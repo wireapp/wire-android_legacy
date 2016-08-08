@@ -70,6 +70,8 @@ public interface IUserPreferencesController {
 
     boolean isGiphyEnabled();
 
+    boolean isContentPreviewEnabled();
+
     void setVerificationCode(String code);
 
     void removeVerificationCode();

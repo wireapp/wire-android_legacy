@@ -90,6 +90,13 @@
         android:layout="@layout/preference_category"
         >
 
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="@string/pref_options_content_preview_key"
+            android:summary="@string/pref_options_content_preview_summary"
+            android:title="@string/pref_options_content_preview_title"
+            />
+
         <com.waz.zclient.pages.main.profile.ListPreferenceWithSummary
             android:defaultValue="@string/pref_options_image_download_default"
             android:dialogTitle="@string/pref_options_image_download_title"

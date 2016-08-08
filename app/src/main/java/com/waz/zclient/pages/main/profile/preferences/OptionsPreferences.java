@@ -26,11 +26,12 @@ import android.support.v7.preference.Preference;
 import android.text.TextUtils;
 import android.widget.Toast;
 import com.waz.api.MediaProvider;
+import com.waz.zclient.BuildConfig;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.spotify.SpotifyObserver;
-import com.waz.zclient.core.controllers.tracking.events.settings.ChangedImageDownloadPreferenceEvent;
 import com.waz.zclient.core.controllers.tracking.events.Event;
 import com.waz.zclient.core.controllers.tracking.events.settings.ChangedContactsPermissionEvent;
+import com.waz.zclient.core.controllers.tracking.events.settings.ChangedImageDownloadPreferenceEvent;
 import com.waz.zclient.pages.BasePreferenceFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.WireRingtonePreferenceDialogFragment;
 import com.waz.zclient.utils.TrackingUtils;
@@ -58,6 +59,15 @@ public class OptionsPreferences extends BasePreferenceFragment<OptionsPreference
         super.onCreatePreferences2(savedInstanceState, rootKey);
         addPreferencesFromResource(R.xml.preferences_options);
 
+        // TODO - Remove check for DEVELOPER_OPTIONS to enable this setting in prod - AN-4222
+        if (!BuildConfig.SHOW_DEVELOPER_OPTIONS) {
+            Preference contentPreviewPreference = findPreference(getString(R.string.pref_options_content_preview_key));
+            net.xpece.android.support.preference.PreferenceCategory group = (net.xpece.android.support.preference.PreferenceCategory) findPreference(
+                getString(R.string.pref_options_media_category_key));
+            if (contentPreviewPreference != null) {
+                group.removePreference(contentPreviewPreference);
+            }
+        }
         ringtonePreference = (RingtonePreference) findPreference(getString(R.string.pref_options_ringtones_ringtone_key));
         textTonePreference = (RingtonePreference) findPreference(getString(R.string.pref_options_ringtones_text_key));
         pingPreference = (RingtonePreference) findPreference(getString(R.string.pref_options_ringtones_ping_key));

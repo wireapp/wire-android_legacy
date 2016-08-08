@@ -199,6 +199,11 @@ public class UserPreferencesController implements IUserPreferencesController {
     }
 
     @Override
+    public boolean isContentPreviewEnabled() {
+        return userPreferences.getBoolean(context.getString(R.string.pref_options_content_preview_key), true);
+    }
+
+    @Override
     public void setVerificationCode(String code) {
         userPreferences.edit().putString(USER_PREF_PHONE_VERIFICATION_CODE, code).apply();
     }

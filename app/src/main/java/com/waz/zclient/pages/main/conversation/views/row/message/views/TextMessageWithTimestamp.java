@@ -36,15 +36,21 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import com.waz.api.Message;
+import com.waz.api.MessageContent;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.pages.main.conversation.views.MessageViewsContainer;
 import com.waz.zclient.ui.text.LinkTextView;
 import com.waz.zclient.ui.text.TypefaceTextView;
+import com.waz.zclient.utils.IntentUtils;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.utils.ZTimeFormatter;
 import org.threeten.bp.DateTimeUtils;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.Locale;
 
 public class TextMessageWithTimestamp extends LinearLayout implements AccentColorObserver,
                                                                       GestureDetector.OnGestureListener {
@@ -71,6 +77,8 @@ public class TextMessageWithTimestamp extends LinearLayout implements AccentColo
             String messageText;
             if (message.isDeleted()) {
                 messageText = getResources().getString(R.string.content__system__message_deleted);
+            } else if (message.getMessageType() == Message.Type.LOCATION) {
+                messageText = getLocationMessageText(message.getLocation());
             } else {
                 messageText = message.getBody();
                 messageText = messageText.replaceAll("\u2028", "\n");
@@ -290,5 +298,23 @@ public class TextMessageWithTimestamp extends LinearLayout implements AccentColo
         } else {
             messageTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSizeRegular);
         }
+    }
+
+    private String getLocationMessageText(MessageContent.Location location) {
+        if (location == null) {
+            return "";
+        }
+        String urlEncodedName;
+        try {
+            urlEncodedName = URLEncoder.encode(location.getName(), "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            urlEncodedName = location.getName();
+        }
+        return String.format(Locale.getDefault(),
+                                    IntentUtils.GOOGLE_MAPS_WEB_LINK,
+                                    location.getZoom(),
+                                    location.getLatitude(),
+                                    location.getLongitude(),
+                                    urlEncodedName);
     }
 }

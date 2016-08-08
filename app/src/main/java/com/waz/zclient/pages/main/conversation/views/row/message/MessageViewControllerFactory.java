@@ -111,6 +111,10 @@ public class MessageViewControllerFactory {
             case AUDIO_ASSET:
                 return new AudioMessageViewController(context, messageViewsContainer);
             case LOCATION:
+                if (messageViewsContainer != null && !messageViewsContainer.isTornDown() &&
+                    !messageViewsContainer.getControllerFactory().getUserPreferencesController().isContentPreviewEnabled()) {
+                    return new TextMessageViewController(context, messageViewsContainer);
+                }
                 return new LocationMessageViewController(context, messageViewsContainer);
             case KNOCK:
                 return new PingMessageViewController(context, messageViewsContainer);
@@ -138,6 +142,10 @@ public class MessageViewControllerFactory {
                 final Message.Part richMediaPart = MessageUtils.getFirstRichMediaPart(message);
                 if (richMediaPart == null) {
                     return new LinkPreviewViewController(context, messageViewsContainer);
+                }
+                if (messageViewsContainer != null && !messageViewsContainer.isTornDown() &&
+                    !messageViewsContainer.getControllerFactory().getUserPreferencesController().isContentPreviewEnabled()) {
+                    return new TextMessageViewController(context, messageViewsContainer);
                 }
                 switch (richMediaPart.getPartType()) {
                     case TEXT:
