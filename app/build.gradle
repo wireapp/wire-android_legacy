@@ -1,4 +1,3 @@
-apply plugin: 'android-sdk-manager'
 apply plugin: 'com.android.application'
 apply plugin: 'jp.leafytree.android-scala'
 apply plugin: 'android-apt'
@@ -115,8 +114,6 @@ android {
             buildConfigField 'int', 'LOG_LEVEL_UI', logLevelWarn()
             buildConfigField 'int', 'LOG_LEVEL_SE', logLevelSupress()
             buildConfigField 'int', 'LOG_LEVEL_AVS', logLevelVerbose()
-
-            patchKeepSpecs()
         }
 
         candidate {
@@ -291,8 +288,6 @@ android {
             buildConfigField 'int', 'LOG_LEVEL_UI', logLevelVerbose()
             buildConfigField 'int', 'LOG_LEVEL_SE', logLevelVerbose()
             buildConfigField 'int', 'LOG_LEVEL_AVS', logLevelVerbose()
-
-            patchKeepSpecs()
         }
     }
 
@@ -317,76 +312,6 @@ android {
         exclude 'META-INF/NOTICE'
         exclude 'APK_LICENSE.txt'
         exclude 'LICENSE.txt'
-    }
-}
-
-def patchKeepSpecs() {
-    def taskClass = "com.android.build.gradle.internal.tasks.multidex.CreateManifestKeepList";
-    def clazz = this.class.classLoader.loadClass(taskClass)
-    def keepSpecsField = clazz.getDeclaredField("KEEP_SPECS")
-    keepSpecsField.setAccessible(true)
-    def keepSpecsMap = (Map) keepSpecsField.get(null)
-    if (keepSpecsMap.remove("activity") != null) {
-        println "KEEP_SPECS patched: removed 'activity' root"
-    } else {
-        println "Failed to patch KEEP_SPECS: no 'activity' root found"
-    }
-
-    if (keepSpecsMap.remove("instrumentation") != null) {
-        println "KEEP_SPECS patched: removed 'instrumentation' root"
-    } else {
-        println "Failed to patch KEEP_SPECS: no 'instrumentation' root found"
-    }
-
-    if (keepSpecsMap.remove("service") != null) {
-        println "KEEP_SPECS patched: removed 'service' root"
-    } else {
-        println "Failed to patch KEEP_SPECS: no 'service' root found"
-    }
-
-
-
-
-}
-
-afterEvaluate {
-    //Pretty big hack to keep the main dex class list down
-    Task collectTask = project.tasks.findByName("collectDevDebugMultiDexComponents")
-    Task processManifestTask = project.tasks.findByName("processDevDebugManifest")
-
-    if (!collectTask || !processManifestTask)
-        return
-
-    collectTask.dependsOn(processManifestTask) << {
-        File androidManifestFile = processManifestTask.outputs.files.filter {
-            it.absolutePath.matches('.*full.*AndroidManifest\\.xml')
-        }.singleFile
-
-        File manifestKeepFile = collectTask.outputs.files.filter {
-            it.absolutePath.endsWith('manifest_keep.txt')
-        }.singleFile
-
-        def nonExportedClasses = new XmlSlurper().parse(androidManifestFile).application.'**'.findAll { node ->
-            if (node.name().matches('(activity|service|receiver|provider)')) {
-                return (node.'@android:exported' == 'false'
-                        || (node.'@android:exported' != 'true'
-                        && node.'intent-filter'.size() == 0))
-            }
-        }.collect {
-            it.'@android:name'.text()
-        }
-
-        def manifestKeepText = manifestKeepFile.text
-        manifestKeepFile.withWriter('utf-8') { writer ->
-            manifestKeepText.eachLine { line ->
-                boolean isNonExportedLine = nonExportedClasses.any {
-                    line.contains(it)
-                }
-
-                if (!isNonExportedLine)
-                    writer.writeLine(line)
-            }
-        }
     }
 }
 
