@@ -59,7 +59,7 @@ public class IntentUtils {
     private static final String GOOGLE_MAPS_INTENT_URI = "geo:0,0?q=%s,%s";
     private static final String GOOGLE_MAPS_WITH_LABEL_INTENT_URI = "geo:0,0?q=%s,%s(%s)";
     private static final String GOOGLE_MAPS_INTENT_PACKAGE = "com.google.android.apps.maps";
-    private static final String GOOGLE_MAPS_WEB_LINK = "http://maps.google.com/maps?z=%d&q=loc:%f+%f+(%s)";
+    public static final String GOOGLE_MAPS_WEB_LINK = "http://maps.google.com/maps?z=%d&q=loc:%f+%f+(%s)";
 
     public static boolean isEmailVerificationIntent(@Nullable Intent intent) {
         if (intent == null) {

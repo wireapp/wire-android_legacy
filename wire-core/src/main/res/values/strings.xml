@@ -478,6 +478,8 @@
     <string name="pref_options_image_download_always">Always</string>
     <string name="pref_options_image_download_wifi">Wi-Fi only</string>
     <string name="pref_options_media_category_title">Media</string>
+    <string name="pref_options_content_preview_title">Content previews</string>
+    <string name="pref_options_content_preview_summary">Previews for links, media and maps in conversations.</string>
     <string name="pref_options_giphy_title">Giphy</string>
     <string name="pref_options_giphy_summary">Replace message text with animated GIFs.</string>
     <string name="pref_options_spotify_title">Connect with Spotify</string>
