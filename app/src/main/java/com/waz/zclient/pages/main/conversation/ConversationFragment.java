@@ -155,6 +155,7 @@ import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.utils.AssetUtils;
 import com.waz.zclient.utils.Callback;
 import com.waz.zclient.utils.LayoutSpec;
+import com.waz.zclient.utils.MessageUtils;
 import com.waz.zclient.utils.OtrDestination;
 import com.waz.zclient.utils.PermissionUtils;
 import com.waz.zclient.utils.TrackingUtils;
@@ -384,7 +385,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                     break;
 
                 case EDIT:
-                    // AN-SHUMENG
+                    editMessage(message);
                     break;
 
                 case FORWARD:
@@ -575,6 +576,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         cursorLayout.getTypingIndicatorContainer().addTypingIndicatorView(typingIndicatorView);
         // Only show Giphy button when text field has input
         cursorLayout.enableGiphyButton(false);
+
         timestampShown = new HashSet<>();
 
         typingListener = new UpdateListener() {
@@ -700,8 +702,11 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         getControllerFactory().getGiphyController().removeObserver(this);
         getStoreFactory().getNetworkStore().removeNetworkStoreObserver(this);
         getControllerFactory().getSingleImageController().removeSingleImageObserver(this);
-        getStoreFactory().getDraftStore().setDraft(getStoreFactory().getConversationStore().getCurrentConversation(),
-                                                   cursorLayout.getText().trim());
+
+        if (!cursorLayout.isEditingMessage()) {
+            getStoreFactory().getDraftStore().setDraft(getStoreFactory().getConversationStore().getCurrentConversation(),
+                                                       cursorLayout.getText().trim());
+        }
         getStoreFactory().getInAppNotificationStore().removeInAppNotificationObserver(this);
         getStoreFactory().getParticipantsStore().removeParticipantsStoreObserver(this);
         getControllerFactory().getStreamMediaPlayerController().removeStreamMediaBarObserver(this);
@@ -868,7 +873,8 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
 
                 // handle draft
-                if (fromConversation != null && changeToDifferentConversation) {
+                if (fromConversation != null && changeToDifferentConversation &&
+                    !cursorLayout.isEditingMessage()) {
                     getStoreFactory().getDraftStore().setDraft(fromConversation, cursorLayout.getText().trim());
                 }
 
@@ -1735,6 +1741,12 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             extendedCursorContainer.close(false);
             return true;
         }
+
+        if (cursorLayout.isEditingMessage()) {
+            cursorLayout.onCloseEditMessage();
+            return true;
+        }
+
         return false;
     }
 
@@ -2168,6 +2180,26 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     @Override
     public void onExtendedCursorClosed() {
         cursorLayout.onExtendedCursorClosed();
+    }
+
+    private void editMessage(final Message message) {
+        final Message.Part richMediaPart = MessageUtils.getFirstRichMediaPart(message);
+        if (message.getMessageType() != Message.Type.TEXT &&
+            !(message.getMessageType() == Message.Type.RICH_MEDIA &&
+              (richMediaPart.getPartType() == Message.Part.Type.WEB_LINK ||
+               richMediaPart.getPartType() == Message.Part.Type.TEXT))) {
+            return;
+        }
+
+        cursorLayout.editMessage(message);
+
+        // Add small delay so triggering keyboard works
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                KeyboardUtils.showKeyboard(getActivity());
+            }
+        }, 200);
     }
 
     private void deleteMessage(final Message message, final boolean forEveryone) {
