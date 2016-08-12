@@ -37,4 +37,6 @@ public interface CursorCallback {
     void onCursorClicked();
 
     void onShowedActionHint(CursorMenuItem item);
+
+    void onApprovedMessageEditing();
 }

@@ -138,7 +138,7 @@
                 android:padding="@dimen/drawing__button__padding"
                 android:text="@string/glyph__undo"
                 android:textColor="@color/drawing__icon__disabled_color"
-                android:textSize="@dimen/drawing__button_undo__text_size"
+                android:textSize="@dimen/wire__text_size__regular"
                 android:layout_gravity="center_vertical|left"
                 />
 
@@ -150,7 +150,7 @@
                 android:padding="@dimen/drawing__send__button__padding"
                 android:text="@string/glyph__check"
                 android:textColor="@color/drawing__icon__disabled_color"
-                android:textSize="@dimen/drawing__button_send__text_size"
+                android:textSize="@dimen/wire__text_size__medium"
                 android:layout_gravity="center"
                 />
 
@@ -162,7 +162,7 @@
                 android:padding="@dimen/drawing__button__padding"
                 android:text="@string/glyph__close"
                 android:textColor="@color/drawing__icon__enabled_color"
-                android:textSize="@dimen/drawing__button_cancel__text_size"
+                android:textSize="@dimen/wire__text_size__regular"
                 android:layout_gravity="center_vertical|right"
                 />
 

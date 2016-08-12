@@ -26,7 +26,11 @@ public class SeparatorRules {
 
     private static final String TAG = SeparatorRules.class.getName();
 
-    public static boolean shouldHaveName(Separator separator) {
+    public static boolean shouldHaveName(Message message, Separator separator) {
+        if (message.isEdited()) {
+            return true;
+        }
+
         // First message with no previous messages e.g. when history has been cleared
         if (separator.previousMessage == null &&
                 separator.nextMessage.getMessageType() != Message.Type.MEMBER_JOIN &&
