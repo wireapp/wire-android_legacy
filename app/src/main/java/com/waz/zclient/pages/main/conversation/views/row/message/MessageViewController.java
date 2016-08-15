@@ -47,6 +47,8 @@ public abstract class MessageViewController implements ConversationItemViewContr
 
     protected void afterInit() {}
 
+    protected void onHeaderClick() {}
+
     /**
      * Set the model to be displayed. The UI setup logic for each message type goes here.
      *

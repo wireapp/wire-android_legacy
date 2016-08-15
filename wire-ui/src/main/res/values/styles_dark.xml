@@ -29,6 +29,10 @@
         <item name="android:textColor">@color/text__primary_dark</item>
     </style>
 
+    <style name="message_stream__separator_recalled__dark" parent="message_stream__separator_recalled__base">
+        <item name="android:textColor">@color/text__primary_dark</item>
+    </style>
+
     <style name="message_stream__timestamp__dark" parent="@style/message_stream__timestamp__base">
         <item name="android:textColor">@color/text__primary_dark</item>
     </style>

@@ -28,6 +28,7 @@ import com.waz.zclient.pages.main.conversation.views.row.message.views.Conversat
 import com.waz.zclient.pages.main.conversation.views.row.message.views.ErrorMessageViewController;
 import com.waz.zclient.pages.main.conversation.views.row.message.views.FileMessageViewController;
 import com.waz.zclient.pages.main.conversation.views.row.message.views.ImageMessageViewController;
+import com.waz.zclient.pages.main.conversation.views.row.message.views.LinkPreviewViewController;
 import com.waz.zclient.pages.main.conversation.views.row.message.views.LocationMessageViewController;
 import com.waz.zclient.pages.main.conversation.views.row.message.views.MissedCallViewController;
 import com.waz.zclient.pages.main.conversation.views.row.message.views.OtrSystemMessageViewController;
@@ -39,7 +40,6 @@ import com.waz.zclient.pages.main.conversation.views.row.message.views.TextMessa
 import com.waz.zclient.pages.main.conversation.views.row.message.views.TwitterMessageViewControllerFactory;
 import com.waz.zclient.pages.main.conversation.views.row.message.views.VideoMessageViewController;
 import com.waz.zclient.pages.main.conversation.views.row.message.views.YouTubeMessageViewController;
-import com.waz.zclient.pages.main.conversation.views.row.message.views.LinkPreviewViewController;
 import com.waz.zclient.utils.MessageUtils;
 
 import java.util.EnumSet;
@@ -70,7 +70,8 @@ public class MessageViewControllerFactory {
                                                                            Type.OTR_UNVERIFIED,
                                                                            Type.HISTORY_LOST,
                                                                            Type.STARTED_USING_DEVICE,
-                                                                           Type.RICH_MEDIA);
+                                                                           Type.RICH_MEDIA,
+                                                                           Type.RECALLED);
     private static final EnumSet<Message.Part.Type> ACCEPTED_PART_TYPES = EnumSet.of(Message.Part.Type.TEXT,
                                                                                      Message.Part.Type.TEXT_EMOJI_ONLY,
                                                                                      Message.Part.Type.WEB_LINK,
@@ -158,6 +159,8 @@ public class MessageViewControllerFactory {
                     default:
                         return new LinkPreviewViewController(context, messageViewsContainer);
                 }
+            case RECALLED:
+                return new TextMessageViewController(context, messageViewsContainer);
             case INCOMING_CALL:
             default:
                 return new ErrorMessageViewController(context, messageViewsContainer);

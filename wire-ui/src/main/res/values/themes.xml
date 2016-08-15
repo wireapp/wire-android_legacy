@@ -40,6 +40,7 @@
         <!-- Message Stream -->
         <item name="messageStreamMessage">@style/message_stream__message__dark</item>
         <item name="messageStreamSeparatorName">@style/message_stream__separator_name__dark</item>
+        <item name="messageStreamSeparatorRecalled">@style/message_stream__separator_recalled__dark</item>
         <item name="messageStreamTimestamp">@style/message_stream__timestamp__dark</item>
         <item name="messageStreamTimestampSmall">@style/message_stream__timestamp_small__dark</item>
         <item name="messageStreamSubtitle">@style/message_stream__subtitle__dark</item>
@@ -167,6 +168,7 @@
         <!-- Message Stream -->
         <item name="messageStreamMessage">@style/message_stream__message__light</item>
         <item name="messageStreamSeparatorName">@style/message_stream__separator_name__light</item>
+        <item name="messageStreamSeparatorRecalled">@style/message_stream__separator_recalled__light</item>
         <item name="messageStreamTimestamp">@style/message_stream__timestamp__light</item>
         <item name="messageStreamTimestampSmall">@style/message_stream__timestamp_small__light</item>
         <item name="messageStreamSubtitle">@style/message_stream__subtitle__light</item>
