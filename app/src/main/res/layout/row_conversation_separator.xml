@@ -88,6 +88,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
+        android:baselineAligned="true"
         >
 
         <FrameLayout
@@ -105,15 +106,31 @@
 
         </FrameLayout>
 
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/ttv__row_conversation__separator__name"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_gravity="center"
-            android:visibility="gone"
-            style="?messageStreamSeparatorName"
-            />
+            android:gravity="start|center_horizontal"
+            >
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/ttv__row_conversation__separator__name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                style="?messageStreamSeparatorName"
+                />
+
+            <com.waz.zclient.ui.text.GlyphTextView
+                android:id="@+id/gtv__message_recalled"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/glyph__trash"
+                android:visibility="gone"
+                style="?messageStreamSeparatorRecalled"
+                />
+
+        </LinearLayout>
 
         <!-- Dummy vie to center text label -->
         <FrameLayout

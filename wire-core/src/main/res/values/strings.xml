@@ -192,6 +192,7 @@
     <string name="content__system__message_deleted">This message has been removed</string>
     <string name="content_system_message_timestamp_failure">Unsent message.</string>
     <string name="content_system_message_timestamp_pending">Sending\u2026</string>
+    <string name="content_system_message_timestamp_deleted">Deleted on %1$s</string>
 
     <!-- Conversation: missed call -->
     <string name="content__missed_call__you_called">[[YOU]] CALLED</string>

@@ -23,6 +23,7 @@
     <!-- messageStream -->
     <attr name="messageStreamMessage" format="reference" />
     <attr name="messageStreamSeparatorName" format="reference" />
+    <attr name="messageStreamSeparatorRecalled" format="reference" />
     <attr name="messageStreamTimestamp" format="reference" />
     <attr name="messageStreamTimestampSmall" format="reference" />
     <attr name="messageStreamSubtitle" format="reference" />

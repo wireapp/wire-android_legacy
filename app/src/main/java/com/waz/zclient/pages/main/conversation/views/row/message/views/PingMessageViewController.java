@@ -62,10 +62,11 @@ public class PingMessageViewController extends MessageViewController implements 
         super(context, messageViewsContainer);
         LayoutInflater inflater = LayoutInflater.from(context);
         view = inflater.inflate(R.layout.row_conversation_knock, null);
-        view.setOnLongClickListener(this);
 
         textViewMessage = ViewUtils.getView(view, R.id.ttv__row_conversation__ping_message);
+        textViewMessage.setOnLongClickListener(this);
         glyphTextView = ViewUtils.getView(view, R.id.gtv__knock_icon);
+        glyphTextView.setOnLongClickListener(this);
         userChatheadImageView = ViewUtils.getView(view, R.id.civ__row_conversation__ping_chathead);
 
         locale = context.getResources().getConfiguration().locale;
