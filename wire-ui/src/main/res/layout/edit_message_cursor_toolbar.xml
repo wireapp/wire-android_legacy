@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2016 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+             android:layout_marginLeft="@dimen/wire__padding__regular"
+             android:layout_marginRight="@dimen/wire__padding__regular">
+
+    <com.waz.zclient.ui.text.GlyphTextView
+        android:id="@+id/gtv__edit_message__reset"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="left|center_vertical"
+        android:padding="@dimen/drawing__button__padding"
+        android:gravity="center"
+        android:text="@string/glyph__undo"
+        android:textColor="@color/drawing__icon__disabled_color"
+        android:textSize="@dimen/drawing__button_undo__text_size"
+        style="?attr/iconButton"
+        />
+
+    <com.waz.zclient.ui.text.GlyphTextView
+        android:id="@+id/gtv__edit_message__approve"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:padding="@dimen/drawing__button__padding"
+        android:gravity="center"
+        android:text="@string/glyph__check"
+        android:textColor="@color/drawing__icon__disabled_color"
+        android:textSize="@dimen/drawing__button_send__text_size"
+        style="?attr/iconButton"
+        />
+
+    <com.waz.zclient.ui.text.GlyphTextView
+        android:id="@+id/gtv__edit_message__close"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="right|center_vertical"
+        android:padding="@dimen/drawing__button__padding"
+        android:gravity="center"
+        android:text="@string/glyph__close"
+        android:textColor="@color/drawing__icon__enabled_color"
+        android:textSize="@dimen/drawing__button_undo__text_size"
+        style="?attr/iconButton"
+        />
+
+</FrameLayout>

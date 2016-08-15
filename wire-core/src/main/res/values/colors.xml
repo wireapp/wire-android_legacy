@@ -75,6 +75,7 @@
 
     <color name="accent_red__40">#67FF2700</color>
     <color name="accent_red__24">#3CFF2700</color>
+    <color name="accent_yellow__16">#28FFD200</color>
 
     <!--Sketch color picker-->
     <color name="draw_white">@color/white</color>

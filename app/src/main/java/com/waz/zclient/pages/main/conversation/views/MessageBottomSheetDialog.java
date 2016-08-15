@@ -132,6 +132,9 @@ public class MessageBottomSheetDialog extends BottomSheetDialog {
     }
 
     private boolean isEditAllowed() {
+        if (!message.getUser().isMe()) {
+            return false;
+        }
         switch (message.getMessageType()) {
             case TEXT:
             case RICH_MEDIA:
