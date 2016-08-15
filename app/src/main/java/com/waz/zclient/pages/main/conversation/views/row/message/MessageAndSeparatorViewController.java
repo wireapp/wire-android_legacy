@@ -33,12 +33,18 @@ public class MessageAndSeparatorViewController implements ConversationItemViewCo
     private MessageViewController messageViewController;
     private Context context;
 
-    public MessageAndSeparatorViewController(MessageViewController messageViewController,
+    public MessageAndSeparatorViewController(final MessageViewController messageViewController,
                                              MessageViewsContainer messageViewsContainer,
                                              Context context) {
         this.messageViewController = messageViewController;
         this.context = context;
-        this.separatorViewController = new SeparatorViewController(this.context, messageViewsContainer);
+        separatorViewController = new SeparatorViewController(this.context, messageViewsContainer);
+        separatorViewController.setOnSeparatorClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                messageViewController.onHeaderClick();
+            }
+        });
     }
 
     public void setModel(@NonNull Message message, @NonNull Separator separator) {

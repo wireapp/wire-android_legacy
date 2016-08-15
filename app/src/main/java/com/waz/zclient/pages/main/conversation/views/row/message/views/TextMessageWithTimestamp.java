@@ -73,8 +73,13 @@ public class TextMessageWithTimestamp extends LinearLayout implements AccentColo
                 messageText = messageText.replaceAll("\u2028", "\n");
             }
 
-            messageTextView.setLinkTextColor(messageViewContainer.getControllerFactory().getAccentColorController().getColor());
-            messageTextView.setTextLink(messageText);
+            if (message.getMessageType() == Message.Type.RECALLED) {
+                messageTextView.setVisibility(GONE);
+            } else {
+                messageTextView.setVisibility(VISIBLE);
+                messageTextView.setLinkTextColor(messageViewContainer.getControllerFactory().getAccentColorController().getColor());
+                messageTextView.setTextLink(messageText);
+            }
 
             String timestamp;
             Message.Status messageStatus = message.getMessageStatus();
@@ -84,6 +89,10 @@ public class TextMessageWithTimestamp extends LinearLayout implements AccentColo
                 timestamp = getResources().getString(R.string.content_system_message_timestamp_failure);
             } else {
                 timestamp = ZTimeFormatter.getSingleMessageTime(getContext(), DateTimeUtils.toDate(message.getTime()));
+            }
+
+            if (message.getMessageType() == Message.Type.RECALLED) {
+                timestamp = getContext().getString(R.string.content_system_message_timestamp_deleted, timestamp);
             }
 
             timestampTextView.setTransformedText(timestamp);
@@ -135,12 +144,7 @@ public class TextMessageWithTimestamp extends LinearLayout implements AccentColo
         messageTextView.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                timestampTextView.clearAnimation();
-                if (timestampTextView.getVisibility() == GONE) {
-                    expandTimestamp();
-                } else {
-                    collapseTimestamp();
-                }
+                toggleTimestamp();
             }
         });
 
@@ -157,7 +161,11 @@ public class TextMessageWithTimestamp extends LinearLayout implements AccentColo
 
     public void setMessage(final Message message) {
         messageModelObserver.setAndUpdate(message);
-        messageTextView.setVisibility(View.VISIBLE);
+        if (message.getMessageType() == Message.Type.RECALLED) {
+            messageTextView.setVisibility(GONE);
+        } else {
+            messageTextView.setVisibility(VISIBLE);
+        }
         this.message = message;
         if (messageViewContainer.getTimestampShownSet().contains(message.getId())) {
             messageViewContainer.setShownTimestampView(this);
@@ -244,6 +252,15 @@ public class TextMessageWithTimestamp extends LinearLayout implements AccentColo
     public void setMessageViewsContainer(MessageViewsContainer messageViewContainer) {
         this.messageViewContainer = messageViewContainer;
         messageViewContainer.getControllerFactory().getAccentColorController().addAccentColorObserver(this);
+    }
+
+    public void toggleTimestamp() {
+        timestampTextView.clearAnimation();
+        if (timestampTextView.getVisibility() == GONE) {
+            expandTimestamp();
+        } else {
+            collapseTimestamp();
+        }
     }
 
     @Override

@@ -54,7 +54,8 @@ public class SeparatorRules {
                  separator.previousMessage.getMessageType() != Message.Type.TEXT &&
                  separator.previousMessage.getMessageType() != Message.Type.RICH_MEDIA
                 ) ||
-                separator.nextMessage.getMessageType() == Message.Type.ANY_ASSET
+                separator.nextMessage.getMessageType() == Message.Type.ANY_ASSET ||
+                separator.nextMessage.getMessageType() == Message.Type.RECALLED
                ) &&
 
                //next message is not a "system" message or a knock

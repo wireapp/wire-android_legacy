@@ -55,6 +55,7 @@ public class SeparatorViewController implements ConversationItemViewController,
     private TypefaceTextView timestampTextview;
     private View timestampDivider;
     private TypefaceTextView userNameTextView;
+    private View messageRecalledGlyph;
     private ImageView unreadDot;
     private ChatheadImageView userChatheadImageView;
     private View userLayout;
@@ -70,6 +71,7 @@ public class SeparatorViewController implements ConversationItemViewController,
 
         view = View.inflate(context, R.layout.row_conversation_separator, null);
         userNameTextView = ViewUtils.getView(view, R.id.ttv__row_conversation__separator__name);
+        messageRecalledGlyph = ViewUtils.getView(view, R.id.gtv__message_recalled);
         timestampLinearLayout = ViewUtils.getView(view, R.id.ll__row_conversation__separator_time);
         timestampDivider = ViewUtils.getView(view, R.id.v__row_conversation__separator__time__divider);
         timestampTextview = ViewUtils.getView(view, R.id.ttv__row_conversation__separator__time);
@@ -83,6 +85,7 @@ public class SeparatorViewController implements ConversationItemViewController,
         setUserName(separator);
         setTimestamp(separator);
         setPadding(separator);
+        showRecalledGlyph(separator);
     }
 
     private void setPadding(Separator separator) {
@@ -358,7 +361,11 @@ public class SeparatorViewController implements ConversationItemViewController,
             userChatheadImageView.setOnClickListener(null);
             user = null;
         }
+    }
 
+    private void showRecalledGlyph(Separator separator) {
+        messageRecalledGlyph.setVisibility(separator.nextMessage.getMessageType() == Message.Type.RECALLED ?
+                                           View.VISIBLE : View.GONE);
     }
 
     private void showUserName() {
@@ -386,6 +393,10 @@ public class SeparatorViewController implements ConversationItemViewController,
                 }
             });
         }
+    }
+
+    public void setOnSeparatorClickListener(View.OnClickListener onSeparatorClickListener) {
+        view.setOnClickListener(onSeparatorClickListener);
     }
 
     @Override
