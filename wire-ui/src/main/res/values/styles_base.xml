@@ -57,6 +57,11 @@
         <item name="font">@string/wire__typeface__medium</item>
     </style>
 
+    <style name="message_stream__separator_recalled__base">
+        <item name="android:textSize">@dimen/wire__text_size__tiny</item>
+        <item name="android:paddingStart">@dimen/wire__padding__8</item>
+    </style>
+
     <style name="message_stream__timestamp__base">
         <item name="android:textSize">@dimen/wire__text_size__small</item>
         <item name="android:textAllCaps">true</item>

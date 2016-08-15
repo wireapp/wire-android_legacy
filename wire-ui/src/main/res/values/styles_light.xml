@@ -28,6 +28,10 @@
 
     <style name="message_stream__separator_name__light" parent="message_stream__separator_name__base" />
 
+    <style name="message_stream__separator_recalled__light" parent="message_stream__separator_recalled__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
     <style name="message_stream__timestamp__light" parent="@style/message_stream__timestamp__base">
         <item name="android:textColor">@color/text__primary_light</item>
     </style>

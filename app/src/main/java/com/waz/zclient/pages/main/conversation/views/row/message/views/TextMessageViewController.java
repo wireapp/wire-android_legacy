@@ -21,6 +21,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
+import com.waz.api.Message;
 import com.waz.zclient.R;
 import com.waz.zclient.pages.main.conversation.views.MessageViewsContainer;
 import com.waz.zclient.pages.main.conversation.views.row.message.RetryMessageViewController;
@@ -47,6 +48,13 @@ public class TextMessageViewController extends RetryMessageViewController {
     public void onSetMessage(Separator separator) {
         super.onSetMessage(separator);
         textWithTimestamp.setMessage(message);
+    }
+
+    @Override
+    protected void onHeaderClick() {
+        if (message.getMessageType() == Message.Type.RECALLED) {
+            textWithTimestamp.toggleTimestamp();
+        }
     }
 
     @Override
