@@ -18,9 +18,14 @@
 package com.waz.zclient.controllers.tracking.events.conversation;
 
 import android.support.annotation.NonNull;
+import com.waz.zclient.core.controllers.tracking.attributes.Attribute;
 import com.waz.zclient.core.controllers.tracking.events.Event;
 
 public class CopiedMessageEvent extends Event {
+
+    public CopiedMessageEvent(String messageType) {
+        attributes.put(Attribute.TYPE, messageType);
+    }
 
     @NonNull
     @Override
