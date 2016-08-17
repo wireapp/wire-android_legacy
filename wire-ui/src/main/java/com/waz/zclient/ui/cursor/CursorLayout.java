@@ -288,6 +288,9 @@ public class CursorLayout extends FrameLayout implements
             return;
         }
         giphyEnabled = enable;
+        if (isEditingMessage()) {
+            return;
+        }
         if (enable) {
             int duration = getResources().getInteger(R.integer.animation_duration_medium);
             giphyButton.setVisibility(View.VISIBLE);
@@ -379,10 +382,7 @@ public class CursorLayout extends FrameLayout implements
     public void setConversation(IConversation conversation) {
         shieldViewWithBanner.setConversation(conversation);
         enableMessageWriting();
-        mainToolbar.setTranslationY(0);
-        mainToolbar.setVisibility(VISIBLE);
-        secondaryToolbar.setTranslationY(2 * cursorHeight);
-        secondaryToolbar.setVisibility(GONE);
+        resetMainAndSecondaryToolbars();
         closeEditMessage(false);
     }
 
@@ -508,7 +508,10 @@ public class CursorLayout extends FrameLayout implements
         showEditMessageToolbar();
     }
 
-    private void closeEditMessage(boolean animated) {
+    public void closeEditMessage(boolean animated) {
+        if (!isEditingMessage) {
+            return;
+        }
         message = null;
         newCursorEditText.setText("");
         hintView.setVisibility(VISIBLE);
@@ -520,6 +523,7 @@ public class CursorLayout extends FrameLayout implements
         } else {
             editMessageCursorToolbar.setVisibility(GONE);
             editMessageBackgroundView.setVisibility(GONE);
+            resetMainAndSecondaryToolbars();
         }
         if (giphyEnabled) {
             giphyButton.setVisibility(VISIBLE);
@@ -658,5 +662,12 @@ public class CursorLayout extends FrameLayout implements
 
     public void onExtendedCursorClosed() {
         mainToolbar.unselectItems();
+    }
+
+    private void resetMainAndSecondaryToolbars() {
+        mainToolbar.setTranslationY(0);
+        mainToolbar.setVisibility(VISIBLE);
+        secondaryToolbar.setTranslationY(2 * cursorHeight);
+        secondaryToolbar.setVisibility(GONE);
     }
 }

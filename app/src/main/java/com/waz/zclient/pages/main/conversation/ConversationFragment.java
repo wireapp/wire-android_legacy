@@ -503,9 +503,11 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 switch (item.getItemId()) {
                     case R.id.action_audio_call:
                         getControllerFactory().getCallingController().startCall(false);
+                        cursorLayout.closeEditMessage(false);
                         return true;
                     case R.id.action_video_call:
                         getControllerFactory().getCallingController().startCall(true);
+                        cursorLayout.closeEditMessage(false);
                         return true;
                 }
                 return false;
@@ -517,6 +519,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 if (LayoutSpec.isTablet(getContext()) && ViewUtils.isInLandscape(getContext())) {
                     return;
                 }
+                cursorLayout.closeEditMessage(false);
                 getActivity().onBackPressed();
                 KeyboardUtils.closeKeyboardIfShown(getActivity());
             }
@@ -1754,7 +1757,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         }
 
         if (cursorLayout.isEditingMessage()) {
-            cursorLayout.onCloseEditMessage();
+            cursorLayout.closeEditMessage(true);
             return true;
         }
 
