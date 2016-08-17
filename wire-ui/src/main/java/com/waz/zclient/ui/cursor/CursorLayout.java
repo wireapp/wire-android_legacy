@@ -35,6 +35,7 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import com.waz.api.IConversation;
 import com.waz.api.Message;
 import com.waz.api.MessageContent;
@@ -480,7 +481,13 @@ public class CursorLayout extends FrameLayout implements
 
     @Override
     public void onApproveEditMessage() {
-        message.update(new MessageContent.Text(newCursorEditText.getText().toString()));
+        if (TextUtils.isEmpty(newCursorEditText.getText().toString().trim())) {
+            message.recall();
+            Toast.makeText(getContext(), R.string.conversation__message_action__delete__confirmation, Toast.LENGTH_SHORT).show();
+        } else {
+            message.update(new MessageContent.Text(newCursorEditText.getText().toString()));
+        }
+
         onCloseEditMessage();
         if (cursorCallback != null) {
             cursorCallback.onApprovedMessageEditing();
