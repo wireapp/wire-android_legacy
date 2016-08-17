@@ -103,6 +103,7 @@ public class MessageBottomSheetDialog extends BottomSheetDialog {
     private boolean isCopyAllowed() {
         switch (message.getMessageType()) {
             case TEXT:
+            case TEXT_EMOJI_ONLY:
             case RICH_MEDIA:
                 return true;
             default:
@@ -113,6 +114,7 @@ public class MessageBottomSheetDialog extends BottomSheetDialog {
     private boolean isForwardAllowed() {
         switch (message.getMessageType()) {
             case TEXT:
+            case TEXT_EMOJI_ONLY:
             case RICH_MEDIA:
                 return true;
             case ANY_ASSET:
@@ -137,6 +139,7 @@ public class MessageBottomSheetDialog extends BottomSheetDialog {
             return false;
         }
         switch (message.getMessageType()) {
+            case TEXT_EMOJI_ONLY:
             case TEXT:
             case RICH_MEDIA:
                 return true;
