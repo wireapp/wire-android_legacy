@@ -102,6 +102,7 @@ import com.waz.zclient.controllers.singleimage.SingleImageObserver;
 import com.waz.zclient.controllers.streammediaplayer.StreamMediaBarObserver;
 import com.waz.zclient.controllers.tracking.events.conversation.CopiedMessageEvent;
 import com.waz.zclient.controllers.tracking.events.conversation.DeletedMessageEvent;
+import com.waz.zclient.controllers.tracking.events.conversation.EditedMessageEvent;
 import com.waz.zclient.controllers.tracking.events.conversation.ForwardedMessageEvent;
 import com.waz.zclient.controllers.tracking.events.conversation.OpenedMessageActionEvent;
 import com.waz.zclient.controllers.tracking.events.navigation.OpenedMoreActionsEvent;
@@ -390,6 +391,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
                 case EDIT:
                     editMessage(message);
+                    getControllerFactory().getTrackingController().tagEvent(OpenedMessageActionEvent.edit(message.getMessageType().name()));
                     break;
 
                 case FORWARD:
@@ -1733,8 +1735,9 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     }
 
     @Override
-    public void onApprovedMessageEditing() {
+    public void onApprovedMessageEditing(Message message) {
         KeyboardUtils.hideKeyboard(getActivity());
+        getControllerFactory().getTrackingController().tagEvent(new EditedMessageEvent(message));
     }
 
     @Override

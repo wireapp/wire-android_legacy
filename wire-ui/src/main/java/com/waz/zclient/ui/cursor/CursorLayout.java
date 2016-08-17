@@ -488,10 +488,10 @@ public class CursorLayout extends FrameLayout implements
             message.update(new MessageContent.Text(newCursorEditText.getText().toString()));
         }
 
-        onCloseEditMessage();
         if (cursorCallback != null) {
-            cursorCallback.onApprovedMessageEditing();
+            cursorCallback.onApprovedMessageEditing(message);
         }
+        closeEditMessage(true);
     }
 
     public boolean isEditingMessage() {
