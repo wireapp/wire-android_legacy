@@ -100,6 +100,8 @@ import com.waz.zclient.controllers.navigation.PagerControllerObserver;
 import com.waz.zclient.controllers.permission.RequestPermissionsObserver;
 import com.waz.zclient.controllers.singleimage.SingleImageObserver;
 import com.waz.zclient.controllers.streammediaplayer.StreamMediaBarObserver;
+import com.waz.zclient.controllers.tracking.events.conversation.CopiedMessageEvent;
+import com.waz.zclient.controllers.tracking.events.conversation.DeletedMessageEvent;
 import com.waz.zclient.controllers.tracking.events.conversation.ForwardedMessageEvent;
 import com.waz.zclient.controllers.tracking.events.conversation.OpenedMessageActionEvent;
 import com.waz.zclient.controllers.tracking.events.navigation.OpenedMoreActionsEvent;
@@ -373,14 +375,17 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             switch (action) {
                 case COPY:
                     copyMessage(message);
+                    getControllerFactory().getTrackingController().tagEvent(OpenedMessageActionEvent.copy(message.getMessageType().name()));
                     break;
 
                 case DELETE_GLOBAL:
                     deleteMessage(message, true);
+                    getControllerFactory().getTrackingController().tagEvent(OpenedMessageActionEvent.deleteForEveryone(message.getMessageType().name()));
                     break;
 
                 case DELETE_LOCAL:
                     deleteMessage(message, false);
+                    getControllerFactory().getTrackingController().tagEvent(OpenedMessageActionEvent.deleteForMe(message.getMessageType().name()));
                     break;
 
                 case EDIT:
@@ -389,6 +394,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
                 case FORWARD:
                     forwardMessage(message);
+                    getControllerFactory().getTrackingController().tagEvent(OpenedMessageActionEvent.forward(message.getMessageType().name()));
                     break;
 
                 default:
@@ -2226,8 +2232,8 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                                        } else {
                                            message.delete();
                                        }
-                                       getControllerFactory().getTrackingController().tagEvent(OpenedMessageActionEvent.delete());
                                        Toast.makeText(getContext(), R.string.conversation__message_action__delete__confirmation, Toast.LENGTH_SHORT).show();
+                                       getControllerFactory().getTrackingController().tagEvent(new DeletedMessageEvent(message, forEveryone));
                                    }
                                })
             .create();
@@ -2235,6 +2241,8 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     }
 
     private void copyMessage(Message message) {
+        getControllerFactory().getTrackingController().tagEvent(new CopiedMessageEvent(message.getMessageType().name()));
+
         ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText(getContext().getString(R.string.conversation__action_mode__copy__description,
                                                                      message.getUser().getDisplayName()),
@@ -2244,8 +2252,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     }
 
     private void forwardMessage(final Message message) {
-        getControllerFactory().getTrackingController().tagEvent(OpenedMessageActionEvent.forward());
-        getControllerFactory().getTrackingController().tagEvent(new ForwardedMessageEvent(message.getMessageType().toString()));
+        getControllerFactory().getTrackingController().tagEvent(new ForwardedMessageEvent(message.getMessageType().name()));
 
         final ShareCompat.IntentBuilder intentBuilder = ShareCompat.IntentBuilder.from(getActivity());
         intentBuilder.setChooserTitle(R.string.conversation__action_mode__fwd__chooser__title);

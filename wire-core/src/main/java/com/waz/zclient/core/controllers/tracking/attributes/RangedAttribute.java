@@ -50,6 +50,7 @@ public enum RangedAttribute {
     FILE_SIZE_MB("size_mb", new int[] {0, 1, 6, 11, 16, 21, 26}),
     FILE_UPLOAD_DURATION("duration", new int[] {0, 6, 11, 21, 31, 61, 181, 301}),
     VIDEO_AND_AUDIO_MESSAGE_DURATION("duration", new int[] {0, 1, 11, 31, 61, 301, 901, 1801}),
+    MESSAGE_ACTION_TIME_ELAPSED("time_elapsed", new int[] {0, 1, 61, 301, 601, 1801, 3601, 86401}),
     NUMBER_OF_ARCHIVED_CONVERSATIONS("numberOfArchivedConversations", new int[] {0, 1, 2, 3, 4, 5, 10, 15, 20, 30, 40, 50}),
     NUMBER_OF_MUTED_CONVERSATIONS("numberOfMutedConversations", new int[] {0, 1, 2, 3, 4, 5, 10, 15, 20, 30, 40, 50});
 

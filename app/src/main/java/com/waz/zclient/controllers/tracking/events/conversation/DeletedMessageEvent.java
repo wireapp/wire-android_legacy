@@ -19,14 +19,15 @@ package com.waz.zclient.controllers.tracking.events.conversation;
 
 
 import android.support.annotation.NonNull;
+import com.waz.api.Message;
 import com.waz.zclient.core.controllers.tracking.attributes.Attribute;
 import com.waz.zclient.core.controllers.tracking.events.Event;
-import com.waz.zclient.utils.TrackingUtils;
 
 public class DeletedMessageEvent extends Event {
 
-    public DeletedMessageEvent(boolean multipleMessagesSelected) {
-        attributes.put(Attribute.CONTEXT, TrackingUtils.getMessageSelectionMode(multipleMessagesSelected));
+    public DeletedMessageEvent(Message message, boolean forEveryone) {
+        attributes.put(Attribute.TYPE, message.getMessageType().name());
+        attributes.put(Attribute.METHOD, forEveryone ? "for_everyone" : "for_me");
     }
 
     @NonNull
