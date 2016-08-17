@@ -89,8 +89,7 @@ public class SeparatorViewController implements ConversationItemViewController,
         setPadding(message, separator);
         showRecalledGlyph(separator);
 
-        if (message.getUser().isMe() &&
-            message.isEdited()) {
+        if (message.isEdited()) {
             messageEditedGlyph.setVisibility(View.VISIBLE);
         } else {
             messageEditedGlyph.setVisibility(View.GONE);
