@@ -27,6 +27,7 @@ public class OpenedMessageActionEvent extends Event {
         DELETE_FOR_ME("delete_for_me"),
         DELETE_FOR_EVERYONE("delete_for_everyone"),
         COPY("copy"),
+        EDIT("edit"),
         FORWARD("forward"),
         ;
 
@@ -49,6 +50,9 @@ public class OpenedMessageActionEvent extends Event {
         return new OpenedMessageActionEvent(Target.DELETE_FOR_EVERYONE, messageType);
     }
 
+    public static OpenedMessageActionEvent edit(String messageType) {
+        return new OpenedMessageActionEvent(Target.EDIT, messageType);
+    }
 
     public static OpenedMessageActionEvent copy(String messageType) {
         return new OpenedMessageActionEvent(Target.COPY, messageType);
