@@ -43,6 +43,7 @@ import com.waz.zclient.ui.text.TypefaceTextView;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.utils.ZTimeFormatter;
 import org.threeten.bp.DateTimeUtils;
+import org.threeten.bp.Instant;
 
 public class TextMessageWithTimestamp extends LinearLayout implements AccentColorObserver {
 
@@ -67,7 +68,7 @@ public class TextMessageWithTimestamp extends LinearLayout implements AccentColo
 
             String messageText;
             if (message.isDeleted()) {
-                messageText = getResources().getString(R.string.content__system__message_deleted);
+                messageText = "";
             } else {
                 messageText = message.getBody();
                 messageText = messageText.replaceAll("\u2028", "\n");
@@ -88,7 +89,10 @@ public class TextMessageWithTimestamp extends LinearLayout implements AccentColo
             } else if (messageStatus == Message.Status.FAILED) {
                 timestamp = getResources().getString(R.string.content_system_message_timestamp_failure);
             } else {
-                timestamp = ZTimeFormatter.getSingleMessageTime(getContext(), DateTimeUtils.toDate(message.getTime()));
+                Instant messageTime = message.isEdited() ?
+                                      message.getEditTime() :
+                                      message.getTime();
+                timestamp = ZTimeFormatter.getSingleMessageTime(getContext(), DateTimeUtils.toDate(messageTime));
             }
 
             if (message.getMessageType() == Message.Type.RECALLED) {

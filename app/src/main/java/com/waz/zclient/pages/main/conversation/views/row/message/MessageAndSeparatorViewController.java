@@ -49,7 +49,7 @@ public class MessageAndSeparatorViewController implements ConversationItemViewCo
 
     public void setModel(@NonNull Message message, @NonNull Separator separator) {
         messageViewController.setMessage(message, separator);
-        separatorViewController.setSeparator(separator);
+        separatorViewController.setMessage(message, separator);
     }
 
     public MessageViewController getMessageViewController() {

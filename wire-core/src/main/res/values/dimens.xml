@@ -543,9 +543,6 @@
     <dimen name="drawing__bottom_bar__height">80dp</dimen>
     <dimen name="drawing__button__padding">8dp</dimen>
     <dimen name="drawing__send__button__padding">10dp</dimen>
-    <dimen name="drawing__button_send__text_size">40dp</dimen>
-    <dimen name="drawing__button_cancel__text_size">16dp</dimen>
-    <dimen name="drawing__button_undo__text_size">16dp</dimen>
     <dimen name="drawing__border_scroll_bar__height">@dimen/wire__divider__height__thin</dimen>
     <dimen name="drawing__border_line__height">@dimen/wire__divider__height__thin</dimen>
     <dimen name="drawing__tip__font__size">12dp</dimen>

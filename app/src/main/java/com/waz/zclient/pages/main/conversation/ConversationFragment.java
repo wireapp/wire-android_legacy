@@ -384,7 +384,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                     break;
 
                 case EDIT:
-                    // AN-SHUMENG
+                    editMessage(message);
                     break;
 
                 case FORWARD:
@@ -575,6 +575,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         cursorLayout.getTypingIndicatorContainer().addTypingIndicatorView(typingIndicatorView);
         // Only show Giphy button when text field has input
         cursorLayout.enableGiphyButton(false);
+
         timestampShown = new HashSet<>();
 
         typingListener = new UpdateListener() {
@@ -700,8 +701,11 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         getControllerFactory().getGiphyController().removeObserver(this);
         getStoreFactory().getNetworkStore().removeNetworkStoreObserver(this);
         getControllerFactory().getSingleImageController().removeSingleImageObserver(this);
-        getStoreFactory().getDraftStore().setDraft(getStoreFactory().getConversationStore().getCurrentConversation(),
-                                                   cursorLayout.getText().trim());
+
+        if (!cursorLayout.isEditingMessage()) {
+            getStoreFactory().getDraftStore().setDraft(getStoreFactory().getConversationStore().getCurrentConversation(),
+                                                       cursorLayout.getText().trim());
+        }
         getStoreFactory().getInAppNotificationStore().removeInAppNotificationObserver(this);
         getStoreFactory().getParticipantsStore().removeParticipantsStoreObserver(this);
         getControllerFactory().getStreamMediaPlayerController().removeStreamMediaBarObserver(this);
@@ -868,7 +872,8 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
 
                 // handle draft
-                if (fromConversation != null && changeToDifferentConversation) {
+                if (fromConversation != null && changeToDifferentConversation &&
+                    !cursorLayout.isEditingMessage()) {
                     getStoreFactory().getDraftStore().setDraft(fromConversation, cursorLayout.getText().trim());
                 }
 
@@ -1068,7 +1073,9 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     public void onKeyboardVisibilityChanged(boolean keyboardIsVisible, int keyboardHeight, View currentFocus) {
         cursorLayout.notifyKeyboardVisibilityChanged(keyboardIsVisible, currentFocus);
 
-        if (keyboardIsVisible && getControllerFactory().getFocusController().getCurrentFocus() == IFocusController.CONVERSATION_CURSOR) {
+        if (keyboardIsVisible &&
+            getControllerFactory().getFocusController().getCurrentFocus() == IFocusController.CONVERSATION_CURSOR &&
+            !cursorLayout.isEditingMessage()) {
             messageStreamManager.onCursorStateEdit();
             getControllerFactory().getNavigationController().setMessageStreamState(VoiceBarAppearance.MINI);
         }
@@ -1099,7 +1106,9 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         }
         // this is needed to make sure that text is scrolled to bottom - on some devices
         // the keyboard height changes while text is being entered
-        messageStreamManager.onCursorStateEdit();
+        if (!cursorLayout.isEditingMessage()) {
+            messageStreamManager.onCursorStateEdit();
+        }
 
         if (inputStateIndicator != null) {
             if (text.isEmpty()) {
@@ -1361,6 +1370,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
     @Override
     public boolean onItemLongClick(final Message message) {
+        final boolean isMemberOfConversation = getStoreFactory().getConversationStore().getCurrentConversation().isMemberOfConversation();
         if (KeyboardUtils.isKeyboardVisible(getContext())) {
             KeyboardUtils.hideKeyboard(getActivity());
             new Handler().postDelayed(new Runnable() {
@@ -1369,11 +1379,11 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                     if (getActivity() == null) {
                         return;
                     }
-                    new MessageBottomSheetDialog(getContext(), message, messageBottomSheetDialogCallback).show();
+                    new MessageBottomSheetDialog(getContext(), message, isMemberOfConversation, messageBottomSheetDialogCallback).show();
                 }
             }, BOTTOM_MENU_DISPLAY_DELAY_MS);
         } else {
-            new MessageBottomSheetDialog(getContext(), message, messageBottomSheetDialogCallback).show();
+            new MessageBottomSheetDialog(getContext(), message, isMemberOfConversation, messageBottomSheetDialogCallback).show();
         }
         return true;
     }
@@ -1702,13 +1712,20 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
     @Override
     public void onCursorClicked() {
-        listView.scrollToBottom();
+        if (!cursorLayout.isEditingMessage()) {
+            listView.scrollToBottom();
+        }
     }
 
     @Override
     public void onShowedActionHint(CursorMenuItem item) {
         getControllerFactory().getTrackingController().tagEvent(new OpenedActionHintEvent(item.name(),
                                                                                           getConversationTypeString()));
+    }
+
+    @Override
+    public void onApprovedMessageEditing() {
+        KeyboardUtils.hideKeyboard(getActivity());
     }
 
     @Override
@@ -1735,6 +1752,12 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             extendedCursorContainer.close(false);
             return true;
         }
+
+        if (cursorLayout.isEditingMessage()) {
+            cursorLayout.onCloseEditMessage();
+            return true;
+        }
+
         return false;
     }
 
@@ -2168,6 +2191,21 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     @Override
     public void onExtendedCursorClosed() {
         cursorLayout.onExtendedCursorClosed();
+    }
+
+    private void editMessage(final Message message) {
+        if (cursorLayout == null) {
+            return;
+        }
+        cursorLayout.editMessage(message);
+
+        // Add small delay so triggering keyboard works
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                KeyboardUtils.showKeyboard(getActivity());
+            }
+        }, 200);
     }
 
     private void deleteMessage(final Message message, final boolean forEveryone) {
