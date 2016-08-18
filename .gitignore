@@ -14,12 +14,16 @@
 # VIM crap
 .*.swp
 
+captures
+
 # generated files
 bin/
 gen/
 obj
 libs/armeabi
 ajcore.*.txt
+target
+flavor-*
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -28,6 +32,9 @@ app/api-keys.properties
 app/*.keystore
 app/signing.gradle
 user.gradle
+
+target
+app/flavor-*
 
 # Google Play Services lib
 google-play-services_lib/
