@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2016 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<com.waz.zclient.messages.TextPartView android:id="@+id/ltv__row_conversation__message"
+                                       style="?messageStreamMessage"
+                                       xmlns:android="http://schemas.android.com/apk/res/android"
+                                       xmlns:app="http://schemas.android.com/apk/res-auto"
+                                       android:layout_width="match_parent"
+                                       android:layout_height="wrap_content"
+                                       android:focusable="true"
+                                       android:focusableInTouchMode="true"
+                                       android:inputType="none"
+                                       android:longClickable="true"
+                                       android:paddingLeft="48dp"
+                                       android:paddingRight="48dp"
+                                       android:paddingTop="4dp"
+                                       android:textIsSelectable="true"
+                                       app:font="@string/wire__typeface__light"
+    />

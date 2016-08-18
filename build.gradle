@@ -115,6 +115,7 @@ ext {
             supportannotations   : "com.android.support:support-annotations:$supportLibVersion",
             preferences          : "com.android.support:preference-v7:$supportLibVersion",
             cardview             : "com.android.support:cardview-v7:$supportLibVersion",
+            gridview             : "com.android.support:leanback-v17:$supportLibVersion",
 
             // Play services
             psBase               : "com.google.android.gms:play-services-base:$playServicesVersion",

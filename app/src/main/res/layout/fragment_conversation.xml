@@ -86,8 +86,7 @@
             android:layout_weight="1"
             >
 
-            <com.waz.zclient.pages.main.conversation.views.listview.ConversationListView
-                android:id="@+id/clv__conversation_list_view"
+            <com.waz.zclient.messages.MessagesListView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:divider="@null"

@@ -31,6 +31,7 @@ import com.waz.zclient.core.stores.IStoreFactory
 import com.waz.zclient.notifications.controllers.{CallingNotificationsController, ImageNotificationsController, MessageNotificationsController}
 import com.waz.zclient.utils.{BackendPicker, BuildConfigUtils, Callback}
 import com.waz.zclient.controllers.global.AccentColorController
+import com.waz.zclient.messages.MessageViewFactory
 
 object WireApplication {
   var APP_INSTANCE: WireApplication = _
@@ -46,6 +47,7 @@ object WireApplication {
     bind[GlobalCallingController] to new GlobalCallingController(inject[Context])
     bind[GlobalCameraController] to new GlobalCameraController(inject[Context], new AndroidCameraFactory)(EventContext.Global)
     bind[MediaManagerService] to ZMessaging.currentGlobal.mediaManager
+    bind[MessageViewFactory] to new MessageViewFactory()
 
     //notifications
     bind[MessageNotificationsController] to new MessageNotificationsController()
