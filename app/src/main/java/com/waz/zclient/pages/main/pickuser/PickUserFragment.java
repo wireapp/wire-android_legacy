@@ -46,7 +46,6 @@ import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.currentfocus.IFocusController;
-import com.waz.zclient.controllers.globallayout.KeyboardHeightObserver;
 import com.waz.zclient.controllers.globallayout.KeyboardVisibilityObserver;
 import com.waz.zclient.controllers.navigation.NavigationController;
 import com.waz.zclient.controllers.tracking.events.connect.OpenedGenericInviteMenuEvent;
@@ -91,7 +90,6 @@ import java.util.Set;
 public class PickUserFragment extends BaseFragment<PickUserFragment.Container> implements View.OnClickListener,
                                                                                           OnInboxLoadedListener,
                                                                                           PickUserStoreObserver,
-                                                                                          KeyboardHeightObserver,
                                                                                           KeyboardVisibilityObserver,
                                                                                           AccentColorObserver,
                                                                                           ConversationQuickMenuCallback,
@@ -343,7 +341,6 @@ public class PickUserFragment extends BaseFragment<PickUserFragment.Container> i
         super.onStart();
 
         getStoreFactory().getPickUserStore().addPickUserStoreObserver(this);
-        getControllerFactory().getGlobalLayoutController().addKeyboardHeightObserver(this);
         getControllerFactory().getGlobalLayoutController().addKeyboardVisibilityObserver(this);
         getControllerFactory().getAccentColorController().addAccentColorObserver(this);
         getControllerFactory().getPickUserController().addPickUserSearchControllerObserver(this);
@@ -407,7 +404,6 @@ public class PickUserFragment extends BaseFragment<PickUserFragment.Container> i
         getContainer().getLoadingViewIndicator().hide();
         getStoreFactory().getPickUserStore().removePickUserStoreObserver(this);
         getControllerFactory().getGlobalLayoutController().removeKeyboardVisibilityObserver(this);
-        getControllerFactory().getGlobalLayoutController().removeKeyboardHeightObserver(this);
         getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
         getControllerFactory().getPickUserController().removePickUserSearchControllerObserver(this);
         usersSearchModelObserver.pauseListening();
@@ -1080,11 +1076,6 @@ public class PickUserFragment extends BaseFragment<PickUserFragment.Container> i
                        getString(R.string.conversation_quick_menu__conversation_button__group_label) :
                        getString(R.string.conversation_quick_menu__conversation_button__single_label);
         conversationQuickMenu.setConversationButtonText(label);
-    }
-
-    @Override
-    public void onKeyboardHeightChanged(int keyboardHeight) {
-
     }
 
     @Override
