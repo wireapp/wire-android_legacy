@@ -118,7 +118,8 @@ object RecyclerDataSet {
 
       diffs.foldRight((Seq.newBuilder[(Diff[V], Int)], 0)) { case (change, (builder, index)) =>
         change match {
-          case Unchanged(items) => (builder, index + items.length)
+          case Unchanged(items) =>
+            (builder, index + items.length)
           case d @ Updated(items) =>
             builder += (d -> index)
             (builder, index + items.length)

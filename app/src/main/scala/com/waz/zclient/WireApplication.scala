@@ -31,7 +31,7 @@ import com.waz.zclient.core.stores.IStoreFactory
 import com.waz.zclient.notifications.controllers.{CallingNotificationsController, ImageNotificationsController, MessageNotificationsController}
 import com.waz.zclient.utils.{BackendPicker, BuildConfigUtils, Callback}
 import com.waz.zclient.controllers.context.ScrollController
-import com.waz.zclient.controllers.global.AccentColorController
+import com.waz.zclient.controllers.global.{KeyboardController, AccentColorController}
 import com.waz.zclient.messages.MessageViewFactory
 
 object WireApplication {
@@ -63,6 +63,7 @@ object WireApplication {
   }
 
   def controllers(implicit ctx: WireContext) = new Module {
+    bind[KeyboardController] to new KeyboardController()
     bind[CurrentCallController] to new CurrentCallController()
     bind[CallPermissionsController] to new CallPermissionsController()
     bind[ScrollController] to new ScrollController()

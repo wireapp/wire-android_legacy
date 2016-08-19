@@ -21,6 +21,7 @@ import com.waz.ZLog.{LogTag, debug, logTagFor}
 import com.waz.model.ConvId
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
+import com.waz.zclient.controllers.global.KeyboardController
 import com.waz.zclient.{Injectable, Injector}
 
 class ScrollController(implicit inj: Injector) extends Injectable {
@@ -28,6 +29,7 @@ class ScrollController(implicit inj: Injector) extends Injectable {
   import ScrollController._
 
   val zms = inject[Signal[ZMessaging]]
+  val keyboardVisibility = inject[KeyboardController].keyboardVisibility
 
   private var currentSelectedConv = Option.empty[ConvId]
   val selectedConv = zms.flatMap(_.convsStats.selectedConversationId).collect { case Some(convId) => convId }
@@ -42,13 +44,22 @@ class ScrollController(implicit inj: Injector) extends Injectable {
     case (z, id) => z.messagesStorage.getEntries(id)
   }.map(_.size)
 
-  val scrollPosition = (for {
+  val lastVisibleItemIndex = Signal(-1)
+
+  val scrollPosition = for {
     count <- messagesCount
-    ind <- lastReadIndex
+    lr <- lastReadIndex
+    kB <- keyboardVisibility
+    lv <- lastVisibleItemIndex
   } yield {
-    debug(s"Last read: $ind, total count: $count")
-    count - 1
-  }).onChanged
+    debug(s"Last read: $lr, last visible: $lv, total count: $count")
+    if      (false)                 count - 1 //TODO when cursor is clicked => count - 1
+    else if (kB)                    count - 1 //keyboard came up, user must have clicked on cursor
+    else if (lr == count - 2)       count - 1 //TODO message sent by user should get marked as read
+    else if (lv == count - 2)       count - 1 //other user just sent a message while you were scrolled to bottom
+    else                            lr
+    //TODO stop scrolling to bottom if scrolled up 
+  }
 }
 
 object ScrollController {
