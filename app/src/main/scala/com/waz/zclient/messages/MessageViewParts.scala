@@ -23,6 +23,7 @@ import android.util.AttributeSet
 import android.widget.{ImageView, LinearLayout}
 import com.waz.model.{MessageContent, MessageData, UserId}
 import com.waz.service.ZMessaging
+import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.ui.text.{LinkTextView, TypefaceTextView}
 import com.waz.zclient.utils.{DateConvertUtils, ZTimeFormatter}
@@ -38,6 +39,8 @@ class SeparatorView(context: Context, attrs: AttributeSet, style: Int) extends L
   override val tpe: MsgPart = MsgPart.Separator
   val is24HourFormat = DateFormat.is24HourFormat(context)
 
+  private var pos = -1
+
   val time = Signal[Instant]()
   val text = time map { t =>
     ZTimeFormatter.getSeparatorTime(context.getResources, LocalDateTime.now, DateConvertUtils.asLocalDateTime(t), is24HourFormat, ZoneId.systemDefault, true)
@@ -46,20 +49,24 @@ class SeparatorView(context: Context, attrs: AttributeSet, style: Int) extends L
   lazy val tvTime: TypefaceTextView = findById(R.id.ttv__row_conversation__separator__time)
   lazy val ivUnreadDot: ImageView = findById(R.id.iv__row_conversation__unread_dot)
 
-  text {
-    tvTime.setTransformedText
+  text { t =>
+    tvTime.setTransformedText(s"$pos: $t")
   }
 
   // TODO: unread dot size and visibility
 
-  override def set(msg: MessageData, part: Option[MessageContent]): Unit =
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent]): Unit = {
+    this.pos = pos
     time ! msg.time
+  }
 }
 
 class SeparatorViewLarge(context: Context, attrs: AttributeSet, style: Int) extends TypefaceTextView(context, attrs, style) with MessageViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
 
   def this(context: Context) = this(context, null, 0)
+
+  private var pos = -1
 
   override val tpe: MsgPart = MsgPart.SeparatorLarge
   val is24HourFormat = DateFormat.is24HourFormat(context)
@@ -69,12 +76,14 @@ class SeparatorViewLarge(context: Context, attrs: AttributeSet, style: Int) exte
     ZTimeFormatter.getSeparatorTime(context.getResources, LocalDateTime.now, DateConvertUtils.asLocalDateTime(t), is24HourFormat, ZoneId.systemDefault, true)
   }
 
-  text {
-    setTransformedText
+  text.on(Threading.Ui) { t =>
+    setTransformedText(s"$pos: $t")
   }
 
-  override def set(msg: MessageData, part: Option[MessageContent]): Unit =
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent]): Unit = {
+    this.pos = pos
     time ! msg.time
+  }
 }
 
 // TODO: replace LinearLayout with TextView, set chathead as compound drawable
@@ -90,6 +99,8 @@ class UserView(context: Context, attrs: AttributeSet, style: Int) extends Linear
   private val chathead: ChatheadView = findById(R.id.chathead)
   private val tvName: TypefaceTextView = findById(R.id.tvName)
 
+  private var pos = -1
+
   private val zms = inject[Signal[Option[ZMessaging]]].collect { case Some(z) => z }
   private val userId = Signal[UserId]()
 
@@ -99,11 +110,14 @@ class UserView(context: Context, attrs: AttributeSet, style: Int) extends Linear
 
   userId(chathead.setUserId)
 
-  user.map(_.getDisplayName) {
-    tvName.setTransformedText
+  user.map(_.getDisplayName).on(Threading.Ui) { n =>
+    tvName.setTransformedText(s"$pos: $n")
   }
 
-  override def set(msg: MessageData, part: Option[MessageContent]): Unit = userId ! msg.userId
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent]): Unit = {
+    this.pos = pos
+    userId ! msg.userId
+  }
 }
 
 class TimestampView(context: Context, attrs: AttributeSet, style: Int) extends TypefaceTextView(context, attrs, style) with MessageViewPart {
@@ -113,8 +127,8 @@ class TimestampView(context: Context, attrs: AttributeSet, style: Int) extends T
 
   override val tpe: MsgPart = MsgPart.Timestamp
 
-  override def set(msg: MessageData, part: Option[MessageContent]): Unit =
-    setText(msg.time.toString) // TODO: formatting
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent]): Unit =
+    setText(s"$pos: ${msg.time.toString}") // TODO: formatting
 }
 
 class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends LinkTextView(context, attrs, style) with MessageViewPart {
@@ -124,8 +138,8 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
   override val tpe: MsgPart = MsgPart.Text
 
-  override def set(msg: MessageData, part: Option[MessageContent]): Unit =
-    setTransformedText(part.fold(msg.contentString)(_.content))
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent]): Unit =
+    setTransformedText(s"$pos: ${part.fold(msg.contentString)(_.content)}")
 }
 
 class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends ImageView(context, attrs, style) with MessageViewPart {
@@ -135,7 +149,7 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends I
 
   override val tpe: MsgPart = MsgPart.Image
 
-  override def set(msg: MessageData, part: Option[MessageContent]): Unit = {
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent]): Unit = {
     // TODO image loading
   }
 }

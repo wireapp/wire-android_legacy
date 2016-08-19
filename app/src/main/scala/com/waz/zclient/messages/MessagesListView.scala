@@ -68,7 +68,7 @@ class MessagesListAdapter(view: View)(implicit inj: Injector, ev: EventContext) 
   override def getItemViewType(position: Int): Int = MessageView.viewType(messages(position).msgType)
 
   override def onBindViewHolder(holder: MessageViewHolder, position: Int): Unit =
-    holder.view.set(messages(position), if (position == 0) None else Some(messages(position - 1)))
+    holder.view.set(position, messages(position), if (position == 0) None else Some(messages(position - 1)))
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder =
     new MessageViewHolder(MessageView(parent, viewType))

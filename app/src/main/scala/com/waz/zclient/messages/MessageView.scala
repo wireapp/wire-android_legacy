@@ -33,7 +33,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
 
   // TODO: handle selection - show timestamp and backgroud/frame
 
-  def set(m: MessageData, prev: Option[MessageData]): Unit = {
+  def set(pos: Int, m: MessageData, prev: Option[MessageData]): Unit = {
 
     // TODO: it could be faster to only recycle views that can not be reused
     // current implementation always recycles all views and fetches new parts from recycler, this is slower than just updating already added views
@@ -50,17 +50,17 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
     // TODO: system messages don't always need a divider
 
     if (prev.forall(_.time.isBefore(m.time.minusSeconds(3600))))
-      addPart(MsgPart.Separator, m, None)
+      addPart(pos, MsgPart.Separator, m, None)
 
     if (prev.forall(_.userId != m.userId)) // TODO: show also if prev is a system message
-      addPart(MsgPart.User, m, None)
+      addPart(pos, MsgPart.User, m, None)
 
     if (m.content.isEmpty) {
-      addPart(MsgPart(m.msgType), m, None)
+      addPart(pos, MsgPart(m.msgType), m, None)
     } else {
       // add rich media parts
       m.content foreach { content =>
-        addPart(MsgPart(content.tpe), m, Some(content))
+        addPart(pos, MsgPart(content.tpe), m, Some(content))
       }
     }
 
@@ -69,9 +69,9 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
     //    invalidate()
   }
 
-  private def addPart(tpe: MsgPart, msg: MessageData, part: Option[MessageContent]) = {
+  private def addPart(pos: Int, tpe: MsgPart, msg: MessageData, part: Option[MessageContent]) = {
     val view = factory.get(tpe, this)
-    view.set(msg, part)
+    view.set(pos, msg, part)
     addViewInLayout(view, getChildCount, Option(view.getLayoutParams) getOrElse factory.DefaultLayoutParams)
     view
   }
@@ -117,5 +117,5 @@ object MsgPart {
 trait MessageViewPart extends View {
   val tpe: MsgPart
 
-  def set(msg: MessageData, part: Option[MessageContent]): Unit
+  def set(pos: Int, msg: MessageData, part: Option[MessageContent]): Unit
 }
