@@ -27,7 +27,8 @@ import com.waz.model.{MessageData, MessageId}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.zclient.{Injectable, Injector, ViewHelper, R}
+import com.waz.zclient.controllers.context.ScrollController
+import com.waz.zclient.{Injectable, Injector, ViewHelper}
 
 class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extends VerticalGridView(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -36,6 +37,8 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
   setHasFixedSize(true)
   setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false))
   setAdapter(new MessagesListAdapter(this))
+
+  inject[ScrollController].scrollPosition.on(Threading.Ui)(scrollToPosition)
 }
 
 object MessagesListView {
