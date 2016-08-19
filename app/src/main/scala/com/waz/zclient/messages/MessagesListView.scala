@@ -18,10 +18,9 @@
 package com.waz.zclient.messages
 
 import android.content.Context
-import android.support.v17.leanback.widget.VerticalGridView
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.util.AttributeSet
-import android.view.{LayoutInflater, View, ViewGroup}
+import android.view.{View, ViewGroup}
 import com.waz.ZLog._
 import com.waz.model.{MessageData, MessageId}
 import com.waz.service.ZMessaging
@@ -30,7 +29,7 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.controllers.context.ScrollController
 import com.waz.zclient.{Injectable, Injector, ViewHelper}
 
-class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extends VerticalGridView(context, attrs, style) with ViewHelper {
+class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extends RecyclerView(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -45,14 +44,12 @@ object MessagesListView {
   private implicit val Tag: LogTag = logTagFor[MessagesListView]
 }
 
-case class MessageViewHolder(view: MessageView) extends RecyclerView.ViewHolder(view) {
-
-}
+case class MessageViewHolder(view: MessageView) extends RecyclerView.ViewHolder(view)
 
 class MessagesListAdapter(view: View)(implicit inj: Injector, ev: EventContext) extends RecyclerView.Adapter[MessageViewHolder]() with Injectable {
   import MessagesListAdapter._
 
-  val zms = inject[Signal[Option[ZMessaging]]].collect { case Some(z) => z }
+  val zms = inject[Signal[ZMessaging]]
   val selectedConv = zms.flatMap(_.convsStats.selectedConversationId).collect { case Some(convId) => convId }
 
   val messages = new RecyclerDataSet[MessageId, MessageData](this) {
@@ -74,7 +71,7 @@ class MessagesListAdapter(view: View)(implicit inj: Injector, ev: EventContext) 
     holder.view.set(messages(position), if (position == 0) None else Some(messages(position - 1)))
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder =
-    new MessageViewHolder(LayoutInflater.from(parent.getContext).inflate(R.layout.message_view, parent, false).asInstanceOf[MessageView])
+    new MessageViewHolder(MessageView(parent, viewType))
 }
 
 object MessagesListAdapter {
