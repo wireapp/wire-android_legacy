@@ -23,7 +23,7 @@ import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.util.AttributeSet
 import android.view.ViewGroup
 import com.waz.ZLog._
-import com.waz.model.{ConvId, MessageData, MessageId}
+import com.waz.model.MessageData
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
@@ -45,11 +45,11 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
   setLayoutManager(layoutManager)
   setAdapter(adapter)
 
-  scrollController.scrollPosition.zip(adapter.initialMessagesLoaded).on(Threading.Ui) {
-    case (pos, true) =>
-      verbose(s"Scrolling to pos: $pos")
-      layoutManager.scrollToPositionWithOffset(pos, 0) //TODO may have to calculate different offset for images and large assets?
-    case _ => //too early to scroll
+  scrollController.adapter ! adapter
+
+  scrollController.scrollPosition.on(Threading.Ui) { pos =>
+    verbose(s"Scrolling to pos: $pos")
+    layoutManager.scrollToPositionWithOffset(pos, 0) //TODO may have to calculate different offset for images and large assets?
   }
 
   scrollController.adapter ! adapter
@@ -59,6 +59,11 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
       scrollController.lastVisibleItemIndex ! layoutManager.findLastCompletelyVisibleItemPosition()
     }
   })
+
+  override def onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int): Unit = {
+    super.onLayout(changed, l, t, r, b)
+    scrollController.listHeight ! (b - t)
+  }
 }
 
 object MessagesListView {
@@ -74,49 +79,50 @@ class MessagesListAdapter()(implicit inj: Injector, ev: EventContext) extends Re
   verbose("MessagesListAdapter created")
 
   val zms = inject[Signal[ZMessaging]]
-  val selectedConv = zms.flatMap(_.convsStats.selectedConversationId).collect { case Some(convId) => convId }
-  val cursor = zms.zip(selectedConv) .flatMap { case (zs, conv) => zs.messagesStorage.getEntries(conv) }
+  val selectedConversation = zms.flatMap(_.convsStats.selectedConversationId).collect { case Some(convId) => convId }
+  val cursor = zms.zip(selectedConversation) map { case (zs, conv) => new RecyclerCursor(conv, zs, adapter) }
 
-  val initialMessagesLoaded = Signal(false)
+  override val initialLastReadIndex = cursor.flatMap { c => c.initialLastReadIndex.map((c.conv, _)) }
+  override val msgCount = cursor.flatMap(_.countSignal)
 
-  override def lastReadIndex: Signal[Int] = cursor.map(_.lastReadIndex)
+  private var messages = Option.empty[RecyclerCursor]
 
-  override def msgCount: Signal[Int] = cursor.map(_.size)
-
-  override def selectedConversation: Signal[ConvId] = selectedConv
-
-  val messages = new RecyclerDataSet[MessageId, MessageData](this) {
-    override def getId(v: MessageData): MessageId = v.id
+  cursor.on(Threading.Ui) { c =>
+    messages.foreach(_.close())
+    messages = Some(c)
+    notifyDataSetChanged()
   }
 
-  cursor.on(Threading.Ui) { ms =>
-    // TODO: don't use MessagesCursor, don't load all messages every time,
-    // load only some window around current position
-    verbose(s"loaded cursor: ${ms.size}")
-    messages.set(IndexedSeq.tabulate(ms.size)(ms(_).message))
-    initialMessagesLoaded ! true
+  zms.zip(selectedConversation).on(Threading.Ui) { case (zs, conv) =>
+    messages.foreach(_.close())
+    messages = Some(new RecyclerCursor(conv, zs, adapter))
+    notifyDataSetChanged()
   }
 
-  override def getItemCount: Int = messages.length
+  override def getItemCount: Int = messages.fold(0)(_.count)
 
-  override def getItemViewType(position: Int): Int = MessageView.viewType(messages(position).msgType)
+  private def message(position: Int) = messages.map(_.apply(position).message).orNull
+
+  override def getItemViewType(position: Int): Int = MessageView.viewType(message(position).msgType)
 
   override def onBindViewHolder(holder: MessageViewHolder, position: Int): Unit = {
     zms.currentValue.foreach { zms =>
-      selectedConv.currentValue.foreach { convId =>
+      selectedConversation.currentValue.foreach { convId =>
         val curLastRead = zms.messagesStorage.getEntries(convId).map(_.lastReadIndex).currentValue.getOrElse(-1)
         if (curLastRead > 0 && position > curLastRead) {
           verbose(s"Setting last read to $position")
-          zms.convsUi.setLastRead(convId, messages(position))
+          zms.convsUi.setLastRead(convId, message(position))
         }
       }
     }
 
-    holder.view.set(position, messages(position), if (position == 0) None else Some(messages(position - 1)))
+    // FIXME - view depends on two message entries, so it should listen for changes of both of them,
+    // most importantly, view needs to be refreshed if previous message was added or removed
+    holder.view.set(position, message(position), if (position == 0) None else Some(message(position - 1)))
   }
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder =
-    new MessageViewHolder(MessageView(parent, viewType))
+    MessageViewHolder(MessageView(parent, viewType))
 }
 
 object MessagesListAdapter {
