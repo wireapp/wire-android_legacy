@@ -10,9 +10,8 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.5.0'
+        classpath 'com.android.tools.build:gradle:2.2.0-beta1'
         classpath 'com.jakewharton.hugo:hugo-plugin:1.2.1'
-        classpath 'com.jakewharton.sdkmanager:gradle-plugin:0.12.0'
         classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
         classpath 'com.mutualmobile.gradle.plugins:dexinfo:0.1.2'
         classpath 'com.wire:gradle-android-scala-plugin:1.5.0'
@@ -60,7 +59,7 @@ ext {
     compileSdkVersion = 23
     minSdkVersion = 17
     targetSdkVersion = 23
-    buildToolsVersion = '23.0.3'
+    buildToolsVersion = '24.0.1'
     scalaMajorVersion = '2.11'
     scalaVersion = scalaMajorVersion + '.8'
     sourceCompatibilityVersion = JavaVersion.VERSION_1_7
