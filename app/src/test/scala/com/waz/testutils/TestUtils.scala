@@ -31,18 +31,18 @@ object TestUtils {
   implicit val executionContext = ExecutionContext.Implicits.global
   val timeout = 1000;
 
-  def signalTest[A](signal: Signal[A])(test: A => Boolean)(trigger: => Unit)(implicit printVals: PrintSignalVals): Unit = {
+  def signalTest[A](signal: Signal[A])(test: A => Boolean)(trigger: => Unit)(implicit printVals: PrintValues): Unit = {
     signal.disableAutowiring()
     trigger
-    if (printVals.debug) println("****")
+    if (printVals) println("****")
     Await.result(signal.filter { value =>
-      if (printVals.debug) println(value)
+      if (printVals) println(value)
       test(value)
     }.head, Duration(timeout, TimeUnit.MILLISECONDS))
-    if (printVals.debug) println("****")
+    if (printVals) println("****")
   }
 
-  case class PrintSignalVals(debug: Boolean)
+  type PrintValues = Boolean
 
   implicit class RichLatch(latch: CountDownLatch) {
     def waitDuration(implicit duration: Duration): Unit = latch.await(duration.toMillis, TimeUnit.MILLISECONDS)
@@ -50,6 +50,8 @@ object TestUtils {
 }
 
 
-abstract class TestWireContext extends WireContext
+abstract class TestWireContext extends WireContext {
+  override def eventContext = EventContext.Implicits.global
+}
 
 

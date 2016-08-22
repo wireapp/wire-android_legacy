@@ -22,7 +22,7 @@ import com.waz.model.NameSource.Nickname
 import com.waz.model.UserData.ConnectionStatus.Accepted
 import com.waz.model._
 import com.waz.service.{SearchKey, ZMessaging}
-import com.waz.testutils.TestUtils.{PrintSignalVals, signalTest}
+import com.waz.testutils.TestUtils.{PrintValues, signalTest}
 import com.waz.testutils.{MockUiModule, MockZMessaging}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.Module
@@ -38,7 +38,7 @@ import scala.collection.GenSet
 @Config(manifest=Config.NONE)
 class ChatheadControllerTest extends JUnitSuite {
 
-  implicit val printSignalVals = PrintSignalVals(false)
+  implicit val printSignalVals: PrintValues = false
   implicit val eventContext = EventContext.Implicits.global
 
   var zMessaging: MockZMessaging = _
