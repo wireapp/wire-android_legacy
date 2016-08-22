@@ -22,9 +22,11 @@ import com.waz.model.ConvId
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
 import com.waz.zclient.controllers.global.KeyboardController
-import com.waz.zclient.{Injectable, Injector}
+import com.waz.zclient.{Injectable, Injector, WireContext}
 
-class ScrollController(implicit inj: Injector) extends Injectable {
+class ScrollController(implicit cxt: WireContext, inj: Injector) extends Injectable {
+
+  implicit val eventContext = cxt.eventContext
 
   import ScrollController._
 
@@ -40,26 +42,26 @@ class ScrollController(implicit inj: Injector) extends Injectable {
 
   val lastReadIndex = msgCursor.map(_.lastReadIndex)
 
-  val messagesCount = Signal(zms, selectedConv).flatMap {
-    case (z, id) => z.messagesStorage.getEntries(id)
-  }.map(_.size)
+  val lastMessageIndex = msgCursor.map(_.size - 1)
 
   val lastVisibleItemIndex = Signal(-1)
 
-  val scrollPosition = for {
-    count <- messagesCount
-    lr <- lastReadIndex
-    kB <- keyboardVisibility
-    lv <- lastVisibleItemIndex
-  } yield {
-    debug(s"Last read: $lr, last visible: $lv, total count: $count")
-    if      (false)                 count - 1 //TODO when cursor is clicked => count - 1
-    else if (kB)                    count - 1 //keyboard came up, user must have clicked on cursor
-    else if (lr == count - 2)       count - 1 //TODO message sent by user should get marked as read
-    else if (lv == count - 2)       count - 1 //other user just sent a message while you were scrolled to bottom
-    else                            lr
-    //TODO stop scrolling to bottom if scrolled up 
+  val scrolledToBottom = lastVisibleItemIndex.zip(lastMessageIndex).map {
+    case (lv, lm) if lv == lm => true
+    case _ => false
   }
+
+  private var currentScrollPos = -1
+  val scrollPosition = for {
+    sB <- scrolledToBottom
+    lm <- lastMessageIndex
+    kB <- keyboardVisibility
+  } yield {
+    debug(s"ScrolledToBottom?: $sB, total count: $lm, keyboardVisible?: $kB")
+    if (sB) lm
+    else currentScrollPos // not scrolled to bottom
+  }
+  scrollPosition (currentScrollPos = _)
 }
 
 object ScrollController {
