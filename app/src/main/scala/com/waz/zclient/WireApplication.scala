@@ -30,7 +30,6 @@ import com.waz.zclient.controllers.{DefaultControllerFactory, IControllerFactory
 import com.waz.zclient.core.stores.IStoreFactory
 import com.waz.zclient.notifications.controllers.{CallingNotificationsController, ImageNotificationsController, MessageNotificationsController}
 import com.waz.zclient.utils.{BackendPicker, BuildConfigUtils, Callback}
-import com.waz.zclient.controllers.context.ScrollController
 import com.waz.zclient.controllers.global.{KeyboardController, AccentColorController}
 import com.waz.zclient.messages.MessageViewFactory
 
@@ -66,7 +65,6 @@ object WireApplication {
     bind[KeyboardController] to new KeyboardController()
     bind[CurrentCallController] to new CurrentCallController()
     bind[CallPermissionsController] to new CallPermissionsController()
-    bind[ScrollController] to new ScrollController()
     bind[PermissionActivity] to ctx.asInstanceOf[PermissionActivity]
     bind[PermissionsController] to new PermissionsController(new PermissionsWrapper)
   }
