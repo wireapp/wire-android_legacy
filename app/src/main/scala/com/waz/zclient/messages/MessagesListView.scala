@@ -93,7 +93,13 @@ class MessagesListAdapter(listView: MessagesListView)(implicit inj: Injector, ev
 
   override def onBindViewHolder(holder: MessageViewHolder, position: Int): Unit = {
     zms.currentValue.foreach { zms =>
-      selectedConv.currentValue.foreach(zms.convsUi.setLastRead(_, messages(position)))
+      selectedConv.currentValue.foreach { convId =>
+        val curLastRead = zms.messagesStorage.getEntries(convId).map(_.lastReadIndex).currentValue.getOrElse(-1)
+        if (curLastRead > 0 && position > curLastRead) {
+          verbose(s"Setting last read to $position")
+          zms.convsUi.setLastRead(convId, messages(position))
+        }
+      }
     }
 
     holder.view.set(position, messages(position), if (position == 0) None else Some(messages(position - 1)))
