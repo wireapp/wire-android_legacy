@@ -23,11 +23,11 @@ import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.util.AttributeSet
 import android.view.ViewGroup
 import com.waz.ZLog._
-import com.waz.model.{MessageData, MessageId}
+import com.waz.model.{ConvId, MessageData, MessageId}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.zclient.controllers.context.ScrollController
+import com.waz.zclient.controllers.context.{ScrollAdapter, ScrollController}
 import com.waz.zclient.{Injectable, Injector, ViewHelper}
 
 class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extends RecyclerView(context, attrs, style) with ViewHelper {
@@ -37,20 +37,22 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
   def this(context: Context) = this(context, null, 0)
 
   val scrollController = inject[ScrollController]
-  val initialMessagesLoaded = Signal(false)
 
   val layoutManager = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+  val adapter = new MessagesListAdapter
 
   setHasFixedSize(true)
   setLayoutManager(layoutManager)
-  setAdapter(new MessagesListAdapter(this))
+  setAdapter(adapter)
 
-  scrollController.scrollPosition.zip(initialMessagesLoaded).on(Threading.Ui) {
+  scrollController.scrollPosition.zip(adapter.initialMessagesLoaded).on(Threading.Ui) {
     case (pos, true) =>
       verbose(s"Scrolling to pos: $pos")
       layoutManager.scrollToPositionWithOffset(pos, 0) //TODO may have to calculate different offset for images and large assets?
     case _ => //too early to scroll
   }
+
+  scrollController.adapter ! adapter
 
   addOnScrollListener(new OnScrollListener {
     override def onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int): Unit = {
@@ -65,7 +67,7 @@ object MessagesListView {
 
 case class MessageViewHolder(view: MessageView) extends RecyclerView.ViewHolder(view)
 
-class MessagesListAdapter(listView: MessagesListView)(implicit inj: Injector, ev: EventContext) extends RecyclerView.Adapter[MessageViewHolder]() with Injectable {
+class MessagesListAdapter()(implicit inj: Injector, ev: EventContext) extends RecyclerView.Adapter[MessageViewHolder]() with Injectable with ScrollAdapter {
   adapter =>
   import MessagesListAdapter._
 
@@ -74,6 +76,14 @@ class MessagesListAdapter(listView: MessagesListView)(implicit inj: Injector, ev
   val zms = inject[Signal[ZMessaging]]
   val selectedConv = zms.flatMap(_.convsStats.selectedConversationId).collect { case Some(convId) => convId }
   val cursor = zms.zip(selectedConv) .flatMap { case (zs, conv) => zs.messagesStorage.getEntries(conv) }
+
+  val initialMessagesLoaded = Signal(false)
+
+  override def lastReadIndex: Signal[Int] = cursor.map(_.lastReadIndex)
+
+  override def msgCount: Signal[Int] = cursor.map(_.size)
+
+  override def selectedConversation: Signal[ConvId] = selectedConv
 
   val messages = new RecyclerDataSet[MessageId, MessageData](this) {
     override def getId(v: MessageData): MessageId = v.id
@@ -84,7 +94,7 @@ class MessagesListAdapter(listView: MessagesListView)(implicit inj: Injector, ev
     // load only some window around current position
     verbose(s"loaded cursor: ${ms.size}")
     messages.set(IndexedSeq.tabulate(ms.size)(ms(_).message))
-    listView.initialMessagesLoaded ! true
+    initialMessagesLoaded ! true
   }
 
   override def getItemCount: Int = messages.length

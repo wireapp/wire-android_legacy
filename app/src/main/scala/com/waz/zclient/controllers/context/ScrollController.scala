@@ -31,7 +31,7 @@ class ScrollController(implicit cxt: WireContext, inj: Injector) extends Injecta
   import ScrollController._
 
   val keyboardVisibility = inject[KeyboardController].keyboardVisibility
-  val adapter = Signal[Adapter]
+  val adapter = Signal[ScrollAdapter]
 
   val lastReadIndex = adapter.flatMap(_.lastReadIndex)
 
@@ -68,7 +68,7 @@ class ScrollController(implicit cxt: WireContext, inj: Injector) extends Injecta
   scrollPosition (currentScrollPos = _)
 }
 
-trait Adapter {
+trait ScrollAdapter {
   def lastReadIndex: Signal[Int]
 
   def msgCount: Signal[Int]

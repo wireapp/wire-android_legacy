@@ -121,6 +121,6 @@ class ScrollControllerTest extends JUnitSuite with RobolectricSuite {
   }
 
 
-  abstract class TestAdapter extends Adapter
+  abstract class TestAdapter extends ScrollAdapter
 
 }
