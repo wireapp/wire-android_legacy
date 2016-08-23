@@ -23,19 +23,25 @@ import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.util.AttributeSet
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.model.ConvId
+import com.waz.model.{ConvId, MessageData}
+import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
-import com.waz.zclient.ViewHelper
+import com.waz.utils.events.{EventContext, Signal}
+import com.waz.zclient.{Injectable, Injector, ViewHelper}
 import com.waz.zclient.messages.ScrollController.Scroll
+
+import scala.concurrent.duration._
 
 class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extends RecyclerView(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
+  import MessagesListView._
+
   val layoutManager = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
   val adapter = new MessagesListAdapter
   val scrollController = new ScrollController(adapter)
+  val lastRead = new LastReadUpdater(adapter, layoutManager)
 
   setHasFixedSize(true)
   setLayoutManager(layoutManager)
@@ -43,8 +49,17 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
 
   scrollController.onScroll.on(Threading.Ui) { case Scroll(pos, smooth) =>
     verbose(s"Scrolling to pos: $pos")
-    // TODO: implement smooth scrolling
-    layoutManager.scrollToPositionWithOffset(pos, 0) //TODO may have to calculate different offset for images and large assets?
+    if (smooth) {
+      val current = layoutManager.findFirstVisibleItemPosition()
+
+      // jump closer to target position before scrolling, don't want to smooth scroll through many messages
+      if (math.abs(current - pos) > MaxSmoothScroll)
+        scrollToPosition(if (pos > current) pos - MaxSmoothScroll else pos + MaxSmoothScroll)
+
+      smoothScrollToPosition(pos)
+    } else {
+      scrollToPosition(pos)
+    }
   }
 
   addOnScrollListener(new OnScrollListener {
@@ -67,6 +82,8 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
 
 object MessagesListView {
 
+  val MaxSmoothScroll = 50
+
   trait Adapter {
     def initialLastReadIndex: Signal[(ConvId, Int)]
     def msgCount: Signal[Int]
@@ -74,5 +91,22 @@ object MessagesListView {
   }
 }
 
-case class MessageViewHolder(view: MessageView) extends RecyclerView.ViewHolder(view)
+case class MessageViewHolder(view: MessageView)(implicit ec: EventContext) extends RecyclerView.ViewHolder(view) {
 
+  def bind(position: Int, msg: MessageData, prev: Option[MessageData]): Unit = view.set(position, msg, prev)
+}
+
+class LastReadUpdater(adapter: MessagesListAdapter, layoutManager: LinearLayoutManager)(implicit injector: Injector, ev: EventContext) extends Injectable {
+
+  val zmessaging = inject[Signal[ZMessaging]]
+
+  private val lastBoundMessage = for {
+    zms <- zmessaging
+    index <- Signal.wrap(adapter.onBindView).throttle(500.millis)
+  } yield (zms, index)
+
+  lastBoundMessage.on(Threading.Ui) { case (zms, _) =>
+    val msg = adapter.message(layoutManager.findLastCompletelyVisibleItemPosition())
+    zms.convsUi.setLastRead(msg.convId, msg)
+  }
+}
