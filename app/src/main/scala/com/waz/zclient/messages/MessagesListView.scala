@@ -21,15 +21,15 @@ import android.content.Context
 import android.support.v7.widget.RecyclerView.OnScrollListener
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.util.AttributeSet
+import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.model.ConvId
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.ViewHelper
+import com.waz.zclient.messages.ScrollController.Scroll
 
 class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extends RecyclerView(context, attrs, style) with ViewHelper {
-
-  import MessagesListView._
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -41,16 +41,19 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
   setLayoutManager(layoutManager)
   setAdapter(adapter)
 
-  scrollController.onScroll.on(Threading.Ui) { pos =>
+  scrollController.onScroll.on(Threading.Ui) { case Scroll(pos, smooth) =>
     verbose(s"Scrolling to pos: $pos")
+    // TODO: implement smooth scrolling
     layoutManager.scrollToPositionWithOffset(pos, 0) //TODO may have to calculate different offset for images and large assets?
   }
 
   addOnScrollListener(new OnScrollListener {
-    override def onScrollStateChanged(recyclerView: RecyclerView, newState: Int): Unit = {
-      if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-        scrollController.onScrolled(layoutManager.findLastCompletelyVisibleItemPosition() == adapter.getItemCount - 1)
-      }
+    override def onScrollStateChanged(recyclerView: RecyclerView, newState: Int): Unit = newState match {
+      case RecyclerView.SCROLL_STATE_IDLE =>
+        scrollController.onScrolled(layoutManager.findLastCompletelyVisibleItemPosition())
+      case RecyclerView.SCROLL_STATE_DRAGGING =>
+        scrollController.onDragging()
+      case _ =>
     }
   })
 
@@ -58,10 +61,11 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
     super.onLayout(changed, l, t, r, b)
     scrollController.listHeight ! (b - t)
   }
+
+  def scrollToBottom(): Unit = scrollController.onScrollToBottomRequested ! layoutManager.findLastCompletelyVisibleItemPosition()
 }
 
 object MessagesListView {
-  private implicit val Tag: LogTag = logTagFor[MessagesListView]
 
   trait Adapter {
     def initialLastReadIndex: Signal[(ConvId, Int)]

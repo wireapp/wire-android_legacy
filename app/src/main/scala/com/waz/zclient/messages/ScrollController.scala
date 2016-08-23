@@ -17,36 +17,30 @@
  */
 package com.waz.zclient.messages
 
-import com.waz.ZLog._
-import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.waz.zclient.messages.ScrollController.Scroll
 
 class ScrollController(adapter: MessagesListView.Adapter)(implicit ec: EventContext) {
 
   val listHeight = Signal[Int]()
+  val onScrollToBottomRequested = EventStream[Int]
 
-  val shouldScrollToBottom = Signal(false)
+  private var shouldScrollToBottom = false
 
-  val onScroll = EventStream[Int]()
+  def onScrolled(lastVisiblePosition: Int) = shouldScrollToBottom = lastVisiblePosition == lastPosition
 
-  def onScrolled(scrolledToBottom: Boolean) = {
+  def onDragging(): Unit = shouldScrollToBottom = false
 
-    if (adapter.getItemCount > 0) shouldScrollToBottom ! scrolledToBottom
-  }
+  private def lastPosition = adapter.getItemCount - 1
 
-  adapter.initialLastReadIndex.onChanged {
-    case (conv, lastReadIndex) =>
-      verbose(s"initialLastReadIndex($conv, $lastReadIndex)")
-      onScroll ! lastReadIndex
-  }
+  val onScroll = EventStream.union(
+    adapter.initialLastReadIndex.onChanged.map { case (_, lastReadIndex) => Scroll(lastReadIndex, smooth = false) },
+    onScrollToBottomRequested.map(_ => Scroll(lastPosition, smooth = true)),
+    listHeight.onChanged.filter(_ => shouldScrollToBottom).map(_ => Scroll(lastPosition, smooth = false)),
+    adapter.msgCount.onChanged.filter(_ => shouldScrollToBottom).map(_ => Scroll(lastPosition, smooth = true))
+  )
+}
 
-  listHeight.onChanged { _ =>
-    verbose(s"height changed")
-    if (shouldScrollToBottom.currentValue.contains(true)) onScroll ! (adapter.getItemCount - 1)
-  }
-
-  adapter.msgCount.onChanged { _ =>
-    verbose(s"msgs count changed")
-    if (shouldScrollToBottom.currentValue.contains(true)) onScroll ! (adapter.getItemCount - 1)
-  }
+object ScrollController {
+  case class Scroll(position: Int, smooth: Boolean)
 }

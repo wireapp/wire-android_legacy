@@ -130,6 +130,7 @@ import com.waz.zclient.core.stores.inappnotification.InAppNotificationStoreObser
 import com.waz.zclient.core.stores.inappnotification.KnockingEvent;
 import com.waz.zclient.core.stores.network.DefaultNetworkAction;
 import com.waz.zclient.core.stores.participants.ParticipantsStoreObserver;
+import com.waz.zclient.messages.MessagesListView;
 import com.waz.zclient.notifications.controllers.ImageNotificationsController;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer;
@@ -244,7 +245,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     private Toolbar toolbar;
     private TextView toolbarTitle;
     private ShieldView shieldView;
-
     private CursorLayout cursorLayout;
     private AudioMessageRecordingView audioMessageRecordingView;
     private ExtendedCursorContainer extendedCursorContainer;

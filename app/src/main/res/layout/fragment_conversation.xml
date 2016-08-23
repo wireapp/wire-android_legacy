@@ -87,6 +87,7 @@
             >
 
             <com.waz.zclient.messages.MessagesListView
+                android:id="@+id/messages_list_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:divider="@null"
