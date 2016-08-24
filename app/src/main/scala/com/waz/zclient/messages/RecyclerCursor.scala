@@ -38,6 +38,8 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
 
   import com.waz.threading.Threading.Implicits.Ui
 
+  verbose(s"RecyclerCursor created for conv: $conv")
+
   val storage = zms.messagesStorage
   val likes = zms.likingsStorage
 
@@ -59,6 +61,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
   )
 
   index onSuccess { case idx =>
+    verbose(s"index: $idx, closed?: $closed")
     if (!closed) {
       subs = Seq(
         idx.signals.messagesCursor.on(Threading.Ui) { setCursor },
@@ -80,7 +83,8 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
     countSignal ! 0
   }
 
-  private def setCursor(c: MessagesCursor) =
+  private def setCursor(c: MessagesCursor) = {
+    verbose(s"setCursor: c: $c, count: ${c.size}")
     if (closed) c.close()
     else {
       self.cursor.foreach(_.close())
@@ -89,6 +93,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
       notifyFromHistory(c.createTime)
       countSignal ! c.size
     }
+  }
 
   private def notifyFromHistory(time: Instant) = {
     verbose(s"notifyFromHistory($time)")

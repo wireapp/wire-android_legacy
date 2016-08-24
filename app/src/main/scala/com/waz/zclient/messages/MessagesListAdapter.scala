@@ -44,7 +44,7 @@ class MessagesListAdapter()(implicit inj: Injector, ec: EventContext) extends Re
 
   cursor.on(Threading.Ui) { c =>
     messages.foreach(_.close())
-    verbose(s"cursor changed")
+    verbose(s"cursor changed: ${c.count}")
     messages = Some(c)
     notifyDataSetChanged()
   }

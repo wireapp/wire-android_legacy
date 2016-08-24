@@ -101,7 +101,7 @@ class UserView(context: Context, attrs: AttributeSet, style: Int) extends Linear
 
   private var pos = -1
 
-  private val zms = inject[Signal[Option[ZMessaging]]].collect { case Some(z) => z }
+  private val zms = inject[Signal[ZMessaging]]
   private val userId = Signal[UserId]()
 
   private val user = Signal(zms, userId).flatMap {
