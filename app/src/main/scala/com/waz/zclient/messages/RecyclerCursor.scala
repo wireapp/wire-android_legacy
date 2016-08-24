@@ -27,7 +27,7 @@ import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.{EventContext, Signal, Subscription}
+import com.waz.utils.events.{EventContext, EventStream, Signal, Subscription}
 import com.waz.zclient.{Injectable, Injector}
 import org.threeten.bp.Instant
 
@@ -39,7 +39,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
   import com.waz.threading.Threading.Implicits.Ui
 
   val storage = zms.messagesStorage
-  val likesStorage = zms.msgAndLikes
+  val likes = zms.likingsStorage
 
   val index = storage.msgsIndex(conv)
   val lastReadTime = Signal.future(index).flatMap(_.signals.lastReadTime)
@@ -52,11 +52,18 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
   private var cursor = Option.empty[MessagesCursor]
   private var subs = Seq.empty[Subscription]
 
+  private val onLikesChanged = EventStream.union(
+    likes.onAdded map { _.map(_.message) },
+    likes.onUpdated map { _.map(_._2.message) },
+    likes.onDeleted map { _.map(_._1) }
+  )
+
   index onSuccess { case idx =>
     if (!closed) {
       subs = Seq(
         idx.signals.messagesCursor.on(Threading.Ui) { setCursor },
-        idx.signals.indexChanged.on(Threading.Ui) { change => history = history :+ change }
+        idx.signals.indexChanged.on(Threading.Ui) { change => history = history :+ change },
+        onLikesChanged { likesChanged(_) }
       )
     }
   }
@@ -98,6 +105,11 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
 
     if (toApply.isEmpty) adapter.notifyDataSetChanged()
   }
+
+  private def likesChanged(ids: Seq[MessageId]) =
+    storage.getAll(ids) .map { msgs =>
+      msgs foreach { _ foreach { msg => window.onUpdated(msg, msg) } }
+    } (Threading.Ui)
 
   def count: Int = cursor.fold(0)(_.size)
 
@@ -185,7 +197,12 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
       val pe = Entry(prev)
       val ce = Entry(current)
 
-      if (pe != ce) {
+      if (pe == ce) { // position unchanged, will only notify adapter about data change
+        search(pe) match {
+          case Found(pos) => adapter.notifyItemChanged(pos)
+          case _ => // no need to notify about changes outside of window
+        }
+      } else {
         // message position changed
 
         val len = entries.length
@@ -194,8 +211,9 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
           case (InsertionPoint(0), InsertionPoint(0)) | (InsertionPoint(`len`), InsertionPoint(`len`)) =>
             // message updated outside of window, ignoring
           case (Found(src), InsertionPoint(dst)) if src == dst || src == dst - 1 =>
-            // time changed, but position remains the same, no need to notify
+            // time changed, but position remains the same
             entries.update(src, ce)
+            adapter.notifyItemChanged(src)
           case (Found(src), InsertionPoint(dst)) =>
             entries.remove(src)
             val target = if (dst > src) dst - 1 else dst // use dst - 1 since one item was just removed on left side
