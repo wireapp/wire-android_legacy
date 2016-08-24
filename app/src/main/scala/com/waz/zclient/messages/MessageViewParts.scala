@@ -21,7 +21,7 @@ import android.content.Context
 import android.text.format.DateFormat
 import android.util.AttributeSet
 import android.widget.{ImageView, LinearLayout}
-import com.waz.model.{MessageContent, MessageData, UserId}
+import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -142,14 +142,5 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
     setTransformedText(s"$pos: ${part.fold(msg.contentString)(_.content)}")
 }
 
-class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends ImageView(context, attrs, style) with MessageViewPart {
-  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
 
-  def this(context: Context) = this(context, null, 0)
 
-  override val tpe: MsgPart = MsgPart.Image
-
-  override def set(pos: Int, msg: MessageData, part: Option[MessageContent]): Unit = {
-    // TODO image loading
-  }
-}

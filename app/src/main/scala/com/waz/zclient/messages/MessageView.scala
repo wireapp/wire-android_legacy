@@ -23,7 +23,9 @@ import android.view.{View, ViewGroup}
 import android.widget.LinearLayout
 import com.waz.api.Message
 import com.waz.model.{MessageContent, MessageData}
-import com.waz.zclient.{ViewHelper, R}
+import com.waz.service.messages.MessageAndLikes
+import com.waz.utils.returning
+import com.waz.zclient.{R, ViewHelper}
 
 class MessageView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -33,47 +35,57 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
 
   // TODO: handle selection - show timestamp and backgroud/frame
 
-  def set(pos: Int, m: MessageData, prev: Option[MessageData]): Unit = {
+  def set(pos: Int, m: MessageAndLikes, prev: Option[MessageData]): Unit = {
 
-    // TODO: it could be faster to only recycle views that can not be reused
-    // current implementation always recycles all views and fetches new parts from recycler, this is slower than just updating already added views
+    val msg = m.message
+    val parts = Seq.newBuilder[(MsgPart, Option[MessageContent])]
 
-    for (i <- 0 until getChildCount) {
-      getChildAt(i) match {
-        case pv: MessageViewPart => factory.recycle(pv)
-        case _ =>
-      }
-    }
+    if (shouldShowSeparator(msg, prev))
+      parts += MsgPart.Separator -> None
 
-    removeAllViewsInLayout()
+    if (shouldShowChathead(msg, prev))
+      parts += MsgPart.User -> None
 
-    // TODO: system messages don't always need a divider
-
-    if (prev.forall(_.time.isBefore(m.time.minusSeconds(3600))))
-      addPart(pos, MsgPart.Separator, m, None)
-
-    if (prev.forall(_.userId != m.userId)) // TODO: show also if prev is a system message
-      addPart(pos, MsgPart.User, m, None)
-
-    if (m.content.isEmpty) {
-      addPart(pos, MsgPart(m.msgType), m, None)
+    if (msg.content.isEmpty) {
+      parts += MsgPart(msg.msgType) -> None
     } else {
       // add rich media parts
-      m.content foreach { content =>
-        addPart(pos, MsgPart(content.tpe), m, Some(content))
+      msg.content foreach { content =>
+        parts += MsgPart(content.tpe) -> Some(content)
       }
     }
 
     // TODO: add timestamp if selected
-    //    requestLayout()
-    //    invalidate()
+
+    setParts(pos, msg, parts.result())
   }
 
-  private def addPart(pos: Int, tpe: MsgPart, msg: MessageData, part: Option[MessageContent]) = {
-    val view = factory.get(tpe, this)
-    view.set(pos, msg, part)
-    addViewInLayout(view, getChildCount, Option(view.getLayoutParams) getOrElse factory.DefaultLayoutParams)
-    view
+  // TODO: system messages don't always need a divider
+  private def shouldShowSeparator(msg: MessageData, prev: Option[MessageData]) =
+    prev.forall(_.time.isBefore(msg.time.minusSeconds(3600)))
+
+  private def shouldShowChathead(msg: MessageData, prev: Option[MessageData]) =
+    prev.forall(m => m.userId != msg.userId || m.isSystemMessage)
+
+  private def setParts(position: Int, msg: MessageData, parts: Seq[(MsgPart, Option[MessageContent])]) = {
+
+    val partViews = Seq.tabulate(getChildCount)(getChildAt).collect { case pv: MessageViewPart => pv }.iterator.buffered
+
+    parts.zipWithIndex foreach { case ((tpe, content), index) =>
+      while (partViews.hasNext && partViews.head.tpe != tpe && partViews.head.tpe.order <= tpe.order) {
+        factory.recycle(returning(partViews.next()) { removeViewInLayout })
+      }
+      if (partViews.hasNext && partViews.head.tpe == tpe) {
+        partViews.next().set(position, msg, content)
+      } else {
+        val view = factory.get(tpe, this)
+        view.set(position, msg, content)
+        addViewInLayout(view, index, Option(view.getLayoutParams) getOrElse factory.DefaultLayoutParams)
+      }
+    }
+
+    partViews foreach { pv => factory.recycle(pv) }
+    removeViewsInLayout(parts.length, getChildCount - parts.length)
   }
 }
 
@@ -90,16 +102,20 @@ object MessageView {
   }
 }
 
-sealed trait MsgPart
+/**
+  * @param order - describes typical ordering of parts in a message, used to optimize view recycling
+  */
+sealed abstract class MsgPart(val order: Int)
+
 object MsgPart {
-  case object User extends MsgPart
-  case object Separator extends MsgPart
-  case object SeparatorLarge extends MsgPart
-  case object Timestamp extends MsgPart
-  case object Text extends MsgPart
-  case object Image extends MsgPart
-  case object YouTube extends MsgPart
-  case object SoundCloud extends MsgPart
+  case object Separator extends MsgPart(0)
+  case object SeparatorLarge extends MsgPart(0)
+  case object User extends MsgPart(10)
+  case object Text extends MsgPart(20)
+  case object Image extends MsgPart(30)
+  case object YouTube extends MsgPart(40)
+  case object SoundCloud extends MsgPart(40)
+  case object Timestamp extends MsgPart(100)
 
   def apply(msgType: Message.Type): MsgPart = msgType match {
     case Message.Type.TEXT => Text

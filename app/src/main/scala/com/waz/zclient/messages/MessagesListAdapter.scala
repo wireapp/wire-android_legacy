@@ -50,12 +50,12 @@ class MessagesListAdapter()(implicit inj: Injector, ec: EventContext) extends Re
 
   override def getItemCount: Int = messages.fold(0)(_.count)
 
-  def message(position: Int) = messages.map(_.apply(position).message).orNull
+  def message(position: Int) = messages.get.apply(position)
 
-  override def getItemViewType(position: Int): Int = MessageView.viewType(message(position).msgType)
+  override def getItemViewType(position: Int): Int = MessageView.viewType(message(position).message.msgType)
 
   override def onBindViewHolder(holder: MessageViewHolder, position: Int): Unit = {
-    holder.bind(position, message(position), if (position == 0) None else Some(message(position - 1)))
+    holder.bind(position, message(position), if (position == 0) None else Some(message(position - 1).message))
     onBindView ! position
   }
 

@@ -25,6 +25,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.model.{ConvId, MessageData}
 import com.waz.service.ZMessaging
+import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.{Injectable, Injector, ViewHelper}
@@ -93,7 +94,7 @@ object MessagesListView {
 
 case class MessageViewHolder(view: MessageView)(implicit ec: EventContext) extends RecyclerView.ViewHolder(view) {
 
-  def bind(position: Int, msg: MessageData, prev: Option[MessageData]): Unit = view.set(position, msg, prev)
+  def bind(position: Int, msg: MessageAndLikes, prev: Option[MessageData]): Unit = view.set(position, msg, prev)
 }
 
 class LastReadUpdater(adapter: MessagesListAdapter, layoutManager: LinearLayoutManager)(implicit injector: Injector, ev: EventContext) extends Injectable {
@@ -106,7 +107,7 @@ class LastReadUpdater(adapter: MessagesListAdapter, layoutManager: LinearLayoutM
   } yield (zms, index)
 
   lastBoundMessage.on(Threading.Ui) { case (zms, _) =>
-    val msg = adapter.message(layoutManager.findLastCompletelyVisibleItemPosition())
+    val msg = adapter.message(layoutManager.findLastCompletelyVisibleItemPosition()).message
     zms.convsUi.setLastRead(msg.convId, msg)
   }
 }
