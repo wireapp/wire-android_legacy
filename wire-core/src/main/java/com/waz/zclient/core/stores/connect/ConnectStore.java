@@ -19,7 +19,6 @@ package com.waz.zclient.core.stores.connect;
 
 import com.waz.api.CommonConnections;
 import com.waz.api.IConversation;
-import com.waz.api.MessagesList;
 import com.waz.api.User;
 
 import java.util.HashSet;
@@ -37,12 +36,6 @@ public abstract class ConnectStore implements IConnectStore {
     @Override
     public void removeConnectRequestObserver(ConnectStoreObserver connectStoreObserver) {
         connectStoreObservers.remove(connectStoreObserver);
-    }
-
-    protected void notifyMessagesUpdated(MessagesList messageList) {
-        for (ConnectStoreObserver connectStoreObserver : connectStoreObservers) {
-            connectStoreObserver.onMessagesUpdated(messageList);
-        }
     }
 
     protected void notifyConnectUserUpdated(User user, UserRequester userRequester) {

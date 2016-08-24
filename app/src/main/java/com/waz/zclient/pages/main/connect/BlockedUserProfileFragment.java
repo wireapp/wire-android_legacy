@@ -279,11 +279,6 @@ public class BlockedUserProfileFragment extends BaseFragment<BlockedUserProfileF
     //////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onMessagesUpdated(MessagesList messagesList) {
-
-    }
-
-    @Override
     public void onConnectUserUpdated(final User user, IConnectStore.UserRequester userRequester) {
         if (this.userRequester != userRequester ||
             user == null) {

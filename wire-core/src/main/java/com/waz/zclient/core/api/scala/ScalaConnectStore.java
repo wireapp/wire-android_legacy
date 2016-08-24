@@ -23,7 +23,6 @@ import com.waz.api.ErrorResponse;
 import com.waz.api.IConversation;
 import com.waz.api.InvitationTokenFactory;
 import com.waz.api.Invitations;
-import com.waz.api.MessagesList;
 import com.waz.api.UpdateListener;
 import com.waz.api.User;
 import com.waz.api.ZMessagingApi;
@@ -41,7 +40,6 @@ public class ScalaConnectStore extends ConnectStore {
     private ZMessagingApi zMessagingApi;
     private Context context;
     private Invitations invites;
-    private MessagesList messagesList;
     private CommonConnections commonConnections;
 
     Set<Invitations.ConnectionCallback> connectionCallbacks;
@@ -57,11 +55,9 @@ public class ScalaConnectStore extends ConnectStore {
 
     @Override
     public void tearDown() {
-        removeMessageListener();
         removeUserListener();
         removeCommonConnectionsListener();
 
-        messagesList = null;
         commonConnections = null;
         users = null;
         invites = null;
@@ -101,14 +97,6 @@ public class ScalaConnectStore extends ConnectStore {
                 popoverUserListener.updated();
                 break;
         }
-    }
-
-    @Override
-    public void loadMessages(MessagesList messagesList) {
-        removeMessageListener();
-        this.messagesList = messagesList;
-        messagesList.addUpdateListener(messagesListener);
-        messagesListener.updated();
     }
 
     @Override
@@ -178,12 +166,6 @@ public class ScalaConnectStore extends ConnectStore {
         }
     }
 
-    private void removeMessageListener() {
-        if (messagesList != null) {
-            messagesList.removeUpdateListener(messagesListener);
-        }
-    }
-
     private void removeCommonConnectionsListener() {
         if (commonConnections != null) {
             commonConnections.removeUpdateListener(commonConnectionsListener);
@@ -229,15 +211,6 @@ public class ScalaConnectStore extends ConnectStore {
         }
     };
 
-
-    private final UpdateListener messagesListener = new UpdateListener() {
-        @Override
-        public void updated() {
-            if (messagesList != null) {
-                notifyMessagesUpdated(messagesList);
-            }
-        }
-    };
 
     private final UpdateListener commonConnectionsListener = new UpdateListener() {
         @Override

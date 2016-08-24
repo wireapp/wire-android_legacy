@@ -255,11 +255,6 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
     //////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onMessagesUpdated(MessagesList messagesList) {
-
-    }
-
-    @Override
     public void onConnectUserUpdated(final User user, final IConnectStore.UserRequester userRequester) {
         if (this.userRequester != userRequester) {
             return;

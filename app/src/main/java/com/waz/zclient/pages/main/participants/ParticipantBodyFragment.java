@@ -520,11 +520,6 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
     }
 
     @Override
-    public void onMessagesUpdated(MessagesList messagesList) {
-
-    }
-
-    @Override
     public void onConnectUserUpdated(final User user, IConnectStore.UserRequester usertype) {
         if (usertype != userRequester ||
             user == null) {

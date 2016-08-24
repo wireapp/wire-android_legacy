@@ -32,8 +32,6 @@ public interface IConnectStore extends IStore {
     // Displaying a connect request
     void loadUser(String userId, UserRequester userRequester);
 
-    void loadMessages(com.waz.api.MessagesList messagesList);
-
     void loadCommonConnections(CommonConnections commonConnections);
 
     void addConnectRequestObserver(ConnectStoreObserver connectStoreObserver);

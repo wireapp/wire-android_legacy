@@ -19,12 +19,9 @@ package com.waz.zclient.core.stores.connect;
 
 import com.waz.api.CommonConnections;
 import com.waz.api.IConversation;
-import com.waz.api.MessagesList;
 import com.waz.api.User;
 
 public interface ConnectStoreObserver {
-
-    void onMessagesUpdated(MessagesList messagesList);
 
     void onConnectUserUpdated(User user, IConnectStore.UserRequester usertype);
 

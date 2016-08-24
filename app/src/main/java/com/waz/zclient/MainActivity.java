@@ -686,9 +686,6 @@ public class MainActivity extends BaseActivity implements MainPhoneFragment.Cont
     //////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onMessagesUpdated(MessagesList messagesList) {}
-
-    @Override
     public void onConnectUserUpdated(User user, IConnectStore.UserRequester usertype) {}
 
     @Override
