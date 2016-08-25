@@ -61,7 +61,8 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends I
     setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, h))
   }
 
-  override def set(pos: Int, msg: MessageData, part: Option[MessageContent]): Unit = {
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
+    width.mutateOrDefault(identity, widthHint)
     imageDim ! msg.imageDimensions.getOrElse(Dim2(1, 1))
     assetId ! msg.assetId
   }

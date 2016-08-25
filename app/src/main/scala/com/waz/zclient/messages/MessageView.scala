@@ -29,6 +29,8 @@ import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.ZLog._
+import com.waz.ZLog.ImplicitTag._
 
 class MessageView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -38,7 +40,10 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
   private val selection = inject[SelectionController].messages
   private val data = Signal[(Int, MessageAndLikes, Option[MessageData])]()
   private val msgId = data.map(_._2.message.id)
-  private val focused = msgId flatMap { id => selection.focused.map(_ == id) }
+  private val focused = msgId flatMap { id => selection.focused.map(_.contains(id)) }
+
+  var parent = Option.empty[ViewGroup]
+  private def widthHint = parent.fold(0)(_.getWidth)
 
   data { case (pos, m, prev) =>
 
@@ -68,15 +73,17 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
 
   focused {
     case true => // show timestamp
+      verbose(s"show timestamp")
       data.currentValue foreach { case (pos, msg, _) =>
         if (getTimestampView.isEmpty) {
           // TODO: animate
           val view = factory.get(MsgPart.Timestamp, this)
-          view.set(pos, msg.message, None)
+          view.set(pos, msg.message, None, widthHint)
           addView(view)
         }
       }
     case false => // hide timestamp
+      verbose("hide timestamp")
       getTimestampView foreach { v =>
         // TODO: animate
         factory.recycle(v)
@@ -111,16 +118,21 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
         factory.recycle(returning(partViews.next()) { removeViewInLayout })
       }
       if (partViews.hasNext && partViews.head.tpe == tpe) {
-        partViews.next().set(position, msg, content)
+        partViews.next().set(position, msg, content, widthHint)
       } else {
         val view = factory.get(tpe, this)
-        view.set(position, msg, content)
+        view.set(position, msg, content, widthHint)
         addViewInLayout(view, index, Option(view.getLayoutParams) getOrElse factory.DefaultLayoutParams)
       }
     }
 
     partViews foreach { pv => factory.recycle(pv) }
     removeViewsInLayout(parts.length, getChildCount - parts.length)
+  }
+
+  override def onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int): Unit = {
+    super.onLayout(changed, l, t, r, b)
+    verbose(s"onLayout, height: ${b - t}")
   }
 }
 
@@ -133,7 +145,7 @@ object MessageView {
   }
 
   def apply(parent: ViewGroup, tpe: Int): MessageView = tpe match {
-    case _ => ViewHelper.inflate(R.layout.message_view, parent, false)
+    case _ => returning(ViewHelper.inflate[MessageView](R.layout.message_view, parent, addToParent = false)) { _.parent = Some(parent) }
   }
 }
 
@@ -168,5 +180,5 @@ object MsgPart {
 trait MessageViewPart extends View {
   val tpe: MsgPart
 
-  def set(pos: Int, msg: MessageData, part: Option[MessageContent]): Unit
+  def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit
 }

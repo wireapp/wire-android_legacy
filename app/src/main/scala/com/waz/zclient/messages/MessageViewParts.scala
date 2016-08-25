@@ -55,7 +55,7 @@ class SeparatorView(context: Context, attrs: AttributeSet, style: Int) extends L
 
   // TODO: unread dot size and visibility
 
-  override def set(pos: Int, msg: MessageData, part: Option[MessageContent]): Unit = {
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
     this.pos = pos
     time ! msg.time
   }
@@ -80,7 +80,7 @@ class SeparatorViewLarge(context: Context, attrs: AttributeSet, style: Int) exte
     setTransformedText(s"$pos: $t")
   }
 
-  override def set(pos: Int, msg: MessageData, part: Option[MessageContent]): Unit = {
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
     this.pos = pos
     time ! msg.time
   }
@@ -114,7 +114,7 @@ class UserView(context: Context, attrs: AttributeSet, style: Int) extends Linear
     tvName.setTransformedText(s"$pos: $n")
   }
 
-  override def set(pos: Int, msg: MessageData, part: Option[MessageContent]): Unit = {
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
     this.pos = pos
     userId ! msg.userId
   }
@@ -127,7 +127,7 @@ class TimestampView(context: Context, attrs: AttributeSet, style: Int) extends T
 
   override val tpe: MsgPart = MsgPart.Timestamp
 
-  override def set(pos: Int, msg: MessageData, part: Option[MessageContent]): Unit =
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit =
     setText(s"$pos: ${msg.time.toString}") // TODO: formatting
 }
 
@@ -138,7 +138,7 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
   override val tpe: MsgPart = MsgPart.Text
 
-  override def set(pos: Int, msg: MessageData, part: Option[MessageContent]): Unit =
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit =
     setTransformedText(s"$pos: ${part.fold(msg.contentString)(_.content)}")
 }
 
