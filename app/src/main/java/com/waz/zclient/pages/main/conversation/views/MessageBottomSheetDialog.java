@@ -40,6 +40,8 @@ public class MessageBottomSheetDialog extends BottomSheetDialog {
         COPY(R.id.message_bottom_menu_item_copy, R.string.glyph__copy, R.string.message_bottom_menu_action_copy),
         DELETE_LOCAL(R.id.message_bottom_menu_item_delete_local, R.string.glyph__delete_me, R.string.message_bottom_menu_action_delete_local),
         DELETE_GLOBAL(R.id.message_bottom_menu_item_delete_global, R.string.glyph__delete_everywhere, R.string.message_bottom_menu_action_delete_global),
+        LIKE(R.id.message_bottom_menu_item_like, R.string.glyph__love, R.string.message_bottom_menu_action_like),
+        UNLIKE(R.id.message_bottom_menu_item_unlike, R.string.glyph__liked, R.string.message_bottom_menu_action_unlike),
         EDIT(R.id.message_bottom_menu_item_edit, R.string.glyph__edit, R.string.message_bottom_menu_action_edit);
 
         public int resId;
@@ -63,6 +65,13 @@ public class MessageBottomSheetDialog extends BottomSheetDialog {
     @SuppressLint("InflateParams")
     private void init(boolean isMemberOfConversation) {
         LinearLayout view = (LinearLayout) getLayoutInflater().inflate(R.layout.message__bottom__menu, null);
+        if (isLikeAllowed()) {
+            if (message.isLikedByThisUser()) {
+                addAction(view, MessageAction.UNLIKE);
+            } else {
+                addAction(view, MessageAction.LIKE);
+            }
+        }
         if (isCopyAllowed()) {
             addAction(view, MessageAction.COPY);
         }
@@ -98,6 +107,23 @@ public class MessageBottomSheetDialog extends BottomSheetDialog {
         });
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewUtils.toPx(getContext(), 48));
         root.addView(row, params);
+    }
+
+    private boolean isLikeAllowed() {
+        switch (message.getMessageType()) {
+            case ANY_ASSET:
+            case ASSET:
+            case AUDIO_ASSET:
+            case KNOCK:
+            case LOCATION:
+            case TEXT:
+            case TEXT_EMOJI_ONLY:
+            case RICH_MEDIA:
+            case VIDEO_ASSET:
+                return true;
+            default:
+                return false;
+        }
     }
 
     private boolean isCopyAllowed() {
