@@ -37,6 +37,7 @@ import org.threeten.bp.Instant;
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.replaceText;
+import static android.support.test.espresso.action.ViewActions.swipeUp;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static com.waz.zclient.testutils.CustomViewAssertions.hasText;
@@ -142,6 +143,8 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         fragment.onItemLongClick(mockMessage);
 
         Thread.sleep(500);
+        onView(withId(R.id.message_bottom_menu_item_copy)).perform(swipeUp());
+        Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_delete_global)).check(isVisible());
         onView(withId(R.id.message_bottom_menu_item_delete_global)).perform(click());
 
@@ -172,6 +175,8 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         Thread.sleep(500);
         fragment.onItemLongClick(mockMessage);
 
+        Thread.sleep(500);
+        onView(withId(R.id.message_bottom_menu_item_copy)).perform(swipeUp());
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_delete_global)).check(isVisible());
         onView(withId(R.id.message_bottom_menu_item_delete_global)).perform(click());
@@ -351,6 +356,8 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         Thread.sleep(500);
         fragment.onItemLongClick(mockMessage);
 
+        Thread.sleep(500);
+        onView(withId(R.id.message_bottom_menu_item_copy)).perform(swipeUp());
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_delete_global)).check(isVisible());
         onView(withId(R.id.message_bottom_menu_item_delete_global)).perform(click());

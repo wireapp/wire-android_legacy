@@ -400,6 +400,14 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                     forwardMessage(message);
                     getControllerFactory().getTrackingController().tagEvent(OpenedMessageActionEvent.forward(message.getMessageType().name()));
                     break;
+                case LIKE:
+                case UNLIKE:
+                    if (message.isLikedByThisUser()) {
+                        message.unlike();
+                    } else {
+                        message.like();
+                    }
+                    break;
 
                 default:
                     ExceptionHandler.saveException(new RuntimeException("Unhandled action"), null, null);
@@ -1415,7 +1423,14 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 }
             }, BOTTOM_MENU_DISPLAY_DELAY_MS);
         } else {
-            new MessageBottomSheetDialog(getContext(), message, isMemberOfConversation, messageBottomSheetDialogCallback).show();
+            messageBottomSheetDialog = new MessageBottomSheetDialog(getContext(), message, isMemberOfConversation, messageBottomSheetDialogCallback);
+            messageBottomSheetDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    messageBottomSheetDialog = null;
+                }
+            });
+            messageBottomSheetDialog.show();
         }
         return true;
     }
