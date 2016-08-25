@@ -24,6 +24,7 @@ import com.waz.ZLog._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.{Injectable, Injector}
 
 class MessagesListAdapter()(implicit inj: Injector, ec: EventContext) extends RecyclerView.Adapter[MessageViewHolder]() with Injectable with MessagesListView.Adapter { adapter =>
@@ -31,7 +32,7 @@ class MessagesListAdapter()(implicit inj: Injector, ec: EventContext) extends Re
   verbose("MessagesListAdapter created")
 
   val zms = inject[Signal[ZMessaging]]
-  val selectedConversation = zms.flatMap(_.convsStats.selectedConversationId).collect { case Some(convId) => convId }
+  val selectedConversation = inject[SelectionController].selectedConv
   val cursor = zms.zip(selectedConversation) map { case (zs, conv) => new RecyclerCursor(conv, zs, adapter) }
 
   val onBindView = EventStream[Int]()

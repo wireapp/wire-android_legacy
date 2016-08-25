@@ -31,24 +31,24 @@ import com.waz.zclient.core.stores.IStoreFactory
 import com.waz.zclient.notifications.controllers.{CallingNotificationsController, ImageNotificationsController, MessageNotificationsController}
 import com.waz.zclient.utils.{BackendPicker, BuildConfigUtils, Callback}
 import com.waz.zclient.controllers.ImageController
-import com.waz.zclient.controllers.global.{AccentColorController, KeyboardController}
+import com.waz.zclient.controllers.global.{AccentColorController, SelectionController, KeyboardController}
 import com.waz.zclient.messages.MessageViewFactory
 
 object WireApplication {
   var APP_INSTANCE: WireApplication = _
 
   lazy val Global = new Module {
-    implicit def context = inject[Context]
-    implicit def eventContext = EventContext.Global
+    implicit val eventContext = EventContext.Global
 
     bind[Signal[Option[ZMessaging]]] to ZMessaging.currentUi.currentZms
     bind[Signal[ZMessaging]] to inject[Signal[Option[ZMessaging]]].collect { case Some(z) => z }
     bind[PreferenceService] to new PreferenceService(inject[Context])
     bind[AccentColorController] to new AccentColorController()
     bind[GlobalCallingController] to new GlobalCallingController(inject[Context])
-    bind[GlobalCameraController] to new GlobalCameraController(inject[Context], new AndroidCameraFactory)(EventContext.Global)
+    bind[GlobalCameraController] to new GlobalCameraController(inject[Context], new AndroidCameraFactory)
     bind[MediaManagerService] to ZMessaging.currentGlobal.mediaManager
     bind[MessageViewFactory] to new MessageViewFactory()
+    bind[SelectionController] to new SelectionController()
 
     //notifications
     bind[MessageNotificationsController] to new MessageNotificationsController()

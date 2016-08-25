@@ -28,8 +28,8 @@ import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.zclient.{Injectable, Injector, ViewHelper}
 import com.waz.zclient.messages.ScrollController.Scroll
+import com.waz.zclient.{Injectable, Injector, ViewHelper}
 
 import scala.concurrent.duration._
 
@@ -107,7 +107,10 @@ class LastReadUpdater(adapter: MessagesListAdapter, layoutManager: LinearLayoutM
   } yield (zms, index)
 
   lastBoundMessage.on(Threading.Ui) { case (zms, _) =>
-    val msg = adapter.message(layoutManager.findLastCompletelyVisibleItemPosition()).message
-    zms.convsUi.setLastRead(msg.convId, msg)
+    val index = layoutManager.findLastCompletelyVisibleItemPosition()
+    if (index >= 0) {
+      val msg = adapter.message(index).message
+      zms.convsUi.setLastRead(msg.convId, msg)
+    }
   }
 }

@@ -19,12 +19,15 @@ package com.waz.zclient.messages
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.View.OnClickListener
 import android.view.{View, ViewGroup}
 import android.widget.LinearLayout
 import com.waz.api.Message
 import com.waz.model.{MessageContent, MessageData}
 import com.waz.service.messages.MessageAndLikes
+import com.waz.utils.events.Signal
 import com.waz.utils.returning
+import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.{R, ViewHelper}
 
 class MessageView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
@@ -32,10 +35,12 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
   def this(context: Context) = this(context, null, 0)
 
   private val factory = inject[MessageViewFactory]
+  private val selection = inject[SelectionController].messages
+  private val data = Signal[(Int, MessageAndLikes, Option[MessageData])]()
+  private val msgId = data.map(_._2.message.id)
+  private val focused = msgId flatMap { id => selection.focused.map(_ == id) }
 
-  // TODO: handle selection - show timestamp and backgroud/frame
-
-  def set(pos: Int, m: MessageAndLikes, prev: Option[MessageData]): Unit = {
+  data { case (pos, m, prev) =>
 
     val msg = m.message
     val parts = Seq.newBuilder[(MsgPart, Option[MessageContent])]
@@ -55,9 +60,39 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
       }
     }
 
-    // TODO: add timestamp if selected
+    if (focused.currentValue.contains(true))
+      parts += MsgPart.Timestamp -> None
 
     setParts(pos, msg, parts.result())
+  }
+
+  focused {
+    case true => // show timestamp
+      data.currentValue foreach { case (pos, msg, _) =>
+        if (getTimestampView.isEmpty) {
+          // TODO: animate
+          val view = factory.get(MsgPart.Timestamp, this)
+          view.set(pos, msg.message, None)
+          addView(view)
+        }
+      }
+    case false => // hide timestamp
+      getTimestampView foreach { v =>
+        // TODO: animate
+        factory.recycle(v)
+        removeView(v)
+      }
+  }
+
+  setOnClickListener(new OnClickListener {
+    override def onClick(v: View): Unit = msgId.currentValue foreach selection.toggleFocused
+  })
+
+  def set(pos: Int, m: MessageAndLikes, prev: Option[MessageData]): Unit = data ! (pos, m, prev)
+
+  private def getTimestampView = getChildAt(getChildCount - 1) match {
+    case v: MessageViewPart if v.tpe == MsgPart.Timestamp => Some(v)
+    case _ => None
   }
 
   // TODO: system messages don't always need a divider
