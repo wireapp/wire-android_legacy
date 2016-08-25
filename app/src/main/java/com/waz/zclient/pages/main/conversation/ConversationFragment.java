@@ -400,6 +400,14 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                     forwardMessage(message);
                     getControllerFactory().getTrackingController().tagEvent(OpenedMessageActionEvent.forward(message.getMessageType().name()));
                     break;
+                case LIKE:
+                case UNLIKE:
+                    if (message.isLikedByThisUser()) {
+                        message.unlike();
+                    } else {
+                        message.like();
+                    }
+                    break;
 
                 default:
                     ExceptionHandler.saveException(new RuntimeException("Unhandled action"), null, null);
