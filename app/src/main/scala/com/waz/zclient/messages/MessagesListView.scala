@@ -23,11 +23,12 @@ import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.util.AttributeSet
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.model.{ConvId, MessageData}
+import com.waz.model.{ConvId, MessageData, MessageId}
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
+import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.messages.ScrollController.Scroll
 import com.waz.zclient.{Injectable, Injector, ViewHelper}
 
@@ -74,8 +75,8 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
   })
 
   override def onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int): Unit = {
-    super.onLayout(changed, l, t, r, b)
     scrollController.listHeight ! (b - t)
+    super.onLayout(changed, l, t, r, b)
   }
 
   def scrollToBottom(): Unit = scrollController.onScrollToBottomRequested ! layoutManager.findLastCompletelyVisibleItemPosition()
@@ -92,10 +93,23 @@ object MessagesListView {
   }
 }
 
-case class MessageViewHolder(view: MessageView)(implicit ec: EventContext) extends RecyclerView.ViewHolder(view) {
+case class MessageViewHolder(view: MessageView, adapter: MessagesListAdapter)(implicit ec: EventContext, inj: Injector) extends RecyclerView.ViewHolder(view) with Injectable {
 
-  def bind(position: Int, msg: MessageAndLikes, prev: Option[MessageData]): Unit = view.set(position, msg, prev)
+  private val selection = inject[SelectionController].messages
+  private var id: MessageId = _
+  private var focused = false
+
+  selection.focused.onChanged { f =>
+    if (focused != f.contains(id)) adapter.notifyItemChanged(getAdapterPosition)
+  }
+
+  def bind(position: Int, msg: MessageAndLikes, prev: Option[MessageData]): Unit = {
+    id = msg.message.id
+    focused = selection.focused.currentValue.exists(_.contains(id))
+    view.set(position, msg, prev, focused)
+  }
 }
+
 
 class LastReadUpdater(adapter: MessagesListAdapter, layoutManager: LinearLayoutManager)(implicit injector: Injector, ev: EventContext) extends Injectable {
 

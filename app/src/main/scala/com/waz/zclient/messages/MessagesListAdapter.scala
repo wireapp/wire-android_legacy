@@ -61,7 +61,7 @@ class MessagesListAdapter()(implicit inj: Injector, ec: EventContext) extends Re
   }
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder =
-    MessageViewHolder(MessageView(parent, viewType))
+    MessageViewHolder(MessageView(parent, viewType), adapter)
 
 
   // view depends on two message entries,
