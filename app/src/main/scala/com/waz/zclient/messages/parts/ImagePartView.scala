@@ -21,41 +21,28 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.ViewGroup
 import android.widget.{ImageView, LinearLayout}
-import com.waz.model.{AssetId, Dim2, MessageContent, MessageData}
-import com.waz.service.assets.AssetService.BitmapResult
-import com.waz.threading.Threading
+import com.waz.model.{Dim2, MessageContent, MessageData}
 import com.waz.utils.events.Signal
+import com.waz.utils.returning
 import com.waz.zclient.ViewHelper
-import com.waz.zclient.controllers.ImageController
+import com.waz.zclient.controllers.ImageAssetDrawable
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 
 class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends ImageView(context, attrs, style) with MessageViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
+  val background = returning(new ImageAssetDrawable())(setBackground)
+
   override val tpe: MsgPart = MsgPart.Image
 
-  val images = inject[ImageController]
-
-  private val assetId = Signal[AssetId]()
   private val imageDim = Signal[Dim2]()
   private val width = Signal[Int]()
-
-  val bitmap = for {
-    w <- width
-    id <- assetId
-    res <- images.imageSignal(id, w)
-  } yield res match {
-    case BitmapResult.BitmapLoaded(bmp, _, _) => bmp
-    case _ => null
-  }
 
   val height = for {
     w <- width
     Dim2(imW, imH) <- imageDim
   } yield imH * w / imW  // TODO: improve image view size computation
-
-  bitmap.on(Threading.Ui) { setImageBitmap }
 
   height { h =>
     setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, h))
@@ -64,7 +51,7 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends I
   override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
     width.mutateOrDefault(identity, widthHint)
     imageDim ! msg.imageDimensions.getOrElse(Dim2(1, 1))
-    assetId ! msg.assetId
+    background.setAssetId(msg.assetId)
   }
 
   override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {

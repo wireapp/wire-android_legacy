@@ -17,13 +17,89 @@
  */
 package com.waz.zclient.controllers
 
+import android.animation.ValueAnimator
+import android.animation.ValueAnimator.AnimatorUpdateListener
+import android.graphics._
+import android.graphics.drawable.Drawable
+import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.verbose
 import com.waz.model.{AnyAssetData, AssetId, AssetPreviewData, ImageAssetData}
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapRequest.Regular
 import com.waz.service.assets.AssetService.{BitmapRequest, BitmapResult}
 import com.waz.service.images.BitmapSignal
-import com.waz.utils.events.Signal
+import com.waz.threading.Threading
+import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.{Injectable, Injector}
+
+//TODO could merge with logic from the ChatheadView to make a very general drawable for our app
+class ImageAssetDrawable(implicit inj: Injector, eventContext: EventContext) extends Drawable with Injectable {
+  self =>
+
+  val images = inject[ImageController]
+
+  private val assetId = Signal[AssetId]
+  private var currentBitmap = Option.empty[Bitmap]
+
+  val width = Signal[Int]()
+
+  private val bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG)
+
+  bitmapPaint.setColor(Color.TRANSPARENT)
+  private val animator = ValueAnimator.ofFloat(0, 1).setDuration(750)
+
+  animator.addUpdateListener(new AnimatorUpdateListener {
+    override def onAnimationUpdate(animation: ValueAnimator): Unit = {
+      val alpha = (animation.getAnimatedFraction * 255).toInt
+      verbose(s"setting alpha: $alpha")
+      bitmapPaint.setAlpha(alpha)
+      invalidateSelf()
+    }
+  })
+
+  val bitmap = for {
+    w <- width
+    id <- assetId
+    res <- images.imageSignal(id, w)
+  } yield res match {
+    case BitmapResult.BitmapLoaded(bmp, _, _) => bmp
+    case _ => null
+  }
+
+  def setAssetId(id: AssetId): Unit = {
+    if (!assetId.currentValue.contains(id)) {
+      currentBitmap = None //
+      assetId ! id
+    }
+  }
+
+  bitmap.on(Threading.Ui) { b =>
+    if (!currentBitmap.contains(b)) {
+      currentBitmap = Some(b)
+      animator.start()
+    }
+  }
+
+  override def setBounds(left: Int, top: Int, right: Int, bottom: Int): Unit = {
+    verbose(s"setBounds: left: $left, top: $top, right: $right, bottom: $bottom")
+    super.setBounds(left, top, right, bottom)
+    width ! (right - left)
+  }
+
+  override def draw(canvas: Canvas): Unit = {
+    currentBitmap.fold {
+      canvas.drawColor(Color.TRANSPARENT)
+    } { b =>
+      canvas.drawBitmap(b, null, getBounds, bitmapPaint)
+    }
+  }
+
+  override def setColorFilter(colorFilter: ColorFilter): Unit = ()
+
+  override def setAlpha(alpha: Int): Unit = ()
+
+  override def getOpacity: Int = PixelFormat.TRANSLUCENT
+}
 
 class ImageController(implicit inj: Injector) extends Injectable {
 
