@@ -25,8 +25,8 @@ import com.waz.model.{Dim2, MessageContent, MessageData}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.ViewHelper
-import com.waz.zclient.controllers.ImageAssetDrawable
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
+import com.waz.zclient.views.ImageAssetDrawable
 
 class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends ImageView(context, attrs, style) with MessageViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)

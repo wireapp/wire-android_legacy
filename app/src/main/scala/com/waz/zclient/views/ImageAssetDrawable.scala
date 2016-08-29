@@ -15,15 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.controllers
+package com.waz.zclient.views
 
 import android.animation.ValueAnimator
 import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.graphics._
 import android.graphics.drawable.Drawable
+import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
-import com.waz.model.{AnyAssetData, AssetId, AssetPreviewData, ImageAssetData}
+import com.waz.model.{AssetPreviewData, AnyAssetData, ImageAssetData, AssetId}
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapRequest.Regular
 import com.waz.service.assets.AssetService.{BitmapRequest, BitmapResult}
@@ -34,7 +34,6 @@ import com.waz.zclient.{Injectable, Injector}
 
 //TODO could merge with logic from the ChatheadView to make a very general drawable for our app
 class ImageAssetDrawable(implicit inj: Injector, eventContext: EventContext) extends Drawable with Injectable {
-  self =>
 
   val images = inject[ImageController]
 
@@ -51,7 +50,6 @@ class ImageAssetDrawable(implicit inj: Injector, eventContext: EventContext) ext
   animator.addUpdateListener(new AnimatorUpdateListener {
     override def onAnimationUpdate(animation: ValueAnimator): Unit = {
       val alpha = (animation.getAnimatedFraction * 255).toInt
-      verbose(s"setting alpha: $alpha")
       bitmapPaint.setAlpha(alpha)
       invalidateSelf()
     }
@@ -67,14 +65,16 @@ class ImageAssetDrawable(implicit inj: Injector, eventContext: EventContext) ext
   }
 
   def setAssetId(id: AssetId): Unit = {
+    verbose(s"setAssedId: current: ${assetId.currentValue}, new id: $id")
     if (!assetId.currentValue.contains(id)) {
-      currentBitmap = None //
+      currentBitmap = None
       assetId ! id
     }
   }
 
   bitmap.on(Threading.Ui) { b =>
     if (!currentBitmap.contains(b)) {
+      verbose(s"bitmap changed, width: ${width.currentValue}")
       currentBitmap = Some(b)
       animator.start()
     }

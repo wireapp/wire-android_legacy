@@ -28,11 +28,11 @@ import com.waz.zclient.camera.controllers.{AndroidCameraFactory, GlobalCameraCon
 import com.waz.zclient.common.controllers.{PermissionActivity, PermissionsController, PermissionsWrapper}
 import com.waz.zclient.controllers.{DefaultControllerFactory, IControllerFactory}
 import com.waz.zclient.core.stores.IStoreFactory
+import com.waz.zclient.messages.MessageViewFactory
 import com.waz.zclient.notifications.controllers.{CallingNotificationsController, ImageNotificationsController, MessageNotificationsController}
 import com.waz.zclient.utils.{BackendPicker, BuildConfigUtils, Callback}
-import com.waz.zclient.controllers.ImageController
-import com.waz.zclient.controllers.global.{AccentColorController, SelectionController, KeyboardController}
-import com.waz.zclient.messages.MessageViewFactory
+import com.waz.zclient.controllers.global.{AccentColorController, KeyboardController, SelectionController}
+import com.waz.zclient.views.ImageController
 
 object WireApplication {
   var APP_INSTANCE: WireApplication = _
