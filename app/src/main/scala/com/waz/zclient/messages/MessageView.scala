@@ -81,11 +81,19 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
 
   private def setParts(position: Int, msg: MessageData, parts: Seq[(MsgPart, Option[MessageContent])]) = {
 
+    verbose(s"setParts: position: $position, parts: ${parts.map(_._1)}")
+    factory.printCache()
+
     val partViews = Seq.tabulate(getChildCount)(getChildAt).collect { case pv: MessageViewPart => pv }.iterator.buffered
 
     parts.zipWithIndex foreach { case ((tpe, content), index) =>
+      val hasNext = partViews.hasNext
+      verbose(s"pv.hasNext?: $hasNext")
+      if (hasNext) verbose(s"pv.head.tpe: ${partViews.head.tpe}, pv.head.tpe.order: ${partViews.head.tpe.order} <= tpe.order: ${tpe.order}")
       while (partViews.hasNext && partViews.head.tpe != tpe && partViews.head.tpe.order <= tpe.order) {
-        factory.recycle(returning(partViews.next()) { removeViewInLayout })
+        val partView = returning(partViews.next()) { removeViewInLayout }
+        verbose(s"partView: $partView")
+        factory.recycle(partView)
       }
       if (partViews.hasNext && partViews.head.tpe == tpe) {
         partViews.next().set(position, msg, content, widthHint)

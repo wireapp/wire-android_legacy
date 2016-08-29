@@ -19,6 +19,8 @@ package com.waz.zclient.messages
 
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.verbose
 import com.waz.zclient.{R, ViewHelper}
 
 import scala.collection.mutable
@@ -29,11 +31,15 @@ class MessageViewFactory {
 
   private val cache = new mutable.HashMap[MsgPart, mutable.Queue[MessageViewPart]]
 
-  def recycle(view: MessageViewPart): Unit =
-    cache.getOrElseUpdate(view.tpe, new mutable.Queue[MessageViewPart]()).enqueue(view)
+  def recycle(part: MessageViewPart): Unit = {
+    verbose(s"recycling part: ${part.tpe}")
+    cache.getOrElseUpdate(part.tpe, new mutable.Queue[MessageViewPart]()).enqueue(part)
+  }
 
-  def get(tpe: MsgPart, parent: ViewGroup): MessageViewPart =
+  def get(tpe: MsgPart, parent: ViewGroup): MessageViewPart = {
+    verbose(s"getting part: $tpe")
     cache.get(tpe).flatMap(q => if(q.isEmpty) None else Some(q.dequeue())).getOrElse {
+      verbose(s"there was no cached $tpe, building a new one")
       import MsgPart._
       tpe match {
         case User           => ViewHelper.inflate(R.layout.message_user, parent, false)
@@ -46,4 +52,12 @@ class MessageViewFactory {
         case _              => ViewHelper.inflate(R.layout.message_text, parent, false) // TODO: other types
       }
     }
+  }
+
+  def printCache(): Unit = {
+    verbose(s"Currently cached view parts, cache@${cache.hashCode}")
+    cache.foreach {
+      case (partTp, queue) => verbose(s"\t$partTp: ${queue.size} views available")
+    }
+  }
 }
