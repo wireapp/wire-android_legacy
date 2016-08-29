@@ -73,8 +73,12 @@ class ImageAssetDrawable(
   } yield res
 
   private var currentSrc: ImageSource = _
-  src.on(Threading.Ui) { img =>
-    verbose(s"src changed, current: $currentSrc, new: $img")
+
+  src { img =>
+    // image source signal should be processed on UI thread, this is needed to avoid flickering
+    // we can not avoid that requirement by using `on(Threading.Ui)`, it wold flicker, as changing src would run on next frame
+    Threading.assertUiThread()
+
     if (img != currentSrc) {
       currentSrc = img
       currentBitmap = None
@@ -85,13 +89,15 @@ class ImageAssetDrawable(
 
   bitmap.on(Threading.Ui) {
     case BitmapLoaded(bmp, preview, _) =>
-      verbose(s"bitmap changed, width: ${width.currentValue}")
-      currentBitmap = Some(bmp)
-      scaleType(matrix, bmp.getWidth, bmp.getHeight, getBounds)
-      invalidateSelf()
-      if (state.currentValue.contains(State.Loading)) animator.start()
+      if (!currentBitmap.contains(bmp)) {
+        verbose(s"bitmap changed, width: ${width.currentValue}")
+        currentBitmap = Some(bmp)
+        scaleType(matrix, bmp.getWidth, bmp.getHeight, getBounds)
+        invalidateSelf()
+        if (state.currentValue.contains(State.Loading)) animator.start()
+      }
       state ! (if (preview) State.PreviewLoaded else State.Loaded)
-    case _ =>
+    case res =>
       currentBitmap = None
       state ! State.Failed
       invalidateSelf()
@@ -111,9 +117,9 @@ class ImageAssetDrawable(
       canvas.drawBitmap(b, matrix, bitmapPaint)
     }
 
-  override def setColorFilter(colorFilter: ColorFilter): Unit = ()
+  override def setColorFilter(colorFilter: ColorFilter): Unit = bitmapPaint.setColorFilter(colorFilter)
 
-  override def setAlpha(alpha: Int): Unit = ()
+  override def setAlpha(alpha: Int): Unit = bitmapPaint.setAlpha(alpha)
 
   override def getOpacity: Int = PixelFormat.TRANSLUCENT
 }
