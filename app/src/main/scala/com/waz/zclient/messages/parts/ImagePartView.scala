@@ -23,21 +23,23 @@ import android.view.ViewGroup
 import android.widget.{ImageView, LinearLayout}
 import com.waz.model.{Dim2, MessageContent, MessageData}
 import com.waz.utils.events.Signal
-import com.waz.utils.returning
 import com.waz.zclient.ViewHelper
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.views.ImageAssetDrawable
+import com.waz.zclient.views.ImageController.WireImage
 
 class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends ImageView(context, attrs, style) with MessageViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
-  val background = returning(new ImageAssetDrawable())(setBackground)
-
   override val tpe: MsgPart = MsgPart.Image
 
-  private val imageDim = Signal[Dim2]()
+  private val message = Signal[MessageData]()
+
+  private val imageDim = message map { _.imageDimensions.getOrElse(Dim2(1, 1)) }
   private val width = Signal[Int]()
+
+  setBackground(new ImageAssetDrawable(message map { m => WireImage(m.assetId) }))
 
   val height = for {
     w <- width
@@ -50,8 +52,7 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends I
 
   override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
     width.mutateOrDefault(identity, widthHint)
-    imageDim ! msg.imageDimensions.getOrElse(Dim2(1, 1))
-    background.setAssetId(msg.assetId)
+    message ! msg
   }
 
   override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {

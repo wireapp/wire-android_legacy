@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2016 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<com.waz.zclient.messages.parts.WebLinkPartView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cv__row_conversation__link_preview__container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="@dimen/content__padding_left"
+    android:layout_marginRight="@dimen/content__padding_right"
+    app:cardCornerRadius="@dimen/content__card__corner_radius"
+    app:cardBackgroundColor="@color/light_graphite_16"
+    app:cardElevation="0dp"
+    >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="@dimen/wire__padding__12"
+        android:orientation="vertical"
+        >
+
+        <FrameLayout
+            android:id="@+id/fl__row_conversation__link_preview__image_container"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/content__link_preview__image_height"
+            >
+
+            <com.waz.zclient.pages.main.conversation.views.row.message.views.ProgressDotsView
+                android:id="@+id/pdv__row_conversation__link_preview__placeholder_dots"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                />
+
+            <ImageView
+                android:id="@+id/iv__row_conversation__link_preview__image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                />
+
+        </FrameLayout>
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/ttv__row_conversation__link_preview__title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/wire__padding__12"
+            android:paddingRight="@dimen/wire__padding__12"
+            android:paddingLeft="@dimen/wire__padding__12"
+            android:maxLines="@integer/content__link_preview__title__maxlines"
+            android:ellipsize="end"
+            android:gravity="left"
+            android:textSize="@dimen/wire__text_size__regular"
+            app:font="@string/wire__typeface__light"
+            style="?colorPrimary"
+            />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/ttv__row_conversation__link_preview__url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/wire__padding__6"
+            android:paddingRight="@dimen/wire__padding__12"
+            android:paddingLeft="@dimen/wire__padding__12"
+            android:ellipsize="middle"
+            android:singleLine="true"
+            android:gravity="left"
+            android:textSize="@dimen/wire__text_size__small"
+            android:textColor="@color/wire__text_color_secondary_light_selector"
+            app:font="@string/wire__typeface__light"
+            />
+
+    </LinearLayout>
+
+</com.waz.zclient.messages.parts.WebLinkPartView>

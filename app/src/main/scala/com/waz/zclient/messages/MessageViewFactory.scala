@@ -42,6 +42,7 @@ class MessageViewFactory {
         case Timestamp      => ViewHelper.inflate(R.layout.message_timestamp, parent, false)
         case Text           => ViewHelper.inflate(R.layout.message_text, parent, false)
         case Image          => ViewHelper.inflate(R.layout.message_image, parent, false)
+        case WebLink        => ViewHelper.inflate(R.layout.message_link_preview, parent, false)
         case _              => ViewHelper.inflate(R.layout.message_text, parent, false) // TODO: other types
       }
     }

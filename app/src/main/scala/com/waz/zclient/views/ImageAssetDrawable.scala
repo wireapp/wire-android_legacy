@@ -21,26 +21,37 @@ import android.animation.ValueAnimator
 import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.graphics._
 import android.graphics.drawable.Drawable
-import com.waz.ZLog._
+import android.net.Uri
 import com.waz.ZLog.ImplicitTag._
-import com.waz.model.{AssetPreviewData, AnyAssetData, ImageAssetData, AssetId}
+import com.waz.ZLog._
+import com.waz.model.GenericContent.Asset
+import com.waz.model.{AnyAssetData, AssetId, AssetPreviewData, ImageAssetData}
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapRequest.Regular
+import com.waz.service.assets.AssetService.BitmapResult.BitmapLoaded
 import com.waz.service.assets.AssetService.{BitmapRequest, BitmapResult}
 import com.waz.service.images.BitmapSignal
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
+import com.waz.zclient.views.ImageAssetDrawable.{RequestBuilder, ScaleType, State}
+import com.waz.zclient.views.ImageController.{ImageSource, ImageUri, ProtoImage, WireImage}
 import com.waz.zclient.{Injectable, Injector}
 
 //TODO could merge with logic from the ChatheadView to make a very general drawable for our app
-class ImageAssetDrawable(implicit inj: Injector, eventContext: EventContext) extends Drawable with Injectable {
+class ImageAssetDrawable(
+                          src: Signal[ImageSource],
+                          scaleType: ScaleType = ScaleType.FitXY,
+                          request: RequestBuilder = RequestBuilder.Regular
+                        )(implicit inj: Injector, eventContext: EventContext) extends Drawable with Injectable {
 
   val images = inject[ImageController]
 
-  private val assetId = Signal[AssetId]
-  private var currentBitmap = Option.empty[Bitmap]
+  val state = Signal[State](State.Loading)
 
-  val width = Signal[Int]()
+  private var currentBitmap = Option.empty[Bitmap]
+  private val matrix = new Matrix()
+
+  private val width = Signal[Int]()
 
   private val bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG)
 
@@ -55,50 +66,95 @@ class ImageAssetDrawable(implicit inj: Injector, eventContext: EventContext) ext
     }
   })
 
-  val bitmap = for {
+  private val bitmap = for {
     w <- width
-    id <- assetId
-    res <- images.imageSignal(id, w)
-  } yield res match {
-    case BitmapResult.BitmapLoaded(bmp, _, _) => bmp
-    case _ => null
-  }
+    s <- src
+    res <- images.imageSignal(s, request(w))
+  } yield res
 
-  def setAssetId(id: AssetId): Unit = {
-    verbose(s"setAssedId: current: ${assetId.currentValue}, new id: $id")
-    if (!assetId.currentValue.contains(id)) {
+  private var currentSrc: ImageSource = _
+  src.on(Threading.Ui) { img =>
+    verbose(s"src changed, current: $currentSrc, new: $img")
+    if (img != currentSrc) {
+      currentSrc = img
       currentBitmap = None
-      assetId ! id
+      state ! State.Loading
+      invalidateSelf()
     }
   }
 
-  bitmap.on(Threading.Ui) { b =>
-    if (!currentBitmap.contains(b)) {
+  bitmap.on(Threading.Ui) {
+    case BitmapLoaded(bmp, preview, _) =>
       verbose(s"bitmap changed, width: ${width.currentValue}")
-      currentBitmap = Some(b)
-      animator.start()
-    }
+      currentBitmap = Some(bmp)
+      scaleType(matrix, bmp.getWidth, bmp.getHeight, getBounds)
+      invalidateSelf()
+      if (state.currentValue.contains(State.Loading)) animator.start()
+      state ! (if (preview) State.PreviewLoaded else State.Loaded)
+    case _ =>
+      currentBitmap = None
+      state ! State.Failed
+      invalidateSelf()
   }
 
   override def setBounds(left: Int, top: Int, right: Int, bottom: Int): Unit = {
     verbose(s"setBounds: left: $left, top: $top, right: $right, bottom: $bottom")
     super.setBounds(left, top, right, bottom)
+    currentBitmap foreach { b =>
+      scaleType(matrix, b.getWidth, b.getHeight, getBounds)
+    }
     width ! (right - left)
   }
 
-  override def draw(canvas: Canvas): Unit = {
-    currentBitmap.fold {
-      canvas.drawColor(Color.TRANSPARENT)
-    } { b =>
-      canvas.drawBitmap(b, null, getBounds, bitmapPaint)
+  override def draw(canvas: Canvas): Unit =
+    currentBitmap foreach { b =>
+      canvas.drawBitmap(b, matrix, bitmapPaint)
     }
-  }
 
   override def setColorFilter(colorFilter: ColorFilter): Unit = ()
 
   override def setAlpha(alpha: Int): Unit = ()
 
   override def getOpacity: Int = PixelFormat.TRANSLUCENT
+}
+
+object ImageAssetDrawable {
+
+  sealed trait ScaleType {
+    def apply(matrix: Matrix, w: Int, h: Int, bounds: Rect): Unit
+  }
+  object ScaleType {
+    case object FitXY extends ScaleType {
+      override def apply(matrix: Matrix, w: Int, h: Int, bounds: Rect): Unit =
+        matrix.setScale(bounds.width().toFloat / w, bounds.height().toFloat / h)
+    }
+    case object CenterCrop extends ScaleType {
+      override def apply(matrix: Matrix, w: Int, h: Int, bounds: Rect): Unit = {
+        val srcW = bounds.width() * h / bounds.height()
+        val scale = if (srcW >= w) bounds.width().toFloat / w else bounds.height().toFloat / h
+        val dx = - (w * scale - bounds.width()) / 2
+        val dy = - (h * scale - bounds.height()) / 2
+
+        matrix.setScale(scale, scale)
+        matrix.postTranslate(dx, dy)
+      }
+    }
+  }
+
+  type RequestBuilder = Int => BitmapRequest
+  object RequestBuilder {
+    val Regular: RequestBuilder = BitmapRequest.Regular(_)
+    val Single: RequestBuilder = BitmapRequest.Single(_)
+    val Static: RequestBuilder = BitmapRequest.Static(_)
+  }
+
+  sealed trait State
+  object State {
+    case object Loading extends State
+    case object PreviewLoaded extends State
+    case object Loaded extends State
+    case object Failed extends State
+  }
 }
 
 class ImageController(implicit inj: Injector) extends Injectable {
@@ -122,4 +178,24 @@ class ImageController(implicit inj: Injector) extends Injectable {
       data <- imageData(id)
       res <- BitmapSignal(data, req, zms.imageLoader, zms.imageCache)
     } yield res
+
+  def imageSignal(uri: Uri, req: BitmapRequest): Signal[BitmapResult] =
+    BitmapSignal(ImageAssetData(uri), req, ZMessaging.currentGlobal.imageLoader, ZMessaging.currentGlobal.imageCache)
+
+  def imageSignal(asset: Asset, req: BitmapRequest): Signal[BitmapResult] =
+    zMessaging flatMap { zms => BitmapSignal(asset, req, zms.imageLoader, zms.imageCache) }
+
+  def imageSignal(src: ImageSource, req: BitmapRequest): Signal[BitmapResult] = src match {
+    case WireImage(id) => imageSignal(id, req)
+    case ProtoImage(asset) => imageSignal(asset, req)
+    case ImageUri(uri) => imageSignal(uri, req)
+  }
+}
+
+object ImageController {
+
+  sealed trait ImageSource
+  case class WireImage(id: AssetId) extends ImageSource
+  case class ProtoImage(asset: Asset) extends ImageSource
+  case class ImageUri(uri: Uri) extends ImageSource
 }

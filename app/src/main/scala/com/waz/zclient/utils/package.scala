@@ -21,6 +21,8 @@ import android.view.View
 import android.view.View._
 import com.waz.zclient.ui.utils.ResourceUtils
 
+import scala.language.implicitConversions
+
 package object utils {
 
   implicit class RichView(val view: View) extends AnyVal {
