@@ -22,10 +22,8 @@ import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.graphics._
 import android.graphics.drawable.Drawable
 import android.net.Uri
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.model.GenericContent.Asset
-import com.waz.model.{AnyAssetData, AssetId, AssetPreviewData, ImageAssetData}
+import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapRequest.Regular
 import com.waz.service.assets.AssetService.BitmapResult.BitmapLoaded
@@ -46,16 +44,10 @@ class ImageAssetDrawable(
 
   val images = inject[ImageController]
 
-  val state = Signal[State](State.Loading)
-
-  private var currentBitmap = Option.empty[Bitmap]
   private val matrix = new Matrix()
-
-  private val width = Signal[Int]()
-
+  private val dims = Signal[Dim2]()
   private val bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG)
 
-  bitmapPaint.setColor(Color.TRANSPARENT)
   private val animator = ValueAnimator.ofFloat(0, 1).setDuration(750)
 
   animator.addUpdateListener(new AnimatorUpdateListener {
@@ -66,60 +58,60 @@ class ImageAssetDrawable(
     }
   })
 
-  private val bitmap = for {
-    w <- width
-    s <- src
-    res <- images.imageSignal(s, request(w))
-  } yield res
+  val state = for {
+    im <- src
+    d <- dims
+    state <- bitmapState(im, d.width)
+  } yield state
 
-  private var currentSrc: ImageSource = _
+  state.on(Threading.Ui) { _ => invalidateSelf() }
 
-  src { img =>
-    // image source signal should be processed on UI thread, this is needed to avoid flickering
-    // we can not avoid that requirement by using `on(Threading.Ui)`, it wold flicker, as changing src would run on next frame
-    Threading.assertUiThread()
-
-    if (img != currentSrc) {
-      currentSrc = img
-      currentBitmap = None
-      state ! State.Loading
-      invalidateSelf()
-    }
-  }
-
-  bitmap.on(Threading.Ui) {
-    case BitmapLoaded(bmp, preview, _) =>
-      if (!currentBitmap.contains(bmp)) {
-        verbose(s"bitmap changed, width: ${width.currentValue}")
-        currentBitmap = Some(bmp)
-        scaleType(matrix, bmp.getWidth, bmp.getHeight, getBounds)
-        invalidateSelf()
-        if (state.currentValue.contains(State.Loading)) animator.start()
+  private def bitmapState(im: ImageSource, w: Int) =
+    images.imageSignal(im, request(w))
+      .map[State] {
+        case BitmapLoaded(bmp, true, _) => State.PreviewLoaded(im, Some(bmp))
+        case BitmapLoaded(bmp, _, _) => State.Loaded(im, Some(bmp))
+        case _ => State.Failed(im)
       }
-      state ! (if (preview) State.PreviewLoaded else State.Loaded)
-    case res =>
-      currentBitmap = None
-      state ! State.Failed
-      invalidateSelf()
-  }
+      .orElse(Signal const State.Loading(im))
 
-  override def setBounds(left: Int, top: Int, right: Int, bottom: Int): Unit = {
-    verbose(s"setBounds: left: $left, top: $top, right: $right, bottom: $bottom")
-    super.setBounds(left, top, right, bottom)
-    currentBitmap foreach { b =>
-      scaleType(matrix, b.getWidth, b.getHeight, getBounds)
-    }
-    width ! (right - left)
-  }
+  // previously drawn state
+  private var prev: State = State.Loading(WireImage(AssetId()))
 
   override def draw(canvas: Canvas): Unit =
-    currentBitmap foreach { b =>
-      canvas.drawBitmap(b, matrix, bitmapPaint)
+    state.currentValue foreach { st =>
+      if (st != prev) {
+        // update transform and alpha on image state change
+        st.bmp.foreach { b =>
+          val bounds = getBounds
+          scaleType(matrix, b.getWidth, b.getHeight, Dim2(bounds.width(), bounds.height()))
+        }
+        if (st.src != prev.src) {
+          animator.end()
+
+          if (prev.bmp.isEmpty) {
+            // will only use fadeIn if we previously displayed an empty bitmap
+            // this way we can avoid animating if view was just recycled
+            animator.start()
+          }
+        }
+
+        prev = st
+      }
+      st.bmp foreach { canvas.drawBitmap(_, matrix, bitmapPaint) }
     }
 
-  override def setColorFilter(colorFilter: ColorFilter): Unit = bitmapPaint.setColorFilter(colorFilter)
+  override def onBoundsChange(bounds: Rect): Unit = dims ! Dim2(bounds.width(), bounds.height())
 
-  override def setAlpha(alpha: Int): Unit = bitmapPaint.setAlpha(alpha)
+  override def setColorFilter(colorFilter: ColorFilter): Unit = {
+    bitmapPaint.setColorFilter(colorFilter)
+    invalidateSelf()
+  }
+
+  override def setAlpha(alpha: Int): Unit = {
+    bitmapPaint.setAlpha(alpha)
+    invalidateSelf()
+  }
 
   override def getOpacity: Int = PixelFormat.TRANSLUCENT
 }
@@ -127,19 +119,19 @@ class ImageAssetDrawable(
 object ImageAssetDrawable {
 
   sealed trait ScaleType {
-    def apply(matrix: Matrix, w: Int, h: Int, bounds: Rect): Unit
+    def apply(matrix: Matrix, w: Int, h: Int, viewSize: Dim2): Unit
   }
   object ScaleType {
     case object FitXY extends ScaleType {
-      override def apply(matrix: Matrix, w: Int, h: Int, bounds: Rect): Unit =
-        matrix.setScale(bounds.width().toFloat / w, bounds.height().toFloat / h)
+      override def apply(matrix: Matrix, w: Int, h: Int, viewSize: Dim2): Unit =
+        matrix.setScale(viewSize.width.toFloat / w, viewSize.height.toFloat / h)
     }
     case object CenterCrop extends ScaleType {
-      override def apply(matrix: Matrix, w: Int, h: Int, bounds: Rect): Unit = {
-        val srcW = bounds.width() * h / bounds.height()
-        val scale = if (srcW >= w) bounds.width().toFloat / w else bounds.height().toFloat / h
-        val dx = - (w * scale - bounds.width()) / 2
-        val dy = - (h * scale - bounds.height()) / 2
+      override def apply(matrix: Matrix, w: Int, h: Int, viewSize: Dim2): Unit = {
+        val srcW = viewSize.width * h / viewSize.height
+        val scale = if (srcW >= w) viewSize.width.toFloat / w else viewSize.height.toFloat / h
+        val dx = - (w * scale - viewSize.width) / 2
+        val dy = - (h * scale - viewSize.height) / 2
 
         matrix.setScale(scale, scale)
         matrix.postTranslate(dx, dy)
@@ -154,12 +146,15 @@ object ImageAssetDrawable {
     val Static: RequestBuilder = BitmapRequest.Static(_)
   }
 
-  sealed trait State
+  sealed trait State {
+    val src: ImageSource
+    val bmp: Option[Bitmap] = None
+  }
   object State {
-    case object Loading extends State
-    case object PreviewLoaded extends State
-    case object Loaded extends State
-    case object Failed extends State
+    case class Loading(src: ImageSource) extends State
+    case class PreviewLoaded(src: ImageSource, override val bmp: Option[Bitmap]) extends State
+    case class Loaded(src: ImageSource, override val bmp: Option[Bitmap]) extends State
+    case class Failed(src: ImageSource) extends State
   }
 }
 

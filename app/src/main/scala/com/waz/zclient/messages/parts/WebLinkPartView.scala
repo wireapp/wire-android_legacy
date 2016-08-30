@@ -103,7 +103,10 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
 
     hasImage.on(Threading.Ui) { previewImageContainerView.setVisible }
 
-    imageDrawable.state.map(_ == State.Loading) { progressDotsView.setVisible }
+    imageDrawable.state.map {
+      case State.Loading(_) => true
+      case _ => false
+    }.on(Threading.Ui) { progressDotsView.setVisible }
 
     title.on(Threading.Ui) { titleTextView.setText }
 

@@ -19,8 +19,8 @@ package com.waz.zclient.messages.parts
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.ViewGroup
-import android.widget.{ImageView, LinearLayout}
+import android.view.{View, ViewGroup}
+import android.widget.LinearLayout
 import com.waz.model.{Dim2, MessageContent, MessageData}
 import com.waz.utils.events.Signal
 import com.waz.zclient.ViewHelper
@@ -28,7 +28,7 @@ import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.views.ImageAssetDrawable
 import com.waz.zclient.views.ImageController.WireImage
 
-class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends ImageView(context, attrs, style) with MessageViewPart with ViewHelper {
+class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends View(context, attrs, style) with MessageViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -44,7 +44,7 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends I
   val height = for {
     w <- width
     Dim2(imW, imH) <- imageDim
-  } yield imH * w / imW  // TODO: improve image view size computation
+  } yield imH * w / imW  // TODO: improve view size computation
 
   height { h =>
     setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, h))
