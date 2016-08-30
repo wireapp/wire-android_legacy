@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2016 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<com.waz.zclient.messages.parts.AssetPartView xmlns:android="http://schemas.android.com/apk/res/android"
+                                              android:layout_width="match_parent"
+                                              android:layout_height="wrap_content"
+                                              android:orientation="horizontal"
+    >
+
+    <com.waz.zclient.messages.widgets.AssetActionButton
+        android:id="@+id/action_button"
+        android:layout_width="@dimen/content__audio_message__button__size"
+        android:layout_height="@dimen/content__audio_message__button__size"
+        android:layout_margin="@dimen/wire__padding__12"
+        android:layout_gravity="center"
+        android:background="@drawable/selector__icon_button__background__video_message"
+        android:text="@string/glyph__play"
+        android:textColor="@color/white"
+        android:textSize="@dimen/content__audio_message__glyph_size"
+        />
+
+    <com.waz.zclient.messages.parts.ProgressDotsView
+        android:id="@+id/placeholder_dots"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/content__audio_message__view_height"
+        android:layout_marginStart="@dimen/content__padding_left"
+        android:layout_marginEnd="@dimen/content__padding_right"
+        android:background="@drawable/shape_audio_message_background"
+        />
+
+</com.waz.zclient.messages.parts.AssetPartView>

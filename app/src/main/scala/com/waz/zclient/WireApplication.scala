@@ -32,6 +32,7 @@ import com.waz.zclient.messages.MessageViewFactory
 import com.waz.zclient.notifications.controllers.{CallingNotificationsController, ImageNotificationsController, MessageNotificationsController}
 import com.waz.zclient.utils.{BackendPicker, BuildConfigUtils, Callback}
 import com.waz.zclient.controllers.global.{AccentColorController, KeyboardController, SelectionController}
+import com.waz.zclient.messages.parts.AssetController
 import com.waz.zclient.views.ImageController
 
 object WireApplication {
@@ -67,6 +68,7 @@ object WireApplication {
     bind[CurrentCallController] to new CurrentCallController()
     bind[CallPermissionsController] to new CallPermissionsController()
     bind[ImageController] to new ImageController()
+    bind[AssetController] to new AssetController()
     bind[PermissionActivity] to ctx.asInstanceOf[PermissionActivity]
     bind[PermissionsController] to new PermissionsController(new PermissionsWrapper)
   }
