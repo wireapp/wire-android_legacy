@@ -22,9 +22,10 @@
                                               android:layout_width="match_parent"
                                               android:layout_height="wrap_content"
                                               android:orientation="horizontal"
+                                              android:background="@drawable/shape_audio_message_background"
     >
 
-    <com.waz.zclient.messages.widgets.AssetActionButton
+    <com.waz.zclient.messages.parts.AssetActionButton
         android:id="@+id/action_button"
         android:layout_width="@dimen/content__audio_message__button__size"
         android:layout_height="@dimen/content__audio_message__button__size"
@@ -34,15 +35,6 @@
         android:text="@string/glyph__play"
         android:textColor="@color/white"
         android:textSize="@dimen/content__audio_message__glyph_size"
-        />
-
-    <com.waz.zclient.messages.parts.ProgressDotsView
-        android:id="@+id/placeholder_dots"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/content__audio_message__view_height"
-        android:layout_marginStart="@dimen/content__padding_left"
-        android:layout_marginEnd="@dimen/content__padding_right"
-        android:background="@drawable/shape_audio_message_background"
         />
 
 </com.waz.zclient.messages.parts.AssetPartView>
