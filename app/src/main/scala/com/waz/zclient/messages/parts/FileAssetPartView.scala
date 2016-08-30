@@ -22,7 +22,8 @@ import java.util.Locale
 import android.content.Context
 import android.graphics._
 import android.util.AttributeSet
-import android.widget.LinearLayout
+import android.view.View
+import android.widget.{LinearLayout, TextView}
 import com.waz.api
 import com.waz.api.AssetStatus._
 import com.waz.api.Message
@@ -34,19 +35,29 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient._
 import com.waz.zclient.messages.parts.DeliveryState._
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
+import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.views.{GlyphProgressView, ProgressDotsDrawable}
 
-class AssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
+class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
   private lazy val assetActionButton: AssetActionButton = findById(R.id.action_button)
+  private lazy val downloadedIndicator: GlyphTextView = findById(R.id.done_indicator)
+  private lazy val fileNameView: TextView = findById(R.id.file_name)
+  private lazy val fileInfoView: TextView = findById(R.id.file_info)
 
   val assets = inject[AssetController]
   val message = Signal[MessageData]()
+  val asset = message.flatMap(m => assets.assetSignal(m.assetId))
+
+  asset.map(_._1.name.getOrElse("")).on(Threading.Ui)(fileNameView.setText)
+  asset.map(_._2).map(_ == DOWNLOAD_DONE).map { case true => View.VISIBLE; case false => View.GONE }.on(Threading.Ui)(downloadedIndicator.setVisibility)
+
+  //TODO fileInfo strings - pretty big mess...
 
   setBackground(new AssetBackground(message.flatMap(m => assets.deliveryState(m))))
 
