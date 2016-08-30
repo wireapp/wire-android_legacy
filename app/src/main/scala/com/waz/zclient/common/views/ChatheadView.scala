@@ -41,6 +41,7 @@ import com.waz.utils.NameParts
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
+import com.waz.zclient.utils.ContextUtils._
 
 class ChatheadView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends View(context, attrs, defStyleAttr) with ViewHelper {
 
@@ -50,11 +51,11 @@ class ChatheadView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   def this(context: Context) = this(context, null)
 
-  private val initialsTypeface = TypefaceUtils.getTypeface(getResources.getString(R.string.chathead__user_initials__font))
-  private val initialsFontColor = getResources.getColor(R.color.chathead__user_initials__font_color);
-  private val iconOverlayColor = getResources.getColor(R.color.chathead__glyph__overlay_color)
-  private val grayScaleColor = getContext.getResources.getColor(R.color.chathead__non_connected__color)
-  private val overlayColor = getResources.getColor(R.color.text__secondary_light)
+  private val initialsTypeface = TypefaceUtils.getTypeface(getString(R.string.chathead__user_initials__font))
+  private val initialsFontColor = getColor(R.color.chathead__user_initials__font_color)
+  private val iconOverlayColor = getColor(R.color.chathead__glyph__overlay_color)
+  private val grayScaleColor = getColor(R.color.chathead__non_connected__color)
+  private val overlayColor = getColor(R.color.text__secondary_light)
 
   private val a: TypedArray = context.getTheme.obtainStyledAttributes(attrs, R.styleable.ChatheadView, 0, 0)
 
@@ -62,15 +63,15 @@ class ChatheadView(val context: Context, val attrs: AttributeSet, val defStyleAt
     a.getBoolean(R.styleable.ChatheadView_isSelectable, false),
     a.getBoolean(R.styleable.ChatheadView_show_border, true),
     Some(new Border(
-      context.getResources.getDimension(R.dimen.chathead__min_size_large_border).toInt,
-      context.getResources.getDimension(R.dimen.chathead__border_width).toInt,
-      context.getResources.getDimension(R.dimen.chathead__large_border_width).toInt)),
+      getDimen(R.dimen.chathead__min_size_large_border).toInt,
+      getDimen(R.dimen.chathead__border_width).toInt,
+      getDimen(R.dimen.chathead__large_border_width).toInt)),
     ColorVal(overlayColor)
   )
   private val allowIcon = a.getBoolean(R.styleable.ChatheadView_allow_icon, true)
   private val swapBackgroundAndInitialsColors = a.getBoolean(R.styleable.ChatheadView_swap_background_and_initial_colors, false)
   private val iconFontSize = a.getDimensionPixelSize(R.styleable.ChatheadView_glyph_size, getResources.getDimensionPixelSize(R.dimen.chathead__picker__glyph__font_size))
-  private val initialsFontSize = a.getDimensionPixelSize(R.styleable.ChatheadView_initials_font_size, defaultInitialFontSize);
+  private val initialsFontSize = a.getDimensionPixelSize(R.styleable.ChatheadView_initials_font_size, defaultInitialFontSize)
   a.recycle()
 
   private val initialsTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG)

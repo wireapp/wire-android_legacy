@@ -17,6 +17,7 @@
  */
 package com.waz.zclient
 
+import android.content.Context
 import android.view.View
 import android.view.View._
 import com.waz.zclient.ui.utils.ResourceUtils

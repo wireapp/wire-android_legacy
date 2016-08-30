@@ -22,16 +22,17 @@ import android.graphics.drawable.Drawable
 import android.graphics.{Canvas, ColorFilter, Paint, PixelFormat}
 import android.os.SystemClock
 import com.waz.utils.returning
+import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.R
 
 import scala.concurrent.duration._
 
 class ProgressDotsDrawable(duration: FiniteDuration = (350 * 3).millis)(implicit context: Context) extends Drawable {
 
-  private val lightPaint = returning(new Paint) { _.setColor(context.getResources.getColor(R.color.graphite_16)) }
-  private val darkPaint = returning(new Paint) { _.setColor(context.getResources.getColor(R.color.graphite_40)) }
+  private val lightPaint = returning(new Paint) { _.setColor(getColor(R.color.graphite_16)) }
+  private val darkPaint = returning(new Paint) { _.setColor(getColor(R.color.graphite_40)) }
 
-  private val dotSpacing = context.getResources.getDimensionPixelSize(R.dimen.progress_dot_spacing_and_width)
+  private val dotSpacing = getDimenPx(R.dimen.progress_dot_spacing_and_width)
   private val dotRadius = dotSpacing / 2
 
   private val frameMillis = duration.toMillis / 3

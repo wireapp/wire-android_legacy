@@ -35,6 +35,7 @@ import com.waz.zclient._
 import com.waz.zclient.messages.parts.DeliveryState._
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.ui.utils.TypefaceUtils
+import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.views.{GlyphProgressView, ProgressDotsDrawable}
 
@@ -103,7 +104,7 @@ protected class AssetBackground(deliveryState: Signal[DeliveryState])(implicit c
   private val cornerRadius = ViewUtils.toPx(context, 4).toFloat
 
   private val backgroundPaint = new Paint
-  backgroundPaint.setColor(context.getResources.getColor(R.color.light_graphite_8))
+  backgroundPaint.setColor(getColor(R.color.light_graphite_8))
 
   private val dots = new ProgressDotsDrawable
   dots.setCallback(this)
@@ -130,9 +131,9 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
   val message = Signal[MessageData]()
   val deliveryState = message.flatMap(m => assetService.deliveryState(m))
 
-  def normalButtonBackground = context.getResources.getDrawable(R.drawable.selector__icon_button__background__video_message)
+  def normalButtonBackground = getDrawable(R.drawable.selector__icon_button__background__video_message)
 
-  def errorButtonBackground = context.getResources.getDrawable(R.drawable.selector__icon_button__background__video_message__error)
+  def errorButtonBackground = getDrawable(R.drawable.selector__icon_button__background__video_message__error)
 
   def fileDrawable = new FileDrawable(message.map(_.assetId).flatMap(id => inject[AssetController].assetSignal(id)).map(_._1.mimeType.extension))
 
@@ -145,7 +146,7 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
     case _ => (0, null)
   }.on(Threading.Ui) {
     case (action, drawable) =>
-      setText(if (action == 0) "" else context.getString(action))
+      setText(if (action == 0) "" else getString(action))
       setBackground(drawable)
   }
 
@@ -172,21 +173,21 @@ protected class FileDrawable(ext: Signal[String])(implicit context: Context, cxt
     invalidateSelf()
   }
 
-  private final val textCorrectionSpacing = context.getResources.getDimensionPixelSize(R.dimen.wire__padding__4)
-  private final val fileGlyph = context.getResources.getString(R.string.glyph__file)
+  private final val textCorrectionSpacing = getDimenPx(R.dimen.wire__padding__4)
+  private final val fileGlyph = getString(R.string.glyph__file)
   private final val glyphPaint = new Paint
   private final val textPaint = new Paint
 
   glyphPaint.setTypeface(TypefaceUtils.getTypeface(TypefaceUtils.getGlyphsTypefaceName))
-  glyphPaint.setColor(context.getResources.getColor(R.color.black_48))
+  glyphPaint.setColor(getColor(R.color.black_48))
   glyphPaint.setAntiAlias(true)
   glyphPaint.setTextAlign(Paint.Align.CENTER)
-  glyphPaint.setTextSize(context.getResources.getDimensionPixelSize(R.dimen.content__audio_message__button__size))
+  glyphPaint.setTextSize(getDimenPx(R.dimen.content__audio_message__button__size))
 
-  textPaint.setColor(context.getResources.getColor(R.color.white))
+  textPaint.setColor(getColor(R.color.white))
   textPaint.setAntiAlias(true)
   textPaint.setTextAlign(Paint.Align.CENTER)
-  textPaint.setTextSize(context.getResources.getDimensionPixelSize(R.dimen.wire__text_size__tiny))
+  textPaint.setTextSize(getDimenPx(R.dimen.wire__text_size__tiny))
 
   override def draw(canvas: Canvas): Unit = {
     canvas.drawText(fileGlyph, getBounds.width / 2, getBounds.height, glyphPaint)

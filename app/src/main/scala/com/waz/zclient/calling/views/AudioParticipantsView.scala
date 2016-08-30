@@ -32,6 +32,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.calling.controllers.CurrentCallController
 import com.waz.zclient.ui.text.TypefaceTextView
+import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.calling.CallingGainView
 import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.{R, ViewHelper}
@@ -54,11 +55,11 @@ class AudioParticipantsView(val context: Context, val attrs: AttributeSet, val d
     val oneToOneViewType = 0
     val groupCallViewType = 1
 
-    val largeChatheadWidth = context.getResources.getDimensionPixelSize(R.dimen.calling__participants_max_diameter)
-    val smallChatheadWidth = context.getResources.getDimensionPixelSize(R.dimen.calling__participants_group_call)
+    val largeChatheadWidth = getDimenPx(R.dimen.calling__participants_max_diameter)
+    val smallChatheadWidth = getDimenPx(R.dimen.calling__participants_group_call)
 
-    val largeChatheadMargin = context.getResources.getDimensionPixelSize(R.dimen.list_padding_top)
-    val normalChatheadMargin = context.getResources.getDimensionPixelSize(R.dimen.wire__padding__small)
+    val largeChatheadMargin = getDimenPx(R.dimen.list_padding_top)
+    val normalChatheadMargin = getDimenPx(R.dimen.wire__padding__small)
 
     var participantsToDisplay = Vector.empty[UserId]
 
@@ -110,9 +111,9 @@ protected class AudioParticipantChatheadView(val context: Context, val attrs: At
 
   def this(context: Context) = this(context, null)
 
-  val gainMargin = context.getResources.getDimensionPixelSize(R.dimen.calling__chat_head__gain_margin)
-  val normalChatheadMargin = context.getResources.getDimensionPixelSize(R.dimen.wire__padding__small)
-  val largeChatheadMargin = context.getResources.getDimensionPixelSize(R.dimen.list_padding_top)
+  val gainMargin = getDimenPx(R.dimen.calling__chat_head__gain_margin)
+  val normalChatheadMargin = getDimenPx(R.dimen.wire__padding__small)
+  val largeChatheadMargin = getDimenPx(R.dimen.list_padding_top)
 
   val controller = inject[CurrentCallController]
 
