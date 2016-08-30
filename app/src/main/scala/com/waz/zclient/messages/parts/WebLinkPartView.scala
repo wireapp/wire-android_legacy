@@ -30,6 +30,7 @@ import com.waz.model.{Dim2, GenericContent, MessageContent, MessageData}
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
+import com.waz.zclient.controllers.BrowserController
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.utils._
 import com.waz.zclient.views.{ImageAssetDrawable, ProgressDotsDrawable}
@@ -42,6 +43,8 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
   def this(context: Context) = this(context, null, 0)
 
   override val tpe: MsgPart = MsgPart.WebLink
+
+  lazy val browser = inject[BrowserController]
 
   lazy val titleTextView: TextView  = findById(R.id.ttv__row_conversation__link_preview__title)
   lazy val urlTextView: TextView    = findById(R.id.ttv__row_conversation__link_preview__url)
@@ -83,10 +86,9 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
     case (ct, _) => ct.openGraph.getOrElse(OpenGraphData.Empty)
   }
 
-  val hasImage = image.map(_.isDefined)
-
   val title = openGraph.map(_.title)
   val urlText = content.map(c => StringUtils.trimLinkPreviewUrls(c.contentAsUri))
+  val hasImage = image.map(_.isDefined)
 
   private val dotsDrawable = new ProgressDotsDrawable
   private val imageDrawable = new ImageAssetDrawable(image.collect { case Some(im) => im }, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single)
@@ -106,10 +108,7 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
   urlText.on(Threading.Ui) { urlTextView.setText }
 
   this.onClick {
-    content.currentValue foreach { c =>
-
-      verbose(s"on link click: ${c.contentAsUri}")
-    }
+    content.currentValue foreach { c => browser.openUrl(c.contentAsUri) }
   }
 
   override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {

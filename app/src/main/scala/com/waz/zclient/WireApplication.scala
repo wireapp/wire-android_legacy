@@ -26,13 +26,13 @@ import com.waz.zclient.api.scala.ScalaStoreFactory
 import com.waz.zclient.calling.controllers.{CallPermissionsController, CurrentCallController, GlobalCallingController}
 import com.waz.zclient.camera.controllers.{AndroidCameraFactory, GlobalCameraController}
 import com.waz.zclient.common.controllers.{PermissionActivity, PermissionsController, PermissionsWrapper}
-import com.waz.zclient.controllers.{DefaultControllerFactory, IControllerFactory}
+import com.waz.zclient.controllers.global.{AccentColorController, KeyboardController, SelectionController}
+import com.waz.zclient.controllers.{BrowserController, DefaultControllerFactory, IControllerFactory}
 import com.waz.zclient.core.stores.IStoreFactory
 import com.waz.zclient.messages.MessageViewFactory
+import com.waz.zclient.messages.parts.AssetController
 import com.waz.zclient.notifications.controllers.{CallingNotificationsController, ImageNotificationsController, MessageNotificationsController}
 import com.waz.zclient.utils.{BackendPicker, BuildConfigUtils, Callback}
-import com.waz.zclient.controllers.global.{AccentColorController, KeyboardController, SelectionController}
-import com.waz.zclient.messages.parts.AssetController
 import com.waz.zclient.views.ImageController
 
 object WireApplication {
@@ -69,6 +69,7 @@ object WireApplication {
     bind[CallPermissionsController] to new CallPermissionsController()
     bind[ImageController] to new ImageController()
     bind[AssetController] to new AssetController()
+    bind[BrowserController] to new BrowserController(ctx)
     bind[PermissionActivity] to ctx.asInstanceOf[PermissionActivity]
     bind[PermissionsController] to new PermissionsController(new PermissionsWrapper)
   }
