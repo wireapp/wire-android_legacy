@@ -26,7 +26,7 @@ import com.waz.zclient.R
 
 import scala.concurrent.duration._
 
-class ProgressDotsDrawable(context: Context, duration: FiniteDuration = (350 * 3).millis) extends Drawable {
+class ProgressDotsDrawable(duration: FiniteDuration = (350 * 3).millis)(implicit context: Context) extends Drawable {
 
   private val lightPaint = returning(new Paint) { _.setColor(context.getResources.getColor(R.color.graphite_16)) }
   private val darkPaint = returning(new Paint) { _.setColor(context.getResources.getColor(R.color.graphite_40)) }

@@ -88,7 +88,7 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
   val title = openGraph.map(_.title)
   val urlText = content.map(c => StringUtils.trimLinkPreviewUrls(c.contentAsUri))
 
-  private val dotsDrawable = new ProgressDotsDrawable(context)
+  private val dotsDrawable = new ProgressDotsDrawable
   private val imageDrawable = new ImageAssetDrawable(image.collect { case Some(im) => im }, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single)
 
   imageView.setBackground(dotsDrawable)

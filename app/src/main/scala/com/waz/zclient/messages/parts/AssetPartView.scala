@@ -19,10 +19,8 @@ package com.waz.zclient.messages.parts
 
 import java.util.Locale
 
-import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics._
-import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.widget.LinearLayout
 import com.waz.api
@@ -32,13 +30,13 @@ import com.waz.api.impl.ProgressIndicator.ProgressData
 import com.waz.model.{AssetId, MessageContent, MessageData}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient._
 import com.waz.zclient.messages.parts.DeliveryState._
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ViewUtils
-import com.waz.zclient.views.GlyphProgressView
+import com.waz.zclient.views.{GlyphProgressView, ProgressDotsDrawable}
 
 class AssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -107,54 +105,18 @@ protected class AssetBackground(deliveryState: Signal[DeliveryState])(implicit c
   private val backgroundPaint = new Paint
   backgroundPaint.setColor(context.getResources.getColor(R.color.light_graphite_8))
 
-  private val dots = new ProgressDots(deliveryState.map { case OtherUploading => true; case _ => false }.onChanged)
+  private val dots = new ProgressDotsDrawable
   dots.setCallback(this)
+
+  private var showDots = false
+  deliveryState.map { case OtherUploading => true; case _ => false }.onChanged.on(Threading.Ui) (showDots = _)
 
   override def draw(canvas: Canvas): Unit = {
     canvas.drawRoundRect(new RectF(getBounds), cornerRadius, cornerRadius, backgroundPaint)
-    dots.draw(canvas)
+    if (showDots) dots.draw(canvas)
   }
 
   override def onBoundsChange(bounds: Rect): Unit = dots.setBounds(bounds)
-}
-
-class ProgressDots(showProgress: EventStream[Boolean])(implicit context: WireContext, eventContext: EventContext) extends DrawableHelper {
-
-  private val ANIMATION_DURATION = 350 * 3
-
-  private val lightPaint = new Paint
-  private val darkPaint = new Paint
-  private val dotSpacing = context.getResources.getDimensionPixelSize(R.dimen.progress_dot_spacing_and_width)
-  private val dotRadius = dotSpacing / 2
-  private val animator = ValueAnimator.ofInt(0, 1, 2, 3).setDuration(ANIMATION_DURATION)
-  private var darkDotIndex = 0
-
-  lightPaint.setColor(context.getResources.getColor(R.color.graphite_16))
-  darkPaint.setColor(context.getResources.getColor(R.color.graphite_40))
-  animator.setRepeatCount(ValueAnimator.INFINITE)
-  animator.setInterpolator(null)
-
-  animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-    def onAnimationUpdate(animation: ValueAnimator): Unit = {
-      darkDotIndex = animation.getAnimatedValue.asInstanceOf[Int]
-      invalidateSelf()
-    }
-  })
-
-  showProgress.on(Threading.Ui) {
-    case true => animator.start()
-    case false => animator.cancel()
-  }
-
-  override def draw(canvas: Canvas): Unit = if (animator.isRunning) {
-    val centerX = getBounds.width() / 2
-    val centerY = getBounds.height() / 2
-    val dotLeftCenterX = centerX - dotSpacing - dotRadius
-    val dotRightCenterX = centerX + dotSpacing + dotRadius
-    canvas.drawCircle(dotLeftCenterX, centerY, dotRadius, if (darkDotIndex == 0) darkPaint else lightPaint)
-    canvas.drawCircle(centerX, centerY, dotRadius, if (darkDotIndex == 1) darkPaint else lightPaint)
-    canvas.drawCircle(dotRightCenterX, centerY, dotRadius, if (darkDotIndex == 2) darkPaint else lightPaint)
-  }
 }
 
 class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) extends GlyphProgressView(context, attrs, style) with ViewHelper {
