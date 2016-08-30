@@ -20,7 +20,6 @@ package com.waz.zclient.messages.parts
 import android.content.Context
 import android.support.v7.widget.CardView
 import android.util.AttributeSet
-import android.view.View
 import android.widget.{ImageView, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
@@ -33,7 +32,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.utils._
-import com.waz.zclient.views.ImageAssetDrawable
+import com.waz.zclient.views.{ImageAssetDrawable, ProgressDotsDrawable}
 import com.waz.zclient.views.ImageAssetDrawable.{RequestBuilder, ScaleType, State}
 import com.waz.zclient.views.ImageController.{ImageUri, ProtoImage}
 import com.waz.zclient.{R, ViewHelper}
@@ -44,14 +43,14 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
 
   override val tpe: MsgPart = MsgPart.WebLink
 
-  lazy val titleTextView: TextView          = findById(R.id.ttv__row_conversation__link_preview__title)
-  lazy val urlTextView: TextView            = findById(R.id.ttv__row_conversation__link_preview__url)
-  lazy val previewImageView: ImageView      = findById(R.id.iv__row_conversation__link_preview__image)
-  lazy val progressDotsView: View           = findById(R.id.pdv__row_conversation__link_preview__placeholder_dots)
-  lazy val previewImageContainerView: View  = findById(R.id.fl__row_conversation__link_preview__image_container)
+  lazy val titleTextView: TextView  = findById(R.id.ttv__row_conversation__link_preview__title)
+  lazy val urlTextView: TextView    = findById(R.id.ttv__row_conversation__link_preview__url)
+  lazy val imageView: ImageView     = findById(R.id.iv__row_conversation__link_preview__image)
 
   private val message = Signal[MessageData]()
   private val content = Signal[MessageContent]()
+
+  inflate(R.layout.message_part_weblink_content)
 
   val linkPreview = for {
     msg <- message
@@ -89,7 +88,22 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
   val title = openGraph.map(_.title)
   val urlText = content.map(c => StringUtils.trimLinkPreviewUrls(c.contentAsUri))
 
+  private val dotsDrawable = new ProgressDotsDrawable(context)
   private val imageDrawable = new ImageAssetDrawable(image.collect { case Some(im) => im }, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single)
+
+  imageView.setBackground(dotsDrawable)
+  imageView.setImageDrawable(imageDrawable)
+
+  hasImage.on(Threading.Ui) { imageView.setVisible }
+
+  imageDrawable.state.map {
+    case State.Loading(_) => dotsDrawable
+    case _ => null
+  }.on(Threading.Ui) { imageView.setBackground }
+
+  title.on(Threading.Ui) { titleTextView.setText }
+
+  urlText.on(Threading.Ui) { urlTextView.setText }
 
   this.onClick {
     content.currentValue foreach { c =>
@@ -98,24 +112,8 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
     }
   }
 
-  private lazy val bindViews = {
-    previewImageView.setImageDrawable(imageDrawable)
-
-    hasImage.on(Threading.Ui) { previewImageContainerView.setVisible }
-
-    imageDrawable.state.map {
-      case State.Loading(_) => true
-      case _ => false
-    }.on(Threading.Ui) { progressDotsView.setVisible }
-
-    title.on(Threading.Ui) { titleTextView.setText }
-
-    urlText.on(Threading.Ui) { urlTextView.setText }
-  }
-
   override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
     verbose(s"set $part")
-    bindViews
     message ! msg
     part foreach { content ! _ }
   }

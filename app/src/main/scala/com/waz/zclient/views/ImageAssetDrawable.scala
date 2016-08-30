@@ -78,28 +78,33 @@ class ImageAssetDrawable(
   // previously drawn state
   private var prev: State = State.Loading(WireImage(AssetId()))
 
-  override def draw(canvas: Canvas): Unit =
+  override def draw(canvas: Canvas): Unit = {
+
+    // will only use fadeIn if we previously displayed an empty bitmap
+    // this way we can avoid animating if view was recycled
+    def resetAnimation(state: State) = {
+      animator.end()
+      if (state.bmp.nonEmpty && prev.bmp.isEmpty) animator.start()
+    }
+
+    def updateMatrix(b: Bitmap) =
+      scaleType(matrix, b.getWidth, b.getHeight, Dim2(getBounds.width(), getBounds.height()))
+
+    def updateDrawingState(state: State) = {
+      state.bmp foreach updateMatrix
+      if (state.src != prev.src) resetAnimation(state)
+    }
+
     state.currentValue foreach { st =>
       if (st != prev) {
-        // update transform and alpha on image state change
-        st.bmp.foreach { b =>
-          val bounds = getBounds
-          scaleType(matrix, b.getWidth, b.getHeight, Dim2(bounds.width(), bounds.height()))
-        }
-        if (st.src != prev.src) {
-          animator.end()
-
-          if (prev.bmp.isEmpty) {
-            // will only use fadeIn if we previously displayed an empty bitmap
-            // this way we can avoid animating if view was just recycled
-            animator.start()
-          }
-        }
-
+        updateDrawingState(st)
         prev = st
       }
-      st.bmp foreach { canvas.drawBitmap(_, matrix, bitmapPaint) }
+      st.bmp foreach {
+        canvas.drawBitmap(_, matrix, bitmapPaint)
+      }
     }
+  }
 
   override def onBoundsChange(bounds: Rect): Unit = dims ! Dim2(bounds.width(), bounds.height())
 

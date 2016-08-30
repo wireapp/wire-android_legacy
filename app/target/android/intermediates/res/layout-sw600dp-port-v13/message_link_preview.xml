@@ -22,10 +22,10 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cv__row_conversation__link_preview__container"
-    android:layout_width="match_parent"
+    android:layout_width="@dimen/content__width"
     android:layout_height="wrap_content"
-    android:layout_marginLeft="@dimen/content__padding_left"
-    android:layout_marginRight="@dimen/content__padding_right"
     app:cardCornerRadius="@dimen/content__card__corner_radius"
     app:cardBackgroundColor="@color/light_graphite_16"
+    android:layout_marginLeft="@dimen/content__padding_left"
+    android:layout_marginRight="@dimen/content__padding_right"
     app:cardElevation="0dp" />
