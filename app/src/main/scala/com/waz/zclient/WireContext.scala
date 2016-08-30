@@ -20,6 +20,8 @@ package com.waz.zclient
 import android.annotation.SuppressLint
 import android.app.{Activity, Service}
 import android.content.{Context, ContextWrapper}
+import android.graphics.{PixelFormat, ColorFilter}
+import android.graphics.drawable.Drawable
 import android.support.v4.app.{Fragment, FragmentActivity}
 import android.view.{LayoutInflater, View, ViewGroup, ViewStub}
 import com.waz.ZLog._
@@ -53,7 +55,8 @@ trait ViewFinder {
 }
 
 trait ViewHelper extends View with ViewFinder with Injectable with ViewEventContext {
-  lazy implicit val injector = WireContext(getContext).injector
+  lazy implicit val wContext = WireContext(getContext)
+  lazy implicit val injector = wContext.injector
 
   @SuppressLint(Array("com.waz.ViewUtils"))
   def findById[V <: View](id: Int) = findViewById(id).asInstanceOf[V]
@@ -61,7 +64,6 @@ trait ViewHelper extends View with ViewFinder with Injectable with ViewEventCont
   def inflate(layoutResId: Int, group: ViewGroup = ViewHelper.viewGroup(this), addToParent: Boolean = true)(implicit tag: LogTag = "ViewHelper") =
     ViewHelper.inflate[View](layoutResId, group, addToParent)
 }
-
 
 object ViewHelper {
 
@@ -79,6 +81,21 @@ object ViewHelper {
       error("inflate failed with root cause:", cause)
       throw e
     }
+}
+
+trait DrawableHelper extends Drawable with Drawable.Callback with Injectable {
+
+  override def setColorFilter(colorFilter: ColorFilter): Unit = ()
+
+  override def setAlpha(alpha: Int): Unit = ()
+
+  override def getOpacity: Int = PixelFormat.TRANSLUCENT
+
+  override def scheduleDrawable(who: Drawable, what: Runnable, when: Long): Unit = scheduleSelf(what, when)
+
+  override def invalidateDrawable(who: Drawable): Unit = invalidateSelf()
+
+  override def unscheduleDrawable(who: Drawable, what: Runnable): Unit = unscheduleSelf(what)
 }
 
 trait ServiceHelper extends Service with Injectable with WireContext with EventContext {

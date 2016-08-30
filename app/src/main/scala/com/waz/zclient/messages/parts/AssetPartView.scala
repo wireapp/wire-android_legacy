@@ -23,7 +23,6 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics._
 import android.graphics.drawable.Drawable
-import android.graphics.drawable.Drawable.Callback
 import android.util.AttributeSet
 import android.widget.LinearLayout
 import com.waz.api
@@ -34,12 +33,12 @@ import com.waz.model.{AssetId, MessageContent, MessageData}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.waz.zclient._
 import com.waz.zclient.messages.parts.DeliveryState._
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.views.GlyphProgressView
-import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 
 class AssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -50,7 +49,7 @@ class AssetPartView(context: Context, attrs: AttributeSet, style: Int) extends L
   val assets = inject[AssetController]
   val message = Signal[MessageData]()
 
-  setBackground(new AssetBackground(context, message.flatMap(m => assets.deliveryState(m))))
+  setBackground(new AssetBackground(message.flatMap(m => assets.deliveryState(m))))
 
   override val tpe: MsgPart = MsgPart.Asset
 
@@ -102,17 +101,14 @@ protected object DeliveryState {
   }
 }
 
-protected class AssetBackground(context: Context, deliveryState: Signal[DeliveryState])(implicit eventContext: EventContext) extends Drawable with Drawable.Callback {
-
+protected class AssetBackground(deliveryState: Signal[DeliveryState])(implicit context: WireContext, eventContext: EventContext) extends DrawableHelper {
   private val cornerRadius = ViewUtils.toPx(context, 4).toFloat
 
   private val backgroundPaint = new Paint
   backgroundPaint.setColor(context.getResources.getColor(R.color.light_graphite_8))
 
-  private val dots = new ProgressDots(context, deliveryState.map { case OtherUploading => true; case _ => false }.onChanged)
+  private val dots = new ProgressDots(deliveryState.map { case OtherUploading => true; case _ => false }.onChanged)
   dots.setCallback(this)
-
-  override def getCallback: Callback = super.getCallback
 
   override def draw(canvas: Canvas): Unit = {
     canvas.drawRoundRect(new RectF(getBounds), cornerRadius, cornerRadius, backgroundPaint)
@@ -120,21 +116,10 @@ protected class AssetBackground(context: Context, deliveryState: Signal[Delivery
   }
 
   override def onBoundsChange(bounds: Rect): Unit = dots.setBounds(bounds)
-
-  override def setColorFilter(colorFilter: ColorFilter): Unit = ()
-
-  override def setAlpha(alpha: Int): Unit = ()
-
-  override def getOpacity: Int = PixelFormat.TRANSLUCENT
-
-  override def scheduleDrawable(who: Drawable, what: Runnable, when: Long): Unit = scheduleSelf(what, when)
-
-  override def invalidateDrawable(who: Drawable): Unit = invalidateSelf()
-
-  override def unscheduleDrawable(who: Drawable, what: Runnable): Unit = unscheduleSelf(what)
 }
 
-class ProgressDots(context: Context, showProgress: EventStream[Boolean])(implicit eventContext: EventContext) extends Drawable {
+class ProgressDots(showProgress: EventStream[Boolean])(implicit context: WireContext, eventContext: EventContext) extends DrawableHelper {
+
   private val ANIMATION_DURATION = 350 * 3
 
   private val lightPaint = new Paint
@@ -170,12 +155,6 @@ class ProgressDots(context: Context, showProgress: EventStream[Boolean])(implici
     canvas.drawCircle(centerX, centerY, dotRadius, if (darkDotIndex == 1) darkPaint else lightPaint)
     canvas.drawCircle(dotRightCenterX, centerY, dotRadius, if (darkDotIndex == 2) darkPaint else lightPaint)
   }
-
-  override def setColorFilter(colorFilter: ColorFilter): Unit = ()
-
-  override def setAlpha(alpha: Int): Unit = ()
-
-  override def getOpacity: Int = PixelFormat.TRANSLUCENT
 }
 
 class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) extends GlyphProgressView(context, attrs, style) with ViewHelper {
@@ -193,7 +172,7 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
 
   def errorButtonBackground = context.getResources.getDrawable(R.drawable.selector__icon_button__background__video_message__error)
 
-  def fileDrawable = new FileDrawable(context, message.map(_.assetId))
+  def fileDrawable = new FileDrawable(message.map(_.assetId).flatMap(id => inject[AssetController].assetSignal(id)).map(_._1.mimeType.extension))
 
   //TODO playback controls for audio messages
   deliveryState.map {
@@ -225,9 +204,7 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
   }
 }
 
-protected class FileDrawable(context: Context, assetId: Signal[AssetId])(implicit injector: Injector, cxt: EventContext) extends Drawable with Injectable {
-
-  private val ext = assetId.flatMap(id => inject[AssetController].assetSignal(id)).map(_._1.mimeType.extension)
+protected class FileDrawable(ext: Signal[String])(implicit context: Context, cxt: EventContext) extends DrawableHelper {
 
   ext.onChanged.on(Threading.Ui) { _ =>
     invalidateSelf()
@@ -253,12 +230,6 @@ protected class FileDrawable(context: Context, assetId: Signal[AssetId])(implici
     canvas.drawText(fileGlyph, getBounds.width / 2, getBounds.height, glyphPaint)
     ext.currentValue.foreach { ex => canvas.drawText(ex.toUpperCase(Locale.getDefault), getBounds.width / 2, getBounds.height - textCorrectionSpacing, textPaint) }
   }
-
-  override def setAlpha(alpha: Int): Unit = ()
-
-  override def setColorFilter(colorFilter: ColorFilter): Unit = ()
-
-  override def getOpacity: Int = PixelFormat.TRANSLUCENT
 }
 
 
