@@ -19,7 +19,6 @@ package com.waz.zclient.messages
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.View.OnClickListener
 import android.view.{View, ViewGroup}
 import android.widget.LinearLayout
 import com.waz.ZLog.ImplicitTag._
@@ -30,6 +29,7 @@ import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.returning
 import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.utils._
 
 class MessageView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -42,9 +42,9 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
   var parent = Option.empty[ViewGroup]
   private def widthHint = parent.fold(0)(_.getWidth)
 
-  setOnClickListener(new OnClickListener {
-    override def onClick(v: View): Unit = selection.toggleFocused(msgId)
-  })
+  this.onClick {
+    selection.toggleFocused(msgId)
+  }
 
   def set(pos: Int, m: MessageAndLikes, prev: Option[MessageData], focused: Boolean): Unit = {
     val msg = m.message
@@ -112,6 +112,8 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
     super.onLayout(changed, l, t, r, b)
     verbose(s"onLayout, height: ${b - t}")
   }
+
+
 }
 
 object MessageView {
@@ -139,26 +141,41 @@ object MsgPart {
   case object Text extends MsgPart(20)
   case object FileAsset extends MsgPart(30)
   case object AudioAsset extends MsgPart(30)
+  case object VideoAsset extends MsgPart(30)
   case object Image extends MsgPart(30)
   case object WebLink extends MsgPart(40)
   case object YouTube extends MsgPart(40)
+  case object Location extends MsgPart(40)
   case object SoundCloud extends MsgPart(40)
   case object Timestamp extends MsgPart(100)
 
-  def apply(msgType: Message.Type): MsgPart = msgType match {
-    case Message.Type.TEXT => Text
-    case Message.Type.ASSET => Image
-    case Message.Type.ANY_ASSET => FileAsset
-    case Message.Type.AUDIO_ASSET => AudioAsset
-    case _ => Text // TODO
+
+  def apply(msgType: Message.Type): MsgPart = {
+    import Message.Type._
+    msgType match {
+      case TEXT | TEXT_EMOJI_ONLY => Text
+      case ASSET => Image
+      case ANY_ASSET => FileAsset
+      case VIDEO_ASSET => VideoAsset
+      case AUDIO_ASSET => AudioAsset
+      case LOCATION => Location
+      case _ => Text // TODO
+    }
   }
 
-  def apply(msgType: Message.Part.Type): MsgPart = msgType match {
-    case Message.Part.Type.TEXT => Text
-    case Message.Part.Type.ASSET => Image
-    case Message.Part.Type.WEB_LINK => WebLink
-    case Message.Part.Type.ANY_ASSET => FileAsset
-    case _ => Text // TODO
+  def apply(msgType: Message.Part.Type): MsgPart = {
+    import Message.Part.Type._
+
+    msgType match {
+      case TEXT | TEXT_EMOJI_ONLY => Text
+      case ASSET => Image
+      case WEB_LINK => WebLink
+      case ANY_ASSET => FileAsset
+      case SOUNDCLOUD => SoundCloud
+      case YOUTUBE => YouTube
+      case GOOGLE_MAPS | SPOTIFY => Text
+      case _ => Text // TODO
+    }
   }
 }
 

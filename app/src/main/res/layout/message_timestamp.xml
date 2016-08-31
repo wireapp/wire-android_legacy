@@ -25,7 +25,9 @@
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
                                         android:fontFamily="sans-serif-light"
-                                        android:paddingTop="@dimen/content__message_timestamp__padding_top"
                                         android:textSize="@dimen/wire__text_size__small"
                                         app:font="@string/wire__typeface__light"
+                                        android:paddingTop="@dimen/content__message_timestamp__padding_top"
+                                        android:layout_marginLeft="@dimen/content__padding_left"
+                                        android:layout_marginRight="@dimen/content__padding_right"
     />

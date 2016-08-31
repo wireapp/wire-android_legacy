@@ -76,7 +76,7 @@ class ImageAssetDrawable(
       .orElse(Signal const State.Loading(im))
 
   // previously drawn state
-  private var prev: State = State.Loading(WireImage(AssetId()))
+  private var prev = Option.empty[State]
 
   override def draw(canvas: Canvas): Unit = {
 
@@ -84,7 +84,7 @@ class ImageAssetDrawable(
     // this way we can avoid animating if view was recycled
     def resetAnimation(state: State) = {
       animator.end()
-      if (state.bmp.nonEmpty && prev.bmp.isEmpty) animator.start()
+      if (state.bmp.nonEmpty && prev.exists(_.bmp.isEmpty)) animator.start()
     }
 
     def updateMatrix(b: Bitmap) =
@@ -92,13 +92,13 @@ class ImageAssetDrawable(
 
     def updateDrawingState(state: State) = {
       state.bmp foreach updateMatrix
-      if (state.src != prev.src) resetAnimation(state)
+      if (prev.forall(_.src != state.src)) resetAnimation(state)
     }
 
     state.currentValue foreach { st =>
-      if (st != prev) {
+      if (!prev.contains(st)) {
         updateDrawingState(st)
-        prev = st
+        prev = Some(st)
       }
       st.bmp foreach {
         canvas.drawBitmap(_, matrix, bitmapPaint)
