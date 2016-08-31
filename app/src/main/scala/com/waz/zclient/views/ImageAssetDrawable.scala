@@ -39,7 +39,8 @@ import com.waz.zclient.{Injectable, Injector}
 class ImageAssetDrawable(
                           src: Signal[ImageSource],
                           scaleType: ScaleType = ScaleType.FitXY,
-                          request: RequestBuilder = RequestBuilder.Regular
+                          request: RequestBuilder = RequestBuilder.Regular,
+                          background: Option[Drawable] = None
                         )(implicit inj: Injector, eventContext: EventContext) extends Drawable with Injectable {
 
   val images = inject[ImageController]
@@ -100,13 +101,20 @@ class ImageAssetDrawable(
         updateDrawingState(st)
         prev = Some(st)
       }
+
+      if (st.bmp.isEmpty || bitmapPaint.getAlpha < 255)
+        background foreach { _.draw(canvas) }
+
       st.bmp foreach {
         canvas.drawBitmap(_, matrix, bitmapPaint)
       }
     }
   }
 
-  override def onBoundsChange(bounds: Rect): Unit = dims ! Dim2(bounds.width(), bounds.height())
+  override def onBoundsChange(bounds: Rect): Unit = {
+    background foreach { _.setBounds(bounds) }
+    dims ! Dim2(bounds.width(), bounds.height())
+  }
 
   override def setColorFilter(colorFilter: ColorFilter): Unit = {
     bitmapPaint.setColorFilter(colorFilter)

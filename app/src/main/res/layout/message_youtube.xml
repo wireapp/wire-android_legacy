@@ -18,14 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<com.waz.zclient.messages.parts.TextPartView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/ltv__row_conversation__message"
-    style="?messageStreamMessage"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginLeft="@dimen/content__padding_left"
-    android:layout_marginRight="@dimen/content__padding_right"
-    app:font="@string/wire__typeface__light"
+<com.waz.zclient.messages.parts.YouTubePartView xmlns:android="http://schemas.android.com/apk/res/android"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
     />

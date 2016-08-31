@@ -48,6 +48,7 @@ class MessageViewFactory {
         case Timestamp      => ViewHelper.inflate(R.layout.message_timestamp, parent, false)
         case Text           => ViewHelper.inflate(R.layout.message_text, parent, false)
         case Image          => ViewHelper.inflate(R.layout.message_image, parent, false)
+        case YouTube        => ViewHelper.inflate(R.layout.message_youtube, parent, false)
         case WebLink        => ViewHelper.inflate(R.layout.message_link_preview, parent, false)
         case FileAsset      => ViewHelper.inflate(R.layout.message_file_asset, parent, false)
         case AudioAsset     => ViewHelper.inflate(R.layout.message_audio_asset, parent, false)

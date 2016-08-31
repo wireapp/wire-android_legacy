@@ -20,7 +20,7 @@ package com.waz.zclient
 import android.content.Context
 import android.support.multidex.MultiDexApplication
 import com.waz.api.{NetworkMode, ZMessagingApi, ZMessagingApiFactory}
-import com.waz.service.{MediaManagerService, PreferenceService, ZMessaging}
+import com.waz.service.{MediaManagerService, NetworkModeService, PreferenceService, ZMessaging}
 import com.waz.utils.events.{EventContext, Signal, Subscription}
 import com.waz.zclient.api.scala.ScalaStoreFactory
 import com.waz.zclient.calling.controllers.{CallPermissionsController, CurrentCallController, GlobalCallingController}
@@ -41,13 +41,17 @@ object WireApplication {
   lazy val Global = new Module {
     implicit val eventContext = EventContext.Global
 
+    // SE services
     bind[Signal[Option[ZMessaging]]] to ZMessaging.currentUi.currentZms
     bind[Signal[ZMessaging]] to inject[Signal[Option[ZMessaging]]].collect { case Some(z) => z }
-    bind[PreferenceService] to new PreferenceService(inject[Context])
+    bind[PreferenceService] to ZMessaging.currentGlobal.prefs
+    bind[NetworkModeService] to ZMessaging.currentGlobal.network
+    bind[MediaManagerService] to ZMessaging.currentGlobal.mediaManager
+
+    // global controllers
     bind[AccentColorController] to new AccentColorController()
     bind[GlobalCallingController] to new GlobalCallingController(inject[Context])
     bind[GlobalCameraController] to new GlobalCameraController(inject[Context], new AndroidCameraFactory)
-    bind[MediaManagerService] to ZMessaging.currentGlobal.mediaManager
     bind[MessageViewFactory] to new MessageViewFactory()
     bind[SelectionController] to new SelectionController()
 

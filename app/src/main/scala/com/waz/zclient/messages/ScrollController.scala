@@ -38,7 +38,7 @@ class ScrollController(adapter: MessagesListView.Adapter)(implicit ec: EventCont
     onScrollToBottomRequested.map(_ => Scroll(lastPosition, smooth = true)),
     listHeight.onChanged.filter(_ => shouldScrollToBottom).map(_ => Scroll(lastPosition, smooth = false)),
     adapter.msgCount.onChanged.filter(_ => shouldScrollToBottom).map(_ => Scroll(lastPosition, smooth = true))
-  )
+  ) .filter(_.position >= 0)
 }
 
 object ScrollController {
