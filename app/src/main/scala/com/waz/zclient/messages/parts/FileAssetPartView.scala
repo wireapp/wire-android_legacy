@@ -47,7 +47,7 @@ import com.waz.zclient.utils.{StringUtils, ViewUtils, _}
 import com.waz.zclient.views.{GlyphProgressView, ProgressDotsDrawable}
 import org.threeten.bp.Duration
 
-class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
+abstract class AssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -57,7 +57,24 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) exten
   val deliveryState = DeliveryState(message, asset)
   setBackground(new AssetBackground(deliveryState))
 
-  private lazy val assetActionButton: AssetActionButton = findById(R.id.action_button)
+  protected lazy val assetActionButton: AssetActionButton = findById(R.id.action_button)
+
+  //toggle content visibility to show only progress dot background if other side is uploading asset
+  deliveryState.map {
+    case OtherUploading => false
+    case _ => true
+  }.on(Threading.Ui)(show => Seq.tabulate(getChildCount)(getChildAt).foreach(_.setVisible(show)))
+
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
+    message ! msg
+    assetActionButton.message ! msg
+  }
+}
+
+class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends AssetPartView(context, attrs, style) {
+  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
+  def this(context: Context) = this(context, null, 0)
+
   private lazy val downloadedIndicator: GlyphTextView = findById(R.id.done_indicator)
   private lazy val fileNameView: TextView = findById(R.id.file_name)
   private lazy val fileInfoView: TextView = findById(R.id.file_info)
@@ -69,23 +86,12 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) exten
 
   override val tpe: MsgPart = MsgPart.FileAsset
 
-  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
-    message ! msg
-    assetActionButton.message ! msg
-  }
 }
 
-class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
+class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends AssetPartView(context, attrs, style) {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
-  val assets = inject[AssetController]
-  val message = Signal[MessageData]()
-  val asset = assets.assetSignal(message)
-  val deliveryState = DeliveryState(message, asset)
-  setBackground(new AssetBackground(deliveryState))
-
-  private lazy val assetActionButton: AssetActionButton = findById(R.id.action_button)
   private lazy val durationView: TextView = findById(R.id.duration)
   private lazy val progressBar: SeekBar = findById(R.id.progress)
 
@@ -116,11 +122,6 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) exte
   }
 
   override val tpe: MsgPart = MsgPart.AudioAsset
-
-  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
-    message ! msg
-    assetActionButton.message ! msg
-  }
 }
 
 class PlaybackControls(asset: Signal[AnyAssetData])(implicit injector: Injector) extends Injectable {
