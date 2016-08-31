@@ -41,6 +41,7 @@
             android:layout_margin="@dimen/wire__padding__12"
             android:textColor="@color/white"
             android:textSize="@dimen/content__audio_message__glyph_size"
+            app:isFileType="true"
             />
 
         <!--TODO incorporate this into the action button-->

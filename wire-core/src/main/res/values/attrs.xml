@@ -247,4 +247,9 @@
         <attr name="secondaryColor" format="color" />
         <attr name="dotPadding" format="dimension" />
     </declare-styleable>
+
+    <declare-styleable name="AssetActionButton">
+        <attr name="isFileType" format="boolean"/>
+    </declare-styleable>
+
 </resources>

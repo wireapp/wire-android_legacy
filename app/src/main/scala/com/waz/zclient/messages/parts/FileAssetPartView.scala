@@ -20,15 +20,18 @@ package com.waz.zclient.messages.parts
 import java.util.Locale
 
 import android.content.Context
+import android.content.res.TypedArray
 import android.graphics._
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, TextView}
+import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.verbose
 import com.waz.api
 import com.waz.api.AssetStatus._
 import com.waz.api.Message
 import com.waz.api.impl.ProgressIndicator.ProgressData
-import com.waz.model.{AssetId, MessageContent, MessageData}
+import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
@@ -45,21 +48,23 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) exten
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
+  val assets = inject[AssetController]
+  val message = Signal[MessageData]()
+  val asset = assets.assetSignal(message)
+  val deliveryState = DeliveryState(message, asset)
+  setBackground(new AssetBackground(deliveryState))
+
   private lazy val assetActionButton: AssetActionButton = findById(R.id.action_button)
   private lazy val downloadedIndicator: GlyphTextView = findById(R.id.done_indicator)
   private lazy val fileNameView: TextView = findById(R.id.file_name)
   private lazy val fileInfoView: TextView = findById(R.id.file_info)
 
-  val assets = inject[AssetController]
-  val message = Signal[MessageData]()
-  val asset = message.flatMap(m => assets.assetSignal(m.assetId))
 
   asset.map(_._1.name.getOrElse("")).on(Threading.Ui)(fileNameView.setText)
   asset.map(_._2).map(_ == DOWNLOAD_DONE).map { case true => View.VISIBLE; case false => View.GONE }.on(Threading.Ui)(downloadedIndicator.setVisibility)
 
   //TODO fileInfo strings - pretty big mess...
 
-  setBackground(new AssetBackground(message.flatMap(m => assets.deliveryState(m))))
 
   override val tpe: MsgPart = MsgPart.Asset
 
@@ -72,9 +77,7 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) exten
 class AssetController(implicit inj: Injector) extends Injectable {
   val assets = inject[Signal[ZMessaging]].map(_.assets)
 
-  def assetSignal(id: AssetId) = assets.flatMap(_.assetSignal(id))
-
-  def deliveryState(m: MessageData) = assetSignal(m.assetId).map(a => DeliveryState(a._2, m.state))
+  def assetSignal(mes: Signal[MessageData]) = mes.flatMap(m => assets.flatMap(_.assetSignal(m.assetId)))
 
   def downloadProgress(id: AssetId) = assets.flatMap(_.downloadProgress(id))
 
@@ -97,7 +100,7 @@ protected object DeliveryState {
 
   case object Unknown extends DeliveryState
 
-  def apply(as: api.AssetStatus, ms: Message.Status): DeliveryState = (as, ms) match {
+  private def apply(as: api.AssetStatus, ms: Message.Status): DeliveryState = (as, ms) match {
     case (UPLOAD_CANCELLED | UPLOAD_FAILED | DOWNLOAD_FAILED, _) => Failed
     case (UPLOAD_NOT_STARTED | META_DATA_SENT | PREVIEW_SENT | UPLOAD_IN_PROGRESS, mState) =>
       mState match {
@@ -109,6 +112,9 @@ protected object DeliveryState {
     case (UPLOAD_DONE | DOWNLOAD_DONE, _) => Complete
     case _ => Unknown
   }
+
+  def apply(message: Signal[MessageData], asset: Signal[(AnyAssetData, api.AssetStatus)]): Signal[DeliveryState] =
+    message.zip(asset).map { case (m, (_, s)) => apply(s, m.state) }
 }
 
 protected class AssetBackground(deliveryState: Signal[DeliveryState])(implicit context: WireContext, eventContext: EventContext) extends DrawableHelper {
@@ -131,29 +137,31 @@ protected class AssetBackground(deliveryState: Signal[DeliveryState])(implicit c
   override def onBoundsChange(bounds: Rect): Unit = dots.setBounds(bounds)
 }
 
-class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) extends GlyphProgressView(context, attrs, style) with ViewHelper {
+class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) extends GlyphProgressView(context, attrs, style) with ViewHelper with View.OnClickListener {
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
 
   def this(context: Context) = this(context, null, 0)
 
+  private val a: TypedArray = context.getTheme.obtainStyledAttributes(attrs, R.styleable.AssetActionButton, 0, 0)
+  private val isFileType = a.getBoolean(R.styleable.AssetActionButton_isFileType, false)
+
   val assetService = inject[AssetController]
-
   val message = Signal[MessageData]()
-  val deliveryState = message.flatMap(m => assetService.deliveryState(m))
 
-  def normalButtonBackground = getDrawable(R.drawable.selector__icon_button__background__video_message)
+  val asset = assetService.assetSignal(message)
+  val deliveryState = DeliveryState(message, asset)
 
-  def errorButtonBackground = getDrawable(R.drawable.selector__icon_button__background__video_message__error)
-
-  def fileDrawable = new FileDrawable(message.map(_.assetId).flatMap(id => inject[AssetController].assetSignal(id)).map(_._1.mimeType.extension))
+  private val normalButtonDrawable = getDrawable(R.drawable.selector__icon_button__background__video_message)
+  private val errorButtonDrawable = getDrawable(R.drawable.selector__icon_button__background__video_message__error)
+  private val onCompletedDrawable = if (isFileType) new FileDrawable(asset.map(_._1.mimeType.extension)) else normalButtonDrawable
 
   //TODO playback controls for audio messages
   deliveryState.map {
-    case Complete => (0, fileDrawable) //TODO handle audio and video messages here
+    case Complete => (if (isFileType) 0 else R.string.glyph__play, onCompletedDrawable)
     case Uploading |
-         Downloading => (R.string.glyph__close, normalButtonBackground)
-    case Failed => (R.string.glyph__redo, errorButtonBackground)
+         Downloading => (R.string.glyph__close, normalButtonDrawable)
+    case Failed => (R.string.glyph__redo, errorButtonDrawable)
     case _ => (0, null)
   }.on(Threading.Ui) {
     case (action, drawable) =>
@@ -175,6 +183,11 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
         case _ => clearProgress()
       }
     case _ => clearProgress()
+  }
+
+  //TODO handle click events
+  override def onClick(v: View): Unit = {
+    verbose("AssetButton clicked")
   }
 }
 
