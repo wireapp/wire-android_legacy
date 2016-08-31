@@ -74,7 +74,6 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
   def close() = {
     Threading.assertUiThread()
     closed = true
-    cursor.foreach(_.close())
     cursor = None
     subs.foreach(_.destroy())
     subs = Nil
@@ -85,9 +84,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
 
   private def setCursor(c: MessagesCursor) = {
     verbose(s"setCursor: c: $c, count: ${c.size}")
-    if (closed) c.close()
-    else {
-      self.cursor.foreach(_.close())
+    if (!closed) {
       self.cursor = Some(c)
       initialLastReadIndex.mutateOrDefault(identity, c.lastReadIndex) // only set signal if it was empty
       notifyFromHistory(c.createTime)
