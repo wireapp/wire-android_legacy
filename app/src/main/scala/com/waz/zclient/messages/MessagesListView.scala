@@ -18,8 +18,8 @@
 package com.waz.zclient.messages
 
 import android.content.Context
-import android.support.v7.widget.RecyclerView.{ViewHolder, OnScrollListener}
-import android.support.v7.widget.{DefaultItemAnimator, LinearLayoutManager, RecyclerView}
+import android.support.v7.widget.RecyclerView.OnScrollListener
+import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.util.AttributeSet
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._

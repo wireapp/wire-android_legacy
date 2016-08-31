@@ -28,8 +28,8 @@ import com.waz.model.{MessageContent, MessageData, MessageId}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.returning
 import com.waz.zclient.controllers.global.SelectionController
-import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.utils._
+import com.waz.zclient.{R, ViewHelper}
 
 class MessageView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -142,7 +142,6 @@ object MsgPart {
   case object SoundCloud extends MsgPart(40)
   case object Timestamp extends MsgPart(100)
 
-
   def apply(msgType: Message.Type): MsgPart = {
     import Message.Type._
     msgType match {
@@ -151,6 +150,7 @@ object MsgPart {
       case ANY_ASSET => FileAsset
       case VIDEO_ASSET => VideoAsset
       case AUDIO_ASSET => AudioAsset
+      case VIDEO_ASSET => VideoAsset
       case LOCATION => Location
       case _ => Text // TODO
     }

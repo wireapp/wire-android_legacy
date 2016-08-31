@@ -23,9 +23,9 @@ import android.content.Context
 import android.content.res.TypedArray
 import android.graphics._
 import android.util.AttributeSet
-import android.view.View
+import android.view.{View, ViewGroup}
 import android.widget.SeekBar.OnSeekBarChangeListener
-import android.widget.{LinearLayout, SeekBar, TextView}
+import android.widget._
 import com.waz.api
 import com.waz.api.AssetStatus._
 import com.waz.api.Message
@@ -44,18 +44,28 @@ import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{StringUtils, ViewUtils, _}
-import com.waz.zclient.views.{GlyphProgressView, ProgressDotsDrawable}
+import com.waz.zclient.views.ImageAssetDrawable.State.Loaded
+import com.waz.zclient.views.ImageController.WireImage
+import com.waz.zclient.views.{GlyphProgressView, ImageAssetDrawable, ProgressDotsDrawable}
 import org.threeten.bp.Duration
 
-abstract class AssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
-  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
-  def this(context: Context) = this(context, null, 0)
-
+//TODO retry logic on sending failed
+//TODO inflate the content from a different file to handle different layouts
+trait AssetPartView extends ViewGroup with MessageViewPart with ViewHelper {
+  val zms = inject[Signal[ZMessaging]]
   val assets = inject[AssetController]
   val message = Signal[MessageData]()
   val asset = assets.assetSignal(message)
+  val assetId = asset.map(_._1.id)
+  val duration = asset.map(_._1).map {
+    case AnyAssetData(_, _, _, _, _, Some(HasDuration(d)), _, _, _, _, _) => d
+    case _ => Duration.ZERO
+  }
+  val formattedDuration = duration.map(d => StringUtils.formatTimeSeconds(d.getSeconds))
+
   val deliveryState = DeliveryState(message, asset)
-  setBackground(new AssetBackground(deliveryState))
+  val progressDots = new AssetBackground(deliveryState)
+  setBackground(progressDots)
 
   protected lazy val assetActionButton: AssetActionButton = findById(R.id.action_button)
 
@@ -71,7 +81,7 @@ abstract class AssetPartView(context: Context, attrs: AttributeSet, style: Int) 
   }
 }
 
-class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends AssetPartView(context, attrs, style) {
+class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with AssetPartView {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -88,7 +98,7 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) exten
 
 }
 
-class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends AssetPartView(context, attrs, style) {
+class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with AssetPartView {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -97,8 +107,8 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) exte
 
   val playControls = new PlaybackControls(asset.map(_._1))
 
-  playControls.duration.map(d => StringUtils.formatTimeSeconds(d.getSeconds)).on(Threading.Ui)(durationView.setText)
-  playControls.duration.map(_.toMillis.toInt).on(Threading.Ui)(progressBar.setMax)
+  formattedDuration.on(Threading.Ui)(durationView.setText)
+  duration.map(_.toMillis.toInt).on(Threading.Ui)(progressBar.setMax)
   playControls.playHead.map(_.toMillis.toInt).on(Threading.Ui)(progressBar.setProgress)
 
   deliveryState.map { case Complete => true; case _ => false }.on(Threading.Ui) {
@@ -124,14 +134,71 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) exte
   override val tpe: MsgPart = MsgPart.AudioAsset
 }
 
+class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with AssetPartView {
+  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
+
+  def this(context: Context) = this(context, null, 0)
+
+  private lazy val durationView: TextView = findById(R.id.duration)
+
+  override val tpe: MsgPart = MsgPart.VideoAsset
+
+  private val imageDrawable = new ImageAssetDrawable(assetId.map(WireImage))
+
+  imageDrawable.state.map {
+    case Loaded(_, _) => getColor(R.color.white)
+    case _ => getColor(R.color.black)
+  }.on(Threading.Ui)(durationView.setTextColor)
+
+  deliveryState.on(Threading.Ui) {
+    case OtherUploading => setBackground(progressDots)
+    case _ =>
+      setBackground(imageDrawable)
+      imageDrawable.state.on(Threading.Ui) {
+        case ImageAssetDrawable.State.Failed(_) => setBackground(progressDots)
+        case _ =>
+      }
+  }
+
+  //TODO there is more logic for what text to display, but it doesn't seem to be used - confirm
+  formattedDuration.on(Threading.Ui)(durationView.setText)
+
+  deliveryState.map { case Complete => true; case _ => false }.on(Threading.Ui) {
+    case true =>
+      assetActionButton.onClick {
+        for {
+          id <- assetId.currentValue
+          as <- zms.map(_.assets).currentValue
+          mime <- asset.map(_._1.mimeType).currentValue
+        } {
+          as.getAssetUri(id).foreach {
+            case Some(uri) =>
+              val intent = AssetUtils.getOpenFileIntent(uri, mime.orDefault.str)
+              context.startActivity(intent)
+            case _ =>
+          } (Threading.Ui)
+        }
+      }
+    case _ =>
+  }
+
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
+    super.set(pos, msg, part, widthHint)
+
+    val Dim2(w, h) = msg.imageDimensions.getOrElse(Dim2(1, 1))
+    val margin = if (h > w) getDimenPx(R.dimen.content__padding_left) else 0
+    val displayWidth = widthHint - 2 * margin
+    val height = (h * (displayWidth.toDouble / w)).toInt
+
+    val pms = new LinearLayout.LayoutParams(displayWidth, height)
+    pms.setMargins(margin, 0, margin, 0)
+    setLayoutParams(pms)
+  }
+}
+
 class PlaybackControls(asset: Signal[AnyAssetData])(implicit injector: Injector) extends Injectable {
   val zms = inject[Signal[ZMessaging]]
   val rAndP = zms.map(_.global.recordingAndPlayback)
-
-  val duration = asset.map {
-    case AnyAssetData(_, _, _, _, _, Some(HasDuration(d)), _, _, _, _, _) => d
-    case _ => Duration.ZERO
-  }
 
   val isPlaying = rAndP.zip(asset).flatMap { case (rP, a) => rP.isPlaying(AssetMediaKey(a.id)) }
   val playHead = rAndP.zip(asset).flatMap { case (rP, a) => rP.playhead(AssetMediaKey(a.id)) }
