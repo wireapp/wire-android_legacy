@@ -24,15 +24,17 @@ import android.content.res.TypedArray
 import android.graphics._
 import android.util.AttributeSet
 import android.view.View
-import android.widget.{LinearLayout, TextView}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
+import android.widget.SeekBar.OnSeekBarChangeListener
+import android.widget.{LinearLayout, SeekBar, TextView}
 import com.waz.api
 import com.waz.api.AssetStatus._
 import com.waz.api.Message
 import com.waz.api.impl.ProgressIndicator.ProgressData
+import com.waz.model.AssetMetaData.HasDuration
 import com.waz.model._
 import com.waz.service.ZMessaging
+import com.waz.service.assets.GlobalRecordAndPlayService
+import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, UnauthenticatedContent}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient._
@@ -41,8 +43,9 @@ import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.ViewUtils
+import com.waz.zclient.utils.{StringUtils, ViewUtils, _}
 import com.waz.zclient.views.{GlyphProgressView, ProgressDotsDrawable}
+import org.threeten.bp.Duration
 
 class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -59,19 +62,96 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) exten
   private lazy val fileNameView: TextView = findById(R.id.file_name)
   private lazy val fileInfoView: TextView = findById(R.id.file_info)
 
-
   asset.map(_._1.name.getOrElse("")).on(Threading.Ui)(fileNameView.setText)
   asset.map(_._2).map(_ == DOWNLOAD_DONE).map { case true => View.VISIBLE; case false => View.GONE }.on(Threading.Ui)(downloadedIndicator.setVisibility)
 
   //TODO fileInfo strings - pretty big mess...
 
-
-  override val tpe: MsgPart = MsgPart.Asset
+  override val tpe: MsgPart = MsgPart.FileAsset
 
   override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
     message ! msg
     assetActionButton.message ! msg
   }
+}
+
+class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
+  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
+  def this(context: Context) = this(context, null, 0)
+
+  val assets = inject[AssetController]
+  val message = Signal[MessageData]()
+  val asset = assets.assetSignal(message)
+  val deliveryState = DeliveryState(message, asset)
+  setBackground(new AssetBackground(deliveryState))
+
+  private lazy val assetActionButton: AssetActionButton = findById(R.id.action_button)
+  private lazy val durationView: TextView = findById(R.id.duration)
+  private lazy val progressBar: SeekBar = findById(R.id.progress)
+
+  val playControls = new PlaybackControls(asset.map(_._1))
+
+  playControls.duration.map(d => StringUtils.formatTimeSeconds(d.getSeconds)).on(Threading.Ui)(durationView.setText)
+  playControls.duration.map(_.toMillis.toInt).on(Threading.Ui)(progressBar.setMax)
+  playControls.playHead.map(_.toMillis.toInt).on(Threading.Ui)(progressBar.setProgress)
+
+  deliveryState.map { case Complete => true; case _ => false }.on(Threading.Ui) {
+    case true =>
+      progressBar.setEnabled(true)
+      assetActionButton.listenToPlayState(playControls.isPlaying)
+      assetActionButton.onClick {
+        playControls.playOrPause()
+      }
+
+      progressBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener {
+        override def onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean): Unit =
+          if (fromUser) playControls.setPlayHead(Duration.ofMillis(progress))
+
+        override def onStopTrackingTouch(seekBar: SeekBar): Unit = ()
+
+        override def onStartTrackingTouch(seekBar: SeekBar): Unit = ()
+      })
+
+    case false => progressBar.setEnabled(false)
+  }
+
+  override val tpe: MsgPart = MsgPart.AudioAsset
+
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
+    message ! msg
+    assetActionButton.message ! msg
+  }
+}
+
+class PlaybackControls(asset: Signal[AnyAssetData])(implicit injector: Injector) extends Injectable {
+  val zms = inject[Signal[ZMessaging]]
+  val rAndP = zms.map(_.global.recordingAndPlayback)
+
+  val duration = asset.map {
+    case AnyAssetData(_, _, _, _, _, Some(HasDuration(d)), _, _, _, _, _) => d
+    case _ => Duration.ZERO
+  }
+
+  val isPlaying = rAndP.zip(asset).flatMap { case (rP, a) => rP.isPlaying(AssetMediaKey(a.id)) }
+  val playHead = rAndP.zip(asset).flatMap { case (rP, a) => rP.playhead(AssetMediaKey(a.id)) }
+
+  private def rPAction(f: (GlobalRecordAndPlayService, AssetMediaKey, Content, Boolean) => Unit): Unit = {
+    for {
+      as <- zms.map(_.assets).currentValue
+      rP <- rAndP.currentValue
+      id <- asset.map(_.id).currentValue
+      isPlaying <- isPlaying.currentValue
+    } {
+      as.getAssetUri(id).foreach {
+        case Some(uri) => f(rP, AssetMediaKey(id), UnauthenticatedContent(uri), isPlaying)
+        case None =>
+      }(Threading.Background)
+    }
+  }
+
+  def playOrPause() = rPAction { case (rP, key, content, playing) => if (playing) rP.pause(key) else rP.play(key, content) }
+
+  def setPlayHead(duration: Duration) = rPAction { case (rP, key, content, playing) => rP.setPlayhead(key, content, duration) }
 }
 
 class AssetController(implicit inj: Injector) extends Injectable {
@@ -137,7 +217,7 @@ protected class AssetBackground(deliveryState: Signal[DeliveryState])(implicit c
   override def onBoundsChange(bounds: Rect): Unit = dots.setBounds(bounds)
 }
 
-class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) extends GlyphProgressView(context, attrs, style) with ViewHelper with View.OnClickListener {
+class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) extends GlyphProgressView(context, attrs, style) with ViewHelper {
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
 
@@ -151,12 +231,11 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
 
   val asset = assetService.assetSignal(message)
   val deliveryState = DeliveryState(message, asset)
-
   private val normalButtonDrawable = getDrawable(R.drawable.selector__icon_button__background__video_message)
+
   private val errorButtonDrawable = getDrawable(R.drawable.selector__icon_button__background__video_message__error)
   private val onCompletedDrawable = if (isFileType) new FileDrawable(asset.map(_._1.mimeType.extension)) else normalButtonDrawable
 
-  //TODO playback controls for audio messages
   deliveryState.map {
     case Complete => (if (isFileType) 0 else R.string.glyph__play, onCompletedDrawable)
     case Uploading |
@@ -168,6 +247,11 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
       setText(if (action == 0) "" else getString(action))
       setBackground(drawable)
   }
+
+  def listenToPlayState(isPlaying: Signal[Boolean]): Unit = isPlaying.map {
+    case true => R.string.glyph__pause
+    case false => R.string.glyph__play
+  }.map(getString).on(Threading.Ui)(setText)
 
   deliveryState.zip(message.map(_.assetId)).flatMap {
     case (Uploading, id) => assetService.uploadProgress(id).map(Option(_))
@@ -183,11 +267,6 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
         case _ => clearProgress()
       }
     case _ => clearProgress()
-  }
-
-  //TODO handle click events
-  override def onClick(v: View): Unit = {
-    verbose("AssetButton clicked")
   }
 }
 

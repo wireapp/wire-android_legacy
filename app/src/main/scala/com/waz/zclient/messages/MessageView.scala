@@ -137,7 +137,8 @@ object MsgPart {
   case object SeparatorLarge extends MsgPart(0)
   case object User extends MsgPart(10)
   case object Text extends MsgPart(20)
-  case object Asset extends MsgPart(30)
+  case object FileAsset extends MsgPart(30)
+  case object AudioAsset extends MsgPart(30)
   case object Image extends MsgPart(30)
   case object WebLink extends MsgPart(40)
   case object YouTube extends MsgPart(40)
@@ -147,7 +148,8 @@ object MsgPart {
   def apply(msgType: Message.Type): MsgPart = msgType match {
     case Message.Type.TEXT => Text
     case Message.Type.ASSET => Image
-    case Message.Type.ANY_ASSET => Asset
+    case Message.Type.ANY_ASSET => FileAsset
+    case Message.Type.AUDIO_ASSET => AudioAsset
     case _ => Text // TODO
   }
 
@@ -155,7 +157,7 @@ object MsgPart {
     case Message.Part.Type.TEXT => Text
     case Message.Part.Type.ASSET => Image
     case Message.Part.Type.WEB_LINK => WebLink
-    case Message.Part.Type.ANY_ASSET => Asset
+    case Message.Part.Type.ANY_ASSET => FileAsset
     case _ => Text // TODO
   }
 }

@@ -49,7 +49,8 @@ class MessageViewFactory {
         case Text           => ViewHelper.inflate(R.layout.message_text, parent, false)
         case Image          => ViewHelper.inflate(R.layout.message_image, parent, false)
         case WebLink        => ViewHelper.inflate(R.layout.message_link_preview, parent, false)
-        case Asset          => ViewHelper.inflate(R.layout.message_file_asset, parent, false)
+        case FileAsset      => ViewHelper.inflate(R.layout.message_file_asset, parent, false)
+        case AudioAsset     => ViewHelper.inflate(R.layout.message_audio_asset, parent, false)
         case _              => ViewHelper.inflate(R.layout.message_text, parent, false) // TODO: other types
       }
     }
