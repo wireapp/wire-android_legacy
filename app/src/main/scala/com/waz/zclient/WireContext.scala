@@ -20,11 +20,12 @@ package com.waz.zclient
 import android.annotation.SuppressLint
 import android.app.{Activity, Service}
 import android.content.{Context, ContextWrapper}
-import android.graphics.{PixelFormat, ColorFilter}
+import android.graphics.{ColorFilter, PixelFormat}
 import android.graphics.drawable.Drawable
 import android.support.v4.app.{Fragment, FragmentActivity}
 import android.view.{LayoutInflater, View, ViewGroup, ViewStub}
 import com.waz.ZLog._
+import com.waz.threading.CancellableFuture
 import com.waz.utils.events._
 import com.waz.utils.returning
 
@@ -54,7 +55,34 @@ trait ViewFinder {
   def stub[V <: View](id: Int) : V = findById[ViewStub](id).inflate().asInstanceOf[V]
 }
 
-trait ViewHelper extends View with ViewFinder with Injectable with ViewEventContext {
+
+trait DelayedViewEventContext extends View with EventContext {
+  import com.waz.ZLog.ImplicitTag._
+  import com.waz.threading.Threading.Implicits.Ui
+  import scala.concurrent.duration._
+
+  private var attached = false
+  private var stopFuture = CancellableFuture.cancelled[Any]()
+
+  override def onAttachedToWindow(): Unit = {
+    super.onAttachedToWindow()
+
+    attached = true
+    stopFuture.cancel()
+    onContextStart()
+  }
+
+  override def onDetachedFromWindow(): Unit = {
+    super.onDetachedFromWindow()
+
+    attached = false
+    stopFuture = CancellableFuture.delayed(1.second) {
+      if (!attached) onContextStop()
+    }
+  }
+}
+
+trait ViewHelper extends View with ViewFinder with Injectable with DelayedViewEventContext {
   lazy implicit val wContext = WireContext(getContext)
   lazy implicit val injector = wContext.injector
 
