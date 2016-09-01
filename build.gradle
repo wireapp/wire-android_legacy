@@ -91,6 +91,7 @@ ext {
 
     deps = [
             scala               : "org.scala-lang:scala-library:$scalaVersion",
+            scalaReflect        : "org.scala-lang:scala-reflect:$scalaVersion",
 
             // Annotations processing
             autoService         : 'com.google.auto.service:auto-service:1.0-rc2',

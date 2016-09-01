@@ -23,6 +23,7 @@ import android.support.v7.widget.CardView
 import android.util.AttributeSet
 import android.view.View
 import android.widget.TextView
+import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NetworkMode
 import com.waz.model.{AssetId, Dim2, MessageContent, MessageData}
 import com.waz.service.NetworkModeService

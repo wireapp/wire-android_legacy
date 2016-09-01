@@ -15,6 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-include ':app', ':wire-core', ':wire-ui', ':lintlib', ':lintrules', ':custom-checkstyle', 'testing_gallery', ':macrosupport'
+package com.waz.zclient.utils
 
-rootProject.name = 'zclient-root'
+import scala.reflect.macros.blackbox
+
+object ViewMacros {
+
+  //TODO - make this more useful so it warrants being used again...
+  def findById[V](c: blackbox.Context)(id: c.Expr[Int])(implicit tag: c.WeakTypeTag[V]) = {
+    import c.universe._
+    q"${c.prefix.tree}.findViewById($id).asInstanceOf[$tag]"
+  }
+}

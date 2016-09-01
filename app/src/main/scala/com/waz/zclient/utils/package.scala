@@ -17,28 +17,25 @@
  */
 package com.waz.zclient
 
-import android.content.Context
 import android.view.View
 import android.view.View._
 import com.waz.zclient.ui.utils.ResourceUtils
 
-import scala.language.implicitConversions
-
 package object utils {
 
   implicit class RichView(val view: View) extends AnyVal {
-    def setVisible(isVisible: Boolean): Unit = {
-      view.setVisibility(if (isVisible) VISIBLE else GONE)
-    }
+
+    def setVisible(isVisible: Boolean): Unit = view.setVisibility(if (isVisible) VISIBLE else GONE)
 
     //TODO improve this so that multiple click listeners can be set from different places at once
     //TODO could also handle a set of views?
-    def onClick(f: => Unit): Unit = {
-      view.setOnClickListener(new OnClickListener {
-        override def onClick(v: View): Unit = f
-      })
-    }
+    def onClick(f: => Unit): Unit = view.setOnClickListener(new OnClickListener {
+      override def onClick(v: View): Unit = f
+    })
   }
+
+  //TODO include java ViewUtils stuff here to have everything in one place and to prevent annoying name conflicts
+
 
   object ContextUtils {
 

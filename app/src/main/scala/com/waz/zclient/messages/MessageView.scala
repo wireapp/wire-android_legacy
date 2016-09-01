@@ -118,7 +118,9 @@ object MessageView {
   }
 
   def apply(parent: ViewGroup, tpe: Int): MessageView = tpe match {
-    case _ => returning(ViewHelper.inflate[MessageView](R.layout.message_view, parent, addToParent = false)) { _.parent = Some(parent) }
+    case _ => returning(ViewHelper.inflate[MessageView](R.layout.message_view, parent, addToParent = false)) {
+      _.parent = Some(parent)
+    }
   }
 }
 

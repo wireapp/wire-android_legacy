@@ -20,10 +20,11 @@ package com.waz.zclient
 import android.annotation.SuppressLint
 import android.app.{Activity, Service}
 import android.content.{Context, ContextWrapper}
-import android.graphics.{ColorFilter, PixelFormat}
 import android.graphics.drawable.Drawable
+import android.graphics.{ColorFilter, PixelFormat}
 import android.support.v4.app.{Fragment, FragmentActivity}
 import android.view.{LayoutInflater, View, ViewGroup, ViewStub}
+import com.waz.ZLog
 import com.waz.ZLog._
 import com.waz.threading.CancellableFuture
 import com.waz.utils.events._
@@ -55,10 +56,10 @@ trait ViewFinder {
   def stub[V <: View](id: Int) : V = findById[ViewStub](id).inflate().asInstanceOf[V]
 }
 
-
 trait DelayedViewEventContext extends View with EventContext {
   import com.waz.ZLog.ImplicitTag._
   import com.waz.threading.Threading.Implicits.Ui
+
   import scala.concurrent.duration._
 
   private var attached = false
@@ -87,7 +88,7 @@ trait ViewHelper extends View with ViewFinder with Injectable with DelayedViewEv
   lazy implicit val injector = wContext.injector
 
   @SuppressLint(Array("com.waz.ViewUtils"))
-  def findById[V <: View](id: Int) = findViewById(id).asInstanceOf[V]
+  def findById[V <: View](id: Int): V = findViewById(id).asInstanceOf[V]
 
   def inflate(layoutResId: Int, group: ViewGroup = ViewHelper.viewGroup(this), addToParent: Boolean = true)(implicit tag: LogTag = "ViewHelper") =
     ViewHelper.inflate[View](layoutResId, group, addToParent)
@@ -95,20 +96,21 @@ trait ViewHelper extends View with ViewFinder with Injectable with DelayedViewEv
 
 object ViewHelper {
 
+  @SuppressLint(Array("LogNotTimber"))
+  def inflate[T <: View](layoutResId: Int, group: ViewGroup, addToParent: Boolean)(implicit logTag: ZLog.LogTag) =
+    try LayoutInflater.from(group.getContext).inflate(layoutResId, group, addToParent).asInstanceOf[T]
+    catch {
+      case e: Throwable =>
+        var cause = e
+        while (cause.getCause != null) cause = cause.getCause
+        ZLog.error("inflate failed with root cause:", cause)
+        throw e
+    }
+
   def viewGroup(view: View) = view match {
     case vg: ViewGroup => vg
     case _ => view.getParent.asInstanceOf[ViewGroup]
   }
-
-  @SuppressLint(Array("LogNotTimber"))
-  def inflate[T <: View](layoutResId: Int, group: ViewGroup, addToParent: Boolean)(implicit tag: LogTag = "ViewHelper") =
-    try LayoutInflater.from(group.getContext).inflate(layoutResId, group, addToParent).asInstanceOf[T]
-    catch { case e: Throwable =>
-      var cause = e
-      while (cause.getCause != null) cause = cause.getCause
-      error("inflate failed with root cause:", cause)
-      throw e
-    }
 }
 
 trait DrawableHelper extends Drawable with Drawable.Callback with Injectable {

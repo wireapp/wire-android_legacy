@@ -21,7 +21,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
-import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.{ViewHelper, R}
 
 import scala.collection.mutable
 

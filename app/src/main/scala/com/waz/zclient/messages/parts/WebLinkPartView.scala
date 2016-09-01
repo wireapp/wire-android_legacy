@@ -33,9 +33,9 @@ import com.waz.utils.events.Signal
 import com.waz.zclient.controllers.BrowserController
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.utils._
-import com.waz.zclient.views.{ImageAssetDrawable, ProgressDotsDrawable}
 import com.waz.zclient.views.ImageAssetDrawable.{RequestBuilder, ScaleType, State}
 import com.waz.zclient.views.ImageController.{ImageUri, ProtoImage}
+import com.waz.zclient.views.{ImageAssetDrawable, ProgressDotsDrawable}
 import com.waz.zclient.{R, ViewHelper}
 
 class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends CardView(context, attrs, style) with MessageViewPart with ViewHelper {

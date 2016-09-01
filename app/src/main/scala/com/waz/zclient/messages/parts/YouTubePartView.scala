@@ -23,6 +23,7 @@ import android.graphics.{Color, PorterDuff}
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.{LinearLayout, RelativeLayout, TextView}
+import com.waz.ZLog.ImplicitTag._
 import com.waz.api.{Message, NetworkMode}
 import com.waz.model.messages.media.MediaAssetData
 import com.waz.model.{MessageContent, MessageData}

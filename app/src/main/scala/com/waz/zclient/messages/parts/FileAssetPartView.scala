@@ -43,7 +43,7 @@ import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{StringUtils, ViewUtils, _}
+import com.waz.zclient.utils.{AssetUtils, RichView, StringUtils, ViewUtils}
 import com.waz.zclient.views.ImageAssetDrawable.State.Loaded
 import com.waz.zclient.views.ImageController.WireImage
 import com.waz.zclient.views.{GlyphProgressView, ImageAssetDrawable, ProgressDotsDrawable}

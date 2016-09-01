@@ -21,11 +21,12 @@ import android.content.Context
 import android.text.format.DateFormat
 import android.util.AttributeSet
 import android.widget.{ImageView, LinearLayout}
+import com.waz.ZLog.ImplicitTag._
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.zclient.ui.text.{LinkTextView, TypefaceTextView}
+import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.{DateConvertUtils, ZTimeFormatter}
 import com.waz.zclient.views.chathead.ChatheadView
 import com.waz.zclient.{R, ViewHelper}
