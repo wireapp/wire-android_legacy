@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2016 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    >
+
+    <FrameLayout
+        android:id="@+id/fl__row_conversation__map_image_container"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/content__location_message__map_height"
+        android:background="@color/light_graphite_24"
+        >
+
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:id="@+id/gtv__row_conversation__map_pin_glyph"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingBottom="@dimen/wire__padding__26"
+            android:gravity="center"
+            android:background="@drawable/pin_bg"
+            android:textSize="@dimen/content__location_message__pin_icon__text_size"
+            android:text="@string/glyph__location"
+            />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/ttv__row_conversation_map_image_placeholder_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:paddingStart="@dimen/wire__padding__32"
+            android:paddingEnd="@dimen/wire__padding__32"
+            android:textSize="@dimen/wire__text_size__small"
+            android:gravity="center"
+            android:text="@string/content__location__no_map_placeholder"
+            app:font="@string/wire__typeface__thin"
+            />
+
+    </FrameLayout>
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/ttv__row_conversation_map_name"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/content__location_message__name_height"
+        android:background="@color/light_graphite_16"
+        android:paddingStart="@dimen/wire__padding__regular"
+        android:paddingEnd="@dimen/content__location_message__name_padding_end"
+        android:textSize="@dimen/wire__text_size__regular"
+        android:gravity="center|start"
+        android:singleLine="true"
+        android:ellipsize="end"
+        app:font="@string/wire__typeface__thin"
+        />
+
+</LinearLayout>

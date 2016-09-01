@@ -21,6 +21,8 @@ import android.content.{Context, Intent}
 import android.net.Uri
 import com.waz.utils.LoggedTry
 import com.waz.ZLog.ImplicitTag._
+import com.waz.api.MessageContent.Location
+import com.waz.zclient.utils.IntentUtils
 
 class BrowserController(context: Context) {
 
@@ -33,4 +35,7 @@ class BrowserController(context: Context) {
     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     context.startActivity(intent)
   }
+
+  def openLocation(location: Location) =
+    Option(IntentUtils.getGoogleMapsIntent(context, location.getLatitude, location.getLongitude, location.getZoom, location.getName)) foreach { context.startActivity }
 }

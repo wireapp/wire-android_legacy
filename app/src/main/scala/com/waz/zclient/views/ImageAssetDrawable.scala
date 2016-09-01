@@ -32,7 +32,7 @@ import com.waz.service.images.BitmapSignal
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.views.ImageAssetDrawable.{RequestBuilder, ScaleType, State}
-import com.waz.zclient.views.ImageController.{ImageSource, ImageUri, ProtoImage, WireImage}
+import com.waz.zclient.views.ImageController._
 import com.waz.zclient.{Injectable, Injector}
 
 //TODO could merge with logic from the ChatheadView to make a very general drawable for our app
@@ -199,10 +199,14 @@ class ImageController(implicit inj: Injector) extends Injectable {
   def imageSignal(asset: Asset, req: BitmapRequest): Signal[BitmapResult] =
     zMessaging flatMap { zms => BitmapSignal(asset, req, zms.imageLoader, zms.imageCache) }
 
+  def imageSignal(data: ImageAssetData, req: BitmapRequest): Signal[BitmapResult] =
+    zMessaging flatMap { zms => BitmapSignal(data, req, zms.imageLoader, zms.imageCache) }
+
   def imageSignal(src: ImageSource, req: BitmapRequest): Signal[BitmapResult] = src match {
     case WireImage(id) => imageSignal(id, req)
     case ProtoImage(asset) => imageSignal(asset, req)
     case ImageUri(uri) => imageSignal(uri, req)
+    case DataImage(data) => imageSignal(data, req)
   }
 }
 
@@ -210,6 +214,7 @@ object ImageController {
 
   sealed trait ImageSource
   case class WireImage(id: AssetId) extends ImageSource
+  case class DataImage(data: ImageAssetData) extends ImageSource
   case class ProtoImage(asset: Asset) extends ImageSource
   case class ImageUri(uri: Uri) extends ImageSource
 }

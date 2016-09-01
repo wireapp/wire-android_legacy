@@ -150,7 +150,6 @@ object MsgPart {
       case ANY_ASSET => FileAsset
       case VIDEO_ASSET => VideoAsset
       case AUDIO_ASSET => AudioAsset
-      case VIDEO_ASSET => VideoAsset
       case LOCATION => Location
       case _ => Text // TODO
     }
