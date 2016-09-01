@@ -30,6 +30,7 @@ import com.waz.service.NetworkModeService
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events.Signal
+import com.waz.zclient.controllers.BrowserController
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.ui.utils.ColorUtils
@@ -49,6 +50,7 @@ class YouTubePartView(context: Context, attrs: AttributeSet, style: Int) extends
   inflate(R.layout.message_youtube_content)
 
   val network = inject[NetworkModeService]
+  val browser = inject[BrowserController]
 
   val tvTitle: TextView         = findById(R.id.ttv__youtube_message__title)
   val error: View               = findById(R.id.ttv__youtube_message__error)
@@ -102,5 +104,11 @@ class YouTubePartView(context: Context, attrs: AttributeSet, style: Int) extends
     super.onLayout(changed, left, top, right, bottom)
 
     width ! (right - left)
+  }
+
+  this.onClick {
+    content.currentValue foreach { c =>
+      browser.openUrl(c.contentAsUri)
+    }
   }
 }
