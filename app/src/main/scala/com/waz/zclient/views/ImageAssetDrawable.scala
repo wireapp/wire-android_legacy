@@ -93,7 +93,7 @@ class ImageAssetDrawable(
 
     def updateDrawingState(state: State) = {
       state.bmp foreach updateMatrix
-      if (prev.forall(_.src != state.src)) resetAnimation(state)
+      if (prev.forall(p => p.src != state.src || p.bmp.isEmpty != state.bmp.isEmpty)) resetAnimation(state)
     }
 
     state.currentValue foreach { st =>
