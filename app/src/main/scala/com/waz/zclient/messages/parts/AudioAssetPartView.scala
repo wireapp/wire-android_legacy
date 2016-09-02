@@ -37,7 +37,6 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) exte
 
   override def inflate() = inflate(R.layout.message_audio_asset_content)
 
-  private val durationView: TextView = findById(R.id.duration)
   private val progressBar: SeekBar = findById(R.id.progress)
 
   val accentColorController = inject[AccentColorController]
@@ -46,7 +45,6 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) exte
 
   val playControls = assets.getPlaybackControls(asset.map(_._1))
 
-  formattedDuration.on(Threading.Ui)(durationView.setText)
   duration.map(_.toMillis.toInt).on(Threading.Ui)(progressBar.setMax)
   playControls.flatMap(_.playHead).map(_.toMillis.toInt).on(Threading.Ui)(progressBar.setProgress)
 
@@ -69,5 +67,4 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) exte
 
     case false => progressBar.setEnabled(false)
   }
-
 }

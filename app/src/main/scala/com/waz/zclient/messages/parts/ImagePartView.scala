@@ -28,36 +28,11 @@ import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.views.ImageAssetDrawable
 import com.waz.zclient.views.ImageController.WireImage
 
-class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends View(context, attrs, style) with MessageViewPart with ViewHelper {
+class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends View(context, attrs, style) with ImageLayoutAssetPart {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
   override val tpe: MsgPart = MsgPart.Image
 
-  private val message = Signal[MessageData]()
-
-  private val imageDim = message map { _.imageDimensions.getOrElse(Dim2(1, 1)) }
-  private val width = Signal[Int]()
-
-  setBackground(new ImageAssetDrawable(message map { m => WireImage(m.assetId) }))
-
-  val height = for {
-    w <- width
-    Dim2(imW, imH) <- imageDim
-  } yield imH * w / imW  // TODO: improve view size computation
-
-  height { h =>
-    setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, h))
-  }
-
-  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
-    width.mutateOrDefault(identity, widthHint)
-    message ! msg
-  }
-
-  override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {
-    super.onLayout(changed, left, top, right, bottom)
-
-    width ! (right - left)
-  }
+  setBackground(imageDrawable) //FIXME, sets twice, kinda unnecessary
 }
