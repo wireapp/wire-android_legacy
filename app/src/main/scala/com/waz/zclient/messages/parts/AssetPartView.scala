@@ -48,7 +48,7 @@ import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{AssetUtils, RichView, StringUtils, ViewUtils}
+import com.waz.zclient.utils.{AssetUtils, RichSeekBar, RichView, StringUtils, ViewUtils}
 import com.waz.zclient.views.ImageAssetDrawable.State.Loaded
 import com.waz.zclient.views.ImageController.WireImage
 import com.waz.zclient.views.{GlyphProgressView, ImageAssetDrawable, ProgressDotsDrawable}
@@ -214,6 +214,10 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) exte
 
   private val durationView: TextView = findById(R.id.duration)
   private val progressBar: SeekBar = findById(R.id.progress)
+
+  val accentColorController = inject[AccentColorController]
+
+  accentColorController.accentColor.map(_.getColor).on(Threading.Ui)(progressBar.setColor)
 
   val playControls = new PlaybackControls(asset.map(_._1))
 

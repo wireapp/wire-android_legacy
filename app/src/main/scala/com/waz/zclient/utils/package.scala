@@ -17,8 +17,11 @@
  */
 package com.waz.zclient
 
+import android.graphics.LightingColorFilter
+import android.graphics.drawable.LayerDrawable
 import android.view.View
 import android.view.View._
+import android.widget.SeekBar
 import com.waz.zclient.ui.utils.ResourceUtils
 
 package object utils {
@@ -34,8 +37,17 @@ package object utils {
     })
   }
 
-  //TODO include java ViewUtils stuff here to have everything in one place and to prevent annoying name conflicts
-
+  implicit class RichSeekBar(val bar: SeekBar) extends AnyVal {
+    def setColor(color: Int): Unit = {
+      val progressDrawable = Option(bar.getProgressDrawable).map {
+        case d: LayerDrawable => Option(d.findDrawableByLayerId(android.R.id.progress)).getOrElse(d)
+        case d => d
+      }
+      val thumbDrawable = Option(bar.getThumb)
+      val filter = new LightingColorFilter(0xFF000000, color)
+      Seq(progressDrawable, thumbDrawable).foreach(_.foreach(_.setColorFilter(filter)))
+    }
+  }
 
   object ContextUtils {
 
