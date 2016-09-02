@@ -19,12 +19,16 @@ package com.waz.zclient.messages.parts
 
 import java.util.Locale
 
-import android.content.Context
+import android.app.DownloadManager
+import android.content.{Intent, Context}
 import android.content.res.TypedArray
 import android.graphics._
+import android.net.Uri
+import android.support.v7.app.AppCompatDialog
+import android.text.TextUtils
 import android.text.format.Formatter
-import android.util.AttributeSet
-import android.view.{View, ViewGroup}
+import android.util.{AttributeSet, TypedValue}
+import android.view.{Gravity, View, ViewGroup}
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget._
 import com.waz.api
@@ -38,17 +42,19 @@ import com.waz.service.assets.GlobalRecordAndPlayService
 import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, UnauthenticatedContent}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.zclient._
 import com.waz.zclient.messages.parts.DeliveryState._
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.ui.text.GlyphTextView
-import com.waz.zclient.ui.utils.TypefaceUtils
+import com.waz.zclient.ui.utils.{ResourceUtils, TypefaceUtils}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{AssetUtils, RichView, StringUtils, ViewUtils}
 import com.waz.zclient.views.ImageAssetDrawable.State.Loaded
 import com.waz.zclient.views.ImageController.WireImage
 import com.waz.zclient.views.{GlyphProgressView, ImageAssetDrawable, ProgressDotsDrawable}
+import com.waz.zclient.{R, _}
 import org.threeten.bp.Duration
+
+import scala.util.Success
 
 //TODO retry logic on sending failed
 //TODO inflate the content from a different file to handle different layouts
@@ -65,6 +71,7 @@ trait AssetPartView extends ViewGroup with MessageViewPart with ViewHelper {
   val formattedDuration = duration.map(d => StringUtils.formatTimeSeconds(d.getSeconds))
 
   val deliveryState = DeliveryState(message, asset)
+  val actionReady = deliveryState.map { case Complete => true; case _ => false }
   val progressDots = new AssetBackground(deliveryState)
   setBackground(progressDots)
 
@@ -118,6 +125,79 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) exten
   }.on(Threading.Ui) (fileInfoView.setText)
 
   override val tpe: MsgPart = MsgPart.FileAsset
+
+  actionReady.on(Threading.Ui) {
+    case true =>
+      assetActionButton.onClick {
+        for {
+          id <- assetId.currentValue
+          as <- zms.map(_.assets).currentValue
+          a <- asset.map(_._1).currentValue
+          mime <- asset.map(_._1.mimeType).currentValue
+        } {
+          as.getAssetUri(id).foreach {
+            case Some(uri) =>
+              val intent = AssetUtils.getOpenFileIntent(uri, mime.orDefault.str)
+              val fileCanBeOpened = AssetUtils.fileTypeCanBeOpened(context.getPackageManager, intent)
+
+              //TODO tidy up
+              //TODO there is also a weird flash or double-dialog issue when you click outside of the dialog
+              val dialog = new AppCompatDialog(context)
+              a.name.foreach(dialog.setTitle)
+              dialog.setContentView(R.layout.file_action_sheet_dialog)
+
+              val title = dialog.findViewById(R.id.title).asInstanceOf[TextView]
+              title.setEllipsize(TextUtils.TruncateAt.MIDDLE)
+              title.setTypeface(TypefaceUtils.getTypeface(getString(R.string.wire__typeface__medium)))
+              title.setTextSize(TypedValue.COMPLEX_UNIT_PX, getDimenPx(R.dimen.wire__text_size__regular))
+              title.setGravity(Gravity.CENTER)
+
+              val openButton = dialog.findViewById(R.id.ttv__file_action_dialog__open).asInstanceOf[TextView]
+              val noAppFoundLabel = dialog.findViewById(R.id.ttv__file_action_dialog__open__no_app_found)
+              val saveButton = dialog.findViewById(R.id.ttv__file_action_dialog__save)
+
+              if (fileCanBeOpened) {
+                noAppFoundLabel.setVisibility(View.GONE)
+                openButton.setAlpha(1f)
+                openButton.setOnClickListener(new View.OnClickListener() {
+                  def onClick(v: View) = {
+                    context.startActivity(intent)
+                    dialog.dismiss()
+                  }
+                })
+              }
+              else {
+                noAppFoundLabel.setVisibility(View.VISIBLE)
+                val disabledAlpha = getResourceFloat(R.dimen.button__disabled_state__alpha)
+                openButton.setAlpha(disabledAlpha)
+              }
+
+              saveButton.setOnClickListener(new View.OnClickListener() {
+                def onClick(v: View) = {
+                  dialog.dismiss()
+                  as.saveAssetToDownloads(id).onComplete {
+                    case Success(Some(file)) =>
+                      val uri = Uri.fromFile(file)
+                      val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE).asInstanceOf[DownloadManager]
+                      downloadManager.addCompletedDownload(a.name.get, a.name.get, false, a.mimeType.orDefault.str, uri.getPath, a.sizeInBytes, true)
+                      Toast.makeText(context, com.waz.zclient.ui.R.string.content__file__action__save_completed, Toast.LENGTH_SHORT).show()
+
+                      val intent: Intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
+                      intent.setData(uri)
+                      context.sendBroadcast(intent)
+                    case _ =>
+                  } (Threading.Ui)
+                }
+              })
+
+              dialog.show()
+            case _ =>
+          }(Threading.Ui)
+        }
+      }
+
+    case false =>
+  }
 }
 
 class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with AssetPartView {
@@ -133,7 +213,7 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) exte
   duration.map(_.toMillis.toInt).on(Threading.Ui)(progressBar.setMax)
   playControls.playHead.map(_.toMillis.toInt).on(Threading.Ui)(progressBar.setProgress)
 
-  deliveryState.map { case Complete => true; case _ => false }.on(Threading.Ui) {
+  actionReady.on(Threading.Ui) {
     case true =>
       progressBar.setEnabled(true)
       assetActionButton.listenToPlayState(playControls.isPlaying)
@@ -185,7 +265,7 @@ class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int) exte
   //TODO there is more logic for what text to display, but it doesn't seem to be used - confirm
   formattedDuration.on(Threading.Ui)(durationView.setText)
 
-  deliveryState.map { case Complete => true; case _ => false }.on(Threading.Ui) {
+  actionReady.on(Threading.Ui) {
     case true =>
       assetActionButton.onClick {
         for {
