@@ -31,6 +31,8 @@ import android.util.{AttributeSet, TypedValue}
 import android.view.{Gravity, View}
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget._
+import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.verbose
 import com.waz.api
 import com.waz.api.AssetStatus._
 import com.waz.api.Message
@@ -57,7 +59,6 @@ import org.threeten.bp.Duration
 
 import scala.util.Success
 
-//TODO retry logic on sending failed
 abstract class AssetPartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with MessageViewPart with ViewHelper {
   val zms = inject[Signal[ZMessaging]]
   val assets = inject[AssetController]
@@ -337,13 +338,22 @@ class PlaybackControls(asset: Signal[AnyAssetData])(implicit injector: Injector)
 }
 
 class AssetController(implicit inj: Injector) extends Injectable {
-  val assets = inject[Signal[ZMessaging]].map(_.assets)
+
+  val zms = inject[Signal[ZMessaging]]
+  val assets = zms.map(_.assets)
+  val messages = zms.map(_.messages)
 
   def assetSignal(mes: Signal[MessageData]) = mes.flatMap(m => assets.flatMap(_.assetSignal(m.assetId)))
 
   def downloadProgress(id: AssetId) = assets.flatMap(_.downloadProgress(id))
 
   def uploadProgress(id: AssetId) = assets.flatMap(_.uploadProgress(id))
+
+  def cancelUpload(m: MessageData) = assets.currentValue.foreach(_.cancelUpload(m.assetId, m.id))
+
+  def cancelDownload(m: MessageData) = assets.currentValue.foreach(_.cancelDownload(m.assetId))
+
+  def retry(m: MessageData) = if (m.state == Message.Status.FAILED || m.state == Message.Status.FAILED_READ) messages.currentValue.foreach(_.retryMessageSending(m.convId, m.id))
 }
 
 protected sealed trait DeliveryState
@@ -368,19 +378,23 @@ protected object DeliveryState {
 
   case object Unknown extends DeliveryState
 
-  private def apply(as: api.AssetStatus, ms: Message.Status): DeliveryState = (as, ms) match {
-    case (UPLOAD_CANCELLED, _) => Cancelled
-    case (UPLOAD_FAILED, _) => UploadFailed
-    case (DOWNLOAD_FAILED, _) => DownloadFailed
-    case (UPLOAD_NOT_STARTED | META_DATA_SENT | PREVIEW_SENT | UPLOAD_IN_PROGRESS, mState) =>
-      mState match {
-        case Message.Status.FAILED => UploadFailed
-        case Message.Status.SENT => OtherUploading
-        case _ => Uploading
-      }
-    case (DOWNLOAD_IN_PROGRESS, _) => Downloading
-    case (UPLOAD_DONE | DOWNLOAD_DONE, _) => Complete
-    case _ => Unknown
+  private def apply(as: api.AssetStatus, ms: Message.Status): DeliveryState = {
+    val res = (as, ms) match {
+      case (UPLOAD_CANCELLED, _) => Cancelled
+      case (UPLOAD_FAILED, _) => UploadFailed
+      case (DOWNLOAD_FAILED, _) => DownloadFailed
+      case (UPLOAD_NOT_STARTED | META_DATA_SENT | PREVIEW_SENT | UPLOAD_IN_PROGRESS, mState) =>
+        mState match {
+          case Message.Status.FAILED => UploadFailed
+          case Message.Status.SENT => OtherUploading
+          case _ => Uploading
+        }
+      case (DOWNLOAD_IN_PROGRESS, _) => Downloading
+      case (UPLOAD_DONE | DOWNLOAD_DONE, _) => Complete
+      case _ => Unknown
+    }
+    verbose(s"Mapping Asset.Status: $as, and Message.Status $ms to DeliveryState: $res")
+    res
   }
 
   def apply(message: Signal[MessageData], asset: Signal[(AnyAssetData, api.AssetStatus)]): Signal[DeliveryState] =
@@ -415,6 +429,8 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
   private val a: TypedArray = context.getTheme.obtainStyledAttributes(attrs, R.styleable.AssetActionButton, 0, 0)
   private val isFileType = a.getBoolean(R.styleable.AssetActionButton_isFileType, false)
 
+  val zms = inject[Signal[ZMessaging]]
+  val assets = zms.map(_.assets)
   val assetService = inject[AssetController]
   val message = Signal[MessageData]()
   val accentController = inject[AccentColorController]
@@ -460,6 +476,21 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
       }
     case _ => clearProgress()
   }
+
+  deliveryState.map { case Complete => false; case _ => true }.on(Threading.Ui) {
+    //only want to set the onClick listener if NOT completed
+    case true =>
+      this.onClick {
+        deliveryState.currentValue.foreach {
+          case UploadFailed => message.currentValue.foreach(assetService.retry)
+          case Uploading => message.currentValue.foreach(assetService.cancelUpload)
+          case Downloading => message.currentValue.foreach(assetService.cancelDownload)
+          case _ => //
+        }
+      }
+    case false => //do nothing, individual view parts will handle what happens when in the Completed state.
+  }
+
 }
 
 protected class FileDrawable(ext: Signal[String])(implicit context: Context, cxt: EventContext) extends DrawableHelper {
