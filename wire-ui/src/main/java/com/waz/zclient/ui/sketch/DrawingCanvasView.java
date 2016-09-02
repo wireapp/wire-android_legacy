@@ -29,9 +29,10 @@ import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import com.waz.zclient.ui.R;
 import com.waz.zclient.utils.SquareOrientation;
 import net.hockeyapp.android.ExceptionHandler;
-import com.waz.zclient.ui.R;
+
 import java.util.LinkedList;
 
 public class DrawingCanvasView extends View {
@@ -42,6 +43,7 @@ public class DrawingCanvasView extends View {
     private Path path;
     private Paint bitmapPaint;
     private Paint drawingPaint;
+    private Paint emojiPaint;
     private Paint whitePaint;
     private SquareOrientation backgroundImageRotation = SquareOrientation.NONE;
     private DrawingCanvasCallback drawingCanvasCallback;
@@ -59,6 +61,8 @@ public class DrawingCanvasView extends View {
 
     private int trimBuffer;
     private final int defaultStrokeWidth = getResources().getDimensionPixelSize(R.dimen.color_picker_small_dot_radius) * 2;
+    private String emoji;
+    private boolean drawEmoji;
 
     private LinkedList<HistoryItem> historyItems; // NOPMD
 
@@ -88,6 +92,9 @@ public class DrawingCanvasView extends View {
         drawingPaint.setStrokeWidth(defaultStrokeWidth);
         whitePaint = new Paint(Paint.DITHER_FLAG);
         whitePaint.setColor(Color.WHITE);
+        emojiPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        emojiPaint.setStrokeWidth(1);
+        emoji = null;
 
         trimBuffer = getResources().getDimensionPixelSize(R.dimen.draw_image_trim_buffer);
     }
@@ -118,7 +125,11 @@ public class DrawingCanvasView extends View {
     protected void onDraw(Canvas canvas) {
         canvas.drawColor(Color.TRANSPARENT);
         canvas.drawBitmap(bitmap, 0, 0, bitmapPaint);
-        canvas.drawPath(path, drawingPaint);
+        if (drawEmoji) {
+            canvas.drawText(emoji, currentX, currentY, emojiPaint);
+        } else {
+            canvas.drawPath(path, drawingPaint);
+        }
     }
 
     public void setBackgroundBitmap(Bitmap bitmap) {
@@ -199,34 +210,52 @@ public class DrawingCanvasView extends View {
     });
 
     private void touch_start(float x, float y) {
-        path.reset();
-        path.moveTo(x, y);
-        currentX = x;
-        currentY = y;
+        if (emoji == null) {
+            path.reset();
+            path.moveTo(x, y);
+            currentX = x;
+            currentY = y;
+        } else {
+            drawEmoji = true;
+            currentX = x - emojiPaint.getTextSize() / 2;
+            currentY = y;
+        }
     }
 
     private void touch_move(float x, float y) {
         float dx = Math.abs(x - currentX);
         float dy = Math.abs(y - currentY);
         if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE) {
-            path.quadTo(currentX, currentY, (x + currentX) / 2, (y + currentY) / 2);
-            currentX = x;
-            currentY = y;
+            if (drawEmoji) {
+                currentX = x - emojiPaint.getTextSize() / 2;
+                currentY = y;
+            } else {
+                path.quadTo(currentX, currentY, (x + currentX) / 2, (y + currentY) / 2);
+                currentX = x;
+                currentY = y;
+            }
             paintedOn(true);
             touchMoved = true;
         }
     }
 
     private void touch_up() {
-        path.lineTo(currentX, currentY);
-        canvas.drawPath(path, drawingPaint);
-        if (touchMoved) {
-            touchMoved = false;
-            RectF bounds = new RectF();
-            path.computeBounds(bounds, true);
-            historyItems.add(new Stroke(new Path(path), new Paint(drawingPaint), bounds));
+        if (drawEmoji) {
+            drawEmoji = false;
+            canvas.drawText(emoji, currentX, currentY, emojiPaint);
+            historyItems.add(new Emoji(emoji, currentX, currentY, new Paint(emojiPaint)));
+            paintedOn(true);
+        } else {
+            path.lineTo(currentX, currentY);
+            canvas.drawPath(path, drawingPaint);
+            if (touchMoved) {
+                touchMoved = false;
+                RectF bounds = new RectF();
+                path.computeBounds(bounds, true);
+                historyItems.add(new Stroke(new Path(path), new Paint(drawingPaint), bounds));
+            }
+            path.reset();
         }
-        path.reset();
     }
 
     public int getTopTrimValue(boolean isLandscape) {
@@ -247,6 +276,9 @@ public class DrawingCanvasView extends View {
                 } else {
                     topTrimValue = Math.min(topTrimValue, (int) bounds.top);
                 }
+            } else if (historyItem instanceof Emoji) {
+                Emoji emoji = (Emoji) historyItem;
+                topTrimValue = (int) Math.min(topTrimValue, emoji.y - emoji.paint.getTextSize());
             }
         }
         return Math.max(topTrimValue - trimBuffer, 0);
@@ -268,6 +300,8 @@ public class DrawingCanvasView extends View {
                 } else {
                     bottomTrimValue = Math.max(bottomTrimValue, (int) bounds.bottom);
                 }
+            } else if (historyItem instanceof Emoji) {
+                bottomTrimValue = (int) Math.max(bottomTrimValue, ((Emoji) historyItem).y);
             }
         }
         return Math.min(bottomTrimValue + trimBuffer, isLandscape ? bitmap.getWidth() : bitmap.getHeight());
@@ -279,10 +313,16 @@ public class DrawingCanvasView extends View {
 
     public void setDrawingColor(int color) {
         drawingPaint.setColor(color);
+        emoji = null;
     }
 
     public void setStrokeSize(int strokeSize) {
         drawingPaint.setStrokeWidth(strokeSize);
+    }
+
+    public void setEmoji(String emoji, float size) {
+        this.emoji = emoji;
+        emojiPaint.setTextSize(size);
     }
 
     public boolean undo() {
@@ -423,6 +463,25 @@ public class DrawingCanvasView extends View {
         @Override
         public void draw(Canvas canvas) {
             canvas.drawPath(path, paint);
+        }
+    }
+
+    private class Emoji implements HistoryItem {
+        private final float x;
+        private final float y;
+        private final String emoji;
+        private final Paint paint;
+
+        Emoji(String emoji, float currentX, float currentY, Paint paint) {
+            this.emoji = emoji;
+            this.x = currentX;
+            this.y = currentY;
+            this.paint = paint;
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+            canvas.drawText(emoji, x, y, paint);
         }
     }
 

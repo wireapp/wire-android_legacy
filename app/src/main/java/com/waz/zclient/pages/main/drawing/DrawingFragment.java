@@ -42,7 +42,7 @@ import com.waz.zclient.controllers.drawing.DrawingController;
 import com.waz.zclient.controllers.orientation.OrientationControllerObserver;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.ui.sketch.DrawingCanvasView;
-import com.waz.zclient.ui.colorpicker.ColorPickerDotLayout;
+import com.waz.zclient.ui.colorpicker.ColorPickerLayout;
 import com.waz.zclient.ui.colorpicker.ColorPickerScrollView;
 import com.waz.zclient.ui.text.TypefaceTextView;
 import com.waz.zclient.utils.LayoutSpec;
@@ -55,12 +55,12 @@ import net.hockeyapp.android.ExceptionHandler;
 import java.util.Locale;
 
 public class DrawingFragment extends BaseFragment<DrawingFragment.Container> implements OnBackPressedListener,
-                                                                                        ColorPickerDotLayout.OnColorSelectedListener,
+                                                                                        ColorPickerLayout.OnColorSelectedListener,
                                                                                         OrientationControllerObserver,
                                                                                         DrawingCanvasView.DrawingCanvasCallback,
                                                                                         ViewTreeObserver.OnScrollChangedListener,
                                                                                         AccentColorObserver,
-                                                                                        ColorPickerDotLayout.OnWidthChangedListener {
+                                                                                        ColorPickerLayout.OnWidthChangedListener {
 
     public static final String TAG = DrawingFragment.class.getName();
     private static final String SAVED_INSTANCE_BITMAP = "SAVED_INSTANCE_BITMAP";
@@ -76,7 +76,7 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
     private SensorManager sensorManager;
 
     private DrawingCanvasView drawingCanvasView;
-    private ColorPickerDotLayout colorLayout;
+    private ColorPickerLayout colorLayout;
     private HorizontalScrollView colorPickerScrollContainer;
     private TypefaceTextView conversationTitle;
 
@@ -148,7 +148,6 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
         colorLayout = ViewUtils.getView(rootView, R.id.cpdl__color_layout);
         colorLayout.setOnColorSelectedListener(this);
         colorLayout.setAccentColors(getResources().getIntArray(R.array.draw_color));
-        colorLayout.setCurrentColor(getControllerFactory().getAccentColorController().getColor());
         colorLayout.getViewTreeObserver().addOnScrollChangedListener(this);
 
         colorPickerScrollBar = ViewUtils.getView(rootView, R.id.cpsb__color_picker_scrollbar);
@@ -498,6 +497,11 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
         }
         drawingCanvasView.setDrawingColor(color);
         drawingCanvasView.setStrokeSize(strokeSize);
+    }
+
+    @Override
+    public void onEmojiSelected(String emoji, int size) {
+        drawingCanvasView.setEmoji(emoji, size);
     }
 
     @Override

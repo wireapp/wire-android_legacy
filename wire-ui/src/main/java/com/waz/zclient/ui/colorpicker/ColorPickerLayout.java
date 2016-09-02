@@ -27,29 +27,38 @@ import com.waz.zclient.ui.R;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ColorPickerDotLayout extends LinearLayout {
+public class ColorPickerLayout extends LinearLayout {
 
-    public static final String TAG = ColorPickerDotLayout.class.getName();
+    public static final String TAG = ColorPickerLayout.class.getName();
 
+    private static final String[] EMOJIS = new String[] {
+        "\u2764",          // love
+        "\uD83D\uDC4D",    // thumbs up
+        "\uD83D\uDC4E",    // thumbs down
+        "\uD83D\uDE03",    // smiley
+        "\uD83D\uDE26",    // frowning face
+        "\uD83D\uDCA9"     // poop
+    };
     // the list of colors offered by the app
     private int[] accentColors;
 
-    private List<ColorPickerDotView> colorDotViews = new ArrayList<>();
+    private List<ColorPickerView> colorDotViews = new ArrayList<>();
 
     private OnColorSelectedListener onColorSelectedListener;
     private OnWidthChangedListener onWidthChangedListener;
 
     private int currentDotRadius = getResources().getDimensionPixelSize(R.dimen.color_picker_small_dot_radius);
+    private int currentEmojiSize = getResources().getDimensionPixelSize(R.dimen.sketch__emoji__icon_size__small);
 
-    public ColorPickerDotLayout(Context context) {
+    public ColorPickerLayout(Context context) {
         this(context, null);
     }
 
-    public ColorPickerDotLayout(Context context, AttributeSet attrs) {
+    public ColorPickerLayout(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public ColorPickerDotLayout(Context context, AttributeSet attrs, int defStyle) {
+    public ColorPickerLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init();
     }
@@ -69,18 +78,38 @@ public class ColorPickerDotLayout extends LinearLayout {
             removeAllViews();
         }
 
+        LayoutInflater layoutInflater = LayoutInflater.from(getContext());
+        for (String emoji : EMOJIS) {
+            final ColorPickerEmojiView emojiView = (ColorPickerEmojiView) layoutInflater.inflate(R.layout.color_picker_emoji_view, this, false);
+            emojiView.setEmoji(emoji);
+            emojiView.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    setCurrentColor(emojiView);
+                }
+            });
+            colorDotViews.add(emojiView);
+            this.addView(emojiView);
+        }
+
+        boolean selected = false;
         for (int accentColor: accentColors) {
-            final ColorPickerDotView dot = (ColorPickerDotView) LayoutInflater.from(getContext()).inflate(R.layout.color_picker_dot_view, this, false);
+            final ColorPickerDotView dot = (ColorPickerDotView) layoutInflater.inflate(R.layout.color_picker_dot_view, this, false);
+            if (!selected) {
+                dot.setSelected(currentDotRadius);
+                selected = true;
+            }
             dot.setColor(accentColor);
             dot.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    setCurrentColor(dot.getCircleColor());
+                    setCurrentColor(dot);
                 }
             });
             colorDotViews.add(dot);
             this.addView(dot);
         }
+
         postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -99,14 +128,22 @@ public class ColorPickerDotLayout extends LinearLayout {
         invalidate();
     }
 
-    public void setCurrentColor(int color) {
-        for (ColorPickerDotView colorPickerDotView: colorDotViews) {
-            if (colorPickerDotView.getCircleColor() != color) {
-                colorPickerDotView.setUnselected();
+    public void setCurrentColor(ColorPickerView view) {
+        for (ColorPickerView colorPickerView: colorDotViews) {
+            if (colorPickerView != view) {
+                colorPickerView.setUnselected();
             } else {
-                colorPickerDotView.setSelected(currentDotRadius);
-                currentDotRadius = colorPickerDotView.getDotRadius();
-                onColorSelectedListener.onColorSelected(colorPickerDotView.getCircleColor(), colorPickerDotView.getStrokeSize());
+                if (view instanceof ColorPickerDotView) {
+                    colorPickerView.setSelected(currentDotRadius);
+                    currentDotRadius = colorPickerView.getSize();
+                    ColorPickerDotView colorPickerDotView = (ColorPickerDotView) colorPickerView;
+                    onColorSelectedListener.onColorSelected(colorPickerDotView.getCircleColor(), colorPickerDotView.getStrokeSize());
+                } else {
+                    colorPickerView.setSelected(currentEmojiSize);
+                    currentEmojiSize = colorPickerView.getSize();
+                    ColorPickerEmojiView colorPickerEmojiView = (ColorPickerEmojiView) colorPickerView;
+                    onColorSelectedListener.onEmojiSelected(colorPickerEmojiView.getEmoji(), colorPickerEmojiView.getEmojiSize());
+                }
             }
         }
         invalidate();
@@ -128,6 +165,7 @@ public class ColorPickerDotLayout extends LinearLayout {
      */
     public interface OnColorSelectedListener {
         void onColorSelected(int color, int strokeSize);
+        void onEmojiSelected(String emoji, int size);
     }
 
     public interface OnWidthChangedListener {
