@@ -77,7 +77,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
     prev.forall(_.time.isBefore(msg.time.minusSeconds(3600)))
 
   private def shouldShowChathead(msg: MessageData, prev: Option[MessageData]) =
-    prev.forall(m => m.userId != msg.userId || m.isSystemMessage)
+    !msg.isSystemMessage && prev.forall(m => m.userId != msg.userId || m.isSystemMessage)
 
   private def setParts(position: Int, msg: MessageData, parts: Seq[(MsgPart, Option[MessageContent])]) = {
     verbose(s"setParts: position: $position, parts: ${parts.map(_._1)}")

@@ -52,7 +52,6 @@ object WireApplication {
     bind[AccentColorController] to new AccentColorController()
     bind[GlobalCallingController] to new GlobalCallingController(inject[Context])
     bind[GlobalCameraController] to new GlobalCameraController(inject[Context], new AndroidCameraFactory)
-    bind[MessageViewFactory] to new MessageViewFactory()
     bind[SelectionController] to new SelectionController()
 
     //notifications
@@ -74,6 +73,7 @@ object WireApplication {
     bind[ImageController] to new ImageController()
     bind[AssetController] to new AssetController()
     bind[BrowserController] to new BrowserController(ctx)
+    bind[MessageViewFactory] to new MessageViewFactory()
     bind[PermissionActivity] to ctx.asInstanceOf[PermissionActivity]
     bind[PermissionsController] to new PermissionsController(new PermissionsWrapper)
   }

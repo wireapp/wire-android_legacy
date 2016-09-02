@@ -17,11 +17,11 @@
  */
 package com.waz.zclient.messages
 
-import android.view.ViewGroup
+import android.view.{View, ViewGroup}
 import android.widget.LinearLayout
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
-import com.waz.zclient.{ViewHelper, R}
+import com.waz.zclient.{R, ViewHelper}
 
 import scala.collection.mutable
 
@@ -30,6 +30,8 @@ class MessageViewFactory {
   val DefaultLayoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
 
   private val cache = new mutable.HashMap[MsgPart, mutable.Stack[MessageViewPart]]
+
+  private val viewCache = new mutable.HashMap[Int, mutable.Stack[View]]
 
   def recycle(part: MessageViewPart): Unit = {
     verbose(s"recycling part: ${part.tpe}")
@@ -54,10 +56,19 @@ class MessageViewFactory {
         case AudioAsset     => ViewHelper.inflate(R.layout.message_audio_asset, parent, false)
         case VideoAsset     => ViewHelper.inflate(R.layout.message_video_asset, parent, false)
         case Location       => ViewHelper.inflate(R.layout.message_location, parent, false)
+        case MemberChange   => ViewHelper.inflate(R.layout.message_member_change, parent, false)
         case _              => ViewHelper.inflate(R.layout.message_text, parent, false) // TODO: other types
       }
     }
   }
+
+  def recycle(view: View, resId: Int): Unit = {
+    verbose(s"recycling view: $resId")
+    viewCache.getOrElseUpdate(resId, new mutable.Stack[View]()).push(view)
+  }
+
+  def get[A <: View](resId: Int, parent: ViewGroup): A =
+    viewCache.get(resId).flatMap(s => if (s.isEmpty) None else Some(s.pop().asInstanceOf[A])).getOrElse { ViewHelper.inflate[A](resId, parent, addToParent = false) }
 
   def printCache(): Unit = {
     verbose(s"Currently cached view parts, cache@${cache.hashCode}")
