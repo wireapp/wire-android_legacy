@@ -20,15 +20,15 @@ package com.waz.zclient.messages.parts
 import java.util.Locale
 
 import android.app.DownloadManager
-import android.content.{Intent, Context}
 import android.content.res.TypedArray
+import android.content.{Context, Intent}
 import android.graphics._
 import android.net.Uri
 import android.support.v7.app.AppCompatDialog
 import android.text.TextUtils
 import android.text.format.Formatter
 import android.util.{AttributeSet, TypedValue}
-import android.view.{Gravity, View, ViewGroup}
+import android.view.{Gravity, View}
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget._
 import com.waz.api
@@ -46,7 +46,7 @@ import com.waz.zclient.controllers.global.AccentColorController
 import com.waz.zclient.messages.parts.DeliveryState._
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.ui.text.GlyphTextView
-import com.waz.zclient.ui.utils.{ResourceUtils, TypefaceUtils}
+import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{AssetUtils, RichView, StringUtils, ViewUtils}
 import com.waz.zclient.views.ImageAssetDrawable.State.Loaded
@@ -58,8 +58,7 @@ import org.threeten.bp.Duration
 import scala.util.Success
 
 //TODO retry logic on sending failed
-//TODO inflate the content from a different file to handle different layouts
-trait AssetPartView extends ViewGroup with MessageViewPart with ViewHelper {
+abstract class AssetPartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with MessageViewPart with ViewHelper {
   val zms = inject[Signal[ZMessaging]]
   val assets = inject[AssetController]
   val message = Signal[MessageData]()
@@ -73,16 +72,19 @@ trait AssetPartView extends ViewGroup with MessageViewPart with ViewHelper {
 
   val deliveryState = DeliveryState(message, asset)
   val actionReady = deliveryState.map { case Complete => true; case _ => false }
-  val progressDots = new AssetBackground(deliveryState)
+  val progressDots = new AssetBackground(deliveryState.map { case OtherUploading => true; case _ => false })
   setBackground(progressDots)
 
-  protected lazy val assetActionButton: AssetActionButton = findById(R.id.action_button)
+  def inflate(): Unit
+  inflate()
+  private val content: View = findById(R.id.content)
 
+  protected val assetActionButton: AssetActionButton = findById(R.id.action_button)
   //toggle content visibility to show only progress dot background if other side is uploading asset
   deliveryState.map {
     case OtherUploading => false
     case _ => true
-  }.on(Threading.Ui)(show => Seq.tabulate(getChildCount)(getChildAt).foreach(_.setVisible(show)))
+  }.on(Threading.Ui)(content.setVisible)
 
   override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
     message ! msg
@@ -90,13 +92,17 @@ trait AssetPartView extends ViewGroup with MessageViewPart with ViewHelper {
   }
 }
 
-class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with AssetPartView { self =>
+class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends AssetPartView(context, attrs, style) {
+  self =>
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
-  private lazy val downloadedIndicator: GlyphTextView = findById(R.id.done_indicator)
-  private lazy val fileNameView: TextView = findById(R.id.file_name)
-  private lazy val fileInfoView: TextView = findById(R.id.file_info)
+  override val tpe: MsgPart = MsgPart.FileAsset
+  override def inflate() = inflate(R.layout.message_file_asset_content)
+
+  private val downloadedIndicator: GlyphTextView = findById(R.id.done_indicator)
+  private val fileNameView: TextView = findById(R.id.file_name)
+  private val fileInfoView: TextView = findById(R.id.file_info)
 
   asset.map(_._1.name.getOrElse("")).on(Threading.Ui)(fileNameView.setText)
   asset.map(_._2).map(_ == DOWNLOAD_DONE).map { case true => View.VISIBLE; case false => View.GONE }.on(Threading.Ui)(downloadedIndicator.setVisibility)
@@ -124,8 +130,6 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) exten
         case _                        => getStringOrEmpty(min)
       }
   }.on(Threading.Ui) (fileInfoView.setText)
-
-  override val tpe: MsgPart = MsgPart.FileAsset
 
   actionReady.on(Threading.Ui) {
     case true =>
@@ -201,12 +205,15 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) exten
   }
 }
 
-class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with AssetPartView {
+class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends AssetPartView(context, attrs, style) {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
-  private lazy val durationView: TextView = findById(R.id.duration)
-  private lazy val progressBar: SeekBar = findById(R.id.progress)
+  override val tpe: MsgPart = MsgPart.AudioAsset
+  override def inflate() = inflate(R.layout.message_audio_asset_content)
+
+  private val durationView: TextView = findById(R.id.duration)
+  private val progressBar: SeekBar = findById(R.id.progress)
 
   val playControls = new PlaybackControls(asset.map(_._1))
 
@@ -224,7 +231,7 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) exte
 
       progressBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener {
         override def onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean): Unit =
-          if (fromUser) playControls.setPlayHead(Duration.ofMillis(progress))
+        if (fromUser) playControls.setPlayHead(Duration.ofMillis(progress))
 
         override def onStopTrackingTouch(seekBar: SeekBar): Unit = ()
 
@@ -234,17 +241,17 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) exte
     case false => progressBar.setEnabled(false)
   }
 
-  override val tpe: MsgPart = MsgPart.AudioAsset
 }
 
-class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with AssetPartView {
+class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends AssetPartView(context, attrs, style) {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
-
   def this(context: Context) = this(context, null, 0)
 
-  private lazy val durationView: TextView = findById(R.id.duration)
-
   override val tpe: MsgPart = MsgPart.VideoAsset
+  override def inflate() = inflate(R.layout.message_video_asset_content)
+
+  private val durationView: TextView = findById(R.id.duration)
+  inflate(R.layout.message_video_asset_content)
 
   private val imageDrawable = new ImageAssetDrawable(assetId.map(WireImage))
 
@@ -376,7 +383,7 @@ protected object DeliveryState {
     message.zip(asset).map { case (m, (_, s)) => apply(s, m.state) }
 }
 
-protected class AssetBackground(deliveryState: Signal[DeliveryState])(implicit context: WireContext, eventContext: EventContext) extends DrawableHelper {
+protected class AssetBackground(showDots: Signal[Boolean])(implicit context: WireContext, eventContext: EventContext) extends DrawableHelper {
   private val cornerRadius = ViewUtils.toPx(context, 4).toFloat
 
   private val backgroundPaint = new Paint
@@ -385,12 +392,11 @@ protected class AssetBackground(deliveryState: Signal[DeliveryState])(implicit c
   private val dots = new ProgressDotsDrawable
   dots.setCallback(this)
 
-  private var showDots = false
-  deliveryState.map { case OtherUploading => true; case _ => false }.onChanged.on(Threading.Ui) (showDots = _)
+  showDots.onChanged.on(Threading.Ui)(_ => invalidateSelf())
 
   override def draw(canvas: Canvas): Unit = {
     canvas.drawRoundRect(new RectF(getBounds), cornerRadius, cornerRadius, backgroundPaint)
-    if (showDots) dots.draw(canvas)
+    if (showDots.currentValue.getOrElse(false)) dots.draw(canvas)
   }
 
   override def onBoundsChange(bounds: Rect): Unit = dots.setBounds(bounds)

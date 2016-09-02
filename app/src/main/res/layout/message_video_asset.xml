@@ -19,30 +19,7 @@
 -->
 <com.waz.zclient.messages.parts.VideoAssetPartView android:id="@+id/fl__video_message_container"
                                                    xmlns:android="http://schemas.android.com/apk/res/android"
-                                                   xmlns:app="http://schemas.android.com/apk/res-auto"
                                                    android:layout_width="match_parent"
                                                    android:layout_height="match_parent"
                                                    android:layout_gravity="center"
-    >
-
-    <com.waz.zclient.messages.parts.AssetActionButton
-        android:id="@+id/action_button"
-        android:layout_width="@dimen/content__video_message__button__size"
-        android:layout_height="@dimen/content__video_message__button__size"
-        android:layout_gravity="center"
-        android:textColor="@color/white"
-        android:textSize="@dimen/content__video_message__glyph_size"
-        />
-
-    <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/duration"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/content__video_message__bottom_bar__height"
-        android:layout_gravity="bottom"
-        android:gravity="center_vertical|right"
-        android:paddingRight="@dimen/wire__padding__regular"
-        android:textSize="@dimen/wire__text_size__small"
-        app:font="@string/wire__typeface__light"
-        />
-
-</com.waz.zclient.messages.parts.VideoAssetPartView>
+    />

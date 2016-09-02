@@ -19,41 +19,8 @@
 
 -->
 <com.waz.zclient.messages.parts.AudioAssetPartView xmlns:android="http://schemas.android.com/apk/res/android"
-                                                   xmlns:app="http://schemas.android.com/apk/res-auto"
                                                    android:layout_width="match_parent"
                                                    android:layout_height="@dimen/content__audio_message__view_height"
                                                    android:layout_marginEnd="@dimen/content__padding_right"
                                                    android:layout_marginStart="@dimen/content__padding_left"
-                                                   android:orientation="horizontal"
-    >
-
-    <com.waz.zclient.messages.parts.AssetActionButton
-        android:id="@+id/action_button"
-        android:layout_width="@dimen/content__audio_message__button__size"
-        android:layout_height="@dimen/content__audio_message__button__size"
-        android:layout_gravity="center"
-        android:layout_margin="@dimen/wire__padding__12"
-        android:textColor="@color/white"
-        android:textSize="@dimen/content__audio_message__glyph_size"
-        app:isFileType="false"
-        />
-
-    <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/duration"
-        style="?audioMessageDuration"
-        android:layout_width="@dimen/content__audio_message__duration_width"
-        android:layout_height="match_parent"
-        android:gravity="center_vertical|start"
-        app:font="@string/wire__typeface__light"
-        />
-
-    <SeekBar
-        android:id="@+id/progress"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center"
-        android:maxHeight="@dimen/content__audio_message__view_height"
-        android:minHeight="@dimen/loading_bar__stroke_width"
-        />
-
-</com.waz.zclient.messages.parts.AudioAssetPartView>
+    />
