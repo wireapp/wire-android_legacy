@@ -65,19 +65,19 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) exten
   }
 
   deliveryState.map {
-    case Uploading => (R.string.content__file__status__uploading__minimized, R.string.content__file__status__uploading, R.string.content__file__status__uploading__size_and_extension)
-    case Downloading => (R.string.content__file__status__downloading__minimized, R.string.content__file__status__downloading, R.string.content__file__status__downloading__size_and_extension)
-    case Cancelled => (R.string.content__file__status__cancelled__minimized, R.string.content__file__status__cancelled, R.string.content__file__status__cancelled__size_and_extension)
-    case UploadFailed => (R.string.content__file__status__upload_failed__minimized, R.string.content__file__status__upload_failed, R.string.content__file__status__upload_failed__size_and_extension)
-    case DownloadFailed => (R.string.content__file__status__download_failed__minimized, R.string.content__file__status__download_failed, R.string.content__file__status__download_failed__size_and_extension)
-    case Complete => (R.string.content__file__status__default, R.string.content__file__status__default, R.string.content__file__status__default__size_and_extension)
-    case _ => (0, 0, 0)
+    case Uploading        => (R.string.content__file__status__uploading__minimized,       R.string.content__file__status__uploading,        R.string.content__file__status__uploading__size_and_extension)
+    case Downloading      => (R.string.content__file__status__downloading__minimized,     R.string.content__file__status__downloading,      R.string.content__file__status__downloading__size_and_extension)
+    case Cancelled        => (R.string.content__file__status__cancelled__minimized,       R.string.content__file__status__cancelled,        R.string.content__file__status__cancelled__size_and_extension)
+    case UploadFailed     => (R.string.content__file__status__upload_failed__minimized,   R.string.content__file__status__upload_failed,    R.string.content__file__status__upload_failed__size_and_extension)
+    case DownloadFailed   => (R.string.content__file__status__download_failed__minimized, R.string.content__file__status__download_failed,  R.string.content__file__status__download_failed__size_and_extension)
+    case Complete         => (R.string.content__file__status__default,                    R.string.content__file__status__default,          R.string.content__file__status__default__size_and_extension)
+    case _                => (0, 0, 0)
   }.zip(sizeAndExt).map {
     case ((min, dfault, full), sAndE) =>
       sAndE match {
-        case (Some(size), Some(ext)) => getStringOrEmpty(full, size, ext)
-        case (None, Some(ext)) => getStringOrEmpty(dfault, ext)
-        case _ => getStringOrEmpty(min)
+        case (Some(size), Some(ext))  => getStringOrEmpty(full, size, ext)
+        case (None, Some(ext))        => getStringOrEmpty(dfault, ext)
+        case _                        => getStringOrEmpty(min)
       }
   }.on(Threading.Ui)(fileInfoView.setText)
 
