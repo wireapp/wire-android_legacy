@@ -82,31 +82,25 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
   private def setParts(position: Int, msg: MessageData, parts: Seq[(MsgPart, Option[MessageContent])]) = {
     verbose(s"setParts: position: $position, parts: ${parts.map(_._1)}")
 
-    val partViews = Seq.tabulate(getChildCount)(getChildAt).collect { case pv: MessageViewPart => pv }.iterator.buffered
+    // recycle views in reverse order, recycled views are stored in a Stack, this way we will get the same views back if parts are the same
+    // XXX: one views get bigger, we may need to optimise this, we don't need to remove views that will get reused, currently this seems to be fast enough
+    (0 until getChildCount).reverseIterator.map(getChildAt) foreach {
+      case pv: MessageViewPart => factory.recycle(pv)
+      case _ =>
+    }
+    removeAllViewsInLayout()
 
     parts.zipWithIndex foreach { case ((tpe, content), index) =>
-      while (partViews.hasNext && partViews.head.tpe != tpe && partViews.head.tpe.order <= tpe.order) {
-        factory.recycle(returning(partViews.next()) { removeViewInLayout })
-      }
-      if (partViews.hasNext && partViews.head.tpe == tpe) {
-        partViews.next().set(position, msg, content, widthHint)
-      } else {
-        val view = factory.get(tpe, this)
-        view.set(position, msg, content, widthHint)
-        addViewInLayout(view, index, Option(view.getLayoutParams) getOrElse factory.DefaultLayoutParams)
-      }
+      val view = factory.get(tpe, this)
+      view.set(position, msg, content, widthHint)
+      addViewInLayout(view, index, Option(view.getLayoutParams) getOrElse factory.DefaultLayoutParams)
     }
-
-    partViews foreach { pv => factory.recycle(pv) }
-    removeViewsInLayout(parts.length, getChildCount - parts.length)
   }
 
   override def onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int): Unit = {
     super.onLayout(changed, l, t, r, b)
     verbose(s"onLayout, height: ${b - t}")
   }
-
-
 }
 
 object MessageView {
@@ -124,25 +118,23 @@ object MessageView {
   }
 }
 
-/**
-  * @param order - describes typical ordering of parts in a message, used to optimize view recycling
-  */
-sealed abstract class MsgPart(val order: Int)
+sealed trait MsgPart
 
 object MsgPart {
-  case object Separator extends MsgPart(0)
-  case object SeparatorLarge extends MsgPart(0)
-  case object User extends MsgPart(10)
-  case object Text extends MsgPart(20)
-  case object FileAsset extends MsgPart(30)
-  case object AudioAsset extends MsgPart(30)
-  case object VideoAsset extends MsgPart(30)
-  case object Image extends MsgPart(30)
-  case object WebLink extends MsgPart(40)
-  case object YouTube extends MsgPart(40)
-  case object Location extends MsgPart(40)
-  case object SoundCloud extends MsgPart(40)
-  case object Timestamp extends MsgPart(100)
+  case object Separator extends MsgPart
+  case object SeparatorLarge extends MsgPart
+  case object User extends MsgPart
+  case object Text extends MsgPart
+  case object FileAsset extends MsgPart
+  case object AudioAsset extends MsgPart
+  case object VideoAsset extends MsgPart
+  case object Image extends MsgPart
+  case object WebLink extends MsgPart
+  case object YouTube extends MsgPart
+  case object Location extends MsgPart
+  case object SoundCloud extends MsgPart
+  case object MemberChange extends MsgPart
+  case object Timestamp extends MsgPart
 
   def apply(msgType: Message.Type): MsgPart = {
     import Message.Type._
@@ -153,6 +145,7 @@ object MsgPart {
       case VIDEO_ASSET => VideoAsset
       case AUDIO_ASSET => AudioAsset
       case LOCATION => Location
+      case MEMBER_JOIN | MEMBER_LEAVE => MemberChange
       case _ => Text // TODO
     }
   }
