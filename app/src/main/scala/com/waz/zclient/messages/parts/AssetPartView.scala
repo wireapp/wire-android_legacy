@@ -42,6 +42,7 @@ import com.waz.service.assets.GlobalRecordAndPlayService
 import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, UnauthenticatedContent}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
+import com.waz.zclient.controllers.global.AccentColorController
 import com.waz.zclient.messages.parts.DeliveryState._
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.ui.text.GlyphTextView
@@ -406,6 +407,7 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
 
   val assetService = inject[AssetController]
   val message = Signal[MessageData]()
+  val accentController = inject[AccentColorController]
 
   val asset = assetService.assetSignal(message)
   val deliveryState = DeliveryState(message, asset)
@@ -413,6 +415,8 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
 
   private val errorButtonDrawable = getDrawable(R.drawable.selector__icon_button__background__video_message__error)
   private val onCompletedDrawable = if (isFileType) new FileDrawable(asset.map(_._1.mimeType.extension)) else normalButtonDrawable
+
+  accentController.accentColor.map(_.getColor).on(Threading.Ui) (setProgressColor)
 
   deliveryState.map {
     case Complete => (if (isFileType) 0 else R.string.glyph__play, onCompletedDrawable)
