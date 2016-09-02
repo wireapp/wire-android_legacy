@@ -22,6 +22,7 @@ import java.util.Locale
 import android.content.Context
 import android.content.res.TypedArray
 import android.graphics._
+import android.text.format.Formatter
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.SeekBar.OnSeekBarChangeListener
@@ -81,7 +82,7 @@ trait AssetPartView extends ViewGroup with MessageViewPart with ViewHelper {
   }
 }
 
-class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with AssetPartView {
+class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with AssetPartView { self =>
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -92,10 +93,31 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) exten
   asset.map(_._1.name.getOrElse("")).on(Threading.Ui)(fileNameView.setText)
   asset.map(_._2).map(_ == DOWNLOAD_DONE).map { case true => View.VISIBLE; case false => View.GONE }.on(Threading.Ui)(downloadedIndicator.setVisibility)
 
-  //TODO fileInfo strings - pretty big mess...
+  val sizeAndExt = asset.map {
+    case (a, _) =>
+      val size = if (a.sizeInBytes <= 0) None else Some(Formatter.formatFileSize(context, a.sizeInBytes))
+      val ext = Option(a.mimeType.extension).map(_.toUpperCase(Locale.getDefault))
+      (size, ext)
+  }
+
+  deliveryState.map {
+    case Uploading        => (R.string.content__file__status__uploading__minimized,         R.string.content__file__status__uploading,        R.string.content__file__status__uploading__size_and_extension)
+    case Downloading      => (R.string.content__file__status__downloading__minimized,       R.string.content__file__status__downloading,      R.string.content__file__status__downloading__size_and_extension)
+    case Cancelled        => (R.string.content__file__status__cancelled__minimized,         R.string.content__file__status__cancelled,        R.string.content__file__status__cancelled__size_and_extension)
+    case UploadFailed     => (R.string.content__file__status__upload_failed__minimized,     R.string.content__file__status__upload_failed,    R.string.content__file__status__upload_failed__size_and_extension)
+    case DownloadFailed   => (R.string.content__file__status__download_failed__minimized,   R.string.content__file__status__download_failed,  R.string.content__file__status__download_failed__size_and_extension)
+    case Complete         => (R.string.content__file__status__default,                      R.string.content__file__status__default,          R.string.content__file__status__default__size_and_extension)
+    case _                => (0, 0, 0)
+  }.zip(sizeAndExt).map {
+    case ((min, dfault, full), sAndE) =>
+      sAndE match {
+        case (Some(size), Some(ext))  => getStringOrEmpty(full, size, ext)
+        case (None, Some(ext))        => getStringOrEmpty(dfault, ext)
+        case _                        => getStringOrEmpty(min)
+      }
+  }.on(Threading.Ui) (fileInfoView.setText)
 
   override val tpe: MsgPart = MsgPart.FileAsset
-
 }
 
 class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with AssetPartView {
@@ -244,15 +266,23 @@ protected object DeliveryState {
 
   case object Downloading extends DeliveryState
 
-  case object Failed extends DeliveryState
+  case object Cancelled extends DeliveryState
+
+  trait Failed extends DeliveryState
+
+  case object UploadFailed extends Failed
+
+  case object DownloadFailed extends Failed
 
   case object Unknown extends DeliveryState
 
   private def apply(as: api.AssetStatus, ms: Message.Status): DeliveryState = (as, ms) match {
-    case (UPLOAD_CANCELLED | UPLOAD_FAILED | DOWNLOAD_FAILED, _) => Failed
+    case (UPLOAD_CANCELLED, _) => Cancelled
+    case (UPLOAD_FAILED, _) => UploadFailed
+    case (DOWNLOAD_FAILED, _) => DownloadFailed
     case (UPLOAD_NOT_STARTED | META_DATA_SENT | PREVIEW_SENT | UPLOAD_IN_PROGRESS, mState) =>
       mState match {
-        case Message.Status.FAILED => Failed
+        case Message.Status.FAILED => UploadFailed
         case Message.Status.SENT => OtherUploading
         case _ => Uploading
       }
@@ -308,7 +338,7 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
     case Complete => (if (isFileType) 0 else R.string.glyph__play, onCompletedDrawable)
     case Uploading |
          Downloading => (R.string.glyph__close, normalButtonDrawable)
-    case Failed => (R.string.glyph__redo, errorButtonDrawable)
+    case _ : Failed | Cancelled => (R.string.glyph__redo, errorButtonDrawable)
     case _ => (0, null)
   }.on(Threading.Ui) {
     case (action, drawable) =>
