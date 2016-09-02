@@ -17,8 +17,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<com.waz.zclient.messages.parts.VideoAssetPartView xmlns:android="http://schemas.android.com/apk/res/android"
-                                                   android:layout_width="match_parent"
-                                                   android:layout_height="match_parent"
-                                                   android:layout_gravity="center"
+<com.waz.zclient.messages.parts.FileAssetPartView xmlns:android="http://schemas.android.com/apk/res/android"
+                                                  android:layout_width="@dimen/content__width"
+                                                  android:layout_height="@dimen/content__audio_message__view_height"
+                                                  android:layout_gravity="center"
+                                                  android:paddingEnd="@dimen/content__row__padding_right"
     />
