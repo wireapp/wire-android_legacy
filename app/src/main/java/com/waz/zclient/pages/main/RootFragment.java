@@ -61,6 +61,7 @@ import com.waz.zclient.pages.main.connect.ConnectRequestInboxManagerFragment;
 import com.waz.zclient.pages.main.connect.ConnectRequestLoadMode;
 import com.waz.zclient.pages.main.connect.PendingConnectRequestManagerFragment;
 import com.waz.zclient.pages.main.conversation.ConversationFragment;
+import com.waz.zclient.pages.main.conversation.LikesListFragment;
 import com.waz.zclient.pages.main.conversation.LocationFragment;
 import com.waz.zclient.pages.main.conversation.controller.ConversationScreenControllerObserver;
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController;
@@ -92,6 +93,7 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
                                                                        PendingConnectRequestManagerFragment.Container,
                                                                        ConnectRequestInboxManagerFragment.Container,
                                                                        ParticipantsDialogFragment.Container,
+                                                                       LikesListFragment.Container,
                                                                        PagerControllerObserver,
                                                                        ConversationScreenControllerObserver,
                                                                        OnBackPressedListener,
@@ -695,7 +697,17 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
 
     @Override
     public void onShowLikesList(Message message) {
-
+        getChildFragmentManager()
+            .beginTransaction()
+            .setCustomAnimations(R.anim.slide_in_from_bottom_pick_user,
+                                 R.anim.open_new_conversation__thread_list_out,
+                                 R.anim.open_new_conversation__thread_list_in,
+                                 R.anim.slide_out_to_bottom_pick_user)
+            .replace(R.id.fl__root__likes_list,
+                     LikesListFragment.newInstance(message),
+                     LikesListFragment.TAG)
+            .addToBackStack(LikesListFragment.TAG)
+            .commit();
     }
 
     @Override
@@ -733,6 +745,12 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
         fragment = getChildFragmentManager().findFragmentById(R.id.fl__root__sketch);
         if (fragment instanceof OnBackPressedListener) {
             ((OnBackPressedListener) fragment).onBackPressed();
+            return true;
+        }
+
+        fragment = getChildFragmentManager().findFragmentById(R.id.fl__root__likes_list);
+        if (fragment instanceof LikesListFragment) {
+            getChildFragmentManager().popBackStack(LikesListFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE);
             return true;
         }
 
@@ -912,6 +930,14 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
             getStoreFactory().getConversationStore().sendMessage(location);
         }
         getChildFragmentManager().popBackStack(LocationFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+    }
+
+    @Override
+    public void closeLikesList() {
+        Fragment fragment = getChildFragmentManager().findFragmentById(R.id.fl__conversation_manager__message_list_container);
+        if (fragment instanceof LikesListFragment) {
+            getChildFragmentManager().popBackStack(LikesListFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        }
     }
 
     public interface Container {

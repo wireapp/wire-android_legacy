@@ -22,7 +22,9 @@
               xmlns:app="http://schemas.android.com/apk/res-auto"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:orientation="vertical">
+              android:orientation="vertical"
+              android:clickable="false"
+              style="?wireBackground">
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/t__likes_list__toolbar"
