@@ -765,4 +765,13 @@
     <dimen name="cursor_strip_width">48dp</dimen>
     <dimen name="fake_icon_diameter">31dp</dimen>
     <dimen name="message__bottom_menu__icon_view_size">24dp</dimen>
+
+    <dimen name="sketch__emoji__size__small">40dp</dimen>
+    <dimen name="sketch__emoji__size__medium">60dp</dimen>
+    <dimen name="sketch__emoji__size__large">70dp</dimen>
+
+    <dimen name="sketch__emoji__icon_size__unselected">4dp</dimen>
+    <dimen name="sketch__emoji__icon_size__small">6dp</dimen>
+    <dimen name="sketch__emoji__icon_size__medium">7dp</dimen>
+    <dimen name="sketch__emoji__icon_size__large">8dp</dimen>
 </resources>

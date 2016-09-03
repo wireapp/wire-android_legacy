@@ -26,7 +26,7 @@ import android.view.View;
 
 import com.waz.zclient.ui.R;
 
-public class ColorPickerDotView extends View {
+public class ColorPickerDotView extends View implements ColorPickerView {
 
     final int smallDotRadius = getResources().getDimensionPixelSize(R.dimen.color_picker_small_dot_radius);
     final int mediumDotRadius = getResources().getDimensionPixelSize(R.dimen.color_picker_medium_dot_radius);
@@ -71,6 +71,7 @@ public class ColorPickerDotView extends View {
         invalidate();
     }
 
+    @Override
     public void setSelected(int colorPickerDotSize) {
         //if selected, increase size
         if (isSelected) {
@@ -82,10 +83,16 @@ public class ColorPickerDotView extends View {
         invalidate();
     }
 
+    @Override
     public void setUnselected() {
         isSelected = false;
         dotRadius = smallDotRadius;
         invalidate();
+    }
+
+    @Override
+    public int getSize() {
+        return dotRadius;
     }
 
     @Override
@@ -114,10 +121,6 @@ public class ColorPickerDotView extends View {
 
     public int getCircleColor() {
         return circlePaint.getColor();
-    }
-
-    public int getDotRadius() {
-        return dotRadius;
     }
 
     public int getStrokeSize() {
