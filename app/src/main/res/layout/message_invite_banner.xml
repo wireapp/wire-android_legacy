@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2016 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<com.waz.zclient.messages.parts.InviteBannerPartView xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:custom="http://schemas.android.com/apk/res-auto"
+              android:id="@+id/ll__conversation__invite_banner"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:paddingBottom="@dimen/content__invite_banner__padding_bottom"
+              android:gravity="center_horizontal">
+
+    <!-- Clear button -->
+    <com.waz.zclient.ui.text.GlyphTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="@dimen/wire__padding__14"
+        android:text="@string/glyph__invite"
+        android:textSize="@dimen/content__invite_banner__icon__size"
+        android:textColor="@color/text__secondary_light"
+        />
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/content__invite_banner__title"
+        custom:font="@string/wire__typeface__light"
+        style="?messageStreamSubtitle"
+        />
+
+    <com.waz.zclient.ui.views.ZetaButton
+        android:id="@+id/zb__conversation__invite_banner__show_contacts"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/wire__button__height_small"
+        android:layout_marginTop="@dimen/wire__padding__18"
+        android:paddingLeft="@dimen/wire__padding__big"
+        android:paddingRight="@dimen/wire__padding__big"
+        android:gravity="center"
+        android:textSize="@dimen/wire__text_size__small"
+        android:textAllCaps="true"
+        android:text="@string/content__invite_banner__button_label"
+        custom:font="@string/wire__typeface__light"
+        />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/people_picker__border_line__height"
+        android:layout_marginTop="@dimen/wire__padding__big"
+        android:background="@color/separator_light"
+        />
+
+
+</com.waz.zclient.messages.parts.InviteBannerPartView>

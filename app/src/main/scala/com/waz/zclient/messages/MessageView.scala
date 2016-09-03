@@ -141,6 +141,7 @@ object MsgPart {
   case object MemberChange extends MsgPart
   case object ConnectRequest extends MsgPart
   case object Timestamp extends MsgPart
+  case object InviteBanner extends MsgPart
 
   def apply(msgType: Message.Type): MsgPart = {
     import Message.Type._

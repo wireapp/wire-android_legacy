@@ -33,7 +33,10 @@ import com.waz.zclient.messages.MessageViewFactory
 import com.waz.zclient.messages.parts.AssetController
 import com.waz.zclient.notifications.controllers.{CallingNotificationsController, ImageNotificationsController, MessageNotificationsController}
 import com.waz.zclient.utils.{BackendPicker, BuildConfigUtils, Callback}
+import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.views.ImageController
+import com.waz.zclient.controllers.theme.IThemeController
+import com.waz.zclient.controllers.IControllerFactory
 
 object WireApplication {
   var APP_INSTANCE: WireApplication = _
@@ -41,12 +44,20 @@ object WireApplication {
   lazy val Global = new Module {
     implicit val eventContext = EventContext.Global
 
+    def controllerFactory = APP_INSTANCE.asInstanceOf[ZApplication].getControllerFactory
+
     // SE services
     bind[Signal[Option[ZMessaging]]] to ZMessaging.currentUi.currentZms
     bind[Signal[ZMessaging]] to inject[Signal[Option[ZMessaging]]].collect { case Some(z) => z }
     bind[PreferenceService] to ZMessaging.currentGlobal.prefs
     bind[NetworkModeService] to ZMessaging.currentGlobal.network
     bind[MediaManagerService] to ZMessaging.currentGlobal.mediaManager
+
+    // old controllers
+    // TODO: remove controller factory, reimplement those controllers
+    bind[IControllerFactory] toProvider controllerFactory
+    bind[IPickUserController] toProvider controllerFactory.getPickUserController
+    bind[IThemeController] toProvider controllerFactory.getThemeController
 
     // global controllers
     bind[AccentColorController] to new AccentColorController()
