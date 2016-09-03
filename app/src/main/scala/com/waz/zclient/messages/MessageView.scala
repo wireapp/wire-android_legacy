@@ -51,19 +51,21 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
     msgId = msg.id
     val parts = Seq.newBuilder[(MsgPart, Option[MessageContent])]
 
+    verbose(s"set $pos, $msg")
+
     if (shouldShowSeparator(msg, prev))
       parts += MsgPart.Separator -> None
 
     if (shouldShowChathead(msg, prev))
       parts += MsgPart.User -> None
 
-    if (msg.content.isEmpty) {
-      parts += MsgPart(msg.msgType) -> None
-    } else {
+    if (msg.msgType == Message.Type.RICH_MEDIA) {
       // add rich media parts
       msg.content foreach { content =>
         parts += MsgPart(content.tpe) -> Some(content)
       }
+    } else {
+      parts += MsgPart(msg.msgType) -> None
     }
 
     if (focused)
@@ -73,8 +75,11 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
   }
 
   // TODO: system messages don't always need a divider
-  private def shouldShowSeparator(msg: MessageData, prev: Option[MessageData]) =
-    prev.forall(_.time.isBefore(msg.time.minusSeconds(3600)))
+  private def shouldShowSeparator(msg: MessageData, prev: Option[MessageData]) = msg.msgType match {
+    case Message.Type.CONNECT_REQUEST => false
+    case _ =>
+      prev.forall(_.time.isBefore(msg.time.minusSeconds(3600)))
+  }
 
   private def shouldShowChathead(msg: MessageData, prev: Option[MessageData]) =
     !msg.isSystemMessage && prev.forall(m => m.userId != msg.userId || m.isSystemMessage)
@@ -134,6 +139,7 @@ object MsgPart {
   case object Location extends MsgPart
   case object SoundCloud extends MsgPart
   case object MemberChange extends MsgPart
+  case object ConnectRequest extends MsgPart
   case object Timestamp extends MsgPart
 
   def apply(msgType: Message.Type): MsgPart = {
@@ -146,6 +152,7 @@ object MsgPart {
       case AUDIO_ASSET => AudioAsset
       case LOCATION => Location
       case MEMBER_JOIN | MEMBER_LEAVE => MemberChange
+      case CONNECT_REQUEST => ConnectRequest
       case _ => Text // TODO
     }
   }

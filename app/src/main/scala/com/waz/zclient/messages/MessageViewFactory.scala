@@ -57,6 +57,7 @@ class MessageViewFactory {
         case VideoAsset     => ViewHelper.inflate(R.layout.message_video_asset, parent, false)
         case Location       => ViewHelper.inflate(R.layout.message_location, parent, false)
         case MemberChange   => ViewHelper.inflate(R.layout.message_member_change, parent, false)
+        case ConnectRequest => ViewHelper.inflate(R.layout.message_connect_request, parent, false)
         case _              => ViewHelper.inflate(R.layout.message_text, parent, false) // TODO: other types
       }
     }
