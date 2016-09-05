@@ -67,6 +67,7 @@
         android:layout_marginStart="@dimen/content__padding_left"
         android:textColor="@color/text__secondary_light"
         android:gravity="start|center_vertical"
+        android:singleLine="true"
         android:textSize="@dimen/wire__text_size__small"
         app:font="@string/wire__typeface__light"
         />
