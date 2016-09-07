@@ -28,5 +28,5 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends V
 
   override val tpe: MsgPart = MsgPart.Image
 
-  setBackground(imageDrawable) //FIXME, sets twice, kinda unnecessary
+  setBackground(imageDrawable)
 }

@@ -18,7 +18,7 @@
 package com.waz.zclient.messages.parts
 
 import android.view.View
-import android.widget.{LinearLayout, TextView}
+import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api
@@ -31,11 +31,13 @@ import com.waz.service.assets.GlobalRecordAndPlayService
 import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, UnauthenticatedContent}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
+import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.messages.MessageViewPart
 import com.waz.zclient.messages.parts.DeliveryState.{Complete, OtherUploading}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, StringUtils}
+import com.waz.zclient.views.ImageAssetDrawable.Padding
 import com.waz.zclient.views.ImageController.WireImage
 import com.waz.zclient.views.{AssetActionButtonNew, AssetBackground, ImageAssetDrawable}
 import org.threeten.bp.Duration
@@ -125,34 +127,53 @@ trait ContentAssetPart extends AssetPart {
 
 trait ImageLayoutAssetPart extends AssetPart {
   protected val imageDim = message map { _.imageDimensions.getOrElse(Dim2(1, 1)) }
-  protected val width = Signal[Int]()
+  protected val viewWidth = Signal[Int]()
+
+  private lazy val contentPadding = getDimenPx(R.dimen.content__padding_left)
 
   val imageDrawable = new ImageAssetDrawable(message map { m => WireImage(m.assetId) })
 
-  val height = for {
-    w <- width
+  val displaySize = for {
+    w <- viewWidth
     Dim2(imW, imH) <- imageDim
-  } yield imH * w / imW  // TODO: improve view size computation
+  } yield {
+    val pxW = toPx(imW)
+    val centered = w - 2 * contentPadding
+    val padded = w - contentPadding
+    val width =
+      if (imH > imW) math.min(pxW, centered)
+      else if (pxW >= padded) w
+      else if (pxW >= centered) centered
+      else pxW
 
-  height { h =>
-    val w = getLayoutParams.width
-    val margin = if (h > w) getDimenPx(R.dimen.content__padding_left) else 0
-    val displayWidth = w - 2 * margin
-    val height = (h * (displayWidth.toDouble / w)).toInt
-    //TODO, set the imageDrawable to draw only within the bounds of `displayWidth`
-    val pms = new LinearLayout.LayoutParams(w, height)
-    pms.setMargins(margin, 0, margin, 0)
-    setLayoutParams(pms)
+    Dim2(width, imH * width / imW)
+  }
+
+  val padding = for {
+    w <- viewWidth
+    Dim2(dW, dH) <- displaySize
+  } yield {
+    if (dW >= w) Padding.Empty
+    else {
+      val left = if (getLayoutDirection == View.LAYOUT_DIRECTION_LTR) contentPadding else w - contentPadding - dW
+      Padding(left, 0, w - dW - left, 0)
+    }
+  }
+
+  padding { imageDrawable.padding ! _ }
+
+  displaySize.map(_.height) { h =>
+    setLayoutParams(returning(getLayoutParams)(_.height = h))
   }
 
   override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
     super.set(pos, msg, part, widthHint)
-    width.mutateOrDefault(identity, widthHint)
+    viewWidth.mutateOrDefault(identity, widthHint)
   }
 
   override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {
     super.onLayout(changed, left, top, right, bottom)
-    width ! (right - left)
+    viewWidth ! (right - left)
   }
 }
 

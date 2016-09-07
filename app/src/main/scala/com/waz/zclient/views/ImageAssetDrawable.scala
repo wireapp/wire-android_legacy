@@ -31,7 +31,7 @@ import com.waz.service.assets.AssetService.{BitmapRequest, BitmapResult}
 import com.waz.service.images.BitmapSignal
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.zclient.views.ImageAssetDrawable.{RequestBuilder, ScaleType, State}
+import com.waz.zclient.views.ImageAssetDrawable.{Padding, RequestBuilder, ScaleType, State}
 import com.waz.zclient.views.ImageController._
 import com.waz.zclient.{Injectable, Injector}
 
@@ -51,6 +51,8 @@ class ImageAssetDrawable(
 
   private val animator = ValueAnimator.ofFloat(0, 1).setDuration(750)
 
+  val padding = Signal(Padding.Empty)
+
   animator.addUpdateListener(new AnimatorUpdateListener {
     override def onAnimationUpdate(animation: ValueAnimator): Unit = {
       val alpha = (animation.getAnimatedFraction * 255).toInt
@@ -61,11 +63,21 @@ class ImageAssetDrawable(
 
   val state = for {
     im <- src
-    d <- dims
-    state <- bitmapState(im, d.width)
+    d <- dims if d.width > 0
+    p <- padding
+    state <- bitmapState(im, d.width - p.left - p.right)
   } yield state
 
-  state.on(Threading.Ui) { _ => invalidateSelf() }
+  state.on(Threading.Ui) { st =>
+    invalidateSelf()
+  }
+
+  background foreach { bg =>
+    dims.zip(padding) { case (_, Padding(l, t, r, b)) =>
+      val bounds = getBounds
+      bg.setBounds(bounds.left + l, bounds.top + t, bounds.right - r, bounds.bottom - b)
+    }
+  }
 
   private def bitmapState(im: ImageSource, w: Int) =
     images.imageSignal(im, request(w))
@@ -88,8 +100,12 @@ class ImageAssetDrawable(
       if (state.bmp.nonEmpty && prev.exists(_.bmp.isEmpty)) animator.start()
     }
 
-    def updateMatrix(b: Bitmap) =
-      scaleType(matrix, b.getWidth, b.getHeight, Dim2(getBounds.width(), getBounds.height()))
+    def updateMatrix(b: Bitmap) = {
+      val bounds = getBounds
+      val p = padding.currentValue.getOrElse(Padding.Empty)
+      scaleType(matrix, b.getWidth, b.getHeight, Dim2(bounds.width() - p.left - p.right, bounds.height() - p.top - p.bottom))
+      matrix.postTranslate(bounds.left + p.left, bounds.top + p.top)
+    }
 
     def updateDrawingState(state: State) = {
       state.bmp foreach updateMatrix
@@ -112,7 +128,6 @@ class ImageAssetDrawable(
   }
 
   override def onBoundsChange(bounds: Rect): Unit = {
-    background foreach { _.setBounds(bounds) }
     dims ! Dim2(bounds.width(), bounds.height())
   }
 
@@ -139,10 +154,26 @@ object ImageAssetDrawable {
       override def apply(matrix: Matrix, w: Int, h: Int, viewSize: Dim2): Unit =
         matrix.setScale(viewSize.width.toFloat / w, viewSize.height.toFloat / h)
     }
+    case object FitY extends ScaleType {
+      override def apply(matrix: Matrix, w: Int, h: Int, viewSize: Dim2): Unit = {
+        val scale = viewSize.height.toFloat / h
+        matrix.setScale(scale, scale)
+        matrix.postTranslate(- (w * scale - viewSize.width) / 2, 0)
+      }
+    }
     case object CenterCrop extends ScaleType {
       override def apply(matrix: Matrix, w: Int, h: Int, viewSize: Dim2): Unit = {
-        val srcW = viewSize.width * h / viewSize.height
-        val scale = if (srcW >= w) viewSize.width.toFloat / w else viewSize.height.toFloat / h
+        val scale = math.max(viewSize.width.toFloat / w, viewSize.height.toFloat / h)
+        val dx = - (w * scale - viewSize.width) / 2
+        val dy = - (h * scale - viewSize.height) / 2
+
+        matrix.setScale(scale, scale)
+        matrix.postTranslate(dx, dy)
+      }
+    }
+    case object CenterInside extends ScaleType {
+      override def apply(matrix: Matrix, w: Int, h: Int, viewSize: Dim2): Unit = {
+        val scale = math.min(viewSize.width.toFloat / w, viewSize.height.toFloat / h)
         val dx = - (w * scale - viewSize.width) / 2
         val dy = - (h * scale - viewSize.height) / 2
 
@@ -168,6 +199,11 @@ object ImageAssetDrawable {
     case class PreviewLoaded(src: ImageSource, override val bmp: Option[Bitmap]) extends State
     case class Loaded(src: ImageSource, override val bmp: Option[Bitmap]) extends State
     case class Failed(src: ImageSource) extends State
+  }
+
+  case class Padding(left: Int, top: Int, right: Int, bottom: Int)
+  object Padding {
+    val Empty = Padding(0, 0, 0, 0)
   }
 }
 

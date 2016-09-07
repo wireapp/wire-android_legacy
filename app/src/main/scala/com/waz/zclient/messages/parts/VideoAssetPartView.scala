@@ -18,9 +18,11 @@
 package com.waz.zclient.messages.parts
 
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import com.waz.threading.Threading
+import com.waz.utils.events.Signal
 import com.waz.zclient.R
 import com.waz.zclient.messages.MsgPart
 import com.waz.zclient.messages.parts.DeliveryState.OtherUploading
@@ -42,15 +44,16 @@ class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int) exte
     case _ => getColor(R.color.black)
   }.on(Threading.Ui)(durationView.setTextColor)
 
-  deliveryState.on(Threading.Ui) {
-    case OtherUploading => setBackground(progressDots)
+  val bg = deliveryState flatMap {
+    case OtherUploading => Signal.const[Drawable](progressDots)
     case _ =>
-      setBackground(imageDrawable)
-      imageDrawable.state.on(Threading.Ui) {
-        case ImageAssetDrawable.State.Failed(_) => setBackground(progressDots)
-        case _ =>
-      }
+      imageDrawable.state map {
+        case ImageAssetDrawable.State.Failed(_) => progressDots
+        case _ => imageDrawable
+      } orElse Signal.const[Drawable](imageDrawable)
   }
+
+  bg.on(Threading.Ui) { setBackground }
 
   actionReady.on(Threading.Ui) {
     case true =>
