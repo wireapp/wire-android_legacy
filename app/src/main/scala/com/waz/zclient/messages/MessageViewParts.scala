@@ -121,18 +121,6 @@ class UserView(context: Context, attrs: AttributeSet, style: Int) extends Linear
   }
 }
 
-class TimestampView(context: Context, attrs: AttributeSet, style: Int) extends TypefaceTextView(context, attrs, style) with MessageViewPart {
-  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
-
-  def this(context: Context) = this(context, null, 0)
-
-  override val tpe: MsgPart = MsgPart.Timestamp
-
-  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit =
-    setText(s"$pos: ${msg.time.toString}") // TODO: formatting
-}
-
-
 
 
 

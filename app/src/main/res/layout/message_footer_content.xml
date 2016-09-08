@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2016 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+    >
+
+    <FrameLayout
+        android:layout_width="@dimen/content__padding_left"
+        android:layout_height="@dimen/content__footer__height"
+        >
+
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:id="@+id/gtv__footer__like__button"
+            android:layout_width="@dimen/content__footer__like_icon__size"
+            android:layout_height="@dimen/content__footer__like_icon__size"
+            android:layout_gravity="end|center_vertical"
+            android:layout_marginEnd="@dimen/chathead__margin"
+            android:gravity="center"
+            android:text="@string/glyph__like"
+            android:textSize="@dimen/wire__text_size__small"
+            />
+
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:id="@+id/gtv__footer__like__button_animation"
+            android:layout_width="@dimen/content__footer__like_icon__size"
+            android:layout_height="@dimen/content__footer__like_icon__size"
+            android:layout_gravity="end|center_vertical"
+            android:layout_marginEnd="@dimen/chathead__margin"
+            android:gravity="center"
+            android:text="@string/glyph__liked"
+            android:textColor="@color/accent_red"
+            android:textSize="@dimen/wire__text_size__small"
+            />
+
+    </FrameLayout>
+
+    <com.waz.zclient.messages.parts.LikeDetailsLayout
+        android:id="@+id/fldl_like_details"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/content__footer__height"
+        />
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/tv__footer__message_status"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/content__footer__height"
+        android:layout_marginStart="@dimen/content__padding_left"
+        android:textColor="@color/text__secondary_light"
+        android:gravity="start|center_vertical"
+        android:singleLine="true"
+        android:textSize="@dimen/wire__text_size__small"
+        app:font="@string/wire__typeface__light"
+        />
+
+</FrameLayout>

@@ -47,7 +47,7 @@ class MessageViewFactory {
         case User           => ViewHelper.inflate(R.layout.message_user, parent, false)
         case Separator      => ViewHelper.inflate(R.layout.message_separator, parent, false)
         case SeparatorLarge => ViewHelper.inflate(R.layout.message_separator_large, parent, false)
-        case Timestamp      => ViewHelper.inflate(R.layout.message_timestamp, parent, false)
+        case Footer         => ViewHelper.inflate(R.layout.message_footer, parent, false)
         case Text           => ViewHelper.inflate(R.layout.message_text, parent, false)
         case Image          => ViewHelper.inflate(R.layout.message_image, parent, false)
         case YouTube        => ViewHelper.inflate(R.layout.message_youtube, parent, false)

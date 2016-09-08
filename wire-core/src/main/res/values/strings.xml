@@ -1021,9 +1021,9 @@
 
     <string name="message_footer__tap_to_like">Tap to like</string>
     <plurals name="message_footer__number_of_likes">
-        <item quantity="few">%1$d people</item>
-        <item quantity="many">%1$d people</item>
-        <item quantity="other">%1$d people</item>
+        <item quantity="few">%1$s people</item>
+        <item quantity="many">%1$s people</item>
+        <item quantity="other">%1$s people</item>
     </plurals>
     <string name="message_footer__status__sending">Sending…</string>
     <string name="message_footer__status__sent">%1$s \u30FB Sent</string>

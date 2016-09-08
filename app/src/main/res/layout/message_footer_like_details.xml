@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2016 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+       xmlns:app="http://schemas.android.com/apk/res-auto"
+    >
+
+    <com.waz.zclient.ui.text.GlyphTextView
+        android:id="@+id/gtv__footer__like__arrow"
+        android:layout_width="@dimen/content__padding_left"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/content__footer__hint_arrow_padding"
+        android:textColor="@color/text__secondary_light"
+        android:textSize="@dimen/wire__text_size__small"
+        android:text="@string/glyph__previous"
+        />
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/tv__footer__like__description"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:textColor="@color/text__secondary_light"
+        android:textSize="@dimen/wire__text_size__small"
+        android:maxLines="1"
+        app:font="@string/wire__typeface__light"
+        />
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        />
+
+    <LinearLayout
+        android:id="@+id/ll__like_chathead_container"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:paddingEnd="@dimen/content__padding_right"
+        android:gravity="center_vertical"
+        >
+
+        <com.waz.zclient.common.views.ChatheadView
+            android:layout_width="@dimen/content__footer__chathead__size"
+            android:layout_height="@dimen/content__footer__chathead__size"
+            android:layout_marginEnd="@dimen/wire__padding__small"
+            app:show_border="false"
+            app:isSelectable="false"
+            />
+
+        <com.waz.zclient.common.views.ChatheadView
+            android:layout_width="@dimen/content__footer__chathead__size"
+            android:layout_height="@dimen/content__footer__chathead__size"
+            android:layout_marginEnd="@dimen/wire__padding__small"
+            app:show_border="false"
+            app:isSelectable="false"
+            />
+
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/glyph__more"
+            />
+
+    </LinearLayout>
+</merge>

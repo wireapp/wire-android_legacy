@@ -69,7 +69,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
     }
 
     if (focused)
-      parts += MsgPart.Timestamp -> None
+      parts += MsgPart.Footer -> None
 
     setParts(pos, msg, parts.result())
   }
@@ -140,7 +140,7 @@ object MsgPart {
   case object SoundCloud extends MsgPart
   case object MemberChange extends MsgPart
   case object ConnectRequest extends MsgPart
-  case object Timestamp extends MsgPart
+  case object Footer extends MsgPart
   case object InviteBanner extends MsgPart
 
   def apply(msgType: Message.Type): MsgPart = {
