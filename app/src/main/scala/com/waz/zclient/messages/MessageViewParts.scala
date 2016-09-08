@@ -26,9 +26,9 @@ import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
+import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.{DateConvertUtils, ZTimeFormatter}
-import com.waz.zclient.views.chathead.ChatheadView
 import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.{Instant, LocalDateTime, ZoneId}
 

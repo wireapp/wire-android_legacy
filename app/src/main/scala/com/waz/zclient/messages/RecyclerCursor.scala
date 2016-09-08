@@ -41,7 +41,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
   verbose(s"RecyclerCursor created for conv: $conv")
 
   val storage = zms.messagesStorage
-  val likes = zms.likingsStorage
+  val likes = zms.reactionsStorage
 
   val index = storage.msgsIndex(conv)
   val lastReadTime = Signal.future(index).flatMap(_.signals.lastReadTime)

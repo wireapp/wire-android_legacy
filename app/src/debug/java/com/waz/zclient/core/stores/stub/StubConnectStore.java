@@ -20,12 +20,9 @@ package com.waz.zclient.core.stores.stub;
 import com.waz.api.CommonConnections;
 import com.waz.api.IConversation;
 import com.waz.api.Invitations;
-import com.waz.api.MessagesList;
 import com.waz.api.User;
 import com.waz.zclient.core.stores.connect.ConnectStoreObserver;
 import com.waz.zclient.core.stores.connect.IConnectStore;
-import java.lang.Override;
-import java.lang.String;
 
 public class StubConnectStore implements IConnectStore {
   @Override
@@ -65,11 +62,6 @@ public class StubConnectStore implements IConnectStore {
 
   @Override
   public void removeConnectRequestObserver(ConnectStoreObserver connectStoreObserver) {
-    ;
-  }
-
-  @Override
-  public void loadMessages(MessagesList messagesList) {
     ;
   }
 

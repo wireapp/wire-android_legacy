@@ -24,7 +24,7 @@
        android:layout_height="wrap_content"
     >
 
-    <com.waz.zclient.views.chathead.ChatheadView
+    <com.waz.zclient.common.views.ChatheadView
         android:id="@+id/chathead"
         android:layout_width="28dp"
         android:layout_height="28dp"

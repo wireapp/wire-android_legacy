@@ -25,12 +25,12 @@ import com.waz.model.{MessageContent, MessageData}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
+import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.controllers.BrowserController
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.ui.utils.TextViewUtils
-import com.waz.zclient.views.chathead.ChatheadView
-import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.{R, ViewHelper}
 
 class ConnectRequestPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)

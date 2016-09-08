@@ -20,7 +20,7 @@ package com.waz.zclient.messages.parts
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.SeekBar.OnSeekBarChangeListener
-import android.widget.{FrameLayout, SeekBar, TextView}
+import android.widget.{FrameLayout, SeekBar}
 import com.waz.threading.Threading
 import com.waz.zclient.R
 import com.waz.zclient.controllers.global.AccentColorController

@@ -17,7 +17,7 @@
   */
 package com.waz.zclient.messages.parts
 
-import android.view.{View, ViewGroup}
+import android.view.View
 import android.widget.{LinearLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
@@ -37,7 +37,7 @@ import com.waz.zclient.messages.parts.DeliveryState.{Complete, OtherUploading}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, StringUtils}
 import com.waz.zclient.views.ImageController.WireImage
-import com.waz.zclient.views.{ImageAssetDrawable, AssetActionButtonNew, AssetBackground}
+import com.waz.zclient.views.{AssetActionButtonNew, AssetBackground, ImageAssetDrawable}
 import org.threeten.bp.Duration
 
 import scala.PartialFunction._

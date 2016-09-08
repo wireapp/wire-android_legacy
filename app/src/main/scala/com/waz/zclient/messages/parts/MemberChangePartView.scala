@@ -28,11 +28,11 @@ import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
+import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.messages.{MessageViewFactory, MessageViewPart, MsgPart}
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.views.chathead.ChatheadView
 import com.waz.zclient.{R, ViewHelper}
 
 class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with MessageViewPart with ViewHelper {

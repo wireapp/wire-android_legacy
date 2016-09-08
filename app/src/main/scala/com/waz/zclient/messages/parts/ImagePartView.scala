@@ -19,14 +19,8 @@ package com.waz.zclient.messages.parts
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.{View, ViewGroup}
-import android.widget.LinearLayout
-import com.waz.model.{Dim2, MessageContent, MessageData}
-import com.waz.utils.events.Signal
-import com.waz.zclient.ViewHelper
-import com.waz.zclient.messages.{MessageViewPart, MsgPart}
-import com.waz.zclient.views.ImageAssetDrawable
-import com.waz.zclient.views.ImageController.WireImage
+import android.view.View
+import com.waz.zclient.messages.MsgPart
 
 class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends View(context, attrs, style) with ImageLayoutAssetPart {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
