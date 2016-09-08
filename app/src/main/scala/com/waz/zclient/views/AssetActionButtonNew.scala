@@ -20,7 +20,6 @@ package com.waz.zclient.views
 import java.util.Locale
 
 import android.content.Context
-import android.content.res.TypedArray
 import android.graphics.drawable.Drawable
 import android.graphics.{Canvas, ColorFilter, Paint, PixelFormat}
 import android.util.AttributeSet

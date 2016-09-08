@@ -69,7 +69,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
         // TODO: add invite banner part for first member create message
         builder ++= contentParts
 
-        if (focused)
+        if (focused || m.likes.nonEmpty)
           builder += MsgPart.Footer -> None
 
         builder.result()

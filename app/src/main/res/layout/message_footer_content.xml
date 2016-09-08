@@ -24,46 +24,25 @@
                 android:layout_height="match_parent"
     >
 
-    <FrameLayout
+    <com.waz.zclient.messages.parts.LikeButton
+        android:id="@+id/like__button"
         android:layout_width="@dimen/content__padding_left"
-        android:layout_height="@dimen/content__footer__height"
-        >
-
-        <com.waz.zclient.ui.text.GlyphTextView
-            android:id="@+id/gtv__footer__like__button"
-            android:layout_width="@dimen/content__footer__like_icon__size"
-            android:layout_height="@dimen/content__footer__like_icon__size"
-            android:layout_gravity="end|center_vertical"
-            android:layout_marginEnd="@dimen/chathead__margin"
-            android:gravity="center"
-            android:text="@string/glyph__like"
-            android:textSize="@dimen/wire__text_size__small"
-            />
-
-        <com.waz.zclient.ui.text.GlyphTextView
-            android:id="@+id/gtv__footer__like__button_animation"
-            android:layout_width="@dimen/content__footer__like_icon__size"
-            android:layout_height="@dimen/content__footer__like_icon__size"
-            android:layout_gravity="end|center_vertical"
-            android:layout_marginEnd="@dimen/chathead__margin"
-            android:gravity="center"
-            android:text="@string/glyph__liked"
-            android:textColor="@color/accent_red"
-            android:textSize="@dimen/wire__text_size__small"
-            />
-
-    </FrameLayout>
+        android:layout_height="match_parent"
+        android:layout_marginEnd="@dimen/chathead__margin"
+        android:gravity="center"
+        />
 
     <com.waz.zclient.messages.parts.LikeDetailsLayout
-        android:id="@+id/fldl_like_details"
+        android:id="@+id/like_details"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/content__footer__height"
+        android:layout_height="match_parent"
+        android:layout_marginStart="@dimen/content__padding_left"
         />
 
     <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/tv__footer__message_status"
+        android:id="@+id/timestamp_and_status"
         android:layout_width="wrap_content"
-        android:layout_height="@dimen/content__footer__height"
+        android:layout_height="match_parent"
         android:layout_marginStart="@dimen/content__padding_left"
         android:textColor="@color/text__secondary_light"
         android:gravity="start|center_vertical"

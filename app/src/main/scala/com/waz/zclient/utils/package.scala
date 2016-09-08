@@ -58,6 +58,8 @@ package object utils {
 
     def getColor(resId: Int)(implicit context: Context) = context.getResources.getColor(resId)
 
+    def getInt(resId: Int)(implicit context: Context) = context.getResources.getInteger(resId)
+
     def getString(resId: Int)(implicit context: Context): String = context.getResources.getString(resId)
     def getString(resId: Int, args: String*)(implicit context: Context): String = context.getResources.getString(resId, args:_*)
 

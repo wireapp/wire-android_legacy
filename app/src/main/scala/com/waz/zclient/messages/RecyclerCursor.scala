@@ -54,6 +54,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
   private var cursor = Option.empty[MessagesCursor]
   private var subs = Seq.empty[Subscription]
 
+  //TODO I think we only really care if the first/last like is added/removed - then we need to show/hide the footer
   private val onLikesChanged = EventStream.union(
     likes.onAdded map { _.map(_.message) },
     likes.onUpdated map { _.map(_._2.message) },
