@@ -18,84 +18,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
               xmlns:app="http://schemas.android.com/apk/res-auto"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:background="@null"
-              android:orientation="vertical"
     >
 
-    <LinearLayout
+    <com.waz.zclient.messages.SystemMessageView
+        android:id="@+id/smv_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:baselineAligned="false"
         android:orientation="horizontal"
-        android:layout_marginBottom="@dimen/wire__padding__small"
-        >
-
-        <FrameLayout
-            android:layout_width="@dimen/content__separator__avatar_container__width"
-            android:layout_height="wrap_content"
-            >
-
-            <com.waz.zclient.ui.text.GlyphTextView
-                android:id="@+id/gtv__row_conversation__people_changed__icon"
-                android:layout_width="@dimen/wire__otr__shield__small_width"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:text="@string/glyph__plus"
-                android:textColor="?wirePrimaryTextColor"
-                android:layout_marginEnd="@dimen/error__image__margin"
-                />
-
-        </FrameLayout>
-
-        <FrameLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            >
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="@dimen/content__separator__avatar_container__width"
-                android:orientation="horizontal"
-                >
-
-                <com.waz.zclient.ui.text.TypefaceTextView
-                    android:id="@+id/ttv__row_conversation__people_changed__text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/wire__padding__12"
-                    android:lineSpacingExtra="@dimen/wire__text_spacing__medium"
-                    android:textSize="@dimen/wire__text_size__small"
-                    android:textColor="?wirePrimaryTextColor"
-                    app:font="@string/wire__typeface__light"
-                    />
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/wire__divider__height__thin"
-                    android:layout_weight="1"
-                    android:layout_marginTop="@dimen/wire__padding__small"
-                    style="?wireDivider"
-                    />
-
-            </LinearLayout>
-
-            <View
-                android:layout_width="@dimen/content__separator__avatar_container__width"
-                android:layout_height="@dimen/wire__divider__height__thin"
-                android:layout_marginTop="@dimen/wire__padding__small"
-                android:layout_gravity="right"
-                style="?wireDivider"
-                />
-
-        </FrameLayout>
-
-    </LinearLayout>
+        android:layout_marginBottom="@dimen/wire__padding__small" />
 
     <com.waz.zclient.messages.parts.MembersGridView
         android:id="@+id/rv__row_conversation__people_changed__grid"
@@ -105,4 +40,4 @@
         android:layout_marginEnd="@dimen/wire__padding__32"
         />
 
-</LinearLayout>
+</merge>

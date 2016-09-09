@@ -43,7 +43,7 @@
         app:font="@string/wire__typeface__light"
         />
 
-    <com.waz.zclient.views.chathead.ChatheadView
+    <com.waz.zclient.common.views.ChatheadView
         android:id="@+id/cv__row_conversation__connect_request__chat_head"
         android:layout_width="@dimen/profile__image__width"
         android:layout_height="@dimen/profile__image__width"

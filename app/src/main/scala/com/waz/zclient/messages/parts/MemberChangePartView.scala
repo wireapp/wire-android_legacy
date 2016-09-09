@@ -19,7 +19,7 @@ package com.waz.zclient.messages.parts
 
 import android.content.Context
 import android.util.AttributeSet
-import android.widget.{FrameLayout, GridLayout, TextView}
+import android.widget.{GridLayout, LinearLayout}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.Message
@@ -29,25 +29,24 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.views.ChatheadView
-import com.waz.zclient.messages.{MessageViewFactory, MessageViewPart, MsgPart}
-import com.waz.zclient.ui.text.GlyphTextView
-import com.waz.zclient.ui.utils.TextViewUtils
+import com.waz.zclient.messages.{MessageViewFactory, MessageViewPart, MsgPart, SystemMessageView}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 
-class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with MessageViewPart with ViewHelper {
+class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
   override val tpe = MsgPart.MemberChange
 
+  setOrientation(LinearLayout.VERTICAL)
+
   inflate(R.layout.message_member_change_content)
 
   val zMessaging = inject[Signal[ZMessaging]]
 
-  val messageTextView: TextView = findById(R.id.ttv__row_conversation__people_changed__text)
-  val gridView: MembersGridView = findById(R.id.rv__row_conversation__people_changed__grid)
-  val iconView: GlyphTextView   = findById(R.id.gtv__row_conversation__people_changed__icon)
+  val messageView: SystemMessageView  = findById(R.id.smv_header)
+  val gridView: MembersGridView       = findById(R.id.rv__row_conversation__people_changed__grid)
 
   lazy val locale = context.getResources.getConfiguration.locale
   lazy val stringYou = context.getString(R.string.content__system__you)
@@ -108,12 +107,9 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) ex
     }
   }
 
-  iconGlyph { iconView.setText }
+  iconGlyph { messageView.setIconGlyph }
 
-  linkText.on(Threading.Ui) { txt =>
-    messageTextView.setText(txt.toUpperCase(locale))
-    TextViewUtils.boldText(messageTextView)
-  }
+  linkText.on(Threading.Ui) { messageView.setText }
 
   memberIds { gridView.members ! _ }
 

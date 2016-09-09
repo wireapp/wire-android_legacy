@@ -74,5 +74,7 @@ package object utils {
     def getResourceFloat(resId: Int)(implicit context: Context) = ResourceUtils.getResourceFloat(context.getResources, resId)
 
     def toPx(dp: Int)(implicit context: Context) = (dp * context.getResources.getDisplayMetrics.density).toInt
+
+    def getLocale(implicit context: Context) = context.getResources.getConfiguration.locale
   }
 }

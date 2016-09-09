@@ -66,6 +66,8 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
       }
     } else {
       parts += MsgPart(msg.msgType) -> None
+
+      // TODO: add invite banner part for first member create message
     }
 
     if (focused)
@@ -142,6 +144,7 @@ object MsgPart {
   case object ConnectRequest extends MsgPart
   case object Footer extends MsgPart
   case object InviteBanner extends MsgPart
+  case object OtrMessage extends MsgPart
 
   def apply(msgType: Message.Type): MsgPart = {
     import Message.Type._
@@ -154,6 +157,7 @@ object MsgPart {
       case LOCATION => Location
       case MEMBER_JOIN | MEMBER_LEAVE => MemberChange
       case CONNECT_REQUEST => ConnectRequest
+      case OTR_ERROR | OTR_DEVICE_ADDED | OTR_IDENTITY_CHANGED | OTR_UNVERIFIED | OTR_VERIFIED | HISTORY_LOST | STARTED_USING_DEVICE => OtrMessage
       case _ => Text // TODO
     }
   }

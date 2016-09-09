@@ -58,6 +58,8 @@ class MessageViewFactory {
         case Location       => ViewHelper.inflate(R.layout.message_location, parent, false)
         case MemberChange   => ViewHelper.inflate(R.layout.message_member_change, parent, false)
         case ConnectRequest => ViewHelper.inflate(R.layout.message_connect_request, parent, false)
+        case InviteBanner   => ViewHelper.inflate(R.layout.message_invite_banner, parent, false)
+        case OtrMessage     => ViewHelper.inflate(R.layout.message_otr_part, parent, false)
         case _              => ViewHelper.inflate(R.layout.message_text, parent, false) // TODO: other types
       }
     }
