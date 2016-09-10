@@ -80,6 +80,15 @@ class SyncEngineSignals(implicit injector: Injector, context: Context) extends I
   def user(id: UserId) = zMessaging flatMap { _.users.userSignal(id) }
 
   def selfUserId = zMessaging map { _.selfUserId }
+
+  def conv(message: Signal[MessageData]) = {
+    for {
+      zms <- zMessaging
+      msg <- message
+      conv <- zms.convsStorage.signal(msg.convId)
+    } yield conv
+  }
+
 }
 
 object SyncEngineSignals {

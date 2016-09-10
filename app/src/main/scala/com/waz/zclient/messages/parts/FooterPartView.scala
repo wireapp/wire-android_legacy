@@ -32,8 +32,7 @@ import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{Signal, _}
 import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.controllers.global.SelectionController
-import com.waz.zclient.messages.Footer
-import com.waz.zclient.messages.parts.FooterController.showAvatars
+import com.waz.zclient.messages.{Footer, SyncEngineSignals}
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils.{getColor, getQuantityString, _}
 import com.waz.zclient.utils.{RichView, ZTimeFormatter}
@@ -57,6 +56,7 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
 
   val selection = inject[SelectionController].messages
   val controller = inject[FooterController]
+  val signals = inject[SyncEngineSignals]
 
   private val likeButton: LikeButton = findById(R.id.like__button)
   private val timeStampAndStatus: TextView = findById(R.id.timestamp_and_status)
@@ -71,24 +71,32 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
   focused.on(Threading.Ui)(timeStampAndStatus.setVisible)
   focused.zip(isLiked).map { case (false, true) => true; case _ => false }.on(Threading.Ui)(likeDetails.setVisible)
 
-  messageAndLikes.map(_.message).on(Threading.Ui) { m =>
-    val timestamp = ZTimeFormatter.getSingleMessageTime(context, DateTimeUtils.toDate(m.time))
-    val text = if (controller.isSelfUser(m.userId)) {
-      m.state match {
-        case Status.PENDING => getString(R.string.message_footer__status__sending)
-        case Status.SENT => getString(R.string.message_footer__status__sent, timestamp)
-        case Status.DELETED => getString(R.string.message_footer__status__deleted, timestamp)
-        case Status.DELIVERED => "" //TODO delivered status
-        case Status.FAILED | Status.FAILED_READ => context.getString(R.string.message_footer__status__failed)
-        case _ => "" //TODO default state
-      }
-    } else timestamp
-    timeStampAndStatus.setText(text)
-    TextViewUtils.linkifyText(timeStampAndStatus, ContextCompat.getColor(context, R.color.accent_red), false, new Runnable() {
-      def run() = {
-        //TODO retry
-      }
-    })
+  val conv = signals.conv(messageAndLikes.map(_.message))
+
+  messageAndLikes.map(_.message).zip(conv.map(_.convType)).on(Threading.Ui) {
+    case (m, convType) =>
+      val timestamp = ZTimeFormatter.getSingleMessageTime(context, DateTimeUtils.toDate(m.time))
+      val text = if (controller.isSelfUser(m.userId)) {
+        m.state match {
+          case Status.PENDING => getString(R.string.message_footer__status__sending)
+          case Status.SENT => getString(R.string.message_footer__status__sent, timestamp)
+          case Status.DELETED => getString(R.string.message_footer__status__deleted, timestamp)
+          case Status.DELIVERED =>
+            //TODO AN-4474 Uncomment to show delivered state
+            //if (convType == IConversation.Type.GROUP)
+            context.getString(R.string.message_footer__status__sent, timestamp)
+          //else getString(R.string.message_footer__status__delivered, timestamp)
+          case Status.FAILED |
+               Status.FAILED_READ => context.getString(R.string.message_footer__status__failed)
+          case _ => timestamp
+        }
+      } else timestamp
+      timeStampAndStatus.setText(text)
+      TextViewUtils.linkifyText(timeStampAndStatus, ContextCompat.getColor(context, R.color.accent_red), false, new Runnable() {
+        def run() = {
+          //TODO retry
+        }
+      })
   }
 
   override def set(msg: MessageAndLikes, isFocused: Boolean): Unit = {
@@ -141,6 +149,8 @@ class LikeButton(context: Context, attrs: AttributeSet, style: Int) extends Fram
 
 class LikeDetailsLayout(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
 
+  import FooterController._
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -170,6 +180,9 @@ class LikeDetailsLayout(context: Context, attrs: AttributeSet, style: Int) exten
 
 
 class FooterController(implicit inj: Injector, context: Context) extends Injectable {
+
+  import FooterController._
+
   private val zms = inject[Signal[ZMessaging]]
   private val reactions = zms.map(_.reactions)
 
