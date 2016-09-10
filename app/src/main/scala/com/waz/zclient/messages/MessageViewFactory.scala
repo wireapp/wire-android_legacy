@@ -29,16 +29,16 @@ class MessageViewFactory {
 
   val DefaultLayoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
 
-  private val cache = new mutable.HashMap[MsgPart, mutable.Stack[MessageViewPart]]
+  private val cache = new mutable.HashMap[MsgPart, mutable.Stack[ViewPart]]
 
   private val viewCache = new mutable.HashMap[Int, mutable.Stack[View]]
 
-  def recycle(part: MessageViewPart): Unit = {
+  def recycle(part: ViewPart): Unit = {
     verbose(s"recycling part: ${part.tpe}")
-    cache.getOrElseUpdate(part.tpe, new mutable.Stack[MessageViewPart]()).push(part)
+    cache.getOrElseUpdate(part.tpe, new mutable.Stack[ViewPart]()).push(part)
   }
 
-  def get(tpe: MsgPart, parent: ViewGroup): MessageViewPart = {
+  def get(tpe: MsgPart, parent: ViewGroup): ViewPart = {
     verbose(s"getting part: $tpe")
     cache.get(tpe).flatMap(s => if(s.isEmpty) None else Some(s.pop())).getOrElse {
       verbose(s"there was no cached $tpe, building a new one")

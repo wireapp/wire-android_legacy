@@ -28,6 +28,7 @@ import com.waz.model.{MessageContent, MessageData, MessageId}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.returning
 import com.waz.zclient.controllers.global.SelectionController
+import com.waz.zclient.messages.MsgPart.Footer
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 
@@ -75,7 +76,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
         builder.result()
       }
 
-    setParts(pos, msg, parts)
+    setParts(pos, m, parts)
   }
 
   private def shouldShowSeparator(msg: MessageData, prev: Option[MessageData]) = msg.msgType match {
@@ -87,20 +88,23 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
   private def shouldShowChathead(msg: MessageData, prev: Option[MessageData]) =
     !msg.isSystemMessage && msg.msgType != Message.Type.KNOCK && prev.forall(m => m.userId != msg.userId || m.isSystemMessage)
 
-  private def setParts(position: Int, msg: MessageData, parts: Seq[(MsgPart, Option[MessageContent])]) = {
+  private def setParts(position: Int, msg: MessageAndLikes, parts: Seq[(MsgPart, Option[MessageContent])]) = {
     verbose(s"setParts: position: $position, parts: ${parts.map(_._1)}")
 
     // recycle views in reverse order, recycled views are stored in a Stack, this way we will get the same views back if parts are the same
     // XXX: one views get bigger, we may need to optimise this, we don't need to remove views that will get reused, currently this seems to be fast enough
     (0 until getChildCount).reverseIterator.map(getChildAt) foreach {
-      case pv: MessageViewPart => factory.recycle(pv)
+      case pv: ViewPart => factory.recycle(pv)
       case _ =>
     }
     removeAllViewsInLayout()
 
     parts.zipWithIndex foreach { case ((tpe, content), index) =>
       val view = factory.get(tpe, this)
-      view.set(position, msg, content, widthHint)
+      view match {
+        case v: MessageViewPart => v.set(position, msg.message, content, widthHint)
+        case v: Footer => v.set(msg)
+      }
       addViewInLayout(view, index, Option(view.getLayoutParams) getOrElse factory.DefaultLayoutParams)
     }
   }
@@ -184,9 +188,18 @@ object MsgPart {
   }
 }
 
-trait MessageViewPart extends View {
+trait ViewPart extends View {
   val tpe: MsgPart
+}
 
+trait MessageViewPart extends ViewPart {
   def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit
 }
+
+trait Footer extends ViewPart {
+  override val tpe = Footer
+
+  def set(msg: MessageAndLikes): Unit
+}
+
 

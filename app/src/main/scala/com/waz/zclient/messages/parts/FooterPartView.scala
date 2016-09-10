@@ -23,13 +23,14 @@ import android.view.ViewGroup
 import android.widget.{FrameLayout, LinearLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
-import com.waz.model.{MessageContent, MessageData, UserId}
+import com.waz.model.{MessageData, UserId}
 import com.waz.service.ZMessaging
+import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{Signal, _}
 import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.messages.Footer
 import com.waz.zclient.messages.parts.FooterController.showAvatars
-import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.utils.ContextUtils.{getColor, getQuantityString, _}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
@@ -39,7 +40,7 @@ import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 //TODO click handling on the 'users who liked' list and going to fragment
 //TODO recycle chatheads in like details view - see MembersGridView for more
 //TODO tracking
-class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with MessageViewPart with ViewHelper {
+class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with Footer with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -49,11 +50,10 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
   private val messageStatusTextView: TextView = findById(R.id.timestamp_and_status)
   private val likeDetails: LikeDetailsLayout = findById(R.id.like_details)
 
-  override val tpe: MsgPart = MsgPart.Footer
-
-  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
-    likeButton.message.publish(msg, Threading.Ui)
-    likeDetails.message.publish(msg, Threading.Ui)
+  override def set(msg: MessageAndLikes): Unit = {
+    verbose("set: pos")
+    likeButton.messageAndLikes.publish(msg, Threading.Ui)
+    likeDetails.messageAndLikes.publish(msg, Threading.Ui)
   }
 
 }
@@ -74,14 +74,13 @@ class LikeButton(context: Context, attrs: AttributeSet, style: Int) extends Fram
   private val likeButtonAnimation: TextView = findById(R.id.like__button_animation)
 
   val controller = inject[FooterController]
-  val message = Signal[MessageData]()
-  val messagesAndLikes = controller.messagesAndLikes(message)
-  val likedBySelf = messagesAndLikes.map(_.likedBySelf)
+  val messageAndLikes = Signal[MessageAndLikes]()
+  val likedBySelf = messageAndLikes.map(_.likedBySelf)
 
   val likeClicked = EventStream[Unit]()
   new EventStreamWithAuxSignal[Unit, Boolean](likeClicked, likedBySelf).map { case (_, likedBySelf) => likedBySelf.map(!_) }.collect { case Some(l) => l } { like =>
-    verbose(s"setting message to liked: $message.id, $like")
-    controller.setLiked(like, message)
+    verbose(s"setting message to liked:  $like")
+    controller.setLiked(like, messageAndLikes.map(_.message))
   }
 
   likeButtonConstant onClick {
@@ -89,6 +88,7 @@ class LikeButton(context: Context, attrs: AttributeSet, style: Int) extends Fram
     likeClicked ! (())
   }
 
+  likedBySelf.on(Threading.Ui)(l => verbose(s"setting liked?: $l"))
   likedBySelf.map { case true => R.string.glyph__liked; case false => R.string.glyph__like }.map(getString).on(Threading.Ui)(likeButtonConstant.setText)
   likedBySelf.map { case true => likeButtonColorLiked; case false => likeButtonColorUnliked }.on(Threading.Ui)(likeButtonConstant.setTextColor)
 }
@@ -107,8 +107,8 @@ class LikeDetailsLayout(context: Context, attrs: AttributeSet, style: Int) exten
   private val chatheads = Seq.tabulate(chatheadContainer.getChildCount)(chatheadContainer.getChildAt).collect { case v: ChatheadView => v }
 
   val controller = inject[FooterController]
-  val message = Signal[MessageData]
-  val userIds = controller.messagesAndLikes(message).map(_.likes)
+  val messageAndLikes = Signal[MessageAndLikes]()
+  val userIds = messageAndLikes.map(_.likes)
 
   userIds.map(ids => showAvatars(ids)).on(Threading.Ui)(chatheadContainer.setVisible)
 
@@ -128,9 +128,7 @@ class FooterController(implicit inj: Injector, context: Context) extends Injecta
   private val reactions = zms.map(_.reactions)
 
   reactions.disableAutowiring()
-
-  def messagesAndLikes(message: Signal[MessageData]) = zms.zip(message).flatMap { case (zms, m) => Signal.future(zms.msgAndLikes.getMessageAndLikes(m.id)).collect { case Some(mL) => mL } }
-
+  
   def getDisplayNameString(ids: Seq[UserId]): Signal[Option[String]] = ids match {
     case ids if showAvatars(ids) => Signal const Some(getQuantityString(R.plurals.message_footer__number_of_likes, ids.size, ids.size.toString))
     case ids if ids.nonEmpty => zms.flatMap(z => Signal.sequence(ids.map(id => z.users.userSignal(id).map(_.getDisplayName)): _*)).map(names => Some(names.mkString(", ")))
