@@ -18,10 +18,15 @@
 package com.waz.zclient.messages.parts
 
 import android.content.Context
+import android.net.Uri
 import android.util.AttributeSet
+import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.model.{MessageContent, MessageData}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
+import com.waz.zclient.controllers.global.AccentColorController
+import com.waz.zclient.controllers.{BrowserController, ScreenController}
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, SyncEngineSignals, SystemMessageView}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
@@ -34,14 +39,19 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends 
 
   override val tpe = MsgPart.Location
 
-  val seSignals = inject[SyncEngineSignals]
+  lazy val screenController = inject[ScreenController]
+  lazy val browserController = inject[BrowserController]
+
+  val accentColor = inject[AccentColorController]
+  val signals = inject[SyncEngineSignals]
+
   val message = Signal[MessageData]()
 
   val msgType = message.map(_.msgType)
 
-  val userName = seSignals.userDisplayNameString(message)
+  val userName = signals.userDisplayNameString(message)
 
-  val memberNames = seSignals.memberDisplayNames(message)
+  val memberNames = signals.memberDisplayNames(message)
 
   val shieldIcon = msgType map {
     case OTR_ERROR | OTR_IDENTITY_CHANGED | HISTORY_LOST  => Some(R.drawable.red_alert)
@@ -67,7 +77,20 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends 
     case Some(icon) => setIcon(icon)
   }
 
-  msgString.on(Threading.Ui) { setText }
+  Signal(message, msgString, accentColor.accentColor, signals.selfUserId).on(Threading.Ui) {
+    case (msg, text, color, selfUserId) => setTextWithLink(text, color.getColor()) {
+      def isMe = msg.members.size == 1 && msg.members.contains(selfUserId)
+      (msg.msgType, isMe) match {
+        case (OTR_UNVERIFIED | OTR_DEVICE_ADDED, true)  => screenController.openOtrDevicePreferences()
+        case (OTR_UNVERIFIED | OTR_DEVICE_ADDED, false) => screenController.showParticipants(this, showDeviceTabIfSingle = true)
+        case (STARTED_USING_DEVICE, _)                  => screenController.openOtrDevicePreferences()
+        case (OTR_ERROR, _)                             => browserController.openUrl(Uri parse getString(R.string.url_otr_decryption_error_1))
+        case (OTR_IDENTITY_CHANGED, _)                  => browserController.openUrl(Uri parse getString(R.string.url_otr_decryption_error_2))
+        case _ =>
+          info(s"unhandled help link click for $msg")
+      }
+    }
+  }
 
   override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
     message.publish(msg, Threading.Ui)
