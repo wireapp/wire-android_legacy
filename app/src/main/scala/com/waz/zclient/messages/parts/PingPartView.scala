@@ -25,6 +25,7 @@ import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.messages.SyncEngineSignals.DisplayName.{Me, Other}
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, SyncEngineSignals}
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.TextViewUtils
@@ -57,11 +58,13 @@ class PingPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
   val hotKnock = message.map(_.hotKnock)
 
-  val userName = signals.userDisplayName(message).map(_.toUpperCase(locale))
+  val userName = signals.userDisplayName(message)
 
   val text = userName.zip(hotKnock) map {
-    case (name, false) => getString(R.string.content__xxx_pinged, name)
-    case (name, true)  => getString(R.string.content__xxx_pinged_again, name)
+    case (Me, false)          => getString(R.string.content__you_pinged)
+    case (Me, true)           => getString(R.string.content__you_pinged_again)
+    case (Other(name), false) => getString(R.string.content__xxx_pinged, name.toUpperCase(locale))
+    case (Other(name), true)  => getString(R.string.content__xxx_pinged_again, name.toUpperCase(locale))
   }
 
   message.map(_.userId) { chatheadView.setUserId }
