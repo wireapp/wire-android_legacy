@@ -50,6 +50,7 @@ class MessageViewFactory {
         case Footer         => ViewHelper.inflate(R.layout.message_footer, parent, false)
         case Text           => ViewHelper.inflate(R.layout.message_text, parent, false)
         case Ping           => ViewHelper.inflate(R.layout.message_ping, parent, false)
+        case Rename         => ViewHelper.inflate(R.layout.message_rename, parent, false)
         case Image          => ViewHelper.inflate(R.layout.message_image, parent, false)
         case YouTube        => ViewHelper.inflate(R.layout.message_youtube, parent, false)
         case WebLink        => ViewHelper.inflate(R.layout.message_link_preview, parent, false)
