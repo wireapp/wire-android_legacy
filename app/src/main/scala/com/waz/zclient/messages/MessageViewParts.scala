@@ -20,6 +20,7 @@ package com.waz.zclient.messages
 import android.content.Context
 import android.text.format.DateFormat
 import android.util.AttributeSet
+import android.view.View
 import android.widget.{ImageView, LinearLayout}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model._
@@ -121,6 +122,11 @@ class UserView(context: Context, attrs: AttributeSet, style: Int) extends Linear
   }
 }
 
+class EmptyPartView(context: Context, attrs: AttributeSet, style: Int) extends View(context, attrs, style) with MessageViewPart {
+  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
+  def this(context: Context) = this(context, null, 0)
 
+  override val tpe = MsgPart.Empty
 
-
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = ()
+}

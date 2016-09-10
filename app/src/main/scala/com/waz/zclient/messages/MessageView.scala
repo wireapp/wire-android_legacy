@@ -49,34 +49,35 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
   def set(pos: Int, m: MessageAndLikes, prev: Option[MessageData], focused: Boolean): Unit = {
     val msg = m.message
     msgId = msg.id
-    val parts = Seq.newBuilder[(MsgPart, Option[MessageContent])]
-
     verbose(s"set $pos, $msg")
 
-    if (shouldShowSeparator(msg, prev))
-      parts += MsgPart.Separator -> None
+    val contentParts =
+      if (msg.msgType != Message.Type.RICH_MEDIA) Seq(MsgPart(msg.msgType) -> None)
+      else msg.content map { content => MsgPart(content.tpe) -> Some(content) }
 
-    if (shouldShowChathead(msg, prev))
-      parts += MsgPart.User -> None
+    val parts =
+      if (contentParts.forall(_._1 == MsgPart.Empty)) Nil // don't display anything for unknown message
+      else {
+        val builder = Seq.newBuilder[(MsgPart, Option[MessageContent])]
 
-    if (msg.msgType == Message.Type.RICH_MEDIA) {
-      // add rich media parts
-      msg.content foreach { content =>
-        parts += MsgPart(content.tpe) -> Some(content)
+        if (shouldShowSeparator(msg, prev))
+          builder += MsgPart.Separator -> None
+
+        if (shouldShowChathead(msg, prev))
+          builder += MsgPart.User -> None
+
+        // TODO: add invite banner part for first member create message
+        builder ++= contentParts
+
+        if (focused)
+          builder += MsgPart.Footer -> None
+
+        builder.result()
       }
-    } else {
-      parts += MsgPart(msg.msgType) -> None
 
-      // TODO: add invite banner part for first member create message
-    }
-
-    if (focused)
-      parts += MsgPart.Footer -> None
-
-    setParts(pos, msg, parts.result())
+    setParts(pos, msg, parts)
   }
 
-  // TODO: system messages don't always need a divider
   private def shouldShowSeparator(msg: MessageData, prev: Option[MessageData]) = msg.msgType match {
     case Message.Type.CONNECT_REQUEST => false
     case _ =>
@@ -132,6 +133,8 @@ object MsgPart {
   case object SeparatorLarge extends MsgPart
   case object User extends MsgPart
   case object Text extends MsgPart
+  case object Ping extends MsgPart
+  case object Rename extends MsgPart
   case object FileAsset extends MsgPart
   case object AudioAsset extends MsgPart
   case object VideoAsset extends MsgPart
@@ -145,6 +148,7 @@ object MsgPart {
   case object Footer extends MsgPart
   case object InviteBanner extends MsgPart
   case object OtrMessage extends MsgPart
+  case object Empty extends MsgPart
 
   def apply(msgType: Message.Type): MsgPart = {
     import Message.Type._
@@ -158,7 +162,10 @@ object MsgPart {
       case MEMBER_JOIN | MEMBER_LEAVE => MemberChange
       case CONNECT_REQUEST => ConnectRequest
       case OTR_ERROR | OTR_DEVICE_ADDED | OTR_IDENTITY_CHANGED | OTR_UNVERIFIED | OTR_VERIFIED | HISTORY_LOST | STARTED_USING_DEVICE => OtrMessage
-      case _ => Text // TODO
+      case KNOCK => Ping
+      case RENAME => Rename
+      case UNKNOWN | RICH_MEDIA => Empty
+      case CONNECT_ACCEPTED | INCOMING_CALL | MISSED_CALL | RECALLED => Empty // TODO: implement view parts
     }
   }
 
@@ -172,8 +179,7 @@ object MsgPart {
       case ANY_ASSET => FileAsset
       case SOUNDCLOUD => SoundCloud
       case YOUTUBE => YouTube
-      case GOOGLE_MAPS | SPOTIFY => Text
-      case _ => Text // TODO
+      case GOOGLE_MAPS | SPOTIFY | TWITTER => Text
     }
   }
 }
