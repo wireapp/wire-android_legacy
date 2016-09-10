@@ -27,16 +27,15 @@ import com.waz.zclient.calling.controllers.{CallPermissionsController, CurrentCa
 import com.waz.zclient.camera.controllers.{AndroidCameraFactory, GlobalCameraController}
 import com.waz.zclient.common.controllers.{PermissionActivity, PermissionsController, PermissionsWrapper}
 import com.waz.zclient.controllers.global.{AccentColorController, KeyboardController, SelectionController}
+import com.waz.zclient.controllers.theme.IThemeController
 import com.waz.zclient.controllers.{BrowserController, DefaultControllerFactory, IControllerFactory}
 import com.waz.zclient.core.stores.IStoreFactory
-import com.waz.zclient.messages.MessageViewFactory
 import com.waz.zclient.messages.parts.AssetController
+import com.waz.zclient.messages.{MessageViewFactory, SyncEngineSignals}
 import com.waz.zclient.notifications.controllers.{CallingNotificationsController, ImageNotificationsController, MessageNotificationsController}
-import com.waz.zclient.utils.{BackendPicker, BuildConfigUtils, Callback}
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
+import com.waz.zclient.utils.{BackendPicker, BuildConfigUtils, Callback}
 import com.waz.zclient.views.ImageController
-import com.waz.zclient.controllers.theme.IThemeController
-import com.waz.zclient.controllers.IControllerFactory
 
 object WireApplication {
   var APP_INSTANCE: WireApplication = _
@@ -87,6 +86,7 @@ object WireApplication {
     bind[MessageViewFactory] to new MessageViewFactory()
     bind[PermissionActivity] to ctx.asInstanceOf[PermissionActivity]
     bind[PermissionsController] to new PermissionsController(new PermissionsWrapper)
+    bind[SyncEngineSignals] to new SyncEngineSignals()
   }
 }
 

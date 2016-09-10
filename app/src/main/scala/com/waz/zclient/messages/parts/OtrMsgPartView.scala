@@ -19,11 +19,10 @@ package com.waz.zclient.messages.parts
 
 import android.content.Context
 import android.util.AttributeSet
-import com.waz.model.{MessageContent, MessageData, UserId}
-import com.waz.service.ZMessaging
+import com.waz.model.{MessageContent, MessageData}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.zclient.messages.{MessageViewPart, MsgPart, SystemMessageView}
+import com.waz.zclient.messages.{MessageViewPart, MsgPart, SyncEngineSignals, SystemMessageView}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 
@@ -35,26 +34,14 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends 
 
   override val tpe = MsgPart.Location
 
-  val zMessaging = inject[Signal[ZMessaging]]
+  val seSignals = inject[SyncEngineSignals]
   val message = Signal[MessageData]()
 
   val msgType = message.map(_.msgType)
 
-  private def userDisplayName(zms: ZMessaging, id: UserId) =
-    if (zms.selfUserId == id) Signal const getString(R.string.content__system__you)
-    else zms.users.userSignal(id).map(_.getDisplayName)
+  val userName = seSignals.userDisplayNameString(message)
 
-  val userName = for {
-    zms <- zMessaging
-    msg <- message
-    name <- userDisplayName(zms, msg.userId)
-  } yield name
-
-  val memberNames = for {
-    zms <- zMessaging
-    msg <- message
-    names <- Signal.sequence(msg.members.toSeq.sortBy(_.str).map { userDisplayName(zms, _) }: _*)
-  } yield names.mkString(", ")
+  val memberNames = seSignals.memberDisplayNames(message)
 
   val shieldIcon = msgType map {
     case OTR_ERROR | OTR_IDENTITY_CHANGED | HISTORY_LOST  => Some(R.drawable.red_alert)
@@ -83,6 +70,6 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends 
   msgString.on(Threading.Ui) { setText }
 
   override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
-    message ! msg
+    message.publish(msg, Threading.Ui)
   }
 }
