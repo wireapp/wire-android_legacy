@@ -18,44 +18,90 @@
 package com.waz.zclient.messages.parts
 
 import android.content.Context
+import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
 import android.view.ViewGroup
 import android.widget.{FrameLayout, LinearLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
+import com.waz.api.Message.Status
 import com.waz.model.{MessageData, UserId}
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
-import com.waz.threading.Threading
+import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{Signal, _}
 import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.messages.Footer
 import com.waz.zclient.messages.parts.FooterController.showAvatars
+import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils.{getColor, getQuantityString, _}
-import com.waz.zclient.utils.RichView
+import com.waz.zclient.utils.{RichView, ZTimeFormatter}
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
+import org.threeten.bp.DateTimeUtils
 
 //TODO rules for keeping the like button open
-//TODO showing the message status and click handling on it
 //TODO click handling on the 'users who liked' list and going to fragment
-//TODO recycle chatheads in like details view - see MembersGridView for more
+//TODO timestamp/like details animation
+//TODO switching between timestamp and likes details after timeout
+//TODO like hint
 //TODO tracking
+//TODO recycle chatheads in like details view - see MembersGridView for more
 class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with Footer with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
   inflate(R.layout.message_footer_content)
 
+  private val focused = Signal[Boolean](false)
+
+  val selection = inject[SelectionController].messages
+  val controller = inject[FooterController]
+
   private val likeButton: LikeButton = findById(R.id.like__button)
-  private val messageStatusTextView: TextView = findById(R.id.timestamp_and_status)
+  private val timeStampAndStatus: TextView = findById(R.id.timestamp_and_status)
   private val likeDetails: LikeDetailsLayout = findById(R.id.like_details)
 
-  override def set(msg: MessageAndLikes): Unit = {
-    verbose("set: pos")
+  private var hideTimestampFuture = CancellableFuture.cancelled[Unit]()
+
+  private val messageAndLikes = Signal[MessageAndLikes]()
+
+  private val isLiked = messageAndLikes.map(_.likes.nonEmpty)
+
+  focused.on(Threading.Ui)(timeStampAndStatus.setVisible)
+  focused.zip(isLiked).map { case (false, true) => true; case _ => false }.on(Threading.Ui)(likeDetails.setVisible)
+
+  messageAndLikes.map(_.message).on(Threading.Ui) { m =>
+    val timestamp = ZTimeFormatter.getSingleMessageTime(context, DateTimeUtils.toDate(m.time))
+    val text = if (controller.isSelfUser(m.userId)) {
+      m.state match {
+        case Status.PENDING => getString(R.string.message_footer__status__sending)
+        case Status.SENT => getString(R.string.message_footer__status__sent, timestamp)
+        case Status.DELETED => getString(R.string.message_footer__status__deleted, timestamp)
+        case Status.DELIVERED => "" //TODO delivered status
+        case Status.FAILED | Status.FAILED_READ => context.getString(R.string.message_footer__status__failed)
+        case _ => "" //TODO default state
+      }
+    } else timestamp
+    timeStampAndStatus.setText(text)
+    TextViewUtils.linkifyText(timeStampAndStatus, ContextCompat.getColor(context, R.color.accent_red), false, new Runnable() {
+      def run() = {
+        //TODO retry
+      }
+    })
+  }
+
+  override def set(msg: MessageAndLikes, isFocused: Boolean): Unit = {
+    verbose(s"setting footer, isFocused?: $isFocused")
+    focused.publish(isFocused, Threading.Ui)
+    messageAndLikes.publish(msg, Threading.Ui)
     likeButton.messageAndLikes.publish(msg, Threading.Ui)
     likeDetails.messageAndLikes.publish(msg, Threading.Ui)
   }
+}
 
+object FooterPartView {
+  private val TIMESTAMP_VISIBILITY: Int = 5000
 }
 
 //TODO button animation
@@ -127,8 +173,10 @@ class FooterController(implicit inj: Injector, context: Context) extends Injecta
   private val zms = inject[Signal[ZMessaging]]
   private val reactions = zms.map(_.reactions)
 
+  def isSelfUser(userId: UserId) = zms.currentValue.exists(_.selfUserId == userId)
+
   reactions.disableAutowiring()
-  
+
   def getDisplayNameString(ids: Seq[UserId]): Signal[Option[String]] = ids match {
     case ids if showAvatars(ids) => Signal const Some(getQuantityString(R.plurals.message_footer__number_of_likes, ids.size, ids.size.toString))
     case ids if ids.nonEmpty => zms.flatMap(z => Signal.sequence(ids.map(id => z.users.userSignal(id).map(_.getDisplayName)): _*)).map(names => Some(names.mkString(", ")))

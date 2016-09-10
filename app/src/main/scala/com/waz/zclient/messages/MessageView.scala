@@ -76,7 +76,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
         builder.result()
       }
 
-    setParts(pos, m, parts)
+    setParts(pos, m, parts, focused)
   }
 
   private def shouldShowSeparator(msg: MessageData, prev: Option[MessageData]) = msg.msgType match {
@@ -88,7 +88,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
   private def shouldShowChathead(msg: MessageData, prev: Option[MessageData]) =
     !msg.isSystemMessage && msg.msgType != Message.Type.KNOCK && prev.forall(m => m.userId != msg.userId || m.isSystemMessage)
 
-  private def setParts(position: Int, msg: MessageAndLikes, parts: Seq[(MsgPart, Option[MessageContent])]) = {
+  private def setParts(position: Int, msg: MessageAndLikes, parts: Seq[(MsgPart, Option[MessageContent])], isFocused: Boolean) = {
     verbose(s"setParts: position: $position, parts: ${parts.map(_._1)}")
 
     // recycle views in reverse order, recycled views are stored in a Stack, this way we will get the same views back if parts are the same
@@ -103,7 +103,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
       val view = factory.get(tpe, this)
       view match {
         case v: MessageViewPart => v.set(position, msg.message, content, widthHint)
-        case v: Footer => v.set(msg)
+        case v: Footer => v.set(msg, isFocused)
       }
       addViewInLayout(view, index, Option(view.getLayoutParams) getOrElse factory.DefaultLayoutParams)
     }
@@ -199,7 +199,7 @@ trait MessageViewPart extends ViewPart {
 trait Footer extends ViewPart {
   override val tpe = Footer
 
-  def set(msg: MessageAndLikes): Unit
+  def set(msg: MessageAndLikes, isFocused: Boolean): Unit
 }
 
 
