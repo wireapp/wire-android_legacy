@@ -29,7 +29,8 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.views.ChatheadView
-import com.waz.zclient.messages.{MessageViewFactory, MessageViewPart, MsgPart, SystemMessageView}
+import com.waz.zclient.messages.SyncEngineSignals.DisplayName.{Me, Other}
+import com.waz.zclient.messages._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 
@@ -44,14 +45,10 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) ex
   inflate(R.layout.message_member_change_content)
 
   val zMessaging = inject[Signal[ZMessaging]]
+  val signals = inject[SyncEngineSignals]
 
   val messageView: SystemMessageView  = findById(R.id.smv_header)
   val gridView: MembersGridView       = findById(R.id.rv__row_conversation__people_changed__grid)
-
-  lazy val locale = context.getResources.getConfiguration.locale
-  lazy val stringYou = context.getString(R.string.content__system__you)
-  lazy val itemSeparator = context.getString(R.string.content__system__item_separator)
-  lazy val lastSeparator = context.getString(R.string.content__system__last_item_separator)
 
   private val message = Signal[MessageData]()
 
@@ -62,48 +59,32 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) ex
     }
   }
 
-  val memberIds = message.map(_.members.toSeq.sorted) // we should probably sort members by name instead
+  val memberNames = signals.memberDisplayNames(message)
 
-  def memberName(id: UserId, zms: ZMessaging) =
-    if (zms.selfUserId == id) Signal const stringYou
-    else zms.users.userSignal(id).map(_.getDisplayName)
-
-  val membersString = for {
-    zms <- zMessaging
-    ids <- memberIds
-    names <- Signal.sequence(ids.map(memberName(_, zms)): _*)
-  } yield
-    names match {
-      case Seq() => ""
-      case Seq(name) => name
-      case _ =>
-        val n = names.length
-        s"${names.take(n - 1).mkString(itemSeparator + " ")} $lastSeparator  ${names.last}"
-    }
+  val userName = signals.userDisplayName(message)
 
   val linkText = for {
     zms <- zMessaging
     msg <- message
-    ids <- memberIds
-    user <- zms.users.userSignal(msg.userId)
-    members <- membersString
+    displayName <- userName
+    members <- memberNames
   } yield {
     import Message.Type._
     val me = zms.selfUserId
     val userId = msg.userId
 
-    (msg.msgType, msg.userId, ids) match {
-      case (MEMBER_JOIN, `me`, _)       if msg.firstMessage => context.getString(R.string.content__system__you_started_participant, "", members)
-      case (MEMBER_JOIN, _, Seq(`me`))  if msg.firstMessage => context.getString(R.string.content__system__other_started_you, user.getDisplayName)
-      case (MEMBER_JOIN, _, _)          if msg.firstMessage => context.getString(R.string.content__system__other_started_participant, user.getDisplayName, members)
-      case (MEMBER_JOIN, `me`, _)                           => context.getString(R.string.content__system__you_added_participant, "", members)
-      case (MEMBER_JOIN, _, Seq(`me`))                      => context.getString(R.string.content__system__other_added_you, user.getDisplayName)
-      case (MEMBER_JOIN, _, _)                              => context.getString(R.string.content__system__other_added_participant, user.getDisplayName, members)
-      case (MEMBER_LEAVE, `me`, Seq(`me`))                  => context.getString(R.string.content__system__you_left)
-      case (MEMBER_LEAVE, `me`, _)                          => context.getString(R.string.content__system__you_removed_other, "", members)
-      case (MEMBER_LEAVE, _, Seq(`me`))                     => context.getString(R.string.content__system__other_removed_you, user.getDisplayName)
-      case (MEMBER_LEAVE, _, Seq(`userId`))                 => context.getString(R.string.content__system__other_left, user.getDisplayName)
-      case (MEMBER_LEAVE, _, _)                             => context.getString(R.string.content__system__other_removed_other, user.getDisplayName, members)
+    (msg.msgType, displayName, msg.members) match {
+      case (MEMBER_JOIN, Me, _)                   if msg.firstMessage => context.getString(R.string.content__system__you_started_participant, "", members)
+      case (MEMBER_JOIN, Other(name), Seq(`me`))  if msg.firstMessage => context.getString(R.string.content__system__other_started_you, name)
+      case (MEMBER_JOIN, Other(name), _)          if msg.firstMessage => context.getString(R.string.content__system__other_started_participant, name, members)
+      case (MEMBER_JOIN, `me`, _)                                     => context.getString(R.string.content__system__you_added_participant, "", members)
+      case (MEMBER_JOIN, Other(name), Seq(`me`))                      => context.getString(R.string.content__system__other_added_you, name)
+      case (MEMBER_JOIN, Other(name), _)                              => context.getString(R.string.content__system__other_added_participant, name, members)
+      case (MEMBER_LEAVE, Me, Seq(`me`))                              => context.getString(R.string.content__system__you_left)
+      case (MEMBER_LEAVE, Me, _)                                      => context.getString(R.string.content__system__you_removed_other, "", members)
+      case (MEMBER_LEAVE, Other(name), Seq(`me`))                     => context.getString(R.string.content__system__other_removed_you, name)
+      case (MEMBER_LEAVE, Other(name), Seq(`userId`))                 => context.getString(R.string.content__system__other_left, name)
+      case (MEMBER_LEAVE, Other(name), _)                             => context.getString(R.string.content__system__other_removed_other, name, members)
     }
   }
 
@@ -111,7 +92,7 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) ex
 
   linkText.on(Threading.Ui) { messageView.setText }
 
-  memberIds { gridView.members ! _ }
+  message.map(_.members.toSeq.sortBy(_.str)) { gridView.members ! _ }
 
   override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
     message ! msg
