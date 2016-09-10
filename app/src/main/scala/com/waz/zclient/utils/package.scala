@@ -17,8 +17,11 @@
  */
 package com.waz.zclient
 
+import android.content.res.TypedArray
 import android.graphics.LightingColorFilter
 import android.graphics.drawable.LayerDrawable
+import android.support.annotation.StyleableRes
+import android.util.AttributeSet
 import android.view.View
 import android.view.View._
 import android.widget.SeekBar
@@ -76,5 +79,10 @@ package object utils {
     def toPx(dp: Int)(implicit context: Context) = (dp * context.getResources.getDisplayMetrics.density).toInt
 
     def getLocale(implicit context: Context) = context.getResources.getConfiguration.locale
+
+    def withStyledAttributes[A](set: AttributeSet, @StyleableRes attrs: Array[Int])(body: TypedArray => A)(implicit context: Context) = {
+      val a = context.getTheme.obtainStyledAttributes(set, attrs, 0, 0)
+      try body(a) finally a.recycle()
+    }
   }
 }

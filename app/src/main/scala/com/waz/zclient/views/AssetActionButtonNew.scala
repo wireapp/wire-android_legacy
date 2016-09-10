@@ -42,8 +42,7 @@ class AssetActionButtonNew(context: Context, attrs: AttributeSet, style: Int) ex
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
-  private val a: TypedArray = context.getTheme.obtainStyledAttributes(attrs, R.styleable.AssetActionButton, 0, 0)
-  private val isFileType = a.getBoolean(R.styleable.AssetActionButton_isFileType, false)
+  private val isFileType = withStyledAttributes(attrs, R.styleable.AssetActionButton) { _.getBoolean(R.styleable.AssetActionButton_isFileType, false) }
 
   val zms = inject[Signal[ZMessaging]]
   val assetService = inject[AssetController]
