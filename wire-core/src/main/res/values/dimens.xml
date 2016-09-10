@@ -409,6 +409,7 @@
     <dimen name="profile__image_top_padding">92dp</dimen>
     <dimen name="participant__image_shift">-32dp</dimen>
     <dimen name="chathead__margin">26dp</dimen>
+    <dimen name="chathead__margin_start">18dp</dimen>
     <dimen name="error__image__margin">32dp</dimen>
     <dimen name="profile__image__width_regular">260dp</dimen>
     <dimen name="profile__image__height_regular">260dp</dimen>

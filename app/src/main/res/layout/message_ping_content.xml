@@ -18,12 +18,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<merge xmlns:android="http://schemas.android.com/apk/res/android"
-       xmlns:app="http://schemas.android.com/apk/res-auto"
-       android:layout_width="match_parent"
-       android:layout_height="wrap_content"
+<merge
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     >
-
 
     <com.waz.zclient.common.views.ChatheadView
         android:id="@+id/chathead"
@@ -32,17 +32,26 @@
         android:layout_height="@dimen/content__separator__chathead__size"
         android:layout_marginEnd="@dimen/chathead__margin"
         android:layout_marginStart="@dimen/chathead__margin_start"
-    />
+        />
 
     <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/tvName"
-        style="?messageStreamSeparatorName"
-        android:layout_width="match_parent"
+        android:id="@+id/ttv__row_conversation__ping_message"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
-        android:textAllCaps="true"
+        android:textSize="@dimen/wire__text_size__small"
+        android:textColor="?wirePrimaryTextColor"
         app:font="@string/wire__typeface__light"
-    />
+        />
+
+    <com.waz.zclient.ui.text.GlyphTextView
+        android:id="@+id/gtv__ping_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:textColor="@color/text__primary_light"
+        android:paddingStart="@dimen/wire__padding__small"
+        android:text="@string/glyph__ping"
+        />
 
 </merge>
-

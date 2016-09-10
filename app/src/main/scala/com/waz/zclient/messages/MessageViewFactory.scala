@@ -49,6 +49,7 @@ class MessageViewFactory {
         case SeparatorLarge => ViewHelper.inflate(R.layout.message_separator_large, parent, false)
         case Footer         => ViewHelper.inflate(R.layout.message_footer, parent, false)
         case Text           => ViewHelper.inflate(R.layout.message_text, parent, false)
+        case Ping           => ViewHelper.inflate(R.layout.message_ping, parent, false)
         case Image          => ViewHelper.inflate(R.layout.message_image, parent, false)
         case YouTube        => ViewHelper.inflate(R.layout.message_youtube, parent, false)
         case WebLink        => ViewHelper.inflate(R.layout.message_link_preview, parent, false)
@@ -60,7 +61,8 @@ class MessageViewFactory {
         case ConnectRequest => ViewHelper.inflate(R.layout.message_connect_request, parent, false)
         case InviteBanner   => ViewHelper.inflate(R.layout.message_invite_banner, parent, false)
         case OtrMessage     => ViewHelper.inflate(R.layout.message_otr_part, parent, false)
-        case _              => ViewHelper.inflate(R.layout.message_text, parent, false) // TODO: other types
+        case SoundCloud     => ViewHelper.inflate(R.layout.message_text, parent, false) // TODO: implement media player
+        case Empty          => new EmptyPartView(parent.getContext)
       }
     }
   }
