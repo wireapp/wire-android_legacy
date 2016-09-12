@@ -37,7 +37,7 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends 
 
   import com.waz.api.Message.Type._
 
-  override val tpe = MsgPart.Location
+  override val tpe = MsgPart.OtrMessage
 
   lazy val screenController = inject[ScreenController]
   lazy val browserController = inject[BrowserController]
