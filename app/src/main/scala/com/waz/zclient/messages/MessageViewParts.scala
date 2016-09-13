@@ -41,8 +41,6 @@ class SeparatorView(context: Context, attrs: AttributeSet, style: Int) extends L
   override val tpe: MsgPart = MsgPart.Separator
   val is24HourFormat = DateFormat.is24HourFormat(context)
 
-  private var pos = -1
-
   val time = Signal[Instant]()
   val text = time map { t =>
     ZTimeFormatter.getSeparatorTime(context.getResources, LocalDateTime.now, DateConvertUtils.asLocalDateTime(t), is24HourFormat, ZoneId.systemDefault, true)
@@ -51,14 +49,11 @@ class SeparatorView(context: Context, attrs: AttributeSet, style: Int) extends L
   lazy val tvTime: TypefaceTextView = findById(R.id.ttv__row_conversation__separator__time)
   lazy val ivUnreadDot: ImageView = findById(R.id.iv__row_conversation__unread_dot)
 
-  text { t =>
-    tvTime.setTransformedText(s"$pos: $t")
-  }
+  text.on(Threading.Ui) (tvTime.setTransformedText)
 
   // TODO: unread dot size and visibility
 
   override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
-    this.pos = pos
     time ! msg.time
   }
 }
@@ -68,8 +63,6 @@ class SeparatorViewLarge(context: Context, attrs: AttributeSet, style: Int) exte
 
   def this(context: Context) = this(context, null, 0)
 
-  private var pos = -1
-
   override val tpe: MsgPart = MsgPart.SeparatorLarge
   val is24HourFormat = DateFormat.is24HourFormat(context)
 
@@ -78,12 +71,9 @@ class SeparatorViewLarge(context: Context, attrs: AttributeSet, style: Int) exte
     ZTimeFormatter.getSeparatorTime(context.getResources, LocalDateTime.now, DateConvertUtils.asLocalDateTime(t), is24HourFormat, ZoneId.systemDefault, true)
   }
 
-  text.on(Threading.Ui) { t =>
-    setTransformedText(s"$pos: $t")
-  }
+  text.on(Threading.Ui) (setTransformedText)
 
   override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
-    this.pos = pos
     time ! msg.time
   }
 }

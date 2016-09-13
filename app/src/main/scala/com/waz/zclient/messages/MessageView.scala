@@ -28,7 +28,9 @@ import com.waz.model.{MessageContent, MessageData, MessageId}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.returning
 import com.waz.zclient.controllers.global.SelectionController
-import com.waz.zclient.messages.MsgPart.Footer
+import com.waz.zclient.messages.MessageView.getTopMargin
+import com.waz.zclient.messages.MsgPart._
+import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 
@@ -76,6 +78,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
         builder.result()
       }
 
+    if (parts.nonEmpty) this.setMarginTop(getTopMargin(prev.map(_.msgType), parts.head._1))
     setParts(pos, mAndL, parts, focused)
   }
 
@@ -108,6 +111,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
       addViewInLayout(view, index, Option(view.getLayoutParams) getOrElse factory.DefaultLayoutParams)
     }
   }
+
 }
 
 object MessageView {
@@ -123,6 +127,66 @@ object MessageView {
       _.parent = Some(parent)
     }
   }
+
+  trait MarginRule
+
+  case object TextLike extends MarginRule
+  case object ImageLike extends MarginRule
+  case object FileLike extends MarginRule
+  case object MemberChange extends MarginRule
+  case object Rename extends MarginRule
+  case object Ping extends MarginRule
+  case object MissedCall extends MarginRule
+  case object Other extends MarginRule
+
+  object MarginRule {
+    def apply(tpe: Message.Type): MarginRule = apply(MsgPart(tpe))
+
+    def apply(tpe: MsgPart): MarginRule = {
+      tpe match {
+        case Separator |
+             SeparatorLarge |
+             User |
+             Text => TextLike
+        case MsgPart.Ping => Ping
+        case MsgPart.Rename => Rename
+        case FileAsset |
+             AudioAsset |
+             WebLink |
+             YouTube |
+             Location |
+             SoundCloud => FileLike
+        case Image | VideoAsset => ImageLike
+        case MsgPart.MemberChange => MemberChange
+        case _ => Other
+      }
+    }
+  }
+
+
+  def getTopMargin(prevTpe: Option[Message.Type], topPart: MsgPart)(implicit context: Context) = {
+    if (prevTpe.isEmpty)
+      if (MarginRule(topPart) == MemberChange) toPx(24) else 0
+    else {
+      val p = (MarginRule(prevTpe.get), MarginRule(topPart)) match {
+        case (TextLike, TextLike)         => 8
+        case (TextLike, FileLike)         => 16
+        case (FileLike, FileLike)         => 10
+        case (ImageLike, ImageLike)       => 0
+        case (FileLike | ImageLike, _) |
+             (_, FileLike | ImageLike)    => 10
+        case (Rename, _)                  => 24
+        case (MissedCall, _)              => 24
+        case (MemberChange, _) |
+             (_, MemberChange)            => 24
+        case (_, Ping) | (Ping, _)        => 14
+        case (_, MissedCall)              => 24
+        case _                            => 0
+      }
+      toPx(p)
+    }
+  }
+
 }
 
 sealed trait MsgPart

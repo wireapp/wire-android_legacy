@@ -22,7 +22,7 @@ import android.graphics.LightingColorFilter
 import android.graphics.drawable.LayerDrawable
 import android.support.annotation.StyleableRes
 import android.util.AttributeSet
-import android.view.View
+import android.view.{ViewGroup, View}
 import android.view.View._
 import android.widget.SeekBar
 import com.waz.zclient.ui.utils.ResourceUtils
@@ -33,11 +33,17 @@ package object utils {
 
     def setVisible(isVisible: Boolean): Unit = view.setVisibility(if (isVisible) VISIBLE else GONE)
 
+    def setMarginTop(m: Int) = {
+      view.getLayoutParams.asInstanceOf[ViewGroup.MarginLayoutParams].topMargin = m
+      view.invalidate()
+    }
+
     //TODO improve this so that multiple click listeners can be set from different places at once
     //TODO could also handle a set of views?
     def onClick(f: => Unit): Unit = view.setOnClickListener(new OnClickListener {
       override def onClick(v: View): Unit = f
     })
+
   }
 
   implicit class RichSeekBar(val bar: SeekBar) extends AnyVal {
