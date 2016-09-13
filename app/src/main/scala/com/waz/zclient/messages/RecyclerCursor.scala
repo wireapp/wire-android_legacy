@@ -84,6 +84,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
       initialLastReadIndex.mutateOrDefault(identity, c.lastReadIndex) // only set signal if it was empty
       notifyFromHistory(c.createTime)
       countSignal ! c.size
+      onChangedSub.foreach(_.destroy())
       onChangedSub = Some(c onUpdate (id => likesChanged(Seq(id))))
     }
   }
