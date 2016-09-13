@@ -27,7 +27,7 @@ import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.{EventContext, EventStream, Signal, Subscription}
+import com.waz.utils.events.{EventContext, Signal, Subscription}
 import com.waz.zclient.{Injectable, Injector}
 import org.threeten.bp.Instant
 
@@ -122,7 +122,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
     }
 
     val msg = c(position)
-    verbose(s"Fetching message: $msg from Messages Cursor at position: $position")
+    verbose(s"Fetching for position: $position message: $msg")
     msg
   })
 
@@ -131,6 +131,10 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
     import MessagesCursor.Entry
 
     private var offset = 0
+
+    def getOffset = offset
+
+    //just for printing
     private var entries = new ListBuffer[Entry]()
 
     def shouldReload(position: Int): Boolean = offset > math.max(0, position - 25) || offset + entries.length < math.min(count, position + 25)

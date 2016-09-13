@@ -56,6 +56,7 @@ class MessagesListAdapter()(implicit inj: Injector, ec: EventContext) extends Re
   override def getItemViewType(position: Int): Int = MessageView.viewType(message(position).message.msgType)
 
   override def onBindViewHolder(holder: MessageViewHolder, position: Int): Unit = {
+    verbose(s"onBindViewHolder: position: $position")
     holder.bind(position, message(position), if (position == 0) None else Some(message(position - 1).message))
     onBindView ! position
   }

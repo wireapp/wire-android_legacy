@@ -141,9 +141,6 @@ class LikeButton(context: Context, attrs: AttributeSet, style: Int) extends Fram
     likeClicked ! (())
   }
 
-
-
-
   likedBySelf.on(Threading.Ui)(l => verbose(s"setting liked?: $l"))
   likedBySelf.map { case true => R.string.glyph__liked; case false => R.string.glyph__like }.map(getString).on(Threading.Ui)(likeButtonConstant.setText)
   likedBySelf.map { case true => likeButtonColorLiked; case false => likeButtonColorUnliked }.on(Threading.Ui)(likeButtonConstant.setTextColor)
