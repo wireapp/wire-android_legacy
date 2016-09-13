@@ -47,10 +47,10 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
     selection.toggleFocused(msgId)
   }
 
-  def set(pos: Int, m: MessageAndLikes, prev: Option[MessageData], focused: Boolean): Unit = {
-    val msg = m.message
+  def set(pos: Int, mAndL: MessageAndLikes, prev: Option[MessageData], focused: Boolean): Unit = {
+    val msg = mAndL.message
     msgId = msg.id
-    verbose(s"set $pos, $msg")
+    verbose(s"set $pos, $mAndL")
 
     val contentParts =
       if (msg.msgType != Message.Type.RICH_MEDIA) Seq(MsgPart(msg.msgType) -> None)
@@ -70,13 +70,13 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
         // TODO: add invite banner part for first member create message
         builder ++= contentParts
 
-        if (focused || m.likes.nonEmpty)
+        if (focused || mAndL.likes.nonEmpty)
           builder += MsgPart.Footer -> None
 
         builder.result()
       }
 
-    setParts(pos, m, parts, focused)
+    setParts(pos, mAndL, parts, focused)
   }
 
   private def shouldShowSeparator(msg: MessageData, prev: Option[MessageData]) = msg.msgType match {

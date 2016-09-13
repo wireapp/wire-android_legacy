@@ -53,21 +53,14 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
   private var history = Seq.empty[ConvMessagesIndex.Change]
   private var cursor = Option.empty[MessagesCursor]
   private var subs = Seq.empty[Subscription]
-
-  //TODO I think we only really care if the first/last like is added/removed - then we need to show/hide the footer
-  private val onLikesChanged = EventStream.union(
-    likes.onAdded map { _.map(_.message) },
-    likes.onUpdated map { _.map(_._2.message) },
-    likes.onDeleted map { _.map(_._1) }
-  )
+  private var onChangedSub = Option.empty[Subscription]
 
   index onSuccess { case idx =>
     verbose(s"index: $idx, closed?: $closed")
     if (!closed) {
       subs = Seq(
         idx.signals.messagesCursor.on(Threading.Ui) { setCursor },
-        idx.signals.indexChanged.on(Threading.Ui) { change => history = history :+ change },
-        onLikesChanged { likesChanged(_) }
+        idx.signals.indexChanged.on(Threading.Ui) { change => history = history :+ change }
       )
     }
   }
@@ -77,6 +70,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
     closed = true
     cursor = None
     subs.foreach(_.destroy())
+    onChangedSub.foreach(_.destroy())
     subs = Nil
     history = Nil
     adapter.notifyDataSetChanged()
@@ -90,6 +84,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
       initialLastReadIndex.mutateOrDefault(identity, c.lastReadIndex) // only set signal if it was empty
       notifyFromHistory(c.createTime)
       countSignal ! c.size
+      onChangedSub = Some(c onUpdate (id => likesChanged(Seq(id))))
     }
   }
 
@@ -109,10 +104,14 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
     if (toApply.isEmpty) adapter.notifyDataSetChanged()
   }
 
-  private def likesChanged(ids: Seq[MessageId]) =
-    storage.getAll(ids) .map { msgs =>
-      msgs foreach { _ foreach { msg => window.onUpdated(msg, msg) } }
-    } (Threading.Ui)
+  private def likesChanged(ids: Seq[MessageId]) = {
+    verbose(s"likesChanged: $ids")
+    storage.getAll(ids).map { msgs =>
+      msgs foreach {
+        _ foreach { msg => window.onUpdated(msg, msg) }
+      }
+    }(Threading.Ui)
+  }
 
   def count: Int = cursor.fold(0)(_.size)
 
@@ -122,7 +121,9 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
       window.reload(c, position)
     }
 
-    c(position)
+    val msg = c(position)
+    verbose(s"Fetching message: $msg from Messages Cursor at position: $position")
+    msg
   })
 
 
@@ -200,14 +201,16 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
       val pe = Entry(prev)
       val ce = Entry(current)
 
-      if (pe == ce) { // position unchanged, will only notify adapter about data change
+      if (pe == ce) {
+        verbose(s"position unchanged, will only notify adapter about data change")
         search(pe) match {
-          case Found(pos) => adapter.notifyItemChanged(pos)
-          case _ => // no need to notify about changes outside of window
+          case Found(pos) =>
+            verbose(s"found, notifiying adapter at pos: ${offset + pos}")
+            adapter.notifyItemChanged(offset + pos)
+          case _ => verbose("no need to notify about changes outside of window")
         }
       } else {
-        // message position changed
-
+        verbose("message position changed")
         val len = entries.length
 
         (search(pe), search(ce)) match {
@@ -216,7 +219,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
           case (Found(src), InsertionPoint(dst)) if src == dst || src == dst - 1 =>
             // time changed, but position remains the same
             entries.update(src, ce)
-            adapter.notifyItemChanged(src)
+            adapter.notifyItemChanged(offset + src)
           case (Found(src), InsertionPoint(dst)) =>
             entries.remove(src)
             val target = if (dst > src) dst - 1 else dst // use dst - 1 since one item was just removed on left side

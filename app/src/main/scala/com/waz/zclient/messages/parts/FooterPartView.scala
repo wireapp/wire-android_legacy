@@ -39,7 +39,6 @@ import com.waz.zclient.utils.{RichView, ZTimeFormatter}
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 import org.threeten.bp.DateTimeUtils
 
-//TODO rules for keeping the like button open
 //TODO click handling on the 'users who liked' list and going to fragment
 //TODO timestamp/like details animation
 //TODO switching between timestamp and likes details after timeout
