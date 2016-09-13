@@ -27,6 +27,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import com.waz.api.Message;
 import com.waz.zclient.R;
+import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.utils.ViewUtils;
 
@@ -38,6 +39,13 @@ public class LikesListFragment extends BaseFragment<LikesListFragment.Container>
     private Toolbar toolbar;
     private RecyclerView likersListView;
     private LikesAdapter likesAdapter;
+
+    ModelObserver<Message> messageModelObserver = new ModelObserver<Message>() {
+        @Override
+        public void updated(Message model) {
+            likesAdapter.setLikes(model.getLikes());
+        }
+    };
 
     public static LikesListFragment newInstance(Message message) {
         LikesListFragment fragment = new LikesListFragment();
@@ -68,9 +76,14 @@ public class LikesListFragment extends BaseFragment<LikesListFragment.Container>
         });
 
         Message likedMessage = getArguments().getParcelable(ARGUMENT_LIKED_MESSAGE);
-        likesAdapter.setLikes(likedMessage.getLikes());
-
+        messageModelObserver.setAndUpdate(likedMessage);
         return rootView;
+    }
+
+    @Override
+    public void onDestroyView() {
+        messageModelObserver.pauseListening();
+        super.onDestroyView();
     }
 
     public interface Container {

@@ -31,6 +31,7 @@ import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{Signal, _}
 import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.controllers.ScreenController
 import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.messages.{Footer, SyncEngineSignals}
 import com.waz.zclient.ui.utils.TextViewUtils
@@ -39,7 +40,6 @@ import com.waz.zclient.utils.{RichView, ZTimeFormatter}
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 import org.threeten.bp.DateTimeUtils
 
-//TODO click handling on the 'users who liked' list and going to fragment
 //TODO timestamp/like details animation
 //TODO switching between timestamp and likes details after timeout
 //TODO like hint
@@ -141,6 +141,9 @@ class LikeButton(context: Context, attrs: AttributeSet, style: Int) extends Fram
     likeClicked ! (())
   }
 
+
+
+
   likedBySelf.on(Threading.Ui)(l => verbose(s"setting liked?: $l"))
   likedBySelf.map { case true => R.string.glyph__liked; case false => R.string.glyph__like }.map(getString).on(Threading.Ui)(likeButtonConstant.setText)
   likedBySelf.map { case true => likeButtonColorLiked; case false => likeButtonColorUnliked }.on(Threading.Ui)(likeButtonConstant.setTextColor)
@@ -175,6 +178,8 @@ class LikeDetailsLayout(context: Context, attrs: AttributeSet, style: Int) exten
   displayText.map { case Some(_) => true; case _ => false }.on(Threading.Ui)(description.setVisible)
 
   userIds.on(Threading.Ui)(_ => hintArrow.setVisible(false))
+
+  chatheadContainer.onClick(messageAndLikes.map(_.message.id).currentValue.foreach(inject[ScreenController].showUsersWhoLike))
 }
 
 
