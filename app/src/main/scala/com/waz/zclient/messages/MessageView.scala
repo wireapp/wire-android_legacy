@@ -108,11 +108,6 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
       addViewInLayout(view, index, Option(view.getLayoutParams) getOrElse factory.DefaultLayoutParams)
     }
   }
-
-  override def onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int): Unit = {
-    super.onLayout(changed, l, t, r, b)
-    verbose(s"onLayout, height: ${b - t}")
-  }
 }
 
 object MessageView {

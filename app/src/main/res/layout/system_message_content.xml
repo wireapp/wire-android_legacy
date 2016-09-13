@@ -32,7 +32,7 @@
         android:textColor="?wirePrimaryTextColor"
     />
 
-    <com.waz.zclient.ui.text.TypefaceTextView
+    <com.waz.zclient.common.views.LinkTextView
         android:id="@+id/ttv__system_message__text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

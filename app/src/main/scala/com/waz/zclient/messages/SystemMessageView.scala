@@ -25,7 +25,8 @@ import android.view.View.MeasureSpec
 import android.view.{View, ViewGroup}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.returning
-import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
+import com.waz.zclient.common.views.LinkTextView
+import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
@@ -58,7 +59,7 @@ class SystemMessageView(context: Context, attrs: AttributeSet, style: Int) exten
   }
 
   val iconView: GlyphTextView = findById(R.id.gtv__system_message__icon)
-  val textView: TypefaceTextView = findById(R.id.ttv__system_message__text)
+  val textView: LinkTextView = findById(R.id.ttv__system_message__text)
 
   setWillNotDraw(false)
 
@@ -67,13 +68,8 @@ class SystemMessageView(context: Context, attrs: AttributeSet, style: Int) exten
     TextViewUtils.boldText(textView)
   }
 
-  def setTextWithLink(text: String, color: Int, bold: Boolean = false, underline: Boolean = false)(onClick: => Unit) = {
-    textView.setText(text.toUpperCase(locale))
-    TextViewUtils.boldText(textView)
-    TextViewUtils.linkifyText(textView, color, bold, underline, new Runnable {
-      override def run(): Unit = onClick
-    })
-  }
+  def setTextWithLink(text: String, color: Int, bold: Boolean = false, underline: Boolean = false)(onClick: => Unit) =
+    textView.setTextWithLink(text.toUpperCase(locale), color, bold, underline)(onClick)
 
   def setIcon(drawable: Drawable) = {
     iconView.setText("")
