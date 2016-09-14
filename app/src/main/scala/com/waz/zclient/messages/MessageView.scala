@@ -31,8 +31,10 @@ import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.messages.MessageView.getTopMargin
 import com.waz.zclient.messages.MsgPart._
 import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.DateConvertUtils.asZonedDateTime
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.utils.RichOption
 
 class MessageView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -63,8 +65,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
       else {
         val builder = Seq.newBuilder[(MsgPart, Option[MessageContent])]
 
-        if (shouldShowSeparator(msg, prev))
-          builder += MsgPart.Separator -> None
+        builder += getSeparatorType(msg, prev) -> None
 
         if (shouldShowChathead(msg, prev))
           builder += MsgPart.User -> None
@@ -82,10 +83,18 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
     setParts(pos, mAndL, parts, focused)
   }
 
-  private def shouldShowSeparator(msg: MessageData, prev: Option[MessageData]) = msg.msgType match {
-    case Message.Type.CONNECT_REQUEST => false
+  //TODO - do we really want to build a view here if we don't need a separator?
+  private def getSeparatorType(msg: MessageData, prev: Option[MessageData]) = msg.msgType match {
+    case Message.Type.CONNECT_REQUEST => Empty
     case _ =>
-      prev.forall(_.time.isBefore(msg.time.minusSeconds(3600)))
+      prev.fold2(Empty, { p =>
+        val prevDay = asZonedDateTime(p.time).toLocalDate.atStartOfDay()
+        val curDay = asZonedDateTime(msg.time).toLocalDate.atStartOfDay()
+
+        if (prevDay.isBefore(curDay)) SeparatorLarge
+        else if (p.time.isBefore(msg.time.minusSeconds(3600))) Separator
+        else Empty
+      })
   }
 
   private def shouldShowChathead(msg: MessageData, prev: Option[MessageData]) =
