@@ -283,6 +283,8 @@ trait TimeSeparator extends ViewPart with ViewHelper {
     unreadDot.show ! isLastRead
   }
 
+  this.onClick {} //confusing if message opens when timestamp clicked
+
 }
 
 trait MessageViewPart extends ViewPart {

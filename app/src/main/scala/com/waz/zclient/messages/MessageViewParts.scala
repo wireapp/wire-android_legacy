@@ -59,7 +59,7 @@ class UnreadDot(context: Context, attrs: AttributeSet, style: Int) extends View(
   val accent = inject[AccentColorController].accentColor
   val show = Signal[Boolean](false)
 
-  val dotRadius = getDimenPx(R.dimen.content__separator__chathead__size) / 2
+  val dotRadius = getDimenPx(R.dimen.conversation__unread_dot__radius)
   val dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG)
 
   accent { color => dotPaint.setColor(color.getColor()) }

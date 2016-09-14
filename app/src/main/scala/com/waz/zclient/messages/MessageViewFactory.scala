@@ -76,10 +76,4 @@ class MessageViewFactory {
   def get[A <: View](resId: Int, parent: ViewGroup): A =
     viewCache.get(resId).flatMap(s => if (s.isEmpty) None else Some(s.pop().asInstanceOf[A])).getOrElse { ViewHelper.inflate[A](resId, parent, addToParent = false) }
 
-  def printCache(): Unit = {
-    verbose(s"Currently cached view parts, cache@${cache.hashCode}")
-    cache.foreach {
-      case (partTp, queue) => verbose(s"\t$partTp: ${queue.size} views available")
-    }
-  }
 }

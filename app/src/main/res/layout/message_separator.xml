@@ -31,7 +31,7 @@
     <com.waz.zclient.messages.UnreadDot
         android:id="@+id/unread_dot"
         android:layout_width="@dimen/content__padding_left"
-        android:layout_height="match_parent"
+        android:layout_height="@dimen/wire__margin__huge"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
         />
@@ -41,7 +41,7 @@
         style="?messageStreamTimestampSmall"
         android:layout_width="match_parent"
         android:layout_height="@dimen/wire__margin__huge"
-        android:layout_alignStart="@id/unread_dot"
+        android:layout_toEndOf="@id/unread_dot"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:textAllCaps="true"
