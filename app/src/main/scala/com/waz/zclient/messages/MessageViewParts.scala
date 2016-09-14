@@ -29,7 +29,10 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.ui.text.TypefaceTextView
-import com.waz.zclient.utils.{DateConvertUtils, ZTimeFormatter}
+import com.waz.zclient.ui.theme.ThemeUtils
+import com.waz.zclient.utils.ContextUtils.getColor
+import com.waz.zclient.utils.ZTimeFormatter.getSeparatorTime
+import com.waz.zclient.utils.{ContextUtils, DateConvertUtils, ZTimeFormatter}
 import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.{Instant, LocalDateTime, ZoneId}
 
@@ -43,7 +46,7 @@ class SeparatorView(context: Context, attrs: AttributeSet, style: Int) extends L
 
   val time = Signal[Instant]()
   val text = time map { t =>
-    ZTimeFormatter.getSeparatorTime(context.getResources, LocalDateTime.now, DateConvertUtils.asLocalDateTime(t), is24HourFormat, ZoneId.systemDefault, true)
+    getSeparatorTime(context.getResources, LocalDateTime.now, DateConvertUtils.asLocalDateTime(t), is24HourFormat, ZoneId.systemDefault, true)
   }
 
   lazy val tvTime: TypefaceTextView = findById(R.id.ttv__row_conversation__separator__time)
@@ -60,22 +63,23 @@ class SeparatorView(context: Context, attrs: AttributeSet, style: Int) extends L
 
 class SeparatorViewLarge(context: Context, attrs: AttributeSet, style: Int) extends TypefaceTextView(context, attrs, style) with MessageViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
-
   def this(context: Context) = this(context, null, 0)
 
   override val tpe: MsgPart = MsgPart.SeparatorLarge
   val is24HourFormat = DateFormat.is24HourFormat(context)
 
+  if (ThemeUtils.isDarkTheme(context)) setBackgroundColor(getColor(R.color.white_8))
+  else setBackgroundColor(getColor(R.color.black_4))
+  setTypeface(ContextUtils.getString(R.string.wire__typeface__bold))
+
   val time = Signal[Instant]()
   val text = time map { t =>
-    ZTimeFormatter.getSeparatorTime(context.getResources, LocalDateTime.now, DateConvertUtils.asLocalDateTime(t), is24HourFormat, ZoneId.systemDefault, true)
+    getSeparatorTime(context.getResources, LocalDateTime.now, DateConvertUtils.asLocalDateTime(t), is24HourFormat, ZoneId.systemDefault, true)
   }
 
   text.on(Threading.Ui) (setTransformedText)
 
-  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
-    time ! msg.time
-  }
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = time ! msg.time
 }
 
 // TODO: replace LinearLayout with TextView, set chathead as compound drawable

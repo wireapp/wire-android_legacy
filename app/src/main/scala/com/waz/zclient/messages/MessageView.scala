@@ -65,7 +65,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
       else {
         val builder = Seq.newBuilder[(MsgPart, Option[MessageContent])]
 
-        builder += getSeparatorType(msg, prev) -> None
+        getSeparatorType(msg, prev).foreach(sep => builder += sep -> None)
 
         if (shouldShowChathead(msg, prev))
           builder += MsgPart.User -> None
@@ -83,17 +83,16 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
     setParts(pos, mAndL, parts, focused)
   }
 
-  //TODO - do we really want to build a view here if we don't need a separator?
-  private def getSeparatorType(msg: MessageData, prev: Option[MessageData]) = msg.msgType match {
-    case Message.Type.CONNECT_REQUEST => Empty
+  private def getSeparatorType(msg: MessageData, prev: Option[MessageData]): Option[MsgPart] = msg.msgType match {
+    case Message.Type.CONNECT_REQUEST => None
     case _ =>
-      prev.fold2(Empty, { p =>
+      prev.fold2(None, { p =>
         val prevDay = asZonedDateTime(p.time).toLocalDate.atStartOfDay()
         val curDay = asZonedDateTime(msg.time).toLocalDate.atStartOfDay()
 
-        if (prevDay.isBefore(curDay)) SeparatorLarge
-        else if (p.time.isBefore(msg.time.minusSeconds(3600))) Separator
-        else Empty
+        if (prevDay.isBefore(curDay)) Some(SeparatorLarge)
+        else if (p.time.isBefore(msg.time.minusSeconds(3600))) Some(Separator)
+        else None
       })
   }
 
