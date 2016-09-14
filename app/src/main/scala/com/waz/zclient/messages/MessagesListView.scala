@@ -103,10 +103,10 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesListAdapter)(im
     if (focused != f.contains(id)) adapter.notifyItemChanged(getAdapterPosition)
   }
 
-  def bind(position: Int, msg: MessageAndLikes, prev: Option[MessageData]): Unit = {
+  def bind(position: Int, msg: MessageAndLikes, prev: Option[MessageData], isLastRead: Boolean): Unit = {
     id = msg.message.id
     focused = selection.focused.currentValue.exists(_.contains(id))
-    view.set(position, msg, prev, focused)
+    view.set(position, msg, prev, focused, isLastRead)
   }
 }
 

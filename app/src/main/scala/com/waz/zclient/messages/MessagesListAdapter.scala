@@ -57,9 +57,11 @@ class MessagesListAdapter()(implicit inj: Injector, ec: EventContext) extends Re
 
   override def onBindViewHolder(holder: MessageViewHolder, position: Int): Unit = {
     verbose(s"onBindViewHolder: position: $position")
-    holder.bind(position, message(position), if (position == 0) None else Some(message(position - 1).message))
+    holder.bind(position, message(position), if (position == 0) None else Some(message(position - 1).message), isLastRead(position))
     onBindView ! position
   }
+
+  private def isLastRead(pos: Int) = messages.fold(false)(_.lastRead() == pos)
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder =
     MessageViewHolder(MessageView(parent, viewType), adapter)

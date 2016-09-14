@@ -18,68 +18,55 @@
 package com.waz.zclient.messages
 
 import android.content.Context
-import android.text.format.DateFormat
+import android.graphics.{Canvas, Paint}
 import android.util.AttributeSet
 import android.view.View
-import android.widget.{ImageView, LinearLayout}
+import android.widget.{LinearLayout, RelativeLayout}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.controllers.global.AccentColorController
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.theme.ThemeUtils
-import com.waz.zclient.utils.ContextUtils.getColor
-import com.waz.zclient.utils.ZTimeFormatter.getSeparatorTime
-import com.waz.zclient.utils.{ContextUtils, DateConvertUtils, ZTimeFormatter}
+import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx}
 import com.waz.zclient.{R, ViewHelper}
-import org.threeten.bp.{Instant, LocalDateTime, ZoneId}
 
-class SeparatorView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
+class SeparatorView(context: Context, attrs: AttributeSet, style: Int) extends RelativeLayout(context, attrs, style) with TimeSeparator {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
-
   def this(context: Context) = this(context, null, 0)
 
   override val tpe: MsgPart = MsgPart.Separator
-  val is24HourFormat = DateFormat.is24HourFormat(context)
-
-  val time = Signal[Instant]()
-  val text = time map { t =>
-    getSeparatorTime(context.getResources, LocalDateTime.now, DateConvertUtils.asLocalDateTime(t), is24HourFormat, ZoneId.systemDefault, true)
-  }
-
-  lazy val tvTime: TypefaceTextView = findById(R.id.ttv__row_conversation__separator__time)
-  lazy val ivUnreadDot: ImageView = findById(R.id.iv__row_conversation__unread_dot)
-
-  text.on(Threading.Ui) (tvTime.setTransformedText)
-
-  // TODO: unread dot size and visibility
-
-  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
-    time ! msg.time
-  }
 }
 
-class SeparatorViewLarge(context: Context, attrs: AttributeSet, style: Int) extends TypefaceTextView(context, attrs, style) with MessageViewPart with ViewHelper {
+class SeparatorViewLarge(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with TimeSeparator {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
   override val tpe: MsgPart = MsgPart.SeparatorLarge
-  val is24HourFormat = DateFormat.is24HourFormat(context)
 
   if (ThemeUtils.isDarkTheme(context)) setBackgroundColor(getColor(R.color.white_8))
   else setBackgroundColor(getColor(R.color.black_4))
-  setTypeface(ContextUtils.getString(R.string.wire__typeface__bold))
 
-  val time = Signal[Instant]()
-  val text = time map { t =>
-    getSeparatorTime(context.getResources, LocalDateTime.now, DateConvertUtils.asLocalDateTime(t), is24HourFormat, ZoneId.systemDefault, true)
-  }
+}
 
-  text.on(Threading.Ui) (setTransformedText)
+class UnreadDot(context: Context, attrs: AttributeSet, style: Int) extends View(context, attrs, style) with ViewHelper {
+  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
+  def this(context: Context) = this(context, null, 0)
 
-  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = time ! msg.time
+  val accent = inject[AccentColorController].accentColor
+  val show = Signal[Boolean](false)
+
+  val dotRadius = getDimenPx(R.dimen.content__separator__chathead__size) / 2
+  val dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG)
+
+  accent { color => dotPaint.setColor(color.getColor()) }
+
+  show.onChanged.on(Threading.Ui)(_ => invalidate())
+
+  override def onDraw(canvas: Canvas): Unit = if (show.currentValue.getOrElse(false)) canvas.drawCircle(getWidth / 2, getHeight / 2, dotRadius, dotPaint)
 }
 
 // TODO: replace LinearLayout with TextView, set chathead as compound drawable

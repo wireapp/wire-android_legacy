@@ -127,6 +127,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
     msg
   })
 
+  def lastRead() = cursor.fold(-1)(_.lastReadIndex)
 
   class IndexWindow {
     import MessagesCursor.Entry

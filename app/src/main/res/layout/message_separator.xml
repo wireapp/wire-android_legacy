@@ -20,29 +20,38 @@
 -->
 <com.waz.zclient.messages.SeparatorView xmlns:android="http://schemas.android.com/apk/res/android"
                                         xmlns:app="http://schemas.android.com/apk/res-auto"
-                                        android:layout_width="wrap_content"
+                                        android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
                                         android:layout_gravity="center"
+                                        android:layout_marginBottom="8dp"
                                         android:gravity="center_horizontal"
-                                        android:orientation="horizontal"
+                                        android:orientation="vertical"
     >
 
-    <ImageView
-        android:id="@+id/iv__row_conversation__unread_dot"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
+    <com.waz.zclient.messages.UnreadDot
+        android:id="@+id/unread_dot"
+        android:layout_width="@dimen/content__padding_left"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
         />
 
     <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/ttv__row_conversation__separator__time"
+        android:id="@+id/separator__time"
         style="?messageStreamTimestampSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/wire__margin__huge"
+        android:layout_alignStart="@id/unread_dot"
+        android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:textAllCaps="true"
         app:font="@string/wire__typeface__light"
         />
 
+    <View
+        style="?wireDivider"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/wire__divider__height__thin"
+        android:layout_alignParentBottom="true"
+        />
 </com.waz.zclient.messages.SeparatorView>

@@ -18,6 +18,7 @@
 package com.waz.zclient.messages
 
 import android.content.Context
+import android.text.format.DateFormat
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.LinearLayout
@@ -26,15 +27,19 @@ import com.waz.ZLog._
 import com.waz.api.Message
 import com.waz.model.{MessageContent, MessageData, MessageId}
 import com.waz.service.messages.MessageAndLikes
-import com.waz.utils.returning
+import com.waz.threading.Threading
+import com.waz.utils.events.Signal
+import com.waz.utils.{RichOption, returning}
 import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.messages.MessageView.getTopMargin
 import com.waz.zclient.messages.MsgPart._
+import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DateConvertUtils.asZonedDateTime
+import com.waz.zclient.utils.ZTimeFormatter._
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.utils.RichOption
+import org.threeten.bp.{Instant, LocalDateTime, ZoneId}
 
 class MessageView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -51,7 +56,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
     selection.toggleFocused(msgId)
   }
 
-  def set(pos: Int, mAndL: MessageAndLikes, prev: Option[MessageData], focused: Boolean): Unit = {
+  def set(pos: Int, mAndL: MessageAndLikes, prev: Option[MessageData], focused: Boolean, isLastRead: Boolean): Unit = {
     val msg = mAndL.message
     msgId = msg.id
     verbose(s"set $pos, $mAndL")
@@ -80,7 +85,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
       }
 
     if (parts.nonEmpty) this.setMarginTop(getTopMargin(prev.map(_.msgType), parts.head._1))
-    setParts(pos, mAndL, parts, focused)
+    setParts(pos, mAndL, parts, focused, isLastRead)
   }
 
   private def getSeparatorType(msg: MessageData, prev: Option[MessageData]): Option[MsgPart] = msg.msgType match {
@@ -99,7 +104,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
   private def shouldShowChathead(msg: MessageData, prev: Option[MessageData]) =
     !msg.isSystemMessage && msg.msgType != Message.Type.KNOCK && prev.forall(m => m.userId != msg.userId || m.isSystemMessage)
 
-  private def setParts(position: Int, msg: MessageAndLikes, parts: Seq[(MsgPart, Option[MessageContent])], isFocused: Boolean) = {
+  private def setParts(position: Int, msg: MessageAndLikes, parts: Seq[(MsgPart, Option[MessageContent])], isFocused: Boolean, isLastRead: Boolean) = {
     verbose(s"setParts: position: $position, parts: ${parts.map(_._1)}")
 
     // recycle views in reverse order, recycled views are stored in a Stack, this way we will get the same views back if parts are the same
@@ -113,8 +118,9 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
     parts.zipWithIndex foreach { case ((tpe, content), index) =>
       val view = factory.get(tpe, this)
       view match {
+        case v: TimeSeparator   => v.set(msg.message.time, isLastRead)
         case v: MessageViewPart => v.set(position, msg.message, content, widthHint)
-        case v: Footer => v.set(msg, isFocused)
+        case v: Footer          => v.set(msg, isFocused)
       }
       addViewInLayout(view, index, Option(view.getLayoutParams) getOrElse factory.DefaultLayoutParams)
     }
@@ -170,7 +176,6 @@ object MessageView {
       }
     }
   }
-
 
   def getTopMargin(prevTpe: Option[Message.Type], topPart: MsgPart)(implicit context: Context) = {
     if (prevTpe.isEmpty)
@@ -257,6 +262,27 @@ object MsgPart {
 
 trait ViewPart extends View {
   val tpe: MsgPart
+}
+
+trait TimeSeparator extends ViewPart with ViewHelper {
+
+  val is24HourFormat = DateFormat.is24HourFormat(getContext)
+
+  lazy val timeText: TypefaceTextView = findById(R.id.separator__time)
+  lazy val unreadDot: UnreadDot = findById(R.id.unread_dot)
+
+  val time = Signal[Instant]()
+  val text = time map { t =>
+    getSeparatorTime(getContext.getResources, LocalDateTime.now, DateConvertUtils.asLocalDateTime(t), is24HourFormat, ZoneId.systemDefault, true)
+  }
+
+  text.on(Threading.Ui)(timeText.setTransformedText)
+
+  def set(time: Instant, isLastRead: Boolean): Unit = {
+    this.time ! time
+    unreadDot.show ! isLastRead
+  }
+
 }
 
 trait MessageViewPart extends ViewPart {

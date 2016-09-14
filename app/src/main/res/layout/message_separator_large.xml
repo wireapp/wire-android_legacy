@@ -18,14 +18,30 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<com.waz.zclient.messages.SeparatorViewLarge style="?messageStreamTimestamp"
-                                             xmlns:android="http://schemas.android.com/apk/res/android"
+<com.waz.zclient.messages.SeparatorViewLarge xmlns:android="http://schemas.android.com/apk/res/android"
                                              xmlns:app="http://schemas.android.com/apk/res-auto"
                                              android:layout_width="match_parent"
                                              android:layout_height="@dimen/wire__margin__huge"
                                              android:layout_marginBottom="16dp"
-                                             android:gravity="center_vertical"
-                                             android:paddingLeft="@dimen/content__padding_left"
-                                             android:includeFontPadding="false"
-                                             app:font="@string/wire__typeface__thin"
-    />
+    >
+
+    <com.waz.zclient.messages.UnreadDot
+        android:id="@+id/unread_dot"
+        android:layout_width="@dimen/content__padding_left"
+        android:layout_height="match_parent"
+        />
+
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/separator__time"
+        style="?messageStreamTimestamp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:includeFontPadding="false"
+        android:textAllCaps="true"
+        app:font="@string/wire__typeface__bold"
+        />
+
+
+</com.waz.zclient.messages.SeparatorViewLarge>
