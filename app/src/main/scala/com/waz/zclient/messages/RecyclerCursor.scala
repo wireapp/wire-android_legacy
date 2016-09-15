@@ -28,6 +28,7 @@ import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal, Subscription}
+import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.{Injectable, Injector}
 import org.threeten.bp.Instant
 
@@ -42,6 +43,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
 
   val storage = zms.messagesStorage
   val likes = zms.reactionsStorage
+  val navController = inject[NavigationController]
 
   val index = storage.msgsIndex(conv)
   val lastReadTime = Signal.future(index).flatMap(_.signals.lastReadTime)
@@ -65,6 +67,9 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
     }
   }
 
+  //last read should be updated each time we enter a conversation, whether it changed or not
+  navController.messageStreamOpen.onChanged.filter(_ == true)(_ => cursor.foreach(c => initialLastReadIndex ! c.lastReadIndex))
+
   def close() = {
     Threading.assertUiThread()
     closed = true
@@ -81,7 +86,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
     verbose(s"setCursor: c: $c, count: ${c.size}")
     if (!closed) {
       self.cursor = Some(c)
-      initialLastReadIndex.mutateOrDefault(identity, c.lastReadIndex) // only set signal if it was empty
+      initialLastReadIndex.mutateOrDefault(identity, c.lastReadIndex) // update signal if it was empty
       notifyFromHistory(c.createTime)
       countSignal ! c.size
       onChangedSub.foreach(_.destroy())

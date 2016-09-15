@@ -27,9 +27,11 @@ import com.waz.zclient.calling.controllers.{CallPermissionsController, CurrentCa
 import com.waz.zclient.camera.controllers.{AndroidCameraFactory, GlobalCameraController}
 import com.waz.zclient.common.controllers.{PermissionActivity, PermissionsController, PermissionsWrapper}
 import com.waz.zclient.controllers.global.{AccentColorController, KeyboardController, SelectionController}
+import com.waz.zclient.controllers.navigation.INavigationController
 import com.waz.zclient.controllers.theme.IThemeController
 import com.waz.zclient.controllers.{BrowserController, DefaultControllerFactory, IControllerFactory, ScreenController}
 import com.waz.zclient.core.stores.IStoreFactory
+import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.messages.parts.{AssetController, FooterController}
 import com.waz.zclient.messages.{MessageViewFactory, SyncEngineSignals}
 import com.waz.zclient.notifications.controllers.{CallingNotificationsController, ImageNotificationsController, MessageNotificationsController}
@@ -59,6 +61,7 @@ object WireApplication {
     bind[IPickUserController] toProvider controllerFactory.getPickUserController
     bind[IThemeController] toProvider controllerFactory.getThemeController
     bind[IConversationScreenController] toProvider controllerFactory.getConversationScreenController
+    bind[INavigationController] toProvider controllerFactory.getNavigationController
 
     // global controllers
     bind[AccentColorController] to new AccentColorController()
@@ -91,6 +94,7 @@ object WireApplication {
     bind[SyncEngineSignals] to new SyncEngineSignals()
     bind[FooterController] to new FooterController()
     bind[ScreenController] to new ScreenController()
+    bind[NavigationController] to new NavigationController()
   }
 }
 

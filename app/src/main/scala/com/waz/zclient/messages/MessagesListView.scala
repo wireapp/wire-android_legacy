@@ -30,6 +30,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.messages.ScrollController.Scroll
+import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.{Injectable, Injector, ViewHelper}
 
 import scala.concurrent.duration._
@@ -49,6 +50,7 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
   setLayoutManager(layoutManager)
   setAdapter(adapter)
 
+  //TODO there seems to be an issue with scrolling to the lastRead index where it's position on screen changes depending on which side you approach it from
   scrollController.onScroll.on(Threading.Ui) { case Scroll(pos, smooth) =>
     verbose(s"Scrolling to pos: $pos")
     if (smooth) {
@@ -114,17 +116,22 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesListAdapter)(im
 class LastReadUpdater(adapter: MessagesListAdapter, layoutManager: LinearLayoutManager)(implicit injector: Injector, ev: EventContext) extends Injectable {
 
   val zmessaging = inject[Signal[ZMessaging]]
+  val messageStreamOpen = inject[NavigationController].messageStreamOpen
 
   private val lastBoundMessage = for {
     zms <- zmessaging
     index <- Signal.wrap(adapter.onBindView).throttle(500.millis)
   } yield (zms, index)
 
-  lastBoundMessage.on(Threading.Ui) { case (zms, _) =>
-    val index = layoutManager.findLastCompletelyVisibleItemPosition()
-    if (index >= 0) {
-      val msg = adapter.message(index).message
-      zms.convsUi.setLastRead(msg.convId, msg)
-    }
+  lastBoundMessage.zip(messageStreamOpen).on(Threading.Ui) {
+    case ((zms, _), true) =>
+      val index = layoutManager.findLastCompletelyVisibleItemPosition()
+      if (index >= 0) {
+        val msg = adapter.message(index).message
+        verbose(s"Setting last read to pos:$index, $msg")
+        zms.convsUi.setLastRead(msg.convId, msg)
+      }
+    case _ => //message stream not open
+
   }
 }
