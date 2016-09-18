@@ -32,7 +32,7 @@ class ScrollController(adapter: MessagesListView.Adapter)(implicit ec: EventCont
   def onDragging(): Unit = shouldScrollToBottom = false
 
   private def lastPosition = adapter.getItemCount - 1
-  
+
   val onScroll = EventStream.union(
     adapter.initialLastReadIndex.onChanged.map { case (_, lastReadPosition) => Scroll(lastReadPosition, smooth = false) },
     onScrollToBottomRequested.map(_ => Scroll(lastPosition, smooth = true)),

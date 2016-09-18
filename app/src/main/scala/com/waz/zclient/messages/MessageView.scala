@@ -56,7 +56,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
     selection.toggleFocused(msgId)
   }
 
-  def set(pos: Int, mAndL: MessageAndLikes, prev: Option[MessageData], focused: Boolean, isLastRead: Boolean): Unit = {
+  def set(pos: Int, mAndL: MessageAndLikes, prev: Option[MessageData], focused: Boolean, isFirstUnread: Boolean): Unit = {
     val msg = mAndL.message
     msgId = msg.id
     verbose(s"set $pos, $mAndL")
@@ -70,7 +70,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
       else {
         val builder = Seq.newBuilder[(MsgPart, Option[MessageContent])]
 
-        getSeparatorType(msg, prev).foreach(sep => builder += sep -> None)
+        getSeparatorType(msg, prev, isFirstUnread).foreach(sep => builder += sep -> None)
 
         if (shouldShowChathead(msg, prev))
           builder += MsgPart.User -> None
@@ -85,10 +85,10 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
       }
 
     if (parts.nonEmpty) this.setMarginTop(getTopMargin(prev.map(_.msgType), parts.head._1))
-    setParts(pos, mAndL, parts, focused, isLastRead)
+    setParts(pos, mAndL, parts, focused, isFirstUnread)
   }
 
-  private def getSeparatorType(msg: MessageData, prev: Option[MessageData]): Option[MsgPart] = msg.msgType match {
+  private def getSeparatorType(msg: MessageData, prev: Option[MessageData], isFirstUnread: Boolean): Option[MsgPart] = msg.msgType match {
     case Message.Type.CONNECT_REQUEST => None
     case _ =>
       prev.fold2(None, { p =>
@@ -96,7 +96,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
         val curDay = asZonedDateTime(msg.time).toLocalDate.atStartOfDay()
 
         if (prevDay.isBefore(curDay)) Some(SeparatorLarge)
-        else if (p.time.isBefore(msg.time.minusSeconds(3600))) Some(Separator)
+        else if (p.time.isBefore(msg.time.minusSeconds(3600)) || isFirstUnread) Some(Separator)
         else None
       })
   }
@@ -104,7 +104,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
   private def shouldShowChathead(msg: MessageData, prev: Option[MessageData]) =
     !msg.isSystemMessage && msg.msgType != Message.Type.KNOCK && prev.forall(m => m.userId != msg.userId || m.isSystemMessage)
 
-  private def setParts(position: Int, msg: MessageAndLikes, parts: Seq[(MsgPart, Option[MessageContent])], isFocused: Boolean, isLastRead: Boolean) = {
+  private def setParts(position: Int, msg: MessageAndLikes, parts: Seq[(MsgPart, Option[MessageContent])], isFocused: Boolean, isFirstUnread: Boolean) = {
     verbose(s"setParts: position: $position, parts: ${parts.map(_._1)}")
 
     // recycle views in reverse order, recycled views are stored in a Stack, this way we will get the same views back if parts are the same
@@ -118,7 +118,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
     parts.zipWithIndex foreach { case ((tpe, content), index) =>
       val view = factory.get(tpe, this)
       view match {
-        case v: TimeSeparator   => v.set(msg.message.time, isLastRead)
+        case v: TimeSeparator   => v.set(msg.message.time, isFirstUnread)
         case v: MessageViewPart => v.set(position, msg.message, content, widthHint)
         case v: Footer          => v.set(msg, isFocused)
       }
@@ -199,7 +199,6 @@ object MessageView {
       toPx(p)
     }
   }
-
 }
 
 sealed trait MsgPart
@@ -278,9 +277,9 @@ trait TimeSeparator extends ViewPart with ViewHelper {
 
   text.on(Threading.Ui)(timeText.setTransformedText)
 
-  def set(time: Instant, isLastRead: Boolean): Unit = {
+  def set(time: Instant, isFirstUnread: Boolean): Unit = {
     this.time ! time
-    unreadDot.show ! isLastRead
+    unreadDot.show ! isFirstUnread
   }
 
   this.onClick {} //confusing if message opens when timestamp clicked
