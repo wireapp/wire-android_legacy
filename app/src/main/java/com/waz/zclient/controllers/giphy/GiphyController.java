@@ -26,7 +26,6 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 public class GiphyController implements IGiphyController {
 
-    public static final String GIPHY_PREFIX = "/giphy";
     public static final int MAXIMUM_ALLOWED_WORD_COUNT = 6;
     public static final int MAX_GIPHY_CHARS = 16;
     private static final String GIPHY_QUERY_REGEX = "(\\/giphy)?(.*)";
@@ -62,6 +61,13 @@ public class GiphyController implements IGiphyController {
     }
 
     @Override
+    public void searchTrending() {
+        for (GiphyObserver observer : observers) {
+            observer.onTrendingSearch();
+        }
+    }
+
+    @Override
     public void close() {
         final CopyOnWriteArraySet<GiphyObserver> giphyObservers = new CopyOnWriteArraySet<>(observers);
         for (GiphyObserver observer : giphyObservers) {
@@ -78,30 +84,22 @@ public class GiphyController implements IGiphyController {
     }
 
     @Override
-    public boolean handleInput(@NonNull final String text, boolean afterPressedEnter) {
+    public boolean handleInput(@NonNull final String text) {
         final String input = text.trim();
-        if (!input.startsWith(GIPHY_PREFIX) &&
-            !input.endsWith(GIPHY_PREFIX) &&
-            afterPressedEnter) {
-            return false;
+        if (TextUtils.isEmpty(input)) {
+            searchTrending();
+        } else {
+            final String query = extractSearchQuery(input);
+            search(query);
         }
-        if (GIPHY_PREFIX.equals(input) ||
-            (TextUtils.isEmpty(input) && !afterPressedEnter)) {
-            searchRandom();
-            return true;
-        }
-        if (!isInputAllowedForGiphy(input)) {
-            return false;
-        }
-        final String query = extractSearchQuery(input);
-        search(query);
+
         return true;
     }
 
     @Override
     public boolean isInputAllowedForGiphy(@NonNull final String input) {
         final String query = extractSearchQuery(input);
-        if (TextUtils.isEmpty(input) || query.length() >= MAX_GIPHY_CHARS) {
+        if (query.length() >= MAX_GIPHY_CHARS) {
             return false;
         }
         final String[] words = query.split(" ");

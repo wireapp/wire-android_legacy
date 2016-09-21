@@ -829,11 +829,11 @@
     <string name="new_reg__password_length">AT LEAST %1$s CHARACTERS</string>
 
     <!-- Giphy -->
+    <string name="giphy_preview__search_hint">Search Giphy</string>
     <string name="giphy_preview__title_search">#%s</string>
     <string name="giphy_preview__title_random">RANDOM</string>
-    <string name="giphy_preview__try_another_action">TRY ANOTHER</string>
     <string name="giphy_preview__error">NO GIFS FOUND.</string>
-    <string name="giphy_preview__message_via_random">Via giphy.com</string>
+    <string name="giphy_preview__message_via_random_trending">Via giphy.com</string>
     <string name="giphy_preview__message_via_search">%s · via giphy.com</string>
     <string name="service_giphy_name">Giphy</string>
 
@@ -961,6 +961,7 @@
     <string name="tooltip_more">More actions</string>
     <string name="tooltip_audio_message">Tap and hold to send an audio message</string>
     <string name="tooltip_file">Send File</string>
+    <string name="tooltip_gif">Gif</string>
     <string name="new_feature">New</string>
 
     <!-- Delete -->

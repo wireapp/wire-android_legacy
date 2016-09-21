@@ -1496,6 +1496,11 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     }
 
     @Override
+    public void onTrendingSearch() {
+
+    }
+
+    @Override
     public void onCloseGiphy() {
         resetCursor();
     }
@@ -1666,6 +1671,10 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 getControllerFactory().getTrackingController().tagEvent(new OpenedMoreActionsEvent(
                     getConversationTypeString()));
                 break;
+            case GIF:
+                getControllerFactory().getGiphyController().handleInput(cursorLayout.getText());
+                getControllerFactory().getTrackingController().tagEvent(OpenedMediaActionEvent.giphy(isGroupConversation));
+                break;
         }
     }
 
@@ -1735,17 +1744,14 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         if (TextUtils.isEmpty(message.trim())) {
             return;
         }
-        if (!getControllerFactory().getUserPreferencesController().isGiphyEnabled() ||
-            !getControllerFactory().getGiphyController().handleInput(message, true)) {
-            resetCursor();
-            getStoreFactory().getConversationStore().sendMessage(message);
-            TrackingUtils.onSentTextMessage(getControllerFactory().getTrackingController(),
-                                            getStoreFactory().getConversationStore().getCurrentConversation());
+        resetCursor();
+        getStoreFactory().getConversationStore().sendMessage(message);
+        TrackingUtils.onSentTextMessage(getControllerFactory().getTrackingController(),
+                                        getStoreFactory().getConversationStore().getCurrentConversation());
 
-            getStoreFactory().getNetworkStore().doIfHasInternetOrNotifyUser(null);
-            getControllerFactory().getTrackingController().updateSessionAggregates(RangedAttribute.TEXT_MESSAGES_SENT,
-                                                                                   message);
-        }
+        getStoreFactory().getNetworkStore().doIfHasInternetOrNotifyUser(null);
+        getControllerFactory().getTrackingController().updateSessionAggregates(RangedAttribute.TEXT_MESSAGES_SENT,
+                                                                               message);
         getControllerFactory().getSharingController().maybeResetSharedText(getStoreFactory().getConversationStore().getCurrentConversation());
     }
 
@@ -1798,7 +1804,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
     @Override
     public void onCursorGiphyButtonClicked() {
-        getControllerFactory().getGiphyController().handleInput(cursorLayout.getText(), false);
+        getControllerFactory().getGiphyController().handleInput(cursorLayout.getText());
         final IConversation conversation = getStoreFactory().getConversationStore().getCurrentConversation();
         boolean isGroupConversation = conversation.getType() == IConversation.Type.GROUP;
         getControllerFactory().getTrackingController().tagEvent(OpenedMediaActionEvent.giphy(isGroupConversation));

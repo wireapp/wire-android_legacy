@@ -102,6 +102,8 @@
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__delete_everywhere">\uE232</string>
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__forward">\uE233</string>
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__copy">\uE234</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__send">\uE235</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__keyboard">\uE236</string>
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__filter_helium">\uE240</string>
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__filter_jellyfish">\uE242</string>
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__filter_hare">\uE243</string>
