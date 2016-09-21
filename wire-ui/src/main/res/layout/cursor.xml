@@ -101,6 +101,7 @@
                 />
 
             <!-- button giphy -->
+            <!--
             <com.waz.zclient.ui.text.GlyphTextView
                 android:id="@+id/cursor_button_giphy"
                 style="?cursorMenuButton"
@@ -111,6 +112,7 @@
                 android:gravity="center"
                 android:text="@string/glyph__gif"
                 />
+                -->
 
             <include
                 android:id="@+id/svwb"

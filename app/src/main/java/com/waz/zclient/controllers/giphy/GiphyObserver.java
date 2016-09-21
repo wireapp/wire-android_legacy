@@ -22,6 +22,8 @@ public interface GiphyObserver {
 
     void onRandomSearch();
 
+    void onTrendingSearch();
+
     void onCloseGiphy();
 
     void onCancelGiphy();

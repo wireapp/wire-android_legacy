@@ -326,7 +326,20 @@ public class ConversationFragmentTest extends FragmentTest<MainTestActivity> {
         onView(withId(R.id.gtv__cursor_image__nav_open_gallery)).perform(click());
     }
 
+    @Test
+    public void assertGIFIconVisibleInOneToOneConversation() throws InterruptedException {
+        IConversation mockConversation = mock(IConversation.class);
+        when(mockConversation.getType()).thenReturn(IConversation.Type.ONE_TO_ONE);
+        when(mockConversation.isMemberOfConversation()).thenReturn(true);
+        when(mockConversation.isActive()).thenReturn(true);
 
+        MockHelper.setupConversationMocks(mockConversation, activity);
+        attachFragment(ConversationFragment.newInstance(), ConversationFragment.TAG);
 
+        Thread.sleep(500);
+        onView(withId(R.id.cursor_menu_item_more)).perform(click());
+        Thread.sleep(500);
+        onView(withId(R.id.cursor_menu_item_gif)).check(isVisible());
+    }
 
 }
