@@ -70,7 +70,7 @@ public interface IUserPreferencesController {
 
     int getSpotifyLoginTriesCount();
 
-    boolean isGiphyEnabled();
+    boolean isCursorSendButtonEnabled();
 
     void setVerificationCode(String code);
 

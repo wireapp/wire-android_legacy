@@ -41,6 +41,7 @@ import com.waz.api.Message;
 import com.waz.api.MessageContent;
 import com.waz.zclient.ui.R;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
+import com.waz.zclient.ui.animation.interpolators.penner.Quart;
 import com.waz.zclient.ui.utils.CursorUtils;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
@@ -74,7 +75,7 @@ public class CursorLayout extends FrameLayout implements
     private CursorToolbarFrame cursorToolbarFrame;
     private CursorEditText newCursorEditText;
     private ShieldViewWithBanner shieldViewWithBanner;
-    private View giphyButton;
+    private TextView sendButton;
     private CursorToolbar mainToolbar;
     private CursorToolbar secondaryToolbar;
     private EditMessageCursorToolbar editMessageCursorToolbar;
@@ -84,7 +85,7 @@ public class CursorLayout extends FrameLayout implements
     private View dividerView;
 
     private CursorCallback cursorCallback;
-    private boolean giphyEnabled;
+    private boolean sendButtonIsVisible;
     private boolean tooltipEnabled;
     private boolean isEditingMessage;
     private int anchorPositionPx2;
@@ -156,8 +157,7 @@ public class CursorLayout extends FrameLayout implements
         typingIndicatorContainer = ViewUtils.getView(this, R.id.tic__cursor);
         cursorToolbarFrame = ViewUtils.getView(this, R.id.cal__cursor);
         newCursorEditText = ViewUtils.getView(this, R.id.cet__cursor);
-        // TODO: Add send button
-        //giphyButton = ViewUtils.getView(this, R.id.cursor_button_giphy);
+        sendButton = ViewUtils.getView(this, R.id.cursor_button_send);
         shieldViewWithBanner = ViewUtils.getView(this, R.id.svwb);
         mainToolbar = ViewUtils.getView(this, R.id.c__cursor__main);
         secondaryToolbar = ViewUtils.getView(this, R.id.c__cursor__secondary);
@@ -177,8 +177,7 @@ public class CursorLayout extends FrameLayout implements
         cursorToolbarAnimationDuration = getResources().getInteger(R.integer.wire__animation__delay__regular);
         tooltip.setVisibility(View.GONE);
         connectEditText();
-        // TODO: Add send button
-        //giphyButton.setVisibility(View.INVISIBLE);
+        sendButton.setVisibility(View.INVISIBLE);
         editMessageBackgroundView.setVisibility(GONE);
 
         defaultEditTextColor = newCursorEditText.getCurrentTextColor();
@@ -195,6 +194,7 @@ public class CursorLayout extends FrameLayout implements
     public void setAccentColor(int accentColor) {
         newCursorEditText.setAccentColor(accentColor);
         mainToolbar.setAccentColor(accentColor);
+        sendButton.setTextColor(accentColor);
     }
 
     private void connectEditText() {
@@ -285,44 +285,53 @@ public class CursorLayout extends FrameLayout implements
         return false;
     }
 
-    public void enableGiphyButton(boolean enable) {
-        // TODO: Add send button
-        /*
-        if (giphyEnabled == enable) {
+    public void showSendButtonAsEnterKey(boolean show) {
+        if (show) {
+            newCursorEditText.setImeOptions(EditorInfo.IME_ACTION_SEND);
+        } else {
+            newCursorEditText.setImeOptions(EditorInfo.IME_ACTION_NONE);
+        }
+    }
+
+    public void showSendButton(boolean show) {
+        if (sendButtonIsVisible == show) {
             return;
         }
-        giphyEnabled = enable;
-        if (enable) {
+        sendButtonIsVisible = show;
+        if (show) {
             if (isEditingMessage()) {
                 return;
             }
             int duration = getResources().getInteger(R.integer.animation_duration_medium);
-            giphyButton.setVisibility(View.VISIBLE);
-            giphyButton.setAlpha(0);
-            giphyButton.animate()
-                    .alpha(1f)
-                    .setInterpolator(new Quart.EaseOut())
-                    .setDuration(duration)
-                    .setListener(new AnimatorListenerAdapter() {
+            sendButton.setVisibility(View.VISIBLE);
+            sendButton.setAlpha(0);
+            sendButton.animate()
+                      .alpha(1f)
+                      .setInterpolator(new Quart.EaseOut())
+                      .setDuration(duration)
+                      .setListener(new AnimatorListenerAdapter() {
                         @Override
                         public void onAnimationEnd(Animator animation) {
-                            giphyButton.setAlpha(1);
+                            sendButton.setAlpha(1);
                         }
                     });
 
-            giphyButton.setOnClickListener(new OnClickListener() {
+            sendButton.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     if (cursorCallback != null) {
-                        cursorCallback.onCursorGiphyButtonClicked();
+                        String sendText = newCursorEditText.getText().toString();
+                        if (TextUtils.isEmpty(sendText)) {
+                            return;
+                        }
+                        cursorCallback.onMessageSubmitted(sendText);
                     }
                 }
             });
         } else {
-            giphyButton.setVisibility(View.INVISIBLE);
-            giphyButton.setOnClickListener(null);
+            sendButton.setVisibility(View.INVISIBLE);
+            sendButton.setOnClickListener(null);
         }
-        */
     }
 
     public TypingIndicatorContainer getTypingIndicatorContainer() {
@@ -507,8 +516,8 @@ public class CursorLayout extends FrameLayout implements
         newCursorEditText.setText(message.getBody());
         newCursorEditText.setSelection(newCursorEditText.getText().length());
 
-        if (giphyEnabled) {
-            enableGiphyButton(false);
+        if (sendButtonIsVisible) {
+            showSendButton(false);
         }
         setBackgroundColor(ContextCompat.getColor(getContext(), R.color.white));
         ViewUtils.fadeInView(editMessageBackgroundView);

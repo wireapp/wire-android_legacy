@@ -100,7 +100,7 @@ public class StubUserPreferencesController implements IUserPreferencesController
   }
 
   @Override
-  public boolean isGiphyEnabled() {
+  public boolean isCursorSendButtonEnabled() {
     return false;
   }
 

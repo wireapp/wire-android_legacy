@@ -101,9 +101,9 @@
 
         <SwitchPreference
             android:defaultValue="true"
-            android:key="@string/pref_options_giphy_key"
-            android:summary="@string/pref_options_giphy_summary"
-            android:title="@string/pref_options_giphy_title"
+            android:key="@string/pref_options_cursor_send_button_key"
+            android:summary="@string/pref_options_cursor_send_button_summary"
+            android:title="@string/pref_options_cursor_send_button_title"
             />
 
         <Preference

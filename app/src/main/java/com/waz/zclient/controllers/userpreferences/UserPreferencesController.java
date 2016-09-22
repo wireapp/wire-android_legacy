@@ -199,8 +199,8 @@ public class UserPreferencesController implements IUserPreferencesController {
     }
 
     @Override
-    public boolean isGiphyEnabled() {
-        return userPreferences.getBoolean(context.getString(R.string.pref_options_giphy_key), true);
+    public boolean isCursorSendButtonEnabled() {
+        return userPreferences.getBoolean(context.getString(R.string.pref_options_cursor_send_button_key), true);
     }
 
     @Override

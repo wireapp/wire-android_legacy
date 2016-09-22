@@ -72,7 +72,7 @@
                 android:layout_marginEnd="@dimen/cursor_anchor3"
                 android:background="@null"
                 android:gravity="center_vertical"
-                android:imeOptions="actionSend"
+                android:imeOptions="actionNone"
                 android:inputType="textCapSentences|textMultiLine"
                 android:maxLines="@integer/cursor__max_lines"
                 android:scrollHorizontally="false"
@@ -101,18 +101,16 @@
                 />
 
             <!-- button giphy -->
-            <!--
             <com.waz.zclient.ui.text.GlyphTextView
-                android:id="@+id/cursor_button_giphy"
-                style="?cursorMenuButton"
+                android:id="@+id/cursor_button_send"
                 android:layout_width="@dimen/cursor__menu_button__diameter"
                 android:layout_height="@dimen/cursor__menu_button__diameter"
                 android:layout_gravity="end|center_vertical"
                 android:layout_marginEnd="@dimen/cursor_button_horizontal_margin"
                 android:gravity="center"
-                android:text="@string/glyph__gif"
+                android:text="@string/glyph__send"
+                android:textSize="@dimen/cursor_button_text_size"
                 />
-                -->
 
             <include
                 android:id="@+id/svwb"
