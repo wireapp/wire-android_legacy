@@ -58,13 +58,13 @@ public class CursorLayout extends FrameLayout implements
     private static List<CursorMenuItem> mainCursorItems = Arrays.asList(CursorMenuItem.VIDEO_MESSAGE,
                                                                         CursorMenuItem.CAMERA,
                                                                         CursorMenuItem.SKETCH,
-                                                                        CursorMenuItem.LOCATION,
+                                                                        CursorMenuItem.GIF,
                                                                         CursorMenuItem.AUDIO_MESSAGE,
                                                                         CursorMenuItem.MORE);
 
     private static List<CursorMenuItem> secondaryCursorItems = Arrays.asList(CursorMenuItem.PING,
                                                                              CursorMenuItem.FILE,
-                                                                             CursorMenuItem.GIF,
+                                                                             CursorMenuItem.LOCATION,
                                                                              CursorMenuItem.DUMMY,
                                                                              CursorMenuItem.DUMMY,
                                                                              CursorMenuItem.LESS);
