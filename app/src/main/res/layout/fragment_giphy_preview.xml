@@ -19,6 +19,7 @@
 
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:custom="http://schemas.android.com/apk/res-auto"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:orientation="vertical"
@@ -32,70 +33,68 @@
         android:layout_height="@dimen/giphy_preview__loading_indicator__height"
         />
 
-    <FrameLayout
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/t__giphy__toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:layout_marginTop="@dimen/giphy_preview__header_margin_top"
-        android:layout_marginBottom="@dimen/giphy_preview__header_margin_bottom"
-        android:layout_marginLeft="@dimen/giphy_preview__header_icons_padding"
-        android:layout_marginRight="@dimen/giphy_preview__header_icons_padding"
+        android:layout_marginEnd="@dimen/toolbar__padding__right"
+        android:clickable="false"
+        style="?startUiToolbar"
         >
 
-        <com.waz.zclient.ui.text.GlyphTextView
-            android:id="@+id/gtv__giphy_preview__link_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="left"
-            android:layout_marginLeft="@dimen/giphy_preview__header_margin_side"
-            android:text="@string/glyph__grid"
-            style="?giphyControl"
-            />
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            >
 
-        <com.waz.zclient.ui.text.GlyphTextView
-            android:id="@+id/gtv__giphy_previous_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="left"
-            android:layout_marginLeft="@dimen/giphy_preview__header_margin_side"
-            android:text="@string/glyph__previous"
-            style="?giphyControl"
-            />
+            <com.waz.zclient.ui.cursor.CursorEditText
+                android:id="@+id/cet__giphy_preview__search"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="@dimen/wire__margin__huge"
+                android:layout_gravity="start|center_vertical"
+                android:paddingEnd="@dimen/wire__padding__regular"
+                android:background="@null"
+                android:singleLine="true"
+                android:hint="@string/giphy_preview__search_hint"
+                android:imeOptions="actionSend"
+                android:inputType="textCapSentences"
+                custom:font="@string/wire__typeface__light"
+                style="?cursorEditText"
+                />
 
-            <LinearLayout
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/ttv__giphy_preview__title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/wire__margin__huge"
+                android:layout_gravity="start|center_vertical"
+                android:paddingEnd="@dimen/wire__padding__regular"
+                android:singleLine="true"
+                android:ellipsize="end"
+                style="?startUiToolbar"
+                />
+
+            <com.waz.zclient.ui.text.GlyphTextView
+                android:id="@+id/gtv__giphy_preview__close_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_gravity="center"
-                >
-                <com.waz.zclient.ui.text.TypefaceTextView
-                    android:id="@+id/ttv__giphy_conversation_name_title"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    style="?giphyConversation"
-                    />
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginEnd="@dimen/giphy_preview__header_margin_side"
+                android:text="@string/glyph__close"
+                style="?giphyControl"
+                />
 
-                <com.waz.zclient.ui.text.TypefaceTextView
-                    android:id="@+id/ttv__giphy_preview__title"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    style="?giphyKeyword"
-                    />
+        </FrameLayout>
 
-            </LinearLayout>
+    </android.support.v7.widget.Toolbar>
 
-
-        <com.waz.zclient.ui.text.GlyphTextView
-            android:id="@+id/gtv__giphy_preview__close_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="right"
-            android:layout_marginRight="@dimen/giphy_preview__header_margin_side"
-            android:text="@string/glyph__close"
-            style="?giphyControl"
-            />
-
-    </FrameLayout>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/wire__divider__height__thin"
+        style="?wireDivider"
+        />
 
     <FrameLayout
         android:layout_width="match_parent"

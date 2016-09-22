@@ -70,6 +70,7 @@ public class GiphyGridViewAdapter extends RecyclerView.Adapter<GiphyGridViewAdap
 
     public void setGiphyResults(GiphyResults giphyResults) {
         this.giphyResults = giphyResults;
+        notifyDataSetChanged();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder implements ImageAsset.BitmapCallback {

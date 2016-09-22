@@ -18,26 +18,30 @@
 package com.waz.zclient.pages.main.giphy;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.TextView;
 import com.waz.api.GiphyResults;
-import com.waz.api.IConversation;
 import com.waz.api.ImageAsset;
-import com.waz.api.LoadHandle;
 import com.waz.api.UpdateListener;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
-import com.waz.zclient.core.controllers.tracking.events.media.OpenedGiphyGridEvent;
 import com.waz.zclient.core.stores.network.NetworkStoreObserver;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.pages.main.profile.views.ConfirmationMenu;
 import com.waz.zclient.pages.main.profile.views.ConfirmationMenuListener;
+import com.waz.zclient.ui.theme.ThemeUtils;
 import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.ui.utils.TextViewUtils;
 import com.waz.zclient.utils.TrackingUtils;
@@ -49,27 +53,26 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
                                                                                                                 ImageAssetView.BitmapLoadedCallback,
                                                                                                                 NetworkStoreObserver,
                                                                                                                 GiphyGridViewAdapter.ScrollGifCallback,
+                                                                                                                TextWatcher,
+                                                                                                                View.OnClickListener,
                                                                                                                 OnBackPressedListener {
 
     public static final String TAG = GiphySharingPreviewFragment.class.getSimpleName();
     public static final String ARG_SEARCH_TERM = "SEARCH_TERM";
+    public static final int GIPHY_SEARCH_DELAY_MIN_SEC = 800;
     private String searchTerm;
     private ImageAssetView previewImageAssetView;
     private TextView giphyTitle;
-    private TextView conversationTitle;
     private ConfirmationMenu confirmationMenu;
-    private View gifBackButton;
-    private View gifLinkButton;
-    private LoadHandle searchHandle;
+    private Toolbar toolbar;
+    private EditText giphySearchEditText;
     private ImageAsset foundImage;
     private LoadingIndicatorView loadingIndicator;
     private TextView errorView;
     private RecyclerView recyclerView;
     private GiphyGridViewAdapter giphyGridViewAdapter;
-
     private GiphyResults giphyResults;
-    private int currentImageAssetIndex = 0;
-    private int currentGifsLoaded = 0;
+    private Handler giphySearchHandler;
 
     private final UpdateListener giphyResultUpdateListener = new UpdateListener() {
         @Override
@@ -77,22 +80,13 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
             if (giphyGridViewAdapter == null) {
                 return;
             }
-            giphyGridViewAdapter.notifyItemRangeInserted(currentGifsLoaded, giphyResults.size() - currentGifsLoaded);
-            currentGifsLoaded = giphyResults.size();
-            showNextImage();
-        }
-    };
-
-    private final UpdateListener conversationListUpdateListener = new UpdateListener() {
-        @Override
-        public void updated() {
-            if (getActivity() == null ||
-                getStoreFactory().isTornDown()) {
+            if (giphyResults == null ||
+                giphyResults.size() == 0) {
+                showError();
                 return;
             }
-            if (getStoreFactory().getConversationStore().getCurrentConversation() != null) {
-                conversationTitle.setText(getStoreFactory().getConversationStore().getCurrentConversation().getName());
-            }
+            errorView.setVisibility(View.GONE);
+            giphyGridViewAdapter.setGiphyResults(giphyResults);
         }
     };
 
@@ -104,23 +98,17 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
 
         @Override
         public void cancel() {
-            showNextImage();
+           showGrid();
         }
     };
 
-    @Override
-    public void onConnectivityChange(boolean hasInternet, boolean isServerError) {
-        if (!hasInternet) {
-            onLossOfNetworkConnection();
-            return;
+    private Runnable giphySearchRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateGiphyResults();
+            updateGiphyTitle();
         }
-        onResumedNetworkConnection();
-    }
-
-    @Override
-    public void onNoInternetConnection(boolean isServerError) {
-
-    }
+    };
 
     public static GiphySharingPreviewFragment newInstance() {
         GiphySharingPreviewFragment fragment = new GiphySharingPreviewFragment();
@@ -152,112 +140,62 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_giphy_preview, container, false);
         loadingIndicator = ViewUtils.getView(view, R.id.liv__giphy_preview__loading);
-        loadingIndicator.setType(LoadingIndicatorView.INFINITE_LOADING_BAR);
+        toolbar = ViewUtils.getView(view, R.id.t__giphy__toolbar);
+        giphySearchEditText = ViewUtils.getView(view, R.id.cet__giphy_preview__search);
         previewImageAssetView = ViewUtils.getView(view, R.id.iv__giphy_preview__preview);
-        previewImageAssetView.setShowPreview(true);
-        previewImageAssetView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (foundImage != null) {
-                    ViewUtils.fadeOutView(previewImageAssetView);
-                    ViewUtils.fadeOutView(confirmationMenu);
-                    ViewUtils.fadeOutView(gifLinkButton);
-                    ViewUtils.fadeInView(recyclerView);
-                    ViewUtils.fadeInView(gifBackButton);
-
-                    foundImage.removeUpdateListener(previewImageAssetView);
-                    if (searchHandle != null) {
-                        searchHandle.cancel();
-                    }
-                }
-                previewImageAssetView.setImageAsset(null);
-            }
-        });
-
         errorView = ViewUtils.getView(view, R.id.ttv__giphy_preview__error);
-        errorView.setVisibility(View.GONE);
         giphyTitle = ViewUtils.getView(view, R.id.ttv__giphy_preview__title);
-        conversationTitle = ViewUtils.getView(view, R.id.ttv__giphy_conversation_name_title);
+        recyclerView = ViewUtils.getView(view, R.id.rv__giphy_image_preview);
+        View closeButton = ViewUtils.getView(view, R.id.gtv__giphy_preview__close_button);
+        confirmationMenu = ViewUtils.getView(view, R.id.cm__giphy_preview__confirmation_menu);
+
+        giphySearchHandler = new Handler();
+
+        loadingIndicator.setType(LoadingIndicatorView.INFINITE_LOADING_BAR);
+
+        giphySearchEditText.addTextChangedListener(this);
+        giphySearchEditText.setText(searchTerm);
+
+        previewImageAssetView.setShowPreview(true);
+        previewImageAssetView.setOnClickListener(this);
 
         giphyGridViewAdapter = new GiphyGridViewAdapter(getActivity());
-        recyclerView = ViewUtils.getView(view, R.id.rv__giphy_image_preview);
         recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
         recyclerView.setAdapter(giphyGridViewAdapter);
-        recyclerView.setVisibility(View.GONE);
 
-        gifBackButton = ViewUtils.getView(view, R.id.gtv__giphy_previous_button);
-        gifBackButton.setVisibility(View.GONE);
-        final View closeButton = ViewUtils.getView(view, R.id.gtv__giphy_preview__close_button);
-        closeButton.setOnClickListener(new View.OnClickListener() {
+        closeButton.setOnClickListener(this);
+
+        confirmationMenu.setConfirmationMenuListener(confirmationMenuListener);
+        confirmationMenu.setConfirm(getString(R.string.sharing__image_preview__confirm_action));
+        confirmationMenu.setCancel(getString(R.string.confirmation_menu__cancel));
+        confirmationMenu.setWireTheme(getControllerFactory().getThemeController().getThemeDependentOptionsTheme());
+
+        errorView.setVisibility(View.GONE);
+        previewImageAssetView.setVisibility(View.GONE);
+        confirmationMenu.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.VISIBLE);
+        giphyTitle.setVisibility(View.GONE);
+
+        if (ThemeUtils.isDarkTheme(getContext())) {
+            toolbar.setNavigationIcon(R.drawable.ic_action_search_light);
+        } else {
+            toolbar.setNavigationIcon(R.drawable.ic_action_search_dark);
+        }
+
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                getControllerFactory().getGiphyController().cancel();
-            }
-        });
-        gifLinkButton = ViewUtils.getView(view, R.id.gtv__giphy_preview__link_button);
-        gifLinkButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+            public void onClick(View view) {
+                if (giphySearchEditText.getVisibility() == View.VISIBLE) {
+                    return;
+                }
                 showGrid();
             }
         });
-        gifBackButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                closeGrid();
-            }
-        });
-        confirmationMenu = ViewUtils.getView(view, R.id.cm__giphy_preview__confirmation_menu);
-        confirmationMenu.setConfirmationMenuListener(confirmationMenuListener);
-        confirmationMenu.setConfirm(getString(R.string.sharing__image_preview__confirm_action));
-        confirmationMenu.setCancel(getString(R.string.giphy_preview__try_another_action));
-        confirmationMenu.setWireTheme(getControllerFactory().getThemeController().getThemeDependentOptionsTheme());
+
+        updateGiphyResults();
+        updateGiphyTitle();
+
         return view;
-    }
-
-    private void showGrid() {
-        previewImageAssetView.setImageBitmap(null);
-        previewImageAssetView.setImageAsset(null);
-        ViewUtils.fadeOutView(previewImageAssetView);
-        ViewUtils.fadeOutView(confirmationMenu);
-        ViewUtils.fadeOutView(gifLinkButton);
-        ViewUtils.fadeInView(recyclerView);
-        ViewUtils.fadeInView(gifBackButton);
-
-        if (foundImage != null) {
-            foundImage.removeUpdateListener(previewImageAssetView);
-        }
-        if (searchHandle != null) {
-            searchHandle.cancel();
-        }
-        getControllerFactory().getTrackingController().tagEvent(new OpenedGiphyGridEvent());
-    }
-
-    private void closeGrid() {
-        setSelectedGifFromGridView(foundImage);
-        ViewUtils.fadeInView(previewImageAssetView);
-        ViewUtils.fadeInView(confirmationMenu);
-        ViewUtils.fadeInView(gifLinkButton);
-        ViewUtils.fadeOutView(recyclerView);
-        ViewUtils.fadeOutView(gifBackButton);
-        if (foundImage != null) {
-            foundImage.addUpdateListener(previewImageAssetView);
-        }
-    }
-
-    private void sendGif() {
-        TrackingUtils.onSentGifMessage(getControllerFactory().getTrackingController(),
-                                       getStoreFactory().getConversationStore().getCurrentConversation());
-
-        if (searchTerm == null) {
-            getStoreFactory().getConversationStore().sendMessage(getString(R.string.giphy_preview__message_via_random));
-        } else {
-            getStoreFactory().getConversationStore().sendMessage(getString(R.string.giphy_preview__message_via_search,
-                                                                           searchTerm));
-        }
-        getStoreFactory().getNetworkStore().doIfHasInternetOrNotifyUser(null);
-        getStoreFactory().getConversationStore().sendMessage(foundImage);
-        getControllerFactory().getGiphyController().close();
     }
 
     @Override
@@ -268,10 +206,22 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
         getControllerFactory().getAccentColorController().addAccentColorObserver(this);
         getStoreFactory().getInAppNotificationStore().setUserSendingPicture(true);
         getStoreFactory().getNetworkStore().addNetworkStoreObserver(this);
-        IConversation conversation = getStoreFactory().getConversationStore().getCurrentConversation();
-        if (conversation != null) {
-            conversation.addUpdateListener(conversationListUpdateListener);
-            conversationTitle.setText(conversation.getName());
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (giphySearchEditText.getVisibility() == View.VISIBLE) {
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    giphySearchEditText.requestFocus();
+                    giphySearchEditText.setSelection(giphySearchEditText.getText().length());
+                    if (TextUtils.isEmpty(searchTerm)) {
+                        KeyboardUtils.showKeyboard(getActivity());
+                    }
+                }
+            }, getResources().getInteger(R.integer.people_picker__keyboard__show_delay));
         }
     }
 
@@ -280,28 +230,13 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
         getStoreFactory().getInAppNotificationStore().setUserSendingPicture(false);
         getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
         getStoreFactory().getNetworkStore().removeNetworkStoreObserver(this);
-        IConversation conversation = getStoreFactory().getConversationStore().getCurrentConversation();
-        if (conversation != null) {
-            conversation.removeUpdateListener(conversationListUpdateListener);
-        }
+
         giphyGridViewAdapter.setScrollGifCallback(null);
         if (giphyResults != null) {
             giphyResults.removeUpdateListener(giphyResultUpdateListener);
         }
+        KeyboardUtils.hideKeyboard(getActivity());
         super.onStop();
-    }
-
-    @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        String gifTitle;
-        if (searchTerm == null) {
-            gifTitle = getString(R.string.giphy_preview__title_random);
-        } else {
-            gifTitle = getString(R.string.giphy_preview__title_search, searchTerm);
-        }
-        giphyTitle.setText(gifTitle);
-        onSearch(searchTerm);
     }
 
     @Override
@@ -316,10 +251,6 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
 
     @Override
     public void onDestroyView() {
-        if (searchHandle != null) {
-            searchHandle.cancel();
-            searchHandle = null;
-        }
         previewImageAssetView.clearImage();
         previewImageAssetView = null;
         giphyTitle = null;
@@ -327,65 +258,23 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
         foundImage = null;
         recyclerView = null;
         giphyGridViewAdapter = null;
-        gifLinkButton = null;
-        gifBackButton = null;
         giphyResults = null;
+        giphySearchHandler.removeCallbacks(giphySearchRunnable);
         super.onDestroyView();
     }
 
-    private void showNextImage() {
-        if (giphyResults == null ||
-            giphyResults.size() == 0) {
-            showError();
+    @Override
+    public void onConnectivityChange(boolean hasInternet, boolean isServerError) {
+        if (!hasInternet) {
+            onLossOfNetworkConnection();
             return;
         }
-        foundImage = giphyResults.get(currentImageAssetIndex);
-        previewImageAssetView.setBitmapLoadedCallback(this);
-        previewImageAssetView.setImageAsset(foundImage);
-        if (currentImageAssetIndex < giphyResults.size() - 1) {
-            currentImageAssetIndex++;
-        } else {
-            currentImageAssetIndex = 0;
-        }
+        onResumedNetworkConnection();
     }
 
-    private void onSearch(String keyword) {
-        if (searchHandle != null) {
-            searchHandle.cancel();
-            searchHandle = null;
-        }
-        confirmationMenu.setConfirmEnabled(false);
-        errorView.setVisibility(View.GONE);
-        previewImageAssetView.clearImage();
-        loadingIndicator.show();
-        if (searchTerm == null) {
-            giphyResults = getStoreFactory().getZMessagingApiStore()
-                                            .getApi()
-                                            .getGiphy()
-                                            .random();
+    @Override
+    public void onNoInternetConnection(boolean isServerError) {
 
-        } else {
-            giphyResults = getStoreFactory().getZMessagingApiStore()
-                                            .getApi()
-                                            .getGiphy()
-                                            .search(keyword);
-        }
-        giphyResults.whenReady(new Runnable() {
-            @Override
-            public void run() {
-                giphyResultUpdateListener.updated();
-            }
-        });
-        giphyResults.addUpdateListener(giphyResultUpdateListener);
-        giphyGridViewAdapter.setGiphyResults(giphyResults);
-    }
-
-    private void showError() {
-        loadingIndicator.hide();
-        previewImageAssetView.clearImage();
-        errorView.setText(R.string.giphy_preview__error);
-        TextViewUtils.mediumText(errorView);
-        errorView.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -398,34 +287,154 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
     @Override
     public void setSelectedGifFromGridView(ImageAsset gifAsset) {
         foundImage = gifAsset;
+        confirmationMenu.setConfirmEnabled(false);
+        previewImageAssetView.setBitmapLoadedCallback(this);
         previewImageAssetView.setImageAsset(gifAsset);
+        loadingIndicator.show();
+        KeyboardUtils.closeKeyboardIfShown(getActivity());
+        if (ThemeUtils.isDarkTheme(getContext())) {
+            toolbar.setNavigationIcon(R.drawable.action_back_light);
+        } else {
+            toolbar.setNavigationIcon(R.drawable.action_back_dark);
+        }
         ViewUtils.fadeInView(previewImageAssetView);
         ViewUtils.fadeInView(confirmationMenu);
-        ViewUtils.fadeInView(gifLinkButton);
+        ViewUtils.fadeInView(giphyTitle);
         ViewUtils.fadeOutView(recyclerView);
-        ViewUtils.fadeOutView(gifBackButton);
+        ViewUtils.fadeOutView(giphySearchEditText);
+        ViewUtils.fadeOutView(errorView);
+    }
+
+    @Override
+    public boolean onBackPressed() {
+        if (previewImageAssetView.getVisibility() == View.VISIBLE) {
+            showGrid();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.gtv__giphy_preview__close_button:
+                getControllerFactory().getGiphyController().cancel();
+                break;
+            case R.id.iv__giphy_preview__preview:
+                if (foundImage != null) {
+                    ViewUtils.fadeOutView(previewImageAssetView);
+                    ViewUtils.fadeOutView(confirmationMenu);
+                    ViewUtils.fadeInView(recyclerView);
+
+                    foundImage.removeUpdateListener(previewImageAssetView);
+                }
+                previewImageAssetView.setImageAsset(null);
+                break;
+        }
+    }
+
+    @Override
+    public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+    }
+
+    @Override
+    public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+        searchTerm = giphySearchEditText.getText().toString();
+        giphySearchHandler.removeCallbacks(giphySearchRunnable);
+        giphySearchHandler.postDelayed(giphySearchRunnable, GIPHY_SEARCH_DELAY_MIN_SEC);
+    }
+
+    @Override
+    public void afterTextChanged(Editable editable) {
+
+    }
+
+    private void updateGiphyResults() {
+        errorView.setVisibility(View.GONE);
+        previewImageAssetView.clearImage();
+        loadingIndicator.show();
+        if (TextUtils.isEmpty(searchTerm) || searchTerm == null) {
+            giphyResults = getStoreFactory().getZMessagingApiStore()
+                                            .getApi()
+                                            .getGiphy()
+                                            .trending();
+
+        } else {
+            giphyResults = getStoreFactory().getZMessagingApiStore()
+                                            .getApi()
+                                            .getGiphy()
+                                            .search(searchTerm);
+        }
+        giphyResults.whenReady(new Runnable() {
+            @Override
+            public void run() {
+                loadingIndicator.hide();
+                giphyResultUpdateListener.updated();
+            }
+        });
+        giphyResults.addUpdateListener(giphyResultUpdateListener);
+        giphyGridViewAdapter.setGiphyResults(giphyResults);
+    }
+
+    private void updateGiphyTitle() {
+        String gifTitle;
+        if (TextUtils.isEmpty(searchTerm) || searchTerm == null) {
+            gifTitle = "";
+        } else {
+            gifTitle = getString(R.string.giphy_preview__title_search, searchTerm);
+        }
+        giphyTitle.setText(gifTitle);
+    }
+
+    private void showError() {
+        loadingIndicator.hide();
+        previewImageAssetView.clearImage();
+        errorView.setText(R.string.giphy_preview__error);
+        TextViewUtils.mediumText(errorView);
+        errorView.setVisibility(View.VISIBLE);
+    }
+
+    private void showGrid() {
+        foundImage = null;
+        previewImageAssetView.clearImage();
+
+        if (ThemeUtils.isDarkTheme(getContext())) {
+            toolbar.setNavigationIcon(R.drawable.ic_action_search_light);
+        } else {
+            toolbar.setNavigationIcon(R.drawable.ic_action_search_dark);
+        }
+        ViewUtils.fadeOutView(previewImageAssetView);
+        ViewUtils.fadeOutView(confirmationMenu);
+        ViewUtils.fadeOutView(giphyTitle);
+        ViewUtils.fadeInView(recyclerView);
+        ViewUtils.fadeInView(giphySearchEditText);
+        giphySearchEditText.requestFocus();
+    }
+
+    private void sendGif() {
+        TrackingUtils.onSentGifMessage(getControllerFactory().getTrackingController(),
+                                       getStoreFactory().getConversationStore().getCurrentConversation());
+
+        if (TextUtils.isEmpty(searchTerm) || searchTerm == null) {
+            getStoreFactory().getConversationStore().sendMessage(getString(R.string.giphy_preview__message_via_random_trending));
+        } else {
+            getStoreFactory().getConversationStore().sendMessage(getString(R.string.giphy_preview__message_via_search,
+                                                                           searchTerm));
+        }
+        getStoreFactory().getNetworkStore().doIfHasInternetOrNotifyUser(null);
+        getStoreFactory().getConversationStore().sendMessage(foundImage);
+        getControllerFactory().getGiphyController().close();
     }
 
     private void onLossOfNetworkConnection() {
-        gifLinkButton.setClickable(false);
         confirmationMenu.setConfirmationMenuListener(null);
         previewImageAssetView.setClickable(false);
     }
 
     private void onResumedNetworkConnection() {
-        gifLinkButton.setClickable(true);
         confirmationMenu.setConfirmationMenuListener(confirmationMenuListener);
         previewImageAssetView.setClickable(true);
-    }
-
-    @Override
-    public boolean onBackPressed() {
-        if (recyclerView != null &&
-            recyclerView.getVisibility() == View.VISIBLE) {
-            closeGrid();
-            return true;
-        }
-        return false;
     }
 
     public interface Container { }

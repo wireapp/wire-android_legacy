@@ -54,7 +54,7 @@ public class StubGiphyController implements IGiphyController {
   }
 
   @Override
-  public boolean handleInput(String text, boolean afterPressedEnter) {
+  public boolean handleInput(String text) {
     return false;
   }
 
@@ -63,7 +63,12 @@ public class StubGiphyController implements IGiphyController {
     ;
   }
 
-  @Override
+    @Override
+    public void searchTrending() {
+
+    }
+
+    @Override
   public void searchRandom() {
     ;
   }

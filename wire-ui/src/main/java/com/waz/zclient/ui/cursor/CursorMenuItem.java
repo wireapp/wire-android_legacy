@@ -31,6 +31,7 @@ public enum CursorMenuItem {
     CAMERA(R.string.glyph__camera, R.id.cursor_menu_item_camera, R.string.tooltip_camera),
     SKETCH(R.string.glyph__paint, R.id.cursor_menu_item_draw, R.string.tooltip_sketch),
     FILE(R.string.glyph__attachment, R.id.cursor_menu_item_file, R.string.tooltip_file),
+    GIF(R.string.glyph__gif, R.id.cursor_menu_item_gif, R.string.tooltip_gif),
     AUDIO_MESSAGE(R.string.glyph__microphone_on, R.id.cursor_menu_item_audio_message, R.string.tooltip_audio_message),
     MORE(R.string.glyph__more, R.id.cursor_menu_item_more, R.string.tooltip_more),
     LESS(R.string.glyph__more, R.id.cursor_menu_item_less, R.string.tooltip_more),

@@ -526,6 +526,11 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
     }
 
     @Override
+    public void onTrendingSearch() {
+
+    }
+
+    @Override
     public void onCloseGiphy() {
         Fragment fragment = getChildFragmentManager().findFragmentById(R.id.fl__root__giphy);
         if (fragment != null) {

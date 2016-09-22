@@ -29,6 +29,7 @@
     <item name="cursor_menu_item_ping" type="id" />
     <item name="cursor_menu_item_location" type="id" />
     <item name="cursor_menu_item_file" type="id" />
+    <item name="cursor_menu_item_gif" type="id" />
     <item name="cursor_menu_item_audio_message" type="id" />
     <item name="cursor_menu_item_more" type="id" />
     <item name="cursor_menu_item_less" type="id" />

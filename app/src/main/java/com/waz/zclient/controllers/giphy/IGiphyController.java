@@ -30,11 +30,13 @@ public interface IGiphyController {
 
     void search(@NonNull String keyword);
 
+    void searchTrending();
+
     void close();
 
     void cancel();
 
-    boolean handleInput(@NonNull String text, boolean afterPressedEnter);
+    boolean handleInput(@NonNull String text);
 
     boolean isInputAllowedForGiphy(String input);
 }

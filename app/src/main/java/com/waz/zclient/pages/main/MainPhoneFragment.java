@@ -312,6 +312,16 @@ public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container>
     }
 
     @Override
+    public void onTrendingSearch() {
+        getChildFragmentManager().beginTransaction()
+                                 .add(R.id.fl__overlay_container,
+                                      GiphySharingPreviewFragment.newInstance(),
+                                      GiphySharingPreviewFragment.TAG)
+                                 .addToBackStack(GiphySharingPreviewFragment.TAG)
+                                 .commit();
+    }
+
+    @Override
     public void onCloseGiphy() {
         getChildFragmentManager().popBackStackImmediate(GiphySharingPreviewFragment.TAG,
                                                         FragmentManager.POP_BACK_STACK_INCLUSIVE);
