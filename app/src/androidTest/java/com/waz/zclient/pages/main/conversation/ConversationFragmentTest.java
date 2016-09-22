@@ -337,8 +337,6 @@ public class ConversationFragmentTest extends FragmentTest<MainTestActivity> {
         attachFragment(ConversationFragment.newInstance(), ConversationFragment.TAG);
 
         Thread.sleep(500);
-        onView(withId(R.id.cursor_menu_item_more)).perform(click());
-        Thread.sleep(500);
         onView(withId(R.id.cursor_menu_item_gif)).check(isVisible());
     }
 
