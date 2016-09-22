@@ -480,8 +480,8 @@
     <string name="pref_options_image_download_always">Always</string>
     <string name="pref_options_image_download_wifi">Wi-Fi only</string>
     <string name="pref_options_media_category_title">Media</string>
-    <string name="pref_options_giphy_title">Giphy</string>
-    <string name="pref_options_giphy_summary">Show GIF button</string>
+    <string name="pref_options_cursor_send_button_title">Send button</string>
+    <string name="pref_options_cursor_send_button_summary">Show send button</string>
     <string name="pref_options_spotify_title">Connect with Spotify</string>
     <string name="pref_options_spotify_logout_title">Disconnect with Spotify</string>
     <string name="pref_options_spotify_summary">You need a Spotify Premium account.</string>

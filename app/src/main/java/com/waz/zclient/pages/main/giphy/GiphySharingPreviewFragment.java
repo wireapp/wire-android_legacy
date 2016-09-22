@@ -157,7 +157,6 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
         giphySearchEditText.setText(searchTerm);
 
         previewImageAssetView.setShowPreview(true);
-        previewImageAssetView.setOnClickListener(this);
 
         giphyGridViewAdapter = new GiphyGridViewAdapter(getActivity());
         recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
@@ -319,16 +318,6 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
         switch (view.getId()) {
             case R.id.gtv__giphy_preview__close_button:
                 getControllerFactory().getGiphyController().cancel();
-                break;
-            case R.id.iv__giphy_preview__preview:
-                if (foundImage != null) {
-                    ViewUtils.fadeOutView(previewImageAssetView);
-                    ViewUtils.fadeOutView(confirmationMenu);
-                    ViewUtils.fadeInView(recyclerView);
-
-                    foundImage.removeUpdateListener(previewImageAssetView);
-                }
-                previewImageAssetView.setImageAsset(null);
                 break;
         }
     }

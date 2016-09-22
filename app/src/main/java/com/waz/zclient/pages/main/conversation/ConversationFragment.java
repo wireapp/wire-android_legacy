@@ -127,7 +127,6 @@ import com.waz.zclient.core.stores.conversation.ConversationStoreObserver;
 import com.waz.zclient.core.stores.inappnotification.InAppNotificationStoreObserver;
 import com.waz.zclient.core.stores.inappnotification.KnockingEvent;
 import com.waz.zclient.core.stores.network.DefaultNetworkAction;
-import com.waz.zclient.core.stores.network.NetworkStoreObserver;
 import com.waz.zclient.core.stores.participants.ParticipantsStoreObserver;
 import com.waz.zclient.notifications.controllers.ImageNotificationsController;
 import com.waz.zclient.pages.BaseFragment;
@@ -192,7 +191,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                                                                                                   MessageViewsContainer,
                                                                                                   NavigationControllerObserver,
                                                                                                   SlidingPaneObserver,
-                                                                                                  NetworkStoreObserver,
                                                                                                   SingleImageObserver,
                                                                                                   MentioningObserver,
                                                                                                   GiphyObserver,
@@ -608,8 +606,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         typingIndicatorLayoutParams.gravity = Gravity.CENTER;
         typingIndicatorView.setLayoutParams(typingIndicatorLayoutParams);
         cursorLayout.getTypingIndicatorContainer().addTypingIndicatorView(typingIndicatorView);
-        // Only show Giphy button when text field has input
-        cursorLayout.enableGiphyButton(false);
+        cursorLayout.showSendButton(false);
 
         typingListener = new UpdateListener() {
             @Override
@@ -660,6 +657,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         getControllerFactory().getGlobalLayoutController().addKeyboardVisibilityObserver(extendedCursorContainer);
         getControllerFactory().getRequestPermissionsController().addObserver(this);
         cursorLayout.setCursorCallback(this);
+        cursorLayout.showSendButtonAsEnterKey(!getControllerFactory().getUserPreferencesController().isCursorSendButtonEnabled());
         final String draftText = getStoreFactory().getDraftStore().getDraft(getStoreFactory().getConversationStore().getCurrentConversation());
         if (!TextUtils.isEmpty(draftText)) {
             cursorLayout.setText(draftText);
@@ -693,7 +691,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         getStoreFactory().getInAppNotificationStore().addInAppNotificationObserver(this);
 
         getControllerFactory().getSlidingPaneController().addObserver(this);
-        getStoreFactory().getNetworkStore().addNetworkStoreObserver(this);
 
         typingIndicatorView.setSelfUser(getStoreFactory().getProfileStore().getSelfUser());
         extendedCursorContainer.setCallback(this);
@@ -738,7 +735,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             getControllerFactory().getMentioningController().removeObserver(this);
         }
         getControllerFactory().getGiphyController().removeObserver(this);
-        getStoreFactory().getNetworkStore().removeNetworkStoreObserver(this);
         getControllerFactory().getSingleImageController().removeSingleImageObserver(this);
 
         if (!cursorLayout.isEditingMessage()) {
@@ -1149,15 +1145,11 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             } else {
                 inputStateIndicator.textChanged();
             }
-            if (!getStoreFactory().getNetworkStore().hasInternetConnection()) {
-                cursorLayout.enableGiphyButton(false);
-                return;
-            }
         }
 
-        boolean isGiphyPreferenceEnabled = getControllerFactory().getUserPreferencesController().isGiphyEnabled();
-        boolean isInputAllowedForGiphy = getControllerFactory().getGiphyController().isInputAllowedForGiphy(text);
-        cursorLayout.enableGiphyButton(isGiphyPreferenceEnabled && isInputAllowedForGiphy);
+        if (getControllerFactory().getUserPreferencesController().isCursorSendButtonEnabled()) {
+            cursorLayout.showSendButton(!TextUtils.isEmpty(text));
+        }
     }
 
     public boolean isKeyboardUp() {
@@ -1470,19 +1462,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
     private boolean inSplitPortraitMode() {
         return LayoutSpec.isTablet(getActivity()) && ViewUtils.isInPortrait(getActivity()) && getControllerFactory().getNavigationController().getPagerPosition() == 0;
-    }
-
-    @Override
-    public void onConnectivityChange(boolean hasInternet, boolean isServerError) {
-        if (cursorLayout == null) {
-            return;
-        }
-        cursorLayout.enableGiphyButton(hasInternet && cursorLayout.hasText());
-    }
-
-    @Override
-    public void onNoInternetConnection(boolean isServerError) {
-
     }
 
     @Override
@@ -1800,14 +1779,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     public void onClosedMessageEditing() {
         getControllerFactory().getConversationScreenController().setMessageBeingEdited(null);
         messageAdapter.notifyDataSetChanged();
-    }
-
-    @Override
-    public void onCursorGiphyButtonClicked() {
-        getControllerFactory().getGiphyController().handleInput(cursorLayout.getText());
-        final IConversation conversation = getStoreFactory().getConversationStore().getCurrentConversation();
-        boolean isGroupConversation = conversation.getType() == IConversation.Type.GROUP;
-        getControllerFactory().getTrackingController().tagEvent(OpenedMediaActionEvent.giphy(isGroupConversation));
     }
 
     @Override

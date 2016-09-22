@@ -29,8 +29,6 @@ public interface CursorCallback {
 
     void onMessageSubmitted(String message);
 
-    void onCursorGiphyButtonClicked();
-
     void onEditTextHasChanged(int cursorPosition, String text);
 
     void onFocusChange(boolean hasFocus);
