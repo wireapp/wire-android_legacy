@@ -39,8 +39,6 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
-  import MessagesListView._
-
   val layoutManager = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
   val adapter = new MessagesListAdapter
   val scrollController = new ScrollController(adapter)
@@ -90,7 +88,8 @@ object MessagesListView {
   val MaxSmoothScroll = 50
 
   trait Adapter {
-    def initialLastReadIndex: Signal[(ConvId, Int)]
+    def selectedConversation: Signal[ConvId]
+    def initialLastReadIndex: Signal[Int]
     def msgCount: Signal[Int]
     def getItemCount: Int
   }
@@ -119,6 +118,13 @@ class LastReadController(adapter: MessagesListAdapter, layoutManager: LinearLayo
   val zmessaging = inject[Signal[ZMessaging]]
   val messageStreamOpen = inject[NavigationController].messageStreamOpen
 
+  //last read should only be updated each time we enter a conversation, whether the conv changed or not
+  messageStreamOpen.onChanged.filter(_ == true) { _ =>
+    val lastRead = adapter.currentLastReadIndex()
+    verbose(s"setting last read index: $lastRead")
+    adapter.initialLastReadIndex ! lastRead
+  }
+
   private val lastBoundMessage = for {
     zms <- zmessaging
     index <- Signal.wrap(adapter.onBindView).throttle(500.millis)
@@ -130,9 +136,7 @@ class LastReadController(adapter: MessagesListAdapter, layoutManager: LinearLayo
       if (index >= 0) {
         val msg = adapter.message(index).message
         verbose(s"Setting last read to pos:$index, $msg")
-        val prevLastRead = adapter.currentLastReadIndex()
         zms.convsUi.setLastRead(msg.convId, msg)
-        adapter.notifyItemChanged(prevLastRead)
       }
     case _ => //message stream not open
 

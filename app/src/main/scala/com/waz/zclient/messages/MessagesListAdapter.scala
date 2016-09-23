@@ -33,14 +33,13 @@ class MessagesListAdapter()(implicit inj: Injector, ec: EventContext) extends Re
   verbose("MessagesListAdapter created")
 
   val zms = inject[Signal[ZMessaging]]
-  val selectedConversation = inject[SelectionController].selectedConv
-  val cursor = zms.zip(selectedConversation) map { case (zs, conv) => new RecyclerCursor(conv, zs, adapter) }
+  val messageStreamOpen = inject[NavigationController].messageStreamOpen
+  override val selectedConversation = inject[SelectionController].selectedConv
 
   val onBindView = EventStream[Int]()
+  override val initialLastReadIndex = Signal[Int]()
 
-  val messageStreamOpen = inject[NavigationController].messageStreamOpen
-
-  override val initialLastReadIndex = cursor.flatMap { c => c.initialLastReadIndex.map((c.conv, _)) }
+  val cursor = zms.zip(selectedConversation) map { case (zs, conv) => new RecyclerCursor(conv, zs, adapter) }
   override val msgCount = cursor.flatMap(_.countSignal)
 
   private var messages = Option.empty[RecyclerCursor]
@@ -69,7 +68,7 @@ class MessagesListAdapter()(implicit inj: Injector, ec: EventContext) extends Re
   private def isFirstUnread(pos: Int) =
     if (pos == 0) false
     else if (!zms.map(_.selfUserId).currentValue.contains(message(pos).message.userId))
-      initialLastReadIndex.map { case (_, i) => i }.currentValue.getOrElse(-1) == pos - 1
+      initialLastReadIndex.currentValue.getOrElse(-1) == pos - 1
     else false
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder =
