@@ -51,14 +51,11 @@
             android:layout_height="@dimen/new_cursor_height"
             >
 
-
-            <!-- Typing Indicator -->
-            <com.waz.zclient.ui.cursor.TypingIndicatorContainer
-                android:id="@+id/tic__cursor"
-                android:layout_width="@dimen/new_cursor_menu_button_width"
-                android:layout_height="@dimen/new_cursor_menu_button_width"
+            <FrameLayout
+                android:id="@+id/fl__cursor__emoji_container"
+                android:layout_width="@dimen/content__separator__avatar_container__width"
+                android:layout_height="wrap_content"
                 android:layout_gravity="start|center_vertical"
-                android:layout_marginStart="@dimen/wire__padding__4"
                 />
 
             <!-- Edit Text -->
@@ -100,16 +97,12 @@
                 android:paddingStart="@dimen/wire__padding__small"
                 />
 
-            <!-- button giphy -->
-            <com.waz.zclient.ui.text.GlyphTextView
-                android:id="@+id/cursor_button_send"
-                android:layout_width="@dimen/cursor__menu_button__diameter"
-                android:layout_height="@dimen/cursor__menu_button__diameter"
+            <FrameLayout
+                android:id="@+id/fl__cursor__send_button_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_gravity="end|center_vertical"
                 android:layout_marginEnd="@dimen/cursor_button_horizontal_margin"
-                android:gravity="center"
-                android:text="@string/glyph__send"
-                android:textSize="@dimen/cursor_button_text_size"
                 />
 
             <include

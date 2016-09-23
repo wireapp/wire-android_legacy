@@ -29,11 +29,15 @@ import android.widget.FrameLayout;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.globallayout.KeyboardHeightObserver;
 import com.waz.zclient.controllers.globallayout.KeyboardVisibilityObserver;
+import com.waz.zclient.pages.extendedcursor.emoji.EmojiKeyboardLayout;
 import com.waz.zclient.pages.extendedcursor.image.CursorImagesLayout;
 import com.waz.zclient.pages.extendedcursor.voicefilter.VoiceFilterLayout;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
 import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.utils.ViewUtils;
+
+import java.util.List;
+import java.util.Set;
 
 public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeightObserver,
                                                                     KeyboardVisibilityObserver {
@@ -45,7 +49,8 @@ public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeig
     public enum Type {
         NONE,
         VOICE_FILTER_RECORDING,
-        IMAGES
+        IMAGES,
+        EMOJIS
     }
 
     private final SharedPreferences sharedPreferences;
@@ -56,6 +61,7 @@ public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeig
     private boolean isExpanded;
 
     private VoiceFilterLayout voiceFilterLayout;
+    private EmojiKeyboardLayout emojiKeyboardLayout;
 
     private int keyboardHeightLandscape;
     private int keyboardHeight;
@@ -108,6 +114,14 @@ public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeig
     public void openCursorImages(CursorImagesLayout.Callback callback) {
         openWithType(Type.IMAGES);
         cursorImagesLayout.setCallback(callback);
+    }
+
+    public void openEmojis(List<String> recent,
+                           Set<String> unsupported,
+                           EmojiKeyboardLayout.Callback callback) {
+        openWithType(Type.EMOJIS);
+        emojiKeyboardLayout.setCallback(callback);
+        emojiKeyboardLayout.setEmojis(recent, unsupported);
     }
 
     public void setAccentColor(int accentColor) {
@@ -199,6 +213,16 @@ public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeig
                                                                                                     this,
                                                                                                     false);
                 addView(cursorImagesLayout);
+                break;
+            case EMOJIS:
+                closeVoiceFilter();
+                closeCursorImages();
+
+                emojiKeyboardLayout = (EmojiKeyboardLayout) LayoutInflater.from(getContext()).inflate(R.layout.emoji_keyboard_layout,
+                                                                                                     this,
+                                                                                                     false);
+                addView(emojiKeyboardLayout);
+                break;
         }
 
         if (KeyboardUtils.isKeyboardVisible(getContext())) {

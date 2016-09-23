@@ -158,5 +158,8 @@
     <string translatable="false" name="pref_dev_version_info_id_key">USER_PREFS_DEV_VERSIONS_ID</string>
     <string translatable="false" name="pref_dev_version_info_id_title">Versions</string>
 
+    <!-- Emoji keyboard -->
+    <string translatable="false" name="emoji_keyboard_tab_1">ALL</string>
+
 </resources>
 

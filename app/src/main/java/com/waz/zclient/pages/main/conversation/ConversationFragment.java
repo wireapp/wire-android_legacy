@@ -131,6 +131,7 @@ import com.waz.zclient.core.stores.participants.ParticipantsStoreObserver;
 import com.waz.zclient.notifications.controllers.ImageNotificationsController;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer;
+import com.waz.zclient.pages.extendedcursor.emoji.EmojiKeyboardLayout;
 import com.waz.zclient.pages.extendedcursor.image.CursorImagesLayout;
 import com.waz.zclient.pages.extendedcursor.image.ImagePreviewLayout;
 import com.waz.zclient.pages.extendedcursor.voicefilter.VoiceFilterLayout;
@@ -203,6 +204,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                                                                                                   PagerControllerObserver,
                                                                                                   CursorImagesLayout.Callback,
                                                                                                   VoiceFilterLayout.Callback,
+                                                                                                  EmojiKeyboardLayout.Callback,
                                                                                                   ExtendedCursorContainer.Callback {
     public static final String TAG = ConversationFragment.class.getName();
     private static final String SAVED_STATE_PREVIEW = "SAVED_STATE_PREVIEW";
@@ -605,7 +607,8 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                                                                                                 R.dimen.typing_indicator__chathead_size));
         typingIndicatorLayoutParams.gravity = Gravity.CENTER;
         typingIndicatorView.setLayoutParams(typingIndicatorLayoutParams);
-        cursorLayout.getTypingIndicatorContainer().addTypingIndicatorView(typingIndicatorView);
+        // TODO: Support new typing indicator
+        //cursorLayout.getTypingIndicatorContainer().addTypingIndicatorView(typingIndicatorView);
         cursorLayout.showSendButton(false);
 
         typingListener = new UpdateListener() {
@@ -626,7 +629,8 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
                 UsersList usersList = inputStateIndicator.getTypingUsers();
                 typingIndicatorView.usersUpdated(usersList, true);
-                cursorLayout.getTypingIndicatorContainer().setOtherIsTyping(usersList.size() > 0);
+                // TODO: Support new typing indicator
+                //cursorLayout.getTypingIndicatorContainer().setOtherIsTyping(usersList.size() > 0);
             }
         };
 
@@ -1782,6 +1786,19 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     }
 
     @Override
+    public void onEmojiButtonClicked(boolean showEmojiKeyboard) {
+        if (showEmojiKeyboard) {
+            KeyboardUtils.hideKeyboard(getActivity());
+            extendedCursorContainer.openEmojis(getControllerFactory().getUserPreferencesController().getRecentEmojis(),
+                                               getControllerFactory().getUserPreferencesController().getUnsupportedEmojis(),
+                                               this);
+        } else {
+            extendedCursorContainer.close(false);
+            KeyboardUtils.showKeyboard(getActivity());
+        }
+    }
+
+    @Override
     public boolean onBackPressed() {
         if (isPreviewShown) {
             onCancelPreview();
@@ -2445,6 +2462,11 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     private void unableToSaveImageNoPermissions() {
         imageAssetToSave = null;
         Toast.makeText(getContext(), R.string.message_bottom_menu_action_save_fail, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onEmojiSelected(String emoji) {
+        cursorLayout.appendText(emoji);
     }
 
     public interface Container {

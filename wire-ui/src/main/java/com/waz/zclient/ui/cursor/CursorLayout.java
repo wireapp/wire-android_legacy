@@ -30,6 +30,7 @@ import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -43,6 +44,7 @@ import com.waz.zclient.ui.R;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
 import com.waz.zclient.ui.animation.interpolators.penner.Quart;
 import com.waz.zclient.ui.utils.CursorUtils;
+import com.waz.zclient.ui.views.CursorIconButton;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
 import java.util.Arrays;
@@ -52,8 +54,7 @@ public class CursorLayout extends FrameLayout implements
                                                TextView.OnEditorActionListener,
                                                TextWatcher,
                                                CursorToolbar.Callback,
-                                               EditMessageCursorToolbar.Callback,
-                                               View.OnClickListener {
+                                               EditMessageCursorToolbar.Callback {
     private static final long TOOLTIP_DURATION = 1500;
 
     private static List<CursorMenuItem> mainCursorItems = Arrays.asList(CursorMenuItem.VIDEO_MESSAGE,
@@ -71,11 +72,10 @@ public class CursorLayout extends FrameLayout implements
                                                                              CursorMenuItem.LESS);
 
     private View editMessageBackgroundView;
-    private TypingIndicatorContainer typingIndicatorContainer;
     private CursorToolbarFrame cursorToolbarFrame;
     private CursorEditText newCursorEditText;
     private ShieldViewWithBanner shieldViewWithBanner;
-    private TextView sendButton;
+    private CursorIconButton sendButton;
     private CursorToolbar mainToolbar;
     private CursorToolbar secondaryToolbar;
     private EditMessageCursorToolbar editMessageCursorToolbar;
@@ -83,6 +83,7 @@ public class CursorLayout extends FrameLayout implements
     private TextView tooltip;
     private TextView hintView;
     private View dividerView;
+    private CursorIconButton emojiButton;
 
     private CursorCallback cursorCallback;
     private boolean sendButtonIsVisible;
@@ -136,13 +137,11 @@ public class CursorLayout extends FrameLayout implements
         anchorPositionPx2 = CursorUtils.getCursorEditTextAnchorPosition(getContext(), width);
         if (ViewUtils.isInPortrait(getContext())) {
             int left = CursorUtils.getCursorMenuLeftMargin(getContext(), width);
-            ((FrameLayout.LayoutParams) typingIndicatorContainer.getLayoutParams()).leftMargin = left;
             ((FrameLayout.LayoutParams) newCursorEditText.getLayoutParams()).leftMargin = anchorPositionPx2;
             ((FrameLayout.LayoutParams) hintView.getLayoutParams()).leftMargin = anchorPositionPx2;
             cursorToolbarFrame.setPadding(left, 0, left, 0);
         } else {
             int left = CursorUtils.getCursorMenuLeftMargin(getContext(), width);
-            ((FrameLayout.LayoutParams) typingIndicatorContainer.getLayoutParams()).leftMargin = getResources().getDimensionPixelSize(R.dimen.cursor_typing_left_margin);
             ((FrameLayout.LayoutParams) newCursorEditText.getLayoutParams()).leftMargin = anchorPositionPx2;
             ((FrameLayout.LayoutParams) hintView.getLayoutParams()).leftMargin = anchorPositionPx2;
             cursorToolbarFrame.setPadding(left, 0, left, 0);
@@ -154,10 +153,8 @@ public class CursorLayout extends FrameLayout implements
         super.onFinishInflate();
 
         editMessageBackgroundView = ViewUtils.getView(this, R.id.fl__edit_message__background);
-        typingIndicatorContainer = ViewUtils.getView(this, R.id.tic__cursor);
         cursorToolbarFrame = ViewUtils.getView(this, R.id.cal__cursor);
         newCursorEditText = ViewUtils.getView(this, R.id.cet__cursor);
-        sendButton = ViewUtils.getView(this, R.id.cursor_button_send);
         shieldViewWithBanner = ViewUtils.getView(this, R.id.svwb);
         mainToolbar = ViewUtils.getView(this, R.id.c__cursor__main);
         secondaryToolbar = ViewUtils.getView(this, R.id.c__cursor__secondary);
@@ -166,6 +163,8 @@ public class CursorLayout extends FrameLayout implements
         tooltip = ViewUtils.getView(this, R.id.ctv__cursor);
         hintView = ViewUtils.getView(this, R.id.ttv__cursor_hint);
         dividerView = ViewUtils.getView(this, R.id.v__cursor__divider);
+        FrameLayout emojiButtonContainer = ViewUtils.getView(this, R.id.fl__cursor__emoji_container);
+        FrameLayout sendButtonContainer = ViewUtils.getView(this, R.id.fl__cursor__send_button_container);
 
         mainToolbar.setCursorItems(mainCursorItems);
         secondaryToolbar.setCursorItems(secondaryCursorItems);
@@ -177,12 +176,51 @@ public class CursorLayout extends FrameLayout implements
         cursorToolbarAnimationDuration = getResources().getInteger(R.integer.wire__animation__delay__regular);
         tooltip.setVisibility(View.GONE);
         connectEditText();
-        sendButton.setVisibility(View.INVISIBLE);
         editMessageBackgroundView.setVisibility(GONE);
 
         defaultEditTextColor = newCursorEditText.getCurrentTextColor();
         ColorDrawable dividerBg = (ColorDrawable) dividerView.getBackground();
         defaultDividerColor = dividerBg.getColor();
+
+        // Emoji button
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        emojiButton = (CursorIconButton) inflater.inflate(R.layout.cursor__item,
+                                                          this,
+                                                          false);
+        emojiButton.setText(R.string.glyph__emoji);
+        emojiButton.setAccentColor(ContextCompat.getColor(getContext(), R.color.light_graphite));
+        int buttonWidth = getResources().getDimensionPixelSize(R.dimen.cursor__menu_button__diameter);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(buttonWidth,
+                                                                       buttonWidth);
+        params.gravity = Gravity.END;
+        params.setMarginEnd(getResources().getDimensionPixelSize(R.dimen.chathead__margin));
+        emojiButtonContainer.addView(emojiButton, params);
+        emojiButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (cursorCallback == null) {
+                    return;
+                }
+                mainToolbar.unselectItems();
+                if (getContext().getString(R.string.glyph__emoji).equals(emojiButton.getText())) {
+                    emojiButton.setText(R.string.glyph__keyboard);
+                    cursorCallback.onEmojiButtonClicked(true);
+                } else {
+                    emojiButton.setText(R.string.glyph__emoji);
+                    cursorCallback.onEmojiButtonClicked(false);
+                }
+            }
+        });
+
+        // Send button
+        sendButton = (CursorIconButton) inflater.inflate(R.layout.cursor__item,
+                                                          this,
+                                                          false);
+        sendButton.setText(R.string.glyph__send);
+        sendButton.setAccentColor(ContextCompat.getColor(getContext(), R.color.light_graphite));
+        sendButtonContainer.addView(sendButton, new FrameLayout.LayoutParams(buttonWidth,
+                                                                             buttonWidth));
+        sendButton.setVisibility(View.INVISIBLE);
     }
 
     public void setCursorCallback(CursorCallback cursorCallback) {
@@ -194,7 +232,7 @@ public class CursorLayout extends FrameLayout implements
     public void setAccentColor(int accentColor) {
         newCursorEditText.setAccentColor(accentColor);
         mainToolbar.setAccentColor(accentColor);
-        sendButton.setTextColor(accentColor);
+        sendButton.setAccentTextColor(accentColor);
     }
 
     private void connectEditText() {
@@ -246,9 +284,10 @@ public class CursorLayout extends FrameLayout implements
 
         if (TextUtils.isEmpty(charSequence.toString())) {
             hintView.setVisibility(View.VISIBLE);
-            getTypingIndicatorContainer().setSelfIsTyping(keyboardIsVisible);
+            // TODO: Support new typing indicator
+            //getTypingIndicatorContainer().setSelfIsTyping(keyboardIsVisible);
         } else {
-            getTypingIndicatorContainer().setSelfIsTyping(true);
+            //getTypingIndicatorContainer().setSelfIsTyping(true);
             hintView.setVisibility(View.GONE);
         }
 
@@ -335,7 +374,7 @@ public class CursorLayout extends FrameLayout implements
     }
 
     public TypingIndicatorContainer getTypingIndicatorContainer() {
-        return typingIndicatorContainer;
+        return null;
     }
 
 
@@ -344,10 +383,16 @@ public class CursorLayout extends FrameLayout implements
         newCursorEditText.setSelection(text.length());
     }
 
+    public void appendText(String text) {
+        newCursorEditText.append(text);
+        newCursorEditText.setSelection(newCursorEditText.getText().length());
+    }
+
     public void notifyKeyboardVisibilityChanged(boolean keyboardIsVisible, View currentFocus) {
         this.keyboardIsVisible = keyboardIsVisible;
         if (keyboardIsVisible) {
-            getTypingIndicatorContainer().setSelfIsTyping(true);
+            // TODO: Support new typing indicator
+            //getTypingIndicatorContainer().setSelfIsTyping(true);
             cursorToolbarFrame.shrink();
             shieldViewWithBanner.setEnabled(false);
             if (newCursorEditText.hasFocus() && cursorCallback != null) {
@@ -356,11 +401,13 @@ public class CursorLayout extends FrameLayout implements
         } else {
 
 
+            // TODO: Support new typing indicator
+            /*
             if (!TextUtils.isEmpty(newCursorEditText.getText())) {
                 getTypingIndicatorContainer().setSelfIsTyping(true);
             } else {
                 getTypingIndicatorContainer().setSelfIsTyping(false);
-            }
+            }*/
 
             cursorToolbarFrame.expand();
 
@@ -407,10 +454,18 @@ public class CursorLayout extends FrameLayout implements
         if (cursorCallback != null) {
             cursorCallback.onCursorButtonClicked(item);
         }
-        if (item == CursorMenuItem.MORE) {
-            showSecondaryCursorToolbar();
-        } else if (item == CursorMenuItem.LESS) {
-            hideSecondaryCursorToolbar();
+
+        switch (item) {
+            case MORE:
+                showSecondaryCursorToolbar();
+                break;
+            case LESS:
+                hideSecondaryCursorToolbar();
+                break;
+            case CAMERA:
+            case AUDIO_MESSAGE:
+                resetEmojiButton();
+                break;
         }
     }
 
@@ -451,7 +506,6 @@ public class CursorLayout extends FrameLayout implements
 
         ((FrameLayout.LayoutParams) tooltip.getLayoutParams()).gravity = gravity;
 
-        setOnClickListener(this);
         tooltipEnabled = true;
         tooltip.setText(message);
         tooltip
@@ -667,11 +721,6 @@ public class CursorLayout extends FrameLayout implements
         return animator;
     }
 
-    @Override
-    public void onClick(View v) {
-        dismissToolbar();
-    }
-
     public void showTopbar(boolean show) {
         if (show) {
             topBorder.setVisibility(View.VISIBLE);
@@ -682,6 +731,7 @@ public class CursorLayout extends FrameLayout implements
 
     public void onExtendedCursorClosed() {
         mainToolbar.unselectItems();
+        resetEmojiButton();
     }
 
     private void resetMainAndSecondaryToolbars() {
@@ -689,5 +739,9 @@ public class CursorLayout extends FrameLayout implements
         mainToolbar.setVisibility(VISIBLE);
         secondaryToolbar.setTranslationY(2 * cursorHeight);
         secondaryToolbar.setVisibility(GONE);
+    }
+
+    private void resetEmojiButton() {
+        emojiButton.setText(R.string.glyph__emoji);
     }
 }

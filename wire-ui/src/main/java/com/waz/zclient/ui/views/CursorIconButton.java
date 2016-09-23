@@ -102,4 +102,8 @@ public class CursorIconButton extends GlyphTextView {
 
         super.setTextColor(colorStateList);
     }
+
+    public void setAccentTextColor(int color) {
+        super.setTextColor(color);
+    }
 }

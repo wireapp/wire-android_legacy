@@ -38,6 +38,7 @@ public enum CursorMenuItem {
     // DUMMY item is a blank icon just used to position icons when the row of icons is not full
     DUMMY(R.string.empty_string, R.id.cursor_menu_item_dummy, R.string.tooltip_ping),
     LOCATION(R.string.glyph__location, R.id.cursor_menu_item_location, R.string.tooltip_location),
+    EMOJI(R.string.glyph__emoji, R.id.cursor_menu_item_emoji, R.string.tooltip_emoji),
     PING(R.string.glyph__ping, R.id.cursor_menu_item_ping, R.string.tooltip_ping);
 
     public int glyphResId;
