@@ -25,7 +25,7 @@ import com.waz.content.{ConvMessagesIndex, MessagesCursor}
 import com.waz.model.{ConvId, MessageData, MessageId}
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
-import com.waz.threading.Threading
+import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal, Subscription}
 import com.waz.zclient.messages.controllers.NavigationController
@@ -34,6 +34,7 @@ import org.threeten.bp.Instant
 
 import scala.collection.Searching.{Found, InsertionPoint}
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.duration._
 
 class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Adapter[_])(implicit inj: Injector, ev: EventContext) extends Injectable { self =>
 
@@ -67,8 +68,8 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
     }
   }
 
-  //last read should be updated each time we enter a conversation, whether it changed or not
-  navController.messageStreamOpen.onChanged.filter(_ == true)(_ => cursor.foreach(c => initialLastReadIndex ! c.lastReadIndex))
+  //last read should be updated each time we enter a conversation, whether the conv changed or not
+  navController.messageStreamOpen.onChanged.filter(_ == true)(_ => cursor.foreach(c => updateLastRead(c.lastReadIndex)))
 
   def close() = {
     Threading.assertUiThread()
@@ -86,12 +87,17 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
     verbose(s"setCursor: c: $c, count: ${c.size}")
     if (!closed) {
       self.cursor = Some(c)
-      initialLastReadIndex.mutateOrDefault(identity, c.lastReadIndex) // update signal if it was empty
+      updateLastRead(c.lastReadIndex)
       notifyFromHistory(c.createTime)
       countSignal ! c.size
       onChangedSub.foreach(_.destroy())
       onChangedSub = Some(c onUpdate (id => likesChanged(Seq(id))))
     }
+  }
+
+  private def updateLastRead(pos: Int): Unit = {
+    verbose(s"setting last read index: $pos")
+    initialLastReadIndex ! pos
   }
 
   private def notifyFromHistory(time: Instant) = {
@@ -132,7 +138,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
     msg
   })
 
-  def lastRead() = cursor.fold(-1)(_.lastReadIndex)
+  def lastReadIndex() = cursor.fold(-1)(_.lastReadIndex)
 
   class IndexWindow {
     import MessagesCursor.Entry

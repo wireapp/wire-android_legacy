@@ -25,6 +25,7 @@ import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.controllers.global.SelectionController
+import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.{Injectable, Injector}
 
 class MessagesListAdapter()(implicit inj: Injector, ec: EventContext) extends RecyclerView.Adapter[MessageViewHolder]() with Injectable with MessagesListView.Adapter { adapter =>
@@ -36,6 +37,8 @@ class MessagesListAdapter()(implicit inj: Injector, ec: EventContext) extends Re
   val cursor = zms.zip(selectedConversation) map { case (zs, conv) => new RecyclerCursor(conv, zs, adapter) }
 
   val onBindView = EventStream[Int]()
+
+  val messageStreamOpen = inject[NavigationController].messageStreamOpen
 
   override val initialLastReadIndex = cursor.flatMap { c => c.initialLastReadIndex.map((c.conv, _)) }
   override val msgCount = cursor.flatMap(_.countSignal)
@@ -55,13 +58,19 @@ class MessagesListAdapter()(implicit inj: Injector, ec: EventContext) extends Re
 
   override def getItemViewType(position: Int): Int = MessageView.viewType(message(position).message.msgType)
 
-  override def onBindViewHolder(holder: MessageViewHolder, position: Int): Unit = {
-    verbose(s"onBindViewHolder: position: $position")
-    holder.bind(position, message(position), if (position == 0) None else Some(message(position - 1).message), isFirstUnread = if (position == 0) false else isLastRead(position - 1))
-    onBindView ! position
+  override def onBindViewHolder(holder: MessageViewHolder, pos: Int): Unit = {
+    verbose(s"onBindViewHolder: position: $pos")
+    holder.bind(pos, message(pos), if (pos == 0) None else Some(message(pos - 1).message), isFirstUnread(pos))
+    onBindView ! pos
   }
 
-  private def isLastRead(pos: Int) = messages.fold(false)(_.lastRead() == pos)
+  def currentLastReadIndex() = messages.fold(-1) (_.lastReadIndex())
+
+  private def isFirstUnread(pos: Int) =
+    if (pos == 0) false
+    else if (!zms.map(_.selfUserId).currentValue.contains(message(pos).message.userId))
+      initialLastReadIndex.map { case (_, i) => i }.currentValue.getOrElse(-1) == pos - 1
+    else false
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder =
     MessageViewHolder(MessageView(parent, viewType), adapter)

@@ -63,6 +63,8 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
 
   private var hideTimestampFuture = CancellableFuture.cancelled[Unit]()
 
+  private var pos = -1
+
   private val messageAndLikes = Signal[MessageAndLikes]()
 
   private val isLiked = messageAndLikes.map(_.likes.nonEmpty)
@@ -90,7 +92,7 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
           case _ => timestamp
         }
       } else timestamp
-      timeStampAndStatus.setText(text)
+      timeStampAndStatus.setText(s"$pos: $text")
       TextViewUtils.linkifyText(timeStampAndStatus, ContextCompat.getColor(context, R.color.accent_red), false, new Runnable() {
         def run() = {
           //TODO retry
@@ -98,8 +100,9 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
       })
   }
 
-  override def set(msg: MessageAndLikes, isFocused: Boolean): Unit = {
+  override def set(pos: Int, msg: MessageAndLikes, isFocused: Boolean): Unit = {
     verbose(s"setting footer, isFocused?: $isFocused")
+    this.pos = pos
     focused.publish(isFocused, Threading.Ui)
     messageAndLikes.publish(msg, Threading.Ui)
     likeButton.messageAndLikes.publish(msg, Threading.Ui)

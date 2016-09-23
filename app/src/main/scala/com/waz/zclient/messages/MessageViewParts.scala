@@ -25,7 +25,7 @@ import android.widget.{LinearLayout, RelativeLayout}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model._
 import com.waz.service.ZMessaging
-import com.waz.threading.{CancellableFuture, Threading}
+import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.controllers.global.AccentColorController
@@ -33,8 +33,6 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx}
 import com.waz.zclient.{R, ViewHelper}
-
-import scala.concurrent.duration._
 
 class SeparatorView(context: Context, attrs: AttributeSet, style: Int) extends RelativeLayout(context, attrs, style) with TimeSeparator {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -64,9 +62,10 @@ class UnreadDot(context: Context, attrs: AttributeSet, style: Int) extends View(
   val dotRadius = getDimenPx(R.dimen.conversation__unread_dot__radius)
   val dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG)
 
-  accent { color => dotPaint.setColor(color.getColor()) }
-
-  show.onChanged.filter(_ == true) { _ => CancellableFuture.delay(5.seconds).map(_ => show ! false)(Threading.Background) }
+  accent { color =>
+    dotPaint.setColor(color.getColor())
+    invalidate()
+  }
 
   show.onChanged.on(Threading.Ui)(_ => invalidate())
 

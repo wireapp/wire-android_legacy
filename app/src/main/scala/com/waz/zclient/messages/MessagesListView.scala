@@ -44,26 +44,27 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
   val layoutManager = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
   val adapter = new MessagesListAdapter
   val scrollController = new ScrollController(adapter)
-  val lastRead = new LastReadUpdater(adapter, layoutManager)
+  val lastRead = new LastReadController(adapter, layoutManager)
 
   setHasFixedSize(true)
   setLayoutManager(layoutManager)
   setAdapter(adapter)
 
-  //TODO there seems to be an issue with scrolling to the lastRead index where it's position on screen changes depending on which side you approach it from
   scrollController.onScroll.on(Threading.Ui) { case Scroll(pos, smooth) =>
     verbose(s"Scrolling to pos: $pos")
-    if (smooth) {
-      val current = layoutManager.findFirstVisibleItemPosition()
-
-      // jump closer to target position before scrolling, don't want to smooth scroll through many messages
-      if (math.abs(current - pos) > MaxSmoothScroll)
-        scrollToPosition(if (pos > current) pos - MaxSmoothScroll else pos + MaxSmoothScroll)
-
-      smoothScrollToPosition(pos)
-    } else {
-      scrollToPosition(pos)
-    }
+//    val itemHeight = findViewHolderForAdapterPosition(pos).itemView.getHeight
+//    if (smooth) {
+//      val current = layoutManager.findFirstVisibleItemPosition()
+//
+//      // jump closer to target position before scrolling, don't want to smooth scroll through many messages
+//      if (math.abs(current - pos) > MaxSmoothScroll)
+//        layoutManager.scrollToPositionWithOffset(if (pos > current) pos - MaxSmoothScroll else pos + MaxSmoothScroll, 0)
+//
+//      smoothScrollToPosition(pos) //TODO figure out how to provide an offset
+//    } else {
+      layoutManager.scrollToPositionWithOffset(pos, 0)
+//      scrollToPosition(pos)
+//    }
   }
 
   addOnScrollListener(new OnScrollListener {
@@ -113,7 +114,7 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesListAdapter)(im
 }
 
 
-class LastReadUpdater(adapter: MessagesListAdapter, layoutManager: LinearLayoutManager)(implicit injector: Injector, ev: EventContext) extends Injectable {
+class LastReadController(adapter: MessagesListAdapter, layoutManager: LinearLayoutManager)(implicit injector: Injector, ev: EventContext) extends Injectable {
 
   val zmessaging = inject[Signal[ZMessaging]]
   val messageStreamOpen = inject[NavigationController].messageStreamOpen
@@ -129,7 +130,9 @@ class LastReadUpdater(adapter: MessagesListAdapter, layoutManager: LinearLayoutM
       if (index >= 0) {
         val msg = adapter.message(index).message
         verbose(s"Setting last read to pos:$index, $msg")
+        val prevLastRead = adapter.currentLastReadIndex()
         zms.convsUi.setLastRead(msg.convId, msg)
+        adapter.notifyItemChanged(prevLastRead)
       }
     case _ => //message stream not open
 

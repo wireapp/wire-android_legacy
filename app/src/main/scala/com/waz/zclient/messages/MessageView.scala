@@ -118,9 +118,9 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
     parts.zipWithIndex foreach { case ((tpe, content), index) =>
       val view = factory.get(tpe, this)
       view match {
-        case v: TimeSeparator   => v.set(msg.message.time, isFirstUnread)
+        case v: TimeSeparator   => v.set(position, msg.message.time, isFirstUnread)
         case v: MessageViewPart => v.set(position, msg.message, content, widthHint)
-        case v: Footer          => v.set(msg, isFocused)
+        case v: Footer          => v.set(position, msg, isFocused)
       }
       addViewInLayout(view, index, Option(view.getLayoutParams) getOrElse factory.DefaultLayoutParams)
     }
@@ -277,7 +277,8 @@ trait TimeSeparator extends ViewPart with ViewHelper {
 
   text.on(Threading.Ui)(timeText.setTransformedText)
 
-  def set(time: Instant, isFirstUnread: Boolean): Unit = {
+  def set(pos: Int, time: Instant, isFirstUnread: Boolean): Unit = {
+    verbose(s"Setting isFirstUnread?: $isFirstUnread at pos $pos")
     this.time ! time
     unreadDot.show ! isFirstUnread
   }
@@ -293,7 +294,7 @@ trait MessageViewPart extends ViewPart {
 trait Footer extends ViewPart {
   override val tpe = Footer
 
-  def set(msg: MessageAndLikes, isFocused: Boolean): Unit
+  def set(pos: Int, msg: MessageAndLikes, isFocused: Boolean): Unit
 }
 
 
