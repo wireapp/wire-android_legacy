@@ -85,8 +85,6 @@ class UserView(context: Context, attrs: AttributeSet, style: Int) extends Linear
   private val chathead: ChatheadView = findById(R.id.chathead)
   private val tvName: TypefaceTextView = findById(R.id.tvName)
 
-  private var pos = -1
-
   private val zms = inject[Signal[ZMessaging]]
   private val userId = Signal[UserId]()
 
@@ -96,14 +94,9 @@ class UserView(context: Context, attrs: AttributeSet, style: Int) extends Linear
 
   userId(chathead.setUserId)
 
-  user.map(_.getDisplayName).on(Threading.Ui) { n =>
-    tvName.setTransformedText(s"$pos: $n")
-  }
+  user.map(_.getDisplayName).on(Threading.Ui)(tvName.setTransformedText)
 
-  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = {
-    this.pos = pos
-    userId ! msg.userId
-  }
+  override def set(pos: Int, msg: MessageData, part: Option[MessageContent], widthHint: Int): Unit = userId ! msg.userId
 }
 
 class EmptyPartView(context: Context, attrs: AttributeSet, style: Int) extends View(context, attrs, style) with MessageViewPart {
