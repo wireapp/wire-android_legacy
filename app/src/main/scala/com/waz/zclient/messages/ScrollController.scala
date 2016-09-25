@@ -34,7 +34,7 @@ class ScrollController(adapter: MessagesListView.Adapter)(implicit ec: EventCont
   private def lastPosition = adapter.getItemCount - 1
 
   val onScroll = EventStream.union(
-    adapter.selectedConversation.zip(adapter.initialLastReadIndex).onChanged.map { case (_, lastReadPosition) => Scroll(lastReadPosition, smooth = false) },
+    adapter.selectedConversation.zip(adapter.nextUnreadIndex).onChanged.map { case (_, nextUnreadPos) => Scroll(nextUnreadPos, smooth = false) },
     onScrollToBottomRequested.map(_ => Scroll(lastPosition, smooth = true)),
     listHeight.onChanged.filter(_ => shouldScrollToBottom).map(_ => Scroll(lastPosition, smooth = false)),
     adapter.msgCount.onChanged.filter(_ => shouldScrollToBottom).map(_ => Scroll(lastPosition, smooth = true))

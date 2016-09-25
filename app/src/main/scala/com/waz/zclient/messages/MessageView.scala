@@ -96,7 +96,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
         val curDay = asZonedDateTime(msg.time).toLocalDate.atStartOfDay()
 
         if (prevDay.isBefore(curDay)) Some(SeparatorLarge)
-        else if (p.time.isBefore(msg.time.minusSeconds(3600)) || isFirstUnread) Some(Separator)
+        else if (p.time.isBefore(msg.time.minusSeconds(1800)) || isFirstUnread) Some(Separator)
         else None
       })
   }

@@ -26,7 +26,7 @@ import com.waz.ZLog._
 import com.waz.model.{ConvId, MessageData, MessageId}
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
-import com.waz.threading.Threading
+import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.messages.ScrollController.Scroll
@@ -50,6 +50,7 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
 
   scrollController.onScroll.on(Threading.Ui) { case Scroll(pos, smooth) =>
     verbose(s"Scrolling to pos: $pos")
+      val scrollTo = math.min(adapter.getItemCount - 1, pos)
 //    val itemHeight = findViewHolderForAdapterPosition(pos).itemView.getHeight
 //    if (smooth) {
 //      val current = layoutManager.findFirstVisibleItemPosition()
@@ -60,7 +61,7 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
 //
 //      smoothScrollToPosition(pos) //TODO figure out how to provide an offset
 //    } else {
-      layoutManager.scrollToPositionWithOffset(pos, 0)
+      layoutManager.scrollToPositionWithOffset(scrollTo, 0)
 //      scrollToPosition(pos)
 //    }
   }
@@ -89,7 +90,8 @@ object MessagesListView {
 
   trait Adapter {
     def selectedConversation: Signal[ConvId]
-    def initialLastReadIndex: Signal[Int]
+
+    def nextUnreadIndex: Signal[Int]
     def msgCount: Signal[Int]
     def getItemCount: Int
   }
@@ -118,11 +120,16 @@ class LastReadController(adapter: MessagesListAdapter, layoutManager: LinearLayo
   val zmessaging = inject[Signal[ZMessaging]]
   val messageStreamOpen = inject[NavigationController].messageStreamOpen
 
+  private var hideUnread = CancellableFuture.successful[Unit](())
+
   //last read should only be updated each time we enter a conversation, whether the conv changed or not
   messageStreamOpen.onChanged.filter(_ == true) { _ =>
     val lastRead = adapter.currentLastReadIndex()
     verbose(s"setting last read index: $lastRead")
-    adapter.initialLastReadIndex ! lastRead
+    adapter.showUnreadDot ! (lastRead + 1 < adapter.getItemCount)
+    adapter.nextUnreadIndex ! lastRead + 1
+    hideUnread.cancel()
+    hideUnread = CancellableFuture.delay(3.seconds).map(_ => adapter.showUnreadDot ! false)(Threading.Background)
   }
 
   private val lastBoundMessage = for {
