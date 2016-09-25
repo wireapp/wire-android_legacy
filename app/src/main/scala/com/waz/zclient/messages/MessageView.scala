@@ -42,6 +42,9 @@ import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.{Instant, LocalDateTime, ZoneId}
 
 class MessageView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
+
+  import MessageView._
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -78,7 +81,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
         // TODO: add invite banner part for first member create message
         builder ++= contentParts
 
-        if (focused || mAndL.likes.nonEmpty)
+        if ((focused && focusableTypes.contains(msg.msgType))|| mAndL.likes.nonEmpty)
           builder += MsgPart.Footer -> None
 
         builder.result()
@@ -129,6 +132,17 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
 }
 
 object MessageView {
+
+  val focusableTypes = Set(
+    Message.Type.TEXT,
+    Message.Type.TEXT_EMOJI_ONLY,
+    Message.Type.ANY_ASSET,
+    Message.Type.ASSET,
+    Message.Type.AUDIO_ASSET,
+    Message.Type.VIDEO_ASSET,
+    Message.Type.LOCATION,
+    Message.Type.RICH_MEDIA
+  )
 
   val GenericMessage = 0
 
