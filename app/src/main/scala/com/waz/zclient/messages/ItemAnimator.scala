@@ -32,6 +32,8 @@ class ItemAnimator extends DefaultItemAnimator {
   //us to manually control animations
   override def animateChange(oldHolder: ViewHolder, newHolder: ViewHolder, fromX: Int, fromY: Int, toX: Int, toY: Int): Boolean = {
     if (oldHolder == newHolder) {
+
+      //TODO get animations working nicely
       verbose(s"Handling animation manually: fromX: $fromX, fromY: $fromY, toX: $toX, toY: $toY")
 //      val holder = oldHolder.asInstanceOf[MessageViewHolder]
 //      holder.view.getFooter.foreach { f =>

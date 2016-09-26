@@ -120,7 +120,7 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesListAdapter)(im
       view.set(position, msg, prev, isFirstUnread)
     } { // partial update
       case FocusChanged => //nothing special to do
-      case LikesChanged => view.getFooter.foreach(_.updateLikes(msg.likes))
+      case LikesChanged => view.getFooter.foreach(_.updateLikes(msg.likedBySelf, msg.likes))
       case _ => // not defined
     }
     view.getFooter.foreach(_.setVisible(focused || msg.likes.nonEmpty))

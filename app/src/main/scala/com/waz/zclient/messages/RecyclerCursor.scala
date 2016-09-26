@@ -211,7 +211,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
         search(pe) match {
           case Found(pos) =>
             verbose(s"found, notifiying adapter at pos: ${offset + pos}")
-            adapter.notifyItemChanged(offset + pos)
+            adapter.notifyItemChanged(offset + pos, payload)
           case _ => verbose("no need to notify about changes outside of window")
         }
       } else {

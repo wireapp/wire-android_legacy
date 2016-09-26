@@ -40,8 +40,9 @@ import com.waz.zclient.utils.{RichView, ZTimeFormatter}
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 import org.threeten.bp.DateTimeUtils
 
+import scala.concurrent.duration._
+
 //TODO timestamp/like details animation
-//TODO switching between timestamp and likes details after timeout
 //TODO like hint
 //TODO tracking
 //TODO recycle chatheads in like details view - see MembersGridView for more
@@ -59,25 +60,46 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
   private val timeStampAndStatus: TextView = findById(R.id.timestamp_and_status)
   private val likeDetails: LikeDetailsLayout = findById(R.id.like_details)
 
-  private var hideTimestampFuture = CancellableFuture.cancelled[Unit]()
+  private var hideTimestampFuture = CancellableFuture.successful[Unit](())
 
   private var pos = -1
 
-  private val messageAndLikes = Signal[MessageAndLikes]()
+  private val message = Signal[MessageData]()
+  private val isLiked = Signal[Boolean](false)
 
-  private val isLiked = messageAndLikes.map(_.likes.nonEmpty)
-
-  val focused = selection.focused.zip(messageAndLikes.map(_.message.id)).map {
+  val focused = selection.focused.zip(message.map(_.id)).map {
     case (Some(selectedId), thisId) => selectedId == thisId
     case _ => false
   }
 
-  focused.on(Threading.Ui)(timeStampAndStatus.setVisible)
-  focused.zip(isLiked).map { case (false, true) => true; case _ => false }.on(Threading.Ui)(likeDetails.setVisible)
+  focused.zip(isLiked).map {
+    case (true, _) => true
+    case _ => false
+  }.on(Threading.Ui)(timeStampAndStatus.setVisible)
 
-  val conv = signals.conv(messageAndLikes.map(_.message))
+  focused.zip(isLiked).map {
+    case (false, true) => true
+    case _ => false
+  }.on(Threading.Ui)(likeDetails.setVisible)
 
-  messageAndLikes.map(_.message).zip(conv.map(_.convType)).on(Threading.Ui) {
+  Signal(focused, isLiked, message).on(Threading.Ui) {
+    case (true, true, msg) =>
+      hideTimestampFuture.cancel()
+      hideTimestampFuture = CancellableFuture.delay(3.seconds).map[Unit](_ => selection.toggleFocused(msg.id))(Threading.Background)
+    case _ =>
+      hideTimestampFuture.cancel()
+  }
+
+  likeButton.likeClicked { _ => if (focused.currentValue.contains(true))
+    message.currentValue.foreach { msg =>
+      hideTimestampFuture.cancel()
+      selection.toggleFocused(msg.id)
+    }
+  }
+
+  val conv = signals.conv(message)
+
+  message.zip(conv.map(_.convType)).on(Threading.Ui) {
     case (m, convType) =>
       val timestamp = ZTimeFormatter.getSingleMessageTime(context, DateTimeUtils.toDate(m.time))
       val text = if (controller.isSelfUser(m.userId)) {
@@ -105,14 +127,17 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
 
   override def set(pos: Int, msg: MessageAndLikes): Unit = {
     this.pos = pos
-    messageAndLikes.publish(msg, Threading.Ui)
-    likeButton.messageAndLikes.publish(msg, Threading.Ui)
+    message.publish(msg.message, Threading.Ui)
     likeDetails.messageId.publish(msg.message.id, Threading.Ui)
-    updateLikes(msg.likes)
+    likeButton.message.publish(msg.message, Threading.Ui)
+    updateLikes(msg.likedBySelf, msg.likes)
   }
 
-  override def updateLikes(likes: IndexedSeq[UserId]): Unit =
+  override def updateLikes(likedBySelf: Boolean, likes: IndexedSeq[UserId]): Unit = {
+    isLiked.publish(likes.nonEmpty, Threading.Ui)
+    likeButton.likedBySelf.publish(likedBySelf, Threading.Ui)
     likeDetails.likedBy.publish(likes, Threading.Ui)
+  }
 }
 
 object FooterPartView {
@@ -135,13 +160,13 @@ class LikeButton(context: Context, attrs: AttributeSet, style: Int) extends Fram
   private val likeButtonAnimation: TextView = findById(R.id.like__button_animation)
 
   val controller = inject[FooterController]
-  val messageAndLikes = Signal[MessageAndLikes]()
-  val likedBySelf = messageAndLikes.map(_.likedBySelf)
+  val likedBySelf = Signal[Boolean]()
+  val message = Signal[MessageData]()
 
   val likeClicked = EventStream[Unit]()
   new EventStreamWithAuxSignal[Unit, Boolean](likeClicked, likedBySelf).map { case (_, likedBySelf) => likedBySelf.map(!_) }.collect { case Some(l) => l } { like =>
     verbose(s"setting message to liked:  $like")
-    controller.setLiked(like, messageAndLikes.map(_.message))
+    controller.setLiked(like, message)
   }
 
   likeButtonConstant onClick {

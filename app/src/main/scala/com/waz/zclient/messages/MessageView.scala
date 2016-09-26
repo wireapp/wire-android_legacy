@@ -321,7 +321,7 @@ trait Footer extends ViewPart {
 
   def set(pos: Int, msg: MessageAndLikes): Unit
 
-  def updateLikes(likes: IndexedSeq[UserId]): Unit
+  def updateLikes(likedBySelf: Boolean, likes: IndexedSeq[UserId]): Unit
 }
 
 
