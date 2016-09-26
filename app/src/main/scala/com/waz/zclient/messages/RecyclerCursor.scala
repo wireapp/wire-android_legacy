@@ -28,6 +28,7 @@ import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal, Subscription}
+import com.waz.zclient.messages.ItemAnimator.{LikesChanged, Payload}
 import com.waz.zclient.{Injectable, Injector}
 import org.threeten.bp.Instant
 
@@ -96,7 +97,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
     toApply foreach {
       case Added(msgs) => msgs foreach window.onAdded // TODO: batching (use notifyRange if possible)
       case Removed(msg) => window.onRemoved(msg)
-      case Updated(updates) => updates foreach { case (prev, current) => window.onUpdated(prev, current) }
+      case Updated(updates) => updates foreach { case (prev, current) => window.onUpdated(prev, current, null) }
       case RemovedOlder(t) => window.onRemoved(t)
     }
 
@@ -107,7 +108,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
     verbose(s"likesChanged: $ids")
     storage.getAll(ids).map { msgs =>
       msgs foreach {
-        _ foreach { msg => window.onUpdated(msg, msg) }
+        _ foreach { msg => window.onUpdated(msg, msg, LikesChanged) }
       }
     }(Threading.Ui)
   }
@@ -201,7 +202,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
       }
     }
 
-    def onUpdated(prev: MessageData, current: MessageData) = {
+    def onUpdated(prev: MessageData, current: MessageData, payload: Payload) = {
       val pe = Entry(prev)
       val ce = Entry(current)
 
@@ -223,7 +224,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, adapter: RecyclerView.Ad
           case (Found(src), InsertionPoint(dst)) if src == dst || src == dst - 1 =>
             // time changed, but position remains the same
             entries.update(src, ce)
-            adapter.notifyItemChanged(offset + src)
+            adapter.notifyItemChanged(offset + src, payload)
           case (Found(src), InsertionPoint(dst)) =>
             entries.remove(src)
             val target = if (dst > src) dst - 1 else dst // use dst - 1 since one item was just removed on left side

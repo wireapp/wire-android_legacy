@@ -17,6 +17,8 @@
  */
 package com.waz.zclient.messages
 
+import java.util
+
 import android.support.v7.widget.RecyclerView
 import android.view.ViewGroup
 import com.waz.ZLog.ImplicitTag._
@@ -26,6 +28,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.{Injectable, Injector}
+import collection.JavaConverters._
 
 class MessagesListAdapter()(implicit inj: Injector, ec: EventContext) extends RecyclerView.Adapter[MessageViewHolder]() with Injectable with MessagesListView.Adapter { adapter =>
 
@@ -59,8 +62,12 @@ class MessagesListAdapter()(implicit inj: Injector, ec: EventContext) extends Re
   override def getItemViewType(position: Int): Int = MessageView.viewType(message(position).message.msgType)
 
   override def onBindViewHolder(holder: MessageViewHolder, pos: Int): Unit = {
+    onBindViewHolder(holder, pos, new util.ArrayList[AnyRef])
+  }
+
+  override def onBindViewHolder(holder: MessageViewHolder, pos: Int, payloads: util.List[AnyRef]): Unit = {
     verbose(s"onBindViewHolder: position: $pos")
-    holder.bind(pos, message(pos), if (pos == 0) None else Some(message(pos - 1).message), isFirstUnread(pos))
+    holder.bind(pos, message(pos), if (pos == 0) None else Some(message(pos - 1).message), isFirstUnread(pos), payloads.asScala.toList)
     onBindView ! pos
   }
 

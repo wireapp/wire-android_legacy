@@ -33,6 +33,8 @@ package object utils {
 
     def setVisible(isVisible: Boolean): Unit = view.setVisibility(if (isVisible) VISIBLE else GONE)
 
+    def isVisible = view.getVisibility == VISIBLE
+
     def setMarginTop(m: Int) = {
       view.getLayoutParams.asInstanceOf[ViewGroup.MarginLayoutParams].topMargin = m
       view.invalidate()

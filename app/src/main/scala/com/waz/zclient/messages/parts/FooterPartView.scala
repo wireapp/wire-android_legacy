@@ -25,7 +25,7 @@ import android.widget.{FrameLayout, LinearLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
 import com.waz.api.Message.Status
-import com.waz.model.{MessageData, UserId}
+import com.waz.model.{MessageData, MessageId, UserId}
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.{CancellableFuture, Threading}
@@ -51,8 +51,6 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
 
   inflate(R.layout.message_footer_content)
 
-  private val focused = Signal[Boolean](false)
-
   val selection = inject[SelectionController].messages
   val controller = inject[FooterController]
   val signals = inject[SyncEngineSignals]
@@ -68,6 +66,11 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
   private val messageAndLikes = Signal[MessageAndLikes]()
 
   private val isLiked = messageAndLikes.map(_.likes.nonEmpty)
+
+  val focused = selection.focused.zip(messageAndLikes.map(_.message.id)).map {
+    case (Some(selectedId), thisId) => selectedId == thisId
+    case _ => false
+  }
 
   focused.on(Threading.Ui)(timeStampAndStatus.setVisible)
   focused.zip(isLiked).map { case (false, true) => true; case _ => false }.on(Threading.Ui)(likeDetails.setVisible)
@@ -100,14 +103,16 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
       })
   }
 
-  override def set(pos: Int, msg: MessageAndLikes, isFocused: Boolean): Unit = {
-    verbose(s"setting footer, isFocused?: $isFocused")
+  override def set(pos: Int, msg: MessageAndLikes): Unit = {
     this.pos = pos
-    focused.publish(isFocused, Threading.Ui)
     messageAndLikes.publish(msg, Threading.Ui)
     likeButton.messageAndLikes.publish(msg, Threading.Ui)
-    likeDetails.messageAndLikes.publish(msg, Threading.Ui)
+    likeDetails.messageId.publish(msg.message.id, Threading.Ui)
+    updateLikes(msg.likes)
   }
+
+  override def updateLikes(likes: IndexedSeq[UserId]): Unit =
+    likeDetails.likedBy.publish(likes, Threading.Ui)
 }
 
 object FooterPartView {
@@ -165,21 +170,21 @@ class LikeDetailsLayout(context: Context, attrs: AttributeSet, style: Int) exten
   private val chatheads = Seq.tabulate(chatheadContainer.getChildCount)(chatheadContainer.getChildAt).collect { case v: ChatheadView => v }
 
   val controller = inject[FooterController]
-  val messageAndLikes = Signal[MessageAndLikes]()
-  val userIds = messageAndLikes.map(_.likes)
+  val messageId = Signal[MessageId]()
+  val likedBy = Signal[IndexedSeq[UserId]]()
 
-  userIds.map(ids => showAvatars(ids)).on(Threading.Ui)(chatheadContainer.setVisible)
+  likedBy.map(ids => showAvatars(ids)).on(Threading.Ui)(chatheadContainer.setVisible)
 
-  userIds.collect { case ids if showAvatars(ids) => ids }.on(Threading.Ui)(_.zip(chatheads).foreach { case (id, view) => view.setUserId(id) })
+  likedBy.collect { case ids if showAvatars(ids) => ids }.on(Threading.Ui)(_.zip(chatheads).foreach { case (id, view) => view.setUserId(id) })
 
-  val displayText = userIds flatMap controller.getDisplayNameString
+  val displayText = likedBy flatMap controller.getDisplayNameString
 
   displayText.collect { case Some(t) => t }.on(Threading.Ui)(description.setText)
   displayText.map { case Some(_) => true; case _ => false }.on(Threading.Ui)(description.setVisible)
 
-  userIds.on(Threading.Ui)(_ => hintArrow.setVisible(false))
+  likedBy.on(Threading.Ui)(_ => hintArrow.setVisible(false))
 
-  chatheadContainer.onClick(messageAndLikes.map(_.message.id).currentValue.foreach(inject[ScreenController].showUsersWhoLike))
+  chatheadContainer.onClick(messageId.currentValue.foreach(inject[ScreenController].showUsersWhoLike))
 }
 
 

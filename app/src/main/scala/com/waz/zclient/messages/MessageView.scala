@@ -25,13 +25,12 @@ import android.widget.LinearLayout
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.Message
-import com.waz.model.{MessageContent, MessageData, MessageId}
+import com.waz.model.{MessageContent, MessageData, MessageId, UserId}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.{RichOption, returning}
 import com.waz.zclient.controllers.global.SelectionController
-import com.waz.zclient.messages.MessageView.getTopMargin
 import com.waz.zclient.messages.MsgPart._
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
@@ -52,6 +51,9 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
   private val selection = inject[SelectionController].messages
   private var msgId: MessageId = _
 
+  private var separator = Option.empty[TimeSeparator]
+  private var footer = Option.empty[Footer]
+
   var parent = Option.empty[ViewGroup]
   private def widthHint = parent.fold(0)(_.getWidth)
 
@@ -59,7 +61,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
     selection.toggleFocused(msgId)
   }
 
-  def set(pos: Int, mAndL: MessageAndLikes, prev: Option[MessageData], focused: Boolean, isFirstUnread: Boolean): Unit = {
+  def set(pos: Int, mAndL: MessageAndLikes, prev: Option[MessageData], isFirstUnread: Boolean): Unit = {
     val msg = mAndL.message
     msgId = msg.id
     verbose(s"set $pos, $mAndL")
@@ -81,15 +83,19 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
         // TODO: add invite banner part for first member create message
         builder ++= contentParts
 
-        if ((focused && focusableTypes.contains(msg.msgType))|| mAndL.likes.nonEmpty)
+        if (focusableTypes.contains(msg.msgType))//|| mAndL.likes.nonEmpty) TODO need to trigger open animation if liked
           builder += MsgPart.Footer -> None
 
         builder.result()
       }
 
     if (parts.nonEmpty) this.setMarginTop(getTopMargin(prev.map(_.msgType), parts.head._1))
-    setParts(pos, mAndL, parts, focused, isFirstUnread)
+    setParts(pos, mAndL, parts, isFirstUnread)
   }
+
+  def getSeparator = separator
+
+  def getFooter = footer
 
   private def getSeparatorType(msg: MessageData, prev: Option[MessageData], isFirstUnread: Boolean): Option[MsgPart] = msg.msgType match {
     case Message.Type.CONNECT_REQUEST => None
@@ -107,7 +113,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
   private def shouldShowChathead(msg: MessageData, prev: Option[MessageData]) =
     !msg.isSystemMessage && msg.msgType != Message.Type.KNOCK && prev.forall(m => m.userId != msg.userId || m.isSystemMessage)
 
-  private def setParts(position: Int, msg: MessageAndLikes, parts: Seq[(MsgPart, Option[MessageContent])], isFocused: Boolean, isFirstUnread: Boolean) = {
+  private def setParts(position: Int, msg: MessageAndLikes, parts: Seq[(MsgPart, Option[MessageContent])], isFirstUnread: Boolean) = {
     verbose(s"setParts: position: $position, parts: ${parts.map(_._1)}")
 
     // recycle views in reverse order, recycled views are stored in a Stack, this way we will get the same views back if parts are the same
@@ -121,9 +127,14 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
     parts.zipWithIndex foreach { case ((tpe, content), index) =>
       val view = factory.get(tpe, this)
       view match {
-        case v: TimeSeparator   => v.set(position, msg.message.time, isFirstUnread)
-        case v: MessageViewPart => v.set(position, msg.message, content, widthHint)
-        case v: Footer          => v.set(position, msg, isFocused)
+        case v: TimeSeparator =>
+          v.set(position, msg.message.time, isFirstUnread)
+          separator = Some(v)
+        case v: MessageViewPart =>
+          v.set(position, msg.message, content, widthHint)
+        case v: Footer =>
+          v.set(position, msg)
+          footer = Some(v)
       }
       addViewInLayout(view, index, Option(view.getLayoutParams) getOrElse factory.DefaultLayoutParams)
     }
@@ -308,7 +319,9 @@ trait MessageViewPart extends ViewPart {
 trait Footer extends ViewPart {
   override val tpe = Footer
 
-  def set(pos: Int, msg: MessageAndLikes, isFocused: Boolean): Unit
+  def set(pos: Int, msg: MessageAndLikes): Unit
+
+  def updateLikes(likes: IndexedSeq[UserId]): Unit
 }
 
 

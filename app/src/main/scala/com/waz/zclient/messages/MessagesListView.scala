@@ -29,8 +29,10 @@ import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.controllers.global.SelectionController
+import com.waz.zclient.messages.ItemAnimator.{FocusChanged, LikesChanged}
 import com.waz.zclient.messages.ScrollController.Scroll
 import com.waz.zclient.messages.controllers.NavigationController
+import com.waz.zclient.utils.RichView
 import com.waz.zclient.{Injectable, Injector, ViewHelper}
 
 import scala.concurrent.duration._
@@ -47,6 +49,7 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
   setHasFixedSize(true)
   setLayoutManager(layoutManager)
   setAdapter(adapter)
+  setItemAnimator(new ItemAnimator)
 
   scrollController.onScroll.on(Threading.Ui) { case Scroll(pos, smooth) =>
     verbose(s"Scrolling to pos: $pos")
@@ -104,14 +107,26 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesListAdapter)(im
   private var focused = false
 
   selection.focused.onChanged { f =>
-    if (focused != f.contains(id)) adapter.notifyItemChanged(getAdapterPosition)
+    if (focused != f.contains(id)) adapter.notifyItemChanged(getAdapterPosition, FocusChanged)
   }
 
-  def bind(position: Int, msg: MessageAndLikes, prev: Option[MessageData], isFirstUnread: Boolean): Unit = {
+  def isFocused = focused
+
+  def bind(position: Int, msg: MessageAndLikes, prev: Option[MessageData], isFirstUnread: Boolean, payloads: List[AnyRef]): Unit = {
     id = msg.message.id
     focused = selection.focused.currentValue.exists(_.contains(id))
-    view.set(position, msg, prev, focused, isFirstUnread)
+
+    payloads.headOption.fold { //full update
+      view.set(position, msg, prev, isFirstUnread)
+    } { // partial update
+      case FocusChanged => //nothing special to do
+      case LikesChanged => view.getFooter.foreach(_.updateLikes(msg.likes))
+      case _ => // not defined
+    }
+    view.getFooter.foreach(_.setVisible(focused || msg.likes.nonEmpty))
+
   }
+
 }
 
 
