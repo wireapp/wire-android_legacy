@@ -29,6 +29,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.waz.zclient.ui.R;
+import com.waz.zclient.ui.text.GlyphTextView;
 import com.waz.zclient.utils.ViewUtils;
 
 import java.util.ArrayList;
@@ -100,6 +101,16 @@ public class TabIndicatorLayout extends LinearLayout implements ViewPager.OnPage
         setLabels(labels);
     }
 
+    public void setGlyphLabels(int[] resIds) {
+        List<String> labels = new ArrayList<>();
+
+        for (int resId : resIds) {
+            labels.add(getResources().getString(resId));
+        }
+
+        setGlyphLabels(labels);
+    }
+
     public void setLabelHeight(int height) {
         ViewGroup.LayoutParams params = textViewContainer.getLayoutParams();
         params.height = height;
@@ -126,6 +137,25 @@ public class TabIndicatorLayout extends LinearLayout implements ViewPager.OnPage
 
         requestLayout();
     }
+
+    public void setGlyphLabels(List<String> lables) {
+        anchorPositions = new int[lables.size()];
+
+        textViewContainer.removeAllViews();
+
+        for (int i = 0; i < lables.size(); i++) {
+            String label = lables.get(i);
+            LayoutInflater inflater = LayoutInflater.from(getContext());
+            GlyphTextView textView = (GlyphTextView) inflater.inflate(R.layout.tab_glyphtextview, textViewContainer, false);
+            textViewContainer.addView(textView);
+
+            textView.setText(label);
+            textView.setId(i);
+        }
+
+        requestLayout();
+    }
+
 
     public void setTextColor(ColorStateList textColor) {
         if (textViewContainer == null) {

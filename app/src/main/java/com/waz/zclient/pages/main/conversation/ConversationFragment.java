@@ -1673,11 +1673,13 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 break;
             case VOICE_FILTER_RECORDING:
                 extendedCursorContainer.openVoiceFilter(this);
+                hideSendButtonIfNeeded();
                 getControllerFactory().getTrackingController().tagEvent(OpenedMediaActionEvent.audiomessage(
                     isGroupConversation));
                 break;
             case IMAGES:
                 extendedCursorContainer.openCursorImages(this);
+                hideSendButtonIfNeeded();
                 getControllerFactory().getTrackingController().tagEvent(OpenedMediaActionEvent.photo(
                     isGroupConversation));
                 break;
@@ -1792,6 +1794,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             extendedCursorContainer.openEmojis(getControllerFactory().getUserPreferencesController().getRecentEmojis(),
                                                getControllerFactory().getUserPreferencesController().getUnsupportedEmojis(),
                                                this);
+            cursorLayout.showSendButton(true);
         } else {
             extendedCursorContainer.close(false);
             KeyboardUtils.showKeyboard(getActivity());
@@ -2260,6 +2263,13 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     @Override
     public void onExtendedCursorClosed() {
         cursorLayout.onExtendedCursorClosed();
+        hideSendButtonIfNeeded();
+    }
+
+    private void hideSendButtonIfNeeded() {
+        if (!getControllerFactory().getUserPreferencesController().isCursorSendButtonEnabled() || TextUtils.isEmpty(cursorLayout.getText())) {
+            cursorLayout.showSendButton(false);
+        }
     }
 
     private void editMessage(final Message message) {
@@ -2467,6 +2477,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     @Override
     public void onEmojiSelected(String emoji) {
         cursorLayout.appendText(emoji);
+        getControllerFactory().getUserPreferencesController().addRecentEmoji(emoji);
     }
 
     public interface Container {
