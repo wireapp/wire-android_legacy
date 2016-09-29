@@ -29,23 +29,24 @@ package object zclient {
   def AppModule = new Module {
     val ctx = WireApplication.APP_INSTANCE
     bind [Context]          to ctx
+    bind [WireContext]      to ctx
     bind [Application]      to ctx
-    bind [EventContext]     to EventContext.Global
+    bind [EventContext]     to ctx.eventContext
     bind [ContentResolver]  to ctx.getContentResolver
 
     //Android services
-    bind [ActivityManager]          to ctx.getSystemService(Context.ACTIVITY_SERVICE).asInstanceOf[ActivityManager]
-    bind [PowerManager]             to ctx.getSystemService(Context.POWER_SERVICE).asInstanceOf[PowerManager]
-    bind [Vibrator]                 to ctx.getSystemService(Context.VIBRATOR_SERVICE).asInstanceOf[Vibrator]
-    bind [AudioManager]             to ctx.getSystemService(Context.AUDIO_SERVICE).asInstanceOf[AudioManager]
-    bind [NotificationManager]      to ctx.getSystemService(Context.NOTIFICATION_SERVICE).asInstanceOf[NotificationManager]
+    bind [ActivityManager]      to ctx.getSystemService(Context.ACTIVITY_SERVICE).asInstanceOf[ActivityManager]
+    bind [PowerManager]         to ctx.getSystemService(Context.POWER_SERVICE).asInstanceOf[PowerManager]
+    bind [Vibrator]             to ctx.getSystemService(Context.VIBRATOR_SERVICE).asInstanceOf[Vibrator]
+    bind [AudioManager]         to ctx.getSystemService(Context.AUDIO_SERVICE).asInstanceOf[AudioManager]
+    bind [NotificationManager]  to ctx.getSystemService(Context.NOTIFICATION_SERVICE).asInstanceOf[NotificationManager]
   }
 
   def ContextModule(ctx: WireContext) = new Module {
-    bind [Context] to ctx
-    bind [WireContext] to ctx
+    bind [Context]      to ctx
+    bind [WireContext]  to ctx
     bind [EventContext] to ctx.eventContext
-    bind [Activity] to {
+    bind [Activity]     to {
       def getActivity(ctx: Context): Activity = ctx match {
         case a: Activity => a
         case w: ContextWrapper => getActivity(w.getBaseContext)

@@ -24,7 +24,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.api.MessageContent.Location
 import com.waz.zclient.utils.IntentUtils
 
-class BrowserController(context: Context) {
+class BrowserController(implicit context: Context) {
 
   def normalizeHttp(uri: Uri) =
     if (uri.getScheme == null) uri.buildUpon().scheme("http").build()

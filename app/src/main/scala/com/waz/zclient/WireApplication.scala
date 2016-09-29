@@ -17,7 +17,6 @@
  */
 package com.waz.zclient
 
-import android.content.Context
 import android.support.multidex.MultiDexApplication
 import com.waz.api.{NetworkMode, ZMessagingApi, ZMessagingApiFactory}
 import com.waz.service.{MediaManagerService, NetworkModeService, PreferenceService, ZMessaging}
@@ -44,57 +43,58 @@ object WireApplication {
   var APP_INSTANCE: WireApplication = _
 
   lazy val Global = new Module {
-    implicit val eventContext = EventContext.Global
+    implicit lazy val wContext     = inject[WireContext]
+    implicit lazy val eventContext = inject[EventContext]
 
     def controllerFactory = APP_INSTANCE.asInstanceOf[ZApplication].getControllerFactory
 
     // SE services
-    bind[Signal[Option[ZMessaging]]] to ZMessaging.currentUi.currentZms
-    bind[Signal[ZMessaging]] to inject[Signal[Option[ZMessaging]]].collect { case Some(z) => z }
-    bind[PreferenceService] to ZMessaging.currentGlobal.prefs
-    bind[NetworkModeService] to ZMessaging.currentGlobal.network
-    bind[MediaManagerService] to ZMessaging.currentGlobal.mediaManager
+    bind [Signal[Option[ZMessaging]]]  to ZMessaging.currentUi.currentZms
+    bind [Signal[ZMessaging]]          to inject[Signal[Option[ZMessaging]]].collect { case Some(z) => z }
+    bind [PreferenceService]           to ZMessaging.currentGlobal.prefs
+    bind [NetworkModeService]          to ZMessaging.currentGlobal.network
+    bind [MediaManagerService]         to ZMessaging.currentGlobal.mediaManager
 
     // old controllers
     // TODO: remove controller factory, reimplement those controllers
-    bind[IControllerFactory] toProvider controllerFactory
-    bind[IPickUserController] toProvider controllerFactory.getPickUserController
-    bind[IThemeController] toProvider controllerFactory.getThemeController
-    bind[IConversationScreenController] toProvider controllerFactory.getConversationScreenController
-    bind[INavigationController] toProvider controllerFactory.getNavigationController
+    bind [IControllerFactory]            toProvider controllerFactory
+    bind [IPickUserController]           toProvider controllerFactory.getPickUserController
+    bind [IThemeController]              toProvider controllerFactory.getThemeController
+    bind [IConversationScreenController] toProvider controllerFactory.getConversationScreenController
+    bind [INavigationController]         toProvider controllerFactory.getNavigationController
 
     // global controllers
-    bind[AccentColorController] to new AccentColorController()
-    bind[GlobalCallingController] to new GlobalCallingController(inject[Context])
-    bind[GlobalCameraController] to new GlobalCameraController(inject[Context], new AndroidCameraFactory)
-    bind[SelectionController] to new SelectionController()
+    bind [AccentColorController]   to new AccentColorController()
+    bind [GlobalCallingController] to new GlobalCallingController()
+    bind [GlobalCameraController]  to new GlobalCameraController(new AndroidCameraFactory)
+    bind [SelectionController]     to new SelectionController()
 
     //notifications
-    bind[MessageNotificationsController] to new MessageNotificationsController()
-    bind[ImageNotificationsController] to new ImageNotificationsController(inject[Context])
-    bind[CallingNotificationsController] to new CallingNotificationsController(inject[Context])
+    bind [MessageNotificationsController]  to new MessageNotificationsController()
+    bind [ImageNotificationsController]    to new ImageNotificationsController()
+    bind [CallingNotificationsController]  to new CallingNotificationsController()
   }
 
   def services(ctx: WireContext) = new Module {
-    bind [ZMessagingApi] to new ZMessagingApiProvider(ctx).api
+    bind [ZMessagingApi]      to new ZMessagingApiProvider(ctx).api
     bind [Signal[ZMessaging]] to inject[ZMessagingApi].asInstanceOf[com.waz.api.impl.ZMessagingApi].ui.currentZms.collect{case Some(zms)=> zms }
     bind [Signal[NetworkMode]]
   }
 
   def controllers(implicit ctx: WireContext) = new Module {
-    bind[KeyboardController] to new KeyboardController()
-    bind[CurrentCallController] to new CurrentCallController()
-    bind[CallPermissionsController] to new CallPermissionsController()
-    bind[ImageController] to new ImageController()
-    bind[AssetController] to new AssetController()
-    bind[BrowserController] to new BrowserController(ctx)
-    bind[MessageViewFactory] to new MessageViewFactory()
-    bind[PermissionActivity] to ctx.asInstanceOf[PermissionActivity]
-    bind[PermissionsController] to new PermissionsController(new PermissionsWrapper)
-    bind[SyncEngineSignals] to new SyncEngineSignals()
-    bind[FooterController] to new FooterController()
-    bind[ScreenController] to new ScreenController()
-    bind[NavigationController] to new NavigationController()
+    bind [KeyboardController]        to new KeyboardController()
+    bind [CurrentCallController]     to new CurrentCallController()
+    bind [CallPermissionsController] to new CallPermissionsController()
+    bind [ImageController]           to new ImageController()
+    bind [AssetController]           to new AssetController()
+    bind [BrowserController]         to new BrowserController()
+    bind [MessageViewFactory]        to new MessageViewFactory()
+    bind [PermissionActivity]        to ctx.asInstanceOf[PermissionActivity]
+    bind [PermissionsController]     to new PermissionsController(new PermissionsWrapper)
+    bind [SyncEngineSignals]         to new SyncEngineSignals()
+    bind [FooterController]          to new FooterController()
+    bind [ScreenController]          to new ScreenController()
+    bind [NavigationController]      to new NavigationController()
   }
 }
 

@@ -21,22 +21,20 @@ import android.app.NotificationManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.support.v4.app.NotificationCompat
-import com.waz.model.{ImageAssetData, AssetId}
+import com.waz.model.{AssetId, ImageAssetData}
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapRequest.Single
 import com.waz.service.assets.AssetService.BitmapResult
 import com.waz.service.images.BitmapSignal
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
-import com.waz.zclient.{Injectable, Injector, WireContext, R}
+import com.waz.utils.events.{EventContext, Signal}
+import com.waz.zclient.{Injectable, Injector, R, WireContext}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.IntentUtils._
 
-class ImageNotificationsController(cxt: WireContext)(implicit inj: Injector) extends Injectable {
+class ImageNotificationsController(implicit cxt: WireContext, eventContext: EventContext, inj: Injector) extends Injectable {
 
   import ImageNotificationsController._
-  implicit val eventContext = cxt.eventContext
-  implicit val context = cxt
 
   val zms = inject[Signal[Option[ZMessaging]]].collect { case Some(z) => z }
   val notManager = inject[NotificationManager]

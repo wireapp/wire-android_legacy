@@ -38,7 +38,7 @@ import timber.log.Timber
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
-class GlobalCameraController(cxt: WireContext, cameraFactory: CameraFactory)(implicit eventContext: EventContext) {
+class GlobalCameraController(cameraFactory: CameraFactory)(implicit cxt: WireContext, eventContext: EventContext) {
 
   implicit val logTag = ZLog.logTagFor[GlobalCameraController]
 

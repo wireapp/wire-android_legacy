@@ -30,19 +30,16 @@ import com.waz.service.assets.AssetService.BitmapResult
 import com.waz.service.assets.AssetService.BitmapResult.BitmapLoaded
 import com.waz.service.images.BitmapSignal
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.calling.controllers.GlobalCallingController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.IntentUtils.getNotificationAppLaunchIntent
 import com.waz.zclient.{Injectable, Injector, R, WireContext}
 import com.waz.zms.CallService
 
-class CallingNotificationsController(cxt: WireContext)(implicit inj: Injector) extends Injectable {
+class CallingNotificationsController(implicit cxt: WireContext, eventContext: EventContext, inj: Injector) extends Injectable {
 
   import CallingNotificationsController._
-
-  implicit val eventContext = cxt.eventContext
-  implicit val context = cxt
 
   val callImageSizePx = toPx(CallImageSizeDp)
 
@@ -91,12 +88,12 @@ class CallingNotificationsController(cxt: WireContext)(implicit inj: Injector) e
       val bigTextStyle = new NotificationCompat.BigTextStyle()
         .setBigContentTitle(conv)
         .bigText(message)
-      val builder = new NotificationCompat.Builder(context)
+      val builder = new NotificationCompat.Builder(cxt)
         .setSmallIcon(R.drawable.ic_menu_logo)
         .setLargeIcon(bitmap.orNull)
         .setContentTitle(title)
         .setContentText(message)
-        .setContentIntent(getNotificationAppLaunchIntent(context))
+        .setContentIntent(getNotificationAppLaunchIntent(cxt))
         .setStyle(bigTextStyle)
         .setCategory(NotificationCompat.CATEGORY_CALL)
         .setPriority(NotificationCompat.PRIORITY_MAX)
@@ -134,13 +131,13 @@ class CallingNotificationsController(cxt: WireContext)(implicit inj: Injector) e
 
   }
 
-  private def silenceIntent(convId: ConvId) = pendingIntent(SilenceRequestCode, CallService.silenceIntent(context, convId))
+  private def silenceIntent(convId: ConvId) = pendingIntent(SilenceRequestCode, CallService.silenceIntent(cxt, convId))
 
-  private def leaveIntent(convId: ConvId) = pendingIntent(LeaveRequestCode, CallService.leaveIntent(context, convId))
+  private def leaveIntent(convId: ConvId) = pendingIntent(LeaveRequestCode, CallService.leaveIntent(cxt, convId))
 
-  private def joinIntent(convId: ConvId) = pendingIntent(JoinRequestCode, CallService.joinIntent(context, convId))
+  private def joinIntent(convId: ConvId) = pendingIntent(JoinRequestCode, CallService.joinIntent(cxt, convId))
 
-  private def pendingIntent(reqCode: Int, intent: Intent) = PendingIntent.getService(context, reqCode, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+  private def pendingIntent(reqCode: Int, intent: Intent) = PendingIntent.getService(cxt, reqCode, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 }
 
 object CallingNotificationsController {

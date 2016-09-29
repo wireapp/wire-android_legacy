@@ -26,9 +26,7 @@ import com.waz.threading.Threading
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.{Injectable, Injector, WireContext}
 
-class GlobalCallingController(cxt: WireContext)(implicit inj: Injector) extends Injectable {
-
-  implicit val eventContext = cxt.eventContext
+class GlobalCallingController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext) extends Injectable {
 
   val zms = inject[Signal[Option[ZMessaging]]]
 
