@@ -61,8 +61,11 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int) extends Lin
     selection.toggleFocused(msgId)
   }
 
+  var pos = -1 //messages position for debugging only
+
   def set(pos: Int, mAndL: MessageAndLikes, prev: Option[MessageData], isFirstUnread: Boolean): Unit = {
     val msg = mAndL.message
+    this.pos = pos
     msgId = msg.id
     verbose(s"set $pos, $mAndL")
 

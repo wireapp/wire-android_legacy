@@ -29,7 +29,7 @@ import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.controllers.global.SelectionController
-import com.waz.zclient.messages.ItemAnimator.{FocusChanged, LikesChanged}
+import com.waz.zclient.messages.ItemChangeAnimator.{FocusChanged, LikesChanged}
 import com.waz.zclient.messages.ScrollController.Scroll
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.utils.RichView
@@ -49,7 +49,7 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
   setHasFixedSize(true)
   setLayoutManager(layoutManager)
   setAdapter(adapter)
-  setItemAnimator(new ItemAnimator)
+  setItemAnimator(new ItemChangeAnimator)
 
   scrollController.onScroll.on(Threading.Ui) { case Scroll(pos, smooth) =>
     verbose(s"Scrolling to pos: $pos")
@@ -104,27 +104,28 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesListAdapter)(im
 
   private val selection = inject[SelectionController].messages
   private var id: MessageId = _
-  private var focused = false
+  private var _isFocused = false
+  private var _hasLikes = false
 
   selection.focused.onChanged { f =>
-    if (focused != f.contains(id)) adapter.notifyItemChanged(getAdapterPosition, FocusChanged)
+    if (_isFocused != f.contains(id)) adapter.notifyItemChanged(getAdapterPosition, FocusChanged)
   }
 
-  def isFocused = focused
+  def shouldDisplayFooter = _isFocused || _hasLikes
 
   def bind(position: Int, msg: MessageAndLikes, prev: Option[MessageData], isFirstUnread: Boolean, payloads: List[AnyRef]): Unit = {
     id = msg.message.id
-    focused = selection.focused.currentValue.exists(_.contains(id))
+    _isFocused = selection.focused.currentValue.exists(_.contains(id))
+    _hasLikes = msg.likes.nonEmpty
 
     payloads.headOption.fold { //full update
       view.set(position, msg, prev, isFirstUnread)
+      view.getFooter.foreach(_.setVisible(_isFocused || _hasLikes)) //set initial state for footer
     } { // partial update
       case FocusChanged => //nothing special to do
       case LikesChanged => view.getFooter.foreach(_.updateLikes(msg.likedBySelf, msg.likes))
       case _ => // not defined
     }
-    view.getFooter.foreach(_.setVisible(focused || msg.likes.nonEmpty))
-
   }
 
 }

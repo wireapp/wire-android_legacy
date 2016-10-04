@@ -28,7 +28,7 @@ import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal, Subscription}
-import com.waz.zclient.messages.ItemAnimator.{LikesChanged, Payload}
+import com.waz.zclient.messages.ItemChangeAnimator.{LikesChanged, Payload}
 import com.waz.zclient.{Injectable, Injector}
 import org.threeten.bp.Instant
 
