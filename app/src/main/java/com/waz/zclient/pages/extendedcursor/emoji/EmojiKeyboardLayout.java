@@ -21,6 +21,7 @@ package com.waz.zclient.pages.extendedcursor.emoji;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -122,6 +123,11 @@ public class EmojiKeyboardLayout extends LinearLayout {
         tapIndicatorLayout.setCallback(new TabIndicatorLayout.Callback() {
             @Override
             public void onItemSelected(int pos) {
+                if (ViewCompat.getLayoutDirection(EmojiKeyboardLayout.this) == ViewCompat.LAYOUT_DIRECTION_RTL) {
+                    // Revert tab position for RTL layout
+                    pos = (TAB_COUNT - 1) - pos;
+                }
+
                 if (pos == TAB_COUNT - 1) {
                     Threading.Background().execute(new Runnable() {
                         @Override
