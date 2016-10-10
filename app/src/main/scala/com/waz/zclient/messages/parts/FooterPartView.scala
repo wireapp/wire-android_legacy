@@ -42,7 +42,6 @@ import org.threeten.bp.DateTimeUtils
 
 import scala.concurrent.duration._
 
-//TODO timestamp/like details animation
 //TODO like hint
 //TODO tracking
 //TODO recycle chatheads in like details view - see MembersGridView for more
@@ -56,9 +55,13 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
   val controller = inject[FooterController]
   val signals = inject[SyncEngineSignals]
 
+  val height = getDimen(R.dimen.content__footer__height).toInt
+
   private val likeButton: LikeButton = findById(R.id.like__button)
   private val timeStampAndStatus: TextView = findById(R.id.timestamp_and_status)
+
   private val likeDetails: LikeDetailsLayout = findById(R.id.like_details)
+  likeDetails.setTranslationY(-height)
 
   private var hideTimestampFuture = CancellableFuture.successful[Unit](())
 
@@ -71,16 +74,6 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
     case (Some(selectedId), thisId) => selectedId == thisId
     case _ => false
   }
-
-  focused.zip(isLiked).map {
-    case (true, _) => true
-    case _ => false
-  }.on(Threading.Ui)(timeStampAndStatus.setVisible)
-
-  focused.zip(isLiked).map {
-    case (false, true) => true
-    case _ => false
-  }.on(Threading.Ui)(likeDetails.setVisible)
 
   Signal(focused, isLiked, message).on(Threading.Ui) {
     case (true, true, msg) =>
@@ -138,6 +131,14 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
     likeButton.likedBySelf.publish(likedBySelf, Threading.Ui)
     likeDetails.likedBy.publish(likes, Threading.Ui)
   }
+
+  override def setContentTranslationY(translation: Float): Unit = {
+    likeDetails.setTranslationY(translation - height)
+    timeStampAndStatus.setTranslationY(translation)
+  }
+
+  override def getContentTranslation = timeStampAndStatus.getTranslationY
+
 }
 
 object FooterPartView {

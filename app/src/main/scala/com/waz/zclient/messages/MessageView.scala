@@ -322,6 +322,11 @@ trait MessageViewPart extends ViewPart {
 trait Footer extends ViewPart {
   override val tpe = Footer
 
+  //for animation
+  def setContentTranslationY(translation: Float): Unit
+
+  def getContentTranslation: Float
+
   def set(pos: Int, msg: MessageAndLikes): Unit
 
   def updateLikes(likedBySelf: Boolean, likes: IndexedSeq[UserId]): Unit

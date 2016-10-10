@@ -32,8 +32,9 @@ import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.messages.ItemChangeAnimator.{FocusChanged, LikesChanged}
 import com.waz.zclient.messages.ScrollController.Scroll
 import com.waz.zclient.messages.controllers.NavigationController
+import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.{Injectable, Injector, ViewHelper}
+import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 
 import scala.concurrent.duration._
 
@@ -111,6 +112,10 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesListAdapter)(im
     if (_isFocused != f.contains(id)) adapter.notifyItemChanged(getAdapterPosition, FocusChanged)
   }
 
+  def hasLikes = _hasLikes
+
+  def isFocused = _isFocused
+
   def shouldDisplayFooter = _isFocused || _hasLikes
 
   def bind(position: Int, msg: MessageAndLikes, prev: Option[MessageData], isFirstUnread: Boolean, payloads: List[AnyRef]): Unit = {
@@ -120,7 +125,13 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesListAdapter)(im
 
     payloads.headOption.fold { //full update
       view.set(position, msg, prev, isFirstUnread)
-      view.getFooter.foreach(_.setVisible(_isFocused || _hasLikes)) //set initial state for footer
+      view.getFooter.foreach{ f =>  //set initial state for footer
+        f.setVisible(shouldDisplayFooter)
+        if (f.isVisible) {
+          f.setContentTranslationY(if (hasLikes && isFocused) 0 else getDimen(R.dimen.content__footer__height)(itemView.getContext).toInt) //FIXME
+        }
+
+      }
     } { // partial update
       case FocusChanged => //nothing special to do
       case LikesChanged => view.getFooter.foreach(_.updateLikes(msg.likedBySelf, msg.likes))
