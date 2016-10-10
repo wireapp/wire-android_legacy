@@ -22,16 +22,13 @@ import android.animation.{Animator, ValueAnimator}
 import android.support.v7.widget.DefaultItemAnimator
 import android.support.v7.widget.RecyclerView.{ItemAnimator, ViewHolder}
 import android.view.View
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.utils.returning
 import com.waz.zclient.R
+import com.waz.zclient.ui.animation.interpolators.penner.Expo
 import com.waz.zclient.utils.ContextUtils.getDimen
-import com.waz.zclient.utils.{ContextUtils, RichView}
+import com.waz.zclient.utils.RichView
 
 class ItemChangeAnimator extends DefaultItemAnimator {
-
-  import ItemChangeAnimator._
 
   private var pendingChanges = Set.empty[ViewHolder]
   private var anims = Set.empty[ValueAnimator]
@@ -44,22 +41,17 @@ class ItemChangeAnimator extends DefaultItemAnimator {
   }
 
   //Setting a payload in notifyItemChanged(int pos, Object payload) ensures that the old viewHolder is re-used, allowing
-  //us to manually control animations
+  //us to manually control animations. If this method returns true, then the animations will be run later on the UI thread
+  //when the ReyclerView calls our #runPendingAnimations implementation
   override def animateChange(oldHolder: ViewHolder, newHolder: ViewHolder, fromX: Int, fromY: Int, toX: Int, toY: Int): Boolean = {
     if (oldHolder == newHolder) {
-      verbose(s"Handling animation manually on view ${itemPos(oldHolder)}: fromX: $fromX, fromY: $fromY, toX: $toX, toY: $toY")
       pendingChanges += oldHolder
       true
-    } else {
-      verbose("Letting default animation take place")
-      super.animateChange(oldHolder, newHolder, fromX, fromY, toX, toY)
-    }
+    } else super.animateChange(oldHolder, newHolder, fromX, fromY, toX, toY)
   }
 
   override def runPendingAnimations(): Unit = {
     super.runPendingAnimations()
-
-    verbose(s"runPendingAnimations(), changes: $pendingChanges")
     if (pendingChanges.nonEmpty) {
       val changer: Runnable = new Runnable() {
         def run() = {
@@ -68,35 +60,25 @@ class ItemChangeAnimator extends DefaultItemAnimator {
           }
         }
       }
-      //      if (removalsPending) { //TODO figure out if there are any pending removals...
-      //        ViewCompat.postOnAnimationDelayed(pendingChanges.head.viewHolder.itemView, changer, getRemoveDuration)
-      //      }
-      //      else {
       changer.run()
-      //      }
     }
   }
 
   def animateChangeImpl(viewHolder: ViewHolder): Unit = {
     val holder = viewHolder.asInstanceOf[MessageViewHolder]
-    holder.view.getFooter.foreach { footer =>
-      verbose(s"animating footer: alpha: ${footer.getAlpha}, footer height: ${footer.getHeight}, ${footer.getMeasuredHeight}")
-      returning(new OpenCloseAnimation(footer, !holder.shouldDisplayFooter) { self =>
-        override def onStart(): Unit = {
-          dispatchChangeStarting(holder, false)
+    holder.view.getFooter.foreach {
+      case footer if shouldAnimateFooter(holder) =>
+        returning(new FooterAnimator(footer, holder)) { anim =>
+          pendingChanges -= viewHolder
+          anims += anim
+          anim.start()
         }
-
-        override def onEnd(): Unit = {
-          anims -= self
-          dispatchChangeFinished(holder, false)
-        }
-      }) { anim =>
-        pendingChanges -= viewHolder
-        anims += anim
-        anim.start()
-      }
+      case _ => //no animation
     }
   }
+
+  def shouldAnimateFooter(h: MessageViewHolder) = h.shouldDisplayFooter && !h.view.getFooter.exists(_.isVisible) ||
+    !h.shouldDisplayFooter && h.view.getFooter.exists(_.isVisible)
 
   override def endAnimations(): Unit = {
     anims.foreach(_.end())
@@ -106,6 +88,39 @@ class ItemChangeAnimator extends DefaultItemAnimator {
   }
 
   override def isRunning: Boolean = super.isRunning || pendingChanges.nonEmpty || anims.nonEmpty
+
+  class FooterAnimator(footer: View, holder: MessageViewHolder) extends ValueAnimator with AnimatorListener with ValueAnimator.AnimatorUpdateListener {
+
+    private val closing = !holder.shouldDisplayFooter
+    private val openHeight = getDimen(R.dimen.content__footer__height)(holder.itemView.getContext).toInt //TODO must be a better way
+
+    setFloatValues(0, 1)
+    setInterpolator(new Expo.EaseInOut)
+    addListener(this)
+    addUpdateListener(this)
+
+    override def onAnimationStart(animation: Animator): Unit = {
+      if (!closing) footer.setVisible(true)
+      dispatchChangeStarting(holder, false)
+    }
+
+    override def onAnimationEnd(animation: Animator): Unit = {
+      if (closing) footer.setVisible(false)
+      anims -= this
+      dispatchChangeFinished(holder, false)
+    }
+
+    override def onAnimationUpdate(animation: ValueAnimator): Unit = {
+      val fr = animation.getAnimatedFraction
+      val heightDelta = (openHeight * fr).toInt
+      footer.getLayoutParams.height = if (closing) openHeight - heightDelta else heightDelta
+      footer.requestLayout()
+    }
+
+    override def onAnimationRepeat(animation: Animator): Unit = ()
+
+    override def onAnimationCancel(animation: Animator): Unit = ()
+  }
 }
 
 object ItemChangeAnimator {
@@ -113,49 +128,5 @@ object ItemChangeAnimator {
   trait Payload
   case object FocusChanged extends Payload
   case object LikesChanged extends Payload
-
-  abstract class StartEndAnimatorListener extends AnimatorListener {
-
-    override def onAnimationCancel(animation: Animator): Unit = ()
-
-    override def onAnimationRepeat(animation: Animator): Unit = ()
-  }
-
-  abstract class OpenCloseAnimation(view: View, closing: Boolean) extends ValueAnimator with AnimatorListener with ValueAnimator.AnimatorUpdateListener {
-
-    private val startHeight = 0
-    private val targetHeight = getDimen(R.dimen.content__footer__height)(view.getContext) //TODO must be a better way
-
-    setFloatValues(0, 1)
-    addListener(this)
-    addUpdateListener(this)
-
-    def onStart(): Unit
-
-    def onEnd(): Unit
-
-    override def onAnimationStart(animation: Animator): Unit = {
-      verbose(s"${if (closing) "Close" else "Open"} beginning")
-      if (!closing) view.setVisible(true)
-      onStart()
-    }
-
-    override def onAnimationEnd(animation: Animator): Unit = {
-      verbose(s"${if (closing) "Close" else "Open"} ending")
-      if (closing) view.setVisible(false)
-      onEnd()
-    }
-
-    override def onAnimationUpdate(animation: ValueAnimator): Unit = {
-      val fr = animation.getAnimatedFraction
-      val newHeight = startHeight + (targetHeight * fr).toInt
-      view.getLayoutParams.height = if (closing) view.getHeight - newHeight else newHeight
-      //      view.setAlpha( if (closing) 1 - fr else 0 + fr)
-//      view.requestLayout()
-    }
-
-    override def onAnimationRepeat(animation: Animator): Unit = ()
-    override def onAnimationCancel(animation: Animator): Unit = ()
-  }
 
 }
