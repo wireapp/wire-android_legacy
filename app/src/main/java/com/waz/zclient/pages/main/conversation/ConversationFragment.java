@@ -27,6 +27,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.database.DataSetObserver;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -48,6 +49,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.widget.AbsListView;
 import android.widget.FrameLayout;
@@ -63,6 +65,7 @@ import com.waz.api.AssetForUpload;
 import com.waz.api.AudioAssetForUpload;
 import com.waz.api.AudioEffect;
 import com.waz.api.ConversationsList;
+import com.waz.api.EphemeralExpiration;
 import com.waz.api.ErrorsList;
 import com.waz.api.IConversation;
 import com.waz.api.ImageAsset;
@@ -132,14 +135,15 @@ import com.waz.zclient.notifications.controllers.ImageNotificationsController;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer;
 import com.waz.zclient.pages.extendedcursor.emoji.EmojiKeyboardLayout;
+import com.waz.zclient.pages.extendedcursor.ephemeral.EphemeralLayout;
 import com.waz.zclient.pages.extendedcursor.image.CursorImagesLayout;
 import com.waz.zclient.pages.extendedcursor.image.ImagePreviewLayout;
 import com.waz.zclient.pages.extendedcursor.voicefilter.VoiceFilterLayout;
 import com.waz.zclient.pages.main.calling.enums.VoiceBarAppearance;
-import com.waz.zclient.pages.main.conversation.views.TypingIndicatorView;
 import com.waz.zclient.pages.main.conversation.views.ExpandableView;
 import com.waz.zclient.pages.main.conversation.views.MessageBottomSheetDialog;
 import com.waz.zclient.pages.main.conversation.views.MessageViewsContainer;
+import com.waz.zclient.pages.main.conversation.views.TypingIndicatorView;
 import com.waz.zclient.pages.main.conversation.views.header.StreamMediaPlayerBarFragment;
 import com.waz.zclient.pages.main.conversation.views.listview.ConversationListView;
 import com.waz.zclient.pages.main.conversation.views.listview.ConversationScrollListener;
@@ -184,6 +188,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                                                                                                   OnBoardingHintFragment.Container,
                                                                                                   ConversationScrollListener.ScrolledToBottomListener,
                                                                                                   ConversationScrollListener.VisibleMessagesChangesListener,
+                                                                                                  ConversationScrollListener.ScrollStateChangeListener,
                                                                                                   KeyboardVisibilityObserver,
                                                                                                   AccentColorObserver,
                                                                                                   StreamMediaPlayerBarFragment.Container,
@@ -207,6 +212,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                                                                                                   VoiceFilterLayout.Callback,
                                                                                                   EmojiKeyboardLayout.Callback,
                                                                                                   ExtendedCursorContainer.Callback,
+                                                                                                  EphemeralLayout.Callback,
                                                                                                   TypingIndicatorView.Callback {
     public static final String TAG = ConversationFragment.class.getName();
     private static final String SAVED_STATE_PREVIEW = "SAVED_STATE_PREVIEW";
@@ -601,6 +607,12 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         });
 
         messageAdapter = new MessageAdapter(this);
+        messageAdapter.registerDataSetObserver(new DataSetObserver() {
+            @Override
+            public void onChanged() {
+                checkEphemeralMessageOnScreen();
+            }
+        });
         listView.setAdapter(messageAdapter);
         messageStreamManager = new MessageStreamManager(listView, messageAdapter);
 
@@ -812,6 +824,17 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 getControllerFactory().getSingleImageController().setViewReferences(clickedImageView);
             }
         }, getResources().getInteger(R.integer.framework_animation_duration_long));
+    }
+
+    @Override
+    public void onShowVideo(Uri uri) {
+
+    }
+
+    @Override
+    public void onHideVideo() {
+        getControllerFactory().getNavigationController().setRightPage(Page.MESSAGE_STREAM, TAG);
+        listView.setEnabled(true);
     }
 
     private View getViewByPosition(int pos, ListView listView) {
@@ -1390,7 +1413,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             }
             messageBottomSheetDialog = null;
         }
-        if (message == null) {
+        if (message == null || message.isEphemeral()) {
             return false;
         }
         final boolean isMemberOfConversation = getStoreFactory().getConversationStore().getCurrentConversation().isMemberOfConversation();
@@ -1784,6 +1807,11 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             extendedCursorContainer.close(false);
             KeyboardUtils.showKeyboard(getActivity());
         }
+    }
+
+    @Override
+    public void onEphemeralButtonClicked(EphemeralExpiration currentEphemeralExpiration) {
+        extendedCursorContainer.openEphemeral(this, currentEphemeralExpiration);
     }
 
     @Override
@@ -2459,6 +2487,32 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         Toast.makeText(getContext(), R.string.message_bottom_menu_action_save_fail, Toast.LENGTH_SHORT).show();
     }
 
+    private void checkEphemeralMessageOnScreen() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+            // Not really supported
+            return;
+        }
+        try {
+            boolean ephemeral = false;
+            for (int i = listView.getFirstVisiblePosition(); i <= listView.getLastVisiblePosition(); i++) {
+                Message message = (Message) listView.getItemAtPosition(i);
+                if (message.isEphemeral()) {
+                    ephemeral = true;
+                    break;
+                }
+            }
+            if (ephemeral) {
+                getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+            } else {
+                getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+            }
+
+        } catch (Throwable t) {
+            //ignore
+            Timber.w(t, "Something went wrong");
+        }
+    }
+
     @Override
     public void onEmojiSelected(String emoji) {
         cursorLayout.appendText(emoji);
@@ -2472,6 +2526,22 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         } else {
             cursorLayout.showTopbar(!listView.computeIsScrolledToBottom());
         }
+    }
+
+    @Override
+    public void onEphemeralExpirationSelected(EphemeralExpiration expiration, boolean close) {
+        if (getStoreFactory() == null || getStoreFactory().isTornDown()) {
+            return;
+        }
+        if (close) {
+            extendedCursorContainer.close(false);
+        }
+        getStoreFactory().getConversationStore().getCurrentConversation().setEphemeralExpiration(expiration);
+    }
+
+    @Override
+    public void onScrollStateChanged(boolean idle) {
+        checkEphemeralMessageOnScreen();
     }
 
     public interface Container {

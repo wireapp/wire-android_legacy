@@ -218,8 +218,10 @@ public class FooterViewController implements ConversationItemViewController,
         likeButton.setText(context.getText(likedByThisUser ? R.string.glyph__liked : R.string.glyph__like));
         likeButton.setTextColor(likedByThisUser ? likeButtonColorLiked : likeButtonColorUnliked);
         likeButton.setTag(likedByThisUser);
-        if (message.isLiked() && likeButton.getVisibility() == View.GONE) {
+        if (message.isLiked() && likeButton.getVisibility() == View.GONE && shouldShowLikeButton()) {
             likeButton.setVisibility(View.VISIBLE);
+        } else if (message.isEphemeral()) {
+            likeButton.setVisibility(View.GONE);
         }
         if (showLikeAnimation) {
             showLikeAnimation(likedByThisUser);
@@ -235,7 +237,7 @@ public class FooterViewController implements ConversationItemViewController,
         Runnable linkRunnable = null;
         boolean linkUnderlined = true;
         int linkHighlightColor = ContextCompat.getColor(context, R.color.accent_red);
-        if (message.isEphemeral()) {
+        if (message.isEphemeral() && message.getExpirationTime().compareTo(Instant.MAX) != 0 && !message.isExpired()) {
             long remainingTime = remainingSeconds(message.getExpirationTime());
             status = context.getString(R.string.message_footer__status__ephemeral, timestamp, remainingTime);
             if (remainingTime > 0) {

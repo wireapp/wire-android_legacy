@@ -268,6 +268,11 @@ public class MockMessagesList extends MockObservable implements MessagesList {
         }
 
         @Override
+        public boolean isExpired() {
+            return false;
+        }
+
+        @Override
         public EphemeralExpiration getEphemeralExpiration() {
             return null;
         }

@@ -28,7 +28,9 @@
     <com.waz.zclient.pages.main.conversation.views.row.message.views.ProgressDotsView
         android:id="@+id/pdv__row_conversation__audio_placeholder_dots"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="@dimen/content__audio_message__view_height"
+        android:layout_marginStart="@dimen/content__padding_left"
+        android:layout_marginEnd="@dimen/content__padding_right"
         android:visibility="gone"
         />
 

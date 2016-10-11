@@ -26,10 +26,12 @@ import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
+import com.waz.api.EphemeralExpiration;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.globallayout.KeyboardHeightObserver;
 import com.waz.zclient.controllers.globallayout.KeyboardVisibilityObserver;
 import com.waz.zclient.pages.extendedcursor.emoji.EmojiKeyboardLayout;
+import com.waz.zclient.pages.extendedcursor.ephemeral.EphemeralLayout;
 import com.waz.zclient.pages.extendedcursor.image.CursorImagesLayout;
 import com.waz.zclient.pages.extendedcursor.voicefilter.VoiceFilterLayout;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
@@ -50,7 +52,8 @@ public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeig
         NONE,
         VOICE_FILTER_RECORDING,
         IMAGES,
-        EMOJIS
+        EMOJIS,
+        EPHEMERAL
     }
 
     private final SharedPreferences sharedPreferences;
@@ -62,6 +65,7 @@ public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeig
 
     private VoiceFilterLayout voiceFilterLayout;
     private EmojiKeyboardLayout emojiKeyboardLayout;
+    private EphemeralLayout ephemeralLayout;
 
     private int keyboardHeightLandscape;
     private int keyboardHeight;
@@ -122,6 +126,12 @@ public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeig
         openWithType(Type.EMOJIS);
         emojiKeyboardLayout.setCallback(callback);
         emojiKeyboardLayout.setEmojis(recent, unsupported);
+    }
+
+    public void openEphemeral(EphemeralLayout.Callback callback, EphemeralExpiration expiration) {
+        openWithType(Type.EPHEMERAL);
+        ephemeralLayout.setSelectedExpiration(expiration);
+        ephemeralLayout.setCallback(callback);
     }
 
     public void setAccentColor(int accentColor) {
@@ -222,6 +232,13 @@ public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeig
                                                                                                      this,
                                                                                                      false);
                 addView(emojiKeyboardLayout);
+                break;
+            case EPHEMERAL:
+                closeVoiceFilter();
+                closeCursorImages();
+
+                ephemeralLayout = (EphemeralLayout) LayoutInflater.from(getContext()).inflate(R.layout.ephemeral_keyboard_layout, this, false);
+                addView(ephemeralLayout);
                 break;
         }
 

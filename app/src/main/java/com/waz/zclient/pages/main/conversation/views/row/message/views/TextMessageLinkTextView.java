@@ -18,6 +18,7 @@
 package com.waz.zclient.pages.main.conversation.views.row.message.views;
 
 import android.content.Context;
+import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.MotionEvent;
@@ -28,7 +29,7 @@ import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.pages.main.conversation.views.MessageViewsContainer;
 import com.waz.zclient.ui.text.LinkTextView;
-import org.threeten.bp.Instant;
+import com.waz.zclient.ui.utils.TypefaceUtils;
 
 public class TextMessageLinkTextView extends LinkTextView implements AccentColorObserver,
                                                                      View.OnLongClickListener {
@@ -39,6 +40,7 @@ public class TextMessageLinkTextView extends LinkTextView implements AccentColor
     private MessageViewsContainer messageViewContainer;
     private final float textSizeRegular;
     private final float textSizeEmoji;
+    private final Typeface defaultTypeface;
 
     private final ModelObserver<Message> messageModelObserver = new ModelObserver<Message>() {
         @Override
@@ -49,11 +51,13 @@ public class TextMessageLinkTextView extends LinkTextView implements AccentColor
             }
 
             String messageText;
-            if (message.isEphemeral() && message.getExpirationTime().isBefore(Instant.now())) {
-                // TODO should be obfuscated
-                messageText = message.getBody();
-                messageText = messageText.replaceAll("\u2028", "\n");
-            } else if (message.isDeleted()) {
+            if (message.isEphemeral() && message.isExpired()) {
+                setTypeface(TypefaceUtils.getTypeface(TypefaceUtils.getRedactedTypedaceName()));
+            } else {
+                setTypeface(defaultTypeface);
+            }
+
+            if (message.isDeleted()) {
                 messageText = "";
             } else {
                 messageText = message.getBody();
@@ -64,7 +68,11 @@ public class TextMessageLinkTextView extends LinkTextView implements AccentColor
                 setVisibility(GONE);
             } else {
                 setVisibility(VISIBLE);
-                setTextLink(messageText);
+                if (message.isEphemeral() && message.isExpired()) {
+                    setText(messageText);
+                } else {
+                    setTextLink(messageText);
+                }
             }
 
             resizeIfEmoji(message);
@@ -86,6 +94,7 @@ public class TextMessageLinkTextView extends LinkTextView implements AccentColor
         textSizeEmoji = context.getResources().getDimensionPixelSize(R.dimen.wire__text_size__emoji);
 
         setOnLongClickListener(this);
+        defaultTypeface = getTypeface();
     }
 
     /*

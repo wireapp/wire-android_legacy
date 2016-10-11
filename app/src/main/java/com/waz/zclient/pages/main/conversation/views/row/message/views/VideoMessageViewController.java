@@ -54,6 +54,7 @@ import com.waz.zclient.views.OnDoubleClickListener;
 import timber.log.Timber;
 
 import static android.view.View.GONE;
+import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
 
 public class VideoMessageViewController extends MessageViewController implements ImageAsset.BitmapCallback,
@@ -81,6 +82,11 @@ public class VideoMessageViewController extends MessageViewController implements
         @Override
         public void updated(Message message) {
             Timber.i("Message status %s", message.getMessageStatus());
+            if (message.isEphemeral() && message.isExpired()) {
+                refreshPreviewSize();
+                messageExpired();
+                return;
+            }
             assetObserver.setAndUpdate(message.getAsset());
             refreshPreviewSize();
             updateVideoStatus();
@@ -212,9 +218,11 @@ public class VideoMessageViewController extends MessageViewController implements
         messageObserver.clear();
         assetObserver.clear();
         progressIndicatorObserver.clear();
+        placeHolderDots.setExpired(false);
         imageAssetModelObserver.clear();
         actionButton.clearProgress();
         previewImage.setImageResource(R.drawable.shape_video_message_no_preview);
+        previewImage.setVisibility(VISIBLE);
         videoInfoText.setText("");
         videoInfoText.setBackground(null);
         if (previewImageLoadHandle != null) {
@@ -360,12 +368,16 @@ public class VideoMessageViewController extends MessageViewController implements
                                 if (messageViewsContainer == null || messageViewsContainer.isTornDown()) {
                                     return;
                                 }
-                                messageViewsContainer.getControllerFactory().getTrackingController().tagEvent(new PlayedVideoMessageEvent(
-                                    (int) asset.getDuration().getSeconds(),
-                                    !message.getUser().isMe(),
-                                    messageViewsContainer.getStoreFactory().getConversationStore().getCurrentConversation()));
-                                final Intent intent = AssetUtils.getOpenFileIntent(uri, asset.getMimeType());
-                                context.startActivity(intent);
+                                if (message.isEphemeral()) {
+                                    messageViewsContainer.getControllerFactory().getSingleImageController().showVideo(uri);
+                                } else {
+                                    messageViewsContainer.getControllerFactory().getTrackingController().tagEvent(new PlayedVideoMessageEvent(
+                                        (int) asset.getDuration().getSeconds(),
+                                        !message.getUser().isMe(),
+                                        messageViewsContainer.getStoreFactory().getConversationStore().getCurrentConversation()));
+                                    final Intent intent = AssetUtils.getOpenFileIntent(uri, asset.getMimeType());
+                                    context.startActivity(intent);
+                                }
                             }
 
                             @Override
@@ -381,12 +393,16 @@ public class VideoMessageViewController extends MessageViewController implements
                         if (messageViewsContainer == null || messageViewsContainer.isTornDown()) {
                             return;
                         }
-                        messageViewsContainer.getControllerFactory().getTrackingController().tagEvent(new PlayedVideoMessageEvent(
-                            (int) asset.getDuration().getSeconds(),
-                            !message.getUser().isMe(),
-                            messageViewsContainer.getStoreFactory().getConversationStore().getCurrentConversation()));
-                        final Intent intent = AssetUtils.getOpenFileIntent(uri, asset.getMimeType());
-                        context.startActivity(intent);
+                        if (message.isEphemeral()) {
+                            messageViewsContainer.getControllerFactory().getSingleImageController().showVideo(uri);
+                        } else {
+                            messageViewsContainer.getControllerFactory().getTrackingController().tagEvent(new PlayedVideoMessageEvent(
+                                (int) asset.getDuration().getSeconds(),
+                                !message.getUser().isMe(),
+                                messageViewsContainer.getStoreFactory().getConversationStore().getCurrentConversation()));
+                            final Intent intent = AssetUtils.getOpenFileIntent(uri, asset.getMimeType());
+                            context.startActivity(intent);
+                        }
                     }
 
                     @Override
@@ -438,6 +454,20 @@ public class VideoMessageViewController extends MessageViewController implements
     @Override
     public void onBitmapLoadingFailed() {
         // noop
+    }
+
+    private void messageExpired() {
+        assetObserver.clear();
+        imageAssetModelObserver.clear();
+        progressIndicatorObserver.clear();
+        if (previewImageLoadHandle != null) {
+            previewImageLoadHandle.cancel();
+        }
+        placeHolderDots.setExpired(true);
+        placeHolderDots.setVisibility(VISIBLE);
+        actionButton.setVisibility(GONE);
+        previewImage.setVisibility(INVISIBLE);
+        videoInfoText.setText("");
     }
 
 }

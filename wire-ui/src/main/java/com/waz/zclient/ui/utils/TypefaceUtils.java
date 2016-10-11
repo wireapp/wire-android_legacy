@@ -40,4 +40,8 @@ public class TypefaceUtils {
     public static String getGlyphsTypefaceName() {
         return "wire_glyphs.otf";
     }
+
+    public static String getRedactedTypedaceName() {
+        return "redacted_script_regular.ttf";
+    }
 }

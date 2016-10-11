@@ -70,8 +70,7 @@ public class MediaPlayerView extends FrameLayout implements CircularSeekBar.OnCi
     public MediaPlayerView(final Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        LayoutInflater inflater = LayoutInflater.from(context);
-        View view = inflater.inflate(R.layout.media_player_layout, this, true);
+        View view = LayoutInflater.from(context).inflate(R.layout.media_player_layout, this, true);
 
         musicTrackIndicator = ViewUtils.getView(view, R.id.gtv__media_music_indicator);
         loadingIndicatorProgressView = ViewUtils.getView(view, R.id.pb__media_loading_indicator);

@@ -56,7 +56,7 @@ public class AudioMessageViewController extends MessageViewController implements
 
     private View view;
     private AssetActionButton actionButton;
-    private View progressDotsView;
+    private ProgressDotsView progressDotsView;
     private TextView audioDurationText;
     private SeekBar audioSeekBar;
     private LinearLayout selectionContainer;
@@ -68,7 +68,9 @@ public class AudioMessageViewController extends MessageViewController implements
     private final ModelObserver<Message> messageModelObserver = new ModelObserver<Message>() {
         @Override
         public void updated(Message message) {
-            if (asset == null) {
+            if (message.isEphemeral() && message.isExpired()) {
+                messageExpired();
+            } else if (asset == null) {
                 asset = message.getAsset();
                 actionButton.setOnClickListener(actionButtonOnClickListener);
                 assetModelObserver.setAndUpdate(asset);
@@ -219,6 +221,7 @@ public class AudioMessageViewController extends MessageViewController implements
         actionButton.clearProgress();
         audioDurationText.setText(StringUtils.formatTimeSeconds(0));
         audioSeekBar.setEnabled(false);
+        progressDotsView.setExpired(false);
         super.recycle();
     }
 
@@ -341,6 +344,12 @@ public class AudioMessageViewController extends MessageViewController implements
                 !message.getUser().isMe(),
                 messageViewsContainer.getStoreFactory().getConversationStore().getCurrentConversation()));
         }
+    }
+
+    private void messageExpired() {
+        assetModelObserver.clear();
+        setProgressDotsVisible(true);
+        progressDotsView.setExpired(true);
     }
 
 }

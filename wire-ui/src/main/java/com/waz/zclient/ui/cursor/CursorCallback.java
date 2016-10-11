@@ -18,6 +18,7 @@
 package com.waz.zclient.ui.cursor;
 
 import android.view.MotionEvent;
+import com.waz.api.EphemeralExpiration;
 import com.waz.api.Message;
 
 public interface CursorCallback {
@@ -42,4 +43,6 @@ public interface CursorCallback {
     void onClosedMessageEditing();
 
     void onEmojiButtonClicked(boolean showEmojiKeyboard);
+
+    void onEphemeralButtonClicked(EphemeralExpiration currentEphemeralExpiration);
 }

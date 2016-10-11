@@ -20,6 +20,8 @@ package com.waz.zclient.pages.main.conversation.views.row.message.views;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
 import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -39,6 +41,7 @@ import com.waz.zclient.pages.main.conversation.views.MessageViewsContainer;
 import com.waz.zclient.pages.main.conversation.views.row.message.MessageViewController;
 import com.waz.zclient.pages.main.conversation.views.row.separator.Separator;
 import com.waz.zclient.ui.text.GlyphTextView;
+import com.waz.zclient.ui.utils.TypefaceUtils;
 import com.waz.zclient.ui.views.EphemeralDotAnimationView;
 import com.waz.zclient.utils.IntentUtils;
 import com.waz.zclient.utils.LayoutSpec;
@@ -63,6 +66,7 @@ public class LocationMessageViewController extends MessageViewController impleme
 
     private ImageAsset imageAsset;
     private LoadHandle bitmapLoadHandle;
+    private final Typeface defaultLocationNameTypeface;
 
     private int imageWidth;
 
@@ -78,7 +82,12 @@ public class LocationMessageViewController extends MessageViewController impleme
 
     private final ModelObserver<Message> messageModelObserver = new ModelObserver<Message>() {
         @Override
-        public void updated(Message model) {
+        public void updated(Message message) {
+            if (message.isEphemeral() && message.isExpired()) {
+                messageExpired();
+                return;
+            }
+
             mapImageView.setTag(message.getId());
             if (imageWidth > 0) {
                 imageAsset = message.getImage(imageWidth, context.getResources().getDimensionPixelSize(R.dimen.content__location_message__map_height));
@@ -148,6 +157,7 @@ public class LocationMessageViewController extends MessageViewController impleme
         ephemeralDotAnimationView = ViewUtils.getView(view, R.id.edav__ephemeral_view);
 
         imageWidth = getImageWidth();
+        defaultLocationNameTypeface = locationName.getTypeface();
         afterInit();
     }
 
@@ -246,6 +256,7 @@ public class LocationMessageViewController extends MessageViewController impleme
         mapPlaceholderText.setVisibility(View.VISIBLE);
 
         locationName.setText("");
+        locationName.setTypeface(defaultLocationNameTypeface);
         view.setTag(null);
         imageAssetModelObserver.clear();
         messageModelObserver.clear();
@@ -260,5 +271,19 @@ public class LocationMessageViewController extends MessageViewController impleme
     @Override
     public void onAccentColorHasChanged(Object sender, int color) {
         pinView.setTextColor(color);
+    }
+
+    private void messageExpired() {
+        imageAssetModelObserver.clear();
+        if (bitmapLoadHandle != null) {
+            bitmapLoadHandle.cancel();
+        }
+        mapImageView.setVisibility(View.VISIBLE);
+        pinImage.setVisibility(View.INVISIBLE);
+        pinView.setVisibility(View.INVISIBLE);
+        mapPlaceholderText.setVisibility(View.INVISIBLE);
+        mapImageView.setImageDrawable(new ColorDrawable(ContextCompat.getColor(context, R.color.ephemera)));
+        Typeface redactedTypeface = TypefaceUtils.getTypeface(TypefaceUtils.getRedactedTypedaceName());
+        locationName.setTypeface(redactedTypeface);
     }
 }

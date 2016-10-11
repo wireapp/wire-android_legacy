@@ -69,7 +69,8 @@ public class ZApplication extends WireApplication implements NotificationsHandle
 
             try {
                 Typeface typeface;
-                if (name.equals(getString(R.string.wire__glyphs))) {
+                if (name.equals(getString(R.string.wire__glyphs)) ||
+                    name.equals(getString(R.string.wire__typeface__redacted))) {
                     typeface = Typeface.createFromAsset(getAssets(), FONT_FOLDER + File.separator + name);
                 } else if (name.equals(getString(R.string.wire__typeface__thin))) {
                     typeface = Typeface.create("sans-serif-thin", Typeface.NORMAL);

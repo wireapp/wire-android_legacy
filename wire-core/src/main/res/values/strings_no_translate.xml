@@ -21,6 +21,7 @@
 <resources>
     <!-- Typeface Definitions -->
     <string translatable="false" name="wire__glyphs" >wire_glyphs.otf</string>
+    <string translatable="false" name="wire__typeface__redacted">redacted_script_regular.ttf</string>
     <string translatable="false" name="wire__typeface__light">Roboto_Light</string>
     <string translatable="false" name="wire__typeface__thin">Roboto_Thin</string>
     <string translatable="false" name="wire__typeface__regular">Roboto_Regular</string>

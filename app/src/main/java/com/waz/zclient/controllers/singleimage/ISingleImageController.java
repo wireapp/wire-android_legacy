@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.controllers.singleimage;
 
+import android.net.Uri;
 import android.view.View;
 import com.waz.api.Message;
 import com.waz.api.User;
@@ -47,4 +48,8 @@ public interface ISingleImageController {
     void showSingleImage(Message message);
 
     void showSingleImage(User user);
+
+    void showVideo(Uri uri);
+
+    void hideVideo();
 }

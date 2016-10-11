@@ -21,7 +21,6 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
               android:layout_gravity="center_horizontal"
               android:gravity="center"
               android:orientation="vertical"
@@ -29,14 +28,24 @@
 
     <include layout="@layout/row_conversation_text_message" />
 
-    <com.waz.zclient.views.media.MediaPlayerView
-        android:id="@+id/mpv__row_conversation__message_media_player"
+    <FrameLayout
+        android:id="@+id/fl__row_conversation__media_player_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="@dimen/row_conversation__message_media_player_margin_top"
         android:layout_marginBottom="@dimen/row_conversation__message_media_player_margin_bottom"
-        android:gravity="center_horizontal"
-        />
+        android:gravity="center"
+        >
+
+        <com.waz.zclient.views.media.MediaPlayerView
+            android:id="@+id/mpv__row_conversation__message_media_player"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center"
+            />
+
+    </FrameLayout>
 
 </LinearLayout>

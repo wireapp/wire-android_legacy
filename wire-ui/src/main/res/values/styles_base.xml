@@ -430,4 +430,9 @@
         <item name="devicePreferenceStyle">@style/Preference.Material.DevicePreference</item>
         <item name="badgeablePreferenceScreenLikeStyle">@style/Preference.Material.BadgeablePreferenceScreenLike</item>
     </style>
+
+    <style name="NumberPickerText">
+        <item name="android:textSize">@dimen/wire__text_size__big</item>
+    </style>
+
 </resources>

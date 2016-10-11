@@ -30,6 +30,7 @@ public class ConversationScrollListener implements AbsListView.OnScrollListener 
     public static final int UNSET_ITEM_POSITION = -1;
     List<ScrolledToBottomListener> scrolledToBottomListeners = new LinkedList<>();
     List<VisibleMessagesChangesListener> visibleMessagesChangedListeners = new LinkedList<>();
+    List<ScrollStateChangeListener> scrollStateChangeListeners = new LinkedList<>();
 
     private static final int MAX_OFFSET = 400;
 
@@ -38,6 +39,7 @@ public class ConversationScrollListener implements AbsListView.OnScrollListener 
     @Override
     public void onScrollStateChanged(AbsListView view, int scrollState) {
         this.scrollState = scrollState;
+        notifyScrollStateChanged(scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE);
     }
 
     @Override
@@ -49,6 +51,14 @@ public class ConversationScrollListener implements AbsListView.OnScrollListener 
         notifyOffsetFromFirstElement(listView, totalItemCount);
         notifyScrollPosition(listView, totalItemCount);
         notifyVisibleMessagesChanged(listView, firstVisibleItem, firstVisibleItem + visibleItemCount - 1);
+    }
+
+    public void registerScrollStateChangeListener(ScrollStateChangeListener listener) {
+        scrollStateChangeListeners.add(listener);
+    }
+
+    public void unregisterScrollStateChangeListener(ScrollStateChangeListener listener) {
+        scrollStateChangeListeners.remove(listener);
     }
 
     public void registerScrolledToBottomListener(ScrolledToBottomListener listener) {
@@ -65,6 +75,12 @@ public class ConversationScrollListener implements AbsListView.OnScrollListener 
 
     public void unregisterVisibleMessagesChangedListener(VisibleMessagesChangesListener listener) {
         visibleMessagesChangedListeners.remove(listener);
+    }
+
+    private void notifyScrollStateChanged(boolean idle) {
+        for (ScrollStateChangeListener listener : scrollStateChangeListeners) {
+            listener.onScrollStateChanged(idle);
+        }
     }
 
     private void notifyScrollPosition(AbsListView listView, int totalItemCount) {
@@ -139,6 +155,10 @@ public class ConversationScrollListener implements AbsListView.OnScrollListener 
         for (ScrolledToBottomListener listener : scrolledToBottomListeners) {
             listener.onScrolledAwayFromBottom();
         }
+    }
+
+    public interface ScrollStateChangeListener {
+        void onScrollStateChanged(boolean idle);
     }
 
     public interface ScrolledToBottomListener {

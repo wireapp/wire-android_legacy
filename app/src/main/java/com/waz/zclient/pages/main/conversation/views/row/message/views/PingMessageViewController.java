@@ -19,6 +19,8 @@ package com.waz.zclient.pages.main.conversation.views.row.message.views;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Typeface;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Animation;
@@ -34,6 +36,8 @@ import com.waz.zclient.ui.animation.interpolators.penner.Expo;
 import com.waz.zclient.ui.text.GlyphTextView;
 import com.waz.zclient.ui.text.TypefaceTextView;
 import com.waz.zclient.ui.utils.TextViewUtils;
+import com.waz.zclient.ui.utils.TypefaceUtils;
+import com.waz.zclient.ui.views.EphemeralDotAnimationView;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.chathead.ChatheadImageView;
 import org.threeten.bp.DateTimeUtils;
@@ -49,6 +53,7 @@ public class PingMessageViewController extends MessageViewController implements 
     private TypefaceTextView textViewMessage;
     private GlyphTextView glyphTextView;
     private ChatheadImageView userChatheadImageView;
+    private EphemeralDotAnimationView ephemeralDotAnimationView;
     private Locale locale;
 
     private View view;
@@ -56,6 +61,7 @@ public class PingMessageViewController extends MessageViewController implements 
 
     private LeftPaddingReverseAnimation knockingAnimation;
     int originalLeftPadding;
+    private final Typeface originalTypeface;
 
     @SuppressLint("InflateParams")
     public PingMessageViewController(Context context, MessageViewsContainer messageViewsContainer) {
@@ -68,8 +74,10 @@ public class PingMessageViewController extends MessageViewController implements 
         glyphTextView = ViewUtils.getView(view, R.id.gtv__knock_icon);
         glyphTextView.setOnLongClickListener(this);
         userChatheadImageView = ViewUtils.getView(view, R.id.civ__row_conversation__ping_chathead);
+        ephemeralDotAnimationView = ViewUtils.getView(view, R.id.edav__ephemeral_view);
 
         locale = context.getResources().getConfiguration().locale;
+        originalTypeface = textViewMessage.getTypeface();
 
         originalLeftPadding = context.getResources().getDimensionPixelSize(R.dimen.content__padding_left);
     }
@@ -81,6 +89,7 @@ public class PingMessageViewController extends MessageViewController implements 
         message.addUpdateListener(this);
         userChatheadImageView.setUser(user);
         userChatheadImageView.setOnClickListener(this);
+        ephemeralDotAnimationView.setMessage(message);
 
         updated();
     }
@@ -93,12 +102,24 @@ public class PingMessageViewController extends MessageViewController implements 
     @Override
     public void updated() {
         textViewMessage.setText(getPingMessage());
-        final int textColor = user.getAccent().getColor();
-        glyphTextView.setTextColor(textColor);
-        textViewMessage.setTextColor(textColor);
-        TextViewUtils.boldText(textViewMessage);
+        if (message.isEphemeral() && message.isExpired()) {
+            final int textColor = ContextCompat.getColor(context, R.color.ephemera);
+            Typeface redactedTypeface = TypefaceUtils.getTypeface(TypefaceUtils.getRedactedTypedaceName());
+            textViewMessage.setTypeface(redactedTypeface);
+            glyphTextView.setTypeface(redactedTypeface);
+            glyphTextView.setTextColor(textColor);
+            textViewMessage.setTextColor(textColor);
+        } else {
+            final int textColor = user.getAccent().getColor();
+            textViewMessage.setTypeface(originalTypeface);
+            glyphTextView.setTypeface(TypefaceUtils.getTypeface(TypefaceUtils.getGlyphsTypefaceName()));
+            glyphTextView.setTextColor(textColor);
+            textViewMessage.setTextColor(textColor);
+            TextViewUtils.boldText(textViewMessage);
+        }
 
-        if (DateTimeUtils.toDate(message.getLocalTime()).getTime() + APPROXIMATE_MESSAGE_EVALUATION_DURATION > System.currentTimeMillis()) {
+        if (DateTimeUtils.toDate(message.getLocalTime()).getTime() + APPROXIMATE_MESSAGE_EVALUATION_DURATION > System.currentTimeMillis() &&
+            (!message.isEphemeral() || !message.isExpired())) {
             startKnockAnimation();
         }
     }
@@ -186,6 +207,7 @@ public class PingMessageViewController extends MessageViewController implements 
         if (message != null) {
             message.removeUpdateListener(this);
         }
+        ephemeralDotAnimationView.setMessage(null);
         userChatheadImageView.setOnClickListener(null);
         user = null;
         super.recycle();

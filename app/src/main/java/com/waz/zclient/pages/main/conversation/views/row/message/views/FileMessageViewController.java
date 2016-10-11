@@ -78,8 +78,12 @@ public class FileMessageViewController extends MessageViewController implements 
         @Override
         public void updated(Message message) {
             Timber.i("Message status %s", message.getMessageStatus());
-            assetObserver.setAndUpdate(message.getAsset());
-            updateFileStatus();
+            if (message.isEphemeral() && message.isExpired()) {
+                messageExpired();
+            } else {
+                assetObserver.setAndUpdate(message.getAsset());
+                updateFileStatus();
+            }
         }
     };
 
@@ -222,6 +226,7 @@ public class FileMessageViewController extends MessageViewController implements 
         fileNameTextView.setText("");
         fileInfoTextView.setText("");
         downloadDoneIndicatorView.setVisibility(GONE);
+        progressDotsView.setExpired(false);
         super.recycle();
     }
 
@@ -435,5 +440,11 @@ public class FileMessageViewController extends MessageViewController implements 
                                                                                                                      message,
                                                                                                                      ReactedToMessageEvent.Method.DOUBLE_TAP));
         }
+    }
+
+    private void messageExpired() {
+        assetObserver.clear();
+        setProgressDotsVisible(true);
+        progressDotsView.setExpired(true);
     }
 }

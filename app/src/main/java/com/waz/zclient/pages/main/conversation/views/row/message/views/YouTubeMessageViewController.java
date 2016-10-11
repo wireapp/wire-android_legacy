@@ -22,7 +22,9 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -30,10 +32,10 @@ import com.waz.api.ImageAsset;
 import com.waz.api.LoadHandle;
 import com.waz.api.MediaAsset;
 import com.waz.api.Message;
-import com.waz.api.UpdateListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.tracking.events.conversation.ReactedToMessageEvent;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
+import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.core.controllers.tracking.attributes.RangedAttribute;
 import com.waz.zclient.core.controllers.tracking.events.media.PlayedYouTubeMessageEvent;
 import com.waz.zclient.pages.main.conversation.views.MessageViewsContainer;
@@ -57,6 +59,7 @@ public class YouTubeMessageViewController extends MessageViewController implemen
     private View view;
     private ImageView imageView;
     private TextMessageLinkTextView textMessageLinkTextView;
+    private View headerContainerView;
     private GlyphTextView glyphTextView;
     private TypefaceTextView errorTextView;
     private TypefaceTextView titleTextView;
@@ -67,14 +70,36 @@ public class YouTubeMessageViewController extends MessageViewController implemen
     private MediaAsset mediaAsset;
     private final float alphaOverlay;
 
-    private final UpdateListener imageAssetUpdateListener = new UpdateListener() {
+    private final ModelObserver<Message> messageModelObserver = new ModelObserver<Message>() {
         @Override
-        public void updated() {
-            if (view == null ||
-                context == null ||
-                imageAsset == null) {
+        public void updated(Message message) {
+            if (imageAsset != null) {
+                imageAssetModelObserver.clear();
+                imageAsset = null;
+            }
+            if (message.isEphemeral() && message.isExpired()) {
+                messageExpired();
                 return;
             }
+            final Message.Part mediaPart = MessageUtils.getFirstRichMediaPart(message);
+            if (mediaPart == null) {
+                showError();
+                return;
+            }
+            mediaAsset = mediaPart.getMediaAsset();
+            if (mediaAsset == null || mediaAsset.isEmpty()) {
+                showError();
+                return;
+            }
+            titleTextView.setText(mediaAsset.getTitle());
+            imageAsset = mediaAsset.getArtwork();
+            imageAssetModelObserver.setAndUpdate(imageAsset);
+        }
+    };
+
+    private final ModelObserver<ImageAsset> imageAssetModelObserver = new ModelObserver<ImageAsset>() {
+        @Override
+        public void updated(ImageAsset imageAsset) {
             if (loadHandle != null) {
                 loadHandle.cancel();
             }
@@ -126,6 +151,7 @@ public class YouTubeMessageViewController extends MessageViewController implemen
         glyphTextView.setOnClickListener(this);
         titleTextView = ViewUtils.getView(view, R.id.ttv__youtube_message__title);
         ephemeralDotAnimationView = ViewUtils.getView(view, R.id.edav__ephemeral_view);
+        headerContainerView = ViewUtils.getView(view, R.id.ll_youtube_message__header_container);
 
         alphaOverlay = ResourceUtils.getResourceFloat(context.getResources(), R.dimen.content__youtube__alpha_overlay);
         imageView.getLayoutParams().height = (int) ((double) ViewUtils.getOrientationIndependentDisplayWidth(context) * 9 / 16);
@@ -140,7 +166,7 @@ public class YouTubeMessageViewController extends MessageViewController implemen
         textMessageLinkTextView.setMessage(message);
         messageViewsContainer.getControllerFactory().getAccentColorController().addAccentColorObserver(textMessageLinkTextView);
         ephemeralDotAnimationView.setMessage(message);
-        updated();
+        messageModelObserver.setAndUpdate(message);
     }
 
     @Override
@@ -152,28 +178,6 @@ public class YouTubeMessageViewController extends MessageViewController implemen
         textMessageLinkTextView.setAlpha(opacity);
     }
 
-    public void updated() {
-        if (imageAsset != null) {
-            imageAsset.removeUpdateListener(imageAssetUpdateListener);
-            imageAsset = null;
-        }
-        final Message.Part mediaPart = MessageUtils.getFirstRichMediaPart(message);
-        if (mediaPart == null) {
-            showError();
-            return;
-        }
-        mediaAsset = mediaPart.getMediaAsset();
-        if (mediaAsset == null ||
-            mediaAsset.isEmpty()) {
-            showError();
-            return;
-        }
-        titleTextView.setText(mediaAsset.getTitle());
-        imageAsset = mediaAsset.getArtwork();
-        imageAsset.addUpdateListener(imageAssetUpdateListener);
-        imageAssetUpdateListener.updated();
-    }
-
     @Override
     public View getView() {
         return view;
@@ -181,6 +185,8 @@ public class YouTubeMessageViewController extends MessageViewController implemen
 
     @Override
     public void recycle() {
+        messageModelObserver.clear();
+        imageAssetModelObserver.clear();
         if (!messageViewsContainer.isTornDown()) {
             messageViewsContainer.getControllerFactory().getAccentColorController().removeAccentColorObserver(textMessageLinkTextView);
         }
@@ -189,18 +195,17 @@ public class YouTubeMessageViewController extends MessageViewController implemen
         if (loadHandle != null) {
             loadHandle.cancel();
         }
-        if (imageAsset != null) {
-            imageAsset.removeUpdateListener(imageAssetUpdateListener);
-            imageAsset = null;
-        }
+        imageAsset = null;
         mediaAsset = null;
         textMessageLinkTextView.recycle();
         imageView.setImageDrawable(null);
         glyphTextView.setText(context.getString(R.string.glyph__play));
+        glyphTextView.setVisibility(View.VISIBLE);
         errorTextView.setVisibility(View.GONE);
         imageView.setAlpha(0f);
         imageView.setColorFilter(null);
         titleTextView.setText("");
+        headerContainerView.setVisibility(View.VISIBLE);
         super.recycle();
     }
 
@@ -278,4 +283,19 @@ public class YouTubeMessageViewController extends MessageViewController implemen
     public void onTextMessageLinkTextViewOnLongClicked(View view) {
         onLongClick(view);
     }
+
+    private void messageExpired() {
+        imageAssetModelObserver.clear();
+        if (loadHandle != null) {
+            loadHandle.cancel();
+        }
+        imageView.setImageDrawable(new ColorDrawable(ContextCompat.getColor(context, R.color.ephemera)));
+        imageView.setVisibility(View.VISIBLE);
+        imageView.setAlpha(1f);
+        imageView.clearColorFilter();
+        glyphTextView.setVisibility(View.GONE);
+        errorTextView.setVisibility(View.GONE);
+        headerContainerView.setVisibility(View.GONE);
+    }
+
 }

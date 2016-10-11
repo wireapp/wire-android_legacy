@@ -103,6 +103,8 @@
     <dimen name="cursor__top_border__height">1dp</dimen>
     <dimen name="cursor__menu_button__diameter">28dp</dimen>
     <dimen name="cursor__menu_button__padding">4dp</dimen>
+    <dimen name="cursor__ephemeral_button__top_padding">2dp</dimen>
+    <dimen name="cursor__ephemeral_button__side_padding">1dp</dimen>
 
     <!-- color picker-->
     <dimen name="color_picker_circle_height">72dp</dimen>

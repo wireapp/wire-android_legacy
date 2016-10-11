@@ -18,6 +18,9 @@
 package com.waz.zclient.pages.main.conversation.views.row.message.views;
 
 import android.content.Context;
+import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
+import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.text.TextUtils;
 import android.view.View;
@@ -33,6 +36,7 @@ import com.waz.zclient.pages.main.conversation.views.MessageViewsContainer;
 import com.waz.zclient.pages.main.conversation.views.row.message.MessageViewController;
 import com.waz.zclient.pages.main.conversation.views.row.separator.Separator;
 import com.waz.zclient.ui.utils.ResourceUtils;
+import com.waz.zclient.ui.utils.TypefaceUtils;
 import com.waz.zclient.ui.views.EphemeralDotAnimationView;
 import com.waz.zclient.utils.MessageUtils;
 import com.waz.zclient.utils.StringUtils;
@@ -53,6 +57,8 @@ public class LinkPreviewViewController extends MessageViewController implements 
     private View previewImageContainerView;
     private EphemeralDotAnimationView ephemeralDotAnimationView;
     private LoadHandle previewImageLoadHandle;
+    private final Typeface defaultTitleTypeface;
+    private final Typeface defaultUrlTypeface;
 
     private final ModelObserver<Message> messageObserver = new ModelObserver<Message>() {
         @Override
@@ -78,7 +84,11 @@ public class LinkPreviewViewController extends MessageViewController implements 
                 return;
             }
             previewImageContainerView.setVisibility(View.VISIBLE);
-            imageAssetModelObserver.addAndUpdate(linkPart.getImage());
+            if (message.isEphemeral() && message.isExpired()) {
+                messageExpired();
+            } else {
+                imageAssetModelObserver.addAndUpdate(linkPart.getImage());
+            }
         }
     };
 
@@ -113,15 +123,16 @@ public class LinkPreviewViewController extends MessageViewController implements 
             if (TextUtils.isEmpty(urlTextView.getText())) {
                 return;
             }
-            messageViewsContainer.onOpenUrl(urlTextView.getText().toString());
+            if (!message.isEphemeral() || message.isExpired()) {
+                messageViewsContainer.onOpenUrl(urlTextView.getText().toString());
+            }
             if (footerActionCallback != null) {
                 footerActionCallback.toggleVisibility();
             }
         }
     };
 
-    public LinkPreviewViewController(Context context,
-                                     final MessageViewsContainer messageViewsContainer) {
+    public LinkPreviewViewController(Context context, final MessageViewsContainer messageViewsContainer) {
         super(context, messageViewsContainer);
         view = View.inflate(context, R.layout.row_conversation_link_preview, null);
         textMessageLinkTextView = ViewUtils.getView(view, R.id.cv__row_conversation__link_preview__text_message);
@@ -142,6 +153,8 @@ public class LinkPreviewViewController extends MessageViewController implements 
 
         textMessageLinkTextView.setMessageViewsContainer(messageViewsContainer);
 
+        defaultTitleTypeface = titleTextView.getTypeface();
+        defaultUrlTypeface = urlTextView.getTypeface();
     }
 
     @Override
@@ -185,6 +198,8 @@ public class LinkPreviewViewController extends MessageViewController implements 
         }
         previewImageLoadHandle = null;
         textMessageLinkTextView.recycle();
+        titleTextView.setTypeface(defaultTitleTypeface);
+        urlTextView.setTypeface(defaultUrlTypeface);
         super.recycle();
     }
 
@@ -209,5 +224,17 @@ public class LinkPreviewViewController extends MessageViewController implements 
     @Override
     public void onTextMessageLinkTextViewOnLongClicked(View view) {
         onLongClick(view);
+    }
+
+    private void messageExpired() {
+        imageAssetModelObserver.clear();
+        if (previewImageLoadHandle != null) {
+            previewImageLoadHandle.cancel();
+        }
+        previewImageAssetView.clearImage();
+        previewImageAssetView.setImageDrawable(new ColorDrawable(ContextCompat.getColor(context, R.color.ephemera)));
+        Typeface redactedTypeface = TypefaceUtils.getTypeface(TypefaceUtils.getRedactedTypedaceName());
+        titleTextView.setTypeface(redactedTypeface);
+        urlTextView.setTypeface(redactedTypeface);
     }
 }

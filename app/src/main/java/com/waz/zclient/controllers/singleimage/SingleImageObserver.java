@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.controllers.singleimage;
 
+import android.net.Uri;
 import com.waz.api.Message;
 import com.waz.api.User;
 
@@ -28,4 +29,8 @@ public interface SingleImageObserver {
     void onHideSingleImage();
 
     void updateSingleImageReferences();
+
+    void onShowVideo(Uri uri);
+
+    void onHideVideo();
 }

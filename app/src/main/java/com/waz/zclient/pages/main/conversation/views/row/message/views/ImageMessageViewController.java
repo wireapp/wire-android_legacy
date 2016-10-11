@@ -20,6 +20,7 @@ package com.waz.zclient.pages.main.conversation.views.row.message.views;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -27,6 +28,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import com.waz.api.ImageAsset;
 import com.waz.api.LoadHandle;
+import com.waz.api.Message;
 import com.waz.api.UpdateListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
@@ -34,6 +36,7 @@ import com.waz.zclient.controllers.drawing.IDrawingController;
 import com.waz.zclient.controllers.singleimage.ISingleImageController;
 import com.waz.zclient.controllers.tracking.events.conversation.ReactedToMessageEvent;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
+import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.pages.main.conversation.views.MessageViewsContainer;
 import com.waz.zclient.pages.main.conversation.views.row.message.MessageViewController;
 import com.waz.zclient.pages.main.conversation.views.row.separator.Separator;
@@ -88,9 +91,18 @@ public class ImageMessageViewController extends MessageViewController implements
         public void onSingleClick() {
             if (footerActionCallback != null) {
                 int visibility = footerActionCallback.toggleVisibility() ? View.VISIBLE : View.GONE;
-                singleImageButton.setVisibility(visibility);
-                sketchButton.setVisibility(visibility);
+                if (!(message.isEphemeral() && message.isExpired())) {
+                    singleImageButton.setVisibility(visibility);
+                    sketchButton.setVisibility(visibility);
+                }
             }
+        }
+    };
+
+    private ModelObserver<Message> messageModelObserver = new ModelObserver<Message>() {
+        @Override
+        public void updated(Message model) {
+            checkMessageExpired();
         }
     };
 
@@ -196,6 +208,7 @@ public class ImageMessageViewController extends MessageViewController implements
         loadBitmap(finalWidth);
 
         messageViewsContainer.getControllerFactory().getAccentColorController().addAccentColorObserver(this);
+        messageModelObserver.setAndUpdate(message);
     }
 
     private void loadBitmap(int finalViewWidth) {
@@ -203,6 +216,9 @@ public class ImageMessageViewController extends MessageViewController implements
 
         if (bitmapLoadHandle != null) {
             bitmapLoadHandle.cancel();
+        }
+        if (message.isEphemeral() && message.isExpired()) {
+            return;
         }
 
         bitmapLoadHandle = imageAsset.getBitmap(finalViewWidth, new ImageAsset.BitmapCallback() {
@@ -264,6 +280,9 @@ public class ImageMessageViewController extends MessageViewController implements
     }
 
     private void showFinalImage(final Bitmap bitmap) {
+        if (message.isEphemeral() && message.isExpired()) {
+            return;
+        }
         gifImageView.setImageBitmap(bitmap);
         gifImageView.setAlpha(0f);
         gifImageView.setVisibility(View.VISIBLE);
@@ -319,6 +338,7 @@ public class ImageMessageViewController extends MessageViewController implements
         if (!messageViewsContainer.isTornDown()) {
             messageViewsContainer.getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
         }
+        messageModelObserver.clear();
         ephemeralDotAnimationView.setMessage(null);
         containerOnDoubleClickListener.reset();
         gifImageView.animate().cancel();
@@ -349,6 +369,25 @@ public class ImageMessageViewController extends MessageViewController implements
     public void onAccentColorHasChanged(Object sender, int color) {
         if (previewLoadingIndicator != null) {
             previewLoadingIndicator.setColor(color);
+        }
+    }
+
+    private void checkMessageExpired() {
+        if (message.isEphemeral() && message.isExpired()) {
+            imageContainer.setBackgroundColor(ContextCompat.getColor(context, R.color.ephemera));
+            gifImageView.setVisibility(View.INVISIBLE);
+            gifImageView.setImageBitmap(null);
+            polkadotView.setVisibility(View.INVISIBLE);
+            polkadotView.setImageBitmap(null);
+            if (bitmapLoadHandle != null) {
+                bitmapLoadHandle.cancel();
+            }
+            previewLoadingIndicator.hide();
+            previewLoadingIndicator.setVisibility(View.GONE);
+        } else {
+            imageContainer.setBackground(null);
+            gifImageView.setVisibility(View.VISIBLE);
+            polkadotView.setVisibility(View.VISIBLE);
         }
     }
 

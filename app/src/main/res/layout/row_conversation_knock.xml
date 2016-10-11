@@ -60,4 +60,23 @@
         android:text="@string/glyph__ping"
         />
 
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        >
+        <com.waz.zclient.ui.views.EphemeralDotAnimationView
+            android:id="@+id/edav__ephemeral_view"
+            android:layout_width="@dimen/ephemeral__animating_dots__width"
+            android:layout_height="@dimen/ephemeral__animating_dots__height"
+            android:layout_gravity="end|top"
+            android:layout_marginEnd="@dimen/ephemeral__animating_dots__right_margin"
+            android:paddingTop="@dimen/ephemeral__animating_dots__padding_top"
+            android:paddingBottom="@dimen/ephemeral__animating_dots__padding_bottom"
+            app:primaryColor="@color/ephemera"
+            app:secondaryColor="@color/ephemera_dimmed"
+            app:dotPadding="@dimen/ephemeral__animating_dots__space_between"
+            />
+
+    </FrameLayout>
+
 </LinearLayout>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2016 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:orientation="vertical"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+             style="?wireBackground"
+    >
+
+    <VideoView
+        android:id="@+id/vv__video_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        />
+
+    <RelativeLayout
+        android:id="@+id/rl__video_player__header"
+        android:layout_width="fill_parent"
+        android:layout_height="@dimen/single_image_message__header_height"
+        android:layout_gravity="center_horizontal|top"
+        android:background="@color/single_image_message__overlay__color"
+        android:paddingTop="@dimen/single_image_message__layout__padding__top"
+        android:paddingLeft="@dimen/single_image_message__layout__padding__left"
+        android:paddingRight="@dimen/single_image_message__layout__padding__right"
+        >
+
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:id="@+id/gtv__video_player__close"
+            android:layout_marginTop="@dimen/single_image_message__icon__adjust_to_top"
+            android:layout_marginRight="@dimen/single_image_message__icon__adjust_to_right"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:text="@string/glyph__close"
+            android:clickable="true"
+            android:textColor="@color/wire__text_color_primary_dark_selector"
+            android:textSize="@dimen/single_image_message__icon__text_size"
+            android:paddingLeft="@dimen/single_image_message__icon__padding__left"
+            android:paddingRight="@dimen/single_image_message__icon__padding__right"
+            android:paddingTop="@dimen/single_image_message__icon__padding__top"
+            android:paddingBottom="@dimen/single_image_message__icon__padding__bottom"
+            />
+
+    </RelativeLayout>
+
+</FrameLayout>

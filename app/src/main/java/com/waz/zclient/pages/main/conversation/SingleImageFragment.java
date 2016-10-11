@@ -51,7 +51,7 @@ import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.images.TouchImageView;
 
-public abstract class SingleImageFragment extends BaseFragment<SingleImageFragment> implements ImageDragViewContainer.Callback,
+public abstract class SingleImageFragment extends BaseFragment<SingleImageFragment.Container> implements ImageDragViewContainer.Callback,
                                                                                                OnBackPressedListener {
 
     private static final Interpolator ALPHA_INTERPOLATOR = new Quart.EaseOut();

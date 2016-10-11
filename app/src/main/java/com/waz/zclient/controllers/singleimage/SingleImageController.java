@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.controllers.singleimage;
 
+import android.net.Uri;
 import android.view.View;
 import com.waz.api.Message;
 import com.waz.api.User;
@@ -77,6 +78,20 @@ public class SingleImageController implements ISingleImageController {
         this.message = null;
         for (SingleImageObserver observer : observerList) {
             observer.onShowUserImage(user);
+        }
+    }
+
+    @Override
+    public void showVideo(Uri uri) {
+        for (SingleImageObserver observer : observerList) {
+            observer.onShowVideo(uri);
+        }
+    }
+
+    @Override
+    public void hideVideo() {
+        for (SingleImageObserver observer : observerList) {
+            observer.onHideVideo();
         }
     }
 
