@@ -623,6 +623,20 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         invisibleFooter.setLayoutParams(params);
 
         listView.addFooterView(invisibleFooter, null, false);
+        listView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                switch (scrollState) {
+                    case AbsListView.OnScrollListener.SCROLL_STATE_IDLE:
+                        checkEphemeralMessageOnScreen();
+                }
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+
+            }
+        });
 
         cursorLayout.showSendButton(false);
 
