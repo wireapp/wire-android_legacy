@@ -126,8 +126,7 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
         getSelectedSoundUri(sharedPreferences.getString(context.getString(R.string.pref_options_ringtones_text_key), null), R.raw.new_message_gcm)
       case KNOCK =>
         val value = sharedPreferences.getString(context.getString(R.string.pref_options_ringtones_ping_key), null)
-        if (n.isPing) getSelectedSoundUri(value, R.raw.ping_from_them, R.raw.hotping_from_them)
-        else getSelectedSoundUri(value, R.raw.ping_from_them)
+        getSelectedSoundUri(value, R.raw.ping_from_them)
       case _ => null
     }
   }

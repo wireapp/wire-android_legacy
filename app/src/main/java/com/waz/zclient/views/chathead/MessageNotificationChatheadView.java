@@ -161,22 +161,27 @@ public class MessageNotificationChatheadView extends FrameLayout implements Upda
 
     private void setLabel(TypefaceTextView label, Message message) {
         String messageLabel;
-        label.setTypeface(getResources().getString(R.string.message_notification_chathead__label__font));
-        if (message.getMessageType() == Message.Type.KNOCK) {
-            messageLabel = message.isHotKnock() ? getResources().getString(R.string.in_app_notification__footer__pinged_again)
-                                                : getResources().getString(R.string.in_app_notification__footer__ping);
-        } else if (message.getMessageType() == Message.Type.ASSET) {
-            messageLabel = getResources().getString(R.string.in_app_notification__footer__photo);
-        } else if (message.getMessageType() == Message.Type.ANY_ASSET) {
-            messageLabel = getResources().getString(R.string.in_app_notification__footer__file);
-        } else if (message.getMessageType() == Message.Type.VIDEO_ASSET) {
-            messageLabel = getResources().getString(R.string.in_app_notification__footer__video);
-        } else if (message.getMessageType() == Message.Type.AUDIO_ASSET) {
-            messageLabel = getResources().getString(R.string.in_app_notification__footer__audio);
-        } else if (message.getMessageType() == Message.Type.LOCATION) {
-            messageLabel = getResources().getString(R.string.in_app_notification__footer__location);
-        } else {
+        if (message.isEphemeral()) {
+            label.setTypeface(getResources().getString(R.string.wire__typeface__redacted));
             messageLabel = message.getBody();
+        } else {
+            label.setTypeface(getResources().getString(R.string.message_notification_chathead__label__font));
+            if (message.getMessageType() == Message.Type.KNOCK) {
+                messageLabel = message.isHotKnock() ? getResources().getString(R.string.in_app_notification__footer__pinged_again)
+                                                    : getResources().getString(R.string.in_app_notification__footer__ping);
+            } else if (message.getMessageType() == Message.Type.ASSET) {
+                messageLabel = getResources().getString(R.string.in_app_notification__footer__photo);
+            } else if (message.getMessageType() == Message.Type.ANY_ASSET) {
+                messageLabel = getResources().getString(R.string.in_app_notification__footer__file);
+            } else if (message.getMessageType() == Message.Type.VIDEO_ASSET) {
+                messageLabel = getResources().getString(R.string.in_app_notification__footer__video);
+            } else if (message.getMessageType() == Message.Type.AUDIO_ASSET) {
+                messageLabel = getResources().getString(R.string.in_app_notification__footer__audio);
+            } else if (message.getMessageType() == Message.Type.LOCATION) {
+                messageLabel = getResources().getString(R.string.in_app_notification__footer__location);
+            } else {
+                messageLabel = message.getBody();
+            }
         }
         label.setTransformedText(messageLabel,
                                  getResources().getString(R.string.message_notification_chathead__label__text_transform));
