@@ -55,16 +55,12 @@ class PingPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
   val signals = inject[SyncEngineSignals]
 
   val message = Signal[MessageData]()
-
-  val hotKnock = message.map(_.hotKnock)
-
+  
   val userName = signals.userDisplayName(message)
 
-  val text = userName.zip(hotKnock) map {
-    case (Me, false)          => getString(R.string.content__you_pinged)
-    case (Me, true)           => getString(R.string.content__you_pinged_again)
-    case (Other(name), false) => getString(R.string.content__xxx_pinged, name.toUpperCase(locale))
-    case (Other(name), true)  => getString(R.string.content__xxx_pinged_again, name.toUpperCase(locale))
+  val text = userName map {
+    case Me          => getString(R.string.content__you_pinged)
+    case Other(name) => getString(R.string.content__xxx_pinged, name.toUpperCase(locale))
   }
 
   message.map(_.userId) { chatheadView.setUserId }
