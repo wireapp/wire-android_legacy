@@ -45,10 +45,10 @@ object Flavor {
   lazy val Dev = Flavor("-dev", "com.waz.zclient.dev", BuildConfig.Dev, Placeholders.Dev)
   lazy val Candidate = Flavor("-candidate", "com.wire.candidate", BuildConfig.Candidate, Placeholders.Candidate, Some("proguard-android-optimize-wire.txt"))
   lazy val Prod = Flavor("", "com.wire", BuildConfig.Prod, Placeholders.Prod, Some("proguard-android-optimize-wire.txt"), SigningConfig.Release)
-  lazy val Internal = Flavor("-internal", "com.wire.internal", BuildConfig.Internal, Placeholders.Internal, Some("proguard-rules-test.txt"))
-  lazy val Avs = Flavor("-avs", "com.wire.avs", BuildConfig.Avs, Placeholders.Avs, Some("proguard-rules-test.txt"))
-  lazy val QAAvs = Flavor("-qaavs", "com.wire.qaavs", BuildConfig.QAAvs, Placeholders.QAAvs, Some("proguard-rules-test.txt"))
-  lazy val Experimental = Flavor("-exp", "com.wire.x", BuildConfig.Experimental, Placeholders.Experimental, Some("proguard-rules-test.txt"))
+  lazy val Internal = Flavor("-internal", "com.wire.internal", BuildConfig.Internal, Placeholders.Internal, Some("proguard-rules.txt"))
+  lazy val Avs = Flavor("-avs", "com.wire.avs", BuildConfig.Avs, Placeholders.Avs, Some("proguard-rules.txt"))
+  lazy val QAAvs = Flavor("-qaavs", "com.wire.qaavs", BuildConfig.QAAvs, Placeholders.QAAvs, Some("proguard-rules.txt"))
+  lazy val Experimental = Flavor("-exp", "com.wire.x", BuildConfig.Experimental, Placeholders.Experimental, Some("proguard-rules.txt"))
 }
 
 object SigningConfig {
