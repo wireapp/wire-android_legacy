@@ -122,4 +122,14 @@
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__emoji_crown">\uE254</string>
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__emoji_symbol">\uE255</string>
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__emoji_flag">\uE256</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__ping_timed">\uE637</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__camera_timed">\uE643</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__location_timed">\uE648</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__microphone_on_timed">\uE654</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__attachment_timed">\uE659</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__sketch_timed">\uE679</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__gif_timed">\uE719</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__record_timed">\uE727</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__send_timed">\uE735</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__emoji_timed">\uE737</string>
 </resources>

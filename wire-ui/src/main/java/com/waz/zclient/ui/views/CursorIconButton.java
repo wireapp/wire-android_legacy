@@ -24,6 +24,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.util.AttributeSet;
 import com.waz.zclient.ui.R;
+import com.waz.zclient.ui.cursor.CursorMenuItem;
 import com.waz.zclient.ui.text.GlyphTextView;
 import com.waz.zclient.ui.theme.ThemeUtils;
 import com.waz.zclient.ui.utils.ColorUtils;
@@ -36,6 +37,7 @@ public class CursorIconButton extends GlyphTextView {
     private static final float TRESHOLD = 0.55f;
     private static final float DARKEN_FACTOR = 0.1f;
     private float alphaPressed;
+    private CursorMenuItem cursorMenuItem;
 
     public CursorIconButton(Context context) {
         this(context, null);
@@ -47,6 +49,29 @@ public class CursorIconButton extends GlyphTextView {
 
     public CursorIconButton(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+    }
+
+    public void setCursorMenuItem(CursorMenuItem cursorMenuItem) {
+        this.cursorMenuItem = cursorMenuItem;
+        setText(cursorMenuItem.glyphResId);
+    }
+
+    public CursorMenuItem getCursorMenuItem() {
+        return cursorMenuItem;
+    }
+
+    public void showEphemeralMode(int color) {
+        setTextColor(color);
+        if (cursorMenuItem != null) {
+            setText(cursorMenuItem.timedGlyphResId);
+        }
+    }
+
+    public void hideEphemeralMode(int color) {
+        setTextColor(color);
+        if (cursorMenuItem != null) {
+            setText(cursorMenuItem.glyphResId);
+        }
     }
 
     public void setPressedBackgroundColor(int color) {

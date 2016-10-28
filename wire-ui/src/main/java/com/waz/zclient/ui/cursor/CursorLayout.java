@@ -127,6 +127,9 @@ public class CursorLayout extends FrameLayout implements
                 ephemeralButton.setTextColor(ephemeralColor);
                 updateEphemeralButtonBackground();
                 sendButton.setSolidBackgroundColor(ephemeralColor);
+                emojiButton.showEphemeralMode(ephemeralColor);
+                mainToolbar.showEphemeralMode(ephemeralColor);
+                secondaryToolbar.showEphemeralMode(ephemeralColor);
             } else {
                 dividerView.setBackgroundColor(defaultDividerColor);
                 hintView.setText(R.string.cursor__type_a_message);
@@ -134,6 +137,9 @@ public class CursorLayout extends FrameLayout implements
                 ephemeralButton.setTextColor(defaultEditTextColor);
                 updateEphemeralButtonBackground();
                 sendButton.setSolidBackgroundColor(accentColor);
+                emojiButton.hideEphemeralMode(defaultEditTextColor);
+                mainToolbar.hideEphemeraMode(defaultEditTextColor);
+                secondaryToolbar.hideEphemeraMode(defaultEditTextColor);
             }
 
             if (!isEditingMessage &&
@@ -229,7 +235,7 @@ public class CursorLayout extends FrameLayout implements
         // Emoji button
         LayoutInflater inflater = LayoutInflater.from(getContext());
         emojiButton = (CursorIconButton) inflater.inflate(R.layout.cursor__item, this, false);
-        emojiButton.setText(R.string.glyph__emoji);
+        emojiButton.setCursorMenuItem(CursorMenuItem.EMOJI);
         emojiButton.setPressedBackgroundColor(ContextCompat.getColor(getContext(), R.color.light_graphite));
         int buttonWidth = getResources().getDimensionPixelSize(R.dimen.cursor__menu_button__diameter);
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(buttonWidth,
@@ -300,6 +306,7 @@ public class CursorLayout extends FrameLayout implements
         if (conversation == null || !conversation.isEphemeral()) {
             sendButton.setSolidBackgroundColor(accentColor);
         }
+        ephemeralColor = accentColor;
     }
 
     private void connectEditText() {

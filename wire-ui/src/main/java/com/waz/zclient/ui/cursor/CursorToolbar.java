@@ -52,6 +52,29 @@ public class CursorToolbar extends LinearLayout {
         cursorIconButtonAudio.initTextColor(accentColor);
     }
 
+    public void showEphemeralMode(int color) {
+        for (int i = 0; i < getChildCount(); i++) {
+            FrameLayout containerView = (FrameLayout) getChildAt(i);
+            CursorIconButton cursorIconButton = (CursorIconButton) containerView.getChildAt(0);
+            if (cursorIconButton.getCursorMenuItem() != CursorMenuItem.MORE &&
+                cursorIconButton.getCursorMenuItem() != CursorMenuItem.LESS) {
+                cursorIconButton.showEphemeralMode(color);
+            }
+        }
+    }
+
+    public void hideEphemeraMode(int color) {
+        for (int i = 0; i < getChildCount(); i++) {
+            FrameLayout containerView = (FrameLayout) getChildAt(i);
+            CursorIconButton cursorIconButton = (CursorIconButton) containerView.getChildAt(0);
+            if (cursorIconButton.getCursorMenuItem() != CursorMenuItem.MORE &&
+                cursorIconButton.getCursorMenuItem() != CursorMenuItem.LESS) {
+                cursorIconButton.hideEphemeralMode(color);
+            }
+        }
+    }
+
+
     private GestureDetector.OnGestureListener gestureListener = new GestureDetector.SimpleOnGestureListener() {
 
         @Override
@@ -141,7 +164,7 @@ public class CursorToolbar extends LinearLayout {
             cursorIconButton = (CursorIconButton) inflater.inflate(R.layout.cursor__item,
                                                                    this,
                                                                    false);
-            cursorIconButton.setText(item.glyphResId);
+            cursorIconButton.setCursorMenuItem(item);
             cursorIconButton.setPressedBackgroundColor(ContextCompat.getColor(getContext(), R.color.light_graphite));
 
             switch (item) {
