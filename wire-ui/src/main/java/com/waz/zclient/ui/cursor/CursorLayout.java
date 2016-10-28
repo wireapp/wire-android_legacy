@@ -127,6 +127,9 @@ public class CursorLayout extends FrameLayout implements
                 ephemeralButton.setTextColor(ephemeralColor);
                 updateEphemeralButtonBackground();
                 sendButton.setSolidBackgroundColor(ephemeralColor);
+                emojiButton.setTextColor(ephemeralColor);
+                mainToolbar.setCursorButtonColor(ephemeralColor);
+                secondaryToolbar.setCursorButtonColor(ephemeralColor);
             } else {
                 dividerView.setBackgroundColor(defaultDividerColor);
                 hintView.setText(R.string.cursor__type_a_message);
@@ -134,6 +137,9 @@ public class CursorLayout extends FrameLayout implements
                 ephemeralButton.setTextColor(defaultEditTextColor);
                 updateEphemeralButtonBackground();
                 sendButton.setSolidBackgroundColor(accentColor);
+                emojiButton.setTextColor(defaultEditTextColor);
+                mainToolbar.setCursorButtonColor(defaultEditTextColor);
+                secondaryToolbar.setCursorButtonColor(defaultEditTextColor);
             }
 
             if (!isEditingMessage &&
@@ -300,6 +306,7 @@ public class CursorLayout extends FrameLayout implements
         if (conversation == null || !conversation.isEphemeral()) {
             sendButton.setSolidBackgroundColor(accentColor);
         }
+        ephemeralColor = accentColor;
     }
 
     private void connectEditText() {
