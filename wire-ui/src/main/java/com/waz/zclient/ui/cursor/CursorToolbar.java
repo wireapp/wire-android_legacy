@@ -52,16 +52,28 @@ public class CursorToolbar extends LinearLayout {
         cursorIconButtonAudio.initTextColor(accentColor);
     }
 
-    public void setCursorButtonColor(int color) {
+    public void showEphemeralMode(int color) {
         for (int i = 0; i < getChildCount(); i++) {
             FrameLayout containerView = (FrameLayout) getChildAt(i);
             CursorIconButton cursorIconButton = (CursorIconButton) containerView.getChildAt(0);
             if (cursorIconButton.getCursorMenuItem() != CursorMenuItem.MORE &&
                 cursorIconButton.getCursorMenuItem() != CursorMenuItem.LESS) {
-                cursorIconButton.setTextColor(color);
+                cursorIconButton.showEphemeralMode(color);
             }
         }
     }
+
+    public void hideEphemeraMode(int color) {
+        for (int i = 0; i < getChildCount(); i++) {
+            FrameLayout containerView = (FrameLayout) getChildAt(i);
+            CursorIconButton cursorIconButton = (CursorIconButton) containerView.getChildAt(0);
+            if (cursorIconButton.getCursorMenuItem() != CursorMenuItem.MORE &&
+                cursorIconButton.getCursorMenuItem() != CursorMenuItem.LESS) {
+                cursorIconButton.hideEphemeralMode(color);
+            }
+        }
+    }
+
 
     private GestureDetector.OnGestureListener gestureListener = new GestureDetector.SimpleOnGestureListener() {
 

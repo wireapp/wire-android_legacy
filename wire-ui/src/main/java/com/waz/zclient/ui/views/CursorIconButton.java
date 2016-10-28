@@ -60,6 +60,20 @@ public class CursorIconButton extends GlyphTextView {
         return cursorMenuItem;
     }
 
+    public void showEphemeralMode(int color) {
+        setTextColor(color);
+        if (cursorMenuItem != null) {
+            setText(cursorMenuItem.timedGlyphResId);
+        }
+    }
+
+    public void hideEphemeralMode(int color) {
+        setTextColor(color);
+        if (cursorMenuItem != null) {
+            setText(cursorMenuItem.glyphResId);
+        }
+    }
+
     public void setPressedBackgroundColor(int color) {
         setBackgroundColor(Color.TRANSPARENT, color);
     }
