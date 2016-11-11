@@ -409,6 +409,8 @@ dependencies {
     compile deps.psLocation
     compile deps.cardview
 
+    compile 'com.facebook.stetho:stetho:1.4.1'
+
     //Used for animating incoming messages
     compile deps.nineoldandroids
     // For using local files in app/libs

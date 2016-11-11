@@ -20,6 +20,7 @@ package com.waz.zclient;
 import android.app.Activity;
 import android.graphics.Typeface;
 import android.support.annotation.Nullable;
+import com.facebook.stetho.Stetho;
 import com.jakewharton.threetenabp.AndroidThreeTen;
 import com.localytics.android.Localytics;
 import com.localytics.android.LocalyticsActivityLifecycleCallbacks;
@@ -113,6 +114,7 @@ public class ZApplication extends WireApplication implements NotificationsHandle
         if (com.waz.zclient.BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
             LogLevel.setMinimumLogLevel(LogLevel.VERBOSE);
+            Stetho.initializeWithDefaults(this);
         } else {
             Timber.plant(new WireLoggerTree());
             LogLevel.setMinimumLogLevel(BuildConfigUtils.getLogLevelSE(this));
