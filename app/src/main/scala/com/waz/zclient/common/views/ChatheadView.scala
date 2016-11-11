@@ -30,7 +30,7 @@ import com.waz.api.User.ConnectionStatus
 import com.waz.api.User.ConnectionStatus._
 import com.waz.api.impl.AccentColor
 import com.waz.api.{ContactDetails, User}
-import com.waz.model.{ImageAssetData, UserData, UserId}
+import com.waz.model.{AssetData, UserData, UserId}
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapRequest.Round
 import com.waz.service.assets.AssetService.BitmapResult
@@ -297,7 +297,7 @@ protected class ChatheadController(val setSelectable: Boolean = false,
 
   val bitmapResult = Signal(zMessaging, assetId, viewWidth, borderWidth, accentColor).flatMap[BitmapResult] {
     case (zms, Some(id), width, bWidth, bColor) if width > 0 => zms.assetsStorage.signal(id).flatMap {
-      case data: ImageAssetData => BitmapSignal(data, Round(width, bWidth, bColor.value), zms.imageLoader, zms.imageCache)
+      case data@AssetData.IsImage(_, _) => BitmapSignal(data, Round(width, bWidth, bColor.value), zms.imageLoader, zms.imageCache)
       case _ => Signal.empty[BitmapResult]
     }
     case _ => Signal.empty[BitmapResult]
