@@ -71,7 +71,7 @@ public class TextMessageViewController extends MessageViewController implements 
     private final View.OnLongClickListener onLongClickListener = new View.OnLongClickListener() {
         @Override
         public boolean onLongClick(View v) {
-            messageViewsContainer.onItemLongClick(message);
+            messageViewsContainer.onItemLongClick(message, TextMessageViewController.this);
             return true;
         }
     };

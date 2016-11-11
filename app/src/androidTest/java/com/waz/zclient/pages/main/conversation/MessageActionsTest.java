@@ -27,6 +27,9 @@ import com.waz.api.User;
 import com.waz.zclient.MainTestActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.core.stores.conversation.IConversationStore;
+import com.waz.zclient.pages.main.conversation.views.row.message.MessageViewController;
+import com.waz.zclient.pages.main.conversation.views.row.message.views.FileMessageViewController;
+import com.waz.zclient.pages.main.conversation.views.row.message.views.TextMessageViewController;
 import com.waz.zclient.testutils.FragmentTest;
 import com.waz.zclient.testutils.MockHelper;
 import org.junit.Test;
@@ -77,7 +80,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_delete_local)).check(isVisible());
@@ -108,7 +111,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_delete_local)).check(isVisible());
@@ -139,7 +142,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_delete_global)).check(isVisible());
@@ -170,7 +173,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_delete_global)).check(isVisible());
@@ -201,7 +204,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_delete_global)).check(isNull());
@@ -226,7 +229,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_delete_global)).check(isNull());
@@ -251,7 +254,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_delete_global)).check(isVisible());
@@ -285,7 +288,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_delete_global)).check(isVisible());
@@ -318,7 +321,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_delete_global)).check(isVisible());
@@ -349,7 +352,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_delete_global)).check(isVisible());
@@ -385,7 +388,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_edit)).check(isVisible());
@@ -431,7 +434,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(800);
         onView(withId(R.id.message_bottom_menu_item_edit)).check(isVisible());
@@ -467,7 +470,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(800);
         onView(withId(R.id.message_bottom_menu_item_edit)).check(isVisible());
@@ -500,7 +503,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_edit)).check(isVisible());
@@ -529,7 +532,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_edit)).check(isNull());
@@ -554,7 +557,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_edit)).check(isNull());
@@ -582,7 +585,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_edit)).check(isVisible());
@@ -625,7 +628,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_edit)).check(isVisible());
@@ -636,7 +639,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         onView(withId(R.id.cet__cursor)).check(hasText(firstMessageText));
 
         // Edit another message
-        fragment.onItemLongClick(secondMockMessage);
+        fragment.onItemLongClick(secondMockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_edit)).check(isVisible());
@@ -669,7 +672,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_like)).check(isVisible());
@@ -700,7 +703,7 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
         ConversationFragment fragment = ConversationFragment.newInstance();
         attachFragment(fragment, ConversationFragment.TAG);
         Thread.sleep(500);
-        fragment.onItemLongClick(mockMessage);
+        fragment.onItemLongClick(mockMessage, getMockMessageViewController(mockMessage));
 
         Thread.sleep(500);
         onView(withId(R.id.message_bottom_menu_item_unlike)).check(isVisible());
@@ -708,4 +711,13 @@ public class MessageActionsTest extends FragmentTest<MainTestActivity> {
 
         verify(mockMessage).unlike();
     }
+
+    private MessageViewController getMockMessageViewController(Message message) {
+        if (message.getMessageType() == Message.Type.ANY_ASSET) {
+            return mock(FileMessageViewController.class);
+        }
+        return mock(TextMessageViewController.class);
+    }
+
+
 }

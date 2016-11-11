@@ -1020,6 +1020,7 @@
     <string name="message_bottom_menu_action_like">Like</string>
     <string name="message_bottom_menu_action_unlike">Unlike</string>
     <string name="message_bottom_menu_action_save">Save</string>
+    <string name="message_bottom_menu_action_open">Open</string>
     <string name="message_bottom_menu_action_delete_local">Delete for me</string>
     <string name="message_bottom_menu_action_delete_global">Delete for everyone</string>
     <string name="likes_list__header">Liked by</string>

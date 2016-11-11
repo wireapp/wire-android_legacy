@@ -150,6 +150,7 @@ import com.waz.zclient.pages.main.conversation.views.listview.ConversationListVi
 import com.waz.zclient.pages.main.conversation.views.listview.ConversationScrollListener;
 import com.waz.zclient.pages.main.conversation.views.row.message.MessageAndSeparatorViewController;
 import com.waz.zclient.pages.main.conversation.views.row.message.MessageViewController;
+import com.waz.zclient.pages.main.conversation.views.row.message.views.FileMessageViewController;
 import com.waz.zclient.pages.main.conversation.views.row.message.views.ImageMessageViewController;
 import com.waz.zclient.pages.main.conversation.views.row.message.views.MediaPlayerViewController;
 import com.waz.zclient.pages.main.conversation.views.row.message.views.YouTubeMessageViewController;
@@ -395,7 +396,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     private final MessageBottomSheetDialog.Callback messageBottomSheetDialogCallback = new MessageBottomSheetDialog.Callback() {
 
         @Override
-        public void onAction(MessageBottomSheetDialog.MessageAction action, Message message) {
+        public void onAction(MessageBottomSheetDialog.MessageAction action, Message message, MessageViewController messageViewController) {
             switch (action) {
                 case COPY:
                     copyMessage(message);
@@ -438,6 +439,12 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                     break;
                 case SAVE:
                     saveMessage(message);
+                    break;
+                case OPEN_FILE:
+                    if (message.getMessageType() == Message.Type.ANY_ASSET &&
+                        messageViewController instanceof FileMessageViewController) {
+                        ((FileMessageViewController) messageViewController).startAssetDownLoad();
+                    }
                     break;
                 default:
                     ExceptionHandler.saveException(new RuntimeException("Unhandled action"), null, null);
@@ -1421,7 +1428,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     }
 
     @Override
-    public boolean onItemLongClick(final Message message) {
+    public boolean onItemLongClick(final Message message, final MessageViewController messageViewController) {
         if (messageBottomSheetDialog != null) {
             if (messageBottomSheetDialog.isShowing()) {
                 messageBottomSheetDialog.dismiss();
@@ -1440,7 +1447,12 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                     if (getActivity() == null) {
                         return;
                     }
-                    messageBottomSheetDialog = new MessageBottomSheetDialog(getContext(), R.style.message__bottom_sheet__base, message, isMemberOfConversation, messageBottomSheetDialogCallback);
+                    messageBottomSheetDialog = new MessageBottomSheetDialog(getContext(),
+                                                                            R.style.message__bottom_sheet__base,
+                                                                            message,
+                                                                            messageViewController,
+                                                                            isMemberOfConversation,
+                                                                            messageBottomSheetDialogCallback);
                     messageBottomSheetDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
                         public void onDismiss(DialogInterface dialog) {
@@ -1451,7 +1463,11 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 }
             }, BOTTOM_MENU_DISPLAY_DELAY_MS);
         } else {
-            messageBottomSheetDialog = new MessageBottomSheetDialog(getContext(), R.style.message__bottom_sheet__base, message, isMemberOfConversation, messageBottomSheetDialogCallback);
+            messageBottomSheetDialog = new MessageBottomSheetDialog(getContext(),
+                                                                    R.style.message__bottom_sheet__base,
+                                                                    message, messageViewController,
+                                                                    isMemberOfConversation,
+                                                                    messageBottomSheetDialogCallback);
             messageBottomSheetDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                 @Override
                 public void onDismiss(DialogInterface dialog) {

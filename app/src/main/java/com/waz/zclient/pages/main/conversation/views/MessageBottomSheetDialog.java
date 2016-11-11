@@ -28,11 +28,13 @@ import android.widget.TextView;
 import com.waz.api.AssetStatus;
 import com.waz.api.Message;
 import com.waz.zclient.R;
+import com.waz.zclient.pages.main.conversation.views.row.message.MessageViewController;
 import com.waz.zclient.utils.ViewUtils;
 
 public class MessageBottomSheetDialog extends BottomSheetDialog {
 
     private final Message message;
+    private final MessageViewController messageViewController;
     private final Callback callback;
 
     public enum MessageAction {
@@ -43,6 +45,7 @@ public class MessageBottomSheetDialog extends BottomSheetDialog {
         LIKE(R.id.message_bottom_menu_item_like, R.string.glyph__like, R.string.message_bottom_menu_action_like),
         UNLIKE(R.id.message_bottom_menu_item_unlike, R.string.glyph__liked, R.string.message_bottom_menu_action_unlike),
         SAVE(R.id.message_bottom_menu_item_save, R.string.glyph__download, R.string.message_bottom_menu_action_save),
+        OPEN_FILE(R.id.message_bottom_menu_item_open_file, R.string.glyph__view, R.string.message_bottom_menu_action_open),
         EDIT(R.id.message_bottom_menu_item_edit, R.string.glyph__edit, R.string.message_bottom_menu_action_edit);
 
         public int resId;
@@ -56,16 +59,18 @@ public class MessageBottomSheetDialog extends BottomSheetDialog {
         }
     }
 
-    public MessageBottomSheetDialog(@NonNull Context context, @NonNull Message message, boolean isMemberOfConversation, Callback callback) {
+    public MessageBottomSheetDialog(@NonNull Context context, @NonNull Message message, MessageViewController messageViewController, boolean isMemberOfConversation, Callback callback) {
         super(context);
         this.message = message;
+        this.messageViewController = messageViewController;
         this.callback = callback;
         init(isMemberOfConversation);
     }
 
-    public MessageBottomSheetDialog(@NonNull Context context, int theme, @NonNull Message message, boolean isMemberOfConversation, Callback callback) {
+    public MessageBottomSheetDialog(@NonNull Context context, int theme, @NonNull Message message, MessageViewController messageViewController, boolean isMemberOfConversation, Callback callback) {
         super(context, theme);
         this.message = message;
+        this.messageViewController = messageViewController;
         this.callback = callback;
         init(isMemberOfConversation);
     }
@@ -88,6 +93,9 @@ public class MessageBottomSheetDialog extends BottomSheetDialog {
         }
         if (isSaveAllowed()) {
             addAction(view, MessageAction.SAVE);
+        }
+        if (isOpenFileAllowed()) {
+            addAction(view, MessageAction.OPEN_FILE);
         }
         if (isForwardAllowed()) {
             addAction(view, MessageAction.FORWARD);
@@ -112,7 +120,7 @@ public class MessageBottomSheetDialog extends BottomSheetDialog {
         row.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                callback.onAction(action, message);
+                callback.onAction(action, message, messageViewController);
                 dismiss();
             }
         });
@@ -147,9 +155,24 @@ public class MessageBottomSheetDialog extends BottomSheetDialog {
             // Only image supported ATM, need to handle Audio/File/Video
             case ASSET:
                 return true;
-            case ANY_ASSET:
             case AUDIO_ASSET:
             case VIDEO_ASSET:
+                if (message.getAsset().getStatus() == AssetStatus.UPLOAD_DONE ||
+                    message.getAsset().getStatus() == AssetStatus.DOWNLOAD_DONE) {
+                    return true;
+                }
+                return false;
+            default:
+                return false;
+        }
+    }
+
+    private boolean isOpenFileAllowed() {
+        if (message.isEphemeral()) {
+            return false;
+        }
+        switch (message.getMessageType()) {
+            case ANY_ASSET:
                 if (message.getAsset().getStatus() == AssetStatus.UPLOAD_DONE ||
                     message.getAsset().getStatus() == AssetStatus.DOWNLOAD_DONE) {
                     return true;
@@ -237,7 +260,7 @@ public class MessageBottomSheetDialog extends BottomSheetDialog {
     }
 
     public interface Callback {
-        void onAction(MessageAction action, Message message);
+        void onAction(MessageAction action, Message message, MessageViewController messageViewController);
     }
 
 }

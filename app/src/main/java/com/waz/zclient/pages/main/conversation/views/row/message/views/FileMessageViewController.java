@@ -251,6 +251,10 @@ public class FileMessageViewController extends MessageViewController implements 
         return view;
     }
 
+    public void startAssetDownLoad() {
+        asset.getContentUri(loadToOpenCallback);
+    }
+
     private void updateFileStatus() {
         if (asset == null) {
             return;
@@ -297,7 +301,7 @@ public class FileMessageViewController extends MessageViewController implements 
         } else if (asset.getStatus() == AssetStatus.DOWNLOAD_DONE) {
             // File is already downloaded to cache
             if (localAssetUri == null) {
-                asset.getContentUri(loadToOpenCallback);
+                startAssetDownLoad();
             } else {
                 final Intent intent = AssetUtils.getOpenFileIntent(localAssetUri, asset.getMimeType());
                 final boolean fileCanBeOpened = AssetUtils.fileTypeCanBeOpened(context.getPackageManager(), intent);

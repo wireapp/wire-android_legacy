@@ -21,6 +21,7 @@ import android.view.View;
 import com.waz.api.IConversation;
 import com.waz.api.Message;
 import com.waz.zclient.ServiceContainer;
+import com.waz.zclient.pages.main.conversation.views.row.message.MessageViewController;
 import com.waz.zclient.utils.OtrDestination;
 
 public interface MessageViewsContainer extends ServiceContainer {
@@ -52,5 +53,5 @@ public interface MessageViewsContainer extends ServiceContainer {
 
     void openDevicesPage(OtrDestination otrDestination, View anchorView);
 
-    boolean onItemLongClick(Message message);
+    boolean onItemLongClick(Message message, MessageViewController messageViewController);
 }
