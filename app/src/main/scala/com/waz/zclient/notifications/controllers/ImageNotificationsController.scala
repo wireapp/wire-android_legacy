@@ -21,7 +21,7 @@ import android.app.NotificationManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.support.v4.app.NotificationCompat
-import com.waz.model.{ImageAssetData, AssetId}
+import com.waz.model.{AssetData, AssetId}
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapRequest.Single
 import com.waz.service.assets.AssetService.BitmapResult
@@ -59,7 +59,7 @@ class ImageNotificationsController(cxt: WireContext)(implicit inj: Injector) ext
   zms.zip(savedImageId).flatMap {
     case (zms, Some(imageId)) =>
       zms.assetsStorage.signal(imageId).flatMap {
-        case data: ImageAssetData => BitmapSignal(data, Single(getDimenPx(R.dimen.notification__image_saving__image_width)), zms.imageLoader, zms.imageCache)
+        case data@AssetData.IsImage(_, _) => BitmapSignal(data, Single(getDimenPx(R.dimen.notification__image_saving__image_width)), zms.imageLoader, zms.imageCache)
         case _ => Signal.empty[BitmapResult]
       }
     case _ => Signal.empty[BitmapResult]

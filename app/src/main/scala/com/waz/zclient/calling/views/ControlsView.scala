@@ -30,7 +30,7 @@ import com.facebook.rebound._
 import com.waz.ZLog
 import com.waz.api.VideoSendState._
 import com.waz.api.impl.AccentColor
-import com.waz.model.ImageAssetData
+import com.waz.model.AssetData
 import com.waz.service.assets.AssetService.BitmapRequest.Round
 import com.waz.service.assets.AssetService.BitmapResult
 import com.waz.service.assets.AssetService.BitmapResult.BitmapLoaded
@@ -221,7 +221,7 @@ private class IncomingControlsView(val context: Context, val attrs: AttributeSet
         Signal.const[Option[BitmapResult]](None)
       } { assetId =>
         zms.assetsStorage.signal(assetId).flatMap {
-          case data: ImageAssetData => BitmapSignal(data, Round(avatarRadius * 2, 0, Color.TRANSPARENT), zms.imageLoader, zms.imageCache).map(Option(_))
+          case data@AssetData.IsImage(_, _) => BitmapSignal(data, Round(avatarRadius * 2, 0, Color.TRANSPARENT), zms.imageLoader, zms.imageCache).map(Option(_))
           case _ => Signal.const[Option[BitmapResult]](None)
         }
       }
