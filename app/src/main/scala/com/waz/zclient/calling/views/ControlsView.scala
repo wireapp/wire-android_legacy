@@ -31,11 +31,11 @@ import com.waz.ZLog
 import com.waz.api.VideoSendState._
 import com.waz.api.impl.AccentColor
 import com.waz.model.AssetData
-import com.waz.service.assets.AssetService.BitmapRequest.Round
 import com.waz.service.assets.AssetService.BitmapResult
 import com.waz.service.assets.AssetService.BitmapResult.BitmapLoaded
 import com.waz.service.images.BitmapSignal
 import com.waz.threading.Threading
+import com.waz.ui.MemoryImageCache.BitmapRequest.Round
 import com.waz.utils.NameParts
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.zclient.calling.controllers.{CallPermissionsController, CurrentCallController}
