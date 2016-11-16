@@ -199,8 +199,7 @@ public class ContactRowView extends FrameLayout implements UserRowView {
         String finalString;
         if (TextUtils.isEmpty(addressBookName)) {
             if (commonContacts > 0) {
-
-                finalString = getContext().getString(R.string.people_picker__contact_list_contact_sub_label_common_friends, username, commonContacts);
+                finalString = getResources().getQuantityString(R.plurals.people_picker__contact_list_contact_sub_label_common_friends, commonContacts, username, commonContacts);
             } else {
                 finalString = getContext().getString(R.string.people_picker__contact_list_contact_sub_label_username, username);
             }
