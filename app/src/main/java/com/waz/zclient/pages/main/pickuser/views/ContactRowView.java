@@ -191,7 +191,7 @@ public class ContactRowView extends FrameLayout implements UserRowView {
         boolean isUserSelected(User user);
     }
 
-    private String getFormattedSubLabel(){
+    private String getFormattedSubLabel() {
         String username = user.getUsername();
         String addressBookName = user.isContact() ? user.getFirstContact().getDisplayName().trim() : "";
         String name = user.getName().trim();
@@ -199,15 +199,16 @@ public class ContactRowView extends FrameLayout implements UserRowView {
         String finalString;
         if (TextUtils.isEmpty(addressBookName)) {
             if (commonContacts > 0) {
-                finalString = String.format(getContext().getString(R.string.people_picker__contact_list_contact_sub_label_common_friends), username, commonContacts);
+
+                finalString = getContext().getString(R.string.people_picker__contact_list_contact_sub_label_common_friends, username, commonContacts);
             } else {
-                finalString = String.format(getContext().getString(R.string.people_picker__contact_list_contact_sub_label_username), username);
+                finalString = getContext().getString(R.string.people_picker__contact_list_contact_sub_label_username, username);
             }
         } else {
             if (name.equalsIgnoreCase(addressBookName)) {
-                finalString = String.format(getContext().getString(R.string.people_picker__contact_list_contact_sub_label_address_book_identical), username);
+                finalString = getContext().getString(R.string.people_picker__contact_list_contact_sub_label_address_book_identical, username);
             } else {
-                finalString = String.format(getContext().getString(R.string.people_picker__contact_list_contact_sub_label_address_book), username, addressBookName);
+                finalString = getContext().getString(R.string.people_picker__contact_list_contact_sub_label_address_book, username, addressBookName);
             }
         }
         return finalString;
