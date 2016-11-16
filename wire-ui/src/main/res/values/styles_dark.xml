@@ -211,6 +211,10 @@
         <item name="android:textColor">@color/text__primary_dark</item>
     </style>
 
+    <style name="start_ui__user_row__sub_label__dark" parent="start_ui__user_row__label__base">
+        <item name="android:textColor">@color/text__secondary_light</item>
+    </style>
+
     <style name="start_ui__header_row__label__dark" parent="start_ui__header_row__label__base">
         <item name="android:textColor">@color/text__secondary_light</item>
     </style>
