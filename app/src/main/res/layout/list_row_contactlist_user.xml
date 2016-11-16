@@ -41,18 +41,33 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:layout_marginStart="@dimen/people_picker__search_result__chathead__padding_right"
+        android:orientation="vertical"
+        android:paddingBottom="@dimen/people_picker__search_result__row__padding_bottom"
         >
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/ttv__contactlist__user__name"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:paddingBottom="@dimen/people_picker__search_result__row__padding_bottom"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:ellipsize="end"
-            android:gravity="start|center_vertical"
             android:maxLines="1"
+            android:gravity="start|bottom"
             app:font="@string/wire__typeface__light"
             style="?startUiUserRowLabel"
+            />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/ttv__contactlist__user__username_and_address_book"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:gravity="start|top"
+            android:singleLine="true"
+            app:font="@string/wire__typeface__light"
+            android:textSize="@dimen/wire__text_size__small"
+            style="?startUiUserRowSubLabel"
             />
 
     </LinearLayout>
