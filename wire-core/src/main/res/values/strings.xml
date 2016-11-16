@@ -160,7 +160,7 @@
     <!-- Should not use newline in the dialog message, not supported by all devices, text will be cut off -->
     <string name="people_picker__invite__share_details_dialog">Share Wire with your friends.</string>
     <string name="people_picker__invite__share_text__header">%1$s wants to connect on Wire</string>
-    <string name="people_picker__invite__share_text__body">I\'m on Wire, talk to you there https://get.wire.com</string>
+    <string name="people_picker__invite__share_text__body">I am on Wire, search for %1$s or visit wire.com/download</string>
     <string name="people_picker__invite__message">Hi,\nThanks for the invitation. Let\'s connect.\n%1$s</string>
     <string name="people_picker__invite__sent_feedback">Invitation sent</string>
     <string name="people_picker__contact_list__user_selection_button__label">OPEN</string>
