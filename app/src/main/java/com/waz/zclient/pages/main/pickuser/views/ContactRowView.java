@@ -18,7 +18,9 @@
 package com.waz.zclient.pages.main.pickuser.views;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -39,6 +41,7 @@ public class ContactRowView extends FrameLayout implements UserRowView {
     private User user;
     private ChatheadView chathead;
     private TextView nameView;
+    private TextView subLabelView;
     private ZetaButton contactInviteButton;
     private Callback callback;
 
@@ -46,7 +49,9 @@ public class ContactRowView extends FrameLayout implements UserRowView {
         @Override
         public void updated(ContactDetails model) {
             contactDetails = model;
+            nameView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
             nameView.setText(contactDetails.getDisplayName());
+            subLabelView.setVisibility(GONE);
             chathead.setContactDetails(contactDetails);
             if (contactDetails.hasBeenInvited()) {
                 contactInviteButton.setVisibility(GONE);
@@ -79,7 +84,10 @@ public class ContactRowView extends FrameLayout implements UserRowView {
         @Override
         public void updated(User model) {
             user = model;
+            nameView.setGravity(Gravity.START | Gravity.BOTTOM);
             nameView.setText(user.getName());
+            subLabelView.setVisibility(VISIBLE);
+            subLabelView.setText(getFormattedSubLabel());
             chathead.setUser(user);
             switch (user.getConnectionStatus()) {
                 case CANCELLED:
@@ -151,6 +159,7 @@ public class ContactRowView extends FrameLayout implements UserRowView {
         LayoutInflater.from(context).inflate(R.layout.list_row_contactlist_user, this, true);
         chathead = ViewUtils.getView(this, R.id.cv__contactlist__user__chathead);
         nameView = ViewUtils.getView(this, R.id.ttv__contactlist__user__name);
+        subLabelView = ViewUtils.getView(this, R.id.ttv__contactlist__user__username_and_address_book);
         contactInviteButton = ViewUtils.getView(this, R.id.zb__contactlist__user_selected_button);
     }
 
@@ -180,5 +189,27 @@ public class ContactRowView extends FrameLayout implements UserRowView {
         @IPickUserController.ContactListDestination int getDestination();
 
         boolean isUserSelected(User user);
+    }
+
+    private String getFormattedSubLabel(){
+        String username = user.getUsername();
+        String addressBookName = user.isContact() ? user.getFirstContact().getDisplayName().trim() : "";
+        String name = user.getName().trim();
+        int commonContacts = user.getCommonConnectionsCount();
+        String finalString;
+        if (TextUtils.isEmpty(addressBookName)) {
+            if (commonContacts > 0) {
+                finalString = String.format(getContext().getString(R.string.people_picker__contact_list_contact_sub_label_common_friends), username, commonContacts);
+            } else {
+                finalString = String.format(getContext().getString(R.string.people_picker__contact_list_contact_sub_label_username), username);
+            }
+        } else {
+            if (name.equalsIgnoreCase(addressBookName)) {
+                finalString = String.format(getContext().getString(R.string.people_picker__contact_list_contact_sub_label_address_book_identical), username);
+            } else {
+                finalString = String.format(getContext().getString(R.string.people_picker__contact_list_contact_sub_label_address_book), username, addressBookName);
+            }
+        }
+        return finalString;
     }
 }

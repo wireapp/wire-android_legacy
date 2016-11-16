@@ -114,6 +114,7 @@
         <item name="startUiCloseButton">@style/start_ui__close_button__dark</item>
 
         <item name="startUiUserRowLabel">@style/start_ui__user_row__label__dark</item>
+        <item name="startUiUserRowSubLabel">@style/start_ui__user_row__sub_label__dark</item>
         <item name="startUiHeaderRowLabel">@style/start_ui__header_row__label__dark</item>
 
         <item name="wireDivider">@style/common__divider__dark</item>
@@ -251,6 +252,7 @@
         <item name="startUiCloseButton">@style/start_ui__close_button__light</item>
 
         <item name="startUiUserRowLabel">@style/start_ui__user_row__label__light</item>
+        <item name="startUiUserRowSubLabel">@style/start_ui__user_row__sub_label__light</item>
         <item name="startUiHeaderRowLabel">@style/start_ui__header_row__label__light</item>
 
         <item name="wireDivider">@style/common__divider__light</item>
