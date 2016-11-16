@@ -53,10 +53,10 @@
         android:title="@string/pref_dev_version_info_id_title"
         />
 
-    <!--<CheckBoxPreference-->
-        <!--android:defaultValue="true"-->
-        <!--android:key="@string/pref_dev_assets_v3_key"-->
-        <!--android:title="@string/pref_dev_assets_v3_title"-->
-        <!--/>-->
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="@string/pref_dev_assets_v3_key"
+        android:title="@string/pref_dev_assets_v3_title"
+        />
 
 </PreferenceScreen>
