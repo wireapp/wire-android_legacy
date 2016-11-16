@@ -98,6 +98,7 @@
     <attr name="startUiCloseButton" format="reference" />
 
     <attr name="startUiUserRowLabel" format="reference" />
+    <attr name="startUiUserRowSubLabel" format="reference" />
     <attr name="startUiHeaderRowLabel" format="reference" />
 
     <!-- Media Player -->
