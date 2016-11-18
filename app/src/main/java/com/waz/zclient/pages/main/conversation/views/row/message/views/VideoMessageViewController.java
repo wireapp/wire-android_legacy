@@ -292,8 +292,6 @@ public class VideoMessageViewController extends MessageViewController implements
                 updateViews(action, errorButtonBackground, null);
                 break;
             case UPLOAD_NOT_STARTED:
-            case META_DATA_SENT:
-            case PREVIEW_SENT:
             case UPLOAD_IN_PROGRESS:
                 if (message.getMessageStatus() == Message.Status.FAILED) {
                     updateViews(context.getString(R.string.glyph__redo), errorButtonBackground, null);
@@ -354,8 +352,6 @@ public class VideoMessageViewController extends MessageViewController implements
                 }
                 break;
             case UPLOAD_NOT_STARTED:
-            case META_DATA_SENT:
-            case PREVIEW_SENT:
             case UPLOAD_IN_PROGRESS:
                 if (message.getMessageStatus() == Message.Status.FAILED ||
                     message.getMessageStatus() == Message.Status.FAILED_READ) {

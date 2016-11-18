@@ -29,8 +29,6 @@ import com.waz.zclient.pages.main.conversation.views.MessageViewsContainer;
 import com.waz.zclient.pages.main.conversation.views.row.footer.FooterActionCallback;
 import com.waz.zclient.pages.main.conversation.views.row.separator.Separator;
 
-import static com.waz.api.AssetStatus.META_DATA_SENT;
-import static com.waz.api.AssetStatus.PREVIEW_SENT;
 import static com.waz.api.AssetStatus.UPLOAD_IN_PROGRESS;
 import static com.waz.api.AssetStatus.UPLOAD_NOT_STARTED;
 
@@ -104,8 +102,6 @@ public abstract class MessageViewController implements ConversationItemViewContr
     protected boolean receivingMessage(Asset asset) {
         return asset != null &&
                (asset.getStatus() == UPLOAD_NOT_STARTED ||
-                asset.getStatus() == META_DATA_SENT ||
-                asset.getStatus() == PREVIEW_SENT ||
                 asset.getStatus() == UPLOAD_IN_PROGRESS) &&
                message.getMessageStatus() == Message.Status.SENT;
     }

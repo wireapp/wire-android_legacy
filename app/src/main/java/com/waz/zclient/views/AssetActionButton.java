@@ -163,8 +163,6 @@ public class AssetActionButton extends GlyphProgressView {
                 updateViews(action, errorButtonBackground, null);
                 break;
             case UPLOAD_NOT_STARTED:
-            case META_DATA_SENT:
-            case PREVIEW_SENT:
             case UPLOAD_IN_PROGRESS:
                 if (message.getMessageStatus() == Message.Status.FAILED) {
                     updateViews(getContext().getString(R.string.glyph__redo), errorButtonBackground, null);
