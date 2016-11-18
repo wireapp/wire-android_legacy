@@ -100,7 +100,7 @@ public class ConnectRequestInboxAdapter extends BaseAdapter {
 
             viewHolder = new ViewHolder();
             viewHolder.nameView = ViewUtils.getView(convertView, R.id.taet__participants__header);
-            viewHolder.subheaderView = ViewUtils.getView(convertView, R.id.ttv__participants__sub_header);
+            viewHolder.subheaderView = ViewUtils.getView(convertView, R.id.ttv__participants__user_name);
             viewHolder.separatorView = ViewUtils.getView(convertView, R.id.v__connect_request__separator_line);
 
             convertView.setTag(viewHolder);

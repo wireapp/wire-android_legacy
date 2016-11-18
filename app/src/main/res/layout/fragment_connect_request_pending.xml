@@ -27,6 +27,7 @@
               style="?wireBackground"
     >
 
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -44,12 +45,22 @@
 
     </FrameLayout>
 
-
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         >
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/ttv__pending_connect_request__username"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/wire__padding__small"
+            android:layout_gravity="center_horizontal|top"
+            android:textColor="?wireSecondaryTextColor"
+            android:textSize="@dimen/wire__text_size__small"
+            app:font="@string/wire__typeface__light"
+            />
 
         <com.waz.zclient.views.images.ImageAssetImageView
             android:id="@+id/iaiv__pending_connect"
@@ -61,16 +72,6 @@
             />
 
     </FrameLayout>
-
-    <com.waz.zclient.pages.main.connect.views.CommonUsersView
-        android:id="@+id/ll__send_connect_request__common_users"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/wire__padding__regular"
-        android:layout_marginBottom="@dimen/wire__padding__small"
-        android:paddingStart="@dimen/wire__padding__big"
-        android:paddingEnd="@dimen/wire__text_size__big"
-        />
 
     <!-- Wrapper with height of accept menu to ensure Common user view stays in fixed position when toggling between Footer & Accept menu -->
     <FrameLayout
@@ -147,9 +148,9 @@
             android:id="@+id/fm__footer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:leftActionText="@string/glyph__conversation"
-            app:rightActionText="@string/glyph__more"
-            app:leftActionLabelText="@string/connect_request__sub_header__pending_label"
+            app:leftActionText="@string/glyph__undo"
+            app:rightActionText="@string/glyph__block"
+            app:leftActionLabelText="@string/connect_request__cancel_request__label"
             />
 
     </FrameLayout>

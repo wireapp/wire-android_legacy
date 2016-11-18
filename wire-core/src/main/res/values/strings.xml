@@ -303,6 +303,7 @@
     <string name="connect_request__common_users__label">You both know</string>
     <string name="connect_request__common_users__connection_counter">+%1$s</string>
     <string name="connect_request__sub_header__pending_label">Pending</string>
+    <string name="connect_request__cancel_request__label">Cancel connection request</string>
     <string name="connect_request__unblock__button__text">Unblock</string>
     <string name="send_connect_request__connect_button__text">Connect</string>
     <string name="connect_inbox__one_person__link__name">1 person waiting</string>
@@ -310,6 +311,7 @@
     <string name="connect_request__ignore_button__text">Ignore</string>
     <string name="content__message__connect_request__footer">CONNECTED</string>
     <string name="content__message__connect_request__auto_connect__footer">AUTO-CONNECTED. _LEARN MORE_</string>
+    <string name="content__message__connect_request__user_info">%1$s in Address Book</string>
 
     <!-- In-App Notifications -->
     <string name="in_app_notification__footer__photo">Shared a photo</string>
