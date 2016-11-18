@@ -105,6 +105,7 @@
         <item name="strongBackground">@style/common__strong_background__dark</item>
         <item name="wirePrimaryTextColor">@color/text__primary_dark</item>
         <item name="wirePrimaryTextColorReverted">@color/text__primary_light</item>
+        <item name="wireSecondaryTextColor">@color/text__secondary_dark</item>
 
         <!-- Start UI -->
         <item name="startUiErrorLabel">@style/start_ui__error_label__dark</item>
@@ -242,6 +243,7 @@
         <item name="strongBackground">@style/common__strong_background__light</item>
         <item name="wirePrimaryTextColor">@color/text__primary_light</item>
         <item name="wirePrimaryTextColorReverted">@color/text__primary_dark</item>
+        <item name="wireSecondaryTextColor">@color/text__secondary_light</item>
 
         <!-- Start UI -->
         <item name="startUiErrorLabel">@style/start_ui__error_label__light</item>

@@ -139,6 +139,10 @@ public class StringUtils {
         return missing;
     }
 
+    public static String formatUsername(String username) {
+        return "@" + username;
+    }
+
     private static class TextDrawing {
         private final Bitmap bitmap = Bitmap.createBitmap(50, 50, Bitmap.Config.ALPHA_8);
         private final Canvas canvas = new Canvas(bitmap);

@@ -138,7 +138,7 @@
     </style>
 
     <style name="user__footer_label__dark" parent="user__footer_label__base">
-        <item name="android:textColor">@color/text__secondary_light</item>
+        <item name="android:textColor">@color/text__primary_dark</item>
     </style>
 
     <style name="user__strong_label__dark" parent="user__strong_label__base">

@@ -30,14 +30,15 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import com.waz.api.CommonConnections;
+import com.waz.api.ContactDetails;
 import com.waz.api.IConversation;
-import com.waz.api.UpdateListener;
 import com.waz.api.User;
+import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.R;
 import com.waz.zclient.pages.main.connect.ConnectActionsCallback;
 import com.waz.zclient.ui.utils.TextViewUtils;
+import com.waz.zclient.utils.StringUtils;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
 import com.waz.zclient.ui.animation.interpolators.penner.Quart;
@@ -53,17 +54,81 @@ public class ConnectRequestInboxRow extends FrameLayout {
 
     // Model this view is bound to
     private User user;
-    private CommonConnections commonConnections;
     private ConnectActionsCallback connectActionCallback;
     private CommonUsersCallback commonUsersCallback;
     private ZetaButton ignoreButton;
     private ZetaButton acceptButton;
-    private TextView nameView;
-    private TextView subHeaderView;
+    private TextView displayNameTextView;
+    private TextView usernameTextView;
+    private TextView userInfoTextView;
     private LinearLayout acceptMenu;
-    private CommonUsersView commonUsersView;
     private ValueAnimator rowHeightAnimator;
     private ImageAssetImageView imageAssetImageViewProfile;
+
+    private final ModelObserver<ContactDetails> contactDetailsModelObserver = new ModelObserver<ContactDetails>() {
+        @Override
+        public void updated(ContactDetails contactDetails) {
+            if (user == null) {
+                return;
+            }
+            String userInfo;
+            if (user.getDisplayName().equals(contactDetails.getDisplayName())) {
+                // User's Wire name is same as in address book
+                userInfo = getContext().getString(R.string.content__message__connect_request__user_info, "");
+            } else {
+                userInfo = getContext().getResources().getString(R.string.content__message__connect_request__user_info,
+                                                                      StringUtils.formatUsername(contactDetails.getDisplayName()));
+            }
+            userInfoTextView.setText(userInfo);
+        }
+    };
+
+    private final ModelObserver<User> userModelObserver = new ModelObserver<User>() {
+        @Override
+        public void updated(User user) {
+            if (imageAssetImageViewProfile != null) {
+                imageAssetImageViewProfile.connectImageAsset(user.getPicture());
+            }
+            displayNameTextView.setText(getContext().getString(R.string.connect_request__inbox__header, user.getName()));
+            TextViewUtils.boldText(displayNameTextView);
+
+            if (!user.isContact()) {
+                userInfoTextView.setText("");
+                contactDetailsModelObserver.pauseListening();
+            } else {
+                contactDetailsModelObserver.setAndUpdate(user.getFirstContact());
+            }
+
+            // Toggle accept / ignore buttons
+            if (user.getConnectionStatus() == User.ConnectionStatus.PENDING_FROM_OTHER ||
+                user.getConnectionStatus() == User.ConnectionStatus.IGNORED) {
+                usernameTextView.setText(StringUtils.formatUsername(user.getUsername()));
+                acceptMenu.setVisibility(View.VISIBLE);
+
+                ignoreButton.setEnabled(true);
+                ignoreButton.setOnClickListener(new OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        ignoreButton.setEnabled(false);
+                        animateIgnore(ConnectRequestInboxRow.this.user);
+                    }
+                });
+
+                acceptButton.setEnabled(true);
+                acceptButton.setOnClickListener(new OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        acceptButton.setEnabled(false);
+                        animateAccept(ConnectRequestInboxRow.this.user);
+                    }
+                });
+            } else {
+                acceptMenu.setVisibility(View.GONE);
+                ignoreButton.setOnClickListener(null);
+                acceptButton.setOnClickListener(null);
+            }
+        }
+    };
 
     public ConnectRequestInboxRow(Context context) {
         this(context, null);
@@ -82,10 +147,10 @@ public class ConnectRequestInboxRow extends FrameLayout {
         View container = LayoutInflater.from(getContext()).inflate(R.layout.fragment_connect_request_pending_inbox, this, true);
         ignoreButton = ViewUtils.getView(container, R.id.zb__connect_request__ignore_button);
         acceptButton = ViewUtils.getView(container, R.id.zb__connect_request__accept_button);
-        nameView = ViewUtils.getView(container, R.id.taet__participants__header);
-        subHeaderView = ViewUtils.getView(container, R.id.ttv__participants__sub_header);
+        displayNameTextView = ViewUtils.getView(container, R.id.taet__participants__header);
+        usernameTextView = ViewUtils.getView(container, R.id.ttv__participants__user_name);
+        userInfoTextView = ViewUtils.getView(container, R.id.ttv__participants__user_info);
         acceptMenu = ViewUtils.getView(container, R.id.ll__connect_request__accept_menu);
-        commonUsersView = ViewUtils.getView(container, R.id.ll__send_connect_request__common_users);
 
         if (LayoutSpec.isTablet(getContext())) {
             View mainContainerView = ViewUtils.getView(container,
@@ -110,11 +175,6 @@ public class ConnectRequestInboxRow extends FrameLayout {
             dummyView.setVisibility(GONE);
         }
 
-        // Hide common connections until loaded
-        if (commonUsersView != null) {
-            commonUsersView.setVisibility(GONE);
-        }
-
         // Hide accept menu, check later when user loaded
         acceptMenu.setVisibility(View.GONE);
     }
@@ -136,13 +196,11 @@ public class ConnectRequestInboxRow extends FrameLayout {
     }
 
     public void loadUser(User user) {
-        if (this.user != null) {
-            this.user.removeUpdateListener(userListener);
-        }
+
         this.user = user;
-        this.user.addUpdateListener(userListener);
-        userListener.updated();
-        for (View v : Arrays.asList(ignoreButton, nameView, acceptButton, subHeaderView, acceptMenu, commonUsersView)) {
+        userModelObserver.setAndUpdate(user);
+        for (View v : Arrays.asList(ignoreButton,
+                                    displayNameTextView, acceptButton, usernameTextView, acceptMenu)) {
             if (v == null) {
                 continue;
             }
@@ -162,68 +220,12 @@ public class ConnectRequestInboxRow extends FrameLayout {
         }
     }
 
-    public void loadCommonConnections(CommonConnections commonConnections) {
-        if (this.commonConnections != null) {
-            this.commonConnections.removeUpdateListener(commonConnectionsListener);
-        }
-        this.commonConnections = commonConnections;
-        this.commonConnections.addUpdateListener(commonConnectionsListener);
-        commonConnectionsListener.updated();
-    }
-
-    private UpdateListener userListener = new UpdateListener() {
-
-        @Override
-        public void updated() {
-            if (user == null ||
-                getContext() == null) {
-                return;
-            }
-            if (imageAssetImageViewProfile != null) {
-                imageAssetImageViewProfile.connectImageAsset(user.getPicture());
-            }
-            nameView.setText(getContext().getString(R.string.connect_request__inbox__header, user.getName()));
-            TextViewUtils.boldText(nameView);
-
-            loadCommonConnections(user.getCommonConnections());
-
-            // Toggle accept / ignore buttons
-            if (user.getConnectionStatus() == User.ConnectionStatus.PENDING_FROM_OTHER ||
-                user.getConnectionStatus() == User.ConnectionStatus.IGNORED) {
-                subHeaderView.setText(user.getEmail());
-                acceptMenu.setVisibility(View.VISIBLE);
-
-                ignoreButton.setEnabled(true);
-                ignoreButton.setOnClickListener(new OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        ignoreButton.setEnabled(false);
-                        animateIgnore(user);
-                    }
-                });
-
-                acceptButton.setEnabled(true);
-                acceptButton.setOnClickListener(new OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        acceptButton.setEnabled(false);
-                        animateAccept(user);
-                    }
-                });
-            } else {
-                acceptMenu.setVisibility(View.GONE);
-                ignoreButton.setOnClickListener(null);
-                acceptButton.setOnClickListener(null);
-            }
-        }
-    };
-
     private void animateAccept(final User user) {
         final int animationDuration = getResources().getInteger(R.integer.framework_animation_duration_medium);
         final List<Animator> animatorList = new ArrayList<>();
 
-        final int translationDestination = -nameView.getWidth();
-        for (View v : Arrays.asList(nameView)) {
+        final int translationDestination = -displayNameTextView.getWidth();
+        for (View v : Arrays.asList(displayNameTextView)) {
             if (v == null) {
                 continue;
             }
@@ -232,7 +234,7 @@ public class ConnectRequestInboxRow extends FrameLayout {
             animatorList.add(animator);
         }
 
-        for (View v : Arrays.asList(ignoreButton, acceptButton, subHeaderView, acceptMenu, commonUsersView)) {
+        for (View v : Arrays.asList(ignoreButton, acceptButton, usernameTextView, acceptMenu)) {
             if (v == null) {
                 continue;
             }
@@ -290,7 +292,8 @@ public class ConnectRequestInboxRow extends FrameLayout {
         final int animationDuration = getResources().getInteger(R.integer.framework_animation_duration_medium);
         final List<Animator> animatorList = new ArrayList<>();
 
-        for (View v : Arrays.asList(ignoreButton, nameView, acceptButton, subHeaderView, acceptMenu, commonUsersView)) {
+        for (View v : Arrays.asList(ignoreButton,
+                                    displayNameTextView, acceptButton, usernameTextView, acceptMenu)) {
             if (v == null) {
                 continue;
             }
@@ -319,20 +322,4 @@ public class ConnectRequestInboxRow extends FrameLayout {
         animatorSet.start();
 
     }
-
-    private UpdateListener commonConnectionsListener = new UpdateListener() {
-        @Override
-        public void updated() {
-            if (commonConnections != null) {
-                if (commonConnections.getTotalCount() > 0) {
-                    commonUsersView.setVisibility(VISIBLE);
-                    commonUsersView.setCommonUsers(commonConnections.getTopConnections(), commonConnections.getTotalCount(), commonUsersCallback);
-                } else {
-                    commonUsersView.setVisibility(GONE);
-                }
-            }
-        }
-    };
-
-
 }

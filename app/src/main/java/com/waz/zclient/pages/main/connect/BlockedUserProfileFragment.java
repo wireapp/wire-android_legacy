@@ -165,7 +165,7 @@ public class BlockedUserProfileFragment extends BaseFragment<BlockedUserProfileF
         cancelButton = ViewUtils.getView(view, R.id.zb__connect_request__ignore_button);
         smallUnblockButton = ViewUtils.getView(view, R.id.zb__connect_request__accept_button);
         nameTextView = ViewUtils.getView(view, R.id.taet__participants__header);
-        subHeaderTextView = ViewUtils.getView(view, R.id.ttv__participants__sub_header);
+        subHeaderTextView = ViewUtils.getView(view, R.id.ttv__participants__user_name);
         footerMenu = ViewUtils.getView(view, R.id.fm__footer);
         unblockMenu = ViewUtils.getView(view, R.id.ll__connect_request__accept_menu);
         separatorLine = ViewUtils.getView(view, R.id.v__connect_request__separator_line);

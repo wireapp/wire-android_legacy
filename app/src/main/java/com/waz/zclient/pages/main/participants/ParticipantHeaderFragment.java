@@ -64,6 +64,7 @@ import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.ui.utils.MathUtils;
 import com.waz.zclient.ui.views.e2ee.ShieldView;
 import com.waz.zclient.utils.LayoutSpec;
+import com.waz.zclient.utils.StringUtils;
 import com.waz.zclient.utils.ViewUtils;
 
 public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFragment.Container> implements KeyboardVisibilityObserver,
@@ -139,7 +140,7 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
         View rootView = inflater.inflate(R.layout.fragment_participants_header, container, false);
 
         headerTopBorder = ViewUtils.getView(rootView, R.id.v_participants__header__top_border);
-        subHeader = ViewUtils.getView(rootView, R.id.ttv__participants__sub_header);
+        subHeader = ViewUtils.getView(rootView, R.id.ttv__participants__user_name);
         textViewAddressBookNameContainer = ViewUtils.getView(rootView, R.id.ll__single_participants__real_name__container);
         textViewAddressBookNameContainer.setVisibility(View.GONE);
         textViewAddressBookName = ViewUtils.getView(rootView, R.id.ttv__address_book_name);
@@ -669,7 +670,7 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
             textViewAddressBookNameContainer.setVisibility(View.GONE);
         }
 
-        subHeader.setText(user.getEmail());
+        subHeader.setText(StringUtils.formatUsername(user.getUsername()));
         subHeader.setTextSize(TypedValue.COMPLEX_UNIT_PX,
                               getResources().getDimension(R.dimen.participants__subheader__font_size__one_to_one));
         if (!TextUtils.isEmpty(user.getEmail())) {
