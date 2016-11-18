@@ -25,7 +25,7 @@
               android:orientation="horizontal"
               android:layout_marginTop="@dimen/wire__padding__big"
     >
-    
+
     <View
         android:id="@+id/v__participants_header__dummy_view"
         android:layout_width="@dimen/wire__icon_button__diameter"
@@ -59,7 +59,7 @@
             />
 
         <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/ttv__participants__sub_header"
+            android:id="@+id/ttv__participants__user_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/wire__padding__small"
@@ -67,9 +67,17 @@
             android:ellipsize="end"
             android:gravity="center"
             android:textColorHint="@color/text__secondary_light"
-            android:textAllCaps="true"
             app:font="@string/wire__typeface__light"
             style="?userSubHeader"
+            />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/ttv__participants__user_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="?wirePrimaryTextColor"
+            android:textSize="@dimen/wire__text_size__small"
+            app:font="@string/wire__typeface__light"
             />
     </LinearLayout>
 

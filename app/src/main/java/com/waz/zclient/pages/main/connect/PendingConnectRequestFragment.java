@@ -36,8 +36,6 @@ import com.waz.zclient.core.stores.connect.ConnectStoreObserver;
 import com.waz.zclient.core.stores.connect.IConnectStore;
 import com.waz.zclient.core.stores.conversation.OnConversationLoadedListener;
 import com.waz.zclient.pages.BaseFragment;
-import com.waz.zclient.pages.main.connect.views.CommonUsersCallback;
-import com.waz.zclient.pages.main.connect.views.CommonUsersView;
 import com.waz.zclient.pages.main.participants.ParticipantBackbarFragment;
 import com.waz.zclient.pages.main.participants.ProfileAnimation;
 import com.waz.zclient.pages.main.participants.ProfileSourceAnimation;
@@ -46,6 +44,7 @@ import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 import com.waz.zclient.ui.text.GlyphTextView;
 import com.waz.zclient.ui.views.ZetaButton;
 import com.waz.zclient.utils.LayoutSpec;
+import com.waz.zclient.utils.StringUtils;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.images.ImageAssetImageView;
 import com.waz.zclient.views.menus.FooterMenu;
@@ -75,6 +74,7 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
     private boolean isShowingFooterMenu;
 
     private boolean isBelowUserProfile;
+    private TextView usernameTextView;
     private ZetaButton ignoreButton;
     private ZetaButton acceptButton;
     private ZetaButton unblockButton;
@@ -82,7 +82,6 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
     private FooterMenu footerMenu;
     private TextView subHeaderView;
     private GlyphTextView closeButton;
-    private CommonUsersView commonUsersView;
     private TextView participentsHeader;
     private ImageAssetImageView imageAssetImageViewProfile;
 
@@ -174,14 +173,14 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
 
         View rootView = inflater.inflate(R.layout.fragment_connect_request_pending, viewContainer, false);
 
+        usernameTextView =  ViewUtils.getView(rootView, R.id.ttv__pending_connect_request__username);
         ignoreButton = ViewUtils.getView(rootView, R.id.zb__connect_request__ignore_button);
         acceptButton = ViewUtils.getView(rootView, R.id.zb__connect_request__accept_button);
         unblockButton = ViewUtils.getView(rootView, R.id.zb__connect_request__unblock_button);
         acceptMenu = ViewUtils.getView(rootView, R.id.ll__connect_request__accept_menu);
         footerMenu = ViewUtils.getView(rootView, R.id.fm__footer);
-        subHeaderView = ViewUtils.getView(rootView, R.id.ttv__participants__sub_header);
+        subHeaderView = ViewUtils.getView(rootView, R.id.ttv__participants__user_name);
         closeButton = ViewUtils.getView(rootView, R.id.gtv__participants__close);
-        commonUsersView = ViewUtils.getView(rootView, R.id.ll__send_connect_request__common_users);
         participentsHeader = ViewUtils.getView(rootView, R.id.taet__participants__header);
         imageAssetImageViewProfile = ViewUtils.getView(rootView, R.id.iaiv__pending_connect);
         imageAssetImageViewProfile.setDisplayType(ImageAssetImageView.DisplayType.CIRCLE);
@@ -234,7 +233,6 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
         footerMenu.setVisibility(View.GONE);
         acceptMenu.setVisibility(View.GONE);
         unblockButton.setVisibility(View.GONE);
-        commonUsersView.setVisibility(View.GONE);
 
         return rootView;
     }
@@ -291,7 +289,6 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
         footerMenu = null;
         subHeaderView = null;
         closeButton = null;
-        commonUsersView = null;
         participentsHeader = null;
         if (conversation != null) {
             conversation.removeUpdateListener(this);
@@ -330,12 +327,12 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
         footerMenu.setCallback(new FooterMenuCallback() {
             @Override
             public void onLeftActionClicked() {
-                // do nothing
+                user.cancelConnection();
             }
 
             @Override
             public void onRightActionClicked() {
-                getContainer().showOptionsMenu(user);
+                user.block();
             }
         });
     }
@@ -457,6 +454,7 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
         }
 
         imageAssetImageViewProfile.connectImageAsset(user.getPicture());
+        usernameTextView.setText(StringUtils.formatUsername(user.getUsername()));
 
         // Load common users
         getStoreFactory().getConnectStore().loadCommonConnections(user.getCommonConnections());
@@ -483,29 +481,7 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
 
     @Override
     public void onCommonConnectionsUpdated(CommonConnections commonConnections) {
-        if (commonConnections.getTotalCount() == 0) {
-            commonUsersView.setVisibility(View.GONE);
-            return;
-        } else {
-            commonUsersView.setVisibility(View.VISIBLE);
-            if (LayoutSpec.isTablet(getActivity())) {
-                ViewUtils.setWidth(imageAssetImageViewProfile, getResources().getDimensionPixelSize(R.dimen.profile__image__width_small));
-                ViewUtils.setHeight(imageAssetImageViewProfile, getResources().getDimensionPixelSize(R.dimen.profile__image__height_small));
-            }
-        }
-
-        commonUsersView.setVisibility(View.VISIBLE);
-
-        CommonUsersCallback commonUserOnClickCallback = new CommonUsersCallback() {
-            @Override
-            public void onCommonUserClicked(View anchor, User user) {
-                getContainer().openCommonUserProfile(anchor, user);
-            }
-        };
-
-        commonUsersView.setCommonUsers(commonConnections.getTopConnections(),
-                                       commonConnections.getTotalCount(),
-                                       commonUserOnClickCallback);
+        // do nothing
     }
 
     @Override
@@ -543,8 +519,6 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
 
     public interface Container extends UserProfileContainer {
         void onAcceptedConnectRequest(IConversation conversation);
-
-        void showOptionsMenu(User user);
 
         void onConversationUpdated(IConversation conversation);
     }

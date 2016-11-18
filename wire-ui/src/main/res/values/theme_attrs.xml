@@ -87,6 +87,7 @@
     <attr name="wireDivider" format="reference" />
     <attr name="tabIndicatorLabel" format="reference" />
     <attr name="wirePrimaryTextColor" format="color" />
+    <attr name="wireSecondaryTextColor" format="color" />
     <attr name="wirePrimaryTextColorReverted" format="color" />
 
     <!-- StartUI error labels -->

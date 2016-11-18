@@ -31,15 +31,21 @@
     >
 
     <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/ttv__row_conversation__connect_request__user"
+        android:id="@+id/ttv__row_conversation__connect_request__username"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/content__connect_request__chathead__margin_top"
-        android:layout_marginBottom="@dimen/wire__padding__big"
-        android:textColor="?wirePrimaryTextColor"
-        android:textSize="@dimen/wire__text_size__regular"
-        android:ellipsize="end"
-        android:singleLine="true"
+        android:layout_marginTop="@dimen/wire__padding__small"
+        android:textColor="?wireSecondaryTextColor"
+        android:textSize="@dimen/wire__text_size__small"
+        app:font="@string/wire__typeface__light"
+        />
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/ttv__row_conversation__connect_request__user_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="?wireSecondaryTextColor"
+        android:textSize="@dimen/wire__text_size__small"
         app:font="@string/wire__typeface__light"
         />
 
@@ -47,18 +53,8 @@
         android:id="@+id/cv__row_conversation__connect_request__chat_head"
         android:layout_width="@dimen/profile__image__width"
         android:layout_height="@dimen/profile__image__width"
+        android:layout_marginTop="@dimen/wire__padding__big"
         app:show_border="false"
-        />
-
-    <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/ttv__row_conversation__connect_request__label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/wire__padding__12"
-        android:layout_marginBottom="@dimen/wire__padding__big"
-        android:textColor="?wirePrimaryTextColor"
-        android:textSize="@dimen/wire__text_size__small"
-        app:font="@string/wire__typeface__light"
         />
 
 </LinearLayout>

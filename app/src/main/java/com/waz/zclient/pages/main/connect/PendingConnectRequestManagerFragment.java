@@ -39,7 +39,6 @@ import com.waz.zclient.pages.main.participants.OptionsMenuControl;
 import com.waz.zclient.core.stores.connect.IConnectStore;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
 import com.waz.zclient.pages.BaseFragment;
-import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController;
 import com.waz.zclient.pages.main.participants.OptionsMenuFragment;
 import com.waz.zclient.pages.main.participants.SingleParticipantFragment;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
@@ -190,20 +189,6 @@ public class PendingConnectRequestManagerFragment extends BaseFragment<PendingCo
                                           null, true);
             }
         });
-    }
-
-    @Override
-    public void showOptionsMenu(final User user) {
-        @IConversationScreenController.ConversationMenuRequester int menuRequester = (userRequester == IConnectStore.UserRequester.SEARCH) ?
-                                                                                     IConversationScreenController.USER_PROFILE_SEARCH :
-                                                                                     IConversationScreenController.CONVERSATION_DETAILS;
-
-        optionsMenuControl.setTitle(user.getDisplayName());
-        optionsMenuControl.createMenu(user.getConversation(),
-                                      menuRequester,
-                                      getControllerFactory().getThemeController().getThemeDependentOptionsTheme());
-        optionsMenuControl.open();
-
     }
 
     @Override
