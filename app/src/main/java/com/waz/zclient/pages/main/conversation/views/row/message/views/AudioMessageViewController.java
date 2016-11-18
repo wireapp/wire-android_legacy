@@ -291,8 +291,6 @@ public class AudioMessageViewController extends MessageViewController implements
                 }
                 break;
             case UPLOAD_NOT_STARTED:
-            case META_DATA_SENT:
-            case PREVIEW_SENT:
             case UPLOAD_IN_PROGRESS:
                 if (message.getMessageStatus() != Message.Status.SENT) {
                     asset.getUploadProgress().cancel();
