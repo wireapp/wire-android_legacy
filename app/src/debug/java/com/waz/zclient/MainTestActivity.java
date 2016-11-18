@@ -180,4 +180,9 @@ public class MainTestActivity extends TestActivity implements MainPhoneFragment.
     public void onForceClientUpdate() {
 
     }
+
+    @Override
+    public void onMyUsernameHasChanged(String myUsername) {
+
+    }
 }

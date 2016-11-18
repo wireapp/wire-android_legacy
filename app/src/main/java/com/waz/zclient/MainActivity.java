@@ -976,4 +976,9 @@ public class MainActivity extends BaseActivity implements MainPhoneFragment.Cont
             userPreferencesController.setUnsupportedEmoji(unsupported, Emojis.VERSION);
         }
     }
+
+    @Override
+    public void onMyUsernameHasChanged(String myUsername) {
+
+    }
 }

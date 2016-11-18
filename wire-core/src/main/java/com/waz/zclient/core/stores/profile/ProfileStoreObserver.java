@@ -29,4 +29,6 @@ public interface ProfileStoreObserver {
     void onPhoneUpdateFailed(String myPhone, int errorCode, String message, String label);
 
     void onMyEmailAndPasswordHasChanged(String myEmail);
+
+    void onMyUsernameHasChanged(String myUsername);
 }
