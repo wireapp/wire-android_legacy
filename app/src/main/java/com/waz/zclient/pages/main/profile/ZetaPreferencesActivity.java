@@ -347,4 +347,8 @@ public class ZetaPreferencesActivity extends BasePreferenceActivity implements A
     public void onCloseCamera(CameraContext cameraContext) {
         getSupportFragmentManager().popBackStack(CameraFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE);
     }
+
+    @Override
+    public void onMyUsernameHasChanged(String myUsername) {
+    }
 }

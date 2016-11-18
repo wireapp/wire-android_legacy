@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2016 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:clickable="true"
+    >
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:scrollbars="none"
+        android:overScrollMode="ifContentScrolls"
+        >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            >
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pref__account_action__dialog__change_username__title"
+                android:textSize="@dimen/prefs__username_change__title_size"
+                android:layout_marginBottom="@dimen/prefs__username_change__margins_between"
+                app:font="@string/wire__typeface__regular"
+                android:layout_margin="@dimen/prefs__dialog__padding"
+                />
+
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/prefs__dialog__padding"
+                android:layout_marginEnd="@dimen/prefs__dialog__padding"
+                >
+
+                <android.support.design.widget.TextInputLayout
+                    android:id="@+id/til__change_username"
+                    android:layout_height="wrap_content"
+                    android:layout_width="match_parent"
+                    android:layout_centerInParent="true"
+                    app:errorEnabled="true"
+                    >
+
+                    <android.support.v7.widget.AppCompatEditText
+                        android:id="@+id/acet__change_username"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="@dimen/prefs__username_change__edit_text_horizontal_padding"
+                        android:paddingEnd="@dimen/prefs__username_change__edit_text_horizontal_padding"
+                        android:paddingBottom="@dimen/prefs__username_change__edit_text_bottom_padding"
+                        android:singleLine="true"
+                        android:inputType="textNoSuggestions|textVisiblePassword"
+                        />
+
+                </android.support.design.widget.TextInputLayout>
+
+                <android.support.v7.widget.AppCompatTextView
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:layout_alignStart="@id/til__change_username"
+                    android:layout_centerVertical="true"
+                    android:paddingBottom="@dimen/prefs__username_change__at__padding_bottom"
+                    android:paddingStart="@dimen/prefs__username_change__at__padding_start"
+                    android:textSize="@dimen/wire__text_size__medium"
+                    android:text="@string/prefs__username_change__username_at"
+                    />
+
+                <com.waz.zclient.views.LoadingIndicatorView
+                    android:id="@+id/liv__username_verifying_indicator"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignEnd="@id/til__change_username"
+                    android:layout_centerVertical="true"
+                    android:paddingBottom="@dimen/prefs__username_change__loading__bottom_padding"
+                    android:layout_marginEnd="@dimen/prefs__username_change__loading__margin_end"/>
+
+            </RelativeLayout>
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pref__account_action__dialog__change_username__summary"
+                android:textSize="@dimen/prefs__username_change__text_size"
+                android:layout_marginTop="@dimen/prefs__username_change__margins_between"
+                android:layout_marginBottom="@dimen/prefs__username_change__margins_between"
+                android:textColor="?android:attr/textColorSecondary"
+                app:font="@string/wire__typeface__regular"
+                android:layout_marginStart="@dimen/prefs__dialog__padding"
+                android:layout_marginEnd="@dimen/prefs__dialog__padding"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pref__account_action__dialog__change_username__rules"
+                android:textSize="@dimen/prefs__username_change__text_size"
+                android:layout_marginBottom="@dimen/prefs__username_change__margins_between"
+                android:textColor="?android:attr/textColorSecondary"
+                app:font="@string/wire__typeface__regular"
+                android:layout_marginStart="@dimen/prefs__dialog__padding"
+                android:layout_marginEnd="@dimen/prefs__dialog__padding"
+                />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:orientation="vertical"
+        >
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/prefs__username_change__separator_height"
+            android:background="?attr/colorAccent"
+            />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            style="?android:buttonBarStyle"
+            >
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/tv__back_button"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="@android:string/cancel"
+                app:font="@string/wire__typeface__medium"
+                android:textColor="?attr/colorAccent"
+                style="?android:attr/buttonBarButtonStyle"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/tv__ok_button"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="@android:string/ok"
+                app:font="@string/wire__typeface__medium"
+                android:textColor="?attr/colorAccent"
+                style="?android:attr/buttonBarButtonStyle"
+                />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

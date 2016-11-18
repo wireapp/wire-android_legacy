@@ -76,6 +76,8 @@
     <string translatable="false" name="pref_account_name_key">pref_account_name_key</string>
     <string translatable="false" name="pref_account_details_category_key">pref_account_details_category_key</string>
     <string translatable="false" name="pref_account_actions_category_key">pref_account_actions_category_key</string>
+    <string translatable="false" name="pref_account_personal_category_key">pref_account_personal_category_key</string>
+    <string translatable="false" name="pref_account_username_key">pref_account_username_key</string>
     <string translatable="false" name="pref_account_phone_key">pref_account_phone_key</string>
     <string translatable="false" name="pref_account_email_key">pref_account_email_key</string>
     <string translatable="false" name="pref_account_sign_out_key">pref_account_sign_out_key</string>

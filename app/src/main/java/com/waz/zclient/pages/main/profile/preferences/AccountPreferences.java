@@ -40,6 +40,7 @@ import com.waz.zclient.pages.main.profile.preferences.dialogs.AccentColorPrefere
 import com.waz.zclient.pages.main.profile.preferences.dialogs.AddEmailAndPasswordPreferenceDialogFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.AddPhoneNumberPreferenceDialogFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.ChangeEmailPreferenceDialogFragment;
+import com.waz.zclient.pages.main.profile.preferences.dialogs.ChangeUsernamePreferenceDialogFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.VerifyEmailPreferenceFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.VerifyPhoneNumberPreferenceFragment;
 import com.waz.zclient.ui.utils.TextViewUtils;
@@ -53,10 +54,12 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
                                                                                                         AddEmailAndPasswordPreferenceDialogFragment.Container,
                                                                                                         ChangeEmailPreferenceDialogFragment.Container,
                                                                                                         AddPhoneNumberPreferenceDialogFragment.Container,
+                                                                                                        ChangeUsernamePreferenceDialogFragment.Container,
                                                                                                         AccentColorObserver {
 
     public static final String TAG = AccountPreferences.class.getName();
     private EditTextPreference namePreference;
+    private Preference usernamePreference;
     private Preference phonePreference;
     private Preference emailPreference;
     private Preference signOutPreference;
@@ -114,6 +117,15 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
                 }
                 getStoreFactory().getProfileStore().setMyName(newName);
                 return false;
+            }
+        });
+        usernamePreference = findPreference(getString(R.string.pref_account_username_key));
+        usernamePreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                String username = getStoreFactory().getProfileStore().getSelfUser().getUsername();
+                changeUsername(username);
+                return true;
             }
         });
         phonePreference = findPreference(getString(R.string.pref_account_phone_key));
@@ -396,9 +408,32 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
                                  .commit();
     }
 
+    private void changeUsername(String currentUsername) {
+        getChildFragmentManager().beginTransaction()
+                                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+                                 .add(ChangeUsernamePreferenceDialogFragment.newInstance(currentUsername),
+                                      ChangeUsernamePreferenceDialogFragment.TAG)
+                                 .addToBackStack(ChangeUsernamePreferenceDialogFragment.TAG)
+                                 .commit();
+    }
+
     @Override
     public void onAccentColorHasChanged(Object sender, int color) {
         colorPreference.setAccentColor(color);
+    }
+
+    @Override
+    public void onMyUsernameHasChanged(String myUsername) {
+        if (usernamePreference == null) {
+            return;
+        }
+        usernamePreference.setTitle(myUsername);
+        usernamePreference.setSummary(getString(R.string.pref_account_username_title));
+    }
+
+    @Override
+    public void onUsernameChanged(String username) {
+        onMyUsernameHasChanged(username);
     }
 
     public interface Container {

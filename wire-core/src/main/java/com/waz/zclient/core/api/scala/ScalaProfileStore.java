@@ -36,6 +36,7 @@ public class ScalaProfileStore extends ProfileStore {
     private String myName;
     private String myEmail;
     private String myPhoneNumber;
+    private String myUsername;
     private int myColor;
     private boolean emailIsVerified;
     private boolean phoneIsVerified;
@@ -56,6 +57,7 @@ public class ScalaProfileStore extends ProfileStore {
         myEmail = null;
         myPhoneNumber = null;
         zMessagingApi = null;
+        myUsername = null;
         emailIsVerified = false;
         phoneIsVerified = false;
     }
@@ -224,6 +226,11 @@ public class ScalaProfileStore extends ProfileStore {
         if (!selfUser.getName().equals(myName)) {
             this.myName = selfUser.getName();
             notifyNameHasChanged(this, myName);
+        }
+
+        if (!selfUser.getUsername().equals(myUsername)) {
+            this.myUsername = selfUser.getUsername();
+            notifyUsernameHasChanged(myUsername);
         }
 
         if (!selfUser.getEmail().equals(myEmail) ||

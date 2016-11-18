@@ -427,6 +427,16 @@
     <dimen name="prefs__dialog__padding">20dp</dimen>
     <dimen name="prefs__dialog__margin_top_bottom">48dp</dimen>
     <dimen name="prefs__add_email_pw__margin_textinput">16dp</dimen>
+    <dimen name="prefs__username_change__title_size">24dp</dimen>
+    <dimen name="prefs__username_change__text_size">16dp</dimen>
+    <dimen name="prefs__username_change__margins_between">24dp</dimen>
+    <dimen name="prefs__username_change__edit_text_horizontal_padding">32dp</dimen>
+    <dimen name="prefs__username_change__edit_text_bottom_padding">20dp</dimen>
+    <dimen name="prefs__username_change__separator_height">1dp</dimen>
+    <dimen name="prefs__username_change__loading__bottom_padding">36dp</dimen>
+    <dimen name="prefs__username_change__loading__margin_end">24dp</dimen>
+    <dimen name="prefs__username_change__at__padding_start">4dp</dimen>
+    <dimen name="prefs__username_change__at__padding_bottom">36dp</dimen>
     <dimen name="participants__otr_device__header_padding_top">40dp</dimen>
     <dimen name="participants__otr_device__header_padding_bottom">@dimen/wire__padding__regular</dimen>
     <dimen name="participants__otr_device__padding_top">@dimen/wire__padding__regular</dimen>
