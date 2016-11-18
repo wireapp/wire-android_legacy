@@ -596,20 +596,6 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
         getContainer().dismissDialog();
     }
 
-    //////////////////////////////////////////////////////////////////////////////////////////
-    //
-    // ParticipantBodyFragment.Container,
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public void showOptionsMenu(final User user) {
-        optionsMenuControl.setTitle(user.getDisplayName());
-        optionsMenuControl.createMenu(user.getConversation(),
-                                      IConversationScreenController.USER_PROFILE_PARTICIPANTS,
-                                      getControllerFactory().getThemeController().getThemeDependentOptionsTheme());
-        optionsMenuControl.open();
-    }
 
     @Override
     public void onConversationUpdated(IConversation conversation) { }

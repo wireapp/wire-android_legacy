@@ -148,7 +148,7 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
             userRequester = IConnectStore.UserRequester.valueOf(savedInstanceState.getString(ARGUMENT_USER_REQUESTER));
         }
         nameTextView = ViewUtils.getView(rootView, R.id.taet__participants__header);
-        subHeaderView = ViewUtils.getView(rootView, R.id.ttv__participants__sub_header);
+        subHeaderView = ViewUtils.getView(rootView, R.id.ttv__participants__user_name);
         closeButton = ViewUtils.getView(rootView, R.id.gtv__participants__close);
         connectButton = ViewUtils.getView(rootView, R.id.zb__send_connect_request__connect_button);
         commonUsersView = ViewUtils.getView(rootView, R.id.ll__send_connect_request__common_users);

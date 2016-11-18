@@ -143,7 +143,7 @@
                 </LinearLayout>
 
                 <com.waz.zclient.ui.text.TypefaceTextView
-                    android:id="@+id/ttv__participants__sub_header"
+                    android:id="@+id/ttv__participants__user_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="@dimen/wire__padding__regular"
@@ -152,7 +152,6 @@
                     android:layout_gravity="start"
                     android:gravity="center"
                     android:ellipsize="end"
-                    android:textAllCaps="true"
                     android:singleLine="true"
                     app:font="@string/wire__typeface__light"
                     style="?userSubHeader"

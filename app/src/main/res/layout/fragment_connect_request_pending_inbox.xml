@@ -44,18 +44,6 @@
             android:layout_gravity="bottom|center_horizontal"
             />
 
-        <com.waz.zclient.pages.main.connect.views.CommonUsersView
-            android:id="@+id/ll__send_connect_request__common_users"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:layout_marginTop="@dimen/wire__padding__regular"
-            android:layout_marginBottom="@dimen/wire__padding__small"
-            android:paddingStart="@dimen/wire__padding__big"
-            android:paddingEnd="@dimen/wire__text_size__big"
-            />
-
-
         <LinearLayout
             android:id="@+id/ll__connect_request__accept_menu"
             android:layout_width="match_parent"
