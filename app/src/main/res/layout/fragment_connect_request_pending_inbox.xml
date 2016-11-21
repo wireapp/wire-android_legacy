@@ -30,10 +30,33 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
         >
 
-        <include layout="@layout/rl__participants__header" />
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/ttv__connect_request__display_name"
+            android:background="@color/participants__header__background_color"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/wire__padding__big"
+            android:freezesText="true"
+            android:gravity="center"
+            android:imeOptions="actionDone"
+            android:inputType="textFilter|textMultiLine|textNoSuggestions"
+            android:singleLine="false"
+            android:textColorHint="@color/text__secondary_light"
+            android:maxLines="3"
+            app:font="@string/wire__typeface__medium"
+            style="?userHeader"
+            />
+
+        <com.waz.zclient.ui.views.UserDetailsView
+            android:id="@+id/udv__connect_request__user_details"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/wire__padding__small"
+            />
 
         <com.waz.zclient.views.images.ImageAssetImageView
             android:id="@+id/iaiv__pending_connect"

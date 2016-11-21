@@ -30,15 +30,14 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import com.waz.api.ContactDetails;
 import com.waz.api.IConversation;
 import com.waz.api.User;
 import com.waz.zclient.core.api.scala.ModelObserver;
+import com.waz.zclient.ui.views.UserDetailsView;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.R;
 import com.waz.zclient.pages.main.connect.ConnectActionsCallback;
 import com.waz.zclient.ui.utils.TextViewUtils;
-import com.waz.zclient.utils.StringUtils;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
 import com.waz.zclient.ui.animation.interpolators.penner.Quart;
@@ -59,29 +58,10 @@ public class ConnectRequestInboxRow extends FrameLayout {
     private ZetaButton ignoreButton;
     private ZetaButton acceptButton;
     private TextView displayNameTextView;
-    private TextView usernameTextView;
-    private TextView userInfoTextView;
+    private UserDetailsView userDetailsView;
     private LinearLayout acceptMenu;
     private ValueAnimator rowHeightAnimator;
     private ImageAssetImageView imageAssetImageViewProfile;
-
-    private final ModelObserver<ContactDetails> contactDetailsModelObserver = new ModelObserver<ContactDetails>() {
-        @Override
-        public void updated(ContactDetails contactDetails) {
-            if (user == null) {
-                return;
-            }
-            String userInfo;
-            if (user.getDisplayName().equals(contactDetails.getDisplayName())) {
-                // User's Wire name is same as in address book
-                userInfo = getContext().getString(R.string.content__message__connect_request__user_info, "");
-            } else {
-                userInfo = getContext().getResources().getString(R.string.content__message__connect_request__user_info,
-                                                                      StringUtils.formatUsername(contactDetails.getDisplayName()));
-            }
-            userInfoTextView.setText(userInfo);
-        }
-    };
 
     private final ModelObserver<User> userModelObserver = new ModelObserver<User>() {
         @Override
@@ -92,17 +72,11 @@ public class ConnectRequestInboxRow extends FrameLayout {
             displayNameTextView.setText(getContext().getString(R.string.connect_request__inbox__header, user.getName()));
             TextViewUtils.boldText(displayNameTextView);
 
-            if (!user.isContact()) {
-                userInfoTextView.setText("");
-                contactDetailsModelObserver.pauseListening();
-            } else {
-                contactDetailsModelObserver.setAndUpdate(user.getFirstContact());
-            }
+            userDetailsView.setUser(user);
 
             // Toggle accept / ignore buttons
             if (user.getConnectionStatus() == User.ConnectionStatus.PENDING_FROM_OTHER ||
                 user.getConnectionStatus() == User.ConnectionStatus.IGNORED) {
-                usernameTextView.setText(StringUtils.formatUsername(user.getUsername()));
                 acceptMenu.setVisibility(View.VISIBLE);
 
                 ignoreButton.setEnabled(true);
@@ -147,9 +121,8 @@ public class ConnectRequestInboxRow extends FrameLayout {
         View container = LayoutInflater.from(getContext()).inflate(R.layout.fragment_connect_request_pending_inbox, this, true);
         ignoreButton = ViewUtils.getView(container, R.id.zb__connect_request__ignore_button);
         acceptButton = ViewUtils.getView(container, R.id.zb__connect_request__accept_button);
-        displayNameTextView = ViewUtils.getView(container, R.id.taet__participants__header);
-        usernameTextView = ViewUtils.getView(container, R.id.ttv__participants__user_name);
-        userInfoTextView = ViewUtils.getView(container, R.id.ttv__participants__user_info);
+        displayNameTextView = ViewUtils.getView(container, R.id.ttv__connect_request__display_name);
+        userDetailsView = ViewUtils.getView(container, R.id.udv__connect_request__user_details);
         acceptMenu = ViewUtils.getView(container, R.id.ll__connect_request__accept_menu);
 
         if (LayoutSpec.isTablet(getContext())) {
@@ -200,7 +173,7 @@ public class ConnectRequestInboxRow extends FrameLayout {
         this.user = user;
         userModelObserver.setAndUpdate(user);
         for (View v : Arrays.asList(ignoreButton,
-                                    displayNameTextView, acceptButton, usernameTextView, acceptMenu)) {
+                                    displayNameTextView, acceptButton, acceptMenu)) {
             if (v == null) {
                 continue;
             }
@@ -234,7 +207,7 @@ public class ConnectRequestInboxRow extends FrameLayout {
             animatorList.add(animator);
         }
 
-        for (View v : Arrays.asList(ignoreButton, acceptButton, usernameTextView, acceptMenu)) {
+        for (View v : Arrays.asList(ignoreButton, acceptButton, acceptMenu)) {
             if (v == null) {
                 continue;
             }
@@ -293,7 +266,7 @@ public class ConnectRequestInboxRow extends FrameLayout {
         final List<Animator> animatorList = new ArrayList<>();
 
         for (View v : Arrays.asList(ignoreButton,
-                                    displayNameTextView, acceptButton, usernameTextView, acceptMenu)) {
+                                    displayNameTextView, acceptButton, acceptMenu)) {
             if (v == null) {
                 continue;
             }

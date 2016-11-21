@@ -51,15 +51,12 @@
         android:layout_weight="1"
         >
 
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/ttv__pending_connect_request__username"
+        <com.waz.zclient.ui.views.UserDetailsView
+            android:id="@+id/udv__pending_connect__user_details"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/wire__padding__small"
             android:layout_gravity="center_horizontal|top"
-            android:textColor="?wireSecondaryTextColor"
-            android:textSize="@dimen/wire__text_size__small"
-            app:font="@string/wire__typeface__light"
             />
 
         <com.waz.zclient.views.images.ImageAssetImageView
