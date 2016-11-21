@@ -42,6 +42,7 @@ import com.waz.zclient.pages.main.participants.ProfileSourceAnimation;
 import com.waz.zclient.pages.main.participants.ProfileTabletAnimation;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 import com.waz.zclient.ui.utils.KeyboardUtils;
+import com.waz.zclient.ui.views.UserDetailsView;
 import com.waz.zclient.ui.views.ZetaButton;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
@@ -64,8 +65,8 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
 
     // Flag true if layout has been set
     private boolean isBelowUserProfile;
-    private TextView nameTextView;
-    private TextView subHeaderView;
+    private TextView displayNameTextView;
+    private UserDetailsView userDetailsView;
     private View closeButton;
     private ZetaButton connectButton;
     private CommonUsersView commonUsersView;
@@ -147,8 +148,8 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
             userId = savedInstanceState.getString(ARGUMENT_USER_ID);
             userRequester = IConnectStore.UserRequester.valueOf(savedInstanceState.getString(ARGUMENT_USER_REQUESTER));
         }
-        nameTextView = ViewUtils.getView(rootView, R.id.taet__participants__header);
-        subHeaderView = ViewUtils.getView(rootView, R.id.ttv__participants__user_name);
+        displayNameTextView = ViewUtils.getView(rootView, R.id.taet__participants__header);
+        userDetailsView = ViewUtils.getView(rootView, R.id.udv__participants__user_details);
         closeButton = ViewUtils.getView(rootView, R.id.gtv__participants__close);
         connectButton = ViewUtils.getView(rootView, R.id.zb__send_connect_request__connect_button);
         commonUsersView = ViewUtils.getView(rootView, R.id.ll__send_connect_request__common_users);
@@ -175,8 +176,6 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
                 backgroundContainer.setBackgroundColor(Color.TRANSPARENT);
             }
         }
-        subHeaderView.setVisibility(View.GONE);
-
         connectButton.setText(getResources().getString(R.string.send_connect_request__connect_button__text));
 
         closeButton.setOnClickListener(new View.OnClickListener() {
@@ -225,6 +224,7 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
 
     @Override
     public void onDestroyView() {
+        userDetailsView.recycle();
         imageAssetImageViewProfile = null;
         super.onDestroyView();
     }
@@ -267,8 +267,8 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
 
         imageAssetImageViewProfile.connectImageAsset(user.getPicture());
 
-        nameTextView.setText(user.getName());
-        nameTextView.setText(user.getName());
+        displayNameTextView.setText(user.getName());
+        userDetailsView.setUser(user);
 
         getStoreFactory().getConnectStore().loadCommonConnections(user.getCommonConnections());
 
