@@ -35,6 +35,7 @@ import com.waz.zclient.controllers.tracking.events.profile.SignOut;
 import com.waz.zclient.core.controllers.tracking.events.session.LoggedOutEvent;
 import com.waz.zclient.core.stores.profile.ProfileStoreObserver;
 import com.waz.zclient.pages.BasePreferenceFragment;
+import com.waz.zclient.pages.main.profile.ZetaPreferencesActivity;
 import com.waz.zclient.pages.main.profile.camera.CameraContext;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.AccentColorPreferenceDialogFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.AddEmailAndPasswordPreferenceDialogFragment;
@@ -80,6 +81,7 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
     public void onCreatePreferences2(Bundle savedInstanceState, String rootKey) {
         super.onCreatePreferences2(savedInstanceState, rootKey);
         addPreferencesFromResource(R.xml.preferences_account);
+        boolean shouldShowUsernameEdit = getArguments().getBoolean(ZetaPreferencesActivity.SHOW_USERNAME_EDIT);
         namePreference = (EditTextPreference) findPreference(getString(R.string.pref_account_name_key));
         namePreference.setOnEditTextCreatedListener(new EditTextPreference.OnEditTextCreatedListener() {
             @Override
@@ -124,7 +126,7 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
             @Override
             public boolean onPreferenceClick(Preference preference) {
                 String username = getStoreFactory().getProfileStore().getSelfUser().getUsername();
-                changeUsername(username);
+                changeUsername(username, true);
                 return true;
             }
         });
@@ -201,7 +203,9 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
                 return true;
             }
         });
-
+        if (shouldShowUsernameEdit) {
+            changeUsername(getControllerFactory().getUsernameController().getGeneratedUsername(), false);
+        }
     }
 
     @Override
@@ -408,10 +412,10 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
                                  .commit();
     }
 
-    private void changeUsername(String currentUsername) {
+    private void changeUsername(String currentUsername, boolean cancellable) {
         getChildFragmentManager().beginTransaction()
                                  .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-                                 .add(ChangeUsernamePreferenceDialogFragment.newInstance(currentUsername),
+                                 .add(ChangeUsernamePreferenceDialogFragment.newInstance(currentUsername, cancellable),
                                       ChangeUsernamePreferenceDialogFragment.TAG)
                                  .addToBackStack(ChangeUsernamePreferenceDialogFragment.TAG)
                                  .commit();

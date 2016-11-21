@@ -47,6 +47,7 @@ import com.waz.zclient.controllers.streammediaplayer.IStreamMediaPlayerControlle
 import com.waz.zclient.controllers.stubs.StubThemeController;
 import com.waz.zclient.controllers.theme.IThemeController;
 import com.waz.zclient.controllers.tracking.ITrackingController;
+import com.waz.zclient.controllers.usernames.IUsernamesController;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
 import com.waz.zclient.controllers.verification.IVerificationController;
 import com.waz.zclient.controllers.vibrator.IVibratorController;
@@ -240,6 +241,11 @@ public class StubControllerFactory implements IControllerFactory {
 
     @Override
     public IPickUserController getPickUserController() {
+        return null;
+    }
+
+    @Override
+    public IUsernamesController getUsernameController() {
         return null;
     }
 }

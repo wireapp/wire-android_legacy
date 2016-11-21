@@ -493,6 +493,9 @@ public class MainActivity extends BaseActivity implements MainPhoneFragment.Cont
             }
             IntentUtils.clearLaunchIntentExtra(intent);
         }
+
+        getControllerFactory().getUsernameController().setUser(self);
+
         setIntent(intent);
         openMainPage();
     }
@@ -741,6 +744,7 @@ public class MainActivity extends BaseActivity implements MainPhoneFragment.Cont
         getControllerFactory().getTrackingController().tagEvent(new SignOut());
         getControllerFactory().getTrackingController().tagEvent(new LoggedOutEvent());
         getStoreFactory().getZMessagingApiStore().logout();
+        getControllerFactory().getUsernameController().logout();
     }
 
     @Override

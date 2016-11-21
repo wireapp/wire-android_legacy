@@ -27,7 +27,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
-
 import com.waz.api.CredentialsUpdateListener;
 import com.waz.api.UsernameValidation;
 import com.waz.api.UsernameValidationError;
@@ -36,12 +35,12 @@ import com.waz.zclient.R;
 import com.waz.zclient.pages.BaseDialogFragment;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.LoadingIndicatorView;
-
 import java.util.Locale;
 
 public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<ChangeUsernamePreferenceDialogFragment.Container> {
     public static final String TAG = ChangeUsernamePreferenceDialogFragment.class.getSimpleName();
     private static final String ARG_USERNAME = "ARG_USERNAME";
+    private static final String ARG_CANCEL_ENABLED = "ARG_CANCEL_ENABLED";
 
     private TextInputLayout usernameInputLayout;
     private AppCompatEditText usernameEditText;
@@ -49,6 +48,7 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
     private View okButton;
     private View backButton;
     private String inputUsername = "";
+    private boolean editingEnabled = true;
 
     private TextWatcher usernameTextWatcher = new TextWatcher() {
         @Override
@@ -67,6 +67,7 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
                     usernameInputLayout.setError(getErrorMessage(validation.reason()));
                 } else {
                     usernameInputLayout.setError("");
+                    getStoreFactory().getZMessagingApiStore().getApi().getUsernames().isUsernameAvailable(charSequence.toString(), usernameAvailableCallback);
                 }
             }
         }
@@ -85,21 +86,31 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
 
         @Override
         public void onUpdateFailed(int code, String message, String label) {
-            usernameInputLayout.setError(getErrorMessage(UsernameValidationError.ALREADY_TAKEN));
+            usernameInputLayout.setError(getString(R.string.pref__account_action__dialog__change_username__error_unknown));
             enableEditing();
         }
     };
 
     private UsernamesRequestCallback usernameAvailableCallback = new UsernamesRequestCallback() {
         @Override
-        public void onUsernameRequestResult(String username, final UsernameValidation validation) {
-            if (validation.isValid()) {
-                getStoreFactory().getZMessagingApiStore().getApi().getSelf().setUsername(username, setUsernameCallback);
-            } else {
-                usernameInputLayout.setError(getErrorMessage(validation.reason()));
-                enableEditing();
-                editBoxShakeAnimation();
+        public void onUsernameRequestResult(final UsernameValidation[] validation) {
+            if (!validation[0].username().equals(usernameEditText.getText().toString())) {
+                return;
             }
+            if (validation[0].isValid()) {
+                usernameInputLayout.setError("");
+                okButton.setEnabled(editingEnabled);
+            } else {
+                usernameInputLayout.setError(getErrorMessage(validation[0].reason()));
+                okButton.setEnabled(false);
+            }
+        }
+
+        @Override
+        public void onRequestFailed(Integer errorCode) {
+            usernameInputLayout.setError(getString(R.string.pref__account_action__dialog__change_username__error_unknown));
+            enableEditing();
+            editBoxShakeAnimation();
         }
     };
 
@@ -113,11 +124,12 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
                 return;
             }
             disableEditing();
-            getStoreFactory().getZMessagingApiStore().getApi().getUsernames().isUsernameAvailable(inputUsername, usernameAvailableCallback);
+            getStoreFactory().getZMessagingApiStore().getApi().getSelf().setUsername(inputUsername, setUsernameCallback);
         }
     };
 
     private void disableEditing() {
+        editingEnabled = false;
         usernameEditText.setEnabled(false);
         usernameVerifyingIndicator.show();
         okButton.setEnabled(false);
@@ -125,6 +137,7 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
     }
 
     private void enableEditing() {
+        editingEnabled = true;
         usernameVerifyingIndicator.hide();
         okButton.setEnabled(true);
         backButton.setEnabled(true);
@@ -134,10 +147,11 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
     public ChangeUsernamePreferenceDialogFragment() {
     }
 
-    public static ChangeUsernamePreferenceDialogFragment newInstance(String currentUsername) {
+    public static ChangeUsernamePreferenceDialogFragment newInstance(String currentUsername, boolean cancellable) {
         ChangeUsernamePreferenceDialogFragment fragment = new ChangeUsernamePreferenceDialogFragment();
         Bundle args = new Bundle();
         args.putString(ARG_USERNAME, currentUsername);
+        args.putBoolean(ARG_CANCEL_ENABLED, cancellable);
         fragment.setArguments(args);
         return fragment;
     }
@@ -159,6 +173,7 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         String username = getArguments().getString(ARG_USERNAME, "");
+        boolean cancelEnabled = getArguments().getBoolean(ARG_CANCEL_ENABLED);
 
         View view = inflater.inflate(R.layout.fragment_change_username_preference_dialog, container, false);
         usernameInputLayout = ViewUtils.getView(view, R.id.til__change_username);
@@ -180,10 +195,12 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
                 dismiss();
             }
         });
-
+        if (!cancelEnabled) {
+            backButton.setVisibility(View.GONE);
+        }
         okButton.setOnClickListener(okButtonClickListener);
 
-        getDialog().setCancelable(false);
+        setCancelable(false);
         return view;
     }
 

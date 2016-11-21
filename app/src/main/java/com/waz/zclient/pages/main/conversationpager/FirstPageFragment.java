@@ -26,6 +26,7 @@ import android.view.ViewGroup;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.pages.BaseFragment;
+import com.waz.zclient.pages.main.RootFragment;
 import com.waz.zclient.pages.main.conversationlist.ConfirmationFragment;
 import com.waz.zclient.pages.main.conversationlist.ConversationListManagerFragment;
 import timber.log.Timber;
@@ -123,6 +124,14 @@ public class FirstPageFragment extends BaseFragment<FirstPageFragment.Container>
     @Override
     public void onOpenUrl(String url) {
         getContainer().onOpenUrl(url);
+    }
+
+    @Override
+    public void closeFirstAssignUsernameScreen() {
+        RootFragment fragment = (RootFragment) getChildFragmentManager().findFragmentByTag(RootFragment.TAG);
+        if (fragment != null) {
+            fragment.hideBlankFragment();
+        }
     }
 
     public interface Container {

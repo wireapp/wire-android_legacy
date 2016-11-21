@@ -21,6 +21,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.view.LayoutInflater;
@@ -29,6 +30,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 import com.waz.api.ConversationsList;
+import com.waz.api.CredentialsUpdateListener;
 import com.waz.api.ErrorType;
 import com.waz.api.ErrorsList;
 import com.waz.api.IConversation;
@@ -66,6 +68,7 @@ import com.waz.zclient.core.stores.conversation.InboxLoadRequester;
 import com.waz.zclient.core.stores.conversation.OnInboxLoadedListener;
 import com.waz.zclient.core.stores.inappnotification.InAppNotificationStoreObserver;
 import com.waz.zclient.core.stores.inappnotification.KnockingEvent;
+import com.waz.zclient.newreg.fragments.FirstTimeAssignUsername;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment;
 import com.waz.zclient.pages.main.connect.ConnectRequestLoadMode;
@@ -112,7 +115,8 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
                                                                                                    NavigationControllerObserver,
                                                                                                    ConfirmationObserver,
                                                                                                    AccentColorObserver,
-                                                                                                   InAppNotificationStoreObserver {
+                                                                                                   InAppNotificationStoreObserver,
+                                                                                                   FirstTimeAssignUsername.Container {
     public static final String TAG = ConversationListManagerFragment.class.getName();
 
     private LoadingIndicatorView startuiLoadingIndicatorView;
@@ -132,6 +136,11 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
         Bundle arguments = new Bundle();
         fragment.setArguments(arguments);
         return fragment;
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
     }
 
     @Override
@@ -462,6 +471,10 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
         if (getControllerFactory().getPickUserController().isShowingPickUser(getCurrentPickerDestination())) {
             getStoreFactory().getInAppNotificationStore().setUserLookingAtPeoplePicker(false);
             getControllerFactory().getPickUserController().hidePickUser(getCurrentPickerDestination(), true);
+            return true;
+        }
+
+        if (getChildFragmentManager().findFragmentByTag(FirstTimeAssignUsername.TAG) != null) {
             return true;
         }
 
@@ -1202,7 +1215,55 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
         errorDescription.dismiss();
     }
 
+    public void showFirstAssignUsernameScreen(String name, String username) {
+        getChildFragmentManager()
+            .beginTransaction()
+            .setCustomAnimations(R.anim.fade_in,
+                R.anim.fade_out,
+                R.anim.fade_in,
+                R.anim.fade_out)
+            .replace(R.id.fl__conversation_list_main, FirstTimeAssignUsername.newInstance(name, username), FirstTimeAssignUsername.TAG)
+            .addToBackStack(FirstTimeAssignUsername.TAG)
+            .commitAllowingStateLoss();
+    }
+
+    public void hideFirstAssignUsernameScreen() {
+        getChildFragmentManager().popBackStackImmediate(FirstTimeAssignUsername.TAG,
+            FragmentManager.POP_BACK_STACK_INCLUSIVE);
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  FirstTimeAssignUsername.Container
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onChooseUsernameChosen() {
+        getContainer().closeFirstAssignUsernameScreen();
+        hideFirstAssignUsernameScreen();
+        startActivity(ZetaPreferencesActivity.getUsernameEditPreferencesIntent(getActivity()));
+    }
+
+    @Override
+    public void onKeepUsernameChosen(String username) {
+        getContainer().closeFirstAssignUsernameScreen();
+        hideFirstAssignUsernameScreen();
+        getStoreFactory().getZMessagingApiStore().getApi().getSelf().setUsername(username, new CredentialsUpdateListener() {
+            @Override
+            public void onUpdated() { }
+            @Override
+            public void onUpdateFailed(int code, String message, String label) {
+                Toast.makeText(getActivity(), getString(R.string.username__set__toast_error), Toast.LENGTH_SHORT).show();
+                getControllerFactory().getUsernameController().logout();
+                getControllerFactory().getUsernameController().setUser(getStoreFactory().getZMessagingApiStore().getApi().getSelf());
+            }
+        });
+    }
+
     public interface Container {
         void onOpenUrl(String url);
+        void closeFirstAssignUsernameScreen();
     }
+
 }

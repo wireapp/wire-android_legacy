@@ -70,6 +70,8 @@ import com.waz.zclient.controllers.streammediaplayer.StreamMediaPlayerController
 import com.waz.zclient.controllers.theme.IThemeController;
 import com.waz.zclient.controllers.theme.ThemeController;
 import com.waz.zclient.controllers.tracking.ITrackingController;
+import com.waz.zclient.controllers.usernames.IUsernamesController;
+import com.waz.zclient.controllers.usernames.UsernamesController;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
 import com.waz.zclient.controllers.userpreferences.UserPreferencesController;
 import com.waz.zclient.controllers.verification.IVerificationController;
@@ -149,6 +151,8 @@ public abstract class Base$$ControllerFactory implements IControllerFactory {
   protected ISlidingPaneController slidingPaneController;
 
   protected IPickUserController pickUserController;
+
+  protected IUsernamesController usernamesController;
 
   protected boolean isTornDown;
 
@@ -318,6 +322,10 @@ public abstract class Base$$ControllerFactory implements IControllerFactory {
     if (pickUserController != null) {
       pickUserController.tearDown();
       pickUserController = null;
+    }
+    if (usernamesController != null) {
+      usernamesController.tearDown();
+      usernamesController = null;
     }
     this.context = null;
   }
@@ -540,6 +548,7 @@ public abstract class Base$$ControllerFactory implements IControllerFactory {
     getOrientationController().setActivity(activity);
     getSpotifyController().setActivity(activity);
     getTrackingController().setActivity(activity);
+    getUsernameController().setActivity(activity);
   }
 
   @Override
@@ -604,4 +613,13 @@ public abstract class Base$$ControllerFactory implements IControllerFactory {
     }
     return accentColorController;
   }
+
+    @Override
+    public IUsernamesController getUsernameController() {
+        verifyLifecycle();
+        if (usernamesController == null) {
+            usernamesController = new UsernamesController();
+        }
+        return usernamesController;
+    }
 }

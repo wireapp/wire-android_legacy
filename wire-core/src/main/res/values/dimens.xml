@@ -821,4 +821,6 @@
     <dimen name="ephemeral__animating_dots__space_between">1dp</dimen>
     <dimen name="ephemeral__animating_dots__right_margin">5dp</dimen>
     <dimen name="ephemeral__animating_dots__image_top_margin">7dp</dimen>
+
+    <dimen name="usernames__take_over__side_margin">28dp</dimen>
 </resources>

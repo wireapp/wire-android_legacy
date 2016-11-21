@@ -45,6 +45,7 @@ import com.waz.zclient.controllers.spotify.ISpotifyController;
 import com.waz.zclient.controllers.streammediaplayer.IStreamMediaPlayerController;
 import com.waz.zclient.controllers.theme.IThemeController;
 import com.waz.zclient.controllers.tracking.ITrackingController;
+import com.waz.zclient.controllers.usernames.IUsernamesController;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
 import com.waz.zclient.controllers.verification.IVerificationController;
 import com.waz.zclient.controllers.vibrator.IVibratorController;
@@ -124,4 +125,6 @@ public interface IControllerFactory {
   IDrawingController getDrawingController();
 
   IVibratorController getVibratorController();
+
+  IUsernamesController getUsernameController();
 }
