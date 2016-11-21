@@ -22,27 +22,24 @@
               xmlns:app="http://schemas.android.com/apk/res-auto"
               android:orientation="vertical"
               android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:background="@null"
-              android:gravity="center_horizontal"
-              android:baselineAligned="false"
-              android:paddingLeft="@dimen/framework__general__left_padding"
-              android:paddingRight="@dimen/framework__general__right_padding"
-    >
+              android:layout_height="match_parent">
 
-    <com.waz.zclient.ui.views.UserDetailsView
-        android:id="@+id/udv__row_conversation__connect_request__user_details"
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/ttv__user_details__user_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/wire__padding__small"
+        android:textColor="?wireSecondaryTextColor"
+        android:textSize="@dimen/wire__text_size__small"
+        app:font="@string/wire__typeface__light"
         />
 
-    <com.waz.zclient.common.views.ChatheadView
-        android:id="@+id/cv__row_conversation__connect_request__chat_head"
-        android:layout_width="@dimen/profile__image__width"
-        android:layout_height="@dimen/profile__image__width"
-        android:layout_marginTop="@dimen/wire__padding__big"
-        app:show_border="false"
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/ttv__user_details__user_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="?wireSecondaryTextColor"
+        android:textSize="@dimen/wire__text_size__small"
+        app:font="@string/wire__typeface__light"
         />
 
 </LinearLayout>

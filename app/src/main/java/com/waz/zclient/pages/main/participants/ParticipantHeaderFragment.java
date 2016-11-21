@@ -140,7 +140,7 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
         View rootView = inflater.inflate(R.layout.fragment_participants_header, container, false);
 
         headerTopBorder = ViewUtils.getView(rootView, R.id.v_participants__header__top_border);
-        subHeader = ViewUtils.getView(rootView, R.id.ttv__participants__user_name);
+        subHeader = ViewUtils.getView(rootView, R.id.ttv__participants__sub_header);
         textViewAddressBookNameContainer = ViewUtils.getView(rootView, R.id.ll__single_participants__real_name__container);
         textViewAddressBookNameContainer.setVisibility(View.GONE);
         textViewAddressBookName = ViewUtils.getView(rootView, R.id.ttv__address_book_name);
