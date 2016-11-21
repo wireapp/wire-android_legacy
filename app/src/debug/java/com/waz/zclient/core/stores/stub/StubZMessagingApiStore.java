@@ -41,6 +41,7 @@ import com.waz.api.Self;
 import com.waz.api.Spotify;
 import com.waz.api.TrackingData;
 import com.waz.api.User;
+import com.waz.api.Usernames;
 import com.waz.api.ZCache;
 import com.waz.api.ZMessagingApi;
 import com.waz.media.manager.MediaManager;
@@ -234,6 +235,11 @@ public class StubZMessagingApiStore implements IZMessagingApiStore {
             public ConnectionIndicator getConnectionIndicator() {
                 return null;
             }
+
+            @Override
+            public Usernames getUsernames() {
+                return null;
+            }
         };
     }
 
@@ -249,7 +255,7 @@ public class StubZMessagingApiStore implements IZMessagingApiStore {
 
     @Override
     public void delete() {
-        
+
     }
 
     @Override
