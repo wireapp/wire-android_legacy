@@ -83,6 +83,7 @@ public class ZetaPreferencesActivity extends BasePreferenceActivity implements A
     public static final String SHOW_SPOTIFY_LOGIN = "SHOW_SPOTIFY_LOGIN";
     public static final String SHOW_OTR_DEVICES = "SHOW_OTR_DEVICES";
     public static final String SHOW_ACCOUNT = "SHOW_ACCOUNT";
+    public static final String SHOW_USERNAME_EDIT = "SHOW_USERNAME_EDIT";
 
     public static Intent getDefaultIntent(Context context) {
         return new Intent(context, ZetaPreferencesActivity.class);
@@ -97,6 +98,12 @@ public class ZetaPreferencesActivity extends BasePreferenceActivity implements A
     public static Intent getOtrDevicesPreferencesIntent(Context context) {
         Intent intent = getDefaultIntent(context);
         intent.putExtra(SHOW_OTR_DEVICES, true);
+        return intent;
+    }
+
+    public static Intent getUsernameEditPreferencesIntent(Context context) {
+        Intent intent = getDefaultIntent(context);
+        intent.putExtra(SHOW_USERNAME_EDIT, true);
         return intent;
     }
 
@@ -296,6 +303,7 @@ public class ZetaPreferencesActivity extends BasePreferenceActivity implements A
         preferenceScreen.getExtras().remove(ZetaPreferencesActivity.SHOW_SPOTIFY_LOGIN);
         preferenceScreen.getExtras().remove(ZetaPreferencesActivity.SHOW_OTR_DEVICES);
         preferenceScreen.getExtras().remove(ZetaPreferencesActivity.SHOW_ACCOUNT);
+        preferenceScreen.getExtras().remove(ZetaPreferencesActivity.SHOW_USERNAME_EDIT);
     }
 
     @Override

@@ -861,6 +861,7 @@
     <string name="hello">Hello, &lt;b&gt;%s&lt;/b&gt;</string>
     <string name="sign_in">Log In</string>
     <string name="new_reg__password_length">AT LEAST %1$s CHARACTERS</string>
+    <string name="username__set__toast_error">Error updating username</string>
 
     <!-- Giphy -->
     <string name="giphy_preview__search_hint">Search Giphy</string>

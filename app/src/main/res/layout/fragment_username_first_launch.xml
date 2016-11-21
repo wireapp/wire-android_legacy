@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2016 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:custom="http://schemas.android.com/apk/res-auto"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent" android:background="@color/black"
+    >
+
+    <com.waz.zclient.views.images.ImageAssetImageView
+        android:id="@+id/iaiv__user_photo"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        />
+
+    <ImageView
+        android:id="@+id/iv_background_vignette_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitXY"
+        />
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/ttv__username"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingBottom="240dp"
+        android:text=""
+        android:textSize="@dimen/wire__text_size__medium"
+        android:textColor="@color/text__primary_dark"
+        custom:font="@string/wire__typeface__light"
+        android:layout_centerVertical="true"
+        android:layout_alignParentStart="true"/>
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/ttv__name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@id/ttv__username"
+        android:layout_marginTop="-32dp"
+        android:gravity="center"
+        android:text=""
+        android:textSize="@dimen/wire__text_size__medium"
+        android:textColor="@color/text__primary_dark"
+        custom:font="@string/wire__typeface__thin"
+        />
+
+    <LinearLayout
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/usernames__take_over__side_margin"
+        android:layout_marginRight="@dimen/usernames__take_over__side_margin"
+        android:layout_marginBottom="@dimen/first_time__create_account__padding_bottom"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        >
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Wire @names are here."
+            android:textSize="@dimen/wire__text_size__medium"
+            android:textColor="@color/text__primary_dark"
+            custom:font="@string/wire__typeface__light"
+            />
+
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/ttv__username_first_assign__summary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="@dimen/wire__padding__small"
+            android:text="People will be able to find you easier. _Learn more._"
+            android:textSize="@dimen/wire__text_size__medium"
+            android:textColor="@color/text__primary_dark"
+            custom:font="@string/wire__typeface__thin"
+            />
+
+        <com.waz.zclient.ui.views.ZetaButton
+            android:id="@+id/zb__username_first_assign__choose"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/framework_confirmation_menu_button_height"
+            android:layout_marginTop="@dimen/framework__general__top_padding"
+            android:gravity="center"
+            android:text="CHOOSE YOUR OWN"
+            android:textSize="@dimen/framework_confirmation_menu_button_font_size"
+            android:textAllCaps="true"
+            android:textColor="@color/white"
+            custom:font="@string/wire__typeface__light"
+            />
+
+        <com.waz.zclient.ui.views.ZetaButton
+            android:id="@+id/zb__username_first_assign__keep"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/framework_confirmation_menu_button_height"
+            android:layout_marginTop="@dimen/wire__padding__8"
+            android:gravity="center"
+            android:text="KEEP THIS ONE"
+            android:textSize="@dimen/framework_confirmation_menu_button_font_size"
+            android:textAllCaps="true"
+            android:textColor="@color/white"
+            custom:font="@string/wire__typeface__light"
+            />
+
+    </LinearLayout>
+
+</RelativeLayout>

@@ -103,7 +103,8 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
                                                                        DrawingObserver,
                                                                        LocationObserver,
                                                                        ParticipantsStoreObserver,
-                                                                       ConversationFragment.Container {
+                                                                       ConversationFragment.Container,
+                                                                       ConversationListManagerFragment.Container {
     public static final String TAG = RootFragment.class.getName();
     private static final Interpolator RIGHT_VIEW_ALPHA_INTERPOLATOR = new Quart.EaseOut();
     private View leftView;
@@ -115,6 +116,7 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
     private boolean panelSliding = false;
     private boolean groupConversation;
     private User otherUser;
+    private boolean rightSideShouldBeBlank = false;
 
     private final ModelObserver<IConversation> conversationModelObserver = new ModelObserver<IConversation>() {
         @Override
@@ -285,6 +287,10 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
         conversationModelObserver.setAndUpdate(toConversation);
         getStoreFactory().getParticipantsStore().setCurrentConversation(toConversation);
 
+        if (rightSideShouldBeBlank) {
+            return;
+        }
+
         getControllerFactory().getBackgroundController().expand(false);
 
         final IConversation.Type type = toConversation.getType();
@@ -320,7 +326,6 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
                         tag = ConversationFragment.TAG;
                         break;
                 }
-
                 openMessageStream(page, fragment, tag);
             }
         });
@@ -897,6 +902,29 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
             getStoreFactory().getConversationStore().sendMessage(location);
         }
         getChildFragmentManager().popBackStack(LocationFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+    }
+
+    public void showBlankFragment() {
+        rightSideShouldBeBlank = true;
+        openMessageStream(Page.NONE, BlankFragment.newInstance(), BlankFragment.TAG);
+    }
+
+    public void hideBlankFragment() {
+        rightSideShouldBeBlank = false;
+        conversationModelObserver.forceUpdate();
+    }
+
+    public void showFirstTimeAssignUsername(String name, String suggestedUsername) {
+        ConversationListManagerFragment fragment = (ConversationListManagerFragment) getChildFragmentManager().findFragmentByTag(ConversationListManagerFragment.TAG);
+        if (fragment != null) {
+            fragment.showFirstAssignUsernameScreen(name, suggestedUsername);
+            showBlankFragment();
+        }
+    }
+
+    @Override
+    public void closeFirstAssignUsernameScreen() {
+        hideBlankFragment();
     }
 
     public interface Container {

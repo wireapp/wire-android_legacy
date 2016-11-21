@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -38,6 +39,7 @@ import com.waz.zclient.controllers.confirmation.ConfirmationRequest;
 import com.waz.zclient.controllers.confirmation.IConfirmationController;
 import com.waz.zclient.controllers.navigation.Page;
 import com.waz.zclient.controllers.singleimage.SingleImageObserver;
+import com.waz.zclient.controllers.usernames.UsernamesControllerObserver;
 import com.waz.zclient.core.controllers.tracking.attributes.RangedAttribute;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.pages.main.backgroundmain.views.BackgroundFrameLayout;
@@ -57,13 +59,19 @@ public class MainTabletFragment extends BaseFragment<MainTabletFragment.Containe
         SingleImageObserver,
         SingleImageFragment.Container,
         ConfirmationObserver,
-        AccentColorObserver {
+        AccentColorObserver,
+        UsernamesControllerObserver {
 
     public static final String TAG = MainTabletFragment.class.getName();
     private static final String ARG_LOCK_EXPANDED = "ARG_LOCK_EXPANDED";
 
     private ConfirmationMenu confirmationMenu;
     private BackgroundFrameLayout backgroundLayout;
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -116,6 +124,7 @@ public class MainTabletFragment extends BaseFragment<MainTabletFragment.Containe
         getControllerFactory().getAccentColorController().addAccentColorObserver(this);
         getControllerFactory().getAccentColorController().addAccentColorObserver(backgroundLayout);
         getControllerFactory().getBackgroundController().addBackgroundObserver(backgroundLayout);
+        getControllerFactory().getUsernameController().addUsernamesObserver(this);
     }
 
     @Override
@@ -125,6 +134,7 @@ public class MainTabletFragment extends BaseFragment<MainTabletFragment.Containe
         getControllerFactory().getSingleImageController().removeSingleImageObserver(this);
         getControllerFactory().getAccentColorController().removeAccentColorObserver(backgroundLayout);
         getControllerFactory().getBackgroundController().removeBackgroundObserver(backgroundLayout);
+        getControllerFactory().getUsernameController().removeUsernamesObserver(this);
         super.onStop();
     }
 
@@ -253,6 +263,28 @@ public class MainTabletFragment extends BaseFragment<MainTabletFragment.Containe
     @Override
     public void onAccentColorHasChanged(Object sender, int color) {
         confirmationMenu.setButtonColor(color);
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  UsernamesObserver
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onValidUsernameGenerated(String name, String generatedUsername) {
+        RootFragment fragment = (RootFragment) getChildFragmentManager().findFragmentByTag(RootFragment.TAG);
+        if (fragment != null) {
+            fragment.showFirstTimeAssignUsername(name, generatedUsername);
+        }
+    }
+
+    @Override
+    public void onUsernameAttemptsExhausted(String name) {
+        RootFragment fragment = (RootFragment) getChildFragmentManager().findFragmentByTag(RootFragment.TAG);
+        if (fragment != null) {
+            fragment.showFirstTimeAssignUsername(name, "");
+        }
     }
 
     public interface Container {

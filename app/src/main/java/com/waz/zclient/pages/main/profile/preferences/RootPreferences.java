@@ -106,6 +106,7 @@ public class RootPreferences extends BasePreferenceFragment<RootPreferences.Cont
             boolean showSpotifyLogin = getArguments().getBoolean(ZetaPreferencesActivity.SHOW_SPOTIFY_LOGIN, false);
             boolean showOtrDevices = getArguments().getBoolean(ZetaPreferencesActivity.SHOW_OTR_DEVICES, false);
             boolean showAccount = getArguments().getBoolean(ZetaPreferencesActivity.SHOW_ACCOUNT, false);
+            boolean showUsernameEdit = getArguments().getBoolean(ZetaPreferencesActivity.SHOW_USERNAME_EDIT);
 
             final PreferenceManager.OnNavigateToScreenListener navigateToScreenListener = getPreferenceManager().getOnNavigateToScreenListener();
             PreferenceScreen preference = null;
@@ -116,6 +117,8 @@ public class RootPreferences extends BasePreferenceFragment<RootPreferences.Cont
                 getControllerFactory().getSpotifyController().login(getActivity());
             } else if (showOtrDevices) {
                 preference = devicesPreferenceScreenLike.getPreferenceScreen();
+            } else if (showUsernameEdit) {
+                preference = ((BadgeablePreferenceScreenLike) findPreference(getString(R.string.pref_account_screen_key))).getPreferenceScreen();
             }
 
             if (preference != null) {

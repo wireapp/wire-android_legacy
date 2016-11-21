@@ -189,6 +189,10 @@ public class TextViewUtils {
      * @param onClick
      */
     public static void linkifyText(TextView textView, final int highlightColor, boolean bold, final boolean underline, final Runnable onClick) {
+        linkifyText(textView, highlightColor, bold ? R.string.wire__typeface__medium : -1, true, onClick);
+    }
+
+    public static void linkifyText(TextView textView, final int highlightColor, int boldTypeface, final boolean underline, final Runnable onClick) {
         textView.setMovementMethod(LinkMovementMethod.getInstance());
         final String string = textView.getText().toString();
         final int highlightStart = string.indexOf('_');
@@ -227,11 +231,11 @@ public class TextViewUtils {
         };
 
         str.setSpan(linkSpan, highlightStart, highlightEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        if (bold) {
-            str.setSpan(new CustomTypefaceSpan("", textView.getResources().getString(R.string.wire__typeface__medium)),
-                        highlightStart,
-                        highlightEnd,
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        if (boldTypeface > 0) {
+            str.setSpan(new CustomTypefaceSpan("", textView.getResources().getString(boldTypeface)),
+                                    highlightStart,
+                                    highlightEnd,
+                                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         textView.setText(str);
     }
