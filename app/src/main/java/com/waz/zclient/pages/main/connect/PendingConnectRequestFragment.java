@@ -42,9 +42,9 @@ import com.waz.zclient.pages.main.participants.ProfileSourceAnimation;
 import com.waz.zclient.pages.main.participants.ProfileTabletAnimation;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 import com.waz.zclient.ui.text.GlyphTextView;
+import com.waz.zclient.ui.views.UserDetailsView;
 import com.waz.zclient.ui.views.ZetaButton;
 import com.waz.zclient.utils.LayoutSpec;
-import com.waz.zclient.utils.StringUtils;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.images.ImageAssetImageView;
 import com.waz.zclient.views.menus.FooterMenu;
@@ -74,13 +74,12 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
     private boolean isShowingFooterMenu;
 
     private boolean isBelowUserProfile;
-    private TextView usernameTextView;
+    private UserDetailsView userDetailsView;
     private ZetaButton ignoreButton;
     private ZetaButton acceptButton;
     private ZetaButton unblockButton;
     private LinearLayout acceptMenu;
     private FooterMenu footerMenu;
-    private TextView subHeaderView;
     private GlyphTextView closeButton;
     private TextView participentsHeader;
     private ImageAssetImageView imageAssetImageViewProfile;
@@ -173,13 +172,12 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
 
         View rootView = inflater.inflate(R.layout.fragment_connect_request_pending, viewContainer, false);
 
-        usernameTextView =  ViewUtils.getView(rootView, R.id.ttv__pending_connect_request__username);
+        userDetailsView =  ViewUtils.getView(rootView, R.id.udv__pending_connect__user_details);
         ignoreButton = ViewUtils.getView(rootView, R.id.zb__connect_request__ignore_button);
         acceptButton = ViewUtils.getView(rootView, R.id.zb__connect_request__accept_button);
         unblockButton = ViewUtils.getView(rootView, R.id.zb__connect_request__unblock_button);
         acceptMenu = ViewUtils.getView(rootView, R.id.ll__connect_request__accept_menu);
         footerMenu = ViewUtils.getView(rootView, R.id.fm__footer);
-        subHeaderView = ViewUtils.getView(rootView, R.id.ttv__participants__user_name);
         closeButton = ViewUtils.getView(rootView, R.id.gtv__participants__close);
         participentsHeader = ViewUtils.getView(rootView, R.id.taet__participants__header);
         imageAssetImageViewProfile = ViewUtils.getView(rootView, R.id.iaiv__pending_connect);
@@ -281,13 +279,13 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
 
     @Override
     public void onDestroyView() {
+        userDetailsView.recycle();
         imageAssetImageViewProfile = null;
         ignoreButton = null;
         acceptButton = null;
         unblockButton = null;
         acceptMenu = null;
         footerMenu = null;
-        subHeaderView = null;
         closeButton = null;
         participentsHeader = null;
         if (conversation != null) {
@@ -454,17 +452,11 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
         }
 
         imageAssetImageViewProfile.connectImageAsset(user.getPicture());
-        usernameTextView.setText(StringUtils.formatUsername(user.getUsername()));
+        userDetailsView.setUser(user);
 
         // Load common users
         getStoreFactory().getConnectStore().loadCommonConnections(user.getCommonConnections());
         participentsHeader.setText(user.getName());
-
-        if (user.getConnectionStatus() == User.ConnectionStatus.PENDING_FROM_OTHER) {
-            subHeaderView.setText(user.getEmail());
-        } else {
-            subHeaderView.setText("");
-        }
 
         switch (user.getConnectionStatus()) {
             case PENDING_FROM_OTHER:
@@ -503,7 +495,6 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
 
         unblockButton.setIsFilled(false);
         unblockButton.setAccentColor(color);
-        subHeaderView.setTextColor(color);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////

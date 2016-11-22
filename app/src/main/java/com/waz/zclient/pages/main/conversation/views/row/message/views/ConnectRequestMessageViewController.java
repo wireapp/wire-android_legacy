@@ -21,16 +21,13 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.TextView;
-import com.waz.api.ContactDetails;
 import com.waz.api.IConversation;
 import com.waz.api.User;
 import com.waz.zclient.R;
-import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.pages.main.conversation.views.MessageViewsContainer;
 import com.waz.zclient.pages.main.conversation.views.row.message.MessageViewController;
 import com.waz.zclient.pages.main.conversation.views.row.separator.Separator;
-import com.waz.zclient.utils.StringUtils;
+import com.waz.zclient.ui.views.UserDetailsView;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.common.views.ChatheadView;
 
@@ -39,44 +36,8 @@ public class ConnectRequestMessageViewController extends MessageViewController {
     // User with whom conversation was created
     private View view;
     private ChatheadView chatheadView;
-    private TextView userNameTextView;
-    private TextView userInfoTextView;
+    private UserDetailsView userDetailsView;
     private User otherUser;
-
-    private final ModelObserver<ContactDetails> contactDetailsModelObserver = new ModelObserver<ContactDetails>() {
-        @Override
-        public void updated(ContactDetails contactDetails) {
-            if (otherUser == null) {
-                return;
-            }
-            String userInfo;
-            if (otherUser.getDisplayName().equals(contactDetails.getDisplayName())) {
-                // User's Wire name is same as in address book
-                userInfo = view.getContext().getResources().getString(R.string.content__message__connect_request__user_info, "");
-            } else {
-                userInfo = view.getContext().getResources().getString(R.string.content__message__connect_request__user_info,
-                                                                      contactDetails.getDisplayName());
-            }
-            userInfoTextView.setText(userInfo);
-        }
-    };
-
-    private final ModelObserver<User> userModelObserver = new ModelObserver<User>() {
-        @Override
-        public void updated(User user) {
-            if (context == null ||
-                messageViewsContainer == null) {
-                return;
-            }
-            userNameTextView.setText(StringUtils.formatUsername(user.getUsername()));
-            if (!user.isContact()) {
-                userInfoTextView.setText("");
-                contactDetailsModelObserver.pauseListening();
-            } else {
-                contactDetailsModelObserver.setAndUpdate(user.getFirstContact());
-            }
-        }
-    };
 
 
     @SuppressLint("InflateParams")
@@ -85,14 +46,12 @@ public class ConnectRequestMessageViewController extends MessageViewController {
         LayoutInflater inflater = LayoutInflater.from(context);
         view = inflater.inflate(R.layout.row_conversation_connect_request, null);
         chatheadView = ViewUtils.getView(view, R.id.cv__row_conversation__connect_request__chat_head);
-        userNameTextView = ViewUtils.getView(view, R.id.ttv__row_conversation__connect_request__username);
-        userInfoTextView = ViewUtils.getView(view, R.id.ttv__row_conversation__connect_request__user_info);
+        userDetailsView = ViewUtils.getView(view, R.id.udv__row_conversation__connect_request__user_details);
     }
 
     @Override
     public void recycle() {
-        userModelObserver.pauseListening();
-        contactDetailsModelObserver.pauseListening();
+        userDetailsView.recycle();
         otherUser = null;
         super.recycle();
     }
@@ -103,11 +62,7 @@ public class ConnectRequestMessageViewController extends MessageViewController {
         // TODO this crashes when the conversation is a group conversation
         if (message.getConversation().getType() == IConversation.Type.ONE_TO_ONE) {
             chatheadView.setUser(otherUser);
-        }
-
-        // TODO this crashes when the conversation is a group conversation
-        if (message.getConversation().getType() == IConversation.Type.ONE_TO_ONE) {
-            userModelObserver.setAndUpdate(otherUser);
+            userDetailsView.setUser(otherUser);
         }
     }
 

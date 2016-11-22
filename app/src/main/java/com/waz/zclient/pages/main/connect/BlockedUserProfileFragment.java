@@ -45,6 +45,7 @@ import com.waz.zclient.pages.main.participants.ProfileSourceAnimation;
 import com.waz.zclient.pages.main.participants.ProfileTabletAnimation;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 import com.waz.zclient.ui.animation.fragment.FadeAnimation;
+import com.waz.zclient.ui.views.UserDetailsView;
 import com.waz.zclient.ui.views.ZetaButton;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
@@ -72,7 +73,7 @@ public class BlockedUserProfileFragment extends BaseFragment<BlockedUserProfileF
     private ZetaButton cancelButton;
     private ZetaButton smallUnblockButton;
     private TextView nameTextView;
-    private TextView subHeaderTextView;
+    private UserDetailsView userDetailsView;
     private View unblockMenu;
     private FooterMenu footerMenu;
     private View separatorLine;
@@ -165,7 +166,7 @@ public class BlockedUserProfileFragment extends BaseFragment<BlockedUserProfileF
         cancelButton = ViewUtils.getView(view, R.id.zb__connect_request__ignore_button);
         smallUnblockButton = ViewUtils.getView(view, R.id.zb__connect_request__accept_button);
         nameTextView = ViewUtils.getView(view, R.id.taet__participants__header);
-        subHeaderTextView = ViewUtils.getView(view, R.id.ttv__participants__user_name);
+        userDetailsView = ViewUtils.getView(view, R.id.udv__participants__user_details);
         footerMenu = ViewUtils.getView(view, R.id.fm__footer);
         unblockMenu = ViewUtils.getView(view, R.id.ll__connect_request__accept_menu);
         separatorLine = ViewUtils.getView(view, R.id.v__connect_request__separator_line);
@@ -257,7 +258,8 @@ public class BlockedUserProfileFragment extends BaseFragment<BlockedUserProfileF
         footerMenu = null;
         unblockMenu = null;
         separatorLine = null;
-        subHeaderTextView = null;
+        userDetailsView.recycle();
+        userDetailsView = null;
         super.onDestroyView();
     }
 
@@ -295,7 +297,7 @@ public class BlockedUserProfileFragment extends BaseFragment<BlockedUserProfileF
         // Load common users
         getStoreFactory().getConnectStore().loadCommonConnections(user.getCommonConnections());
         nameTextView.setText(user.getName());
-        subHeaderTextView.setText(user.getEmail());
+        userDetailsView.setUser(user);
 
         setFooterMenu(user);
     }
@@ -345,7 +347,6 @@ public class BlockedUserProfileFragment extends BaseFragment<BlockedUserProfileF
         cancelButton.setAccentColor(color);
 
         smallUnblockButton.setAccentColor(color);
-        subHeaderTextView.setTextColor(color);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////

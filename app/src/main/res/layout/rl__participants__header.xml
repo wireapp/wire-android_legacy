@@ -37,6 +37,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
         >
 
@@ -58,21 +59,36 @@
             style="?userHeader"
             />
 
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/ttv__participants__user_name"
-            android:layout_width="match_parent"
+        <FrameLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/wire__padding__small"
-            android:singleLine="true"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:textColorHint="@color/text__secondary_light"
-            app:font="@string/wire__typeface__light"
-            style="?userSubHeader"
-            />
+            >
+
+            <com.waz.zclient.ui.views.UserDetailsView
+                android:id="@+id/udv__participants__user_details"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__small"
+                />
+
+            <!-- TODO: Remove once final design is known-->
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/ttv__participants__subheader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__small"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:textColorHint="@color/text__secondary_light"
+                app:font="@string/wire__typeface__light"
+                style="?userSubHeader"
+                />
+
+        </FrameLayout>
+
 
         <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/ttv__participants__user_info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="?wirePrimaryTextColor"

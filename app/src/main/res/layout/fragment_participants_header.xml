@@ -142,8 +142,9 @@
 
                 </LinearLayout>
 
+                <!-- TODO: Edit when final design ready -->
                 <com.waz.zclient.ui.text.TypefaceTextView
-                    android:id="@+id/ttv__participants__user_name"
+                    android:id="@+id/ttv__participants__sub_header"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="@dimen/wire__padding__regular"
