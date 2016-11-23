@@ -169,13 +169,12 @@
     <string name="people_picker__contact_list__invite_dialog__title">Send invitation</string>
     <string name="people_picker__contact_list__searchbox__hint">\u0020 SEARCH BY NAME</string>
     <string name="people_picker__contact_list__generic_invite__button__label">INVITE MORE PEOPLE</string>
-    <string name="people_picker__contact_list_contact_sub_label_username">\@%1$s</string>
     <plurals name="people_picker__contact_list_contact_sub_label_common_friends">
-        <item quantity="one">\@%1$s - %2$d friend in common</item>
-        <item quantity="other">\@%1$s - %2$d friends in common</item>
+        <item quantity="one">%1$d friend in common</item>
+        <item quantity="other">%1$d friends in common</item>
     </plurals>
-    <string name="people_picker__contact_list_contact_sub_label_address_book">\@%1$s - %2$s in Address Book</string>
-    <string name="people_picker__contact_list_contact_sub_label_address_book_identical">\@%1$s - in Address Book</string>
+    <string name="people_picker__contact_list_contact_sub_label_address_book">%1$s in Address Book</string>
+    <string name="people_picker__contact_list_contact_sub_label_address_book_identical">in Address Book</string>
 
     <!-- Conversation: Quick menu -->
     <string name="conversation_quick_menu__conversation_button__single_label">OPEN</string>
