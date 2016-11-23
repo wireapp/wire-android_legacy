@@ -32,6 +32,7 @@ import com.waz.zclient.R;
 import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController;
 import com.waz.zclient.ui.views.ZetaButton;
+import com.waz.zclient.utils.StringUtils;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.common.views.ChatheadView;
 
@@ -49,34 +50,7 @@ public class ContactRowView extends FrameLayout implements UserRowView {
         @Override
         public void updated(ContactDetails model) {
             contactDetails = model;
-            nameView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
-            nameView.setText(contactDetails.getDisplayName());
-            subLabelView.setVisibility(GONE);
-            chathead.setContactDetails(contactDetails);
-            if (contactDetails.hasBeenInvited()) {
-                contactInviteButton.setVisibility(GONE);
-                setOnClickListener(new OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        if (callback == null) {
-                            return;
-                        }
-                        callback.onContactListContactClicked(contactDetails);
-                    }
-                });
-                return;
-            }
-            contactInviteButton.setVisibility(VISIBLE);
-            contactInviteButton.setText(getResources().getText(R.string.people_picker__contact_list__contact_selection_button__label));
-            contactInviteButton.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if (callback == null) {
-                        return;
-                    }
-                    callback.onContactListContactClicked(contactDetails);
-                }
-            });
+            redraw();
         }
     };
 
@@ -84,34 +58,7 @@ public class ContactRowView extends FrameLayout implements UserRowView {
         @Override
         public void updated(User model) {
             user = model;
-            nameView.setGravity(Gravity.START | Gravity.BOTTOM);
-            nameView.setText(user.getName());
-            subLabelView.setVisibility(VISIBLE);
-            subLabelView.setText(getFormattedSubLabel());
-            chathead.setUser(user);
-            switch (user.getConnectionStatus()) {
-                case CANCELLED:
-                case UNCONNECTED:
-                    contactInviteButton.setVisibility(VISIBLE);
-                    contactInviteButton.setText(getResources().getText(R.string.people_picker__contact_list__contact_selection_button__label));
-                    break;
-                case ACCEPTED:
-                    setSelected(callback.isUserSelected(user));
-                    contactInviteButton.setVisibility(GONE);
-                    break;
-                case PENDING_FROM_USER:
-                    contactInviteButton.setVisibility(GONE);
-                    break;
-            }
-            contactInviteButton.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if (callback == null) {
-                        return;
-                    }
-                    callback.onContactListUserClicked(user);
-                }
-            });
+            redraw();
         }
     };
 
@@ -136,14 +83,12 @@ public class ContactRowView extends FrameLayout implements UserRowView {
         if (contact == null) {
             return;
         }
-        if (contact.getDetails() == null) {
-            contactDetails = null;
-        }
+        userModelObserver.clear();
+        contactDetailsModelObserver.clear();
+        contactDetails = null;
+        user = null;
+        clearDraw();
         contactDetailsModelObserver.setAndUpdate(contact.getDetails());
-
-        if (contact.getUser() == null) {
-            user = null;
-        }
         userModelObserver.setAndUpdate(contact.getUser());
     }
 
@@ -181,6 +126,124 @@ public class ContactRowView extends FrameLayout implements UserRowView {
         chathead.setSelected(selected);
     }
 
+    private String getFormattedSubLabel() {
+        String username = user.getUsername();
+        String addressBookName = contactDetails != null ? contactDetails.getDisplayName().trim() : "";
+        String name = user.getName().trim();
+        int commonContacts = user.getCommonConnectionsCount();
+
+        String usernameString = "";
+        if (!TextUtils.isEmpty(username)) {
+            usernameString = StringUtils.formatUsername(username);
+        }
+
+        String otherString = "";
+        if (TextUtils.isEmpty(addressBookName)) {
+            if (commonContacts > 0) {
+                otherString = getResources().getQuantityString(R.plurals.people_picker__contact_list_contact_sub_label_common_friends, commonContacts, commonContacts);
+            }
+        } else {
+            if (name.equalsIgnoreCase(addressBookName)) {
+                otherString = getContext().getString(R.string.people_picker__contact_list_contact_sub_label_address_book_identical);
+            } else {
+                otherString = getContext().getString(R.string.people_picker__contact_list_contact_sub_label_address_book, addressBookName);
+            }
+        }
+
+        if (TextUtils.isEmpty(username)) {
+            return otherString;
+        } else if (TextUtils.isEmpty(otherString)) {
+            return usernameString;
+        }
+        return usernameString + " - " + otherString;
+    }
+
+    private void redraw() {
+        if (user != null) {
+            drawUser();
+        } else if (contactDetails != null) {
+            drawContact();
+        }
+    }
+
+    private void drawUser() {
+        if (user == null) {
+            return;
+        }
+        String sublabel = getFormattedSubLabel();
+        if (TextUtils.isEmpty(sublabel)) {
+            nameView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+        } else {
+            nameView.setGravity(Gravity.START | Gravity.BOTTOM);
+            subLabelView.setVisibility(VISIBLE);
+            subLabelView.setText(sublabel);
+        }
+        nameView.setText(user.getName());
+        chathead.setUser(user);
+        switch (user.getConnectionStatus()) {
+            case CANCELLED:
+            case UNCONNECTED:
+                contactInviteButton.setVisibility(VISIBLE);
+                contactInviteButton.setText(getResources().getText(R.string.people_picker__contact_list__contact_selection_button__label));
+                break;
+            case ACCEPTED:
+                setSelected(callback.isUserSelected(user));
+                contactInviteButton.setVisibility(GONE);
+                break;
+            case PENDING_FROM_USER:
+                contactInviteButton.setVisibility(GONE);
+                break;
+        }
+        contactInviteButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (callback == null) {
+                    return;
+                }
+                callback.onContactListUserClicked(user);
+            }
+        });
+    }
+
+    private void drawContact() {
+        if (contactDetails == null) {
+            return;
+        }
+        nameView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+        nameView.setText(contactDetails.getDisplayName());
+        subLabelView.setVisibility(GONE);
+        chathead.setContactDetails(contactDetails);
+        if (contactDetails.hasBeenInvited()) {
+            contactInviteButton.setVisibility(GONE);
+            setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (callback == null) {
+                        return;
+                    }
+                    callback.onContactListContactClicked(contactDetails);
+                }
+            });
+            return;
+        }
+        contactInviteButton.setVisibility(VISIBLE);
+        contactInviteButton.setText(getResources().getText(R.string.people_picker__contact_list__contact_selection_button__label));
+        contactInviteButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (callback == null) {
+                    return;
+                }
+                callback.onContactListContactClicked(contactDetails);
+            }
+        });
+    }
+
+    private void clearDraw() {
+        nameView.setText("");
+        subLabelView.setVisibility(GONE);
+    }
+
     public interface Callback {
         void onContactListUserClicked(User user);
 
@@ -189,27 +252,5 @@ public class ContactRowView extends FrameLayout implements UserRowView {
         @IPickUserController.ContactListDestination int getDestination();
 
         boolean isUserSelected(User user);
-    }
-
-    private String getFormattedSubLabel() {
-        String username = user.getUsername();
-        String addressBookName = user.isContact() ? user.getFirstContact().getDisplayName().trim() : "";
-        String name = user.getName().trim();
-        int commonContacts = user.getCommonConnectionsCount();
-        String finalString;
-        if (TextUtils.isEmpty(addressBookName)) {
-            if (commonContacts > 0) {
-                finalString = getResources().getQuantityString(R.plurals.people_picker__contact_list_contact_sub_label_common_friends, commonContacts, username, commonContacts);
-            } else {
-                finalString = getContext().getString(R.string.people_picker__contact_list_contact_sub_label_username, username);
-            }
-        } else {
-            if (name.equalsIgnoreCase(addressBookName)) {
-                finalString = getContext().getString(R.string.people_picker__contact_list_contact_sub_label_address_book_identical, username);
-            } else {
-                finalString = getContext().getString(R.string.people_picker__contact_list_contact_sub_label_address_book, username, addressBookName);
-            }
-        }
-        return finalString;
     }
 }
