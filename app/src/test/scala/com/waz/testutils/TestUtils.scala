@@ -47,6 +47,7 @@ object TestUtils {
   implicit class RichLatch(latch: CountDownLatch) {
     def waitDuration(implicit duration: Duration): Unit = latch.await(duration.toMillis, TimeUnit.MILLISECONDS)
   }
+
 }
 
 
