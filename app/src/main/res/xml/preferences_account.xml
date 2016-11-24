@@ -74,6 +74,13 @@
         android:layout="@layout/preference_category"
         >
 
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="@string/pref_account_private_mode_key"
+            android:title="@string/pref_account_private_mode_title"
+            android:summary="@string/pref_account_private_mode_summary"
+            />
+
         <Preference
             android:key="@string/pref_account_password_key"
             android:title="@string/pref_account_password_title"

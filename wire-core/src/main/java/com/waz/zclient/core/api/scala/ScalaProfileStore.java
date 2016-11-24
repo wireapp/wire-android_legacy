@@ -39,6 +39,7 @@ public class ScalaProfileStore extends ProfileStore {
     private int myColor;
     private boolean emailIsVerified;
     private boolean phoneIsVerified;
+    private boolean privateMode;
 
     public ScalaProfileStore(ZMessagingApi zMessagingApi) {
         this.zMessagingApi = zMessagingApi;
@@ -58,6 +59,7 @@ public class ScalaProfileStore extends ProfileStore {
         zMessagingApi = null;
         emailIsVerified = false;
         phoneIsVerified = false;
+        privateMode = false;
     }
 
     @Override
@@ -212,6 +214,18 @@ public class ScalaProfileStore extends ProfileStore {
                                         verificationListener);
     }
 
+    @Override
+    public boolean isInPrivateMode() {
+        return selfUser.isInPrivateMode();
+    }
+
+    @Override
+    public void setPrivateMode(boolean privateMode) {
+        if (selfUser.isInPrivateMode() != privateMode) {
+            selfUser.setPrivateMode(privateMode);
+        }
+    }
+
     /**
      * User has been updated in core.
      */
@@ -238,6 +252,11 @@ public class ScalaProfileStore extends ProfileStore {
             this.myPhoneNumber = selfUser.getPhone();
             this.phoneIsVerified = selfUser.isPhoneVerified();
             notifyPhoneHasChanged(myPhoneNumber, this.phoneIsVerified);
+        }
+
+        if (selfUser.isInPrivateMode() != privateMode) {
+            this.privateMode = selfUser.isInPrivateMode();
+            notifyPrivateModeHasChanged(this.privateMode);
         }
 
         if (selfUser.getAccent().getColor() != myColor) {

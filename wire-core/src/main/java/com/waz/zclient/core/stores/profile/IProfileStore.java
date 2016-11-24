@@ -87,4 +87,8 @@ public interface IProfileStore extends IStore {
     void submitCode(String myPhoneNumber,
                     String code,
                     ZMessagingApi.PhoneNumberVerificationListener verificationListener);
+
+    boolean isInPrivateMode();
+
+    void setPrivateMode(boolean privateMode);
 }

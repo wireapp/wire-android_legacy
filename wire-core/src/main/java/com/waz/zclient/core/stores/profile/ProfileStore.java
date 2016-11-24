@@ -57,6 +57,7 @@ public abstract class ProfileStore implements IProfileStore, UpdateListener {
         profileStoreObserver.onMyEmailHasChanged(selfUser.getEmail(), selfUser.isEmailVerified());
         profileStoreObserver.onMyPhoneHasChanged(selfUser.getPhone(), selfUser.isPhoneVerified());
         profileStoreObserver.onAccentColorChangedRemotely(this, selfUser.getAccent().getColor());
+        profileStoreObserver.onMyPrivateModeHasChanged(selfUser.isInPrivateMode());
     }
 
     @Override
@@ -110,12 +111,18 @@ public abstract class ProfileStore implements IProfileStore, UpdateListener {
         }
     }
 
+    protected void notifyPrivateModeHasChanged(boolean privateMode) {
+        for (ProfileStoreObserver profileStoreObserver : profileStoreObservers) {
+            profileStoreObserver.onMyPrivateModeHasChanged(privateMode);
+        }
+    }
+
     protected void notifyEmailAndPasswordHasChanged(String email) {
         for (ProfileStoreObserver profileStoreObserver : profileStoreObservers) {
             profileStoreObserver.onMyEmailAndPasswordHasChanged(email);
         }
     }
- 
+
     public boolean hasIncomingDevices() {
         return otherClients.size() > 0;
     }

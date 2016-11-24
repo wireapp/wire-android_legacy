@@ -158,4 +158,14 @@ public class StubProfileStore implements IProfileStore {
   public void removeProfileStoreObserver(ProfileStoreObserver profileStoreObserver) {
     ;
   }
+
+    @Override
+    public boolean isInPrivateMode() {
+        return false;
+    }
+
+    @Override
+    public void setPrivateMode(boolean privateMode) {
+
+    }
 }

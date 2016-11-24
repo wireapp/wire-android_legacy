@@ -468,6 +468,8 @@
     <string name="pref_account_password_title">Reset Password</string>
     <string name="pref_account_edit_name_empty_warning">Name must have 2 or more characters</string>
     <string name="pref_account_edit_name_empty_verify">OK</string>
+    <string name="pref_account_private_mode_title">Private Mode</string>
+    <string name="pref_account_private_mode_summary">When the account is set to private, only people who know your exact username will be able to find you.</string>
 
     <!-- Options -->
     <string name="pref_options_dark_theme_title">Dark theme</string>

@@ -107,6 +107,7 @@
     <string translatable="false" name="pref_account_color_key">pref_account_color_key</string>
     <string translatable="false" name="pref_advanced_analytics_enabled_key">@string/zms_analytics_preference_key</string>
     <string translatable="false" name="pref_advanced_debug_report_key">PREF_DEBUG_REPORT</string>
+    <string translatable="false" name="pref_account_private_mode_key">pref_account_private_mode_key</string>
     <string-array translatable="false" name="pref_options_sounds_entries">
         <item>@string/pref_options_sounds_all</item>
         <item>@string/pref_options_sounds_new_conversations_and_talks_only</item>

@@ -32,6 +32,7 @@ import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.tracking.events.profile.ResetPassword;
 import com.waz.zclient.controllers.tracking.events.profile.SignOut;
+import com.waz.zclient.core.controllers.tracking.events.Event;
 import com.waz.zclient.core.controllers.tracking.events.session.LoggedOutEvent;
 import com.waz.zclient.core.stores.profile.ProfileStoreObserver;
 import com.waz.zclient.pages.BasePreferenceFragment;
@@ -45,6 +46,7 @@ import com.waz.zclient.pages.main.profile.preferences.dialogs.VerifyPhoneNumberP
 import com.waz.zclient.ui.utils.TextViewUtils;
 import com.waz.zclient.utils.ViewUtils;
 import net.xpece.android.support.preference.EditTextPreference;
+import net.xpece.android.support.preference.SwitchPreference;
 
 public class AccountPreferences extends BasePreferenceFragment<AccountPreferences.Container> implements ProfileStoreObserver,
                                                                                                         SharedPreferences.OnSharedPreferenceChangeListener,
@@ -64,6 +66,7 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
     private Preference resetPasswordPreference;
     private PicturePreference picturePreference;
     private ColorPreference colorPreference;
+    private SwitchPreference privateModePreference;
 
     public static AccountPreferences newInstance(String rootKey, Bundle extras) {
         AccountPreferences f = new AccountPreferences();
@@ -189,7 +192,7 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
                 return true;
             }
         });
-
+        privateModePreference = (SwitchPreference) findPreference(getString(R.string.pref_account_private_mode_key));
     }
 
     @Override
@@ -229,6 +232,7 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
             resetPasswordPreference.setOnPreferenceClickListener(null);
             resetPasswordPreference = null;
         }
+        privateModePreference = null;
         super.onDestroyView();
     }
 
@@ -399,6 +403,19 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
     @Override
     public void onAccentColorHasChanged(Object sender, int color) {
         colorPreference.setAccentColor(color);
+    }
+
+    @Override
+    public void onMyPrivateModeHasChanged(boolean privateMode) {
+        privateModePreference.setChecked(privateMode);
+    }
+
+    @Override
+    public Event handlePreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (key.equals(getString(R.string.pref_account_private_mode_key))) {
+            getStoreFactory().getProfileStore().setPrivateMode(privateModePreference.isChecked());
+        }
+        return super.handlePreferenceChanged(sharedPreferences, key);
     }
 
     public interface Container {
