@@ -71,12 +71,10 @@ import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment;
 import com.waz.zclient.pages.main.connect.ConnectRequestLoadMode;
 import com.waz.zclient.pages.main.connect.PendingConnectRequestManagerFragment;
 import com.waz.zclient.pages.main.connect.SendConnectRequestFragment;
-import com.waz.zclient.pages.main.connect.UserProfile;
 import com.waz.zclient.pages.main.conversation.controller.ConversationScreenControllerObserver;
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController;
 import com.waz.zclient.pages.main.participants.OptionsMenuControl;
 import com.waz.zclient.pages.main.participants.OptionsMenuFragment;
-import com.waz.zclient.pages.main.participants.SingleParticipantFragment;
 import com.waz.zclient.pages.main.participants.dialog.ParticipantsDialogFragment;
 import com.waz.zclient.pages.main.pickuser.PickUserFragment;
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController;
@@ -106,7 +104,6 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
                                                                                                    OptionsMenuFragment.Container,
                                                                                                    PickUserFragment.Container,
                                                                                                    CameraFragment.Container,
-                                                                                                   SingleParticipantFragment.Container,
                                                                                                    SendConnectRequestFragment.Container,
                                                                                                    BlockedUserProfileFragment.Container,
                                                                                                    ParticipantsDialogFragment.Container,
@@ -455,17 +452,6 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
             return true;
         }
 
-        SingleParticipantFragment singleUserFragment = (SingleParticipantFragment) getChildFragmentManager().findFragmentByTag(
-            SingleParticipantFragment.TAG);
-        if (singleUserFragment != null &&
-            singleUserFragment.onBackPressed()) {
-            return true;
-        }
-
-        if (getControllerFactory().getPickUserController().isShowingCommonUserProfile()) {
-            getControllerFactory().getPickUserController().hideCommonUserProfile();
-        }
-
         PickUserFragment pickUserFragment = (PickUserFragment) getChildFragmentManager().findFragmentByTag(
             PickUserFragment.TAG);
         if (pickUserFragment != null &&
@@ -587,11 +573,7 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
 
     @Override
     public void dismissUserProfile() {
-        if (getControllerFactory().getPickUserController().isShowingCommonUserProfile()) {
-            getControllerFactory().getPickUserController().hideCommonUserProfile();
-        } else {
-            getControllerFactory().getPickUserController().hideUserProfile();
-        }
+        getControllerFactory().getPickUserController().hideUserProfile();
     }
 
     @Override
@@ -602,11 +584,6 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
     @Override
     public void showRemoveConfirmation(User user) {
 
-    }
-
-    @Override
-    public void openCommonUserProfile(View anchor, User commonUser) {
-        getControllerFactory().getPickUserController().showCommonUserProfile(commonUser);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -734,50 +711,6 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
         getChildFragmentManager().popBackStackImmediate();
         togglePeoplePicker(true);
     }
-
-    @Override
-    public void onShowCommonUserProfile(final User user) {
-        if (getControllerFactory().getPickUserController().isShowingCommonUserProfile()) {
-            return;
-        }
-
-        UserProfile profileFragment = (UserProfile) getChildFragmentManager().findFragmentById(R.id.fl__conversation_list__profile_overlay);
-        if (profileFragment != null) {
-            profileFragment.isBelowUserProfile(true);
-        }
-
-        getStoreFactory().getSingleParticipantStore().setUser(user);
-
-        getChildFragmentManager()
-            .beginTransaction()
-            .setCustomAnimations(R.anim.fragment_animation__send_connect_request__fade_in,
-                                 R.anim.fragment_animation__send_connect_request__zoom_exit,
-                                 R.anim.fragment_animation__send_connect_request__zoom_enter,
-                                 R.anim.fragment_animation__send_connect_request__fade_out)
-            .replace(R.id.fl__conversation_list__profile_overlay,
-                     SingleParticipantFragment.newInstance(true,
-                                                           IConnectStore.UserRequester.SEARCH),
-                     SingleParticipantFragment.TAG)
-            .addToBackStack(SingleParticipantFragment.TAG)
-            .commit();
-
-        getControllerFactory().getNavigationController().setLeftPage(Page.COMMON_USER_PROFILE, TAG);
-    }
-
-    @Override
-    public void onHideCommonUserProfile() {
-        getChildFragmentManager().popBackStackImmediate();
-
-        Fragment fragment = getChildFragmentManager().findFragmentById(R.id.fl__conversation_list__profile_overlay);
-        if (fragment instanceof SendConnectRequestFragment) {
-            getControllerFactory().getNavigationController().setLeftPage(Page.SEND_CONNECT_REQUEST, TAG);
-        } else if (fragment instanceof PendingConnectRequestManagerFragment) {
-            getControllerFactory().getNavigationController().setLeftPage(Page.PENDING_CONNECT_REQUEST, TAG);
-        } else if (fragment instanceof BlockedUserProfileFragment) {
-            getControllerFactory().getNavigationController().setLeftPage(Page.BLOCK_USER, TAG);
-        }
-    }
-
 
     /**
      * Decides based on state returned from PickUserController whether to show START UI or CONVERSATIONLIST
@@ -1001,16 +934,6 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
 
     @Override
     public void onHideUser() {
-
-    }
-
-    @Override
-    public void onShowCommonUser(User user) {
-
-    }
-
-    @Override
-    public void onHideCommonUser() {
 
     }
 

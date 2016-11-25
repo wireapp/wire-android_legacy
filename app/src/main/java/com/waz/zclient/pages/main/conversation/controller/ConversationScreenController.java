@@ -35,7 +35,6 @@ public class ConversationScreenController implements IConversationScreenControll
     private boolean isSingleConversation;
     private boolean isMemberOfConversation;
     private boolean isShowingUser;
-    private boolean isShowingCommonUser;
     private boolean conversationStreamUiReady;
     private DialogLaunchMode launchMode;
     private User showDevicesTabForUser;
@@ -119,7 +118,6 @@ public class ConversationScreenController implements IConversationScreenControll
     public void resetToMessageStream() {
         isShowingParticipant = false;
         isShowingUser = false;
-        isShowingCommonUser = false;
         showDevicesTabForUser = null;
         launchMode = null;
     }
@@ -188,31 +186,6 @@ public class ConversationScreenController implements IConversationScreenControll
     @Override
     public boolean isShowingUser() {
         return isShowingUser;
-    }
-
-    @Override
-    public void showCommonUser(User user) {
-        if (user == null) {
-            return;
-        }
-
-        for (ConversationScreenControllerObserver observer : conversationScreenControllerObservers) {
-            observer.onShowCommonUser(user);
-        }
-        isShowingCommonUser = true;
-    }
-
-    @Override
-    public void hideCommonUser() {
-        for (ConversationScreenControllerObserver observer : conversationScreenControllerObservers) {
-            observer.onHideCommonUser();
-        }
-        isShowingCommonUser = false;
-    }
-
-    @Override
-    public boolean isShowingCommonUser() {
-        return isShowingCommonUser;
     }
 
     @Override

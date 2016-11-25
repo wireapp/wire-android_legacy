@@ -19,12 +19,11 @@ package com.waz.zclient.pages.main.connect;
 
 import android.graphics.Color;
 import android.os.Bundle;
-import android.view.Gravity;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
-import android.widget.FrameLayout;
 import android.widget.TextView;
 import com.waz.api.CommonConnections;
 import com.waz.api.IConversation;
@@ -37,14 +36,12 @@ import com.waz.zclient.controllers.tracking.events.connect.UnblockingEvent;
 import com.waz.zclient.core.stores.connect.ConnectStoreObserver;
 import com.waz.zclient.core.stores.connect.IConnectStore;
 import com.waz.zclient.pages.BaseFragment;
-import com.waz.zclient.pages.main.connect.views.CommonUsersCallback;
-import com.waz.zclient.pages.main.connect.views.CommonUsersView;
-import com.waz.zclient.pages.main.participants.ParticipantBackbarFragment;
 import com.waz.zclient.pages.main.participants.ProfileAnimation;
 import com.waz.zclient.pages.main.participants.ProfileSourceAnimation;
 import com.waz.zclient.pages.main.participants.ProfileTabletAnimation;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 import com.waz.zclient.ui.animation.fragment.FadeAnimation;
+import com.waz.zclient.ui.theme.ThemeUtils;
 import com.waz.zclient.ui.views.UserDetailsView;
 import com.waz.zclient.ui.views.ZetaButton;
 import com.waz.zclient.utils.LayoutSpec;
@@ -55,8 +52,7 @@ import com.waz.zclient.views.menus.FooterMenuCallback;
 
 public class BlockedUserProfileFragment extends BaseFragment<BlockedUserProfileFragment.Container> implements UserProfile,
                                                                                                               ConnectStoreObserver,
-                                                                                                              AccentColorObserver,
-                                                                                                              ParticipantBackbarFragment.Container {
+                                                                                                              AccentColorObserver {
     public static final String TAG = BlockedUserProfileFragment.class.getName();
     public static final String ARGUMENT_USER_ID = "ARGUMENT_USER_ID";
     public static final String ARGUMENT_USER_REQUESTER = "ARGUMENT_USER_REQUESTER";
@@ -68,7 +64,6 @@ public class BlockedUserProfileFragment extends BaseFragment<BlockedUserProfileF
     boolean isShowingFooterMenu;
     private boolean isBelowUserProfile;
     private boolean goToConversationWithUser;
-    private CommonUsersView commonUsersView;
     private ZetaButton unblockButton;
     private ZetaButton cancelButton;
     private ZetaButton smallUnblockButton;
@@ -161,38 +156,29 @@ public class BlockedUserProfileFragment extends BaseFragment<BlockedUserProfileF
         }
 
         View view = inflater.inflate(R.layout.fragment_blocked_user_profile, viewContainer, false);
-        commonUsersView = ViewUtils.getView(view, R.id.ll__send_connect_request__common_users);
         unblockButton = ViewUtils.getView(view, R.id.zb__connect_request__unblock_button);
         cancelButton = ViewUtils.getView(view, R.id.zb__connect_request__ignore_button);
         smallUnblockButton = ViewUtils.getView(view, R.id.zb__connect_request__accept_button);
-        nameTextView = ViewUtils.getView(view, R.id.taet__participants__header);
-        userDetailsView = ViewUtils.getView(view, R.id.udv__participants__user_details);
+        Toolbar toolbar = ViewUtils.getView(view, R.id.t__blocked_user__toolbar);
+        nameTextView = ViewUtils.getView(view, R.id.tv__blocked_user__toolbar__title);
+        userDetailsView = ViewUtils.getView(view, R.id.udv__blocked_user__user_details);
         footerMenu = ViewUtils.getView(view, R.id.fm__footer);
         unblockMenu = ViewUtils.getView(view, R.id.ll__connect_request__accept_menu);
         separatorLine = ViewUtils.getView(view, R.id.v__connect_request__separator_line);
         imageAssetImageViewProfile = ViewUtils.getView(view, R.id.iaiv__blocked_user);
         imageAssetImageViewProfile.setDisplayType(ImageAssetImageView.DisplayType.CIRCLE);
 
-        // Close button
-        View closeButton = ViewUtils.getView(view, R.id.gtv__participants__close);
-        closeButton.setOnClickListener(new View.OnClickListener() {
+        if (ThemeUtils.isDarkTheme(getContext())) {
+            toolbar.setNavigationIcon(R.drawable.action_back_light);
+        } else {
+            toolbar.setNavigationIcon(R.drawable.action_back_dark);
+        }
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 getContainer().dismissUserProfile();
             }
         });
-
-        if (userRequester == IConnectStore.UserRequester.PARTICIPANTS &&
-            LayoutSpec.isTablet(getActivity())) {
-            // Don't set to GONE to keep the header text centered and not spanning entire screen due to backbar
-            closeButton.setClickable(false);
-            closeButton.setVisibility(View.INVISIBLE);
-            getChildFragmentManager().beginTransaction()
-                                     .add(R.id.fl__participant__backbar__container,
-                                          ParticipantBackbarFragment.newInstance(),
-                                          ParticipantBackbarFragment.TAG)
-                                     .commit();
-        }
 
         // Split Unblock / Cancel menu when opened from group conversation
         cancelButton.setText(getString(R.string.confirmation_menu__cancel));
@@ -202,7 +188,6 @@ public class BlockedUserProfileFragment extends BaseFragment<BlockedUserProfileF
         footerMenu.setVisibility(View.GONE);
         unblockButton.setVisibility(View.GONE);
         separatorLine.setVisibility(View.GONE);
-        commonUsersView.setVisibility(View.GONE);
         unblockButton.setVisibility(View.GONE);
 
         View backgroundContainer = ViewUtils.getView(view, R.id.fl__blocked_user__background_container);
@@ -250,7 +235,6 @@ public class BlockedUserProfileFragment extends BaseFragment<BlockedUserProfileF
     @Override
     public void onDestroyView() {
         imageAssetImageViewProfile = null;
-        commonUsersView = null;
         unblockButton = null;
         cancelButton = null;
         smallUnblockButton = null;
@@ -304,27 +288,7 @@ public class BlockedUserProfileFragment extends BaseFragment<BlockedUserProfileF
 
     @Override
     public void onCommonConnectionsUpdated(CommonConnections commonConnections) {
-        if (commonConnections.getTotalCount() == 0) {
-            commonUsersView.setVisibility(View.GONE);
-            FrameLayout.LayoutParams params = ((FrameLayout.LayoutParams) imageAssetImageViewProfile.getLayoutParams());
-            params.topMargin = 0;
-            params.gravity = Gravity.CENTER;
-            imageAssetImageViewProfile.setLayoutParams(params);
-        } else {
-            commonUsersView.setVisibility(View.VISIBLE);
-            FrameLayout.LayoutParams params = ((FrameLayout.LayoutParams) imageAssetImageViewProfile.getLayoutParams());
-            params.topMargin = getResources().getDimensionPixelSize(R.dimen.profile__image_top_padding);
-            params.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-            imageAssetImageViewProfile.setLayoutParams(params);
-        }
-        CommonUsersCallback commonUserOnClickCallback = new CommonUsersCallback() {
-            @Override
-            public void onCommonUserClicked(View anchor, User user) {
-                getContainer().openCommonUserProfile(anchor, user);
-            }
-        };
 
-        commonUsersView.setCommonUsers(commonConnections.getTopConnections(), commonConnections.getTotalCount(), commonUserOnClickCallback);
     }
 
     @Override

@@ -80,12 +80,6 @@ public interface IConversationScreenController {
 
     boolean isShowingUser();
 
-    void showCommonUser(User user);
-
-    void hideCommonUser();
-
-    boolean isShowingCommonUser();
-
     void tearDown();
 
     void notifyConversationListReady();

@@ -282,16 +282,6 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
     }
 
     @Override
-    public void onShowCommonUser(User user) {
-
-    }
-
-    @Override
-    public void onHideCommonUser() {
-
-    }
-
-    @Override
     public void onAddPeopleToConversation() {
 
     }
@@ -441,11 +431,6 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
 
     @Override
     public void showRemoveConfirmation(User user) {
-
-    }
-
-    @Override
-    public void openCommonUserProfile(View anchor, User commonUser) {
 
     }
 
@@ -608,16 +593,6 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
 
     @Override
     public void onHideUserProfile() {
-        // noop
-    }
-
-    @Override
-    public void onShowCommonUserProfile(User user) {
-        // noop
-    }
-
-    @Override
-    public void onHideCommonUserProfile() {
         // noop
     }
 

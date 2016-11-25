@@ -66,12 +66,6 @@ public interface IPickUserController {
 
     boolean isShowingUserProfile();
 
-    void showCommonUserProfile(User user);
-
-    void hideCommonUserProfile();
-
-    boolean isShowingCommonUserProfile();
-
     void addPickUserSearchControllerObserver(PickUserControllerSearchObserver observer);
 
     void removePickUserSearchControllerObserver(PickUserControllerSearchObserver observer);

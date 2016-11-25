@@ -663,16 +663,6 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
     }
 
     @Override
-    public void onShowCommonUser(User user) {
-
-    }
-
-    @Override
-    public void onHideCommonUser() {
-
-    }
-
-    @Override
     public void onAddPeopleToConversation() {
 
     }
@@ -824,16 +814,6 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
     }
 
     @Override
-    public void onShowCommonUserProfile(User user) {
-
-    }
-
-    @Override
-    public void onHideCommonUserProfile() {
-
-    }
-
-    @Override
     public void onAcceptedConnectRequest(IConversation conversation) {
 
     }
@@ -877,12 +857,6 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
     public void showRemoveConfirmation(User user) {
 
     }
-
-    @Override
-    public void openCommonUserProfile(View anchor, User commonUser) {
-
-    }
-
 
     // ParticipantsStoreObserver
 

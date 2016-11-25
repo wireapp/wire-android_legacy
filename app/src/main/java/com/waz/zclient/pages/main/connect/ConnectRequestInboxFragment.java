@@ -43,7 +43,6 @@ import com.waz.zclient.core.stores.conversation.OnInboxLoadedListener;
 import com.waz.zclient.core.stores.inappnotification.InAppNotificationStoreObserver;
 import com.waz.zclient.core.stores.inappnotification.KnockingEvent;
 import com.waz.zclient.pages.BaseFragment;
-import com.waz.zclient.pages.main.connect.views.CommonUsersCallback;
 import com.waz.zclient.pages.main.connect.views.ConnectRequestInboxListView;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
@@ -110,14 +109,7 @@ public class ConnectRequestInboxFragment extends BaseFragment<ConnectRequestInbo
             }
         };
 
-        CommonUsersCallback commonUsersCallback = new CommonUsersCallback() {
-            @Override
-            public void onCommonUserClicked(View anchor, User user) {
-                getContainer().openCommonUserProfile(anchor, user);
-            }
-        };
-
-        inboxAdapter = new ConnectRequestInboxAdapter(getActivity(), connectActionsCallback, commonUsersCallback);
+        inboxAdapter = new ConnectRequestInboxAdapter(getActivity(), connectActionsCallback);
         inboxListView = ViewUtils.getView(rootView, R.id.crlv_connect_request_inbox__list);
         if (LayoutSpec.isTablet(getActivity())) {
             inboxListView.setStackFromBottom(true);
@@ -359,7 +351,5 @@ public class ConnectRequestInboxFragment extends BaseFragment<ConnectRequestInbo
         void dismissInboxFragment();
 
         void onAcceptedUser(IConversation conversation);
-
-        void openCommonUserProfile(View anchor, User user);
     }
 }

@@ -401,11 +401,6 @@ public class SecondPageFragment extends BaseFragment<SecondPageFragment.Containe
 
     }
 
-    @Override
-    public void openCommonUserProfile(View anchor, User commonUser) {
-
-    }
-
     public interface Container {
         void onOpenUrl(String url);
     }

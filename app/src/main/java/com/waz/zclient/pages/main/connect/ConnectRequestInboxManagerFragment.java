@@ -22,20 +22,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import com.waz.api.IConversation;
-import com.waz.api.User;
-import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
-import com.waz.zclient.core.stores.connect.IConnectStore;
 import com.waz.zclient.pages.BaseFragment;
-import com.waz.zclient.pages.main.participants.SingleParticipantFragment;
-import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
-import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
 
-public class ConnectRequestInboxManagerFragment extends BaseFragment<ConnectRequestInboxManagerFragment.Container> implements ConnectRequestInboxFragment.Container,
-                                                                                                                              SingleParticipantFragment.Container,
-                                                                                                                              OnBackPressedListener {
+public class ConnectRequestInboxManagerFragment extends BaseFragment<ConnectRequestInboxManagerFragment.Container> implements ConnectRequestInboxFragment.Container {
     public static final String TAG = ConnectRequestInboxManagerFragment.class.getName();
     public static final String ARGUMENT_CONVERSATION_ID = "ARGUMENT_CONVERSATION_ID";
 
@@ -101,31 +93,6 @@ public class ConnectRequestInboxManagerFragment extends BaseFragment<ConnectRequ
         getContainer().onAcceptedUser(conversation);
     }
 
-    @Override
-    public void openCommonUserProfile(View anchor, User user) {
-        if (LayoutSpec.isTablet(getActivity())) {
-            getControllerFactory().getConversationScreenController().setPopoverLaunchedMode(DialogLaunchMode.COMMON_USER);
-            getControllerFactory().getPickUserController().showUserProfile(user, anchor);
-        } else {
-            getStoreFactory().getSingleParticipantStore().setUser(user);
-
-            animateInboxContainerWithCommonUserProfile(false);
-
-            getChildFragmentManager()
-                .beginTransaction()
-                .setCustomAnimations(R.anim.open_profile,
-                                     R.anim.close_profile,
-                                     R.anim.open_profile,
-                                     R.anim.close_profile)
-                .add(R.id.fl__common_user_profile,
-                     SingleParticipantFragment.newInstance(true,
-                                                           IConnectStore.UserRequester.SEARCH),
-                     SingleParticipantFragment.TAG)
-                .addToBackStack(SingleParticipantFragment.TAG)
-                .commit();
-        }
-    }
-
     private void animateInboxContainerWithCommonUserProfile(boolean show) {
         View inboxContainer = ViewUtils.getView(getView(), R.id.fl__connect_request_inbox);
         if (show) {
@@ -147,45 +114,6 @@ public class ConnectRequestInboxManagerFragment extends BaseFragment<ConnectRequ
                           .setStartDelay(0)
                           .start();
         }
-    }
-
-    //////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  SingleParticipantFragment.Container
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////
-
-
-    @Override
-    public void dismissUserProfile() {
-        if (getChildFragmentManager().popBackStackImmediate()) {
-            restoreConnectRequestInboxFragment();
-        }
-    }
-
-    @Override
-    public void dismissSingleUserProfile() {
-        dismissUserProfile();
-    }
-
-    @Override
-    public void showRemoveConfirmation(User user) {
-
-    }
-
-    @Override
-    public boolean onBackPressed() {
-        SingleParticipantFragment singleUserFragment = (SingleParticipantFragment) getChildFragmentManager().findFragmentByTag(SingleParticipantFragment.TAG);
-        if (singleUserFragment != null &&
-            singleUserFragment.onBackPressed()) {
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public void onOpenUrl(String url) {
-
     }
 
     public interface Container {

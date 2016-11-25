@@ -43,10 +43,6 @@ public interface ConversationScreenControllerObserver {
 
     void onHideUser();
 
-    void onShowCommonUser(User user);
-
-    void onHideCommonUser();
-
     void onAddPeopleToConversation();
 
     void onShowConversationMenu(@IConversationScreenController.ConversationMenuRequester int requester, IConversation conversation, View anchorView);
