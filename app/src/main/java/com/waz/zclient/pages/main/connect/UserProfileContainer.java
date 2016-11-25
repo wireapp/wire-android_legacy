@@ -17,7 +17,6 @@
  */
 package com.waz.zclient.pages.main.connect;
 
-import android.view.View;
 import com.waz.api.User;
 
 public interface UserProfileContainer {
@@ -27,6 +26,4 @@ public interface UserProfileContainer {
     void dismissSingleUserProfile();
 
     void showRemoveConfirmation(User user);
-
-    void openCommonUserProfile(View anchor, User commonUser);
 }

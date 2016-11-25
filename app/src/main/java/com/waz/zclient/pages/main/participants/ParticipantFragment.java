@@ -71,7 +71,6 @@ import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment;
 import com.waz.zclient.pages.main.connect.ConnectRequestLoadMode;
 import com.waz.zclient.pages.main.connect.PendingConnectRequestFragment;
 import com.waz.zclient.pages.main.connect.SendConnectRequestFragment;
-import com.waz.zclient.pages.main.connect.UserProfile;
 import com.waz.zclient.pages.main.conversation.controller.ConversationScreenControllerObserver;
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
@@ -637,11 +636,6 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
             return true;
         }
 
-        if (getControllerFactory().getConversationScreenController().isShowingCommonUser()) {
-            getControllerFactory().getConversationScreenController().hideCommonUser();
-            return true;
-        }
-
         if (getControllerFactory().getConversationScreenController().isShowingUser()) {
             getControllerFactory().getConversationScreenController().hideUser();
             return true;
@@ -902,45 +896,6 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
         animateParticipantsWithConnectUserProfile(true);
     }
 
-    @Override
-    public void onShowCommonUser(final User user) {
-        if (getControllerFactory().getConversationScreenController().isShowingCommonUser()) {
-            return;
-        }
-
-        UserProfile profileFragment = (UserProfile) getChildFragmentManager().findFragmentById(R.id.fl__participant__overlay);
-        if (profileFragment != null) {
-            profileFragment.isBelowUserProfile(true);
-        }
-
-        getStoreFactory().getSingleParticipantStore().setUser(user);
-
-        getChildFragmentManager()
-            .beginTransaction()
-            .setCustomAnimations(R.anim.open_profile, R.anim.close_profile, R.anim.open_profile, R.anim.close_profile)
-            .replace(R.id.fl__participant__overlay,
-                     SingleParticipantFragment.newInstance(true,
-                                                           IConnectStore.UserRequester.PARTICIPANTS),
-                     SingleParticipantFragment.TAG)
-            .addToBackStack(SingleParticipantFragment.TAG)
-            .commit();
-    }
-
-    @Override
-    public void onHideCommonUser() {
-        if (!getControllerFactory().getConversationScreenController().isShowingCommonUser()) {
-            return;
-        }
-        getChildFragmentManager().popBackStackImmediate();
-
-        if (LayoutSpec.isTablet(getActivity())) {
-            UserProfile profileFragment = (UserProfile) getChildFragmentManager().findFragmentById(R.id.fl__participant__overlay);
-            if (profileFragment != null) {
-                profileFragment.isBelowUserProfile(false);
-            }
-        }
-    }
-
     //////////////////////////////////////////////////////////////////////////////////////////
     //
     //  UserProfileContainer
@@ -1007,21 +962,12 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
 
     @Override
     public void dismissUserProfile() {
-        if (getControllerFactory().getConversationScreenController().isShowingCommonUser()) {
-            getControllerFactory().getConversationScreenController().hideCommonUser();
-        } else {
             getControllerFactory().getConversationScreenController().hideUser();
-        }
     }
 
     @Override
     public void dismissSingleUserProfile() {
         dismissUserProfile();
-    }
-
-    @Override
-    public void openCommonUserProfile(View anchor, final User commonUser) {
-        getControllerFactory().getConversationScreenController().showCommonUser(commonUser);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -1253,12 +1199,6 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
 
     @Override
     public void onHideUserProfile() { }
-
-    @Override
-    public void onShowCommonUserProfile(User user) { }
-
-    @Override
-    public void onHideCommonUserProfile() { }
 
     //////////////////////////////////////////////////////////////////////////////////////////
     //

@@ -24,7 +24,6 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 import com.waz.api.IConversation;
 import com.waz.zclient.R;
-import com.waz.zclient.pages.main.connect.views.CommonUsersCallback;
 import com.waz.zclient.pages.main.connect.views.ConnectRequestInboxRow;
 import com.waz.zclient.ui.utils.TextViewUtils;
 import com.waz.zclient.utils.LayoutSpec;
@@ -42,12 +41,10 @@ public class ConnectRequestInboxAdapter extends BaseAdapter {
     private int accentColor;
     private Context context;
     private ConnectActionsCallback connectActionsCallback;
-    private CommonUsersCallback commonUsersCallback;
 
-    public ConnectRequestInboxAdapter(Context context, ConnectActionsCallback connectActionsCallback, CommonUsersCallback commonUsersCallback) {
+    public ConnectRequestInboxAdapter(Context context, ConnectActionsCallback connectActionsCallback) {
         this.context = context;
         this.connectActionsCallback = connectActionsCallback;
-        this.commonUsersCallback = commonUsersCallback;
     }
 
     public void reset() {
@@ -113,7 +110,6 @@ public class ConnectRequestInboxAdapter extends BaseAdapter {
         TextViewUtils.boldText(viewHolder.nameView);
 
         ((ConnectRequestInboxRow) convertView).setConnectActionCallback(connectActionsCallback);
-        ((ConnectRequestInboxRow) convertView).setCommonUsersCallback(commonUsersCallback);
         ((ConnectRequestInboxRow) convertView).setAccentColor(accentColor);
         ((ConnectRequestInboxRow) convertView).loadUser(request.getOtherParticipant());
 

@@ -17,8 +17,10 @@
  */
 package com.waz.zclient.pages.main.connect;
 
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,12 +38,12 @@ import com.waz.zclient.core.stores.connect.ConnectStoreObserver;
 import com.waz.zclient.core.stores.connect.IConnectStore;
 import com.waz.zclient.core.stores.conversation.OnConversationLoadedListener;
 import com.waz.zclient.pages.BaseFragment;
-import com.waz.zclient.pages.main.participants.ParticipantBackbarFragment;
 import com.waz.zclient.pages.main.participants.ProfileAnimation;
 import com.waz.zclient.pages.main.participants.ProfileSourceAnimation;
 import com.waz.zclient.pages.main.participants.ProfileTabletAnimation;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
-import com.waz.zclient.ui.text.GlyphTextView;
+import com.waz.zclient.ui.theme.ThemeUtils;
+import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.ui.views.UserDetailsView;
 import com.waz.zclient.ui.views.ZetaButton;
 import com.waz.zclient.utils.LayoutSpec;
@@ -54,8 +56,7 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
                                                                                                                     OnConversationLoadedListener,
                                                                                                                     ConnectStoreObserver,
                                                                                                                     AccentColorObserver,
-                                                                                                                    UpdateListener,
-                                                                                                                    ParticipantBackbarFragment.Container {
+                                                                                                                    UpdateListener {
 
     public static final String TAG = PendingConnectRequestFragment.class.getName();
     public static final String ARGUMENT_USER_ID = "ARGUMENT_USER_ID";
@@ -80,8 +81,8 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
     private ZetaButton unblockButton;
     private LinearLayout acceptMenu;
     private FooterMenu footerMenu;
-    private GlyphTextView closeButton;
-    private TextView participentsHeader;
+    private Toolbar toolbar;
+    private TextView displayNameTextView;
     private ImageAssetImageView imageAssetImageViewProfile;
 
     public static PendingConnectRequestFragment newInstance(String userId,
@@ -155,6 +156,14 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
     }
 
     @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        updateToolbarNavigationIcon(newConfig);
+        toolbar.setContentInsetsRelative(getResources().getDimensionPixelSize(R.dimen.content__padding_left),
+                                         toolbar.getContentInsetEnd());
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, final ViewGroup viewContainer, Bundle savedInstanceState) {
         if (savedInstanceState != null) {
             userId = savedInstanceState.getString(ARGUMENT_USER_ID);
@@ -178,46 +187,30 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
         unblockButton = ViewUtils.getView(rootView, R.id.zb__connect_request__unblock_button);
         acceptMenu = ViewUtils.getView(rootView, R.id.ll__connect_request__accept_menu);
         footerMenu = ViewUtils.getView(rootView, R.id.fm__footer);
-        closeButton = ViewUtils.getView(rootView, R.id.gtv__participants__close);
-        participentsHeader = ViewUtils.getView(rootView, R.id.taet__participants__header);
+        toolbar = ViewUtils.getView(rootView, R.id.t__pending_connect__toolbar);
+        displayNameTextView = ViewUtils.getView(rootView, R.id.tv__pending_connect_toolbar__title);
         imageAssetImageViewProfile = ViewUtils.getView(rootView, R.id.iaiv__pending_connect);
         imageAssetImageViewProfile.setDisplayType(ImageAssetImageView.DisplayType.CIRCLE);
         imageAssetImageViewProfile.setSaturation(0);
 
-        // Close button & backbar
-        switch (userRequester) {
-            case CONVERSATION:
-                closeButton.setClickable(false);
-                closeButton.setVisibility(View.INVISIBLE);
-                break;
-            case PARTICIPANTS:
-                if (LayoutSpec.isTablet(getActivity())) {
-                    closeButton.setClickable(false);
-                    closeButton.setVisibility(View.INVISIBLE);
-
-                    getChildFragmentManager().beginTransaction()
-                                             .add(R.id.fl__participant__backbar__container,
-                                                  ParticipantBackbarFragment.newInstance(),
-                                                  ParticipantBackbarFragment.TAG)
-                                             .commit();
-                } else {
-                    closeButton.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            getContainer().dismissUserProfile();
+        updateToolbarNavigationIcon();
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch (userRequester) {
+                    case CONVERSATION:
+                        if (LayoutSpec.isTablet(getContext()) && ViewUtils.isInLandscape(getContext())) {
+                            return;
                         }
-                    });
-                }
-                break;
-            default:
-                closeButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
+                        getActivity().onBackPressed();
+                        KeyboardUtils.closeKeyboardIfShown(getActivity());
+                        break;
+                    default:
                         getContainer().dismissUserProfile();
-                    }
-                });
-                break;
-        }
+                        break;
+                }
+            }
+        });
 
         View backgroundContainer = ViewUtils.getView(rootView, R.id.ll__pending_connect__background_container);
         if (getControllerFactory().getConversationScreenController().getPopoverLaunchMode() == DialogLaunchMode.AVATAR ||
@@ -286,8 +279,7 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
         unblockButton = null;
         acceptMenu = null;
         footerMenu = null;
-        closeButton = null;
-        participentsHeader = null;
+        displayNameTextView = null;
         if (conversation != null) {
             conversation.removeUpdateListener(this);
             conversation = null;
@@ -457,7 +449,7 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
 
         // Load common users
         getStoreFactory().getConnectStore().loadCommonConnections(user.getCommonConnections());
-        participentsHeader.setText(user.getName());
+        displayNameTextView.setText(user.getName());
 
         switch (user.getConnectionStatus()) {
             case PENDING_FROM_OTHER:
@@ -496,6 +488,34 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
 
         unblockButton.setIsFilled(false);
         unblockButton.setAccentColor(color);
+    }
+
+    private void updateToolbarNavigationIcon() {
+        updateToolbarNavigationIcon(null);
+    }
+
+    private void updateToolbarNavigationIcon(Configuration newConfig) {
+        if (ViewUtils.isInLandscape(getContext()) ||
+            (newConfig != null && ViewUtils.isInLandscape(newConfig))) {
+            toolbar.setNavigationIcon(null);
+        } else {
+            switch (userRequester) {
+                case CONVERSATION:
+                    if (ThemeUtils.isDarkTheme(getContext())) {
+                        toolbar.setNavigationIcon(R.drawable.ic_action_menu_light);
+                    } else {
+                        toolbar.setNavigationIcon(R.drawable.ic_action_menu_dark);
+                    }
+                    break;
+                default:
+                    if (ThemeUtils.isDarkTheme(getContext())) {
+                        toolbar.setNavigationIcon(R.drawable.action_back_light);
+                    } else {
+                        toolbar.setNavigationIcon(R.drawable.action_back_dark);
+                    }
+                    break;
+            }
+        }
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////

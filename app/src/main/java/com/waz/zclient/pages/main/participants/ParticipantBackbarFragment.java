@@ -43,11 +43,6 @@ public class ParticipantBackbarFragment extends BaseFragment<ParticipantBackbarF
 
     @Override
     public void onClick(View v) {
-        if (getControllerFactory().getConversationScreenController().isShowingCommonUser()) {
-            getControllerFactory().getConversationScreenController().hideCommonUser();
-            return;
-        }
-
         if (getControllerFactory().getConversationScreenController().isShowingUser()) {
             getControllerFactory().getConversationScreenController().hideUser();
             return;

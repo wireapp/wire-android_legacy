@@ -17,10 +17,9 @@
  */
 package com.waz.zclient.pages.main.participants;
 
-import android.content.Intent;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,7 +30,6 @@ import com.waz.api.User;
 import com.waz.api.Verification;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
-import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.confirmation.ConfirmationCallback;
 import com.waz.zclient.controllers.confirmation.ConfirmationRequest;
 import com.waz.zclient.controllers.confirmation.IConfirmationController;
@@ -48,6 +46,8 @@ import com.waz.zclient.pages.main.connect.UserProfileContainer;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 import com.waz.zclient.ui.animation.fragment.FadeAnimation;
 import com.waz.zclient.ui.theme.OptionsTheme;
+import com.waz.zclient.ui.theme.ThemeUtils;
+import com.waz.zclient.ui.views.UserDetailsView;
 import com.waz.zclient.ui.views.e2ee.ShieldView;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
@@ -58,7 +58,6 @@ import com.waz.zclient.views.menus.FooterMenuCallback;
 public class SingleParticipantFragment extends BaseFragment<SingleParticipantFragment.Container> implements
                                                                                                  UserProfile,
                                                                                                  SingleParticipantStoreObserver,
-                                                                                                 AccentColorObserver,
                                                                                                  OnBackPressedListener,
                                                                                                  TabbedParticipantBodyFragment.Container,
                                                                                                  ParticipantBackbarFragment.Container {
@@ -68,10 +67,8 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
     private static final String ARGUMENT_USER_REQUESTER = "ARGUMENT_USER_REQUESTER";
 
     private TextView header;
-    private View closeButton;
-    private TextView subheader;
     private ShieldView shieldView;
-
+    private UserDetailsView userDetailsView;
     private boolean isBelowUserProfile;
     private boolean goToConversationWithUser;
     private FooterMenu footerMenu;
@@ -152,14 +149,7 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
     public View onCreateView(LayoutInflater inflater, ViewGroup viewGroup, Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_participants_single, viewGroup, false);
 
-        closeButton = ViewUtils.getView(view, R.id.gtv__single_participants__close);
-        closeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getContainer().dismissSingleUserProfile();
-            }
-        });
-
+        Toolbar toolbar = ViewUtils.getView(view, R.id.t__single_participant__toolbar);
         shieldView = ViewUtils.getView(view, R.id.sv__otr__verified_shield);
         shieldView.setVisibility(View.INVISIBLE);
 
@@ -169,8 +159,8 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
             requester = (IConnectStore.UserRequester) args.getSerializable(ARGUMENT_USER_REQUESTER);
         }
 
-        header = ViewUtils.getView(view, R.id.ttv__single_participants__header);
-        subheader = ViewUtils.getView(view, R.id.ttv__single_participants__sub_header);
+        header = ViewUtils.getView(view, R.id.tv__single_participant__toolbar__title);
+        userDetailsView = ViewUtils.getView(view, R.id.udv__single_participant__user_details);
         footerMenu = ViewUtils.getView(view, R.id.upm__footer);
         imageAssetImageViewProfile = ViewUtils.getView(view, R.id.iaiv__single_participant);
         imageAssetImageViewProfile.setDisplayType(ImageAssetImageView.DisplayType.CIRCLE);
@@ -183,6 +173,8 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
                                           TabbedParticipantBodyFragment.newInstance(TabbedParticipantBodyFragment.USER_PAGE),
                                           TabbedParticipantBodyFragment.TAG)
                                      .commit();
+
+
             // Posting so that we can get height after onMeasure has been called
             view.post(new Runnable() {
                 @Override
@@ -207,6 +199,18 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
             backgroundContainer.setBackgroundColor(Color.TRANSPARENT);
         }
 
+        if (ThemeUtils.isDarkTheme(getContext())) {
+            toolbar.setNavigationIcon(R.drawable.action_back_light);
+        } else {
+            toolbar.setNavigationIcon(R.drawable.action_back_dark);
+        }
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getContainer().dismissSingleUserProfile();
+            }
+        });
+
         // Hide footer until user is loaded
         footerMenu.setVisibility(View.GONE);
 
@@ -224,7 +228,6 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
         super.onStart();
 
         getStoreFactory().getSingleParticipantStore().addSingleParticipantObserver(this);
-        getControllerFactory().getAccentColorController().addAccentColorObserver(this);
     }
 
     @Override
@@ -235,7 +238,6 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
 
     @Override
     public void onStop() {
-        getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
         getStoreFactory().getSingleParticipantStore().removeSingleParticipantObserver(this);
 
         super.onStop();
@@ -250,9 +252,7 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
 
         imageAssetImageViewProfile = null;
         header = null;
-        subheader = null;
         footerMenu = null;
-        closeButton = null;
         super.onDestroyView();
     }
 
@@ -283,21 +283,9 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
         imageAssetImageViewProfile.connectImageAsset(user.getPicture());
 
         header.setText(user.getDisplayName());
-        subheader.setText(user.getEmail());
-        subheader.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final Uri uri = Uri.parse(String.format("mailto:%s", user.getEmail()));
-                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                startActivity(intent);
-            }
-        });
+        userDetailsView.setUser(user);
 
         shieldView.setVisibility(user.getVerified() == Verification.VERIFIED ? View.VISIBLE : View.INVISIBLE);
-
-        // TODO: AddressBook name
-//        realNameContainer.setVisibility(View.VISIBLE);
-//        realName.setText("Marc Prengemann");
 
         // Show footer if profile is not for self user
         if (!user.isMe()) {
@@ -380,7 +368,7 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
         String text = getString(R.string.confirmation_menu__block_text_with_name, user.getDisplayName());
         String confirm = getString(R.string.confirmation_menu__confirm_block);
         String cancel = getString(R.string.confirmation_menu__cancel);
-        OptionsTheme optionsTheme = getControllerFactory().getThemeController().getThemeDependentOptionsTheme(); 
+        OptionsTheme optionsTheme = getControllerFactory().getThemeController().getThemeDependentOptionsTheme();
 
         ConfirmationRequest request = new ConfirmationRequest.Builder(IConfirmationController.BLOCK_CONNECTED)
             .withHeader(header)
@@ -400,11 +388,6 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
     @Override
     public boolean onBackPressed() {
         return false;
-    }
-
-    @Override
-    public void onAccentColorHasChanged(Object sender, int color) {
-        subheader.setTextColor(color);
     }
 
     @Override

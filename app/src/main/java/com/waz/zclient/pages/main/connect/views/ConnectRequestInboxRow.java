@@ -54,7 +54,6 @@ public class ConnectRequestInboxRow extends FrameLayout {
     // Model this view is bound to
     private User user;
     private ConnectActionsCallback connectActionCallback;
-    private CommonUsersCallback commonUsersCallback;
     private ZetaButton ignoreButton;
     private ZetaButton acceptButton;
     private TextView displayNameTextView;
@@ -142,11 +141,6 @@ public class ConnectRequestInboxRow extends FrameLayout {
         if (closeButton != null) {
             closeButton.setVisibility(GONE);
         }
-        // Hide dummy view
-        View dummyView = ViewUtils.getView(container, R.id.v__participants_header__dummy_view);
-        if (dummyView != null) {
-            dummyView.setVisibility(GONE);
-        }
 
         // Hide accept menu, check later when user loaded
         acceptMenu.setVisibility(View.GONE);
@@ -154,10 +148,6 @@ public class ConnectRequestInboxRow extends FrameLayout {
 
     public void setConnectActionCallback(ConnectActionsCallback callback) {
         connectActionCallback = callback;
-    }
-
-    public void setCommonUsersCallback(CommonUsersCallback callback) {
-        commonUsersCallback = callback;
     }
 
     public void setAccentColor(int accentColor) {

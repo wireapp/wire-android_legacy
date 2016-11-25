@@ -192,10 +192,7 @@ public class ParticipantsDialogFragment extends BaseFragment<ParticipantsDialogF
                                    int posY,
                                    int dialogWidth,
                                    int dialogHeight) {
-        if (getControllerFactory().getConversationScreenController().getPopoverLaunchMode() == DialogLaunchMode.COMMON_USER) {
-            dialogTranslationX = posX + (rect.width() - dialogWidth) / 2;
-            marker.setVisibility(View.VISIBLE);
-        } else if (getControllerFactory().getConversationScreenController().getPopoverLaunchMode() == DialogLaunchMode.CONVERSATION_TOOLBAR) {
+        if (getControllerFactory().getConversationScreenController().getPopoverLaunchMode() == DialogLaunchMode.CONVERSATION_TOOLBAR) {
             int screenWidth = ViewUtils.getRealDisplayWidth(getActivity());
             dialogTranslationX = screenWidth / 2 - dialogWidth / 2;
             marker.setVisibility(View.INVISIBLE);
@@ -346,7 +343,6 @@ public class ParticipantsDialogFragment extends BaseFragment<ParticipantsDialogF
                 }
                 break;
             case AVATAR:
-            case COMMON_USER:
             case SEARCH:
                 getControllerFactory().getPickUserController().hideUserProfile();
                 break;
@@ -752,23 +748,6 @@ public class ParticipantsDialogFragment extends BaseFragment<ParticipantsDialogF
     }
 
     @Override
-    public void onShowCommonUser(User user) {
-        Fragment fragment = getChildFragmentManager().findFragmentByTag(ParticipantFragment.TAG);
-        if (fragment instanceof ConversationScreenControllerObserver) {
-            ((ConversationScreenControllerObserver) fragment).onShowCommonUser(user);
-        }
-    }
-
-    @Override
-    public void onHideCommonUser() {
-        Fragment fragment = getChildFragmentManager().findFragmentByTag(ParticipantFragment.TAG);
-        if (fragment instanceof ConversationScreenControllerObserver) {
-            ((ConversationScreenControllerObserver) fragment).onHideCommonUser();
-        }
-
-    }
-
-    @Override
     public void onAddPeopleToConversation() {
         Fragment fragment = getChildFragmentManager().findFragmentByTag(ParticipantFragment.TAG);
         if (fragment instanceof ConversationScreenControllerObserver) {
@@ -919,12 +898,8 @@ public class ParticipantsDialogFragment extends BaseFragment<ParticipantsDialogF
 
     @Override
     public void dismissSingleUserProfile() {
-        if (getControllerFactory().getConversationScreenController().getPopoverLaunchMode() == DialogLaunchMode.COMMON_USER) {
-            getControllerFactory().getPickUserController().hideCommonUserProfile();
-        } else {
-            getControllerFactory().getDialogBackgroundImageController().setUser(user);
-            animateBetweenMainAndDetail(true);
-        }
+        getControllerFactory().getDialogBackgroundImageController().setUser(user);
+        animateBetweenMainAndDetail(true);
     }
 
     @Override
@@ -940,13 +915,6 @@ public class ParticipantsDialogFragment extends BaseFragment<ParticipantsDialogF
     @Override
     public void onConnectRequestWasSentToUser() {
         getControllerFactory().getPickUserController().hideUserProfile();
-    }
-
-    @Override
-    public void openCommonUserProfile(View anchor, User commonUser) {
-        getControllerFactory().getDialogBackgroundImageController().setUser(commonUser);
-        getStoreFactory().getSingleParticipantStore().setUser(commonUser);
-        animateBetweenMainAndDetail(false);
     }
 
     /**
@@ -1018,17 +986,6 @@ public class ParticipantsDialogFragment extends BaseFragment<ParticipantsDialogF
     public void onHideUserProfile() {
         setVisible(false);
     }
-
-    @Override
-    public void onShowCommonUserProfile(User user) {
-
-    }
-
-    @Override
-    public void onHideCommonUserProfile() {
-        setVisible(false);
-    }
-
 
     //////////////////////////////////////////////////////////////////////////////////////////
     //

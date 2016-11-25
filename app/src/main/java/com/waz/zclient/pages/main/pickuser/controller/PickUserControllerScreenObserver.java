@@ -30,8 +30,4 @@ public interface PickUserControllerScreenObserver {
     void onShowUserProfile(User user, View anchorView);
 
     void onHideUserProfile();
-
-    void onShowCommonUserProfile(User user);
-
-    void onHideCommonUserProfile();
 }

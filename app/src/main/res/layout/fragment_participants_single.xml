@@ -19,13 +19,14 @@
 
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:app="http://schemas.android.com/apk/res-auto"
-             android:id="@+id/fl__send_connect_request__background_container"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-             style="?wireBackground"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:id="@+id/fl__send_connect_request__background_container"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              style="?wireBackground"
     >
 
+    <!--
     <FrameLayout
         android:id="@+id/fl__participant__backbar__container"
         android:layout_width="wrap_content"
@@ -103,6 +104,68 @@
             />
 
     </LinearLayout>
+    -->
+
+
+    <LinearLayout
+        android:id="@+id/ll__single_participant__header_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="top"
+        >
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/t__single_participant__toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:clickable="true"
+            app:contentInsetStart="@dimen/content__padding_left"
+            style="?conversationToolbar"
+            >
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="start|center_vertical"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                >
+
+                <com.waz.zclient.ui.views.e2ee.ShieldView
+                    android:id="@+id/sv__otr__verified_shield"
+                    android:layout_width="wrap_content"
+                    android:layout_height="@dimen/wire__otr__shield__small_width"
+                    android:layout_marginEnd="@dimen/wire__padding__8"
+                    app:shieldVerified="true"
+                    />
+
+                <com.waz.zclient.ui.text.TypefaceTextView
+                    android:id="@+id/tv__single_participant__toolbar__title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/wire__padding__regular"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:background="@null"
+                    style="?conversationToolbar"
+                    />
+
+            </LinearLayout>
+
+
+        </android.support.v7.widget.Toolbar>
+
+        <com.waz.zclient.ui.views.UserDetailsView
+            android:id="@+id/udv__single_participant__user_details"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/wire__padding__small"
+            android:layout_gravity="center_horizontal|top"
+            />
+
+    </LinearLayout>
+
 
     <FrameLayout
         android:id="@+id/fl__participant__tab__container"

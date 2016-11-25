@@ -39,7 +39,6 @@ public class PickUserController implements IPickUserController {
     private ITrackingController trackingController;
 
     private boolean isShowingUserProfile;
-    private boolean isShowingCommonUserProfile;
     private boolean hideWithoutAnimations;
 
     private final EmailValidator emailValidator;
@@ -52,14 +51,13 @@ public class PickUserController implements IPickUserController {
         this.trackingController = trackingController;
         this.context = context;
         this.emailValidator = EmailValidator.newInstance();
-        
+
         pickUserControllerScreenObservers = new HashSet<>();
         pickUserControllerSearchObservers = new HashSet<>();
         visibleDestinations = new HashSet<>();
         selectedUsers = new ArrayList<>();
 
         isShowingUserProfile = false;
-        isShowingCommonUserProfile = false;
         hideWithoutAnimations = false;
     }
 
@@ -148,27 +146,6 @@ public class PickUserController implements IPickUserController {
         // The PickUser fragment is only showing user profile for phone,
         // for tablet the user profile is shown in a dialog and this should always return false
         return isShowingUserProfile && LayoutSpec.isPhone(context);
-    }
-
-    @Override
-    public void showCommonUserProfile(User user) {
-        for (PickUserControllerScreenObserver pickUserControllerScreenObserver : pickUserControllerScreenObservers) {
-            pickUserControllerScreenObserver.onShowCommonUserProfile(user);
-        }
-        isShowingCommonUserProfile = true;
-    }
-
-    @Override
-    public void hideCommonUserProfile() {
-        for (PickUserControllerScreenObserver pickUserControllerScreenObserver : pickUserControllerScreenObservers) {
-            pickUserControllerScreenObserver.onHideCommonUserProfile();
-        }
-        isShowingCommonUserProfile = false;
-    }
-
-    @Override
-    public boolean isShowingCommonUserProfile() {
-        return isShowingCommonUserProfile;
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////

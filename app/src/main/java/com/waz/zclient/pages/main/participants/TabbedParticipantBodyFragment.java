@@ -132,7 +132,9 @@ public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipan
         } else {
             color = getResources().getColor(R.color.text__secondary_light);
         }
-        tabIndicatorLayout.setPrimaryColor(color);
+        if (tabIndicatorLayout != null) {
+            tabIndicatorLayout.setPrimaryColor(color);
+        }
         viewPager = ViewUtils.getView(view, R.id.vp_single_participant_viewpager);
         viewPager.setAdapter(new TabbedParticipantPagerAdapter(getActivity(), participantOtrDeviceAdapter, this));
         viewPager.addOnPageChangeListener(this);
@@ -308,16 +310,6 @@ public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipan
 
     @Override
     public void onHideUser() {
-
-    }
-
-    @Override
-    public void onShowCommonUser(User user) {
-
-    }
-
-    @Override
-    public void onHideCommonUser() {
 
     }
 

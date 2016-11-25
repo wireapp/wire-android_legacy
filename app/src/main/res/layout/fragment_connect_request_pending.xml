@@ -27,23 +27,28 @@
               style="?wireBackground"
     >
 
-
-    <FrameLayout
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/t__pending_connect__toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="?attr/actionBarSize"
+        android:clickable="true"
+        app:contentInsetStart="@dimen/content__padding_left"
+        style="?conversationToolbar"
         >
 
-        <FrameLayout
-            android:id="@+id/fl__participant__backbar__container"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/wire__padding__big"
-            android:paddingStart="@dimen/wire__padding__big"
-            />
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/tv__pending_connect_toolbar__title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/wire__padding__regular"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:background="@null"
+                style="?conversationToolbar"
+                />
 
-        <include layout="@layout/rl__participants__header" />
 
-    </FrameLayout>
+    </android.support.v7.widget.Toolbar>
 
     <FrameLayout
         android:layout_width="match_parent"

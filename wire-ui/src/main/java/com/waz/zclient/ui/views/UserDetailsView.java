@@ -62,7 +62,8 @@ public class UserDetailsView extends LinearLayout {
         @Override
         public void updated(User user) {
             userNameTextView.setText(StringUtils.formatUsername(user.getUsername()));
-            if (!user.isContact()) {
+            if (user.getConnectionStatus() != User.ConnectionStatus.ACCEPTED &&
+                user.getConnectionStatus() != User.ConnectionStatus.BLOCKED) {
                 userInfoTextView.setText("");
                 contactDetailsModelObserver.pauseListening();
             } else {
@@ -72,8 +73,8 @@ public class UserDetailsView extends LinearLayout {
                                                                                                          user.getCommonConnectionsCount());
                     userInfoTextView.setText(commonUsersSummary);
                 }
-                contactDetailsModelObserver.setAndUpdate(user.getFirstContact());
             }
+            contactDetailsModelObserver.setAndUpdate(user.getFirstContact());
         }
     };
 

@@ -19,6 +19,7 @@ package com.waz.zclient.pages.main.connect;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,13 +35,11 @@ import com.waz.zclient.core.controllers.tracking.attributes.RangedAttribute;
 import com.waz.zclient.core.stores.connect.ConnectStoreObserver;
 import com.waz.zclient.core.stores.connect.IConnectStore;
 import com.waz.zclient.pages.BaseFragment;
-import com.waz.zclient.pages.main.connect.views.CommonUsersCallback;
-import com.waz.zclient.pages.main.connect.views.CommonUsersView;
-import com.waz.zclient.pages.main.participants.ParticipantBackbarFragment;
 import com.waz.zclient.pages.main.participants.ProfileAnimation;
 import com.waz.zclient.pages.main.participants.ProfileSourceAnimation;
 import com.waz.zclient.pages.main.participants.ProfileTabletAnimation;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
+import com.waz.zclient.ui.theme.ThemeUtils;
 import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.ui.views.UserDetailsView;
 import com.waz.zclient.ui.views.ZetaButton;
@@ -53,8 +52,7 @@ import com.waz.zclient.views.menus.FooterMenuCallback;
 
 public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestFragment.Container> implements UserProfile,
                                                                                                               ConnectStoreObserver,
-                                                                                                              AccentColorObserver,
-                                                                                                              ParticipantBackbarFragment.Container {
+                                                                                                              AccentColorObserver {
     public static final String TAG = SendConnectRequestFragment.class.getName();
     public static final String ARGUMENT_USER_ID = "ARGUMENT_USER_ID";
     public static final String ARGUMENT_USER_REQUESTER = "ARGUMENT_USER_REQUESTER";
@@ -67,10 +65,7 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
     private boolean isBelowUserProfile;
     private TextView displayNameTextView;
     private UserDetailsView userDetailsView;
-    private View closeButton;
     private ZetaButton connectButton;
-    private CommonUsersView commonUsersView;
-    private int numberOfCommonUsers;
     private FooterMenu footerMenu;
     private ImageAssetImageView imageAssetImageViewProfile;
 
@@ -148,11 +143,10 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
             userId = savedInstanceState.getString(ARGUMENT_USER_ID);
             userRequester = IConnectStore.UserRequester.valueOf(savedInstanceState.getString(ARGUMENT_USER_REQUESTER));
         }
-        displayNameTextView = ViewUtils.getView(rootView, R.id.taet__participants__header);
-        userDetailsView = ViewUtils.getView(rootView, R.id.udv__participants__user_details);
-        closeButton = ViewUtils.getView(rootView, R.id.gtv__participants__close);
+        Toolbar toolbar = ViewUtils.getView(rootView, R.id.t__send_connect__toolbar);
+        displayNameTextView = ViewUtils.getView(rootView, R.id.tv__send_connect__toolbar__title);
+        userDetailsView = ViewUtils.getView(rootView, R.id.udv__send_connect__user_details);
         connectButton = ViewUtils.getView(rootView, R.id.zb__send_connect_request__connect_button);
-        commonUsersView = ViewUtils.getView(rootView, R.id.ll__send_connect_request__common_users);
         footerMenu = ViewUtils.getView(rootView, R.id.fm__footer);
         imageAssetImageViewProfile = ViewUtils.getView(rootView, R.id.iaiv__send_connect);
         imageAssetImageViewProfile.setDisplayType(ImageAssetImageView.DisplayType.CIRCLE);
@@ -160,32 +154,25 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
 
         View backgroundContainer = ViewUtils.getView(rootView, R.id.fl__send_connect_request__background_container);
         backgroundContainer.setClickable(true);
-        if (userRequester == IConnectStore.UserRequester.PARTICIPANTS) {
-            if (LayoutSpec.isTablet(getActivity())) {
-
-                // Don't set to GONE to keep the header text centered and not spanning entire screen due to backbar
-                closeButton.setClickable(false);
-                closeButton.setVisibility(View.INVISIBLE);
-                getChildFragmentManager().beginTransaction()
-                                         .add(R.id.fl__participant__backbar__container,
-                                              ParticipantBackbarFragment.newInstance(),
-                                              ParticipantBackbarFragment.TAG)
-                                         .commit();
-            } else if (getControllerFactory().getConversationScreenController().getPopoverLaunchMode() != DialogLaunchMode.AVATAR &&
-                       getControllerFactory().getConversationScreenController().getPopoverLaunchMode() != DialogLaunchMode.COMMON_USER) {
-                backgroundContainer.setBackgroundColor(Color.TRANSPARENT);
-            }
+        if (userRequester == IConnectStore.UserRequester.PARTICIPANTS &&
+            getControllerFactory().getConversationScreenController().getPopoverLaunchMode() != DialogLaunchMode.AVATAR &&
+            getControllerFactory().getConversationScreenController().getPopoverLaunchMode() != DialogLaunchMode.COMMON_USER) {
+            backgroundContainer.setBackgroundColor(Color.TRANSPARENT);
         }
         connectButton.setText(getResources().getString(R.string.send_connect_request__connect_button__text));
 
-        closeButton.setOnClickListener(new View.OnClickListener() {
+        if (ThemeUtils.isDarkTheme(getContext())) {
+            toolbar.setNavigationIcon(R.drawable.action_back_light);
+        } else {
+            toolbar.setNavigationIcon(R.drawable.action_back_dark);
+        }
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 getContainer().dismissUserProfile();
             }
         });
 
-        commonUsersView.setVisibility(View.GONE);
         footerMenu.setVisibility(View.GONE);
 
         return rootView;
@@ -229,12 +216,12 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
         super.onDestroyView();
     }
 
-    private void trackSendConnectRequest() {
+    private void trackSendConnectRequest(User user) {
         getControllerFactory().getTrackingController().updateSessionAggregates(RangedAttribute.CONNECT_REQUESTS_SENT);
 
         TrackingUtils.tagSentConnectRequestFromUserProfileEvent(getControllerFactory().getTrackingController(),
                                                                 userRequester,
-                                                                numberOfCommonUsers);
+                                                                user.getCommonConnectionsCount());
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -285,7 +272,7 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
                 String otherName = user.getName();
                 String message = getString(R.string.connect__message, otherName, myName);
                 IConversation conversation = getStoreFactory().getConnectStore().connectToNewUser(user, message);
-                trackSendConnectRequest();
+                trackSendConnectRequest(user);
                 if (conversation != null) {
                     KeyboardUtils.hideKeyboard(getActivity());
                     getContainer().onConnectRequestWasSentToUser();
@@ -322,27 +309,7 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
 
     @Override
     public void onCommonConnectionsUpdated(CommonConnections commonConnections) {
-        if (commonConnections.getTotalCount() == 0) {
-            commonUsersView.setVisibility(View.GONE);
-        } else {
-            commonUsersView.setVisibility(View.VISIBLE);
-            if (LayoutSpec.isTablet(getActivity())) {
-                ViewUtils.setWidth(imageAssetImageViewProfile,
-                                   getResources().getDimensionPixelSize(R.dimen.profile__image__width_small));
-                ViewUtils.setHeight(imageAssetImageViewProfile,
-                                    getResources().getDimensionPixelSize(R.dimen.profile__image__height_small));
-            }
-        }
-        CommonUsersCallback commonUserOnClickCallback = new CommonUsersCallback() {
-            @Override
-            public void onCommonUserClicked(View anchor, User user) {
-                getContainer().openCommonUserProfile(anchor, user);
-            }
-        };
-        numberOfCommonUsers = commonConnections.getTotalCount();
-        commonUsersView.setCommonUsers(commonConnections.getTopConnections(),
-                                       commonConnections.getTotalCount(),
-                                       commonUserOnClickCallback);
+
     }
 
     @Override

@@ -43,22 +43,12 @@ public class StubPickUserController implements IPickUserController {
   }
 
   @Override
-  public void hideCommonUserProfile() {
-    ;
-  }
-
-  @Override
   public void hidePickUserWithoutAnimations(IPickUserController.Destination destination) {
     ;
   }
 
   @Override
   public void removePickUserScreenControllerObserver(PickUserControllerScreenObserver observer) {
-    ;
-  }
-
-  @Override
-  public void showCommonUserProfile(User user) {
     ;
   }
 
@@ -79,11 +69,6 @@ public class StubPickUserController implements IPickUserController {
 
   @Override
   public boolean isShowingUserProfile() {
-    return false;
-  }
-
-  @Override
-  public boolean isShowingCommonUserProfile() {
     return false;
   }
 

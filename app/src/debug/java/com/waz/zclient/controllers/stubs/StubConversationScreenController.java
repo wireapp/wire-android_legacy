@@ -113,22 +113,12 @@ public class StubConversationScreenController implements IConversationScreenCont
     }
 
     @Override
-    public void hideCommonUser() {
-        ;
-    }
-
-    @Override
     public void setPopoverLaunchedMode(DialogLaunchMode launchedMode) {
         ;
     }
 
     @Override
     public void addConversationControllerObservers(ConversationScreenControllerObserver conversationScreenControllerObserver) {
-        ;
-    }
-
-    @Override
-    public void showCommonUser(User user) {
         ;
     }
 
@@ -195,11 +185,6 @@ public class StubConversationScreenController implements IConversationScreenCont
     @Override
     public void setSingleConversation(boolean isSingleConversation) {
         ;
-    }
-
-    @Override
-    public boolean isShowingCommonUser() {
-        return false;
     }
 
     @Override
