@@ -346,15 +346,12 @@ public class OptionsMenuFragment extends BaseFragment<OptionsMenuFragment.Contai
         connectConversation(conversation);
     }
 
-    @Override
-    public void onTitleSet(String title) {
-        optionsMenu.setTitle(title);
-    }
-
     private void connectConversation(IConversation conversation) {
         this.conversation = conversation;
         this.conversation.addUpdateListener(conversationUpdateListener);
         conversationUpdateListener.updated();
+        optionsMenu.setTitle(conversation.getName());
+        optionsMenu.setConversationDetails(conversation);
     }
 
     private void disconnectConversation() {

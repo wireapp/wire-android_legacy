@@ -27,6 +27,7 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import com.waz.api.IConversation;
 import com.waz.zclient.ui.R;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
 import com.waz.zclient.ui.animation.interpolators.penner.Quart;
@@ -35,6 +36,7 @@ import com.waz.zclient.ui.text.TypefaceTextView;
 import com.waz.zclient.ui.theme.OptionsDarkTheme;
 import com.waz.zclient.ui.theme.OptionsLightTheme;
 import com.waz.zclient.ui.theme.OptionsTheme;
+import com.waz.zclient.ui.views.UserDetailsView;
 import com.waz.zclient.utils.ViewUtils;
 
 import java.util.Collections;
@@ -69,7 +71,9 @@ public class OptionsMenu extends FrameLayout implements View.OnClickListener {
     /**
      * The title of the settings box.
      */
-    private TypefaceTextView typefaceTextViewTitle;
+    private TypefaceTextView titleTextView;
+
+    private UserDetailsView userDetailsView;
 
     /**
      * The cancel button of the settings box.
@@ -159,12 +163,18 @@ public class OptionsMenu extends FrameLayout implements View.OnClickListener {
                       .setInterpolator(quartOut)
                       .alpha(1);
         // animate title
-        typefaceTextViewTitle.setAlpha(0);
-        typefaceTextViewTitle.animate()
-                             .setStartDelay(getResources().getInteger(R.integer.wire__animation__delay__regular))
-                             .setDuration(getResources().getInteger(R.integer.wire__animation__duration__medium))
-                             .setInterpolator(quartOut)
-                             .alpha(1);
+        titleTextView.setAlpha(0);
+        titleTextView.animate()
+                     .setStartDelay(getResources().getInteger(R.integer.wire__animation__delay__regular))
+                     .setDuration(getResources().getInteger(R.integer.wire__animation__duration__medium))
+                     .setInterpolator(quartOut)
+                     .alpha(1);
+        userDetailsView.setAlpha(0);
+        userDetailsView.animate()
+                     .setStartDelay(getResources().getInteger(R.integer.wire__animation__delay__regular))
+                     .setDuration(getResources().getInteger(R.integer.wire__animation__duration__medium))
+                     .setInterpolator(quartOut)
+                     .alpha(1);
     }
 
     /**
@@ -192,10 +202,14 @@ public class OptionsMenu extends FrameLayout implements View.OnClickListener {
                   .setDuration(duration);
 
         // animate title
-        typefaceTextViewTitle.animate()
-                             .alpha(0)
-                             .setInterpolator(quartOut)
-                             .setDuration(duration);
+        titleTextView.animate()
+                     .alpha(0)
+                     .setInterpolator(quartOut)
+                     .setDuration(duration);
+        userDetailsView.animate()
+                     .alpha(0)
+                     .setInterpolator(quartOut)
+                     .setDuration(duration);
 
         // animate background
         backgroundView.animate()
@@ -212,7 +226,7 @@ public class OptionsMenu extends FrameLayout implements View.OnClickListener {
     }
 
     public void setMenuItems(List<OptionsMenuItem> optionsMenuItems, @NonNull final OptionsTheme optionsTheme) {
-        typefaceTextViewTitle.setTextColor(optionsTheme.getTextColorPrimary());
+        titleTextView.setTextColor(optionsTheme.getTextColorPrimary());
         backgroundView.setBackgroundColor(optionsTheme.getOverlayColor());
 
         //important that items are in order
@@ -317,7 +331,16 @@ public class OptionsMenu extends FrameLayout implements View.OnClickListener {
      * Sets the context title.
      */
     public void setTitle(String title) {
-        typefaceTextViewTitle.setText(title);
+        titleTextView.setText(title);
+    }
+
+    public void setConversationDetails(IConversation conversation) {
+        if (conversation.getType() == IConversation.Type.GROUP ||
+            conversation.getType() == IConversation.Type.UNKNOWN) {
+            userDetailsView.setUser(null);
+            return;
+        }
+        userDetailsView.setUser(conversation.getOtherParticipant());
     }
 
     @Override
@@ -325,10 +348,11 @@ public class OptionsMenu extends FrameLayout implements View.OnClickListener {
         super.onFinishInflate();
         LayoutInflater.from(getContext()).inflate(R.layout.options_menu, this);
 
-        typefaceTextViewTitle = ViewUtils.getView(this, R.id.ttv__settings_box__title);
+        titleTextView = ViewUtils.getView(this, R.id.ttv__settings_box__title);
+        userDetailsView = ViewUtils.getView(this, R.id.udv__settings_box__user_details);
         cancelView = ViewUtils.getView(this, R.id.ttv__settings_box__cancel_button);
 
-        if (typefaceTextViewTitle == null) {
+        if (titleTextView == null) {
             throw new IllegalStateException("A typeface text view view needs to be provided in the xml layout.");
         }
 
