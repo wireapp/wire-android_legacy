@@ -26,6 +26,7 @@ import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import com.waz.api.IConversation;
 import com.waz.api.Message;
 import com.waz.api.UpdateListener;
 import com.waz.api.User;
@@ -97,12 +98,14 @@ public class SeparatorViewController implements ConversationItemViewController,
     }
 
     private void setPadding(Message message, Separator separator) {
-        if (separator.nextMessage == null) {
+        if (separator.nextMessage == null ||
+            separator.getNextMessage().getMessageType() == Message.Type.CONNECT_REQUEST) {
             return;
         }
 
         if (separator.previousMessage == null) {
-            if (separator.nextMessage.getMessageType() == Message.Type.MEMBER_JOIN) {
+            if (messageViewsContainer.getConversationType() == IConversation.Type.GROUP &&
+                separator.nextMessage.getMessageType() == Message.Type.MEMBER_JOIN) {
                 ViewUtils.setPaddingTop(view,
                                         resources.getDimensionPixelSize(R.dimen.content__separator__padding__before_started));
             }

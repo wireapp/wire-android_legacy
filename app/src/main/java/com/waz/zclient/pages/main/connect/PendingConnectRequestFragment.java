@@ -495,6 +495,9 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
     }
 
     private void updateToolbarNavigationIcon(Configuration newConfig) {
+        if (LayoutSpec.isPhone(getContext())) {
+            return;
+        }
         if (ViewUtils.isInLandscape(getContext()) ||
             (newConfig != null && ViewUtils.isInLandscape(newConfig))) {
             toolbar.setNavigationIcon(null);

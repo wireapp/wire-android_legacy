@@ -136,12 +136,6 @@ public class ConnectRequestInboxRow extends FrameLayout {
             imageAssetImageViewProfile.setDisplayType(ImageAssetImageView.DisplayType.CIRCLE);
         }
 
-        // Hide close button
-        View closeButton = ViewUtils.getView(container, R.id.gtv__participants__close);
-        if (closeButton != null) {
-            closeButton.setVisibility(GONE);
-        }
-
         // Hide accept menu, check later when user loaded
         acceptMenu.setVisibility(View.GONE);
     }
