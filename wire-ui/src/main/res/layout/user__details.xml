@@ -22,7 +22,9 @@
               xmlns:app="http://schemas.android.com/apk/res-auto"
               android:orientation="vertical"
               android:layout_width="match_parent"
-              android:layout_height="match_parent">
+              android:layout_height="match_parent"
+              android:layout_marginLeft="@dimen/wire__padding__big"
+              android:layout_marginRight="@dimen/wire__padding__big">
 
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/ttv__user_details__user_name"

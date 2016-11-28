@@ -151,7 +151,7 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
 
         Toolbar toolbar = ViewUtils.getView(view, R.id.t__single_participant__toolbar);
         shieldView = ViewUtils.getView(view, R.id.sv__otr__verified_shield);
-        shieldView.setVisibility(View.INVISIBLE);
+        shieldView.setVisibility(View.GONE);
 
         Bundle args = getArguments();
         IConnectStore.UserRequester requester = null;
@@ -285,7 +285,7 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
         header.setText(user.getDisplayName());
         userDetailsView.setUser(user);
 
-        shieldView.setVisibility(user.getVerified() == Verification.VERIFIED ? View.VISIBLE : View.INVISIBLE);
+        shieldView.setVisibility(user.getVerified() == Verification.VERIFIED ? View.VISIBLE : View.GONE);
 
         // Show footer if profile is not for self user
         if (!user.isMe()) {
