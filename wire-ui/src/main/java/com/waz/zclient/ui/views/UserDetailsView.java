@@ -93,12 +93,18 @@ public class UserDetailsView extends LinearLayout {
 
     public void setUser(User user) {
         this.user = user;
+        if (user == null) {
+            userModelObserver.clear();
+            userNameTextView.setText("");
+            userInfoTextView.setText("");
+            return;
+        }
         userModelObserver.setAndUpdate(user);
     }
 
     public void recycle() {
-        userModelObserver.pauseListening();
-        contactDetailsModelObserver.pauseListening();
+        userModelObserver.clear();
+        contactDetailsModelObserver.clear();
         user = null;
     }
 

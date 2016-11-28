@@ -953,7 +953,6 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
             return;
         }
 
-        optionsMenuControl.setTitle(conversation.getName());
         optionsMenuControl.createMenu(conversation,
                                       requester,
                                       getControllerFactory().getThemeController().getOptionsDarkTheme());

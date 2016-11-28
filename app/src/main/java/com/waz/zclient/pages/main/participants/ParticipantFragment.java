@@ -713,7 +713,6 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
             return;
         }
 
-        optionsMenuControl.setTitle(conversation.getName());
         optionsMenuControl.createMenu(conversation,
                                       requester,
                                       getControllerFactory().getThemeController().getThemeDependentOptionsTheme());

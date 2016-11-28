@@ -48,20 +48,11 @@ public class OptionsMenuControl {
         }
     }
 
-    public void setTitle(String title) {
-        if (callback != null) {
-            callback.onTitleSet(title);
-        }
-    }
-
     public interface Callback {
         void onOpenRequest();
 
         boolean onCloseRequest();
 
         void onCreateMenu(IConversation conversation, @IConversationScreenController.ConversationMenuRequester int requester, OptionsTheme optionsTheme);
-
-        void onTitleSet(String title);
-
     }
 }
