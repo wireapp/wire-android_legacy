@@ -18,13 +18,10 @@
 package com.waz.zclient.pages.main.pickuser.views;
 
 import android.content.Context;
-import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.TextView;
 import com.waz.api.Contact;
 import com.waz.api.ContactDetails;
 import com.waz.api.User;
@@ -32,7 +29,6 @@ import com.waz.zclient.R;
 import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController;
 import com.waz.zclient.ui.views.ZetaButton;
-import com.waz.zclient.utils.StringUtils;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.common.views.ChatheadView;
 
@@ -41,8 +37,7 @@ public class ContactRowView extends FrameLayout implements UserRowView {
     private ContactDetails contactDetails;
     private User user;
     private ChatheadView chathead;
-    private TextView nameView;
-    private TextView subLabelView;
+    private ContactListItemTextView contactListItemTextView;
     private ZetaButton contactInviteButton;
     private Callback callback;
 
@@ -87,9 +82,9 @@ public class ContactRowView extends FrameLayout implements UserRowView {
         contactDetailsModelObserver.clear();
         contactDetails = null;
         user = null;
-        clearDraw();
         contactDetailsModelObserver.setAndUpdate(contact.getDetails());
         userModelObserver.setAndUpdate(contact.getUser());
+        contactListItemTextView.setContact(contact);
     }
 
     public void setAccentColor(int color) {
@@ -97,14 +92,13 @@ public class ContactRowView extends FrameLayout implements UserRowView {
     }
 
     public void applyDarkTheme() {
-        nameView.setTextColor(getResources().getColor(R.color.text__primary_dark));
+        contactListItemTextView.applyDarkTheme();
     }
 
     private void init(Context context) {
         LayoutInflater.from(context).inflate(R.layout.list_row_contactlist_user, this, true);
         chathead = ViewUtils.getView(this, R.id.cv__contactlist__user__chathead);
-        nameView = ViewUtils.getView(this, R.id.ttv__contactlist__user__name);
-        subLabelView = ViewUtils.getView(this, R.id.ttv__contactlist__user__username_and_address_book);
+        contactListItemTextView = ViewUtils.getView(this, R.id.clitv__contactlist__user__text_view);
         contactInviteButton = ViewUtils.getView(this, R.id.zb__contactlist__user_selected_button);
     }
 
@@ -126,38 +120,6 @@ public class ContactRowView extends FrameLayout implements UserRowView {
         chathead.setSelected(selected);
     }
 
-    private String getFormattedSubLabel() {
-        String username = user.getUsername();
-        String addressBookName = contactDetails != null ? contactDetails.getDisplayName().trim() : "";
-        String name = user.getName().trim();
-        int commonContacts = user.getCommonConnectionsCount();
-
-        String usernameString = "";
-        if (!TextUtils.isEmpty(username)) {
-            usernameString = StringUtils.formatUsername(username);
-        }
-
-        String otherString = "";
-        if (TextUtils.isEmpty(addressBookName)) {
-            if (commonContacts > 0) {
-                otherString = getResources().getQuantityString(R.plurals.people_picker__contact_list_contact_sub_label_common_friends, commonContacts, commonContacts);
-            }
-        } else {
-            if (name.equalsIgnoreCase(addressBookName)) {
-                otherString = getContext().getString(R.string.people_picker__contact_list_contact_sub_label_address_book_identical);
-            } else {
-                otherString = getContext().getString(R.string.people_picker__contact_list_contact_sub_label_address_book, addressBookName);
-            }
-        }
-
-        if (TextUtils.isEmpty(username)) {
-            return otherString;
-        } else if (TextUtils.isEmpty(otherString)) {
-            return usernameString;
-        }
-        return usernameString + " - " + otherString;
-    }
-
     private void redraw() {
         if (user != null) {
             drawUser();
@@ -170,15 +132,6 @@ public class ContactRowView extends FrameLayout implements UserRowView {
         if (user == null) {
             return;
         }
-        String sublabel = getFormattedSubLabel();
-        if (TextUtils.isEmpty(sublabel)) {
-            nameView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
-        } else {
-            nameView.setGravity(Gravity.START | Gravity.BOTTOM);
-            subLabelView.setVisibility(VISIBLE);
-            subLabelView.setText(sublabel);
-        }
-        nameView.setText(user.getName());
         chathead.setUser(user);
         switch (user.getConnectionStatus()) {
             case CANCELLED:
@@ -209,9 +162,6 @@ public class ContactRowView extends FrameLayout implements UserRowView {
         if (contactDetails == null) {
             return;
         }
-        nameView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
-        nameView.setText(contactDetails.getDisplayName());
-        subLabelView.setVisibility(GONE);
         chathead.setContactDetails(contactDetails);
         if (contactDetails.hasBeenInvited()) {
             contactInviteButton.setVisibility(GONE);
@@ -237,11 +187,6 @@ public class ContactRowView extends FrameLayout implements UserRowView {
                 callback.onContactListContactClicked(contactDetails);
             }
         });
-    }
-
-    private void clearDraw() {
-        nameView.setText("");
-        subLabelView.setVisibility(GONE);
     }
 
     public interface Callback {

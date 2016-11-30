@@ -36,41 +36,12 @@
         app:isSelectable="true"
         />
 
-    <LinearLayout
+    <com.waz.zclient.pages.main.pickuser.views.ContactListItemTextView
+        android:id="@+id/clitv__contactlist__user__text_view"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:layout_marginStart="@dimen/people_picker__search_result__chathead__padding_right"
-        android:orientation="vertical"
-        android:paddingBottom="@dimen/people_picker__search_result__row__padding_bottom"
-        >
-
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/ttv__contactlist__user__name"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:gravity="start|bottom"
-            app:font="@string/wire__typeface__light"
-            style="?startUiUserRowLabel"
-            />
-
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/ttv__contactlist__user__username_and_address_book"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:gravity="start|top"
-            android:singleLine="true"
-            app:font="@string/wire__typeface__light"
-            android:textSize="@dimen/wire__text_size__small"
-            style="?startUiUserRowSubLabel"
-            />
-
-    </LinearLayout>
+        android:layout_marginStart="@dimen/people_picker__search_result__chathead__padding_right"/>
 
     <com.waz.zclient.ui.views.ZetaButton
         android:id="@+id/zb__contactlist__user_selected_button"

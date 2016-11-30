@@ -36,17 +36,11 @@
         app:isSelectable="true"
         />
 
-    <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/ttv_pickuser__searchuser_name"
+    <com.waz.zclient.pages.main.pickuser.views.ContactListItemTextView
+        android:id="@+id/clitv__contactlist__user__text_view"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_marginStart="@dimen/people_picker__search_result__chathead__padding_right"
-        android:ellipsize="end"
-        android:gravity="start|center_vertical"
-        android:maxLines="1"
-        android:includeFontPadding="false"
-        app:font="@string/wire__typeface__light"
-        style="?startUiUserRowLabel"
-        />
+        android:gravity="start|center_vertical"/>
 
 </LinearLayout>
