@@ -31,6 +31,7 @@ import com.waz.api.ImageAsset;
 import com.waz.api.Self;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
+import com.waz.zclient.controllers.accentcolor.IAccentColorController;
 import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.ui.text.TypefaceTextView;
@@ -53,6 +54,7 @@ public class FirstTimeAssignUsername extends BaseFragment<FirstTimeAssignUsernam
     TypefaceTextView usernameTextView;
     ImageAssetImageView backgroundImageView;
     Self self;
+    String suggestedUsername = "";
 
     ModelObserver<Self> selfModelObserver = new ModelObserver<Self>() {
         @Override
@@ -61,7 +63,8 @@ public class FirstTimeAssignUsername extends BaseFragment<FirstTimeAssignUsernam
             backgroundImageView.connectImageAsset(imageAsset);
             self = model;
             if (self.hasSetUsername()) {
-                getContainer().onKeepUsernameChosen(self.getUsername());
+                suggestedUsername = self.getUsername();
+                usernameTextView.setText(StringUtils.formatUsername(self.getUsername()));
             }
         }
     };
@@ -86,6 +89,8 @@ public class FirstTimeAssignUsername extends BaseFragment<FirstTimeAssignUsernam
         ZetaButton chooseYourOwnButton = ViewUtils.getView(view, R.id.zb__username_first_assign__choose);
         ZetaButton keepButton = ViewUtils.getView(view, R.id.zb__username_first_assign__keep);
         TypefaceTextView summaryTextView = ViewUtils.getView(view, R.id.ttv__username_first_assign__summary);
+        IAccentColorController colorController = getControllerFactory().getAccentColorController();
+        final int accentColor = colorController != null ? colorController.getAccentColor().getColor() : Color.TRANSPARENT;
         final int darkenColor = ColorUtils.injectAlpha(ResourceUtils.getResourceFloat(getResources(), R.dimen.background_solid_black_overlay_opacity),
             Color.BLACK);
 
@@ -97,7 +102,7 @@ public class FirstTimeAssignUsername extends BaseFragment<FirstTimeAssignUsernam
         selfModelObserver.setAndUpdate(getStoreFactory().getZMessagingApiStore().getApi().getSelf());
 
         chooseYourOwnButton.setIsFilled(true);
-        chooseYourOwnButton.setAccentColor(getControllerFactory().getAccentColorController().getAccentColor().getColor());
+        chooseYourOwnButton.setAccentColor(accentColor);
         chooseYourOwnButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -105,9 +110,9 @@ public class FirstTimeAssignUsername extends BaseFragment<FirstTimeAssignUsernam
             }
         });
 
-        final String suggestedUsername = getArguments().getString(ARG_SUGGESTED_USERNAME, "");
+        suggestedUsername = getArguments().getString(ARG_SUGGESTED_USERNAME, "");
         keepButton.setIsFilled(false);
-        keepButton.setAccentColor(getControllerFactory().getAccentColorController().getAccentColor().getColor());
+        keepButton.setAccentColor(accentColor);
         keepButton.setTextColor(getResources().getColor(R.color.white));
         keepButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -127,7 +132,7 @@ public class FirstTimeAssignUsername extends BaseFragment<FirstTimeAssignUsernam
         TextViewUtils.linkifyText(summaryTextView, Color.WHITE, com.waz.zclient.ui.R.string.wire__typeface__light, false, new Runnable() {
             @Override
             public void run() {
-            //TODO: Learn more page
+                getContainer().onOpenUrl(getString(R.string.usernames__learn_more__link));
             }
         });
 
@@ -142,5 +147,6 @@ public class FirstTimeAssignUsername extends BaseFragment<FirstTimeAssignUsernam
     public interface Container {
         void onChooseUsernameChosen();
         void onKeepUsernameChosen(String username);
+        void onOpenUrl(String url);
     }
 }

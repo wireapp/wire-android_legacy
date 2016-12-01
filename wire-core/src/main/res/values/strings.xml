@@ -1077,6 +1077,11 @@
 
     <string name="message_footer__status__ephemeral_summary">%1$s \u30FB _%2$s left_</string>
     <string name="prefs__username_change__username_at" translatable="false">\@</string>
+    <string name="usernames__learn_more__link">https://wire.com/support/username/</string>
+    <string name="usernames__take_over__title">Wire usernames are here.</string>
+    <string name="usernames__take_over__summary">People will be able to find you easier. _Learn more._</string>
+    <string name="usernames__take_over__choose">CHOOSE YOUR OWN</string>
+    <string name="usernames__take_over__keep">KEEP THIS ONE</string>
     <plurals name="message_footer__expire__days">
         <item quantity="one">%1$d day</item>
         <item quantity="other">%1$d days</item>

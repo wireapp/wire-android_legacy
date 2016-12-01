@@ -18,8 +18,6 @@
 package com.waz.zclient.startup.fragments;
 
 import android.support.test.runner.AndroidJUnit4;
-
-import com.waz.api.User;
 import com.waz.api.impl.Self;
 import com.waz.zclient.AppEntryTestActivity;
 import com.waz.zclient.R;
@@ -54,8 +52,9 @@ public class UsernamesTakeOverScreenTest extends FragmentTest<AppEntryTestActivi
     }
 
     @Test
-    public void verifyConversationListIsOpenedAfterAcceptingUsername() {
+    public void verifyConversationListIsOpenedAfterAcceptingUsername() throws InterruptedException {
         attachFragment(FirstTimeAssignUsername.newInstance("", ""), FirstTimeAssignUsername.TAG);
+        Thread.sleep(500);
         onView(withId(R.id.zb__username_first_assign__keep)).perform(click());
     }
 

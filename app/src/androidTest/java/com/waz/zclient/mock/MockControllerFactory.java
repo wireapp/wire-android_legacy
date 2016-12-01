@@ -74,10 +74,13 @@ import com.waz.zclient.controllers.stubs.StubStreamMediaPlayerController;
 import com.waz.zclient.controllers.stubs.StubThemeController;
 import com.waz.zclient.controllers.stubs.StubTrackingController;
 import com.waz.zclient.controllers.stubs.StubUserPreferencesController;
+import com.waz.zclient.controllers.stubs.StubUsernamesController;
 import com.waz.zclient.controllers.stubs.StubVerificationController;
 import com.waz.zclient.controllers.stubs.StubVibratorController;
 import com.waz.zclient.controllers.theme.IThemeController;
 import com.waz.zclient.controllers.tracking.ITrackingController;
+import com.waz.zclient.controllers.usernames.IUsernamesController;
+import com.waz.zclient.controllers.usernames.UsernamesController;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
 import com.waz.zclient.controllers.verification.IVerificationController;
 import com.waz.zclient.controllers.vibrator.IVibratorController;
@@ -151,6 +154,8 @@ public class MockControllerFactory implements IControllerFactory {
   protected ISlidingPaneController slidingPaneController = spy(StubSlidingPaneController.class);
 
   protected IPickUserController pickUserController = spy(StubPickUserController.class);
+
+  protected IUsernamesController usernamesController = spy(StubUsernamesController.class);
 
   @Override
   public IFocusController getFocusController() {
@@ -328,4 +333,9 @@ public class MockControllerFactory implements IControllerFactory {
   public ICallingController getCallingController() {
     return callingController;
   }
+
+    @Override
+    public IUsernamesController getUsernameController() {
+        return usernamesController;
+    }
 }
