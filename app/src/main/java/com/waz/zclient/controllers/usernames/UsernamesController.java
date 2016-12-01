@@ -18,15 +18,12 @@
 package com.waz.zclient.controllers.usernames;
 import android.app.Activity;
 import android.text.TextUtils;
-
 import com.waz.api.Self;
 import com.waz.api.UsernameValidation;
 import com.waz.api.Usernames;
-import com.waz.api.UsernamesRequestCallback;
+import com.waz.api.ValidatedUsernames;
 import com.waz.zclient.ZApplication;
 import com.waz.zclient.core.api.scala.ModelObserver;
-
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,8 +31,6 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.Set;
 import java.util.WeakHashMap;
-
-import timber.log.Timber;
 
 public class UsernamesController implements IUsernamesController {
 
@@ -61,6 +56,7 @@ public class UsernamesController implements IUsernamesController {
 
     private GeneratedUsername generatedUsername = null;
     private String currentSearch;
+    private String[] currentAttemptsArray;
 
     private ModelObserver<Self> userModelObserver = new ModelObserver<Self>() {
         @Override
@@ -71,7 +67,32 @@ public class UsernamesController implements IUsernamesController {
                 } else {
                     startUsernameGenerator(model.getName());
                 }
+            } else if (model.hasSetUsername()) {
+                currentAttemptsArray = null;
             }
+        }
+    };
+
+    private ModelObserver<ValidatedUsernames> validatedUsernamesModelObserver = new ModelObserver<ValidatedUsernames>() {
+        @Override
+        public void updated(ValidatedUsernames model) {
+            if (currentAttemptsArray == null) {
+                return;
+            }
+            UsernameValidation[] usernameValidations = model.getValidations(currentAttemptsArray);
+            for (UsernameValidation attemptValidation : usernameValidations) {
+                if (attemptValidation.isValid()) {
+                    generatedUsername = new GeneratedUsername(attemptValidation.username(), currentSearch);
+                    notifyObserversValidUsernameGenerated(currentSearch, attemptValidation.username());
+                    currentSearch = "";
+                    currentAttemptsArray = null;
+                    return;
+                }
+            }
+            notifyObserversAttemptsExhausted(currentSearch);
+            generatedUsername = new GeneratedUsername("", currentSearch);
+            currentSearch = "";
+            currentAttemptsArray = null;
         }
     };
 
@@ -85,6 +106,7 @@ public class UsernamesController implements IUsernamesController {
             return;
         }
         application = ZApplication.from(activity);
+        validatedUsernamesModelObserver.setAndUpdate(application.getStoreFactory().getZMessagingApiStore().getApi().getUsernames().getValidatedUsernames());
     }
 
     @Override
@@ -135,48 +157,22 @@ public class UsernamesController implements IUsernamesController {
         }
         generatedUsername = null;
         currentSearch = baseName;
+        currentAttemptsArray = null;
         Usernames usernames = application.getStoreFactory().getZMessagingApiStore().getApi().getUsernames();
         String baseGeneratedUsername = usernames.generateUsernameFromName(baseName, application);
 
-        attemptUsername(baseName, baseGeneratedUsername);
+        List<String> attempts = new ArrayList<>();
+        for (int i = 0; i < MAX_ATTEMPTS; i++) {
+            attempts.add(baseGeneratedUsername + getTrailingNumber(i));
+        }
+        currentAttemptsArray = new String[attempts.size()];
+        attempts.toArray(currentAttemptsArray);
+        usernames.validateUsernames(currentAttemptsArray);
     }
 
     @Override
     public void setUser(Self self) {
         userModelObserver.setAndUpdate(self);
-    }
-
-    private void attemptUsername(final String baseName, final String baseUsername) {
-        Usernames usernames = application.getStoreFactory().getZMessagingApiStore().getApi().getUsernames();
-        List<String> attempts = new ArrayList<>();
-        for (int i = 0; i < MAX_ATTEMPTS; i++) {
-            attempts.add(baseUsername + getTrailingNumber(i));
-        }
-        String[] attemptsArray = new String[attempts.size()];
-        attempts.toArray(attemptsArray);
-        usernames.areUsernamesAvailable(attemptsArray, new UsernamesRequestCallback() {
-
-            @Override
-            public void onUsernameRequestResult(UsernameValidation[] usernameValidation) {
-                for (UsernameValidation attemptValidation : usernameValidation) {
-                    if (attemptValidation.isValid()) {
-                        generatedUsername = new GeneratedUsername(attemptValidation.username(), baseName);
-                        currentSearch = "";
-                        notifyObserversValidUsernameGenerated(baseName, attemptValidation.username());
-                        return;
-                    }
-                }
-                notifyObserversAttemptsExhausted(baseName);
-                generatedUsername = new GeneratedUsername("", baseName);
-                currentSearch = "";
-            }
-
-            @Override
-            public void onRequestFailed(Integer errorCode) {
-                Timber.d("areUsernamesAvailable request failed with error " + errorCode);
-                currentSearch = "";
-            }
-        });
     }
 
     private String getTrailingNumber(int attempt) {
@@ -197,5 +193,6 @@ public class UsernamesController implements IUsernamesController {
         usernamesControllerObservers.clear();
         randomGenerator = null;
         currentSearch = null;
+        currentAttemptsArray = null;
     }
 }

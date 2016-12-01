@@ -1076,6 +1076,7 @@
 
     <string name="message_footer__status__ephemeral_summary">%1$s \u30FB _%2$s left_</string>
     <string name="prefs__username_change__username_at" translatable="false">\@</string>
+    <string name="usernames__learn_more__link">https://wire.com/support/username/</string>
     <plurals name="message_footer__expire__days">
         <item quantity="one">%1$d day</item>
         <item quantity="other">%1$d days</item>
