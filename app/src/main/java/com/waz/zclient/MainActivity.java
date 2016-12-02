@@ -454,6 +454,7 @@ public class MainActivity extends BaseActivity implements MainPhoneFragment.Cont
         getStoreFactory().getProfileStore().setUser(self);
         getControllerFactory().getAccentColorController().setColor(AccentColorChangeRequester.LOGIN,
                                                                    self.getAccent().getColor());
+        getControllerFactory().getUsernameController().setUser(self);
 
         final Intent intent = getIntent();
         if (IntentUtils.isLaunchFromNotificationIntent(intent)) {
@@ -493,8 +494,6 @@ public class MainActivity extends BaseActivity implements MainPhoneFragment.Cont
             }
             IntentUtils.clearLaunchIntentExtra(intent);
         }
-
-        getControllerFactory().getUsernameController().setUser(self);
 
         setIntent(intent);
         openMainPage();
