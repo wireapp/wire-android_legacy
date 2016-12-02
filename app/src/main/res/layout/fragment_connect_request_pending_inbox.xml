@@ -44,7 +44,6 @@
             android:gravity="center"
             android:imeOptions="actionDone"
             android:inputType="textFilter|textMultiLine|textNoSuggestions"
-            android:singleLine="false"
             android:textColorHint="@color/text__secondary_light"
             android:maxLines="3"
             app:font="@string/wire__typeface__medium"

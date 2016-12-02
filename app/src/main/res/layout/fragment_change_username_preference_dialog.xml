@@ -74,7 +74,7 @@
                         android:paddingStart="@dimen/prefs__username_change__edit_text_horizontal_padding"
                         android:paddingEnd="@dimen/prefs__username_change__edit_text_horizontal_padding"
                         android:paddingBottom="@dimen/prefs__username_change__edit_text_bottom_padding"
-                        android:singleLine="true"
+                        android:maxLines="1"
                         android:inputType="textNoSuggestions|textVisiblePassword"
                         />
 
