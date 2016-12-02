@@ -170,8 +170,8 @@
     <string name="people_picker__contact_list__searchbox__hint">\u0020 SEARCH BY NAME</string>
     <string name="people_picker__contact_list__generic_invite__button__label">INVITE MORE PEOPLE</string>
     <plurals name="people_picker__contact_list_contact_sub_label_common_friends">
-        <item quantity="one">%1$d friend in common</item>
-        <item quantity="other">%1$d friends in common</item>
+        <item quantity="one">%1$d person in common</item>
+        <item quantity="other">%1$d people in common</item>
     </plurals>
     <string name="people_picker__contact_list_contact_sub_label_address_book">%1$s in Address Book</string>
     <string name="people_picker__contact_list_contact_sub_label_address_book_identical">in Address Book</string>
@@ -309,8 +309,8 @@
     <string name="connect_request__common_users__label">You both know</string>
     <string name="connect_request__common_users__connection_counter">+%1$s</string>
     <plurals name="connect_request__common_users__summary">
-        <item quantity="one">%1$d friend in common</item>
-        <item quantity="other">%1$d friends in common</item>
+        <item quantity="one">%1$d person in common</item>
+        <item quantity="other">%1$d people in common</item>
     </plurals>
     <string name="connect_request__sub_header__pending_label">Pending</string>
     <string name="connect_request__cancel_request__label">Cancel connection request</string>
