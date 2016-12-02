@@ -34,7 +34,7 @@ import java.util.WeakHashMap;
 
 public class UsernamesController implements IUsernamesController {
 
-    private static final int MAX_ATTEMPTS = 10;
+    private static final int MAX_ATTEMPTS = 30;
     private static final int MAX_RANDOM_TRAILLING_NUMBER = 10000;
 
     private ZApplication application = null;
@@ -177,7 +177,7 @@ public class UsernamesController implements IUsernamesController {
 
     private String getTrailingNumber(int attempt) {
         if (attempt > 0) {
-            return String.format(Locale.getDefault(), "%04d", randomGenerator.nextInt(MAX_RANDOM_TRAILLING_NUMBER));
+            return String.format(Locale.getDefault(), "%d", randomGenerator.nextInt(MAX_RANDOM_TRAILLING_NUMBER * 10 ^ (attempt / 10)));
         }
         return "";
     }
@@ -191,7 +191,6 @@ public class UsernamesController implements IUsernamesController {
     public void tearDown() {
         userModelObserver.clear();
         usernamesControllerObservers.clear();
-        randomGenerator = null;
         currentSearch = null;
         currentAttemptsArray = null;
     }

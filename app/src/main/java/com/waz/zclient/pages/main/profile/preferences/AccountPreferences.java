@@ -331,6 +331,7 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
                                           getControllerFactory().getTrackingController().tagEvent(new SignOut());
                                           getControllerFactory().getTrackingController().tagEvent(new LoggedOutEvent());
                                           getControllerFactory().getSpotifyController().logout();
+                                          getControllerFactory().getUsernameController().logout();
                                           getStoreFactory().getZMessagingApiStore().logout();
                                       }
                                   },

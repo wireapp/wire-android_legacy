@@ -56,6 +56,8 @@ public class UsernamesTakeOverScreenTest extends FragmentTest<AppEntryTestActivi
         attachFragment(FirstTimeAssignUsername.newInstance("", ""), FirstTimeAssignUsername.TAG);
         Thread.sleep(500);
         onView(withId(R.id.zb__username_first_assign__keep)).perform(click());
+        Thread.sleep(500);
+        verify(activity.getFragmentManager().findFragmentByTag(FirstTimeAssignUsername.TAG) == null);
     }
 
     @Test
