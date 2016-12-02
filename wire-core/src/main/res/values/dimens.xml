@@ -823,4 +823,6 @@
     <dimen name="ephemeral__animating_dots__image_top_margin">7dp</dimen>
 
     <dimen name="usernames__take_over__side_margin">28dp</dimen>
+    <dimen name="usernames__take_over__username__bottom_padding">240dp</dimen>
+    <dimen name="usernames__take_over__name__top_margin">-32dp</dimen>
 </resources>

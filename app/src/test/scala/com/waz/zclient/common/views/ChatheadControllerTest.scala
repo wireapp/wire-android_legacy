@@ -105,7 +105,7 @@ class ChatheadControllerTest extends JUnitSuite {
   def createUser(known: Boolean): UserId = {
     val userId = UserId()
     val connection = if (known) Accepted else UserData.ConnectionStatus.Unconnected
-    zMessaging.insertUser(new UserData(userId, name = "Some Name", None, None, connection = connection, searchKey = SearchKey("")))
+    zMessaging.insertUser(new UserData(userId, name = "Some Name", None, None, connection = connection, searchKey = SearchKey(""), handle = None))
     userId
   }
 }
