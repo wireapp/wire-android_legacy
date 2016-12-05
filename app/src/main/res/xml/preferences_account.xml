@@ -26,7 +26,6 @@
         android:key="@string/pref_account_details_category_key"
         android:title="@string/pref_account_details_category_title"
         android:layout="@layout/preference_category"
-        android:summary="@string/pref_account_details_category_summary"
         >
 
         <EditTextPreference
@@ -41,15 +40,6 @@
             android:key="@string/pref_account_username_key"
             android:title="@string/pref_account_username_title"
             />
-
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        android:key="@string/pref_account_personal_category_key"
-        android:title="@string/pref_account_personal_category_title"
-        android:layout="@layout/preference_category"
-        android:summary="@string/pref_account_personal_category_summary"
-        >
 
         <Preference
             android:persistent="false"

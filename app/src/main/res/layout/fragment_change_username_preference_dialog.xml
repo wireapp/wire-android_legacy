@@ -45,7 +45,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/pref__account_action__dialog__change_username__title"
-                android:textSize="@dimen/prefs__username_change__title_size"
+                android:textSize="@dimen/wire__text_size__medium"
                 android:layout_marginBottom="@dimen/prefs__username_change__margins_between"
                 app:font="@string/wire__typeface__regular"
                 android:layout_margin="@dimen/prefs__dialog__padding"
@@ -105,21 +105,8 @@
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/pref__account_action__dialog__change_username__summary"
-                android:textSize="@dimen/prefs__username_change__text_size"
-                android:layout_marginTop="@dimen/prefs__username_change__margins_between"
-                android:layout_marginBottom="@dimen/prefs__username_change__margins_between"
-                android:textColor="?android:attr/textColorSecondary"
-                app:font="@string/wire__typeface__regular"
-                android:layout_marginStart="@dimen/prefs__dialog__padding"
-                android:layout_marginEnd="@dimen/prefs__dialog__padding"
-                />
-
-            <com.waz.zclient.ui.text.TypefaceTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
                 android:text="@string/pref__account_action__dialog__change_username__rules"
-                android:textSize="@dimen/prefs__username_change__text_size"
+                android:textSize="@dimen/wire__text_size__regular"
                 android:layout_marginBottom="@dimen/prefs__username_change__margins_between"
                 android:textColor="?android:attr/textColorSecondary"
                 app:font="@string/wire__typeface__regular"

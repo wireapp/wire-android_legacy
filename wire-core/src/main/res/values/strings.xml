@@ -585,7 +585,7 @@
     <string name="pref__account_action__dialog__change_email__error__invalid_email">Enter valid email</string>
     <string name="pref__account_action__dialog__change_email__title">Edit Email Address</string>
     <string name="pref__account_action__dialog__change_username__summary">With this username, people will be able to find you on Wire without knowing your email address or phone number.</string>
-    <string name="pref__account_action__dialog__change_username__rules">You can user the characters a&#8211;z, 0&#8211;9, underscore and full stop.</string>
+    <string name="pref__account_action__dialog__change_username__rules">At least 2 characters. a–z, 0–9, and _ only</string>
     <string name="pref__account_action__dialog__change_username__title">Username</string>
     <string name="pref__account_action__dialog__change_username__error_too_short">At least 2 characters</string>
     <string name="pref__account_action__dialog__change_username__error_too_long">At most 21 characters</string>
