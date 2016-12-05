@@ -135,6 +135,7 @@ public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container>
         getControllerFactory().getConfirmationController().removeConfirmationObserver(this);
         getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
         getControllerFactory().getNavigationController().removeNavigationControllerObserver(this);
+        getControllerFactory().getUsernameController().removeUsernamesObserver(this);
 
         getControllerFactory().getAccentColorController().removeAccentColorObserver(backgroundLayout);
         getControllerFactory().getBackgroundController().removeBackgroundObserver(backgroundLayout);
