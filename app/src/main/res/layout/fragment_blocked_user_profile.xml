@@ -126,7 +126,6 @@
 
                 </LinearLayout>
 
-
                 <!-- Unblock button for blocked users -->
                 <com.waz.zclient.ui.views.ZetaButton
                     android:id="@+id/zb__connect_request__unblock_button"

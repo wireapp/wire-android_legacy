@@ -25,7 +25,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.waz.api.CommonConnections;
 import com.waz.api.IConversation;
@@ -76,10 +75,7 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
 
     private boolean isBelowUserProfile;
     private UserDetailsView userDetailsView;
-    private ZetaButton ignoreButton;
-    private ZetaButton acceptButton;
     private ZetaButton unblockButton;
-    private LinearLayout acceptMenu;
     private FooterMenu footerMenu;
     private Toolbar toolbar;
     private TextView displayNameTextView;
@@ -182,10 +178,7 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
         View rootView = inflater.inflate(R.layout.fragment_connect_request_pending, viewContainer, false);
 
         userDetailsView =  ViewUtils.getView(rootView, R.id.udv__pending_connect__user_details);
-        ignoreButton = ViewUtils.getView(rootView, R.id.zb__connect_request__ignore_button);
-        acceptButton = ViewUtils.getView(rootView, R.id.zb__connect_request__accept_button);
         unblockButton = ViewUtils.getView(rootView, R.id.zb__connect_request__unblock_button);
-        acceptMenu = ViewUtils.getView(rootView, R.id.ll__connect_request__accept_menu);
         footerMenu = ViewUtils.getView(rootView, R.id.fm__footer);
         toolbar = ViewUtils.getView(rootView, R.id.t__pending_connect__toolbar);
         displayNameTextView = ViewUtils.getView(rootView, R.id.tv__pending_connect_toolbar__title);
@@ -222,7 +215,6 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
 
         // Hide views until connection status of user is determined
         footerMenu.setVisibility(View.GONE);
-        acceptMenu.setVisibility(View.GONE);
         unblockButton.setVisibility(View.GONE);
 
         return rootView;
@@ -274,10 +266,7 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
     public void onDestroyView() {
         userDetailsView.recycle();
         imageAssetImageViewProfile = null;
-        ignoreButton = null;
-        acceptButton = null;
         unblockButton = null;
-        acceptMenu = null;
         footerMenu = null;
         displayNameTextView = null;
         if (conversation != null) {
@@ -305,11 +294,6 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
     //////////////////////////////////////////////////////////////////////////////////////////
 
     private void setFooterForOutgoingConnectRequest(final User user) {
-        // Hide accept / ignore buttons
-        acceptMenu.setVisibility(View.GONE);
-        ignoreButton.setOnClickListener(null);
-        acceptButton.setOnClickListener(null);
-
         // Show footer
         footerMenu.setVisibility(View.VISIBLE);
         isShowingFooterMenu = true;
@@ -329,67 +313,28 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
 
 
     private void setFooterForIncomingConnectRequest(final User user) {
-        isShowingFooterMenu = userRequester == IConnectStore.UserRequester.PARTICIPANTS;
-
-        // Footer menu
-        if (isShowingFooterMenu) {
-            footerMenu.setRightActionText(getString(R.string.glyph__minus));
-
-            footerMenu.setCallback(new FooterMenuCallback() {
-                @Override
-                public void onLeftActionClicked() {
-                    // Show Accept menu, hide Footer menu
-                    toggleAcceptAndFooterMenu(false);
-                }
-
-                @Override
-                public void onRightActionClicked() {
-                    getContainer().showRemoveConfirmation(user);
-                }
-            });
+        if (userRequester != IConnectStore.UserRequester.PARTICIPANTS)  {
+            return;
         }
 
-        // Accept / ignore buttons
-        ignoreButton.setEnabled(true);
-        ignoreButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (userRequester == IConnectStore.UserRequester.PARTICIPANTS) {
-                    // Hide Accept menu, show Footer menu
-                    toggleAcceptAndFooterMenu(true);
-                } else {
-                    ignoreButton.setEnabled(false);
-                    user.ignoreConnection();
-                    getContainer().dismissUserProfile();
-                }
-                getContainer().onIgnoredConnectRequest(conversation);
-            }
-        });
+        footerMenu.setVisibility(View.VISIBLE);
+        footerMenu.setRightActionText(getString(R.string.glyph__minus));
 
-        acceptButton.setEnabled(true);
-        acceptButton.setOnClickListener(new View.OnClickListener() {
+        footerMenu.setCallback(new FooterMenuCallback() {
             @Override
-            public void onClick(View v) {
-                acceptButton.setEnabled(false);
+            public void onLeftActionClicked() {
                 IConversation conversation = user.acceptConnection();
                 getContainer().onAcceptedConnectRequest(conversation);
             }
+
+            @Override
+            public void onRightActionClicked() {
+                getContainer().showRemoveConfirmation(user);
+            }
         });
 
-        // Init accept and footer menu visibility
-        toggleAcceptAndFooterMenu(isShowingFooterMenu);
-    }
-
-    private void toggleAcceptAndFooterMenu(boolean showFooterMenu) {
-        if (showFooterMenu) {
-            acceptMenu.setVisibility(View.GONE);
-            footerMenu.setVisibility(View.VISIBLE);
-        } else {
-            acceptMenu.setVisibility(View.VISIBLE);
-            footerMenu.setVisibility(View.GONE);
-        }
-
-        isShowingFooterMenu = showFooterMenu;
+        footerMenu.setLeftActionText(getString(R.string.glyph__plus));
+        footerMenu.setLeftActionLabelText(getString(R.string.send_connect_request__connect_button__text));
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -482,10 +427,6 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
 
     @Override
     public void onAccentColorHasChanged(Object sender, int color) {
-        ignoreButton.setIsFilled(false);
-        ignoreButton.setAccentColor(color);
-        acceptButton.setAccentColor(color);
-
         unblockButton.setIsFilled(false);
         unblockButton.setAccentColor(color);
     }
@@ -535,8 +476,6 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
 
     public interface Container extends UserProfileContainer {
         void onAcceptedConnectRequest(IConversation conversation);
-
-        void onIgnoredConnectRequest(IConversation conversation);
 
         void onConversationUpdated(IConversation conversation);
     }

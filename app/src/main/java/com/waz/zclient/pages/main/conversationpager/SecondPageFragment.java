@@ -344,11 +344,6 @@ public class SecondPageFragment extends BaseFragment<SecondPageFragment.Containe
                                                                         ConversationChangeRequester.CONNECT_REQUEST_ACCEPTED);
     }
 
-    @Override
-    public void onIgnoredConnectRequest(IConversation conversation) {
-        getStoreFactory().getConversationStore().setCurrentConversationToNext(ConversationChangeRequester.CONNECT_REQUEST_IGNORED);
-    }
-
     //////////////////////////////////////////////////////////////////////////////////////////
     //
     //  ConnectRequestInboxManagerFragment.Container

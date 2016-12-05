@@ -982,11 +982,6 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
                                                                         ConversationChangeRequester.START_CONVERSATION);
     }
 
-    @Override
-    public void onIgnoredConnectRequest(IConversation conversation) {
-        getStoreFactory().getConversationStore().setCurrentConversationToNext(ConversationChangeRequester.CONNECT_REQUEST_IGNORED);
-    }
-
     //////////////////////////////////////////////////////////////////////////////////////////
     //
     //  BlockedUserProfileFragment.Container

@@ -90,45 +90,6 @@
             android:paddingEnd="@dimen/wire__padding__big"
             >
 
-            <LinearLayout
-                android:id="@+id/ll__connect_request__accept_menu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:orientation="horizontal"
-                >
-
-                <com.waz.zclient.ui.views.ZetaButton
-                    android:id="@+id/zb__connect_request__ignore_button"
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/framework_confirmation_menu_button_height"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="@dimen/connect_request__common_users__chathead__vertical_padding"
-                    android:gravity="center"
-                    android:text="@string/connect_request__ignore_button__text"
-                    app:font="@string/wire__typeface__light"
-                    android:textAllCaps="true"
-                    android:textSize="@dimen/wire__text_size__small"
-                    android:textColor="@color/text__primary_light"
-                    />
-
-                <com.waz.zclient.ui.views.ZetaButton
-                    android:id="@+id/zb__connect_request__accept_button"
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/framework_confirmation_menu_button_height"
-                    android:layout_weight="1"
-                    android:layout_marginStart="@dimen/connect_request__common_users__chathead__vertical_padding"
-                    android:gravity="center"
-                    android:text="@string/send_connect_request__connect_button__text"
-                    app:font="@string/wire__typeface__light"
-                    android:textAllCaps="true"
-                    android:textSize="@dimen/wire__text_size__small"
-                    android:textColor="@color/text__primary_dark"
-                    />
-
-            </LinearLayout>
-
-
             <!-- Unblock button for blocked users -->
             <com.waz.zclient.ui.views.ZetaButton
                 android:id="@+id/zb__connect_request__unblock_button"

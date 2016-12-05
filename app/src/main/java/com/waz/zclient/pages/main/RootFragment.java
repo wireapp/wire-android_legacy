@@ -824,11 +824,6 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
     }
 
     @Override
-    public void onIgnoredConnectRequest(IConversation conversation) {
-
-    }
-
-    @Override
     public void onAcceptedPendingOutgoingConnectRequest(IConversation conversation) {
 
     }
