@@ -69,6 +69,7 @@ public class UsernamesController implements IUsernamesController {
                 }
             } else if (model.hasSetUsername()) {
                 currentAttemptsArray = null;
+                generatedUsername = null;
             }
         }
     };
