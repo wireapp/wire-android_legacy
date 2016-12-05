@@ -19,6 +19,7 @@ package com.waz.zclient.ui.views;
 
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.widget.LinearLayout;
@@ -61,7 +62,14 @@ public class UserDetailsView extends LinearLayout {
     private final ModelObserver<User> userModelObserver = new ModelObserver<User>() {
         @Override
         public void updated(User user) {
-            userNameTextView.setText(StringUtils.formatUsername(user.getUsername()));
+            if (TextUtils.isEmpty(user.getUsername())) {
+                userNameTextView.setVisibility(GONE);
+                userNameTextView.setText("");
+            } else {
+                userNameTextView.setVisibility(VISIBLE);
+                userNameTextView.setText(StringUtils.formatUsername(user.getUsername()));
+            }
+
             if (user.getConnectionStatus() != User.ConnectionStatus.ACCEPTED &&
                 user.getConnectionStatus() != User.ConnectionStatus.BLOCKED) {
                 userInfoTextView.setText("");

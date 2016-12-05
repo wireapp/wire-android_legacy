@@ -498,8 +498,9 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
         if (LayoutSpec.isPhone(getContext())) {
             return;
         }
-        if (ViewUtils.isInLandscape(getContext()) ||
-            (newConfig != null && ViewUtils.isInLandscape(newConfig))) {
+        if (userRequester == IConnectStore.UserRequester.CONVERSATION &&
+            (ViewUtils.isInLandscape(getContext()) ||
+             (newConfig != null && ViewUtils.isInLandscape(newConfig)))) {
             toolbar.setNavigationIcon(null);
         } else {
             switch (userRequester) {
