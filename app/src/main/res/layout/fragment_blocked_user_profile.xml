@@ -44,7 +44,7 @@
             android:maxLines="1"
             android:ellipsize="end"
             android:background="@null"
-            style="?conversationToolbar"
+            style="?conversationToolbarNoDivider"
             />
 
     </android.support.v7.widget.Toolbar>
