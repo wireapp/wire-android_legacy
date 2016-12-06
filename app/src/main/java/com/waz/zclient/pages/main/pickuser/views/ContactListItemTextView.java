@@ -155,7 +155,7 @@ public class ContactListItemTextView extends LinearLayout {
 
         String otherString = "";
         if (TextUtils.isEmpty(addressBookName)) {
-            if (commonContacts > 0) {
+            if (commonContacts > 0 && !user.isConnected()) {
                 otherString = getResources().getQuantityString(R.plurals.people_picker__contact_list_contact_sub_label_common_friends, commonContacts, commonContacts);
             }
         } else {
