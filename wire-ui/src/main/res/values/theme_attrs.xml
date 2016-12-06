@@ -44,6 +44,7 @@
 
     <!-- Conversation Toolbar -->
     <attr name="conversationToolbar" format="reference" />
+    <attr name="conversationToolbarNoDivider" format="reference" />
     <attr name="conversationToolbarBackground" format="reference" />
     <attr name="conversationToolbarIconVideo" format="reference" />
     <attr name="conversationToolbarIconCall" format="reference" />

@@ -61,6 +61,7 @@
 
         <!-- Conversation Toolbar -->
         <item name="conversationToolbar">@style/conversation_toolbar__dark</item>
+        <item name="conversationToolbarNoDivider">@style/conversation_toolbar_no_divider__dark</item>
         <item name="conversationToolbarBackground">@drawable/toolbar_background__dark</item>
         <item name="actionModeStyle">@style/conversation_toolbar_action_mode__dark</item>
         <item name="actionModeCloseDrawable">@drawable/ic_action_close_light</item>
@@ -200,6 +201,7 @@
 
         <!-- Conversation Toolbar -->
         <item name="conversationToolbar">@style/conversation_toolbar__light</item>
+        <item name="conversationToolbarNoDivider">@style/conversation_toolbar_no_divider__light</item>
         <item name="conversationToolbarBackground">@drawable/toolbar_background__light</item>
         <item name="actionModeStyle">@style/conversation_toolbar_action_mode__light</item>
         <item name="actionModeCloseDrawable">@drawable/ic_action_close_dark</item>

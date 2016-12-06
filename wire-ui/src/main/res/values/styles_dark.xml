@@ -83,6 +83,10 @@
         <item name="navigationIcon">@drawable/action_back_light</item>
     </style>
 
+    <style name="conversation_toolbar_no_divider__dark" parent="conversation_toolbar__dark">
+        <item name="android:background">@null</item>
+    </style>
+
     <style name="conversation_toolbar_action_mode__dark" parent="conversation_toolbar_action_mode__base">
         <item name="background">@drawable/toolbar_background__dark</item>
         <item name="android:textColor">@color/wire__text_color_primary_dark_selector</item>

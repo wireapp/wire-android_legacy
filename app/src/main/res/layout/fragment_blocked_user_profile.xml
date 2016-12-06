@@ -33,7 +33,7 @@
         android:layout_height="?attr/actionBarSize"
         android:clickable="true"
         app:contentInsetStart="@dimen/content__padding_left"
-        style="?conversationToolbar"
+        style="?conversationToolbarNoDivider"
         >
 
         <com.waz.zclient.ui.text.TypefaceTextView

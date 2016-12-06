@@ -27,20 +27,13 @@
               android:fitsSystemWindows="true"
     >
 
-    <View
-        android:id="@+id/v_participants__header__top_border"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/wire__divider__height__thin"
-        android:background="@color/text__secondary_light__40"
-        />
-
     <android.support.v7.widget.Toolbar
         android:id="@+id/t__participants__toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:clickable="true"
         app:contentInsetStart="@dimen/content__padding_left"
-        style="?conversationToolbar"
+        style="?conversationToolbarNoDivider"
         >
 
         <LinearLayout

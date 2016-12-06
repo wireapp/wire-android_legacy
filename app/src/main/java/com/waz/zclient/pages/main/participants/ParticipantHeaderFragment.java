@@ -73,7 +73,6 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
 
 
     private Toolbar toolbar;
-    private View headerTopBorder;
     private TextView membersCountTextView;
     private UserDetailsView userDetailsView;
     private AccentColorEditText headerEditText;
@@ -133,7 +132,6 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
         View rootView = inflater.inflate(R.layout.fragment_participants_header, container, false);
 
         toolbar = ViewUtils.getView(rootView, R.id.t__participants__toolbar);
-        headerTopBorder = ViewUtils.getView(rootView, R.id.v_participants__header__top_border);
         membersCountTextView = ViewUtils.getView(rootView, R.id.ttv__participants__sub_header);
         userDetailsView = ViewUtils.getView(rootView, R.id.udv__participants__user_details);
         headerReadOnlyTextView = ViewUtils.getView(rootView, R.id.ttv__participants__header);
@@ -162,10 +160,6 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
         });
 
         penIconHandler = new Handler();
-
-        if (LayoutSpec.isTablet(getActivity())) {
-            headerTopBorder.setVisibility(View.GONE);
-        }
 
         if (LayoutSpec.isTablet(getContext())) {
             toolbar.setNavigationIcon(null);
@@ -201,10 +195,6 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
         getControllerFactory().getConversationScreenController().addConversationControllerObservers(this);
         getControllerFactory().getAccentColorController().addAccentColorObserver(this);
 
-        if (getControllerFactory().getConversationScreenController().isShowingParticipant()) {
-            showCancelButton(true, false);
-        }
-
         if (!getControllerFactory().getThemeController().isDarkTheme()) {
             headerEditText.setAccentColor(getControllerFactory().getAccentColorController().getColor());
         }
@@ -235,7 +225,6 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
 
     @Override
     public void onDestroyView() {
-        headerTopBorder = null;
         membersCountTextView = null;
         userDetailsView = null;
         headerReadOnlyTextView = null;
@@ -304,32 +293,6 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
     @Override
     public void otherUserUpdated(final User otherUser) {
         setParticipant(otherUser);
-    }
-
-    public void showCancelButton(boolean show, boolean animate) {
-        if (headerTopBorder == null) {
-            return;
-        }
-
-        if (show) {
-            if (animate) {
-                headerTopBorder
-                    .animate()
-                    .alpha(0)
-                    .setDuration(getResources().getInteger(R.integer.open_close_button__alpha__animation_duration))
-                    .setStartDelay(getResources().getInteger(R.integer.open_close_button__alpha__delay))
-                    .start();
-            }
-        } else {
-            if (animate) {
-                headerTopBorder
-                    .animate()
-                    .alpha(1)
-                    .setDuration(getResources().getInteger(R.integer.close_close_button__alpha__animation_duration))
-                    .setStartDelay(getResources().getInteger(R.integer.close_close_button__alpha__delay))
-                    .start();
-            }
-        }
     }
 
     private View.OnTouchListener headerOnTouchListener = new View.OnTouchListener() {
@@ -477,7 +440,6 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
 
     @Override
     public void onShowParticipants(View anchorView, boolean isSingleConversation, boolean isMemberOfConversation, boolean showDeviceTabIfSingle) {
-        showCancelButton(true, true);
         if (!isSingleConversation && isMemberOfConversation) {
             startPenIconTimeOut();
         } else {
@@ -496,8 +458,6 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
             !hideByConversationChange) {
             renameConversation();
         }
-
-        showCancelButton(false, true);
     }
 
     @Override

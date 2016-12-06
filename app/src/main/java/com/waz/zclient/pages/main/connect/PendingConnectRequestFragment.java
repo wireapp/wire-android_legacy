@@ -187,6 +187,9 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
         imageAssetImageViewProfile.setSaturation(0);
 
         updateToolbarNavigationIcon();
+        if (userRequester == IConnectStore.UserRequester.PARTICIPANTS) {
+            toolbar.setBackground(null);
+        }
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
