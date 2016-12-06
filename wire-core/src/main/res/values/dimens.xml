@@ -429,7 +429,9 @@
     <dimen name="prefs__add_email_pw__margin_textinput">16dp</dimen>
     <dimen name="prefs__username_change__margins_between">24dp</dimen>
     <dimen name="prefs__username_change__edit_text_horizontal_padding">28dp</dimen>
-    <dimen name="prefs__username_change__edit_text_bottom_padding">20dp</dimen>
+    <dimen name="prefs__username_change__at_top_padding">16dp</dimen>
+    <dimen name="prefs__username_change__edit_text_bottom_padding">@dimen/wire__padding__20</dimen>
+    <dimen name="prefs__username_change__edit_text_top_padding">20dp</dimen>
     <dimen name="prefs__username_change__separator_height">1dp</dimen>
     <dimen name="prefs__username_change__loading__bottom_padding">36dp</dimen>
     <dimen name="prefs__username_change__loading__margin_end">24dp</dimen>
@@ -822,4 +824,5 @@
     <dimen name="usernames__take_over__side_margin">28dp</dimen>
     <dimen name="usernames__take_over__username__bottom_padding">240dp</dimen>
     <dimen name="usernames__take_over__name__top_margin">-32dp</dimen>
+    <dimen name="prefs__username_change__content_height">140dp</dimen>
 </resources>

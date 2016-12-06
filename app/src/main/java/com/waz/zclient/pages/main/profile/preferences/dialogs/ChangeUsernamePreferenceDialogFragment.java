@@ -32,6 +32,7 @@ import com.waz.api.UsernameValidation;
 import com.waz.api.UsernameValidationError;
 import com.waz.api.UsernamesRequestCallback;
 import com.waz.zclient.R;
+import com.waz.zclient.core.stores.IStoreFactory;
 import com.waz.zclient.pages.BaseDialogFragment;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.LoadingIndicatorView;
@@ -51,23 +52,35 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
     private boolean editingEnabled = true;
 
     private TextWatcher usernameTextWatcher = new TextWatcher() {
+        private String lastText;
+
         @Override
         public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            lastText = charSequence.toString();
         }
 
         @Override
         public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
             String lowercaseString = charSequence.toString().toLowerCase(Locale.getDefault());
             if (!lowercaseString.equals(charSequence.toString())) {
-                usernameEditText.setText(lowercaseString);
-                usernameEditText.setSelection(lowercaseString.length());
+                usernameEditText.setTextKeepState(lowercaseString);
             } else {
-                UsernameValidation validation = getStoreFactory().getZMessagingApiStore().getApi().getUsernames().isUsernameValid(charSequence.toString());
+                IStoreFactory storeFactory = getStoreFactory();
+                if (storeFactory == null || storeFactory.isTornDown()) {
+                    return;
+                }
+                UsernameValidation validation = storeFactory.getZMessagingApiStore().getApi().getUsernames().isUsernameValid(charSequence.toString());
                 if (!validation.isValid()) {
                     usernameInputLayout.setError(getErrorMessage(validation.reason()));
+                    if (validation.reason() == UsernameValidationError.INVALID_CHARACTERS) {
+                        usernameEditText.setTextKeepState(lastText);
+                    }
+                    editBoxShakeAnimation();
                 } else {
                     usernameInputLayout.setError("");
-                    getStoreFactory().getZMessagingApiStore().getApi().getUsernames().isUsernameAvailable(charSequence.toString(), usernameAvailableCallback);
+                    if (!storeFactory.getZMessagingApiStore().getApi().getSelf().getUsername().equals(charSequence.toString())) {
+                        storeFactory.getZMessagingApiStore().getApi().getUsernames().isUsernameAvailable(charSequence.toString(), usernameAvailableCallback);
+                    }
                 }
             }
         }
@@ -118,6 +131,13 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
         @Override
         public void onClick(View view) {
             inputUsername = usernameEditText.getText().toString();
+            IStoreFactory storeFactory = getStoreFactory();
+            if (storeFactory != null &&
+                !storeFactory.isTornDown() &&
+                storeFactory.getZMessagingApiStore().getApi().getSelf().getUsername().equals(inputUsername)) {
+                dismiss();
+                return;
+            }
             UsernameValidation validation = getStoreFactory().getZMessagingApiStore().getApi().getUsernames().isUsernameValid(inputUsername);
             if (!validation.isValid()) {
                 editBoxShakeAnimation();
@@ -164,8 +184,7 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
-        getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE |
-            WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         super.onViewCreated(view, savedInstanceState);
     }
 
@@ -184,34 +203,48 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
 
         usernameEditText.setText(username);
         usernameEditText.setSelection(username.length());
-        usernameEditText.addTextChangedListener(usernameTextWatcher);
 
         usernameVerifyingIndicator.setType(LoadingIndicatorView.SPINNER);
         usernameVerifyingIndicator.hide();
 
+        if (!cancelEnabled) {
+            backButton.setVisibility(View.GONE);
+        }
+
+        setCancelable(false);
+        return view;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        usernameEditText.addTextChangedListener(usernameTextWatcher);
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 dismiss();
             }
         });
-        if (!cancelEnabled) {
-            backButton.setVisibility(View.GONE);
-        }
         okButton.setOnClickListener(okButtonClickListener);
+        usernameEditText.requestFocus();
+    }
 
-        setCancelable(false);
-        return view;
+    @Override
+    public void onStop() {
+        super.onStop();
+        usernameEditText.removeTextChangedListener(usernameTextWatcher);
+        backButton.setOnClickListener(null);
+        okButton.setOnClickListener(null);
     }
 
     private String getErrorMessage(UsernameValidationError errorCode) {
         switch (errorCode) {
             case TOO_LONG:
-                return getString(R.string.pref__account_action__dialog__change_username__error_too_long);
+                return " ";
             case TOO_SHORT:
-                return getString(R.string.pref__account_action__dialog__change_username__error_too_short);
+                return " ";
             case INVALID_CHARACTERS:
-                return getString(R.string.pref__account_action__dialog__change_username__error_invalid_characters);
+                return " ";
             case ALREADY_TAKEN:
                 return getString(R.string.pref__account_action__dialog__change_username__error_already_taken);
             default:
