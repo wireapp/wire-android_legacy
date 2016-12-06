@@ -1082,6 +1082,7 @@
     <string name="usernames__take_over__summary">People will be able to find you easier. _Learn more._</string>
     <string name="usernames__take_over__choose">CHOOSE YOUR OWN</string>
     <string name="usernames__take_over__keep">KEEP THIS ONE</string>
+    <string name="pref_account_username_empty_title">Add username</string>
     <plurals name="message_footer__expire__days">
         <item quantity="one">%1$d day</item>
         <item quantity="other">%1$d days</item>

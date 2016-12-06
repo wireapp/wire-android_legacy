@@ -432,8 +432,13 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
         if (usernamePreference == null) {
             return;
         }
-        usernamePreference.setTitle(myUsername);
-        usernamePreference.setSummary(getString(R.string.pref_account_username_title));
+        if (TextUtils.isEmpty(myUsername)) {
+            usernamePreference.setTitle(getString(R.string.pref_account_username_empty_title));
+            usernamePreference.setSummary("");
+        } else {
+            usernamePreference.setTitle(myUsername);
+            usernamePreference.setSummary(getString(R.string.pref_account_username_title));
+        }
     }
 
     @Override
