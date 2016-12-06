@@ -24,6 +24,7 @@ import com.waz.api.Usernames;
 import com.waz.api.ValidatedUsernames;
 import com.waz.zclient.ZApplication;
 import com.waz.zclient.core.api.scala.ModelObserver;
+import com.waz.zclient.utils.StringUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +35,7 @@ import java.util.WeakHashMap;
 
 public class UsernamesController implements IUsernamesController {
 
+    private static final int USERNAME_MAX_LENGTH = 21;
     private static final int MAX_ATTEMPTS = 30;
     private static final int MAX_RANDOM_TRAILLING_NUMBER = 10000;
 
@@ -164,7 +166,8 @@ public class UsernamesController implements IUsernamesController {
 
         List<String> attempts = new ArrayList<>();
         for (int i = 0; i < MAX_ATTEMPTS; i++) {
-            attempts.add(baseGeneratedUsername + getTrailingNumber(i));
+            String trailingNumber = getTrailingNumber(i);
+            attempts.add(StringUtils.truncate(baseGeneratedUsername, USERNAME_MAX_LENGTH - trailingNumber.length()) + trailingNumber);
         }
         currentAttemptsArray = new String[attempts.size()];
         attempts.toArray(currentAttemptsArray);
