@@ -106,7 +106,7 @@ public class ConnectRequestInboxAdapter extends BaseAdapter {
 
         // Set valuesCon
         IConversation request = getItem(position);
-        viewHolder.nameView.setText(context.getString(R.string.connect_request__inbox__header, request.getName()));
+        viewHolder.nameView.setText(request.getName());
         TextViewUtils.boldText(viewHolder.nameView);
 
         ((ConnectRequestInboxRow) convertView).setConnectActionCallback(connectActionsCallback);
