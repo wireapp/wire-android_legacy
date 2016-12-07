@@ -30,7 +30,6 @@ import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.ui.R;
 import com.waz.zclient.utils.StringUtils;
 import com.waz.zclient.utils.ViewUtils;
-
 import java.util.Locale;
 
 
@@ -71,16 +70,14 @@ public class UserDetailsView extends LinearLayout {
             }
 
             if (user.getConnectionStatus() != User.ConnectionStatus.ACCEPTED &&
-                user.getConnectionStatus() != User.ConnectionStatus.BLOCKED) {
-                userInfoTextView.setText("");
-                contactDetailsModelObserver.pauseListening();
+                user.getConnectionStatus() != User.ConnectionStatus.BLOCKED &&
+                user.getCommonConnectionsCount() > 0) {
+                final String commonUsersSummary = getContext().getResources().getQuantityString(R.plurals.connect_request__common_users__summary,
+                                                                                                user.getCommonConnectionsCount(),
+                                                                                                user.getCommonConnectionsCount());
+                userInfoTextView.setText(commonUsersSummary);
             } else {
-                if (user.getCommonConnectionsCount() > 0) {
-                    final String commonUsersSummary = getContext().getResources().getQuantityString(R.plurals.connect_request__common_users__summary,
-                                                                                                         user.getCommonConnectionsCount(),
-                                                                                                         user.getCommonConnectionsCount());
-                    userInfoTextView.setText(commonUsersSummary);
-                }
+                userInfoTextView.setText("");
             }
             contactDetailsModelObserver.setAndUpdate(user.getFirstContact());
         }
