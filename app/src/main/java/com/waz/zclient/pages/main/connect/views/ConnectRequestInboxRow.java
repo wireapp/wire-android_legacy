@@ -68,7 +68,7 @@ public class ConnectRequestInboxRow extends FrameLayout {
             if (imageAssetImageViewProfile != null) {
                 imageAssetImageViewProfile.connectImageAsset(user.getPicture());
             }
-            displayNameTextView.setText(getContext().getString(R.string.connect_request__inbox__header, user.getName()));
+            displayNameTextView.setText(user.getName());
             TextViewUtils.boldText(displayNameTextView);
 
             userDetailsView.setUser(user);
