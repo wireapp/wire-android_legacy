@@ -557,17 +557,6 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
         }
     }
 
-    @Override
-    public void editingHeader(boolean editing) {
-        if (LayoutSpec.isTablet(getActivity())) {
-            return;
-        }
-        if (editing) {
-            ViewUtils.fadeOutView(bodyContainer);
-        } else {
-            ViewUtils.fadeInView(bodyContainer);
-        }
-    }
 
     @Override
     public void onClickedEmptyBackground() {
@@ -662,7 +651,16 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     public void onHideParticipants(boolean backOrButtonPressed, boolean hideByConversationChange, boolean isSingleConversation) { }
 
     @Override
-    public void onShowEditConversationName(boolean show) { }
+    public void onShowEditConversationName(boolean show) {
+        if (LayoutSpec.isTablet(getActivity())) {
+            return;
+        }
+        if (show) {
+            ViewUtils.fadeOutView(bodyContainer);
+        } else {
+            ViewUtils.fadeInView(bodyContainer);
+        }
+    }
 
     @Override
     public void setListOffset(int offset) { }

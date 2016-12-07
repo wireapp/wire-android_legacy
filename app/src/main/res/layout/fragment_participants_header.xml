@@ -66,8 +66,7 @@
                     android:gravity="start|center_vertical"
                     android:ellipsize="end"
                     android:maxLines="1"
-                    app:font="@string/wire__typeface__medium"
-                    style="?userHeader"
+                    style="?conversationToolbarNoDivider"
                     />
 
                 <com.waz.zclient.ui.text.TypefaceActionEditText
@@ -96,7 +95,7 @@
                 android:id="@+id/gtv__participants_header__pen_icon"
                 android:layout_width="@dimen/wire__icon_button__diameter"
                 android:layout_height="@dimen/wire__icon_button__diameter"
-                android:clickable="false"
+                android:clickable="true"
                 android:text="@string/glyph__edit"
                 android:gravity="center"
                 style="?iconButton"

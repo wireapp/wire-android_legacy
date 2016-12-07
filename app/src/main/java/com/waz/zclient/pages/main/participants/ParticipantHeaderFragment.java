@@ -65,12 +65,12 @@ import com.waz.zclient.utils.ViewUtils;
 
 public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFragment.Container> implements KeyboardVisibilityObserver,
                                                                                                             ParticipantsStoreObserver,
+                                                                                                            View.OnClickListener,
                                                                                                             ConversationScreenControllerObserver,
                                                                                                             ConnectStoreObserver,
                                                                                                             AccentColorObserver {
     public static final String TAG = ParticipantHeaderFragment.class.getName();
     private static final String ARG_USER_REQUESTER = "ARG_USER_REQUESTER";
-
 
     private Toolbar toolbar;
     private TextView membersCountTextView;
@@ -82,16 +82,6 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
     private ShieldView shieldView;
     private IConnectStore.UserRequester userRequester;
 
-    private Handler penIconHandler;
-    private Runnable penIconRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (penIcon == null) {
-                return;
-            }
-            showPenIcon(false);
-        }
-    };
     private boolean isGroupConversation;
 
     public static ParticipantHeaderFragment newInstance(IConnectStore.UserRequester userRequester) {
@@ -140,7 +130,7 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
         shieldView = ViewUtils.getView(rootView, R.id.sv__otr__verified_shield);
         shieldView.setVisibility(View.GONE);
         penIcon = ViewUtils.getView(rootView, R.id.gtv__participants_header__pen_icon);
-        showPenIcon(false);
+        penIcon.setVisibility(View.GONE);
 
         membersCountTextView.setVisibility(View.GONE);
         userDetailsView.setVisibility(View.GONE);
@@ -151,15 +141,6 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
         // Hide bottom border initially
         bottomBorder.setVisibility(View.GONE);
 
-        // Toggle color background
-        rootView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                getContainer().onClickedEmptyBackground();
-            }
-        });
-
-        penIconHandler = new Handler();
 
         if (LayoutSpec.isTablet(getContext())) {
             toolbar.setNavigationIcon(null);
@@ -205,12 +186,14 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
         super.onResume();
         headerEditText.clearFocus();
         getControllerFactory().getGlobalLayoutController().addKeyboardVisibilityObserver(this);
+        penIcon.setOnClickListener(this);
     }
 
     @Override
     public void onPause() {
         getControllerFactory().getGlobalLayoutController().removeKeyboardVisibilityObserver(this);
         KeyboardUtils.hideKeyboard(getActivity());
+        penIcon.setOnClickListener(null);
         super.onPause();
     }
 
@@ -230,13 +213,19 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
         headerReadOnlyTextView = null;
         headerEditText = null;
         bottomBorder = null;
-        penIconHandler.removeCallbacks(null);
-        penIconHandler = null;
         penIcon = null;
         shieldView = null;
         super.onDestroyView();
     }
 
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.gtv__participants_header__pen_icon:
+                triggerEditingOfConversationNameIfInternet();
+                break;
+        }
+    }
 
     @Override
     public void conversationUpdated(IConversation conversation) {
@@ -301,21 +290,7 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
         @Override
         public boolean onTouch(View v, MotionEvent event) {
             if (event.getAction() == MotionEvent.ACTION_UP && downAction) {
-                if (MathUtils.floatEqual(headerEditText.getAlpha(), 0f)) {
-                    // only if not already visible and network is available
-                    getStoreFactory().getNetworkStore().doIfHasInternetOrNotifyUser(new NetworkAction() {
-                        @Override
-                        public void execute(NetworkMode networkMode) {
-                            showEditHeader(true);
-                        }
-
-                        @Override
-                        public void onNoNetwork() {
-                            showOfflineRenameError();
-                        }
-                    });
-
-                }
+                triggerEditingOfConversationNameIfInternet();
                 downAction = false;
             } else if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 downAction = true;
@@ -326,6 +301,27 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
 
         }
     };
+
+    private void triggerEditingOfConversationNameIfInternet() {
+        if (getStoreFactory() == null ||
+            getStoreFactory().isTornDown()) {
+            return;
+        }
+        if (MathUtils.floatEqual(headerEditText.getAlpha(), 0f)) {
+            // only if not already visible and network is available
+            getStoreFactory().getNetworkStore().doIfHasInternetOrNotifyUser(new NetworkAction() {
+                @Override
+                public void execute(NetworkMode networkMode) {
+                    toggleEditModeForConversationName(true);
+                }
+
+                @Override
+                public void onNoNetwork() {
+                    showOfflineRenameError();
+                }
+            });
+        }
+    }
 
     private void showOfflineRenameError() {
         ViewUtils.showAlertDialog(getActivity(),
@@ -407,30 +403,6 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
         }
     }
 
-    private void showEditHeader(boolean edit) {
-        getContainer().editingHeader(edit);
-        if (edit) {
-            headerEditText.setText(headerReadOnlyTextView.getText());
-            headerEditText.setAlpha(1);
-            headerEditText.requestFocus();
-            getControllerFactory().getFocusController().setFocus(IFocusController.CONVERSATION_EDIT_NAME);
-            headerEditText.setSelection(headerEditText.getText().length());
-            KeyboardUtils.showKeyboard(getActivity());
-            headerReadOnlyTextView.setAlpha(0);
-            membersCountTextView.setAlpha(0);
-            showPenIcon(false);
-        } else {
-            headerEditText.setAlpha(0);
-            headerEditText.requestLayout();
-            headerReadOnlyTextView.setAlpha(1);
-            headerEditText.clearFocus();
-            membersCountTextView.setAlpha(1);
-
-            if (LayoutSpec.isTablet(getActivity())) {
-                renameConversation();
-            }
-        }
-    }
 
     //////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -441,11 +413,9 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
     @Override
     public void onShowParticipants(View anchorView, boolean isSingleConversation, boolean isMemberOfConversation, boolean showDeviceTabIfSingle) {
         if (!isSingleConversation && isMemberOfConversation) {
-            startPenIconTimeOut();
+            penIcon.setVisibility(View.VISIBLE);
         } else {
-            if (penIcon != null) {
-                showPenIcon(false);
-            }
+            penIcon.setVisibility(View.GONE);
         }
     }
 
@@ -462,7 +432,7 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
 
     @Override
     public void onShowEditConversationName(boolean edit) {
-        showEditHeader(edit);
+        // do nothing
     }
 
     @Override
@@ -537,31 +507,7 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
     @Override
     public void onKeyboardVisibilityChanged(boolean keyboardIsVisible, int keyboardHeight, View currentFocus) {
         if (!keyboardIsVisible) {
-            showEditHeader(false);
-        }
-    }
-
-    //////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  BackgroundImageObserver
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////
-
-    private void startPenIconTimeOut() {
-        if (penIcon == null) {
-            return;
-        }
-        showPenIcon(true);
-        penIconHandler.removeCallbacks(penIconRunnable);
-        penIconHandler.postDelayed(penIconRunnable,
-                                   getResources().getInteger(R.integer.profile__pen_icon__hide_time_out));
-    }
-
-    private void showPenIcon(boolean show) {
-        if (show) {
-            penIcon.setVisibility(View.VISIBLE);
-        } else {
-            penIcon.setVisibility(View.GONE);
+            toggleEditModeForConversationName(false);
         }
     }
 
@@ -613,9 +559,33 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
         }
     }
 
-    public interface Container {
+    private void toggleEditModeForConversationName(boolean edit) {
+        getControllerFactory().getConversationScreenController().editConversationName(edit);
+        if (edit) {
+            headerEditText.setText(headerReadOnlyTextView.getText());
+            headerEditText.setAlpha(1);
+            headerEditText.requestFocus();
+            getControllerFactory().getFocusController().setFocus(IFocusController.CONVERSATION_EDIT_NAME);
+            headerEditText.setSelection(headerEditText.getText().length());
+            KeyboardUtils.showKeyboard(getActivity());
+            headerReadOnlyTextView.setAlpha(0);
+            membersCountTextView.setAlpha(0);
+            penIcon.setVisibility(View.GONE);
+        } else {
+            headerEditText.setAlpha(0);
+            headerEditText.requestLayout();
+            headerReadOnlyTextView.setAlpha(1);
+            headerEditText.clearFocus();
+            membersCountTextView.setAlpha(1);
+            penIcon.setVisibility(View.VISIBLE);
 
-        void editingHeader(boolean editing);
+            if (LayoutSpec.isTablet(getActivity())) {
+                renameConversation();
+            }
+        }
+    }
+
+    public interface Container {
 
         void onClickedEmptyBackground();
 
