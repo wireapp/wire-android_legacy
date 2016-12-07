@@ -20,7 +20,6 @@ package com.waz.zclient.pages.main.conversation.views;
 import android.support.test.runner.AndroidJUnit4;
 import com.waz.api.Asset;
 import com.waz.api.AssetStatus;
-import com.waz.api.AccentColor;
 import com.waz.api.IConversation;
 import com.waz.api.Message;
 import com.waz.api.MessageContent;
@@ -42,7 +41,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.threeten.bp.DateTimeUtils;
 import org.threeten.bp.Duration;
-import org.threeten.bp.Instant;
+
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.doubleClick;
@@ -52,8 +51,11 @@ import static com.waz.zclient.testutils.CustomViewAssertions.containsText;
 import static com.waz.zclient.testutils.CustomViewAssertions.doesNotContainText;
 import static com.waz.zclient.testutils.CustomViewAssertions.hasText;
 import static com.waz.zclient.testutils.CustomViewAssertions.isGone;
-import static com.waz.zclient.testutils.CustomViewAssertions.isInvisible;
 import static com.waz.zclient.testutils.CustomViewAssertions.isVisible;
+import static com.waz.zclient.testutils.MockHelper.createMockConversation;
+import static com.waz.zclient.testutils.MockHelper.createMockMessage;
+import static com.waz.zclient.testutils.MockHelper.createMockSeparator;
+import static com.waz.zclient.testutils.MockHelper.createMockUser;
 import static junit.framework.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -913,51 +915,5 @@ public class FooterViewControllerTest extends ViewTest<MainTestActivity> {
             i = 0;
         }
         return messageStatusStr.substring(i);
-    }
-
-    private Separator createMockSeparator() {
-        User mockUser = mock(User.class);
-        when(mockUser.getId()).thenReturn("123");
-
-        Message message = createMockMessage(Message.Type.TEXT, Message.Status.SENT, false);
-        when(message.getUser()).thenReturn(mockUser);
-
-        Separator separator = mock(Separator.class);
-        when(separator.getNextMessage()).thenReturn(message);
-        when(separator.getPreviousMessage()).thenReturn(message);
-        return separator;
-    }
-
-    private Message createMockMessage(Message.Type type, Message.Status status, boolean sentByMe) {
-        Message message = mock(Message.class);
-        when(message.getId()).thenReturn("1234");
-        when(message.getMessageType()).thenReturn(type);
-        when(message.getMessageStatus()).thenReturn(status);
-        when(message.getBody()).thenReturn("Some message");
-        when(message.isEdited()).thenReturn(false);
-        when(message.getTime()).thenReturn(Instant.now());
-
-        User mockUser = mock(User.class);
-        when(mockUser.getId()).thenReturn("123");
-        when(mockUser.isMe()).thenReturn(sentByMe);
-        when(message.getUser()).thenReturn(mockUser);
-
-        return message;
-    }
-
-    private User createMockUser(String name, String id) {
-        User mockUser = mock(User.class);
-        when(mockUser.getId()).thenReturn(id);
-        when(mockUser.getDisplayName()).thenReturn(name);
-        AccentColor mockAccent = mock(AccentColor.class);
-        when(mockAccent.getColor()).thenReturn(3);
-        when(mockUser.getAccent()).thenReturn(mockAccent);
-        return mockUser;
-    }
-
-    private IConversation createMockConversation(IConversation.Type type) {
-        IConversation conversation = mock(IConversation.class);
-        when(conversation.getType()).thenReturn(type);
-        return conversation;
     }
 }
