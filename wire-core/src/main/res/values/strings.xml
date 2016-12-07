@@ -833,8 +833,6 @@
     <string name="name_placeholder">Name</string>
     <string name="registration_back">Back</string>
 
-    <string name="connect_request__inbox__header">%s</string>
-
     <!-- Strings -->
     <string name="your_phone_number">Your Phone Number</string>
     <string name="edit_phone_number">EDIT PHONE NUMBER</string>
