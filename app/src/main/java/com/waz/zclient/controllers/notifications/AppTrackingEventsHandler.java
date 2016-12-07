@@ -136,6 +136,8 @@ public class AppTrackingEventsHandler implements TrackingEventsHandler {
                 trackingController.tagEvent(new FailedFileDownloadEvent(assetMimeType));
                 break;
         }
+
+
     }
 
     @Override
