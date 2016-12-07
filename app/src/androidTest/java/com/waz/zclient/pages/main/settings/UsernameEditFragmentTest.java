@@ -1,13 +1,34 @@
+/**
+ * Wire
+ * Copyright (C) 2016 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package com.waz.zclient.pages.main.settings;
 
 import android.support.design.widget.TextInputLayout;
+import android.support.test.espresso.NoMatchingViewException;
+import android.support.test.espresso.ViewAssertion;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.View;
 
 import com.waz.zclient.MainTestActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.ChangeUsernamePreferenceDialogFragment;
 import com.waz.zclient.testutils.FragmentTest;
-import com.waz.zclient.ui.text.TypefaceTextView;
+
+import junit.framework.AssertionFailedError;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,8 +74,15 @@ public class UsernameEditFragmentTest extends FragmentTest<MainTestActivity> {
         Thread.sleep(400);
         onView(withId(R.id.acet__change_username)).perform(typeText("1"));
         Thread.sleep(400);
-        CharSequence error = ((TextInputLayout) withId(R.id.til__change_username)).getError();
-        verify(error != null && error.length() > 0);
+        onView(withId(R.id.til__change_username)).check(new ViewAssertion() {
+            @Override
+            public void check(View view, NoMatchingViewException noViewFoundException) {
+                CharSequence error = ((TextInputLayout) view).getError();
+                if (error == null || error.length() == 0) {
+                    throw new AssertionFailedError("Error field is empty");
+                }
+            }
+        });
     }
 
     @Test
@@ -64,6 +92,13 @@ public class UsernameEditFragmentTest extends FragmentTest<MainTestActivity> {
         Thread.sleep(400);
         onView(withId(R.id.acet__change_username)).perform(typeText("1"));
         Thread.sleep(400);
-        verify(!((TypefaceTextView) withId(R.id.tv__ok_button)).isEnabled());
+        onView(withId(R.id.til__change_username)).check(new ViewAssertion() {
+            @Override
+            public void check(View view, NoMatchingViewException noViewFoundException) {
+                if (!view.isEnabled()) {
+                    throw new AssertionFailedError("View is enabled");
+                }
+            }
+        });
     }
 }
