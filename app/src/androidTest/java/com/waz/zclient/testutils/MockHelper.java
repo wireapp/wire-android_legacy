@@ -26,6 +26,7 @@ import com.waz.api.UpdateListener;
 import com.waz.api.NetworkMode;
 import com.waz.api.User;
 import com.waz.api.AccentColor;
+import com.waz.api.Message;
 import com.waz.zclient.TestActivity;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
 import com.waz.zclient.core.stores.conversation.ConversationStoreObserver;
@@ -34,8 +35,10 @@ import com.waz.zclient.core.stores.network.INetworkStore;
 import com.waz.zclient.core.stores.network.NetworkAction;
 import com.waz.zclient.core.stores.participants.IParticipantsStore;
 import com.waz.zclient.core.stores.participants.ParticipantsStoreObserver;
+import com.waz.zclient.pages.main.conversation.views.row.separator.Separator;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.threeten.bp.Instant;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -157,5 +160,41 @@ public class MockHelper {
         when(mockAccent.getColor()).thenReturn(3);
         when(mockUser.getAccent()).thenReturn(mockAccent);
         return mockUser;
+    }
+
+    public static Message createMockMessage(Message.Type type, Message.Status status, boolean sentByMe) {
+        Message message = mock(Message.class);
+        when(message.getId()).thenReturn("1234");
+        when(message.getMessageType()).thenReturn(type);
+        when(message.getMessageStatus()).thenReturn(status);
+        when(message.getBody()).thenReturn("Some message");
+        when(message.isEdited()).thenReturn(false);
+        when(message.getTime()).thenReturn(Instant.now());
+
+        User mockUser = mock(User.class);
+        when(mockUser.getId()).thenReturn("123");
+        when(mockUser.isMe()).thenReturn(sentByMe);
+        when(message.getUser()).thenReturn(mockUser);
+
+        return message;
+    }
+
+    public static IConversation createMockConversation(IConversation.Type type) {
+        IConversation conversation = mock(IConversation.class);
+        when(conversation.getType()).thenReturn(type);
+        return conversation;
+    }
+
+    public static Separator createMockSeparator() {
+        User mockUser = mock(User.class);
+        when(mockUser.getId()).thenReturn("123");
+
+        Message message = createMockMessage(Message.Type.TEXT, Message.Status.SENT, false);
+        when(message.getUser()).thenReturn(mockUser);
+
+        Separator separator = mock(Separator.class);
+        when(separator.getNextMessage()).thenReturn(message);
+        when(separator.getPreviousMessage()).thenReturn(message);
+        return separator;
     }
 }
