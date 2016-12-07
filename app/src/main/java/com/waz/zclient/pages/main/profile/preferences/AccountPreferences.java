@@ -45,6 +45,7 @@ import com.waz.zclient.pages.main.profile.preferences.dialogs.ChangeUsernamePref
 import com.waz.zclient.pages.main.profile.preferences.dialogs.VerifyEmailPreferenceFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.VerifyPhoneNumberPreferenceFragment;
 import com.waz.zclient.ui.utils.TextViewUtils;
+import com.waz.zclient.utils.StringUtils;
 import com.waz.zclient.utils.ViewUtils;
 import net.xpece.android.support.preference.EditTextPreference;
 
@@ -436,7 +437,7 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
             usernamePreference.setTitle(getString(R.string.pref_account_username_empty_title));
             usernamePreference.setSummary("");
         } else {
-            usernamePreference.setTitle(myUsername);
+            usernamePreference.setTitle(StringUtils.formatUsername(myUsername));
             usernamePreference.setSummary(getString(R.string.pref_account_username_title));
         }
     }

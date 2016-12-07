@@ -74,8 +74,10 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
                     usernameInputLayout.setError(getErrorMessage(validation.reason()));
                     if (validation.reason() == UsernameValidationError.INVALID_CHARACTERS) {
                         usernameEditText.setTextKeepState(lastText);
+                        editBoxShakeAnimation();
+                    } else if (validation.reason() == UsernameValidationError.TOO_LONG) {
+                        usernameEditText.setTextKeepState(lastText);
                     }
-                    editBoxShakeAnimation();
                 } else {
                     usernameInputLayout.setError("");
                     if (!storeFactory.getZMessagingApiStore().getApi().getSelf().getUsername().equals(charSequence.toString())) {
@@ -184,7 +186,9 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
-        getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        if (getDialog() != null && getDialog().getWindow() != null) {
+            getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        }
         super.onViewCreated(view, savedInstanceState);
     }
 
