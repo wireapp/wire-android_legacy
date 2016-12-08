@@ -120,7 +120,7 @@
     <string name="invitation__email__failed">Unable to register with this invitation.</string>
 
     <!-- People picker/start UI -->
-    <string name="pick_user_search_focus">\u0020 SEARCH BY NAME OR EMAIL</string>
+    <string name="pick_user_search_focus">\u0020 SEARCH BY NAME OR USERNAME</string>
     <string name="pick_user_search__add_to_conversation">\u0020 SEARCH BY NAME</string>
     <string name="people_picker__top_users_header_title">Top people</string>
     <string name="people_picker__address_book_matches_title">Connect</string>

@@ -1040,7 +1040,7 @@ public class PickUserFragment extends BaseFragment<PickUserFragment.Container> i
             username = getStoreFactory().getProfileStore().getSelfUser().getUsername();
         }
 
-        shareBody = getString(R.string.people_picker__invite__share_text__body, username);
+        shareBody = getString(R.string.people_picker__invite__share_text__body, StringUtils.formatUsername(username));
         String shareSubject = getString(R.string.people_picker__invite__share_text__header, name);
         String shareChooserMessage = getString(R.string.people_picker__invite__share_details_dialog);
         Intent sharingIntent = new Intent(Intent.ACTION_SEND);
