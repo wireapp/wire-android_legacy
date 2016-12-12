@@ -18,6 +18,7 @@
 package com.waz.zclient.controllers.usernames;
 import android.app.Activity;
 import android.text.TextUtils;
+import com.waz.api.ClientRegistrationState;
 import com.waz.api.Self;
 import com.waz.api.UsernameValidation;
 import com.waz.api.Usernames;
@@ -63,7 +64,10 @@ public class UsernamesController implements IUsernamesController {
     private ModelObserver<Self> userModelObserver = new ModelObserver<Self>() {
         @Override
         public void updated(Self model) {
-            if (model.isUpToDate() && !TextUtils.isEmpty(model.getName()) && !model.hasSetUsername()) {
+            if (model.isUpToDate() &&
+                model.getClientRegistrationState() == ClientRegistrationState.REGISTERED &&
+                !TextUtils.isEmpty(model.getName()) &&
+                !model.hasSetUsername()) {
                 if (hasGeneratedUsername() && model.getName().equals(generatedUsername.searchedName)) {
                     notifyObserversValidUsernameGenerated(model.getName(), getGeneratedUsername());
                 } else {
