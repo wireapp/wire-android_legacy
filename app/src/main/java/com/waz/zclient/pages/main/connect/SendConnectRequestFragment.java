@@ -309,7 +309,7 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
 
     @Override
     public void onCommonConnectionsUpdated(CommonConnections commonConnections) {
-
+        userDetailsView.refresh();
     }
 
     @Override

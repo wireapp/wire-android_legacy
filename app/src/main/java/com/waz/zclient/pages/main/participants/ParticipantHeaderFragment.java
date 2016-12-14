@@ -541,7 +541,7 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
 
     @Override
     public void onCommonConnectionsUpdated(CommonConnections commonConnections) {
-
+        userDetailsView.refresh();
     }
 
     @Override

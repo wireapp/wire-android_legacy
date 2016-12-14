@@ -288,7 +288,7 @@ public class BlockedUserProfileFragment extends BaseFragment<BlockedUserProfileF
 
     @Override
     public void onCommonConnectionsUpdated(CommonConnections commonConnections) {
-
+        userDetailsView.refresh();
     }
 
     @Override

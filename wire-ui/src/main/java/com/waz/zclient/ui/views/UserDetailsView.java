@@ -113,6 +113,10 @@ public class UserDetailsView extends LinearLayout {
         user = null;
     }
 
+    public void refresh() {
+        userModelObserver.forceUpdate();
+    }
+
     private void init() {
         LayoutInflater.from(getContext()).inflate(R.layout.user__details, this, true);
         userNameTextView = ViewUtils.getView(this, R.id.ttv__user_details__user_name);

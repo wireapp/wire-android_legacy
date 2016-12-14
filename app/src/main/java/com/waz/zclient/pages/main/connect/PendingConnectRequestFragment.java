@@ -414,7 +414,7 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
 
     @Override
     public void onCommonConnectionsUpdated(CommonConnections commonConnections) {
-        // do nothing
+        userDetailsView.refresh();
     }
 
     @Override

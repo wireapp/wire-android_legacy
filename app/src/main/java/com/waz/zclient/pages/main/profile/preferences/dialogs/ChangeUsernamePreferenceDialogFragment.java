@@ -111,7 +111,11 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
 
         @Override
         public void onUpdateFailed(int code, String message, String label) {
-            usernameInputLayout.setError(getString(R.string.pref__account_action__dialog__change_username__error_unknown));
+            if (code == 409) {
+                usernameInputLayout.setError(getString(R.string.pref__account_action__dialog__change_username__error_already_taken));
+            } else {
+                usernameInputLayout.setError(getString(R.string.pref__account_action__dialog__change_username__error_unknown));
+            }
             enableEditing();
         }
     };
