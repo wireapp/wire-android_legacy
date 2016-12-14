@@ -561,6 +561,9 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 switch (item.getItemId()) {
+                    case R.id.action_collection:
+                        getControllerFactory().getGiphyController().openCollection();
+                        return true;
                     case R.id.action_audio_call:
                         getControllerFactory().getCallingController().startCall(false);
                         cursorLayout.closeEditMessage(false);
@@ -1534,6 +1537,10 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
     }
 
+    @Override
+    public void openCollection() {
+
+    }
 
     //////////////////////////////////////////////////////////////////////////////
     //

@@ -27,4 +27,7 @@ public interface GiphyObserver {
     void onCloseGiphy();
 
     void onCancelGiphy();
+
+    //TODO - being lazy - this should go somewhere else
+    void openCollection();
 }

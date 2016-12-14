@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2016 Wire Swiss GmbH
@@ -18,23 +17,20 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-      xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:clickable="true"
+              android:orientation="vertical"
+              style="?wireBackground"
     >
 
-    <item
-        android:id="@+id/action_collection"
-        android:orderInCategory="50"
-        android:title="@string/conversation_toolbar__call_video"
-        android:icon="?attr/conversationToolbarCollection"
-        app:showAsAction="always"
-        />
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/rv__collection"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        >
 
-    <item
-        android:id="@+id/action_audio_call"
-        android:orderInCategory="100"
-        android:title="@string/conversation_toolbar__call_audio"
-        android:icon="?attr/conversationToolbarIconCall"
-        app:showAsAction="always" />
+    </android.support.v7.widget.RecyclerView>
 
-</menu>
+</LinearLayout>

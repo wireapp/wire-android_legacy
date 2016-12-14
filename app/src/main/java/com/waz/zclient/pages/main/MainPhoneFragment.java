@@ -41,6 +41,7 @@ import com.waz.zclient.controllers.giphy.GiphyObserver;
 import com.waz.zclient.controllers.navigation.Page;
 import com.waz.zclient.controllers.onboarding.OnboardingControllerObserver;
 import com.waz.zclient.controllers.singleimage.SingleImageObserver;
+import com.waz.zclient.conversation.CollectionFragment;
 import com.waz.zclient.core.controllers.tracking.attributes.RangedAttribute;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.pages.main.backgroundmain.views.BackgroundFrameLayout;
@@ -358,6 +359,16 @@ public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container>
     public void onCancelGiphy() {
         getChildFragmentManager().popBackStackImmediate(GiphySharingPreviewFragment.TAG,
                                                         FragmentManager.POP_BACK_STACK_INCLUSIVE);
+    }
+
+    @Override
+    public void openCollection() {
+        getChildFragmentManager().beginTransaction()
+                                 .add(R.id.fl__overlay_container,
+                                      CollectionFragment.newInstance(),
+                                      CollectionFragment.TAG())
+                                 .addToBackStack(CollectionFragment.TAG())
+                                 .commit();
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
