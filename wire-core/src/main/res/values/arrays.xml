@@ -147,20 +147,6 @@
         <item>135</item>
         <item>11</item>
     </integer-array>
-    <integer-array name="hotping_from_them">
-        <item>175</item>
-        <item>11</item>
-        <item>139</item>
-        <item>11</item>
-        <item>79</item>
-        <item>11</item>
-        <item>55</item>
-        <item>11</item>
-        <item>51</item>
-        <item>11</item>
-        <item>104</item>
-        <item>11</item>
-    </integer-array>
     <integer-array name="camera">
         <item>0</item>
         <item>10</item>

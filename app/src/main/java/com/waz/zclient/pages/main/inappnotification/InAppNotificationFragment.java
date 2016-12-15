@@ -144,13 +144,8 @@ public class InAppNotificationFragment extends BaseFragment<InAppNotificationFra
 
     @Override
     public void onIncomingKnock(KnockingEvent knock) {
-        if (knock.isHotKnock()) {
-            getStoreFactory().getMediaStore().playSound(R.raw.hotping_from_them);
-            getControllerFactory().getVibratorController().vibrate(R.array.hotping_from_them);
-        } else {
-            getStoreFactory().getMediaStore().playSound(R.raw.ping_from_them);
-            getControllerFactory().getVibratorController().vibrate(R.array.ping_from_them);
-        }
+        getStoreFactory().getMediaStore().playSound(R.raw.ping_from_them);
+        getControllerFactory().getVibratorController().vibrate(R.array.ping_from_them);
     }
 
     @Override

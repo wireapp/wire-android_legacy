@@ -65,7 +65,6 @@
         <item name="conversationToolbarBackground">@drawable/toolbar_background__dark</item>
         <item name="actionModeStyle">@style/conversation_toolbar_action_mode__dark</item>
         <item name="actionModeCloseDrawable">@drawable/ic_action_close_light</item>
-        <item name="conversationToolbarCollection">@drawable/ic_action_pause_light</item>
         <item name="conversationToolbarIconVideo">@drawable/ic_action_video_light</item>
         <item name="conversationToolbarIconCall">@drawable/ic_action_call_light</item>
         <item name="conversationToolbarIconCopy">@drawable/ic_action_copy_light</item>
@@ -206,7 +205,6 @@
         <item name="conversationToolbarBackground">@drawable/toolbar_background__light</item>
         <item name="actionModeStyle">@style/conversation_toolbar_action_mode__light</item>
         <item name="actionModeCloseDrawable">@drawable/ic_action_close_dark</item>
-        <item name="conversationToolbarCollection">@drawable/ic_action_pause_dark</item>
         <item name="conversationToolbarIconVideo">@drawable/ic_action_video_dark</item>
         <item name="conversationToolbarIconCall">@drawable/ic_action_call_dark</item>
         <item name="conversationToolbarIconCopy">@drawable/ic_action_copy_dark</item>

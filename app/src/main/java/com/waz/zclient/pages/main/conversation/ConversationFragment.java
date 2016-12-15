@@ -252,8 +252,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     private IConversation.Type toConversationType;
     private String expandedMessageId;
     private ExpandableView currentExpandableView;
-    private String lastPingMessageId;
-    private String lastHotPingMessageId;
     private Toolbar toolbar;
     private TextView toolbarTitle;
     private ShieldView shieldView;
@@ -1388,25 +1386,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 messageVC.closeMessageViewControllerExtras();
             }
         }
-    }
-
-    @Override
-    public boolean ping(boolean hotKnock, String id, String message, int color) {
-        if (hotKnock) {
-            if (lastHotPingMessageId != null && lastHotPingMessageId.equals(id)) {
-                return false;
-            }
-
-            lastHotPingMessageId = id;
-        } else {
-            if (lastPingMessageId != null && lastPingMessageId.equals(id)) {
-                return false;
-            }
-
-            lastPingMessageId = id;
-        }
-
-        return true;
     }
 
     @Override
