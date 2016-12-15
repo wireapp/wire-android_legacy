@@ -947,6 +947,7 @@
     <string name="conversation_list__action_join_call">JOIN</string>
 
     <!-- Conversation Toolbar -->
+    <string name="conversation_toolbar__collection">Collection</string>
     <string name="conversation_toolbar__call_video">Video call</string>
     <string name="conversation_toolbar__call_audio">Audio call</string>
     <string name="conversation_toolbar__delete">Delete</string>

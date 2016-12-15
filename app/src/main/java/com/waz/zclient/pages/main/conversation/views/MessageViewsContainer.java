@@ -39,8 +39,6 @@ public interface MessageViewsContainer extends ServiceContainer {
 
     void closeMessageViewsExtras();
 
-    boolean ping(boolean hotKnock, String id, String message, int color);
-
     boolean isPhone();
 
     boolean isTornDown();

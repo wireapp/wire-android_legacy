@@ -107,12 +107,8 @@ public class ScalaMediaStore extends MediaStore {
         if (customSoundUri != null) {
             setCustomSoundUri(R.raw.ping_from_them, customSoundUri);
             if (RingtoneUtils.isDefaultValue(context, customSoundUri, R.raw.ping_from_them)) {
-                setCustomSoundUri(R.raw.hotping_from_them, RingtoneUtils.getUriForRawId(context, R.raw.hotping_from_them).toString());
-                setCustomSoundUri(R.raw.hotping_from_me, RingtoneUtils.getUriForRawId(context, R.raw.hotping_from_me).toString());
                 setCustomSoundUri(R.raw.ping_from_me, RingtoneUtils.getUriForRawId(context, R.raw.ping_from_me).toString());
             } else {
-                setCustomSoundUri(R.raw.hotping_from_them, customSoundUri);
-                setCustomSoundUri(R.raw.hotping_from_me, customSoundUri);
                 setCustomSoundUri(R.raw.ping_from_me, customSoundUri);
             }
         }

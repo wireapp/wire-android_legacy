@@ -35,13 +35,13 @@ import android.view.animation.Interpolator;
 import com.waz.api.ConversationsList;
 import com.waz.api.IConversation;
 import com.waz.api.ImageAsset;
+import com.waz.api.Message;
 import com.waz.api.MessageContent;
 import com.waz.api.OtrClient;
 import com.waz.api.SyncState;
 import com.waz.api.User;
 import com.waz.api.UsersList;
 import com.waz.api.Verification;
-import com.waz.api.Message;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.drawing.DrawingController;
@@ -52,6 +52,7 @@ import com.waz.zclient.controllers.location.LocationObserver;
 import com.waz.zclient.controllers.navigation.Page;
 import com.waz.zclient.controllers.navigation.PagerControllerObserver;
 import com.waz.zclient.controllers.usernames.UsernamesControllerObserver;
+import com.waz.zclient.conversation.CollectionFragment;
 import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.core.controllers.tracking.events.media.SentPictureEvent;
 import com.waz.zclient.core.stores.connect.IConnectStore;
@@ -554,6 +555,15 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
         if (fragment != null) {
             getChildFragmentManager().beginTransaction().remove(fragment).commit();
         }
+    }
+
+    @Override
+    public void openCollection() {
+        getChildFragmentManager().beginTransaction()
+                                 .add(R.id.fl__root__giphy,
+                                      CollectionFragment.newInstance(),
+                                      CollectionFragment.TAG())
+                                 .commit();
     }
 
     @Override

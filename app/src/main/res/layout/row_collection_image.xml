@@ -18,23 +18,14 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-      xmlns:app="http://schemas.android.com/apk/res-auto"
-    >
-
-    <item
-        android:id="@+id/action_collection"
-        android:orderInCategory="50"
-        android:title="@string/conversation_toolbar__call_video"
-        android:icon="?attr/conversationToolbarCollection"
-        app:showAsAction="always"
-        />
-
-    <item
-        android:id="@+id/action_audio_call"
-        android:orderInCategory="100"
-        android:title="@string/conversation_toolbar__call_audio"
-        android:icon="?attr/conversationToolbarIconCall"
-        app:showAsAction="always" />
-
-</menu>
+<com.waz.zclient.pages.main.conversation.views.AspectRatioImageView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/iv__row_giphy_image"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/giphy_grid_view__margin"
+    android:layout_marginBottom="@dimen/giphy_grid_view__margin"
+    android:layout_marginLeft="@dimen/giphy_grid_view__margin"
+    android:layout_marginRight="@dimen/giphy_grid_view__margin"
+    android:scaleType="fitStart"
+    />
