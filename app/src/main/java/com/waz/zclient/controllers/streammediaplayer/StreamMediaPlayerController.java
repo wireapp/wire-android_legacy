@@ -34,8 +34,8 @@ import com.waz.zclient.controllers.mediaplayer.IMediaPlayer;
 import com.waz.zclient.controllers.mediaplayer.MediaPlayerListener;
 import com.waz.zclient.controllers.mediaplayer.MediaPlayerState;
 import com.waz.zclient.controllers.spotify.ISpotifyController;
-import com.waz.zclient.controllers.spotify.SpotifyMediaPlayer;
 
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -150,9 +150,6 @@ public class StreamMediaPlayerController implements IStreamMediaPlayerController
         if (type == MediaProvider.SOUNDCLOUD && mediaPlayer instanceof DefaultMediaPlayer) {
             return;
         }
-        if (type == MediaProvider.SPOTIFY && spotifyController.isLoggedIn() && mediaPlayer instanceof SpotifyMediaPlayer) {
-            return;
-        }
         if (type == MediaProvider.SPOTIFY && !spotifyController.isLoggedIn() && mediaPlayer instanceof DefaultMediaPlayer) {
             return;
         }
@@ -169,10 +166,14 @@ public class StreamMediaPlayerController implements IStreamMediaPlayerController
                 this.mediaPlayer = new DefaultMediaPlayer();
                 break;
             case SPOTIFY:
-                if (spotifyController.isLoggedIn()) {
-                    this.mediaPlayer = new SpotifyMediaPlayer(context, spotifyController);
-                } else {
-                    this.mediaPlayer = new DefaultMediaPlayer();
+                if (!spotifyController.isLoggedIn()) {
+                    mediaPlayer = new DefaultMediaPlayer();
+                } else try {
+                    final Class<?> spotifyClass = Class.forName("com.waz.zclient.controllers.spotify.SpotifyMediaPlayer");
+                    final Constructor<?> cons = spotifyClass.getConstructor(Context.class, ISpotifyController.class);
+                    mediaPlayer = (IMediaPlayer) cons.newInstance(context, spotifyController);
+                } catch (Exception e) {
+                    mediaPlayer = new DefaultMediaPlayer();
                 }
                 break;
         }
