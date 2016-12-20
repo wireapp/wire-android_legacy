@@ -30,8 +30,6 @@ import com.waz.zclient.ui.text.TypefaceTextView;
 import com.waz.zclient.ui.utils.TextViewUtils;
 import com.waz.zclient.utils.OtrUtils;
 
-import java.util.Locale;
-
 
 public class FingerprintView extends TypefaceTextView implements Subscriber<Fingerprint>, UpdateListener {
     public static final String TAG = FingerprintView.class.getName();
@@ -87,8 +85,7 @@ public class FingerprintView extends TypefaceTextView implements Subscriber<Fing
                 if (TextUtils.isEmpty(otrClient.getId())) {
                     break;
                 }
-                String formattedString = OtrUtils.getFormattedFingerprint(otrClient.getId().toUpperCase(Locale.getDefault()));
-                String text = String.format(getResources().getString(R.string.otr__device_id), formattedString);
+                String text = String.format(getResources().getString(R.string.otr__device_id), otrClient.getDisplayId());
                 int deviceIDStart = text.indexOf(':') + 1;
                 if (deviceIDStart == -1) {
                     deviceIDStart = 0;
