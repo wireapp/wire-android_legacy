@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2017 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,10 +19,12 @@ package com.waz.zclient.messages
 
 import java.util
 
+import android.app.Activity
 import android.content.Context
 import android.support.v7.widget.RecyclerView.{OnScrollListener, ViewHolder}
 import android.support.v7.widget.{DefaultItemAnimator, LinearLayoutManager, RecyclerView}
 import android.util.AttributeSet
+import android.view.WindowManager
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.model.{ConvId, Dim2, MessageData, MessageId}
@@ -55,6 +57,19 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
     // always reuse view holder, we will handle animations ourselves
     override def canReuseUpdatedViewHolder(viewHolder: ViewHolder, payloads: util.List[AnyRef]): Boolean = true
   })
+
+  adapter.ephemeralCount { set =>
+    val count = set.size
+    Option(getContext).foreach {
+      case a:Activity => {
+        count match {
+          case 0 => a.getWindow.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+          case _ => a.getWindow.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
+      }
+      case _ => // not attahced, ignore
+    }
+  }
 
   scrollController.onScroll { case Scroll(pos, smooth) =>
     verbose(s"Scrolling to pos: $pos, smooth: $smooth")
@@ -106,7 +121,7 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesListAdapter)(im
   private val selection = inject[SelectionController].messages
   private val msgsController = inject[MessagesController]
 
-  private var id = Option.empty[MessageId]
+  var id = Option.empty[MessageId]
   private var opts = Option.empty[MsgBindOptions]
   private var _isFocused = false
 

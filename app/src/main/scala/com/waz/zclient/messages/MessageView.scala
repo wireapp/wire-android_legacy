@@ -118,6 +118,8 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
 
   def isFooterHiding = !hasFooter && getFooter.isDefined
 
+  def isEphemeral = msg.isEphemeral
+
   private def getSeparatorType(msg: MessageData, prev: Option[MessageData], isFirstUnread: Boolean): Option[MsgPart] = msg.msgType match {
     case Message.Type.CONNECT_REQUEST => None
     case _ =>
