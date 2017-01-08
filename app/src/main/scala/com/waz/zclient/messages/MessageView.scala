@@ -146,7 +146,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
     opts.position == 0 && msg.msgType == Message.Type.MEMBER_JOIN && opts.convType == ConversationType.Group
 
   private def shouldShowFooter(mAndL: MessageAndLikes, opts: MsgBindOptions): Boolean =
-    mAndL.likes.nonEmpty || selection.isFocused(mAndL.message.id) || opts.isLastSelf
+    mAndL.likes.nonEmpty || selection.isFocused(mAndL.message.id) || (opts.isLastSelf && opts.convType != ConversationType.Group)
 
   def getFooter = listParts.lastOption.collect { case footer: FooterPartView => footer }
 }
