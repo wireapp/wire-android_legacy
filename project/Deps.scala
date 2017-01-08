@@ -27,8 +27,8 @@ object Deps {
   lazy val avsVersion = Option(System.getenv("AVS_VERSION")).getOrElse("2.7.19")
   lazy val avsName = Option(System.getenv("AVS_NAME")).getOrElse("avs")
 
-  val supportLibVersion = "23.4.0"
-  val playServicesVersion = "7.8.+"
+  val supportLibVersion = "24.0.0"
+  val playServicesVersion = "10.0.1"
   val audioVersion = "1.195.0"
   val checkstyleVersion = "6.17"
 

@@ -39,11 +39,10 @@ lintStrict := false
 
 val subProjectSettings = android.Plugin.buildAar ++ Seq(
   libraryProject := true,
-  platformTarget := "android-23",
+  platformTarget := "android-24",
   useProguard := false,
   debugIncludesTests := false,
   dexMulti := true,
-  dexInputs ~= { di => (di._1, di._2 filterNot (_.getName startsWith "scala-library")) },
   publishArtifact in (Compile, packageBin) := false,
   publishArtifact in (Compile, packageDoc) := false,
   publishArtifact in packageDoc := false,
@@ -82,7 +81,7 @@ lazy val app = Project("zclient-app", file("app"))
       val libs = localProjects.value
       libs.map(l => l.layout.base.getName -> l).toMap.values.toSeq
     },
-    platformTarget := "android-23",
+    platformTarget := "android-24",
     proguardCache := Seq(),
     debugIncludesTests := false,
     useProguard := true,
