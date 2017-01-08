@@ -133,13 +133,21 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
       })
   }
 
+  private def systemMessage(m: MessageData) = {
+    import Message.Type._
+    m.isSystemMessage || (m.msgType match {
+      case OTR_DEVICE_ADDED | OTR_UNVERIFIED | OTR_VERIFIED | STARTED_USING_DEVICE => true
+      case _ => false
+    })
+  }
+
   private def shouldShowChathead(msg: MessageData, prev: Option[MessageData]) = {
-    val userChanged = prev.exists(m => m.userId != msg.userId || m.isSystemMessage)
+    val userChanged = prev.forall(m => m.userId != msg.userId || systemMessage(m))
     val recalled = msg.msgType == Message.Type.RECALLED
     val edited = msg.editTime != Instant.EPOCH
     val knock = msg.msgType == Message.Type.KNOCK
 
-    !knock && !msg.isSystemMessage && (recalled || edited || userChanged)
+    !knock && !systemMessage(msg) && (recalled || edited || userChanged)
   }
 
   private def shouldShowInviteBanner(msg: MessageData, opts: MsgBindOptions) =
