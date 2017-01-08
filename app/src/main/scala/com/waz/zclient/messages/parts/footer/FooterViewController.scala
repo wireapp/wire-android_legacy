@@ -18,6 +18,7 @@
 package com.waz.zclient.messages.parts.footer
 
 import android.content.Context
+import com.waz.api.Message
 import com.waz.api.Message.Status
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.MessageData
@@ -109,8 +110,10 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
   }
 
   val linkCallback = new Runnable() {
-    def run() = {
-      //TODO retry
+    def run() = for (z <- zms.head; m <- message.head) {
+      if (m.state == Message.Status.FAILED || m.state == Message.Status.FAILED_READ) {
+        z.messages.retryMessageSending(m.convId, m.id)
+      }
     }
   }
 
