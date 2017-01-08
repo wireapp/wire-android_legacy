@@ -324,7 +324,6 @@ dependencies {
     compile deps.localytics
     compile deps.roundedimageview
     compile deps.rebound
-    compile deps.gridview
 
     // For spotify
     compile deps.spotifyAuth
