@@ -145,8 +145,12 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
   private def shouldShowInviteBanner(msg: MessageData, opts: MsgBindOptions) =
     opts.position == 0 && msg.msgType == Message.Type.MEMBER_JOIN && opts.convType == ConversationType.Group
 
-  private def shouldShowFooter(mAndL: MessageAndLikes, opts: MsgBindOptions): Boolean =
-    mAndL.likes.nonEmpty || selection.isFocused(mAndL.message.id) || (opts.isLastSelf && opts.convType != ConversationType.Group)
+  private def shouldShowFooter(mAndL: MessageAndLikes, opts: MsgBindOptions): Boolean = {
+    mAndL.likes.nonEmpty ||
+      selection.isFocused(mAndL.message.id) ||
+      (opts.isLastSelf && opts.convType != ConversationType.Group) ||
+      mAndL.message.state == Message.Status.FAILED || mAndL.message.state == Message.Status.FAILED_READ
+  }
 
   def getFooter = listParts.lastOption.collect { case footer: FooterPartView => footer }
 }
