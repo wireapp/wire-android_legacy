@@ -20,14 +20,13 @@ package com.waz.zclient.messages.parts.assets
 import android.view.View
 import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.model.{AssetData, Dim2, MessageContent, MessageData}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.controllers.AssetsController
-import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.ClickableViewPart
+import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.parts.assets.DeliveryState.OtherUploading
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{StringUtils, _}
@@ -44,17 +43,12 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper {
 
   private lazy val content: View = findById[View](R.id.content)
 
-  val message = Signal[MessageData]()
   val asset = controller.assetSignal(message)
   val deliveryState = DeliveryState(message, asset)
   val completed = deliveryState.map(_ == DeliveryState.Complete)
 
   val assetBackground = new AssetBackground(deliveryState.map(_ == OtherUploading))
   setBackground(assetBackground)
-
-  override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    message ! msg
-  }
 
   //toggle content visibility to show only progress dot background if other side is uploading asset
   deliveryState.map {

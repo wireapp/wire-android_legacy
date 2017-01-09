@@ -1,20 +1,20 @@
 /**
- * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+  * Wire
+  * Copyright (C) 2017 Wire Swiss GmbH
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
 package com.waz.zclient.messages
 
 import android.content.Context
@@ -45,11 +45,14 @@ import org.threeten.bp.{Instant, LocalDateTime, ZoneId}
 
 trait MessageViewPart extends View {
   val tpe: MsgPart
+  protected val messageAndLikes = Signal[MessageAndLikes]()
 
   def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit
 
-  def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit =
+  def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
     set(msg.message, part, opts)
+    messageAndLikes ! msg
+  }
 
   //By default disable clicks for all view types. There are fewer that need click functionality than those that don't
   this.onClick {}
@@ -57,16 +60,56 @@ trait MessageViewPart extends View {
 }
 
 //Marker for views that should hide/display the footer when clicked and show the menu when long clicked.
-trait ClickableViewPart extends MessageViewPart {
-
+trait ClickableViewPart extends MessageViewPart with ViewHelper {
+  import ClickableViewPart._
+  import com.waz.threading.Threading.Implicits.Ui
+  val zms = inject[Signal[ZMessaging]]
+  val reactions = zms.map(_.reactions)
   val onClicked = EventStream[Unit]()
 
-  this.onClick {
+  protected val message = Signal[MessageData]()
+  message.disableAutowiring() //important to ensure the signal keeps updating itself in the absence of any listeners
+
+  private val likedByMe = messageAndLikes map { m => m.likedBySelf }
+
+  override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+    message ! msg
+  }
+
+  def onSingleClick = {
     onClicked ! ({})
     getParent.asInstanceOf[View].performClick()
   }
 
+  def onDoubleClick = {
+    if (message.currentValue.map(_.msgType).exists(isLikeable)) {
+      for (reacts <- reactions.head) {
+        if (likedByMe.currentValue.get) reacts.unlike(message.currentValue.get.convId, message.currentValue.get.id)
+        else reacts.like(message.currentValue.get.convId, message.currentValue.get.id)
+        getParent.asInstanceOf[View].performClick()
+      }
+    }
+  }
+
+  this.onClick ({ onSingleClick }, { onDoubleClick })
+
   this.onLongClick(getParent.asInstanceOf[View].performLongClick())
+}
+
+object ClickableViewPart {
+  import Message.Type._
+  val likableTypes = Set(
+    ANY_ASSET,
+    ASSET,
+    AUDIO_ASSET,
+    LOCATION,
+    TEXT,
+    TEXT_EMOJI_ONLY,
+    RICH_MEDIA,
+    VIDEO_ASSET
+  )
+
+  def isLikeable(mt: Message.Type) = likableTypes.contains(mt)
 }
 
 // Marker for view parts that should be laid out as in FrameLayout (instead of LinearLayout)

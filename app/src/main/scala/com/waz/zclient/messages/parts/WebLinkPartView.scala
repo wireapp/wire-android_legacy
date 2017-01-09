@@ -52,7 +52,6 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
   lazy val urlTextView: TextView    = findById(R.id.ttv__row_conversation__link_preview__url)
   lazy val imageView: ImageView     = findById(R.id.iv__row_conversation__link_preview__image)
 
-  private val message = Signal[MessageData]()
   private val content = Signal[MessageContent]()
 
   inflate(R.layout.message_part_weblink_content)
@@ -114,8 +113,8 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
   }
 
   override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+    super.set(msg, part, opts)
     verbose(s"set $part")
-    message ! msg
     part foreach { content ! _ }
   }
 }

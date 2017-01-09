@@ -122,6 +122,7 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
     mAndL <- messageAndLikes.head
   } {
     val msg = mAndL.message
+    // TODO tracking?
     if (mAndL.likedBySelf) reacts.unlike(msg.convId, msg.id)
     else reacts.like(msg.convId, msg.id)
   }

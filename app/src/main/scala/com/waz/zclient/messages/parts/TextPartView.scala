@@ -41,7 +41,6 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
   private lazy val redactedTypeface = TypefaceUtils.getTypeface(TypefaceUtils.getRedactedTypedaceName)
 
   private lazy val accentController = inject[AccentColorController]
-  private val message = Signal[MessageData]()
   private val expired = message map { m => m.isEphemeral && m.expired }
   private val typeface = expired map { if (_) redactedTypeface else originalTypeface }
   private val color = expired flatMap[Either[ColorStateList, AccentColor]] {
@@ -59,10 +58,9 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
   }
 
   override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+    super.set(msg, part, opts)
     setTextSize(TypedValue.COMPLEX_UNIT_PX, if (isEmojiOnly(msg, part)) textSizeEmoji else textSizeRegular)
     setTextLink(part.fold(msg.contentString)(_.content))
-
-    message ! msg
   }
 
   def isEmojiOnly(msg: MessageData, part: Option[MessageContent]) =

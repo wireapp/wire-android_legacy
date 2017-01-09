@@ -18,14 +18,15 @@
 package com.waz.zclient
 
 import android.content.res.TypedArray
-import android.graphics.{LightingColorFilter, Rect}
+import android.graphics.LightingColorFilter
 import android.graphics.drawable.LayerDrawable
 import android.support.annotation.StyleableRes
 import android.util.AttributeSet
-import android.view.{View, ViewGroup}
 import android.view.View._
+import android.view.{View, ViewGroup}
 import android.widget.SeekBar
 import com.waz.zclient.ui.utils.ResourceUtils
+import com.waz.zclient.ui.views.OnDoubleClickListener
 
 package object utils {
 
@@ -60,6 +61,11 @@ package object utils {
     //TODO could also handle a set of views?
     def onClick(f: => Unit): Unit = view.setOnClickListener(new OnClickListener {
       override def onClick(v: View): Unit = f
+    })
+
+    def onClick(onSingleClickArg: => Unit, onDoubleClickArg: => Unit): Unit = view.setOnClickListener(new OnDoubleClickListener {
+      override def onSingleClick(): Unit = onSingleClickArg
+      override def onDoubleClick(): Unit = onDoubleClickArg
     })
 
     def onLongClick(f: => Boolean): Unit = view.setOnLongClickListener(new OnLongClickListener {

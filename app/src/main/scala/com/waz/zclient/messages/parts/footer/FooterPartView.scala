@@ -49,7 +49,6 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
   inflate(R.layout.message_footer_content)
 
   val controller = new FooterViewController
-  val message = controller.message
 
   val height = Signal[Int]()
   val contentOffset = Signal[Float]()

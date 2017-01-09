@@ -21,7 +21,6 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
-import com.waz.ZLog.ImplicitTag._
 import com.waz.threading.Threading
 import com.waz.zclient.R
 import com.waz.zclient.controllers.AssetsController
