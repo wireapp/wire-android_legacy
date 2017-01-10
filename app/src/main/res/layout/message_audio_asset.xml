@@ -19,6 +19,7 @@
 
 -->
 <com.waz.zclient.messages.parts.assets.AudioAssetPartView xmlns:android="http://schemas.android.com/apk/res/android"
+                                                          android:id="@+id/message_audio_asset"
                                                           android:layout_width="match_parent"
                                                           android:layout_height="@dimen/content__audio_message__view_height"
                                                           android:layout_marginEnd="@dimen/content__padding_right"
