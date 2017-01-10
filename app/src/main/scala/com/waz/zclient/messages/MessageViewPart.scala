@@ -45,13 +45,11 @@ import org.threeten.bp.{Instant, LocalDateTime, ZoneId}
 
 trait MessageViewPart extends View {
   val tpe: MsgPart
-  protected val messageAndLikes = Signal[MessageAndLikes]()
 
   def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit
 
   def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
     set(msg.message, part, opts)
-    messageAndLikes ! msg
   }
 
   //By default disable clicks for all view types. There are fewer that need click functionality than those that don't
@@ -67,27 +65,33 @@ trait ClickableViewPart extends MessageViewPart with ViewHelper {
   val reactions = zms.map(_.reactions)
   val onClicked = EventStream[Unit]()
 
+  protected val messageAndLikes = Signal[MessageAndLikes]()
   protected val message = Signal[MessageData]()
   message.disableAutowiring() //important to ensure the signal keeps updating itself in the absence of any listeners
 
   private val likedByMe = messageAndLikes map { m => m.likedBySelf }
 
-  override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    message ! msg
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+    super.set(msg, part, opts)
+    messageAndLikes ! msg
+    message ! msg.message
   }
 
-  def onSingleClick = {
+  def onSingleClick() = {
     onClicked ! ({})
     getParent.asInstanceOf[View].performClick()
   }
 
-  def onDoubleClick = {
-    if (message.currentValue.map(_.msgType).exists(isLikeable)) {
-      for (reacts <- reactions.head) {
-        if (likedByMe.currentValue.get) reacts.unlike(message.currentValue.get.convId, message.currentValue.get.id)
-        else reacts.like(message.currentValue.get.convId, message.currentValue.get.id)
-        getParent.asInstanceOf[View].performClick()
-      }
+  def onDoubleClick() = {
+    for {
+      msg <- message.currentValue
+      if isLikeable(msg.msgType)
+      reacts <- reactions.head
+      likedByMe <- likedByMe.currentValue
+    } {
+      if (likedByMe) reacts.unlike(msg.convId, msg.id)
+      else reacts.like(msg.convId, msg.id)
+      getParent.asInstanceOf[View].performClick() //perform click to change focus
     }
   }
 

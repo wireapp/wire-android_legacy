@@ -20,7 +20,6 @@ package com.waz.zclient.messages.parts
 import android.content.Context
 import android.support.v7.widget.CardView
 import android.util.AttributeSet
-import android.view.View
 import android.widget.{ImageView, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
@@ -33,7 +32,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.controllers.BrowserController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
-import com.waz.zclient.messages.{ClickableViewPart, MessageViewPart, MsgPart}
+import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.utils._
 import com.waz.zclient.views.ImageAssetDrawable.{RequestBuilder, ScaleType, State}
 import com.waz.zclient.views.ImageController.{DataImage, ImageUri}
@@ -113,7 +112,6 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
   }
 
   override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    super.set(msg, part, opts)
     verbose(s"set $part")
     part foreach { content ! _ }
   }

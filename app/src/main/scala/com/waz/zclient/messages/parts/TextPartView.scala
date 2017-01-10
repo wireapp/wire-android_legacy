@@ -58,7 +58,6 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
   }
 
   override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    super.set(msg, part, opts)
     setTextSize(TypedValue.COMPLEX_UNIT_PX, if (isEmojiOnly(msg, part)) textSizeEmoji else textSizeRegular)
     setTextLink(part.fold(msg.contentString)(_.content))
   }

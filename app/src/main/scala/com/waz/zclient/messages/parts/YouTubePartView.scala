@@ -33,7 +33,7 @@ import com.waz.utils._
 import com.waz.utils.events.Signal
 import com.waz.zclient.controllers.BrowserController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
-import com.waz.zclient.messages.{ClickableViewPart, MessageViewPart, MsgPart}
+import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.utils.ContextUtils._
@@ -98,7 +98,6 @@ class YouTubePartView(context: Context, attrs: AttributeSet, style: Int) extends
   }
 
   override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    super.set(msg, part, opts)
     width.mutateOrDefault(identity, opts.listDimensions.width)
     part foreach { content ! _ }
   }

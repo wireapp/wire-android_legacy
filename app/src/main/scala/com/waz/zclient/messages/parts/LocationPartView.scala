@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2017 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ import android.view.View
 import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NetworkMode
-import com.waz.model.{AssetId, Dim2}
+import com.waz.model.{AssetId, Dim2, MessageContent, MessageData}
 import com.waz.service.NetworkModeService
 import com.waz.service.media.GoogleMapsMediaService
 import com.waz.threading.Threading
@@ -33,6 +33,7 @@ import com.waz.utils._
 import com.waz.utils.events.Signal
 import com.waz.zclient.controllers.BrowserController
 import com.waz.zclient.controllers.global.AccentColorController
+import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
@@ -90,6 +91,10 @@ class LocationPartView(context: Context, attrs: AttributeSet, style: Int) extend
   showError.on(Threading.Ui) { error.setVisible }
 
   accent.accentColor { c => pinView.setTextColor(c.getColor()) }
+
+  override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+    
+  }
 
   onClicked { _ =>
     message.currentValue.flatMap(_.location) foreach { browser.openLocation }

@@ -61,7 +61,6 @@ trait ActionableAssetPart extends AssetPart {
   protected val assetActionButton: AssetActionButton = findById(R.id.action_button)
 
   override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    super.set(msg, part, opts)
     assetActionButton.message.publish(msg, Threading.Ui)
   }
 }
@@ -143,7 +142,6 @@ trait ImageLayoutAssetPart extends AssetPart {
   }
 
   override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    super.set(msg, part, opts)
     maxWidth.mutateOrDefault(identity, opts.listDimensions.width)
     maxHeight ! opts.listDimensions.height
   }
