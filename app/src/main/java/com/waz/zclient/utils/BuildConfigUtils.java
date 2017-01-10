@@ -24,7 +24,6 @@ import android.content.pm.PackageManager;
 import android.os.Environment;
 import com.waz.api.AvsLogLevel;
 import com.waz.api.LogLevel;
-import com.waz.service.BackendConfig;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.R;
 import timber.log.Timber;
@@ -103,11 +102,4 @@ public class BuildConfigUtils {
         return AvsLogLevel.ERROR;
     }
 
-    public static BackendConfig defaultBackend() {
-        if (BuildConfig.USE_STAGING_BACKEND) {
-            return BackendConfig.StagingBackend();
-        } else {
-            return BackendConfig.ProdBackend();
-        }
-    }
 }

@@ -32,9 +32,10 @@ import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events.Signal
 import com.waz.zclient.controllers.BrowserController
-import com.waz.zclient.controllers.global.AccentColorController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
+import com.waz.zclient.ui.theme.ThemeUtils
+import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.views.ImageAssetDrawable
@@ -42,9 +43,11 @@ import com.waz.zclient.views.ImageAssetDrawable.State
 import com.waz.zclient.views.ImageController.{DataImage, ImageSource, WireImage}
 import com.waz.zclient.{R, ViewHelper}
 
-class LocationPartView(context: Context, attrs: AttributeSet, style: Int) extends CardView(context, attrs, style) with ClickableViewPart with ViewHelper {
+class LocationPartView(context: Context, attrs: AttributeSet, style: Int) extends CardView(context, attrs, style) with ClickableViewPart with ViewHelper with EphemeralTextPart {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
+
+  import Threading.Implicits.Ui
 
   override val tpe = MsgPart.Location
 
@@ -52,12 +55,13 @@ class LocationPartView(context: Context, attrs: AttributeSet, style: Int) extend
 
   val network = inject[NetworkModeService]
   val browser = inject[BrowserController]
-  val accent = inject[AccentColorController]
 
   val imageView: View   = findById(R.id.fl__row_conversation__map_image_container)
   val tvName: TextView  = findById(R.id.ttv__row_conversation_map_name)
   val pinView: TextView = findById(R.id.gtv__row_conversation__map_pin_glyph)
-  val error: View       = findById(R.id.ttv__row_conversation_map_image_placeholder_text)
+  val placeholder: View = findById(R.id.ttv__row_conversation_map_image_placeholder_text)
+
+  override val textView: TextView = tvName
 
   private val imageSize = Signal[Dim2]()
 
@@ -75,29 +79,49 @@ class LocationPartView(context: Context, attrs: AttributeSet, style: Int) extend
   val loadingFailed = imageDrawable.state.map {
     case State.Failed(_) => true
     case _ => false
-  }
+  } .orElse(Signal const false)
 
   val imageLoaded = imageDrawable.state.map {
     case State.Loaded(_, _, _) => true
     case _ => false
+  } .orElse(Signal const false)
+
+  val showPlaceholder = expired flatMap {
+    case true => Signal const false
+    case false =>
+      loadingFailed.zip(network.networkMode) map { case (failed, mode) => failed && mode == NetworkMode.OFFLINE }
   }
 
-  val showError = loadingFailed.zip(network.networkMode).map { case (failed, mode) => failed && mode != NetworkMode.OFFLINE }
+  val showPin = expired flatMap {
+    case true => Signal const false
+    case false => imageLoaded
+  }
 
-  imageView.setBackground(imageDrawable)
+  val drawable =
+    for {
+      hide <- expired
+      acc <- accentController.accentColor
+    } yield
+      if (hide) new ColorDrawable(ColorUtils.injectAlpha(ThemeUtils.getEphemeralBackgroundAlpha(context), acc.getColor()))
+      else imageDrawable
+
+  drawable.on(Threading.Ui) { imageView.setBackground }
 
   name { tvName.setText }
-  imageLoaded.on(Threading.Ui) { pinView.setVisible }
-  showError.on(Threading.Ui) { error.setVisible }
+  showPin.on(Threading.Ui) { pinView.setVisible }
+  showPlaceholder.on(Threading.Ui) { placeholder.setVisible }
 
-  accent.accentColor { c => pinView.setTextColor(c.getColor()) }
+  accentController.accentColor { c => pinView.setTextColor(c.getColor()) }
 
   override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    
+
   }
 
   onClicked { _ =>
-    message.currentValue.flatMap(_.location) foreach { browser.openLocation }
+    expired.head foreach {
+      case true => // ignore click on expired msg
+      case false => message.currentValue.flatMap(_.location) foreach { browser.openLocation }
+    }
   }
 
   override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {

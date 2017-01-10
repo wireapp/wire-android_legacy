@@ -88,7 +88,7 @@ public class BackendPicker {
 
     @Nullable
     private BackendConfig getBackendConfig() {
-        return BuildConfig.SHOW_BACKEND_PICKER ? getCustomBackend() : BuildConfigUtils.defaultBackend();
+        return BuildConfig.SHOW_BACKEND_PICKER ? getCustomBackend() : BackendConfig.ProdBackend();
     }
 
     @SuppressLint("CommitPrefEdits") // lint not seeing commit

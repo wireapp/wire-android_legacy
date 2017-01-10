@@ -42,6 +42,7 @@
             android:background="@drawable/pin_bg"
             android:textSize="@dimen/content__location_message__pin_icon__text_size"
             android:text="@string/glyph__location"
+            android:visibility="gone"
             />
 
         <com.waz.zclient.ui.text.TypefaceTextView
@@ -55,6 +56,7 @@
             android:gravity="center"
             android:text="@string/content__location__no_map_placeholder"
             app:font="@string/wire__typeface__thin"
+            android:visibility="gone"
             />
 
     </FrameLayout>
