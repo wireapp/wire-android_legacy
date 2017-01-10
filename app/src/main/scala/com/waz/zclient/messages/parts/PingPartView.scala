@@ -20,12 +20,10 @@ package com.waz.zclient.messages.parts
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.LinearLayout
-import com.waz.model.{MessageContent, MessageData}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.views.ChatheadView
-import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.SyncEngineSignals.DisplayName.{Me, Other}
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, SyncEngineSignals}
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
@@ -55,8 +53,6 @@ class PingPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
   val zMessaging = inject[Signal[ZMessaging]]
   val signals = inject[SyncEngineSignals]
 
-  val message = Signal[MessageData]()
-
   val userName = signals.displayName(message)
 
   val text = userName map {
@@ -78,7 +74,4 @@ class PingPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
   // TODO: animate new ping, we need some generic controller to track message animations acrosss recycled views
 
-  override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    message.publish(msg, Threading.Ui)
-  }
 }

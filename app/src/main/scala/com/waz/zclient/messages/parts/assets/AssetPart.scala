@@ -21,6 +21,7 @@ import android.view.View
 import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.{AssetData, Dim2, MessageContent, MessageData}
+import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
@@ -60,8 +61,9 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper {
 trait ActionableAssetPart extends AssetPart {
   protected val assetActionButton: AssetActionButton = findById(R.id.action_button)
 
-  override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    assetActionButton.message.publish(msg, Threading.Ui)
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+    super.set(msg, part, opts)
+    assetActionButton.message.publish(msg.message, Threading.Ui)
   }
 }
 
@@ -141,7 +143,8 @@ trait ImageLayoutAssetPart extends AssetPart {
     setLayoutParams(returning(getLayoutParams)(_.height = h))
   }
 
-  override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+    super.set(msg, part, opts)
     maxWidth.mutateOrDefault(identity, opts.listDimensions.width)
     maxHeight ! opts.listDimensions.height
   }

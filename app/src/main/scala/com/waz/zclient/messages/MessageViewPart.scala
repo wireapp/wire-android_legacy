@@ -45,11 +45,12 @@ import org.threeten.bp.{Instant, LocalDateTime, ZoneId}
 
 trait MessageViewPart extends View {
   val tpe: MsgPart
-
-  def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit
+  protected val messageAndLikes = Signal[MessageAndLikes]()
+  protected val message = messageAndLikes.map(_.message)
+  message.disableAutowiring() //important to ensure the signal keeps updating itself in the absence of any listeners
 
   def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    set(msg.message, part, opts)
+    messageAndLikes.publish(msg, Threading.Ui)
   }
 
   //By default disable clicks for all view types. There are fewer that need click functionality than those that don't
@@ -65,17 +66,7 @@ trait ClickableViewPart extends MessageViewPart with ViewHelper {
   val reactions = zms.map(_.reactions)
   val onClicked = EventStream[Unit]()
 
-  protected val messageAndLikes = Signal[MessageAndLikes]()
-  protected val message = Signal[MessageData]()
-  message.disableAutowiring() //important to ensure the signal keeps updating itself in the absence of any listeners
-
   private val likedByMe = messageAndLikes map { m => m.likedBySelf }
-
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    super.set(msg, part, opts)
-    messageAndLikes ! msg
-    message ! msg.message
-  }
 
   def onSingleClick() = {
     onClicked ! ({})
@@ -133,8 +124,9 @@ trait TimeSeparator extends MessageViewPart with ViewHelper {
 
   text.on(Threading.Ui)(timeText.setTransformedText)
 
-  def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    this.time ! msg.time
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+    super.set(msg, part, opts)
+    this.time ! msg.message.time
     unreadDot.show ! opts.isFirstUnread
   }
 }
@@ -192,7 +184,6 @@ class UserPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
   private val zms = inject[Signal[ZMessaging]]
   private val userId = Signal[UserId]()
-  private val message = Signal[MessageData]
 
   private val user = Signal(zms, userId).flatMap {
     case (z, id) => z.usersStorage.signal(id)
@@ -212,9 +203,9 @@ class UserPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
   stateGlyph.collect { case Some(glyph) => glyph } { tvStateGlyph.setText }
 
-  override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    userId ! msg.userId
-    message ! msg
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+    super.set(msg, part, opts)
+    userId ! msg.message.userId
   }
 }
 
@@ -223,8 +214,6 @@ class EmptyPartView(context: Context, attrs: AttributeSet, style: Int) extends V
   def this(context: Context) = this(context, null, 0)
 
   override val tpe = MsgPart.Empty
-
-  override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = ()
 }
 
 class EphemeralDotsView(context: Context, attrs: AttributeSet, style: Int) extends View(context, attrs, style) with ViewHelper with FrameLayoutPart {
@@ -236,6 +225,8 @@ class EphemeralDotsView(context: Context, attrs: AttributeSet, style: Int) exten
 
   setBackground(background)
 
-  override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit =
-    background.setMessage(msg.id)
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+    super.set(msg, part, opts)
+    background.setMessage(msg.message.id)
+  }
 }

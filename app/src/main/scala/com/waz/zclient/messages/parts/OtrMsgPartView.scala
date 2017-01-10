@@ -22,12 +22,10 @@ import android.net.Uri
 import android.util.AttributeSet
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.model.{MessageContent, MessageData}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.controllers.global.AccentColorController
 import com.waz.zclient.controllers.{BrowserController, ScreenController}
-import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, SyncEngineSignals, SystemMessageView}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
@@ -45,8 +43,6 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends 
 
   val accentColor = inject[AccentColorController]
   val signals = inject[SyncEngineSignals]
-
-  val message = Signal[MessageData]()
 
   val msgType = message.map(_.msgType)
 
@@ -93,7 +89,4 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends 
     }
   }
 
-  override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    message.publish(msg, Threading.Ui)
-  }
 }

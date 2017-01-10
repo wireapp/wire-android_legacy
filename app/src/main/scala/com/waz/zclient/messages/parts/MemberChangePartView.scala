@@ -22,11 +22,9 @@ import android.util.AttributeSet
 import android.widget.{GridLayout, LinearLayout}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
-import com.waz.model.{MessageContent, MessageData}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.SyncEngineSignals.DisplayName.{Me, Other}
 import com.waz.zclient.messages._
 import com.waz.zclient.utils.ContextUtils._
@@ -47,8 +45,6 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) ex
 
   val messageView: SystemMessageView  = findById(R.id.smv_header)
   val gridView: MembersGridView       = findById(R.id.rv__row_conversation__people_changed__grid)
-
-  private val message = Signal[MessageData]()
 
   val iconGlyph = message map { msg =>
     msg.msgType match {
@@ -92,9 +88,6 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) ex
 
   message.map(_.members.toSeq.sortBy(_.str)) { gridView.users ! _ }
 
-  override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    message ! msg
-  }
 }
 
 class MembersGridView(context: Context, attrs: AttributeSet, style: Int) extends GridLayout(context, attrs, style) with ChatheadsRecyclerView {

@@ -27,6 +27,7 @@ import com.waz.api.Message.Part
 import com.waz.model.GenericContent.LinkPreview
 import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
+import com.waz.service.messages.MessageAndLikes
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -111,7 +112,8 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
     content.currentValue foreach { c => browser.openUrl(c.contentAsUri) }
   }
 
-  override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+    super.set(msg, part, opts)
     verbose(s"set $part")
     part foreach { content ! _ }
   }

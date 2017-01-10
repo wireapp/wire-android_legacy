@@ -20,14 +20,15 @@ package com.waz.zclient.messages.parts
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.LinearLayout
-import com.waz.model.{MessageContent, MessageData}
+import com.waz.model.MessageContent
+import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.returning
-import com.waz.zclient.utils.RichView
 import com.waz.zclient.controllers.theme.IThemeController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.ui.views.ZetaButton
+import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
 
 class InviteBannerPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
@@ -46,6 +47,6 @@ class InviteBannerPartView(context: Context, attrs: AttributeSet, style: Int) ex
       }
     }
 
-  override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit =
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit =
     showContactsButton.setIsFilled(themeController.isDarkTheme)
 }

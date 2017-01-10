@@ -23,6 +23,7 @@ import android.widget.LinearLayout
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model._
 import com.waz.service.ZMessaging
+import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.messages.MessageView.MsgBindOptions
@@ -65,8 +66,9 @@ class MissedCallPartView(context: Context, attrs: AttributeSet, style: Int) exte
     TextViewUtils.boldText(tvMessage)
   }
 
-  override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    userId ! msg.userId
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+    super.set(msg, part, opts)
+    userId ! msg.message.userId
 
     gtvIcon.setText(if (opts.isSelf) R.string.glyph__call else R.string.glyph__end_call)
     gtvIcon.setTextColor(getColor(if (opts.isSelf) R.color.accent_green else R.color.accent_red))

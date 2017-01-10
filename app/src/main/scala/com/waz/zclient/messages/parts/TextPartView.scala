@@ -24,7 +24,6 @@ import android.widget.TextView
 import com.waz.api.{AccentColor, Message}
 import com.waz.model.{MessageContent, MessageData}
 import com.waz.service.messages.MessageAndLikes
-import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.controllers.global.AccentColorController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
@@ -43,9 +42,10 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
   val textSizeRegular = context.getResources.getDimensionPixelSize(R.dimen.wire__text_size__regular)
   val textSizeEmoji = context.getResources.getDimensionPixelSize(R.dimen.wire__text_size__emoji)
 
-  override def set(msg: MessageData, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
-    setTextSize(TypedValue.COMPLEX_UNIT_PX, if (isEmojiOnly(msg, part)) textSizeEmoji else textSizeRegular)
-    setTextLink(part.fold(msg.contentString)(_.content))
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+    super.set(msg, part, opts)
+    setTextSize(TypedValue.COMPLEX_UNIT_PX, if (isEmojiOnly(msg.message, part)) textSizeEmoji else textSizeRegular)
+    setTextLink(part.fold(msg.message.contentString)(_.content))
   }
 
   def isEmojiOnly(msg: MessageData, part: Option[MessageContent]) =
@@ -63,7 +63,6 @@ trait EphemeralTextPart extends MessageViewPart { self: ViewHelper =>
 
   lazy val accentController = inject[AccentColorController]
 
-  val message = Signal[MessageData]()
   val expired = message map { m => m.isEphemeral && m.expired }
   val typeface = expired map { if (_) redactedTypeface else originalTypeface }
   val color = expired flatMap[Either[ColorStateList, AccentColor]] {
@@ -82,7 +81,5 @@ trait EphemeralTextPart extends MessageViewPart { self: ViewHelper =>
 
     originalTypeface // ensure lazy is initialized before first message update
     originalColor
-
-    message.publish(msg.message, Threading.Ui)
   }
 }
