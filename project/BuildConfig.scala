@@ -51,7 +51,6 @@ case class BuildConfig (
   def setting = Seq[(String, String, String)] (
     ("boolean", "USE_HOCKEY_UPDATE", useHockeyUpdate.toString),
     ("boolean", "USE_EDGE_BACKEND", useEdgeBackend.toString),
-    ("boolean", "USE_STAGING_BACKEND", useStagingBackend.toString),
     ("boolean", "SHOW_GRIDOVERLAY", showGridOverlay.toString),
     ("boolean", "SHOW_MENTIONING", showMentioning.toString),
     ("boolean", "SHOW_DEVELOPER_OPTIONS", showDeveloperOptions.toString),
