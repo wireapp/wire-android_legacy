@@ -10,7 +10,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.2'
+        classpath 'com.android.tools.build:gradle:2.2.3'
         classpath 'com.jakewharton.hugo:hugo-plugin:1.2.1'
         classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
         classpath 'com.mutualmobile.gradle.plugins:dexinfo:0.1.2'

@@ -34,6 +34,7 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.ScrollController.Scroll
+import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.{Injectable, Injector, ViewHelper}
 
 class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extends RecyclerView(context, attrs, style) with ViewHelper {
@@ -89,9 +90,11 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
   addOnScrollListener(new OnScrollListener {
     override def onScrollStateChanged(recyclerView: RecyclerView, newState: Int): Unit = newState match {
       case RecyclerView.SCROLL_STATE_IDLE =>
-        scrollController.onScrolled(layoutManager.findLastCompletelyVisibleItemPosition())
-      case RecyclerView.SCROLL_STATE_DRAGGING =>
+        scrollController.onScrolled(layoutManager.findLastVisibleItemPosition())
+      case RecyclerView.SCROLL_STATE_DRAGGING => {
         scrollController.onDragging()
+        Option(getContext).map(_.asInstanceOf[Activity]).foreach(a => KeyboardUtils.hideKeyboard(a))
+      }
       case _ =>
     }
   })

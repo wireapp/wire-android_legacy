@@ -44,8 +44,10 @@ class ScrollController(adapter: MessagesListView.Adapter, listHeight: Signal[Int
 
   adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver {
     override def onChanged(): Unit = {
-      if (prevConv != adapter.getConvId || prevCount == 0)
+      if (prevConv != adapter.getConvId || prevCount == 0) {
+        shouldScrollToBottom = adapter.getUnreadIndex.index == adapter.getItemCount
         onListLoaded ! adapter.getUnreadIndex
+      }
 
       prevConv = adapter.getConvId
       prevCount = adapter.getItemCount
