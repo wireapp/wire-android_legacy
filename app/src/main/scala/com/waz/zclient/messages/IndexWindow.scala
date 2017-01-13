@@ -95,7 +95,7 @@ class IndexWindow(cursor: RecyclerCursor, notifier: RecyclerNotifier) {
     * there is no intended use case for moving of message.
     */
   def cursorChanged(c: MessagesCursor) = {
-    val items = c.getEntries(offset, math.min(cursor.count - offset, 100)).toIndexedSeq
+    val items = if (cursor.count > 0) c.getEntries(offset, math.min(cursor.count - offset, 100)).toIndexedSeq else IndexedSeq.empty
     val prevCount = totalCount
     val change = diff(data, items).result
     data = items
