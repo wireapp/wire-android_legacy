@@ -51,7 +51,8 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int) exte
     pl <- isPlaying
     a <- asset
   } yield (pl, a)).onChanged {
-    case (pl, (a, _)) if pl => controller.onAudioPlayed ! a
+    case (pl, (a, _)) =>
+      if (pl) controller.onAudioPlayed ! a
   }
 
   assetActionButton.onClicked.filter(_ == DeliveryState.Complete) { _ =>
