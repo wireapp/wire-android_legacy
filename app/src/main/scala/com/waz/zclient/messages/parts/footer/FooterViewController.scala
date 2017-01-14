@@ -98,10 +98,11 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
     timeout     <- ephemeralTimeout
   } yield {
     val timestamp = ZTimeFormatter.getSingleMessageTime(context, DateTimeUtils.toDate(msg.time))
-    if (selfUserId == msg.userId) {
-      timeout.fold(statusString(timestamp, msg, convType))(ephemeralTimeoutString(timestamp, _))
-    } else
-      timestamp
+    timeout match {
+      case Some(t)                          => ephemeralTimeoutString(timestamp, t)
+      case None if selfUserId == msg.userId => statusString(timestamp, msg, convType)
+      case None                             => timestamp
+    }
   }
 
   val linkColor = expiring flatMap {
