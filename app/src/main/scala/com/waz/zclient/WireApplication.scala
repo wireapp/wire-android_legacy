@@ -38,6 +38,7 @@ import com.waz.zclient.messages.controllers.{MessageActionsController, Navigatio
 import com.waz.zclient.messages.{LikesController, MessageViewFactory, MessagesController, UsersController}
 import com.waz.zclient.notifications.controllers.{CallingNotificationsController, ImageNotificationsController, MessageNotificationsController}
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
+import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneController
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.tracking.TrackingController
 import com.waz.zclient.utils.{BackendPicker, BuildConfigUtils, Callback}
@@ -70,6 +71,7 @@ object WireApplication {
     bind [ITrackingController]           toProvider controllerFactory.getTrackingController
     bind [IConversationScreenController] toProvider controllerFactory.getConversationScreenController
     bind [ISingleImageController]        toProvider controllerFactory.getSingleImageController
+    bind [ISlidingPaneController]        toProvider controllerFactory.getSlidingPaneController
     bind [IDrawingController]            toProvider controllerFactory.getDrawingController
 
     // global controllers

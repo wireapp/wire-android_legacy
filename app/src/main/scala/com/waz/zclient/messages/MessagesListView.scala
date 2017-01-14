@@ -27,7 +27,7 @@ import android.util.AttributeSet
 import android.view.WindowManager
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.model.{ConvId, Dim2, MessageData, MessageId}
+import com.waz.model.{ConvId, Dim2, MessageData}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
@@ -127,7 +127,9 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesListAdapter)(im
   private val selection = inject[SelectionController].messages
   private val msgsController = inject[MessagesController]
 
-  var id = Option.empty[MessageId]
+  val message = Signal[MessageData]
+  def id = message.currentValue.map(_.id)
+
   private var opts = Option.empty[MsgBindOptions]
   private var _isFocused = false
 
@@ -147,12 +149,19 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesListAdapter)(im
     }
   }
 
+  // mark message as read if message is bound while list is visible
+  private val visibleMessage =
+    msgsController.fullyVisibleMessagesList flatMap {
+      case Some(convId) => message.filter(_.convId == convId)
+      case None => Signal.empty[MessageData]
+    }
+
+  visibleMessage { msgsController.onMessageRead }
+
   def bind(msg: MessageAndLikes, prev: Option[MessageData], next: Option[MessageData], opts: MsgBindOptions): Unit = {
     view.set(msg, prev, next, opts)
-    id = Some(msg.message.id)
+    message ! msg.message
     this.opts = Some(opts)
-    _isFocused = id.exists(selection.isFocused)
-
-    msgsController.onMessageRead(msg.message)
+    _isFocused = selection.isFocused(msg.message.id)
   }
 }

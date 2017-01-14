@@ -20,9 +20,9 @@ import sbt._
 
 object Deps {
 
-  lazy val zmsDevVersion = "88-SNAPSHOT"
+  lazy val zmsDevVersion = "88.1345"
   // Release version number must be like this X.0(.Y)
-  lazy val zmsReleaseVersion = "72.0.260"
+  lazy val zmsReleaseVersion = "89.0.323"
 
   lazy val avsVersion = Option(System.getenv("AVS_VERSION")).getOrElse("2.7.19")
   lazy val avsName = Option(System.getenv("AVS_NAME")).getOrElse("avs")
