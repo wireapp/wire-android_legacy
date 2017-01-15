@@ -20,7 +20,7 @@ package com.waz.zclient.messages.parts
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
-import android.widget.{LinearLayout, TextView}
+import android.widget.LinearLayout
 import com.waz.threading.Threading
 import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
@@ -30,7 +30,7 @@ import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 
-class PingPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper with EphemeralTextPart {
+class PingPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper with EphemeralPartView {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -44,8 +44,6 @@ class PingPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
   val chatheadView: ChatheadView        = findById(R.id.chathead)
   val textViewMessage: TypefaceTextView = findById(R.id.ttv__row_conversation__ping_message)
   val glyphTextView: GlyphTextView      = findById(R.id.gtv__ping_icon)
-
-  val glyphTypeface = expired map { if (_) redactedTypeface else glyphTextView.getTypeface }
 
   val locale = context.getResources.getConfiguration.locale
 
@@ -77,9 +75,8 @@ class PingPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
     glyphTextView.setTextColor(c.getColor())
   }
 
-  //TODO it would be nice if instead of overriding just one view, the EphemeralTextPart provided methods for achieving the same functionality on an arbitrary number of views...
-  override val textView: TextView = textViewMessage
-  glyphTypeface(glyphTextView.setTypeface)
+  registerEphemeral(textViewMessage)
+  registerEphemeral(glyphTextView)
 
   expired.map {
     case true => View.INVISIBLE

@@ -33,8 +33,6 @@ import com.waz.utils._
 import com.waz.utils.events.Signal
 import com.waz.zclient.controllers.BrowserController
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
-import com.waz.zclient.ui.theme.ThemeUtils
-import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.views.ImageAssetDrawable
@@ -42,7 +40,7 @@ import com.waz.zclient.views.ImageAssetDrawable.State
 import com.waz.zclient.views.ImageController.{DataImage, ImageSource, WireImage}
 import com.waz.zclient.{R, ViewHelper}
 
-class LocationPartView(context: Context, attrs: AttributeSet, style: Int) extends CardView(context, attrs, style) with ClickableViewPart with ViewHelper with EphemeralTextPart {
+class LocationPartView(context: Context, attrs: AttributeSet, style: Int) extends CardView(context, attrs, style) with ClickableViewPart with ViewHelper with EphemeralPartView {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -59,8 +57,6 @@ class LocationPartView(context: Context, attrs: AttributeSet, style: Int) extend
   val tvName: TextView  = findById(R.id.ttv__row_conversation_map_name)
   val pinView: TextView = findById(R.id.gtv__row_conversation__map_pin_glyph)
   val placeholder: View = findById(R.id.ttv__row_conversation_map_image_placeholder_text)
-
-  override val textView: TextView = tvName
 
   private val imageSize = Signal[Dim2]()
 
@@ -96,15 +92,8 @@ class LocationPartView(context: Context, attrs: AttributeSet, style: Int) extend
     case false => imageLoaded
   }
 
-  val drawable =
-    for {
-      hide <- expired
-      acc <- accentController.accentColor
-    } yield
-      if (hide) new ColorDrawable(ColorUtils.injectAlpha(ThemeUtils.getEphemeralBackgroundAlpha(context), acc.getColor()))
-      else imageDrawable
-
-  drawable.on(Threading.Ui) { imageView.setBackground }
+  registerEphemeral(tvName)
+  registerEphemeral(imageView, imageDrawable)
 
   name { tvName.setText }
   showPin.on(Threading.Ui) { pinView.setVisible }
