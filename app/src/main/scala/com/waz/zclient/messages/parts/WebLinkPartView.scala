@@ -40,7 +40,7 @@ import com.waz.zclient.views.ImageController.{DataImage, ImageUri}
 import com.waz.zclient.views.{ImageAssetDrawable, ProgressDotsDrawable}
 import com.waz.zclient.{R, ViewHelper}
 
-class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends CardView(context, attrs, style) with ClickableViewPart with ViewHelper {
+class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends CardView(context, attrs, style) with ClickableViewPart with ViewHelper with EphemeralPartView {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -95,8 +95,11 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
   private val dotsDrawable = new ProgressDotsDrawable
   private val imageDrawable = new ImageAssetDrawable(image.collect { case Some(im) => im }, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single)
 
+  registerEphemeral(titleTextView)
+  registerEphemeral(urlTextView)
+  registerEphemeral(imageView, imageDrawable)
+
   imageView.setBackground(dotsDrawable)
-  imageView.setImageDrawable(imageDrawable)
 
   hasImage.on(Threading.Ui) { imageView.setVisible }
 
@@ -110,7 +113,9 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
   urlText.on(Threading.Ui) { urlTextView.setText }
 
   onClicked { _ =>
-    content.currentValue foreach { c => browser.openUrl(c.contentAsUri) }
+    if (expired.currentValue.forall(_ == false)) {
+      content.currentValue foreach { c => browser.openUrl(c.contentAsUri) }
+    }
   }
 
   override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
