@@ -53,7 +53,7 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends 
   val shieldIcon = msgType map {
     case OTR_ERROR | OTR_IDENTITY_CHANGED | HISTORY_LOST  => Some(R.drawable.red_alert)
     case OTR_VERIFIED                                     => Some(R.drawable.shield_full)
-    case OTR_UNVERIFIED | OTR_DEVICE_ADDED                => Some(R.drawable.shield_full)
+    case OTR_UNVERIFIED | OTR_DEVICE_ADDED                => Some(R.drawable.shield_half)
     case STARTED_USING_DEVICE                             => None
     case _                                                => None
   }
