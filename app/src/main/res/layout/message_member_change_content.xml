@@ -33,7 +33,7 @@
         android:layout_marginBottom="@dimen/wire__padding__small" />
 
     <com.waz.zclient.messages.parts.MembersGridView
-        android:id="@+id/rv__row_conversation__people_changed__grid"
+        android:id="@+id/people_changed_grid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/content__padding_left"
