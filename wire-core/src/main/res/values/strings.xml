@@ -64,8 +64,8 @@
     <string name="new_reg_email_exists_message">@string/sign_up__account_creation_error__duplicate_email_message</string>
     <string name="new_reg_email_invalid_header">Invalid email address</string>
     <string name="new_reg_email_invalid_message">Please enter a valid email address.</string>
-    <string name="new_reg_email_generic_error_header">Invalid email address</string>
-    <string name="new_reg_email_generic_error_message">Please enter a valid email address.</string>
+    <string name="new_reg_email_generic_error_header">Registration unsuccessful</string>
+    <string name="new_reg_email_generic_error_message">Please contact support and report this issue.</string>
     <string name="new_reg_email_register_generic_error_header">Invalid information</string>
     <string name="new_reg_email_register_generic_error_message">Please enter your full name and a valid email address and password.</string>
     <string name="new_reg_email_invalid_login_credentials_header">Invalid information</string>
