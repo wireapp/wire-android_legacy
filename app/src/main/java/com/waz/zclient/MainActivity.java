@@ -491,32 +491,34 @@ public class MainActivity extends BaseActivity implements MainPhoneFragment.Cont
                 }, LAUNCH_CONVERSATION_CHANGE_DELAY);
             }
         } else if (IntentUtils.isLaunchFromSharingIntent(intent)) {
-            final IConversation conversation = getStoreFactory().getConversationStore()
-                .getConversation(IntentUtils.getLaunchConversationId(intent));
             List<String> targetConversations = IntentUtils.getLaunchConversationIds(intent);
             String sharedText = IntentUtils.getLaunchConversationSharedText(intent);
             List<Uri> sharedFileUris = IntentUtils.getLaunchConversationSharedFiles(intent);
             SharingController sharingController = injectJava(SharingController.class);
 
-            if (targetConversations.size() == 1 && conversation != null) {
-                if (!TextUtils.isEmpty(sharedText)) {
-                    getControllerFactory().getSharingController().setSharedContentType(SharedContentType.TEXT);
-                } else {
-                    getControllerFactory().getSharingController().setSharedContentType(SharedContentType.FILE);
-                }
-                getControllerFactory().getSharingController().setSharedText(sharedText);
-                getControllerFactory().getSharingController().setSharedUris(sharedFileUris);
-                getControllerFactory().getSharingController().setSharingConversationId(conversation.getId());
-
-                // Only want to swipe over when app has loaded
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        getStoreFactory().getConversationStore().setCurrentConversation(conversation, ConversationChangeRequester.SHARING);
+            if (targetConversations != null) {
+                if (targetConversations.size() == 1) {
+                    final IConversation conversation = getStoreFactory().getConversationStore()
+                        .getConversation(targetConversations.get(0));
+                    if (!TextUtils.isEmpty(sharedText)) {
+                        getControllerFactory().getSharingController().setSharedContentType(SharedContentType.TEXT);
+                    } else {
+                        getControllerFactory().getSharingController().setSharedContentType(SharedContentType.FILE);
                     }
-                }, LAUNCH_CONVERSATION_CHANGE_DELAY);
-            } else {
-                sharingController.sendContent(sharedText, sharedFileUris, targetConversations, this);
+                    getControllerFactory().getSharingController().setSharedText(sharedText);
+                    getControllerFactory().getSharingController().setSharedUris(sharedFileUris);
+                    getControllerFactory().getSharingController().setSharingConversationId(conversation.getId());
+
+                    // Only want to swipe over when app has loaded
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            getStoreFactory().getConversationStore().setCurrentConversation(conversation, ConversationChangeRequester.SHARING);
+                        }
+                    }, LAUNCH_CONVERSATION_CHANGE_DELAY);
+                } else {
+                    sharingController.sendContent(sharedText, sharedFileUris, targetConversations, this);
+                }
             }
 
             IntentUtils.clearLaunchIntentExtra(intent);
