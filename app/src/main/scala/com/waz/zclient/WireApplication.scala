@@ -42,7 +42,7 @@ import com.waz.zclient.notifications.controllers.{CallingNotificationsController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneController
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
-import com.waz.zclient.tracking.{CallingTrackingController, GlobalTrackingController, MainTrackingController}
+import com.waz.zclient.tracking.{CallingTrackingController, GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.{BackendPicker, BuildConfigUtils, Callback}
 import com.waz.zclient.views.ImageController
 
@@ -124,7 +124,7 @@ object WireApplication {
       * based on the activity responsible for generating their events (we don't want to instantiate an uneccessary
       * MessageActionsController in the CallingActivity, for example
       */
-    bind [MainTrackingController]    to new MainTrackingController()
+    bind [UiTrackingController]    to new UiTrackingController()
   }
 }
 

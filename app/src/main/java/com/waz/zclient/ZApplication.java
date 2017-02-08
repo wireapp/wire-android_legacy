@@ -24,11 +24,8 @@ import com.jakewharton.threetenabp.AndroidThreeTen;
 import com.localytics.android.Localytics;
 import com.localytics.android.LocalyticsActivityLifecycleCallbacks;
 import com.waz.api.LogLevel;
-import com.waz.api.NotificationsHandler;
-import com.waz.api.TrackingEventsHandler;
 import com.waz.api.impl.AccentColors;
 import com.waz.zclient.controllers.IControllerFactory;
-import com.waz.zclient.controllers.notifications.AppTrackingEventsHandler;
 import com.waz.zclient.core.stores.IStoreFactory;
 import com.waz.zclient.ui.text.TypefaceFactory;
 import com.waz.zclient.ui.text.TypefaceLoader;
@@ -40,12 +37,9 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ZApplication extends WireApplication implements NotificationsHandler.NotificationsHandlerFactory,
-                                                             ServiceContainer {
+public class ZApplication extends WireApplication implements ServiceContainer {
 
     private static final String FONT_FOLDER = "fonts";
-
-    private TrackingEventsHandler trackingEventsHandler;
 
     private TypefaceLoader typefaceloader = new TypefaceLoader() {
 
@@ -123,14 +117,6 @@ public class ZApplication extends WireApplication implements NotificationsHandle
         // Register LocalyticsActivityLifecycleCallbacks
         registerActivityLifecycleCallbacks(new LocalyticsActivityLifecycleCallbacks(this));
         Localytics.setPushDisabled(false);
-    }
-
-    @Override
-    public TrackingEventsHandler getTrackingEventsHandler() {
-        if (trackingEventsHandler == null) {
-            trackingEventsHandler = new AppTrackingEventsHandler(getControllerFactory().getTrackingController());
-        }
-        return trackingEventsHandler;
     }
 
     @Override

@@ -84,7 +84,7 @@ import com.waz.zclient.pages.main.connectivity.ConnectivityFragment;
 import com.waz.zclient.pages.main.grid.GridFragment;
 import com.waz.zclient.pages.main.profile.ZetaPreferencesActivity;
 import com.waz.zclient.pages.startup.UpdateFragment;
-import com.waz.zclient.tracking.MainTrackingController;
+import com.waz.zclient.tracking.UiTrackingController;
 import com.waz.zclient.utils.BuildConfigUtils;
 import com.waz.zclient.utils.Emojis;
 import com.waz.zclient.utils.HockeyCrashReporting;
@@ -150,7 +150,7 @@ public class MainActivity extends BaseActivity implements MainPhoneFragment.Cont
         }
         super.onCreate(savedInstanceState);
 
-        injectJava(MainTrackingController.class);
+        injectJava(UiTrackingController.class);
 
         //Prevent drawing the default background to reduce overdraw
         getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
