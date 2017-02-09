@@ -290,7 +290,7 @@ public class IntentUtils {
 
     public static String getLaunchConversationId(Intent intent) {
         List<String> convIds = intent.getStringArrayListExtra(EXTRA_LAUNCH_CONVERSATION_IDS);
-        return convIds.isEmpty() ? null : convIds.get(0);
+        return convIds == null || convIds.isEmpty() ? null : convIds.get(0);
     }
 
     public static List<String> getLaunchConversationIds(Intent intent) {
