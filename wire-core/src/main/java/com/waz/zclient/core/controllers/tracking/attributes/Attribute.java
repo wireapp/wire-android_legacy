@@ -111,8 +111,8 @@ public enum Attribute {
     RECEIVED_PONGS("received_pongs"),
     PING_INTERVAL("ping_interval"),
 
-    IS_EMPTY("is_empty")
-
+    IS_EMPTY("is_empty"),
+    WITH_SEARCH_RESULT("with_search_result")
     ;
 
 

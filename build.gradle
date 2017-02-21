@@ -55,7 +55,7 @@ task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
 licenseFormat.dependsOn licenseFormatAndroid
 
 ext {
-    majorVersion = "2.28."
+    majorVersion = "2.29."
 
     compileSdkVersion = 24
     minSdkVersion = 17
