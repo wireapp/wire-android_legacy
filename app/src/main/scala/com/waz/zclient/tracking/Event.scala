@@ -126,8 +126,8 @@ abstract class CollectionsEvent(name: String, conversationType: ConversationType
     }
   }
 }
-case class OpenedCollectionsEvent(isEmpty: Boolean, conversationType: ConversationType, withBot: Boolean) extends CollectionsEvent("collections.opened_collections", conversationType, withBot){
-  override val attributes = baseAttributes + (IS_EMPTY -> String.valueOf(isEmpty))
+case class OpenedCollectionsEvent(isEmpty: Boolean, withSearchResult: Boolean, conversationType: ConversationType, withBot: Boolean) extends CollectionsEvent("collections.opened_collections", conversationType, withBot){
+  override val attributes = baseAttributes + (IS_EMPTY -> String.valueOf(isEmpty), WITH_SEARCH_RESULT -> String.valueOf(withSearchResult))
 }
 case class OpenedItemCollectionsEvent(messageType: Message.Type, conversationType: ConversationType, withBot: Boolean) extends CollectionsEvent("collections.opened_item", conversationType, withBot){
   override val attributes = baseAttributes + (TYPE -> trackingType(messageType))
@@ -148,6 +148,12 @@ case class DidItemActionCollectionsEvent(messageAction: MessageAction, messageTy
       case _             => "other"
     })
   )
+}
+case class EnteredSearchCollectionsEvent(conversationType: ConversationType, withBot: Boolean) extends CollectionsEvent("collections.entered_search", conversationType, withBot){
+  override val attributes = baseAttributes
+}
+case class SelectedSearchResultCollectionsEvent(conversationType: ConversationType, withBot: Boolean) extends CollectionsEvent("collections.selected_search_result", conversationType, withBot){
+  override val attributes = baseAttributes
 }
 
 class CallEvent(name: String, isV3: Boolean, isGroupCall: Boolean, withOtto: Boolean) extends Event(name) {

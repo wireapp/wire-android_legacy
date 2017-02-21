@@ -20,7 +20,7 @@ package com.waz.zclient.tracking
 import android.content.Context
 import com.waz.api.Message
 import com.waz.model.ConversationData.ConversationType
-import com.waz.model.{AssetData, ConvId, MessageId}
+import com.waz.model.{AssetData, ConvId, MessageContentIndex, MessageId}
 import com.waz.service.tracking.TrackingEventsService
 import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
@@ -101,7 +101,7 @@ class MainTrackingController(implicit injector: Injector, ctx: Context, ec: Even
 
   collectionsController.openedCollection.on(Threading.Ui){
     _.foreach{info => trackingData(info.conversation.id).map { data =>
-      tagEvent(OpenedCollectionsEvent(info.empty, data.convType, data.withOtto))}
+      tagEvent(OpenedCollectionsEvent(info.empty, collectionsController.contentSearchQuery.currentValue.exists(_.originalString.nonEmpty), data.convType, data.withOtto))}
     }
   }
 
@@ -115,6 +115,27 @@ class MainTrackingController(implicit injector: Injector, ctx: Context, ec: Even
     m => trackingData(m.id).map{ data =>
       tagEvent(OpenedItemCollectionsEvent(m.msgType, data.convType, data.withOtto))
     }
+  }
+
+  collectionsController.contentSearchQuery.on(Threading.Ui){
+    query =>
+      if (query.originalString.nonEmpty) {
+        collectionsController.currentConv.currentValue.foreach { conv =>
+          trackingData(conv).map{ data =>
+            tagEvent(EnteredSearchCollectionsEvent(data.convType, data.withOtto))
+          }
+        }
+      }
+  }
+
+  msgActionController.onMessageAction {
+    case (MessageAction.REVEAL, message) if MessageContentIndex.TextMessageTypes.contains(message.getMessageType) =>
+      collectionsController.currentConv.currentValue.foreach { conv =>
+        trackingData(conv).map{ data =>
+          tagEvent(SelectedSearchResultCollectionsEvent(data.convType, data.withOtto))
+        }
+      }
+    case _ =>
   }
 
   private def durationInSeconds(a: AssetData): Int = (a match {
