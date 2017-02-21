@@ -22,6 +22,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import com.waz.api.AccentColor;
+import com.waz.api.CoreList;
 import com.waz.api.Credentials;
 import com.waz.api.CredentialsFactory;
 import com.waz.api.CredentialsUpdateListener;
@@ -33,6 +34,7 @@ import com.waz.api.Invitations;
 import com.waz.api.KindOfAccess;
 import com.waz.api.KindOfVerification;
 import com.waz.api.LoginListener;
+import com.waz.api.OtrClient;
 import com.waz.api.Self;
 import com.waz.api.UpdateListener;
 import com.waz.api.ZMessagingApi;
@@ -74,6 +76,7 @@ public class AppEntryStore implements IAppEntryStore, ErrorsList.ErrorListener {
 
     private Context context;
     private Self self;
+    private CoreList<OtrClient> otherOtrClients;
     private ZMessagingApi zMessagingApi;
     private ErrorsList errors;
     private AppEntryStateCallback appEntryStateCallback;
@@ -238,6 +241,10 @@ public class AppEntryStore implements IAppEntryStore, ErrorsList.ErrorListener {
 
     // Here we handle email verification click on a different device
     private void onSelfUpdated() {
+        if (otherOtrClients == null && self.getOtherOtrClients() != null) {
+            otherOtrClients = self.getOtherOtrClients();
+            otherOtrClients.addUpdateListener(selfUpdateListener);
+        }
         if (ignoreSelfUpdates || appEntryStateCallback == null) {
             return;
         }
@@ -273,10 +280,14 @@ public class AppEntryStore implements IAppEntryStore, ErrorsList.ErrorListener {
         if (this.self != null &&
             this.self != self) {
             this.self.removeUpdateListener(selfUpdateListener);
+            if (otherOtrClients != null) {
+                otherOtrClients.removeUpdateListener(selfUpdateListener);
+            }
         }
 
         if (self == null) {
             this.self = null;
+            otherOtrClients = null;
             return false;
         }
 
@@ -286,6 +297,10 @@ public class AppEntryStore implements IAppEntryStore, ErrorsList.ErrorListener {
 
         this.self = self;
         this.self.addUpdateListener(selfUpdateListener);
+        otherOtrClients = self.getOtherOtrClients();
+        if (otherOtrClients != null) {
+            otherOtrClients.addUpdateListener(selfUpdateListener);
+        }
         return true;
     }
 
@@ -392,7 +407,8 @@ public class AppEntryStore implements IAppEntryStore, ErrorsList.ErrorListener {
                 appEntryStateCallback.onShowPhoneCodePage();
                 break;
             case PHONE_SIGNED_IN:
-                if (self.getEmail().isEmpty()) {
+                Timber.w("ROBIN 1 email=%s, otherOtrClients size=%s", self.getEmail(), (otherOtrClients == null ? "null" : otherOtrClients.size() + ""));
+                if (self.getEmail().isEmpty() && otherOtrClients != null && otherOtrClients.size() > 0) {
                     setState(AppEntryState.PHONE_EMAIL_PASSWORD);
                     break;
                 }
@@ -405,7 +421,8 @@ public class AppEntryStore implements IAppEntryStore, ErrorsList.ErrorListener {
             // TODO: This state was needed because SyncEngine isEmailVerified() was not entirely reliable,
             // accountActivated() flag should not have this problem, we should remove this special state.
             case PHONE_SIGNED_IN_RESUMING:
-                if (self.getEmail().isEmpty()) {
+                Timber.w("ROBIN 2 email=%s, otherOtrClients size=%s", self.getEmail(), (otherOtrClients == null ? "null" : otherOtrClients.size() + ""));
+                if (self.getEmail().isEmpty() && otherOtrClients != null && otherOtrClients.size() > 0) {
                     setState(AppEntryState.PHONE_EMAIL_PASSWORD);
                     break;
                 }
@@ -471,6 +488,9 @@ public class AppEntryStore implements IAppEntryStore, ErrorsList.ErrorListener {
                 entryPoint = null;
                 context.getSharedPreferences(PREF_REGISTRATION, Context.MODE_PRIVATE).edit().clear().apply();
                 self.removeUpdateListener(selfUpdateListener);
+                if (otherOtrClients != null) {
+                    otherOtrClients.removeUpdateListener(selfUpdateListener);
+                }
                 appEntryStateCallback.onEnterApplication();
                 break;
             case EMAIL_INVITATION:
