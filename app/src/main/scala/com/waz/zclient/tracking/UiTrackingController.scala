@@ -43,7 +43,6 @@ class UiTrackingController(implicit injector: Injector, ctx: Context, ec: EventC
   val global = inject[GlobalTrackingController]
 
   import global._
-  import global.legacyController._
 
   val msgActionController   = inject[MessageActionsController]
   val assetsController      = inject[AssetsController]

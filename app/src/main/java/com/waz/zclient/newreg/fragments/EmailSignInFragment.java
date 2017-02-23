@@ -28,6 +28,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.TextView;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.navigation.Page;
 import com.waz.zclient.controllers.tracking.events.profile.ResetPassword;
@@ -40,6 +41,7 @@ import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.pages.main.profile.validator.EmailValidator;
 import com.waz.zclient.pages.main.profile.validator.PasswordValidator;
 import com.waz.zclient.pages.main.profile.views.GuidedEditText;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.ui.views.tab.TabIndicatorLayout;
 import com.waz.zclient.utils.LayoutSpec;
@@ -58,7 +60,7 @@ public class EmailSignInFragment extends BaseFragment<EmailSignInFragment.Contai
     //  LifeCycle
     //
     //////////////////////////////////////////////////////////////////////////////////////////
-    
+
     private GuidedEditText guidedEditTextEmail;
     private GuidedEditText guidedEditTextPassword;
     private TextView textViewGoToPhoneSignIn;
@@ -132,7 +134,7 @@ public class EmailSignInFragment extends BaseFragment<EmailSignInFragment.Contai
             @Override
             public void onClick(View v) {
                 getContainer().onOpenUrl(getResources().getString(R.string.url_password_reset));
-                getControllerFactory().getTrackingController().tagEvent(new ResetPassword(ResetPassword.Location.FROM_SIGN_IN));
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ResetPassword(ResetPassword.Location.FROM_SIGN_IN));
             }
         });
 

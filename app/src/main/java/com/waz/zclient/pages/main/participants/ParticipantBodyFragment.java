@@ -35,6 +35,7 @@ import com.waz.api.NetworkMode;
 import com.waz.api.OtrClient;
 import com.waz.api.User;
 import com.waz.api.UsersList;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.confirmation.ConfirmationCallback;
@@ -55,6 +56,7 @@ import com.waz.zclient.pages.main.conversation.controller.IConversationScreenCon
 import com.waz.zclient.pages.main.participants.views.ParticipantsChatheadAdapter;
 import com.waz.zclient.pages.main.participants.views.ParticipantsGridView;
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.views.ZetaButton;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
@@ -361,7 +363,7 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
                 if (!conversation.isMemberOfConversation()) {
                     return;
                 }
-                getControllerFactory().getTrackingController().tagEvent(new OpenedGroupActionEvent());
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedGroupActionEvent());
                 getControllerFactory().getConversationScreenController().addPeopleToConversation();
             }
 
@@ -569,7 +571,7 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
                     getStoreFactory().getConversationStore().setCurrentConversation(user.getConversation(),
                                                                                     ConversationChangeRequester.START_CONVERSATION);
                 } else {
-                    getControllerFactory().getTrackingController().tagEvent(new OpenedGroupActionEvent());
+                    ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedGroupActionEvent());
                     getControllerFactory().getConversationScreenController().addPeopleToConversation();
                 }
             }
@@ -634,7 +636,7 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
                     getControllerFactory().isTornDown()) {
                     return;
                 }
-                getControllerFactory().getTrackingController().tagEvent(new LeaveGroupConversationEvent(true,
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new LeaveGroupConversationEvent(true,
                                                                                                         getStoreFactory().getConversationStore().getCurrentConversation().getUsers().size()));
 
                 getStoreFactory().getConversationStore().leave(conversation);
@@ -651,7 +653,7 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
                     getControllerFactory().isTornDown()) {
                     return;
                 }
-                getControllerFactory().getTrackingController().tagEvent(new LeaveGroupConversationEvent(false,
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new LeaveGroupConversationEvent(false,
                                                                                                         getStoreFactory().getConversationStore().getCurrentConversation().getUsers().size()));
             }
 

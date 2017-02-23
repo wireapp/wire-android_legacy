@@ -19,7 +19,6 @@ package com.waz.zclient.core.controllers.tracking.events;
 
 
 import android.support.annotation.NonNull;
-import com.waz.api.TrackingData;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,13 +35,4 @@ public abstract class AVSMetricEvent {
         return attributes;
     }
 
-    public void addSyncEngineTrackingData(@NonNull TrackingData trackingData) {}
-
-    public boolean mustWaitForTrackingData() {
-        return true;
-    }
-
-    public boolean onlySendOnce() {
-        return false;
-    }
 }

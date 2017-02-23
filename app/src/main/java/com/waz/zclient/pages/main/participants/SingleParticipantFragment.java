@@ -28,6 +28,7 @@ import android.widget.TextView;
 import com.waz.api.NetworkMode;
 import com.waz.api.User;
 import com.waz.api.Verification;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.confirmation.ConfirmationCallback;
@@ -45,6 +46,7 @@ import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.pages.main.connect.UserProfile;
 import com.waz.zclient.pages.main.connect.UserProfileContainer;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.animation.fragment.FadeAnimation;
 import com.waz.zclient.ui.theme.OptionsTheme;
 import com.waz.zclient.ui.theme.ThemeUtils;
@@ -352,12 +354,12 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
                 getStoreFactory().getConnectStore().blockUser(user);
                 // Dismiss common user profile
                 getContainer().dismissUserProfile();
-                getControllerFactory().getTrackingController().tagEvent(new BlockingEvent(BlockingEvent.ConformationResponse.BLOCK));
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new BlockingEvent(BlockingEvent.ConformationResponse.BLOCK));
             }
 
             @Override
             public void negativeButtonClicked() {
-                getControllerFactory().getTrackingController().tagEvent(new BlockingEvent(BlockingEvent.ConformationResponse.CANCEL));
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new BlockingEvent(BlockingEvent.ConformationResponse.CANCEL));
             }
 
             @Override

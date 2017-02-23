@@ -28,6 +28,7 @@ import android.view.View;
 import android.widget.EditText;
 import com.waz.api.InitListener;
 import com.waz.api.Self;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.tracking.events.profile.ResetPassword;
@@ -45,6 +46,7 @@ import com.waz.zclient.pages.main.profile.preferences.dialogs.ChangeEmailPrefere
 import com.waz.zclient.pages.main.profile.preferences.dialogs.ChangeUsernamePreferenceDialogFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.VerifyEmailPreferenceFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.VerifyPhoneNumberPreferenceFragment;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.utils.TextViewUtils;
 import com.waz.zclient.utils.StringUtils;
 import com.waz.zclient.utils.ViewUtils;
@@ -182,7 +184,7 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
         resetPasswordPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                getControllerFactory().getTrackingController().tagEvent(new ResetPassword(ResetPassword.Location.FROM_PROFILE));
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ResetPassword(ResetPassword.Location.FROM_PROFILE));
                 return false;
             }
         });
@@ -333,8 +335,8 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
                                       @Override
                                       public void onClick(DialogInterface dialog, int which) {
                                           // TODO: Remove old SignOut event https://wearezeta.atlassian.net/browse/AN-4232
-                                          getControllerFactory().getTrackingController().tagEvent(new SignOut());
-                                          getControllerFactory().getTrackingController().tagEvent(new LoggedOutEvent());
+                                          ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new SignOut());
+                                          ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new LoggedOutEvent());
                                           getControllerFactory().getSpotifyController().logout();
                                           getControllerFactory().getUsernameController().logout();
                                           getStoreFactory().getZMessagingApiStore().logout();
@@ -419,7 +421,7 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
     }
 
     private void changeUsername(String currentUsername, boolean cancellable) {
-        getControllerFactory().getTrackingController().tagEvent(new EditedUsernameEvent());
+        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new EditedUsernameEvent());
         getChildFragmentManager().beginTransaction()
                                  .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
                                  .add(ChangeUsernamePreferenceDialogFragment.newInstance(currentUsername, cancellable),

@@ -44,7 +44,6 @@ import com.waz.zclient.controllers.singleimage.ISingleImageController;
 import com.waz.zclient.controllers.spotify.ISpotifyController;
 import com.waz.zclient.controllers.streammediaplayer.IStreamMediaPlayerController;
 import com.waz.zclient.controllers.theme.IThemeController;
-import com.waz.zclient.controllers.tracking.ITrackingController;
 import com.waz.zclient.controllers.usernames.IUsernamesController;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
 import com.waz.zclient.controllers.verification.IVerificationController;
@@ -97,8 +96,6 @@ public interface IControllerFactory {
   void setGlobalLayout(View globalLayoutView);
 
   IPasswordController getPasswordController();
-
-  ITrackingController getTrackingController();
 
   ISlidingPaneController getSlidingPaneController();
 

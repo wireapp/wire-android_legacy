@@ -22,17 +22,16 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.preference.Preference;
 import com.localytics.android.Localytics;
-import com.waz.zclient.BuildConfig;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.R;
-import com.waz.zclient.controllers.tracking.ITrackingController;
-import com.waz.zclient.controllers.tracking.LoggingTrackingController;
-import com.waz.zclient.controllers.tracking.TrackingController;
-import com.waz.zclient.core.controllers.tracking.events.settings.ChangedImageDownloadPreferenceEvent;
 import com.waz.zclient.controllers.tracking.events.tracking.OptIn;
 import com.waz.zclient.controllers.tracking.events.tracking.OptOut;
 import com.waz.zclient.core.controllers.tracking.events.Event;
+import com.waz.zclient.core.controllers.tracking.events.settings.ChangedImageDownloadPreferenceEvent;
 import com.waz.zclient.pages.BasePreferenceFragment;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.utils.DebugUtils;
+import timber.log.Timber;
 
 public class AdvancedPreferences extends BasePreferenceFragment<AdvancedPreferences.Container> {
 
@@ -84,19 +83,12 @@ public class AdvancedPreferences extends BasePreferenceFragment<AdvancedPreferen
                 event = new OptIn();
                 Localytics.setOptedOut(false);
             } else {
-                // To force disable the tracking controller and flush the current queue
-                getControllerFactory().getTrackingController();
-                // Since getControllerFactory().getTrackingController() would return a DISABLED tracking controller
-                // instance, we need to create one here to perform the tracking of the opt out event
-                final ITrackingController trackingController;
-                if (BuildConfig.DEBUG) {
-                    trackingController = new LoggingTrackingController();
-                } else {
-                    trackingController = new TrackingController();
+                try {
+                    (((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class)).tagEvent(new OptOut());
+                } catch (Exception e) {
+                    Timber.e("Unable to tag event OptOut");
+                    e.printStackTrace();
                 }
-                trackingController.setActivity(getActivity());
-                trackingController.tagEvent(new OptOut());
-                trackingController.tearDown();
                 Localytics.setOptedOut(true);
             }
         }

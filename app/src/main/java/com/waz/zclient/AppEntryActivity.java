@@ -64,6 +64,7 @@ import com.waz.zclient.newreg.fragments.VerifyPhoneFragment;
 import com.waz.zclient.newreg.fragments.WelcomeEmailFragment;
 import com.waz.zclient.newreg.fragments.country.CountryController;
 import com.waz.zclient.newreg.fragments.country.CountryDialogFragment;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.utils.HockeyCrashReporting;
 import com.waz.zclient.utils.ViewUtils;
@@ -188,7 +189,7 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
         if (trackingEnabled) {
             HockeyCrashReporting.checkForCrashes(getApplicationContext(),
                                                  getControllerFactory().getUserPreferencesController().getDeviceId(),
-                                                 getControllerFactory().getTrackingController());
+                                                 injectJava(GlobalTrackingController.class));
         } else {
             HockeyCrashReporting.deleteCrashReports(getApplicationContext());
             NativeCrashManager.deleteDumpFiles(getApplicationContext());
@@ -316,7 +317,7 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
             // Temporary tracking to check on high number of invite registrations AN-4117
             String referralToken = getControllerFactory().getUserPreferencesController().getReferralToken();
             String token = getControllerFactory().getUserPreferencesController().getGenericInvitationToken();
-            getControllerFactory().getTrackingController().tagEvent(new OpenedPhoneRegistrationFromInviteEvent(
+            injectJava(GlobalTrackingController.class).tagEvent(new OpenedPhoneRegistrationFromInviteEvent(
                 referralToken,
                 token));
         } else {
@@ -497,7 +498,7 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
 
     @Override
     public void tagAppEntryEvent(Event event) {
-        getControllerFactory().getTrackingController().tagEvent(event);
+        injectJava(GlobalTrackingController.class).tagEvent(event);
         if (event instanceof SucceededWithRegistrationEvent) {
             Localytics.setProfileAttribute(Attribute.REGISTRATION_WEEK.name(), ZTimeFormatter.getCurrentWeek(this), Localytics.ProfileScope.APPLICATION);
         }
@@ -625,22 +626,22 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
     public void onPageVisible(Page page) {
         switch (page) {
             case PHONE_REGISTRATION:
-                getControllerFactory().getTrackingController().onApplicationScreen(ApplicationScreen.PHONE_REGISTRATION);
+                injectJava(GlobalTrackingController.class).onApplicationScreen(ApplicationScreen.PHONE_REGISTRATION);
                 break;
             case PHONE_REGISTRATION_VERIFY_CODE:
-                getControllerFactory().getTrackingController().onApplicationScreen(ApplicationScreen.PHONE_REGISTRATION__VERIFY_CODE);
+                injectJava(GlobalTrackingController.class).onApplicationScreen(ApplicationScreen.PHONE_REGISTRATION__VERIFY_CODE);
                 break;
             case PHONE_REGISTRATION_ADD_NAME:
-                getControllerFactory().getTrackingController().onApplicationScreen(ApplicationScreen.PHONE_REGISTRATION__ADD_NAME);
+                injectJava(GlobalTrackingController.class).onApplicationScreen(ApplicationScreen.PHONE_REGISTRATION__ADD_NAME);
                 break;
             case PHONE_REGISTRATION_ADD_PHOTO:
-                getControllerFactory().getTrackingController().onApplicationScreen(ApplicationScreen.PHONE_REGISTRATION__ADD_PHOTO);
+                injectJava(GlobalTrackingController.class).onApplicationScreen(ApplicationScreen.PHONE_REGISTRATION__ADD_PHOTO);
                 break;
             case EMAIL_LOGIN:
-                getControllerFactory().getTrackingController().onApplicationScreen(ApplicationScreen.EMAIL_LOGIN);
+                injectJava(GlobalTrackingController.class).onApplicationScreen(ApplicationScreen.EMAIL_LOGIN);
                 break;
             case PHONE_LOGIN:
-                getControllerFactory().getTrackingController().onApplicationScreen(ApplicationScreen.PHONE_LOGIN);
+                injectJava(GlobalTrackingController.class).onApplicationScreen(ApplicationScreen.PHONE_LOGIN);
                 break;
         }
     }

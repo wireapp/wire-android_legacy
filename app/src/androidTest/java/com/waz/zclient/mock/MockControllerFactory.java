@@ -73,13 +73,11 @@ import com.waz.zclient.controllers.stubs.StubSlidingPaneController;
 import com.waz.zclient.controllers.stubs.StubSpotifyController;
 import com.waz.zclient.controllers.stubs.StubStreamMediaPlayerController;
 import com.waz.zclient.controllers.stubs.StubThemeController;
-import com.waz.zclient.controllers.stubs.StubTrackingController;
 import com.waz.zclient.controllers.stubs.StubUserPreferencesController;
 import com.waz.zclient.controllers.stubs.StubUsernamesController;
 import com.waz.zclient.controllers.stubs.StubVerificationController;
 import com.waz.zclient.controllers.stubs.StubVibratorController;
 import com.waz.zclient.controllers.theme.IThemeController;
-import com.waz.zclient.controllers.tracking.ITrackingController;
 import com.waz.zclient.controllers.usernames.IUsernamesController;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
 import com.waz.zclient.controllers.verification.IVerificationController;
@@ -140,8 +138,6 @@ public class MockControllerFactory implements IControllerFactory {
   protected IStreamMediaPlayerController streamMediaPlayerController = spy(StubStreamMediaPlayerController.class);
 
   protected IThemeController themeController = spy(StubThemeController.class);
-
-  protected ITrackingController trackingController = spy(StubTrackingController.class);
 
   protected IUserPreferencesController userPreferencesController = spy(StubUserPreferencesController.class);
 
@@ -278,11 +274,6 @@ public class MockControllerFactory implements IControllerFactory {
   @Override
   public ISharingController getSharingController() {
     return sharingController;
-  }
-
-  @Override
-  public ITrackingController getTrackingController() {
-    return trackingController;
   }
 
   @Override

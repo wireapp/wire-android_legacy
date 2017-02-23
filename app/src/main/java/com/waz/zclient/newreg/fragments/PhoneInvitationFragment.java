@@ -23,12 +23,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.core.controllers.tracking.attributes.RegistrationEventContext;
 import com.waz.zclient.core.controllers.tracking.events.registration.CancelledPersonalInvite;
 import com.waz.zclient.core.controllers.tracking.events.registration.ConfirmedPersonalInviteEvent;
 import com.waz.zclient.core.controllers.tracking.events.registration.ViewTOS;
 import com.waz.zclient.pages.BaseFragment;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.ui.utils.TextViewUtils;
 import com.waz.zclient.ui.views.ZetaButton;
@@ -78,7 +80,7 @@ public class PhoneInvitationFragment extends BaseFragment<PhoneInvitationFragmen
             @Override
             public void run() {
                 getContainer().onOpenUrlInApp(getString(R.string.url_terms_of_service), true);
-                getControllerFactory().getTrackingController().tagEvent(new ViewTOS(ViewTOS.Source.FROM_JOIN_PAGE));
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ViewTOS(ViewTOS.Source.FROM_JOIN_PAGE));
             }
         });
 
@@ -145,7 +147,7 @@ public class PhoneInvitationFragment extends BaseFragment<PhoneInvitationFragmen
         }
         KeyboardUtils.hideKeyboard(getActivity());
         getStoreFactory().getAppEntryStore().onBackPressed();
-        getControllerFactory().getTrackingController().tagEvent(new CancelledPersonalInvite(CancelledPersonalInvite.EventContext.INVITE_PHONE));
+        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new CancelledPersonalInvite(CancelledPersonalInvite.EventContext.INVITE_PHONE));
     }
 
     private void onRegisterClicked() {
@@ -159,7 +161,7 @@ public class PhoneInvitationFragment extends BaseFragment<PhoneInvitationFragmen
         getContainer().enableProgress(true);
 
         getStoreFactory().getAppEntryStore().acceptPhoneInvitation(getControllerFactory().getAccentColorController().getAccentColor());
-        getControllerFactory().getTrackingController().tagEvent(new ConfirmedPersonalInviteEvent(
+        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ConfirmedPersonalInviteEvent(
             RegistrationEventContext.PERSONAL_INVITE_PHONE));
     }
 

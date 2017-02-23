@@ -38,7 +38,6 @@ import com.waz.api.PermissionProvider;
 import com.waz.api.Search;
 import com.waz.api.Self;
 import com.waz.api.Spotify;
-import com.waz.api.TrackingData;
 import com.waz.api.User;
 import com.waz.api.Usernames;
 import com.waz.api.ZCache;
@@ -202,11 +201,6 @@ public class StubZMessagingApiStore implements IZMessagingApiStore {
 
             @Override
             public ErrorsList getErrors() {
-                return null;
-            }
-
-            @Override
-            public TrackingData getTrackingData() {
                 return null;
             }
 

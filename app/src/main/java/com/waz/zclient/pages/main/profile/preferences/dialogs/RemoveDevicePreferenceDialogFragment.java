@@ -31,9 +31,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import com.waz.api.OtrClient;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.tracking.events.otr.RemovedOwnOtrClientEvent;
 import com.waz.zclient.pages.BaseDialogFragment;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.utils.ViewUtils;
 import timber.log.Timber;
 
@@ -124,7 +126,7 @@ public class RemoveDevicePreferenceDialogFragment extends BaseDialogFragment<Rem
                 }
                 dismiss();
                 getControllerFactory().getPasswordController().setPassword(password);
-                getControllerFactory().getTrackingController().tagEvent(new RemovedOwnOtrClientEvent());
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new RemovedOwnOtrClientEvent());
                 getContainer().onCurrentDeviceDeleted();
             }
 

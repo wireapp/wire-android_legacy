@@ -30,6 +30,7 @@ import com.waz.api.Subscription;
 import com.waz.api.UiSignal;
 import com.waz.api.UpdateListener;
 import com.waz.api.Verification;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.tracking.events.otr.RemovedOwnOtrClientEvent;
 import com.waz.zclient.controllers.tracking.events.otr.UnverifiedOwnOtrClientEvent;
@@ -37,6 +38,7 @@ import com.waz.zclient.controllers.tracking.events.otr.VerifiedOwnOtrClientEvent
 import com.waz.zclient.core.stores.network.NetworkAction;
 import com.waz.zclient.pages.BasePreferenceFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.RemoveDevicePreferenceDialogFragment;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.utils.ViewUtils;
 import net.xpece.android.support.preference.PreferenceCategory;
 import net.xpece.android.support.preference.SwitchPreference;
@@ -185,7 +187,7 @@ public class DeviceDetailPreferences extends BasePreferenceFragment<DeviceDetail
                                      getControllerFactory().isTornDown()) {
                                      return;
                                  }
-                                 getControllerFactory().getTrackingController().tagEvent(new RemovedOwnOtrClientEvent());
+                                 ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new RemovedOwnOtrClientEvent());
                                  onCurrentDeviceDeleted();
                              }
 
@@ -215,9 +217,9 @@ public class DeviceDetailPreferences extends BasePreferenceFragment<DeviceDetail
             return;
         }
         if (verified) {
-            getControllerFactory().getTrackingController().tagEvent(new VerifiedOwnOtrClientEvent());
+            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new VerifiedOwnOtrClientEvent());
         } else {
-            getControllerFactory().getTrackingController().tagEvent(new UnverifiedOwnOtrClientEvent());
+            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new UnverifiedOwnOtrClientEvent());
         }
     }
 

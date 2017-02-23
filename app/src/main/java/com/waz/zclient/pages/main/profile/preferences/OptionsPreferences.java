@@ -29,6 +29,7 @@ import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceCategory;
 import android.widget.Toast;
 import com.waz.api.MediaProvider;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.permission.RequestPermissionsObserver;
 import com.waz.zclient.controllers.spotify.SpotifyObserver;
@@ -40,6 +41,7 @@ import com.waz.zclient.core.controllers.tracking.events.settings.ChangedThemeEve
 import com.waz.zclient.media.SoundController;
 import com.waz.zclient.pages.BasePreferenceFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.WireRingtonePreferenceDialogFragment;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.PermissionUtils;
 import com.waz.zclient.utils.TrackingUtils;
@@ -182,7 +184,7 @@ public class OptionsPreferences extends BasePreferenceFragment<OptionsPreference
         Event event = null;
         if (key.equals(getString(R.string.pref_options_sounds_key))) {
             String stringValue = sharedPreferences.getString(key, "");
-            TrackingUtils.tagChangedSoundNotificationLevelEvent(getControllerFactory().getTrackingController(),
+            TrackingUtils.tagChangedSoundNotificationLevelEvent(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                                 stringValue,
                                                                 getContext());
 

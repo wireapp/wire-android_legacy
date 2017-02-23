@@ -43,7 +43,6 @@ class CallingTrackingController(implicit injector: Injector, ctx: Context, ec: E
   val global = inject[GlobalTrackingController]
 
   import global._
-  import global.legacyController._
 
   val callController = inject[GlobalCallingController]
   import callController._

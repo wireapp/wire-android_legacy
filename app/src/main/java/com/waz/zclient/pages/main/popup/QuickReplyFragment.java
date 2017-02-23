@@ -35,12 +35,14 @@ import android.widget.TextView;
 import com.waz.api.IConversation;
 import com.waz.api.MessageContent;
 import com.waz.api.MessagesList;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.core.controllers.tracking.events.notifications.OpenedAppFromQuickReplyEvent;
 import com.waz.zclient.core.controllers.tracking.events.notifications.SwitchedMessageInQuickReplyEvent;
 import com.waz.zclient.pages.BaseFragment;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.text.TypefaceEditText;
 import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.utils.IntentUtils;
@@ -120,7 +122,7 @@ public class QuickReplyFragment extends BaseFragment<QuickReplyFragment.Containe
         counter.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getControllerFactory().getTrackingController().tagEvent(new SwitchedMessageInQuickReplyEvent());
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new SwitchedMessageInQuickReplyEvent());
                 contentContainer.smoothScrollToPosition((layoutManager.findFirstVisibleItemPosition() + 1) % adapter.getItemCount());
             }
         });
@@ -129,7 +131,7 @@ public class QuickReplyFragment extends BaseFragment<QuickReplyFragment.Containe
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    getControllerFactory().getTrackingController().tagEvent(new SwitchedMessageInQuickReplyEvent());
+                    ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new SwitchedMessageInQuickReplyEvent());
                     updateScrolledItemText();
                 }
             }
@@ -146,7 +148,7 @@ public class QuickReplyFragment extends BaseFragment<QuickReplyFragment.Containe
                     return;
                 }
 
-                getControllerFactory().getTrackingController().tagEvent(new OpenedAppFromQuickReplyEvent());
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedAppFromQuickReplyEvent());
 
                 Intent appLaunchIntent = IntentUtils.getAppLaunchIntent(getContext(), conversation.getId(), message.getText().toString());
                 startActivity(appLaunchIntent);
@@ -166,7 +168,7 @@ public class QuickReplyFragment extends BaseFragment<QuickReplyFragment.Containe
             }
             conversation.sendMessage(new MessageContent.Text(sendText));
 
-            TrackingUtils.onSentTextMessage(getControllerFactory().getTrackingController(),
+            TrackingUtils.onSentTextMessage(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                             getStoreFactory().getConversationStore().getCurrentConversation());
             getActivity().finish();
             return true;

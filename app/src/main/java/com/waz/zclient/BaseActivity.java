@@ -26,6 +26,7 @@ import com.waz.api.Permission;
 import com.waz.api.PermissionProvider;
 import com.waz.zclient.controllers.IControllerFactory;
 import com.waz.zclient.core.stores.IStoreFactory;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.utils.PermissionUtils;
 import com.waz.zclient.utils.TrackingUtils;
 import com.waz.zclient.utils.ViewUtils;
@@ -103,7 +104,7 @@ public class BaseActivity extends BaseScalaActivity implements ServiceContainer,
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (permissionRequest != null && requestCode == ScalaPermissionRequest.REQUEST_SE_PERMISSION) {
 
-            TrackingUtils.tagChangedContactsPermissionEvent(getControllerFactory().getTrackingController(),
+            TrackingUtils.tagChangedContactsPermissionEvent(injectJava(GlobalTrackingController.class),
                                                             permissions,
                                                             grantResults);
 

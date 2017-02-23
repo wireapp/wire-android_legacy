@@ -46,7 +46,6 @@ import com.waz.zclient.controllers.spotify.ISpotifyController;
 import com.waz.zclient.controllers.streammediaplayer.IStreamMediaPlayerController;
 import com.waz.zclient.controllers.stubs.StubThemeController;
 import com.waz.zclient.controllers.theme.IThemeController;
-import com.waz.zclient.controllers.tracking.ITrackingController;
 import com.waz.zclient.controllers.usernames.IUsernamesController;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
 import com.waz.zclient.controllers.verification.IVerificationController;
@@ -197,11 +196,6 @@ public class StubControllerFactory implements IControllerFactory {
     @Override
     public IThemeController getThemeController() {
         return new StubThemeController();
-    }
-
-    @Override
-    public ITrackingController getTrackingController() {
-        return null;
     }
 
     @Override

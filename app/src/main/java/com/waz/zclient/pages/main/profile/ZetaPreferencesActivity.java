@@ -62,6 +62,7 @@ import com.waz.zclient.pages.main.profile.preferences.OptionsPreferences;
 import com.waz.zclient.pages.main.profile.preferences.RootPreferences;
 import com.waz.zclient.pages.main.profile.preferences.SupportPreferences;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.WireRingtonePreferenceDialogFragment;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
 import timber.log.Timber;
@@ -217,7 +218,7 @@ public class ZetaPreferencesActivity extends BasePreferenceActivity implements A
             return;
         }
         if (previousVerification != Verification.VERIFIED && currentVerification == Verification.VERIFIED) {
-            getControllerFactory().getTrackingController().tagEvent(new VerifiedConversationEvent());
+            injectJava(GlobalTrackingController.class).tagEvent(new VerifiedConversationEvent());
         }
     }
 
@@ -316,7 +317,7 @@ public class ZetaPreferencesActivity extends BasePreferenceActivity implements A
             public void execute(NetworkMode networkMode) {
                 getStoreFactory().getProfileStore().setUserPicture(imageAsset);
                 getControllerFactory().getBackgroundController().setImageAsset(imageAsset);
-                getControllerFactory().getTrackingController().tagEvent(new ChangedProfilePictureEvent());
+                injectJava(GlobalTrackingController.class).tagEvent(new ChangedProfilePictureEvent());
             }
 
             @Override

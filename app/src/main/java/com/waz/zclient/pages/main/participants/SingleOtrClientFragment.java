@@ -34,6 +34,7 @@ import com.waz.api.UiSignal;
 import com.waz.api.UpdateListener;
 import com.waz.api.User;
 import com.waz.api.Verification;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
@@ -41,6 +42,7 @@ import com.waz.zclient.controllers.tracking.events.otr.UnverifiedOtherOtrClientE
 import com.waz.zclient.controllers.tracking.events.otr.VerifiedOtherOtrClientEvent;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.pages.main.profile.ZetaPreferencesActivity;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.utils.TextViewUtils;
 import com.waz.zclient.ui.views.e2ee.OtrSwitch;
 import com.waz.zclient.utils.LayoutSpec;
@@ -373,9 +375,9 @@ public class SingleOtrClientFragment extends BaseFragment<SingleOtrClientFragmen
             return;
         }
         if (verified) {
-            getControllerFactory().getTrackingController().tagEvent(new VerifiedOtherOtrClientEvent());
+            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new VerifiedOtherOtrClientEvent());
         } else {
-            getControllerFactory().getTrackingController().tagEvent(new UnverifiedOtherOtrClientEvent());
+            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new UnverifiedOtherOtrClientEvent());
         }
     }
 

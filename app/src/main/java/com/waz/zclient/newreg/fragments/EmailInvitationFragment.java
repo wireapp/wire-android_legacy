@@ -28,6 +28,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.core.controllers.tracking.attributes.RegistrationEventContext;
 import com.waz.zclient.core.controllers.tracking.events.registration.CancelledPersonalInvite;
@@ -35,6 +36,7 @@ import com.waz.zclient.core.controllers.tracking.events.registration.ConfirmedPe
 import com.waz.zclient.core.controllers.tracking.events.registration.ViewTOS;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.pages.main.profile.validator.PasswordValidator;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.ui.utils.TextViewUtils;
 import com.waz.zclient.ui.views.ZetaButton;
@@ -92,7 +94,7 @@ public class EmailInvitationFragment extends BaseFragment<EmailInvitationFragmen
                     return;
                 }
                 getContainer().onOpenUrlInApp(getString(R.string.url_terms_of_service), true);
-                getControllerFactory().getTrackingController().tagEvent(new ViewTOS(ViewTOS.Source.FROM_JOIN_PAGE));
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ViewTOS(ViewTOS.Source.FROM_JOIN_PAGE));
             }
         });
 
@@ -191,7 +193,7 @@ public class EmailInvitationFragment extends BaseFragment<EmailInvitationFragmen
         }
         KeyboardUtils.hideKeyboard(getActivity());
         getStoreFactory().getAppEntryStore().onBackPressed();
-        getControllerFactory().getTrackingController().tagEvent(new CancelledPersonalInvite(CancelledPersonalInvite.EventContext.INVITE_EMAIL));
+        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new CancelledPersonalInvite(CancelledPersonalInvite.EventContext.INVITE_EMAIL));
     }
 
     private void onRegisterClicked() {
@@ -206,7 +208,7 @@ public class EmailInvitationFragment extends BaseFragment<EmailInvitationFragmen
 
         getStoreFactory().getAppEntryStore().acceptEmailInvitation(passwordEditText.getText().toString(),
                                                                    getControllerFactory().getAccentColorController().getAccentColor());
-        getControllerFactory().getTrackingController().tagEvent(new ConfirmedPersonalInviteEvent(
+        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ConfirmedPersonalInviteEvent(
             RegistrationEventContext.PERSONAL_INVITE_EMAIL));
     }
 

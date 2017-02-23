@@ -29,6 +29,7 @@ import com.waz.api.SyncState;
 import com.waz.api.UpdateListener;
 import com.waz.api.User;
 import com.waz.api.Verification;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
@@ -36,6 +37,7 @@ import com.waz.zclient.core.stores.conversation.ConversationStoreObserver;
 import com.waz.zclient.core.stores.singleparticipants.SingleParticipantStoreObserver;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.optionsmenu.OptionsMenu;
 import com.waz.zclient.ui.optionsmenu.OptionsMenuItem;
 import com.waz.zclient.ui.theme.OptionsTheme;
@@ -314,7 +316,7 @@ public class OptionsMenuFragment extends BaseFragment<OptionsMenuFragment.Contai
             getControllerFactory().isTornDown()) {
             return;
         }
-        TrackingUtils.tagOptionsMenuSelectedEvent(getControllerFactory().getTrackingController(),
+        TrackingUtils.tagOptionsMenuSelectedEvent(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                   optionsMenuItem,
                                                   conversation.getType(),
                                                   inConversationList,
