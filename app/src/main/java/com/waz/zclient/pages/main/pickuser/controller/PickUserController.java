@@ -21,7 +21,6 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.view.View;
 import com.waz.api.User;
-import com.waz.zclient.controllers.tracking.ITrackingController;
 import com.waz.zclient.pages.main.profile.validator.EmailValidator;
 import com.waz.zclient.utils.LayoutSpec;
 
@@ -36,8 +35,6 @@ public class PickUserController implements IPickUserController {
     private Set<PickUserControllerSearchObserver> pickUserControllerSearchObservers;
     private Set<Destination> visibleDestinations;
 
-    private ITrackingController trackingController;
-
     private boolean isShowingUserProfile;
     private boolean hideWithoutAnimations;
 
@@ -46,9 +43,7 @@ public class PickUserController implements IPickUserController {
     private Context context;
     private List<User> selectedUsers;
 
-    public PickUserController(ITrackingController trackingController,
-                              Context context) {
-        this.trackingController = trackingController;
+    public PickUserController(Context context) {
         this.context = context;
         this.emailValidator = EmailValidator.newInstance();
 
@@ -252,7 +247,6 @@ public class PickUserController implements IPickUserController {
             pickUserControllerSearchObservers.clear();
             pickUserControllerSearchObservers = null;
         }
-        trackingController = null;
         selectedUsers = null;
     }
 

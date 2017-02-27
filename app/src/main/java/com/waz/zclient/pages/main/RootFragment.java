@@ -44,6 +44,7 @@ import com.waz.api.User;
 import com.waz.api.UsersList;
 import com.waz.api.Verification;
 import com.waz.model.MessageData;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
@@ -84,6 +85,7 @@ import com.waz.zclient.pages.main.pickuser.controller.IPickUserController;
 import com.waz.zclient.pages.main.pickuser.controller.PickUserControllerScreenObserver;
 import com.waz.zclient.pages.main.profile.camera.CameraContext;
 import com.waz.zclient.pages.main.profile.camera.CameraFragment;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.animation.interpolators.penner.Quart;
 import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.ui.utils.MathUtils;
@@ -509,7 +511,7 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
         getStoreFactory().getConversationStore().sendMessage(imageAsset);
 
         // Tablet doesn't have keyboard camera interface
-        TrackingUtils.onSentPhotoMessage(getControllerFactory().getTrackingController(),
+        TrackingUtils.onSentPhotoMessage(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                          getStoreFactory().getConversationStore().getCurrentConversation(),
                                          imageFromCamera ? SentPictureEvent.Source.CAMERA
                                                          : SentPictureEvent.Source.GALLERY,

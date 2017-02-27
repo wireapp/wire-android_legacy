@@ -70,7 +70,6 @@ import com.waz.zclient.controllers.streammediaplayer.IStreamMediaPlayerControlle
 import com.waz.zclient.controllers.streammediaplayer.StreamMediaPlayerController;
 import com.waz.zclient.controllers.theme.IThemeController;
 import com.waz.zclient.controllers.theme.ThemeController;
-import com.waz.zclient.controllers.tracking.ITrackingController;
 import com.waz.zclient.controllers.usernames.IUsernamesController;
 import com.waz.zclient.controllers.usernames.UsernamesController;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
@@ -137,8 +136,6 @@ public abstract class Base$$ControllerFactory implements IControllerFactory {
 
   protected IThemeController themeController;
 
-  protected ITrackingController trackingController;
-
   protected IUserPreferencesController userPreferencesController;
 
   protected IVerificationController verificationController;
@@ -170,8 +167,6 @@ public abstract class Base$$ControllerFactory implements IControllerFactory {
     }
     return sharingController;
   }
-
-  protected abstract void initTrackingController();
 
   @Override
   public IPasswordController getPasswordController() {
@@ -294,10 +289,6 @@ public abstract class Base$$ControllerFactory implements IControllerFactory {
       themeController.tearDown();
       themeController = null;
     }
-    if (trackingController != null) {
-      trackingController.tearDown();
-      trackingController = null;
-    }
     if (userPreferencesController != null) {
       userPreferencesController.tearDown();
       userPreferencesController = null;
@@ -380,13 +371,6 @@ public abstract class Base$$ControllerFactory implements IControllerFactory {
   }
 
   @Override
-  public ITrackingController getTrackingController() {
-    verifyLifecycle();
-    initTrackingController();
-    return trackingController;
-  }
-
-  @Override
   public boolean isTornDown() {
     return isTornDown;
   }
@@ -431,7 +415,7 @@ public abstract class Base$$ControllerFactory implements IControllerFactory {
   public IPickUserController getPickUserController() {
     verifyLifecycle();
     if (pickUserController == null) {
-      pickUserController = new PickUserController(getTrackingController(), this.context);
+      pickUserController = new PickUserController(this.context);
     }
     return pickUserController;
   }
@@ -546,7 +530,6 @@ public abstract class Base$$ControllerFactory implements IControllerFactory {
     getGlobalLayoutController().setActivity(activity);
     getOrientationController().setActivity(activity);
     getSpotifyController().setActivity(activity);
-    getTrackingController().setActivity(activity);
     getUsernameController().setActivity(activity);
   }
 

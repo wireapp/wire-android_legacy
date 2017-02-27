@@ -40,6 +40,7 @@ import com.waz.api.SyncState;
 import com.waz.api.User;
 import com.waz.api.UsersList;
 import com.waz.api.Verification;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.confirmation.ConfirmationCallback;
@@ -76,6 +77,7 @@ import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 import com.waz.zclient.pages.main.pickuser.PickUserFragment;
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController;
 import com.waz.zclient.pages.main.pickuser.controller.PickUserControllerScreenObserver;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
 import com.waz.zclient.ui.animation.interpolators.penner.Linear;
 import com.waz.zclient.ui.animation.interpolators.penner.Quart;
@@ -424,12 +426,12 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
                     getControllerFactory().getConversationScreenController().hideParticipants(false, true);
                 }
 
-                getControllerFactory().getTrackingController().tagEvent(new BlockingEvent(BlockingEvent.ConformationResponse.BLOCK));
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new BlockingEvent(BlockingEvent.ConformationResponse.BLOCK));
             }
 
             @Override
             public void negativeButtonClicked() {
-                getControllerFactory().getTrackingController().tagEvent(new BlockingEvent(BlockingEvent.ConformationResponse.CANCEL));
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new BlockingEvent(BlockingEvent.ConformationResponse.CANCEL));
             }
 
             @Override
@@ -483,7 +485,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
                 }
 
                 if (!confirmed) {
-                    getControllerFactory().getTrackingController().tagEvent(new DeleteConversationEvent(ConversationType.getValue(conversation),
+                    ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new DeleteConversationEvent(ConversationType.getValue(conversation),
                                                                                                         DeleteConversationEvent.Context.LIST,
                                                                                                         DeleteConversationEvent.Response.CANCEL));
                     return;
@@ -492,7 +494,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
                 boolean deleteCurrentConversation = conversation != null && currentConversation != null &&
                                                     conversation.getId().equals(currentConversation.getId());
                 getStoreFactory().getConversationStore().deleteConversation(conversation, checkboxIsSelected);
-                getControllerFactory().getTrackingController().tagEvent(new DeleteConversationEvent(ConversationType.getValue(
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new DeleteConversationEvent(ConversationType.getValue(
                     conversation),
                                                                                                     DeleteConversationEvent.Context.PARTICIPANTS,
                                                                                                     DeleteConversationEvent.Response.DELETE));
@@ -549,9 +551,9 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
                         return;
                     }
                     if (archive) {
-                        getControllerFactory().getTrackingController().tagEvent(new ArchivedConversationEvent(conversation.getType().toString()));
+                        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ArchivedConversationEvent(conversation.getType().toString()));
                     } else {
-                        getControllerFactory().getTrackingController().tagEvent(new UnarchivedConversationEvent(conversation.getType().toString()));
+                        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new UnarchivedConversationEvent(conversation.getType().toString()));
                     }
 
                 }
@@ -912,7 +914,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
                     @Override
                     public void run() {
                         getStoreFactory().getConversationStore().getCurrentConversation().removeMember(user);
-                        getControllerFactory().getTrackingController().tagEvent(new RemoveContactEvent(true,
+                        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new RemoveContactEvent(true,
                                                                                                        getParticipantsCount()));
                     }
                 });
@@ -920,7 +922,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
 
             @Override
             public void negativeButtonClicked() {
-                getControllerFactory().getTrackingController().tagEvent(new RemoveContactEvent(false,
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new RemoveContactEvent(false,
                                                                                                getParticipantsCount()));
             }
 
@@ -1031,7 +1033,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
                                           R.string.conversation__create_group_conversation__no_network__button,
                                           null, true);
             }
-            getControllerFactory().getTrackingController().tagEvent(new CreatedGroupConversationEvent(true,
+            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new CreatedGroupConversationEvent(true,
                                                                                                       (users.size() + 1)));
         } else if (currentConversation.getType() == IConversation.Type.GROUP) {
             currentConversation.addMembers(users);
@@ -1044,7 +1046,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
                                           R.string.conversation__add_user__no_network__button,
                                           null, true);
             }
-            getControllerFactory().getTrackingController().tagEvent(new AddedMemberToGroupEvent(getParticipantsCount(), users.size()));
+            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new AddedMemberToGroupEvent(getParticipantsCount(), users.size()));
         }
     }
 
@@ -1200,7 +1202,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
         ConfirmationCallback callback = new TwoButtonConfirmationCallback() {
             @Override
             public void positiveButtonClicked(boolean checkboxIsSelected) {
-                getControllerFactory().getTrackingController().tagEvent(new LeaveGroupConversationEvent(true,
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new LeaveGroupConversationEvent(true,
                                                                                                         getStoreFactory().getConversationStore().getCurrentConversation().getUsers().size()));
 
                 getStoreFactory().getConversationStore().leave(conversation);
@@ -1213,7 +1215,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
 
             @Override
             public void negativeButtonClicked() {
-                getControllerFactory().getTrackingController().tagEvent(new LeaveGroupConversationEvent(false,
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new LeaveGroupConversationEvent(false,
                                                                                                         getStoreFactory().getConversationStore().getCurrentConversation().getUsers().size()));
             }
 

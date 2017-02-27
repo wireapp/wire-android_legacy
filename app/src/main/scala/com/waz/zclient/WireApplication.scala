@@ -31,7 +31,6 @@ import com.waz.zclient.controllers.global.{AccentColorController, KeyboardContro
 import com.waz.zclient.controllers.navigation.INavigationController
 import com.waz.zclient.controllers.singleimage.ISingleImageController
 import com.waz.zclient.controllers.theme.IThemeController
-import com.waz.zclient.controllers.tracking.ITrackingController
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
 import com.waz.zclient.conversation.CollectionController
 import com.waz.zclient.core.stores.IStoreFactory
@@ -42,7 +41,7 @@ import com.waz.zclient.notifications.controllers.{CallingNotificationsController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneController
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
-import com.waz.zclient.tracking.{CallingTrackingController, GlobalTrackingController, MainTrackingController}
+import com.waz.zclient.tracking.{CallingTrackingController, GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.{BackendPicker, BuildConfigUtils, Callback}
 import com.waz.zclient.views.ImageController
 
@@ -70,7 +69,6 @@ object WireApplication {
     bind [IConversationScreenController] toProvider controllerFactory.getConversationScreenController
     bind [INavigationController]         toProvider controllerFactory.getNavigationController
     bind [IUserPreferencesController]    toProvider controllerFactory.getUserPreferencesController
-    bind [ITrackingController]           toProvider controllerFactory.getTrackingController
     bind [IConversationScreenController] toProvider controllerFactory.getConversationScreenController
     bind [ISingleImageController]        toProvider controllerFactory.getSingleImageController
     bind [ISlidingPaneController]        toProvider controllerFactory.getSlidingPaneController
@@ -124,7 +122,7 @@ object WireApplication {
       * based on the activity responsible for generating their events (we don't want to instantiate an uneccessary
       * MessageActionsController in the CallingActivity, for example
       */
-    bind [MainTrackingController]    to new MainTrackingController()
+    bind [UiTrackingController]    to new UiTrackingController()
   }
 }
 

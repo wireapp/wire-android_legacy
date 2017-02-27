@@ -30,10 +30,12 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorChangeRequester;
 import com.waz.zclient.core.controllers.tracking.events.settings.ChangedAccentColorEvent;
 import com.waz.zclient.pages.BaseDialogFragment;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.utils.ViewUtils;
 
 public class AccentColorPreferenceDialogFragment extends BaseDialogFragment<AccentColorPreferenceDialogFragment.Container> implements OnItemClickListener {
@@ -69,7 +71,7 @@ public class AccentColorPreferenceDialogFragment extends BaseDialogFragment<Acce
     public void onItemClick(@ColorInt int accentColor) {
         getControllerFactory().getAccentColorController().setColor(AccentColorChangeRequester.SETTINGS, accentColor);
         getStoreFactory().getProfileStore().setAccentColor(this, accentColor);
-        getControllerFactory().getTrackingController().tagEvent(new ChangedAccentColorEvent());
+        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ChangedAccentColorEvent());
         dismiss();
     }
 

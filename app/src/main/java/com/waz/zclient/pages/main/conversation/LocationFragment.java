@@ -63,6 +63,7 @@ import com.waz.api.IConversation;
 import com.waz.api.MessageContent;
 import com.waz.api.SyncState;
 import com.waz.api.Verification;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
@@ -71,6 +72,7 @@ import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
 import com.waz.zclient.core.stores.conversation.ConversationStoreObserver;
 import com.waz.zclient.pages.BaseFragment;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.text.GlyphTextView;
 import com.waz.zclient.ui.views.TouchRegisteringFrameLayout;
 import com.waz.zclient.utils.LayoutSpec;
@@ -494,7 +496,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
                                                                                currentLocationName,
                                                                                (int) map.getCameraPosition().zoom);
                 getControllerFactory().getLocationController().hideShareLocation(location);
-                TrackingUtils.onSentLocationMessage(getControllerFactory().getTrackingController(),
+                TrackingUtils.onSentLocationMessage(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                     getStoreFactory().getConversationStore().getCurrentConversation());
                 break;
         }

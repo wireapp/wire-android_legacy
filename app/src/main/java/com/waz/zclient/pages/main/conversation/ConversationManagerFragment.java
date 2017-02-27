@@ -36,6 +36,7 @@ import com.waz.api.User;
 import com.waz.api.UsersList;
 import com.waz.api.Verification;
 import com.waz.model.MessageData;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
@@ -67,6 +68,7 @@ import com.waz.zclient.pages.main.pickuser.controller.IPickUserController;
 import com.waz.zclient.pages.main.pickuser.controller.PickUserControllerScreenObserver;
 import com.waz.zclient.pages.main.profile.camera.CameraContext;
 import com.waz.zclient.pages.main.profile.camera.CameraFragment;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.TrackingUtils;
@@ -495,7 +497,7 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
         getStoreFactory().getNetworkStore().doIfHasInternetOrNotifyUser(null);
 
         // Photo sent via contacts quick menu
-        TrackingUtils.onSentPhotoMessage(getControllerFactory().getTrackingController(),
+        TrackingUtils.onSentPhotoMessage(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                          getStoreFactory().getConversationStore().getCurrentConversation(),
                                          imageFromCamera ? SentPictureEvent.Source.CAMERA
                                                          : SentPictureEvent.Source.GALLERY,
@@ -567,7 +569,7 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
                                           R.string.conversation__create_group_conversation__no_network__button,
                                           null, true);
             }
-            getControllerFactory().getTrackingController().tagEvent(new CreatedGroupConversationEvent(true, (users.size() + 1)));
+            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new CreatedGroupConversationEvent(true, (users.size() + 1)));
         } else if (currentConversation.getType() == IConversation.Type.GROUP) {
             currentConversation.addMembers(users);
             if (!getStoreFactory().getNetworkStore().hasInternetConnection()) {
@@ -577,7 +579,7 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
                                           R.string.conversation__add_user__no_network__button,
                                           null, true);
             }
-            getControllerFactory().getTrackingController().tagEvent(new AddedMemberToGroupEvent(getParticipantsCount(), users.size()));
+            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new AddedMemberToGroupEvent(getParticipantsCount(), users.size()));
         }
     }
 

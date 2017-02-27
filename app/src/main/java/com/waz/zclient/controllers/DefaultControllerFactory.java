@@ -19,12 +19,7 @@ package com.waz.zclient.controllers;
 
 import android.content.Context;
 import com.waz.zclient.BuildConfig;
-import com.waz.zclient.R;
 import com.waz.zclient.controllers.loadtimelogger.LoadTimeLoggerController;
-import com.waz.zclient.controllers.tracking.DisabledTrackingController;
-import com.waz.zclient.controllers.tracking.LoggingTrackingController;
-import com.waz.zclient.controllers.tracking.TrackingController;
-import com.waz.zclient.controllers.userpreferences.UserPreferencesController;
 
 public class DefaultControllerFactory extends Base$$ControllerFactory {
 
@@ -41,32 +36,6 @@ public class DefaultControllerFactory extends Base$$ControllerFactory {
             loadTimeLoggerController = new LoadTimeLoggerController();
         } else {
             loadTimeLoggerController = new LoadTimeLoggerController.DisabledLoadTimeLoggerController();
-        }
-    }
-
-    @Override
-    protected void initTrackingController() {
-        final boolean trackingEnabled = context.getSharedPreferences(UserPreferencesController.USER_PREFS_TAG, Context.MODE_PRIVATE)
-                                               .getBoolean(context.getString(R.string.pref_advanced_analytics_enabled_key), true);
-
-        if (trackingEnabled) {
-            if (trackingController == null || !(trackingController instanceof TrackingController)) {
-                if (BuildConfig.DISABLE_TRACKING_KEEP_LOGGING) {
-                    trackingController = new DisabledTrackingController();
-                } else if (BuildConfig.DEBUG) {
-                    trackingController = new LoggingTrackingController();
-                } else {
-                    trackingController = new TrackingController();
-                }
-            }
-        } else {
-            if (trackingController == null || !(trackingController instanceof DisabledTrackingController)) {
-                if (trackingController != null) {
-                    trackingController.tearDown();
-                    trackingController = null;
-                }
-                trackingController = new DisabledTrackingController();
-            }
         }
     }
 }

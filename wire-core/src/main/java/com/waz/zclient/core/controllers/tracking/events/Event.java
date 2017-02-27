@@ -18,7 +18,6 @@
 package com.waz.zclient.core.controllers.tracking.events;
 
 import android.support.annotation.NonNull;
-import com.waz.api.TrackingData;
 import com.waz.zclient.core.controllers.tracking.attributes.Attribute;
 import com.waz.zclient.core.controllers.tracking.attributes.RangedAttribute;
 
@@ -41,8 +40,6 @@ public abstract class Event {
     public Map<Attribute, String> getAttributes() {
         return attributes;
     }
-
-    public void addSyncEngineTrackingData(@NonNull TrackingData trackingData) {}
 
     public boolean mustWaitForTrackingData() {
         return true;

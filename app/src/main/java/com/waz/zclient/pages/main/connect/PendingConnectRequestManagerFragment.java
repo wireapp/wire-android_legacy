@@ -24,6 +24,7 @@ import android.view.ViewGroup;
 import com.waz.api.IConversation;
 import com.waz.api.NetworkMode;
 import com.waz.api.User;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.confirmation.ConfirmationCallback;
 import com.waz.zclient.controllers.confirmation.ConfirmationRequest;
@@ -40,6 +41,7 @@ import com.waz.zclient.core.stores.connect.IConnectStore;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.pages.main.participants.OptionsMenuFragment;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.optionsmenu.OptionsMenu;
 import com.waz.zclient.ui.optionsmenu.OptionsMenuItem;
 import com.waz.zclient.utils.LayoutSpec;
@@ -201,11 +203,11 @@ public class PendingConnectRequestManagerFragment extends BaseFragment<PendingCo
                 break;
             case ARCHIVE:
                 getStoreFactory().getConversationStore().archive(conversation, true);
-                getControllerFactory().getTrackingController().tagEvent(new ArchivedConversationEvent(conversation.getType().toString()));
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ArchivedConversationEvent(conversation.getType().toString()));
                 break;
             case UNARCHIVE:
                 getStoreFactory().getConversationStore().archive(conversation, false);
-                getControllerFactory().getTrackingController().tagEvent(new UnarchivedConversationEvent(conversation.getType().toString()));
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new UnarchivedConversationEvent(conversation.getType().toString()));
                 break;
             case SILENCE:
                 conversation.setMuted(true);
@@ -238,7 +240,7 @@ public class PendingConnectRequestManagerFragment extends BaseFragment<PendingCo
                         getControllerFactory().getPickUserController().hideUserProfile();
                         break;
                 }
-                getControllerFactory().getTrackingController().tagEvent(new BlockingEvent(BlockingEvent.ConformationResponse.BLOCK));
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new BlockingEvent(BlockingEvent.ConformationResponse.BLOCK));
 
             }
             @Override

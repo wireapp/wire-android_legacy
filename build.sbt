@@ -5,7 +5,7 @@ import scala.collection.mutable
 
 import Deps._
 
-val MajorVersion = "2.7"
+val MajorVersion = "2.29"
 
 lazy val buildNumber = Option(System.getenv("BUILD_NUMBER")).map(_.toInt).getOrElse(99999)
 

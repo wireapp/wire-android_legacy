@@ -42,6 +42,7 @@ import com.waz.api.Message;
 import com.waz.api.OtrClient;
 import com.waz.api.User;
 import com.waz.api.UsersList;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
@@ -67,6 +68,7 @@ import com.waz.zclient.pages.main.participants.TabbedParticipantBodyFragment;
 import com.waz.zclient.pages.main.pickuser.PickUserFragment;
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController;
 import com.waz.zclient.pages.main.pickuser.controller.PickUserControllerScreenObserver;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.animation.HeightEvaluator;
 import com.waz.zclient.ui.animation.interpolators.penner.Quart;
 import com.waz.zclient.ui.utils.KeyboardUtils;
@@ -1044,7 +1046,7 @@ public class ParticipantsDialogFragment extends BaseFragment<ParticipantsDialogF
                                           R.string.conversation__create_group_conversation__no_network__button,
                                           null, true);
             }
-            getControllerFactory().getTrackingController().tagEvent(new CreatedGroupConversationEvent(true, (users.size() + 1)));
+            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new CreatedGroupConversationEvent(true, (users.size() + 1)));
         } else if (currentConversation.getType() == IConversation.Type.GROUP) {
             currentConversation.addMembers(users);
             if (!getStoreFactory().getNetworkStore().hasInternetConnection()) {
@@ -1054,7 +1056,7 @@ public class ParticipantsDialogFragment extends BaseFragment<ParticipantsDialogF
                                           R.string.conversation__add_user__no_network__button,
                                           null, true);
             }
-            getControllerFactory().getTrackingController().tagEvent(new AddedMemberToGroupEvent(getParticipantsCount(), users.size()));
+            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new AddedMemberToGroupEvent(getParticipantsCount(), users.size()));
         }
         hide();
     }

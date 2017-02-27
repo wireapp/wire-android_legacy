@@ -288,7 +288,7 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
 
     val messages = ns.map(n => getMessage(n, multiple = true, singleConversationInBatch = isSingleConv, singleUserInBatch = users.size == 1 && isSingleConv)).takeRight(5)
     builder.setContentText(messages.last) //the collapsed notification should have the last message
-    messages.reverse.foreach(inboxStyle.addLine)//the expanded notification should have the most recent at the top (reversed)
+    messages.foreach(inboxStyle.addLine)
 
     builder.build
   }

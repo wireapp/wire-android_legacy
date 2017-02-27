@@ -45,6 +45,7 @@ import com.waz.api.IConversation;
 import com.waz.api.NetworkMode;
 import com.waz.api.User;
 import com.waz.api.UserSearchResult;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
@@ -74,6 +75,7 @@ import com.waz.zclient.pages.main.pickuser.controller.PickUserDataState;
 import com.waz.zclient.pages.main.pickuser.views.ContactRowView;
 import com.waz.zclient.pages.main.pickuser.views.SearchBoxView;
 import com.waz.zclient.pages.main.pickuser.views.UserRowView;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.animation.fragment.FadeAnimation;
 import com.waz.zclient.ui.startui.ConversationQuickMenu;
 import com.waz.zclient.ui.startui.ConversationQuickMenuCallback;
@@ -738,7 +740,7 @@ public class PickUserFragment extends BaseFragment<PickUserFragment.Container> i
             return;
         }
 
-        TrackingUtils.onUserSelectedInStartUI(getControllerFactory().getTrackingController(),
+        TrackingUtils.onUserSelectedInStartUI(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                               user,
                                               anchorView instanceof ChatheadWithTextFooter,
                                               isAddingToConversation(),
@@ -777,8 +779,8 @@ public class PickUserFragment extends BaseFragment<PickUserFragment.Container> i
             return;
         }
 
-        getControllerFactory().getTrackingController().tagEvent(new SelectedTopUser());
-        getControllerFactory().getTrackingController().tagEvent(new OpenedConversationEvent(ConversationType.ONE_TO_ONE_CONVERSATION.name()));
+        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new SelectedTopUser());
+        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedConversationEvent(ConversationType.ONE_TO_ONE_CONVERSATION.name()));
         getStoreFactory().getConversationStore().setCurrentConversation(user.getConversation(),
                                                                         ConversationChangeRequester.START_CONVERSATION);
     }
@@ -788,7 +790,7 @@ public class PickUserFragment extends BaseFragment<PickUserFragment.Container> i
         KeyboardUtils.hideKeyboard(getActivity());
         getStoreFactory().getConversationStore().setCurrentConversation(conversation,
                                                                         ConversationChangeRequester.START_CONVERSATION);
-        getControllerFactory().getTrackingController().tagEvent(new OpenedConversationEvent(ConversationType.GROUP_CONVERSATION.name()));
+        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedConversationEvent(ConversationType.GROUP_CONVERSATION.name()));
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -821,7 +823,7 @@ public class PickUserFragment extends BaseFragment<PickUserFragment.Container> i
                 String myName = me != null ? me.getName() : "";
                 String message = getString(R.string.connect__message, user.getName(), myName);
                 user.connect(message);
-                getControllerFactory().getTrackingController().tagEvent(new SentConnectRequestEvent(SentConnectRequestEvent.EventContext.INVITE_CONTACT_LIST, user.getCommonConnections().getTotalCount()));
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new SentConnectRequestEvent(SentConnectRequestEvent.EventContext.INVITE_CONTACT_LIST, user.getCommonConnections().getTotalCount()));
                 break;
         }
     }
@@ -839,7 +841,7 @@ public class PickUserFragment extends BaseFragment<PickUserFragment.Container> i
                     // Launch SMS app directly if contact only has phone numner
                     final String number = contactMethods[0].getStringRepresentation();
                     sendSMSInvite(number);
-                    getControllerFactory().getTrackingController().tagEvent(new OpenedGenericInviteMenuEvent(OpenedGenericInviteMenuEvent.EventContext.ADDRESSBOOK));
+                    ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedGenericInviteMenuEvent(OpenedGenericInviteMenuEvent.EventContext.ADDRESSBOOK));
                     return;
                 }
 
@@ -870,14 +872,14 @@ public class PickUserFragment extends BaseFragment<PickUserFragment.Container> i
                                                   if (selectedContactMethod.getKind() == ContactMethod.Kind.SMS) {
                                                       final String number = String.valueOf(itemNames[selected]);
                                                       sendSMSInvite(number);
-                                                      getControllerFactory().getTrackingController().tagEvent(new OpenedGenericInviteMenuEvent(OpenedGenericInviteMenuEvent.EventContext.ADDRESSBOOK));
+                                                      ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedGenericInviteMenuEvent(OpenedGenericInviteMenuEvent.EventContext.ADDRESSBOOK));
                                                   } else {
                                                       selectedContactMethod.invite(" ", null);
                                                       Toast.makeText(getActivity(),
                                                                      getResources().getString(R.string.people_picker__invite__sent_feedback),
                                                                      Toast.LENGTH_LONG).show();
                                                       boolean fromSearch = TextUtils.isEmpty(getControllerFactory().getPickUserController().getSearchFilter());
-                                                      TrackingUtils.tagSentInviteToContactEvent(getControllerFactory().getTrackingController(),
+                                                      TrackingUtils.tagSentInviteToContactEvent(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                                                                 selectedContactMethod.getKind(),
                                                                                                 contactDetails.hasBeenInvited(),
                                                                                                 fromSearch);
@@ -898,7 +900,7 @@ public class PickUserFragment extends BaseFragment<PickUserFragment.Container> i
                 dialog = builder.create();
                 dialog.show();
 
-                getControllerFactory().getTrackingController().onApplicationScreen(ApplicationScreen.SEND_PERSONAL_INVITE_MENU);
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).onApplicationScreen(ApplicationScreen.SEND_PERSONAL_INVITE_MENU);
             }
         });
     }
@@ -956,7 +958,7 @@ public class PickUserFragment extends BaseFragment<PickUserFragment.Container> i
                 if (!hasSelectedUsers) {
                     getStoreFactory().getPickUserStore().searchContacts(filter);
                 }
-                getControllerFactory().getTrackingController().tagEvent(new EnteredSearchEvent(isAddingToConversation(), filter));
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new EnteredSearchEvent(isAddingToConversation(), filter));
                 break;
             case SHOW_TOP_USERS_AS_LIST:
             case SHOW_TOP_USERS_AND_RECOMMENDED:
@@ -1026,8 +1028,8 @@ public class PickUserFragment extends BaseFragment<PickUserFragment.Container> i
         OpenedGenericInviteMenuEvent.EventContext eventContext = fromSearch ?
                                                                  OpenedGenericInviteMenuEvent.EventContext.NO_RESULTS :
                                                                  OpenedGenericInviteMenuEvent.EventContext.BANNER;
-        getControllerFactory().getTrackingController().tagEvent(new OpenedGenericInviteMenuEvent(eventContext));
-        getControllerFactory().getTrackingController().onApplicationScreen(ApplicationScreen.SEND_GENERIC_INVITE_MENU);
+        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedGenericInviteMenuEvent(eventContext));
+        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).onApplicationScreen(ApplicationScreen.SEND_GENERIC_INVITE_MENU);
     }
 
     private void showUser(User user, View anchorView) {

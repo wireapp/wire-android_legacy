@@ -22,13 +22,14 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
-import android.text.TextWatcher; 
+import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.TextView;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.navigation.Page;
 import com.waz.zclient.core.controllers.tracking.events.session.EnteredLoginPhoneEvent;
@@ -40,6 +41,7 @@ import com.waz.zclient.newreg.fragments.country.CountryController;
 import com.waz.zclient.newreg.utils.AppEntryUtil;
 import com.waz.zclient.newreg.views.PhoneConfirmationButton;
 import com.waz.zclient.pages.BaseFragment;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.text.TypefaceEditText;
 import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.ui.views.tab.TabIndicatorLayout;
@@ -237,7 +239,7 @@ public class PhoneSignInFragment extends BaseFragment<PhoneSignInFragment.Contai
         // before loging in show loader and dismiss keyboard
         getContainer().enableProgress(true);
         KeyboardUtils.hideKeyboard(getActivity());
-        getControllerFactory().getTrackingController().tagEvent(new EnteredLoginPhoneEvent());
+        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new EnteredLoginPhoneEvent());
         getStoreFactory().getAppEntryStore().setSignInPhone(textViewCountryCode.getText().toString(),
                                                             editTextPhone.getText().toString(),
                                                             errorCallback);

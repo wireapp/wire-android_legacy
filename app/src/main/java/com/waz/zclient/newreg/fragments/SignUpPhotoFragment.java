@@ -37,6 +37,7 @@ import android.widget.LinearLayout;
 import com.waz.api.BitmapCallback;
 import com.waz.api.ImageAsset;
 import com.waz.api.LoadHandle;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
@@ -48,6 +49,7 @@ import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.pages.main.conversation.AssetIntentsManager;
 import com.waz.zclient.pages.main.profile.camera.CameraContext;
 import com.waz.zclient.pages.main.profile.camera.CameraFragment;
+import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.utils.BitmapUtils;
 import com.waz.zclient.ui.utils.ColorUtils;
 import com.waz.zclient.ui.utils.KeyboardUtils;
@@ -391,7 +393,7 @@ public class SignUpPhotoFragment extends BaseFragment<SignUpPhotoFragment.Contai
                 RegistrationEventContext registrationEventContext = registrationType == SignUpPhotoFragment.RegistrationType.Phone ?
                                                                     getStoreFactory().getAppEntryStore().getPhoneRegistrationContext() :
                                                                     getStoreFactory().getAppEntryStore().getEmailRegistrationContext();
-                getControllerFactory().getTrackingController().tagEvent(new AddedPhotoEvent(OutcomeAttribute.SUCCESS, "", photoSource, registrationEventContext));
+                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new AddedPhotoEvent(OutcomeAttribute.SUCCESS, "", photoSource, registrationEventContext));
 
             }
         }, getResources().getInteger(R.integer.signup__photo__selected_photo_display_delay));

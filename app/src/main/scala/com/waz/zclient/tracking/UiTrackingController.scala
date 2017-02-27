@@ -18,10 +18,10 @@
 package com.waz.zclient.tracking
 
 import android.content.Context
+import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{AssetData, ConvId, MessageContentIndex, MessageId}
-import com.waz.service.tracking.TrackingEventsService
 import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
 import com.waz.zclient.controllers.{AssetsController, BrowserController}
@@ -31,19 +31,18 @@ import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.pages.main.conversation.views.MessageBottomSheetDialog.MessageAction
 import com.waz.zclient.{Injectable, Injector}
 import org.threeten.bp.Duration
-import com.waz.ZLog.ImplicitTag._
 
 import scala.concurrent.Future
+import scala.concurrent.Future.{apply => _}
 
-class MainTrackingController(implicit injector: Injector, ctx: Context, ec: EventContext) extends Injectable {
+class UiTrackingController(implicit injector: Injector, ctx: Context, ec: EventContext) extends Injectable {
   import GlobalTrackingController._
-  import MainTrackingController._
   import Threading.Implicits.Background
+  import UiTrackingController._
 
   val global = inject[GlobalTrackingController]
 
   import global._
-  import global.legacyController._
 
   val msgActionController   = inject[MessageActionsController]
   val assetsController      = inject[AssetsController]
@@ -54,13 +53,13 @@ class MainTrackingController(implicit injector: Injector, ctx: Context, ec: Even
   msgActionController.onMessageAction {
     case (MessageAction.REVEAL, message) if MessageContentIndex.TextMessageTypes.contains(message.getMessageType) =>
       collectionsController.currentConv.currentValue.foreach { conv =>
-        trackingData(conv).map{ data =>
+        convTrackingData(conv).map{ data =>
           tagEvent(SelectedSearchResultCollectionsEvent(data.convType, data.withOtto))
         }
       }
     case (action, message) if collectionsController.openedCollection.currentValue.exists(_.nonEmpty) =>
       collectionsController.openedCollection.currentValue.foreach(_.foreach{ info=>
-        trackingData(info.conversation.id).map{ data =>
+        convTrackingData(info.conversation.id).map { data =>
           tagEvent(DidItemActionCollectionsEvent(action, message.getMessageType, data.convType, data.withOtto))
         }
       })
@@ -79,7 +78,7 @@ class MainTrackingController(implicit injector: Injector, ctx: Context, ec: Even
 
   likesController.onViewDoubleClicked { mAndL => reactedToMessageEvent(mAndL.message.id, !mAndL.likedBySelf, "douple_tap")} //sic
 
-  private def reactedToMessageEvent(msgId: MessageId, liked: Boolean, method: String) = trackingData(msgId).map {
+  private def reactedToMessageEvent(msgId: MessageId, liked: Boolean, method: String) = messageTrackingData(msgId).map {
     case MessageTrackingData(convType, msgType, withOtto, fromSelf, isLastMsg) =>
       tagEvent(ReactedToMessageEvent(liked, withOtto, fromSelf, msgType, convType, isLastMsg, method))
   }
@@ -93,32 +92,32 @@ class MainTrackingController(implicit injector: Injector, ctx: Context, ec: Even
   }
   assetsController.onFileSaved(a => tagEvent(SavedFileEvent(a.mime.str, a.sizeInBytes.toInt)))
 
-  assetsController.onVideoPlayed(a => trackingData(MessageId(a.id.str)).map {
+  assetsController.onVideoPlayed(a => messageTrackingData(MessageId(a.id.str)).map {
     case MessageTrackingData(convType, _, isOtto, fromSelf, _) => tagEvent(PlayedVideoMessageEvent(durationInSeconds(a), !fromSelf, isOtto, convType))
   })
 
-  assetsController.onAudioPlayed (a => trackingData(MessageId(a.id.str)).map {
+  assetsController.onAudioPlayed(a => messageTrackingData(MessageId(a.id.str)).map {
     case MessageTrackingData(convType, _, isOtto, fromSelf, _) => tagEvent(PlayedAudioMessageEvent(a.mime.orDefault.str, durationInSeconds(a), !fromSelf, isOtto, convType))
   })
 
-  browserController.onYoutubeLinkOpened (mId => trackingData(mId).map {
+  browserController.onYoutubeLinkOpened(mId => messageTrackingData(mId).map {
     case MessageTrackingData(convType, _, isOtto, fromSelf, _) => tagEvent(PlayedYouTubeMessageEvent(!fromSelf, isOtto, convType))
   })
 
   collectionsController.openedCollection.on(Threading.Ui){
-    _.foreach{info => trackingData(info.conversation.id).map { data =>
+    _.foreach { info => convTrackingData(info.conversation.id).map { data =>
       tagEvent(OpenedCollectionsEvent(info.empty, collectionsController.contentSearchQuery.currentValue.exists(_.originalString.nonEmpty), data.convType, data.withOtto))}
     }
   }
 
   collectionsController.openContextMenuForMessage{
-    m => trackingData(m.id).map{ data =>
+    m => messageTrackingData(m.id).map { data =>
       tagEvent(OpenedItemMenuCollectionsEvent(m.msgType, data.convType, data.withOtto))
     }
   }
 
   collectionsController.clickedMessage{
-    m => trackingData(m.id).map{ data =>
+    m => messageTrackingData(m.id).map { data =>
       tagEvent(OpenedItemCollectionsEvent(m.msgType, data.convType, data.withOtto))
     }
   }
@@ -127,7 +126,7 @@ class MainTrackingController(implicit injector: Injector, ctx: Context, ec: Even
     query =>
       if (query.originalString.nonEmpty) {
         collectionsController.currentConv.currentValue.foreach { conv =>
-          trackingData(conv).map{ data =>
+          convTrackingData(conv).map{ data =>
             tagEvent(EnteredSearchCollectionsEvent(data.convType, data.withOtto))
           }
         }
@@ -139,12 +138,12 @@ class MainTrackingController(implicit injector: Injector, ctx: Context, ec: Even
     case _ => Duration.ZERO
   }).toMillis.toInt / 1000
 
-  private def trackingData(messageId: MessageId): Future[MessageTrackingData] = {
+  private def messageTrackingData(messageId: MessageId): Future[MessageTrackingData] = {
     for {
       zms        <- zMessaging.head
       Some(msg)  <- zms.messagesStorage.get(messageId)
       Some(conv) <- zms.convsContent.convById(msg.convId)
-      withOtto   <- TrackingEventsService.isOtto(conv, zms.usersStorage)
+      withOtto   <- isOtto(conv, zms.usersStorage)
       lastMsgs   <- zms.messagesStorage.lastMessageFromSelfAndFromOther(conv.id).head
       fromSelf    = msg.userId == zms.selfUserId
       convType    = conv.convType
@@ -152,16 +151,16 @@ class MainTrackingController(implicit injector: Injector, ctx: Context, ec: Even
     } yield MessageTrackingData(convType, msg.msgType, withOtto, fromSelf, isLastMsg)
   }
 
-  private def trackingData(convId: ConvId): Future[ConversationTrackingData] = {
+  private def convTrackingData(convId: ConvId): Future[ConversationTrackingData] = {
     for {
       zms        <- zMessaging.head
       Some(conv) <- zms.convsContent.convById(convId)
-      withOtto   <- TrackingEventsService.isOtto(conv, zms.usersStorage)
+      withOtto   <- isOtto(conv, zms.usersStorage)
     } yield ConversationTrackingData(conv.convType, withOtto)
   }
 }
 
-object MainTrackingController {
+object UiTrackingController {
 
   case class MessageTrackingData(convType: ConversationType, msgType: Message.Type, withOtto: Boolean, msgFromSelf: Boolean, isLastMsg: Boolean)
 

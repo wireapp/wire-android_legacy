@@ -31,9 +31,11 @@ import com.waz.api.Subscription;
 import com.waz.api.UiSignal;
 import com.waz.api.UpdateListener;
 import com.waz.api.Verification;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.tracking.events.otr.ViewedOwnOtrClientsEvent;
 import com.waz.zclient.pages.BasePreferenceFragment;
+import com.waz.zclient.tracking.GlobalTrackingController;
 
 public class DevicesPreferences extends BasePreferenceFragment<DevicesPreferences.Container> {
 
@@ -94,7 +96,7 @@ public class DevicesPreferences extends BasePreferenceFragment<DevicesPreference
         if (getControllerFactory() == null || getControllerFactory().isTornDown()) {
             return;
         }
-        getControllerFactory().getTrackingController().tagEvent(new ViewedOwnOtrClientsEvent());
+        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ViewedOwnOtrClientsEvent());
     }
 
     private void setupOtrDevices() {
