@@ -404,7 +404,9 @@
     <string name="mediaplayer__artist__placeholder">Track</string>
     <string name="mediaplayer__artist__error">Track is unavailable</string>
     <string name="mediaplayer__source__soundcloud" translatable="false">SoundCloud</string>
+    <string name="mediaplayer__message__onsoundcloud">on SoundCloud</string>
     <string name="mediaplayer__source__spotify" translatable="false">Spotify</string>
+    <string name="mediaplayer__message__onspotify">on Spotify</string>
     <string name="mediaplayer__spotify__hint">Connect with Spotify</string>
     <string name="mediaplayer__open_external">Open in browser</string>
 
