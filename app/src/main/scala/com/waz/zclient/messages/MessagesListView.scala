@@ -54,11 +54,14 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
 
   val messageActionsController = inject[MessageActionsController]
 
+  viewDim.on(Threading.Ui){_ => adapter.notifyDataSetChanged()}
+
   messageActionsController.messageToReveal.flatMap{
     case Some(messageData) => adapter.positionForMessage(messageData)
     case _ => Signal.empty[Option[Int]]
   }.on(Threading.Background){ pos =>
     pos.foreach{ p =>
+      scrollController.targetPosition = Some(p)
       scrollController.scrollToPositionRequested ! p
       messageActionsController.messageToReveal ! None
     }
@@ -92,6 +95,7 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
     if (alreadyScrolledToCorrectPosition) {
       scrollController.shouldScrollToBottom = true
     } else {
+      stopScroll()
       if (smooth) {
         val current = layoutManager.findFirstVisibleItemPosition()
         // jump closer to target position before scrolling, don't want to smooth scroll through many messages

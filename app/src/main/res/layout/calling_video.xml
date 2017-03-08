@@ -25,17 +25,17 @@
     >
 
     <View
-        android:id="@+id/v__background_overlay"
+        android:id="@+id/video_background_overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/calling__controls__video_overlay__color"
+        android:background="@color/calling_video_overlay"
         />
 
     <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/ttv__warning_message"
+        android:id="@+id/video_warning_message"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/calling__ongoing__background__color"
+        android:background="@color/calling_background"
         android:gravity="center"
         android:textAlignment="center"
         android:textAllCaps="true"
@@ -46,7 +46,7 @@
         />
 
     <com.waz.zclient.calling.views.HeaderLayoutVideo
-        android:id="@+id/hl__header"
+        android:id="@+id/header_video"
         android:layout_width="@dimen/calling__participants_max_diameter"
         android:layout_height="wrap_content"
         android:layout_gravity="top|center"
@@ -54,7 +54,7 @@
         />
 
     <LinearLayout
-        android:id="@+id/ll__self_view_layout"
+        android:id="@+id/self_view_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|left"
@@ -64,14 +64,14 @@
         >
 
         <com.waz.zclient.ui.calling.RoundedLayout
-            android:id="@+id/rl__rounded_layout"
+            android:id="@+id/rounded_layout"
             android:layout_width="@dimen/calling__self_video_preview__dimension"
             android:layout_height="@dimen/calling__self_video_preview__dimension"
             android:background="@color/graphite"
             >
 
             <com.waz.zclient.ui.text.TypefaceTextView
-                android:id="@+id/tv__self_preview_place_holder"
+                android:id="@+id/self_preview_place_holder"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
@@ -88,7 +88,7 @@
         </com.waz.zclient.ui.calling.RoundedLayout>
 
         <com.waz.zclient.ui.calling.CallControlCameraToggleButtonView
-            android:id="@+id/ccbv__camera_toggle_button"
+            android:id="@+id/camera_toggle_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -98,7 +98,7 @@
     </LinearLayout>
 
     <com.waz.zclient.calling.views.ControlsView
-        android:id="@+id/cl__controls_layout"
+        android:id="@+id/video_controls_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         />

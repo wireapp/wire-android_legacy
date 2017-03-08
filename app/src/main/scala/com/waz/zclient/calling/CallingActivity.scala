@@ -22,42 +22,59 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.ViewGroup.LayoutParams
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.view.{ViewGroup, WindowManager}
+import android.view.WindowManager
+import android.widget.TextView
+import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.verbose
 import com.waz.threading.Threading
 import com.waz.zclient._
-import com.waz.zclient.calling.controllers.{CurrentCallController, GlobalCallingController}
+import com.waz.zclient.calling.controllers.GlobalCallingController
 import com.waz.zclient.calling.views.VideoCallingView
 import com.waz.zclient.common.controllers.PermissionActivity
-import timber.log.Timber
+import com.waz.zclient.utils.RichView
 
 class CallingActivity extends AppCompatActivity with ActivityHelper with PermissionActivity {
 
-  private lazy val controller = inject[CurrentCallController]
+  private lazy val controller = inject[GlobalCallingController]
+  import controller._
 
-  private lazy val backgroundLayout: ViewGroup = findById(R.id.background)
-
-  private var isContentSet = false
+  lazy val degradedWarningTextView      = findById[TextView](R.id.degraded_warning)
+  lazy val degradedConfirmationTextView = findById[TextView](R.id.degraded_confirmation)
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
-    getWindow.setBackgroundDrawableResource(R.color.calling__ongoing__background__color)
+    verbose("Creating CallingActivity")
+    getWindow.setBackgroundDrawableResource(R.color.calling_background)
 
-    controller.glob.activeCall.on(Threading.Ui) {
+    activeCall.on(Threading.Ui) {
       case false =>
-        Timber.d("call no longer exists, finishing activity")
+        verbose("call no longer exists, finishing activity")
         finish()
       case _ =>
     }
 
-    controller.glob.videoCall.on(Threading.Ui) { isVideoCall =>
-      if (!isContentSet) {
-        isVideoCall match {
-          case true => setContentView(new VideoCallingView(this), new LayoutParams(MATCH_PARENT, MATCH_PARENT))
-          case false => setContentView(R.layout.calling_audio)
+    //ensure activity gets killed to allow content to change if the conv degrades (no need to kill activity on audio call)
+    (for {
+      degraded <- convDegraded
+      video    <- videoCall
+    } yield degraded && video).onChanged.filter(_ == true).on(Threading.Ui)(_ => finish())
+
+    //can only set content view once - so do so on first value of `showVideoView`
+    showVideoView.head.map {
+      case true =>
+        verbose("Setting video view")
+        setContentView(new VideoCallingView(this), new LayoutParams(MATCH_PARENT, MATCH_PARENT))
+      case _ =>
+        verbose("Setting audio view")
+        setContentView(R.layout.calling_audio)
+
+        convDegraded.on(Threading.Ui){ degraded =>
+          degradedWarningTextView.setVisible(degraded)
+          degradedConfirmationTextView.setVisible(degraded)
         }
-        isContentSet = true
-      }
-    }
+        degradationWarningText.on(Threading.Ui)(degradedWarningTextView.setText)
+        degradationConfirmationText.on(Threading.Ui)(degradedConfirmationTextView.setText)
+    }(Threading.Ui)
   }
 
   //don't allow user to go back during call - no way to re-enter call

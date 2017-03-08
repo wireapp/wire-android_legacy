@@ -344,6 +344,13 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         }
     };
 
+    private final MessageContent.Asset.ErrorHandler assetErrorHandlerAudio = new MessageContent.Asset.ErrorHandler() {
+        @Override
+        public void noWifiAndFileIsLarge(long sizeInBytes, NetworkMode net, MessageContent.Asset.Answer answer) {
+            answer.ok();
+        }
+    };
+
     private final ModelObserver<Self> selfModelObserver = new ModelObserver<Self>() {
         @Override
         public void updated(Self model) {
@@ -1565,7 +1572,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     public void onSendAudioMessage(AudioAssetForUpload audioAssetForUpload,
                                    AudioEffect appliedAudioEffect,
                                    boolean sentWithQuickAction) {
-        getStoreFactory().getConversationStore().sendMessage(audioAssetForUpload, assetErrorHandler);
+        getStoreFactory().getConversationStore().sendMessage(audioAssetForUpload, assetErrorHandlerAudio);
         hideAudioMessageRecording();
         TrackingUtils.tagSentAudioMessageEvent(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                audioAssetForUpload,
@@ -1590,7 +1597,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
     @Override
     public void sendRecording(AudioAssetForUpload audioAssetForUpload, AudioEffect appliedAudioEffect) {
-        getStoreFactory().getConversationStore().sendMessage(audioAssetForUpload, assetErrorHandler);
+        getStoreFactory().getConversationStore().sendMessage(audioAssetForUpload, assetErrorHandlerAudio);
         hideAudioMessageRecording();
         TrackingUtils.tagSentAudioMessageEvent(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                audioAssetForUpload,
@@ -1632,8 +1639,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         if (getControllerFactory().getNavigationController().getCurrentPage() != Page.MESSAGE_STREAM) {
             return;
         }
-
-        errorDescription.dismiss();
         KeyboardUtils.hideKeyboard(getActivity());
 
         final IConversation currentConversation = errorDescription.getConversation();
@@ -1699,6 +1704,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             public void positiveButtonClicked(boolean checkboxIsSelected) {
                 final Iterable<? extends Message> messages = errorDescription.getMessages();
                 for (Message message : messages) {
+                    errorDescription.dismiss();
                     message.retry();
                 }
             }

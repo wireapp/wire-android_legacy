@@ -194,8 +194,6 @@
 
     <declare-styleable name="CallControlButtonView">
         <attr name="circleIconDimension" format="dimension" />
-        <attr name="circleIconGlyph" format="string" />
-        <attr name="labelText" format="string" />
         <attr name="labelWidth" format="dimension" />
         <attr name="labelTextSize" format="dimension" />
         <attr name="labelFont" format="string" />

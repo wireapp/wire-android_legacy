@@ -28,6 +28,7 @@ import android.view._
 import android.widget.{FrameLayout, LinearLayout}
 import com.facebook.rebound._
 import com.waz.ZLog
+import com.waz.ZLog.ImplicitTag._
 import com.waz.api.VideoSendState._
 import com.waz.api.impl.AccentColor
 import com.waz.model.AssetData
@@ -40,11 +41,9 @@ import com.waz.utils.NameParts
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.zclient.calling.controllers.{CallPermissionsController, CurrentCallController}
 import com.waz.zclient.ui.animation.interpolators.penner.{Expo, Quart}
-import com.waz.zclient.ui.calling.CallControlButtonView
 import com.waz.zclient.ui.text.TypefaceFactory
 import com.waz.zclient.ui.utils.{ResourceUtils, TypefaceUtils}
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.ZLog.ImplicitTag._
 
 class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends FrameLayout(context, attrs, defStyleAttr) with ViewHelper {
 
@@ -72,49 +71,29 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   }
 }
 
-private class OutgoingControlsView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
+private[calling] class OutgoingControlsView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
 
   import com.waz.zclient.utils.RichView
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
-
   def this(context: Context) = this(context, null)
 
   LayoutInflater.from(context).inflate(R.layout.calling__controls__ongoing, this, true)
   setOrientation(LinearLayout.HORIZONTAL)
 
-  val leftButton: CallControlButtonView = findById(R.id.ccbv__button_left)
+  val leftButton:   CallControlButtonView = findById(R.id.ccbv__button_left)
   val middleButton: CallControlButtonView = findById(R.id.ccbv__button_middle)
-  val rightButton: CallControlButtonView = findById(R.id.ccbv__button_right)
-  val rightSpacer: View = findById(R.id.v__right_view_spacer)
+  val rightButton:  CallControlButtonView = findById(R.id.ccbv__button_right)
+  val rightSpacer:  View                  = findById(R.id.v__right_view_spacer)
 
   val controller = inject[CurrentCallController]
 
   import controller._
   import controller.glob._
 
-  //TODO abstract away these calls to callOnClick()
-  leftButton.onClick {
-    toggleMuted()
-    callOnClick()
-  }
-  middleButton.onClick {
-    leaveCall()
-    callOnClick()
-  }
-  rightButton.onClick {
-    if (videoCall.currentValue.getOrElse(false)) toggleVideo() else speakerButton.press()
-    callOnClick()
-  }
-
-  videoCall.map {
-    case true => (R.string.glyph__video, R.string.incoming__controls__ongoing__video)
-    case false => (R.string.glyph__speaker_loud, R.string.incoming__controls__ongoing__speaker)
-  }.on(Threading.Ui) {
-    case (glyph, text) =>
-      rightButton.setGlyph(glyph)
-      rightButton.setText(text)
-  }
+  leftButtonSettings.on(Threading.Ui)(_.set(leftButton, this))
+  middleButtonSettings.on(Threading.Ui)(_.set(middleButton, this))
+  rightButtonSettings.on(Threading.Ui)(_.set(rightButton, this))
 
   rightButtonShown.on(Threading.Ui) { v =>
     rightSpacer.setVisible(v)

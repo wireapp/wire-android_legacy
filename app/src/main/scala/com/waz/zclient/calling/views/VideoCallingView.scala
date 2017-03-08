@@ -40,28 +40,26 @@ import timber.log.Timber
 import scala.concurrent.duration.FiniteDuration
 
 class VideoCallingView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends FrameLayout(context, attrs, defStyleAttr) with ViewHelper {
+  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
+  def this(context: Context) = this(context, null)
 
   import Threading.Implicits.Ui
   import VideoCallingView._
   import com.waz.zclient.utils.RichView
 
-  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
+  lazy val overlayView: View = findById(R.id.video_background_overlay)
 
-  def this(context: Context) = this(context, null)
+  lazy val headerView: HeaderLayoutVideo = findById(R.id.header_video)
+  lazy val messageView: TextView = findById(R.id.video_warning_message)
 
-  lazy val overlayView: View = findById(R.id.v__background_overlay)
+  lazy val selfViewLayout: LinearLayout = findById(R.id.self_view_layout)
+  lazy val roundedLayout: RoundedLayout = findById(R.id.rounded_layout)
 
-  lazy val headerView: HeaderLayoutVideo = findById(R.id.hl__header)
-  lazy val messageView: TextView = findById(R.id.ttv__warning_message)
+  lazy val selfPreviewPlaceHolder: View = findById(R.id.self_preview_place_holder)
 
-  lazy val selfViewLayout: LinearLayout = findById(R.id.ll__self_view_layout)
-  lazy val roundedLayout: RoundedLayout = findById(R.id.rl__rounded_layout)
+  lazy val cameraToggleButton: CallControlCameraToggleButtonView = findById(R.id.camera_toggle_button)
 
-  lazy val selfPreviewPlaceHolder: View = findById(R.id.tv__self_preview_place_holder)
-
-  lazy val cameraToggleButton: CallControlCameraToggleButtonView = findById(R.id.ccbv__camera_toggle_button)
-
-  lazy val callingControls: ControlsView = findById(R.id.cl__controls_layout)
+  lazy val callingControls: ControlsView = findById(R.id.video_controls_layout)
 
   lazy val videoPreview = new VideoPreview(context)
   lazy val videoView = new VideoRenderer(context, false)

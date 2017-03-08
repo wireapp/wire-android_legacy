@@ -25,8 +25,11 @@ import android.util.AttributeSet
 import android.view.View._
 import android.view.{View, ViewGroup}
 import android.widget.SeekBar
+import com.waz.utils.Managed
 import com.waz.zclient.ui.utils.ResourceUtils
 import com.waz.zclient.ui.views.OnDoubleClickListener
+
+import scala.Proxy.Typed
 
 package object utils {
 
@@ -92,6 +95,7 @@ package object utils {
     import android.content.Context
 
     def getColor(resId: Int)(implicit context: Context) = context.getResources.getColor(resId)
+    def getColorStateList(resId: Int)(implicit context: Context) = context.getResources.getColorStateList(resId)
 
     def getInt(resId: Int)(implicit context: Context) = context.getResources.getInteger(resId)
 

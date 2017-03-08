@@ -18,6 +18,7 @@
 package com.waz.zclient.calling.views
 
 import android.content.Context
+import android.graphics.Canvas
 import android.support.v7.widget.LinearLayoutManager.HORIZONTAL
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.util.AttributeSet
@@ -25,12 +26,14 @@ import android.view.View.VISIBLE
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.view._
 import android.widget.{FrameLayout, LinearLayout}
+import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.verbose
 import com.waz.api.impl.AccentColor
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.zclient.calling.controllers.CurrentCallController
+import com.waz.zclient.calling.controllers.{CurrentCallController, GlobalCallingController}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.calling.CallingGainView
@@ -122,9 +125,9 @@ protected class AudioParticipantChatheadView(val context: Context, val attrs: At
   LayoutInflater.from(context).inflate(R.layout.calling__participants__chathead, this, true)
   setOrientation(LinearLayout.VERTICAL)
 
-  lazy val nameView: UserNameView = findById(R.id.ttv__calling__participant__name)
-  lazy val chatheadView: ChatheadView = findById(R.id.chv__calling__participant__chathead)
-  lazy val gainView: CallingGainView = findById(R.id.cgv__calling__participant__gain)
+  lazy val nameView:     UserNameView    = findById(R.id.name)
+  lazy val chatheadView: ChatheadView    = findById(R.id.chathead)
+  lazy val gainView:     CallingGainView = findById(R.id.voice_gain)
 
   (for {
     userStorage <- controller.glob.userStorage
@@ -134,7 +137,7 @@ protected class AudioParticipantChatheadView(val context: Context, val attrs: At
 
 
   (for (userId <- userId) yield userId).on(Threading.Ui) { userId =>
-    Timber.d(s"Setting userId: $userId")
+    verbose(s"Setting userId: $userId")
     nameView.setUserId(userId)
     chatheadView.setUserId(userId)
   }
@@ -148,7 +151,7 @@ protected class AudioParticipantChatheadView(val context: Context, val attrs: At
     (vcs, convId) <- controller.glob.v2ServiceAndCurrentConvId
     userId <- userId
     volume <- vcs.volumeChanged(convId, userId)
-  } yield volume).on(Threading.Ui)(gainView.onGainHasChanged(_))
+  } yield volume).on(Threading.Ui)(gainView.onGainHasChanged)
 
   def setSize(size: Int, isFirst: Boolean, isLast: Boolean): Unit = {
     val params = new RecyclerView.LayoutParams(WRAP_CONTENT, WRAP_CONTENT)
@@ -160,6 +163,24 @@ protected class AudioParticipantChatheadView(val context: Context, val attrs: At
     gainView.setLayoutParams(new FrameLayout.LayoutParams(size, size))
     chatheadView.setLayoutParams(new FrameLayout.LayoutParams(size - gainMargin, size - gainMargin, Gravity.CENTER))
     nameView.setLayoutParams(new LinearLayout.LayoutParams(size, WRAP_CONTENT))
+  }
+}
+
+class DegradableChatheadView(context: Context, attrs: AttributeSet, defStyleAttr: Int) extends ChatheadView(context, attrs, defStyleAttr) with ViewHelper {
+  def this (context: Context, attrs: AttributeSet) = this (context, attrs, 0)
+  def this (context: Context) = this (context, null)
+
+  lazy val degradedDrawable = getDrawable(R.drawable.degradation_overlay)
+  val convDegraded = inject[GlobalCallingController].convDegraded.disableAutowiring()
+
+  convDegraded.onChanged(_ => postInvalidate())
+
+  override def onDraw(canvas: Canvas): Unit = {
+    super.onDraw(canvas)
+    if (convDegraded.currentValue.getOrElse(false)) {
+      degradedDrawable.setBounds(canvas.getClipBounds)
+      degradedDrawable.draw(canvas)
+    }
   }
 }
 

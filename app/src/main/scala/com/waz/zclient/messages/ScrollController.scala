@@ -25,6 +25,8 @@ import com.waz.zclient.messages.ScrollController.Scroll
 
 class ScrollController(adapter: MessagesListView.Adapter, listHeight: Signal[Int])(implicit ec: EventContext) {
 
+  var targetPosition = Option.empty[Int]
+
   val onScrollToBottomRequested = EventStream[Int]
 
   var shouldScrollToBottom = false
@@ -33,7 +35,10 @@ class ScrollController(adapter: MessagesListView.Adapter, listHeight: Signal[Int
 
   def onScrolled(lastVisiblePosition: Int) = shouldScrollToBottom = lastVisiblePosition == lastPosition
 
-  def onDragging(): Unit = shouldScrollToBottom = false
+  def onDragging(): Unit = {
+    shouldScrollToBottom = false
+    targetPosition = None
+  }
 
   private def lastPosition = adapter.getItemCount - 1
 
@@ -47,8 +52,13 @@ class ScrollController(adapter: MessagesListView.Adapter, listHeight: Signal[Int
   adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver {
     override def onChanged(): Unit = {
       if (prevConv != adapter.getConvId || prevCount == 0) {
-        shouldScrollToBottom = adapter.getUnreadIndex.index == adapter.getItemCount
-        onListLoaded ! adapter.getUnreadIndex
+        shouldScrollToBottom = adapter.getUnreadIndex.index == adapter.getItemCount && targetPosition.isEmpty
+        targetPosition match {
+          case Some(pos) =>
+            scrollToPositionRequested ! pos
+          case _ =>
+            onListLoaded !adapter.getUnreadIndex
+        }
       }
 
       prevConv = adapter.getConvId
@@ -64,9 +74,10 @@ class ScrollController(adapter: MessagesListView.Adapter, listHeight: Signal[Int
   val onScroll = EventStream.union(
     onListLoaded map { case UnreadIndex(pos) => Scroll(pos, smooth = false) },
     onScrollToBottomRequested.map(_ => Scroll(lastPosition, smooth = true)),
-    listHeight.onChanged.filter(_ => shouldScrollToBottom).map(_ => Scroll(lastPosition, smooth = false)),
-    onMessageAdded.filter(_ => shouldScrollToBottom).map(_ => Scroll(lastPosition, smooth = true)),
-    scrollToPositionRequested.map(pos => Scroll(pos, smooth = true))
+    listHeight.onChanged.filter(_ => shouldScrollToBottom && targetPosition.isEmpty).map(_ => Scroll(lastPosition, smooth = false)),
+    listHeight.onChanged.filter(_ => !shouldScrollToBottom && targetPosition.nonEmpty).map(_ => Scroll(targetPosition.get, smooth = false)),
+    onMessageAdded.filter(_ => shouldScrollToBottom && targetPosition.isEmpty).map(_ => Scroll(lastPosition, smooth = true)),
+    scrollToPositionRequested.map(pos => Scroll(pos, smooth = false))
   ) .filter(_.position >= 0)
 }
 

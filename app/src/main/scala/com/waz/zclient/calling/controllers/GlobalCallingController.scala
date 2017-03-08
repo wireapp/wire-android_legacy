@@ -21,15 +21,16 @@ import _root_.com.waz.api.VoiceChannelState._
 import _root_.com.waz.service.ZMessaging
 import _root_.com.waz.utils.events.{EventContext, Signal}
 import android.os.PowerManager
-import com.waz.api.{IConversation, KindOfCall, VoiceChannelState}
+import com.waz.api.{IConversation, KindOfCall, Verification, VoiceChannelState}
 import com.waz.model.{UserId, VoiceChannelData}
 import com.waz.service.call.CallInfo
 import com.waz.service.call.CallInfo._
 import com.waz.threading.Threading
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.media.SoundController
-import com.waz.zclient.{Injectable, Injector, WireContext}
+import com.waz.zclient.{Injectable, Injector, R, WireContext}
 import com.waz.ZLog.ImplicitTag._
+import com.waz.zclient.utils.ContextUtils._
 
 class GlobalCallingController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext) extends Injectable {
 
@@ -163,14 +164,6 @@ class GlobalCallingController(implicit inj: Injector, cxt: WireContext, eventCon
     soundController.setIncomingRingTonePlaying(!m && i)
   }
 
-  (for {
-    v <- videoCall
-    o <- outgoingCall
-  } yield (v, o)) { case (v, o) =>
-    soundController.setOutgoingRingTonePlaying(o, v)
-  }
-
-
   /**
     * From here on, put signals where we're not too worried if we handle empty states or not
     * (mostly stuff that wouldn't affect proper closing of a call).
@@ -206,6 +199,57 @@ class GlobalCallingController(implicit inj: Injector, cxt: WireContext, eventCon
 
   val conversation = zms.zip(convId) flatMap { case (z, cId) => z.convsStorage.signal(cId) }
   val conversationName = conversation map (data => if (data.convType == IConversation.Type.GROUP) data.name.filter(!_.isEmpty).getOrElse(data.generatedName) else data.generatedName)
+
+  //not concerned about degraded conversations for calling v2
+  val convDegraded = (for {
+    isV3     <- isV3Call
+    degraded <- conversation.map(_.verified == Verification.UNVERIFIED)
+  } yield isV3 && degraded)
+    .orElse(Signal(false))
+    .disableAutowiring()
+
+  val degradationWarningText = convDegraded.flatMap {
+    case false => Signal("")
+    case true =>
+      (for {
+        zms <- zms
+        convId <- convId
+      } yield {
+        zms.membersStorage.activeMembers(convId).flatMap { ids =>
+          zms.usersStorage.listSignal(ids)
+        }.map(_.filter(_.verified != Verification.VERIFIED).toList)
+      }).flatten.map {
+        case u1 :: u2 :: _ =>
+          //TODO handle more than 2 users
+          getString(R.string.conversation__degraded_confirmation__header__multiple_user, u1.name, u2.name)
+        case List(u) =>
+          //TODO handle string for case where user adds multiple clients
+          getQuantityString(R.plurals.conversation__degraded_confirmation__header__single_user, 1, u.name)
+        case _ => ""
+      }
+  }
+
+  val degradationConfirmationText = convDegraded.flatMap {
+    case false => Signal("")
+    case true => outgoingCall.map {
+      case true  => R.string.conversation__degraded_confirmation__place_call
+      case false => R.string.conversation__degraded_confirmation__accept_call
+    }.map(getString)
+  }
+
+  (for {
+    v <- videoCall
+    o <- outgoingCall
+    d <- convDegraded
+  } yield (v, o & !d)) { case (v, play) =>
+    soundController.setOutgoingRingTonePlaying(play, v)
+  }
+
+  //Use Audio view to show conversation degraded screen for calling
+  val showVideoView = convDegraded.flatMap {
+    case true  => Signal(false)
+    case false => videoCall
+  }.disableAutowiring()
 
   val selfUser = zms flatMap (_.users.selfUser)
 

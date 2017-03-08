@@ -164,10 +164,8 @@
     <color name="content__image__progress_circle_background_light">@color/white</color>
 
     <!-- Calling-->
-    <color name="calling__ongoing__background__color">@color/black</color>
-    <color name="calling__proximity_overlay__color">@color/black</color>
-    <color name="calling__controls__video_overlay__color">@color/black_48</color>
-    <color name="calling__background">@color/black_96</color>
+    <color name="calling_background">@color/graphite_48</color>
+    <color name="calling_video_overlay">@color/black_48</color>
 
     <!-- Cursor-->
     <color name="cursor_menu_button__text_color">@color/graphite</color>

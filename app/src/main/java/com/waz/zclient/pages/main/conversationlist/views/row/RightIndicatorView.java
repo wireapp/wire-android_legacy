@@ -69,7 +69,7 @@ public class RightIndicatorView extends LinearLayout {
 
         muteButton = ViewUtils.getView(this, R.id.tv_conv_list_voice_muted);
         muteButton.setText(R.string.glyph__silence);
-        muteButton.setSelectedTextColor(getResources().getColor(R.color.calling__ongoing__background__color));
+        muteButton.setSelectedTextColor(getResources().getColor(R.color.calling_background));
         muteButton.setShowCircleBorder(false);
 
         joinCallView = ViewUtils.getView(this, R.id.ttv__conv_list__join_call);
@@ -83,7 +83,7 @@ public class RightIndicatorView extends LinearLayout {
         });
         mediaControlView = ViewUtils.getView(this, R.id.tv_conv_list_media_player);
         mediaControlView.setText(R.string.glyph__pause);
-        mediaControlView.setSelectedTextColor(getResources().getColor(R.color.calling__ongoing__background__color));
+        mediaControlView.setSelectedTextColor(getResources().getColor(R.color.calling_background));
         mediaControlView.setShowCircleBorder(false);
         mediaControlView.setOnClickListener(new OnClickListener() {
             @Override

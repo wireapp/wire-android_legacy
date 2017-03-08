@@ -249,6 +249,7 @@
         <ignore path="*ic_menu_save_image_gallery.png*"/>
         <ignore path="*ic_menu_share.png*"/>
         <ignore path="*ic_menu_silence_call_w.png*"/>
+        <ignore path="*degradation_overlay*"/>
     </issue>
     <issue id="UnusedIds" severity="error" >
         <ignore path="src/main/res/layout/calling*"/>

@@ -340,6 +340,8 @@
         <item quantity="one">Do you still want to send your message?</item>
         <item quantity="other">Do you still want to send your messages?</item>
     </plurals>
+    <string name="conversation__degraded_confirmation__accept_call">Do you want to accept the call?</string>
+    <string name="conversation__degraded_confirmation__place_call">Do you still want to place the call?</string>
     <string name="conversation__degraded_confirmation__positive_action">Send anyway</string>
     <plurals name="conversation__degraded_confirmation__negative_action">
         <item quantity="zero">Show people</item>

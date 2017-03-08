@@ -30,13 +30,13 @@
         >
 
         <com.waz.zclient.views.calling.CallingGainView
-            android:id="@+id/cgv__calling__participant__gain"
+            android:id="@+id/voice_gain"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             />
 
-        <com.waz.zclient.common.views.ChatheadView
-            android:id="@+id/chv__calling__participant__chathead"
+        <com.waz.zclient.calling.views.DegradableChatheadView
+            android:id="@+id/chathead"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:allow_icon="false"
@@ -48,7 +48,7 @@
 
     <com.waz.zclient.calling.views.UserNameView
         android:layout_marginTop="@dimen/wire__padding__small"
-        android:id="@+id/ttv__calling__participant__name"
+        android:id="@+id/name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textAlignment="center"

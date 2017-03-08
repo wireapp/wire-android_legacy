@@ -25,15 +25,13 @@
        android:orientation="horizontal"
     >
     <!-- Mute Button -->
-    <com.waz.zclient.ui.calling.CallControlButtonView
+    <com.waz.zclient.calling.views.CallControlButtonView
         android:id="@+id/ccbv__button_left"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:clickable="true"
         app:circleIconDimension="@dimen/calling__controls__button__dimension"
-        app:circleIconGlyph="@string/glyph__microphone_off"
-        app:labelText="@string/incoming__controls__ongoing__mute"
         app:labelWidth="@dimen/calling__controls__button_label__dimension"
         app:labelFont="@string/wire__typeface__light"
         app:labelTextSize="@dimen/wire__text_size__small"
@@ -47,19 +45,16 @@
         />
 
     <!-- Dismiss Button -->
-    <com.waz.zclient.ui.calling.CallControlButtonView
+    <com.waz.zclient.calling.views.CallControlButtonView
         android:id="@+id/ccbv__button_middle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:clickable="true"
         app:circleIconDimension="@dimen/calling__controls__button__dimension"
-        app:circleIconGlyph="@string/glyph__end_call"
-        app:labelText="@string/incoming__controls__ongoing__hangup"
         app:labelWidth="@dimen/calling__controls__button_label__dimension"
         app:labelFont="@string/wire__typeface__light"
         app:labelTextSize="@dimen/wire__text_size__small"
-        style="?circularIconButtonRed"
         />
 
     <!-- Dummy view to make buttons align to edges -->
@@ -72,7 +67,7 @@
         />
 
     <!-- Speaker or Video Button -->
-    <com.waz.zclient.ui.calling.CallControlButtonView
+    <com.waz.zclient.calling.views.CallControlButtonView
         android:id="@+id/ccbv__button_right"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
