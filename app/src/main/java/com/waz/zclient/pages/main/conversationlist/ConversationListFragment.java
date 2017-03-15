@@ -30,6 +30,7 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+
 import com.waz.api.ActiveVoiceChannels;
 import com.waz.api.ConversationsList;
 import com.waz.api.CoreList;
@@ -39,7 +40,6 @@ import com.waz.api.Message;
 import com.waz.api.OtrClient;
 import com.waz.api.SyncState;
 import com.waz.api.UpdateListener;
-import com.waz.api.Verification;
 import com.waz.api.VoiceChannel;
 import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.OnBackPressedListener;
@@ -75,6 +75,7 @@ import com.waz.zclient.ui.pullforaction.PullForActionMode;
 import com.waz.zclient.ui.text.TypefaceTextView;
 import com.waz.zclient.ui.utils.ResourceUtils;
 import com.waz.zclient.utils.ViewUtils;
+
 import net.hockeyapp.android.CrashManagerListener;
 import net.hockeyapp.android.ExceptionHandler;
 
@@ -510,13 +511,6 @@ public class ConversationListFragment extends BaseFragment<ConversationListFragm
 
     @Override
     public void onMenuConversationHasChanged(IConversation fromConversation) {
-
-    }
-
-    @Override
-    public void onVerificationStateChanged(String conversationId,
-                                           Verification previousVerification,
-                                           Verification currentVerification) {
 
     }
 

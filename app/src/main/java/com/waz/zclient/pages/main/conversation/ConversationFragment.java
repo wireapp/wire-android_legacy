@@ -854,13 +854,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     }
 
     @Override
-    public void onVerificationStateChanged(String conversationId,
-                                           Verification previousVerification,
-                                           Verification currentVerification) {
-
-    }
-
-    @Override
     public void onCursorPositionChanged(float x, float y) {
 
     }

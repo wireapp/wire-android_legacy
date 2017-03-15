@@ -25,6 +25,7 @@ import android.support.v4.app.FragmentManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
 import com.waz.api.ConversationsList;
 import com.waz.api.IConversation;
 import com.waz.api.ImageAsset;
@@ -34,7 +35,6 @@ import com.waz.api.OtrClient;
 import com.waz.api.SyncState;
 import com.waz.api.User;
 import com.waz.api.UsersList;
-import com.waz.api.Verification;
 import com.waz.model.MessageData;
 import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.OnBackPressedListener;
@@ -379,13 +379,6 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
 
     @Override
     public void onMenuConversationHasChanged(IConversation fromConversation) {
-
-    }
-
-    @Override
-    public void onVerificationStateChanged(String conversationId,
-                                           Verification previousVerification,
-                                           Verification currentVerification) {
 
     }
 

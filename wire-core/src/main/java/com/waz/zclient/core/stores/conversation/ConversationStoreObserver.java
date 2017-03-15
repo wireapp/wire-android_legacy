@@ -18,10 +18,10 @@
 package com.waz.zclient.core.stores.conversation;
 
 import android.support.annotation.NonNull;
+
 import com.waz.api.ConversationsList;
 import com.waz.api.IConversation;
 import com.waz.api.SyncState;
-import com.waz.api.Verification;
 
 public interface ConversationStoreObserver {
     void onConversationListUpdated(@NonNull ConversationsList conversationsList);
@@ -35,6 +35,4 @@ public interface ConversationStoreObserver {
     void onConversationSyncingStateHasChanged(SyncState syncState);
 
     void onMenuConversationHasChanged(IConversation fromConversation);
-
-    void onVerificationStateChanged(String conversationId, Verification previousVerification, Verification currentVerification);
 }

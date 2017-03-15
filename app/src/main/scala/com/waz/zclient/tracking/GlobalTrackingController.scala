@@ -28,7 +28,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.Message.Type._
 import com.waz.api.impl.ErrorResponse
-import com.waz.api.{EphemeralExpiration, NetworkMode}
+import com.waz.api.{EphemeralExpiration, NetworkMode, Verification}
 import com.waz.content.UsersStorage
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.UserData.ConnectionStatus
@@ -50,6 +50,7 @@ import org.threeten.bp.{Duration, Instant}
 import com.waz.utils._
 import com.waz.utils.returning
 import com.waz.zclient.controllers.tracking.events.launch.AppLaunch
+import com.waz.zclient.controllers.tracking.events.otr.VerifiedConversationEvent
 import com.waz.zclient.controllers.tracking.screens.{ApplicationScreen, RegistrationScreen}
 import com.waz.zclient.utils.ContextUtils._
 
@@ -256,6 +257,12 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
 
     connStats.flatMap { stats => Signal.wrap(stats.aliveDuration) } { duration =>
       tagEvent(WebSocketConnectionEvent.closedEvent(duration))
+    }
+
+    zms.convsStorage.onUpdated.map {
+      _.filter { case (prev, conv) => prev.verified == Verification.UNVERIFIED && conv.verified == Verification.VERIFIED }
+    }.filter(_.nonEmpty) { _ =>
+      tagEvent(new VerifiedConversationEvent())
     }
   }
 

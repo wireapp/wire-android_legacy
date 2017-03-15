@@ -37,13 +37,11 @@ import com.waz.api.ImageAsset;
 import com.waz.api.NetworkMode;
 import com.waz.api.Self;
 import com.waz.api.SyncState;
-import com.waz.api.Verification;
 import com.waz.zclient.BasePreferenceActivity;
 import com.waz.zclient.MainActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorChangeRequester;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
-import com.waz.zclient.controllers.tracking.events.otr.VerifiedConversationEvent;
 import com.waz.zclient.core.controllers.tracking.events.settings.ChangedProfilePictureEvent;
 import com.waz.zclient.core.stores.api.ZMessagingApiStoreObserver;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
@@ -65,6 +63,7 @@ import com.waz.zclient.pages.main.profile.preferences.dialogs.WireRingtonePrefer
 import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
+
 import timber.log.Timber;
 
 public class ZetaPreferencesActivity extends BasePreferenceActivity implements AccountPreferences.Container,
@@ -208,18 +207,6 @@ public class ZetaPreferencesActivity extends BasePreferenceActivity implements A
     @Override
     public void onMenuConversationHasChanged(IConversation fromConversation) {
 
-    }
-
-    @Override
-    public void onVerificationStateChanged(String conversationId,
-                                           Verification previousVerification,
-                                           Verification currentVerification) {
-        if (getControllerFactory() == null || getControllerFactory().isTornDown()) {
-            return;
-        }
-        if (previousVerification != Verification.VERIFIED && currentVerification == Verification.VERIFIED) {
-            injectJava(GlobalTrackingController.class).tagEvent(new VerifiedConversationEvent());
-        }
     }
 
     @Override

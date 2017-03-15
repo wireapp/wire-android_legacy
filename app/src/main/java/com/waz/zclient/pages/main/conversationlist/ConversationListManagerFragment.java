@@ -29,6 +29,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.Toast;
+
 import com.waz.api.ConversationsList;
 import com.waz.api.CredentialsUpdateListener;
 import com.waz.api.IConversation;
@@ -37,7 +38,6 @@ import com.waz.api.Message;
 import com.waz.api.OtrClient;
 import com.waz.api.SyncState;
 import com.waz.api.User;
-import com.waz.api.Verification;
 import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.LaunchActivity;
 import com.waz.zclient.OnBackPressedListener;
@@ -338,13 +338,6 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
 
     @Override
     public void onMenuConversationHasChanged(IConversation fromConversation) {
-
-    }
-
-    @Override
-    public void onVerificationStateChanged(String conversationId,
-                                           Verification previousVerification,
-                                           Verification currentVerification) {
 
     }
 

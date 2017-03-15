@@ -41,7 +41,6 @@ import com.waz.api.OtrClient;
 import com.waz.api.SyncState;
 import com.waz.api.User;
 import com.waz.api.UsersList;
-import com.waz.api.Verification;
 import com.waz.model.MessageData;
 import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.OnBackPressedListener;
@@ -346,13 +345,6 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
 
     @Override
     public void onMenuConversationHasChanged(IConversation fromConversation) {
-
-    }
-
-    @Override
-    public void onVerificationStateChanged(String conversationId,
-                                           Verification previousVerification,
-                                           Verification currentVerification) {
 
     }
 
