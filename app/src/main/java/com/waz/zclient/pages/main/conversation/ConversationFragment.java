@@ -62,7 +62,6 @@ import com.waz.api.ImageAssetFactory;
 import com.waz.api.InputStateIndicator;
 import com.waz.api.Message;
 import com.waz.api.MessageContent;
-import com.waz.api.MessagesList;
 import com.waz.api.NetworkMode;
 import com.waz.api.OtrClient;
 import com.waz.api.Self;
@@ -154,12 +153,13 @@ import com.waz.zclient.utils.TrackingUtils;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.LoadingIndicatorView;
 import com.waz.zclient.views.MentioningFragment;
-import timber.log.Timber;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import timber.log.Timber;
 
 public class ConversationFragment extends BaseFragment<ConversationFragment.Container> implements ConversationStoreObserver,
                                                                                                   CallingObserver,
@@ -919,14 +919,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
         if (!keyboardIsVisible) {
             getControllerFactory().getNavigationController().setMessageStreamState(VoiceBarAppearance.FULL);
-        }
-    }
-
-    private void showLoadingIndicator(MessagesList messages) {
-        if (messages != null && messages.size() > 0) {
-            conversationLoadingIndicatorViewView.setType(LoadingIndicatorView.INFINITE_LOADING_BAR);
-        } else {
-            conversationLoadingIndicatorViewView.setType(LoadingIndicatorView.SPINNER);
         }
     }
 
