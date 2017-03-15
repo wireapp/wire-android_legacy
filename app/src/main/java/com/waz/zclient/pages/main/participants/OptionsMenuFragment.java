@@ -23,12 +23,12 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
 import com.waz.api.ConversationsList;
 import com.waz.api.IConversation;
 import com.waz.api.SyncState;
 import com.waz.api.UpdateListener;
 import com.waz.api.User;
-import com.waz.api.Verification;
 import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
@@ -41,8 +41,8 @@ import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.optionsmenu.OptionsMenu;
 import com.waz.zclient.ui.optionsmenu.OptionsMenuItem;
 import com.waz.zclient.ui.theme.OptionsTheme;
-import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.utils.TrackingUtils;
+import com.waz.zclient.utils.ViewUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -240,13 +240,6 @@ public class OptionsMenuFragment extends BaseFragment<OptionsMenuFragment.Contai
                 connectUser(conversation.getOtherParticipant());
                 return;
         }
-    }
-
-    @Override
-    public void onVerificationStateChanged(String conversationId,
-                                           Verification previousVerification,
-                                           Verification currentVerification) {
-
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////

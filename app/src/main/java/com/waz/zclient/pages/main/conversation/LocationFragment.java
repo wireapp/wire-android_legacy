@@ -45,6 +45,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -62,7 +63,6 @@ import com.waz.api.ConversationsList;
 import com.waz.api.IConversation;
 import com.waz.api.MessageContent;
 import com.waz.api.SyncState;
-import com.waz.api.Verification;
 import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.OnBackPressedListener;
@@ -81,10 +81,11 @@ import com.waz.zclient.utils.PermissionUtils;
 import com.waz.zclient.utils.StringUtils;
 import com.waz.zclient.utils.TrackingUtils;
 import com.waz.zclient.utils.ViewUtils;
-import timber.log.Timber;
 
 import java.util.List;
 import java.util.Locale;
+
+import timber.log.Timber;
 
 @SuppressLint("All")
 public class LocationFragment extends BaseFragment<LocationFragment.Container> implements com.google.android.gms.location.LocationListener,
@@ -666,13 +667,6 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
 
     @Override
     public void onMenuConversationHasChanged(IConversation fromConversation) {
-
-    }
-
-    @Override
-    public void onVerificationStateChanged(String conversationId,
-                                           Verification previousVerification,
-                                           Verification currentVerification) {
 
     }
 

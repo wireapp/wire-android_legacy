@@ -30,7 +30,6 @@ import com.waz.api.IConversation;
 import com.waz.api.Message;
 import com.waz.api.SyncState;
 import com.waz.api.User;
-import com.waz.api.Verification;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.core.stores.connect.InboxLinkConversation;
@@ -232,13 +231,6 @@ public class ConnectRequestInboxFragment extends BaseFragment<ConnectRequestInbo
 
     @Override
     public void onMenuConversationHasChanged(IConversation fromConversation) {
-
-    }
-
-    @Override
-    public void onVerificationStateChanged(String conversationId,
-                                           Verification previousVerification,
-                                           Verification currentVerification) {
 
     }
 
