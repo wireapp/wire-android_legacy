@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2016 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="80dp"
+    android:orientation="horizontal" >
+
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="80dp"
+        android:layout_height="match_parent"
+    >
+        <ImageView
+            android:id="@+id/iv__spotify_message__image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+        />
+
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:id="@+id/gtv__spotify_message__error"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_centerInParent="true"
+            android:textSize="@dimen/content__youtube__play_button__size"
+            android:textColor="@color/content__youtube__text__color"
+            android:text="@string/glyph__play"
+        />
+    </RelativeLayout>
+
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingTop="@dimen/wire__padding__8"
+        android:paddingBottom="@dimen/wire__padding__8"
+        android:paddingLeft="@dimen/wire__padding__12"
+        android:paddingRight="@dimen/wire__padding__12"
+        android:orientation="vertical" >
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/ttv__spotify_message__title"
+            android:textSize="@dimen/wire__text_size__regular"
+            android:lines="1"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            app:font="@string/wire__typeface__bold"
+            android:textColor="?wirePrimaryTextColor"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+        />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/ttv__spotify_message__artist"
+            android:textSize="@dimen/wire__text_size__regular"
+            android:lines="1"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            app:font="@string/wire__typeface__light"
+            android:textColor="?wirePrimaryTextColor"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+        />
+
+        <LinearLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal" >
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/ttv__spotify_message__onspotify"
+                android:textSize="@dimen/wire__text_size__small"
+                android:textColor="?wireSecondaryTextColor"
+                android:lines="1"
+                android:ellipsize="end"
+                android:includeFontPadding="false"
+                app:font="@string/wire__typeface__bold"
+                android:layout_height="match_parent"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:text="@string/mediaplayer__message__onspotify"
+            />
+
+            <ImageView
+                android:id="@+id/iv__spotify_message__icon"
+                android:layout_width="16dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/spotify"
+                android:gravity="center_vertical"
+            />
+
+        </LinearLayout>
+
+
+    </LinearLayout>
+
+</LinearLayout>
