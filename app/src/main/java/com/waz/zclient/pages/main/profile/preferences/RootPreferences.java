@@ -28,7 +28,7 @@ import com.waz.api.InitListener;
 import com.waz.api.OtrClient;
 import com.waz.api.Self;
 import com.waz.api.User;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
@@ -181,8 +181,8 @@ public class RootPreferences extends BasePreferenceFragment<RootPreferences.Cont
         Intent sharingIntent = IntentUtils.getInviteIntent(getString(R.string.people_picker__invite__share_text__header, name),
                                                            getString(R.string.people_picker__invite__share_text__body, StringUtils.formatHandle(username)));
         startActivity(Intent.createChooser(sharingIntent, getString(R.string.people_picker__invite__share_details_dialog)));
-        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedGenericInviteMenuEvent(OpenedGenericInviteMenuEvent.EventContext.SETTINGS));
-        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).onApplicationScreen(ApplicationScreen.SEND_GENERIC_INVITE_MENU);
+        ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedGenericInviteMenuEvent(OpenedGenericInviteMenuEvent.EventContext.SETTINGS));
+        ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).onApplicationScreen(ApplicationScreen.SEND_GENERIC_INVITE_MENU);
     }
 
     public interface Container {

@@ -28,7 +28,7 @@ import android.widget.TextView;
 import com.waz.api.NetworkMode;
 import com.waz.api.User;
 import com.waz.api.Verification;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.confirmation.ConfirmationCallback;
@@ -354,12 +354,12 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
                 getStoreFactory().getConnectStore().blockUser(user);
                 // Dismiss common user profile
                 getContainer().dismissUserProfile();
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new BlockingEvent(BlockingEvent.ConformationResponse.BLOCK));
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new BlockingEvent(BlockingEvent.ConformationResponse.BLOCK));
             }
 
             @Override
             public void negativeButtonClicked() {
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new BlockingEvent(BlockingEvent.ConformationResponse.CANCEL));
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new BlockingEvent(BlockingEvent.ConformationResponse.CANCEL));
             }
 
             @Override

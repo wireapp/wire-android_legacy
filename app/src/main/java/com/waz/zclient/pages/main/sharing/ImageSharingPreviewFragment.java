@@ -26,7 +26,7 @@ import android.widget.FrameLayout;
 import com.waz.api.IConversation;
 import com.waz.api.ImageAsset;
 import com.waz.api.ImageAssetFactory;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.drawing.DrawingController;
 import com.waz.zclient.controllers.sharing.SharedContentType;
@@ -132,7 +132,7 @@ public class ImageSharingPreviewFragment extends BaseFragment<ImageSharingPrevie
         switch (sharedContentType) {
             case IMAGE:
                 getStoreFactory().getConversationStore().sendMessage(destination, ImageAssetFactory.getImageAsset(sharedImageUris.get(0)));
-                TrackingUtils.onSentPhotoMessageFromSharing(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
+                TrackingUtils.onSentPhotoMessageFromSharing(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                             destination);
                 break;
         }

@@ -41,7 +41,7 @@ import com.waz.api.OtrClient;
 import com.waz.api.SyncState;
 import com.waz.api.UpdateListener;
 import com.waz.api.VoiceChannel;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
@@ -290,7 +290,7 @@ public class ConversationListFragment extends BaseFragment<ConversationListFragm
                 public void onAvatarPress() {
                     getControllerFactory().getPickUserController().showPickUser(IPickUserController.Destination.CONVERSATION_LIST, null);
                     boolean hintVisible = hintContainer != null && hintContainer.getVisibility() == View.VISIBLE;
-                    ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedContactsEvent(hintVisible));
+                    ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedContactsEvent(hintVisible));
                     getControllerFactory().getOnboardingController().hideConversationListHint();
                 }
 
@@ -558,7 +558,7 @@ public class ConversationListFragment extends BaseFragment<ConversationListFragm
                         getControllerFactory().isTornDown()) {
                         return;
                     }
-                    ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedArchiveEvent());
+                    ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedArchiveEvent());
                 }
             }
         }, getResources().getInteger(R.integer.list__show_archived_delay));
@@ -861,7 +861,7 @@ public class ConversationListFragment extends BaseFragment<ConversationListFragm
             case R.id.ll__conversation_list__hint_container:
                 getControllerFactory().getPickUserController().showPickUser(IPickUserController.Destination.CONVERSATION_LIST, null);
                 getControllerFactory().getOnboardingController().hideConversationListHint();
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ClickedOnContactsHintEvent());
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ClickedOnContactsHintEvent());
                 break;
         }
     }

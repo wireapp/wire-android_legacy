@@ -27,7 +27,7 @@ import android.view.animation.Animation;
 import android.widget.TextView;
 import com.waz.api.IConversation;
 import com.waz.api.User;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.core.stores.connect.ConnectStoreObserver;
@@ -216,7 +216,7 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
     }
 
     private void trackSendConnectRequest(User user) {
-        TrackingUtils.tagSentConnectRequestFromUserProfileEvent(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
+        TrackingUtils.tagSentConnectRequestFromUserProfileEvent(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                                 userRequester,
                                                                 user.getCommonConnectionsCount());
     }

@@ -25,9 +25,7 @@ import android.graphics.PorterDuff;
 import android.net.Uri;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Locale;
 
 public class StringUtils {
@@ -124,21 +122,6 @@ public class StringUtils {
                directionality == Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC;
     }
 
-    public static Collection<String> getMissingInFont(Collection<String> strings) {
-        TextDrawing template = new TextDrawing();
-        template.set("\uFFFF"); // missing char
-
-        TextDrawing emoji = new TextDrawing();
-        ArrayList<String> missing = new ArrayList<>();
-        for (String s : strings) {
-            emoji.set(s);
-            if (template.equals(emoji)) {
-                missing.add(s);
-            }
-        }
-        return missing;
-    }
-
     public static String formatHandle(String username) {
         if (StringUtils.isBlank(username)) {
             return "";
@@ -150,7 +133,7 @@ public class StringUtils {
         return base.substring(0, Math.min(limit, base.length()));
     }
 
-    private static class TextDrawing {
+    public static class TextDrawing {
         private final Bitmap bitmap = Bitmap.createBitmap(50, 50, Bitmap.Config.ALPHA_8);
         private final Canvas canvas = new Canvas(bitmap);
         private final ByteBuffer buffer = ByteBuffer.allocate(bitmap.getByteCount());

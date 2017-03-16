@@ -69,7 +69,7 @@ public class PopupActivity extends BaseActivity implements QuickReplyFragment.Co
     }
 
     @Override
-    protected int getBaseTheme() {
+    public int getBaseTheme() {
         return R.style.Theme_Popup;
     }
 

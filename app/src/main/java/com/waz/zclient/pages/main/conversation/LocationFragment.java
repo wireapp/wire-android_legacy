@@ -63,7 +63,7 @@ import com.waz.api.ConversationsList;
 import com.waz.api.IConversation;
 import com.waz.api.MessageContent;
 import com.waz.api.SyncState;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
@@ -507,7 +507,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
                 }
 
                 getControllerFactory().getLocationController().hideShareLocation(location);
-                TrackingUtils.onSentLocationMessage(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
+                TrackingUtils.onSentLocationMessage(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                     getStoreFactory().getConversationStore().getCurrentConversation());
                 break;
         }

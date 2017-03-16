@@ -60,7 +60,7 @@ public class OTRSignInActivity  extends BaseActivity implements OTREmailSignInFr
     }
 
     @Override
-    protected int getBaseTheme() {
+    public int getBaseTheme() {
         return R.style.Theme_Dark;
     }
 

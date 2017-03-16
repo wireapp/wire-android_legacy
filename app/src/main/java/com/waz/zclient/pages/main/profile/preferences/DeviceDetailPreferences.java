@@ -30,7 +30,7 @@ import com.waz.api.Subscription;
 import com.waz.api.UiSignal;
 import com.waz.api.UpdateListener;
 import com.waz.api.Verification;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.tracking.events.otr.RemovedOwnOtrClientEvent;
 import com.waz.zclient.controllers.tracking.events.otr.UnverifiedOwnOtrClientEvent;
@@ -187,7 +187,7 @@ public class DeviceDetailPreferences extends BasePreferenceFragment<DeviceDetail
                                      getControllerFactory().isTornDown()) {
                                      return;
                                  }
-                                 ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new RemovedOwnOtrClientEvent());
+                                 ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new RemovedOwnOtrClientEvent());
                                  onCurrentDeviceDeleted();
                              }
 
@@ -217,9 +217,9 @@ public class DeviceDetailPreferences extends BasePreferenceFragment<DeviceDetail
             return;
         }
         if (verified) {
-            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new VerifiedOwnOtrClientEvent());
+            ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new VerifiedOwnOtrClientEvent());
         } else {
-            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new UnverifiedOwnOtrClientEvent());
+            ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new UnverifiedOwnOtrClientEvent());
         }
     }
 

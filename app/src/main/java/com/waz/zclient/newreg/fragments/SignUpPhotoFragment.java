@@ -37,7 +37,7 @@ import android.widget.LinearLayout;
 import com.waz.api.BitmapCallback;
 import com.waz.api.ImageAsset;
 import com.waz.api.LoadHandle;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
@@ -393,7 +393,7 @@ public class SignUpPhotoFragment extends BaseFragment<SignUpPhotoFragment.Contai
                 RegistrationEventContext registrationEventContext = registrationType == SignUpPhotoFragment.RegistrationType.Phone ?
                                                                     getStoreFactory().getAppEntryStore().getPhoneRegistrationContext() :
                                                                     getStoreFactory().getAppEntryStore().getEmailRegistrationContext();
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new AddedPhotoEvent(OutcomeAttribute.SUCCESS, "", photoSource, registrationEventContext));
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new AddedPhotoEvent(OutcomeAttribute.SUCCESS, "", photoSource, registrationEventContext));
 
             }
         }, getResources().getInteger(R.integer.signup__photo__selected_photo_display_delay));

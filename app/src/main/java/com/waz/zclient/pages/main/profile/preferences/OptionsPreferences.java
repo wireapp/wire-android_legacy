@@ -29,7 +29,7 @@ import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceCategory;
 import android.widget.Toast;
 import com.waz.api.MediaProvider;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.permission.RequestPermissionsObserver;
 import com.waz.zclient.controllers.spotify.SpotifyObserver;
@@ -184,7 +184,7 @@ public class OptionsPreferences extends BasePreferenceFragment<OptionsPreference
         Event event = null;
         if (key.equals(getString(R.string.pref_options_sounds_key))) {
             String stringValue = sharedPreferences.getString(key, "");
-            TrackingUtils.tagChangedSoundNotificationLevelEvent(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
+            TrackingUtils.tagChangedSoundNotificationLevelEvent(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                                 stringValue,
                                                                 getContext());
 

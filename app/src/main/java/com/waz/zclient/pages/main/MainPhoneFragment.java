@@ -33,7 +33,7 @@ import com.waz.api.IConversation;
 import com.waz.api.Message;
 import com.waz.api.User;
 import com.waz.model.MessageData;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
@@ -157,7 +157,7 @@ public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container>
     }
 
     private CollectionController getCollectionController() {
-        return ((BaseScalaActivity) getActivity()).injectJava(CollectionController.class);
+        return ((BaseActivity) getActivity()).injectJava(CollectionController.class);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////

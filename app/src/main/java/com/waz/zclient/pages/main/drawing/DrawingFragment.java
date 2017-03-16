@@ -46,7 +46,7 @@ import com.waz.api.ImageAsset;
 import com.waz.api.ImageAssetFactory;
 import com.waz.api.LoadHandle;
 import com.waz.api.MemoryImageCache;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
@@ -534,7 +534,7 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
                 case R.id.tv__send_button:
                     if (!drawingCanvasView.isEmpty()) {
                         getStoreFactory().getConversationStore().sendMessage(getFinalSketchImage());
-                        TrackingUtils.onSentSketchMessage(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
+                        TrackingUtils.onSentSketchMessage(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                           getStoreFactory().getConversationStore().getCurrentConversation(),
                                                           drawingDestination);
 

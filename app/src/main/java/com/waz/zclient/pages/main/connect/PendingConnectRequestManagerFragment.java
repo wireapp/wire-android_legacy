@@ -24,7 +24,7 @@ import android.view.ViewGroup;
 import com.waz.api.IConversation;
 import com.waz.api.NetworkMode;
 import com.waz.api.User;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.confirmation.ConfirmationCallback;
 import com.waz.zclient.controllers.confirmation.ConfirmationRequest;
@@ -203,11 +203,11 @@ public class PendingConnectRequestManagerFragment extends BaseFragment<PendingCo
                 break;
             case ARCHIVE:
                 getStoreFactory().getConversationStore().archive(conversation, true);
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ArchivedConversationEvent(conversation.getType().toString()));
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ArchivedConversationEvent(conversation.getType().toString()));
                 break;
             case UNARCHIVE:
                 getStoreFactory().getConversationStore().archive(conversation, false);
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new UnarchivedConversationEvent(conversation.getType().toString()));
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new UnarchivedConversationEvent(conversation.getType().toString()));
                 break;
             case SILENCE:
                 conversation.setMuted(true);
@@ -240,7 +240,7 @@ public class PendingConnectRequestManagerFragment extends BaseFragment<PendingCo
                         getControllerFactory().getPickUserController().hideUserProfile();
                         break;
                 }
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new BlockingEvent(BlockingEvent.ConformationResponse.BLOCK));
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new BlockingEvent(BlockingEvent.ConformationResponse.BLOCK));
 
             }
             @Override

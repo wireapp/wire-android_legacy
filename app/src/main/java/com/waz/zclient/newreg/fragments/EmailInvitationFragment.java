@@ -28,7 +28,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.core.controllers.tracking.attributes.RegistrationEventContext;
 import com.waz.zclient.core.controllers.tracking.events.registration.CancelledPersonalInvite;
@@ -94,7 +94,7 @@ public class EmailInvitationFragment extends BaseFragment<EmailInvitationFragmen
                     return;
                 }
                 getContainer().onOpenUrlInApp(getString(R.string.url_terms_of_service), true);
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ViewTOS(ViewTOS.Source.FROM_JOIN_PAGE));
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ViewTOS(ViewTOS.Source.FROM_JOIN_PAGE));
             }
         });
 
@@ -193,7 +193,7 @@ public class EmailInvitationFragment extends BaseFragment<EmailInvitationFragmen
         }
         KeyboardUtils.hideKeyboard(getActivity());
         getStoreFactory().getAppEntryStore().onBackPressed();
-        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new CancelledPersonalInvite(CancelledPersonalInvite.EventContext.INVITE_EMAIL));
+        ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new CancelledPersonalInvite(CancelledPersonalInvite.EventContext.INVITE_EMAIL));
     }
 
     private void onRegisterClicked() {
@@ -208,7 +208,7 @@ public class EmailInvitationFragment extends BaseFragment<EmailInvitationFragmen
 
         getStoreFactory().getAppEntryStore().acceptEmailInvitation(passwordEditText.getText().toString(),
                                                                    getControllerFactory().getAccentColorController().getAccentColor());
-        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ConfirmedPersonalInviteEvent(
+        ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ConfirmedPersonalInviteEvent(
             RegistrationEventContext.PERSONAL_INVITE_EMAIL));
     }
 

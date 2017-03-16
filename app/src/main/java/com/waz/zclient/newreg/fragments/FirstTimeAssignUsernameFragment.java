@@ -30,7 +30,7 @@ import android.widget.ImageView;
 import com.waz.api.AccentColor;
 import com.waz.api.ImageAsset;
 import com.waz.api.Self;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.core.api.scala.ModelObserver;
@@ -135,7 +135,7 @@ public class FirstTimeAssignUsernameFragment extends BaseFragment<FirstTimeAssig
         TextViewUtils.linkifyText(summaryTextView, Color.WHITE, com.waz.zclient.ui.R.string.wire__typeface__light, false, new Runnable() {
             @Override
             public void run() {
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedUsernameFAQEvent());
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedUsernameFAQEvent());
                 getContainer().onOpenUrl(getString(R.string.usernames__learn_more__link));
             }
         });

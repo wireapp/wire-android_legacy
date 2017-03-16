@@ -42,7 +42,7 @@ import com.waz.api.SyncState;
 import com.waz.api.User;
 import com.waz.api.UsersList;
 import com.waz.model.MessageData;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.collections.CollectionsObserver;
@@ -379,7 +379,7 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
     }
 
     private CollectionController getCollectionController() {
-        return ((BaseScalaActivity) getActivity()).injectJava(CollectionController.class);
+        return ((BaseActivity) getActivity()).injectJava(CollectionController.class);
     }
 
     @Override
@@ -500,7 +500,7 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
         getStoreFactory().getConversationStore().sendMessage(imageAsset);
 
         // Tablet doesn't have keyboard camera interface
-        TrackingUtils.onSentPhotoMessage(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
+        TrackingUtils.onSentPhotoMessage(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                          getStoreFactory().getConversationStore().getCurrentConversation(),
                                          imageFromCamera ? SentPictureEvent.Source.CAMERA
                                                          : SentPictureEvent.Source.GALLERY,

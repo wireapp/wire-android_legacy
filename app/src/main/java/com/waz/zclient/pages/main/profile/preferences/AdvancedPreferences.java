@@ -22,7 +22,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.preference.Preference;
 import com.localytics.android.Localytics;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.tracking.events.tracking.OptIn;
 import com.waz.zclient.controllers.tracking.events.tracking.OptOut;
@@ -84,7 +84,7 @@ public class AdvancedPreferences extends BasePreferenceFragment<AdvancedPreferen
                 Localytics.setOptedOut(false);
             } else {
                 try {
-                    (((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class)).tagEvent(new OptOut());
+                    (((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class)).tagEvent(new OptOut());
                 } catch (Exception e) {
                     Timber.e("Unable to tag event OptOut");
                     e.printStackTrace();

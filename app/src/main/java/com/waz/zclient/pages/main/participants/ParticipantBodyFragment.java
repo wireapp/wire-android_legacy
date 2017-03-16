@@ -34,7 +34,7 @@ import com.waz.api.NetworkMode;
 import com.waz.api.OtrClient;
 import com.waz.api.User;
 import com.waz.api.UsersList;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.confirmation.ConfirmationCallback;
@@ -362,7 +362,7 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
                 if (!conversation.isMemberOfConversation()) {
                     return;
                 }
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedGroupActionEvent());
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedGroupActionEvent());
                 getControllerFactory().getConversationScreenController().addPeopleToConversation();
             }
 
@@ -570,7 +570,7 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
                     getStoreFactory().getConversationStore().setCurrentConversation(user.getConversation(),
                                                                                     ConversationChangeRequester.START_CONVERSATION);
                 } else {
-                    ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedGroupActionEvent());
+                    ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedGroupActionEvent());
                     getControllerFactory().getConversationScreenController().addPeopleToConversation();
                 }
             }
@@ -630,7 +630,7 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
                     getControllerFactory().isTornDown()) {
                     return;
                 }
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new LeaveGroupConversationEvent(true,
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new LeaveGroupConversationEvent(true,
                                                                                                         getStoreFactory().getConversationStore().getCurrentConversation().getUsers().size()));
 
                 getStoreFactory().getConversationStore().leave(conversation);
@@ -647,7 +647,7 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
                     getControllerFactory().isTornDown()) {
                     return;
                 }
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new LeaveGroupConversationEvent(false,
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new LeaveGroupConversationEvent(false,
                                                                                                         getStoreFactory().getConversationStore().getCurrentConversation().getUsers().size()));
             }
 

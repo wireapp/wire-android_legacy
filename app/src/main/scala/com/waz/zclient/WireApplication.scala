@@ -18,6 +18,8 @@
 package com.waz.zclient
 
 import android.support.multidex.MultiDexApplication
+import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.verbose
 import com.waz.api.{NetworkMode, ZMessagingApi, ZMessagingApiFactory}
 import com.waz.service.{MediaManagerService, NetworkModeService, PreferenceService, ZMessaging}
 import com.waz.utils.events.{EventContext, Signal, Subscription}
@@ -142,6 +144,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
   override def onCreate(): Unit = {
     super.onCreate()
+    verbose("onCreate")
     controllerFactory = new DefaultControllerFactory(getApplicationContext)
 
     new BackendPicker(this).withBackend(new Callback[Void]() {

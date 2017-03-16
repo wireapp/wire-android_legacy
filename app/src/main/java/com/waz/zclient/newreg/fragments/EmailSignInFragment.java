@@ -28,7 +28,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.TextView;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.navigation.Page;
 import com.waz.zclient.controllers.tracking.events.profile.ResetPassword;
@@ -134,7 +134,7 @@ public class EmailSignInFragment extends BaseFragment<EmailSignInFragment.Contai
             @Override
             public void onClick(View v) {
                 getContainer().onOpenUrl(getResources().getString(R.string.url_password_reset));
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ResetPassword(ResetPassword.Location.FROM_SIGN_IN));
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ResetPassword(ResetPassword.Location.FROM_SIGN_IN));
             }
         });
 

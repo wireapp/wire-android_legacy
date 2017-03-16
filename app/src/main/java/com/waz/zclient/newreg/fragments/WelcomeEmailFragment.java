@@ -23,7 +23,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import com.waz.api.NetworkMode;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.core.stores.network.NetworkAction;
 import com.waz.zclient.controllers.tracking.screens.RegistrationScreen;
@@ -65,8 +65,8 @@ public class WelcomeEmailFragment extends BaseFragment<WelcomeEmailFragment.Cont
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).loadFromSavedInstance(savedInstanceState);
-        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).onRegistrationScreen(RegistrationScreen.WELCOME);
+        ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).loadFromSavedInstance(savedInstanceState);
+        ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).onRegistrationScreen(RegistrationScreen.WELCOME);
     }
 
     @Override
@@ -78,7 +78,7 @@ public class WelcomeEmailFragment extends BaseFragment<WelcomeEmailFragment.Cont
             @Override
             public void run() {
                 WelcomeEmailFragment.this.getContainer().onOpenUrlInApp(getString(R.string.url_terms_of_service), true);
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ViewTOS(ViewTOS.Source.FROM_JOIN_PAGE));
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ViewTOS(ViewTOS.Source.FROM_JOIN_PAGE));
             }
         });
         createAccountZetaButton.setIsFilled(true);
@@ -94,7 +94,7 @@ public class WelcomeEmailFragment extends BaseFragment<WelcomeEmailFragment.Cont
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).saveToSavedInstance(outState);
+        ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).saveToSavedInstance(outState);
         super.onSaveInstanceState(outState);
     }
 

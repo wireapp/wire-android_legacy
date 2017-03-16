@@ -38,7 +38,7 @@ public class LaunchActivity extends BaseActivity implements InitListener {
     }
 
     @Override
-    protected int getBaseTheme() {
+    public int getBaseTheme() {
         return R.style.Theme_Dark;
     }
 

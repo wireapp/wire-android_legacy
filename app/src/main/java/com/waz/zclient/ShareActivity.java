@@ -86,7 +86,7 @@ public class ShareActivity extends BaseActivity implements SharingConversationLi
     }
 
     @Override
-    protected int getBaseTheme() {
+    public int getBaseTheme() {
         return R.style.Theme_Dark;
     }
 

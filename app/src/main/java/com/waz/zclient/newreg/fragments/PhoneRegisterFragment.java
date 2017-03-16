@@ -31,7 +31,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.TextView;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.navigation.Page;
 import com.waz.zclient.core.controllers.tracking.events.registration.PrefilledPhoneNumberEvent;
@@ -184,7 +184,7 @@ public class PhoneRegisterFragment extends BaseFragment<PhoneRegisterFragment.Co
         final String countryCode = countryController.getCodeForAbbreviation(abbreviation);
         final String number = getControllerFactory().getDeviceUserController().getPhoneNumber(countryCode);
         if (!TextUtils.isEmpty(number)) {
-            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new PrefilledPhoneNumberEvent());
+            ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new PrefilledPhoneNumberEvent());
         }
         editTextPhone.setText(number);
     }
@@ -272,7 +272,7 @@ public class PhoneRegisterFragment extends BaseFragment<PhoneRegisterFragment.Co
                 break;
             case R.id.tv__welcome__terms_of_service:
                 getContainer().onOpenUrlInApp(getString(R.string.url_terms_of_service), true);
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ViewTOS(ViewTOS.Source.FROM_JOIN_PAGE));
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ViewTOS(ViewTOS.Source.FROM_JOIN_PAGE));
                 break;
         }
     }

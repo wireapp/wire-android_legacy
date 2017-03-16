@@ -34,7 +34,7 @@ import android.widget.TextView;
 import com.waz.api.GiphyResults;
 import com.waz.api.ImageAsset;
 import com.waz.api.UpdateListener;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
@@ -389,7 +389,7 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
     }
 
     private void sendGif() {
-        TrackingUtils.onSentGifMessage(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
+        TrackingUtils.onSentGifMessage(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                        getStoreFactory().getConversationStore().getCurrentConversation());
 
         if (TextUtils.isEmpty(searchTerm) || searchTerm == null) {

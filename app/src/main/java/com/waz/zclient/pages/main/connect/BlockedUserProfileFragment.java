@@ -27,7 +27,7 @@ import android.view.animation.Animation;
 import android.widget.TextView;
 import com.waz.api.IConversation;
 import com.waz.api.User;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.navigation.NavigationController;
@@ -383,7 +383,7 @@ public class BlockedUserProfileFragment extends BaseFragment<BlockedUserProfileF
 
     private void unblockUser(User user) {
         goToConversationWithUser = true;
-        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new UnblockingEvent());
+        ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new UnblockingEvent());
         IConversation conversation = getStoreFactory().getConnectStore().unblockUser(user);
         if (conversation != null) {
             // Note! important to pass conversation returned by unblockUser() instead of user.getConversation()

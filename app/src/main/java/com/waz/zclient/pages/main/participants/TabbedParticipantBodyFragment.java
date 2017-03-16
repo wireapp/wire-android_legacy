@@ -32,7 +32,7 @@ import com.waz.api.Message;
 import com.waz.api.OtrClient;
 import com.waz.api.User;
 import com.waz.api.UsersList;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.tracking.events.group.OpenedGroupActionEvent;
@@ -357,7 +357,7 @@ public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipan
         if (position == 0 || getControllerFactory() == null || getControllerFactory().isTornDown()) {
             return;
         }
-        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ViewedOtherOtrClientsEvent());
+        ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ViewedOtherOtrClientsEvent());
     }
 
     @Override
@@ -393,7 +393,7 @@ public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipan
                 return;
             }
             if (conversation.getType() == IConversation.Type.ONE_TO_ONE) {
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedGroupActionEvent());
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedGroupActionEvent());
                 getControllerFactory().getConversationScreenController().addPeopleToConversation();
             } else {
                 getControllerFactory().getConversationScreenController().hideParticipants(true, false);

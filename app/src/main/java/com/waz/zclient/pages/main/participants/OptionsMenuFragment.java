@@ -29,7 +29,7 @@ import com.waz.api.IConversation;
 import com.waz.api.SyncState;
 import com.waz.api.UpdateListener;
 import com.waz.api.User;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
@@ -309,7 +309,7 @@ public class OptionsMenuFragment extends BaseFragment<OptionsMenuFragment.Contai
             getControllerFactory().isTornDown()) {
             return;
         }
-        TrackingUtils.tagOptionsMenuSelectedEvent(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
+        TrackingUtils.tagOptionsMenuSelectedEvent(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                   optionsMenuItem,
                                                   conversation.getType(),
                                                   inConversationList,

@@ -34,7 +34,7 @@ import com.waz.api.UiSignal;
 import com.waz.api.UpdateListener;
 import com.waz.api.User;
 import com.waz.api.Verification;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
@@ -375,9 +375,9 @@ public class SingleOtrClientFragment extends BaseFragment<SingleOtrClientFragmen
             return;
         }
         if (verified) {
-            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new VerifiedOtherOtrClientEvent());
+            ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new VerifiedOtherOtrClientEvent());
         } else {
-            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new UnverifiedOtherOtrClientEvent());
+            ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new UnverifiedOtherOtrClientEvent());
         }
     }
 

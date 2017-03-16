@@ -71,7 +71,7 @@ import com.waz.api.UpdateListener;
 import com.waz.api.User;
 import com.waz.api.UsersList;
 import com.waz.api.Verification;
-import com.waz.zclient.BaseScalaActivity;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
@@ -1188,7 +1188,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 }
 
                 errorDescription.dismiss();
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new SelectedTooLargeFileEvent());
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new SelectedTooLargeFileEvent());
                 break;
             case RECORDING_FAILURE:
                 ViewUtils.showAlertDialog(getActivity(),
@@ -1225,7 +1225,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 if (LayoutSpec.isTablet(getContext())) {
                     KeyboardUtils.closeKeyboardIfShown(getActivity());
                     getControllerFactory().getCameraController().openCamera(CameraContext.MESSAGE);
-                    ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.PHOTO, conversation));
+                    ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.PHOTO, conversation));
                 } else {
 
                     if (PermissionUtils.hasSelfPermissions(getContext(), EXTENDED_CURSOR_PERMISSIONS)) {
@@ -1248,20 +1248,20 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                         }
                     }
                 });
-                TrackingUtils.onSentPingMessage(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
+                TrackingUtils.onSentPingMessage(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                 getStoreFactory().getConversationStore().getCurrentConversation());
                 break;
             case SKETCH:
                 getControllerFactory().getDrawingController().showDrawing(null,
                                                                           IDrawingController.DrawingDestination.SKETCH_BUTTON);
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.SKETCH, conversation));
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.SKETCH, conversation));
                 break;
             case FILE:
                 assetIntentsManager.openFileSharing();
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.FILE, conversation));
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.FILE, conversation));
                 break;
             case VIDEO_MESSAGE:
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.VIDEO_MESSAGE, conversation));
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.VIDEO_MESSAGE, conversation));
                 isVideoMessageButtonClicked = true;
                 getCameraController().releaseCamera(new Callback<Void>() {
                     @Override
@@ -1278,29 +1278,29 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 if (ConnectionResult.SUCCESS == GooglePlayServicesUtil.isGooglePlayServicesAvailable(getContext())) {
                     KeyboardUtils.hideKeyboard(getActivity());
                     getControllerFactory().getLocationController().showShareLocation();
-                    ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.LOCATION, conversation));
+                    ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.LOCATION, conversation));
                 } else {
                     Toast.makeText(getContext(), R.string.location_sharing__missing_play_services, Toast.LENGTH_LONG).show();
                 }
                 break;
             case MORE:
             case LESS:
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedMoreActionsEvent(
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedMoreActionsEvent(
                     getConversationTypeString()));
                 break;
             case GIF:
                 getControllerFactory().getGiphyController().handleInput(cursorLayout.getText());
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.GIPHY, conversation));
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.GIPHY, conversation));
                 break;
         }
     }
 
     private CollectionController getCollectionController() {
-        return ((BaseScalaActivity) getActivity()).injectJava(CollectionController.class);
+        return ((BaseActivity) getActivity()).injectJava(CollectionController.class);
     }
 
     private GlobalCameraController getCameraController() {
-        return ((BaseScalaActivity) getActivity()).injectJava(GlobalCameraController.class);
+        return ((BaseActivity) getActivity()).injectJava(GlobalCameraController.class);
     }
 
     private void openExtendedCursor(ExtendedCursorContainer.Type type) {
@@ -1311,13 +1311,13 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             case VOICE_FILTER_RECORDING:
                 extendedCursorContainer.openVoiceFilter(this);
                 hideSendButtonIfNeeded();
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.AUDIO_MESSAGE,
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.AUDIO_MESSAGE,
                                                                                                             conversation));
                 break;
             case IMAGES:
                 extendedCursorContainer.openCursorImages(this);
                 hideSendButtonIfNeeded();
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.PHOTO,
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.PHOTO,
                                                                                                             conversation));
                 break;
         }
@@ -1339,9 +1339,9 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                     audioMessageRecordingView.prepareForRecording();
                     audioMessageRecordingView.setVisibility(View.VISIBLE);
                     final IConversation conversation = getStoreFactory().getConversationStore().getCurrentConversation();
-                    ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.AUDIO_MESSAGE,
+                    ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.AUDIO_MESSAGE,
                                                                                                                 conversation));
-                    ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new StartedRecordingAudioMessageEvent(
+                    ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new StartedRecordingAudioMessageEvent(
                         getConversationTypeString(),
                         true));
                 } else {
@@ -1370,7 +1370,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         }
         resetCursor();
         getStoreFactory().getConversationStore().sendMessage(message);
-        TrackingUtils.onSentTextMessage(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
+        TrackingUtils.onSentTextMessage(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                         getStoreFactory().getConversationStore().getCurrentConversation());
 
         getStoreFactory().getNetworkStore().doIfHasInternetOrNotifyUser(null);
@@ -1408,14 +1408,14 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
     @Override
     public void onShowedActionHint(CursorMenuItem item) {
-        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedActionHintEvent(item.name(),
+        ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedActionHintEvent(item.name(),
                                                                                           getConversationTypeString()));
     }
 
     @Override
     public void onApprovedMessageEditing(Message message) {
         KeyboardUtils.hideKeyboard(getActivity());
-        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new EditedMessageEvent(message));
+        ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new EditedMessageEvent(message));
     }
 
     @Override
@@ -1431,7 +1431,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                                                getControllerFactory().getUserPreferencesController().getUnsupportedEmojis(),
                                                this);
             boolean withBot = getStoreFactory().getConversationStore().getCurrentConversation().isOtto();
-            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedEmojiKeyboardEvent(withBot));
+            ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedEmojiKeyboardEvent(withBot));
             cursorLayout.showSendButton(true);
         } else {
             extendedCursorContainer.close(false);
@@ -1444,7 +1444,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         extendedCursorContainer.openEphemeral(this, currentEphemeralExpiration);
         if (currentEphemeralExpiration == EphemeralExpiration.NONE) {
             IConversation conversation = getStoreFactory().getConversationStore().getCurrentConversation();
-            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.ephemeral(conversation,
+            ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.ephemeral(conversation,
                                                                                                      false));
         }
     }
@@ -1458,7 +1458,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         if (currentEphemeralExpiration.equals(EphemeralExpiration.NONE)) {
             onEphemeralExpirationSelected(lastExpiraton, true);
             IConversation conversation = getStoreFactory().getConversationStore().getCurrentConversation();
-            ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.ephemeral(conversation, true));
+            ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.ephemeral(conversation, true));
         } else {
             onEphemeralExpirationSelected(EphemeralExpiration.NONE, true);
         }
@@ -1559,7 +1559,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                                    boolean sentWithQuickAction) {
         getStoreFactory().getConversationStore().sendMessage(audioAssetForUpload, assetErrorHandlerAudio);
         hideAudioMessageRecording();
-        TrackingUtils.tagSentAudioMessageEvent(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
+        TrackingUtils.tagSentAudioMessageEvent(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                audioAssetForUpload,
                                                appliedAudioEffect,
                                                true,
@@ -1575,7 +1575,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     @Override
     public void onAudioMessageRecordingStarted() {
         getControllerFactory().getGlobalLayoutController().keepScreenAwake();
-        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new StartedRecordingAudioMessageEvent(
+        ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new StartedRecordingAudioMessageEvent(
             getConversationTypeString(),
             false));
     }
@@ -1584,7 +1584,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     public void sendRecording(AudioAssetForUpload audioAssetForUpload, AudioEffect appliedAudioEffect) {
         getStoreFactory().getConversationStore().sendMessage(audioAssetForUpload, assetErrorHandlerAudio);
         hideAudioMessageRecording();
-        TrackingUtils.tagSentAudioMessageEvent(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
+        TrackingUtils.tagSentAudioMessageEvent(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                audioAssetForUpload,
                                                appliedAudioEffect,
                                                false,
@@ -1597,13 +1597,13 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     @Override
     public void onCancelledAudioMessageRecording() {
         hideAudioMessageRecording();
-        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new CancelledRecordingAudioMessageEvent(
+        ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new CancelledRecordingAudioMessageEvent(
             getConversationTypeString()));
     }
 
     @Override
     public void onPreviewedAudioMessage() {
-        ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new PreviewedAudioMessageEvent(getConversationTypeString()));
+        ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new PreviewedAudioMessageEvent(getConversationTypeString()));
     }
 
     @Override
@@ -1828,7 +1828,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     @Override
     public void onSendPictureFromPreview(ImageAsset imageAsset, ImagePreviewLayout.Source source) {
         getStoreFactory().getConversationStore().sendMessage(imageAsset);
-        TrackingUtils.onSentPhotoMessage(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
+        TrackingUtils.onSentPhotoMessage(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                          getStoreFactory().getConversationStore().getCurrentConversation(),
                                          source);
         extendedCursorContainer.close(true);
@@ -1857,7 +1857,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 break;
             case VIDEO_CURSOR_BUTTON:
                 sendVideo(uri);
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new SentVideoMessageEvent((int) (AssetUtils.getVideoAssetDurationMilliSec(
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new SentVideoMessageEvent((int) (AssetUtils.getVideoAssetDurationMilliSec(
                     getContext(),
                     uri) / 1000),
                                                                                                   getStoreFactory().getConversationStore().getCurrentConversation(),
@@ -1865,7 +1865,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 break;
             case VIDEO:
                 sendVideo(uri);
-                ((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new SentVideoMessageEvent((int) (AssetUtils.getVideoAssetDurationMilliSec(
+                ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new SentVideoMessageEvent((int) (AssetUtils.getVideoAssetDurationMilliSec(
                     getContext(),
                     uri) / 1000),
                                                                                                   getStoreFactory().getConversationStore().getCurrentConversation(),
@@ -1873,7 +1873,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 break;
             case CAMERA:
                 sendImage(uri);
-                TrackingUtils.onSentPhotoMessage(((BaseScalaActivity) getActivity()).injectJava(GlobalTrackingController.class),
+                TrackingUtils.onSentPhotoMessage(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                  getStoreFactory().getConversationStore().getCurrentConversation(),
                                                  SentPictureEvent.Source.CAMERA,
                                                  SentPictureEvent.Method.FULL_SCREEN);
