@@ -18,6 +18,7 @@
 package com.waz.zclient.core.api.scala;
 
 import android.os.Handler;
+
 import com.waz.api.AssetForUpload;
 import com.waz.api.AudioAssetForUpload;
 import com.waz.api.ConversationsList;
@@ -32,7 +33,6 @@ import com.waz.api.SyncState;
 import com.waz.api.UiSignal;
 import com.waz.api.UpdateListener;
 import com.waz.api.User;
-import com.waz.api.Verification;
 import com.waz.api.VoiceChannel;
 import com.waz.api.VoiceChannelState;
 import com.waz.api.ZMessagingApi;
@@ -43,13 +43,14 @@ import com.waz.zclient.core.stores.conversation.IConversationStore;
 import com.waz.zclient.core.stores.conversation.InboxLoadRequester;
 import com.waz.zclient.core.stores.conversation.OnConversationLoadedListener;
 import com.waz.zclient.core.stores.conversation.OnInboxLoadedListener;
-import timber.log.Timber;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
+import timber.log.Timber;
 
 public class ScalaConversationStore implements IConversationStore {
     public static final String TAG = ScalaConversationStore.class.getName();
@@ -69,16 +70,6 @@ public class ScalaConversationStore implements IConversationStore {
     private SyncIndicator syncIndicator;
     private IConversation menuConversation;
     private ConversationChangeRequester conversationChangeRequester;
-
-    private final ConversationsList.VerificationStateCallback verificationStateCallback
-        = new ConversationsList.VerificationStateCallback() {
-        @Override
-        public void onVerificationStateChanged(String conversationId,
-                                               Verification previousVerification,
-                                               Verification currentVerification) {
-            notifyConversationVerificationStateChanged(conversationId, previousVerification, currentVerification);
-        }
-    };
 
     private final UpdateListener syncStateUpdateListener = new UpdateListener() {
         @Override
@@ -152,7 +143,6 @@ public class ScalaConversationStore implements IConversationStore {
 
         conversationsList.addUpdateListener(conversationListUpdateListener);
         conversationListUpdateListener.updated();
-        conversationsList.onVerificationStateChange(verificationStateCallback);
         inboxList.addUpdateListener(inboxListUpdateListener);
 
         syncIndicator = conversationsList.getSyncIndicator();
@@ -523,14 +513,6 @@ public class ScalaConversationStore implements IConversationStore {
     private void notifyMenuConversationUpdated() {
         for (ConversationStoreObserver conversationStoreObserver : conversationStoreObservers) {
             conversationStoreObserver.onMenuConversationHasChanged(menuConversation);
-        }
-    }
-
-    private void notifyConversationVerificationStateChanged(String conversationId,
-                                                            Verification previousVerification,
-                                                            Verification currentVerification) {
-        for (ConversationStoreObserver observer : conversationStoreObservers) {
-            observer.onVerificationStateChanged(conversationId, previousVerification, currentVerification);
         }
     }
 

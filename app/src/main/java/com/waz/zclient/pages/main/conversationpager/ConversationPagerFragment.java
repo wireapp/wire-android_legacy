@@ -26,10 +26,10 @@ import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
 import com.waz.api.ConversationsList;
 import com.waz.api.IConversation;
 import com.waz.api.SyncState;
-import com.waz.api.Verification;
 import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
@@ -221,13 +221,6 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
 
     @Override
     public void onMenuConversationHasChanged(IConversation fromConversation) {
-
-    }
-
-    @Override
-    public void onVerificationStateChanged(String conversationId,
-                                           Verification previousVerification,
-                                           Verification currentVerification) {
 
     }
 

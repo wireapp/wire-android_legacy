@@ -35,6 +35,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.text.TextUtils;
 import android.view.Window;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.localytics.android.Localytics;
@@ -46,7 +47,6 @@ import com.waz.api.NetworkMode;
 import com.waz.api.Self;
 import com.waz.api.SyncState;
 import com.waz.api.User;
-import com.waz.api.Verification;
 import com.waz.api.VoiceChannel;
 import com.waz.model.ConvId;
 import com.waz.threading.Threading;
@@ -61,7 +61,6 @@ import com.waz.zclient.controllers.navigation.Page;
 import com.waz.zclient.controllers.sharing.SharedContentType;
 import com.waz.zclient.controllers.tracking.events.connect.AcceptedGenericInviteEvent;
 import com.waz.zclient.controllers.tracking.events.exception.ExceptionEvent;
-import com.waz.zclient.controllers.tracking.events.otr.VerifiedConversationEvent;
 import com.waz.zclient.controllers.tracking.events.profile.SignOut;
 import com.waz.zclient.controllers.tracking.screens.ApplicationScreen;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
@@ -95,15 +94,17 @@ import com.waz.zclient.utils.PhoneUtils;
 import com.waz.zclient.utils.PhoneUtils.PhoneState;
 import com.waz.zclient.utils.StringUtils;
 import com.waz.zclient.utils.ViewUtils;
+
 import net.hockeyapp.android.ExceptionHandler;
 import net.hockeyapp.android.NativeCrashManager;
-import timber.log.Timber;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+
+import timber.log.Timber;
 
 
 public class MainActivity extends BaseActivity implements MainPhoneFragment.Container,
@@ -975,18 +976,6 @@ public class MainActivity extends BaseActivity implements MainPhoneFragment.Cont
     @Override
     public void onMenuConversationHasChanged(IConversation fromConversation) {
 
-    }
-
-    @Override
-    public void onVerificationStateChanged(String conversationId,
-                                           Verification previousVerification,
-                                           Verification currentVerification) {
-        if (getControllerFactory() == null || getControllerFactory().isTornDown()) {
-            return;
-        }
-        if (previousVerification != Verification.VERIFIED && currentVerification == Verification.VERIFIED) {
-            injectJava(GlobalTrackingController.class).tagEvent(new VerifiedConversationEvent());
-        }
     }
 
     private void checkForUnsupportedEmojis() {
