@@ -181,10 +181,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".controllers.notifications.ShareSavedImageActivity" />
-        <!-- Needed for LoginActivity to work -->
-        <activity
-            android:name="com.spotify.sdk.android.authentication.LoginActivity"
-            android:theme="@android:style/Theme.Holo.Light.NoActionBar.Fullscreen"/>
 
         <activity
             android:name=".LaunchActivity"
