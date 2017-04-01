@@ -1,7 +1,5 @@
 Image Filters from http://www.jhlabs.com - Apache 2.0
-Localytics SDK - http://www.localytics.com/docs/sdks-integration-guides/sdks/
 Android Wheel Control - https://code.google.com/p/android-wheel/ - Apache 2.0
-WebRTC 
 Commons IO - http://commons.apache.org/proper/commons-io/ - Apache 2.0
 Gson - https://code.google.com/p/google-gson/ - Apache 2.0
 Hockeyapp SDK - http://support.hockeyapp.net/kb/client-integration-android-other-platforms/hockeyapp-for-android-sdk
@@ -14,9 +12,8 @@ ListViewAnimations - https://github.com/nhaarman/ListViewAnimations - Apache 2.0
 NineOldAndroids - https://github.com/JakeWharton/NineOldAndroids/ - Apache 2.0
 Timber - https://github.com/JakeWharton/timber - Apache 2.0
 Spotify Authentication Library - https://developer.spotify.com/technologies/spotify-android-sdk/android-sdk-api-reference/ - Apache License, Version 2.0
-Spotify Player Library - https://developer.spotify.com/technologies/spotify-android-sdk/android-sdk-api-reference/ - Apache License, Version 2.0
 Retrofit - https://github.com/square/retrofit - Apache License, Version 2.0
 OkHttp - https://github.com/square/okhttp - Apache License, Version 2.0
 Spotify Web API for Android - https://github.com/kaaes/spotify-web-api-android - MIT
 Material Preference - https://github.com/consp1racy/android-support-preference - Apache 2.0
-https://github.com/iPaulPro/aFileChooser - Apache License, Version 2.0
+aFileChooser - https://github.com/iPaulPro/aFileChooser - Apache License, Version 2.0
