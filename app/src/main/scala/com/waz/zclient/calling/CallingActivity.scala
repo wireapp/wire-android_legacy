@@ -53,6 +53,13 @@ class CallingActivity extends AppCompatActivity with ActivityHelper with Permiss
       case _ =>
     }
 
+    leftV3GroupCall.on(Threading.Ui) {
+      case true =>
+        verbose("left group call, finishing activity")
+        finish()
+      case _ =>
+    }
+
     //ensure activity gets killed to allow content to change if the conv degrades (no need to kill activity on audio call)
     (for {
       degraded <- convDegraded
@@ -93,16 +100,25 @@ class CallingActivity extends AppCompatActivity with ActivityHelper with Permiss
 object CallingActivity extends Injectable {
 
   def start(context: Context): Unit = {
+    verbose(s"start...")
     val intent = new Intent(context, classOf[CallingActivity])
     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     context.startActivity(intent)
   }
 
   def startIfCallIsActive(context: WireContext) = {
+    verbose(s"start if active")
     import context.injector
     inject[GlobalCallingController].activeCall.head.foreach {
-      case true => start(context)
+      case true =>
+        if (!inject[GlobalCallingController].leftV3GroupCall.currentValue.getOrElse(false)) {
+          start(context)
+          verbose(s"starting....")
+        }
+        else
+         verbose(s"active, but left the call")
       case false =>
+        verbose(s"not active")
     } (Threading.Ui)
   }
 }

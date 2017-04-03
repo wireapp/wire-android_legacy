@@ -44,9 +44,8 @@ class CallPermissionsController(implicit inj: Injector, cxt: WireContext) extend
 
   val permissionsController = inject[PermissionsController]
 
-  private def useV3(convId: ConvId) = isGroupCall(convId).flatMap {
-    case true => Future.successful(false)
-    case _ => prefs.head.flatMap(p => p.uiPreferenceStringSignal(p.callingV3Key, "1").apply()).flatMap {
+  private def useV3(convId: ConvId) = {
+    prefs.head.flatMap(p => p.uiPreferenceStringSignal(p.callingV3Key, "1").apply()).flatMap {
       case "0" => Future.successful(false) // v2
       case "1" => v3Service.flatMap(_.requestedCallVersion).head.map { v =>
         info(s"Relying on backend switch: using calling version: $v")
@@ -80,7 +79,10 @@ class CallPermissionsController(implicit inj: Injector, cxt: WireContext) extend
     permissionsController.requiring(if (withVideo) Set(CameraPermission, RecordAudioPermission) else Set(RecordAudioPermission)) {
       setVariableBitRateMode(variableBitRate)
       useV3(convId).flatMap {
-        case true => v3Service.head.map(_.startCall(convId, withVideo, false))
+        case true => isGroupCall(convId).flatMap {
+          case true => v3Service.head.map(_.startCall(convId, withVideo, true))
+          case false => v3Service.head.map(_.startCall(convId, withVideo, false))
+        }
         case false => v2Service.head.map(_.joinVoiceChannel(convId, withVideo))
       }
     }(R.string.calling__cannot_start__title,
@@ -101,7 +103,11 @@ class CallPermissionsController(implicit inj: Injector, cxt: WireContext) extend
       def withV2(f: (VoiceChannelService, ConvId) => Unit) = v2ServiceAndCurrentConvId.head.map { case (vcs, id) => f(vcs, id) }
 
       def accept() = v3 match {
-        case true => withV3 { (cs, id) => cs.acceptCall(id, false) }
+        case true => withV3 { (cs, id) => isGroupCall(id).map {
+          case true => cs.acceptCall(id, true)
+          case false => cs.acceptCall(id, false)
+          }
+        }
         case _ => withV2 { (vcs, id) => vcs.joinVoiceChannel(id, withVideo) }
       }
 

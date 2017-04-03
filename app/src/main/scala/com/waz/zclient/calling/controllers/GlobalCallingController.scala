@@ -85,6 +85,11 @@ class GlobalCallingController(implicit inj: Injector, cxt: WireContext, eventCon
     case _ => currentChannelOpt.map(_.map(_.state))
   }
 
+  val leftV3GroupCall = v3CallOpt.map {
+    case Some(c) => !c.shouldRing && c.state == OTHER_CALLING
+    case _ => false
+  }
+
   val activeCall = zmsOpt.flatMap {
     case Some(z) => callStateOpt.map {
       case Some(SELF_CALLING | SELF_JOINING | SELF_CONNECTED | OTHER_CALLING | OTHERS_CONNECTED) => true
@@ -156,7 +161,8 @@ class GlobalCallingController(implicit inj: Injector, cxt: WireContext, eventCon
   }
 
   onCallStarted.on(Threading.Ui) { _ =>
-    CallingActivity.start(cxt)
+    if (!leftV3GroupCall.currentValue.getOrElse(false))
+      CallingActivity.start(cxt)
   }(EventContext.Global)
 
   activeCallEstablished.onChanged.filter(_ == true) { _ =>
@@ -184,8 +190,9 @@ class GlobalCallingController(implicit inj: Injector, cxt: WireContext, eventCon
   (for {
     m <- muted
     i <- incomingCall
-  } yield (m, i)) { case (m, i) =>
-    soundController.setIncomingRingTonePlaying(!m && i)
+    l <- leftV3GroupCall
+  } yield (m, i, l)) { case (m, i, l) =>
+    soundController.setIncomingRingTonePlaying(!m && i && !l)
   }
 
   /**
@@ -289,10 +296,8 @@ class GlobalCallingController(implicit inj: Injector, cxt: WireContext, eventCon
   }
   val callerData = userStorage.zip(callerId).flatMap { case (storage, id) => storage.signal(id) }
 
-  val groupCall = isV3Call.flatMap {
-    case true => Signal.const(false)
-    case _ => currentChannel map (_.tracking.kindOfCall == KindOfCall.GROUP)
-  }
+  val groupCall = currentChannel map (_.tracking.kindOfCall == KindOfCall.GROUP)
+
 }
 
 private class ScreenManager(implicit injector: Injector) extends Injectable {

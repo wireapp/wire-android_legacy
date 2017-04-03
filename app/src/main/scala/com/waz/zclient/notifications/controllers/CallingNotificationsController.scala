@@ -121,7 +121,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
           val silence = silenceIntent(conv.id)
           builder
             .addAction(R.drawable.ic_menu_silence_call_w, getString(R.string.system_notification__silence_call), silence)
-            .addAction(R.drawable.ic_menu_join_call_w, getString(R.string.system_notification__join_call), joinIntent(conv.id))
+            .addAction(R.drawable.ic_menu_join_call_w, getString(R.string.system_notification__join_call), if (group) joinGroupIntent(conv.id) else joinIntent(conv.id))
             .setDeleteIntent(silence)
 
         case SELF_CONNECTED |
@@ -166,6 +166,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
   private def leaveIntent(convId: ConvId) = pendingIntent(LeaveRequestCode, CallService.leaveIntent(cxt, convId))
 
   private def joinIntent(convId: ConvId) = pendingIntent(JoinRequestCode, CallService.joinIntent(cxt, convId))
+  private def joinGroupIntent(convId: ConvId) = pendingIntent(JoinRequestCode, CallService.joinGroupIntent(cxt, convId))
 
   private def pendingIntent(reqCode: Int, intent: Intent) = PendingIntent.getService(cxt, reqCode, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 }
