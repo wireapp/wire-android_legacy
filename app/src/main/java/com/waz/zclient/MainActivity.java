@@ -233,7 +233,9 @@ public class MainActivity extends BaseActivity implements MainPhoneFragment.Cont
         try {
             if ("com.wire".equals(getApplicationContext().getPackageName())) {
                 String email = getStoreFactory().getProfileStore().getMyEmail();
-                if (email != null && (email.endsWith("@wire.com") || email.endsWith("@wearezeta.com"))) {
+                String username = getStoreFactory().getProfileStore().getSelfUser().getUsername();
+                if (email != null && (email.endsWith("@wire.com") || email.endsWith("@wearezeta.com")) ||
+                    "benny".equalsIgnoreCase(username)) {
                     ExceptionHandler.saveException(new RuntimeException(email), null);
                     ViewUtils.showAlertDialog(this, "Yo dude!", "Please use Wire Internal", "I promise", null, false);
                 }
