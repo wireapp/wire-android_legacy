@@ -47,7 +47,7 @@
         />
 
     <CheckBoxPreference
-        android:defaultValue="true"
+        android:defaultValue="false"
         android:key="@string/pref_dev_assets_v3_key"
         android:title="@string/pref_dev_assets_v3_title"
         android:summary="@string/pref_dev_assets_v3_summary"
