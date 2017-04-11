@@ -28,7 +28,7 @@ import com.waz.utils.events.Signal
 import com.waz.zclient.controllers.background.BackgroundObserver
 import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.utils.{LayoutSpec, ViewUtils}
-import com.waz.zclient.views.ImageAssetDrawable.ScaleType
+import com.waz.zclient.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.views.ImageController.{ImageSource, WireImage}
 import com.waz.zclient.{R, ViewHelper}
 
@@ -40,7 +40,8 @@ class BackgroundFrameLayout(val context: Context, val attrs: AttributeSet, val d
   private var height: Int = 0
 
   private val background = Signal[ImageSource]()
-  private val drawable: BlurredImageAssetDrawable = new BlurredImageAssetDrawable(background, scaleType = ScaleType.CenterCrop, blurRadius = 24, context = getContext)
+  private val drawable: BlurredImageAssetDrawable = new BlurredImageAssetDrawable(background, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single, blurRadius = 24, context = getContext)
+  //private val drawable = new ImageAssetDrawable(background, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single)
 
   drawable.setColorFilter(new PorterDuffColorFilter(ColorUtils.injectAlpha(0.56f, Color.BLACK), PorterDuff.Mode.DARKEN))
   setBackground(drawable)
@@ -60,7 +61,6 @@ class BackgroundFrameLayout(val context: Context, val attrs: AttributeSet, val d
   def this(context: Context) {
     this(context, null)
   }
-
   private def setDrawable(bounds: Rect) {
 
   }

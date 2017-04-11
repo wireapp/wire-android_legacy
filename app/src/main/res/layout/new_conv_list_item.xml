@@ -22,7 +22,7 @@
               xmlns:app="http://schemas.android.com/apk/res-auto"
               android:orientation="horizontal"
               android:layout_width="match_parent"
-              android:layout_height="56dp">
+              android:layout_height="@dimen/conversation_list__row__height">
 
 
     <com.waz.zclient.views.ConversationAvatarView
@@ -43,12 +43,16 @@
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/conversation_title"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="36dp"
             android:layout_marginTop="10dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginStart="0dp"
+            android:gravity="top"
             android:layout_toStartOf="@+id/conversation_status_pill"
             android:ellipsize="end"
             android:maxLines="1"
             android:textColor="@color/white"
+            android:text="ASDFGHJSADFGhRTFGHdfgjdhjkdfGHKf"
             android:textSize="@dimen/wire__text_size__regular"
             app:font="@string/wire__typeface__light"/>
 
@@ -56,14 +60,15 @@
             android:id="@+id/conversation_subtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/conversation_title"
-            android:layout_toStartOf="@+id/conversation_status_pill"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Subtitle"
+            android:text="ASDFGHJSADFGhRTFGHdfgjdhjkdfGHKf"
             android:textColor="@color/white_64"
             android:textSize="@dimen/wire__text_size__small"
-            app:font="@string/wire__typeface__light"/>
+            app:font="@string/wire__typeface__light"
+            android:layout_alignBottom="@+id/conversation_title"
+            android:layout_alignParentStart="true"
+            android:layout_alignEnd="@+id/conversation_title"/>
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/conversation_status_pill"
@@ -74,14 +79,16 @@
             android:layout_gravity="center"
             android:layout_marginEnd="16dp"
             android:layout_marginStart="0dp"
-            android:textColor="@color/white"
-            android:textAlignment="center"
-            android:textSize="@dimen/wire__text_size__small"
+            android:background="@drawable/conversation_status_pill"
             android:gravity="center"
-            app:font="@string/wire__typeface__bold"
-            android:background="@drawable/conversation_status_pill"/>
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="@dimen/wire__text_size__small"
+            android:visibility="invisible"
+            app:font="@string/wire__typeface__bold"/>
 
         <View
+            android:id="@+id/conversation_separator"
             android:layout_width="match_parent"
             android:layout_height="0.5dp"
             android:layout_alignParentBottom="true"

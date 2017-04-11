@@ -45,7 +45,8 @@ class ImageAssetDrawable(
                           src: Signal[ImageSource],
                           scaleType: ScaleType = ScaleType.FitXY,
                           request: RequestBuilder = RequestBuilder.Regular,
-                          background: Option[Drawable] = None
+                          background: Option[Drawable] = None,
+                          animate: Boolean = true
                         )(implicit inj: Injector, eventContext: EventContext) extends Drawable with Injectable {
 
   val images = inject[ImageController]
@@ -60,9 +61,11 @@ class ImageAssetDrawable(
 
   animator.addUpdateListener(new AnimatorUpdateListener {
     override def onAnimationUpdate(animation: ValueAnimator): Unit = {
-      val alpha = (animation.getAnimatedFraction * 255).toInt
-      bitmapPaint.setAlpha(alpha)
-      invalidateSelf()
+      if (animate) {
+        val alpha = (animation.getAnimatedFraction * 255).toInt
+        bitmapPaint.setAlpha(alpha)
+        invalidateSelf()
+      }
     }
   })
 
@@ -219,8 +222,9 @@ class RoundedImageAssetDrawable (
                                   scaleType: ScaleType = ScaleType.FitXY,
                                   request: RequestBuilder = RequestBuilder.Regular,
                                   background: Option[Drawable] = None,
+                                  animate: Boolean = true,
                                   cornerRadius: Float = 0
-                                )(implicit inj: Injector, eventContext: EventContext) extends ImageAssetDrawable(src, scaleType, request, background) {
+                                )(implicit inj: Injector, eventContext: EventContext) extends ImageAssetDrawable(src, scaleType, request, background, animate) {
 
   override protected def drawBitmap(canvas: Canvas, bm: Bitmap, matrix: Matrix, bitmapPaint: Paint): Unit = {
     val shader = new BitmapShader(bm, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
@@ -236,13 +240,10 @@ class BlurredImageAssetDrawable(
                                  scaleType: ScaleType = ScaleType.FitXY,
                                  request: RequestBuilder = RequestBuilder.Regular,
                                  background: Option[Drawable] = None,
+                                 animate: Boolean = false,
                                  blurRadius: Float = 1,
                                  context: Context
-                               )(implicit inj: Injector, eventContext: EventContext) extends ImageAssetDrawable(src, scaleType, request, background) {
-
-  override def setColorFilter(colorFilter: ColorFilter) = {
-    bitmapPaint.setColorFilter(colorFilter)
-  }
+                               )(implicit inj: Injector, eventContext: EventContext) extends ImageAssetDrawable(src, scaleType, request, background, animate) {
 
   override protected def drawBitmap(canvas: Canvas, bm: Bitmap, matrix: Matrix, bitmapPaint: Paint): Unit = {
     val renderScript = RenderScript.create(context)
