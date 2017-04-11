@@ -52,7 +52,7 @@ class ImageAssetDrawable(
 
   private val matrix = new Matrix()
   private val dims = Signal[Dim2]()
-  private val bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG)
+  protected val bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG)
 
   private val animator = ValueAnimator.ofFloat(0, 1).setDuration(750)
 
@@ -236,9 +236,13 @@ class BlurredImageAssetDrawable(
                                  scaleType: ScaleType = ScaleType.FitXY,
                                  request: RequestBuilder = RequestBuilder.Regular,
                                  background: Option[Drawable] = None,
-                                 blurRadius: Float = 0,
+                                 blurRadius: Float = 1,
                                  context: Context
                                )(implicit inj: Injector, eventContext: EventContext) extends ImageAssetDrawable(src, scaleType, request, background) {
+
+  override def setColorFilter(colorFilter: ColorFilter) = {
+    bitmapPaint.setColorFilter(colorFilter)
+  }
 
   override protected def drawBitmap(canvas: Canvas, bm: Bitmap, matrix: Matrix, bitmapPaint: Paint): Unit = {
     val renderScript = RenderScript.create(context)
@@ -293,6 +297,7 @@ class ImageController(implicit inj: Injector) extends Injectable {
     case WireImage(id) => imageSignal(id, req)
     case ImageUri(uri) => imageSignal(uri, req)
     case DataImage(data) => imageSignal(data, req)
+    case NoImage() => Signal.empty[BitmapResult]
   }
 }
 
@@ -302,4 +307,5 @@ object ImageController {
   case class WireImage(id: AssetId) extends ImageSource
   case class DataImage(data: AssetData) extends ImageSource
   case class ImageUri(uri: URI) extends ImageSource
+  case class NoImage() extends ImageSource
 }

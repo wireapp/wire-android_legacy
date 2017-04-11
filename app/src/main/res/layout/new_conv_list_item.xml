@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2017 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:orientation="horizontal"
+              android:layout_width="match_parent"
+              android:layout_height="56dp">
+
+
+    <com.waz.zclient.views.ConversationAvatarView
+        android:id="@+id/conversation_icon"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="14dp"
+        android:layout_gravity="center"
+        />
+
+    <RelativeLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        >
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/conversation_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_toStartOf="@+id/conversation_status_pill"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/white"
+            android:textSize="@dimen/wire__text_size__regular"
+            app:font="@string/wire__typeface__light"/>
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/conversation_subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/conversation_title"
+            android:layout_toStartOf="@+id/conversation_status_pill"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Subtitle"
+            android:textColor="@color/white_64"
+            android:textSize="@dimen/wire__text_size__small"
+            app:font="@string/wire__typeface__light"/>
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/conversation_status_pill"
+            android:layout_width="30dp"
+            android:layout_height="20dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_gravity="center"
+            android:layout_marginEnd="16dp"
+            android:layout_marginStart="0dp"
+            android:textColor="@color/white"
+            android:textAlignment="center"
+            android:textSize="@dimen/wire__text_size__small"
+            android:gravity="center"
+            app:font="@string/wire__typeface__bold"
+            android:background="@drawable/conversation_status_pill"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:layout_alignParentBottom="true"
+            android:background="@color/white_8"
+            />
+
+    </RelativeLayout>
+
+</LinearLayout>

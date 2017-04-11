@@ -52,7 +52,7 @@ import com.waz.zclient.core.stores.inappnotification.InAppNotificationStoreObser
 import com.waz.zclient.core.stores.inappnotification.KnockingEvent;
 import com.waz.zclient.fragments.ImageFragment;
 import com.waz.zclient.pages.BaseFragment;
-import com.waz.zclient.pages.main.backgroundmain.views.BackgroundFrameLayout;
+import com.waz.zclient.views.BackgroundFrameLayout;
 import com.waz.zclient.pages.main.conversation.SingleImageUserFragment;
 import com.waz.zclient.pages.main.conversation.VideoPlayerFragment;
 import com.waz.zclient.pages.main.conversationlist.ConfirmationFragment;
@@ -116,7 +116,6 @@ public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container>
         getControllerFactory().getAccentColorController().addAccentColorObserver(this);
         getCollectionController().addObserver(this);
 
-        getControllerFactory().getAccentColorController().addAccentColorObserver(backgroundLayout);
         getControllerFactory().getBackgroundController().addBackgroundObserver(backgroundLayout);
 
         OnBoardingHintFragment fragment = (OnBoardingHintFragment) getChildFragmentManager().findFragmentByTag(
@@ -136,7 +135,6 @@ public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container>
         getStoreFactory().getInAppNotificationStore().removeInAppNotificationObserver(this);
         getCollectionController().removeObserver(this);
 
-        getControllerFactory().getAccentColorController().removeAccentColorObserver(backgroundLayout);
         getControllerFactory().getBackgroundController().removeBackgroundObserver(backgroundLayout);
         super.onStop();
     }
