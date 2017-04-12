@@ -247,6 +247,7 @@ class BlurredImageAssetDrawable(
 
   override protected def drawBitmap(canvas: Canvas, bm: Bitmap, matrix: Matrix, bitmapPaint: Paint): Unit = {
     val renderScript = RenderScript.create(context)
+    val copiedBm = bm.copy(bm.getConfig, true)
     val blurInput = Allocation.createFromBitmap(renderScript, bm)
     val blurOutput = Allocation.createFromBitmap(renderScript, bm)
 
@@ -255,13 +256,14 @@ class BlurredImageAssetDrawable(
     blur.setRadius(blurRadius)
     blur.forEach(blurOutput)
 
-    blurOutput.copyTo(bm)
+    blurOutput.copyTo(copiedBm)
 
     blurInput.destroy()
     blurOutput.destroy()
     renderScript.destroy()
 
-    canvas.drawBitmap(bm, matrix, bitmapPaint)
+    canvas.drawBitmap(copiedBm, matrix, bitmapPaint)
+    copiedBm.recycle()
   }
 
 }
