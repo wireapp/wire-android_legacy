@@ -20,6 +20,7 @@ package com.waz.zclient.pages.main.conversationlist.views.row;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -69,11 +70,26 @@ public class MenuIndicatorView extends FrameLayout {
         invalidate();
     }
 
+
+    public MenuIndicatorView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        init();
+    }
+
+    public MenuIndicatorView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        init();
+    }
+
+    public MenuIndicatorView(Context context) {
+        super(context);
+        init();
+    }
+
     /**
      * CTOR - Initializes the views
      */
-    public MenuIndicatorView(Context context) {
-        super(context);
+    private void init() {
         LayoutInflater.from(getContext()).inflate(R.layout.conv_list_item_behind, this, true);
         firstDotView = ViewUtils.getView(this, R.id.v__row_conversation__menu_indicator__first_dot);
         secondDotView = ViewUtils.getView(this, R.id.v__row_conversation__menu_indicator__second_dot);

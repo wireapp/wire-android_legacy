@@ -18,83 +18,92 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              android:orientation="horizontal"
-              android:layout_width="match_parent"
-              android:layout_height="@dimen/conversation_list__row__height">
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:app="http://schemas.android.com/apk/res-auto"
+             android:layout_width="match_parent"
+             android:layout_height="@dimen/conversation_list__row__height">
 
-
-    <com.waz.zclient.views.ConversationAvatarView
-        android:id="@+id/conversation_icon"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
-        android:layout_marginStart="14dp"
-        android:layout_marginEnd="14dp"
-        android:layout_gravity="center"
-        />
-
-    <RelativeLayout
-        android:layout_width="0dp"
+    <com.waz.zclient.pages.main.conversationlist.views.row.MenuIndicatorView
+        android:id="@+id/conversation_menu_indicator"
+        android:layout_width="@dimen/conversation_list__left_icon_width"
         android:layout_height="match_parent"
-        android:layout_weight="1"
-        >
+        android:layout_gravity="start"/>
 
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/conversation_title"
-            android:layout_width="match_parent"
-            android:layout_height="36dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginStart="0dp"
-            android:gravity="top"
-            android:layout_toStartOf="@+id/conversation_status_pill"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="@color/white"
-            android:text="ASDFGHJSADFGhRTFGHdfgjdhjkdfGHKf"
-            android:textSize="@dimen/wire__text_size__regular"
-            app:font="@string/wire__typeface__light"/>
+    <LinearLayout android:id="@+id/conversation_row_container"
+                  android:orientation="horizontal"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent">
 
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/conversation_subtitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="ASDFGHJSADFGhRTFGHdfgjdhjkdfGHKf"
-            android:textColor="@color/white_64"
-            android:textSize="@dimen/wire__text_size__small"
-            app:font="@string/wire__typeface__light"
-            android:layout_alignBottom="@+id/conversation_title"
-            android:layout_alignParentStart="true"
-            android:layout_alignEnd="@+id/conversation_title"/>
 
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/conversation_status_pill"
-            android:layout_width="30dp"
-            android:layout_height="20dp"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
+        <com.waz.zclient.views.ConversationAvatarView
+            android:id="@+id/conversation_icon"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:layout_gravity="center"
-            android:layout_marginEnd="16dp"
-            android:layout_marginStart="0dp"
-            android:background="@drawable/conversation_status_pill"
-            android:gravity="center"
-            android:textAlignment="center"
-            android:textColor="@color/white"
-            android:textSize="@dimen/wire__text_size__small"
-            android:visibility="invisible"
-            app:font="@string/wire__typeface__bold"/>
-
-        <View
-            android:id="@+id/conversation_separator"
-            android:layout_width="match_parent"
-            android:layout_height="0.5dp"
-            android:layout_alignParentBottom="true"
-            android:background="@color/white_8"
+            android:layout_marginEnd="14dp"
+            android:layout_marginStart="14dp"
             />
 
-    </RelativeLayout>
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            >
 
-</LinearLayout>
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/conversation_title"
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginStart="0dp"
+                android:gravity="top"
+                android:layout_toStartOf="@+id/conversation_status_pill"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/white"
+                android:textSize="@dimen/wire__text_size__regular"
+                app:font="@string/wire__typeface__light"/>
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/conversation_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/white_64"
+                android:textSize="@dimen/wire__text_size__small"
+                app:font="@string/wire__typeface__light"
+                android:layout_alignBottom="@+id/conversation_title"
+                android:layout_alignParentStart="true"
+                android:layout_alignEnd="@+id/conversation_title"/>
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/conversation_status_pill"
+                android:layout_width="30dp"
+                android:layout_height="20dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_gravity="center"
+                android:layout_marginEnd="16dp"
+                android:layout_marginStart="0dp"
+                android:background="@drawable/conversation_status_pill"
+                android:gravity="center"
+                android:textAlignment="center"
+                android:textColor="@color/white"
+                android:textSize="@dimen/wire__text_size__small"
+                android:visibility="invisible"
+                app:font="@string/wire__typeface__bold"/>
+
+            <View
+                android:id="@+id/conversation_separator"
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_alignParentBottom="true"
+                android:background="@color/white_8"
+                />
+
+        </RelativeLayout>
+
+    </LinearLayout>
+</merge>

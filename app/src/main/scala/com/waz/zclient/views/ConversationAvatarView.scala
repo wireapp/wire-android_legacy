@@ -81,6 +81,7 @@ class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int)
         avatarGroup.setVisibility(View.GONE)
         avatarSingle.setVisibility(View.VISIBLE)
         setBackground(null)
+      case _ =>
     }
   }
 }
