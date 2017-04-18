@@ -324,8 +324,10 @@
     <string name="connect_request__cancel_request__label">Cancel connection request</string>
     <string name="connect_request__unblock__button__text">Unblock</string>
     <string name="send_connect_request__connect_button__text">Connect</string>
-    <string name="connect_inbox__one_person__link__name">1 person waiting</string>
-    <string name="connect_inbox__multiple_people__link__name">%1$s people waiting</string>
+    <plurals name="connect_inbox__link__name">
+        <item quantity="one">1 person waiting</item>
+        <item quantity="other">%1$s people waiting</item>
+    </plurals>
     <string name="connect_request__ignore_button__text">Ignore</string>
     <string name="content__message__connect_request__footer">CONNECTED</string>
     <string name="content__message__connect_request__auto_connect__footer">AUTO-CONNECTED. _LEARN MORE_</string>
@@ -1129,4 +1131,30 @@
     <string name="search__box__hint_text">SEARCH TEXT MESSAGES</string>
     <string name="search__no_results">No results.</string>
 
+    <!-- Conversation List -->
+    <plurals name="conversation_list__new_message_count">
+        <item quantity="one">%1$s new message</item>
+        <item quantity="other">%1$s new messages</item>
+    </plurals>
+    <plurals name="conversation_list__missed_calls_count">
+        <item quantity="one">%1$s missed call</item>
+        <item quantity="other">%1$s missed calls</item>
+    </plurals>
+    <plurals name="conversation_list__pings_count">
+        <item quantity="one">%1$s ping</item>
+        <item quantity="other">%1$s pings</item>
+    </plurals>
+    <plurals name="conversation_list__new_likes_count">
+        <item quantity="other">%1$s ♥</item>
+    </plurals>
+    <string name="conversation_list__unsent_message_long">⚠ Unsent message️</string>
+    <string name="conversation_list__unsent_message_short">⚠</string>
+
+    <string name="conversation_list__shared__image">Shared a picture</string>
+    <string name="conversation_list__shared__file">Shared a file</string>
+    <string name="conversation_list__shared__video">Shared a video</string>
+    <string name="conversation_list__shared__audio">Shared an audio message</string>
+    <string name="conversation_list__shared__location">Shared a location</string>
+    <string name="conversation_list__missed_call">Missed call</string>
+    <string name="conversation_list__pinged">Pinged</string>
 </resources>

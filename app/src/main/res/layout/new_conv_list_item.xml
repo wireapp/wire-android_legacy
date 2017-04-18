@@ -57,7 +57,7 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginEnd="16dp"
                 android:layout_marginStart="0dp"
-                android:gravity="top"
+                android:gravity="center_vertical"
                 android:layout_toStartOf="@+id/conversation_status_pill"
                 android:ellipsize="end"
                 android:maxLines="1"
@@ -78,22 +78,15 @@
                 android:layout_alignParentStart="true"
                 android:layout_alignEnd="@+id/conversation_title"/>
 
-            <com.waz.zclient.ui.text.TypefaceTextView
+            <com.waz.zclient.views.ConversationStatusPill
                 android:id="@+id/conversation_status_pill"
-                android:layout_width="30dp"
-                android:layout_height="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/conversation_list__status_pill__height"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:layout_gravity="center"
                 android:layout_marginEnd="16dp"
-                android:layout_marginStart="0dp"
-                android:background="@drawable/conversation_status_pill"
-                android:gravity="center"
-                android:textAlignment="center"
-                android:textColor="@color/white"
-                android:textSize="@dimen/wire__text_size__small"
-                android:visibility="invisible"
-                app:font="@string/wire__typeface__bold"/>
+                android:layout_marginStart="0dp"/>
 
             <View
                 android:id="@+id/conversation_separator"

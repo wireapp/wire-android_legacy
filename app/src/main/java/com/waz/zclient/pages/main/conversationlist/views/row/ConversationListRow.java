@@ -261,10 +261,7 @@ public class ConversationListRow extends FrameLayout implements SwipeListView.Sw
 
     private String getInboxName(InboxLinkConversation conversation) {
         int size = conversation.getSize();
-        // Inbox link is special case: fetch name from resources and disable swiping
-        return size > 1 ?
-               String.format(getResources().getString(R.string.connect_inbox__multiple_people__link__name), size) :
-               getResources().getString(R.string.connect_inbox__one_person__link__name);
+        return getResources().getQuantityString(R.plurals.connect_inbox__link__name, size);
     }
 
     /**

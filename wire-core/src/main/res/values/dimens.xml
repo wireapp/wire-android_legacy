@@ -848,4 +848,5 @@
     <dimen name="conversation_list__row__avatar_size">28dp</dimen>
     <dimen name="conversation_list__row__title__top">8dp</dimen>
     <dimen name="conversation_list__row__height">56dp</dimen>
+    <dimen name="conversation_list__status_pill__height">20dp</dimen>
 </resources>

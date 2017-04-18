@@ -77,11 +77,14 @@ class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int)
         avatarGroup.setVisibility(View.VISIBLE)
         avatarSingle.setVisibility(View.GONE)
         setBackground(groupBackgroundDrawable)
-      case ConversationType.OneToOne =>
+      case ConversationType.OneToOne | ConversationType.WaitForConnection =>
         avatarGroup.setVisibility(View.GONE)
         avatarSingle.setVisibility(View.VISIBLE)
         setBackground(null)
       case _ =>
+        avatarGroup.setVisibility(View.GONE)
+        avatarSingle.setVisibility(View.GONE)
+        setBackground(null)
     }
   }
 }

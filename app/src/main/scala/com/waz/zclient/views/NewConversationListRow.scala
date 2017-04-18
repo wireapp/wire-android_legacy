@@ -21,27 +21,28 @@ import android.animation.ObjectAnimator
 import android.content.Context
 import android.util.AttributeSet
 import android.view.{Gravity, View, ViewGroup}
-import android.widget.{FrameLayout, LinearLayout}
 import android.widget.LinearLayout.LayoutParams
-import com.waz.api.IConversation
+import android.widget.{FrameLayout, LinearLayout}
+import com.waz.ZLog.ImplicitTag._
+import com.waz.api.{IConversation, Message}
+import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
+import com.waz.utils._
 import com.waz.utils.events.Signal
 import com.waz.zclient.controllers.global.AccentColorController
-import com.waz.zclient.ui.text.TypefaceTextView
-import com.waz.zclient.ui.utils.{ColorUtils, TextViewUtils}
-import com.waz.zclient.utils.ViewUtils
-import com.waz.zclient.{R, ViewHelper}
-import com.waz.zclient.utils.ContextUtils._
-import com.waz.utils._
-import com.waz.ZLog._
-import com.waz.ZLog.ImplicitTag._
+import com.waz.zclient.core.stores.connect.InboxLinkConversation
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
 import com.waz.zclient.pages.main.conversationlist.views.listview.SwipeListView
 import com.waz.zclient.pages.main.conversationlist.views.row.MenuIndicatorView
 import com.waz.zclient.ui.animation.interpolators.penner.Expo
+import com.waz.zclient.ui.text.TypefaceTextView
+import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.ui.views.properties.MoveToAnimateable
+import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.ViewUtils
+import com.waz.zclient.{R, ViewHelper}
 
 class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style)
     with ViewHelper
@@ -50,6 +51,8 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
+  implicit val executionContext = Threading.Background
+
   setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getDimenPx(R.dimen.conversation_list__row__height)))
   inflate(R.layout.new_conv_list_item)
 
@@ -57,88 +60,164 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
   val accentColor = inject[AccentColorController].accentColor
   val selfId = zms.map(_.selfUserId)
 
-  private val conversationId = Signal[ConvId]()
+  private val conversationId = Signal[Option[ConvId]]()
 
   val container = ViewUtils.getView(this, R.id.conversation_row_container).asInstanceOf[LinearLayout]
   val title = ViewUtils.getView(this, R.id.conversation_title).asInstanceOf[TypefaceTextView]
   val subtitle = ViewUtils.getView(this, R.id.conversation_subtitle).asInstanceOf[TypefaceTextView]
   val avatar = ViewUtils.getView(this, R.id.conversation_icon).asInstanceOf[ConversationAvatarView]
-  val statusPill = ViewUtils.getView(this, R.id.conversation_status_pill).asInstanceOf[TypefaceTextView]
+  val statusPill = ViewUtils.getView(this, R.id.conversation_status_pill).asInstanceOf[ConversationStatusPill]
   val separator = ViewUtils.getView(this, R.id.conversation_separator).asInstanceOf[View]
   val menuIndicatorView = ViewUtils.getView(this, R.id.conversation_menu_indicator).asInstanceOf[MenuIndicatorView]
 
   var iConversation: IConversation = null
 
-  val lastMessageInfo = for {
-    z <- zms
-    self <- selfId
-    convId <- conversationId
-    lastMessage <- z.messagesStorage.lastMessage(convId)
-    user <- lastMessage.fold2[Signal[Option[UserData]]](Signal.const(Option.empty[UserData]), message => z.usersStorage.optSignal(message.userId))
-  } yield (lastMessage, user, lastMessage.exists(_.userId == self))
-
   val conversation = for {
     z <- zms
-    convId <- conversationId
-    conv <- Signal.future(z.convsStorage.get(convId))
+    Some(convId) <- conversationId
+    conv <- z.convsStorage.signal(convId)
   } yield conv
 
-  val conversationName = conversation.map(_.fold("")(_.displayName))
+  val conversationName = for {
+    z <- zms
+    conv <- conversation
+    memberCount <- z.membersStorage.activeMembers(conv.id).map(_.size)
+  } yield {
+    if (conv.convType == ConversationType.Incoming) {
+      getInboxName(memberCount)
+    } else {
+      conv.displayName
+    }
+  }
 
-  val conversationInfo = for {
+  val statusPillInfo = for {
+    z <- zms
+    conv <- conversation
+    unreadCount <- z.messagesStorage.unreadCount(conv.id)
+  } yield (
+    unreadCount,
+    conv.muted,
+    conv.unjoinedCall,
+    conv.missedCallMessage.nonEmpty,
+    conv.incomingKnockMessage.nonEmpty,
+    conv.convType == ConversationType.WaitForConnection || conv.convType == ConversationType.Incoming)
+
+  val subtitleText = for {
     z <- zms
     self <- selfId
-    Some(conv) <- conversation
-    memberIds <- z.membersStorage.activeMembers(conv.id)
-    memberSeq <- Signal.future(z.usersStorage.getAll(memberIds))
-  } yield (conv.convType, memberSeq.flatten.filter(_.id != self))
+    conv <- conversation
+    lastReadInstant <- z.messagesStorage.lastRead(conv.id)
+    unread <- z.messagesStorage.unreadCount(conv.id)
+    lastMessages <- Signal.future(z.messagesStorage.findMessagesFrom(conv.id, lastReadInstant.plusMillis(1)).map(_.filter(_.userId != self)))
+    lastMessageUser <- lastMessages.lastOption.fold2(Signal.const(Option.empty[UserData]), message => z.usersStorage.optSignal(message.userId))
+  } yield {
+    if (conv.muted) {
+      subtitleStringForMessages(lastMessages)
+    } else {
+      val sender = if (conv.convType == ConversationType.Group) lastMessageUser.fold2("", u => s"[[${u.getDisplayName}:]] ") else ""
+      val content = lastMessages.lastOption.fold2("", subtitleStringForMessage)
+      if (content.isEmpty){
+        ""
+      } else {
+        sender + content
+      }
+    }
+  }
 
-  val unreadCount = for {
-    z <- zms
-    convId <- conversationId
-    unreadCount <- z.messagesStorage.unreadCount(convId)
-  } yield unreadCount
-
-  val isCurrentConversation = for {
-    z <- zms
-    convId <- conversationId
-    currentConv <- z.convsStats.selectedConversationId
-  } yield currentConv.contains(convId)
-
-  lastMessageInfo.on(Threading.Ui) {
-    case (Some(message), Some(user), false) if message.contentString.nonEmpty =>
+  subtitleText.on(Threading.Ui) {
+    case text if text.nonEmpty =>
       showSubtitle()
-      subtitle.setText(s"[[${user.getDisplayName}:]] ${message.contentString}")
+      subtitle.setText(text)
       TextViewUtils.boldText(subtitle)
-    case (Some(message), _, _) if message.contentString.nonEmpty =>
-      showSubtitle()
-      subtitle.setText(s"${message.contentString}")
     case _ =>
       hideSubtitle()
       subtitle.setText("")
   }
 
-  conversationInfo.on(Threading.Background) { convInfo  =>
-    avatar.setMembers(convInfo._2.flatMap(_.picture), convInfo._1)
-  }
-
-  unreadCount.on(Threading.Ui) { count =>
-    statusPill.setText(count.toString)
-    if (count > 0) {
-      statusPill.setVisibility(View.VISIBLE)
-    } else {
-      statusPill.setVisibility(View.INVISIBLE)
+  def subtitleStringForMessage(messageData: MessageData): String = {
+    messageData.msgType match {
+      case Message.Type.TEXT | Message.Type.TEXT_EMOJI_ONLY =>
+        messageData.contentString
+      case Message.Type.ASSET =>
+        getString(R.string.conversation_list__shared__image)
+      case Message.Type.ANY_ASSET =>
+        getString(R.string.conversation_list__shared__file)
+      case Message.Type.VIDEO_ASSET =>
+        getString(R.string.conversation_list__shared__video)
+      case Message.Type.AUDIO_ASSET =>
+        getString(R.string.conversation_list__shared__audio)
+      case Message.Type.LOCATION =>
+        getString(R.string.conversation_list__shared__location)
+      case Message.Type.MISSED_CALL =>
+        getString(R.string.conversation_list__missed_call)
+      case Message.Type.KNOCK =>
+        getString(R.string.conversation_list__pinged)
+      case _ =>
+        ""
     }
   }
 
-  conversationName.on(Threading.Ui) { title.setText }
+  def subtitleStringForMessages(messages: Iterable[MessageData]): String = {
+    val normalMessageCount = messages.count(m => !m.isSystemMessage && m.msgType != Message.Type.KNOCK)
+    val missedCallCount = messages.count(_.msgType == Message.Type.MISSED_CALL)
+    val pingCount = messages.count(_.msgType == Message.Type.KNOCK)
+    val likesCount = 0//TODO: how to get this?
+    val unsentCount = messages.count(_.state == Message.Status.FAILED)
 
-  isCurrentConversation.zip(accentColor).on(Threading.Ui){
-    case (true, color) =>
-      separator.setBackgroundColor(ColorUtils.injectAlpha(0.5f, color.getColor()))
-    case (false, _) =>
-      separator.setBackgroundColor(getColor(R.color.white_8))
+    val unsentString =
+      if (unsentCount > 0)
+        if (normalMessageCount + missedCallCount + pingCount + likesCount == 0)
+          getString(R.string.conversation_list__unsent_message_long)
+        else
+          getString(R.string.conversation_list__unsent_message_short)
+      else
+        ""
+    val strings = Seq(
+      if (normalMessageCount > 0)
+        getResources.getQuantityString(R.plurals.conversation_list__new_message_count, normalMessageCount, normalMessageCount.toString) else "",
+      if (missedCallCount > 0)
+        getResources.getQuantityString(R.plurals.conversation_list__missed_calls_count, missedCallCount, missedCallCount.toString) else "",
+      if (pingCount > 0)
+        getResources.getQuantityString(R.plurals.conversation_list__pings_count, pingCount, pingCount.toString) else "",
+      if (likesCount > 0)
+        getResources.getQuantityString(R.plurals.conversation_list__new_likes_count, likesCount, likesCount.toString) else ""
+    ).filter(_.nonEmpty)
+    Seq(unsentString, strings.mkString(", ")).filter(_.nonEmpty).mkString(" | ")
   }
+
+  val avatarInfo = for {
+    z <- zms
+    self <- selfId
+    conv <- conversation
+    memberIds <- z.membersStorage.activeMembers(conv.id)
+    memberSeq <- Signal.future(z.usersStorage.getAll(memberIds))
+  } yield (conv.convType, memberSeq.flatten.filter(_.id != self))
+
+  avatarInfo.on(Threading.Background) { convInfo  =>
+    avatar.setMembers(convInfo._2.flatMap(_.picture), convInfo._1)
+  }
+
+  //TODO: this is starting to look bad...
+  statusPillInfo.on(Threading.Ui) {
+    case (_, _, true, _, _, _) =>
+      statusPill.setCalling()
+    case (_, _, _, _, _, true) =>
+      statusPill.setWaitingForConnection()
+    case (_, true, _, _, _, _) =>
+      statusPill.setMuted()
+    case (_, false, _, true, _, _) =>
+      statusPill.setMissedCall()
+    case (_, false, _, _, true, _) =>
+      statusPill.setPing()
+    case (0, false, _, _, _, _) =>
+      statusPill.setHidden()
+    case (count, false, _, _, _, _) =>
+      statusPill.setCount(count)
+    case _ =>
+      statusPill.setHidden()
+  }
+
+  conversationName.on(Threading.Ui) { title.setText }
 
   private var conversationCallback: ConversationCallback = null
   private var maxAlpha: Float = .0f
@@ -157,20 +236,27 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
 
   def setConversation(iConversation: IConversation): Unit = {
     self.iConversation = iConversation
-    if (!conversationId.currentValue.contains(ConvId(iConversation.getId))) {
+    if (!conversationId.currentValue.contains(Some(ConvId(iConversation.getId)))) {
       title.setText(iConversation.getName)
+      iConversation match {
+        case conv: InboxLinkConversation =>
+          title.setText(getInboxName(conv.getSize))
+          statusPill.setWaitingForConnection()
+          conversationId.publish(None, Threading.Background)
+        case _ =>
+          title.setText(iConversation.getName)
+          statusPill.setHidden()
+          conversationId.publish(Some(ConvId(iConversation.getId)), Threading.Background)
+      }
       subtitle.setText("")
-      statusPill.setVisibility(View.INVISIBLE)
       avatar.setConversationType(iConversation.getType)
+      closeImmediate()
     }
-    conversationId.publish(ConvId(iConversation.getId), Threading.Background)
   }
 
-  def setConversationCallback(conversationCallback: ConversationCallback) {
-    this.conversationCallback = conversationCallback
-  }
+  private def getInboxName(convSize: Int): String = getResources.getQuantityString(R.plurals.connect_inbox__link__name, convSize)
 
-  //TODO: Copied from java version...
+  menuIndicatorView.setClickable(false)
   menuIndicatorView.setMaxOffset(menuOpenOffset)
   menuIndicatorView.setOnClickListener(new View.OnClickListener() {
     def onClick(v: View) {
@@ -183,19 +269,26 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
   def needsRedraw: Boolean = false
   def redraw(): Unit = {}
 
+  def setConversationCallback(conversationCallback: ConversationCallback) {
+    this.conversationCallback = conversationCallback
+  }
+
   override def open(): Unit =  {
     if (openState) return
     animateMenu(menuOpenOffset)
+    menuIndicatorView.setClickable(true)
     openState = true
   }
 
   def close() {
     if (openState) openState = false
+    menuIndicatorView.setClickable(false)
     animateMenu(0)
   }
 
   private def closeImmediate() {
     if (openState) openState = false
+    menuIndicatorView.setClickable(false)
     setMoveTo(0)
   }
 
@@ -247,7 +340,6 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
 
   override def setMoveTo(value: Float) = {
     moveTo = value
-    container.setPadding(getPaddingLeft, getPaddingTop, moveTo.toInt, getPaddingBottom)
     container.setTranslationX(moveTo)
     menuIndicatorView.setClipX(moveTo.toInt)
   }
