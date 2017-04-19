@@ -36,7 +36,7 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.utils.Offset
 import com.waz.zclient.views.ImageAssetDrawable.{RequestBuilder, ScaleType, State}
 import com.waz.zclient.views.ImageController._
-import com.waz.zclient.{Injectable, Injector}
+import com.waz.zclient.{Injectable, Injector, WireContext}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.wrappers.URI
 
@@ -238,20 +238,21 @@ class RoundedImageAssetDrawable (
 class BlurredImageAssetDrawable(
                                  src: Signal[ImageSource],
                                  scaleType: ScaleType = ScaleType.FitXY,
-                                 request: RequestBuilder = RequestBuilder.Regular,
+                                 request: RequestBuilder = RequestBuilder.Single,
                                  background: Option[Drawable] = None,
                                  animate: Boolean = false,
                                  blurRadius: Float = 1,
                                  context: Context
                                )(implicit inj: Injector, eventContext: EventContext) extends ImageAssetDrawable(src, scaleType, request, background, animate) {
 
+  private val renderScript = inject[RenderScript]
+  private val blur = ScriptIntrinsicBlur.create(renderScript, Element.U8_4(renderScript))
+
   override protected def drawBitmap(canvas: Canvas, bm: Bitmap, matrix: Matrix, bitmapPaint: Paint): Unit = {
-    val renderScript = RenderScript.create(context)
     val copiedBm = bm.copy(bm.getConfig, true)
     val blurInput = Allocation.createFromBitmap(renderScript, bm)
     val blurOutput = Allocation.createFromBitmap(renderScript, bm)
 
-    val blur = ScriptIntrinsicBlur.create(renderScript, Element.U8_4(renderScript))
     blur.setInput(blurInput)
     blur.setRadius(blurRadius)
     blur.forEach(blurOutput)
@@ -260,12 +261,10 @@ class BlurredImageAssetDrawable(
 
     blurInput.destroy()
     blurOutput.destroy()
-    renderScript.destroy()
 
     canvas.drawBitmap(copiedBm, matrix, bitmapPaint)
     copiedBm.recycle()
   }
-
 }
 
 class ImageController(implicit inj: Injector) extends Injectable {

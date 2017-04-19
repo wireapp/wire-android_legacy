@@ -18,12 +18,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<com.waz.zclient.views.BackgroundFrameLayout
+<FrameLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/bl__background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
     >
+
+    <com.waz.zclient.views.BackgroundFrameLayout
+        android:id="@+id/bl__background"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
 
     <FrameLayout
         android:id="@+id/fl_fragment_main_root_container"
@@ -51,4 +56,4 @@
         android:layout_height="match_parent"
         />
 
-</com.waz.zclient.views.BackgroundFrameLayout>
+</FrameLayout>

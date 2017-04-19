@@ -21,7 +21,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.{Color, PorterDuff, PorterDuffColorFilter, Rect}
 import android.util.AttributeSet
-import android.widget.FrameLayout
+import android.widget.ImageView
 import com.waz.api.ImageAsset
 import com.waz.model.AssetId
 import com.waz.utils.events.Signal
@@ -32,35 +32,22 @@ import com.waz.zclient.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.views.ImageController.{ImageSource, WireImage}
 import com.waz.zclient.{R, ViewHelper}
 
-class BackgroundFrameLayout(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends FrameLayout(context, attrs, defStyleAttr) with ViewHelper with BackgroundObserver {
+class BackgroundFrameLayout(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends ImageView(context, attrs, defStyleAttr) with ViewHelper with BackgroundObserver {
+  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
+  def this(context: Context) = this(context, null)
 
   private var scaledToMax: Boolean = false
-
   private var width: Int = 0
   private var height: Int = 0
 
   private val background = Signal[ImageSource]()
   private val drawable: BlurredImageAssetDrawable = new BlurredImageAssetDrawable(background, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single, blurRadius = 24, context = getContext)
-  //private val drawable = new ImageAssetDrawable(background, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single)
-
   drawable.setColorFilter(new PorterDuffColorFilter(ColorUtils.injectAlpha(0.56f, Color.BLACK), PorterDuff.Mode.DARKEN))
-  setBackground(drawable)
+  setImageDrawable(drawable)
 
   val isTablet = LayoutSpec.isTablet(context)
-  /*if (isTablet) {
-    resizeIfNeeded(getResources.getConfiguration)
-  } else {
-    setDrawable(ViewUtils.getOrientationDependentDisplayBounds(getContext))
-  }*/
 
 
-  def this(context: Context, attrs: AttributeSet) {
-    this(context, attrs, 0)
-  }
-
-  def this(context: Context) {
-    this(context, null)
-  }
   private def setDrawable(bounds: Rect) {
 
   }
@@ -93,6 +80,6 @@ class BackgroundFrameLayout(val context: Context, val attrs: AttributeSet, val d
   }
 
   def isExpanded: Boolean = {
-    return scaledToMax
+    scaledToMax
   }
 }

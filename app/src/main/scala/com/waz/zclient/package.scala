@@ -21,6 +21,7 @@ import android.app.{Activity, ActivityManager, Application, NotificationManager}
 import android.content.{ClipboardManager, ContentResolver, Context, ContextWrapper}
 import android.media.AudioManager
 import android.os.{PowerManager, Vibrator}
+import android.renderscript.RenderScript
 import android.support.v4.app.{FragmentActivity, FragmentManager}
 import com.waz.utils.events.EventContext
 
@@ -41,6 +42,7 @@ package object zclient {
     bind [AudioManager]         to ctx.getSystemService(Context.AUDIO_SERVICE).asInstanceOf[AudioManager]
     bind [NotificationManager]  to ctx.getSystemService(Context.NOTIFICATION_SERVICE).asInstanceOf[NotificationManager]
     bind [ClipboardManager]     to ctx.getSystemService(Context.CLIPBOARD_SERVICE).asInstanceOf[ClipboardManager]
+    bind [RenderScript]         to RenderScript.create(ctx)
   }
 
   def ContextModule(ctx: WireContext) = new Module {

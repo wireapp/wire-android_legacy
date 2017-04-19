@@ -52,10 +52,10 @@ class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int)
   private val imageSources = Seq.fill(4)(Signal[ImageSource]())
 
   Seq(avatarStartTop, avatarEndTop, avatarStartBottom, avatarEndBottom).zip(imageSources).foreach{ images =>
-    images._1.setImageDrawable(new ImageAssetDrawable(images._2, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single, background = Some(new ColorDrawable(getColor(R.color.black_8))), animate = false))
+    images._1.setImageDrawable(new ImageAssetDrawable(images._2, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single, background = Some(new ColorDrawable(getColor(R.color.black_8)))))
   }
 
-  avatarSingle.setImageDrawable(new ImageAssetDrawable(imageSources.head, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Round, animate = false))
+  avatarSingle.setImageDrawable(new ImageAssetDrawable(imageSources.head, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Round))
 
   def setMembers(membersPictures: Seq[AssetId], conversationType: ConversationType): Unit = {
     conversationType match {

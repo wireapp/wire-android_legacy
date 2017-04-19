@@ -17,6 +17,7 @@
  */
 package com.waz.zclient
 
+import android.renderscript.RenderScript
 import android.support.multidex.MultiDexApplication
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
@@ -173,6 +174,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     storeFactory.tearDown()
     storeFactory = null
     controllerFactory = null
+    RenderScript.releaseAllContexts()
     super.onTerminate()
   }
 }
