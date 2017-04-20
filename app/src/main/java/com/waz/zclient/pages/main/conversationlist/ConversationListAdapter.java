@@ -351,10 +351,11 @@ public class ConversationListAdapter extends BaseAdapter {
         conversationListRowItem.setAlpha(1f);
         conversationListRowItem.setMaxAlpha(maxAlpha);
         conversationListRowItem.setId(position);
-        conversationListRowItem.setSwipeable(mode == ConversationListFragment.Mode.NORMAL);
 
         // integrate model
         final IConversation conversation = getItem(position);
+
+        conversationListRowItem.setSwipeable(mode == ConversationListFragment.Mode.NORMAL && !(conversation instanceof InboxLinkConversation));
 
         if (isArchived(position)) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {

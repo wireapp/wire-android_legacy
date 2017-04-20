@@ -194,7 +194,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
   } yield (conv.convType, memberSeq.flatten.filter(_.id != self))
 
   avatarInfo.on(Threading.Background) { convInfo  =>
-    avatar.setMembers(convInfo._2.flatMap(_.picture), convInfo._1)
+    avatar.setMembers(convInfo._2.map(_.id), convInfo._1)
   }
 
   //TODO: this is starting to look bad...

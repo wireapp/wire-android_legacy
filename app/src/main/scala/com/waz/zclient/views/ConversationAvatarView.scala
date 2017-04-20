@@ -23,9 +23,10 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout.LayoutParams
 import android.widget.{FrameLayout, ImageView}
-import com.waz.model.AssetId
+import com.waz.model.{AssetId, UserId}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.utils.events.{Signal, SourceSignal}
+import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
@@ -41,31 +42,30 @@ class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int)
 
   private val groupBackgroundDrawable = getDrawable(R.drawable.conversation_group_avatar_background)
 
-  private val avatarStartTop = ViewUtils.getView(this, R.id.conversation_avatar_start_top).asInstanceOf[ImageView]
-  private val avatarEndTop = ViewUtils.getView(this, R.id.conversation_avatar_end_top).asInstanceOf[ImageView]
-  private val avatarStartBottom = ViewUtils.getView(this, R.id.conversation_avatar_start_bottom).asInstanceOf[ImageView]
-  private val avatarEndBottom = ViewUtils.getView(this, R.id.conversation_avatar_end_bottom).asInstanceOf[ImageView]
+  private val avatarStartTop = ViewUtils.getView(this, R.id.conversation_avatar_start_top).asInstanceOf[ChatheadView]
+  private val avatarEndTop = ViewUtils.getView(this, R.id.conversation_avatar_end_top).asInstanceOf[ChatheadView]
+  private val avatarStartBottom = ViewUtils.getView(this, R.id.conversation_avatar_start_bottom).asInstanceOf[ChatheadView]
+  private val avatarEndBottom = ViewUtils.getView(this, R.id.conversation_avatar_end_bottom).asInstanceOf[ChatheadView]
 
-  private val avatarSingle = ViewUtils.getView(this, R.id.avatar_single).asInstanceOf[ImageView]
+  private val avatarSingle = ViewUtils.getView(this, R.id.avatar_single).asInstanceOf[ChatheadView]
   private val avatarGroup = ViewUtils.getView(this, R.id.avatar_group).asInstanceOf[View]
 
   private val imageSources = Seq.fill(4)(Signal[ImageSource]())
 
-  Seq(avatarStartTop, avatarEndTop, avatarStartBottom, avatarEndBottom).zip(imageSources).foreach{ images =>
-    images._1.setImageDrawable(new ImageAssetDrawable(images._2, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single, background = Some(new ColorDrawable(getColor(R.color.black_8)))))
-  }
+  private val chatheads = Seq(avatarStartTop, avatarEndTop, avatarStartBottom, avatarEndBottom)
 
-  avatarSingle.setImageDrawable(new ImageAssetDrawable(imageSources.head, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Round))
-
-  def setMembers(membersPictures: Seq[AssetId], conversationType: ConversationType): Unit = {
+  def setMembers(members: Seq[UserId], conversationType: ConversationType): Unit = {
     conversationType match {
       case ConversationType.Group =>
-        imageSources.zipAll(membersPictures.take(4).map(Some(_)), Signal.empty[ImageSource], None).foreach {
-          case (imageSource: SourceSignal[ImageSource], Some(assetId)) => imageSource ! WireImage(assetId)
-          case (imageSource: SourceSignal[ImageSource], None) => imageSource ! NoImage()
+        chatheads.map(Some(_)).zipAll(members.take(4).map(Some(_)), None, None).foreach{
+          case (Some(view), Some(uid)) =>
+            view.setUserId(uid)
+          case (Some(view), None) =>
+            view.clearUser()
+          case _ =>
         }
-      case ConversationType.OneToOne if membersPictures.nonEmpty =>
-        membersPictures.headOption.foreach(imageSources.head ! WireImage(_))
+      case ConversationType.OneToOne if members.nonEmpty =>
+        members.headOption.fold(avatarSingle.clearUser())(avatarSingle.setUserId)
       case _ =>
         imageSources.foreach(_ ! NoImage())
     }

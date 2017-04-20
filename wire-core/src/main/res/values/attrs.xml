@@ -146,6 +146,8 @@
         <attr name="swap_background_and_initial_colors" format="boolean"/>
         <attr name="allow_icon" format="boolean"/>
         <attr name="show_border" format="boolean"/>
+        <attr name="default_background" format="color"/>
+        <attr name="is_round" format="boolean"/>
     </declare-styleable>
 
     <declare-styleable name="ChatheadWithTextFooter">
