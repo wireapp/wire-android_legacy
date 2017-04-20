@@ -35,7 +35,7 @@
 package com.waz.zclient.notifications.controllers
 
 import android.app.{Notification, NotificationManager, PendingIntent}
-import android.content.Intent
+import com.waz.utils.wrappers.{AndroidIntentBuilder, ContextBuilder, Intent}
 import android.support.v4.app.NotificationCompat
 import com.waz.ZLog._
 import com.waz.api.VoiceChannelState
@@ -50,6 +50,8 @@ import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache.BitmapRequest.Regular
 import com.waz.utils.LoggedTry
 import com.waz.utils.events.{EventContext, Signal}
+//import com.waz.utils.wrappers.AndroidIntentBuilder._
+//import com.waz.utils.wrappers.ContextBuilder._
 import com.waz.zclient.calling.controllers.GlobalCallingController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.IntentUtils.getNotificationAppLaunchIntent
@@ -161,14 +163,14 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
 
   }
 
-  private def silenceIntent(convId: ConvId) = pendingIntent(SilenceRequestCode, CallService.silenceIntent(cxt, convId))
+  private def silenceIntent(convId: ConvId) = pendingIntent(SilenceRequestCode, CallService.silenceIntent(ContextBuilder.wrap(cxt), convId))
 
-  private def leaveIntent(convId: ConvId) = pendingIntent(LeaveRequestCode, CallService.leaveIntent(cxt, convId))
+  private def leaveIntent(convId: ConvId) = pendingIntent(LeaveRequestCode, CallService.leaveIntent(ContextBuilder.wrap(cxt), convId))
 
-  private def joinIntent(convId: ConvId) = pendingIntent(JoinRequestCode, CallService.joinIntent(cxt, convId))
-  private def joinGroupIntent(convId: ConvId) = pendingIntent(JoinRequestCode, CallService.joinGroupIntent(cxt, convId))
+  private def joinIntent(convId: ConvId) = pendingIntent(JoinRequestCode, CallService.joinIntent(ContextBuilder.wrap(cxt), convId))
+  private def joinGroupIntent(convId: ConvId) = pendingIntent(JoinRequestCode, CallService.joinGroupIntent(ContextBuilder.wrap(cxt), convId))
 
-  private def pendingIntent(reqCode: Int, intent: Intent) = PendingIntent.getService(cxt, reqCode, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+  private def pendingIntent(reqCode: Int, intent: Intent) = PendingIntent.getService(cxt, reqCode, AndroidIntentBuilder.unwrap(intent), PendingIntent.FLAG_UPDATE_CURRENT)
 }
 
 object CallingNotificationsController {
