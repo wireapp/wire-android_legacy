@@ -321,7 +321,12 @@ public class IntentUtils {
     }
 
     private static List<Uri> getParcelableArrayListExtra(Intent intent) {
-        return intent.getParcelableArrayListExtra(EXTRA_LAUNCH_CONVERSATION_FILES);
+        List<Uri> files = intent.getParcelableArrayListExtra(EXTRA_LAUNCH_CONVERSATION_FILES);
+        if (files == null) {
+            return Collections.emptyList();
+        } else {
+            return files;
+        }
     }
 
     public static List<URI> getLaunchConversationSharedFiles(Intent intent) {
