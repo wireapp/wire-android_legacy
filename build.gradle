@@ -128,7 +128,7 @@ ext {
             supportpreferences   : 'net.xpece.android:support-preference:0.8.1',
 
             // For spotify
-            spotifyAuth          : 'com.wire:spotify-auth:1.0.0-beta13@aar',
+            spotifyAuth          : 'com.spotify.android:auth:1.0.0-alpha',
 
             // Internal
             audioNotifications   : "com.wire:audio-notifications:$audioVersion",

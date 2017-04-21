@@ -79,7 +79,6 @@ public class SpotifyController implements ISpotifyController {
 
     @Override
     public void logout() {
-        AuthenticationClient.clearCookies(context);
         spotify.disconnect();
         reset();
         notifyLogout();
