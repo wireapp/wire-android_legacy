@@ -24,6 +24,7 @@ import android.view.{Gravity, View, ViewGroup}
 import android.widget.LinearLayout.LayoutParams
 import android.widget.{FrameLayout, LinearLayout}
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.verbose
 import com.waz.api.{IConversation, Message}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
@@ -92,11 +93,18 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     }
   }
 
+  val userTyping = for {
+    z <- zms
+    Some(convId) <- conversationId
+    typing <- Signal.wrap(z.typing.onTypingChanged.filter(_._1 == convId).map(_._2.headOption)).orElse(Signal.const(None))
+    typingUser <- Signal.future(typing.fold(Future.successful(Option.empty[UserData]))(tu => z.usersStorage.get(tu.id)))
+  } yield typingUser
+
   val badgeInfo = for {
     z <- zms
     conv <- conversation
     unreadCount <- z.messagesStorage.unreadCount(conv.id)
-    typing <- Signal.wrap(z.typing.onTypingChanged.filter(_._1 == conv.id).map(_._2.nonEmpty)).orElse(Signal.const(false))
+    typing <- userTyping.map(_.nonEmpty)
   } yield {
     if (conv.unjoinedCall) {
       ConversationBadge.OngoingCall
@@ -128,29 +136,19 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     lastMessages <- Signal.future(z.messagesStorage.findMessagesFrom(conv.id, lastReadInstant.plusMillis(1)).map(_.filter(_.userId != self)))
     lastMessageUser <- lastMessages.lastOption.fold2(Signal.const(Option.empty[UserData]), message => z.usersStorage.optSignal(message.userId))
     lastMessageMembers <- lastMessages.lastOption.fold2(Signal.const(Vector[UserData]()), message => z.usersStorage.listSignal(message.members))
-    typing <- Signal.wrap(z.typing.onTypingChanged.filter(_._1 == conv.id).map(_._2.headOption)).orElse(Signal.const(None))
-    typingUser <- Signal.future(typing.fold(Future.successful(Option.empty[UserData]))(tu => z.usersStorage.get(tu.id)))
+    typingUser <- userTyping
   } yield {
-    if (conv.muted) {
+    if (conv.muted || conv.incomingKnockMessage.nonEmpty || conv.missedCallMessage.nonEmpty) {
       subtitleStringForMessages(lastMessages)
     } else {
-      val sender = if (conv.convType == ConversationType.Group) {
-        typingUser.fold{
-          lastMessageUser.fold2("", u => s"[[${u.getDisplayName}:]] ")
-        } { u =>
-          s"[[${u.displayName}:]] "
+      typingUser.fold {
+        lastMessages.headOption.fold {
+          ""
+        } { msg =>
+          subtitleStringForMessage(msg, lastMessageUser, lastMessageMembers, conv.convType == ConversationType.Group)
         }
-      } else ""
-      val content = typing.fold {
-        lastMessages.lastOption.fold2("", msg => subtitleStringForMessage(msg, lastMessageUser.get, lastMessageMembers))
-      } {
-        _ => getString(R.string.conversation_list__typing)
-      }
-
-      if (content.isEmpty){
-        ""
-      } else {
-        sender + content
+      } { usr =>
+        formatSubtitle(getString(R.string.conversation_list__typing), usr.getDisplayName, conv.convType == ConversationType.Group)
       }
     }
   }
@@ -163,41 +161,50 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     memberSeq <- Signal.future(z.usersStorage.getAll(memberIds))
   } yield (conv.convType, memberSeq.flatten.filter(_.id != self))
 
-  def subtitleStringForMessage(messageData: MessageData, user: UserData, members: Vector[UserData]): String = {
+  def subtitleStringForMessage(messageData: MessageData, user: Option[UserData], members: Vector[UserData], isGroup: Boolean): String = {
+    lazy val senderName = user.fold("")(_.getDisplayName)
+    lazy val memberName = members.headOption.fold2(getString(R.string.conversation_list__someone), _.getDisplayName)
+
     if (messageData.isEphemeral) {
-      return getString(R.string.conversation_list__ephemeral)
+      return formatSubtitle(getString(R.string.conversation_list__ephemeral), senderName, isGroup)
     }
     messageData.msgType match {
       case Message.Type.TEXT | Message.Type.TEXT_EMOJI_ONLY | Message.Type.RICH_MEDIA =>
-        messageData.contentString
+        formatSubtitle(messageData.contentString, senderName, isGroup)
       case Message.Type.ASSET =>
-        getString(R.string.conversation_list__shared__image)
+        formatSubtitle(getString(R.string.conversation_list__shared__image), senderName, isGroup)
       case Message.Type.ANY_ASSET =>
-        getString(R.string.conversation_list__shared__file)
+        formatSubtitle(getString(R.string.conversation_list__shared__file), senderName, isGroup)
       case Message.Type.VIDEO_ASSET =>
-        getString(R.string.conversation_list__shared__video)
+        formatSubtitle(getString(R.string.conversation_list__shared__video), senderName, isGroup)
       case Message.Type.AUDIO_ASSET =>
-        getString(R.string.conversation_list__shared__audio)
+        formatSubtitle(getString(R.string.conversation_list__shared__audio), senderName, isGroup)
       case Message.Type.LOCATION =>
-        getString(R.string.conversation_list__shared__location)
+        formatSubtitle(getString(R.string.conversation_list__shared__location), senderName, isGroup)
       case Message.Type.MISSED_CALL =>
-        getString(R.string.conversation_list__missed_call)
+        formatSubtitle(getString(R.string.conversation_list__missed_call), senderName, isGroup)
       case Message.Type.KNOCK =>
-        getString(R.string.conversation_list__pinged)
+        formatSubtitle(getString(R.string.conversation_list__pinged), senderName, isGroup)
       case Message.Type.MEMBER_JOIN =>
-        val memberName = members.headOption.fold2("Someone", _.displayName)
-        s"[[$memberName]] has joined"
-      case Message.Type. MEMBER_LEAVE if members.contains(user) =>
-        val memberName = members.headOption.fold2("Someone", _.displayName)
-        s"[[$memberName]] has left"
+        getString(R.string.conversation_list__added, memberName)
+      case Message.Type. MEMBER_LEAVE if user.forall(u => members.contains(u)) =>
+        getString(R.string.conversation_list__left, memberName)
       case Message.Type. MEMBER_LEAVE =>
-        val memberName = members.headOption.fold2("Someone", _.displayName)
-        s"[[$memberName]] was removed"
+        getString(R.string.conversation_list__removed, memberName)
       case Message.Type.CONNECT_ACCEPTED =>
-        val handle = members.headOption.flatMap(_.handle).map(_.string).getOrElse("")
-        StringUtils.formatHandle(handle)
+        members.headOption.flatMap(_.handle).map(_.string).getOrElse("")
       case _ =>
         ""
+    }
+  }
+
+  def formatSubtitle(content: String, user: String, group: Boolean): String = {
+    val groupSubtitle =  "[[%s]]: %s"
+    val singleSubtitle =  "%s"
+    if (group) {
+      String.format(groupSubtitle, user, content)
+    } else {
+      String.format(singleSubtitle, content)
     }
   }
 

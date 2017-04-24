@@ -1159,4 +1159,8 @@
     <string name="conversation_list__pinged">Pinged</string>
     <string name="conversation_list__ephemeral">Timed message</string>
     <string name="conversation_list__typing">Typing a message…</string>
+    <string name="conversation_list__someone">Someone</string>
+    <string name="conversation_list__added">[[%1$s]] has joined</string>
+    <string name="conversation_list__left">[[%1$s]] has left</string>
+    <string name="conversation_list__removed">[[%1$s]] was removed</string>
 </resources>
