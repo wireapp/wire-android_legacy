@@ -58,7 +58,7 @@
                 android:layout_marginEnd="16dp"
                 android:layout_marginStart="0dp"
                 android:gravity="center_vertical"
-                android:layout_toStartOf="@+id/conversation_status_pill"
+                android:layout_toStartOf="@+id/conversation_badge"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="@color/white"
@@ -78,10 +78,10 @@
                 android:layout_alignParentStart="true"
                 android:layout_alignEnd="@+id/conversation_title"/>
 
-            <com.waz.zclient.views.ConversationStatusPill
-                android:id="@+id/conversation_status_pill"
+            <com.waz.zclient.views.ConversationBadge
+                android:id="@+id/conversation_badge"
                 android:layout_width="wrap_content"
-                android:layout_height="@dimen/conversation_list__status_pill__height"
+                android:layout_height="@dimen/conversation_list__badge__height"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:layout_gravity="center"

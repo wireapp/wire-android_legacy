@@ -87,6 +87,11 @@ class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int)
         setBackground(null)
     }
   }
+
+  def clearImages(): Unit ={
+    chatheads.foreach(_.clearUser())
+    avatarSingle.clearUser()
+  }
 }
 
 object ConversationAvatarView {

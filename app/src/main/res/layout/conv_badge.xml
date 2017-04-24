@@ -22,7 +22,7 @@
              xmlns:app="http://schemas.android.com/apk/res-auto"
              android:layout_width="wrap_content"
              android:layout_height="20dp"
-             android:background="@drawable/conversation_status_pill"
+             android:background="@drawable/conversation_badge"
              >
 
     <com.waz.zclient.ui.text.TypefaceTextView

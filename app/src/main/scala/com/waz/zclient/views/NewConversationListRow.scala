@@ -41,8 +41,10 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.ui.views.properties.MoveToAnimateable
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.ViewUtils
+import com.waz.zclient.utils.{StringUtils, ViewUtils}
 import com.waz.zclient.{R, ViewHelper}
+
+import scala.concurrent.Future
 
 class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style)
     with ViewHelper
@@ -66,7 +68,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
   val title = ViewUtils.getView(this, R.id.conversation_title).asInstanceOf[TypefaceTextView]
   val subtitle = ViewUtils.getView(this, R.id.conversation_subtitle).asInstanceOf[TypefaceTextView]
   val avatar = ViewUtils.getView(this, R.id.conversation_icon).asInstanceOf[ConversationAvatarView]
-  val statusPill = ViewUtils.getView(this, R.id.conversation_status_pill).asInstanceOf[ConversationStatusPill]
+  val badge = ViewUtils.getView(this, R.id.conversation_badge).asInstanceOf[ConversationBadge]
   val separator = ViewUtils.getView(this, R.id.conversation_separator).asInstanceOf[View]
   val menuIndicatorView = ViewUtils.getView(this, R.id.conversation_menu_indicator).asInstanceOf[MenuIndicatorView]
 
@@ -90,17 +92,32 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     }
   }
 
-  val statusPillInfo = for {
+  val badgeInfo = for {
     z <- zms
     conv <- conversation
     unreadCount <- z.messagesStorage.unreadCount(conv.id)
-  } yield (
-    unreadCount,
-    conv.muted,
-    conv.unjoinedCall,
-    conv.missedCallMessage.nonEmpty,
-    conv.incomingKnockMessage.nonEmpty,
-    conv.convType == ConversationType.WaitForConnection || conv.convType == ConversationType.Incoming)
+    typing <- Signal.wrap(z.typing.onTypingChanged.filter(_._1 == conv.id).map(_._2.nonEmpty)).orElse(Signal.const(false))
+  } yield {
+    if (conv.unjoinedCall) {
+      ConversationBadge.OngoingCall
+    } else if (conv.convType == ConversationType.WaitForConnection || conv.convType == ConversationType.Incoming) {
+      ConversationBadge.WaitingConnection
+    } else if (conv.muted) {
+      ConversationBadge.Muted
+    } else if (typing) {
+      ConversationBadge.Typing
+    } else if (conv.missedCallMessage.nonEmpty) {
+      ConversationBadge.MissedCall
+    } else if (conv.incomingKnockMessage.nonEmpty) {
+      ConversationBadge.Ping
+    } else if (unreadCount == 0) {
+      ConversationBadge.Empty
+    } else if (unreadCount > 0) {
+      ConversationBadge.Count(unreadCount)
+    } else {
+      ConversationBadge.Empty
+    }
+  }
 
   val subtitleText = for {
     z <- zms
@@ -110,12 +127,26 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     unread <- z.messagesStorage.unreadCount(conv.id)
     lastMessages <- Signal.future(z.messagesStorage.findMessagesFrom(conv.id, lastReadInstant.plusMillis(1)).map(_.filter(_.userId != self)))
     lastMessageUser <- lastMessages.lastOption.fold2(Signal.const(Option.empty[UserData]), message => z.usersStorage.optSignal(message.userId))
+    lastMessageMembers <- lastMessages.lastOption.fold2(Signal.const(Vector[UserData]()), message => z.usersStorage.listSignal(message.members))
+    typing <- Signal.wrap(z.typing.onTypingChanged.filter(_._1 == conv.id).map(_._2.headOption)).orElse(Signal.const(None))
+    typingUser <- Signal.future(typing.fold(Future.successful(Option.empty[UserData]))(tu => z.usersStorage.get(tu.id)))
   } yield {
     if (conv.muted) {
       subtitleStringForMessages(lastMessages)
     } else {
-      val sender = if (conv.convType == ConversationType.Group) lastMessageUser.fold2("", u => s"[[${u.getDisplayName}:]] ") else ""
-      val content = lastMessages.lastOption.fold2("", subtitleStringForMessage)
+      val sender = if (conv.convType == ConversationType.Group) {
+        typingUser.fold{
+          lastMessageUser.fold2("", u => s"[[${u.getDisplayName}:]] ")
+        } { u =>
+          s"[[${u.displayName}:]] "
+        }
+      } else ""
+      val content = typing.fold {
+        lastMessages.lastOption.fold2("", msg => subtitleStringForMessage(msg, lastMessageUser.get, lastMessageMembers))
+      } {
+        _ => getString(R.string.conversation_list__typing)
+      }
+
       if (content.isEmpty){
         ""
       } else {
@@ -124,19 +155,20 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     }
   }
 
-  subtitleText.on(Threading.Ui) {
-    case text if text.nonEmpty =>
-      showSubtitle()
-      subtitle.setText(text)
-      TextViewUtils.boldText(subtitle)
-    case _ =>
-      hideSubtitle()
-      subtitle.setText("")
-  }
+  val avatarInfo = for {
+    z <- zms
+    self <- selfId
+    conv <- conversation
+    memberIds <- z.membersStorage.activeMembers(conv.id)
+    memberSeq <- Signal.future(z.usersStorage.getAll(memberIds))
+  } yield (conv.convType, memberSeq.flatten.filter(_.id != self))
 
-  def subtitleStringForMessage(messageData: MessageData): String = {
+  def subtitleStringForMessage(messageData: MessageData, user: UserData, members: Vector[UserData]): String = {
+    if (messageData.isEphemeral) {
+      return getString(R.string.conversation_list__ephemeral)
+    }
     messageData.msgType match {
-      case Message.Type.TEXT | Message.Type.TEXT_EMOJI_ONLY =>
+      case Message.Type.TEXT | Message.Type.TEXT_EMOJI_ONLY | Message.Type.RICH_MEDIA =>
         messageData.contentString
       case Message.Type.ASSET =>
         getString(R.string.conversation_list__shared__image)
@@ -152,6 +184,18 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
         getString(R.string.conversation_list__missed_call)
       case Message.Type.KNOCK =>
         getString(R.string.conversation_list__pinged)
+      case Message.Type.MEMBER_JOIN =>
+        val memberName = members.headOption.fold2("Someone", _.displayName)
+        s"[[$memberName]] has joined"
+      case Message.Type. MEMBER_LEAVE if members.contains(user) =>
+        val memberName = members.headOption.fold2("Someone", _.displayName)
+        s"[[$memberName]] has left"
+      case Message.Type. MEMBER_LEAVE =>
+        val memberName = members.headOption.fold2("Someone", _.displayName)
+        s"[[$memberName]] was removed"
+      case Message.Type.CONNECT_ACCEPTED =>
+        val handle = members.headOption.flatMap(_.handle).map(_.string).getOrElse("")
+        StringUtils.formatHandle(handle)
       case _ =>
         ""
     }
@@ -185,39 +229,23 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     Seq(unsentString, strings.mkString(", ")).filter(_.nonEmpty).mkString(" | ")
   }
 
-  val avatarInfo = for {
-    z <- zms
-    self <- selfId
-    conv <- conversation
-    memberIds <- z.membersStorage.activeMembers(conv.id)
-    memberSeq <- Signal.future(z.usersStorage.getAll(memberIds))
-  } yield (conv.convType, memberSeq.flatten.filter(_.id != self))
+  conversationName.on(Threading.Ui) { title.setText }
+
+  subtitleText.on(Threading.Ui) {
+    case text if text.nonEmpty =>
+      showSubtitle()
+      subtitle.setText(text)
+      TextViewUtils.boldText(subtitle)
+    case _ =>
+      hideSubtitle()
+      subtitle.setText("")
+  }
+
+  badgeInfo.on(Threading.Ui) { badge.setStatus }
 
   avatarInfo.on(Threading.Background) { convInfo  =>
     avatar.setMembers(convInfo._2.map(_.id), convInfo._1)
   }
-
-  //TODO: this is starting to look bad...
-  statusPillInfo.on(Threading.Ui) {
-    case (_, _, true, _, _, _) =>
-      statusPill.setCalling()
-    case (_, _, _, _, _, true) =>
-      statusPill.setWaitingForConnection()
-    case (_, true, _, _, _, _) =>
-      statusPill.setMuted()
-    case (_, false, _, true, _, _) =>
-      statusPill.setMissedCall()
-    case (_, false, _, _, true, _) =>
-      statusPill.setPing()
-    case (0, false, _, _, _, _) =>
-      statusPill.setHidden()
-    case (count, false, _, _, _, _) =>
-      statusPill.setCount(count)
-    case _ =>
-      statusPill.setHidden()
-  }
-
-  conversationName.on(Threading.Ui) { title.setText }
 
   private var conversationCallback: ConversationCallback = null
   private var maxAlpha: Float = .0f
@@ -237,15 +265,14 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
   def setConversation(iConversation: IConversation): Unit = {
     self.iConversation = iConversation
     if (!conversationId.currentValue.contains(Some(ConvId(iConversation.getId)))) {
-      title.setText(iConversation.getName)
       iConversation match {
         case conv: InboxLinkConversation =>
           title.setText(getInboxName(conv.getSize))
-          statusPill.setWaitingForConnection()
+          badge.setStatus(ConversationBadge.WaitingConnection)
           conversationId.publish(None, Threading.Background)
         case _ =>
           title.setText(iConversation.getName)
-          statusPill.setHidden()
+          badge.setStatus(ConversationBadge.Empty)
           conversationId.publish(Some(ConvId(iConversation.getId)), Threading.Background)
       }
       subtitle.setText("")

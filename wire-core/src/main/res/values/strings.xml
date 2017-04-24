@@ -1157,4 +1157,6 @@
     <string name="conversation_list__shared__location">Shared a location</string>
     <string name="conversation_list__missed_call">Missed call</string>
     <string name="conversation_list__pinged">Pinged</string>
+    <string name="conversation_list__ephemeral">Timed message</string>
+    <string name="conversation_list__typing">Typing a message…</string>
 </resources>
