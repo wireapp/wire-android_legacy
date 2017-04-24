@@ -101,8 +101,10 @@ object CallingActivity extends Injectable {
   def startIfCallIsActive(context: WireContext) = {
     import context.injector
     inject[GlobalCallingController].activeCall.head.foreach {
-      case true => start(context)
+      case true =>
+        start(context)
       case false =>
+        verbose(s"not active")
     } (Threading.Ui)
   }
 }

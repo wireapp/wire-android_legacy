@@ -289,10 +289,8 @@ class GlobalCallingController(implicit inj: Injector, cxt: WireContext, eventCon
   }
   val callerData = userStorage.zip(callerId).flatMap { case (storage, id) => storage.signal(id) }
 
-  val groupCall = isV3Call.flatMap {
-    case true => Signal.const(false)
-    case _ => currentChannel map (_.tracking.kindOfCall == KindOfCall.GROUP)
-  }
+  val groupCall = currentChannel map (_.tracking.kindOfCall == KindOfCall.GROUP)
+
 }
 
 private class ScreenManager(implicit injector: Injector) extends Injectable {

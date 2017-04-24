@@ -28,8 +28,8 @@ import com.waz.api._
 import com.waz.avs.{VideoPreview, VideoRenderer}
 import com.waz.model.VoiceChannelData.ConnectionState
 import com.waz.model._
-import com.waz.service.call.CallInfo
-import com.waz.service.call.FlowManagerService.{StateAndReason, UnknownState}
+import com.waz.service.call.AvsV3
+import com.waz.service.call.DefaultFlowManagerService.{StateAndReason, UnknownState}
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events.{ClockSignal, Signal}
@@ -143,7 +143,7 @@ class CurrentCallController(implicit inj: Injector, cxt: WireContext) extends In
   }
 
   val otherSendingVideo = isV3Call.flatMap {
-    case true => v3Call.map(_.videoReceiveState == CallInfo.VideoReceiveState.Started)
+    case true => v3Call.map(_.videoReceiveState == AvsV3.VideoReceiveState.Started)
     case _ => otherParticipants map {
       case Vector(other) => other.sendsVideo
       case _ => false
