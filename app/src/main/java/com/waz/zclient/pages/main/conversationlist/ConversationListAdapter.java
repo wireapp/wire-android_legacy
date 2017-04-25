@@ -38,7 +38,6 @@ import com.waz.zclient.pages.main.conversation.ConversationUtils;
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback;
 import com.waz.zclient.pages.main.conversationlist.views.listview.SwipeListView;
 import com.waz.zclient.pages.main.conversationlist.views.row.ConversationListArchivedBorderRow;
-import com.waz.zclient.pages.main.conversationlist.views.row.ConversationListRow;
 import com.waz.zclient.pages.main.conversationlist.views.row.RightIndicatorView;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
 import com.waz.zclient.ui.animation.interpolators.penner.Quart;
@@ -463,8 +462,8 @@ public class ConversationListAdapter extends BaseAdapter {
         }
         for (int i = 0; i < listView.getChildCount(); i++) {
             View view = listView.getChildAt(i);
-            if (view instanceof ConversationListRow) {
-                ((ConversationListRow) view).tearDown();
+            if (view instanceof NewConversationListRow) {
+                ((NewConversationListRow) view).tearDown();
             }
         }
     }
@@ -482,7 +481,7 @@ public class ConversationListAdapter extends BaseAdapter {
         View last = null;
         for (int i = 0; i < listView.getChildCount(); i++) {
             View view = listView.getChildAt(i);
-            if (view instanceof ConversationListRow || view instanceof ConversationListArchivedBorderRow) {
+            if (view instanceof NewConversationListRow || view instanceof ConversationListArchivedBorderRow) {
                 if (first == null) {
                     first = view;
                 }
@@ -497,7 +496,7 @@ public class ConversationListAdapter extends BaseAdapter {
         // collect all needed animators
         // run once through the list of all displayed items
         for (int i = 0; i < listView.getChildCount(); i++) {
-            if (listView.getChildAt(i) instanceof ConversationListRow) {
+            if (listView.getChildAt(i) instanceof NewConversationListRow) {
                 final NewConversationListRow row = (NewConversationListRow) listView.getChildAt(i);
                 // needs to be called - this view cant be used as a convertView no more
                 row.redraw();
@@ -654,5 +653,10 @@ public class ConversationListAdapter extends BaseAdapter {
     public void setMaxAlpha(float maxAlpha) {
         this.maxAlpha = maxAlpha;
         notifyDataSetChanged();
+    }
+
+    @Override
+    public boolean hasStableIds() {
+        return true;
     }
 }

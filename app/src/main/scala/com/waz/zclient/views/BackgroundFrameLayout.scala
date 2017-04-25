@@ -18,68 +18,46 @@
 package com.waz.zclient.views
 
 import android.content.Context
-import android.content.res.Configuration
-import android.graphics.{Color, PorterDuff, PorterDuffColorFilter, Rect}
+import android.graphics._
 import android.util.AttributeSet
 import android.widget.ImageView
 import com.waz.api.ImageAsset
 import com.waz.model.AssetId
 import com.waz.utils.events.Signal
+import com.waz.zclient.ViewHelper
 import com.waz.zclient.controllers.background.BackgroundObserver
 import com.waz.zclient.ui.utils.ColorUtils
-import com.waz.zclient.utils.{LayoutSpec, ViewUtils}
+import com.waz.zclient.utils.LayoutSpec
 import com.waz.zclient.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.views.ImageController.{ImageSource, WireImage}
-import com.waz.zclient.{R, ViewHelper}
 
 class BackgroundFrameLayout(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends ImageView(context, attrs, defStyleAttr) with ViewHelper with BackgroundObserver {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 
-  private var scaledToMax: Boolean = false
-  private var width: Int = 0
-  private var height: Int = 0
+  val isTablet = LayoutSpec.isTablet(context)
+  val scaleValue = 1.4f
+  val saturationValue = 2
+  val brightnessValue = -56
 
   private val background = Signal[ImageSource]()
-  private val drawable: BlurredImageAssetDrawable = new BlurredImageAssetDrawable(background, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single, blurRadius = 24, context = getContext)
-  drawable.setColorFilter(new PorterDuffColorFilter(ColorUtils.injectAlpha(0.56f, Color.BLACK), PorterDuff.Mode.DARKEN))
+  private val drawable = new BlurredImageAssetDrawable(background, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single, blurRadius = 25, blurPasses = 4, context = getContext)
+  val matrix = new ColorMatrix
+
+  matrix.setSaturation(saturationValue)
+  ColorUtils.adjustBrightness(matrix, brightnessValue)
+  drawable.setColorFilter(new ColorMatrixColorFilter(matrix))
   setImageDrawable(drawable)
+  setScaleX(scaleValue)
+  setScaleY(scaleValue)
 
-  val isTablet = LayoutSpec.isTablet(context)
-
-
-  private def setDrawable(bounds: Rect) {
-
-  }
 
   def onLoadImageAsset(imageAsset: ImageAsset) {
     background ! WireImage(AssetId(imageAsset.getId))
   }
 
   def onScaleToMax(max: Boolean) {
-    scaledToMax = max
-    resizeIfNeeded(getResources.getConfiguration)
   }
 
-  private def resizeIfNeeded(configuration: Configuration) {
-    if (!isTablet) {
-      return
-    }
-    val width: Int = if (scaledToMax) ViewUtils.toPx(getContext, configuration.screenWidthDp)
-    else getResources.getDimensionPixelSize(R.dimen.framework__sidebar_width)
-    val height: Int = ViewUtils.toPx(getContext, configuration.screenHeightDp)
-    if (this.width != width || this.height != height) {
-      resize(width, height)
-    }
-  }
-
-  private def resize(width: Int, height: Int) {
-    this.width = width
-    this.height = height
-    setDrawable(new Rect(0, 0, width, height))
-  }
-
-  def isExpanded: Boolean = {
-    scaledToMax
-  }
+  def isExpanded: Boolean = false
 }

@@ -88,6 +88,16 @@
             app:default_background="@color/black_8"
             />
 
+        <com.waz.zclient.common.views.ChatheadView
+            android:id="@+id/conversation_avatar_single_group"
+            app:show_border="false"
+            app:is_round="false"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            app:default_background="@color/transparent"
+            />
+
     </android.support.v7.widget.CardView>
 
 </merge>

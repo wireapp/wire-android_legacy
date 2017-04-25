@@ -49,6 +49,7 @@ class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int)
 
   private val avatarSingle = ViewUtils.getView(this, R.id.avatar_single).asInstanceOf[ChatheadView]
   private val avatarGroup = ViewUtils.getView(this, R.id.avatar_group).asInstanceOf[View]
+  private val avatarGroupSingle = ViewUtils.getView(this, R.id.conversation_avatar_single_group).asInstanceOf[ChatheadView]
 
   private val imageSources = Seq.fill(4)(Signal[ImageSource]())
 
@@ -56,7 +57,11 @@ class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int)
 
   def setMembers(members: Seq[UserId], conversationType: ConversationType): Unit = {
     conversationType match {
+      case ConversationType.Group if members.size == 1 =>
+        chatheads.foreach(_.clearUser())
+        avatarGroupSingle.setUserId(members.head)
       case ConversationType.Group =>
+        avatarGroupSingle.clearUser()
         chatheads.map(Some(_)).zipAll(members.take(4).map(Some(_)), None, None).foreach{
           case (Some(view), Some(uid)) =>
             view.setUserId(uid)

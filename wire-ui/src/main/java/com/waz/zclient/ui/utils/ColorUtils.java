@@ -20,6 +20,7 @@ package com.waz.zclient.ui.utils;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.ColorMatrix;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -106,5 +107,17 @@ public class ColorUtils {
         ColorDrawable drawable = new ColorDrawable();
         drawable.setColor(Color.TRANSPARENT);
         return drawable;
+    }
+
+    public static void adjustBrightness(ColorMatrix cm, float value) {
+        value = Math.min(100, Math.max(value, -100));
+        float[] mat = new float[] {
+            1,0,0,0,value,
+            0,1,0,0,value,
+            0,0,1,0,value,
+            0,0,0,1,0,
+            0,0,0,0,1
+        };
+        cm.postConcat(new ColorMatrix(mat));
     }
 }

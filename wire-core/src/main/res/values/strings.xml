@@ -1160,7 +1160,11 @@
     <string name="conversation_list__ephemeral">Timed message</string>
     <string name="conversation_list__typing">Typing a message…</string>
     <string name="conversation_list__someone">Someone</string>
-    <string name="conversation_list__added">[[%1$s]] has joined</string>
+    <string name="conversation_list__added">[[%1$s]] was added</string>
+    <string name="conversation_list__added_you">[[%1$s]] added you</string>
     <string name="conversation_list__left">[[%1$s]] has left</string>
+    <string name="conversation_list__left_you">You left</string>
+    <string name="conversation_list__removed_you">[[%1$s]] removed you</string>
     <string name="conversation_list__removed">[[%1$s]] was removed</string>
+    <string name="conversation_list__empty_conv__subtitle">Everyone left</string>
 </resources>

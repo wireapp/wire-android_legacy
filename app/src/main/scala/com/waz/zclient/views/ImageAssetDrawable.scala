@@ -242,6 +242,7 @@ class BlurredImageAssetDrawable(
                                  background: Option[Drawable] = None,
                                  animate: Boolean = false,
                                  blurRadius: Float = 1,
+                                 blurPasses: Int = 1,
                                  context: Context
                                )(implicit inj: Injector, eventContext: EventContext) extends ImageAssetDrawable(src, scaleType, request, background, animate) {
 
@@ -249,15 +250,24 @@ class BlurredImageAssetDrawable(
   private val blur = ScriptIntrinsicBlur.create(renderScript, Element.U8_4(renderScript))
 
   override protected def drawBitmap(canvas: Canvas, bm: Bitmap, matrix: Matrix, bitmapPaint: Paint): Unit = {
+
+    def pass(input: Allocation, output: Allocation, count: Int): Allocation = {
+      if (count == 0) {
+        return input
+      }
+      blur.setInput(input)
+      blur.forEach(output)
+      pass(output, input, count - 1)
+    }
+
     val copiedBm = bm.copy(bm.getConfig, true)
     val blurInput = Allocation.createFromBitmap(renderScript, bm)
     val blurOutput = Allocation.createFromBitmap(renderScript, bm)
 
-    blur.setInput(blurInput)
     blur.setRadius(blurRadius)
-    blur.forEach(blurOutput)
 
-    blurOutput.copyTo(copiedBm)
+    val output = pass(blurInput, blurOutput, blurPasses)
+    output.copyTo(copiedBm)
 
     blurInput.destroy()
     blurOutput.destroy()

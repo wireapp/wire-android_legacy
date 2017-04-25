@@ -51,7 +51,7 @@ import scala.concurrent.Future
 class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style)
     with ViewHelper
     with SwipeListView.SwipeListRow
-    with MoveToAnimateable { self =>
+    with MoveToAnimateable {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -140,15 +140,18 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     lastMessageUser <- lastMessages.lastOption.fold2(Signal.const(Option.empty[UserData]), message => z.usersStorage.optSignal(message.userId))
     lastMessageMembers <- lastMessages.lastOption.fold2(Signal.const(Vector[UserData]()), message => z.usersStorage.listSignal(message.members))
     typingUser <- userTyping
+    memberCount <- z.membersStorage.activeMembers(conv.id).map(_.size)
   } yield {
-    if (conv.muted || conv.incomingKnockMessage.nonEmpty || conv.missedCallMessage.nonEmpty) {
+    if (memberCount == 0) {
+      getString(R.string.conversation_list__empty_conv__subtitle)
+    } else if ((conv.muted || conv.incomingKnockMessage.nonEmpty || conv.missedCallMessage.nonEmpty) && typingUser.isEmpty) {
       subtitleStringForMessages(lastMessages)
     } else {
       typingUser.fold {
         lastMessages.lastOption.fold {
           ""
         } { msg =>
-          subtitleStringForMessage(msg, lastMessageUser, lastMessageMembers, conv.convType == ConversationType.Group)
+          subtitleStringForMessage(msg, lastMessageUser, lastMessageMembers, conv.convType == ConversationType.Group, self)
         }
       } { usr =>
         formatSubtitle(getString(R.string.conversation_list__typing), usr.getDisplayName, conv.convType == ConversationType.Group)
@@ -161,11 +164,18 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     self <- selfId
     conv <- conversation
     memberIds <- z.membersStorage.activeMembers(conv.id)
-    memberSeq <- Signal.future(z.usersStorage.getAll(memberIds))
-  } yield (conv.convType, memberSeq.flatten.filter(_.id != self))
+    memberSeq <- Signal.future(z.usersStorage.getAll(memberIds)).map(_.flatten)
+  } yield {
+    val opacity =
+      if (memberIds.isEmpty || conv.convType == ConversationType.WaitForConnection || !conv.activeMember)
+        0.5f
+      else
+        1f
+    (conv.convType, memberSeq.filter(_.id != self), opacity)
+  }
 
-  def subtitleStringForMessage(messageData: MessageData, user: Option[UserData], members: Vector[UserData], isGroup: Boolean): String = {
-    lazy val senderName = user.fold("")(_.getDisplayName)
+  def subtitleStringForMessage(messageData: MessageData, user: Option[UserData], members: Vector[UserData], isGroup: Boolean, selfId: UserId): String = {
+    lazy val senderName = user.fold(getString(R.string.conversation_list__someone))(_.getDisplayName)
     lazy val memberName = members.headOption.fold2(getString(R.string.conversation_list__someone), _.getDisplayName)
 
     if (messageData.isEphemeral) {
@@ -188,8 +198,14 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
         formatSubtitle(getString(R.string.conversation_list__missed_call), senderName, isGroup)
       case Message.Type.KNOCK =>
         formatSubtitle(getString(R.string.conversation_list__pinged), senderName, isGroup)
+      case Message.Type.MEMBER_JOIN if members.exists(_.id == selfId) =>
+        getString(R.string.conversation_list__added_you, senderName)
       case Message.Type.MEMBER_JOIN =>
         getString(R.string.conversation_list__added, memberName)
+      case Message.Type. MEMBER_LEAVE if members.exists(_.id == selfId) && user.exists(_.id == selfId) =>
+        getString(R.string.conversation_list__left_you, senderName)
+      case Message.Type. MEMBER_LEAVE if members.exists(_.id == selfId) =>
+        getString(R.string.conversation_list__removed_you, senderName)
       case Message.Type. MEMBER_LEAVE if user.forall(u => members.contains(u)) =>
         getString(R.string.conversation_list__left, memberName)
       case Message.Type. MEMBER_LEAVE =>
@@ -255,6 +271,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
 
   avatarInfo.on(Threading.Background) { convInfo  =>
     avatar.setMembers(convInfo._2.map(_.id), convInfo._1)
+    avatar.setAlpha(convInfo._3)
   }
 
   badge.onClickEvent{
@@ -271,6 +288,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
   private var maxOffset: Float = .0f
   private var swipeable: Boolean = false
   private var moveToAnimator: ObjectAnimator = null
+  private var shouldRedraw = false
 
   private def showSubtitle(): Unit = title.setGravity(Gravity.TOP)
 
@@ -279,7 +297,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
   def getConversation: IConversation = iConversation
 
   def setConversation(iConversation: IConversation): Unit = {
-    self.iConversation = iConversation
+    this.iConversation = iConversation
     if (!conversationId.currentValue.contains(Some(ConvId(iConversation.getId)))) {
       iConversation match {
         case conv: InboxLinkConversation =>
@@ -293,6 +311,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
       }
       subtitle.setText("")
       avatar.setConversationType(iConversation.getType)
+      avatar.setAlpha(1f)
       closeImmediate()
     }
   }
@@ -304,13 +323,13 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
   menuIndicatorView.setOnClickListener(new View.OnClickListener() {
     def onClick(v: View) {
       close()
-      conversationCallback.onConversationListRowSwiped(iConversation, self)
+      conversationCallback.onConversationListRowSwiped(iConversation, NewConversationListRow.this)
     }
   })
 
   def isArchiveTarget: Boolean = false
-  def needsRedraw: Boolean = false
-  def redraw(): Unit = {}
+  def needsRedraw: Boolean = shouldRedraw
+  def redraw(): Unit = {shouldRedraw = true}
 
   def setConversationCallback(conversationCallback: ConversationCallback) {
     this.conversationCallback = conversationCallback
@@ -335,7 +354,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     setMoveTo(0)
   }
 
-  override def setMaxOffset(maxOffset: Float) = self.maxOffset = maxOffset
+  override def setMaxOffset(maxOffset: Float) = this.maxOffset = maxOffset
 
   override def setOffset(offset: Float) = {
     val openOffset: Int = if (openState) menuOpenOffset
@@ -355,7 +374,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
   override def isSwipeable = swipeable
 
   def setSwipeable(swipeable: Boolean) {
-    self.swipeable = swipeable
+    this.swipeable = swipeable
   }
 
   override def isOpen = openState
@@ -397,5 +416,8 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
 
   def setMaxAlpha(maxAlpha: Float) {
     this.maxAlpha = maxAlpha
+  }
+
+  def tearDown(): Unit = {
   }
 }

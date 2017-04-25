@@ -114,7 +114,7 @@ class ShareToMultipleFragment extends BaseFragment[ShareToMultipleFragment.Conta
       case _ =>
     }
 
-    profileImageView.setImageDrawable(new BlurredImageAssetDrawable(userImage, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single, blurRadius = 20, context = getContext))
+    profileImageView.setImageDrawable(new BlurredImageAssetDrawable(userImage, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single, blurRadius = 25, blurPasses = 4, context = getContext))
 
     vignetteOverlay.setImageBitmap(BitmapUtils.getVignetteBitmap(getResources))
     vignetteOverlay.setColorFilter(darkenColor, PorterDuff.Mode.DARKEN)
