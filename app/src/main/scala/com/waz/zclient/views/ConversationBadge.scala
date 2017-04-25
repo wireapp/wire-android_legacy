@@ -33,7 +33,6 @@ object ConversationBadge {
   trait Status
   case object Muted extends Status
   case object Empty extends Status
-  case object Calling extends Status
   case object WaitingConnection extends Status
   case object Ping extends Status
   case object Typing extends Status
@@ -52,12 +51,12 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
   val textView = ViewUtils.getView(this, R.id.status_pill_text).asInstanceOf[TypefaceTextView]
   val glyphView = ViewUtils.getView(this, R.id.status_pill_glyph).asInstanceOf[GlyphTextView]
 
-  val onClickEvent = EventStream[Unit]()
+  val onClickEvent = EventStream[Status]()
 
   var status: Status = Empty
 
   setOnClickListener(new OnClickListener {
-    override def onClick(v: View) = onClickEvent ! (())
+    override def onClick(v: View) = onClickEvent ! status
   })
 
   def setGlyph(glyphId: Int, backgroundId: Int = R.drawable.conversation_badge): Unit = {
@@ -84,7 +83,7 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
   def setTyping(): Unit = setGlyph(R.string.glyph__edit)
 
   def setCount(count: Int): Unit = setText(count.toString)
-  def setCalling() = setText(getString(R.string.conversation_list__action_join_call), R.drawable.conversation_badge_green)
+  def setIncomingCalling() = setText(getString(R.string.conversation_list__action_join_call), R.drawable.conversation_badge_green)
   def setOngoingCall() = setGlyph(R.string.glyph__call, R.drawable.conversation_badge_green)
   def setMissedCall() = setGlyph(R.string.glyph__end_call)
 
@@ -95,8 +94,6 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
         setTyping()
       case Muted =>
         setMuted()
-      case Calling =>
-        setCalling()
       case WaitingConnection =>
         setWaitingForConnection()
       case Ping =>
@@ -104,7 +101,7 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
       case OngoingCall =>
         setOngoingCall()
       case IncomingCall =>
-        setCalling()
+        setIncomingCalling()
       case MissedCall =>
         setMissedCall()
       case Count(count) =>

@@ -32,6 +32,7 @@ import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events.Signal
+import com.waz.zclient.calling.controllers.CallPermissionsController
 import com.waz.zclient.controllers.global.AccentColorController
 import com.waz.zclient.core.stores.connect.InboxLinkConversation
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
@@ -61,6 +62,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
 
   val zms = inject[Signal[ZMessaging]]
   val accentColor = inject[AccentColorController].accentColor
+  val callPermissionsController = inject[CallPermissionsController]
   val selfId = zms.map(_.selfUserId)
 
   private val conversationId = Signal[Option[ConvId]]()
@@ -105,9 +107,10 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     conv <- conversation
     unreadCount <- z.messagesStorage.unreadCount(conv.id)
     typing <- userTyping.map(_.nonEmpty)
+    availableCalls <- z.calling.availableCalls
   } yield {
-    if (conv.unjoinedCall) {
-      ConversationBadge.OngoingCall
+    if (availableCalls.contains(conv.id)) {
+      ConversationBadge.IncomingCall
     } else if (conv.convType == ConversationType.WaitForConnection || conv.convType == ConversationType.Incoming) {
       ConversationBadge.WaitingConnection
     } else if (conv.muted) {
@@ -142,7 +145,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
       subtitleStringForMessages(lastMessages)
     } else {
       typingUser.fold {
-        lastMessages.headOption.fold {
+        lastMessages.lastOption.fold {
           ""
         } { msg =>
           subtitleStringForMessage(msg, lastMessageUser, lastMessageMembers, conv.convType == ConversationType.Group)
@@ -212,7 +215,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     val normalMessageCount = messages.count(m => !m.isSystemMessage && m.msgType != Message.Type.KNOCK)
     val missedCallCount = messages.count(_.msgType == Message.Type.MISSED_CALL)
     val pingCount = messages.count(_.msgType == Message.Type.KNOCK)
-    val likesCount = 0//TODO: how to get this?
+    val likesCount = 0//TODO: There is no good way to get this so far
     val unsentCount = messages.count(_.state == Message.Status.FAILED)
 
     val unsentString =
@@ -252,6 +255,12 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
 
   avatarInfo.on(Threading.Background) { convInfo  =>
     avatar.setMembers(convInfo._2.map(_.id), convInfo._1)
+  }
+
+  badge.onClickEvent{
+    case ConversationBadge.IncomingCall =>
+      conversationId.currentValue.flatten.foreach( convId => callPermissionsController.startCall(convId))
+    case _=>
   }
 
   private var conversationCallback: ConversationCallback = null
