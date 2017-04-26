@@ -42,7 +42,7 @@ import com.waz.zclient.pages.main.conversationlist.views.row.RightIndicatorView;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
 import com.waz.zclient.ui.animation.interpolators.penner.Quart;
 import com.waz.zclient.utils.ViewUtils;
-import com.waz.zclient.views.NewConversationListRow;
+import com.waz.zclient.views.conversationlist.NewConversationListRow;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -37,11 +37,11 @@ class BackgroundFrameLayout(val context: Context, val attrs: AttributeSet, val d
 
   val isTablet = LayoutSpec.isTablet(context)
   val scaleValue = 1.4f
-  val saturationValue = 2
-  val brightnessValue = -56
+  val saturationValue = 1.5f
+  val brightnessValue = -120
 
   private val background = Signal[ImageSource]()
-  private val drawable = new BlurredImageAssetDrawable(background, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single, blurRadius = 25, blurPasses = 4, context = getContext)
+  private val drawable = new BlurredImageAssetDrawable(background, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single, blurRadius = 25, blurPasses = 5, context = getContext)
   val matrix = new ColorMatrix
 
   matrix.setSaturation(saturationValue)

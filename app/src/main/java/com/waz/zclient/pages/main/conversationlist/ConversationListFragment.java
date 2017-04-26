@@ -72,6 +72,7 @@ import com.waz.zclient.ui.pullforaction.PullForActionMode;
 import com.waz.zclient.ui.text.TypefaceTextView;
 import com.waz.zclient.ui.utils.ResourceUtils;
 import com.waz.zclient.utils.ViewUtils;
+import com.waz.zclient.views.conversationlist.ConversationListTopToolbar;
 
 import net.hockeyapp.android.CrashManagerListener;
 import net.hockeyapp.android.ExceptionHandler;
@@ -118,6 +119,7 @@ public class ConversationListFragment extends BaseFragment<ConversationListFragm
     private View hintContainer;
     private TypefaceTextView hintHeader;
     private ListActionsView listActionsView;
+    private ConversationListTopToolbar topToolbar;
     private LinearLayout archiveBox;
     private int initialArchivedBoxOffset;
 
@@ -296,6 +298,8 @@ public class ConversationListFragment extends BaseFragment<ConversationListFragm
                 }
             });
         }
+
+        topToolbar = ViewUtils.getView(view, R.id.conversation_list_top_toolbar);
 
         return view;
     }
@@ -745,6 +749,7 @@ public class ConversationListFragment extends BaseFragment<ConversationListFragm
     @Override
     public void onListViewScrollOffsetChanged(int offset, @IConversationListController.ListScrollPosition int scrolledToBottom) {
         listActionsView.setScrolledToBottom(scrolledToBottom == IConversationListController.SCROLLED_TO_BOTTOM);
+        topToolbar.setScrolledToTop(offset == 0);
     }
 
     @Override

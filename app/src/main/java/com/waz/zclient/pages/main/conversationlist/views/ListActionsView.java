@@ -34,7 +34,6 @@ public class ListActionsView extends FrameLayout implements View.OnClickListener
     private GlyphTextView avatar;
     private GlyphTextView settings;
     private CircleView indicatorDot;
-    private TextView contacts;
     private View bottomBorder;
 
     private Callback callback;
@@ -56,8 +55,6 @@ public class ListActionsView extends FrameLayout implements View.OnClickListener
         LayoutInflater.from(context).inflate(R.layout.list_actions_view, this, true);
         avatar = ViewUtils.getView(this, R.id.gtv__list_actions__avatar);
         avatar.setOnClickListener(this);
-        contacts = ViewUtils.getView(this, R.id.tv__list_action_contact_label);
-        contacts.setOnClickListener(this);
         settings = ViewUtils.getView(this, R.id.gtv__list_actions__settings);
         settings.setOnClickListener(this);
         bottomBorder = ViewUtils.getView(this, R.id.v_conversation_list_bottom_border);
@@ -70,7 +67,6 @@ public class ListActionsView extends FrameLayout implements View.OnClickListener
     }
 
     public void setAccentColor(int color) {
-        avatar.setBackground(new FilledCircularBackgroundDrawable(color));
         indicatorDot.setAccentColor(color);
     }
 
@@ -81,7 +77,6 @@ public class ListActionsView extends FrameLayout implements View.OnClickListener
         }
         switch (view.getId()) {
             case R.id.gtv__list_actions__avatar:
-            case R.id.tv__list_action_contact_label:
                 callback.onAvatarPress();
                 break;
             case R.id.gtv__list_actions__settings:

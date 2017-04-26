@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.views
+package com.waz.zclient.views.conversationlist
 
 import android.animation.ObjectAnimator
 import android.content.Context
@@ -24,7 +24,6 @@ import android.view.{Gravity, View, ViewGroup}
 import android.widget.LinearLayout.LayoutParams
 import android.widget.{FrameLayout, LinearLayout}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.api.{IConversation, Message}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
@@ -43,10 +42,12 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.ui.views.properties.MoveToAnimateable
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{StringUtils, ViewUtils}
+import com.waz.zclient.utils.ViewUtils
+import com.waz.zclient.views.ConversationBadge
 import com.waz.zclient.{R, ViewHelper}
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style)
     with ViewHelper

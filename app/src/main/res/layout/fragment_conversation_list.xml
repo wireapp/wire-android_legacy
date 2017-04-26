@@ -24,6 +24,13 @@
              xmlns:app="http://schemas.android.com/apk/res-auto"
     >
 
+    <com.waz.zclient.views.conversationlist.ConversationListTopToolbar
+        android:id="@+id/conversation_list_top_toolbar"
+        android:layout_gravity="top"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        />
+
     <LinearLayout
         android:id="@+id/ll__conversation_list__no_contacts"
         android:layout_width="wrap_content"
@@ -69,12 +76,6 @@
             android:layout_weight="1"
             >
 
-            <com.waz.zclient.ui.pullforaction.PullForActionContainer
-                android:id="@+id/pfac__conversation_list"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                />
-
             <!-- Archiving Box -->
             <LinearLayout
                 android:id="@+id/ll__archiving_container"
@@ -108,6 +109,13 @@
 
             </LinearLayout>
 
+            <com.waz.zclient.ui.pullforaction.PullForActionContainer
+                android:id="@+id/pfac__conversation_list"
+                android:layout_marginTop="44dp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                />
+
 
         </FrameLayout>
 
@@ -116,7 +124,7 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/conversation_list__action_view__height"
             />
-        
+
         <LinearLayout
             android:id="@+id/ll__conversation_list__hint_container"
             android:layout_width="match_parent"

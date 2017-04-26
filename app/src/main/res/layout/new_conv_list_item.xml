@@ -35,7 +35,7 @@
                   android:layout_height="match_parent">
 
 
-        <com.waz.zclient.views.ConversationAvatarView
+        <com.waz.zclient.views.conversationlist.ConversationAvatarView
             android:id="@+id/conversation_icon"
             android:layout_width="28dp"
             android:layout_height="28dp"

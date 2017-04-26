@@ -41,18 +41,6 @@
         android:gravity="center"
         />
 
-    <TextView
-        android:id="@+id/tv__list_action_contact_label"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_gravity="left|center_vertical"
-        android:paddingLeft="@dimen/conversation_list__action_label__padding_left"
-        android:gravity="left|center_vertical"
-        android:text="@string/conversation_list__label_action__contacts"
-        android:textSize="@dimen/wire__text_size__small"
-        android:textColor="@color/text__primary_dark"
-        />
-
     <FrameLayout
         android:layout_width="@dimen/conversation_list__action_icon__size__big"
         android:layout_height="@dimen/conversation_list__action_icon__size__big"

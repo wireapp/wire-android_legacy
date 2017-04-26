@@ -15,22 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.views
+package com.waz.zclient.views.conversationlist
 
 import android.content.Context
-import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.FrameLayout.LayoutParams
-import android.widget.{FrameLayout, ImageView}
-import com.waz.model.{AssetId, UserId}
 import com.waz.model.ConversationData.ConversationType
-import com.waz.utils.events.{Signal, SourceSignal}
+import com.waz.model.UserId
+import com.waz.utils.events.Signal
 import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils
-import com.waz.zclient.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
-import com.waz.zclient.views.ImageController.{ImageSource, NoImage, WireImage}
+import com.waz.zclient.views.ImageController.{ImageSource, NoImage}
 import com.waz.zclient.{R, ViewHelper}
 
 class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ViewHelper {
