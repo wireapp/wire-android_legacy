@@ -109,7 +109,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     typing <- userTyping.map(_.nonEmpty)
     availableCalls <- z.calling.availableCalls
   } yield {
-    if (availableCalls.contains(conv.id)) {
+    if (availableCalls.contains(conv.id) || conv.unjoinedCall) {
       ConversationBadge.IncomingCall
     } else if (conv.convType == ConversationType.WaitForConnection || conv.convType == ConversationType.Incoming) {
       ConversationBadge.WaitingConnection
