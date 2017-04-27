@@ -23,6 +23,7 @@ import android.util.AttributeSet
 import android.view.{Gravity, View, ViewGroup}
 import android.widget.LinearLayout.LayoutParams
 import android.widget.{FrameLayout, LinearLayout}
+import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.{IConversation, Message}
 import com.waz.model.ConversationData.ConversationType
@@ -90,9 +91,9 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     memberCount <- z.membersStorage.activeMembers(conv.id).map(_.size)
   } yield {
     if (conv.convType == ConversationType.Incoming) {
-      getInboxName(memberCount)
+      (conv.id, getInboxName(memberCount))
     } else {
-      conv.displayName
+      (conv.id, conv.displayName)
     }
   }
 
@@ -110,6 +111,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     typing <- userTyping.map(_.nonEmpty)
     availableCalls <- z.calling.availableCalls
   } yield {
+    val status =
     if (availableCalls.contains(conv.id) || conv.unjoinedCall) {
       ConversationBadge.IncomingCall
     } else if (conv.convType == ConversationType.WaitForConnection || conv.convType == ConversationType.Incoming) {
@@ -129,6 +131,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     } else {
       ConversationBadge.Empty
     }
+    (conv.id, status)
   }
 
   val subtitleText = for {
@@ -172,7 +175,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
         0.5f
       else
         1f
-    (conv.convType, memberSeq.filter(_.id != self), opacity)
+    (conv.id, conv.convType, memberSeq.filter(_.id != self), opacity)
   }
 
   def subtitleStringForMessage(messageData: MessageData, user: Option[UserData], members: Vector[UserData], isGroup: Boolean, selfId: UserId): String = {
@@ -256,23 +259,39 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     Seq(unsentString, strings.mkString(", ")).filter(_.nonEmpty).mkString(" | ")
   }
 
-  conversationName.on(Threading.Ui) { title.setText }
-
-  subtitleText.on(Threading.Ui) {
-    case text if text.nonEmpty =>
+  def setSubtitle(text: String): Unit = {
+    if (text.nonEmpty) {
       showSubtitle()
       subtitle.setText(text)
       TextViewUtils.boldText(subtitle)
-    case _ =>
+    } else {
       hideSubtitle()
       subtitle.setText("")
+    }
   }
 
-  badgeInfo.on(Threading.Ui) { badge.setStatus }
+  conversationName.on(Threading.Ui) {
+    case (convId, text) if convId.str == iConversation.getId =>
+      title.setText(text)
+    case _ =>
+      ZLog.debug("outdated conv name")
+  }
 
-  avatarInfo.on(Threading.Background) { convInfo  =>
-    avatar.setMembers(convInfo._2.map(_.id), convInfo._1)
-    avatar.setAlpha(convInfo._3)
+  subtitleText.on(Threading.Ui) { setSubtitle }
+
+  badgeInfo.on(Threading.Ui) {
+    case (convId, status) if convId.str == iConversation.getId =>
+      badge.setStatus(status)
+    case _ =>
+      ZLog.debug("outdated badge status")
+  }
+
+  avatarInfo.on(Threading.Background){
+    case (convId, convType, members, alpha) if convId.str == iConversation.getId =>
+      avatar.setMembers(members.map(_.id), convType)
+      avatar.setAlpha(alpha)
+    case _ =>
+      ZLog.debug("outdated avatar info")
   }
 
   badge.onClickEvent{
