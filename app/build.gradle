@@ -222,6 +222,7 @@ android {
         }
 
         qa {
+            minSdkVersion 21
             applicationId "com.wire.qa"
             versionName majorVersion + android.defaultConfig.versionCode + "-qa"
             manifestPlaceholders = [applicationLabel       : "Wire QA",
@@ -334,6 +335,7 @@ dependencies {
 
     devCompile deps.stetho
     experimentalCompile deps.stetho
+    qaCompile deps.stetho
 
     // For using local files in app/libs
     //compile (name:'avs', ext:'aar')
