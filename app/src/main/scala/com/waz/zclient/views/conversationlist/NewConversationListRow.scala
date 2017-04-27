@@ -144,9 +144,9 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     lastMessageUser <- lastMessages.lastOption.fold2(Signal.const(Option.empty[UserData]), message => z.usersStorage.optSignal(message.userId))
     lastMessageMembers <- lastMessages.lastOption.fold2(Signal.const(Vector[UserData]()), message => z.usersStorage.listSignal(message.members))
     typingUser <- userTyping
-    memberCount <- z.membersStorage.activeMembers(conv.id).map(_.size)
+    members <- z.membersStorage.activeMembers(conv.id)
   } yield {
-    if (memberCount == 0) {
+    if (members.count(_ != self) == 0) {
       getString(R.string.conversation_list__empty_conv__subtitle)
     } else if ((conv.muted || conv.incomingKnockMessage.nonEmpty || conv.missedCallMessage.nonEmpty) && typingUser.isEmpty) {
       subtitleStringForMessages(lastMessages)
@@ -172,7 +172,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
   } yield {
     val opacity =
       if (memberIds.isEmpty || conv.convType == ConversationType.WaitForConnection || !conv.activeMember)
-        0.5f
+        0.25f
       else
         1f
     (conv.id, conv.convType, memberSeq.filter(_.id != self), opacity)

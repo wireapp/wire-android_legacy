@@ -82,6 +82,7 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
         conversationPager.setOffscreenPageLimit(OFFSCREEN_PAGE_LIMIT);
         conversationPager.setOverScrollMode(View.OVER_SCROLL_NEVER);
         conversationPager.setPageTransformer(false, new CustomPagerTransformer(CustomPagerTransformer.SLIDE_IN));
+        conversationPager.setTouchEnabled(false);
         conversationPagerAdapter = new ConversationPagerAdapter(getActivity(),
                                                                 getChildFragmentManager(),
                                                                 LayoutSpec.get(getActivity()),

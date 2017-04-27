@@ -858,7 +858,6 @@
     <dimen name="conversation_list__row__zero">0dp</dimen>
     <dimen name="conversation_list__row_title__margin_top">10dp</dimen>
     <dimen name="conversation_list__row_title__height">36dp</dimen>
-    <dimen name="conversation_list__top_toolbar__height">44dp</dimen>
     <dimen name="conversation_list__badge__corner_radius">16dp</dimen>
     <dimen name="conversation_list__avatar__corner_radius">6dp</dimen>
     <dimen name="conversation_list__badge__text_padding">8dp</dimen>

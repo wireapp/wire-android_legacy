@@ -28,7 +28,7 @@
         android:id="@+id/conversation_list_top_toolbar"
         android:layout_gravity="top"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/conversation_list__top_toolbar__height"
+        android:layout_height="?attr/actionBarSize"
         />
 
     <LinearLayout
@@ -111,7 +111,7 @@
 
             <com.waz.zclient.ui.pullforaction.PullForActionContainer
                 android:id="@+id/pfac__conversation_list"
-                android:layout_marginTop="@dimen/conversation_list__top_toolbar__height"
+                android:layout_marginTop="?attr/actionBarSize"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 />

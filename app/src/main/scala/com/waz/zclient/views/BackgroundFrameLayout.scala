@@ -19,6 +19,7 @@ package com.waz.zclient.views
 
 import android.content.Context
 import android.graphics._
+import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
 import android.widget.ImageView
 import com.waz.api.ImageAsset
@@ -37,17 +38,17 @@ class BackgroundFrameLayout(val context: Context, val attrs: AttributeSet, val d
 
   val isTablet = LayoutSpec.isTablet(context)
   val scaleValue = 1.4f
-  val saturationValue = 1.5f
-  val brightnessValue = -120
+  val saturationValue = 2f
+  val blackLevel = 0.58f
 
   private val background = Signal[ImageSource]()
-  private val drawable = new BlurredImageAssetDrawable(background, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single, blurRadius = 25, blurPasses = 5, context = getContext)
+  private val drawable = new BlurredImageAssetDrawable(background, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single, blurRadius = 25, blurPasses = 10, context = getContext)
   val matrix = new ColorMatrix
 
   matrix.setSaturation(saturationValue)
-  ColorUtils.adjustBrightness(matrix, brightnessValue)
   drawable.setColorFilter(new ColorMatrixColorFilter(matrix))
-  setImageDrawable(drawable)
+  setBackground(drawable)
+  setImageDrawable(new ColorDrawable(ColorUtils.injectAlpha(blackLevel, Color.BLACK)))
   setScaleX(scaleValue)
   setScaleY(scaleValue)
 

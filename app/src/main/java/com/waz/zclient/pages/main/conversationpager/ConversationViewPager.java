@@ -40,6 +40,7 @@ public class ConversationViewPager extends ViewPager {
 
 
     private ViewPagerScroller viewPagerScroller = null;
+    private boolean touchEnabled = true;
 
     /**
      * Override the Scroller instance with our own class so we can change the
@@ -67,7 +68,7 @@ public class ConversationViewPager extends ViewPager {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if (!isEnabled()) {
+        if (!isEnabled() || !touchEnabled) {
             return false;
         }
 
@@ -76,10 +77,14 @@ public class ConversationViewPager extends ViewPager {
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        if (!isEnabled()) {
+        if (!isEnabled() || !touchEnabled) {
             return false;
         }
 
         return super.onTouchEvent(ev);
+    }
+
+    public void setTouchEnabled(boolean enabled) {
+        touchEnabled = enabled;
     }
 }
