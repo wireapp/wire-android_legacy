@@ -17,6 +17,7 @@
  */
 package com.waz.zclient
 
+import android.os.Build
 import android.renderscript.RenderScript
 import android.support.multidex.MultiDexApplication
 import com.waz.ZLog.ImplicitTag._
@@ -174,7 +175,11 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     storeFactory.tearDown()
     storeFactory = null
     controllerFactory = null
-    RenderScript.releaseAllContexts()
+    if (Build.VERSION.SDK_INT > 22){
+      RenderScript.releaseAllContexts()
+    } else {
+      inject[RenderScript].destroy()
+    }
     super.onTerminate()
   }
 }

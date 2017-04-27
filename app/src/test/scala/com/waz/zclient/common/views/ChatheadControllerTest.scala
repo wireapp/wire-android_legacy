@@ -72,7 +72,7 @@ class ChatheadControllerTest extends JUnitSuite {
         width == 0
       }
     } {
-      ctrl.assignInfo ! Left(userId)
+      ctrl.assignInfo ! Some(Left(userId))
       ctrl.viewWidth ! 100
     }
   }
@@ -90,9 +90,9 @@ class ChatheadControllerTest extends JUnitSuite {
       selected == expectSelected
     } {
       if (useContact) {
-        ctrl.assignInfo ! Right(createContactDetails())
+        ctrl.assignInfo ! Some(Right(createContactDetails()))
       } else {
-        ctrl.assignInfo ! Left(createUser(knownUser))
+        ctrl.assignInfo ! Some(Left(createUser(knownUser)))
       }
       ctrl.requestSelected ! true
     }

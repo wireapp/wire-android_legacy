@@ -332,18 +332,12 @@ public class ConversationListAdapter extends BaseAdapter {
 
         if (convertView == null || !(convertView instanceof NewConversationListRow)) {
             conversationListRowItem = new NewConversationListRow(parent.getContext());
-            //conversationListRowItem.setStreamMediaPlayerController(streamMediaPlayerController);
-            //conversationListRowItem.setConversationActionCallback(conversationActionCallback);
-            //conversationListRowItem.setNetworkStore(networkStore);
         } else {
             conversationListRowItem = (NewConversationListRow) convertView;
 
             // needs redraw due to animation changes
             if (conversationListRowItem.needsRedraw()) {
                 conversationListRowItem = new NewConversationListRow(parent.getContext());
-                //conversationListRowItem.setStreamMediaPlayerController(streamMediaPlayerController);
-                //conversationListRowItem.setConversationActionCallback(conversationActionCallback);
-                //conversationListRowItem.setNetworkStore(networkStore);
             }
         }
 
@@ -368,7 +362,6 @@ public class ConversationListAdapter extends BaseAdapter {
             conversationListRowItem.setBackgroundColor(Color.TRANSPARENT);
         }
 
-        //conversationListRowItem.setAccentColor(accentColor);
         conversationListRowItem.setConversation(conversation);
         conversationListRowItem.setConversationCallback(conversationCallback);
         conversationListRowItem.setOnClickListener(new View.OnClickListener() {
@@ -389,8 +382,6 @@ public class ConversationListAdapter extends BaseAdapter {
                 return true;
             }
         });
-
-        //setListRowPaddingTopAndBottom(conversationListRowItem, position);
 
         return conversationListRowItem;
     }

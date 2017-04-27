@@ -242,6 +242,11 @@
         <ignore path="src/main/res/layout/fragment_image.xml"/>
         <ignore path="src/main/res/layout/view_custom*"/>
         <ignore path="src/main/res/layout/view_toolbar*"/>
+        <ignore path="src/main/res/drawable/conversation*"/>
+        <ignore path="src/main/res/layout/conv_badge.xml"/>
+        <ignore path="src/main/res/layout/new_conv_list_item.xml"/>
+        <ignore path="src/main/res/layout/view_conv_list_top.xml"/>
+        <ignore path="src/main/res/layout/view_conversation_avatar.xml"/>
 
         <!--TODO Dean - leaving these here as design comes up with a new container-->
         <ignore path="*ic_action_soundcloud*"/>
@@ -272,6 +277,10 @@
         <ignore path="src/main/res/layout/fragment_image.xml"/>
         <ignore path="src/main/res/layout/view_custom*"/>
         <ignore path="src/main/res/layout/view_toolbar*"/>
+        <ignore path="src/main/res/layout/conv_badge.xml"/>
+        <ignore path="src/main/res/layout/new_conv_list_item.xml"/>
+        <ignore path="src/main/res/layout/view_conv_list_top.xml"/>
+        <ignore path="src/main/res/layout/view_conversation_avatar.xml"/>
     </issue>
     <issue id="EnforceUTF8" severity="error" />
     <issue id="ViewHolder" severity="error" />

@@ -22,11 +22,9 @@ import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.TextView;
 import com.waz.zclient.R;
 import com.waz.zclient.ui.text.GlyphTextView;
 import com.waz.zclient.ui.views.CircleView;
-import com.waz.zclient.ui.views.FilledCircularBackgroundDrawable;
 import com.waz.zclient.utils.ViewUtils;
 
 public class ListActionsView extends FrameLayout implements View.OnClickListener {

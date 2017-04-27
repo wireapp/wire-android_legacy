@@ -21,8 +21,8 @@
 <merge
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="28dp"
-    android:layout_height="28dp"
+    android:layout_width="@dimen/conversation_list__avatar__size"
+    android:layout_height="@dimen/conversation_list__avatar__size"
     android:background="@drawable/conversation_group_avatar_background">
 
     <com.waz.zclient.common.views.ChatheadView
@@ -32,7 +32,7 @@
         app:default_background="@color/black_8"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_margin="2dp"
+        android:layout_margin="@dimen/conversation_list__avatar__inner_margin"
         android:layout_gravity="center"
         android:visibility="gone"
         />
@@ -41,7 +41,7 @@
         android:id="@+id/avatar_group"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_margin="2dp"
+        android:layout_margin="@dimen/conversation_list__avatar__inner_margin"
         android:clipChildren="true"
         android:clipToPadding="true"
         app:cardBackgroundColor="@color/transparent"
@@ -52,8 +52,8 @@
             android:id="@+id/conversation_avatar_start_top"
             app:show_border="false"
             app:is_round="false"
-            android:layout_width="11dp"
-            android:layout_height="11dp"
+            android:layout_width="@dimen/conversation_list__avatar__small_size"
+            android:layout_height="@dimen/conversation_list__avatar__small_size"
             android:layout_gravity="start|top"
             app:default_background="@color/black_8"
             />
@@ -62,8 +62,8 @@
             android:id="@+id/conversation_avatar_end_top"
             app:show_border="false"
             app:is_round="false"
-            android:layout_width="11dp"
-            android:layout_height="11dp"
+            android:layout_width="@dimen/conversation_list__avatar__small_size"
+            android:layout_height="@dimen/conversation_list__avatar__small_size"
             android:layout_gravity="end|top"
             app:default_background="@color/black_8"
             />
@@ -72,8 +72,8 @@
             android:id="@+id/conversation_avatar_start_bottom"
             app:show_border="false"
             app:is_round="false"
-            android:layout_width="11dp"
-            android:layout_height="11dp"
+            android:layout_width="@dimen/conversation_list__avatar__small_size"
+            android:layout_height="@dimen/conversation_list__avatar__small_size"
             android:layout_gravity="start|bottom"
             app:default_background="@color/black_8"
             />
@@ -82,8 +82,8 @@
             android:id="@+id/conversation_avatar_end_bottom"
             app:show_border="false"
             app:is_round="false"
-            android:layout_width="11dp"
-            android:layout_height="11dp"
+            android:layout_width="@dimen/conversation_list__avatar__small_size"
+            android:layout_height="@dimen/conversation_list__avatar__small_size"
             android:layout_gravity="end|bottom"
             app:default_background="@color/black_8"
             />
@@ -92,8 +92,8 @@
             android:id="@+id/conversation_avatar_single_group"
             app:show_border="false"
             app:is_round="false"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="@dimen/conversation_list__avatar__big_size"
+            android:layout_height="@dimen/conversation_list__avatar__big_size"
             android:layout_gravity="center"
             app:default_background="@color/transparent"
             />

@@ -20,5 +20,5 @@
 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <solid android:color="@color/accent_green" />
-    <corners android:radius="16dp" />
+    <corners android:radius="@dimen/conversation_list__badge__corner_radius" />
 </shape>

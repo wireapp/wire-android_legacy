@@ -849,4 +849,19 @@
     <dimen name="conversation_list__row__title__top">8dp</dimen>
     <dimen name="conversation_list__row__height">56dp</dimen>
     <dimen name="conversation_list__badge__height">20dp</dimen>
+    <dimen name="conversation_list__avatar__inner_margin">2dp</dimen>
+    <dimen name="conversation_list__avatar__outer_margin">14dp</dimen>
+    <dimen name="conversation_list__avatar__size">28dp</dimen>
+    <dimen name="conversation_list__avatar__small_size">11dp</dimen>
+    <dimen name="conversation_list__avatar__big_size">24dp</dimen>
+    <dimen name="conversation_list__row__side_padding">16dp</dimen>
+    <dimen name="conversation_list__row__zero">0dp</dimen>
+    <dimen name="conversation_list__row_title__margin_top">10dp</dimen>
+    <dimen name="conversation_list__row_title__height">36dp</dimen>
+    <dimen name="conversation_list__top_toolbar__height">44dp</dimen>
+    <dimen name="conversation_list__badge__corner_radius">16dp</dimen>
+    <dimen name="conversation_list__avatar__corner_radius">6dp</dimen>
+    <dimen name="conversation_list__badge__text_padding">8dp</dimen>
+    <dimen name="conversation_list__badge__glyph_padding">10dp</dimen>
+    <dimen name="conversation_list__avatar__stroke_width">0.5dp</dimen>
 </resources>

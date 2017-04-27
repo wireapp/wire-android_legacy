@@ -112,11 +112,11 @@ public class ColorUtils {
     public static void adjustBrightness(ColorMatrix cm, float value) {
         value = Math.min(100, Math.max(value, -100));
         float[] mat = new float[] {
-            1,0,0,0,value,
-            0,1,0,0,value,
-            0,0,1,0,value,
-            0,0,0,1,0,
-            0,0,0,0,1
+            1, 0, 0, 0, value,
+            0, 1, 0, 0, value,
+            0, 0, 1, 0, value,
+            0, 0, 0, 1, 0,
+            0, 0, 0, 0, 1
         };
         cm.postConcat(new ColorMatrix(mat));
     }

@@ -37,11 +37,11 @@
 
         <com.waz.zclient.views.conversationlist.ConversationAvatarView
             android:id="@+id/conversation_icon"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="@dimen/conversation_list__avatar__size"
+            android:layout_height="@dimen/conversation_list__avatar__size"
             android:layout_gravity="center"
-            android:layout_marginEnd="14dp"
-            android:layout_marginStart="14dp"
+            android:layout_marginEnd="@dimen/conversation_list__avatar__outer_margin"
+            android:layout_marginStart="@dimen/conversation_list__avatar__outer_margin"
             />
 
         <RelativeLayout
@@ -53,10 +53,10 @@
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:id="@+id/conversation_title"
                 android:layout_width="match_parent"
-                android:layout_height="36dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginStart="0dp"
+                android:layout_height="@dimen/conversation_list__row_title__height"
+                android:layout_marginTop="@dimen/conversation_list__row_title__margin_top"
+                android:layout_marginEnd="@dimen/conversation_list__row__side_padding"
+                android:layout_marginStart="@dimen/conversation_list__row__zero"
                 android:gravity="center_vertical"
                 android:layout_toStartOf="@+id/conversation_badge"
                 android:ellipsize="end"
@@ -85,8 +85,8 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:layout_gravity="center"
-                android:layout_marginEnd="16dp"
-                android:layout_marginStart="0dp"/>
+                android:layout_marginEnd="@dimen/conversation_list__row__side_padding"
+                android:layout_marginStart="@dimen/conversation_list__row__zero"/>
 
             <View
                 android:id="@+id/conversation_separator"

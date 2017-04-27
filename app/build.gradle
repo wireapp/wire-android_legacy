@@ -92,7 +92,6 @@ android {
             minSdkVersion 21
             applicationId "com.waz.zclient.dev"
             versionName majorVersion + android.defaultConfig.versionCode + "-dev"
-            minSdkVersion 21
             manifestPlaceholders = [applicationLabel       : "Wire Dev",
                                     allowBackup            : "true",
                                     applicationIcon        : "@drawable/ic_launcher_wire_dev",

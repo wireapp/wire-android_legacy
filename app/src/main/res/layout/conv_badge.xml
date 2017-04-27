@@ -20,9 +20,6 @@
 -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
              xmlns:app="http://schemas.android.com/apk/res-auto"
-             android:layout_width="wrap_content"
-             android:layout_height="20dp"
-             android:background="@drawable/conversation_badge"
              >
 
     <com.waz.zclient.ui.text.TypefaceTextView
@@ -32,8 +29,8 @@
         android:layout_gravity="center"
         android:gravity="center"
         android:textAlignment="center"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
+        android:paddingStart="@dimen/conversation_list__badge__text_padding"
+        android:paddingEnd="@dimen/conversation_list__badge__text_padding"
         android:textColor="@color/white"
         android:textSize="@dimen/wire__text_size__small"
         app:font="@string/wire__typeface__bold"
@@ -48,8 +45,8 @@
         android:text="@string/glyph__silence"
         android:textColor="@color/white"
         android:textSize="@dimen/wire__text_size__small"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"
+        android:paddingStart="@dimen/conversation_list__badge__glyph_padding"
+        android:paddingEnd="@dimen/conversation_list__badge__glyph_padding"
         android:visibility="invisible"
         />
 

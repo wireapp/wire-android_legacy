@@ -21,9 +21,9 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <solid android:color="@color/black_16" />
     <stroke
-        android:width="0.5dp"
+        android:width="@dimen/conversation_list__avatar__stroke_width"
         android:color="@color/white_24"
         />
-    <corners android:radius="6dp" />
+    <corners android:radius="@dimen/conversation_list__avatar__corner_radius" />
 
 </shape>
