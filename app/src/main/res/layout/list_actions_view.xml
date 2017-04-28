@@ -33,7 +33,7 @@
         android:id="@+id/gtv__list_actions__avatar"
         android:layout_width="@dimen/conversation_list__action_icon__size"
         android:layout_height="@dimen/conversation_list__action_icon__size"
-        android:layout_marginLeft="@dimen/wire__padding__18"
+        android:layout_marginLeft="@dimen/wire__padding__10"
         android:layout_gravity="left|center_vertical"
         android:text="@string/glyph__profile"
         android:textColor="@color/text__primary_dark"
@@ -45,7 +45,6 @@
         android:layout_width="@dimen/conversation_list__action_icon__size__big"
         android:layout_height="@dimen/conversation_list__action_icon__size__big"
         android:layout_gravity="right|center_vertical"
-        android:layout_marginRight="@dimen/wire__padding__small"
         >
 
         <com.waz.zclient.ui.text.GlyphTextView

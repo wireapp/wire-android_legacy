@@ -44,7 +44,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.ui.views.properties.MoveToAnimateable
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.ViewUtils
+import com.waz.zclient.utils.{StringUtils, ViewUtils}
 import com.waz.zclient.views.ConversationBadge
 import com.waz.zclient.views.conversationlist.NewConversationListRow._
 import com.waz.zclient.{R, ViewHelper}
@@ -119,22 +119,28 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     conv <- conversation
     lastReadInstant <- z.messagesStorage.lastRead(conv.id)
     unread <- z.messagesStorage.unreadCount(conv.id)
-    lastMessages <- Signal.future(z.messagesStorage.findMessagesFrom(conv.id, lastReadInstant.plusMillis(1)).map(_.filter(_.userId != self)))
-    lastMessageUser <- lastMessages.lastOption.fold2(Signal.const(Option.empty[UserData]), message => z.usersStorage.optSignal(message.userId))
-    lastMessageMembers <- lastMessages.lastOption.fold2(Signal.const(Vector[UserData]()), message => z.usersStorage.listSignal(message.members))
+    lastUnreadMessages <- Signal.future(z.messagesStorage.findMessagesFrom(conv.id, lastReadInstant.plusMillis(1)).map(_.filter(_.userId != self)))
+    lastUnreadMessageUser <- lastUnreadMessages.lastOption.fold2(Signal.const(Option.empty[UserData]), message => z.usersStorage.optSignal(message.userId))
+    lastUnreadMessageMembers <- lastUnreadMessages.lastOption.fold2(Signal.const(Vector[UserData]()), message => z.usersStorage.listSignal(message.members))
     typingUser <- userTyping
     members <- z.membersStorage.activeMembers(conv.id)
+    otherUser <- members.find(_ != self).fold2(Signal.const(Option.empty[UserData]), uid => Signal.future(z.usersStorage.get(uid)))
+    lastMessage <- z.messagesStorage.lastMessage(conv.id)
   } yield {
-    if (members.count(_ != self) == 0) {
+    if (conv.convType == ConversationType.WaitForConnection || (lastMessage.exists(_.msgType == Message.Type.MEMBER_JOIN) && conv.convType == ConversationType.OneToOne)) {
+      otherUser.flatMap(_.handle.map(_.string)).fold("")(StringUtils.formatHandle)
+    } else if (members.count(_ != self) == 0) {
       getString(R.string.conversation_list__empty_conv__subtitle)
+    } else if (lastUnreadMessages.isEmpty &&  !conv.activeMember) {
+      getString(R.string.conversation_list__left_you)
     } else if ((conv.muted || conv.incomingKnockMessage.nonEmpty || conv.missedCallMessage.nonEmpty) && typingUser.isEmpty) {
-      subtitleStringForLastMessages(lastMessages)
+      subtitleStringForLastMessages(lastUnreadMessages)
     } else {
       typingUser.fold {
-        lastMessages.lastOption.fold {
+        lastUnreadMessages.lastOption.fold {
           ""
         } { msg =>
-          subtitleStringForLastMessage(msg, lastMessageUser, lastMessageMembers, conv.convType == ConversationType.Group, self)
+          subtitleStringForLastMessage(msg, lastUnreadMessageUser, lastUnreadMessageMembers, conv.convType == ConversationType.Group, self)
         }
       } { usr =>
         formatSubtitle(getString(R.string.conversation_list__typing), usr.getDisplayName, conv.convType == ConversationType.Group)
@@ -234,7 +240,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
     }
   }
 
-  private def getInboxName(convSize: Int): String = getResources.getQuantityString(R.plurals.connect_inbox__link__name, convSize)
+  private def getInboxName(convSize: Int): String = getResources.getQuantityString(R.plurals.connect_inbox__link__name, convSize, convSize.toString)
 
   menuIndicatorView.setClickable(false)
   menuIndicatorView.setMaxOffset(menuOpenOffset)
@@ -398,20 +404,18 @@ object NewConversationListRow {
         formatSubtitle(getString(R.string.conversation_list__missed_call), senderName, isGroup)
       case Message.Type.KNOCK =>
         formatSubtitle(getString(R.string.conversation_list__pinged), senderName, isGroup)
+      case Message.Type.CONNECT_ACCEPTED | Message.Type.MEMBER_JOIN if !isGroup =>
+        members.headOption.flatMap(_.handle).map(_.string).fold("")(StringUtils.formatHandle)
       case Message.Type.MEMBER_JOIN if members.exists(_.id == selfId) =>
         getString(R.string.conversation_list__added_you, senderName)
+      case Message.Type.MEMBER_JOIN if members.length > 1=>
+        getString(R.string.conversation_list__added, memberName)
       case Message.Type.MEMBER_JOIN =>
         getString(R.string.conversation_list__added, memberName)
       case Message.Type. MEMBER_LEAVE if members.exists(_.id == selfId) && user.exists(_.id == selfId) =>
         getString(R.string.conversation_list__left_you, senderName)
       case Message.Type. MEMBER_LEAVE if members.exists(_.id == selfId) =>
         getString(R.string.conversation_list__removed_you, senderName)
-      case Message.Type. MEMBER_LEAVE if user.forall(u => members.contains(u)) =>
-        getString(R.string.conversation_list__left, memberName)
-      case Message.Type. MEMBER_LEAVE =>
-        getString(R.string.conversation_list__removed, memberName)
-      case Message.Type.CONNECT_ACCEPTED =>
-        members.headOption.flatMap(_.handle).map(_.string).getOrElse("")
       case _ =>
         ""
     }
