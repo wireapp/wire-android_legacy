@@ -64,6 +64,7 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
     glyphView.setVisibility(View.VISIBLE)
     textView.setVisibility(View.INVISIBLE)
     setBackground(getDrawable(backgroundId))
+    textView.setText("")
     glyphView.setText(glyphId)
   }
 
