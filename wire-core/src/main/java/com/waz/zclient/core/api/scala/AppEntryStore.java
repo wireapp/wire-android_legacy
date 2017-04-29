@@ -20,6 +20,7 @@ package com.waz.zclient.core.api.scala;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import com.waz.api.AccentColor;
 import com.waz.api.CoreList;
@@ -38,6 +39,9 @@ import com.waz.api.OtrClient;
 import com.waz.api.Self;
 import com.waz.api.UpdateListener;
 import com.waz.api.ZMessagingApi;
+import com.waz.content.AccountsStorage;
+import com.waz.service.BackendConfig;
+import com.waz.service.GlobalModule;
 import com.waz.zclient.core.controllers.tracking.attributes.OutcomeAttribute;
 import com.waz.zclient.core.controllers.tracking.attributes.RegistrationEventContext;
 import com.waz.zclient.core.controllers.tracking.events.registration.EditSelfUser;
@@ -59,7 +63,13 @@ import com.waz.zclient.core.stores.appentry.AppEntryError;
 import com.waz.zclient.core.stores.appentry.AppEntryState;
 import com.waz.zclient.core.stores.appentry.AppEntryStateCallback;
 import com.waz.zclient.core.stores.appentry.IAppEntryStore;
+import com.waz.zclient.utils.BackendConfigStore;
 import com.waz.zclient.utils.LayoutSpec;
+
+import java.util.concurrent.TimeUnit;
+
+import scala.concurrent.Await;
+import scala.concurrent.duration.Duration;
 import timber.log.Timber;
 
 public class AppEntryStore implements IAppEntryStore, ErrorsList.ErrorListener {
@@ -96,6 +106,8 @@ public class AppEntryStore implements IAppEntryStore, ErrorsList.ErrorListener {
     private String invitationPhone;
     private Invitations.PersonalToken invitationToken;
     private RegistrationEventContext registrationEventContext;
+
+    private boolean isFirstSignInOnDevice = false;
 
     private UpdateListener selfUpdateListener = new UpdateListener() {
         @Override
@@ -607,6 +619,13 @@ public class AppEntryStore implements IAppEntryStore, ErrorsList.ErrorListener {
     public void setSignInPhone(final String countryCode, final String phone, final ErrorCallback errorCallback) {
         setAndStoreCountryCode(countryCode);
         setAndStorePhone(phone);
+        try {
+            AccountsStorage storage = getAccountsStorage();
+            isFirstSignInOnDevice = storage == null || !Await.result(storage.findByPhone(phone),
+                    Duration.create(1, TimeUnit.SECONDS)).isDefined();
+        } catch (Exception e) {
+            isFirstSignInOnDevice = false;
+        }
         zMessagingApi.requestPhoneConfirmationCode(countryCode + phone,
                                                    KindOfAccess.LOGIN,
                                                    new ZMessagingApi.PhoneConfirmationCodeRequestListener() {
@@ -1045,9 +1064,23 @@ public class AppEntryStore implements IAppEntryStore, ErrorsList.ErrorListener {
         });
     }
 
+    @Nullable
+    private AccountsStorage getAccountsStorage() {
+        BackendConfig currentBackend = BackendConfigStore.getConfig(context);
+        GlobalModule global = new GlobalModule(context, currentBackend);
+        return global.accountsStorage();
+    }
+
     @Override
     public void signInWithEmail(String email, String password, final ErrorCallback errorCallback) {
         setAndStoreEmail(email);
+        try {
+            AccountsStorage storage = getAccountsStorage();
+            isFirstSignInOnDevice = storage == null ||
+                    !Await.result(storage.findByEmail(email), Duration.create(1, TimeUnit.SECONDS)).isDefined();
+        } catch (Exception e) {
+            isFirstSignInOnDevice = false;
+        }
         this.password = password;
         ignoreSelfUpdates = true;
         zMessagingApi.login(CredentialsFactory.emailCredentials(email, password),

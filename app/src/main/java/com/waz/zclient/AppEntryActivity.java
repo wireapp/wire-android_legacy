@@ -485,22 +485,13 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
 
     @Override
     public void onShowFirstLaunchPage() {
-        String id = getStoreFactory().getAppEntryStore().getUserId();
-        boolean hasUserLoggedIn = getControllerFactory().getUserPreferencesController().hasUserLoggedIn(id);
-        if (id != null && hasUserLoggedIn) {
-            getStoreFactory().getAppEntryStore().setState(AppEntryState.LOGGED_IN);
-        } else {
-            if (id != null) {
-                getControllerFactory().getUserPreferencesController().userLoggedIn(id);
-            }
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            setDefaultAnimation(transaction)
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        setDefaultAnimation(transaction)
                 .replace(R.id.fl_main_content,
-                         FirstLaunchAfterLoginFragment.newInstance(),
-                         FirstLaunchAfterLoginFragment.TAG)
+                        FirstLaunchAfterLoginFragment.newInstance(),
+                        FirstLaunchAfterLoginFragment.TAG)
                 .commit();
-            enableProgress(false);
-        }
+        enableProgress(false);
     }
 
     @Override
