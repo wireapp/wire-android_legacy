@@ -178,7 +178,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
 
   avatarInfo.on(Threading.Background){
     case (convId, convType, members, alpha) if convId.str == iConversation.getId =>
-      avatar.setMembers(members.map(_.id), convType)
+      avatar.setMembers(members.map(_.id), convId, convType)
       avatar.setAlpha(alpha)
     case _ =>
       ZLog.debug("Outdated avatar info")
