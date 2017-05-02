@@ -140,13 +140,13 @@
     <dimen name="sign_tab_indicator_marker__height">8dp</dimen>
 
     <!-- Wire values-->
-    <dimen name="wire__text_size__tiny">8dp</dimen>
-    <dimen name="wire__text_size__small">11dp</dimen>
+    <dimen name="wire__text_size__tiny">8sp</dimen>
+    <dimen name="wire__text_size__small">12sp</dimen>
     <dimen name="wire__text_size__regular">16sp</dimen>
-    <dimen name="wire__text_size__medium">24dp</dimen>
-    <dimen name="wire__text_size__big">28dp</dimen>
-    <dimen name="wire__text_size__huge">32dp</dimen>
-    <dimen name="wire__text_size__insane">160dp</dimen>
+    <dimen name="wire__text_size__medium">24sp</dimen>
+    <dimen name="wire__text_size__big">28sp</dimen>
+    <dimen name="wire__text_size__huge">32sp</dimen>
+    <dimen name="wire__text_size__insane">160sp</dimen>
     <dimen name="wire__text_size__emoji">40sp</dimen>
     <dimen name="wire__text_spacing__tiny">2dp</dimen>
     <dimen name="wire__text_spacing__medium">4dp</dimen>
@@ -847,7 +847,7 @@
 
     <dimen name="conversation_list__row__avatar_size">28dp</dimen>
     <dimen name="conversation_list__row__title__top">8dp</dimen>
-    <dimen name="conversation_list__row__height">56dp</dimen>
+    <dimen name="conversation_list__row__height">64dp</dimen>
     <dimen name="conversation_list__badge__height">20dp</dimen>
     <dimen name="conversation_list__avatar__inner_margin">2dp</dimen>
     <dimen name="conversation_list__avatar__outer_margin">14dp</dimen>
@@ -856,7 +856,7 @@
     <dimen name="conversation_list__avatar__big_size">24dp</dimen>
     <dimen name="conversation_list__row__side_padding">16dp</dimen>
     <dimen name="conversation_list__row__zero">0dp</dimen>
-    <dimen name="conversation_list__row_title__margin_top">10dp</dimen>
+    <dimen name="conversation_list__row_title__margin_top">14dp</dimen>
     <dimen name="conversation_list__row_title__height">36dp</dimen>
     <dimen name="conversation_list__badge__corner_radius">16dp</dimen>
     <dimen name="conversation_list__avatar__corner_radius">6dp</dimen>
