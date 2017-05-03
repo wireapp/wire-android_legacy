@@ -11,7 +11,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -30,8 +30,8 @@ public class BackendPicker {
     private final Context context;
 
     private final String[] backends = new String[]{
-            BackendConfig.StagingBackend().environment(),
-            BackendConfig.ProdBackend().environment()
+        BackendConfig.StagingBackend().environment(),
+        BackendConfig.ProdBackend().environment()
     };
 
     public BackendPicker(Context context) {
@@ -47,6 +47,9 @@ public class BackendPicker {
     }
 
     public void withBackend(final Callback<Void> callback) {
+        if (!BackendConfigStore.isConfigSet(context)) {
+            return;
+        }
         ZMessaging.useBackend(getBackendConfig());
         callback.callback(null);
     }
@@ -73,7 +76,7 @@ public class BackendPicker {
 
     private BackendConfig getBackendConfig() {
         return BuildConfig.SHOW_BACKEND_PICKER ?
-                BackendConfigStore.getConfig(context) : BackendConfig.ProdBackend();
+            BackendConfigStore.getConfig(context) : BackendConfig.ProdBackend();
     }
 }
 
