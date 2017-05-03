@@ -46,13 +46,13 @@ import com.waz.zclient.ui.views.properties.MoveToAnimateable
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{StringUtils, ViewUtils}
 import com.waz.zclient.views.ConversationBadge
-import com.waz.zclient.views.conversationlist.NewConversationListRow._
+import com.waz.zclient.views.conversationlist.ConversationListRow._
 import com.waz.zclient.{R, ViewHelper}
 
 import scala.concurrent.Future
 import scala.collection.Set
 
-class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style)
+class ConversationListRow(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style)
     with ViewHelper
     with SwipeListView.SwipeListRow
     with MoveToAnimateable {
@@ -62,7 +62,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
   implicit val executionContext = Threading.Background
 
   setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getDimenPx(R.dimen.conversation_list__row__height)))
-  inflate(R.layout.new_conv_list_item)
+  inflate(R.layout.conv_list_item)
 
   val zms = inject[Signal[ZMessaging]]
   val accentColor = inject[AccentColorController].accentColor
@@ -138,9 +138,9 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
   } yield {
     val opacity =
       if (memberIds.isEmpty || conv.convType == ConversationType.WaitForConnection || !conv.activeMember)
-        0.25f
+        getResourceFloat(R.dimen.conversation_avatar_alpha_inactive)
       else
-        1f
+        getResourceFloat(R.dimen.conversation_avatar_alpha_active)
     (conv.id, conv.convType, memberSeq.filter(_.id != self), opacity)
   }
 
@@ -234,7 +234,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
   menuIndicatorView.setOnClickListener(new View.OnClickListener() {
     def onClick(v: View) {
       close()
-      conversationCallback.onConversationListRowSwiped(iConversation, NewConversationListRow.this)
+      conversationCallback.onConversationListRowSwiped(iConversation, ConversationListRow.this)
     }
   })
 
@@ -333,7 +333,7 @@ class NewConversationListRow(context: Context, attrs: AttributeSet, style: Int) 
   }
 }
 
-object NewConversationListRow {
+object ConversationListRow {
 
   def formatSubtitle(content: String, user: String, group: Boolean): String = {
     val groupSubtitle =  "[[%s]]: %s"

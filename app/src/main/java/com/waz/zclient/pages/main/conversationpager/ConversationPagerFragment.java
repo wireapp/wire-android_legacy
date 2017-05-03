@@ -91,7 +91,6 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
 
         if (this.getControllerFactory().getUserPreferencesController().showContactsDialog()) {
             conversationPager.setCurrentItem(NavigationController.FIRST_PAGE);
-            conversationPager.setTouchEnabled(false);
         }
 
         return conversationPager;
@@ -267,11 +266,6 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
 
     @Override
     public void onPageSelected(int position) {
-        if (position == NavigationController.FIRST_PAGE) {
-            conversationPager.setTouchEnabled(false);
-        } else {
-            conversationPager.setTouchEnabled(true);
-        }
         conversationPager.setScrollDurationFactor(VIEW_PAGER_SCROLL_FACTOR_SCROLLING);
         getControllerFactory().getNavigationController().setPagerPosition(position);
     }

@@ -790,7 +790,7 @@
     <dimen name="sketch__emoji__keyboard__item_padding__large">4dp</dimen>
 
     <dimen name="typing_indicator_background__corner_radius">8dp</dimen>
-    <dimen name="typing_indicator_layout_height">16dp</dimen>
+    <dimen name="typing_indicator_layout_height">18dp</dimen>
     <dimen name="typing_indicator_animation_layout_width">18dp</dimen>
     <dimen name="typing_indicator_pen_glyph_padding">2dp</dimen>
     <dimen name="typing_indicator_name_top_margin">-1dp</dimen>

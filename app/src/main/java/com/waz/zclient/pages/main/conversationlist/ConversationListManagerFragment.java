@@ -381,8 +381,7 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
     @Override
     public void onPageVisible(Page page) {
         if (page == Page.CONVERSATION_LIST) {
-            boolean enablePager = getStoreFactory().getConversationStore().getCurrentConversation() != null;
-            getControllerFactory().getNavigationController().setPagerEnabled(enablePager);
+            getControllerFactory().getNavigationController().setPagerEnabled(false);
             getControllerFactory().getUsernameController().addUsernamesObserverAndUpdate(this);
         } else {
             getControllerFactory().getUsernameController().removeUsernamesObserver(this);

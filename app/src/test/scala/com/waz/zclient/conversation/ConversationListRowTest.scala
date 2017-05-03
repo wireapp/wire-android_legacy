@@ -22,10 +22,10 @@ import com.waz.api.{Message, VoiceChannelState}
 import com.waz.model._
 import com.waz.service.call.CallInfo
 import com.waz.testutils.TestUtils._
-import com.waz.testutils.{TestWireContext, ViewTestActivity}
+import com.waz.testutils.ViewTestActivity
 import com.waz.utils.events.EventContext
 import com.waz.zclient.views.ConversationBadge
-import com.waz.zclient.views.conversationlist.NewConversationListRow
+import com.waz.zclient.views.conversationlist.ConversationListRow
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
@@ -54,28 +54,28 @@ class ConversationListRowTest extends JUnitSuite {
   */
   @Test
   def badgeMuted(): Unit = {
-    assert(NewConversationListRow.badgeStatusForConversation(createMutedConversationData(), 5, typing = false, Map()) == ConversationBadge.Muted)
+    assert(ConversationListRow.badgeStatusForConversation(createMutedConversationData(), 5, typing = false, Map()) == ConversationBadge.Muted)
   }
   @Test
   def badgeCount(): Unit = {
-    assert(NewConversationListRow.badgeStatusForConversation(createGroupConversationData(), 5, typing = false, Map()) == ConversationBadge.Count(5))
-    assert(NewConversationListRow.badgeStatusForConversation(createGroupConversationData(), 10, typing = false, Map()) == ConversationBadge.Count(10))
+    assert(ConversationListRow.badgeStatusForConversation(createGroupConversationData(), 5, typing = false, Map()) == ConversationBadge.Count(5))
+    assert(ConversationListRow.badgeStatusForConversation(createGroupConversationData(), 10, typing = false, Map()) == ConversationBadge.Count(10))
   }
   @Test
   def badgeMissedCall(): Unit = {
-    assert(NewConversationListRow.badgeStatusForConversation(createMissedCallConversationData(), 10, typing = false, Map()) == ConversationBadge.MissedCall)
+    assert(ConversationListRow.badgeStatusForConversation(createMissedCallConversationData(), 10, typing = false, Map()) == ConversationBadge.MissedCall)
   }
   @Test
   def badgeOngoingCall(): Unit = {
-    assert(NewConversationListRow.badgeStatusForConversation(createGroupConversationData(), 5, typing = false, Map(ConvId(convId) -> createGenericCallInfo())) == ConversationBadge.IncomingCall)
+    assert(ConversationListRow.badgeStatusForConversation(createGroupConversationData(), 5, typing = false, Map(ConvId(convId) -> createGenericCallInfo())) == ConversationBadge.IncomingCall)
   }
   @Test
   def badgePing(): Unit = {
-    assert(NewConversationListRow.badgeStatusForConversation(createKnockedConversationData(), 5, typing = false, Map()) == ConversationBadge.Ping)
+    assert(ConversationListRow.badgeStatusForConversation(createKnockedConversationData(), 5, typing = false, Map()) == ConversationBadge.Ping)
   }
   @Test
   def badgeTyping(): Unit = {
-    assert(NewConversationListRow.badgeStatusForConversation(createGroupConversationData(), 5, typing = true, Map()) == ConversationBadge.Typing)
+    assert(ConversationListRow.badgeStatusForConversation(createGroupConversationData(), 5, typing = true, Map()) == ConversationBadge.Typing)
   }
 
   def createKnockedConversationData() : ConversationData = {

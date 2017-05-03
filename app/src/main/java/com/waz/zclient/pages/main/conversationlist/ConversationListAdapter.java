@@ -42,7 +42,7 @@ import com.waz.zclient.pages.main.conversationlist.views.row.RightIndicatorView;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
 import com.waz.zclient.ui.animation.interpolators.penner.Quart;
 import com.waz.zclient.utils.ViewUtils;
-import com.waz.zclient.views.conversationlist.NewConversationListRow;
+import com.waz.zclient.views.conversationlist.ConversationListRow;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -328,16 +328,16 @@ public class ConversationListAdapter extends BaseAdapter {
             return getArchiveBorderRow(parent.getContext(), position);
         }
 
-        NewConversationListRow conversationListRowItem;
+        ConversationListRow conversationListRowItem;
 
-        if (convertView == null || !(convertView instanceof NewConversationListRow)) {
-            conversationListRowItem = new NewConversationListRow(parent.getContext());
+        if (convertView == null || !(convertView instanceof ConversationListRow)) {
+            conversationListRowItem = new ConversationListRow(parent.getContext());
         } else {
-            conversationListRowItem = (NewConversationListRow) convertView;
+            conversationListRowItem = (ConversationListRow) convertView;
 
             // needs redraw due to animation changes
             if (conversationListRowItem.needsRedraw()) {
-                conversationListRowItem = new NewConversationListRow(parent.getContext());
+                conversationListRowItem = new ConversationListRow(parent.getContext());
             }
         }
 
@@ -371,7 +371,7 @@ public class ConversationListAdapter extends BaseAdapter {
             }
         });
 
-        final NewConversationListRow anchorView = conversationListRowItem;
+        final ConversationListRow anchorView = conversationListRowItem;
         conversationListRowItem.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -453,8 +453,8 @@ public class ConversationListAdapter extends BaseAdapter {
         }
         for (int i = 0; i < listView.getChildCount(); i++) {
             View view = listView.getChildAt(i);
-            if (view instanceof NewConversationListRow) {
-                ((NewConversationListRow) view).tearDown();
+            if (view instanceof ConversationListRow) {
+                ((ConversationListRow) view).tearDown();
             }
         }
     }
@@ -472,7 +472,7 @@ public class ConversationListAdapter extends BaseAdapter {
         View last = null;
         for (int i = 0; i < listView.getChildCount(); i++) {
             View view = listView.getChildAt(i);
-            if (view instanceof NewConversationListRow || view instanceof ConversationListArchivedBorderRow) {
+            if (view instanceof ConversationListRow || view instanceof ConversationListArchivedBorderRow) {
                 if (first == null) {
                     first = view;
                 }
@@ -487,8 +487,8 @@ public class ConversationListAdapter extends BaseAdapter {
         // collect all needed animators
         // run once through the list of all displayed items
         for (int i = 0; i < listView.getChildCount(); i++) {
-            if (listView.getChildAt(i) instanceof NewConversationListRow) {
-                final NewConversationListRow row = (NewConversationListRow) listView.getChildAt(i);
+            if (listView.getChildAt(i) instanceof ConversationListRow) {
+                final ConversationListRow row = (ConversationListRow) listView.getChildAt(i);
                 // needs to be called - this view cant be used as a convertView no more
                 row.redraw();
 

@@ -898,7 +898,6 @@
     <string name="location_sharing__missing_play_services">Google Play Services is needed for location sharing</string>
 
     <!-- From SyncEngine -->
-    <string name="zms_empty_conversation_name">Group conversation</string>
     <string name="new_reg__phone_signup__create_account">Create an account</string>
 
     <!-- OTR -->
@@ -1147,7 +1146,7 @@
     <plurals name="conversation_list__new_likes_count">
         <item quantity="other">%1$s ♥</item>
     </plurals>
-    <string name="conversation_list__unsent_message_long">⚠ Unsent message️</string>
+    <string name="conversation_list__unsent_message_long">⚠ Unsent message</string>
     <string name="conversation_list__unsent_message_short">⚠</string>
 
     <string name="conversation_list__shared__image">Shared a picture</string>

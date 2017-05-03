@@ -244,7 +244,7 @@
         <ignore path="src/main/res/layout/view_toolbar*"/>
         <ignore path="src/main/res/drawable/conversation*"/>
         <ignore path="src/main/res/layout/conv_badge.xml"/>
-        <ignore path="src/main/res/layout/new_conv_list_item.xml"/>
+        <ignore path="src/main/res/layout/conv_list_item.xml"/>
         <ignore path="src/main/res/layout/view_conv_list_top.xml"/>
         <ignore path="src/main/res/layout/view_conversation_avatar.xml"/>
 
@@ -278,7 +278,7 @@
         <ignore path="src/main/res/layout/view_custom*"/>
         <ignore path="src/main/res/layout/view_toolbar*"/>
         <ignore path="src/main/res/layout/conv_badge.xml"/>
-        <ignore path="src/main/res/layout/new_conv_list_item.xml"/>
+        <ignore path="src/main/res/layout/conv_list_item.xml"/>
         <ignore path="src/main/res/layout/view_conv_list_top.xml"/>
         <ignore path="src/main/res/layout/view_conversation_avatar.xml"/>
     </issue>

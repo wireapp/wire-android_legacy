@@ -56,5 +56,8 @@
     <item type="dimen" format="float" name="ephemeral__accent__primary_alpha__dark_theme">0.32</item>
     <item type="dimen" format="float" name="ephemeral__accent__secondary_alpha">0.08</item>
     <item type="dimen" format="float" name="ephemeral__accent__timer_alpha">0.24</item>
+
+    <item name="conversation_avatar_alpha_active" format="float" type="dimen">1</item>
+    <item name="conversation_avatar_alpha_inactive" format="float" type="dimen">0.25</item>
 </resources>
 

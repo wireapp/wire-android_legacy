@@ -255,4 +255,8 @@ class ImageFragment extends BaseFragment[ImageFragment.Container] with FragmentH
     }).start()
     background.animate.alpha(1f).setDuration(openAnimationBackgroundDuration).setInterpolator(new Quart.EaseOut).start()
   }
+
+  override protected def onPreDetach() = {
+    getControllerFactory.getSingleImageController.hideSingleImage()
+  }
 }

@@ -62,9 +62,8 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
   def setGlyph(glyphId: Int, backgroundId: Int = R.drawable.conversation_badge): Unit = {
     setVisibility(View.VISIBLE)
     glyphView.setVisibility(View.VISIBLE)
-    textView.setVisibility(View.INVISIBLE)
+    textView.setVisibility(View.GONE)
     setBackground(getDrawable(backgroundId))
-    textView.setText("")
     glyphView.setText(glyphId)
   }
 
