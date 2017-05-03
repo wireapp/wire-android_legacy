@@ -49,7 +49,7 @@ import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache.BitmapRequest.Regular
 import com.waz.utils.LoggedTry
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.utils.wrappers.{AndroidIntentUtil, ContextBuilder, Intent}
+import com.waz.utils.wrappers.{AndroidIntentUtil, Context, Intent}
 import com.waz.zclient.calling.controllers.GlobalCallingController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.IntentUtils.getNotificationAppLaunchIntent
@@ -161,12 +161,12 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
 
   }
 
-  private def silenceIntent(convId: ConvId) = pendingIntent(SilenceRequestCode, CallService.silenceIntent(ContextBuilder.wrap(cxt), convId))
+  private def silenceIntent(convId: ConvId) = pendingIntent(SilenceRequestCode, CallService.silenceIntent(Context.wrap(cxt), convId))
 
-  private def leaveIntent(convId: ConvId) = pendingIntent(LeaveRequestCode, CallService.leaveIntent(ContextBuilder.wrap(cxt), convId))
+  private def leaveIntent(convId: ConvId) = pendingIntent(LeaveRequestCode, CallService.leaveIntent(Context.wrap(cxt), convId))
 
-  private def joinIntent(convId: ConvId) = pendingIntent(JoinRequestCode, CallService.joinIntent(ContextBuilder.wrap(cxt), convId))
-  private def joinGroupIntent(convId: ConvId) = pendingIntent(JoinRequestCode, CallService.joinGroupIntent(ContextBuilder.wrap(cxt), convId))
+  private def joinIntent(convId: ConvId) = pendingIntent(JoinRequestCode, CallService.joinIntent(Context.wrap(cxt), convId))
+  private def joinGroupIntent(convId: ConvId) = pendingIntent(JoinRequestCode, CallService.joinGroupIntent(Context.wrap(cxt), convId))
 
   private def pendingIntent(reqCode: Int, intent: Intent) = PendingIntent.getService(cxt, reqCode, AndroidIntentUtil.unwrap(intent), PendingIntent.FLAG_UPDATE_CURRENT)
 }

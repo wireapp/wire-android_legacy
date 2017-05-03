@@ -202,6 +202,11 @@ class ImageFragment extends BaseFragment[ImageFragment.Container] with FragmentH
     val openAnimationDuration = getResources.getInteger(R.integer.single_image_message__open_animation__duration)
     val openAnimationBackgroundDuration = getResources.getInteger(R.integer.framework_animation_duration_short)
 
+    if (!clickedImage.getBackground.isInstanceOf[ImageAssetDrawable]) {
+      imageViewPager.setVisibility(View.VISIBLE)
+      background.setAlpha(1f)
+      return
+    }
     val imagePadding = clickedImage.getBackground.asInstanceOf[ImageAssetDrawable].padding.currentValue.getOrElse(Offset.Empty)
     val clickedImageHeight = clickedImage.getHeight - imagePadding.t - imagePadding.b
     val clickedImageWidth = clickedImage.getWidth - imagePadding.l - imagePadding.r
