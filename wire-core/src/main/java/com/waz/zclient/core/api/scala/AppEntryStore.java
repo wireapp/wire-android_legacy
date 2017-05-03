@@ -107,7 +107,7 @@ public class AppEntryStore implements IAppEntryStore, ErrorsList.ErrorListener {
     private Invitations.PersonalToken invitationToken;
     private RegistrationEventContext registrationEventContext;
 
-    private boolean isFirstSignInOnDevice = false;
+    private boolean isFirstSignInOnDevice = true;
 
     private UpdateListener selfUpdateListener = new UpdateListener() {
         @Override
@@ -522,7 +522,11 @@ public class AppEntryStore implements IAppEntryStore, ErrorsList.ErrorListener {
                 setRegistrationContext(RegistrationEventContext.PERSONAL_INVITE_PHONE);
                 break;
             case FIRST_LOGIN:
-                appEntryStateCallback.onShowFirstLaunchPage();
+                if (isFirstSignInOnDevice) {
+                    appEntryStateCallback.onShowFirstLaunchPage();
+                } else {
+                    setState(AppEntryState.LOGGED_IN);
+                }
                 break;
         }
     }
@@ -617,15 +621,16 @@ public class AppEntryStore implements IAppEntryStore, ErrorsList.ErrorListener {
 
     @Override
     public void setSignInPhone(final String countryCode, final String phone, final ErrorCallback errorCallback) {
-        setAndStoreCountryCode(countryCode);
-        setAndStorePhone(phone);
         try {
             AccountsStorage storage = getAccountsStorage();
             isFirstSignInOnDevice = storage == null || !Await.result(storage.findByPhone(phone),
-                    Duration.create(1, TimeUnit.SECONDS)).isDefined();
+                Duration.create(1, TimeUnit.SECONDS)).isDefined();
         } catch (Exception e) {
-            isFirstSignInOnDevice = false;
+            isFirstSignInOnDevice = true;
         }
+
+        setAndStoreCountryCode(countryCode);
+        setAndStorePhone(phone);
         zMessagingApi.requestPhoneConfirmationCode(countryCode + phone,
                                                    KindOfAccess.LOGIN,
                                                    new ZMessagingApi.PhoneConfirmationCodeRequestListener() {
@@ -1073,14 +1078,15 @@ public class AppEntryStore implements IAppEntryStore, ErrorsList.ErrorListener {
 
     @Override
     public void signInWithEmail(String email, String password, final ErrorCallback errorCallback) {
-        setAndStoreEmail(email);
         try {
             AccountsStorage storage = getAccountsStorage();
             isFirstSignInOnDevice = storage == null ||
-                    !Await.result(storage.findByEmail(email), Duration.create(1, TimeUnit.SECONDS)).isDefined();
+                !Await.result(storage.findByEmail(email), Duration.create(1, TimeUnit.SECONDS)).isDefined();
         } catch (Exception e) {
-            isFirstSignInOnDevice = false;
+            isFirstSignInOnDevice = true;
         }
+
+        setAndStoreEmail(email);
         this.password = password;
         ignoreSelfUpdates = true;
         zMessagingApi.login(CredentialsFactory.emailCredentials(email, password),
