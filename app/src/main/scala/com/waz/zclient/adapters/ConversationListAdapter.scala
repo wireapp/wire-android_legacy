@@ -65,6 +65,11 @@ class ConversationListAdapter(context: Context)(implicit injector: Injector, eve
     _ => notifyDataSetChanged()
   }
 
+  val itemCount = for {
+     _ <- conversations
+     _ <- incomingRequests
+  } yield getItemCount
+
   private def getConversation(position: Int): Option[ConversationData] = {
     conversations.currentValue.fold(Option.empty[ConversationData]){ convs =>
       convs.lift(position)
