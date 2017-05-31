@@ -18,11 +18,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
              android:layout_width="match_parent"
              android:layout_height="match_parent"
              xmlns:app="http://schemas.android.com/apk/res-auto"
-    >
+              android:orientation="vertical">
 
     <com.waz.zclient.views.conversationlist.ConversationListTopToolbar
         android:id="@+id/conversation_list_top_toolbar"
@@ -31,156 +31,57 @@
         android:layout_height="?attr/actionBarSize"
         />
 
-    <LinearLayout
-        android:id="@+id/ll__conversation_list__no_contacts"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/wire__padding__huge"
-        android:layout_marginRight="@dimen/wire__padding__huge"
-        android:layout_gravity="center"
-        android:orientation="vertical">
-
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/no_conversation_in_list__header"
-            android:textAllCaps="true"
-            android:textColor="@color/text__primary_dark"
-            android:textSize="@dimen/wire__text_size__small"
-            android:gravity="center"
-            android:layout_gravity="center"
-            app:font="@string/wire__typeface__medium" />
-
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/wire__padding__small"
-            android:text="@string/no_conversation_in_list__message"
-            android:textAllCaps="true"
-            android:gravity="center"
-            android:layout_gravity="center"
-            android:textColor="@color/text__primary_dark"
-            android:textSize="@dimen/wire__text_size__small"
-            app:font="@string/wire__typeface__light" />
-    </LinearLayout>
-
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        >
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            >
-
-            <!-- Archiving Box -->
-            <LinearLayout
-                android:id="@+id/ll__archiving_container"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/list__archived_box_height"
-                android:layout_gravity="bottom"
-                android:orientation="horizontal"
-                android:background="@color/list_archive_box__background_color"
-                >
-
-                <com.waz.zclient.ui.text.GlyphTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_marginLeft="@dimen/framework__general__left_padding"
-                    android:gravity="center_vertical"
-                    android:text="@string/glyph__archive"
-                    android:textColor="@color/list__archived_box__icon_text_color"
-                    android:textSize="@dimen/list__archived_box__icon_text_size"
-                    />
-
-                <com.waz.zclient.ui.text.TypefaceTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_marginLeft="@dimen/list__archived_left_margin"
-                    android:gravity="center_vertical"
-                    android:text="@string/number_of_conversations_string"
-                    android:textColor="@color/list__archived_box__font__text_color"
-                    android:textSize="@dimen/list__archived_box__text_size"
-                    app:font="@string/list__archived_box__font"
-                    />
-
-            </LinearLayout>
-
-            <com.waz.zclient.pages.main.conversationlist.views.listview.SwipeListView
-                android:id="@+id/conversation_list_view"
-                android:layout_marginTop="?attr/actionBarSize"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                />
-
-
-        </FrameLayout>
-
-        <com.waz.zclient.pages.main.conversationlist.views.ListActionsView
-            android:id="@+id/lav__conversation_list_actions"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/conversation_list__action_view__height"
-            />
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <LinearLayout
-            android:id="@+id/ll__conversation_list__hint_container"
-            android:layout_width="match_parent"
+            android:id="@+id/ll__conversation_list__no_contacts"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/conversation_list__hint__margin_top"
-            android:layout_gravity="bottom"
-            android:layoutDirection="ltr"
+            android:layout_marginLeft="@dimen/wire__padding__huge"
+            android:layout_marginRight="@dimen/wire__padding__huge"
+            android:layout_gravity="center"
             android:orientation="vertical"
-            >
+            android:visibility="gone">
 
-            <ImageView
-                android:layout_width="@dimen/conversation_list__hint__marker_size"
-                android:layout_height="@dimen/conversation_list__hint__marker_size"
-                android:layout_marginLeft="@dimen/wire__padding__big"
-                android:rotation="180"
-                android:background="@drawable/shape_participant_dialog_marker"
-                />
-
-            <LinearLayout
-                android:layout_width="match_parent"
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/tooltip_background"
-                android:paddingTop="@dimen/wire__padding__regular"
-                android:paddingRight="@dimen/wire__padding__regular"
-                android:paddingLeft="@dimen/wire__padding__regular"
-                android:paddingBottom="@dimen/wire__padding__regular"
-                android:layout_marginRight="@dimen/wire__padding__small"
-                android:layout_marginLeft="@dimen/wire__padding__small"
-                android:layout_marginBottom="@dimen/wire__padding__small"
-                >
+                android:text="@string/no_conversation_in_list__header"
+                android:textAllCaps="true"
+                android:textColor="@color/text__primary_dark"
+                android:textSize="@dimen/wire__text_size__small"
+                android:gravity="center"
+                android:layout_gravity="center"
+                app:font="@string/wire__typeface__medium" />
 
-                <com.waz.zclient.ui.text.TypefaceTextView
-                    android:id="@+id/chttv__conversation_list__hint_header"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/wire__padding__small"
-                    android:gravity="left"
-                    android:textColor="@color/text__primary_light"
-                    android:textSize="@dimen/wire__text_size__regular"
-                    android:text="@string/conversation_list__hint_header"
-                    app:font="@string/wire__typeface__medium"
-                    />
-
-                <com.waz.zclient.ui.text.TypefaceTextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="left"
-                    android:textColor="@color/text__primary_light"
-                    android:textSize="@dimen/wire__text_size__regular"
-                    android:text="@string/conversation_list__hint_text"
-                    app:font="@string/wire__typeface__light"
-                    />
-            </LinearLayout>
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__small"
+                android:text="@string/no_conversation_in_list__message"
+                android:textAllCaps="true"
+                android:gravity="center"
+                android:layout_gravity="center"
+                android:textColor="@color/text__primary_dark"
+                android:textSize="@dimen/wire__text_size__small"
+                app:font="@string/wire__typeface__light" />
         </LinearLayout>
 
-    </LinearLayout>
+        <com.waz.zclient.pages.main.conversationlist.views.listview.SwipeListView
+            android:id="@+id/conversation_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            />
 
-</FrameLayout>
+    </FrameLayout>
+
+    <com.waz.zclient.pages.main.conversationlist.views.ListActionsView
+        android:id="@+id/lav__conversation_list_actions"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/conversation_list__action_view__height"
+        />
+
+</LinearLayout>

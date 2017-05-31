@@ -55,6 +55,7 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
     val adapter = new ConversationListAdapter(getContext)
     val topToolbar = ViewUtils.getView(view, R.id.conversation_list_top_toolbar).asInstanceOf[ConversationListTopToolbar]
     val listActionsView = ViewUtils.getView(view, R.id.lav__conversation_list_actions).asInstanceOf[ListActionsView]
+    val emptyConversationsView = ViewUtils.getView(view, R.id.ll__conversation_list__no_contacts).asInstanceOf[View]
 
     conversationListView.setLayoutManager(new LinearLayoutManager(getContext))
     conversationListView.setAdapter(adapter)
@@ -71,21 +72,9 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
     adapter.onConversationLongClick { handleItemLongClick(_, conversationListView) }
     adapter.setMaxAlpha(ResourceUtils.getResourceFloat(getResources, R.dimen.list__swipe_max_alpha))
 
-    val layoutNoConversations = ViewUtils.getView(view, R.id.ll__conversation_list__no_contacts).asInstanceOf[View]
-    layoutNoConversations.setVisibility(View.GONE)
-
-    val archivingContainer = ViewUtils.getView(view, R.id.ll__archiving_container).asInstanceOf[View]
-    archivingContainer.setVisibility(View.GONE)
-
-    val hintContainer = ViewUtils.getView(view, R.id.ll__conversation_list__hint_container).asInstanceOf[View]
-    hintContainer.setVisibility(View.GONE)
-
     listActionsView.setCallback(new Callback {
       override def onAvatarPress() = {
         getControllerFactory.getPickUserController.showPickUser(IPickUserController.Destination.CONVERSATION_LIST, null)
-        val hintVisible: Boolean = hintContainer != null && hintContainer.getVisibility == View.VISIBLE
-        getActivity.asInstanceOf[BaseActivity].injectJava(classOf[GlobalTrackingController]).tagEvent(new OpenedContactsEvent(hintVisible))
-        getControllerFactory.getOnboardingController.hideConversationListHint()
       }
 
       override def onArchivePress() = {
@@ -96,6 +85,13 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
 
     adapter.currentMode.on(Threading.Ui) { mode =>
       topToolbar.title.setText(mode.nameId)
+    }
+
+    adapter.itemCount.on(Threading.Ui) {
+      case 0 =>
+        emptyConversationsView.setVisibility(View.VISIBLE)
+      case _ =>
+        emptyConversationsView.setVisibility(View.GONE)
     }
 
     init(adapter, listActionsView, topToolbar)
