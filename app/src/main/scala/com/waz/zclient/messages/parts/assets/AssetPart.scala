@@ -31,7 +31,7 @@ import com.waz.zclient.controllers.global.AccentColorController
 import com.waz.zclient.messages.ClickableViewPart
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.parts.ImagePartView
-import com.waz.zclient.messages.parts.assets.DeliveryState.{Downloading, OtherUploading}
+import com.waz.zclient.messages.parts.assets.DeliveryState.{Downloading, OtherUploading, DownloadFailed}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{StringUtils, _}
 import com.waz.zclient.views.ImageAssetDrawable
@@ -55,10 +55,12 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper { self =>
   val asset = controller.assetSignal(message)
   val deliveryState = DeliveryState(message, asset)
   val completed = deliveryState.map(_ == DeliveryState.Complete)
+  // if the download failed we will retry it after some time, so in practice downloading is always in progress
+  val downloadIndicatorVisible = deliveryState.map(state => state == OtherUploading || state == Downloading || state == DownloadFailed)
   val expired = message map { m => m.isEphemeral && m.expired }
   val accentColorController = inject[AccentColorController]
 
-  val assetBackground = new AssetBackground(deliveryState.map(state => state == OtherUploading || state == Downloading), expired, accentColorController.accentColor)
+  val assetBackground = new AssetBackground(downloadIndicatorVisible, expired, accentColorController.accentColor)
 
   setBackground(assetBackground)
 
