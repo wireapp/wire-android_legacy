@@ -48,8 +48,8 @@ import net.xpece.android.support.preference.RingtonePreference;
 import net.xpece.android.support.preference.SwitchPreference;
 
 
-public class OptionsPreferences extends BasePreferenceFragment<OptionsPreferences.Container> implements SharedPreferences.OnSharedPreferenceChangeListener,
-                                                                                                        RequestPermissionsObserver {
+public class OptionsPreferences extends BasePreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener,
+                                                                          RequestPermissionsObserver {
 
     private Preference.OnPreferenceChangeListener bindPreferenceSummaryToValueListener = new PreferenceSummaryChangeListener();
     private RingtonePreference ringtonePreference;
@@ -195,9 +195,6 @@ public class OptionsPreferences extends BasePreferenceFragment<OptionsPreference
             preference.setSummary(RingtonePreference.getRingtoneTitle(context, uri));
             return true;
         }
-    }
-
-    public interface Container {
     }
 
     @Override

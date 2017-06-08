@@ -27,7 +27,7 @@ import com.waz.zclient.ZApplication;
 import com.waz.zclient.pages.BasePreferenceFragment;
 import com.waz.zclient.utils.DebugUtils;
 
-public class AboutPreferences extends BasePreferenceFragment<AboutPreferences.Container> {
+public class AboutPreferences extends BasePreferenceFragment {
 
     private static final int A_BUNCH_OF_CLICKS_TO_PREVENT_ACCIDENTAL_TRIGGERING = 10;
     private int versionClickCounter;
@@ -84,8 +84,5 @@ public class AboutPreferences extends BasePreferenceFragment<AboutPreferences.Co
         } catch (PackageManager.NameNotFoundException e) {
             return "";
         }
-    }
-
-    public interface Container {
     }
 }

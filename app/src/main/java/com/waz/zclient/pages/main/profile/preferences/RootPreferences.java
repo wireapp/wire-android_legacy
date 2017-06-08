@@ -42,8 +42,8 @@ import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.utils.IntentUtils;
 import com.waz.zclient.utils.StringUtils;
 
-public class RootPreferences extends BasePreferenceFragment<RootPreferences.Container> implements AvsOptionsDialogFragment.Container,
-                                                                                                  AccentColorObserver {
+public class RootPreferences extends BasePreferenceFragment implements AvsOptionsDialogFragment.Container,
+                                                                       AccentColorObserver {
 
     public static final String TAG = RootPreferences.class.getSimpleName();
     private BadgeablePreferenceScreenLike devicesPreferenceScreenLike;
@@ -179,8 +179,5 @@ public class RootPreferences extends BasePreferenceFragment<RootPreferences.Cont
         startActivity(Intent.createChooser(sharingIntent, getString(R.string.people_picker__invite__share_details_dialog)));
         ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedGenericInviteMenuEvent(OpenedGenericInviteMenuEvent.EventContext.SETTINGS));
         ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).onApplicationScreen(ApplicationScreen.SEND_GENERIC_INVITE_MENU);
-    }
-
-    public interface Container {
     }
 }

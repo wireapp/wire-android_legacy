@@ -44,8 +44,7 @@ import net.xpece.android.support.preference.PreferenceCategory;
 import net.xpece.android.support.preference.SwitchPreference;
 import timber.log.Timber;
 
-public class DeviceDetailPreferences extends BasePreferenceFragment<DeviceDetailPreferences.Container>
-    implements RemoveDevicePreferenceDialogFragment.Container {
+public class DeviceDetailPreferences extends BasePreferenceFragment implements RemoveDevicePreferenceDialogFragment.Container {
 
     public static final String TAG = DeviceDetailPreferences.class.getName();
     public static final String PREFS_OTR_CLIENT = "PREFS_OTR_CLIENT";
@@ -260,6 +259,4 @@ public class DeviceDetailPreferences extends BasePreferenceFragment<DeviceDetail
         getActivity().onBackPressed();
     }
 
-    public interface Container {
-    }
 }

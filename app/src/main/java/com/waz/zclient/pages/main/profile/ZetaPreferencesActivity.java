@@ -65,17 +65,8 @@ import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
 import timber.log.Timber;
 
-public class ZetaPreferencesActivity extends BasePreferenceActivity implements AccountPreferences.Container,
-                                                                               AdvancedPreferences.Container,
-                                                                               OptionsPreferences.Container,
-                                                                               SupportPreferences.Container,
-                                                                               AboutPreferences.Container,
-                                                                               DeveloperPreferences.Container,
-                                                                               DevicesPreferences.Container,
-                                                                               DeviceDetailPreferences.Container,
-                                                                               ConversationStoreObserver,
+public class ZetaPreferencesActivity extends BasePreferenceActivity implements ConversationStoreObserver,
                                                                                ZMessagingApiStoreObserver,
-                                                                               RootPreferences.Container,
                                                                                ProfileStoreObserver,
                                                                                AccentColorObserver,
                                                                                CameraFragment.Container {

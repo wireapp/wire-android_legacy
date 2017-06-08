@@ -51,15 +51,15 @@ import com.waz.zclient.utils.ViewUtils;
 
 import net.xpece.android.support.preference.EditTextPreference;
 
-public class AccountPreferences extends BasePreferenceFragment<AccountPreferences.Container> implements ProfileStoreObserver,
-                                                                                                        SharedPreferences.OnSharedPreferenceChangeListener,
-                                                                                                        VerifyPhoneNumberPreferenceFragment.Container,
-                                                                                                        VerifyEmailPreferenceFragment.Container,
-                                                                                                        AddEmailAndPasswordPreferenceDialogFragment.Container,
-                                                                                                        ChangeEmailPreferenceDialogFragment.Container,
-                                                                                                        AddPhoneNumberPreferenceDialogFragment.Container,
-                                                                                                        ChangeUsernamePreferenceDialogFragment.Container,
-                                                                                                        AccentColorObserver {
+public class AccountPreferences extends BasePreferenceFragment implements ProfileStoreObserver,
+                                                                          SharedPreferences.OnSharedPreferenceChangeListener,
+                                                                          VerifyPhoneNumberPreferenceFragment.Container,
+                                                                          VerifyEmailPreferenceFragment.Container,
+                                                                          AddEmailAndPasswordPreferenceDialogFragment.Container,
+                                                                          ChangeEmailPreferenceDialogFragment.Container,
+                                                                          AddPhoneNumberPreferenceDialogFragment.Container,
+                                                                          ChangeUsernamePreferenceDialogFragment.Container,
+                                                                          AccentColorObserver {
 
     public static final String TAG = AccountPreferences.class.getName();
     private EditTextPreference namePreference;
@@ -455,8 +455,5 @@ public class AccountPreferences extends BasePreferenceFragment<AccountPreference
     @Override
     public void onUsernameChanged(String username) {
         onMyUsernameHasChanged(username);
-    }
-
-    public interface Container {
     }
 }

@@ -37,7 +37,7 @@ import com.waz.zclient.controllers.tracking.events.otr.ViewedOwnOtrClientsEvent;
 import com.waz.zclient.pages.BasePreferenceFragment;
 import com.waz.zclient.tracking.GlobalTrackingController;
 
-public class DevicesPreferences extends BasePreferenceFragment<DevicesPreferences.Container> {
+public class DevicesPreferences extends BasePreferenceFragment {
 
     public static final String TAG = DevicesPreferences.class.getName();
 
@@ -210,8 +210,5 @@ public class DevicesPreferences extends BasePreferenceFragment<DevicesPreference
         Preference preference = new Preference(getActivity());
         preference.setSummary(getString(R.string.pref_devices_warning_summary));
         preferenceGroup.addPreference(preference);
-    }
-
-    public interface Container {
     }
 }

@@ -21,7 +21,7 @@ import android.os.Bundle;
 import com.waz.zclient.R;
 import com.waz.zclient.pages.BasePreferenceFragment;
 
-public class SupportPreferences extends BasePreferenceFragment<SupportPreferences.Container> {
+public class SupportPreferences extends BasePreferenceFragment {
 
     public static SupportPreferences newInstance(String rootKey, Bundle extras) {
         SupportPreferences f = new SupportPreferences();
@@ -35,8 +35,5 @@ public class SupportPreferences extends BasePreferenceFragment<SupportPreference
     public void onCreatePreferences2(Bundle savedInstanceState, String rootKey) {
         super.onCreatePreferences2(savedInstanceState, rootKey);
         addPreferencesFromResource(R.xml.preferences_support);
-    }
-
-    public interface Container {
     }
 }

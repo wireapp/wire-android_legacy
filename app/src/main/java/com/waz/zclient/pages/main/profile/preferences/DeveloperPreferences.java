@@ -34,7 +34,7 @@ import com.waz.zclient.utils.DebugUtils;
 import timber.log.Timber;
 
 
-public class DeveloperPreferences extends BasePreferenceFragment<DeveloperPreferences.Container> {
+public class DeveloperPreferences extends BasePreferenceFragment {
 
     public static final String TAG = DeveloperPreferences.class.getName();
     private Preference lastCallSessionIdPreference;
@@ -138,8 +138,5 @@ public class DeveloperPreferences extends BasePreferenceFragment<DeveloperPrefer
             lastCallSessionIdPreference.setSummary(lastCallSessionId);
         }
         return null;
-    }
-
-    public interface Container {
     }
 }

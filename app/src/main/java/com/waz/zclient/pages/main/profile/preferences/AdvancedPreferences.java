@@ -30,7 +30,7 @@ import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.utils.DebugUtils;
 import timber.log.Timber;
 
-public class AdvancedPreferences extends BasePreferenceFragment<AdvancedPreferences.Container> {
+public class AdvancedPreferences extends BasePreferenceFragment {
 
     private Preference debugReportPreference;
 
@@ -83,8 +83,5 @@ public class AdvancedPreferences extends BasePreferenceFragment<AdvancedPreferen
             }
         }
         return event;
-    }
-
-    public interface Container {
     }
 }

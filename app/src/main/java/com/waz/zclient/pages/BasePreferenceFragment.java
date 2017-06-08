@@ -17,16 +17,15 @@
  */
 package com.waz.zclient.pages;
 
-import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.CallSuper;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.preference.XpPreferenceFragment;
 import android.text.TextUtils;
 import android.view.View;
+
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.ServiceContainer;
 import com.waz.zclient.ZApplication;
@@ -35,27 +34,13 @@ import com.waz.zclient.controllers.userpreferences.UserPreferencesController;
 import com.waz.zclient.core.controllers.tracking.events.Event;
 import com.waz.zclient.core.stores.IStoreFactory;
 import com.waz.zclient.tracking.GlobalTrackingController;
+
 import net.xpece.android.support.preference.PreferenceDividerDecoration;
 
-public abstract class BasePreferenceFragment<T> extends XpPreferenceFragment implements ServiceContainer,
-                                                                                        SharedPreferences.OnSharedPreferenceChangeListener {
+public abstract class BasePreferenceFragment extends XpPreferenceFragment implements ServiceContainer,
+                                                                                     SharedPreferences.OnSharedPreferenceChangeListener {
 
     protected PreferenceManager preferenceManager;
-    private T container;
-
-    @Override
-    public final void onAttach(Activity activity) {
-        super.onAttach(activity);
-        Fragment fragment = getParentFragment();
-        if (fragment != null) {
-            container = (T) fragment;
-        } else {
-            container = (T) activity;
-        }
-        onPostAttach(activity);
-    }
-
-    protected void onPostAttach(Activity activity) { }
 
     @Override
     @CallSuper
@@ -83,26 +68,13 @@ public abstract class BasePreferenceFragment<T> extends XpPreferenceFragment imp
     @Override
     public void onStop() {
         preferenceManager.getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
-        super.onStart();
-    }
-
-    @Override
-    public final void onDetach() {
-        onPreDetach();
-        container = null;
-        super.onDetach();
-    }
-
-    protected void onPreDetach() {}
-
-    public final T getContainer() {
-        return container;
+        super.onStop();
     }
 
     @Override
     public void onDestroy() {
         preferenceManager = null;
-        super.onDestroyView();
+        super.onDestroy();
     }
 
     @Override
