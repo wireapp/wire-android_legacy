@@ -41,7 +41,7 @@ import com.waz.api.User;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.LaunchActivity;
 import com.waz.zclient.OnBackPressedListener;
-import com.waz.zclient.PreferencesActivity;
+import com.waz.zclient.preferences.PreferencesActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.confirmation.ConfirmationCallback;

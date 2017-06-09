@@ -61,6 +61,7 @@ import com.waz.zclient.pages.main.connectivity.ConnectivityFragment
 import com.waz.zclient.pages.main.grid.GridFragment
 import com.waz.zclient.pages.main.{MainPhoneFragment, MainTabletFragment}
 import com.waz.zclient.pages.startup.UpdateFragment
+import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.tracking.{GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.PhoneUtils.PhoneState
 import com.waz.zclient.utils.StringUtils.TextDrawing

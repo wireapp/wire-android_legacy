@@ -23,7 +23,8 @@ import com.waz.model.MessageId
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
-import com.waz.zclient.{Injectable, Injector, PreferencesActivity}
+import com.waz.zclient.preferences.PreferencesActivity
+import com.waz.zclient.{Injectable, Injector}
 
 class ScreenController(implicit injector: Injector, context: Context) extends Injectable {
 

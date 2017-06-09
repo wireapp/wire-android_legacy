@@ -20,12 +20,12 @@ package com.waz.zclient.preferences
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.support.annotation.{CallSuper, Nullable}
-import android.support.v7.preference.XpPreferenceFragment
+import android.support.v7.preference.{Preference, XpPreferenceFragment}
 import android.view.View
 import com.waz.zclient.controllers.userpreferences.UserPreferencesController
 import com.waz.zclient.core.controllers.tracking.events.Event
 import com.waz.zclient.tracking.GlobalTrackingController
-import com.waz.zclient.{BaseActivity, FragmentHelper, ServiceContainer, ZApplication}
+import com.waz.zclient._
 import net.xpece.android.support.preference.PreferenceDividerDecoration
 
 import scala.util.Try
@@ -73,4 +73,6 @@ abstract class BasePreferenceFragment extends XpPreferenceFragment
 
   def injectJava[A](dependencyClass: Class[A]): A =
     Try(getActivity.asInstanceOf[BaseActivity].injectJava[A](dependencyClass)).toOption.getOrElse(null.asInstanceOf[A])
+
+  def findPref[P <: Preference](keyId: Int) = findPreference(getString(keyId))
 }

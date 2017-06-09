@@ -31,7 +31,7 @@ import com.waz.api.Self;
 import com.waz.api.User;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.BuildConfig;
-import com.waz.zclient.PreferencesActivity;
+import com.waz.zclient.preferences.PreferencesActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.tracking.events.connect.OpenedGenericInviteMenuEvent;

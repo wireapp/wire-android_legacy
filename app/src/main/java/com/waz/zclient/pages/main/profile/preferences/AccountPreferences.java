@@ -27,7 +27,7 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
 import com.waz.zclient.BaseActivity;
-import com.waz.zclient.PreferencesActivity;
+import com.waz.zclient.preferences.PreferencesActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.tracking.events.profile.ResetPassword;

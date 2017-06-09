@@ -75,7 +75,7 @@ import com.waz.utils.wrappers.URI;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.OnBackPressedListener;
-import com.waz.zclient.PreferencesActivity;
+import com.waz.zclient.preferences.PreferencesActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.WireContext;
 import com.waz.zclient.camera.controllers.GlobalCameraController;

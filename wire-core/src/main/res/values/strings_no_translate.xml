@@ -153,9 +153,6 @@
     <string translatable="false" name="pref_dev_otr_only_summary">Send only encrypted messages</string>
     <string translatable="false" name="pref_dev_version_info_id_key">USER_PREFS_DEV_VERSIONS_ID</string>
     <string translatable="false" name="pref_dev_version_info_id_title">Versions</string>
-    <string translatable="false" name="pref_dev_net_debug_key">USER_PREFS_DEV_NET_DEBUG_ID</string>
-    <string translatable="false" name="pref_dev_net_debug_title">Press for network info</string>
-    <string translatable="false" name="pref_dev_net_debug_summary">Do it!</string>
     <string translatable="false" name="pref_dev_verbose_logging_enabled">Verbose logging enabled</string>
     <string translatable="false" name="pref_dev_verbose_logging_disabled">Verbose logging disabled</string>
 
