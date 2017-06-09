@@ -24,7 +24,7 @@ import android.support.v7.preference.Preference;
 import android.widget.Toast;
 import com.waz.zclient.R;
 import com.waz.zclient.ZApplication;
-import com.waz.zclient.pages.BasePreferenceFragment;
+import com.waz.zclient.preferences.BasePreferenceFragment;
 import com.waz.zclient.utils.DebugUtils;
 
 public class AboutPreferences extends BasePreferenceFragment {

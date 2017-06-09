@@ -20,11 +20,11 @@ package com.waz.zclient.preferences
 import android.content.Context
 import android.support.v7.preference.EditTextPreference
 import android.util.AttributeSet
+import com.waz.ZLog.ImplicitTag._
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
-import com.waz.zclient.{Injectable, WireContext}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.returning
+import com.waz.zclient.PreferenceHelper
 
 import scala.concurrent.duration._
 import scala.util.Try
@@ -34,13 +34,9 @@ import scala.util.Try
   *
   * This interval is no longer stored in SharedPreferences, so we need to modify loading and persisting logic.
   */
-class PingIntervalPref(context: Context, attrs: AttributeSet)
-    extends EditTextPreference(context, attrs) with Injectable {
+class PingIntervalPref(context: Context, attrs: AttributeSet) extends EditTextPreference(context, attrs) with PreferenceHelper {
 
   setDialogLayoutResource(android.support.v7.preference.R.layout.preference_dialog_edittext)
-
-  lazy implicit val wContext = WireContext(context)
-  lazy implicit val injector = wContext.injector
 
   val pingIntervalService = inject[Signal[ZMessaging]].map(_.pingInterval)
   val interval = returning(pingIntervalService.flatMap(_.interval))(_.disableAutowiring())

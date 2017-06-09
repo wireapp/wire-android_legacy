@@ -38,8 +38,8 @@ import com.waz.zclient.core.controllers.tracking.events.settings.ChangedImageDow
 import com.waz.zclient.core.controllers.tracking.events.settings.ChangedSendButtonSettingEvent;
 import com.waz.zclient.core.controllers.tracking.events.settings.ChangedThemeEvent;
 import com.waz.zclient.media.SoundController;
-import com.waz.zclient.pages.BasePreferenceFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.WireRingtonePreferenceDialogFragment;
+import com.waz.zclient.preferences.BasePreferenceFragment;
 import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.PermissionUtils;
@@ -128,7 +128,7 @@ public class OptionsPreferences extends BasePreferenceFragment implements Shared
                    key.equals(textTonePreference.getKey()) ||
                    key.equals(pingPreference.getKey())) {
 
-            SoundController ctrl = inject(SoundController.class);
+            SoundController ctrl = injectJava(SoundController.class);
             if (ctrl != null) {
                 ctrl.setCustomSoundUrisFromPreferences(sharedPreferences);
             }
@@ -151,7 +151,7 @@ public class OptionsPreferences extends BasePreferenceFragment implements Shared
             event = new ChangedSendButtonSettingEvent(sendButtonIsOn);
         } else if (key.equals(getString(R.string.pref_options_vbr_key))) {
             boolean vbrOn = sharedPreferences.getBoolean(key, false);
-            CallPermissionsController ctrl = inject(CallPermissionsController.class);
+            CallPermissionsController ctrl = injectJava(CallPermissionsController.class);
             if (ctrl != null) {
                 ctrl.setVariableBitRateMode(vbrOn);
             }

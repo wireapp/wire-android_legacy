@@ -29,7 +29,7 @@ import android.widget.Toast;
 import com.waz.zclient.R;
 import com.waz.zclient.core.controllers.tracking.events.Event;
 import com.waz.zclient.core.stores.network.INetworkStore;
-import com.waz.zclient.pages.BasePreferenceFragment;
+import com.waz.zclient.preferences.BasePreferenceFragment;
 import com.waz.zclient.utils.DebugUtils;
 import timber.log.Timber;
 
@@ -68,8 +68,8 @@ public class DeveloperPreferences extends BasePreferenceFragment {
                 return true;
             }
         });
-        final String lastCallSessionId = preferenceManager.getSharedPreferences()
-                                                          .getString(getString(R.string.pref_dev_avs_last_call_session_id_key),
+        final String lastCallSessionId = getPreferenceManager().getSharedPreferences()
+                                                               .getString(getString(R.string.pref_dev_avs_last_call_session_id_key),
                                                                      getString(R.string.pref_dev_avs_last_call_session_id_not_available));
         lastCallSessionIdPreference.setSummary(lastCallSessionId);
 
@@ -113,7 +113,7 @@ public class DeveloperPreferences extends BasePreferenceFragment {
 
     private void copyLastCallSessionIdToClipboard() {
         final String lastCallSessionIdKey = getString(R.string.pref_dev_avs_last_call_session_id_key);
-        String lastCallSessionId = preferenceManager.getSharedPreferences().getString(lastCallSessionIdKey,
+        String lastCallSessionId = getPreferenceManager().getSharedPreferences().getString(lastCallSessionIdKey,
                                                                                       getString(R.string.pref_dev_avs_last_call_session_id_not_available));
         ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText(getString(R.string.pref_dev_avs_last_call_session_id_title),

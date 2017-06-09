@@ -34,7 +34,7 @@ import com.waz.api.Verification;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.tracking.events.otr.ViewedOwnOtrClientsEvent;
-import com.waz.zclient.pages.BasePreferenceFragment;
+import com.waz.zclient.preferences.BasePreferenceFragment;
 import com.waz.zclient.tracking.GlobalTrackingController;
 
 public class DevicesPreferences extends BasePreferenceFragment {

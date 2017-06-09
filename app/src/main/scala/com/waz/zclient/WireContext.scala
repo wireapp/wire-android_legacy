@@ -21,12 +21,12 @@ import android.annotation.SuppressLint
 import android.app.{Activity, Service}
 import android.content.{Context, ContextWrapper}
 import android.support.v4.app.{Fragment, FragmentActivity}
+import android.support.v7.preference.Preference
 import android.view.{LayoutInflater, View, ViewGroup, ViewStub}
 import com.waz.ZLog
 import com.waz.ZLog._
 import com.waz.utils.events._
 import com.waz.utils.returning
-import net.xpece.android.support.preference.Preference
 
 import scala.language.implicitConversions
 

@@ -19,7 +19,7 @@ package com.waz.zclient.pages.main.profile.preferences;
 
 import android.os.Bundle;
 import com.waz.zclient.R;
-import com.waz.zclient.pages.BasePreferenceFragment;
+import com.waz.zclient.preferences.BasePreferenceFragment;
 
 public class SupportPreferences extends BasePreferenceFragment {
 
