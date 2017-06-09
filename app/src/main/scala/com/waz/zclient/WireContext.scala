@@ -193,4 +193,14 @@ class ViewHolder[T <: View](id: Int, finder: ViewFinder) {
 trait PreferenceHelper extends Preference with Injectable with EventContext {
   lazy implicit val wContext = WireContext(getContext)
   lazy implicit val injector = wContext.injector
+
+  override def onAttached(): Unit = {
+    super.onAttached()
+    onContextStart()
+  }
+
+  override def onDetached(): Unit = {
+    onContextStop()
+    super.onDetached()
+  }
 }

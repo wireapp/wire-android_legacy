@@ -21,13 +21,14 @@ import android.content.Context
 import android.util.AttributeSet
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
+import com.waz.utils.returning
 import com.waz.zclient._
+import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.ImageAssetDrawable
 import com.waz.zclient.views.ImageController.{ImageSource, WireImage}
-import com.waz.zclient.utils.ContextUtils._
 import net.xpece.android.support.preference.Preference
 
-class PicturePreference(context: Context, attrs: AttributeSet, defStyleAttr: Int, defStyleRes: Int) extends Preference(context, attrs, defStyleAttr, defStyleRes) with PreferenceHelper{
+class PicturePreference(context: Context, attrs: AttributeSet, defStyleAttr: Int, defStyleRes: Int) extends Preference(context, attrs, defStyleAttr, defStyleRes) with PreferenceHelper {
   def this(context: Context, attrs: AttributeSet, defStyleAttr: Int) = this(context, attrs, defStyleAttr, R.style.Preference_Material)
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, R.attr.preferenceStyle)
   def this(context: Context) = this(context, null)
@@ -39,7 +40,9 @@ class PicturePreference(context: Context, attrs: AttributeSet, defStyleAttr: Int
   }))
 
   private val diameter = getDimenPx(R.dimen.pref_account_icon_size)
-  val drawable = new ImageAssetDrawable(wireImage, ImageAssetDrawable.ScaleType.CenterInside, ImageAssetDrawable.RequestBuilder.Round)
-  drawable.setBounds(0, 0, diameter, diameter)
-  setIcon(drawable)
+
+  returning(new ImageAssetDrawable(wireImage, ImageAssetDrawable.ScaleType.CenterInside, ImageAssetDrawable.RequestBuilder.Round)) { d =>
+    d.setBounds(0, 0, diameter, diameter)
+    setIcon(d)
+  }
 }

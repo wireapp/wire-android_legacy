@@ -17,6 +17,7 @@
  */
 package com.waz.zclient
 
+import android.content.Context
 import android.content.res.TypedArray
 import android.graphics.LightingColorFilter
 import android.graphics.drawable.LayerDrawable
@@ -90,8 +91,6 @@ package object utils {
   }
 
   object ContextUtils {
-
-    import android.content.Context
 
     def getColor(resId: Int)(implicit context: Context) = ContextCompat.getColor(context, resId)
 

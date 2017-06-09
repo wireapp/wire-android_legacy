@@ -37,12 +37,12 @@ import com.waz.api.User;
 import com.waz.api.Verification;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
+import com.waz.zclient.PreferencesActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.tracking.events.otr.UnverifiedOtherOtrClientEvent;
 import com.waz.zclient.controllers.tracking.events.otr.VerifiedOtherOtrClientEvent;
 import com.waz.zclient.pages.BaseFragment;
-import com.waz.zclient.pages.main.profile.ZetaPreferencesActivity;
 import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.utils.TextViewUtils;
 import com.waz.zclient.ui.views.e2ee.OtrSwitch;
@@ -263,7 +263,7 @@ public class SingleOtrClientFragment extends BaseFragment<SingleOtrClientFragmen
                 clipboard.setPrimaryClip(clip);
                 break;
             case R.id.ttv__single_otr_client__my_devices:
-                startActivity(ZetaPreferencesActivity.getOtrDevicesPreferencesIntent(getActivity()));
+                startActivity(PreferencesActivity.getOtrDevicesPreferencesIntent(getActivity()));
                 break;
             case R.id.ttv__single_otr_client__how_to_link:
                 getContainer().onOpenUrl(getString(R.string.url_otr_learn_how));

@@ -75,6 +75,7 @@ import com.waz.utils.wrappers.URI;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.OnBackPressedListener;
+import com.waz.zclient.PreferencesActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.WireContext;
 import com.waz.zclient.camera.controllers.GlobalCameraController;
@@ -132,7 +133,6 @@ import com.waz.zclient.pages.main.conversation.views.TypingIndicatorView;
 import com.waz.zclient.pages.main.conversationlist.ConversationListAnimation;
 import com.waz.zclient.pages.main.conversationpager.controller.SlidingPaneObserver;
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController;
-import com.waz.zclient.pages.main.profile.ZetaPreferencesActivity;
 import com.waz.zclient.pages.main.profile.camera.CameraContext;
 import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
@@ -1642,7 +1642,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                     return;
                 }
                 if (onlySelfChanged) {
-                    getContext().startActivity(ZetaPreferencesActivity.getOtrDevicesPreferencesIntent(getContext()));
+                    getContext().startActivity(PreferencesActivity.getOtrDevicesPreferencesIntent(getContext()));
                 } else {
                     final View anchorView = ViewUtils.getView(getActivity(), R.id.cursor_menu_item_participant);
                     getControllerFactory().getConversationScreenController().showParticipants(anchorView, true);

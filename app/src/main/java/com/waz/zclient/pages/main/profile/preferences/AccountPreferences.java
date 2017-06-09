@@ -27,6 +27,7 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
 import com.waz.zclient.BaseActivity;
+import com.waz.zclient.PreferencesActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.tracking.events.profile.ResetPassword;
@@ -35,7 +36,6 @@ import com.waz.zclient.core.controllers.tracking.events.session.LoggedOutEvent;
 import com.waz.zclient.core.controllers.tracking.events.settings.EditedUsernameEvent;
 import com.waz.zclient.core.stores.profile.ProfileStoreObserver;
 import com.waz.zclient.pages.BasePreferenceFragment;
-import com.waz.zclient.pages.main.profile.ZetaPreferencesActivity;
 import com.waz.zclient.pages.main.profile.camera.CameraContext;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.AccentColorPreferenceDialogFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.AddEmailAndPasswordPreferenceDialogFragment;
@@ -84,7 +84,7 @@ public class AccountPreferences extends BasePreferenceFragment implements Profil
     public void onCreatePreferences2(Bundle savedInstanceState, String rootKey) {
         super.onCreatePreferences2(savedInstanceState, rootKey);
         addPreferencesFromResource(R.xml.preferences_account);
-        boolean shouldShowUsernameEdit = getArguments().getBoolean(ZetaPreferencesActivity.SHOW_USERNAME_EDIT);
+        boolean shouldShowUsernameEdit = getArguments().getBoolean(PreferencesActivity.ShowUsernameEdit());
         namePreference = (EditTextPreference) findPreference(getString(R.string.pref_account_name_key));
         namePreference.setOnEditTextCreatedListener(new EditTextPreference.OnEditTextCreatedListener() {
             @Override

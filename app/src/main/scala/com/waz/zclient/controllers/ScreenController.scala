@@ -23,8 +23,7 @@ import com.waz.model.MessageId
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
-import com.waz.zclient.pages.main.profile.ZetaPreferencesActivity
-import com.waz.zclient.{Injectable, Injector}
+import com.waz.zclient.{Injectable, Injector, PreferencesActivity}
 
 class ScreenController(implicit injector: Injector, context: Context) extends Injectable {
 
@@ -32,7 +31,7 @@ class ScreenController(implicit injector: Injector, context: Context) extends In
   val conversationController = inject[IConversationScreenController]
 
   def openOtrDevicePreferences() =
-    context.startActivity(ZetaPreferencesActivity.getOtrDevicesPreferencesIntent(context))
+    context.startActivity(PreferencesActivity.getOtrDevicesPreferencesIntent(context))
 
   def showParticipants(anchorView: View, showDeviceTabIfSingle: Boolean = false) =
     conversationController.showParticipants(anchorView, showDeviceTabIfSingle)

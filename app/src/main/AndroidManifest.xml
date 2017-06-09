@@ -129,7 +129,7 @@
             />
 
         <activity
-            android:name=".pages.main.profile.ZetaPreferencesActivity"
+            android:name="com.waz.zclient.PreferencesActivity"
             android:hardwareAccelerated="true"
             android:theme="@style/Theme.Dark.Preferences"
             android:label="@string/settings_title"

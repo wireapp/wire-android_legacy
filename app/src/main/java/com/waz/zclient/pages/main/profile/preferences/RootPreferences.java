@@ -23,6 +23,7 @@ import android.os.Bundle;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.preference.PreferenceScreen;
+
 import com.waz.api.CoreList;
 import com.waz.api.InitListener;
 import com.waz.api.OtrClient;
@@ -30,13 +31,13 @@ import com.waz.api.Self;
 import com.waz.api.User;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.BuildConfig;
+import com.waz.zclient.PreferencesActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.tracking.events.connect.OpenedGenericInviteMenuEvent;
 import com.waz.zclient.controllers.tracking.screens.ApplicationScreen;
 import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.pages.BasePreferenceFragment;
-import com.waz.zclient.pages.main.profile.ZetaPreferencesActivity;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.AvsOptionsDialogFragment;
 import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.utils.IntentUtils;
@@ -121,9 +122,9 @@ public class RootPreferences extends BasePreferenceFragment implements AvsOption
         });
 
         if (savedInstanceState == null) {
-            boolean showOtrDevices = getArguments().getBoolean(ZetaPreferencesActivity.SHOW_OTR_DEVICES, false);
-            boolean showAccount = getArguments().getBoolean(ZetaPreferencesActivity.SHOW_ACCOUNT, false);
-            boolean showUsernameEdit = getArguments().getBoolean(ZetaPreferencesActivity.SHOW_USERNAME_EDIT);
+            boolean showOtrDevices = getArguments().getBoolean(PreferencesActivity.ShowOtrDevices(), false);
+            boolean showAccount = getArguments().getBoolean(PreferencesActivity.ShowAccount(), false);
+            boolean showUsernameEdit = getArguments().getBoolean(PreferencesActivity.ShowUsernameEdit());
 
             final PreferenceManager.OnNavigateToScreenListener navigateToScreenListener = getPreferenceManager().getOnNavigateToScreenListener();
             PreferenceScreen preference = null;

@@ -41,6 +41,7 @@ import com.waz.api.User;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.LaunchActivity;
 import com.waz.zclient.OnBackPressedListener;
+import com.waz.zclient.PreferencesActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.confirmation.ConfirmationCallback;
@@ -86,7 +87,6 @@ import com.waz.zclient.pages.main.participants.dialog.ParticipantsDialogFragment
 import com.waz.zclient.fragments.PickUserFragment;
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController;
 import com.waz.zclient.pages.main.pickuser.controller.PickUserControllerScreenObserver;
-import com.waz.zclient.pages.main.profile.ZetaPreferencesActivity;
 import com.waz.zclient.pages.main.profile.camera.CameraContext;
 import com.waz.zclient.pages.main.profile.camera.CameraFragment;
 import com.waz.zclient.tracking.GlobalTrackingController;
@@ -218,7 +218,7 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
                 getControllerFactory().getPickUserController().showPickUser(IPickUserController.Destination.CONVERSATION_LIST, null);
                 break;
             case IntentUtils.LOCALYTICS_DEEPLINK_SETTINGS:
-                startActivity(ZetaPreferencesActivity.getDefaultIntent(getActivity()));
+                startActivity(PreferencesActivity.getDefaultIntent(getActivity()));
                 break;
             case IntentUtils.LOCALYTICS_DEEPLINK_PROFILE:
                  getControllerFactory().getPickUserController().showUserProfile(getStoreFactory().getProfileStore().getSelfUser(),
@@ -1193,7 +1193,7 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
         getControllerFactory().getUsernameController().closeFirstAssignUsernameScreen();
         hideFirstAssignUsernameScreen();
         ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedUsernameSettingsEvent());
-        startActivity(ZetaPreferencesActivity.getUsernameEditPreferencesIntent(getActivity()));
+        startActivity(PreferencesActivity.getUsernameEditPreferencesIntent(getActivity()));
     }
 
     @Override

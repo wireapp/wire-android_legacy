@@ -39,13 +39,12 @@ import com.waz.zclient.pages.main.conversationlist.views.ListActionsView
 import com.waz.zclient.pages.main.conversationlist.views.ListActionsView.Callback
 import com.waz.zclient.pages.main.conversationlist.views.listview.SwipeListView
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
-import com.waz.zclient.pages.main.profile.ZetaPreferencesActivity
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.ResourceUtils
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.views.conversationlist.{ArchiveTopToolbar, ConversationListTopToolbar, NormalTopToolbar}
-import com.waz.zclient.{BaseActivity, FragmentHelper, OnBackPressedListener, R}
+import com.waz.zclient._
 import com.waz.zclient.utils.RichView
 
 abstract class ConversationListFragment extends BaseFragment[ConversationListFragment.Container] with FragmentHelper {
@@ -221,7 +220,7 @@ class NormalConversationFragment extends ConversationListFragment {
         listActionsView.setArchiveEnabled(archive)
     }
 
-    topToolbar.onRightButtonClick{ _ => startActivity(ZetaPreferencesActivity.getDefaultIntent(getContext)) }
+    topToolbar.onRightButtonClick{ _ => startActivity(PreferencesActivity.getDefaultIntent(getContext)) }
 
     incomingClients.on(Threading.Ui) {
       case (color, clients) =>
