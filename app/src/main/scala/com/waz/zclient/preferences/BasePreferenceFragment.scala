@@ -74,5 +74,5 @@ abstract class BasePreferenceFragment extends XpPreferenceFragment
   def injectJava[A](dependencyClass: Class[A]): A =
     Try(getActivity.asInstanceOf[BaseActivity].injectJava[A](dependencyClass)).toOption.getOrElse(null.asInstanceOf[A])
 
-  def findPref[P <: Preference](keyId: Int) = findPreference(getString(keyId))
+  def findPref[P <: Preference](keyId: Int): P = findPreference(getString(keyId)).asInstanceOf[P]
 }

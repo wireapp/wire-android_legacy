@@ -128,6 +128,10 @@ trait FragmentHelper extends Fragment with ViewFinder with Injectable with Event
     if (res != null) res.asInstanceOf[V]
     else getActivity.findViewById(id).asInstanceOf[V]
   }
+
+  def findById[V <: View](parent: View, id: Int) =
+    parent.findViewById(id).asInstanceOf[V]
+
   def view[V <: View](id: Int) = {
     val h = new ViewHolder[V](id, this)
     views ::= h

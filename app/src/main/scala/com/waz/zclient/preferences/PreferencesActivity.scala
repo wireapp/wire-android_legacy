@@ -34,6 +34,7 @@ import com.waz.api.ImageAsset
 import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences.CurrentAccountPref
 import com.waz.service.ZMessaging
+import com.waz.sync.queue.SyncContentUpdater.Add
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning

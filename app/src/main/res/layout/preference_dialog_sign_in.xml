@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2017 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginBottom="@dimen/prefs__dialog__margin_top_bottom"
+    android:layout_marginTop="@dimen/prefs__dialog__margin_top_bottom"
+    android:overScrollMode="ifContentScrolls"
+    tools:ignore="UnusedAttribute"
+    >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/sign_in_email_wrapper"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_margin="@dimen/prefs__dialog__padding"
+            >
+
+            <android.support.v7.widget.AppCompatEditText
+                android:id="@+id/sign_in_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:inputType="textEmailAddress"
+                />
+
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/sign_in_password_wrapper"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_margin="@dimen/prefs__dialog__padding"
+            >
+
+            <android.support.v7.widget.AppCompatEditText
+                android:id="@+id/sign_in_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:inputType="textPassword"
+                />
+
+        </android.support.design.widget.TextInputLayout>
+
+    </LinearLayout>
+
+
+
+</ScrollView>

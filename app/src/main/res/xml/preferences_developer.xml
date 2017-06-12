@@ -77,4 +77,10 @@
 
     </PreferenceCategory>
 
+    <Preference
+        android:key="@string/pref_dev_category_sign_in_account_key"
+        android:title="@string/pref_dev_category_sign_in_account_title"
+        android:summary="@string/pref_dev_category_sign_in_account_summary"
+        />
+
 </PreferenceScreen>

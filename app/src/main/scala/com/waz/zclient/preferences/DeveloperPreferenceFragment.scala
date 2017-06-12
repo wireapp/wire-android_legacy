@@ -20,6 +20,7 @@ package com.waz.zclient.preferences
 import android.content.{ClipData, ClipboardManager, Context}
 import android.os.Bundle
 import android.support.v7.preference.Preference
+import android.support.v7.preference.Preference.OnPreferenceClickListener
 import android.support.v7.preference.PreferenceFragmentCompat.ARG_PREFERENCE_ROOT
 import android.widget.Toast
 import com.waz.content.GlobalPreferences
@@ -27,11 +28,14 @@ import com.waz.content.Preferences.PrefKey
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.R
+import com.waz.zclient.preferences.dialogs.AccountSignInPreference
 import com.waz.zclient.utils.DebugUtils
 
 class DeveloperPreferenceFragment extends BasePreferenceFragment {
 
-  private lazy val lastCallSessionIdPreference = returning(findPref(R.string.pref_dev_avs_last_call_session_id_key)) { p =>
+  lazy val globalPrefs = inject[GlobalPreferences]
+
+  private lazy val lastCallSessionIdPreference = returning(findPref[Preference](R.string.pref_dev_avs_last_call_session_id_key)) { p =>
     p.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
       def onPreferenceClick(preference: Preference): Boolean = {
         copyLastCallSessionIdToClipboard()
@@ -43,12 +47,22 @@ class DeveloperPreferenceFragment extends BasePreferenceFragment {
       .getString(getString(R.string.pref_dev_avs_last_call_session_id_key), getString(R.string.pref_dev_avs_last_call_session_id_not_available)))
 
     //TODO make prefkey/preference method that takes in a context/resource id
-    inject[GlobalPreferences]
-      .preference(PrefKey[String](getString(R.string.pref_dev_avs_last_call_session_id_key))).signal.on(Threading.Ui)(p.setSummary)
-
+    globalPrefs.preference(PrefKey[String](getString(R.string.pref_dev_avs_last_call_session_id_key))).signal.on(Threading.Ui)(p.setSummary)
   }
 
-  private lazy val versionInfoPreference = returning(findPref(R.string.pref_dev_version_info_id_key))(_.setSummary(DebugUtils.getVersion(getContext)))
+  private lazy val versionInfoPreference = returning(findPref[Preference](R.string.pref_dev_version_info_id_key))(_.setSummary(DebugUtils.getVersion(getContext)))
+
+  private lazy val accountSignInPreference = returning(findPref[Preference](R.string.pref_dev_category_sign_in_account_key)) { p =>
+    p.setOnPreferenceClickListener(new OnPreferenceClickListener {
+      override def onPreferenceClick(preference: Preference): Boolean = {
+        getChildFragmentManager.beginTransaction
+          .add(new AccountSignInPreference, AccountSignInPreference.FragmentTag)
+          .addToBackStack(AccountSignInPreference.FragmentTag)
+          .commit
+        true
+      }
+    })
+  }
 
   override def onCreatePreferences2(savedInstanceState: Bundle, rootKey: String) = {
     super.onCreatePreferences2(savedInstanceState, rootKey)
@@ -57,6 +71,7 @@ class DeveloperPreferenceFragment extends BasePreferenceFragment {
     //trigger lazy initialisation
     lastCallSessionIdPreference
     versionInfoPreference
+    accountSignInPreference
   }
 
   private def copyLastCallSessionIdToClipboard() = {

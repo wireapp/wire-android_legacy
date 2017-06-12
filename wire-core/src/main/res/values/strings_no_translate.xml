@@ -171,5 +171,12 @@
     <string translatable="false" name="pref_dev_ws_foreground_summary">Enable to see Web Socket connection status in permanent notification</string>
     <string translatable="false" name="pref_dev_ws_foreground_title">Web Socket foreground service</string>
 
+    <!--Account preferences-->
+    <string translatable="false" name="pref_dev_category_sign_in_account_key">PREF_ACCOUNTS_SIGN_IN</string>
+    <string translatable="false" name="pref_dev_category_sign_in_account_title">Sign into account</string>
+    <string translatable="false" name="pref_dev_category_sign_in_account_summary">Sign into another account and switch to that one</string>
+
+
+
 </resources>
 
