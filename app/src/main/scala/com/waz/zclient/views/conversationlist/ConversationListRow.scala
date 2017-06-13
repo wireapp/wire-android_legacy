@@ -63,7 +63,6 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   implicit val executionContext = Threading.Background
   implicit val uiStorage = inject[UiStorage]
 
-  setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getDimenPx(R.dimen.conversation_list__row__height)))
   inflate(R.layout.conv_list_item)
 
   val zms = inject[Signal[ZMessaging]]
