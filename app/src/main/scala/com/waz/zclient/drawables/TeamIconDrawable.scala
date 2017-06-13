@@ -116,7 +116,13 @@ class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: 
   }
 
   def computeMatrix(bmWidth: Int, bmHeight: Int, bounds: Rect, matrix: Matrix): Unit = {
-    val scale = math.max(bounds.width.toFloat / bmWidth.toFloat, bounds.height.toFloat / bmHeight.toFloat)
+
+    val selectedOffset = if (selected)
+      (selectedDiameter + 2 * (borderGapWidth + borderWidth)).toFloat - selectedDiameter.toFloat
+    else
+      0.0f
+
+    val scale = math.max((bounds.width.toFloat - selectedOffset) / bmWidth.toFloat, (bounds.height.toFloat - selectedOffset) / bmHeight.toFloat)
     val dx = - (bmWidth * scale - bounds.width) / 2
     val dy = - (bmHeight * scale - bounds.height) / 2
 

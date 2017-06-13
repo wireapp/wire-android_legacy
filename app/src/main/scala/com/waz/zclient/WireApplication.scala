@@ -122,7 +122,7 @@ object WireApplication {
     bind [LikesController]           to new LikesController()
     bind [CollectionController]      to new CollectionController()
     bind [SharingController]         to new SharingController()
-    bind [TeamsAndUserController]    to new TeamsAndUserController()
+    bind [UserAccountsController]    to new UserAccountsController()
     bind [UiStorage]                 to new UiStorage()
 
     /**

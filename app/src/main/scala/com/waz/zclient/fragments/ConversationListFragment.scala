@@ -29,7 +29,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.adapters.ConversationListAdapter
-import com.waz.zclient.controllers.TeamsAndUserController
+import com.waz.zclient.controllers.UserAccountsController
 import com.waz.zclient.controllers.global.AccentColorController
 import com.waz.zclient.controllers.tracking.events.navigation.OpenedContactsEvent
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
@@ -53,7 +53,7 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
   implicit lazy val context = getContext
 
   val layoutId: Int
-  lazy val teamsAndUsersController = inject[TeamsAndUserController]
+  lazy val userAccountsController = inject[UserAccountsController]
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle) = {
     val view = inflater.inflate(layoutId, container, false)
@@ -77,13 +77,12 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
         }
       })
     }
+    userAccountsController.currentUser.on(Threading.Ui) { _ =>
+      conversationListView.scrollToPosition(0)
+    }
 
     adapter.onConversationClick { handleItemClick }
     adapter.onConversationLongClick { handleItemLongClick(_, conversationListView) }
-
-    teamsAndUsersController.currentTeamOrUser.on(Threading.Ui) { _ =>
-      conversationListView.scrollToPosition(0)
-    }
 
     init(view, adapter)
 
@@ -187,10 +186,9 @@ class NormalConversationFragment extends ConversationListFragment {
   lazy val hasConversationsAndArchive = for {
     z <- zms
     convs <- z.convsStorage.convsSignal
-    teamId <- teamsAndUsersController.currentTeamOrUser.map(_.fold(_ => None, t => Some(t.id)))
   } yield {
-    (convs.conversations.exists(c => !c.archived && !c.hidden && c.team == teamId),
-    convs.conversations.exists(c => c.archived && !c.hidden && c.team == teamId))
+    (convs.conversations.exists(c => !c.archived && !c.hidden),
+    convs.conversations.exists(c => c.archived && !c.hidden))
   }
 
 

@@ -37,7 +37,7 @@ import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.CallPermissionsController
-import com.waz.zclient.controllers.SharingController
+import com.waz.zclient.controllers.{SharingController, UserAccountsController}
 import com.waz.zclient.controllers.accentcolor.AccentColorChangeRequester
 import com.waz.zclient.controllers.calling.CallingObserver
 import com.waz.zclient.controllers.global.{AccentColorController, SelectionController}
@@ -92,6 +92,7 @@ class MainActivity extends BaseActivity
   lazy val accentColorController    = inject[AccentColorController]
   lazy val callPermissionController = inject[CallPermissionsController]
   lazy val selectionController      = inject[SelectionController]
+  lazy val userAccountsController   = inject[UserAccountsController]
 
   override def onAttachedToWindow() = {
     super.onAttachedToWindow()
@@ -423,16 +424,20 @@ class MainActivity extends BaseActivity
   }
 
   def onLogout() = {
-    info("onLogout")
-    getStoreFactory.reset()
-    getControllerFactory.getPickUserController.hideUserProfile()
-    getControllerFactory.getUserPreferencesController.reset()
-    getStoreFactory.getConversationStore.onLogout()
-    getControllerFactory.getNavigationController.resetPagerPositionToDefault()
-    val intent: Intent = new Intent(this, classOf[MainActivity])
-    intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK)
-    finish()
-    startActivity(intent)
+    userAccountsController.accounts.head.map{ accounts =>
+      if (accounts.isEmpty) {
+        info("onLogout")
+        getStoreFactory.reset()
+        getControllerFactory.getPickUserController.hideUserProfile()
+        getControllerFactory.getUserPreferencesController.reset()
+        getStoreFactory.getConversationStore.onLogout()
+        getControllerFactory.getNavigationController.resetPagerPositionToDefault()
+        val intent: Intent = new Intent(this, classOf[MainActivity])
+        intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK)
+        finish()
+        startActivity(intent)
+      }
+    }
   }
 
   def onForceClientUpdate() = openForceUpdatePage()

@@ -25,7 +25,7 @@ import android.widget.FrameLayout
 import com.waz.ZLog
 import com.waz.threading.Threading
 import com.waz.utils.events.EventStream
-import com.waz.zclient.controllers.TeamsAndUserController
+import com.waz.zclient.controllers.UserAccountsController
 import com.waz.zclient.drawables.ListSeparatorDrawable
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.views.CircleView
@@ -91,13 +91,13 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 
-  val controller = inject[TeamsAndUserController]
+  val controller = inject[UserAccountsController]
 
   glyphButton.setText(R.string.glyph__profile)
-  controller.teams.on(Threading.Ui) { teams =>
-    tabsContainer.setVisible(teams.nonEmpty)
-    title.setVisible(teams.isEmpty)
-    separatorDrawable.setDuration(if (teams.isEmpty) 0 else animationDuration)
+  controller.accounts.on(Threading.Ui) { accounts =>
+    tabsContainer.setVisible(accounts.nonEmpty)
+    title.setVisible(accounts.isEmpty)
+    separatorDrawable.setDuration(if (accounts.isEmpty) 0 else animationDuration)
     onTabsChanged(tabsContainer)
   }
 

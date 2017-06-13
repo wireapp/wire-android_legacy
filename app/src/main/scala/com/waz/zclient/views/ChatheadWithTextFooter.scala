@@ -29,7 +29,7 @@ import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.views.ChatheadView
-import com.waz.zclient.controllers.TeamsAndUserController
+import com.waz.zclient.controllers.UserAccountsController
 import com.waz.zclient.ui.text.{TextTransform, TypefaceTextView}
 import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.utils.ViewUtils
@@ -53,11 +53,9 @@ class ChatheadWithTextFooter(val context: Context, val attrs: AttributeSet, val 
   private val userId = Signal[UserId]()
   private val userInfo = for{
     z <- inject[Signal[ZMessaging]]
-    currentTeam <- inject[TeamsAndUserController].currentTeamOrUser.map(_.fold(_ => Option.empty[TeamData], Some(_)))
     uId <- userId
     data <- z.usersStorage.signal(uId)
-    guests <- Signal.future(currentTeam.fold(Future.successful(Set[UserId]()))(team => z.teams.findGuests(team.id)))
-  } yield (data, guests.contains(uId))
+  } yield (data, false) //TODO: this false means guest status
 
   setOrientation(LinearLayout.VERTICAL)
   initAttributes(attrs)

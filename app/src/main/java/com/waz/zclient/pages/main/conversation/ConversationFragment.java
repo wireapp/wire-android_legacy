@@ -80,7 +80,7 @@ import com.waz.zclient.R;
 import com.waz.zclient.WireContext;
 import com.waz.zclient.camera.controllers.GlobalCameraController;
 import com.waz.zclient.controllers.IControllerFactory;
-import com.waz.zclient.controllers.TeamsAndUserController;
+import com.waz.zclient.controllers.UserAccountsController;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.calling.CallingObserver;
 import com.waz.zclient.controllers.confirmation.ConfirmationCallback;
@@ -247,7 +247,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
             inflateCollectionIcon();
 
-            inject(TeamsAndUserController.class).setIsGroupListener(new ConvId(model.getId()), new Callback<Boolean>() {
+            inject(UserAccountsController.class).setIsGroupListener(new ConvId(model.getId()), new Callback<Boolean>() {
                 @Override
                 public void callback(Boolean isGroup) {
                     toolbar.getMenu().clear();

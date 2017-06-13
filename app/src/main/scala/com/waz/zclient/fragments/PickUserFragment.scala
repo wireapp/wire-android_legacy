@@ -48,7 +48,7 @@ import com.waz.zclient.controllers.permission.RequestPermissionsObserver
 import com.waz.zclient.controllers.tracking.events.connect.{EnteredSearchEvent, OpenedConversationEvent, OpenedGenericInviteMenuEvent, SentConnectRequestEvent}
 import com.waz.zclient.controllers.tracking.screens.ApplicationScreen
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
-import com.waz.zclient.controllers.{SearchState, SearchUserController, TeamsAndUserController}
+import com.waz.zclient.controllers.{SearchState, SearchUserController, UserAccountsController}
 import com.waz.zclient.core.controllers.tracking.attributes.ConversationType
 import com.waz.zclient.core.stores.conversation.{ConversationChangeRequester, InboxLoadRequester, OnInboxLoadedListener}
 import com.waz.zclient.core.stores.network.DefaultNetworkAction
@@ -144,6 +144,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
   private var genericInviteContainer: View = null
   private var genericInviteButton: ZetaButton = null
   private var searchBoxView: SearchEditText = null
+  private var toolbarTitle: TypefaceTextView = null
 
   private var currentTeam = Option.empty[TeamData]
   private var teamPermissions = Set[TeamMemberData.Permission]()
@@ -154,7 +155,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
   private lazy val zms = inject[Signal[ZMessaging]]
   private lazy val self = zms.flatMap(z => UserSignal(z.selfUserId))
   private lazy val trackingController = inject[GlobalTrackingController]
-  private lazy val teamsAndUserController = inject[TeamsAndUserController]
+  private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val accentColor = inject[AccentColorController].accentColor.map(_.getColor())
 
   private case class PickableUser(userId : UserId, userName: String) extends PickableElement {
@@ -221,11 +222,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
       }
     })
 
-    val teamId = teamsAndUserController.currentTeamOrUser.currentValue match {
-      case Some(Right(team)) => Some(team.id)
-      case _ => Option.empty[TeamId]
-    }
-    searchUserController = new SearchUserController(SearchState("", hasSelectedUsers = false, addingToConversation = addingToConversation, teamId))
+    searchUserController = new SearchUserController(SearchState("", hasSelectedUsers = false, addingToConversation = addingToConversation, None))
     searchUserController.setContacts(getStoreFactory.getZMessagingApiStore.getApi.getContacts)
     searchResultAdapter = new PickUsersAdapter(new SearchResultOnItemTouchListener(getActivity, this), this, searchUserController, getControllerFactory.getThemeController.isDarkTheme || !isAddingToConversation)
     searchResultRecyclerView = ViewUtils.getView(rootView, R.id.rv__pickuser__header_list_view)
@@ -282,8 +279,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
       conversationToolbar.setVisibility(View.GONE)
       startUiToolbar.setVisibility(View.VISIBLE)
       divider.setVisibility(View.GONE)
-      val title = teamsAndUserController.getCurrentUserOrTeamName
-      ViewUtils.getView(rootView, R.id.pickuser_title).asInstanceOf[TypefaceTextView].setText(title)
+      toolbarTitle = ViewUtils.getView(rootView, R.id.pickuser_title)
       searchBoxView.applyDarkTheme(true)
       startUiToolbar.inflateMenu(R.menu.toolbar_close_white)
       startUiToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
@@ -295,8 +291,10 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
           false
         }
       })
-      teamsAndUserController.currentTeamOrUser.on(Threading.Ui) {
-        case Right(_) => genericInviteContainer.setVisibility(View.GONE)
+      userAccountsController.currentUser.on(Threading.Ui) {
+        case Some(userData) =>
+          genericInviteContainer.setVisibility(View.GONE)
+          toolbarTitle.setText(userData.getDisplayName)
         case _ =>
       }
     }
@@ -327,19 +325,6 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
         false
       }
     })
-
-    (for {
-      z <- zms
-      team <- teamsAndUserController.currentTeamOrUser.map{
-        case Right(teamData) => Some(teamData)
-        case _ => Option.empty[TeamData]
-      }
-      memberData <- Signal.future(team.fold(Future.successful(Option.empty[TeamMemberData]))(team => z.teamMemberStorage.get((z.selfUserId, team.id))))
-    } yield (team, memberData)){
-      case (team, memberData) =>
-        currentTeam = team
-        teamPermissions = memberData.fold(Set[TeamMemberData.Permission]())(_.selfPermissions)
-    }
 
     rootView
   }
@@ -460,7 +445,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
   }
 
   private def createAndOpenConversation(users: Seq[UserId], requester: ConversationChangeRequester): Unit = {
-    teamsAndUserController.createAndOpenConversation(users.toArray, requester, getActivity.asInstanceOf[BaseActivity])
+    userAccountsController.createAndOpenConversation(users.toArray, requester, getActivity.asInstanceOf[BaseActivity])
     getControllerFactory.getPickUserController.hidePickUser(getCurrentPickerDestination, true)
   }
 

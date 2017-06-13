@@ -37,7 +37,7 @@ import com.waz.model.ConvId;
 import com.waz.model.UserId;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
-import com.waz.zclient.controllers.TeamsAndUserController;
+import com.waz.zclient.controllers.UserAccountsController;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.tracking.events.group.OpenedGroupActionEvent;
 import com.waz.zclient.controllers.tracking.events.otr.ViewedOtherOtrClientsEvent;
@@ -274,8 +274,8 @@ public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipan
             otrClientsModelObserver.clear();
             return;
         }
-        permissionToRemove = ((BaseActivity) getActivity()).injectJava(TeamsAndUserController.class).hasRemoveMemberPermission(new ConvId(conversation.getId()));
-        permissionToCreate = ((BaseActivity) getActivity()).injectJava(TeamsAndUserController.class).hasCreateConversationPermission();
+        permissionToRemove = ((BaseActivity) getActivity()).injectJava(UserAccountsController.class).hasRemoveMemberPermission(new ConvId(conversation.getId()));
+        permissionToCreate = ((BaseActivity) getActivity()).injectJava(UserAccountsController.class).hasCreateConversationPermission();
         final User updatedUser;
         if (conversation.getType() == IConversation.Type.ONE_TO_ONE) {
             updatedUser = conversation.getOtherParticipant();
@@ -418,7 +418,7 @@ public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipan
             } else {
                 getControllerFactory().getConversationScreenController().hideParticipants(true, false);
                 BaseActivity activity = (BaseActivity) getActivity();
-                activity.injectJava(TeamsAndUserController.class).createAndOpenConversation(
+                activity.injectJava(UserAccountsController.class).createAndOpenConversation(
                     new UserId[]{new UserId(user.getId())},
                     ConversationChangeRequester.START_CONVERSATION,
                     activity);
