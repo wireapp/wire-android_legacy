@@ -44,6 +44,7 @@ import com.waz.zclient.pages.main.profile.preferences.dialogs.ChangeUsernamePref
 import com.waz.zclient.pages.main.profile.preferences.dialogs.VerifyEmailPreferenceFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.VerifyPhoneNumberPreferenceFragment;
 import com.waz.zclient.preferences.BasePreferenceFragment;
+import com.waz.zclient.preferences.dialogs.PicturePreference;
 import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.utils.TextViewUtils;
 import com.waz.zclient.utils.StringUtils;
