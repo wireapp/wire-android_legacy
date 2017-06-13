@@ -26,8 +26,8 @@ import android.support.v7.preference.Preference;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
+
 import com.waz.zclient.BaseActivity;
-import com.waz.zclient.preferences.PreferencesActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.tracking.events.profile.ResetPassword;
@@ -36,7 +36,6 @@ import com.waz.zclient.core.controllers.tracking.events.session.LoggedOutEvent;
 import com.waz.zclient.core.controllers.tracking.events.settings.EditedUsernameEvent;
 import com.waz.zclient.core.stores.profile.ProfileStoreObserver;
 import com.waz.zclient.pages.main.profile.camera.CameraContext;
-import com.waz.zclient.pages.main.profile.preferences.dialogs.AccentColorPreferenceDialogFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.AddEmailAndPasswordPreferenceDialogFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.AddPhoneNumberPreferenceDialogFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.ChangeEmailPreferenceDialogFragment;
@@ -44,6 +43,8 @@ import com.waz.zclient.pages.main.profile.preferences.dialogs.ChangeUsernamePref
 import com.waz.zclient.pages.main.profile.preferences.dialogs.VerifyEmailPreferenceFragment;
 import com.waz.zclient.pages.main.profile.preferences.dialogs.VerifyPhoneNumberPreferenceFragment;
 import com.waz.zclient.preferences.BasePreferenceFragment;
+import com.waz.zclient.preferences.PreferencesActivity;
+import com.waz.zclient.preferences.dialogs.AccentColorPickerFragment;
 import com.waz.zclient.preferences.dialogs.PicturePreference;
 import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.utils.TextViewUtils;
@@ -203,9 +204,8 @@ public class AccountPreferences extends BasePreferenceFragment implements Profil
             public boolean onPreferenceClick(Preference preference) {
                 getChildFragmentManager().beginTransaction()
                                          .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-                                         .add(AccentColorPreferenceDialogFragment.newInstance(getStoreFactory().getProfileStore().getAccentColor()),
-                                              AccentColorPreferenceDialogFragment.TAG)
-                                         .addToBackStack(AccentColorPreferenceDialogFragment.TAG)
+                                         .add(new AccentColorPickerFragment(), AccentColorPickerFragment.fragmentTag())
+                                         .addToBackStack(AccentColorPickerFragment.fragmentTag())
                                          .commit();
                 return true;
             }
