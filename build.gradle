@@ -56,7 +56,7 @@ task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
 licenseFormat.dependsOn licenseFormatAndroid
 
 ext {
-    majorVersion = "2.35."
+    majorVersion = "2.36."
 
     compileSdkVersion = 24
     // When upgrading minimum sdk you might want to search for occurrences of Build.VERSION_CODES.
@@ -87,7 +87,7 @@ ext {
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '3.5.31@aar'
+    customAvsVersion = '3.5.32@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
