@@ -67,7 +67,7 @@ class AccountSignInPreference extends DialogFragment with FragmentHelper {
     returning(alertDialogBuilder.create)(_.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE))
   }
 
-  private def handleInput() {
+  private def handleInput() = {
     import com.waz.threading.Threading.Implicits.Background
 
     val email    = EmailAddress(emailLayout.getEditText.getText.toString.trim)
