@@ -31,7 +31,7 @@ import com.waz.zclient.R
 import com.waz.zclient.preferences.dialogs.AccountSignInPreference
 import com.waz.zclient.utils.DebugUtils
 
-class DeveloperPreferenceFragment extends BasePreferenceFragment {
+class DeveloperPreferences extends BasePreferenceFragment {
 
   lazy val globalPrefs = inject[GlobalPreferences]
 
@@ -89,9 +89,9 @@ class DeveloperPreferenceFragment extends BasePreferenceFragment {
   }
 }
 
-object DeveloperPreferenceFragment {
+object DeveloperPreferences {
   def newInstance(rootKey: String, extras: Bundle) = {
-    returning (new DeveloperPreferenceFragment) { f =>
+    returning (new DeveloperPreferences) { f =>
       f.setArguments(returning(if (extras == null) new Bundle else new Bundle(extras)) { b =>
         b.putString(ARG_PREFERENCE_ROOT, rootKey)
       })
