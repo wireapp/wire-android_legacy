@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2017 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/profile_user_name"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:gravity="center"
+        android:textSize="@dimen/wire__text_size__medium"
+        app:font="@string/wire__typeface__regular"
+        />
+
+    <ImageView
+        android:id="@+id/profile_user_picture"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="@dimen/wire__padding__16"
+        />
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/profile_user_handle"
+        android:layout_width="match_parent"
+        android:gravity="center"
+        android:textSize="@dimen/wire__text_size__regular"
+        android:layout_height="56dp"
+        app:font="@string/wire__typeface__regular"
+        />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        />
+
+    <com.waz.zclient.pages.main.profile.preferences.views.DevicesButtonPreference
+        android:id="@+id/profile_devices"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        app:iconStart="@drawable/ic_action_devices"
+        app:title="Devices"
+        />
+
+    <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+        android:id="@+id/profile_settings"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        app:title="Settings"
+        app:iconStart="@drawable/ic_action_advanced"
+        />
+
+    <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+        android:id="@+id/profile_invite"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@color/accent_blue"
+        app:title="Invite People to Join Wire"
+        app:iconStart="@drawable/ic_action_about"
+        />
+
+</LinearLayout>

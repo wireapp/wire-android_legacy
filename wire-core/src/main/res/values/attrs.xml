@@ -244,6 +244,13 @@
         <attr name="hintText" format="string"/>
     </declare-styleable>
 
+    <declare-styleable name="TextButton">
+        <attr name="title" format="string"/>
+        <attr name="subtitle" format="string"/>
+        <attr name="iconStart" format="reference"/>
+        <attr name="iconEnd" format="reference"/>
+    </declare-styleable>
+
     <attr name="wireDividerColor" format="color"/>
     <attr name="wireDividerColorSolid" format="color"/>
 

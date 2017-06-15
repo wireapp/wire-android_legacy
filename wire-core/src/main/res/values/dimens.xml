@@ -868,4 +868,6 @@
     <dimen name="team_tab_drawable_diameter">18dp</dimen>
     <dimen name="team_tab_drawable_gap">2dp</dimen>
     <dimen name="team_tab_drawable_border">1.5dp</dimen>
+
+    <dimen name="preference_button_height">56dp</dimen>
 </resources>

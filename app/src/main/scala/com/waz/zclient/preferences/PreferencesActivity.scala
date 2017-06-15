@@ -41,6 +41,7 @@ import com.waz.zclient.core.controllers.tracking.events.settings.ChangedProfileP
 import com.waz.zclient.pages.main.profile.camera.{CameraContext, CameraFragment}
 import com.waz.zclient.pages.main.profile.preferences._
 import com.waz.zclient.pages.main.profile.preferences.dialogs.WireRingtonePreferenceDialogFragment
+import com.waz.zclient.pages.main.profile.preferences.fragments.{PreferencesViewsManager, ProfileFragment}
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.{LayoutSpec, ViewUtils}
 import com.waz.zclient.{ActivityHelper, BaseActivity, MainActivity, R}
@@ -88,7 +89,8 @@ class PreferencesActivity extends BaseActivity
     titleSwitcher //initialise title switcher
 
     if (LayoutSpec.isPhone(this)) ViewUtils.lockScreenOrientation(Configuration.ORIENTATION_PORTRAIT, this)
-    if (savedInstanceState == null) getSupportFragmentManager.beginTransaction.add(R.id.content, RootPreferences.newInstance(null, getIntent.getExtras), RootPreferences.TAG).commit
+    //if (savedInstanceState == null) getSupportFragmentManager.beginTransaction.add(R.id.content, new ProfileFragment, ProfileFragment.Tag).commit
+    if (savedInstanceState == null) PreferencesViewsManager(this).openView(ProfileFragment.Tag)
 
     currentAccountPref.signal.onChanged { _ =>
       startActivity(returning(new Intent(this, classOf[MainActivity]))(_.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK)))
