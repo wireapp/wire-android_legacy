@@ -22,7 +22,6 @@ import android.os.Bundle
 import android.support.v4.app.FragmentManager.POP_BACK_STACK_INCLUSIVE
 import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.support.v7.preference.Preference
-import android.support.v7.preference.Preference.{OnPreferenceChangeListener, OnPreferenceClickListener}
 import android.support.v7.preference.PreferenceFragmentCompat._
 import android.text.TextUtils
 import android.view.View
@@ -44,8 +43,8 @@ import com.waz.zclient.preferences.dialogs.{AccentColorPickerFragment, ChangeHan
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.ui.utils.TextViewUtils.getBoldText
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.StringUtils
 import com.waz.zclient.utils.ViewUtils.showAlertDialog
+import com.waz.zclient.utils.{RichPreference, StringUtils}
 import net.xpece.android.support.preference.EditTextPreference
 import net.xpece.android.support.preference.EditTextPreference.OnEditTextCreatedListener
 
@@ -65,15 +64,13 @@ class AccountPreferences extends BasePreferenceFragment
   lazy val selfAcc  = zms.map(_.account)
 
   lazy val emailPref = returning(findPref[Preference](R.string.pref_account_email_key)) { p =>
-    p.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-      def onPreferenceClick(preference: Preference): Boolean = {
-        Option(preference.getTitle).map(_.toString).filter(_.nonEmpty) match {
-          case Some(email) if email != getString(R.string.pref_account_add_email_title) => changeEmail(email)
-          case _ => addEmailAndPassword()
-        }
-        true
+
+    p.onClick {
+      Option(p.getTitle).map(_.toString).filter(_.nonEmpty) match {
+        case Some(email) if email != getString(R.string.pref_account_add_email_title) => changeEmail(email)
+        case _ => addEmailAndPassword()
       }
-    })
+    }
 
     (for {
       email    <- selfUser.map(_.email.map(_.str).filter(_.nonEmpty))
@@ -90,15 +87,12 @@ class AccountPreferences extends BasePreferenceFragment
   }
 
   lazy val phonePref = returning(findPref[Preference](R.string.pref_account_phone_key)) { p =>
-    p.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-      def onPreferenceClick(preference: Preference): Boolean = {
-        Option(preference.getTitle).map(_.toString).filter(_.nonEmpty) match {
-          case Some(ph) if ph != getString(R.string.pref_account_add_phone_title) => changePhoneNumber(ph)
-          case _ => addPhoneNumber()
-        }
-        true
+    p.onClick {
+      Option(p.getTitle).map(_.toString).filter(_.nonEmpty) match {
+        case Some(ph) if ph != getString(R.string.pref_account_add_phone_title) => changePhoneNumber(ph)
+        case _ => addPhoneNumber()
       }
-    })
+    }
 
     selfUser.map(_.phone.map(_.str).filter(_.nonEmpty)).on(Threading.Ui) {
       case Some(ph) =>
@@ -122,27 +116,27 @@ class AccountPreferences extends BasePreferenceFragment
           })
         }
       })
-      p.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-        def onPreferenceChange(preference: Preference, newValue: Any): Boolean = {
-          val newName = newValue.asInstanceOf[String].trim
-          if (TextUtils.getTrimmedLength(newName) < getInt(R.integer.account_preferences__min_name_length)) {
-            showAlertDialog(
-              getActivity, null,
-              getString(R.string.pref_account_edit_name_empty_warning),
-              getString(R.string.pref_account_edit_name_empty_verify),
-              new DialogInterface.OnClickListener() {
-                def onClick(dialog: DialogInterface, which: Int) = dialog.dismiss()
-              }, false)
-            false
-          } else {
-            for {
-              z <- zms.head
-              _ <- z.users.updateSelf(name = Some(newName))
-            } yield {}
-            false
-          }
+
+      p.onChange { newValue =>
+        val newName = newValue.asInstanceOf[String].trim
+        if (TextUtils.getTrimmedLength(newName) < getInt(R.integer.account_preferences__min_name_length)) {
+          showAlertDialog(
+            getActivity, null,
+            getString(R.string.pref_account_edit_name_empty_warning),
+            getString(R.string.pref_account_edit_name_empty_verify),
+            new DialogInterface.OnClickListener() {
+              def onClick(dialog: DialogInterface, which: Int) = dialog.dismiss()
+            }, false)
+          false
+        } else {
+          for {
+            z <- zms.head
+            _ <- z.users.updateSelf(name = Some(newName))
+          } yield {}
+          false
         }
-      })
+      }
+
       selfUser.map(_.name).on(Threading.Ui) { name =>
         p.setTitle(name)
         p.setText(name)
@@ -152,15 +146,12 @@ class AccountPreferences extends BasePreferenceFragment
 
     //Username
     returning(findPref[Preference](R.string.pref_account_username_key)) { p =>
-      p.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-        def onPreferenceClick(preference: Preference): Boolean = {
-          selfUser.map(_.handle).head.map {
-            case Some(h) => changeHandle(h.string, cancellable = true)
-            case None =>
-          } (Threading.Ui)
-          true
-        }
-      })
+      p.onClick {
+        selfUser.map(_.handle).head.map {
+          case Some(h) => changeHandle(h.string, cancellable = true)
+          case None =>
+        }(Threading.Ui)
+      }
       selfUser.map(_.handle).on(Threading.Ui) {
         case Some(h) =>
           p.setTitle(StringUtils.formatHandle(h.string))
@@ -172,58 +163,35 @@ class AccountPreferences extends BasePreferenceFragment
     },
 
     //Reset password
-    returning(findPref[Preference](R.string.pref_account_password_key)) { p =>
-      p.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-        def onPreferenceClick(preference: Preference): Boolean = {
-          tracking.tagEvent(new ResetPassword(ResetPassword.Location.FROM_PROFILE))
-          false
-        }
-      })
+    returning(findPref[Preference](R.string.pref_account_password_key)) {
+      _.onClick(tracking.tagEvent(new ResetPassword(ResetPassword.Location.FROM_PROFILE)))
     },
 
     //Sign out
-    returning(findPref[Preference](R.string.pref_account_sign_out_key)) { p =>
-      p.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-        def onPreferenceClick(preference: Preference): Boolean = {
-          signOut()
-          true
-        }
-      })
+    returning(findPref[Preference](R.string.pref_account_sign_out_key)) {
+      _.onClick(signOut())
     },
 
     //Delete account
-    returning(findPref[Preference](R.string.pref_account_delete_key)) { p =>
-      p.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-        def onPreferenceClick(preference: Preference): Boolean = {
-          deleteAccount()
-          true
-        }
-      })
+    returning(findPref[Preference](R.string.pref_account_delete_key)) {
+      _.onClick(deleteAccount())
     },
 
     //Picture
-    returning(findPref[PicturePreference](R.string.pref_account_picture_key)) { p =>
-      p.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-        def onPreferenceClick(preference: Preference): Boolean = {
-          getControllerFactory.getCameraController.openCamera(CameraContext.SETTINGS)
-          true
-        }
-      })
+    returning(findPref[PicturePreference](R.string.pref_account_picture_key)) {
+      _.onClick(getControllerFactory.getCameraController.openCamera(CameraContext.SETTINGS))
     },
 
     //Accent color
     returning(findPref[ColorPreference](R.string.pref_account_color_key)) { p =>
-      p.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-        def onPreferenceClick(preference: Preference): Boolean = {
-          getChildFragmentManager
-            .beginTransaction
-            .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-            .add(new AccentColorPickerFragment, AccentColorPickerFragment.fragmentTag)
-            .addToBackStack(AccentColorPickerFragment.fragmentTag)
-            .commit
-          true
-        }
-      })
+      p.onClick {
+        getChildFragmentManager
+          .beginTransaction
+          .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+          .add(new AccentColorPickerFragment, AccentColorPickerFragment.fragmentTag)
+          .addToBackStack(AccentColorPickerFragment.fragmentTag)
+          .commit
+      }
       selfUser.map(_.accent).map(AccentColor(_).getColor()).on(Threading.Ui)(p.setAccentColor)
     },
 
