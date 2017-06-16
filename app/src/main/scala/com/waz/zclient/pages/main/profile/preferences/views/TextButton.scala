@@ -69,6 +69,18 @@ class TextButton(context: Context, attrs: AttributeSet, style: Int) extends Rela
 
   def layoutId = R.layout.preference_text_button
 
+  def setTitle(text: String): Unit = {
+    title.foreach(_.setText(text))
+  }
+
+  def setDrawableStart(drawable: Option[Drawable]): Unit = {
+    iconStart.foreach(iconStart => setOptionDrawable(iconStart, drawable))
+  }
+
+  def setDrawableEnd(drawable: Option[Drawable]): Unit = {
+    iconEnd.foreach(iconStart => setOptionDrawable(iconStart, drawable))
+  }
+
   protected def setOptionDrawable(imageView: ImageView, drawable: Option[Drawable]): Unit = {
     drawable.fold {
       imageView.setVisible(false)

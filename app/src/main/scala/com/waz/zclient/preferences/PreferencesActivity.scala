@@ -18,9 +18,8 @@
 package com.waz.zclient.preferences
 
 import android.annotation.SuppressLint
-import android.content.res.Configuration
 import android.content.{Context, Intent}
-import android.os.Bundle
+import android.os.{Bundle, PersistableBundle}
 import android.support.annotation.Nullable
 import android.support.v4.app.{Fragment, FragmentManager, FragmentTransaction}
 import android.support.v4.widget.TextViewCompat
@@ -41,10 +40,10 @@ import com.waz.zclient.core.controllers.tracking.events.settings.ChangedProfileP
 import com.waz.zclient.pages.main.profile.camera.{CameraContext, CameraFragment}
 import com.waz.zclient.pages.main.profile.preferences._
 import com.waz.zclient.pages.main.profile.preferences.dialogs.WireRingtonePreferenceDialogFragment
-import com.waz.zclient.pages.main.profile.preferences.fragments.ProfileViewState
+import com.waz.zclient.pages.main.profile.preferences.pages.ProfileViewState
 import com.waz.zclient.tracking.GlobalTrackingController
-import com.waz.zclient.utils.{BackStackNavigator, LayoutSpec, ViewUtils}
-import com.waz.zclient.{ActivityHelper, BaseActivity, R}
+import com.waz.zclient.utils.BackStackNavigator
+import com.waz.zclient.{ActivityHelper, BaseActivity, MainActivity, R}
 
 class PreferencesActivity extends BaseActivity
   with ActivityHelper
@@ -90,15 +89,17 @@ class PreferencesActivity extends BaseActivity
     setSupportActionBar(toolbar)
     titleSwitcher //initialise title switcher
 
-    if (LayoutSpec.isPhone(this)) ViewUtils.lockScreenOrientation(Configuration.ORIENTATION_PORTRAIT, this)
+    //if (LayoutSpec.isPhone(this)) ViewUtils.lockScreenOrientation(Configuration.ORIENTATION_PORTRAIT, this)
     //if (savedInstanceState == null) getSupportFragmentManager.beginTransaction.add(R.id.content, new ProfileFragment, ProfileFragment.Tag).commit
-    //if (savedInstanceState == null) PreferencesViewsManager(this).openView(ProfileFragment.Tag)
-    backStackNavigator.setup(this, findViewById(R.id.content).asInstanceOf[ViewGroup])
-    backStackNavigator.goTo(ProfileViewState())
-    backStackNavigator.currentState.on(Threading.Ui){ state =>
-      setTitle(state.name)
+    if (savedInstanceState == null) {
+      backStackNavigator.setup(this, findViewById(R.id.content).asInstanceOf[ViewGroup])
+      backStackNavigator.goTo(ProfileViewState())
+      backStackNavigator.currentState.on(Threading.Ui){ state =>
+        setTitle(state.name)
+      }
+    } else {
+      backStackNavigator.onRestore(findViewById(R.id.content).asInstanceOf[ViewGroup])
     }
-
     currentAccountPref.signal.onChanged { _ =>
       startActivity(returning(new Intent(this, classOf[MainActivity]))(_.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK)))
     }
@@ -107,6 +108,12 @@ class PreferencesActivity extends BaseActivity
       getControllerFactory.getUserPreferencesController.setLastAccentColor(color.getColor())
       getControllerFactory.getAccentColorController.setColor(AccentColorChangeRequester.REMOTE, color.getColor())
     }
+  }
+
+
+  override def onSaveInstanceState(outState: Bundle, outPersistentState: PersistableBundle) = {
+    super.onSaveInstanceState(outState, outPersistentState)
+    backStackNavigator.onSaveState()
   }
 
   override def onStart(): Unit = {

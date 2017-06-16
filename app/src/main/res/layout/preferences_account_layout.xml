@@ -45,29 +45,29 @@
                 android:textColor="@color/accent_blue"/>
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+                android:id="@+id/preferences_account_name"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="Joao Ponte"
                 app:subtitle="Name"
                 />
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+                android:id="@+id/preferences_account_handle"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="joaoponte"
                 app:subtitle="Username"/>
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+                android:id="@+id/preferences_account_email"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="joao.ponte@wire.com"
                 app:subtitle="Email"/>
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+                android:id="@+id/preferences_account_phone"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="+351 961234567"
-                app:subtitle="Email"/>
+                app:subtitle="Phone"/>
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"
@@ -79,12 +79,14 @@
                 android:textColor="@color/accent_blue"/>
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+                android:id="@+id/preferences_account_picture"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 app:title="Picture"
                 app:iconStart="@drawable/conversation_badge_red"/>
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+                android:id="@+id/preferences_account_accent"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 app:title="Color"
@@ -101,18 +103,21 @@
                 android:textColor="@color/accent_blue"/>
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+                android:id="@+id/preferences_account_reset_pw"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 app:title="Reset Password"
                 />
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+                android:id="@+id/preferences_account_logout"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 app:title="Log out"
                 />
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+                android:id="@+id/preferences_account_delete"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 app:title="Delete account"

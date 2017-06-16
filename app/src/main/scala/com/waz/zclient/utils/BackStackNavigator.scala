@@ -96,6 +96,18 @@ class BackStackNavigator extends Injectable {
     })
   }
 
+  def onRestore(root: ViewGroup): Unit ={
+    this.root = root
+    val viewState = stack.top
+    val view = inflater.inflate(viewState.layoutId, root, false)
+    root.addView(view)
+    viewState.onViewAttached(view)
+  }
+
+  def onSaveState(): Unit ={
+    stack.headOption.foreach(_.onViewDetached())
+  }
+
   def setInAnimation(animation: (View, View, Boolean) => ViewPropertyAnimator): Unit ={
     inAnimation = animation
   }

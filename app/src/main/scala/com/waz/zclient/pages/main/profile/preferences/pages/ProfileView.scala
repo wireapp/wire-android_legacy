@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.pages.main.profile.preferences.fragments
+package com.waz.zclient.pages.main.profile.preferences.pages
 
 import android.content.Context
 import android.graphics.drawable.Drawable
@@ -89,11 +89,15 @@ case class ProfileViewState() extends ViewState {
 
   override def layoutId = R.layout.preferences_profile
 
+  var controller = Option.empty[ProfileViewController]
+
   override def onViewAttached(v: View) = {
-    Option(v.asInstanceOf[ProfileViewImpl]).map(view => new ProfileViewController(view)(view.wContext.injector, view))
+    controller = Option(v.asInstanceOf[ProfileViewImpl]).map(view => new ProfileViewController(view)(view.wContext.injector, view))
   }
 
-  override def onViewDetached() = {}
+  override def onViewDetached() = {
+    controller = None
+  }
 }
 
 class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: EventContext) extends Injectable {
