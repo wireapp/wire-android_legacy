@@ -35,9 +35,6 @@ case class PreferencesViewsManager(activity: BaseActivity) {
 
   def openView(tag: String): Unit = {
     val fragment: Fragment = tag match {
-      case AccountFragment.Tag => new AccountFragment
-      case ProfileFragment.Tag => new ProfileFragment
-      case SettingsFragment.Tag => new SettingsFragment
       case _ => throw new InvalidClassException(tag)
     }
     activity.getSupportFragmentManager

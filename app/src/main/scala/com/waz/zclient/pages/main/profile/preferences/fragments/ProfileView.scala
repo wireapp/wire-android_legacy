@@ -17,25 +17,23 @@
  */
 package com.waz.zclient.pages.main.profile.preferences.fragments
 
+import android.content.Context
 import android.graphics.drawable.Drawable
-import android.os.Bundle
-import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.ImageView
+import android.util.AttributeSet
+import android.view.View
+import android.widget.{ImageView, LinearLayout}
 import com.waz.ZLog
 import com.waz.api.impl.AccentColor
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient._
-import com.waz.zclient.pages.BaseFragment
-import com.waz.zclient.pages.main.profile.preferences.fragments.ProfileFragment._
 import com.waz.zclient.pages.main.profile.preferences.views.TextButton
 import com.waz.zclient.ui.text.TypefaceTextView
-import com.waz.zclient.utils.{StringUtils, UiStorage, UserSignal}
+import com.waz.zclient.utils.{BackStackNavigator, StringUtils, UiStorage, UserSignal, ViewState}
 import com.waz.zclient.views.ImageAssetDrawable
 import com.waz.zclient.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.views.ImageController.{ImageSource, WireImage}
-
 
 trait ProfileView {
   def setUserName(name: String): Unit
@@ -45,33 +43,28 @@ trait ProfileView {
   def setNewDevicesCount(count: Int): Unit
 }
 
-class ProfileFragment extends BaseFragment[Container] with ProfileView with FragmentHelper {
+class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ProfileView with ViewHelper {
+  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
+  def this(context: Context) = this(context, null, 0)
 
-  def userNameText = findById[TypefaceTextView](R.id.profile_user_name)
-  def userPicture = findById[ImageView](R.id.profile_user_picture)
-  def userHandleText = findById[TypefaceTextView](R.id.profile_user_handle)
+  inflate(R.layout.preferences_profile_layout)
 
-  def devicesButton = findById[TextButton](R.id.profile_devices)
-  def settingsButton = findById[TextButton](R.id.profile_settings)
-  def inviteButton = findById[TextButton](R.id.profile_invite)
+  val navigator = inject[BackStackNavigator]
 
-  lazy val controller = new ProfileFragmentController()
+  val userNameText = findById[TypefaceTextView](R.id.profile_user_name)
+  val userPicture = findById[ImageView](R.id.profile_user_picture)
+  val userHandleText = findById[TypefaceTextView](R.id.profile_user_handle)
 
-  override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle) = {
-    inflater.inflate(R.layout.preferences_profile_layout, container, false)
+  val devicesButton = findById[TextButton](R.id.profile_devices)
+  val settingsButton = findById[TextButton](R.id.profile_settings)
+  val inviteButton = findById[TextButton](R.id.profile_invite)
+
+  devicesButton.onClickEvent.on(Threading.Ui) { _ =>
   }
-
-  override def onViewCreated(view: View, savedInstanceState: Bundle) = {
-    controller.view ! this
-    devicesButton.onClickEvent.on(Threading.Ui) { _ =>
-      PreferencesViewsManager(getActivity.asInstanceOf[BaseActivity]).openView(SettingsFragment.Tag)
-    }
-    settingsButton.onClickEvent.on(Threading.Ui) { _ =>
-      PreferencesViewsManager(getActivity.asInstanceOf[BaseActivity]).openView(SettingsFragment.Tag)
-    }
-    inviteButton.onClickEvent.on(Threading.Ui) { _ =>
-      PreferencesViewsManager(getActivity.asInstanceOf[BaseActivity]).openView(SettingsFragment.Tag)
-    }
+  settingsButton.onClickEvent.on(Threading.Ui) { _ =>
+    navigator.goTo(SettingsViewState())
+  }
+  inviteButton.onClickEvent.on(Threading.Ui) { _ =>
   }
 
   override def setUserName(name: String): Unit = userNameText.setText(name)
@@ -86,32 +79,37 @@ class ProfileFragment extends BaseFragment[Container] with ProfileView with Frag
 
   override def setNewDevicesCount(count: Int): Unit = {}
 }
-object ProfileFragment {
-  val Tag = ZLog.logTagFor[ProfileFragment]
-
-  trait Container
+object ProfileView {
+  val Tag = ZLog.logTagFor[ProfileView]
 }
 
-class ProfileFragmentController()(implicit inj: Injector, ec: EventContext) extends Injectable {
+case class ProfileViewState() extends ViewState {
+
+  override def name = "Profile"//TODO: resource
+
+  override def layoutId = R.layout.preferences_profile
+
+  override def onViewAttached(v: View) = {
+    Option(v.asInstanceOf[ProfileViewImpl]).map(view => new ProfileViewController(view)(view.wContext.injector, view))
+  }
+
+  override def onViewDetached() = {}
+}
+
+class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: EventContext) extends Injectable {
   val zms = inject[Signal[ZMessaging]]
   implicit val uiStorage = inject[UiStorage]
-
-  val view = Signal[ProfileView]()
 
   val self = for {
     zms <- zms
     self <- UserSignal(zms.selfUserId)
-    view <- view
   } yield self
 
   val selfPicture: Signal[ImageSource] = self.map(_.picture).collect{case Some(pic) => WireImage(pic)}
 
-  view.on(Threading.Ui) {
-    _.setProfilePictureDrawable(new ImageAssetDrawable(selfPicture, scaleType = ScaleType.CenterInside, request = RequestBuilder.Round))
-  }
+  view.setProfilePictureDrawable(new ImageAssetDrawable(selfPicture, scaleType = ScaleType.CenterInside, request = RequestBuilder.Round))
 
-  Signal(self, view).on(Threading.Ui) {
-    case (self, view) =>
+  self.on(Threading.Ui) { self =>
       view.setAccentColor(self.accent)
       self.handle.foreach(handle => view.setHandle(StringUtils.formatHandle(handle.string)))
       view.setUserName(self.getDisplayName)
