@@ -39,9 +39,14 @@ class SettingsViewImpl(context: Context, attrs: AttributeSet, style: Int) extend
   val navigator = inject[BackStackNavigator]
 
   val accountButton = findById[TextButton](R.id.settings_account)
+  val optionsButton = findById[TextButton](R.id.settings_options)
 
   accountButton.onClickEvent.on(Threading.Ui) { _ =>
     navigator.goTo(AccountViewState())
+  }
+
+  optionsButton.onClickEvent.on(Threading.Ui) { _ =>
+    navigator.goTo(OptionsViewState())
   }
 }
 

@@ -44,6 +44,7 @@
                 app:title="Account"/>
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+                android:id="@+id/settings_options"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 app:iconStart="@drawable/ic_action_options"

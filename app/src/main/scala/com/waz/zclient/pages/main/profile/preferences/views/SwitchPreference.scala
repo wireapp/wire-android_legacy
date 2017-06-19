@@ -19,11 +19,52 @@ package com.waz.zclient.pages.main.profile.preferences.views
 
 import android.content.Context
 import android.util.AttributeSet
+import android.widget.CompoundButton.OnCheckedChangeListener
+import android.widget.{CompoundButton, Switch}
+import com.waz.content.Preferences.PrefKey
+import com.waz.service.ZMessaging
+import com.waz.threading.Threading
+import com.waz.utils.events.{EventStream, Signal}
 import com.waz.zclient.{R, ViewHelper}
 
-class SwitchPreference(context: Context, attrs: AttributeSet, style: Int) extends TextButton(context, attrs, style) with ViewHelper {
+trait Switchable {
+  val onCheckedChange: EventStream[Boolean]
+  def setChecked(checked: Boolean): Unit
+}
+
+class SwitchPreference(context: Context, attrs: AttributeSet, style: Int) extends TextButton(context, attrs, style) with Switchable with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
   override def layoutId = R.layout.preference_switch
+
+  val switch = findById[Switch](R.id.preference_switch)
+  override val onCheckedChange = EventStream[Boolean]()
+
+  val zms = inject[Signal[ZMessaging]]
+  var prefKey = Signal[PrefKey[Boolean]]()
+
+  val pref = for {
+    z <- zms
+    pKey <- prefKey
+  } yield z.prefs.preference(pKey)
+
+  pref.flatMap(_.signal).on(Threading.Ui) { setChecked }
+  onCheckedChange.on(Threading.Ui) { value =>
+    pref.head.map(_.update(value))(Threading.Ui)
+  }
+
+  switch.setOnCheckedChangeListener(new OnCheckedChangeListener {
+    override def onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) = {
+      onCheckedChange ! isChecked
+    }
+  })
+
+  override def setChecked(checked: Boolean): Unit = {
+    switch.setChecked(checked)
+  }
+
+  def setPreference(prefKey: PrefKey[Boolean]): Unit = {
+    this.prefKey ! prefKey
+  }
 }

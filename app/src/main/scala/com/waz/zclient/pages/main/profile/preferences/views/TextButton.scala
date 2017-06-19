@@ -73,6 +73,10 @@ class TextButton(context: Context, attrs: AttributeSet, style: Int) extends Rela
     title.foreach(_.setText(text))
   }
 
+  def setSubtitle(text: String): Unit = {
+    subtitle.foreach(subtitle => setOptionText(subtitle, Some(text)))
+  }
+
   def setDrawableStart(drawable: Option[Drawable]): Unit = {
     iconStart.foreach(iconStart => setOptionDrawable(iconStart, drawable))
   }

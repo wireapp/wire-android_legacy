@@ -29,6 +29,23 @@ trait ViewState {
   def layoutId: Int
   def onViewAttached(v: View): Unit
   def onViewDetached(): Unit
+
+  def inAnimation(view: View, root: View, forward: Boolean): ViewPropertyAnimator = {
+    view.setAlpha(0.0f)
+    if (forward)
+      view.setTranslationX(root.getWidth)
+    else
+      view.setTranslationX(-root.getWidth)
+    view.animate().alpha(1.0f).translationX(0)
+  }
+
+  def outAnimation(view: View, root: View, forward: Boolean): ViewPropertyAnimator = {
+    view.setAlpha(1.0f)
+    if (forward)
+      view.animate().alpha(0.0f).translationX(-root.getWidth)
+    else
+      view.animate().alpha(0.0f).translationX(root.getWidth)
+  }
 }
 
 class BackStackNavigator extends Injectable {
@@ -37,29 +54,12 @@ class BackStackNavigator extends Injectable {
 
   val currentState = Signal[ViewState]()
 
-  //TODO: Options?
-  private var root: ViewGroup = null
-  private var inflater: LayoutInflater = null
-
-  private var inAnimation = (view: View, root: View, forward: Boolean) => {
-    view.setAlpha(0.0f)
-    if (forward)
-      view.setTranslationX(root.getWidth)
-    else
-      view.setTranslationX(-root.getWidth)
-    view.animate().alpha(1.0f).translationX(0)
-  }
-  private var outAnimation = (view: View, root: View, forward: Boolean) => {
-    view.setAlpha(1.0f)
-    if (forward)
-      view.animate().alpha(0.0f).translationX(-root.getWidth)
-    else
-      view.animate().alpha(0.0f).translationX(root.getWidth)
-  }
+  private var root: Option[ViewGroup] = None
+  private var inflater: Option[LayoutInflater] = None
 
   def setup(context: Context, root: ViewGroup): Unit = {
-    this.root = root
-    this.inflater = LayoutInflater.from(context)
+    this.root = Option(root)
+    this.inflater = Option(LayoutInflater.from(context))
     stack.clear()
   }
 
@@ -81,39 +81,44 @@ class BackStackNavigator extends Injectable {
   }
 
   def createAndAttachView(viewState: ViewState, forward: Boolean): Unit ={
-    val view = inflater.inflate(viewState.layoutId, root, false)
-    root.addView(view)
-    inAnimation(view, root, forward)
-    viewState.onViewAttached(view)
+    (root, inflater) match {
+      case (Some(root), Some(inflater)) =>
+        val view = inflater.inflate(viewState.layoutId, root, false)
+        root.addView(view)
+        viewState.inAnimation(view, root, forward)
+        viewState.onViewAttached(view)
+      case _ =>
+    }
   }
 
   def detachView(viewState: ViewState, forward: Boolean): Unit ={
-    viewState.onViewDetached()
-    val removedView = root.getChildAt(root.getChildCount - 1)
-    disableView(removedView)
-    outAnimation(removedView, root, forward).withEndAction(new Runnable {
-      override def run() = root.removeView(removedView)
-    })
+    (root, inflater) match {
+      case (Some(root), Some(inflater)) =>
+        viewState.onViewDetached()
+        val removedView = root.getChildAt(root.getChildCount - 1)
+        disableView(removedView)
+        viewState.outAnimation(removedView, root, forward).withEndAction(new Runnable {
+          override def run() = root.removeView(removedView)
+        })
+      case _ =>
+    }
   }
 
   def onRestore(root: ViewGroup): Unit ={
-    this.root = root
-    val viewState = stack.top
-    val view = inflater.inflate(viewState.layoutId, root, false)
-    root.addView(view)
-    viewState.onViewAttached(view)
+    this.root = Option(root)
+
+    (this.root, inflater) match {
+      case (Some(root), Some(inflater)) =>
+        val viewState = stack.top
+        val view = inflater.inflate(viewState.layoutId, root, false)
+        root.addView(view)
+        viewState.onViewAttached(view)
+      case _ =>
+    }
   }
 
   def onSaveState(): Unit ={
     stack.headOption.foreach(_.onViewDetached())
-  }
-
-  def setInAnimation(animation: (View, View, Boolean) => ViewPropertyAnimator): Unit ={
-    inAnimation = animation
-  }
-
-  def setOutAnimation(animation: (View, View, Boolean) => ViewPropertyAnimator): Unit ={
-    outAnimation = animation
   }
 
   def disableView(view: View): Unit = {

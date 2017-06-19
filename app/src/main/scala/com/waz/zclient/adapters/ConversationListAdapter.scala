@@ -135,7 +135,7 @@ class ConversationListAdapter(context: Context)(implicit injector: Injector, eve
           })
         })
       case IncomingViewType =>
-        IncomingConversationRowViewHolder(returning(ViewHelper.inflate[IncomingConversationListRow](R.layout.normal_conv_list_item, parent, false)) { r =>
+        IncomingConversationRowViewHolder(returning(ViewHelper.inflate[IncomingConversationListRow](R.layout.incoming_conv_list_item, parent, false)) { r =>
           r.setOnClickListener(new View.OnClickListener {
             override def onClick(view: View): Unit = {
               incomingRequests._1.headOption.foreach(onConversationClick ! _ )
