@@ -251,6 +251,10 @@
         <attr name="iconEnd" format="reference"/>
     </declare-styleable>
 
+    <declare-styleable name="SwitchPreference">
+        <attr name="key" format="string"/>
+    </declare-styleable>
+
     <attr name="wireDividerColor" format="color"/>
     <attr name="wireDividerColorSolid" format="color"/>
 

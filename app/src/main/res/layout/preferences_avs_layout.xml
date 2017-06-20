@@ -37,53 +37,25 @@
             >
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
-                android:id="@+id/settings_account"
+                android:id="@+id/avs__logging"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:iconStart="@drawable/ic_action_account"
-                app:title="Account"/>
+                app:title="Logging"
+                />
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
-                android:id="@+id/settings_options"
+                android:id="@+id/avs__post_session_id"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:iconStart="@drawable/ic_action_options"
-                app:title="Options"/>
+                app:title="Post session ID"
+                />
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
-                android:id="@+id/settings_advanced"
+                android:id="@+id/avs__last_session_id"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:iconStart="@drawable/ic_action_advanced"
-                app:title="Advanced"/>
-
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
-                android:id="@+id/settings_support"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/preference_button_height"
-                app:iconStart="@drawable/ic_action_support"
-                app:title="Support"/>
-
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
-                android:id="@+id/settings_about"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/preference_button_height"
-                app:iconStart="@drawable/ic_action_about"
-                app:title="About"/>
-
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
-                android:id="@+id/settings_dev"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/preference_button_height"
-                app:iconStart="@drawable/ic_action_dev"
-                app:title="Developer Settings"/>
-
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
-                android:id="@+id/settings_avs"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/preference_button_height"
-                app:iconStart="@drawable/ic_action_play_light"
-                app:title="AVS Settings"/>
+                app:title="Last session ID"
+                />
 
         </LinearLayout>
 

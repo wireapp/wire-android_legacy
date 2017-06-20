@@ -18,8 +18,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<com.waz.zclient.pages.main.profile.preferences.pages.SettingsView
-              xmlns:android="http://schemas.android.com/apk/res/android"
+<com.waz.zclient.pages.main.profile.preferences.pages.AdvancedViewImpl
+    xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="vertical"
               android:layout_width="match_parent"
               android:layout_height="match_parent"

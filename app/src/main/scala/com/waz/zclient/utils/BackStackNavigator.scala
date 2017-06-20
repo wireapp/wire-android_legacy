@@ -54,6 +54,7 @@ class BackStackNavigator extends Injectable {
 
   val currentState = Signal[ViewState]()
 
+  //TODO: maybe a view switcher is more appropriate?
   private var root: Option[ViewGroup] = None
   private var inflater: Option[LayoutInflater] = None
 

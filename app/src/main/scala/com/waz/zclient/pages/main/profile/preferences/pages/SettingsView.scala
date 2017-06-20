@@ -27,10 +27,7 @@ import com.waz.zclient.utils.{BackStackNavigator, ViewState}
 import com.waz.zclient.{R, ViewHelper}
 
 
-trait SettingsView {
-}
-
-class SettingsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with SettingsView with ViewHelper {
+class SettingsView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -40,17 +37,19 @@ class SettingsViewImpl(context: Context, attrs: AttributeSet, style: Int) extend
 
   val accountButton = findById[TextButton](R.id.settings_account)
   val optionsButton = findById[TextButton](R.id.settings_options)
+  val advancedButton = findById[TextButton](R.id.settings_advanced)
+  val supportButton = findById[TextButton](R.id.settings_support)
+  val aboutButton = findById[TextButton](R.id.settings_about)
+  val devButton = findById[TextButton](R.id.settings_dev)
+  val avsButton = findById[TextButton](R.id.settings_avs)
 
-  accountButton.onClickEvent.on(Threading.Ui) { _ =>
-    navigator.goTo(AccountViewState())
-  }
-
-  optionsButton.onClickEvent.on(Threading.Ui) { _ =>
-    navigator.goTo(OptionsViewState())
-  }
-}
-
-case class SettingsViewController(view: SettingsView) {
+  accountButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AccountViewState()) }
+  optionsButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(OptionsViewState()) }
+  advancedButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AdvancedViewState()) }
+  supportButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(SupportViewState()) }
+  aboutButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AboutViewState()) }
+  devButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(DevSettingsViewState()) }
+  avsButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AvsViewState()) }
 }
 
 case class SettingsViewState() extends ViewState {
@@ -59,9 +58,8 @@ case class SettingsViewState() extends ViewState {
 
   override def layoutId = R.layout.preferences_settings
 
-  override def onViewAttached(v: View) = {
-    SettingsViewController(v.asInstanceOf[SettingsView])
-  }
+  override def onViewAttached(v: View) = {}
 
   override def onViewDetached() = {}
 }
+

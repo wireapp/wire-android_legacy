@@ -31,7 +31,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
             >
 
@@ -155,10 +155,10 @@
                 android:textColor="@color/accent_blue"/>
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
-                android:id="@+id/preferences_account_delete"
+                android:id="@+id/preferences_options_image_download"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="Delete account"
+                app:title="@string/pref_options_image_download_title"
                 />
 
         </LinearLayout>
