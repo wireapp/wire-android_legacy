@@ -37,8 +37,8 @@
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"
-                android:layout_height="32dp"
-                android:text="Info"
+                android:layout_height="@dimen/preference_button_height"
+                android:text="@string/pref_account_details_category_title"
                 android:gravity="center_vertical"
                 android:paddingStart="@dimen/wire__padding__16"
                 android:paddingEnd="@dimen/wire__padding__16"
@@ -48,79 +48,86 @@
                 android:id="@+id/preferences_account_name"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:subtitle="Name"
+                app:subtitle="@string/pref_account_name_title"
                 />
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
                 android:id="@+id/preferences_account_handle"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:subtitle="Username"/>
+                app:subtitle="@string/pref_account_username_title"
+                />
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
                 android:id="@+id/preferences_account_email"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:subtitle="Email"/>
+                app:subtitle="@string/pref_account_email_title"
+                />
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
                 android:id="@+id/preferences_account_phone"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:subtitle="Phone"/>
+                app:subtitle="@string/pref_account_phone_title"
+                />
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"
-                android:layout_height="32dp"
-                android:text="Appearance"
+                android:layout_height="@dimen/preference_button_height"
+                android:text="@string/pref_account_appearance_category_title"
                 android:gravity="center_vertical"
                 android:paddingStart="@dimen/wire__padding__16"
                 android:paddingEnd="@dimen/wire__padding__16"
-                android:textColor="@color/accent_blue"/>
+                android:textColor="@color/accent_blue"
+                />
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
                 android:id="@+id/preferences_account_picture"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="Picture"
-                app:iconStart="@drawable/conversation_badge_red"/>
+                app:title="@string/pref_account_picture_title"
+                app:iconStart="@drawable/conversation_badge_red"
+                />
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
                 android:id="@+id/preferences_account_accent"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="Color"
-                app:iconStart="@drawable/conversation_badge_red"/>
+                app:title="@string/pref_account_color_title"
+                app:iconStart="@drawable/conversation_badge_red"
+                />
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:id="@+id/typefaceTextView"
                 android:layout_width="match_parent"
-                android:layout_height="32dp"
+                android:layout_height="@dimen/preference_button_height"
                 android:gravity="center_vertical"
                 android:paddingEnd="@dimen/wire__padding__16"
                 android:paddingStart="@dimen/wire__padding__16"
-                android:text="Settings"
-                android:textColor="@color/accent_blue"/>
+                android:text="@string/pref_account_actions_category_title"
+                android:textColor="@color/accent_blue"
+                />
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
                 android:id="@+id/preferences_account_reset_pw"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="Reset Password"
+                app:title="@string/pref_account_password_title"
                 />
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
                 android:id="@+id/preferences_account_logout"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="Log out"
+                app:title="@string/pref_account_sign_out_title"
                 />
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
                 android:id="@+id/preferences_account_delete"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="Delete account"
+                app:title="@string/pref_account_delete_title"
                 />
 
         </LinearLayout>

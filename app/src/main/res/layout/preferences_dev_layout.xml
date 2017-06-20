@@ -69,7 +69,7 @@
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"
-                android:layout_height="32dp"
+                android:layout_height="@dimen/preference_button_height"
                 android:text="@string/pref_dev_category_notifications_title"
                 android:gravity="center_vertical"
                 android:paddingStart="@dimen/wire__padding__16"

@@ -870,4 +870,7 @@
     <dimen name="team_tab_drawable_border">1.5dp</dimen>
 
     <dimen name="preference_button_height">56dp</dimen>
+    <dimen name="preference_button_image_size">16dp</dimen>
+    <dimen name="preference_button_padding">16dp</dimen>
+    <dimen name="preference_devices_count_width">28dp</dimen>
 </resources>

@@ -27,7 +27,7 @@
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/profile_user_name"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="@dimen/preference_button_height"
         android:gravity="center"
         android:textSize="@dimen/wire__text_size__medium"
         app:font="@string/wire__typeface__regular"
@@ -46,37 +46,37 @@
         android:layout_width="match_parent"
         android:gravity="center"
         android:textSize="@dimen/wire__text_size__regular"
-        android:layout_height="56dp"
+        android:layout_height="@dimen/preference_button_height"
         app:font="@string/wire__typeface__regular"
         />
 
     <Space
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="@dimen/preference_button_height"
         />
 
     <com.waz.zclient.pages.main.profile.preferences.views.DevicesButtonPreference
         android:id="@+id/profile_devices"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="@dimen/preference_button_height"
         app:iconStart="@drawable/ic_action_devices"
-        app:title="Devices"
+        app:title="@string/pref_devices_screen_title"
         />
 
     <com.waz.zclient.pages.main.profile.preferences.views.TextButton
         android:id="@+id/profile_settings"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        app:title="Settings"
+        android:layout_height="@dimen/preference_button_height"
+        app:title="@string/settings_title"
         app:iconStart="@drawable/ic_action_advanced"
         />
 
     <com.waz.zclient.pages.main.profile.preferences.views.TextButton
         android:id="@+id/profile_invite"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="@dimen/preference_button_height"
         android:background="@color/accent_blue"
-        app:title="Invite People to Join Wire"
+        app:title="@string/pref_invite_title"
         app:iconStart="@drawable/ic_action_about"
         />
 

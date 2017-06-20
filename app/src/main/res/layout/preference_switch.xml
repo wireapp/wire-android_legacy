@@ -27,8 +27,8 @@
     >
 
     <ImageView
-        android:layout_width="16dp"
-        android:layout_height="16dp"
+        android:layout_width="@dimen/preference_button_image_size"
+        android:layout_height="@dimen/preference_button_image_size"
         android:layout_centerVertical="true"
         android:layout_alignParentStart="true"
         android:id="@+id/preference_icon_start"
@@ -42,8 +42,8 @@
         android:layout_centerVertical="true"
         android:layout_toStartOf="@+id/preference_switch"
         android:layout_toEndOf="@+id/preference_icon_start"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginStart="@dimen/preference_button_padding"
+        android:layout_marginEnd="@dimen/preference_button_padding"
         >
 
         <com.waz.zclient.ui.text.TypefaceTextView
@@ -75,7 +75,7 @@
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_alignParentEnd="true"
-        android:layout_marginEnd="16dp"
+        android:layout_marginEnd="@dimen/preference_button_padding"
         />
 
 </RelativeLayout>
