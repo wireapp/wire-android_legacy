@@ -21,8 +21,7 @@ import android.os.Build
 import android.renderscript.RenderScript
 import android.support.multidex.MultiDexApplication
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.{debug, verbose}
-import com.waz.api
+import com.waz.ZLog.verbose
 import com.waz.api.{NetworkMode, ZMessagingApi, ZMessagingApiFactory, ZmsVersion}
 import com.waz.content.GlobalPreferences
 import com.waz.log.InternalLog
@@ -37,7 +36,6 @@ import com.waz.zclient.controllers.drawing.IDrawingController
 import com.waz.zclient.controllers.global.{AccentColorController, KeyboardController, SelectionController}
 import com.waz.zclient.controllers.navigation.INavigationController
 import com.waz.zclient.controllers.singleimage.ISingleImageController
-import com.waz.zclient.controllers.theme.IThemeController
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
 import com.waz.zclient.conversation.CollectionController
 import com.waz.zclient.core.stores.IStoreFactory
@@ -72,7 +70,6 @@ object WireApplication {
     // TODO: remove controller factory, reimplement those controllers
     bind [IControllerFactory]            toProvider controllerFactory
     bind [IPickUserController]           toProvider controllerFactory.getPickUserController
-    bind [IThemeController]              toProvider controllerFactory.getThemeController
     bind [IConversationScreenController] toProvider controllerFactory.getConversationScreenController
     bind [INavigationController]         toProvider controllerFactory.getNavigationController
     bind [IUserPreferencesController]    toProvider controllerFactory.getUserPreferencesController
@@ -88,6 +85,7 @@ object WireApplication {
     bind [SelectionController]     to new SelectionController()
     bind [SoundController]         to new SoundController
     bind [BackStackNavigator]      to new BackStackNavigator
+    bind [ThemeController]         to new ThemeController
 
     //notifications
     bind [MessageNotificationsController]  to new MessageNotificationsController()

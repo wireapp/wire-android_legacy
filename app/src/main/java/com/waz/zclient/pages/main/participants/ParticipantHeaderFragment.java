@@ -41,7 +41,9 @@ import com.waz.api.OtrClient;
 import com.waz.api.User;
 import com.waz.api.UsersList;
 import com.waz.api.Verification;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
+import com.waz.zclient.controllers.ThemeController;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.currentfocus.IFocusController;
 import com.waz.zclient.controllers.globallayout.KeyboardVisibilityObserver;
@@ -173,7 +175,7 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
         getControllerFactory().getConversationScreenController().addConversationControllerObservers(this);
         getControllerFactory().getAccentColorController().addAccentColorObserver(this);
 
-        if (!getControllerFactory().getThemeController().isDarkTheme()) {
+        if (!((BaseActivity)getActivity()).injectJava(ThemeController.class).isDarkTheme()) {
             headerEditText.setAccentColor(getControllerFactory().getAccentColorController().getColor());
         }
     }
@@ -532,7 +534,7 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
         if (isGroupConversation) {
             return;
         }
-        if (!getControllerFactory().getThemeController().isDarkTheme()) {
+        if (!((BaseActivity)getActivity()).injectJava(ThemeController.class).isDarkTheme()) {
             headerEditText.setAccentColor(color);
         }
     }

@@ -54,7 +54,7 @@ case class ProfilePictureViewState() extends ViewState {
   var controller = Option.empty[ProfilePictureViewController]
 
   override def onViewAttached(v: View) = {
-    controller = Option(v.asInstanceOf[ProfilePictureViewImpl]).map(new ProfilePictureViewController(_))
+    controller = Option(v.asInstanceOf[ProfilePictureViewImpl]).map(v => new ProfilePictureViewController(v)(v.wContext.injector, v))
   }
 
   override def onViewDetached() = {

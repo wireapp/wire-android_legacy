@@ -38,6 +38,7 @@ import com.waz.api.UpdateListener;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
+import com.waz.zclient.controllers.ThemeController;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.core.stores.network.NetworkStoreObserver;
 import com.waz.zclient.pages.BaseFragment;
@@ -167,7 +168,7 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
         confirmationMenu.setConfirmationMenuListener(confirmationMenuListener);
         confirmationMenu.setConfirm(getString(R.string.sharing__image_preview__confirm_action));
         confirmationMenu.setCancel(getString(R.string.confirmation_menu__cancel));
-        confirmationMenu.setWireTheme(getControllerFactory().getThemeController().getThemeDependentOptionsTheme());
+        confirmationMenu.setWireTheme(((BaseActivity)getActivity()).injectJava(ThemeController.class).getThemeDependentOptionsTheme());
 
         errorView.setVisibility(View.GONE);
         previewImageAssetView.setVisibility(View.GONE);
@@ -239,7 +240,7 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
     @Override
     public void onAccentColorHasChanged(Object sender, int color) {
         confirmationMenu.setAccentColor(color);
-        if (!getControllerFactory().getThemeController().isDarkTheme()) {
+        if (!((BaseActivity)getActivity()).injectJava(ThemeController.class).isDarkTheme()) {
             confirmationMenu.setCancelColor(color, color);
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
                 //noinspection deprecation

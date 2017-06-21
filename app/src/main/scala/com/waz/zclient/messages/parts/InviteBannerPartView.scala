@@ -23,7 +23,7 @@ import android.widget.LinearLayout
 import com.waz.model.MessageContent
 import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.returning
-import com.waz.zclient.controllers.theme.IThemeController
+import com.waz.zclient.controllers.ThemeController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
@@ -37,7 +37,7 @@ class InviteBannerPartView(context: Context, attrs: AttributeSet, style: Int) ex
 
   override val tpe: MsgPart = MsgPart.InviteBanner
 
-  private val themeController = inject[IThemeController]
+  private val themeController = inject[ThemeController]
   private val pickUserController = inject[IPickUserController]
 
   lazy val showContactsButton: ZetaButton =

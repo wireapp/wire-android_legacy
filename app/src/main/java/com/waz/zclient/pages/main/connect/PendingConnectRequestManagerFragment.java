@@ -26,6 +26,7 @@ import com.waz.api.NetworkMode;
 import com.waz.api.User;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
+import com.waz.zclient.controllers.ThemeController;
 import com.waz.zclient.controllers.confirmation.ConfirmationCallback;
 import com.waz.zclient.controllers.confirmation.ConfirmationRequest;
 import com.waz.zclient.controllers.confirmation.IConfirmationController;
@@ -263,7 +264,7 @@ public class PendingConnectRequestManagerFragment extends BaseFragment<PendingCo
             .withPositiveButton(confirm)
             .withNegativeButton(cancel)
             .withConfirmationCallback(callback)
-            .withWireTheme(getControllerFactory().getThemeController().getThemeDependentOptionsTheme())
+            .withWireTheme(((BaseActivity)getActivity()).injectJava(ThemeController.class).getThemeDependentOptionsTheme())
             .build();
 
         getControllerFactory().getConfirmationController().requestConfirmation(request, IConfirmationController.USER_PROFILE);

@@ -35,13 +35,11 @@ import com.waz.zclient.utils.ViewState
 trait OptionsView {
   val onVbrSwitch: EventStream[Boolean]
   val onVibrationSwitch: EventStream[Boolean]
-  val onDarkThemeSwitch: EventStream[Boolean]
   val onSendButtonSwitch: EventStream[Boolean]
 
   def setVbr(active: Boolean): Unit
   def setVibration(active: Boolean): Unit
-  def setDarkTheme(active: Boolean): Unit
-  def setSendButton(active: Boolean): Unit
+   def setSendButton(active: Boolean): Unit
 
   def setSounds(string: String): Unit
   def setRingtone(string: String): Unit
@@ -65,16 +63,14 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override val onVbrSwitch        = vbrSwitch.onCheckedChange
   override val onVibrationSwitch  = vibrationSwitch.onCheckedChange
-  override val onDarkThemeSwitch  = darkThemeSwitch.onCheckedChange
   override val onSendButtonSwitch = sendButtonSwitch.onCheckedChange
 
   contactsSwitch.setPreference(GlobalPreferences.ShareContacts)
+  darkThemeSwitch.setPreference(GlobalPreferences.DarkTheme)
 
   override def setVbr(active: Boolean) = vbrSwitch.setChecked(active)
 
   override def setVibration(active: Boolean) = vibrationSwitch.setChecked(active)
-
-  override def setDarkTheme(active: Boolean) = darkThemeSwitch.setChecked(active)
 
   override def setSendButton(active: Boolean) = sendButtonSwitch.setChecked(active)
 
@@ -108,11 +104,6 @@ case class OptionsViewState() extends ViewState {
 class OptionsViewController(view: OptionsView)(implicit inj: Injector, ec: EventContext) extends Injectable {
   val zms = inject[Signal[ZMessaging]]
   val prefs = zms.map(_.prefs)
-
-  //TODO: avoid injection context... get theme from the preferences as well
-  val context = inject[WireContext]
-  view.setDarkTheme(context.asInstanceOf[PreferencesActivity].getControllerFactory.getThemeController.isDarkTheme)
-  view.onDarkThemeSwitch{ value => context.asInstanceOf[PreferencesActivity].getControllerFactory.getThemeController.toggleThemePending(true)}
 
   prefs.flatMap(_.preference(GlobalPreferences.DownloadImages).signal).on(Threading.Ui){ view.setDownloadPictures }
 }

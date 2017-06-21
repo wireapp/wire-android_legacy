@@ -38,7 +38,6 @@ import com.waz.zclient.controllers.password.IPasswordController;
 import com.waz.zclient.controllers.permission.IRequestPermissionsController;
 import com.waz.zclient.controllers.sharing.ISharingController;
 import com.waz.zclient.controllers.singleimage.ISingleImageController;
-import com.waz.zclient.controllers.theme.IThemeController;
 import com.waz.zclient.controllers.usernames.IUsernamesController;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
 import com.waz.zclient.controllers.verification.IVerificationController;
@@ -78,8 +77,6 @@ public interface IControllerFactory {
   IConversationScreenController getConversationScreenController();
 
   ILocationController getLocationController();
-
-  IThemeController getThemeController();
 
   IUserPreferencesController getUserPreferencesController();
 

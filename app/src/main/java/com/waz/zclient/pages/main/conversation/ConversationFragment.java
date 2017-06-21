@@ -74,7 +74,9 @@ import com.waz.model.ConvId;
 import com.waz.utils.wrappers.URI;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.BuildConfig;
+import com.waz.zclient.MainActivity;
 import com.waz.zclient.OnBackPressedListener;
+import com.waz.zclient.controllers.ThemeController;
 import com.waz.zclient.preferences.PreferencesActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.WireContext;
@@ -456,55 +458,55 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         typingIndicatorView = ViewUtils.getView(view, R.id.tiv_typing_indicator_view);
         typingIndicatorView.setCallback(this);
         listView = ViewUtils.getView(view, R.id.messages_list_view);
-        toolbar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getControllerFactory().getConversationScreenController().showParticipants(toolbar, false);
-            }
-        });
-        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.action_audio_call:
-                        getControllerFactory().getCallingController().startCall(false);
-                        cursorLayout.closeEditMessage(false);
-                        return true;
-                    case R.id.action_video_call:
-                        getControllerFactory().getCallingController().startCall(true);
-                        cursorLayout.closeEditMessage(false);
-                        return true;
+            toolbar.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    getControllerFactory().getConversationScreenController().showParticipants(toolbar, false);
                 }
-                return false;
-            }
-        });
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (cursorLayout == null) {
-                    return;
+            });
+            toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    switch (item.getItemId()) {
+                        case R.id.action_audio_call:
+                            getControllerFactory().getCallingController().startCall(false);
+                            cursorLayout.closeEditMessage(false);
+                            return true;
+                        case R.id.action_video_call:
+                            getControllerFactory().getCallingController().startCall(true);
+                            cursorLayout.closeEditMessage(false);
+                            return true;
+                    }
+                    return false;
                 }
+            });
+            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (cursorLayout == null) {
+                        return;
+                    }
 
-                cursorLayout.closeEditMessage(false);
-                getActivity().onBackPressed();
-                KeyboardUtils.closeKeyboardIfShown(getActivity());
-            }
-        });
-
-        leftMenu.setOnMenuItemClickListener(new ActionMenuView.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.action_collection:
-                        getCollectionController().openCollection();
-                        return true;
+                    cursorLayout.closeEditMessage(false);
+                    getActivity().onBackPressed();
+                    KeyboardUtils.closeKeyboardIfShown(getActivity());
                 }
-                return false;
-            }
-        });
+            });
 
-        if (LayoutSpec.isTablet(getContext()) && ViewUtils.isInLandscape(getContext())) {
-            toolbar.setNavigationIcon(null);
+            leftMenu.setOnMenuItemClickListener(new ActionMenuView.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    switch (item.getItemId()) {
+                        case R.id.action_collection:
+                            getCollectionController().openCollection();
+                            return true;
+                    }
+                    return false;
+                }
+            });
+
+            if (LayoutSpec.isTablet(getContext()) && ViewUtils.isInLandscape(getContext())) {
+                toolbar.setNavigationIcon(null);
         }
 
         conversationLoadingIndicatorViewView = ViewUtils.getView(view, R.id.lbv__conversation__loading_indicator);
@@ -565,7 +567,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         }
 
         syncIndicatorModelObserver.resumeListening();
-        audioMessageRecordingView.setDarkTheme(getControllerFactory().getThemeController().isDarkTheme());
+        audioMessageRecordingView.setDarkTheme(((BaseActivity)getActivity()).injectJava(ThemeController.class).isDarkTheme());
 
         if (!getControllerFactory().getConversationScreenController().isConversationStreamUiInitialized()) {
             getStoreFactory().getConversationStore().addConversationStoreObserverAndUpdate(this);
@@ -1662,7 +1664,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             .withConfirmationCallback(callback)
             .withCancelButton()
             .withBackgroundImage(R.drawable.degradation_overlay)
-            .withWireTheme(getControllerFactory().getThemeController().getThemeDependentOptionsTheme())
+            .withWireTheme(((BaseActivity)getActivity()).injectJava(ThemeController.class).getThemeDependentOptionsTheme())
             .build();
 
         getControllerFactory().getConfirmationController().requestConfirmation(request,

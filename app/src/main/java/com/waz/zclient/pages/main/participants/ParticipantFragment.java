@@ -45,6 +45,7 @@ import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.TeamsAndUserController;
+import com.waz.zclient.controllers.ThemeController;
 import com.waz.zclient.controllers.confirmation.ConfirmationCallback;
 import com.waz.zclient.controllers.confirmation.ConfirmationRequest;
 import com.waz.zclient.controllers.confirmation.IConfirmationController;
@@ -443,7 +444,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
         String text = getString(R.string.confirmation_menu__block_text_with_name, user.getDisplayName());
         String confirm = getString(R.string.confirmation_menu__confirm_block);
         String cancel = getString(R.string.confirmation_menu__cancel);
-        OptionsTheme optionsTheme = getControllerFactory().getThemeController().getThemeDependentOptionsTheme();
+        OptionsTheme optionsTheme = ((BaseActivity)getActivity()).injectJava(ThemeController.class).getThemeDependentOptionsTheme();
 
         ConfirmationRequest request = new ConfirmationRequest.Builder()
             .withHeader(header)
@@ -516,7 +517,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
             .withPositiveButton(confirm)
             .withNegativeButton(cancel)
             .withConfirmationCallback(callback)
-            .withWireTheme(getControllerFactory().getThemeController().getThemeDependentOptionsTheme());
+            .withWireTheme(((BaseActivity)getActivity()).injectJava(ThemeController.class).getThemeDependentOptionsTheme());
 
 
         if (conversation.getType() == IConversation.Type.GROUP) {
@@ -711,7 +712,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
 
         optionsMenuControl.createMenu(conversation,
                                       requester,
-                                      getControllerFactory().getThemeController().getThemeDependentOptionsTheme());
+                                      ((BaseActivity)getActivity()).injectJava(ThemeController.class).getThemeDependentOptionsTheme());
         optionsMenuControl.open();
     }
 
@@ -944,7 +945,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
             .withPositiveButton(confirm)
             .withNegativeButton(cancel)
             .withConfirmationCallback(callback)
-            .withWireTheme(getControllerFactory().getThemeController().getThemeDependentOptionsTheme())
+            .withWireTheme(((BaseActivity)getActivity()).injectJava(ThemeController.class).getThemeDependentOptionsTheme())
             .build();
 
         getControllerFactory().getConfirmationController().requestConfirmation(request, IConfirmationController.PARTICIPANTS);
@@ -1240,7 +1241,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
             .withPositiveButton(confirm)
             .withNegativeButton(cancel)
             .withConfirmationCallback(callback)
-            .withWireTheme(getControllerFactory().getThemeController().getThemeDependentOptionsTheme())
+            .withWireTheme(((BaseActivity)getActivity()).injectJava(ThemeController.class).getThemeDependentOptionsTheme())
             .build();
 
         getControllerFactory().getConfirmationController().requestConfirmation(request, IConfirmationController.PARTICIPANTS);

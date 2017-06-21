@@ -27,7 +27,7 @@ import android.view.View
 import com.waz.api.{Permission, PermissionProvider}
 import com.waz.log.InternalLog
 import com.waz.zclient.common.controllers.PermissionActivity
-import com.waz.zclient.controllers.IControllerFactory
+import com.waz.zclient.controllers.{IControllerFactory, ThemeController}
 import com.waz.zclient.core.stores.IStoreFactory
 import com.waz.zclient.permissions.PermissionRequest
 import com.waz.zclient.tracking.GlobalTrackingController
@@ -41,6 +41,7 @@ class BaseActivity extends AppCompatActivity
   with PermissionProvider {
 
   lazy val globalTracking = inject[GlobalTrackingController]
+  lazy val themeController = inject[ThemeController]
 
   private var started: Boolean = false
   private var permissionRequest = Option.empty[PermissionRequest]
@@ -57,7 +58,7 @@ class BaseActivity extends AppCompatActivity
     onBaseActivityStart()
   }
 
-  def getBaseTheme: Int = getControllerFactory.getThemeController.getTheme
+  def getBaseTheme: Int = themeController.getTheme
 
   def onBaseActivityStart() = {
     getApplication.asInstanceOf[ZApplication].ensureInitialized()
