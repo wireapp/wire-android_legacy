@@ -21,6 +21,7 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.View
+import android.view.View.OnClickListener
 import android.widget.{ImageView, LinearLayout}
 import com.waz.ZLog
 import com.waz.api.impl.AccentColor
@@ -66,6 +67,9 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   }
   inviteButton.onClickEvent.on(Threading.Ui) { _ =>
   }
+  userPicture.setOnClickListener(new OnClickListener {
+    override def onClick(v: View) = navigator.goTo(ProfilePictureViewState())
+  })
 
   override def setUserName(name: String): Unit = userNameText.setText(name)
 

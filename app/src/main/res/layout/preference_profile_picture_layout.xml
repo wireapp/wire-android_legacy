@@ -33,30 +33,21 @@
         android:src="@color/about__background"
         />
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_height="@dimen/preference_button_height"
         android:layout_width="match_parent"
-        android:orientation="horizontal"
         >
 
         <com.waz.zclient.views.GlyphButton
+            android:id="@+id/profile_user_camera"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/glyph__plus"
+            android:layout_centerInParent="true"
+            android:text="@string/glyph__camera"
+            android:color="@color/white"
+            android:textSize="@dimen/wire__text_size__big"
             />
 
-        <com.waz.zclient.views.GlyphButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/glyph__plus"
-            />
-
-        <com.waz.zclient.views.GlyphButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/glyph__plus"
-            />
-
-    </LinearLayout>
+    </RelativeLayout>
 
 </merge>

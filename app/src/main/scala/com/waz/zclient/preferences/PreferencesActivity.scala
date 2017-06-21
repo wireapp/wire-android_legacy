@@ -155,8 +155,10 @@ class PreferencesActivity extends BaseActivity
 
 
   override def onBackPressed() = {
-    if (!backStackNavigator.back())
-      finish()
+    Option(getSupportFragmentManager.findFragmentByTag(CameraFragment.TAG).asInstanceOf[CameraFragment]).fold{
+      if (!backStackNavigator.back())
+        finish()
+    }{ _.onBackPressed() }
   }
 
   override def onPreferenceDisplayDialog(preferenceFragmentCompat: PreferenceFragmentCompat, preference: Preference): Boolean = {

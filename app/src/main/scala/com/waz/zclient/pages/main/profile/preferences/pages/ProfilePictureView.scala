@@ -21,18 +21,20 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.View
+import android.view.View.OnClickListener
 import android.widget.{ImageView, LinearLayout}
 import com.waz.service.ZMessaging
-import com.waz.utils.events.{EventContext, Signal}
+import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.waz.zclient.pages.main.profile.camera.CameraContext
+import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 import com.waz.zclient.utils.{UiStorage, UserSignal, ViewState}
-import com.waz.zclient.views.ImageAssetDrawable
+import com.waz.zclient.views.{GlyphButton, ImageAssetDrawable}
 import com.waz.zclient.views.ImageAssetDrawable.ScaleType
 import com.waz.zclient.views.ImageController.{ImageSource, WireImage}
 
 trait ProfilePictureView {
-
-  def setPictureDrawable(drawable: Drawable): Unit
+    def setPictureDrawable(drawable: Drawable): Unit
 }
 
 class ProfilePictureViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ProfilePictureView with ViewHelper{
@@ -42,6 +44,13 @@ class ProfilePictureViewImpl(context: Context, attrs: AttributeSet, style: Int) 
   inflate(R.layout.preference_profile_picture_layout)
 
   val image = findById[ImageView](R.id.profile_user_picture)
+  val cameraButton = findById[GlyphButton](R.id.profile_user_camera)
+
+  cameraButton.setOnClickListener(new OnClickListener {
+    override def onClick(v: View) = {
+      Option(context.asInstanceOf[PreferencesActivity]).foreach(_.getControllerFactory.getCameraController.openCamera(CameraContext.SETTINGS))
+    }
+  })
 
   override def setPictureDrawable(drawable: Drawable) = image.setImageDrawable(drawable)
 }
@@ -60,17 +69,6 @@ case class ProfilePictureViewState() extends ViewState {
   override def onViewDetached() = {
     controller = None
   }
-
-  override def inAnimation(view: View, root: View, forward: Boolean) = {
-    view.setAlpha(0.0f)
-    if (forward)
-      view.setTranslationY(root.getHeight)
-    else
-      view.setTranslationY(-root.getHeight)
-    view.animate().alpha(1.0f).translationX(0)
-  }
-
-  override def outAnimation(view: View, root: View, forward: Boolean) = super.outAnimation(view, root, forward)
 }
 
 class ProfilePictureViewController(view: ProfilePictureView)(implicit inj: Injector, ec: EventContext) extends Injectable {

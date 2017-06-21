@@ -38,7 +38,7 @@ import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.preferences.dialogs.AccentColorPickerFragment
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.ViewUtils._
-import com.waz.zclient.utils.{StringUtils, UiStorage, UserSignal, ViewState}
+import com.waz.zclient.utils.{BackStackNavigator, StringUtils, UiStorage, UserSignal, ViewState}
 import com.waz.zclient.views.ImageAssetDrawable
 import com.waz.zclient.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.views.ImageController.{ImageSource, WireImage}
@@ -124,6 +124,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   val zms = inject[Signal[ZMessaging]]
   implicit val uiStorage = inject[UiStorage]
   lazy val tracking = inject[GlobalTrackingController]
+  val navigator = inject[BackStackNavigator]
 
   //TODO: avoid injecting context
   implicit val context = inject[WireContext]
@@ -194,12 +195,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
     }(Threading.Ui)
   }
 
-  view.onPictureClick.on(Threading.Ui){ _ =>
-    self.head.map{ self =>
-      //TODO: Remove java api
-      Option(context.asInstanceOf[PreferencesActivity]).foreach(_.getControllerFactory.getCameraController.openCamera(CameraContext.SETTINGS))
-    }(Threading.Ui)
-  }
+  view.onPictureClick.on(Threading.Ui){ _ => navigator.goTo(ProfilePictureViewState()) }
 
   view.onAccentClick.on(Threading.Ui){ _ =>
     self.head.map{ self =>
