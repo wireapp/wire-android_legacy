@@ -31,9 +31,8 @@ import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient._
 import com.waz.zclient.controllers.tracking.events.profile.SignOut
 import com.waz.zclient.core.controllers.tracking.events.session.LoggedOutEvent
-import com.waz.zclient.pages.main.profile.camera.CameraContext
 import com.waz.zclient.pages.main.profile.preferences.dialogs.{AddEmailAndPasswordPreferenceDialogFragment, AddPhoneNumberPreferenceDialogFragment}
-import com.waz.zclient.pages.main.profile.preferences.views.TextButton
+import com.waz.zclient.pages.main.profile.preferences.views.{EditNameDialog, TextButton}
 import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.preferences.dialogs.AccentColorPickerFragment
 import com.waz.zclient.tracking.GlobalTrackingController
@@ -112,7 +111,7 @@ case class AccountViewState() extends ViewState {
   var controller = Option.empty[AccountViewController]
 
   override def onViewAttached(v: View) = {
-    controller = Option(v.asInstanceOf[AccountViewImpl]).map(view => new AccountViewController(view)(view.wContext.injector, view))
+    controller = Option(v.asInstanceOf[AccountViewImpl]).map(view => new AccountViewController(view)(view.wContext.injector, view, view.getContext))
   }
 
   override def onViewDetached() = {
@@ -120,14 +119,11 @@ case class AccountViewState() extends ViewState {
   }
 }
 
-class AccountViewController(view: AccountView)(implicit inj: Injector, ec: EventContext) extends Injectable {
+class AccountViewController(view: AccountView)(implicit inj: Injector, ec: EventContext, context: Context) extends Injectable {
   val zms = inject[Signal[ZMessaging]]
   implicit val uiStorage = inject[UiStorage]
   lazy val tracking = inject[GlobalTrackingController]
   val navigator = inject[BackStackNavigator]
-
-  //TODO: avoid injecting context
-  implicit val context = inject[WireContext]
 
   val self = for {
     zms <- zms
@@ -170,6 +166,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
 
   view.onNameClick.on(Threading.Ui){ _ =>
     self.head.map{ self =>
+      showPrefDialog(EditNameDialog.newInstance(self.name), EditNameDialog.Tag)
     }(Threading.Ui)
   }
 

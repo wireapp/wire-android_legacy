@@ -105,8 +105,9 @@ class BackStackNavigator extends Injectable {
     }
   }
 
-  def onRestore(root: ViewGroup): Unit ={
+  def onRestore(context: Context, root: ViewGroup): Unit ={
     this.root = Option(root)
+    this.inflater = Option(LayoutInflater.from(context))
 
     (this.root, inflater) match {
       case (Some(root), Some(inflater)) =>

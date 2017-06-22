@@ -98,7 +98,7 @@ class PreferencesActivity extends BaseActivity
         setTitle(state.name)
       }
     } else {
-      backStackNavigator.onRestore(findViewById(R.id.content).asInstanceOf[ViewGroup])
+      backStackNavigator.onRestore(this, findViewById(R.id.content).asInstanceOf[ViewGroup])
     }
     currentAccountPref.signal.onChanged { _ =>
       startActivity(returning(new Intent(this, classOf[MainActivity]))(_.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK)))
