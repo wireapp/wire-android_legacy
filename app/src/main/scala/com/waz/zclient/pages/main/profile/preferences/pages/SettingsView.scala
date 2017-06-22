@@ -36,6 +36,7 @@ class SettingsView(context: Context, attrs: AttributeSet, style: Int) extends Li
   val navigator = inject[BackStackNavigator]
 
   val accountButton = findById[TextButton](R.id.settings_account)
+  val devicesButton = findById[TextButton](R.id.settings_devices)
   val optionsButton = findById[TextButton](R.id.settings_options)
   val advancedButton = findById[TextButton](R.id.settings_advanced)
   val supportButton = findById[TextButton](R.id.settings_support)
@@ -44,6 +45,7 @@ class SettingsView(context: Context, attrs: AttributeSet, style: Int) extends Li
   val avsButton = findById[TextButton](R.id.settings_avs)
 
   accountButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AccountViewState()) }
+  devicesButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(DevicesViewState()) }
   optionsButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(OptionsViewState()) }
   advancedButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AdvancedViewState()) }
   supportButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(SupportViewState()) }

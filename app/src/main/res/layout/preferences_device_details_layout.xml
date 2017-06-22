@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2017 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+    >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            >
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                android:text="@string/pref_devices_current_device_category_title"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/wire__padding__16"
+                android:paddingEnd="@dimen/wire__padding__16"
+                android:textColor="@color/accent_blue"
+                />
+
+            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+                android:id="@+id/current_device"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                app:title="Samsung bla bla"
+                app:subtitle="ID: aa bb aa bb aa bb aa bb aa bb"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                android:text="@string/pref_devices_other_devices_category_title"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/wire__padding__16"
+                android:paddingEnd="@dimen/wire__padding__16"
+                android:textColor="@color/accent_blue"
+                />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                >
+
+                <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/preference_button_height"
+                    app:title="Samsung bla bla"
+                    app:subtitle="ID: aa bb aa bb aa bb aa bb aa bb"
+                    app:iconEnd="@drawable/shield_full"
+                    />
+
+                <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/preference_button_height"
+                    app:title="Samsung bla bla"
+                    app:subtitle="ID: aa bb aa bb aa bb aa bb aa bb"
+                    app:iconEnd="@drawable/shield_half"
+                    />
+
+            </LinearLayout>
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                android:text="@string/pref_devices_warning_summary"
+                android:gravity="center"
+                android:textAlignment="center"
+                android:paddingStart="@dimen/wire__padding__32"
+                android:paddingEnd="@dimen/wire__padding__32"
+                android:textColor="@color/light_graphite"
+                />
+
+        </LinearLayout>
+
+</merge>

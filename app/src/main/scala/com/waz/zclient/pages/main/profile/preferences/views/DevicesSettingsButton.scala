@@ -24,7 +24,7 @@ import com.waz.zclient.R
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.RichView
 
-class DevicesButtonPreference(context: Context, attrs: AttributeSet, style: Int) extends TextButton(context, attrs, style) {
+class DevicesSettingsButton(context: Context, attrs: AttributeSet, style: Int) extends TextButton(context, attrs, style) {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 

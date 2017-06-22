@@ -55,12 +55,20 @@
         android:layout_height="@dimen/preference_button_height"
         />
 
-    <com.waz.zclient.pages.main.profile.preferences.views.DevicesButtonPreference
-        android:id="@+id/profile_devices"
+    <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+        android:id="@+id/profile_create_team"
         android:layout_width="match_parent"
         android:layout_height="@dimen/preference_button_height"
-        app:iconStart="@drawable/ic_action_devices"
-        app:title="@string/pref_devices_screen_title"
+        app:title="Create a Team"
+        app:iconStart="@drawable/ic_action_about"
+        />
+
+    <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+        android:id="@+id/profile_add_account"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/preference_button_height"
+        app:title="Add an account"
+        app:iconStart="@drawable/ic_action_about"
         />
 
     <com.waz.zclient.pages.main.profile.preferences.views.TextButton
@@ -69,15 +77,6 @@
         android:layout_height="@dimen/preference_button_height"
         app:title="@string/settings_title"
         app:iconStart="@drawable/ic_action_advanced"
-        />
-
-    <com.waz.zclient.pages.main.profile.preferences.views.TextButton
-        android:id="@+id/profile_invite"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/preference_button_height"
-        android:background="@color/accent_blue"
-        app:title="@string/pref_invite_title"
-        app:iconStart="@drawable/ic_action_about"
         />
 
 </merge>

@@ -27,7 +27,8 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         >
 
         <LinearLayout
@@ -42,6 +43,13 @@
                 android:layout_height="@dimen/preference_button_height"
                 app:iconStart="@drawable/ic_action_account"
                 app:title="Account"/>
+
+            <com.waz.zclient.pages.main.profile.preferences.views.DevicesSettingsButton
+                android:id="@+id/settings_devices"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                app:iconStart="@drawable/ic_action_devices"
+                app:title="@string/pref_devices_screen_title"/>
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
                 android:id="@+id/settings_options"
@@ -88,5 +96,14 @@
         </LinearLayout>
 
     </ScrollView>
+
+    <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+        android:id="@+id/profile_invite"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/preference_button_height"
+        android:background="@color/accent_blue"
+        app:title="@string/pref_invite_title"
+        app:iconStart="@drawable/ic_action_about"
+        />
 
 </merge>

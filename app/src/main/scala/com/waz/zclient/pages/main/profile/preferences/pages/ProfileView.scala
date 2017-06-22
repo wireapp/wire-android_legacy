@@ -41,7 +41,6 @@ trait ProfileView {
   def setHandle(handle: String): Unit
   def setProfilePictureDrawable(drawable: Drawable): Unit
   def setAccentColor(color: Int): Unit
-  def setNewDevicesCount(count: Int): Unit
 }
 
 class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ProfileView with ViewHelper {
@@ -56,17 +55,12 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   val userPicture = findById[ImageView](R.id.profile_user_picture)
   val userHandleText = findById[TypefaceTextView](R.id.profile_user_handle)
 
-  val devicesButton = findById[TextButton](R.id.profile_devices)
   val settingsButton = findById[TextButton](R.id.profile_settings)
-  val inviteButton = findById[TextButton](R.id.profile_invite)
 
-  devicesButton.onClickEvent.on(Threading.Ui) { _ =>
-  }
   settingsButton.onClickEvent.on(Threading.Ui) { _ =>
     navigator.goTo(SettingsViewState())
   }
-  inviteButton.onClickEvent.on(Threading.Ui) { _ =>
-  }
+
   userPicture.setOnClickListener(new OnClickListener {
     override def onClick(v: View) = navigator.goTo(ProfilePictureViewState())
   })
@@ -77,11 +71,7 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setProfilePictureDrawable(drawable: Drawable): Unit = userPicture.setImageDrawable(drawable)
 
-  override def setAccentColor(color: Int): Unit = {
-    inviteButton.setBackgroundColor(AccentColor(color).getColor())
-  }
-
-  override def setNewDevicesCount(count: Int): Unit = {}
+  override def setAccentColor(color: Int): Unit = {}
 }
 object ProfileView {
   val Tag = ZLog.logTagFor[ProfileView]
@@ -118,7 +108,7 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
   view.setProfilePictureDrawable(new ImageAssetDrawable(selfPicture, scaleType = ScaleType.CenterInside, request = RequestBuilder.Round))
 
   self.on(Threading.Ui) { self =>
-      view.setAccentColor(self.accent)
+      view.setAccentColor(AccentColor(self.accent).getColor())
       self.handle.foreach(handle => view.setHandle(StringUtils.formatHandle(handle.string)))
       view.setUserName(self.getDisplayName)
   }
