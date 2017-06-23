@@ -18,11 +18,12 @@
 package com.waz.zclient.pages.main.profile.preferences.pages
 
 import android.content.Context
+import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.zclient.utils.ViewState
+import com.waz.zclient.utils.BackStackKey
 
 trait DevSettingsView
 
@@ -33,8 +34,8 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int) ext
   inflate(R.layout.preferences_dev_layout)
 }
 
-case class DevSettingsViewState() extends ViewState {
-  override def name = "Developer Settings" //TODO: Name
+case class DevSettingsBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
+  override def nameId: Int = R.string.pref_developer_screen_title
 
   override def layoutId = R.layout.preferences_dev
 

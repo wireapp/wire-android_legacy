@@ -84,7 +84,6 @@ object WireApplication {
     bind [GlobalCameraController]  to new GlobalCameraController(new AndroidCameraFactory)
     bind [SelectionController]     to new SelectionController()
     bind [SoundController]         to new SoundController
-    bind [BackStackNavigator]      to new BackStackNavigator
     bind [ThemeController]         to new ThemeController
 
     //notifications
@@ -124,6 +123,7 @@ object WireApplication {
     bind [SharingController]         to new SharingController()
     bind [TeamsAndUserController]    to new TeamsAndUserController()
     bind [UiStorage]                 to new UiStorage()
+    bind [BackStackNavigator]        to new BackStackNavigator()
 
     /**
       * Since tracking controllers will immediately instantiate other necessary controllers, we keep them separated

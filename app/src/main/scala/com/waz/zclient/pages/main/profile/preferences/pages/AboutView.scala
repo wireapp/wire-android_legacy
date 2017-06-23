@@ -19,11 +19,12 @@ package com.waz.zclient.pages.main.profile.preferences.pages
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import com.waz.zclient.pages.main.profile.preferences.views.TextButton
-import com.waz.zclient.utils.ViewState
+import com.waz.zclient.utils.BackStackKey
 import com.waz.zclient.{R, ViewHelper}
 
 class AboutView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
@@ -37,8 +38,8 @@ class AboutView(context: Context, attrs: AttributeSet, style: Int) extends Linea
   def setVersion(version: String) = versionTextButton.setTitle(context.getString(R.string.pref_about_version_title, version))
 }
 
-case class AboutViewState() extends ViewState {
-  override def name = "About" //TODO resource
+case class AboutBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
+  override def nameId: Int = R.string.pref_about_screen_title
 
   override def layoutId = R.layout.preferences_about
 

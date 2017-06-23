@@ -19,19 +19,20 @@ package com.waz.zclient.pages.main.profile.preferences.pages
 
 import android.content.Context
 import android.graphics.drawable.Drawable
+import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
 import android.widget.{ImageView, LinearLayout}
 import com.waz.service.ZMessaging
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.pages.main.profile.camera.CameraContext
 import com.waz.zclient.preferences.PreferencesActivity
-import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
-import com.waz.zclient.utils.{UiStorage, UserSignal, ViewState}
-import com.waz.zclient.views.{GlyphButton, ImageAssetDrawable}
+import com.waz.zclient.utils.{UiStorage, UserSignal, BackStackKey}
 import com.waz.zclient.views.ImageAssetDrawable.ScaleType
 import com.waz.zclient.views.ImageController.{ImageSource, WireImage}
+import com.waz.zclient.views.{GlyphButton, ImageAssetDrawable}
+import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 
 trait ProfilePictureView {
     def setPictureDrawable(drawable: Drawable): Unit
@@ -55,8 +56,8 @@ class ProfilePictureViewImpl(context: Context, attrs: AttributeSet, style: Int) 
   override def setPictureDrawable(drawable: Drawable) = image.setImageDrawable(drawable)
 }
 
-case class ProfilePictureViewState() extends ViewState {
-  override def name = "Profile Picture"
+case class ProfilePictureBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
+  override def nameId: Int = R.string.pref_account_picture_title
 
   override def layoutId = R.layout.preference_profile_picture
 

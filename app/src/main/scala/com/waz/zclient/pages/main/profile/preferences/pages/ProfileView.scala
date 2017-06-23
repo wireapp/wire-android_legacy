@@ -19,6 +19,7 @@ package com.waz.zclient.pages.main.profile.preferences.pages
 
 import android.content.Context
 import android.graphics.drawable.Drawable
+import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
@@ -31,7 +32,7 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient._
 import com.waz.zclient.pages.main.profile.preferences.views.TextButton
 import com.waz.zclient.ui.text.TypefaceTextView
-import com.waz.zclient.utils.{BackStackNavigator, StringUtils, UiStorage, UserSignal, ViewState}
+import com.waz.zclient.utils.{BackStackNavigator, StringUtils, UiStorage, UserSignal, BackStackKey}
 import com.waz.zclient.views.ImageAssetDrawable
 import com.waz.zclient.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.views.ImageController.{ImageSource, WireImage}
@@ -58,11 +59,11 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   val settingsButton = findById[TextButton](R.id.profile_settings)
 
   settingsButton.onClickEvent.on(Threading.Ui) { _ =>
-    navigator.goTo(SettingsViewState())
+    navigator.goTo(SettingsBackStackKey())
   }
 
   userPicture.setOnClickListener(new OnClickListener {
-    override def onClick(v: View) = navigator.goTo(ProfilePictureViewState())
+    override def onClick(v: View) = navigator.goTo(ProfilePictureBackStackKey())
   })
 
   override def setUserName(name: String): Unit = userNameText.setText(name)
@@ -77,9 +78,9 @@ object ProfileView {
   val Tag = ZLog.logTagFor[ProfileView]
 }
 
-case class ProfileViewState() extends ViewState {
+case class ProfileBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
 
-  override def name = "Profile"//TODO: resource
+  override def nameId: Int = R.string.pref_profile_screen_title
 
   override def layoutId = R.layout.preferences_profile
 

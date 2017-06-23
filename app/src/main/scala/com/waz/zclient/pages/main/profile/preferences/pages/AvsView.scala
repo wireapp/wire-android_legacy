@@ -18,11 +18,12 @@
 package com.waz.zclient.pages.main.profile.preferences.pages
 
 import android.content.Context
+import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
+import com.waz.zclient.utils.BackStackKey
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.zclient.utils.ViewState
 
 trait AvsView
 
@@ -33,8 +34,8 @@ class AvsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends Lin
   inflate(R.layout.preferences_avs_layout)
 }
 
-case class AvsViewState() extends ViewState {
-  override def name = "AVS Settings" //TODO: Name
+case class AvsBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
+  override def nameId: Int = R.string.pref_dev_avs_screen_title
 
   override def layoutId = R.layout.preferences_avs
 

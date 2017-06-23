@@ -18,6 +18,7 @@
 package com.waz.zclient.pages.main.profile.preferences.pages
 
 import android.content.Context
+import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
@@ -27,9 +28,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient._
 import com.waz.zclient.pages.main.profile.preferences.views.{SwitchPreference, TextButton}
-import com.waz.zclient.preferences.PreferencesActivity
-import com.waz.zclient.ui.theme.ThemeUtils
-import com.waz.zclient.utils.ViewState
+import com.waz.zclient.utils.BackStackKey
 
 
 trait OptionsView {
@@ -85,8 +84,8 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   override def setDownloadPictures(string: String) = {}
 }
 
-case class OptionsViewState() extends ViewState {
-  override def name = "Options"//TODO: Resource
+case class OptionsBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
+  override def nameId: Int = R.string.pref_options_screen_title
 
   override def layoutId = R.layout.preferences_options
 

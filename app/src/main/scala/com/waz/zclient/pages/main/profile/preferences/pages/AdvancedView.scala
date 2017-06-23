@@ -18,11 +18,12 @@
 package com.waz.zclient.pages.main.profile.preferences.pages
 
 import android.content.Context
+import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.zclient.utils.ViewState
+import com.waz.zclient.utils.BackStackKey
 
 trait AdvancedView
 
@@ -33,14 +34,12 @@ class AdvancedViewImpl(context: Context, attrs: AttributeSet, style: Int) extend
   inflate(R.layout.preferences_advanced_layout)
 }
 
-case class AdvancedViewState() extends ViewState {
-  override def name = "Advanced"
+case class AdvancedBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
+  override def nameId: Int = R.string.pref_advanced_screen_title
 
   override def layoutId = R.layout.preferences_advanced
 
-  override def onViewAttached(v: View) = {
-    //TODO: Controller
-  }
+  override def onViewAttached(v: View) = {}
 
   override def onViewDetached() = {}
 }

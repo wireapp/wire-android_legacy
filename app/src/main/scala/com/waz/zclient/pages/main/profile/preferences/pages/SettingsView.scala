@@ -18,12 +18,13 @@
 package com.waz.zclient.pages.main.profile.preferences.pages
 
 import android.content.Context
+import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import com.waz.threading.Threading
 import com.waz.zclient.pages.main.profile.preferences.views.TextButton
-import com.waz.zclient.utils.{BackStackNavigator, ViewState}
+import com.waz.zclient.utils.{BackStackNavigator, BackStackKey}
 import com.waz.zclient.{R, ViewHelper}
 
 
@@ -44,19 +45,19 @@ class SettingsView(context: Context, attrs: AttributeSet, style: Int) extends Li
   val devButton = findById[TextButton](R.id.settings_dev)
   val avsButton = findById[TextButton](R.id.settings_avs)
 
-  accountButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AccountViewState()) }
-  devicesButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(DevicesViewState()) }
-  optionsButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(OptionsViewState()) }
-  advancedButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AdvancedViewState()) }
-  supportButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(SupportViewState()) }
-  aboutButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AboutViewState()) }
-  devButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(DevSettingsViewState()) }
-  avsButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AvsViewState()) }
+  accountButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AccountBackStackKey()) }
+  devicesButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(DevicesBackStackKey())}
+  optionsButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(OptionsBackStackKey()) }
+  advancedButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AdvancedBackStackKey()) }
+  supportButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(SupportBackStackKey()) }
+  aboutButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AboutBackStackKey()) }
+  devButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(DevSettingsBackStackKey()) }
+  avsButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AvsBackStackKey()) }
 }
 
-case class SettingsViewState() extends ViewState {
+case class SettingsBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
 
-  override def name = "Settings"//TODO: resource
+  override def nameId: Int = R.string.pref_category_title
 
   override def layoutId = R.layout.preferences_settings
 

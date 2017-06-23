@@ -20,6 +20,7 @@ package com.waz.zclient.pages.main.profile.preferences.pages
 import android.content.{Context, DialogInterface}
 import android.graphics.drawable.Drawable
 import android.graphics.{Canvas, ColorFilter, Paint, PixelFormat}
+import android.os.{Bundle, Parcel, Parcelable}
 import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.util.AttributeSet
 import android.view.View
@@ -37,7 +38,7 @@ import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.preferences.dialogs.AccentColorPickerFragment
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.ViewUtils._
-import com.waz.zclient.utils.{BackStackNavigator, StringUtils, UiStorage, UserSignal, ViewState}
+import com.waz.zclient.utils.{BackStackNavigator, StringUtils, UiStorage, UserSignal, BackStackKey}
 import com.waz.zclient.views.ImageAssetDrawable
 import com.waz.zclient.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.views.ImageController.{ImageSource, WireImage}
@@ -102,9 +103,9 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   override def setAccentDrawable(drawable: Drawable) = colorButton.setDrawableStart(Some(drawable))
 }
 
-case class AccountViewState() extends ViewState {
+case class AccountBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
 
-  override def name = "Account"//TODO: resource
+  override def nameId: Int = R.string.pref_account_screen_title
 
   override def layoutId = R.layout.preferences_account
 
@@ -116,6 +117,13 @@ case class AccountViewState() extends ViewState {
 
   override def onViewDetached() = {
     controller = None
+  }
+}
+
+object AccountBackStackKey {
+  val CREATOR: Parcelable.Creator[AccountBackStackKey] = new Parcelable.Creator[AccountBackStackKey] {
+    override def createFromParcel(source: Parcel) = AccountBackStackKey()
+    override def newArray(size: Int) = Array.ofDim(size)
   }
 }
 
@@ -192,7 +200,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
     }(Threading.Ui)
   }
 
-  view.onPictureClick.on(Threading.Ui){ _ => navigator.goTo(ProfilePictureViewState()) }
+  view.onPictureClick.on(Threading.Ui){ _ => navigator.goTo(ProfilePictureBackStackKey()) }
 
   view.onAccentClick.on(Threading.Ui){ _ =>
     self.head.map{ self =>

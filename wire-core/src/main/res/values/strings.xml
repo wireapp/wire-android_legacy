@@ -455,6 +455,7 @@
     <string name="pref_category_title">Settings</string>
     <string name="pref_developer_screen_title">Developer Settings</string>
     <string name="pref_dev_avs_screen_title">AVS Settings</string>
+    <string name="pref_profile_screen_title">Profile</string>
 
     <!-- Account -->
     <string name="pref_account_screen_title">Account</string>

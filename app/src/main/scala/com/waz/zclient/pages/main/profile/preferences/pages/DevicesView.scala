@@ -18,6 +18,7 @@
 package com.waz.zclient.pages.main.profile.preferences.pages
 
 import android.content.Context
+import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, ScrollView}
@@ -26,7 +27,7 @@ import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.pages.main.profile.preferences.views.DeviceButton
-import com.waz.zclient.utils.ViewState
+import com.waz.zclient.utils.BackStackKey
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 
 trait DevicesView {
@@ -57,8 +58,8 @@ class DevicesViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   }
 }
 
-case class DevicesViewState() extends ViewState {
-  override def name = "Devices"
+case class DevicesBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
+  override def nameId: Int = R.string.pref_devices_screen_title
 
   override def layoutId = R.layout.preferences_devices
 

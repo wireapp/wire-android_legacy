@@ -18,11 +18,12 @@
 package com.waz.zclient.pages.main.profile.preferences.pages
 
 import android.content.Context
+import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.zclient.utils.ViewState
+import com.waz.zclient.utils.BackStackKey
 
 class SupportView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -31,8 +32,8 @@ class SupportView(context: Context, attrs: AttributeSet, style: Int) extends Lin
   inflate(R.layout.preferences_support_layout)
 }
 
-case class SupportViewState() extends ViewState {
-  override def name = "Support"
+case class SupportBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
+  override def nameId: Int = R.string.pref_support_screen_title
 
   override def layoutId = R.layout.preferences_support
 
