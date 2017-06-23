@@ -48,7 +48,7 @@ import com.waz.zclient.controllers.permission.RequestPermissionsObserver
 import com.waz.zclient.controllers.tracking.events.connect.{EnteredSearchEvent, OpenedConversationEvent, OpenedGenericInviteMenuEvent, SentConnectRequestEvent}
 import com.waz.zclient.controllers.tracking.screens.ApplicationScreen
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
-import com.waz.zclient.controllers.{SearchState, SearchUserController, TeamsAndUserController}
+import com.waz.zclient.controllers.{SearchState, SearchUserController, TeamsAndUserController, ThemeController}
 import com.waz.zclient.core.controllers.tracking.attributes.ConversationType
 import com.waz.zclient.core.stores.conversation.{ConversationChangeRequester, InboxLoadRequester, OnInboxLoadedListener}
 import com.waz.zclient.core.stores.network.DefaultNetworkAction
@@ -156,6 +156,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
   private lazy val trackingController = inject[GlobalTrackingController]
   private lazy val teamsAndUserController = inject[TeamsAndUserController]
   private lazy val accentColor = inject[AccentColorController].accentColor.map(_.getColor())
+  private lazy val themeController = inject[ThemeController]
 
   private case class PickableUser(userId : UserId, userName: String) extends PickableElement {
     def id: String = userId.str
@@ -227,7 +228,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
     }
     searchUserController = new SearchUserController(SearchState("", hasSelectedUsers = false, addingToConversation = addingToConversation, teamId))
     searchUserController.setContacts(getStoreFactory.getZMessagingApiStore.getApi.getContacts)
-    searchResultAdapter = new PickUsersAdapter(new SearchResultOnItemTouchListener(getActivity, this), this, searchUserController, getControllerFactory.getThemeController.isDarkTheme || !isAddingToConversation)
+    searchResultAdapter = new PickUsersAdapter(new SearchResultOnItemTouchListener(getActivity, this), this, searchUserController, themeController.isDarkTheme || !isAddingToConversation)
     searchResultRecyclerView = ViewUtils.getView(rootView, R.id.rv__pickuser__header_list_view)
     searchResultRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity))
     searchResultRecyclerView.setAdapter(searchResultAdapter)
@@ -613,7 +614,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
           val myName: String = self.getDisplayName
           val message: String = getString(R.string.connect__message, user.getName, myName)
           user.connect(message)
-          trackingController.tagEvent(new SentConnectRequestEvent(SentConnectRequestEvent.EventContext.INVITE_CONTACT_LIST, user.getCommonConnectionsCount))
+          trackingController.tagEvent(new SentConnectRequestEvent(SentConnectRequestEvent.EventContext.INVITE_CONTACT_LIST, 0))
         }(Threading.Ui)
       case _ =>
     }

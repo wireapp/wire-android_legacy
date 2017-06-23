@@ -38,6 +38,7 @@ import com.waz.model.ConvId;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.TeamsAndUserController;
+import com.waz.zclient.controllers.ThemeController;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.confirmation.ConfirmationCallback;
 import com.waz.zclient.controllers.confirmation.ConfirmationRequest;
@@ -668,7 +669,7 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
             .withNegativeButton(cancel)
             .withConfirmationCallback(callback)
             .withCheckboxLabel(checkboxLabel)
-            .withWireTheme(getControllerFactory().getThemeController().getThemeDependentOptionsTheme())
+            .withWireTheme(((BaseActivity)getActivity()).injectJava(ThemeController.class).getThemeDependentOptionsTheme())
             .withCheckboxSelectedByDefault()
             .build();
 

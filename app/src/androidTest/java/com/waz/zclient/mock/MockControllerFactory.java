@@ -61,11 +61,9 @@ import com.waz.zclient.controllers.stubs.StubRequestPermissionsController;
 import com.waz.zclient.controllers.stubs.StubSharingController;
 import com.waz.zclient.controllers.stubs.StubSingleImageController;
 import com.waz.zclient.controllers.stubs.StubSlidingPaneController;
-import com.waz.zclient.controllers.stubs.StubThemeController;
 import com.waz.zclient.controllers.stubs.StubUserPreferencesController;
 import com.waz.zclient.controllers.stubs.StubUsernamesController;
 import com.waz.zclient.controllers.stubs.StubVerificationController;
-import com.waz.zclient.controllers.theme.IThemeController;
 import com.waz.zclient.controllers.usernames.IUsernamesController;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
 import com.waz.zclient.controllers.verification.IVerificationController;
@@ -113,8 +111,6 @@ public class MockControllerFactory implements IControllerFactory {
   protected ISharingController sharingController = spy(StubSharingController.class);
 
   protected ISingleImageController singleImageController = spy(StubSingleImageController.class);
-
-  protected IThemeController themeController = spy(StubThemeController.class);
 
   protected IUserPreferencesController userPreferencesController = spy(StubUserPreferencesController.class);
 
@@ -209,11 +205,6 @@ public class MockControllerFactory implements IControllerFactory {
   @Override
   public IDeviceUserController getDeviceUserController() {
     return deviceUserController;
-  }
-
-  @Override
-  public IThemeController getThemeController() {
-    return themeController;
   }
 
   @Override

@@ -34,7 +34,7 @@ import com.waz.zclient.adapters.ConversationListAdapter._
 import com.waz.zclient.controllers.TeamsAndUserController
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
 import com.waz.zclient.views.conversationlist.{IncomingConversationListRow, NormalConversationListRow}
-import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 
 class ConversationListAdapter(context: Context)(implicit injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[ConversationRowViewHolder] with Injectable {
 
@@ -111,7 +111,7 @@ class ConversationListAdapter(context: Context)(implicit injector: Injector, eve
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int) = {
     viewType match {
       case NormalViewType =>
-        NormalConversationRowViewHolder(returning(new NormalConversationListRow(context)) { r =>
+        NormalConversationRowViewHolder(returning(ViewHelper.inflate[NormalConversationListRow](R.layout.normal_conv_list_item, parent, false)) { r =>
           r.setAlpha(1f)
           r.setMaxAlpha(maxAlpha)
           r.setOnClickListener(new View.OnClickListener {
@@ -135,7 +135,7 @@ class ConversationListAdapter(context: Context)(implicit injector: Injector, eve
           })
         })
       case IncomingViewType =>
-        IncomingConversationRowViewHolder(returning(new IncomingConversationListRow(context)) { r =>
+        IncomingConversationRowViewHolder(returning(ViewHelper.inflate[IncomingConversationListRow](R.layout.incoming_conv_list_item, parent, false)) { r =>
           r.setOnClickListener(new View.OnClickListener {
             override def onClick(view: View): Unit = {
               incomingRequests._1.headOption.foreach(onConversationClick ! _ )

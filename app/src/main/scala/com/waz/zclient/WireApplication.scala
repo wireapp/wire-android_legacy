@@ -21,8 +21,7 @@ import android.os.Build
 import android.renderscript.RenderScript
 import android.support.multidex.MultiDexApplication
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.{debug, verbose}
-import com.waz.api
+import com.waz.ZLog.verbose
 import com.waz.api.{NetworkMode, ZMessagingApi, ZMessagingApiFactory, ZmsVersion}
 import com.waz.content.GlobalPreferences
 import com.waz.log.InternalLog
@@ -37,7 +36,6 @@ import com.waz.zclient.controllers.drawing.IDrawingController
 import com.waz.zclient.controllers.global.{AccentColorController, KeyboardController, SelectionController}
 import com.waz.zclient.controllers.navigation.INavigationController
 import com.waz.zclient.controllers.singleimage.ISingleImageController
-import com.waz.zclient.controllers.theme.IThemeController
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
 import com.waz.zclient.conversation.CollectionController
 import com.waz.zclient.core.stores.IStoreFactory
@@ -49,7 +47,7 @@ import com.waz.zclient.pages.main.conversation.controller.IConversationScreenCon
 import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneController
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.tracking.{CallingTrackingController, GlobalTrackingController, UiTrackingController}
-import com.waz.zclient.utils.{BackendPicker, BuildConfigUtils, Callback, UiStorage}
+import com.waz.zclient.utils.{BackStackNavigator, BackendPicker, BuildConfigUtils, Callback, UiStorage}
 import com.waz.zclient.views.ImageController
 
 object WireApplication {
@@ -72,7 +70,6 @@ object WireApplication {
     // TODO: remove controller factory, reimplement those controllers
     bind [IControllerFactory]            toProvider controllerFactory
     bind [IPickUserController]           toProvider controllerFactory.getPickUserController
-    bind [IThemeController]              toProvider controllerFactory.getThemeController
     bind [IConversationScreenController] toProvider controllerFactory.getConversationScreenController
     bind [INavigationController]         toProvider controllerFactory.getNavigationController
     bind [IUserPreferencesController]    toProvider controllerFactory.getUserPreferencesController
@@ -87,6 +84,7 @@ object WireApplication {
     bind [GlobalCameraController]  to new GlobalCameraController(new AndroidCameraFactory)
     bind [SelectionController]     to new SelectionController()
     bind [SoundController]         to new SoundController
+    bind [ThemeController]         to new ThemeController
 
     //notifications
     bind [MessageNotificationsController]  to new MessageNotificationsController()
@@ -125,6 +123,7 @@ object WireApplication {
     bind [SharingController]         to new SharingController()
     bind [TeamsAndUserController]    to new TeamsAndUserController()
     bind [UiStorage]                 to new UiStorage()
+    bind [BackStackNavigator]        to new BackStackNavigator()
 
     /**
       * Since tracking controllers will immediately instantiate other necessary controllers, we keep them separated

@@ -218,7 +218,7 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
     private void trackSendConnectRequest(User user) {
         TrackingUtils.tagSentConnectRequestFromUserProfileEvent(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                                 userRequester,
-                                                                user.getCommonConnectionsCount());
+                                                                0);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////

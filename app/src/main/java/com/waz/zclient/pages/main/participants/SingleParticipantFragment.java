@@ -31,6 +31,7 @@ import com.waz.api.Verification;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
+import com.waz.zclient.controllers.ThemeController;
 import com.waz.zclient.controllers.confirmation.ConfirmationCallback;
 import com.waz.zclient.controllers.confirmation.ConfirmationRequest;
 import com.waz.zclient.controllers.confirmation.IConfirmationController;
@@ -371,7 +372,7 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
         String text = getString(R.string.confirmation_menu__block_text_with_name, user.getDisplayName());
         String confirm = getString(R.string.confirmation_menu__confirm_block);
         String cancel = getString(R.string.confirmation_menu__cancel);
-        OptionsTheme optionsTheme = getControllerFactory().getThemeController().getThemeDependentOptionsTheme();
+        OptionsTheme optionsTheme = ((BaseActivity)getActivity()).injectJava(ThemeController.class).getThemeDependentOptionsTheme();
 
         ConfirmationRequest request = new ConfirmationRequest.Builder()
             .withHeader(header)

@@ -26,7 +26,7 @@ import android.support.v4.app.{Fragment, FragmentManager, FragmentTransaction}
 import android.support.v4.widget.TextViewCompat
 import android.support.v7.preference.{Preference, PreferenceFragmentCompat, PreferenceScreen}
 import android.support.v7.widget.{AppCompatTextView, Toolbar}
-import android.view.{MenuItem, View}
+import android.view.{MenuItem, View, ViewGroup}
 import android.widget.{TextSwitcher, TextView, Toast, ViewSwitcher}
 import com.waz.api.ImageAsset
 import com.waz.content.GlobalPreferences
@@ -41,8 +41,9 @@ import com.waz.zclient.core.controllers.tracking.events.settings.ChangedProfileP
 import com.waz.zclient.pages.main.profile.camera.{CameraContext, CameraFragment}
 import com.waz.zclient.pages.main.profile.preferences._
 import com.waz.zclient.pages.main.profile.preferences.dialogs.WireRingtonePreferenceDialogFragment
+import com.waz.zclient.pages.main.profile.preferences.pages.ProfileBackStackKey
 import com.waz.zclient.tracking.GlobalTrackingController
-import com.waz.zclient.utils.{LayoutSpec, ViewUtils}
+import com.waz.zclient.utils.{BackStackNavigator, LayoutSpec, ViewUtils}
 import com.waz.zclient.{ActivityHelper, BaseActivity, MainActivity, R}
 
 class PreferencesActivity extends BaseActivity
@@ -56,6 +57,8 @@ class PreferencesActivity extends BaseActivity
 
   private lazy val replaceFragmentStrategy = new PreferenceScreenStrategy.ReplaceFragment(this, R.anim.abc_fade_in, R.anim.abc_fade_out, R.anim.abc_fade_in, R.anim.abc_fade_out)
   private lazy val toolbar: Toolbar        = findById(R.id.toolbar)
+
+  private lazy val backStackNavigator = inject[BackStackNavigator]
 
   private lazy val actionBar = returning(getSupportActionBar) { ab =>
     ab.setDisplayHomeAsUpEnabled(true)
@@ -88,8 +91,15 @@ class PreferencesActivity extends BaseActivity
     titleSwitcher //initialise title switcher
 
     if (LayoutSpec.isPhone(this)) ViewUtils.lockScreenOrientation(Configuration.ORIENTATION_PORTRAIT, this)
-    if (savedInstanceState == null) getSupportFragmentManager.beginTransaction.add(R.id.content, RootPreferences.newInstance(null, getIntent.getExtras), RootPreferences.TAG).commit
-
+    if (savedInstanceState == null) {
+      backStackNavigator.setup(findViewById(R.id.content).asInstanceOf[ViewGroup])
+      backStackNavigator.goTo(ProfileBackStackKey())
+      backStackNavigator.currentState.on(Threading.Ui){ state =>
+        setTitle(state.nameId)
+      }
+    } else {
+      backStackNavigator.onRestore(findViewById(R.id.content).asInstanceOf[ViewGroup], savedInstanceState)
+    }
     currentAccountPref.signal.onChanged { _ =>
       startActivity(returning(new Intent(this, classOf[MainActivity]))(_.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK)))
     }
@@ -98,6 +108,12 @@ class PreferencesActivity extends BaseActivity
       getControllerFactory.getUserPreferencesController.setLastAccentColor(color.getColor())
       getControllerFactory.getAccentColorController.setColor(AccentColorChangeRequester.REMOTE, color.getColor())
     }
+  }
+
+
+  override def onSaveInstanceState(outState: Bundle) = {
+    super.onSaveInstanceState(outState)
+    backStackNavigator.onSaveState(outState)
   }
 
   override def onStart(): Unit = {
@@ -135,6 +151,14 @@ class PreferencesActivity extends BaseActivity
       case _ =>
     }
     super.onOptionsItemSelected(item)
+  }
+
+
+  override def onBackPressed() = {
+    Option(getSupportFragmentManager.findFragmentByTag(CameraFragment.TAG).asInstanceOf[CameraFragment]).fold{
+      if (!backStackNavigator.back())
+        finish()
+    }{ _.onBackPressed() }
   }
 
   override def onPreferenceDisplayDialog(preferenceFragmentCompat: PreferenceFragmentCompat, preference: Preference): Boolean = {

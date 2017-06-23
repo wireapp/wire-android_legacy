@@ -37,6 +37,7 @@ import com.waz.api.User;
 import com.waz.api.Verification;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
+import com.waz.zclient.controllers.ThemeController;
 import com.waz.zclient.preferences.PreferencesActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
@@ -285,7 +286,7 @@ public class SingleOtrClientFragment extends BaseFragment<SingleOtrClientFragmen
 
     private void resetSession() {
         getContainer().getLoadingViewIndicator().show(LoadingIndicatorView.SPINNER_WITH_DIMMED_BACKGROUND,
-                                                      getControllerFactory().getThemeController().isDarkTheme());
+            ((BaseActivity)getActivity()).injectJava(ThemeController.class).isDarkTheme());
         resetSessionButton.setEnabled(false);
         otrClient.resetSession(new OtrClient.ResetCallback() {
             @Override

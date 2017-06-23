@@ -32,6 +32,7 @@ import com.waz.api.User;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
+import com.waz.zclient.controllers.ThemeController;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
 import com.waz.zclient.core.stores.conversation.ConversationStoreObserver;
 import com.waz.zclient.core.stores.singleparticipants.SingleParticipantStoreObserver;
@@ -96,14 +97,14 @@ public class OptionsMenuFragment extends BaseFragment<OptionsMenuFragment.Contai
         if (savedInstanceState != null) {
             switch (OptionsTheme.Type.values()[savedInstanceState.getInt(ARGUMENT_WIRE_THEME)]) {
                 case DARK:
-                    optionsTheme = getControllerFactory().getThemeController().getOptionsDarkTheme();
+                    optionsTheme = ((BaseActivity)getActivity()).injectJava(ThemeController.class).optionsDarkTheme();
                     break;
                 case LIGHT:
-                    optionsTheme = getControllerFactory().getThemeController().getOptionsLightTheme();
+                    optionsTheme = ((BaseActivity)getActivity()).injectJava(ThemeController.class).optionsLightTheme();
                     break;
             }
         } else {
-            optionsTheme = getControllerFactory().getThemeController().getOptionsLightTheme();
+            optionsTheme = ((BaseActivity)getActivity()).injectJava(ThemeController.class).optionsLightTheme();
         }
 
         return view;

@@ -57,8 +57,6 @@ import com.waz.zclient.controllers.sharing.ISharingController;
 import com.waz.zclient.controllers.sharing.SharingController;
 import com.waz.zclient.controllers.singleimage.ISingleImageController;
 import com.waz.zclient.controllers.singleimage.SingleImageController;
-import com.waz.zclient.controllers.theme.IThemeController;
-import com.waz.zclient.controllers.theme.ThemeController;
 import com.waz.zclient.controllers.usernames.IUsernamesController;
 import com.waz.zclient.controllers.usernames.UsernamesController;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
@@ -110,8 +108,6 @@ public abstract class Base$$ControllerFactory implements IControllerFactory {
   protected ISharingController sharingController;
 
   protected ISingleImageController singleImageController;
-
-  protected IThemeController themeController;
 
   protected IUserPreferencesController userPreferencesController;
 
@@ -239,10 +235,6 @@ public abstract class Base$$ControllerFactory implements IControllerFactory {
       singleImageController.tearDown();
       singleImageController = null;
     }
-    if (themeController != null) {
-      themeController.tearDown();
-      themeController = null;
-    }
     if (userPreferencesController != null) {
       userPreferencesController.tearDown();
       userPreferencesController = null;
@@ -323,15 +315,6 @@ public abstract class Base$$ControllerFactory implements IControllerFactory {
       verificationController = new VerificationController(getUserPreferencesController());
     }
     return verificationController;
-  }
-
-  @Override
-  public IThemeController getThemeController() {
-    verifyLifecycle();
-    if (themeController == null) {
-      themeController = new ThemeController(this.context);
-    }
-    return themeController;
   }
 
   @Override

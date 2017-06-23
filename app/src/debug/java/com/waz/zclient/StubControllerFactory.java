@@ -39,8 +39,6 @@ import com.waz.zclient.controllers.password.IPasswordController;
 import com.waz.zclient.controllers.permission.IRequestPermissionsController;
 import com.waz.zclient.controllers.sharing.ISharingController;
 import com.waz.zclient.controllers.singleimage.ISingleImageController;
-import com.waz.zclient.controllers.stubs.StubThemeController;
-import com.waz.zclient.controllers.theme.IThemeController;
 import com.waz.zclient.controllers.usernames.IUsernamesController;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
 import com.waz.zclient.controllers.verification.IVerificationController;
@@ -156,15 +154,6 @@ public class StubControllerFactory implements IControllerFactory {
     @Override
     public ISingleImageController getSingleImageController() {
         return null;
-    }
-
-    /**
-     * We need a stub implementation of the getThemeController so that test sub classes of the BaseActivity
-     * don't crash any tests.
-     */
-    @Override
-    public IThemeController getThemeController() {
-        return new StubThemeController();
     }
 
     @Override

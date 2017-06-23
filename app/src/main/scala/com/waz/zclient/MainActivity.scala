@@ -37,7 +37,7 @@ import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.CallPermissionsController
-import com.waz.zclient.controllers.SharingController
+import com.waz.zclient.controllers.{SharingController, ThemeController}
 import com.waz.zclient.controllers.accentcolor.AccentColorChangeRequester
 import com.waz.zclient.controllers.calling.CallingObserver
 import com.waz.zclient.controllers.global.{AccentColorController, SelectionController}
@@ -181,8 +181,8 @@ class MainActivity extends BaseActivity
     }
     Localytics.setInAppMessageDisplayActivity(this)
     Localytics.handleTestMode(getIntent)
-    if (getControllerFactory.getThemeController.isRestartPending) {
-      getControllerFactory.getThemeController.removePendingRestart()
+    if (themeController.shouldActivityRestart) {
+      themeController.activityRestarted()
       restartActivity()
     }
   }

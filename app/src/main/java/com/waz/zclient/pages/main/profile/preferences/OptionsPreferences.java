@@ -82,8 +82,6 @@ public class OptionsPreferences extends BasePreferenceFragment implements Shared
         bindPreferenceSummaryToValue(textTonePreference);
         bindPreferenceSummaryToValue(pingPreference);
 
-        themePreference = (SwitchPreference) findPreference(getString(R.string.pref_options_theme_switch_key));
-        themePreference.setChecked(getControllerFactory().getThemeController().isDarkTheme());
 
         if (LayoutSpec.isTablet(getActivity())) {
             PreferenceCategory requestedOptionsCategory = (PreferenceCategory) findPreference(getString(R.string.pref_options_requested_category_key));
@@ -144,8 +142,6 @@ public class OptionsPreferences extends BasePreferenceFragment implements Shared
                 ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.READ_CONTACTS}, PermissionUtils.REQUEST_READ_CONTACTS);
             }
         } else if (key.equals(getString(R.string.pref_options_theme_switch_key))) {
-            getControllerFactory().getThemeController().toggleThemePending(true);
-            event = new ChangedThemeEvent(getControllerFactory().getThemeController().isDarkTheme());
         } else if (key.equals(getString(R.string.pref_options_cursor_send_button_key))) {
             boolean sendButtonIsOn = sharedPreferences.getBoolean(key, true);
             event = new ChangedSendButtonSettingEvent(sendButtonIsOn);

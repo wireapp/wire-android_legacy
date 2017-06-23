@@ -38,6 +38,7 @@ import com.waz.model.UserId;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.TeamsAndUserController;
+import com.waz.zclient.controllers.ThemeController;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.tracking.events.group.OpenedGroupActionEvent;
 import com.waz.zclient.controllers.tracking.events.otr.ViewedOtherOtrClientsEvent;
@@ -135,7 +136,7 @@ public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipan
         View view = inflater.inflate(R.layout.fragment_participants_single_tabbed, viewGroup, false);
         TabIndicatorLayout tabIndicatorLayout = ViewUtils.getView(view, R.id.til_single_participant_tabs);
         int color;
-        if (getControllerFactory().getThemeController().isDarkTheme()) {
+        if (((BaseActivity)getActivity()).injectJava(ThemeController.class).isDarkTheme()) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
                 //noinspection deprecation
                 color = getResources().getColor(R.color.text__secondary_dark);

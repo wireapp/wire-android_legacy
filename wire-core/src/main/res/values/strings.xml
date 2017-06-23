@@ -455,6 +455,7 @@
     <string name="pref_category_title">Settings</string>
     <string name="pref_developer_screen_title">Developer Settings</string>
     <string name="pref_dev_avs_screen_title">AVS Settings</string>
+    <string name="pref_profile_screen_title">Profile</string>
 
     <!-- Account -->
     <string name="pref_account_screen_title">Account</string>
@@ -572,7 +573,7 @@
     <string name="pref_about_copyright_title">\u00A9 Wire Swiss GmbH</string>
 
     <!-- Pref invite -->
-    <string name="pref_invite_title">Invite people</string>
+    <string name="pref_invite_title">Invite people to join Wire</string>
 
     <!-- Preference Account Actions -->
     <string name="pref__account_action__phone_verification__title">Verify phone number</string>

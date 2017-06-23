@@ -68,17 +68,7 @@ public class UserDetailsView extends LinearLayout {
                 userNameTextView.setVisibility(VISIBLE);
                 userNameTextView.setText(StringUtils.formatHandle(user.getUsername()));
             }
-
-            if (user.getConnectionStatus() != User.ConnectionStatus.ACCEPTED &&
-                user.getConnectionStatus() != User.ConnectionStatus.BLOCKED &&
-                user.getCommonConnectionsCount() > 0) {
-                final String commonUsersSummary = getContext().getResources().getQuantityString(R.plurals.connect_request__common_users__summary,
-                                                                                                user.getCommonConnectionsCount(),
-                                                                                                user.getCommonConnectionsCount());
-                userInfoTextView.setText(commonUsersSummary);
-            } else {
-                userInfoTextView.setText("");
-            }
+            userInfoTextView.setText("");
             contactDetailsModelObserver.setAndUpdate(user.getFirstContact());
         }
     };
