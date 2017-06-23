@@ -27,6 +27,7 @@ import android.hardware.Camera.{AutoFocusCallback, PictureCallback, ShutterCallb
 import android.os.Build
 import android.view.{OrientationEventListener, Surface, WindowManager}
 import com.waz.ZLog
+import com.waz.service.images.ImageAssetGenerator
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.RichFuture
 import com.waz.utils.events.{EventContext, Signal}
@@ -200,7 +201,7 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
     pms.setPreviewSize(ps.w.toInt, ps.h.toInt)
     previewSize = Some(ps)
 
-    val pictureSize = getPictureSize(pms, info.cameraFacing)
+    val pictureSize = getPictureSize(pms)
     pms.setPictureSize(pictureSize.width, pictureSize.height)
 
     pms.setRotation(getCameraRotation(devOrientation.orientation, info))
@@ -304,10 +305,9 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
     PreviewSize(w, h)
   }
 
-  private def getPictureSize(pms: Camera#Parameters, facing: CameraFacing) = {
-    val sizes = pms.getSupportedPictureSizes
-    val size = if (facing == CameraFacing.FRONT && ("Nexus 4" == Build.MODEL)) sizes.get(1) else sizes.get(0)
-    size
+  private def getPictureSize(pms: Camera#Parameters) = {
+    val (bigger, smaller) = pms.getSupportedPictureSizes.asScala.partition(_.height >= ImageAssetGenerator.MediumSize)
+    if (bigger.nonEmpty) bigger.minBy(_.width) else smaller.maxBy(_.width)
   }
 
   /**
