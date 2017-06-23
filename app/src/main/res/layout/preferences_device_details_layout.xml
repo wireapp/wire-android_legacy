@@ -31,9 +31,41 @@
             >
 
             <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/device_detail_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/wire__padding__16"
+                android:paddingEnd="@dimen/wire__padding__16"
+                android:textColor="@color/white"
+                android:textSize="@dimen/wire__text_size__regular"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/device_detail_id"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/wire__padding__16"
+                android:paddingEnd="@dimen/wire__padding__16"
+                android:textColor="@color/white"
+                android:textSize="@dimen/wire__text_size__small"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/device_detail_activated"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:padding="@dimen/wire__padding__16"
+                android:textColor="@color/light_graphite"
+                android:textSize="@dimen/wire__text_size__small"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                android:text="@string/pref_devices_current_device_category_title"
+                android:text="@string/pref_devices_device_fingerprint_category_title"
                 android:gravity="center_vertical"
                 android:paddingStart="@dimen/wire__padding__16"
                 android:paddingEnd="@dimen/wire__padding__16"
@@ -41,57 +73,60 @@
                 />
 
             <com.waz.zclient.pages.main.profile.preferences.views.TextButton
-                android:id="@+id/current_device"
+                android:id="@+id/device_detail_fingerprint"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/preference_button_height"
-                app:title="Samsung bla bla"
-                app:subtitle="ID: aa bb aa bb aa bb aa bb aa bb"
+                android:layout_height="wrap_content"
                 />
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/preference_button_height"
-                android:text="@string/pref_devices_other_devices_category_title"
+                android:layout_height="wrap_content"
+                android:text="@string/pref_devices_device_fingerprint_summary"
                 android:gravity="center_vertical"
-                android:paddingStart="@dimen/wire__padding__16"
-                android:paddingEnd="@dimen/wire__padding__16"
-                android:textColor="@color/accent_blue"
+                android:padding="@dimen/wire__padding__16"
+                android:textColor="@color/light_graphite"
+                android:textSize="@dimen/wire__text_size__small"
                 />
 
             <LinearLayout
+                android:id="@+id/device_detail_actions"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                >
+                android:orientation="vertical">
 
-                <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+                <com.waz.zclient.pages.main.profile.preferences.views.SwitchPreference
+                    android:id="@+id/device_detail_verified"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:title="@string/pref_devices_device_verified"
+                    />
+
+                <com.waz.zclient.ui.text.TypefaceTextView
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/preference_button_height"
-                    app:title="Samsung bla bla"
-                    app:subtitle="ID: aa bb aa bb aa bb aa bb aa bb"
-                    app:iconEnd="@drawable/shield_full"
+                    android:text="@string/pref_devices_device_actions_category_title"
+                    android:gravity="center_vertical"
+                    android:paddingStart="@dimen/wire__padding__16"
+                    android:paddingEnd="@dimen/wire__padding__16"
+                    android:textColor="@color/accent_blue"
                     />
 
                 <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+                    android:id="@+id/device_detail_reset"
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/preference_button_height"
-                    app:title="Samsung bla bla"
-                    app:subtitle="ID: aa bb aa bb aa bb aa bb aa bb"
-                    app:iconEnd="@drawable/shield_half"
+                    app:title="@string/pref_devices_device_reset_session_title"
+                    app:subtitle="@string/pref_devices_device_reset_session_summary"
                     />
 
+                <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+                    android:id="@+id/device_detail_remove"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/preference_button_height"
+                    app:title="@string/pref_devices_device_remove_title"
+                    app:subtitle="@string/pref_devices_device_remove_summary"
+                    />
             </LinearLayout>
-
-            <com.waz.zclient.ui.text.TypefaceTextView
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/preference_button_height"
-                android:text="@string/pref_devices_warning_summary"
-                android:gravity="center"
-                android:textAlignment="center"
-                android:paddingStart="@dimen/wire__padding__32"
-                android:paddingEnd="@dimen/wire__padding__32"
-                android:textColor="@color/light_graphite"
-                />
 
         </LinearLayout>
 

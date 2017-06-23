@@ -27,7 +27,7 @@ import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.pages.main.profile.preferences.views.DeviceButton
-import com.waz.zclient.utils.BackStackKey
+import com.waz.zclient.utils.{BackStackKey, BackStackNavigator}
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 
 trait DevicesView {
@@ -41,11 +41,14 @@ class DevicesViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   inflate(R.layout.preferences_devices_layout)
 
+  private val navigator = inject[BackStackNavigator]
+
   val selfDeviceButton = findById[DeviceButton](R.id.current_device)
   val deviceList = findById[LinearLayout](R.id.device_list)
 
   override def setSelfDevice(device: Client): Unit = {
     selfDeviceButton.setDevice(device, self = true)
+    selfDeviceButton.onClickEvent { _ => navigator.goTo(DeviceDetailsBackStackKey(device.id.str)) }
   }
 
   override def setOtherDevices(devices: Seq[Client]): Unit = {
@@ -53,6 +56,7 @@ class DevicesViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     devices.foreach{ device =>
       val deviceButton = new DeviceButton(context, attrs, style)
       deviceButton.setDevice(device, self = false)
+      deviceButton.onClickEvent { _ => navigator.goTo(DeviceDetailsBackStackKey(device.id.str)) }
       deviceList.addView(deviceButton)
     }
   }

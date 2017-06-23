@@ -18,6 +18,7 @@
 package com.waz.zclient.preferences
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.content.{Context, Intent}
 import android.os.Bundle
 import android.support.annotation.Nullable
@@ -42,7 +43,7 @@ import com.waz.zclient.pages.main.profile.preferences._
 import com.waz.zclient.pages.main.profile.preferences.dialogs.WireRingtonePreferenceDialogFragment
 import com.waz.zclient.pages.main.profile.preferences.pages.ProfileBackStackKey
 import com.waz.zclient.tracking.GlobalTrackingController
-import com.waz.zclient.utils.BackStackNavigator
+import com.waz.zclient.utils.{BackStackNavigator, LayoutSpec, ViewUtils}
 import com.waz.zclient.{ActivityHelper, BaseActivity, MainActivity, R}
 
 class PreferencesActivity extends BaseActivity
@@ -89,7 +90,7 @@ class PreferencesActivity extends BaseActivity
     setSupportActionBar(toolbar)
     titleSwitcher //initialise title switcher
 
-    //if (LayoutSpec.isPhone(this)) ViewUtils.lockScreenOrientation(Configuration.ORIENTATION_PORTRAIT, this)
+    if (LayoutSpec.isPhone(this)) ViewUtils.lockScreenOrientation(Configuration.ORIENTATION_PORTRAIT, this)
     if (savedInstanceState == null) {
       backStackNavigator.setup(findViewById(R.id.content).asInstanceOf[ViewGroup])
       backStackNavigator.goTo(ProfileBackStackKey())
