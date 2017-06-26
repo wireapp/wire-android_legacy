@@ -55,7 +55,8 @@ class ChatheadWithTextFooter(val context: Context, val attrs: AttributeSet, val 
     z <- inject[Signal[ZMessaging]]
     uId <- userId
     data <- z.usersStorage.signal(uId)
-  } yield (data, false) //TODO: this false means guest status
+    guests <- z.teams.guests
+  } yield (data, guests.contains(uId)) // true means guest
 
   setOrientation(LinearLayout.VERTICAL)
   initAttributes(attrs)

@@ -61,7 +61,6 @@ import com.waz.zclient.ui.startui.{ConversationQuickMenu, ConversationQuickMenuC
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.ui.utils.KeyboardUtils
-import com.waz.zclient.ui.views.ZetaButton
 import com.waz.zclient.utils.device.DeviceDetector
 import com.waz.zclient.utils.{IntentUtils, LayoutSpec, PermissionUtils, StringUtils, TrackingUtils, UiStorage, UserSignal, ViewUtils}
 import com.waz.zclient.views._
@@ -69,7 +68,6 @@ import com.waz.zclient.views.pickuser.{ContactRowView, SearchBoxView, UserRowVie
 import com.waz.zclient.{BaseActivity, FragmentHelper, OnBackPressedListener, R}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 
 object PickUserFragment {
   val TAG: String = classOf[PickUserFragment].getName
@@ -145,7 +143,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
   private var toolbarTitle: TypefaceTextView = null
 
   private var currentTeam = Option.empty[TeamData]
-  private var teamPermissions = Set[TeamMemberData.Permission]()
+  private var teamPermissions = Set[AccountData.Permission]()
 
   private implicit lazy val uiStorage = inject[UiStorage]
   private implicit lazy val logTag = ZLog.logTagFor[PickUserFragment]
@@ -321,6 +319,16 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
         false
       }
     })
+
+    (for {
+      z <- zms
+      team <- z.teams.selfTeam
+      accountData <- z.account.accountData
+    } yield (team, accountData)){
+      case (team, accountData) =>
+        currentTeam = team
+        teamPermissions = accountData.selfPermissions
+    }
 
     rootView
   }
@@ -782,7 +790,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
     val label: String = if (searchUserController.selectedUsers.size > 1) getString(R.string.conversation_quick_menu__conversation_button__group_label)
     else getString(R.string.conversation_quick_menu__conversation_button__single_label)
     conversationQuickMenu.setConversationButtonText(label)
-    val hasPermissions = currentTeam.isEmpty || searchUserController.selectedUsers.size == 1 || teamPermissions.contains(TeamMemberData.Permission.CreateConversation)
+    val hasPermissions = currentTeam.isEmpty || searchUserController.selectedUsers.size == 1 || teamPermissions.contains(AccountData.Permission.CreateConversation)
     conversationQuickMenu.setVisibility(if (hasPermissions && !isAddingToConversation) View.VISIBLE else View.GONE)
   }
 

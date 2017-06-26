@@ -281,7 +281,16 @@ protected class ChatheadController(val setSelectable: Boolean = false,
     case _ => UNCONNECTED
   }
 
-  val teamMember = Signal.const(false)//TODO: check if it's a team member
+  val teamMember = for {
+    zms <- zMessaging
+
+    userTeamId <- chatheadInfo.map {
+      case Some(Left(user)) => user.teamId
+      case _ => None
+    }
+
+    team <- zms.teams.selfTeam
+  } yield team.map(t => Some(t.id) == userTeamId).getOrElse(false)
 
   val hasBeenInvited = chatheadInfo.map {
     case Some(Left(user)) => false

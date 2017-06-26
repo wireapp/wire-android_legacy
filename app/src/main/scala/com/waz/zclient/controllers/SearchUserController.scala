@@ -99,7 +99,7 @@ class SearchUserController(initialState: SearchState)(implicit injector: Injecto
       Signal.const(Set[UserData]())
     } { teamId =>
       val searchKey = if (searchState.filter.isEmpty) None else Some(SearchKey(searchState.filter))
-      Signal.future(z.teams.searchTeamMembers(teamId, searchKey, handleOnly = Handle.containsSymbol(searchState.filter)))
+      Signal.future(z.teams.searchTeamMembers(searchKey, handleOnly = Handle.containsSymbol(searchState.filter)))
     }
   }
 
