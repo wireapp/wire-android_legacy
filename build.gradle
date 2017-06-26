@@ -79,7 +79,7 @@ ext {
     zMessagingDevVersionBase = '103.1571'
     zMessagingDevVersion = "${zMessagingDevVersionBase}@aar"
     // Release version number must be like this X.0(.Y)
-    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '103.0.372@aar'
+    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '103.1.373@aar'
 
     avsVersion = '3.4.100@aar'
     avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
