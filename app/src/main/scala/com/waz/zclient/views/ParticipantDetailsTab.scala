@@ -27,7 +27,7 @@ import com.waz.model.{TeamData, UserId}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.zclient.controllers.TeamsAndUserController
+import com.waz.zclient.controllers.UserAccountsController
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.UiStorage
 import com.waz.zclient.views.images.ImageAssetImageView
@@ -51,12 +51,7 @@ class ParticipantDetailsTab(val context: Context, val attrs: AttributeSet, val d
   setOrientation(LinearLayout.VERTICAL)
 
   private val userId = Signal[UserId]()
-  private val isGuest = for{
-    z <- inject[Signal[ZMessaging]]
-    currentTeam <- inject[TeamsAndUserController].currentTeamOrUser.map(_.fold(_ => Option.empty[TeamData], Some(_)))
-    uId <- userId
-    guests <- Signal.future(currentTeam.fold(Future.successful(Set[UserId]()))(team => z.teams.findGuests(team.id)))
-  } yield (guests.contains(uId), currentTeam.map(_.name))
+  private val isGuest = Signal((false, Option.empty[TeamData]))
 
   isGuest.on(Threading.Ui) {
     case (true, Some(teamName)) =>

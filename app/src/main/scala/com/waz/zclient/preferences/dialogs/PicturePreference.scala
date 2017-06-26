@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.pages.main.profile.preferences
+package com.waz.zclient.preferences.dialogs
 
 import android.content.Context
 import android.util.AttributeSet

@@ -18,6 +18,7 @@
 package com.waz.zclient.pages.main.profile.preferences.dialogs;
 
 import android.os.Bundle;
+import android.support.annotation.StringRes;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.widget.AppCompatEditText;
 import android.text.Editable;
@@ -86,7 +87,7 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
                 }
                 UsernameValidation validation = storeFactory.getZMessagingApiStore().getApi().getUsernames().isUsernameValid(normalText);
                 if (!validation.isValid()) {
-                    usernameInputLayout.setError(getErrorMessage(validation.reason()));
+                    setError(validation.reason());
                     if (validation.reason() == UsernameValidationError.INVALID_CHARACTERS) {
                         usernameEditText.setText(lastText);
                         editBoxShakeAnimation();
@@ -94,7 +95,7 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
                         usernameEditText.setText(lastText);
                     }
                 } else {
-                    usernameInputLayout.setError("");
+                    setError("");
                     if (!storeFactory.getZMessagingApiStore().getApi().getSelf().getUsername().equals(normalText)) {
                         storeFactory.getZMessagingApiStore().getApi().getUsernames().isUsernameAvailable(normalText, usernameAvailableCallback);
                     }
@@ -113,7 +114,7 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
 
         @Override
         public void onUpdateFailed(int code, String message, String label) {
-            usernameInputLayout.setError(getString(R.string.pref__account_action__dialog__change_username__error_unknown));
+            setError(R.string.pref__account_action__dialog__change_username__error_unknown);
             enableEditing();
         }
     };
@@ -125,17 +126,17 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
                 return;
             }
             if (validation[0].isValid()) {
-                usernameInputLayout.setError("");
+                setError("");
                 okButton.setEnabled(editingEnabled);
             } else {
-                usernameInputLayout.setError(getErrorMessage(validation[0].reason()));
+                setError(validation[0].reason());
                 okButton.setEnabled(false);
             }
         }
 
         @Override
         public void onRequestFailed(Integer errorCode) {
-            usernameInputLayout.setError(getString(R.string.pref__account_action__dialog__change_username__error_unknown));
+            setError(R.string.pref__account_action__dialog__change_username__error_unknown);
             enableEditing();
             editBoxShakeAnimation();
         }
@@ -265,18 +266,30 @@ public class ChangeUsernamePreferenceDialogFragment extends BaseDialogFragment<C
         okButton.setOnClickListener(null);
     }
 
-    private String getErrorMessage(UsernameValidationError errorCode) {
+    private void setError(UsernameValidationError errorCode) {
         switch (errorCode) {
             case TOO_LONG:
-                return " ";
+                setError(" ");
             case TOO_SHORT:
-                return " ";
+                setError(" ");
             case INVALID_CHARACTERS:
-                return " ";
+                setError(" ");
             case ALREADY_TAKEN:
-                return getString(R.string.pref__account_action__dialog__change_username__error_already_taken);
+                setError(R.string.pref__account_action__dialog__change_username__error_already_taken);
             default:
-                return getString(R.string.pref__account_action__dialog__change_username__error_unknown);
+                setError(R.string.pref__account_action__dialog__change_username__error_unknown);
+        }
+    }
+
+    private void setError(@StringRes int resId) {
+        if (getActivity() != null && isAdded()) {
+            usernameInputLayout.setError(getString(resId));
+        }
+    }
+
+    private void setError(String errorMsg) {
+        if (getActivity() != null && isAdded()) {
+            usernameInputLayout.setError(errorMsg);
         }
     }
 

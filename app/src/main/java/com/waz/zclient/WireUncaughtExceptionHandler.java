@@ -17,6 +17,7 @@
  */
 package com.waz.zclient;
 
+import com.waz.log.InternalLog;
 import com.waz.zclient.controllers.IControllerFactory;
 
 class WireUncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
@@ -49,5 +50,6 @@ class WireUncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
         if (defaultUncaughtExceptionHandler != null) {
             defaultUncaughtExceptionHandler.uncaughtException(thread, throwable);
         }
+        InternalLog.flush();
     }
 }

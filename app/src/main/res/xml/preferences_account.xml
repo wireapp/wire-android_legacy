@@ -62,7 +62,7 @@
         android:layout="@layout/preference_category"
         >
 
-        <com.waz.zclient.pages.main.profile.preferences.PicturePreference
+        <com.waz.zclient.preferences.dialogs.PicturePreference
             android:key="@string/pref_account_picture_key"
             android:title="@string/pref_account_picture_title"
             />

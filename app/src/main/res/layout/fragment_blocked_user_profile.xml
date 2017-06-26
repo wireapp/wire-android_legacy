@@ -55,7 +55,7 @@
         android:layout_weight="1"
         >
 
-        <com.waz.zclient.ui.views.UserDetailsView
+        <com.waz.zclient.common.views.UserDetailsView
             android:id="@+id/udv__blocked_user__user_details"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

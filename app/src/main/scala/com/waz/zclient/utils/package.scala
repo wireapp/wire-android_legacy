@@ -24,14 +24,14 @@ import android.graphics.drawable.LayerDrawable
 import android.os.Build
 import android.support.annotation.StyleableRes
 import android.support.v4.content.ContextCompat
-import android.text.Layout
+import android.support.v7.preference.Preference
+import android.support.v7.preference.Preference.{OnPreferenceChangeListener, OnPreferenceClickListener}
 import android.util.AttributeSet
 import android.view.View._
 import android.view.ViewGroup.LayoutParams
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.view.{View, ViewGroup}
 import android.widget.SeekBar
-import com.waz.utils.returning
 import com.waz.zclient.ui.utils.ResourceUtils
 import com.waz.zclient.ui.views.OnDoubleClickListener
 
@@ -93,6 +93,25 @@ package object utils {
     }
     def setWidth(w: Int): Unit = setWidthAndHeight(w = Some(w))
     def setHeight(h: Int): Unit = setWidthAndHeight(h = Some(h))
+  }
+
+  implicit class RichPreference(val pref: Preference) extends AnyVal {
+    def onClick(f: => Unit) = pref.setOnPreferenceClickListener(new OnPreferenceClickListener {
+      override def onPreferenceClick(preference: Preference): Boolean = {
+        f
+        true
+      }
+    })
+
+    /**
+      * @param f True to update the state of the Preference with the new value.
+      */
+    def onChange(f: Any => Boolean) = pref.setOnPreferenceChangeListener(new OnPreferenceChangeListener {
+      override def onPreferenceChange(preference: Preference, o: Any): Boolean = {
+        f(o)
+        true
+      }
+    })
   }
 
   implicit class RichSeekBar(val bar: SeekBar) extends AnyVal {

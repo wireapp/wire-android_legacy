@@ -60,7 +60,7 @@
 
         <!--Default of ~9 minutes (550000 millis)-->
         <!--TODO - make a proper time picker preference-->
-        <com.waz.zclient.preferences.PingIntervalPref
+        <com.waz.zclient.preferences.dialogs.PingIntervalPref
             android:defaultValue="550000"
             android:inputType="number"
             android:key="@string/pref_dev_websocket_ping_interval_key"

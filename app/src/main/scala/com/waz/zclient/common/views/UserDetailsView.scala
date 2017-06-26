@@ -21,6 +21,7 @@ package com.waz.zclient.common.views
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
+import com.waz.api.User
 import com.waz.model.UserId
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -34,7 +35,7 @@ class UserDetailsView(val context: Context, val attrs: AttributeSet, val defStyl
 
   private lazy val userNameTextView: TextView = findById(R.id.ttv__user_details__user_name)
   private lazy val userInfoTextView: TextView = findById(R.id.ttv__user_details__user_info)
-  inflate(R.layout.user__details, this, true)
+  inflate(R.layout.user__details, this, addToParent = true)
 
   val users = inject[UsersController]
   val userId = Signal[UserId]
@@ -63,5 +64,7 @@ class UserDetailsView(val context: Context, val attrs: AttributeSet, val defStyl
 
   def setUserId(id: UserId) =
     Option(id).fold(throw new IllegalArgumentException("UserId should not be null"))(userId ! _)
+
+  def setUser(user: User) = setUserId(UserId(user.getId))
 
 }

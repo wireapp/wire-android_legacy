@@ -20,7 +20,6 @@ package com.waz.zclient.preferences
 import android.content.{ClipData, ClipboardManager, Context}
 import android.os.Bundle
 import android.support.v7.preference.Preference
-import android.support.v7.preference.Preference.OnPreferenceClickListener
 import android.support.v7.preference.PreferenceFragmentCompat.ARG_PREFERENCE_ROOT
 import android.widget.Toast
 import com.waz.content.GlobalPreferences
@@ -29,19 +28,14 @@ import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.R
 import com.waz.zclient.preferences.dialogs.AccountSignInPreference
-import com.waz.zclient.utils.DebugUtils
+import com.waz.zclient.utils.{DebugUtils, RichPreference}
 
-class DeveloperPreferenceFragment extends BasePreferenceFragment {
+class DeveloperPreferences extends BasePreferenceFragment {
 
   lazy val globalPrefs = inject[GlobalPreferences]
 
   private lazy val lastCallSessionIdPreference = returning(findPref[Preference](R.string.pref_dev_avs_last_call_session_id_key)) { p =>
-    p.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-      def onPreferenceClick(preference: Preference): Boolean = {
-        copyLastCallSessionIdToClipboard()
-        true
-      }
-    })
+    p.onClick(copyLastCallSessionIdToClipboard())
     p.setSummary(getPreferenceManager
       .getSharedPreferences
       .getString(getString(R.string.pref_dev_avs_last_call_session_id_key), getString(R.string.pref_dev_avs_last_call_session_id_not_available)))
@@ -52,16 +46,11 @@ class DeveloperPreferenceFragment extends BasePreferenceFragment {
 
   private lazy val versionInfoPreference = returning(findPref[Preference](R.string.pref_dev_version_info_id_key))(_.setSummary(DebugUtils.getVersion(getContext)))
 
-  private lazy val accountSignInPreference = returning(findPref[Preference](R.string.pref_dev_category_sign_in_account_key)) { p =>
-    p.setOnPreferenceClickListener(new OnPreferenceClickListener {
-      override def onPreferenceClick(preference: Preference): Boolean = {
-        getChildFragmentManager.beginTransaction
-          .add(new AccountSignInPreference, AccountSignInPreference.FragmentTag)
-          .addToBackStack(AccountSignInPreference.FragmentTag)
-          .commit
-        true
-      }
-    })
+  private lazy val accountSignInPreference = returning(findPref[Preference](R.string.pref_dev_category_sign_in_account_key)) {
+    _.onClick(getChildFragmentManager.beginTransaction
+      .add(new AccountSignInPreference, AccountSignInPreference.FragmentTag)
+      .addToBackStack(AccountSignInPreference.FragmentTag)
+      .commit)
   }
 
   override def onCreatePreferences2(savedInstanceState: Bundle, rootKey: String) = {
@@ -89,9 +78,9 @@ class DeveloperPreferenceFragment extends BasePreferenceFragment {
   }
 }
 
-object DeveloperPreferenceFragment {
+object DeveloperPreferences {
   def newInstance(rootKey: String, extras: Bundle) = {
-    returning (new DeveloperPreferenceFragment) { f =>
+    returning (new DeveloperPreferences) { f =>
       f.setArguments(returning(if (extras == null) new Bundle else new Bundle(extras)) { b =>
         b.putString(ARG_PREFERENCE_ROOT, rootKey)
       })

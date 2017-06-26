@@ -29,6 +29,7 @@ import com.waz.api.IConversation;
 import com.waz.api.User;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
+import com.waz.zclient.common.views.UserDetailsView;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.core.stores.connect.ConnectStoreObserver;
 import com.waz.zclient.core.stores.connect.IConnectStore;
@@ -40,7 +41,6 @@ import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.theme.ThemeUtils;
 import com.waz.zclient.ui.utils.KeyboardUtils;
-import com.waz.zclient.ui.views.UserDetailsView;
 import com.waz.zclient.ui.views.ZetaButton;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.TrackingUtils;
@@ -210,15 +210,13 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
 
     @Override
     public void onDestroyView() {
-        userDetailsView.recycle();
         imageAssetImageViewProfile = null;
         super.onDestroyView();
     }
 
-    private void trackSendConnectRequest(User user) {
+    private void trackSendConnectRequest() {
         TrackingUtils.tagSentConnectRequestFromUserProfileEvent(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
-                                                                userRequester,
-                                                                user.getCommonConnectionsCount());
+                                                                userRequester);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -262,7 +260,7 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
                 String otherName = user.getName();
                 String message = getString(R.string.connect__message, otherName, myName);
                 IConversation conversation = getStoreFactory().getConnectStore().connectToNewUser(user, message);
-                trackSendConnectRequest(user);
+                trackSendConnectRequest();
                 if (conversation != null) {
                     KeyboardUtils.hideKeyboard(getActivity());
                     getContainer().onConnectRequestWasSentToUser();

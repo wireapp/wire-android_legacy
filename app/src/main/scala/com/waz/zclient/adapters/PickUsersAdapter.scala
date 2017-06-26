@@ -26,7 +26,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
 import com.waz.zclient._
 import com.waz.zclient.adapters.PickUsersAdapter._
-import com.waz.zclient.controllers.{SearchUserController, TeamsAndUserController}
+import com.waz.zclient.controllers.{SearchUserController, UserAccountsController}
 import com.waz.zclient.viewholders._
 import com.waz.zclient.views.pickuser.ContactRowView.Callback
 
@@ -43,7 +43,7 @@ class PickUsersAdapter(topUsersOnItemTouchListener: SearchResultOnItemTouchListe
 
   setHasStableIds(true)
 
-  private val teamsAndUserController = inject[TeamsAndUserController]
+  private val userAccountsController = inject[UserAccountsController]
 
   private var mergedResult = Seq[SearchResult]()
   private var collapsedContacts = true
@@ -62,6 +62,7 @@ class PickUsersAdapter(topUsersOnItemTouchListener: SearchResultOnItemTouchListe
   private var connectedUsers = Seq[UserData]()
   private var contacts = Seq[Contact]()
   private var directoryResults = Seq[UserData]()
+  private var currentUser = Option.empty[UserData]
 
   searchUserController.allDataSignal.throttle(500.millis).on(Threading.Ui) {
     case (newTopUsers, newTeamMembers, newConversations, newConnectedUsers, newContacts, newDirectoryResults) =>
@@ -74,13 +75,15 @@ class PickUsersAdapter(topUsersOnItemTouchListener: SearchResultOnItemTouchListe
       updateMergedResults()
   }
 
+  userAccountsController.currentUser.on(Threading.Ui){ user =>
+    currentUser = user
+    updateMergedResults()
+  }
+
   private def updateMergedResults(): Unit ={
     mergedResult = Seq()
 
-    val teamName = teamsAndUserController.currentTeamOrUser.currentValue match {
-      case Some(Right(teamData)) => teamData.name
-      case _ => ""
-    }
+    val teamName = currentUser.fold("")(_.getDisplayName)//TODO: Get team name from UserData
 
     def addTopPeople(): Unit = {
       if (topUsers.nonEmpty) {
@@ -145,7 +148,7 @@ class PickUsersAdapter(topUsersOnItemTouchListener: SearchResultOnItemTouchListe
 
     addTopPeople()
     addTeamMembers()
-    if (teamsAndUserController.currentTeamOrUser.currentValue.exists(_.isRight)) {
+    if (true/*currentUser.exists(_.teamId.nonEmpty)*/) { //TODO: check if user is a team user
       addGroupConversations()
       addContacts()
     } else {

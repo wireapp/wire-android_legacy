@@ -23,7 +23,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Environment;
 import com.waz.api.AvsLogLevel;
-import com.waz.api.LogLevel;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.R;
 import timber.log.Timber;
@@ -60,26 +59,26 @@ public class BuildConfigUtils {
         return false;
     }
 
-    public static LogLevel getLogLevelSE(Context context) {
+    public static int getLogLevelSE(Context context) {
         if (BuildConfig.LOG_LEVEL_SE == context.getResources().getInteger(R.integer.log_level_supress)) {
-            return LogLevel.SUPPRESS;
+            return Integer.MAX_VALUE;
         }
         if (BuildConfig.LOG_LEVEL_SE == context.getResources().getInteger(R.integer.log_level_verbose)) {
-            return LogLevel.VERBOSE;
+            return android.util.Log.VERBOSE;
         }
         if (BuildConfig.LOG_LEVEL_SE == context.getResources().getInteger(R.integer.log_level_debug)) {
-            return LogLevel.DEBUG;
+            return android.util.Log.DEBUG;
         }
         if (BuildConfig.LOG_LEVEL_SE == context.getResources().getInteger(R.integer.log_level_info)) {
-            return LogLevel.INFO;
+            return android.util.Log.INFO;
         }
         if (BuildConfig.LOG_LEVEL_SE == context.getResources().getInteger(R.integer.log_level_warn)) {
-            return LogLevel.WARN;
+            return android.util.Log.WARN;
         }
         if (BuildConfig.LOG_LEVEL_SE == context.getResources().getInteger(R.integer.log_level_error)) {
-            return LogLevel.ERROR;
+            return android.util.Log.ERROR;
         }
-        return LogLevel.ASSERT;
+        return android.util.Log.ASSERT;
 
     }
 

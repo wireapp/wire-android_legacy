@@ -29,6 +29,7 @@ import com.waz.api.IConversation;
 import com.waz.api.User;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
+import com.waz.zclient.common.views.UserDetailsView;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.navigation.NavigationController;
 import com.waz.zclient.controllers.tracking.events.connect.UnblockingEvent;
@@ -42,7 +43,6 @@ import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.animation.fragment.FadeAnimation;
 import com.waz.zclient.ui.theme.ThemeUtils;
-import com.waz.zclient.ui.views.UserDetailsView;
 import com.waz.zclient.ui.views.ZetaButton;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
@@ -242,7 +242,6 @@ public class BlockedUserProfileFragment extends BaseFragment<BlockedUserProfileF
         footerMenu = null;
         unblockMenu = null;
         separatorLine = null;
-        userDetailsView.recycle();
         userDetailsView = null;
         super.onDestroyView();
     }

@@ -50,7 +50,7 @@
             style="?userHeader"
             />
 
-        <com.waz.zclient.ui.views.UserDetailsView
+        <com.waz.zclient.common.views.UserDetailsView
             android:id="@+id/udv__connect_request__user_details"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

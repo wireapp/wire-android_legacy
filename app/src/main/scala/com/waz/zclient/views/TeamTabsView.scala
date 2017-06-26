@@ -25,10 +25,11 @@ import android.view.{View, ViewGroup}
 import com.waz.ZLog
 import com.waz.ZLog._
 import com.waz.model._
+import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
-import com.waz.utils.returning
-import com.waz.zclient.controllers.TeamsAndUserController
+import com.waz.zclient.controllers.UserAccountsController
+import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector, ViewHelper}
 
 class TeamTabsView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends RecyclerView(context, attrs, defStyleAttr) with ViewHelper {
@@ -47,74 +48,63 @@ class TeamTabsView(val context: Context, val attrs: AttributeSet, val defStyleAt
 }
 
 class TeamTabViewHolder(view: TeamTabButton) extends RecyclerView.ViewHolder(view){
-  def bind(data: Either[UserData, TeamData], selected: Boolean, unreadCount: Int): Unit = {
-    view.setTag(data)
-    data match {
-      case Left(userData) => view.setUserData(userData, selected, unreadCount)
-      case Right(teamData) => view.setTeamData(teamData, selected, unreadCount)
-    }
+
+  def bind(accountData: AccountData, userData: UserData, selected: Boolean, unreadCount: Int): Unit = {
+    view.setUserData(accountData, userData, selected, unreadCount)
   }
 }
 
 class TeamTabsAdapter(context: Context)(implicit injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[TeamTabViewHolder] with Injectable {
   private implicit val tag: LogTag = logTagFor[TeamTabsAdapter]
 
-  val controller = inject[TeamsAndUserController]
+  val controller = inject[UserAccountsController]
+  implicit val uiStorage = inject[UiStorage]
 
-  val onItemClick = EventStream[Either[UserData, TeamData]]()
+  val onItemClick = EventStream[AccountData]()
 
-  private var teams = Option.empty[Seq[(TeamData, Int)]]
-  private var self = Option.empty[(UserData, Int)]
+  onItemClick{ account =>
+    ZMessaging.currentAccounts.switchAccount(account.id)
+  }
 
-  onItemClick{ controller.currentTeamOrUser ! _ }
+  val usersSignal = for {
+    accounts <- controller.accounts
+    users <- Signal.sequence(accounts.flatMap(_.userId).map(UserSignal(_)):_*)
+  } yield accounts.zip(users).sortBy(_._1.id.str)
 
-  Signal(controller.selfAndUnreadCount, controller.teamsAndUnreadCount, controller.currentTeamOrUser).on(Threading.Ui){
-    case (cSelf, cTeams, _) =>
-      self = Some(cSelf)
-      teams = Some(cTeams.toSeq)
+  private var users = Seq[(AccountData, UserData, Int)]()
+
+  usersSignal.on(Threading.Ui){ users =>
+      this.users = users.map(u => (u._1, u._2, 0))
       notifyDataSetChanged()
   }
 
-  override def getItemCount = 1 + controller.teams.currentValue.fold(0)(_.size)
+  override def getItemCount = users.size
 
   override def onBindViewHolder(holder: TeamTabViewHolder, position: Int) = {
     getItem(position) match {
-      case Some(data) =>
-        val userOrTeam = data match {
-          case Left((userData, _)) => Left(userData)
-          case Right((teamData, _)) => Right(teamData)
-        }
-        val count = data match {
-          case Left((_, c)) => c
-          case Right((_, c)) => c
-          case _ => 0
-        }
-        val selected = (controller.currentTeamOrUser.currentValue, userOrTeam) match {
-          case (Some(Left(currentUser)), Left(user)) => currentUser.id == user.id
-          case (Some(Right(currentTeam)), Right(team)) => currentTeam.id == team.id
+      case Some((accountData, userData, messageCount)) =>
+
+        val selected = ZMessaging.currentAccounts.currentAccountData.currentValue match {
+          case Some(Some(currentAccount)) => currentAccount.id == accountData.id
           case _ => false
         }
-        holder.bind(userOrTeam, selected, count)
+        holder.bind(accountData, userData, selected, messageCount)
       case _ =>
         ZLog.error("Invalid get item index")
     }
   }
 
-  override def onCreateViewHolder(parent: ViewGroup, viewType: Int) =
-    new TeamTabViewHolder(returning(new TeamTabButton(context)) {
-      _.setOnClickListener(new OnClickListener {
-        override def onClick(v: View) = {
-          onItemClick ! v.getTag.asInstanceOf[Either[UserData, TeamData]]
-        }
-      })
+  override def onCreateViewHolder(parent: ViewGroup, viewType: Int) = {
+    val view = new TeamTabButton(context)
+    view.setOnClickListener(new OnClickListener {
+      override def onClick(v: View) = {
+        Option(v.asInstanceOf[TeamTabButton]).flatMap(_.accountData).foreach(onItemClick ! _)
+      }
     })
+    new TeamTabViewHolder(view)
+  }
 
-  def getItem(position: Int): Option[Either[(UserData, Int), (TeamData, Int)]] = {
-    position match {
-      case 0 =>
-        self.map(Left(_))
-      case index =>
-        teams.flatMap(_.lift(index - 1)).map(Right(_))
-    }
+  def getItem(position: Int): Option[(AccountData, UserData, Int)] = {
+    users.lift(position)
   }
 }

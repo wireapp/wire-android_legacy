@@ -42,6 +42,7 @@ import com.waz.api.User;
 import com.waz.api.UsersList;
 import com.waz.api.Verification;
 import com.waz.zclient.R;
+import com.waz.zclient.common.views.UserDetailsView;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.currentfocus.IFocusController;
 import com.waz.zclient.controllers.globallayout.KeyboardVisibilityObserver;
@@ -55,7 +56,6 @@ import com.waz.zclient.pages.main.conversation.controller.IConversationScreenCon
 import com.waz.zclient.ui.text.AccentColorEditText;
 import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.ui.utils.MathUtils;
-import com.waz.zclient.ui.views.UserDetailsView;
 import com.waz.zclient.ui.views.e2ee.ShieldView;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;

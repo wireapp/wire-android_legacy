@@ -94,7 +94,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
     } .filter(_.tpe != MsgPart.Empty)
 
     val parts =
-      if (!BuildConfig.DEBUG && contentParts.forall(_.tpe == MsgPart.Unknown)) Nil // don't display anything for unknown message
+      if (!BuildConfig.DEBUG && msg.msgType != Message.Type.RECALLED && contentParts.forall(_.tpe == MsgPart.Unknown)) Nil // don't display anything for unknown message
       else {
         val builder = Seq.newBuilder[PartDesc]
 

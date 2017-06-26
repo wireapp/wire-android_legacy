@@ -24,7 +24,7 @@ import android.support.annotation.Nullable;
 import com.jakewharton.threetenabp.AndroidThreeTen;
 import com.localytics.android.Localytics;
 import com.localytics.android.LocalyticsActivityLifecycleCallbacks;
-import com.waz.api.LogLevel;
+import com.waz.api.impl.LogLevel;
 import com.waz.api.impl.AccentColors;
 import com.waz.zclient.controllers.IControllerFactory;
 import com.waz.zclient.controllers.userpreferences.UserPreferencesController;
@@ -120,7 +120,7 @@ public class ZApplication extends WireApplication implements ServiceContainer {
                                        .getBoolean(context.getString(R.string.pref_force_verbose_key), false);
         if (com.waz.zclient.BuildConfig.DEBUG || forceVerbose) {
             Timber.plant(new Timber.DebugTree());
-            LogLevel.setMinimumLogLevel(LogLevel.VERBOSE);
+            LogLevel.setMinimumLogLevel(android.util.Log.VERBOSE);
         } else {
             Timber.plant(new WireLoggerTree());
             LogLevel.setMinimumLogLevel(BuildConfigUtils.getLogLevelSE(context));

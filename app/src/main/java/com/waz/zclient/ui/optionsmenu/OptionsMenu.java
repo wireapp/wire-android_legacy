@@ -28,6 +28,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.waz.api.IConversation;
+import com.waz.zclient.common.views.UserDetailsView;
 import com.waz.zclient.ui.R;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
 import com.waz.zclient.ui.animation.interpolators.penner.Quart;
@@ -36,7 +37,6 @@ import com.waz.zclient.ui.text.TypefaceTextView;
 import com.waz.zclient.ui.theme.OptionsDarkTheme;
 import com.waz.zclient.ui.theme.OptionsLightTheme;
 import com.waz.zclient.ui.theme.OptionsTheme;
-import com.waz.zclient.ui.views.UserDetailsView;
 import com.waz.zclient.utils.ViewUtils;
 
 import java.util.Collections;
@@ -337,7 +337,6 @@ public class OptionsMenu extends FrameLayout implements View.OnClickListener {
     public void setConversationDetails(IConversation conversation) {
         if (conversation.getType() == IConversation.Type.GROUP ||
             conversation.getType() == IConversation.Type.UNKNOWN) {
-            userDetailsView.setUser(null);
             return;
         }
         userDetailsView.setUser(conversation.getOtherParticipant());

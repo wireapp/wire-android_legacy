@@ -19,12 +19,12 @@ package com.waz.zclient.utils;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+
 import com.waz.api.AudioAssetForUpload;
 import com.waz.api.AudioEffect;
 import com.waz.api.ContactMethod;
 import com.waz.api.EphemeralExpiration;
 import com.waz.api.IConversation;
-import com.waz.api.Message;
 import com.waz.api.Permission;
 import com.waz.api.User;
 import com.waz.model.ConversationData;
@@ -49,8 +49,6 @@ import com.waz.zclient.core.stores.connect.IConnectStore;
 import com.waz.zclient.pages.extendedcursor.image.ImagePreviewLayout;
 import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.optionsmenu.OptionsMenuItem;
-
-import java.util.Locale;
 
 public class TrackingUtils {
 
@@ -125,8 +123,7 @@ public class TrackingUtils {
     }
 
     public static void tagSentConnectRequestFromUserProfileEvent(GlobalTrackingController trackingController,
-                                                                 IConnectStore.UserRequester userRequester,
-                                                                 int numSharedUsers) {
+                                                                 IConnectStore.UserRequester userRequester) {
         SentConnectRequestEvent.EventContext eventContext;
         switch (userRequester) {
             case SEARCH:
@@ -140,39 +137,8 @@ public class TrackingUtils {
                 break;
         }
 
-        SentConnectRequestEvent event = new SentConnectRequestEvent(eventContext, numSharedUsers);
+        SentConnectRequestEvent event = new SentConnectRequestEvent(eventContext);
         trackingController.tagEvent(event);
-    }
-
-    public static String messageTypeForMessageSelection(Message.Type messageType) {
-        String type;
-        switch (messageType) {
-            case TEXT:
-                type = "text";
-                break;
-            case ASSET:
-                type = "image";
-                break;
-            case ANY_ASSET:
-                type = "file";
-                break;
-            case RICH_MEDIA:
-                type = "rich_media";
-                break;
-            case VIDEO_ASSET:
-                type = "video";
-                break;
-            case AUDIO_ASSET:
-                type = "audio";
-                break;
-            case KNOCK:
-                type = "ping";
-                break;
-            default:
-                type = messageType.name().toLowerCase(Locale.getDefault());
-                break;
-        }
-        return type;
     }
 
     public static void tagChangedContactsPermissionEvent(GlobalTrackingController trackingController,

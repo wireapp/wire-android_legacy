@@ -44,7 +44,7 @@ import com.waz.model.UserId;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
-import com.waz.zclient.controllers.TeamsAndUserController;
+import com.waz.zclient.controllers.UserAccountsController;
 import com.waz.zclient.controllers.confirmation.ConfirmationCallback;
 import com.waz.zclient.controllers.confirmation.ConfirmationRequest;
 import com.waz.zclient.controllers.confirmation.IConfirmationController;
@@ -774,8 +774,13 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
             }
             return;
         }
+<<<<<<< HEAD
         TeamsAndUserController teamsAndUserController = ((BaseActivity) getActivity()).injectJava(TeamsAndUserController.class);
         if (teamsAndUserController.isTeamSpace() && !teamsAndUserController.isGuest(new UserId(user.getId()))) {
+=======
+        Boolean isTeamSpace = ((BaseActivity) getActivity()).injectJava(UserAccountsController.class).isTeamSpace();
+        if (isTeamSpace) {
+>>>>>>> 88600ccd... Tabs switch accounts instead of teams. Removed other teams stuff
             showAcceptedUser(user);
         } else {
             switch (user.getConnectionStatus()) {

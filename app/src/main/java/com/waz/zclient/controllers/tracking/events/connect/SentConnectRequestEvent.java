@@ -19,8 +19,8 @@ package com.waz.zclient.controllers.tracking.events.connect;
 
 
 import android.support.annotation.NonNull;
+
 import com.waz.zclient.core.controllers.tracking.attributes.Attribute;
-import com.waz.zclient.core.controllers.tracking.attributes.RangedAttribute;
 import com.waz.zclient.core.controllers.tracking.events.Event;
 
 public class SentConnectRequestEvent extends Event {
@@ -38,8 +38,7 @@ public class SentConnectRequestEvent extends Event {
         }
     }
 
-    public SentConnectRequestEvent(EventContext eventContext, int numSharedUsers) {
-        rangedAttributes.put(RangedAttribute.CONNECT_REQUEST_SHARED_CONTACTS, numSharedUsers);
+    public SentConnectRequestEvent(EventContext eventContext) {
         attributes.put(Attribute.CONTEXT, eventContext.name);
     }
 

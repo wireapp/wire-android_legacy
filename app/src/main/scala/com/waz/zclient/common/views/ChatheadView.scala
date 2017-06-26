@@ -43,7 +43,7 @@ import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.zclient.controllers.TeamsAndUserController
+import com.waz.zclient.controllers.UserAccountsController
 
 
 class ChatheadView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends View(context, attrs, defStyleAttr) with ViewHelper {
@@ -259,7 +259,7 @@ protected class ChatheadController(val setSelectable: Boolean = false,
   private implicit val logtag = ZLog.logTagFor[ChatheadController]
 
   val zMessaging = inject[Signal[ZMessaging]]
-  val teamsAndUserController = inject[TeamsAndUserController]
+  val teamsAndUserController = inject[UserAccountsController]
 
   val assignInfo = Signal[Option[Either[UserId, ContactDetails]]]
 
@@ -281,18 +281,7 @@ protected class ChatheadController(val setSelectable: Boolean = false,
     case _ => UNCONNECTED
   }
 
-  val teamMember = for {
-    zms <- zMessaging
-    userId <- chatheadInfo.map {
-      case Some(Left(user)) => Some(user.id)
-      case _ => None
-    }
-    team <- teamsAndUserController.currentTeamOrUser.map{
-      case Right(team) => Some(team)
-      case _ => None
-    }
-    userTeams <- userId.fold(Signal.const(Set[TeamData]()))(zms.teams.getTeams)
-  } yield team.exists(userTeams.contains)
+  val teamMember = Signal.const(false)//TODO: check if it's a team member
 
   val hasBeenInvited = chatheadInfo.map {
     case Some(Left(user)) => false

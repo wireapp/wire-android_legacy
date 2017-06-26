@@ -59,8 +59,10 @@ class TeamTabButton(val context: Context, val attrs: AttributeSet, val defStyleA
       TypedValue.complexToDimensionPixelSize(tv.data,getResources.getDisplayMetrics)
     else
       getResources.getDimensionPixelSize(R.dimen.teams_tab_default_height)
+
   private var selectedColor = AccentColors.defaultColor.getColor()
   private var buttonSelected = false
+  var accountData = Option.empty[AccountData]
 
   icon.setImageDrawable(drawable)
   setLayerType(View.LAYER_TYPE_SOFTWARE, null)
@@ -74,22 +76,14 @@ class TeamTabButton(val context: Context, val attrs: AttributeSet, val defStyleA
     unreadIndicatorName.setAccentColor(accentColor.getColor())
   }
 
-  def setTeamData(teamData: TeamData, selected: Boolean, unreadCount: Int): Unit = {
-    drawable.setInfo(NameParts.maybeInitial(teamData.name).getOrElse(""), TeamIconDrawable.TeamCorners, selected)
-    name.setText(teamData.name)
-    drawable.assetId ! None
-    buttonSelected = selected
-    unreadIndicatorName.setVisible(unreadCount > 0 && !selected)
-    unreadIndicatorIcon.setVisible(unreadCount > 0 && !selected)
-  }
-
-  def setUserData(userData: UserData, selected: Boolean, unreadCount: Int): Unit = {
+  def setUserData(accountData: AccountData, userData: UserData, selected: Boolean, unreadCount: Int): Unit = {
     drawable.setInfo(NameParts.maybeInitial(userData.displayName).getOrElse(""), TeamIconDrawable.UserCorners, selected)
-    name.setText(userData.displayName)
+    name.setText(userData.getDisplayName)
     drawable.assetId ! userData.picture
     buttonSelected = selected
     unreadIndicatorName.setVisible(unreadCount > 0 && !selected)
     unreadIndicatorIcon.setVisible(unreadCount > 0 && !selected)
+    this.accountData = Some(accountData)
   }
 
   def animateExpand(): Unit = {
