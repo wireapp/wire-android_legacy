@@ -11,36 +11,27 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.waz.zclient.utils;
 
-
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
-import android.support.annotation.Nullable;
+
 import com.waz.service.BackendConfig;
 import com.waz.service.ZMessaging;
 import com.waz.zclient.BuildConfig;
-import timber.log.Timber;
-
-import java.util.NoSuchElementException;
 
 public class BackendPicker {
-
-    private static final String CUSTOM_BACKEND_PREFERENCE = "custom_backend_pref";
     private final Context context;
 
-    private final String[] backends = new String[] {
-            BackendConfig.StagingBackend().environment(),
-            BackendConfig.ProdBackend().environment()
+    private final String[] backends = new String[]{
+        BackendConfig.StagingBackend().environment(),
+        BackendConfig.ProdBackend().environment()
     };
 
     public BackendPicker(Context context) {
@@ -56,11 +47,11 @@ public class BackendPicker {
     }
 
     public void withBackend(final Callback<Void> callback) {
-        BackendConfig be = getBackendConfig();
-        if (be != null) {
-            ZMessaging.useBackend(be);
-            callback.callback(null);
+        if (!BackendConfigStore.isConfigSet(context)) {
+            return;
         }
+        ZMessaging.useBackend(getBackendConfig());
+        callback.callback(null);
     }
 
     private void showDialog(Activity activity, final Callback<Void> callback) {
@@ -71,7 +62,7 @@ public class BackendPicker {
             public void onClick(DialogInterface dialog, int which) {
                 BackendConfig be = BackendConfig.byName().apply(backends[which]);
                 ZMessaging.useBackend(be);
-                saveBackendConfig(be);
+                BackendConfigStore.setConfig(be, context);
                 callback.callback(null);
             }
         });
@@ -80,34 +71,12 @@ public class BackendPicker {
     }
 
     private boolean shouldShowBackendPicker() {
-        if (!BuildConfig.SHOW_BACKEND_PICKER) {
-            return false;
-        }
-        return !PreferenceManager.getDefaultSharedPreferences(context).contains(CUSTOM_BACKEND_PREFERENCE);
+        return BuildConfig.SHOW_BACKEND_PICKER && !BackendConfigStore.isConfigSet(context);
     }
 
-    @Nullable
     private BackendConfig getBackendConfig() {
-        return BuildConfig.SHOW_BACKEND_PICKER ? getCustomBackend() : BackendConfig.ProdBackend();
-    }
-
-    @SuppressLint("CommitPrefEdits") // lint not seeing commit
-    private void saveBackendConfig(BackendConfig backend) {
-        PreferenceManager.getDefaultSharedPreferences(context).edit().putString(CUSTOM_BACKEND_PREFERENCE, backend.environment()).commit();
-    }
-
-    @Nullable
-    private BackendConfig getCustomBackend() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String backend = prefs.getString(CUSTOM_BACKEND_PREFERENCE, null);
-        if (backend != null) {
-            try {
-                return BackendConfig.byName().apply(backend);
-            } catch (NoSuchElementException ex) {
-                Timber.w("Could not find backend with name: %s", backend);
-            }
-        }
-        return null;
+        return BuildConfig.SHOW_BACKEND_PICKER ?
+            BackendConfigStore.getConfig(context) : BackendConfig.ProdBackend();
     }
 }
 
