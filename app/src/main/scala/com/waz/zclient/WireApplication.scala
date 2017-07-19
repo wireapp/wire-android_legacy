@@ -47,7 +47,7 @@ import com.waz.zclient.notifications.controllers.{CallingNotificationsController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneController
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
-import com.waz.zclient.preferences.ScalaPreferencesController
+import com.waz.zclient.preferences.PreferencesController
 import com.waz.zclient.tracking.{CallingTrackingController, GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.{BackStackNavigator, BackendPicker, Callback, UiStorage}
 import com.waz.zclient.views.ImageController
@@ -96,6 +96,7 @@ object WireApplication {
 
     bind [GlobalTrackingController]        to new GlobalTrackingController()
     bind [CallingTrackingController]       to new CallingTrackingController()
+    bind [PreferencesController]           to new PreferencesController()
   }
 
   def services(ctx: WireContext) = new Module {
@@ -127,7 +128,6 @@ object WireApplication {
     bind [UserAccountsController]    to new UserAccountsController()
     bind [UiStorage]                 to new UiStorage()
     bind [BackStackNavigator]        to new BackStackNavigator()
-    bind [ScalaPreferencesController]to new ScalaPreferencesController()
 
     /**
       * Since tracking controllers will immediately instantiate other necessary controllers, we keep them separated

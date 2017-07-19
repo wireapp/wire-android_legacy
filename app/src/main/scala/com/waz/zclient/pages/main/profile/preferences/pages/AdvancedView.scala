@@ -40,6 +40,7 @@ class AdvancedViewImpl(context: Context, attrs: AttributeSet, style: Int) extend
   val submitReport = findById[TextButton](R.id.preferences_debug_report)
 
   analyticsSwitch.setPreference(UserPreferences.AnalyticsEnabled)
+
   submitReport.onClickEvent{ _ =>
     DebugUtils.sendDebugReport(context.asInstanceOf[Activity])
   }

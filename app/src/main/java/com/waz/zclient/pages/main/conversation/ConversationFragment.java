@@ -133,7 +133,7 @@ import com.waz.zclient.pages.main.conversationpager.controller.SlidingPaneObserv
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController;
 import com.waz.zclient.pages.main.profile.camera.CameraContext;
 import com.waz.zclient.preferences.PreferencesActivity;
-import com.waz.zclient.preferences.ScalaPreferencesController;
+import com.waz.zclient.preferences.PreferencesController;
 import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
 import com.waz.zclient.ui.audiomessage.AudioMessageRecordingView;
@@ -1161,8 +1161,8 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         return ((BaseActivity) getActivity()).injectJava(GlobalCameraController.class);
     }
 
-    private ScalaPreferencesController getPreferencesController() {
-        return ((BaseActivity) getActivity()).injectJava(ScalaPreferencesController.class);
+    private PreferencesController getPreferencesController() {
+        return ((BaseActivity) getActivity()).injectJava(PreferencesController.class);
     }
 
     private void openExtendedCursor(ExtendedCursorContainer.Type type) {

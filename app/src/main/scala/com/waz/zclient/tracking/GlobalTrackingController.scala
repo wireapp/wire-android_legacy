@@ -29,8 +29,7 @@ import com.waz.ZLog._
 import com.waz.api.Message.Type._
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.{EphemeralExpiration, NetworkMode, Verification}
-import com.waz.content.Preferences.PrefKey
-import com.waz.content.{UserPreferences, UsersStorage}
+import com.waz.content.UsersStorage
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.UserData.ConnectionStatus.Blocked
 import com.waz.model.{UserId, _}
@@ -49,7 +48,7 @@ import com.waz.zclient.core.controllers.tracking.attributes.{Attribute, RangedAt
 import com.waz.zclient.core.controllers.tracking.events.AVSMetricEvent
 import com.waz.zclient.core.controllers.tracking.events.media.CompletedMediaActionEvent
 import com.waz.zclient.core.controllers.tracking.events.onboarding.GeneratedUsernameEvent
-import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.preferences.PreferencesController
 import org.threeten.bp.{Duration, Instant}
 
 import scala.collection.JavaConverters._
@@ -136,10 +135,8 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     Option(screen).map(_.toString).filter(_ => isTrackingEnabled).foreach(Localytics.tagScreen)
   }
 
-  private def isTrackingEnabled = {
-    val pref = ZMessaging.currentGlobal.prefs.getFromPref(UserPreferences.AnalyticsEnabled)
-    pref && !BuildConfig.DISABLE_TRACKING_KEEP_LOGGING
-  }
+  private def isTrackingEnabled =
+    inject[PreferencesController].isAnalyticsEnabled && !BuildConfig.DISABLE_TRACKING_KEEP_LOGGING
 
   /**
     * Register tracking event listeners on SE services in this method. We need a method here, since whenever the signal

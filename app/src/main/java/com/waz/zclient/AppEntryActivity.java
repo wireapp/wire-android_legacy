@@ -66,7 +66,7 @@ import com.waz.zclient.newreg.fragments.VerifyPhoneFragment;
 import com.waz.zclient.newreg.fragments.WelcomeEmailFragment;
 import com.waz.zclient.newreg.fragments.country.CountryController;
 import com.waz.zclient.newreg.fragments.country.CountryDialogFragment;
-import com.waz.zclient.preferences.ScalaPreferencesController;
+import com.waz.zclient.preferences.PreferencesController;
 import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.utils.HockeyCrashReporting;
@@ -191,7 +191,7 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
     @Override
     protected void onResume() {
         super.onResume();
-        final boolean trackingEnabled = injectJava(ScalaPreferencesController.class).isAnalyticsEnabled();
+        final boolean trackingEnabled = injectJava(PreferencesController.class).isAnalyticsEnabled();
 
         if (trackingEnabled) {
             HockeyCrashReporting.checkForCrashes(getApplicationContext(),
