@@ -60,7 +60,7 @@ import com.waz.zclient.fragments.ConnectivityFragment
 import com.waz.zclient.pages.main.grid.GridFragment
 import com.waz.zclient.pages.main.{MainPhoneFragment, MainTabletFragment}
 import com.waz.zclient.pages.startup.UpdateFragment
-import com.waz.zclient.preferences.PreferencesActivity
+import com.waz.zclient.preferences.{PreferencesActivity, PreferencesController}
 import com.waz.zclient.tracking.{GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.PhoneUtils.PhoneState
 import com.waz.zclient.utils.StringUtils.TextDrawing
@@ -179,12 +179,13 @@ class MainActivity extends BaseActivity
 
     Option(ZMessaging.currentGlobal).foreach(_.googleApi.checkGooglePlayServicesAvailable(this))
 
-    val trackingEnabled = ZMessaging.currentGlobal.prefs.getFromPref(UserPreferences.AnalyticsEnabled)
-    if (trackingEnabled) HockeyCrashReporting.checkForCrashes(getApplicationContext, getControllerFactory.getUserPreferencesController.getDeviceId, globalTracking)
+    if (inject[PreferencesController].isAnalyticsEnabled)
+      HockeyCrashReporting.checkForCrashes(getApplicationContext, getControllerFactory.getUserPreferencesController.getDeviceId, globalTracking)
     else {
       HockeyCrashReporting.deleteCrashReports(getApplicationContext)
       NativeCrashManager.deleteDumpFiles(getApplicationContext)
     }
+
     Localytics.setInAppMessageDisplayActivity(this)
     Localytics.handleTestMode(getIntent)
     if (themeController.shouldActivityRestart) {
