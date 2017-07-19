@@ -76,10 +76,10 @@ ext {
     playServicesVersion = '11.0.0'
 
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
-    zMessagingDevVersionBase = '104.1617'
+    zMessagingDevVersionBase = '104.1618'
     zMessagingDevVersion = "${zMessagingDevVersionBase}@aar"
     // Release version number must be like this X.0(.Y)
-    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '104.5.383@aar'
+    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '104.6.384@aar'
 
     avsVersion = '3.4.100@aar'
     avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
