@@ -64,7 +64,6 @@ import com.waz.zclient.controllers.tracking.events.group.RemoveContactEvent;
 import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.core.controllers.tracking.attributes.ConversationType;
 import com.waz.zclient.core.stores.connect.IConnectStore;
-import com.waz.zclient.core.stores.connect.InboxLinkConversation;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
 import com.waz.zclient.core.stores.conversation.ConversationStoreObserver;
 import com.waz.zclient.core.stores.conversation.OnConversationLoadedListener;
@@ -312,7 +311,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     public void onCurrentConversationHasChanged(IConversation fromConversation,
                                                 IConversation toConversation,
                                                 ConversationChangeRequester conversationChangeRequester) {
-        if (toConversation == null || toConversation instanceof InboxLinkConversation) {
+        if (toConversation == null) {
             return;
         }
         onConversationLoaded(toConversation);

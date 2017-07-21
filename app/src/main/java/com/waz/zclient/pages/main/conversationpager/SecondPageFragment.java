@@ -26,6 +26,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
 import com.waz.api.ConversationsList;
 import com.waz.api.IConversation;
 import com.waz.api.SyncState;
@@ -38,7 +39,6 @@ import com.waz.zclient.connect.ConnectRequestFragment;
 import com.waz.zclient.controllers.navigation.Page;
 import com.waz.zclient.controllers.navigation.PagerControllerObserver;
 import com.waz.zclient.core.stores.connect.IConnectStore;
-import com.waz.zclient.core.stores.connect.InboxLinkConversation;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
 import com.waz.zclient.core.stores.conversation.ConversationStoreObserver;
 import com.waz.zclient.pages.BaseFragment;
@@ -46,6 +46,7 @@ import com.waz.zclient.pages.main.connect.ConnectRequestLoadMode;
 import com.waz.zclient.pages.main.connect.PendingConnectRequestManagerFragment;
 import com.waz.zclient.pages.main.conversation.ConversationManagerFragment;
 import com.waz.zclient.ui.utils.MathUtils;
+
 import timber.log.Timber;
 
 public class SecondPageFragment extends BaseFragment<SecondPageFragment.Container> implements OnBackPressedListener,
@@ -173,9 +174,7 @@ public class SecondPageFragment extends BaseFragment<SecondPageFragment.Containe
         // either starting from beginning or switching fragment
         final boolean switchingToPendingConnectRequest = (toConversation.getType() == IConversation.Type.WAIT_FOR_CONNECTION);
 
-        final boolean switchingToConnectRequestInbox = (toConversation instanceof InboxLinkConversation ||
-                                                        toConversation.getId().equals(InboxLinkConversation.TAG) ||
-                                                        toConversation.getType() == IConversation.Type.INCOMING_CONNECTION);
+        final boolean switchingToConnectRequestInbox = toConversation.getType() == IConversation.Type.INCOMING_CONNECTION;
 
 
         // This must be posted because onCurrentConversationHasChanged()

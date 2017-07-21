@@ -34,7 +34,6 @@ import com.waz.api.UiSignal;
 import com.waz.api.UpdateListener;
 import com.waz.api.User;
 import com.waz.api.ZMessagingApi;
-import com.waz.zclient.core.stores.connect.InboxLinkConversation;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
 import com.waz.zclient.core.stores.conversation.ConversationStoreObserver;
 import com.waz.zclient.core.stores.conversation.IConversationStore;
@@ -205,10 +204,6 @@ public class ScalaConversationStore implements IConversationStore {
     @Override
     public void setCurrentConversation(IConversation conversation,
                                        ConversationChangeRequester conversationChangerSender) {
-        if (conversation instanceof InboxLinkConversation) {
-            conversation = inboxList.get(0);
-        }
-
         if (conversation != null) {
             conversation.setArchived(false);
         }
