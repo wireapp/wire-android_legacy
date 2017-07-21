@@ -687,20 +687,6 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
 
   override def getDestination: Int = if(isAddingToConversation) IPickUserController.CONVERSATION else IPickUserController.STARTUI
 
-  private def setErrorMessage(header: String, body: String): Unit = {
-    errorMessageViewHeader.setText(header)
-    if (body != null) {
-      errorMessageViewBody.setText(body)
-      errorMessageViewBody.setVisibility(View.VISIBLE)
-    } else {
-      errorMessageViewBody.setVisibility(View.GONE)
-    }
-    if (!isAddingToConversation)
-      errorMessageViewSendInvite.setVisibility(View.VISIBLE)
-    else
-      errorMessageViewSendInvite.setVisibility(View.GONE)
-  }
-
   private def showErrorMessage(): Unit = {
     errorMessageViewContainer.setVisibility(View.VISIBLE)
     // Set isClickable as ListView continues to receive click events with GONE visibility
