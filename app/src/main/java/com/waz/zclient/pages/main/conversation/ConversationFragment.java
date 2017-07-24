@@ -62,7 +62,6 @@ import com.waz.api.MessageContent;
 import com.waz.api.NetworkMode;
 import com.waz.api.OtrClient;
 import com.waz.api.Self;
-import com.waz.api.SyncIndicator;
 import com.waz.api.SyncState;
 import com.waz.api.UpdateListener;
 import com.waz.api.User;
@@ -246,24 +245,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                     }
                 }
             });
-        }
-    };
-
-    private final ModelObserver<SyncIndicator> syncIndicatorModelObserver = new ModelObserver<SyncIndicator>() {
-        @Override
-        public void updated(SyncIndicator syncIndicator) {
-            switch (syncIndicator.getState()) {
-                case SYNCING:
-                case WAITING:
-                    conversationLoadingIndicatorViewView.show();
-                    getControllerFactory().getLoadTimeLoggerController().conversationContentSyncStart();
-                    return;
-                case COMPLETED:
-                case FAILED:
-                default:
-                    conversationLoadingIndicatorViewView.hide();
-                    getControllerFactory().getLoadTimeLoggerController().conversationContentSyncFinish();
-            }
         }
     };
 
@@ -534,7 +515,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             cursorView.setText(draftText);
         }
 
-        syncIndicatorModelObserver.resumeListening();
         audioMessageRecordingView.setDarkTheme(((BaseActivity) getActivity()).injectJava(ThemeController.class).isDarkTheme());
 
         if (!getControllerFactory().getConversationScreenController().isConversationStreamUiInitialized()) {
@@ -598,9 +578,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         getStoreFactory().getParticipantsStore().removeParticipantsStoreObserver(this);
         getControllerFactory().getGlobalLayoutController().removeKeyboardVisibilityObserver(this);
         getControllerFactory().getNavigationController().removePagerControllerObserver(this);
-
-//        messagesListModelObserver.pauseListening();
-        syncIndicatorModelObserver.pauseListening();
 
         getStoreFactory().getConversationStore().removeConversationStoreObserver(this);
         getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
@@ -719,7 +696,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 if (changeToDifferentConversation) {
                     getControllerFactory().getConversationScreenController().setConversationStreamUiReady(false);
                     toConversationType = toConversation.getType();
-//                    messagesListModelObserver.setAndUpdate(toConversation.getMessages());
                     getControllerFactory().getSharingController().maybeResetSharedText(fromConversation);
                     getControllerFactory().getSharingController().maybeResetSharedUris(fromConversation);
 
