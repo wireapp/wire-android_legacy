@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.core.api.scala;
+package com.waz.zclient.api.scala;
 
 import android.os.Handler;
 
@@ -26,30 +26,24 @@ import com.waz.api.IConversation;
 import com.waz.api.ImageAsset;
 import com.waz.api.ImageAssetFactory;
 import com.waz.api.MessageContent;
-import com.waz.api.Subscriber;
-import com.waz.api.Subscription;
 import com.waz.api.SyncIndicator;
 import com.waz.api.SyncState;
-import com.waz.api.UiSignal;
 import com.waz.api.UpdateListener;
 import com.waz.api.User;
 import com.waz.api.ZMessagingApi;
+import com.waz.zclient.controllers.global.SelectionController;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
 import com.waz.zclient.core.stores.conversation.ConversationStoreObserver;
 import com.waz.zclient.core.stores.conversation.IConversationStore;
-import com.waz.zclient.core.stores.conversation.InboxLoadRequester;
 import com.waz.zclient.core.stores.conversation.OnConversationLoadedListener;
-import com.waz.zclient.core.stores.conversation.OnInboxLoadedListener;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 import timber.log.Timber;
 
-public class ScalaConversationStore implements IConversationStore {
+public class ScalaConversationStore implements IConversationStore, SelectionController.ConversationChangedListener {
     public static final String TAG = ScalaConversationStore.class.getName();
     private static final int ARCHIVE_DELAY = 500;
 
@@ -57,28 +51,16 @@ public class ScalaConversationStore implements IConversationStore {
     private Set<ConversationStoreObserver> conversationStoreObservers = new HashSet<>();
 
     private ConversationsList conversationsList;
+    private SelectionController selectionController;
     private ConversationsList establishedConversationsList;
 
-    private UiSignal<IConversation> conversationUiSignal;
-    private Subscription selectedConvSubscription;
-    private IConversation selectedConversation;
-
-    private ConversationsList.SearchableConversationsList inboxList;
     private SyncIndicator syncIndicator;
     private IConversation menuConversation;
-    private ConversationChangeRequester conversationChangeRequester;
 
     private final UpdateListener syncStateUpdateListener = new UpdateListener() {
         @Override
         public void updated() {
             notifySyncChanged(syncIndicator.getState());
-        }
-    };
-
-    private final UpdateListener inboxListUpdateListener = new UpdateListener() {
-        @Override
-        public void updated() {
-            notifyConversationListUpdated();
         }
     };
 
@@ -89,6 +71,11 @@ public class ScalaConversationStore implements IConversationStore {
         }
     };
 
+    @Override
+    public IConversation getCurrentConversation() {
+        return selectionController.getSelectedConversation();
+    }
+
     private final UpdateListener conversationListUpdateListener = new UpdateListener() {
         @Override
         public void updated() {
@@ -97,50 +84,19 @@ public class ScalaConversationStore implements IConversationStore {
                 conversationsList.setSelectedConversation(null);
             }
 
-            boolean changeSelectedConversation = selectedConversation == null &&
-                                                 (conversationsList.size() > 0 || inboxList.size() > 0);
-            if (conversationsList.isReady() &&
-                !conversationUiSignal.isEmpty() &&
-                changeSelectedConversation) {
-                identifyCurrentConversation(null);
-            }
-
             notifyConversationListUpdated();
         }
     };
 
-    public ScalaConversationStore(ZMessagingApi zMessagingApi) {
+    public ScalaConversationStore(ZMessagingApi zMessagingApi, SelectionController selectionController) {
         conversationsList = zMessagingApi.getConversations();
+        this.selectionController = selectionController;
         establishedConversationsList = conversationsList.getEstablishedConversations();
-        inboxList = conversationsList.getIncomingConversations();
-        conversationUiSignal = conversationsList.selectedConversation();
-        selectedConvSubscription = conversationUiSignal.subscribe(new Subscriber<IConversation>() {
-            @Override
-            public void next(IConversation value) {
-                IConversation prev = selectedConversation;
-                selectedConversation = value;
 
-                boolean changeSelectedConversation = selectedConversation == null &&
-                                                     (conversationsList.size() > 0 || inboxList.size() > 0);
-                if (conversationsList.isReady() &&
-                    changeSelectedConversation) {
-                    identifyCurrentConversation(prev);
-                } else {
-                    // TODO: Check with SE. In some cases like clicking on inapp-notification signal will also notify when conversation changes to another conversation
-                    boolean conversationChanged = (prev != null && selectedConversation != null && !prev.getId().equals(selectedConversation.getId()));
-                    ConversationChangeRequester changeRequester = conversationChanged ?
-                                                                  conversationChangeRequester :
-                                                                  ConversationChangeRequester.UPDATER;
-                    notifyCurrentConversationHasChanged(prev,
-                                                        selectedConversation,
-                                                        changeRequester);
-                }
-            }
-        });
+        selectionController.setOnConversationChangeCallback(this);
 
         conversationsList.addUpdateListener(conversationListUpdateListener);
         conversationListUpdateListener.updated();
-        inboxList.addUpdateListener(inboxListUpdateListener);
 
         syncIndicator = conversationsList.getSyncIndicator();
         syncIndicator.addUpdateListener(syncStateUpdateListener);
@@ -148,10 +104,6 @@ public class ScalaConversationStore implements IConversationStore {
 
     @Override
     public void tearDown() {
-        if (selectedConvSubscription != null) {
-            selectedConvSubscription.cancel();
-        }
-
         if (syncIndicator != null) {
             syncIndicator.removeUpdateListener(syncStateUpdateListener);
             syncIndicator = null;
@@ -163,19 +115,12 @@ public class ScalaConversationStore implements IConversationStore {
             conversationsList = null;
         }
 
-        if (inboxList != null) {
-            inboxList.removeUpdateListener(inboxListUpdateListener);
-            inboxList = null;
-        }
         if (menuConversation != null) {
             menuConversation.removeUpdateListener(menuConversationUpdateListener);
             menuConversation = null;
         }
 
         establishedConversationsList = null;
-        selectedConvSubscription = null;
-        selectedConversation = null;
-        conversationUiSignal = null;
     }
 
     @Override
@@ -212,29 +157,19 @@ public class ScalaConversationStore implements IConversationStore {
         } else {
             Timber.i("Set current conversation to null, requester %s", conversationChangerSender);
         }
-        this.conversationChangeRequester = conversationChangerSender;
-        IConversation oldConversation = conversationChangerSender == ConversationChangeRequester.FIRST_LOAD ? null
-                                                                                                            : selectedConversation;
+        IConversation oldConversation = conversationChangerSender == ConversationChangeRequester.FIRST_LOAD ? null : getCurrentConversation();
         conversationsList.setSelectedConversation(conversation);
 
-        if (oldConversation == null ||
-            (oldConversation != null &&
-            conversation != null &&
-            oldConversation.getId().equals(conversation.getId()))) {
+        if (oldConversation == null || conversation != null && oldConversation.getId().equals(conversation.getId())) {
             // Notify explicitly if the conversation doesn't change, the UiSginal notifies only when the conversation changes
             notifyCurrentConversationHasChanged(oldConversation, conversation, conversationChangerSender);
         }
     }
 
     @Override
-    public IConversation getCurrentConversation() {
-        return selectedConversation;
-    }
-
-    @Override
     public void loadCurrentConversation(OnConversationLoadedListener onConversationLoadedListener) {
-        if (conversationsList != null && selectedConversation != null) {
-            onConversationLoadedListener.onConversationLoaded(selectedConversation);
+        if (conversationsList != null && getCurrentConversation() != null) {
+            onConversationLoadedListener.onConversationLoaded(getCurrentConversation());
         }
     }
 
@@ -256,7 +191,7 @@ public class ScalaConversationStore implements IConversationStore {
             IConversation previousConversation = i >= 1 ? conversationsList.get(i - 1) : null;
             IConversation conversation = conversationsList.get(i);
             IConversation nextConversation = i == (conversationsList.size() - 1) ? null : conversationsList.get(i + 1);
-            if (selectedConversation.equals(conversation)) {
+            if (getCurrentConversation().equals(conversation)) {
                 if (nextConversation != null) {
                     return nextConversation;
                 }
@@ -272,19 +207,6 @@ public class ScalaConversationStore implements IConversationStore {
         menuConversation.removeUpdateListener(menuConversationUpdateListener);
         menuConversation.addUpdateListener(menuConversationUpdateListener);
         menuConversationUpdateListener.updated();
-    }
-
-    @Override
-    public void loadConnectRequestInboxConversations(OnInboxLoadedListener onConversationsLoadedListener,
-                                                     InboxLoadRequester inboxLoadRequester) {
-        final List<IConversation> matches = new ArrayList<>();
-        for (int i = 0; i < inboxList.size(); i++) {
-            IConversation conversation = inboxList.get(i);
-            if (isPendingIncomingConnectRequest(conversation)) {
-                matches.add(conversation);
-            }
-        }
-        onConversationsLoadedListener.onConnectRequestInboxConversationsLoaded(matches, inboxLoadRequester);
     }
 
     @Override
@@ -311,9 +233,9 @@ public class ScalaConversationStore implements IConversationStore {
     @Override
     public void addConversationStoreObserverAndUpdate(ConversationStoreObserver conversationStoreObserver) {
         addConversationStoreObserver(conversationStoreObserver);
-        if (selectedConversation != null) {
+        if (getCurrentConversation() != null) {
             conversationStoreObserver.onCurrentConversationHasChanged(null,
-                                                                      selectedConversation,
+                                                                      getCurrentConversation(),
                                                                       ConversationChangeRequester.UPDATER);
             conversationStoreObserver.onConversationSyncingStateHasChanged(getConversationSyncingState());
         }
@@ -493,9 +415,9 @@ public class ScalaConversationStore implements IConversationStore {
         }
     }
 
-    protected void notifyCurrentConversationHasChanged(IConversation fromConversation,
-                                                       IConversation toConversation,
-                                                       ConversationChangeRequester conversationChangerSender) {
+    private void notifyCurrentConversationHasChanged(IConversation fromConversation,
+                                                     IConversation toConversation,
+                                                     ConversationChangeRequester conversationChangerSender) {
         for (ConversationStoreObserver conversationStoreObserver : conversationStoreObservers) {
             conversationStoreObserver.onCurrentConversationHasChanged(fromConversation,
                                                                       toConversation,
@@ -503,35 +425,14 @@ public class ScalaConversationStore implements IConversationStore {
         }
     }
 
-    protected void notifySyncChanged(SyncState syncState) {
+    private void notifySyncChanged(SyncState syncState) {
         for (ConversationStoreObserver observer : conversationStoreObservers) {
             observer.onConversationSyncingStateHasChanged(syncState);
         }
     }
 
-    private void identifyCurrentConversation(IConversation previousSelectedConversation) {
-        if (selectedConversation == null) {
-            if (previousSelectedConversation != null &&
-                previousSelectedConversation.getType() == IConversation.Type.INCOMING_CONNECTION) {
-                // Switch to another incoming connect request.
-                // Previous (ignored) conversation might still be included in list of incoming conversations, find another one
-                for (int i = 0; i < inboxList.size(); i++) {
-                    IConversation incomingConnectRequest = inboxList.get(i);
-                    if (!incomingConnectRequest.getId().equals(previousSelectedConversation.getId())) {
-                        setCurrentConversation(incomingConnectRequest, ConversationChangeRequester.FIRST_LOAD);
-                        return;
-                    }
-                }
-            }
-        } else {
-            setCurrentConversation(selectedConversation, ConversationChangeRequester.FIRST_LOAD);
-        }
-    }
-
-    private boolean isPendingIncomingConnectRequest(IConversation conversation) {
-        if (conversation.isMe() || conversation.getType() == IConversation.Type.GROUP) {
-            return false;
-        }
-        return conversation.getType() == IConversation.Type.INCOMING_CONNECTION;
+    @Override
+    public void onConversationChanged(IConversation prev, IConversation current) {
+        notifyCurrentConversationHasChanged(prev, current, ConversationChangeRequester.UPDATER);
     }
 }

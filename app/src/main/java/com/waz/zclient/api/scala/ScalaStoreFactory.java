@@ -18,9 +18,10 @@
 package com.waz.zclient.api.scala;
 
 import android.content.Context;
+
+import com.waz.zclient.controllers.global.SelectionController;
 import com.waz.zclient.core.api.scala.AppEntryStore;
 import com.waz.zclient.core.api.scala.ScalaConnectStore;
-import com.waz.zclient.core.api.scala.ScalaConversationStore;
 import com.waz.zclient.core.api.scala.ScalaDraftStore;
 import com.waz.zclient.core.api.scala.ScalaInAppNotificationStore;
 import com.waz.zclient.core.api.scala.ScalaNetworkStore;
@@ -45,9 +46,11 @@ import com.waz.zclient.core.stores.singleparticipants.ISingleParticipantStore;
 public class ScalaStoreFactory extends StoreFactory {
 
     private Context context;
+    private SelectionController selectionController;
 
-    public ScalaStoreFactory(Context context) {
+    public ScalaStoreFactory(Context context, SelectionController selectionController) {
         this.context = context;
+        this.selectionController = selectionController;
     }
 
     @Override
@@ -67,7 +70,7 @@ public class ScalaStoreFactory extends StoreFactory {
 
     @Override
     protected IConversationStore createConversationStore() {
-        return new ScalaConversationStore(getZMessagingApiStore().getApi());
+        return new ScalaConversationStore(getZMessagingApiStore().getApi(), selectionController);
     }
 
     @Override

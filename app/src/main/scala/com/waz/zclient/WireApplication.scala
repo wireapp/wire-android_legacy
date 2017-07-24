@@ -169,8 +169,8 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
   def ensureInitialized() = {
     if (storeFactory == null) {
-      storeFactory = new ScalaStoreFactory(getApplicationContext)
       //TODO initialization of ZMessaging happens here - make this more explicit?
+      storeFactory = new ScalaStoreFactory(getApplicationContext, inject[SelectionController])
       storeFactory.getZMessagingApiStore.getApi
     }
 
