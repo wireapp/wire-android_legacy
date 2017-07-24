@@ -27,12 +27,7 @@ import com.waz.api.User;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
 import com.waz.zclient.core.stores.conversation.ConversationStoreObserver;
 import com.waz.zclient.core.stores.conversation.IConversationStore;
-import com.waz.zclient.core.stores.conversation.InboxLoadRequester;
 import com.waz.zclient.core.stores.conversation.OnConversationLoadedListener;
-import com.waz.zclient.core.stores.conversation.OnInboxLoadedListener;
-import java.lang.Iterable;
-import java.lang.Override;
-import java.lang.String;
 
 public class StubConversationStore implements IConversationStore {
   @Override
@@ -117,11 +112,6 @@ public class StubConversationStore implements IConversationStore {
 
   @Override
   public void sendMessage(AssetForUpload assetForUpload, MessageContent.Asset.ErrorHandler errorHandler) {
-
-  }
-
-  @Override
-  public void loadConnectRequestInboxConversations(OnInboxLoadedListener onConversationsLoadedListener, InboxLoadRequester inboxLoadRequester) {
 
   }
 

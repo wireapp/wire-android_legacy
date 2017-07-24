@@ -51,7 +51,7 @@ import com.waz.zclient.controllers.tracking.screens.ApplicationScreen
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
 import com.waz.zclient.controllers.{SearchUserController, ThemeController, UserAccountsController}
 import com.waz.zclient.core.controllers.tracking.attributes.ConversationType
-import com.waz.zclient.core.stores.conversation.{ConversationChangeRequester, InboxLoadRequester, OnInboxLoadedListener}
+import com.waz.zclient.core.stores.conversation.{ConversationChangeRequester, InboxLoadRequester}
 import com.waz.zclient.core.stores.network.DefaultNetworkAction
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode
@@ -110,7 +110,6 @@ object PickUserFragment {
 class PickUserFragment extends BaseFragment[PickUserFragment.Container]
   with FragmentHelper
   with View.OnClickListener
-  with OnInboxLoadedListener
   with KeyboardVisibilityObserver
   with ConversationQuickMenuCallback
   with OnBackPressedListener
@@ -120,7 +119,6 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
 
   private var searchResultAdapter: PickUsersAdapter = null
   // Saves user from which a pending connect request is loaded
-  private var pendingFromUser: User = null
   private var isKeyboardVisible: Boolean = false
   private var searchBoxIsEmpty: Boolean = true
   private var showLoadingBarDelay: Long = 0L
@@ -424,15 +422,6 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
       return true
     }
     isKeyboardVisible
-  }
-
-  override def onConnectRequestInboxConversationsLoaded(conversations: java.util.List[IConversation], inboxLoadRequester: InboxLoadRequester): Unit = {
-    (0 until conversations.size()).map(conversations.get).foreach{ conversation =>
-      if (conversation.getId == pendingFromUser.getConversation.getId) {
-        getContainer.showIncomingPendingConnectRequest(conversation)
-        return
-      }
-    }
   }
 
   override def onKeyboardVisibilityChanged(keyboardIsVisible: Boolean, keyboardHeight: Int, currentFocus: View): Unit = {
@@ -749,8 +738,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
         getControllerFactory.getPickUserController.showUserProfile(user, anchorView)
       case ConnectionStatus.PendingFromOther =>
         KeyboardUtils.hideKeyboard(getActivity)
-        pendingFromUser = user
-        getStoreFactory.getConversationStore.loadConnectRequestInboxConversations(this, InboxLoadRequester.INBOX_SHOW_SPECIFIC)
+        getContainer.showIncomingPendingConnectRequest(user.getConversation)
       case _ =>
     }
   }

@@ -131,8 +131,6 @@ public interface IConversationStore extends IStore {
 
     void loadMenuConversation(String conversationId);
 
-    void loadConnectRequestInboxConversations(OnInboxLoadedListener onConversationsLoadedListener, InboxLoadRequester inboxLoadRequester);
-
     int getNumberOfActiveConversations();
 
     SyncState getConversationSyncingState();
