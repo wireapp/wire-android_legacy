@@ -158,7 +158,7 @@ public class PhoneInvitationFragment extends BaseFragment<PhoneInvitationFragmen
             return;
         }
         KeyboardUtils.hideKeyboard(getActivity());
-        getStoreFactory().getAppEntryStore().onBackPressed();
+        getStoreFactory().appEntryStore().onBackPressed();
         ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new CancelledPersonalInvite(CancelledPersonalInvite.EventContext.INVITE_PHONE));
     }
 
@@ -172,7 +172,7 @@ public class PhoneInvitationFragment extends BaseFragment<PhoneInvitationFragmen
         KeyboardUtils.hideKeyboard(getActivity());
         getContainer().enableProgress(true);
 
-        getStoreFactory().getAppEntryStore().acceptPhoneInvitation(getControllerFactory().getAccentColorController().getAccentColor());
+        getStoreFactory().appEntryStore().acceptPhoneInvitation(getControllerFactory().getAccentColorController().getAccentColor());
         ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ConfirmedPersonalInviteEvent(
             RegistrationEventContext.PERSONAL_INVITE_PHONE));
     }

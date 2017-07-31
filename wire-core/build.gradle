@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.neenbedankt.android-apt'
+apply plugin: 'jp.leafytree.android-scala'
 apply from: "${project.rootDir}/app/config/quality.gradle"
 
 android {
@@ -18,6 +19,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    sourceSets.main.scala.srcDir "src/main/java"
+    sourceSets.main.java.srcDirs = []
 }
 
 dependencies {

@@ -270,18 +270,18 @@ public class EmailSignInFragment extends BaseFragment<EmailSignInFragment.Contai
         getControllerFactory().getLoadTimeLoggerController().loginPressed();
         getContainer().enableProgress(true);
         KeyboardUtils.hideKeyboard(getActivity());
-        getStoreFactory().getAppEntryStore()
+        getStoreFactory().appEntryStore()
                          .signInWithEmail(guidedEditTextEmail.getText(),
                                           guidedEditTextPassword.getText(),
                                           errorCallback);
     }
 
     private void goBack() {
-        getStoreFactory().getAppEntryStore().onBackPressed();
+        getStoreFactory().appEntryStore().onBackPressed();
     }
 
     private void goToSignInPhone() {
-        getStoreFactory().getAppEntryStore().setState(AppEntryState.PHONE_SIGN_IN);
+        getStoreFactory().appEntryStore().setState(AppEntryState.PHONE_SIGN_IN);
     }
 
     private void onPasswordResetButtonClicked() {
@@ -294,7 +294,7 @@ public class EmailSignInFragment extends BaseFragment<EmailSignInFragment.Contai
             if (LayoutSpec.isPhone(getActivity())) {
                 goBack();
             } else {
-                getStoreFactory().getAppEntryStore().setState(AppEntryState.EMAIL_REGISTER);
+                getStoreFactory().appEntryStore().setState(AppEntryState.EMAIL_REGISTER);
             }
         }
     }

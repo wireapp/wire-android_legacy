@@ -127,14 +127,14 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
     @Override
     public void onStart() {
         super.onStart();
-        getStoreFactory().getConversationStore().addConversationStoreObserver(this);
+        getStoreFactory().conversationStore().addConversationStoreObserver(this);
         getControllerFactory().getConversationScreenController().addConversationControllerObservers(this);
         getControllerFactory().getDrawingController().addDrawingObserver(this);
         getControllerFactory().getCameraController().addCameraActionObserver(this);
         getControllerFactory().getPickUserController().addPickUserScreenControllerObserver(this);
-        IConversation currentConversation = getStoreFactory().getConversationStore().getCurrentConversation();
+        IConversation currentConversation = getStoreFactory().conversationStore().getCurrentConversation();
         if (currentConversation != null) {
-            getStoreFactory().getParticipantsStore().setCurrentConversation(currentConversation);
+            getStoreFactory().participantsStore().setCurrentConversation(currentConversation);
         }
         getControllerFactory().getLocationController().addObserver(this);
         getCollectionController().addObserver(this);
@@ -147,7 +147,7 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
         getControllerFactory().getCameraController().removeCameraActionObserver(this);
         getControllerFactory().getDrawingController().removeDrawingObserver(this);
         getControllerFactory().getConversationScreenController().removeConversationControllerObservers(this);
-        getStoreFactory().getConversationStore().removeConversationStoreObserver(this);
+        getStoreFactory().conversationStore().removeConversationStoreObserver(this);
         getCollectionController().removeObserver(this);
         super.onStop();
     }
@@ -347,7 +347,7 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
             closeLikesList();
         }
         if (toConversation != null) {
-            getStoreFactory().getParticipantsStore().setCurrentConversation(toConversation);
+            getStoreFactory().participantsStore().setCurrentConversation(toConversation);
             conversationModelObserver.setAndUpdate(toConversation);
         }
         getCollectionController().closeCollection();
@@ -463,12 +463,12 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
         if (cameraContext != CameraContext.MESSAGE) {
             return;
         }
-        getStoreFactory().getConversationStore().sendMessage(imageAsset);
-        getStoreFactory().getNetworkStore().doIfHasInternetOrNotifyUser(null);
+        getStoreFactory().conversationStore().sendMessage(imageAsset);
+        getStoreFactory().networkStore().doIfHasInternetOrNotifyUser(null);
 
         // Photo sent via contacts quick menu
         TrackingUtils.onSentPhotoMessage(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
-                                         getStoreFactory().getConversationStore().getCurrentConversation(),
+                                         getStoreFactory().conversationStore().getCurrentConversation(),
                                          imageFromCamera ? SentPictureEvent.Source.CAMERA
                                                          : SentPictureEvent.Source.GALLERY,
                                          SentPictureEvent.Method.FULL_SCREEN);
@@ -528,10 +528,10 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
         // TODO https://wearezeta.atlassian.net/browse/AN-3730
         getControllerFactory().getPickUserController().hidePickUser(getCurrentPickerDestination(), false);
 
-        IConversation currentConversation = getStoreFactory().getConversationStore().getCurrentConversation();
+        IConversation currentConversation = getStoreFactory().conversationStore().getCurrentConversation();
         if (currentConversation.getType() == IConversation.Type.ONE_TO_ONE) {
-            getStoreFactory().getConversationStore().createGroupConversation(users, requester);
-            if (!getStoreFactory().getNetworkStore().hasInternetConnection()) {
+            getStoreFactory().conversationStore().createGroupConversation(users, requester);
+            if (!getStoreFactory().networkStore().hasInternetConnection()) {
                 ViewUtils.showAlertDialog(getActivity(),
                                           R.string.conversation__create_group_conversation__no_network__title,
                                           R.string.conversation__create_group_conversation__no_network__message,
@@ -541,7 +541,7 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
             ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new CreatedGroupConversationEvent(true, (users.size() + 1)));
         } else if (currentConversation.getType() == IConversation.Type.GROUP) {
             currentConversation.addMembers(users);
-            if (!getStoreFactory().getNetworkStore().hasInternetConnection()) {
+            if (!getStoreFactory().networkStore().hasInternetConnection()) {
                 ViewUtils.showAlertDialog(getActivity(),
                                           R.string.conversation__add_user__no_network__title,
                                           R.string.conversation__add_user__no_network__message,
@@ -577,7 +577,7 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
         if (!groupConversation && otherUser != null) {
             getControllerFactory().getPickUserController().addUser(otherUser);
         }
-        IConversation conversation = getStoreFactory().getConversationStore().getCurrentConversation();
+        IConversation conversation = getStoreFactory().conversationStore().getCurrentConversation();
         String conversationId = conversation == null ? null : conversation.getId();
         getChildFragmentManager()
             .beginTransaction()
@@ -616,7 +616,7 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
     }
 
     private int getParticipantsCount() {
-        return getStoreFactory().getConversationStore().getCurrentConversation().getUsers().size();
+        return getStoreFactory().conversationStore().getCurrentConversation().getUsers().size();
     }
 
     @Override
@@ -633,7 +633,7 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
     @Override
     public void onHideShareLocation(MessageContent.Location location) {
         if (location != null) {
-            getStoreFactory().getConversationStore().sendMessage(location);
+            getStoreFactory().conversationStore().sendMessage(location);
         }
         getControllerFactory().getNavigationController().setRightPage(Page.MESSAGE_STREAM, TAG);
         getChildFragmentManager().popBackStack(LocationFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE);

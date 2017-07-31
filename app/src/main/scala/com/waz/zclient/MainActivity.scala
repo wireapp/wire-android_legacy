@@ -147,18 +147,18 @@ class MainActivity extends BaseActivity
   override protected def onResumeFragments() = {
     info("onResumeFragments")
     super.onResumeFragments()
-    getStoreFactory.getZMessagingApiStore.addApiObserver(this)
+    getStoreFactory.zMessagingApiStore.addApiObserver(this)
   }
 
   override def onStart() = {
     info("onStart")
 
     overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
-    getStoreFactory.getProfileStore.addProfileStoreObserver(this)
-    getStoreFactory.getConnectStore.addConnectRequestObserver(this)
+    getStoreFactory.profileStore.addProfileStoreObserver(this)
+    getStoreFactory.connectStore.addConnectRequestObserver(this)
     getControllerFactory.getNavigationController.addNavigationControllerObserver(this)
     getControllerFactory.getCallingController.addCallingObserver(this)
-    getStoreFactory.getConversationStore.addConversationStoreObserver(this)
+    getStoreFactory.conversationStore.addConversationStoreObserver(this)
     handleInvite()
     handleReferral()
 
@@ -171,7 +171,7 @@ class MainActivity extends BaseActivity
 
     try
         if ("com.wire" == getApplicationContext.getPackageName) {
-          Option(getStoreFactory.getProfileStore.getMyEmail).filter(e => e.endsWith("@wire.com") || e.endsWith("@wearezeta.com")).foreach { email =>
+          Option(getStoreFactory.profileStore.getMyEmail).filter(e => e.endsWith("@wire.com") || e.endsWith("@wearezeta.com")).foreach { email =>
             ExceptionHandler.saveException(new RuntimeException(email), null, null)
             ViewUtils.showAlertDialog(this, "Yo dude!", "Please use Wire Internal", "I promise", null, false)
           }
@@ -214,13 +214,13 @@ class MainActivity extends BaseActivity
   override def onStop() = {
     super.onStop()
     info("onStop")
-    getStoreFactory.getConversationStore.removeConversationStoreObserver(this)
+    getStoreFactory.conversationStore.removeConversationStoreObserver(this)
     getControllerFactory.getCallingController.removeCallingObserver(this)
-    getStoreFactory.getZMessagingApiStore.removeApiObserver(this)
-    getStoreFactory.getConnectStore.removeConnectRequestObserver(this)
-    getStoreFactory.getProfileStore.removeProfileStoreObserver(this)
+    getStoreFactory.zMessagingApiStore.removeApiObserver(this)
+    getStoreFactory.connectStore.removeConnectRequestObserver(this)
+    getStoreFactory.profileStore.removeProfileStoreObserver(this)
     getControllerFactory.getNavigationController.removeNavigationControllerObserver(this)
-    getControllerFactory.getUserPreferencesController.setLastAccentColor(getStoreFactory.getProfileStore.getAccentColor)
+    getControllerFactory.getUserPreferencesController.setLastAccentColor(getStoreFactory.profileStore.getAccentColor)
   }
 
   override def onBackPressed(): Unit = {
@@ -319,7 +319,7 @@ class MainActivity extends BaseActivity
           finish()
           return
         }
-        else getStoreFactory.getZMessagingApiStore.getApi.logout()
+        else getStoreFactory.zMessagingApiStore.getApi.logout()
       case LIMIT_REACHED =>
         showUnableToRegisterOtrClientDialog()
       case _ =>
@@ -328,12 +328,12 @@ class MainActivity extends BaseActivity
   }
 
   private def onPasswordWasReset() = {
-    getStoreFactory.getZMessagingApiStore.getApi.logout()
+    getStoreFactory.zMessagingApiStore.getApi.logout()
     openSignUpPage()
   }
 
   private def onUserLoggedInAndVerified(self: Self) = {
-    getStoreFactory.getProfileStore.setUser(self)
+    getStoreFactory.profileStore.setUser(self)
     getControllerFactory.getAccentColorController.setColor(AccentColorChangeRequester.LOGIN, self.getAccent.getColor)
     getControllerFactory.getUsernameController.setUser(self)
 
@@ -342,11 +342,11 @@ class MainActivity extends BaseActivity
         val startCallNotificationIntent = IntentUtils.isStartCallNotificationIntent(intent)
         info(s"Start from notification with call=$startCallNotificationIntent")
 
-        Option(getStoreFactory.getConversationStore.getConversation(IntentUtils.getLaunchConversationId(intent))).foreach { conversation =>
+        Option(getStoreFactory.conversationStore.getConversation(IntentUtils.getLaunchConversationId(intent))).foreach { conversation =>
           // Only want to swipe over when app has loaded
           new Handler().postDelayed(new Runnable() {
             def run() = {
-              getStoreFactory.getConversationStore.setCurrentConversation(conversation, ConversationChangeRequester.NOTIFICATION)
+              getStoreFactory.conversationStore.setCurrentConversation(Option(conversation), ConversationChangeRequester.NOTIFICATION)
               if (startCallNotificationIntent) startCall(false)
             }
           }, MainActivity.LAUNCH_CONVERSATION_CHANGE_DELAY)
@@ -361,7 +361,7 @@ class MainActivity extends BaseActivity
 
         Option(IntentUtils.getLaunchConversationIds(intent)).map(_.asScala.filter(_ != null).toSeq).foreach {
           case convId +: Nil =>
-            val conv = getStoreFactory.getConversationStore.getConversation(convId)
+            val conv = getStoreFactory.conversationStore.getConversation(convId)
 
             if (!TextUtils.isEmpty(sharedText)) getControllerFactory.getSharingController.setSharedContentType(SharedContentType.TEXT)
             else getControllerFactory.getSharingController.setSharedContentType(SharedContentType.FILE)
@@ -377,7 +377,7 @@ class MainActivity extends BaseActivity
             // Only want to swipe over when app has loaded
             new Handler().postDelayed(new Runnable() {
               def run() = {
-                getStoreFactory.getConversationStore.setCurrentConversation(conv, ConversationChangeRequester.SHARING)
+                getStoreFactory.conversationStore.setCurrentConversation(Option(conv), ConversationChangeRequester.SHARING)
               }
             }, MainActivity.LAUNCH_CONVERSATION_CHANGE_DELAY)
 
@@ -425,7 +425,7 @@ class MainActivity extends BaseActivity
     val token = getControllerFactory.getUserPreferencesController.getGenericInvitationToken
     getControllerFactory.getUserPreferencesController.setGenericInvitationToken(null)
     if (TextUtils.isEmpty(token) || TextUtils.equals(token, AppEntryStore.GENERAL_GENERIC_INVITE_TOKEN)) return
-    getStoreFactory.getConnectStore.requestConnection(token)
+    getStoreFactory.connectStore.requestConnection(token)
     globalTracking.tagEvent(new AcceptedGenericInviteEvent)
   }
 
@@ -433,7 +433,7 @@ class MainActivity extends BaseActivity
     val referralToken = getControllerFactory.getUserPreferencesController.getReferralToken
     getControllerFactory.getUserPreferencesController.setReferralToken(null)
     if (TextUtils.isEmpty(referralToken) || TextUtils.equals(referralToken, AppEntryStore.GENERAL_GENERIC_INVITE_TOKEN)) return
-    getStoreFactory.getConnectStore.requestConnection(referralToken)
+    getStoreFactory.connectStore.requestConnection(referralToken)
     globalTracking.tagEvent(new AcceptedGenericInviteEvent)
   }
 
@@ -443,7 +443,7 @@ class MainActivity extends BaseActivity
         info("onLogout")
         getStoreFactory.reset()
         getControllerFactory.getPickUserController.hideUserProfile()
-        getStoreFactory.getConversationStore.onLogout()
+        getStoreFactory.conversationStore.onLogout()
         getControllerFactory.getNavigationController.resetPagerPositionToDefault()
         val intent: Intent = new Intent(this, classOf[MainActivity])
         intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK)
@@ -504,7 +504,7 @@ class MainActivity extends BaseActivity
 
   def onConnectUserUpdated(user: User, usertype: IConnectStore.UserRequester) = ()
 
-  def onInviteRequestSent(conversation: IConversation) = getStoreFactory.getConversationStore.setCurrentConversation(conversation, ConversationChangeRequester.INVITE)
+  def onInviteRequestSent(conversation: IConversation) = getStoreFactory.conversationStore.setCurrentConversation(Some(conversation), ConversationChangeRequester.INVITE)
 
   def onOpenUrl(url: String) = {
     try {
@@ -533,7 +533,7 @@ class MainActivity extends BaseActivity
     // TODO: Remove old SignOut event AN-4232
     globalTracking.tagEvent(new SignOut)
     globalTracking.tagEvent(new LoggedOutEvent)
-    getStoreFactory.getZMessagingApiStore.logout()
+    getStoreFactory.zMessagingApiStore.logout()
     getControllerFactory.getUsernameController.logout()
   }
 
@@ -548,8 +548,9 @@ class MainActivity extends BaseActivity
 
   def onStartCall(withVideo: Boolean) = {
     handleOnStartCall(withVideo)
-    val conversation = getStoreFactory.getConversationStore.getCurrentConversation
-    globalTracking.tagEvent(OpenedMediaActionEvent.cursorAction(if (withVideo) OpenedMediaAction.VIDEO_CALL else OpenedMediaAction.AUDIO_CALL, conversation))
+    getStoreFactory.conversationStore.currentConversation.foreach { conv =>
+      globalTracking.tagEvent(OpenedMediaActionEvent.cursorAction(if (withVideo) OpenedMediaAction.VIDEO_CALL else OpenedMediaAction.AUDIO_CALL, conv))
+    }
   }
 
   private def handleOnStartCall(withVideo: Boolean) = {
@@ -557,8 +558,7 @@ class MainActivity extends BaseActivity
     else startCallIfInternet(withVideo)
   }
 
-  private def startCall(withVideo: Boolean) = Option(getStoreFactory.getConversationStore.getCurrentConversation).foreach {
-
+  private def startCall(withVideo: Boolean) = getStoreFactory.conversationStore.currentConversation.foreach {
     case c if c.getType == IConversation.Type.GROUP && c.getUsers.size() >= 5 =>
       ViewUtils.showAlertDialog(
         this,
@@ -574,7 +574,6 @@ class MainActivity extends BaseActivity
 
     case c =>
       callPermissionController.startCall(new ConvId(c.getId), withVideo, getControllerFactory.getUserPreferencesController.isVariableBitRateEnabled)
-
   }
 
   private def cannotStartGSM() =

@@ -142,7 +142,7 @@ public class AddPhoneNumberPreferenceDialogFragment extends BaseDialogFragment<A
             .setPositiveButton(android.R.string.ok, null)
             .setNegativeButton(android.R.string.cancel, null);
         if (isEditMode && getStoreFactory() != null &&
-            !StringUtils.isBlank(getStoreFactory().getProfileStore().getMyEmail())) {
+            !StringUtils.isBlank(getStoreFactory().profileStore().getMyEmail())) {
             alertDialogBuilder.setNeutralButton(R.string.pref_account_delete, null);
         }
         final AlertDialog alertDialog = alertDialogBuilder.create();
@@ -218,11 +218,11 @@ public class AddPhoneNumberPreferenceDialogFragment extends BaseDialogFragment<A
         if (getStoreFactory() == null || getStoreFactory().isTornDown()) {
             return;
         }
-        if (!getStoreFactory().getNetworkStore().hasInternetConnection()) {
+        if (!getStoreFactory().networkStore().hasInternetConnection()) {
             showError(getString(R.string.pref__account_action__dialog__delete_phone__no_internet_error));
             return;
         }
-        String number = getStoreFactory().getProfileStore().getMyPhoneNumber();
+        String number = getStoreFactory().profileStore().getMyPhoneNumber();
         ViewUtils.showAlertDialog(getActivity(),
                                   getString(R.string.pref__account_action__dialog__delete_phone_or_email__confirm__title),
                                   getString(R.string.pref__account_action__dialog__delete_phone_or_email__confirm__message, number),
@@ -234,7 +234,7 @@ public class AddPhoneNumberPreferenceDialogFragment extends BaseDialogFragment<A
                                           if (getStoreFactory() == null || getStoreFactory().isTornDown()) {
                                               return;
                                           }
-                                          getStoreFactory().getProfileStore().deleteMyPhoneNumber(new CredentialsUpdateListener() {
+                                          getStoreFactory().profileStore().deleteMyPhoneNumber(new CredentialsUpdateListener() {
                                               @Override
                                               public void onUpdated() {
                                                   if (getContainer() == null) {
@@ -271,7 +271,7 @@ public class AddPhoneNumberPreferenceDialogFragment extends BaseDialogFragment<A
             return;
         }
         final String number = String.format("%s%s", countryCode, rawNumber);
-        if (number.equalsIgnoreCase(getStoreFactory().getProfileStore().getMyPhoneNumber())) {
+        if (number.equalsIgnoreCase(getStoreFactory().profileStore().getMyPhoneNumber())) {
             dismiss();
             return;
         }
@@ -287,7 +287,7 @@ public class AddPhoneNumberPreferenceDialogFragment extends BaseDialogFragment<A
                                           if (getStoreFactory() == null) {
                                               return;
                                           }
-                                          getStoreFactory().getProfileStore()
+                                          getStoreFactory().profileStore()
                                                            .setMyPhoneNumber(number,
                                                                              new CredentialsUpdateListener() {
                                                                                  @Override

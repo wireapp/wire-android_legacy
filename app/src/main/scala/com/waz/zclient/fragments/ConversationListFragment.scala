@@ -92,7 +92,7 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
   def init(view: View, adapter: ConversationListAdapter): Unit
 
   private def handleItemClick(conversationData: ConversationData): Unit = {
-    val iConversation = getStoreFactory.getConversationStore.getConversation(conversationData.id.str)
+    val iConversation = getStoreFactory.conversationStore.getConversation(conversationData.id.str)
     getControllerFactory.getLoadTimeLoggerController.clickConversationInList()
 
     val conversationChangeRequester =
@@ -101,7 +101,7 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
       else
         ConversationChangeRequester.CONVERSATION_LIST
 
-    getStoreFactory.getConversationStore.setCurrentConversation(iConversation, conversationChangeRequester)
+    getStoreFactory.conversationStore.setCurrentConversation(Option(iConversation), conversationChangeRequester)
   }
 
   private def handleItemLongClick(conversationData: ConversationData, anchorView: View): Unit = {
@@ -110,7 +110,7 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
         conversationData.convType != ConversationType.WaitForConnection) {
       return
     }
-    val iConversation = getStoreFactory.getConversationStore.getConversation(conversationData.id.str)
+    val iConversation = getStoreFactory.conversationStore.getConversation(conversationData.id.str)
     getControllerFactory.getConversationScreenController.showConversationMenu(IConversationScreenController.CONVERSATION_LIST_LONG_PRESS, iConversation, anchorView)
   }
 

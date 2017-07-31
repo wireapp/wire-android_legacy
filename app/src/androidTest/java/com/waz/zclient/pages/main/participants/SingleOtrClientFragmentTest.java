@@ -188,7 +188,7 @@ public class SingleOtrClientFragmentTest extends FragmentTest<MainTestActivity> 
     }
 
     private void setupMocksForCurrentOtrClient(Self mockSelf, Fingerprint mockFingerprint) {
-        IZMessagingApiStore mockZMessagingApiStore = activity.getStoreFactory().getZMessagingApiStore();
+        IZMessagingApiStore mockZMessagingApiStore = activity.getStoreFactory().zMessagingApiStore();
         ZMessagingApi mockZMessagingApi = mock(ZMessagingApi.class);
         when(mockZMessagingApiStore.getApi()).thenReturn(mockZMessagingApi);
         when(mockZMessagingApi.getSelf()).thenReturn(mockSelf);
@@ -202,7 +202,7 @@ public class SingleOtrClientFragmentTest extends FragmentTest<MainTestActivity> 
         when(mockFingerprint.getRawBytes()).thenReturn(DEFAULT_FINGERPRINT.getBytes());
 
         // Not really needed, as user is not used for current device
-        IProfileStore mockProfileStore = activity.getStoreFactory().getProfileStore();
+        IProfileStore mockProfileStore = activity.getStoreFactory().profileStore();
         User mockUser = mock(User.class);
         when(mockProfileStore.getSelfUser()).thenReturn(mockUser);
     }

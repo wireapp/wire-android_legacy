@@ -64,6 +64,12 @@ public enum AppEntryState {
     // take a picture
     EMAIL_SET_PICTURE,
 
+    // optional: enter phone number
+    EMAIL_SET_PHONE,
+
+    // optional: enter phone number code
+    EMAIL_SET_CODE,
+
     // email validated, ask for phone (if there isn't one), and picture (if there isn't one)
     EMAIL_SIGNED_IN,
 

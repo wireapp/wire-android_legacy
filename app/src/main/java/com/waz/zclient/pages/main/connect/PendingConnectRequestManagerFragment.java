@@ -129,7 +129,7 @@ public class PendingConnectRequestManagerFragment extends BaseFragment<PendingCo
 
     @Override
     public void showRemoveConfirmation(final User user) {
-        getStoreFactory().getNetworkStore().doIfHasInternetOrNotifyUser(new NetworkAction() {
+        getStoreFactory().networkStore().doIfHasInternetOrNotifyUser(new NetworkAction() {
             @Override
             public void execute(NetworkMode networkMode) {
                 getContainer().showRemoveConfirmation(user);
@@ -203,11 +203,11 @@ public class PendingConnectRequestManagerFragment extends BaseFragment<PendingCo
                 user.unblock();
                 break;
             case ARCHIVE:
-                getStoreFactory().getConversationStore().archive(conversation, true);
+                getStoreFactory().conversationStore().archive(conversation, true);
                 ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ArchivedConversationEvent(conversation.getType().toString()));
                 break;
             case UNARCHIVE:
-                getStoreFactory().getConversationStore().archive(conversation, false);
+                getStoreFactory().conversationStore().archive(conversation, false);
                 ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new UnarchivedConversationEvent(conversation.getType().toString()));
                 break;
             case SILENCE:
@@ -228,13 +228,13 @@ public class PendingConnectRequestManagerFragment extends BaseFragment<PendingCo
             @Override
             public void positiveButtonClicked(boolean checkboxIsSelected) {
 
-                getStoreFactory().getConnectStore().blockUser(user);
+                getStoreFactory().connectStore().blockUser(user);
 
                 final IConnectStore.UserRequester userRequester = IConnectStore.UserRequester.valueOf(getArguments().getString(ARGUMENT_USER_REQUESTER));
-                getStoreFactory().getConnectStore().blockUser(user);
+                getStoreFactory().connectStore().blockUser(user);
                 switch (userRequester) {
                     case CONVERSATION:
-                        getStoreFactory().getConversationStore().setCurrentConversationToNext(ConversationChangeRequester.BLOCK_USER);
+                        getStoreFactory().conversationStore().setCurrentConversationToNext(ConversationChangeRequester.BLOCK_USER);
                         break;
                     case SEARCH:
                     case POPOVER:

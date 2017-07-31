@@ -231,7 +231,7 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
     public void onStart() {
         super.onStart();
 
-        getStoreFactory().getSingleParticipantStore().addSingleParticipantObserver(this);
+        getStoreFactory().singleParticipantStore().addSingleParticipantObserver(this);
     }
 
     @Override
@@ -242,7 +242,7 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
 
     @Override
     public void onStop() {
-        getStoreFactory().getSingleParticipantStore().removeSingleParticipantObserver(this);
+        getStoreFactory().singleParticipantStore().removeSingleParticipantObserver(this);
 
         super.onStop();
     }
@@ -312,7 +312,7 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
                     // Go to conversation with this user
                     goToConversationWithUser = true;
                     getContainer().dismissUserProfile();
-                    getStoreFactory().getConversationStore().setCurrentConversation(user.getConversation(),
+                    getStoreFactory().conversationStore().setCurrentConversation(user.getConversation(),
                                                                                     ConversationChangeRequester.START_CONVERSATION);
                 }
 
@@ -324,7 +324,7 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
                     if (showingCommonUser) {
                         showBlockConfirmation(user);
                     } else {
-                        getStoreFactory().getNetworkStore().doIfHasInternetOrNotifyUser(new NetworkAction() {
+                        getStoreFactory().networkStore().doIfHasInternetOrNotifyUser(new NetworkAction() {
                             @Override
                             public void execute(NetworkMode networkMode) {
                                 getContainer().showRemoveConfirmation(user);
@@ -352,7 +352,7 @@ public class SingleParticipantFragment extends BaseFragment<SingleParticipantFra
         ConfirmationCallback callback = new TwoButtonConfirmationCallback() {
             @Override
             public void positiveButtonClicked(boolean checkboxIsSelected) {
-                getStoreFactory().getConnectStore().blockUser(user);
+                getStoreFactory().connectStore().blockUser(user);
                 // Dismiss common user profile
                 getContainer().dismissUserProfile();
                 ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new BlockingEvent(BlockingEvent.ConformationResponse.BLOCK));

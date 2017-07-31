@@ -204,7 +204,7 @@ public class OTREmailSignInFragment extends BaseFragment<OTREmailSignInFragment.
 
         Credentials credentials = CredentialsFactory.emailCredentials(guidedEditTextEmail.getText(),
                                                                       guidedEditTextPassword.getText());
-        getStoreFactory().getZMessagingApiStore().getApi().login(credentials, new LoginListener() {
+        getStoreFactory().zMessagingApiStore().getApi().login(credentials, new LoginListener() {
             @Override
             public void onSuccess(Self user) {
                 if (getContainer() == null) {

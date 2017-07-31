@@ -140,11 +140,11 @@ public class ChangeEmailPreferenceDialogFragment extends BaseDialogFragment<Chan
         if (getStoreFactory() == null || getStoreFactory().isTornDown()) {
             return;
         }
-        if (!getStoreFactory().getNetworkStore().hasInternetConnection()) {
+        if (!getStoreFactory().networkStore().hasInternetConnection()) {
             inputLayout.setError(getString(R.string.pref__account_action__dialog__delete_phone__no_internet_error));
             return;
         }
-        String email = getStoreFactory().getProfileStore().getMyEmail();
+        String email = getStoreFactory().profileStore().getMyEmail();
         ViewUtils.showAlertDialog(getActivity(),
                                   getString(R.string.pref__account_action__dialog__delete_phone_or_email__confirm__title),
                                   getString(R.string.pref__account_action__dialog__delete_phone_or_email__confirm__message, email),
@@ -156,7 +156,7 @@ public class ChangeEmailPreferenceDialogFragment extends BaseDialogFragment<Chan
                                           if (getStoreFactory() == null || getStoreFactory().isTornDown()) {
                                               return;
                                           }
-                                          getStoreFactory().getProfileStore().deleteMyEmail(new CredentialsUpdateListener() {
+                                          getStoreFactory().profileStore().deleteMyEmail(new CredentialsUpdateListener() {
                                               @Override
                                               public void onUpdated() {
                                                   if (getContainer() == null) {
@@ -183,12 +183,12 @@ public class ChangeEmailPreferenceDialogFragment extends BaseDialogFragment<Chan
             inputLayout.setError(getString(R.string.pref__account_action__dialog__change_email__error__invalid_email));
             return;
         }
-        if (email.equalsIgnoreCase(getStoreFactory().getProfileStore().getMyEmail())) {
+        if (email.equalsIgnoreCase(getStoreFactory().profileStore().getMyEmail())) {
             dismiss();
             return;
         }
         inputLayout.setError(null);
-        getStoreFactory().getProfileStore()
+        getStoreFactory().profileStore()
                          .setMyEmail(email,
                                      new CredentialsUpdateListener() {
                                          @Override

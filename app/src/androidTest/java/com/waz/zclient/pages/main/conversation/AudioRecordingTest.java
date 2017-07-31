@@ -18,16 +18,13 @@
 package com.waz.zclient.pages.main.conversation;
 
 import android.annotation.SuppressLint;
-import android.support.test.espresso.action.ViewActions;
 import com.waz.api.ErrorType;
 import com.waz.api.ErrorsList;
-import com.waz.api.IConversation;
 import com.waz.zclient.MainTestActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.core.stores.inappnotification.IInAppNotificationStore;
 import com.waz.zclient.core.stores.inappnotification.SyncErrorObserver;
 import com.waz.zclient.testutils.FragmentTest;
-import com.waz.zclient.testutils.MockHelper;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -35,8 +32,6 @@ import org.mockito.stubbing.Answer;
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
-import static com.waz.zclient.testutils.CustomViewAssertions.hasText;
-import static com.waz.zclient.testutils.CustomViewAssertions.isInvisible;
 import static com.waz.zclient.testutils.CustomViewAssertions.isVisible;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -106,7 +101,7 @@ public class AudioRecordingTest extends FragmentTest<MainTestActivity> {
     public void assertRecordingFailureWarningShowed() throws InterruptedException {
         final ErrorsList.ErrorDescription mockErrorDescription = mock(ErrorsList.ErrorDescription.class);
         when(mockErrorDescription.getType()).thenReturn(ErrorType.RECORDING_FAILURE);
-        IInAppNotificationStore mockInAppNotificationStore = activity.getStoreFactory().getInAppNotificationStore();
+        IInAppNotificationStore mockInAppNotificationStore = activity.getStoreFactory().inAppNotificationStore();
 
         doAnswer(new Answer<Void>() {
             @Override

@@ -67,7 +67,7 @@ public class MockStoreFactory implements IStoreFactory {
   protected ISingleParticipantStore singleParticipantStore = spy(StubSingleParticipantStore.class);
 
   @Override
-  public IProfileStore getProfileStore() {
+  public IProfileStore profileStore() {
     return profileStore;
   }
 
@@ -77,37 +77,37 @@ public class MockStoreFactory implements IStoreFactory {
   }
 
   @Override
-  public IDraftStore getDraftStore() {
+  public IDraftStore draftStore() {
     return draftStore;
   }
 
   @Override
-  public IZMessagingApiStore getZMessagingApiStore() {
+  public IZMessagingApiStore zMessagingApiStore() {
     return zMessagingApiStore;
   }
 
   @Override
-  public ISingleParticipantStore getSingleParticipantStore() {
+  public ISingleParticipantStore singleParticipantStore() {
     return singleParticipantStore;
   }
 
   @Override
-  public IAppEntryStore getAppEntryStore() {
+  public IAppEntryStore appEntryStore() {
     return appEntryStore;
   }
 
   @Override
-  public INetworkStore getNetworkStore() {
+  public INetworkStore networkStore() {
     return networkStore;
   }
 
   @Override
-  public IInAppNotificationStore getInAppNotificationStore() {
+  public IInAppNotificationStore inAppNotificationStore() {
     return inAppNotificationStore;
   }
 
   @Override
-  public IParticipantsStore getParticipantsStore() {
+  public IParticipantsStore participantsStore() {
     return participantsStore;
   }
 
@@ -116,12 +116,12 @@ public class MockStoreFactory implements IStoreFactory {
   }
 
   @Override
-  public IPickUserStore getPickUserStore() {
+  public IPickUserStore pickUserStore() {
     return pickUserStore;
   }
 
   @Override
-  public IConversationStore getConversationStore() {
+  public IConversationStore conversationStore() {
     return conversationStore;
   }
 
@@ -130,7 +130,7 @@ public class MockStoreFactory implements IStoreFactory {
   }
 
   @Override
-  public IConnectStore getConnectStore() {
+  public IConnectStore connectStore() {
     return connectStore;
   }
 }

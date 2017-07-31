@@ -140,7 +140,7 @@ public class ImageSharingPreviewFragment extends BaseFragment<ImageSharingPrevie
         List<URI> sharedImageUris = getControllerFactory().getSharingController().getSharedFileUris();
         switch (sharedContentType) {
             case IMAGE:
-                getStoreFactory().getConversationStore().sendMessage(destination, ImageAssetFactory.getImageAsset(sharedImageUris.get(0)));
+                getStoreFactory().conversationStore().sendMessage(destination, ImageAssetFactory.getImageAsset(sharedImageUris.get(0)));
                 TrackingUtils.onSentPhotoMessageFromSharing(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                             destination);
                 break;

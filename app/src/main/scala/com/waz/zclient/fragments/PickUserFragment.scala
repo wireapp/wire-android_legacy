@@ -219,7 +219,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
     })
 
     searchUserController = new SearchUserController(SearchState("", hasSelectedUsers = false, addingToConversation = addingToConversation))
-    searchUserController.setContacts(getStoreFactory.getZMessagingApiStore.getApi.getContacts)
+    searchUserController.setContacts(getStoreFactory.zMessagingApiStore.getApi.getContacts)
     searchResultAdapter = new PickUsersAdapter(new SearchResultOnItemTouchListener(getActivity, this), this, searchUserController, themeController.isDarkTheme || !isAddingToConversation)
     searchResultRecyclerView = ViewUtils.getView(rootView, R.id.rv__pickuser__header_list_view)
     searchResultRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity))
@@ -309,11 +309,11 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
     }
 
     searchUserController.onSelectedUserAdded.on(Threading.Ui) { userId =>
-      onSelectedUserAdded(getSelectedUsersJava, getStoreFactory.getPickUserStore.getUser(userId.str))
+      onSelectedUserAdded(getSelectedUsersJava, getStoreFactory.pickUserStore.getUser(userId.str))
     }
 
     searchUserController.onSelectedUserRemoved.on(Threading.Ui) { userId =>
-      onSelectedUserRemoved(getSelectedUsersJava, getStoreFactory.getPickUserStore.getUser(userId.str))
+      onSelectedUserRemoved(getSelectedUsersJava, getStoreFactory.pickUserStore.getUser(userId.str))
       if (getSelectedUsers.isEmpty)
         onSearchBoxIsEmpty()
     }
@@ -371,7 +371,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
           if (getStoreFactory == null || getStoreFactory.isTornDown) {
             return
           }
-          val numberOfActiveConversations: Int = getStoreFactory.getConversationStore.getNumberOfActiveConversations
+          val numberOfActiveConversations: Int = getStoreFactory.conversationStore.numberOfActiveConversations
           if (searchBoxView == null || numberOfActiveConversations <= PickUserFragment.SHOW_KEYBOARD_THRESHOLD) {
             return
           }
@@ -544,7 +544,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
 
   override def onUserClicked(userId: UserId, position: Int, anchorView: View): Unit = {
 
-    val user: User = getStoreFactory.getZMessagingApiStore.getApi.getUser(userId.str)
+    val user: User = getStoreFactory.zMessagingApiStore.getApi.getUser(userId.str)
     if (user == null || user.isMe || getControllerFactory == null || getControllerFactory.isTornDown) {
       return
     }
@@ -565,19 +565,19 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
     if (!anchorView.isInstanceOf[ChatheadWithTextFooter]) {
       return
     }
-    val user: User = getStoreFactory.getZMessagingApiStore.getApi.getUser(userId.str)
+    val user: User = getStoreFactory.zMessagingApiStore.getApi.getUser(userId.str)
     if (user == null || user.isMe || (user.getConnectionStatus ne User.ConnectionStatus.ACCEPTED) || searchUserController.selectedUsers.nonEmpty) {
       return
     }
     trackingController.tagEvent(new OpenedConversationEvent(ConversationType.ONE_TO_ONE_CONVERSATION.name, OpenedConversationEvent.Context.TOPUSER_DOUBLETAP, position + 1))
-    getStoreFactory.getConversationStore.setCurrentConversation(user.getConversation, ConversationChangeRequester.START_CONVERSATION)
+    getStoreFactory.conversationStore.setCurrentConversation(Option(user.getConversation), ConversationChangeRequester.START_CONVERSATION)
   }
 
   override def onConversationClicked(conversationData: ConversationData, position: Int): Unit = {
-    val conversation: IConversation = getStoreFactory.getConversationStore.getConversation(conversationData.id.str)
+    val conversation: IConversation = getStoreFactory.conversationStore.getConversation(conversationData.id.str)
     KeyboardUtils.hideKeyboard(getActivity)
     trackingController.tagEvent(new OpenedConversationEvent(ConversationType.GROUP_CONVERSATION.name, OpenedConversationEvent.Context.SEARCH, 0))
-    getStoreFactory.getConversationStore.setCurrentConversation(conversation, ConversationChangeRequester.START_CONVERSATION)
+    getStoreFactory.conversationStore.setCurrentConversation(Option(conversation), ConversationChangeRequester.START_CONVERSATION)
   }
 
   override def getSelectedUsers: Set[UserId] = searchUserController.selectedUsers
@@ -585,7 +585,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
   def getSelectedAndExcluded: Set[UserId] = searchUserController.selectedUsers ++ searchUserController.excludedUsers.currentValue.getOrElse(Set[UserId]())
 
   override def onContactListUserClicked(userId: UserId): Unit = {
-    val user: User = getStoreFactory.getZMessagingApiStore.getApi.getUser(userId.str)
+    val user: User = getStoreFactory.zMessagingApiStore.getApi.getUser(userId.str)
     if (user == null) {
       return
     }
@@ -603,7 +603,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
   }
 
   override def onContactListContactClicked(contactDetails: ContactDetails): Unit = {
-    getStoreFactory.getNetworkStore.doIfHasInternetOrNotifyUser(new DefaultNetworkAction() {
+    getStoreFactory.networkStore.doIfHasInternetOrNotifyUser(new DefaultNetworkAction() {
       override def execute(networkMode: NetworkMode): Unit = {
         val contactMethodsCount: Int = contactDetails.getContactMethods.size
         val contactMethods: Array[ContactMethod] = contactDetails.getContactMethods.toArray(new Array[ContactMethod](contactMethodsCount))
@@ -658,7 +658,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
   }
 
   private def sendSMSInvite(number: String): Unit = {
-    val me: User = getStoreFactory.getProfileStore.getSelfUser
+    val me: User = getStoreFactory.profileStore.getSelfUser
     if (me != null) {
       var smsBody: String = null
       val username: String = me.getUsername
@@ -725,7 +725,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
           val conversation: IConversation = user.getConversation
           if (conversation != null) {
             KeyboardUtils.hideKeyboard(getActivity)
-            getStoreFactory.getConversationStore.setCurrentConversation(conversation, ConversationChangeRequester.START_CONVERSATION)
+            getStoreFactory.conversationStore.setCurrentConversation(Option(conversation), ConversationChangeRequester.START_CONVERSATION)
           }
         }
       case ConnectionStatus.PendingFromUser |
@@ -827,11 +827,11 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
   }
 
   private def getSelectedUsersJava: java.util.List[User] = {
-    searchUserController.selectedUsers.map(uid => getStoreFactory.getPickUserStore.getUser(uid.str)).toList.asJava
+    searchUserController.selectedUsers.map(uid => getStoreFactory.pickUserStore.getUser(uid.str)).toList.asJava
   }
 
   private def getSelectedAndExcludedUsersJava: java.util.List[User] = {
-    getSelectedAndExcluded.map(uid => getStoreFactory.getPickUserStore.getUser(uid.str)).toList.asJava
+    getSelectedAndExcluded.map(uid => getStoreFactory.pickUserStore.getUser(uid.str)).toList.asJava
   }
 
   // XXX Only show contact sharing dialogs for PERSONAL START UI

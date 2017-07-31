@@ -103,7 +103,7 @@ public class FirstTimeAssignUsernameFragment extends BaseFragment<FirstTimeAssig
         vignetteOverlay.setImageBitmap(BitmapUtils.getVignetteBitmap(getResources()));
         vignetteOverlay.setColorFilter(darkenColor, PorterDuff.Mode.DARKEN);
 
-        selfModelObserver.setAndUpdate(getStoreFactory().getZMessagingApiStore().getApi().getSelf());
+        selfModelObserver.setAndUpdate(getStoreFactory().zMessagingApiStore().getApi().getSelf());
 
         chooseYourOwnButton.setIsFilled(true);
         chooseYourOwnButton.setAccentColor(color);

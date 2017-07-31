@@ -93,7 +93,7 @@ public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container>
     @Override
     public void onStart() {
         super.onStart();
-        getStoreFactory().getInAppNotificationStore().addInAppNotificationObserver(this);
+        getStoreFactory().inAppNotificationStore().addInAppNotificationObserver(this);
         getControllerFactory().getSingleImageController().addSingleImageObserver(this);
         getControllerFactory().getGiphyController().addObserver(this);
         getControllerFactory().getConfirmationController().addConfirmationObserver(this);
@@ -107,7 +107,7 @@ public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container>
         getControllerFactory().getSingleImageController().removeSingleImageObserver(this);
         getControllerFactory().getConfirmationController().removeConfirmationObserver(this);
         getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
-        getStoreFactory().getInAppNotificationStore().removeInAppNotificationObserver(this);
+        getStoreFactory().inAppNotificationStore().removeInAppNotificationObserver(this);
         getCollectionController().removeObserver(this);
 
         super.onStop();
@@ -386,7 +386,7 @@ public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container>
             getStoreFactory().isTornDown()) {
             return;
         }
-        getStoreFactory().getInAppNotificationStore().dismissError(errorId);
+        getStoreFactory().inAppNotificationStore().dismissError(errorId);
     }
 
     public interface Container {
