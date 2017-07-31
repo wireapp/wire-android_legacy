@@ -114,13 +114,13 @@ public class OptionsMenuFragment extends BaseFragment<OptionsMenuFragment.Contai
     public void onStart() {
         super.onStart();
 
-        getStoreFactory().getConversationStore().addConversationStoreObserver(this);
+        getStoreFactory().conversationStore().addConversationStoreObserver(this);
 
         String conversationId = getArguments().getString(ARGUMENT_CONVERSATION_ID);
 
         if (!TextUtils.isEmpty(conversationId)) {
             getStoreFactory()
-                .getZMessagingApiStore()
+                .zMessagingApiStore()
                 .getApi()
                 .getConversations()
                 .getConversation(conversationId,
@@ -131,7 +131,7 @@ public class OptionsMenuFragment extends BaseFragment<OptionsMenuFragment.Contai
                                          connectConversation(iterable.iterator().next());
                                      }
                                  });
-            getStoreFactory().getConversationStore().loadMenuConversation(conversationId);
+            getStoreFactory().conversationStore().loadMenuConversation(conversationId);
         }
 
         getContainer().getOptionsMenuControl().setCallback(this);
@@ -164,8 +164,8 @@ public class OptionsMenuFragment extends BaseFragment<OptionsMenuFragment.Contai
     @Override
     public void onStop() {
         getContainer().getOptionsMenuControl().setCallback(null);
-        getStoreFactory().getConversationStore().removeConversationStoreObserver(this);
-        getStoreFactory().getSingleParticipantStore().removeSingleParticipantObserver(this);
+        getStoreFactory().conversationStore().removeConversationStoreObserver(this);
+        getStoreFactory().singleParticipantStore().removeSingleParticipantObserver(this);
         disconnectConversation();
         disconnectUser();
         super.onStop();

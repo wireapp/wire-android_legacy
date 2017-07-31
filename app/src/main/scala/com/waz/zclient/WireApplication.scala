@@ -171,7 +171,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     if (storeFactory == null) {
       //TODO initialization of ZMessaging happens here - make this more explicit?
       storeFactory = new ScalaStoreFactory(getApplicationContext, inject[SelectionController])
-      storeFactory.getZMessagingApiStore.getApi
+      storeFactory.zMessagingApiStore.getApi
     }
 
     inject[MessageNotificationsController]

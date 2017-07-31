@@ -94,9 +94,9 @@ public class EmailRegisterFragment extends BaseFragment<EmailRegisterFragment.Co
         super.onViewCreated(view, savedInstanceState);
         passwordLengthMessage.setAlpha(0f);
         passwordLengthMessage.setText(getResources().getString(R.string.new_reg__password_length, getResources().getInteger(R.integer.password_validator__min_password_length)));
-        textViewName.setText(getStoreFactory().getAppEntryStore().getName());
-        textViewEmail.setText(getStoreFactory().getAppEntryStore().getEmail());
-        textViewPassword.setText(getStoreFactory().getAppEntryStore().getPassword());
+        textViewName.setText(getStoreFactory().appEntryStore().getName());
+        textViewEmail.setText(getStoreFactory().appEntryStore().getEmail());
+        textViewPassword.setText(getStoreFactory().appEntryStore().getPassword());
 
         textViewPassword.addTextChangedListener(new OnTextChangedListener() {
             boolean wasValid = true;
@@ -188,7 +188,7 @@ public class EmailRegisterFragment extends BaseFragment<EmailRegisterFragment.Co
 
     private void onBackClicked() {
         KeyboardUtils.hideKeyboard(getActivity());
-        getStoreFactory().getAppEntryStore().onBackPressed();
+        getStoreFactory().appEntryStore().onBackPressed();
     }
 
     private void onRegisterClicked() {
@@ -196,7 +196,7 @@ public class EmailRegisterFragment extends BaseFragment<EmailRegisterFragment.Co
         getContainer().enableProgress(true);
         KeyboardUtils.hideKeyboard(getActivity());
 
-        getStoreFactory().getAppEntryStore()
+        getStoreFactory().appEntryStore()
                          .registerWithEmail(textViewEmail.getText().toString(),
                                             textViewPassword.getText().toString(),
                                             textViewName.getText().toString(),

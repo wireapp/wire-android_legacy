@@ -96,8 +96,8 @@ public class PhoneAddEmailFragment extends BaseFragment<PhoneAddEmailFragment.Co
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        guidedEditTextEmail.setText(getStoreFactory().getAppEntryStore().getEmail());
-        guidedEditTextPassword.setText(getStoreFactory().getAppEntryStore().getPassword());
+        guidedEditTextEmail.setText(getStoreFactory().appEntryStore().getEmail());
+        guidedEditTextPassword.setText(getStoreFactory().appEntryStore().getPassword());
     }
 
     @Override
@@ -181,7 +181,7 @@ public class PhoneAddEmailFragment extends BaseFragment<PhoneAddEmailFragment.Co
         getContainer().enableProgress(true);
         KeyboardUtils.hideKeyboard(getActivity());
 
-        getStoreFactory().getAppEntryStore()
+        getStoreFactory().appEntryStore()
                          .addEmailAndPasswordToPhone(guidedEditTextEmail.getText(),
                                                      guidedEditTextPassword.getText(),
                                                      errorCallback,

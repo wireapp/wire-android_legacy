@@ -163,11 +163,11 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
     public void onStart() {
         super.onStart();
         if (userRequester == IConnectStore.UserRequester.POPOVER) {
-            getStoreFactory().getConnectStore().addConnectRequestObserver(this);
-            final User user = getStoreFactory().getSingleParticipantStore().getUser();
-            getStoreFactory().getConnectStore().loadUser(user.getId(), userRequester);
+            getStoreFactory().connectStore().addConnectRequestObserver(this);
+            final User user = getStoreFactory().singleParticipantStore().getUser();
+            getStoreFactory().connectStore().loadUser(user.getId(), userRequester);
         } else {
-            getStoreFactory().getParticipantsStore().addParticipantsStoreObserver(this);
+            getStoreFactory().participantsStore().addParticipantsStoreObserver(this);
         }
         getControllerFactory().getConversationScreenController().addConversationControllerObservers(this);
         getControllerFactory().getAccentColorController().addAccentColorObserver(this);
@@ -176,9 +176,9 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
     @Override
     public void onStop() {
         participantsAdapter.tearDown();
-        getStoreFactory().getConnectStore().removeConnectRequestObserver(this);
+        getStoreFactory().connectStore().removeConnectRequestObserver(this);
         getControllerFactory().getConversationScreenController().removeConversationControllerObservers(this);
-        getStoreFactory().getParticipantsStore().removeParticipantsStoreObserver(this);
+        getStoreFactory().participantsStore().removeParticipantsStoreObserver(this);
         getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
         super.onStop();
     }
@@ -320,7 +320,7 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
             topBorder.setVisibility(View.INVISIBLE);
             footerMenu.setRightActionText(getString(R.string.glyph__more));
             getStoreFactory()
-                .getSingleParticipantStore()
+                .singleParticipantStore()
                 .setUser(conversation.getOtherParticipant());
         } else {
             imageAssetImageView.setVisibility(View.GONE);
@@ -347,13 +347,13 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
             @Override
             public void onLeftActionClicked() {
                 if (userRequester == IConnectStore.UserRequester.POPOVER) {
-                    final User user = getStoreFactory().getSingleParticipantStore().getUser();
+                    final User user = getStoreFactory().singleParticipantStore().getUser();
                     if (user.isMe()) {
                         getControllerFactory().getConversationScreenController().hideParticipants(true, false);
 
                         // Go to conversation with this user
                         getControllerFactory().getPickUserController().hidePickUserWithoutAnimations(getContainer().getCurrentPickerDestination());
-                        getStoreFactory().getConversationStore().setCurrentConversation(user.getConversation(),
+                        getStoreFactory().conversationStore().setCurrentConversation(user.getConversation(),
                                                                                         ConversationChangeRequester.START_CONVERSATION);
                         return;
                     }
@@ -368,7 +368,7 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
 
             @Override
             public void onRightActionClicked() {
-                getStoreFactory().getNetworkStore().doIfHasInternetOrNotifyUser(new NetworkAction() {
+                getStoreFactory().networkStore().doIfHasInternetOrNotifyUser(new NetworkAction() {
                     @Override
                     public void execute(NetworkMode networkMode) {
                         if (!conversation.isMemberOfConversation()) {
@@ -528,7 +528,7 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
         footerMenu.setVisibility(View.VISIBLE);
         topBorder.setVisibility(View.INVISIBLE);
 
-        final IConversation conversation = getStoreFactory().getConversationStore().getCurrentConversation();
+        final IConversation conversation = getStoreFactory().conversationStore().getCurrentConversation();
         if (conversation.getType() == IConversation.Type.ONE_TO_ONE) {
             if (user.isMe()) {
                 footerMenu.setLeftActionText(getString(R.string.glyph__people));
@@ -567,7 +567,7 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
 
                     // Go to conversation with this user
                     getControllerFactory().getPickUserController().hidePickUserWithoutAnimations(getContainer().getCurrentPickerDestination());
-                    getStoreFactory().getConversationStore().setCurrentConversation(user.getConversation(),
+                    getStoreFactory().conversationStore().setCurrentConversation(user.getConversation(),
                                                                                     ConversationChangeRequester.START_CONVERSATION);
                 } else {
                     ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new OpenedGroupActionEvent());
@@ -583,11 +583,11 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
                                                        user.getConnectionStatus() != User.ConnectionStatus.BLOCKED);
                     }
                 } else {
-                    getStoreFactory().getNetworkStore().doIfHasInternetOrNotifyUser(new NetworkAction() {
+                    getStoreFactory().networkStore().doIfHasInternetOrNotifyUser(new NetworkAction() {
                         @Override
                         public void execute(NetworkMode networkMode) {
                             if (user.isMe()) {
-                                showLeaveConfirmation(getStoreFactory().getConversationStore().getCurrentConversation());
+                                showLeaveConfirmation(getStoreFactory().conversationStore().getCurrentConversation());
                             } else {
                                 getContainer().showRemoveConfirmation(user);
                             }
@@ -631,10 +631,10 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
                     return;
                 }
                 ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new LeaveGroupConversationEvent(true,
-                                                                                                        getStoreFactory().getConversationStore().getCurrentConversation().getUsers().size()));
+                                                                                                        getStoreFactory().conversationStore().getCurrentConversation().getUsers().size()));
 
-                getStoreFactory().getConversationStore().leave(conversation);
-                getStoreFactory().getConversationStore().setCurrentConversationToNext(
+                getStoreFactory().conversationStore().leave(conversation);
+                getStoreFactory().conversationStore().setCurrentConversationToNext(
                     ConversationChangeRequester.LEAVE_CONVERSATION);
                 if (LayoutSpec.isTablet(getActivity())) {
                     getControllerFactory().getConversationScreenController().hideParticipants(false, true);
@@ -648,7 +648,7 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
                     return;
                 }
                 ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new LeaveGroupConversationEvent(false,
-                                                                                                        getStoreFactory().getConversationStore().getCurrentConversation().getUsers().size()));
+                                                                                                        getStoreFactory().conversationStore().getCurrentConversation().getUsers().size()));
             }
 
             @Override

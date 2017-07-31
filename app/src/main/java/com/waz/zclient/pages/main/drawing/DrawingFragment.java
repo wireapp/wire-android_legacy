@@ -251,7 +251,7 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
 //        colorPickerScrollBar.setScrollBarColor(getControllerFactory().getAccentColorController().getColor());
 
         TypefaceTextView conversationTitle = ViewUtils.getView(rootView, R.id.tv__drawing_toolbar__title);
-        conversationTitle.setText(getStoreFactory().getConversationStore().getCurrentConversation().getName().toUpperCase(Locale.getDefault()));
+        conversationTitle.setText(getStoreFactory().conversationStore().getCurrentConversation().getName().toUpperCase(Locale.getDefault()));
         toolbar = ViewUtils.getView(rootView, R.id.t_drawing_toolbar);
         toolbar.inflateMenu(R.menu.toolbar_sketch);
         toolbar.setOnMenuItemClickListener(toolbarOnMenuItemClickListener);
@@ -539,9 +539,9 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
             switch (v.getId()) {
                 case R.id.tv__send_button:
                     if (!drawingCanvasView.isEmpty()) {
-                        getStoreFactory().getConversationStore().sendMessage(getFinalSketchImage());
+                        getStoreFactory().conversationStore().sendMessage(getFinalSketchImage());
                         TrackingUtils.onSentSketchMessage(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
-                                                          getStoreFactory().getConversationStore().getCurrentConversation(),
+                                                          getStoreFactory().conversationStore().getCurrentConversation(),
                                                           drawingDestination);
 
                         getControllerFactory().getDrawingController().hideDrawing(drawingDestination, true);

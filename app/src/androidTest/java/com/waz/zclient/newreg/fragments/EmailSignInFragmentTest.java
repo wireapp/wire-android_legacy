@@ -60,7 +60,7 @@ public class EmailSignInFragmentTest extends FragmentTest<AppEntryTestActivity> 
 
         onView(withId(R.id.pcb__signin__email)).perform(click());
 
-        verify(activity.getStoreFactory().getAppEntryStore()).signInWithEmail(eq(email), eq(password), any(IAppEntryStore.ErrorCallback.class));
+        verify(activity.getStoreFactory().appEntryStore()).signInWithEmail(eq(email), eq(password), any(IAppEntryStore.ErrorCallback.class));
     }
 }
 

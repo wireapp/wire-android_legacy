@@ -92,7 +92,7 @@ public class PhoneSetNameFragment extends BaseFragment<PhoneSetNameFragment.Cont
     @Override
     public void onStart() {
         super.onStart();
-        getStoreFactory().getAppEntryStore().setState(AppEntryState.PHONE_SET_NAME);
+        getStoreFactory().appEntryStore().setState(AppEntryState.PHONE_SET_NAME);
         editTextName.requestFocus();
         onAccentColorHasChanged(getContainer().getAccentColor());
         getControllerFactory().getVerificationController().finishVerification();
@@ -123,7 +123,7 @@ public class PhoneSetNameFragment extends BaseFragment<PhoneSetNameFragment.Cont
     }
 
     private void setExistingName() {
-        String name = getStoreFactory().getAppEntryStore().getName();
+        String name = getStoreFactory().appEntryStore().getName();
         if (name != null) {
             editTextName.setText(name);
             editTextName.setSelection(name.length());
@@ -157,7 +157,7 @@ public class PhoneSetNameFragment extends BaseFragment<PhoneSetNameFragment.Cont
         KeyboardUtils.hideKeyboard(getActivity());
 
         String name = editTextName.getText().toString();
-        getStoreFactory().getAppEntryStore().registerWithPhone(name,
+        getStoreFactory().appEntryStore().registerWithPhone(name,
                                                                getControllerFactory().getAccentColorController()
                                                                                      .getAccentColor(),
                                                                errorCallback);

@@ -159,8 +159,8 @@ public class SingleOtrClientFragment extends BaseFragment<SingleOtrClientFragmen
                                            getControllerFactory().getAccentColorController().getColor(),
                                            false));
         if (isSelf) {
-            user = getStoreFactory().getProfileStore().getSelfUser();
-            otrClientUiSignal = getStoreFactory().getZMessagingApiStore().getApi().getSelf().getOtrClient();
+            user = getStoreFactory().profileStore().getSelfUser();
+            otrClientUiSignal = getStoreFactory().zMessagingApiStore().getApi().getSelf().getOtrClient();
             subscribeToOtrClient();
             resetSessionButton.setVisibility(View.GONE);
             howToLinkButton.setVisibility(View.GONE);

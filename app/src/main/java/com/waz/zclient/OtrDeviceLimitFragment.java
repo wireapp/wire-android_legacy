@@ -86,7 +86,7 @@ public class OtrDeviceLimitFragment extends BaseDialogFragment<OtrDeviceLimitFra
     public void onStart() {
         super.onStart();
         if (self == null) {
-            self = getStoreFactory().getZMessagingApiStore().getApi().getSelf();
+            self = getStoreFactory().zMessagingApiStore().getApi().getSelf();
             self.addUpdateListener(selfUpdateListener);
             selfUpdateListener.updated();
         }

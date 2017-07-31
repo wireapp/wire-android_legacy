@@ -100,7 +100,7 @@ public class SecondPageFragment extends BaseFragment<SecondPageFragment.Containe
     @Override
     public void onResume() {
         super.onResume();
-        getStoreFactory().getConversationStore().addConversationStoreObserverAndUpdate(this);
+        getStoreFactory().conversationStore().addConversationStoreObserverAndUpdate(this);
         getControllerFactory().getNavigationController().addPagerControllerObserver(this);
     }
 
@@ -113,7 +113,7 @@ public class SecondPageFragment extends BaseFragment<SecondPageFragment.Containe
     @Override
     public void onPause() {
         getControllerFactory().getNavigationController().removePagerControllerObserver(this);
-        getStoreFactory().getConversationStore().removeConversationStoreObserver(this);
+        getStoreFactory().conversationStore().removeConversationStoreObserver(this);
         super.onPause();
     }
 
@@ -319,13 +319,13 @@ public class SecondPageFragment extends BaseFragment<SecondPageFragment.Containe
 
     @Override
     public void onAcceptedConnectRequest(IConversation conversation) {
-        getStoreFactory().getConversationStore().setCurrentConversation(conversation,
+        getStoreFactory().conversationStore().setCurrentConversation(conversation,
                                                                         ConversationChangeRequester.CONVERSATION_LIST);
     }
 
     @Override
     public void onAcceptedPendingOutgoingConnectRequest(IConversation conversation) {
-        getStoreFactory().getConversationStore().setCurrentConversation(conversation,
+        getStoreFactory().conversationStore().setCurrentConversation(conversation,
                                                                         ConversationChangeRequester.CONNECT_REQUEST_ACCEPTED);
     }
 

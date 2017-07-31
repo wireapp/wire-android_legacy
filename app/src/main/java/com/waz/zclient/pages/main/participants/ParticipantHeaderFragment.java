@@ -166,11 +166,11 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
     public void onStart() {
         super.onStart();
         if (userRequester == IConnectStore.UserRequester.POPOVER) {
-            getStoreFactory().getConnectStore().addConnectRequestObserver(this);
-            final User user = getStoreFactory().getSingleParticipantStore().getUser();
-            getStoreFactory().getConnectStore().loadUser(user.getId(), userRequester);
+            getStoreFactory().connectStore().addConnectRequestObserver(this);
+            final User user = getStoreFactory().singleParticipantStore().getUser();
+            getStoreFactory().connectStore().loadUser(user.getId(), userRequester);
         } else {
-            getStoreFactory().getParticipantsStore().addParticipantsStoreObserver(this);
+            getStoreFactory().participantsStore().addParticipantsStoreObserver(this);
         }
         getControllerFactory().getConversationScreenController().addConversationControllerObservers(this);
         getControllerFactory().getAccentColorController().addAccentColorObserver(this);
@@ -199,9 +199,9 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
     @Override
     public void onStop() {
         getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
-        getStoreFactory().getConnectStore().removeConnectRequestObserver(this);
+        getStoreFactory().connectStore().removeConnectRequestObserver(this);
         getControllerFactory().getConversationScreenController().removeConversationControllerObservers(this);
-        getStoreFactory().getParticipantsStore().removeParticipantsStoreObserver(this);
+        getStoreFactory().participantsStore().removeParticipantsStoreObserver(this);
         super.onStop();
     }
 
@@ -296,7 +296,7 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
             }
 
             // consume touch event if there is no network.
-            return !getStoreFactory().getNetworkStore().hasInternetConnection();
+            return !getStoreFactory().networkStore().hasInternetConnection();
 
         }
     };
@@ -308,7 +308,7 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
         }
         if (MathUtils.floatEqual(headerEditText.getAlpha(), 0f)) {
             // only if not already visible and network is available
-            getStoreFactory().getNetworkStore().doIfHasInternetOrNotifyUser(new NetworkAction() {
+            getStoreFactory().networkStore().doIfHasInternetOrNotifyUser(new NetworkAction() {
                 @Override
                 public void execute(NetworkMode networkMode) {
                     toggleEditModeForConversationName(true);
@@ -364,11 +364,11 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
     };
 
     private void resetName() {
-        headerReadOnlyTextView.setText(getStoreFactory().getConversationStore().getCurrentConversation().getName());
+        headerReadOnlyTextView.setText(getStoreFactory().conversationStore().getCurrentConversation().getName());
     }
 
     private void renameConversation() {
-        getStoreFactory().getNetworkStore().doIfHasInternetOrNotifyUser(new NetworkAction() {
+        getStoreFactory().networkStore().doIfHasInternetOrNotifyUser(new NetworkAction() {
                                                                       @Override
                                                                       public void execute(NetworkMode networkMode) {
                                                                           updateConversationName();
@@ -389,11 +389,11 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
         }
 
         String text = headerEditText.getText().toString();
-        if (text.equals(getStoreFactory().getConversationStore().getCurrentConversation().getName())) {
+        if (text.equals(getStoreFactory().conversationStore().getCurrentConversation().getName())) {
             return;
         }
         if (!TextUtils.isEmpty(text.trim())) {
-            getStoreFactory().getConversationStore().getCurrentConversation().setConversationName(text);
+            getStoreFactory().conversationStore().getCurrentConversation().setConversationName(text);
             headerReadOnlyTextView.setText(text);
         }
     }

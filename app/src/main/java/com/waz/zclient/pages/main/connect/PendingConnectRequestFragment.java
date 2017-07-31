@@ -218,14 +218,14 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
         super.onStart();
 
         getControllerFactory().getAccentColorController().addAccentColorObserver(this);
-        getStoreFactory().getConnectStore().addConnectRequestObserver(this);
+        getStoreFactory().connectStore().addConnectRequestObserver(this);
 
         switch (loadMode) {
             case LOAD_BY_CONVERSATION_ID:
-                getStoreFactory().getConversationStore().loadConversation(conversationId, this);
+                getStoreFactory().conversationStore().loadConversation(conversationId, this);
                 break;
             case LOAD_BY_USER_ID:
-                getStoreFactory().getConnectStore().loadUser(userId, userRequester);
+                getStoreFactory().connectStore().loadUser(userId, userRequester);
                 break;
         }
     }
@@ -249,7 +249,7 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
     @Override
     public void onStop() {
 
-        getStoreFactory().getConnectStore().removeConnectRequestObserver(this);
+        getStoreFactory().connectStore().removeConnectRequestObserver(this);
         getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
 
         super.onStop();
@@ -370,7 +370,7 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
                     conversation.addUpdateListener(this);
                 }
 
-                getStoreFactory().getConnectStore().loadUser(conversation.getOtherParticipant().getId(),
+                getStoreFactory().connectStore().loadUser(conversation.getOtherParticipant().getId(),
                                                              userRequester);
                 break;
         }
@@ -391,7 +391,7 @@ public class PendingConnectRequestFragment extends BaseFragment<PendingConnectRe
 
         switch (loadMode) {
             case LOAD_BY_USER_ID:
-                getStoreFactory().getConversationStore().loadConversation(user.getConversation().getId(),
+                getStoreFactory().conversationStore().loadConversation(user.getConversation().getId(),
                                                                           this);
                 break;
         }

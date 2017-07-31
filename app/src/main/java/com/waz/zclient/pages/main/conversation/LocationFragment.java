@@ -279,7 +279,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
         super.onStart();
         getControllerFactory().getAccentColorController().addAccentColorObserver(this);
         getControllerFactory().getRequestPermissionsController().addObserver(this);
-        getStoreFactory().getConversationStore().addConversationStoreObserver(this);
+        getStoreFactory().conversationStore().addConversationStoreObserver(this);
         if (PermissionUtils.hasSelfPermissions(getActivity(), LOCATION_PERMISSIONS)) {
             updateLastKnownLocation();
             if (!isLocationServicesEnabled()) {
@@ -297,7 +297,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
     public void onResume() {
         super.onResume();
         mapView.onResume();
-        IConversation currentConversation = getStoreFactory().getConversationStore().getCurrentConversation();
+        IConversation currentConversation = getStoreFactory().conversationStore().getCurrentConversation();
         if (currentConversation != null) {
             toolbarTitle.setText(currentConversation.getName());
         }
@@ -327,7 +327,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
 
     @Override
     public void onStop() {
-        getStoreFactory().getConversationStore().removeConversationStoreObserver(this);
+        getStoreFactory().conversationStore().removeConversationStoreObserver(this);
         getControllerFactory().getRequestPermissionsController().removeObserver(this);
         getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
         super.onStop();
@@ -509,7 +509,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
 
                 getControllerFactory().getLocationController().hideShareLocation(location);
                 TrackingUtils.onSentLocationMessage(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
-                                                    getStoreFactory().getConversationStore().getCurrentConversation());
+                                                    getStoreFactory().conversationStore().getCurrentConversation());
                 break;
         }
     }

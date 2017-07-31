@@ -116,8 +116,8 @@ public class OTRPhoneAddEmailFragment extends BaseFragment<OTRPhoneAddEmailFragm
                                                                getResources().getInteger(R.integer.password_validator__min_password_length)));
 
 
-        guidedEditTextEmail.setText(getStoreFactory().getAppEntryStore().getEmail());
-        guidedEditTextPassword.setText(getStoreFactory().getAppEntryStore().getPassword());
+        guidedEditTextEmail.setText(getStoreFactory().appEntryStore().getEmail());
+        guidedEditTextPassword.setText(getStoreFactory().appEntryStore().getPassword());
     }
 
     @Override
@@ -219,7 +219,7 @@ public class OTRPhoneAddEmailFragment extends BaseFragment<OTRPhoneAddEmailFragm
         getContainer().enableProgress(true);
         KeyboardUtils.hideKeyboard(getActivity());
 
-        getStoreFactory().getAppEntryStore()
+        getStoreFactory().appEntryStore()
                          .addEmailAndPasswordToPhone(guidedEditTextEmail.getText(),
                                                      guidedEditTextPassword.getText(),
                                                      errorCallback,

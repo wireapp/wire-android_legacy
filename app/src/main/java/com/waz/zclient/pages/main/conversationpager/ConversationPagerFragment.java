@@ -100,7 +100,7 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
     public void onStart() {
         super.onStart();
 
-        getStoreFactory().getConversationStore().addConversationStoreObserver(this);
+        getStoreFactory().conversationStore().addConversationStoreObserver(this);
         conversationPager.setOnPageChangeListener(getControllerFactory().getNavigationController());
 
         conversationPager.setEnabled(getControllerFactory().getNavigationController().isPagerEnabled());
@@ -113,7 +113,7 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
     public void onStop() {
         getControllerFactory().getNavigationController().removePagerControllerObserver(this);
         getControllerFactory().getNavigationController().removeNavigationControllerObserver(this);
-        getStoreFactory().getConversationStore().removeConversationStoreObserver(this);
+        getStoreFactory().conversationStore().removeConversationStoreObserver(this);
         conversationPager.setOnPageChangeListener(null);
         super.onStop();
     }

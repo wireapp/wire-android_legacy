@@ -20,11 +20,10 @@ package com.waz.zclient.controllers.global
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.IConversation
-import com.waz.model.{ConvId, MessageId}
+import com.waz.model.MessageId
 import com.waz.service.ZMessaging
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.zclient.utils.Callback
 import com.waz.zclient.{Injectable, Injector}
 import org.threeten.bp.Instant
 
@@ -36,7 +35,6 @@ class SelectionController(implicit injector: Injector, ev: EventContext) extends
   val zms = inject[Signal[ZMessaging]]
 
   val selectedConv = zms.flatMap(_.convsStats.selectedConversationId).collect { case Some(convId) => convId }
-
 
   private var previousConv = Option.empty[IConversation]
   private var currentConv  = Option.empty[IConversation]
@@ -53,7 +51,7 @@ class SelectionController(implicit injector: Injector, ev: EventContext) extends
   //use sparingly!
   def setOnConversationChangeCallback(callback: ConversationChangedListener) = {
     convListeners += callback
-    selectedUiConv.currentValue.foreach(callback.onConversationChanged(previousConv.orNull, _))
+    selectedUiConv.currentValue.foreach(current => callback.onConversationChanged(previousConv, Some(current)))
   }
 
   selectedUiConv.onUi { conv =>
@@ -61,12 +59,12 @@ class SelectionController(implicit injector: Injector, ev: EventContext) extends
     if (!previousConv.contains(conv)) {
       previousConv = currentConv
       currentConv = Some(conv)
-      convListeners.foreach(_.onConversationChanged(previousConv.orNull, conv))
+      convListeners.foreach(_.onConversationChanged(previousConv, currentConv))
     }
 
   }
 
-  def getSelectedConversation = selectedUiConv.currentValue.orNull
+  def selectedConversation = selectedUiConv.currentValue
 
   object messages {
 
@@ -116,6 +114,6 @@ class SelectionController(implicit injector: Injector, ev: EventContext) extends
 
 object SelectionController {
   trait ConversationChangedListener {
-    def onConversationChanged(prev: IConversation, current: IConversation)
+    def onConversationChanged(prev: Option[IConversation], current: Option[IConversation]): Unit
   }
 }

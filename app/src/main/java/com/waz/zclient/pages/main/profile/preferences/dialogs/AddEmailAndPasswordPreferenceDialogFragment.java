@@ -142,7 +142,7 @@ public class AddEmailAndPasswordPreferenceDialogFragment extends BaseDialogFragm
             return;
         }
 
-        getStoreFactory().getProfileStore()
+        getStoreFactory().profileStore()
                          .addEmailAndPassword(email,
                                               password,
                                               new CredentialsUpdateListener() {
