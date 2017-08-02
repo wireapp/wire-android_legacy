@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2017 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,20 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.core.stores.profile;
+package com.waz.zclient.core.stores.profile
 
-public interface ProfileStoreObserver {
-    void onAccentColorChangedRemotely(Object sender, int color);
+trait ProfileStoreObserver {
+  def onAccentColorChangedRemotely(sender: Any, color: Int): Unit
 
-    void onMyNameHasChanged(Object sender, String myName);
+  def onMyNameHasChanged(sender: Any, myName: String): Unit
 
-    void onMyEmailHasChanged(String myEmail, boolean isVerified);
+  def onMyEmailHasChanged(myEmail: String, isVerified: Boolean): Unit
 
-    void onMyPhoneHasChanged(String myPhone, boolean isVerified);
+  def onMyPhoneHasChanged(myPhone: String, isVerified: Boolean): Unit
 
-    void onPhoneUpdateFailed(String myPhone, int errorCode, String message, String label);
+  def onPhoneUpdateFailed(myPhone: String, errorCode: Int, message: String, label: String): Unit
 
-    void onMyEmailAndPasswordHasChanged(String myEmail);
+  def onMyEmailAndPasswordHasChanged(myEmail: String): Unit
 
-    void onMyUsernameHasChanged(String myUsername);
+  def onMyUsernameHasChanged(myUsername: String): Unit
 }
