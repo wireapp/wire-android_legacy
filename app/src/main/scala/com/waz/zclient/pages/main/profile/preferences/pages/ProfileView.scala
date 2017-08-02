@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.pages.main.profile.preferences.pages
 
-import android.app.{Activity, AlertDialog}
+import android.app.AlertDialog
 import android.content.{Context, DialogInterface, Intent}
 import android.graphics.drawable.Drawable
 import android.net.Uri
@@ -29,7 +29,6 @@ import android.view.View.OnClickListener
 import android.widget.{ImageView, LinearLayout}
 import com.waz.ZLog
 import com.waz.api.impl.AccentColor
-import com.waz.model.{TeamData, TeamId, UserId}
 import com.waz.model.otr.Client
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading

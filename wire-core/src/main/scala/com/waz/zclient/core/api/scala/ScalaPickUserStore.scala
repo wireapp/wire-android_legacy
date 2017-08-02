@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2017 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,28 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.core.api.scala;
+package com.waz.zclient.core.api.scala
 
-import com.waz.api.User;
-import com.waz.api.ZMessagingApi;
-import com.waz.zclient.core.stores.pickuser.IPickUserStore;
+import com.waz.api.{User, ZMessagingApi}
+import com.waz.zclient.core.stores.pickuser.IPickUserStore
 
-public class ScalaPickUserStore implements IPickUserStore {
-    public static final String TAG = ScalaPickUserStore.class.getName();
+class ScalaPickUserStore(zMessagingApi: ZMessagingApi) extends IPickUserStore {
+  override def tearDown(): Unit = {}
 
-    private ZMessagingApi zMessagingApi;
+  override def getUser(userId: String): User = zMessagingApi.getUser(userId)
+}
 
-    public ScalaPickUserStore(ZMessagingApi zMessagingApi) {
-        this.zMessagingApi = zMessagingApi;
-    }
-
-    @Override
-    public void tearDown() {
-        zMessagingApi = null;
-    }
-
-    @Override
-    public User getUser(String userId) {
-        return zMessagingApi.getUser(userId);
-    }
+object ScalaPickUserStore {
+  val TAG = classOf[ScalaPickUserStore].getName
 }

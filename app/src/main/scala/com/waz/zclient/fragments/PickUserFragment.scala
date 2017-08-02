@@ -657,21 +657,14 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
     })
   }
 
-  private def sendSMSInvite(number: String): Unit = {
-    val me: User = getStoreFactory.profileStore.getSelfUser
-    if (me != null) {
-      var smsBody: String = null
-      val username: String = me.getUsername
-      if (TextUtils.isEmpty(username)) {
-        smsBody = getString(R.string.people_picker__invite__share_text__body, me.getName)
-      }
-      else {
-        smsBody = getString(R.string.people_picker__invite__share_text__body, StringUtils.formatHandle(username))
-      }
-      val intent: Intent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts("sms", number, ""))
-      intent.putExtra("sms_body", smsBody)
-      startActivity(intent)
-    }
+  private def sendSMSInvite(number: String): Unit = getStoreFactory.profileStore.selfUser.foreach { me =>
+    val username = me.getUsername
+    val smsBody =
+      if (TextUtils.isEmpty(username)) getString(R.string.people_picker__invite__share_text__body, me.getName)
+      else getString(R.string.people_picker__invite__share_text__body, StringUtils.formatHandle(username))
+    val intent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts("sms", number, ""))
+    intent.putExtra("sms_body", smsBody)
+    startActivity(intent)
   }
 
   override def getDestination: Int = if(isAddingToConversation) IPickUserController.CONVERSATION else IPickUserController.STARTUI

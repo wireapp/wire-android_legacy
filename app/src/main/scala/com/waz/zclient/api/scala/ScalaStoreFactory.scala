@@ -25,27 +25,27 @@ import com.waz.zclient.core.stores.api.ZMessagingApiStore
 
 class ScalaStoreFactory(context: Context, selectionController: => SelectionController) extends StoreFactory {
 
-  override protected def createZMessagingApiStore = new ZMessagingApiStore(context)
+  override protected def createZMessagingApiStore     = new ZMessagingApiStore(context)
 
-  protected def createNetworkStore = new ScalaNetworkStore(zMessagingApiStore.getApi)
+  override protected def createNetworkStore           = new ScalaNetworkStore(zMessagingApiStore.getApi)
 
-  protected def createAppEntryStore = new AppEntryStore(context, zMessagingApiStore.getApi)
+  override protected def createAppEntryStore          = new AppEntryStore(context, zMessagingApiStore.getApi)
 
-  protected def createConversationStore = new ScalaConversationStore(zMessagingApiStore.getApi, selectionController)
+  override protected def createConversationStore      = new ScalaConversationStore(zMessagingApiStore.getApi, selectionController)
 
-  protected def createProfileStore = new ScalaProfileStore(zMessagingApiStore.getApi)
+  override protected def createProfileStore           = new ScalaProfileStore(zMessagingApiStore.getApi)
 
-  protected def createPickUserStore = new ScalaPickUserStore(zMessagingApiStore.getApi)
+  override protected def createPickUserStore          = new ScalaPickUserStore(zMessagingApiStore.getApi)
 
-  protected def createParticipantsStore = new ScalaParticipantsStore
+  override protected def createParticipantsStore      = new ScalaParticipantsStore
 
-  protected def createSingleParticipantStore = new ScalaSingleParticipantStore
+  override protected def createSingleParticipantStore = new ScalaSingleParticipantStore
 
-  protected def createInAppNotificationStore = new ScalaInAppNotificationStore(zMessagingApiStore.getApi)
+  override protected def createInAppNotificationStore = new ScalaInAppNotificationStore(zMessagingApiStore.getApi)
 
-  def createConnectStore = new ScalaConnectStore(context, zMessagingApiStore.getApi)
+  override protected def createConnectStore           = new ScalaConnectStore(context, zMessagingApiStore.getApi)
 
-  protected def createDraftStore = new ScalaDraftStore
+  override protected def createDraftStore             = new ScalaDraftStore
 
   override def tearDown() = super.tearDown()
 }
