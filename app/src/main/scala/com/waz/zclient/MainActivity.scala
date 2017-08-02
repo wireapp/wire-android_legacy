@@ -171,7 +171,7 @@ class MainActivity extends BaseActivity
 
     try
         if ("com.wire" == getApplicationContext.getPackageName) {
-          Option(getStoreFactory.profileStore.getMyEmail).filter(e => e.endsWith("@wire.com") || e.endsWith("@wearezeta.com")).foreach { email =>
+          Option(getStoreFactory.profileStore.myEmail).filter(e => e.endsWith("@wire.com") || e.endsWith("@wearezeta.com")).foreach { email =>
             ExceptionHandler.saveException(new RuntimeException(email), null, null)
             ViewUtils.showAlertDialog(this, "Yo dude!", "Please use Wire Internal", "I promise", null, false)
           }
@@ -333,7 +333,7 @@ class MainActivity extends BaseActivity
   }
 
   private def onUserLoggedInAndVerified(self: Self) = {
-    getStoreFactory.profileStore.setUser(self)
+    getStoreFactory.profileStore.setUser(Some(self))
     getControllerFactory.getAccentColorController.setColor(AccentColorChangeRequester.LOGIN, self.getAccent.getColor)
     getControllerFactory.getUsernameController.setUser(self)
 

@@ -36,7 +36,6 @@ import com.waz.zclient.core.stores.stub.StubInAppNotificationStore;
 import com.waz.zclient.core.stores.stub.StubNetworkStore;
 import com.waz.zclient.core.stores.stub.StubParticipantsStore;
 import com.waz.zclient.core.stores.stub.StubPickUserStore;
-import com.waz.zclient.core.stores.stub.StubProfileStore;
 import com.waz.zclient.core.stores.stub.StubSingleParticipantStore;
 import com.waz.zclient.core.stores.stub.StubZMessagingApiStore;
 
@@ -59,13 +58,11 @@ public class MockStoreFactory implements IStoreFactory {
 
   protected IPickUserStore pickUserStore = spy(StubPickUserStore.class);
 
-  protected IProfileStore profileStore = spy(StubProfileStore.class);
-
   protected ISingleParticipantStore singleParticipantStore = spy(StubSingleParticipantStore.class);
 
   @Override
   public IProfileStore profileStore() {
-    return profileStore;
+    return null;
   }
 
   @Override

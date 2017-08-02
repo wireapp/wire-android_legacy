@@ -144,7 +144,7 @@ public class ChangeEmailPreferenceDialogFragment extends BaseDialogFragment<Chan
             inputLayout.setError(getString(R.string.pref__account_action__dialog__delete_phone__no_internet_error));
             return;
         }
-        String email = getStoreFactory().profileStore().getMyEmail();
+        String email = getStoreFactory().profileStore().myEmail();
         ViewUtils.showAlertDialog(getActivity(),
                                   getString(R.string.pref__account_action__dialog__delete_phone_or_email__confirm__title),
                                   getString(R.string.pref__account_action__dialog__delete_phone_or_email__confirm__message, email),
@@ -183,7 +183,7 @@ public class ChangeEmailPreferenceDialogFragment extends BaseDialogFragment<Chan
             inputLayout.setError(getString(R.string.pref__account_action__dialog__change_email__error__invalid_email));
             return;
         }
-        if (email.equalsIgnoreCase(getStoreFactory().profileStore().getMyEmail())) {
+        if (email.equalsIgnoreCase(getStoreFactory().profileStore().myEmail())) {
             dismiss();
             return;
         }

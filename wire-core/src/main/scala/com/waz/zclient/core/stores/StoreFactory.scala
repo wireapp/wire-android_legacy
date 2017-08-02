@@ -15,9 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.core.stores;
+package com.waz.zclient.core.stores
 
-import com.waz.api.IConversation
 import com.waz.zclient.core.stores.api.IZMessagingApiStore
 import com.waz.zclient.core.stores.appentry.IAppEntryStore
 import com.waz.zclient.core.stores.connect.IConnectStore

@@ -93,10 +93,7 @@ class ScalaConversationStore(zMessagingApi: ZMessagingApi, selectionController: 
     val oldConversation = if (conversationChangerSender == ConversationChangeRequester.FIRST_LOAD) None else currentConversation
     conversationsList.setSelectedConversation(conversation.getOrElse(null))
 
-    if (oldConversation.map(_.getId) != conversation.map(_.getId)) {
-      // Notify explicitly if the conversation doesn't change, the UiSignal notifies only when the conversation changes
-      notifyCurrentConversationHasChanged(oldConversation, conversation, conversationChangerSender)
-    }
+    notifyCurrentConversationHasChanged(oldConversation, conversation, conversationChangerSender)
   }
 
   override def loadCurrentConversation(onConversationLoadedListener: OnConversationLoadedListener): Unit =
