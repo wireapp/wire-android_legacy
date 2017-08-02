@@ -31,7 +31,6 @@ import com.waz.zclient.core.stores.profile.IProfileStore;
 import com.waz.zclient.core.stores.singleparticipants.ISingleParticipantStore;
 import com.waz.zclient.core.stores.stub.StubAppEntryStore;
 import com.waz.zclient.core.stores.stub.StubConnectStore;
-import com.waz.zclient.core.stores.stub.StubConversationStore;
 import com.waz.zclient.core.stores.stub.StubDraftStore;
 import com.waz.zclient.core.stores.stub.StubInAppNotificationStore;
 import com.waz.zclient.core.stores.stub.StubNetworkStore;
@@ -49,8 +48,6 @@ public class MockStoreFactory implements IStoreFactory {
   protected IAppEntryStore appEntryStore = spy(StubAppEntryStore.class);
 
   protected IConnectStore connectStore = spy(StubConnectStore.class);
-
-  protected IConversationStore conversationStore = spy(StubConversationStore.class);
 
   protected IDraftStore draftStore = spy(StubDraftStore.class);
 
@@ -122,7 +119,7 @@ public class MockStoreFactory implements IStoreFactory {
 
   @Override
   public IConversationStore conversationStore() {
-    return conversationStore;
+    return null;
   }
 
   @Override
