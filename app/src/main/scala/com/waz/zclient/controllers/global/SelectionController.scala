@@ -20,8 +20,9 @@ package com.waz.zclient.controllers.global
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.IConversation
-import com.waz.model.MessageId
+import com.waz.model.{ConversationData, MessageId}
 import com.waz.service.ZMessaging
+import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.{Injectable, Injector}
@@ -40,31 +41,36 @@ class SelectionController(implicit injector: Injector, ev: EventContext) extends
   private var currentConv  = Option.empty[IConversation]
 
   //TODO get rid of this as soon as possible
-  private val selectedUiConv = for {
+  private val selectedConvData = for {
     z          <- zms
     cId        <- selectedConv
     Some(data) <- z.convsStorage.convsSignal.map(_.conversations.find(_.id == cId))
-  } yield ZMessaging.currentUi.convs.getConversation(data)
+  } yield data
 
   private var convListeners = Set.empty[ConversationChangedListener]
+
+  private def withConv(data: ConversationData)(f: IConversation => Unit) = Threading.Ui {
+    f(ZMessaging.currentUi.convs.getConversation(data))
+  }
 
   //use sparingly!
   def setOnConversationChangeCallback(callback: ConversationChangedListener) = {
     convListeners += callback
-    selectedUiConv.currentValue.foreach(current => callback.onConversationChanged(previousConv, Some(current)))
+    selectedConvData.currentValue.foreach { current => withConv(current) { conv =>
+      callback.onConversationChanged(previousConv, Some(conv))
+    }}
   }
 
-  selectedUiConv.onUi { conv =>
+  selectedConvData.onUi { data => withConv(data) { conv =>
     verbose(s"select Ui conv changed: prev: ${previousConv.map(_.getId).orNull}, current: ${conv.getId()}")
     if (!previousConv.contains(conv)) {
       previousConv = currentConv
       currentConv = Some(conv)
       convListeners.foreach(_.onConversationChanged(previousConv, currentConv))
     }
+  }}
 
-  }
-
-  def selectedConversation = selectedUiConv.currentValue
+  def selectedConversation = currentConv
 
   object messages {
 
