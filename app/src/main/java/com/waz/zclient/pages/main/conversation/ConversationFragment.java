@@ -1029,6 +1029,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         });
     }
 
+
     @Override
     public void openExtendedCursor(ExtendedCursorContainer.Type type) {
         final IConversation conversation = getStoreFactory().conversationStore().getCurrentConversation();
