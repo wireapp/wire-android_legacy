@@ -311,7 +311,7 @@ public class SignUpPhotoFragment extends BaseFragment<SignUpPhotoFragment.Contai
                 getStoreFactory().isTornDown()) {
                 return false;
             }
-            getStoreFactory().getAppEntryStore().onBackPressed();
+            getStoreFactory().appEntryStore().onBackPressed();
             return true;
         }
     }
@@ -390,15 +390,15 @@ public class SignUpPhotoFragment extends BaseFragment<SignUpPhotoFragment.Contai
             @Override
             public void run() {
                 if (registrationType == RegistrationType.Phone) {
-                    getStoreFactory().getAppEntryStore().setPhonePicture(imageAsset);
+                    getStoreFactory().appEntryStore().setPhonePicture(imageAsset);
 
                 } else {
-                    getStoreFactory().getAppEntryStore().setEmailPicture(imageAsset);
+                    getStoreFactory().appEntryStore().setEmailPicture(imageAsset);
                 }
 
                 RegistrationEventContext registrationEventContext = registrationType == SignUpPhotoFragment.RegistrationType.Phone ?
-                                                                    getStoreFactory().getAppEntryStore().getPhoneRegistrationContext() :
-                                                                    getStoreFactory().getAppEntryStore().getEmailRegistrationContext();
+                                                                    getStoreFactory().appEntryStore().getPhoneRegistrationContext() :
+                                                                    getStoreFactory().appEntryStore().getEmailRegistrationContext();
                 ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new AddedPhotoEvent(OutcomeAttribute.SUCCESS, "", photoSource, registrationEventContext));
 
             }

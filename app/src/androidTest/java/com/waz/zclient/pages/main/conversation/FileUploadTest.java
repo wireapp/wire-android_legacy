@@ -29,7 +29,6 @@ import com.waz.api.ErrorType;
 import com.waz.api.ErrorsList;
 import com.waz.api.IConversation;
 import com.waz.api.MessageContent;
-import com.waz.api.NetworkMode;
 import com.waz.zclient.MainTestActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.core.stores.conversation.IConversationStore;
@@ -74,7 +73,7 @@ public class FileUploadTest extends FragmentTest<MainTestActivity> {
         when(mockConversation.isMemberOfConversation()).thenReturn(true);
         when(mockConversation.isActive()).thenReturn(true);
         MockHelper.setupConversationMocks(mockConversation, activity);
-        IConversationStore mockConversationStore = activity.getStoreFactory().getConversationStore();
+        IConversationStore mockConversationStore = activity.getStoreFactory().conversationStore();
 
         // Mock intent result
         String action;
@@ -107,7 +106,7 @@ public class FileUploadTest extends FragmentTest<MainTestActivity> {
     public void assertFileTooBigWarningShowed() throws InterruptedException {
         final ErrorsList.ErrorDescription mockErrorDescription = mock(ErrorsList.ErrorDescription.class);
         when(mockErrorDescription.getType()).thenReturn(ErrorType.CANNOT_SEND_ASSET_TOO_LARGE);
-        IInAppNotificationStore mockInAppNotificationStore = activity.getStoreFactory().getInAppNotificationStore();
+        IInAppNotificationStore mockInAppNotificationStore = activity.getStoreFactory().inAppNotificationStore();
 
         doAnswer(new Answer<Void>() {
             @Override
@@ -130,7 +129,7 @@ public class FileUploadTest extends FragmentTest<MainTestActivity> {
     public void assertFileNotFoundWarningShowed() throws InterruptedException {
         final ErrorsList.ErrorDescription mockErrorDescription = mock(ErrorsList.ErrorDescription.class);
         when(mockErrorDescription.getType()).thenReturn(ErrorType.CANNOT_SEND_ASSET_FILE_NOT_FOUND);
-        IInAppNotificationStore mockInAppNotificationStore = activity.getStoreFactory().getInAppNotificationStore();
+        IInAppNotificationStore mockInAppNotificationStore = activity.getStoreFactory().inAppNotificationStore();
 
         doAnswer(new Answer<Void>() {
             @Override

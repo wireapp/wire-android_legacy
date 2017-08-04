@@ -111,7 +111,7 @@ public class UsernamesController implements IUsernamesController {
             return;
         }
         application = ZApplication.from(activity);
-        validatedUsernamesModelObserver.setAndUpdate(application.getStoreFactory().getZMessagingApiStore().getApi().getUsernames().getValidatedUsernames());
+        validatedUsernamesModelObserver.setAndUpdate(application.getStoreFactory().zMessagingApiStore().getApi().getUsernames().getValidatedUsernames());
     }
 
     @Override
@@ -175,7 +175,7 @@ public class UsernamesController implements IUsernamesController {
         generatedUsername = null;
         currentSearch = baseName;
         currentAttemptsArray = null;
-        Usernames usernames = application.getStoreFactory().getZMessagingApiStore().getApi().getUsernames();
+        Usernames usernames = application.getStoreFactory().zMessagingApiStore().getApi().getUsernames();
         String baseGeneratedUsername = usernames.generateUsernameFromName(baseName, application);
         String randomUsername = usernames.generateUsernameFromName("", application);
 

@@ -224,9 +224,9 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
         getControllerFactory().getConversationScreenController().addConversationControllerObservers(this);
         getControllerFactory().getNavigationController().addPagerControllerObserver(this);
         if (!getControllerFactory().getConversationScreenController().isConversationStreamUiInitialized()) {
-            getStoreFactory().getConversationStore().addConversationStoreObserverAndUpdate(this);
+            getStoreFactory().conversationStore().addConversationStoreObserverAndUpdate(this);
         } else {
-            getStoreFactory().getConversationStore().addConversationStoreObserver(this);
+            getStoreFactory().conversationStore().addConversationStoreObserver(this);
         }
         getControllerFactory().getCameraController().addCameraActionObserver(this);
         getControllerFactory().getPickUserController().addPickUserScreenControllerObserver(this);
@@ -247,7 +247,7 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
         getControllerFactory().getCameraController().removeCameraActionObserver(this);
         getControllerFactory().getUsernameController().removeUsernamesObserver(this);
         getControllerFactory().getNavigationController().removePagerControllerObserver(this);
-        getStoreFactory().getConversationStore().removeConversationStoreObserver(this);
+        getStoreFactory().conversationStore().removeConversationStoreObserver(this);
         getControllerFactory().getPickUserController().removePickUserScreenControllerObserver(this);
         getControllerFactory().getGiphyController().removeObserver(this);
         getControllerFactory().getDrawingController().removeDrawingObserver(this);
@@ -284,7 +284,7 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
         }
 
         conversationModelObserver.setAndUpdate(toConversation);
-        getStoreFactory().getParticipantsStore().setCurrentConversation(toConversation);
+        getStoreFactory().participantsStore().setCurrentConversation(toConversation);
 
         if (rightSideShouldBeBlank) {
             return;
@@ -425,11 +425,11 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
 
     @Override
     public void dismissInboxFragment() {
-        IConversation nextConversation = getStoreFactory().getConversationStore().getNextConversation();
+        IConversation nextConversation = getStoreFactory().conversationStore().getNextConversation();
         if (nextConversation == null) {
             return;
         }
-        getStoreFactory().getConversationStore().setCurrentConversation(nextConversation, ConversationChangeRequester.START_CONVERSATION);
+        getStoreFactory().conversationStore().setCurrentConversation(nextConversation, ConversationChangeRequester.START_CONVERSATION);
     }
 
     @Override
@@ -485,11 +485,11 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
             return;
         }
         getControllerFactory().getCameraController().closeCamera(cameraContext);
-        getStoreFactory().getConversationStore().sendMessage(imageAsset);
+        getStoreFactory().conversationStore().sendMessage(imageAsset);
 
         // Tablet doesn't have keyboard camera interface
         TrackingUtils.onSentPhotoMessage(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
-                                         getStoreFactory().getConversationStore().getCurrentConversation(),
+                                         getStoreFactory().conversationStore().getCurrentConversation(),
                                          imageFromCamera ? SentPictureEvent.Source.CAMERA
                                                          : SentPictureEvent.Source.GALLERY,
                                          SentPictureEvent.Method.TABLET);
@@ -901,7 +901,7 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
     @Override
     public void onHideShareLocation(MessageContent.Location location) {
         if (location != null) {
-            getStoreFactory().getConversationStore().sendMessage(location);
+            getStoreFactory().conversationStore().sendMessage(location);
         }
         getChildFragmentManager().popBackStack(LocationFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE);
     }

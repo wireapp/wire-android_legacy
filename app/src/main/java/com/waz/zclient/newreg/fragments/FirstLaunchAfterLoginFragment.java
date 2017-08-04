@@ -84,7 +84,7 @@ public class FirstLaunchAfterLoginFragment extends
             getStoreFactory().isTornDown()) {
             return;
         }
-        getStoreFactory().getAppEntryStore().setState(AppEntryState.LOGGED_IN);
+        getStoreFactory().appEntryStore().setState(AppEntryState.LOGGED_IN);
     }
 
     public interface Container {

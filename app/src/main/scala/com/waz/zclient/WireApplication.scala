@@ -91,7 +91,7 @@ object WireApplication {
     bind [IGiphyController]              toProvider controllerFactory.getGiphyController
 
     bind [IStoreFactory]                 toProvider storeFactory
-    bind [INetworkStore]                 toProvider storeFactory.getNetworkStore
+    bind [INetworkStore]                 toProvider storeFactory.networkStore
 
     // global controllers
     bind [AccentColorController]   to new AccentColorController()
@@ -199,9 +199,9 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
   def ensureInitialized() = {
     if (storeFactory == null) {
-      storeFactory = new ScalaStoreFactory(getApplicationContext)
       //TODO initialization of ZMessaging happens here - make this more explicit?
-      storeFactory.getZMessagingApiStore.getApi
+      storeFactory = new ScalaStoreFactory(getApplicationContext, inject[SelectionController])
+      storeFactory.zMessagingApiStore.getApi
     }
 
     inject[MessageNotificationsController]

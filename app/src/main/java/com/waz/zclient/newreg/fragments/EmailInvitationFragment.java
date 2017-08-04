@@ -204,7 +204,7 @@ public class EmailInvitationFragment extends BaseFragment<EmailInvitationFragmen
             return;
         }
         KeyboardUtils.hideKeyboard(getActivity());
-        getStoreFactory().getAppEntryStore().onBackPressed();
+        getStoreFactory().appEntryStore().onBackPressed();
         ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new CancelledPersonalInvite(CancelledPersonalInvite.EventContext.INVITE_EMAIL));
     }
 
@@ -218,7 +218,7 @@ public class EmailInvitationFragment extends BaseFragment<EmailInvitationFragmen
         KeyboardUtils.hideKeyboard(getActivity());
         getContainer().enableProgress(true);
 
-        getStoreFactory().getAppEntryStore().acceptEmailInvitation(passwordEditText.getText().toString(),
+        getStoreFactory().appEntryStore().acceptEmailInvitation(passwordEditText.getText().toString(),
                                                                    getControllerFactory().getAccentColorController().getAccentColor());
         ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new ConfirmedPersonalInviteEvent(
             RegistrationEventContext.PERSONAL_INVITE_EMAIL));

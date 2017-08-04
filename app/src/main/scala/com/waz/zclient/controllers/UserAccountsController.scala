@@ -98,9 +98,9 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
     } yield conv
 
     createConv.map { convData =>
-      activity.getStoreFactory.getConversationStore.loadConversation(convData.id.str, new OnConversationLoadedListener {
+      activity.getStoreFactory.conversationStore.loadConversation(convData.id.str, new OnConversationLoadedListener {
         override def onConversationLoaded(conversation: IConversation) =
-          activity.getStoreFactory.getConversationStore.setCurrentConversation(conversation, requester)
+          activity.getStoreFactory.conversationStore.setCurrentConversation(Some(conversation), requester)
       })
     }(Threading.Ui)
   }

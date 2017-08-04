@@ -116,8 +116,8 @@ public class PhoneSignInFragment extends BaseFragment<PhoneSignInFragment.Contai
         super.onViewCreated(view, savedInstanceState);
         countryController = getContainer().getCountryController();
 
-        editTextPhone.setText(getStoreFactory().getAppEntryStore().getPhone());
-        Country country = countryController.getCountryFromCode(getStoreFactory().getAppEntryStore().getCountryCode());
+        editTextPhone.setText(getStoreFactory().appEntryStore().getPhone());
+        Country country = countryController.getCountryFromCode(getStoreFactory().appEntryStore().getCountryCode());
         if (country != null) {
             onCountryHasChanged(country);
         }
@@ -143,8 +143,8 @@ public class PhoneSignInFragment extends BaseFragment<PhoneSignInFragment.Contai
 
         countryController.addObserver(this);
 
-        Country country = countryController.getCountryFromCode(getStoreFactory().getAppEntryStore().getCountryCode());
-        String phone = getStoreFactory().getAppEntryStore().getPhone();
+        Country country = countryController.getCountryFromCode(getStoreFactory().appEntryStore().getCountryCode());
+        String phone = getStoreFactory().appEntryStore().getPhone();
 
         if (phone != null) {
             editTextPhone.setText(phone);
@@ -233,7 +233,7 @@ public class PhoneSignInFragment extends BaseFragment<PhoneSignInFragment.Contai
     }
 
     private void goBack() {
-        getStoreFactory().getAppEntryStore().onBackPressed();
+        getStoreFactory().appEntryStore().onBackPressed();
     }
 
     private void confirmPhoneNumber() {
@@ -244,13 +244,13 @@ public class PhoneSignInFragment extends BaseFragment<PhoneSignInFragment.Contai
         getContainer().enableProgress(true);
         KeyboardUtils.hideKeyboard(getActivity());
         ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new EnteredLoginPhoneEvent());
-        getStoreFactory().getAppEntryStore().setSignInPhone(textViewCountryCode.getText().toString(),
+        getStoreFactory().appEntryStore().setSignInPhone(textViewCountryCode.getText().toString(),
                                                             editTextPhone.getText().toString(),
                                                             errorCallback);
     }
 
     private void openEmailSignIn() {
-        getStoreFactory().getAppEntryStore().setState(AppEntryState.EMAIL_SIGN_IN);
+        getStoreFactory().appEntryStore().setState(AppEntryState.EMAIL_SIGN_IN);
     }
 
     @Override

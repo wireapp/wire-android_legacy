@@ -65,26 +65,26 @@ class BaseActivity extends AppCompatActivity
     getControllerFactory.setActivity(this)
     if (!started) {
       started = true
-      getStoreFactory.getZMessagingApiStore.getApi.onResume()
+      getStoreFactory.zMessagingApiStore.getApi.onResume()
     }
-    getStoreFactory.getZMessagingApiStore.getApi.setPermissionProvider(this)
+    getStoreFactory.zMessagingApiStore.getApi.setPermissionProvider(this)
     val contentView: View = ViewUtils.getView(getWindow.getDecorView, android.R.id.content)
     if (contentView != null) getControllerFactory.setGlobalLayout(contentView)
   }
 
   override def onStop() = {
     if (started) {
-      getStoreFactory.getZMessagingApiStore.getApi.onPause()
+      getStoreFactory.zMessagingApiStore.getApi.onPause()
       started = false
     }
-    getStoreFactory.getZMessagingApiStore.getApi.removePermissionProvider(this)
+    getStoreFactory.zMessagingApiStore.getApi.removePermissionProvider(this)
     InternalLog.flush()
     super.onStop()
   }
 
   override def finish() = {
     if (started) {
-      getStoreFactory.getZMessagingApiStore.getApi.onPause()
+      getStoreFactory.zMessagingApiStore.getApi.onPause()
       started = false
     }
     super.finish()

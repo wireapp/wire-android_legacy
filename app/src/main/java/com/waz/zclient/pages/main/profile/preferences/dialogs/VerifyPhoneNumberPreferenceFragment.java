@@ -101,7 +101,7 @@ public class VerifyPhoneNumberPreferenceFragment extends BaseDialogFragment<Veri
             @Override
             public void onClick(View v) {
                 final String code = getVerificationCode();
-                getStoreFactory().getProfileStore()
+                getStoreFactory().profileStore()
                                  .submitCode(number, code, new ZMessagingApi.PhoneNumberVerificationListener() {
                                          @Override
                                          public void onVerified(KindOfVerification kindOfVerification) {
@@ -137,7 +137,7 @@ public class VerifyPhoneNumberPreferenceFragment extends BaseDialogFragment<Veri
             @Override
             public void onClick(View v) {
                 resendButton.animate().alpha(0f).start();
-                getStoreFactory().getProfileStore()
+                getStoreFactory().profileStore()
                                  .resendPhoneVerificationCode(number, new ZMessagingApi.PhoneConfirmationCodeRequestListener() {
 
                                      @Override

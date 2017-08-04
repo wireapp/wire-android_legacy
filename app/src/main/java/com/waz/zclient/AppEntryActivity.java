@@ -123,11 +123,11 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
         if (otrPhoneAddEmailFragment != null) {
             getSupportFragmentManager().popBackStackImmediate(R.id.fl_main_content,
                                                               FragmentManager.POP_BACK_STACK_INCLUSIVE);
-            getStoreFactory().getZMessagingApiStore().logout();
-            getStoreFactory().getAppEntryStore().setState(AppEntryState.PHONE_SIGN_IN);
+            getStoreFactory().zMessagingApiStore().logout();
+            getStoreFactory().appEntryStore().setState(AppEntryState.PHONE_SIGN_IN);
             return;
         }
-        if (!getStoreFactory().getAppEntryStore().onBackPressed()) {
+        if (!getStoreFactory().appEntryStore().onBackPressed()) {
             super.onBackPressed();
         }
     }
@@ -177,11 +177,11 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
     public void onStart() {
         super.onStart();
         getControllerFactory().getNavigationController().addNavigationControllerObserver(this);
-        getStoreFactory().getZMessagingApiStore().addApiObserver(this);
-        getStoreFactory().getAppEntryStore().setCallback(this);
+        getStoreFactory().zMessagingApiStore().addApiObserver(this);
+        getStoreFactory().appEntryStore().setCallback(this);
 
         if (!createdFromSavedInstance) {
-            getStoreFactory().getAppEntryStore().resumeAppEntry(getStoreFactory().getZMessagingApiStore().getApi().getSelf(),
+            getStoreFactory().appEntryStore().resumeAppEntry(getStoreFactory().zMessagingApiStore().getApi().getSelf(),
                                                                 getControllerFactory().getUserPreferencesController().getPersonalInvitationToken());
         }
     }
@@ -206,7 +206,7 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
         super.onPostResume();
         if (isPaused) {
             isPaused = false;
-            getStoreFactory().getAppEntryStore().triggerStateUpdate();
+            getStoreFactory().appEntryStore().triggerStateUpdate();
         }
     }
 
@@ -219,8 +219,8 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
     @Override
     public void onStop() {
         getControllerFactory().getNavigationController().removeNavigationControllerObserver(this);
-        getStoreFactory().getAppEntryStore().setCallback(null);
-        getStoreFactory().getZMessagingApiStore().removeApiObserver(this);
+        getStoreFactory().appEntryStore().setCallback(null);
+        getStoreFactory().zMessagingApiStore().removeApiObserver(this);
         if (unsplashInitLoadHandle != null) {
             unsplashInitLoadHandle.cancel();
             unsplashInitLoadHandle = null;
@@ -239,7 +239,7 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
 
     @Override
     public void onDestroy() {
-        getStoreFactory().getAppEntryStore().clearCurrentState();
+        getStoreFactory().appEntryStore().clearCurrentState();
         super.onDestroy();
     }
 
@@ -293,8 +293,8 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         setDefaultAnimation(transaction)
             .replace(R.id.fl_main_content,
-                     PhoneInvitationFragment.newInstance(getStoreFactory().getAppEntryStore().getInvitationName(),
-                                                         getStoreFactory().getAppEntryStore().getInvitationPhone()),
+                     PhoneInvitationFragment.newInstance(getStoreFactory().appEntryStore().getInvitationName(),
+                                                         getStoreFactory().appEntryStore().getInvitationPhone()),
                      PhoneInvitationFragment.TAG)
             .commit();
         enableProgress(false);
@@ -305,8 +305,8 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         setDefaultAnimation(transaction)
             .replace(R.id.fl_main_content,
-                     EmailInvitationFragment.newInstance(getStoreFactory().getAppEntryStore().getInvitationName(),
-                                                         getStoreFactory().getAppEntryStore().getInvitationEmail()),
+                     EmailInvitationFragment.newInstance(getStoreFactory().appEntryStore().getInvitationName(),
+                                                         getStoreFactory().appEntryStore().getInvitationEmail()),
                      EmailInvitationFragment.TAG)
             .commit();
         enableProgress(false);
@@ -334,7 +334,7 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
         enableProgress(false);
 
         if (fromGenericInvite()) {
-            getStoreFactory().getAppEntryStore().setRegistrationContext(RegistrationEventContext.GENERIC_INVITE_PHONE);
+            getStoreFactory().appEntryStore().setRegistrationContext(RegistrationEventContext.GENERIC_INVITE_PHONE);
 
             // Temporary tracking to check on high number of invite registrations AN-4117
             String referralToken = getControllerFactory().getUserPreferencesController().getReferralToken();
@@ -343,7 +343,7 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
                 referralToken,
                 token));
         } else {
-            getStoreFactory().getAppEntryStore().setRegistrationContext(RegistrationEventContext.PHONE);
+            getStoreFactory().appEntryStore().setRegistrationContext(RegistrationEventContext.PHONE);
         }
 
         getControllerFactory().getNavigationController().setLeftPage(Page.PHONE_REGISTRATION, TAG);
@@ -435,9 +435,9 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
         enableProgress(false);
 
         if (fromGenericInvite()) {
-            getStoreFactory().getAppEntryStore().setRegistrationContext(RegistrationEventContext.GENERIC_INVITE_EMAIL);
+            getStoreFactory().appEntryStore().setRegistrationContext(RegistrationEventContext.GENERIC_INVITE_EMAIL);
         } else {
-            getStoreFactory().getAppEntryStore().setRegistrationContext(RegistrationEventContext.EMAIL);
+            getStoreFactory().appEntryStore().setRegistrationContext(RegistrationEventContext.EMAIL);
         }
     }
 
@@ -478,10 +478,10 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
 
     @Override
     public void onShowFirstLaunchPage() {
-        String id = getStoreFactory().getAppEntryStore().getUserId();
+        String id = getStoreFactory().appEntryStore().getUserId();
         boolean hasUserLoggedIn = getControllerFactory().getUserPreferencesController().hasUserLoggedIn(id);
         if (id != null && hasUserLoggedIn) {
-            getStoreFactory().getAppEntryStore().setState(AppEntryState.LOGGED_IN);
+            getStoreFactory().appEntryStore().setState(AppEntryState.LOGGED_IN);
         } else {
             if (id != null) {
                 getControllerFactory().getUserPreferencesController().userLoggedIn(id);
@@ -553,13 +553,13 @@ public class AppEntryActivity extends BaseActivity implements VerifyPhoneFragmen
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        getStoreFactory().getAppEntryStore().onRestoreInstanceState(savedInstanceState,
-                                                                    getStoreFactory().getZMessagingApiStore().getApi().getSelf());
+        getStoreFactory().appEntryStore().onRestoreInstanceState(savedInstanceState,
+                                                                    getStoreFactory().zMessagingApiStore().getApi().getSelf());
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        getStoreFactory().getAppEntryStore().onSaveInstanceState(outState);
+        getStoreFactory().appEntryStore().onSaveInstanceState(outState);
         super.onSaveInstanceState(outState);
     }
 

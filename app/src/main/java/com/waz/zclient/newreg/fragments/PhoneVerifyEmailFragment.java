@@ -59,7 +59,7 @@ public class PhoneVerifyEmailFragment extends BaseFragment<PhoneVerifyEmailFragm
         buttonBack.setOnClickListener(this);
         resendTextView.setOnClickListener(this);
         onAccentColorHasChanged(getContainer().getAccentColor());
-        onEmailLoaded(getStoreFactory().getAppEntryStore().getEmail());
+        onEmailLoaded(getStoreFactory().appEntryStore().getEmail());
         TextViewUtils.boldText(checkEmailTextView);
     }
 
@@ -106,7 +106,7 @@ public class PhoneVerifyEmailFragment extends BaseFragment<PhoneVerifyEmailFragm
                 break;
             case R.id.ttv__pending_email__resend:
                 ViewUtils.fadeOutView(resendTextView);
-                getStoreFactory().getAppEntryStore().resendEmail();
+                getStoreFactory().appEntryStore().resendEmail();
                 break;
             case R.id.ttv__sign_up__resend:
                 didntGetEmailTextView.animate().alpha(0).start();
@@ -119,13 +119,13 @@ public class PhoneVerifyEmailFragment extends BaseFragment<PhoneVerifyEmailFragm
                                   }
                               })
                               .start();
-                getStoreFactory().getAppEntryStore().resendEmail();
+                getStoreFactory().appEntryStore().resendEmail();
                 break;
         }
     }
 
     private void goBack() {
-        getStoreFactory().getAppEntryStore().onBackPressed();
+        getStoreFactory().appEntryStore().onBackPressed();
     }
 
     public interface Container {

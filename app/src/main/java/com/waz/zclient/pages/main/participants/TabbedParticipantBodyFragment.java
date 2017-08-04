@@ -174,7 +174,7 @@ public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipan
     @Override
     public void onStart() {
         super.onStart();
-        getStoreFactory().getParticipantsStore().addParticipantsStoreObserver(this);
+        getStoreFactory().participantsStore().addParticipantsStoreObserver(this);
         getControllerFactory().getAccentColorController().addAccentColorObserver(this);
         getControllerFactory().getConversationScreenController().addConversationControllerObservers(this);
         updateUser();
@@ -184,7 +184,7 @@ public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipan
     public void onStop() {
         getControllerFactory().getConversationScreenController().removeConversationControllerObservers(this);
         getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
-        getStoreFactory().getParticipantsStore().removeParticipantsStoreObserver(this);
+        getStoreFactory().participantsStore().removeParticipantsStoreObserver(this);
         super.onStop();
     }
 
@@ -242,7 +242,7 @@ public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipan
             ParticipantDetailsTab tab = (ParticipantDetailsTab) view;
             tab.setUser(user);
 
-            final IConversation conversation = getStoreFactory().getConversationStore().getCurrentConversation();
+            final IConversation conversation = getStoreFactory().conversationStore().getCurrentConversation();
             if (conversation != null) {
                 if (conversation.getType() == IConversation.Type.ONE_TO_ONE && permissionToCreate) {
                     tab.updateFooterMenu(R.string.glyph__add_people,
@@ -268,7 +268,7 @@ public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipan
     }
 
     private void updateUser() {
-        IConversation conversation = getStoreFactory().getConversationStore().getCurrentConversation();
+        IConversation conversation = getStoreFactory().conversationStore().getCurrentConversation();
         if (conversation == null) {
             userModelObserver.clear();
             userModelObserverForTabs.clear();
@@ -281,7 +281,7 @@ public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipan
         if (conversation.getType() == IConversation.Type.ONE_TO_ONE) {
             updatedUser = conversation.getOtherParticipant();
         } else {
-            updatedUser = getStoreFactory().getSingleParticipantStore().getUser();
+            updatedUser = getStoreFactory().singleParticipantStore().getUser();
         }
         userModelObserver.setAndUpdate(updatedUser);
         userModelObserverForTabs.setAndUpdate(updatedUser);
@@ -409,7 +409,7 @@ public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipan
                 getControllerFactory() == null || getControllerFactory().isTornDown()) {
                 return;
             }
-            IConversation conversation = getStoreFactory().getConversationStore().getCurrentConversation();
+            IConversation conversation = getStoreFactory().conversationStore().getCurrentConversation();
             if (conversation == null) {
                 return;
             }
@@ -432,7 +432,7 @@ public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipan
                 getControllerFactory() == null || getControllerFactory().isTornDown()) {
                 return;
             }
-            IConversation conversation = getStoreFactory().getConversationStore().getCurrentConversation();
+            IConversation conversation = getStoreFactory().conversationStore().getCurrentConversation();
             if (conversation == null) {
                 return;
             }

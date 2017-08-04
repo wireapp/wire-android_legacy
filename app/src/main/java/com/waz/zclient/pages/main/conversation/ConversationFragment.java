@@ -62,7 +62,6 @@ import com.waz.api.MessageContent;
 import com.waz.api.NetworkMode;
 import com.waz.api.OtrClient;
 import com.waz.api.Self;
-import com.waz.api.SyncIndicator;
 import com.waz.api.SyncState;
 import com.waz.api.UpdateListener;
 import com.waz.api.User;
@@ -246,24 +245,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                     }
                 }
             });
-        }
-    };
-
-    private final ModelObserver<SyncIndicator> syncIndicatorModelObserver = new ModelObserver<SyncIndicator>() {
-        @Override
-        public void updated(SyncIndicator syncIndicator) {
-            switch (syncIndicator.getState()) {
-                case SYNCING:
-                case WAITING:
-                    conversationLoadingIndicatorViewView.show();
-                    getControllerFactory().getLoadTimeLoggerController().conversationContentSyncStart();
-                    return;
-                case COMPLETED:
-                case FAILED:
-                default:
-                    conversationLoadingIndicatorViewView.hide();
-                    getControllerFactory().getLoadTimeLoggerController().conversationContentSyncFinish();
-            }
         }
     };
 
@@ -529,18 +510,17 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         getControllerFactory().getRequestPermissionsController().addObserver(this);
         getControllerFactory().getOrientationController().addOrientationControllerObserver(this);
         cursorView.setCallback(this);
-        final String draftText = getStoreFactory().getDraftStore().getDraft(getStoreFactory().getConversationStore().getCurrentConversation());
+        final String draftText = getStoreFactory().draftStore().getDraft(getStoreFactory().conversationStore().getCurrentConversation());
         if (!TextUtils.isEmpty(draftText)) {
             cursorView.setText(draftText);
         }
 
-        syncIndicatorModelObserver.resumeListening();
         audioMessageRecordingView.setDarkTheme(((BaseActivity) getActivity()).injectJava(ThemeController.class).isDarkTheme());
 
         if (!getControllerFactory().getConversationScreenController().isConversationStreamUiInitialized()) {
-            getStoreFactory().getConversationStore().addConversationStoreObserverAndUpdate(this);
+            getStoreFactory().conversationStore().addConversationStoreObserverAndUpdate(this);
         } else {
-            getStoreFactory().getConversationStore().addConversationStoreObserver(this);
+            getStoreFactory().conversationStore().addConversationStoreObserver(this);
         }
         getControllerFactory().getNavigationController().addNavigationControllerObserver(this);
         getControllerFactory().getNavigationController().addPagerControllerObserver(this);
@@ -548,20 +528,20 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         getControllerFactory().getGiphyController().addObserver(this);
         getControllerFactory().getSingleImageController().addSingleImageObserver(this);
         getControllerFactory().getAccentColorController().addAccentColorObserver(this);
-        getStoreFactory().getParticipantsStore().addParticipantsStoreObserver(this);
+        getStoreFactory().participantsStore().addParticipantsStoreObserver(this);
         getControllerFactory().getGlobalLayoutController().addKeyboardVisibilityObserver(this);
-        getStoreFactory().getInAppNotificationStore().addInAppNotificationObserver(this);
+        getStoreFactory().inAppNotificationStore().addInAppNotificationObserver(this);
         getControllerFactory().getSlidingPaneController().addObserver(this);
 
         extendedCursorContainer.setCallback(this);
-        selfModelObserver.setAndUpdate(getStoreFactory().getZMessagingApiStore().getApi().getSelf());
+        selfModelObserver.setAndUpdate(getStoreFactory().zMessagingApiStore().getApi().getSelf());
     }
 
     @Override
     public void onResume() {
         super.onResume();
         if (LayoutSpec.isTablet(getContext())) {
-            conversationModelObserver.setAndUpdate(getStoreFactory().getConversationStore().getCurrentConversation());
+            conversationModelObserver.setAndUpdate(getStoreFactory().conversationStore().getCurrentConversation());
         }
     }
 
@@ -591,18 +571,15 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         getControllerFactory().getSingleImageController().removeSingleImageObserver(this);
 
         if (!cursorView.isEditingMessage()) {
-            getStoreFactory().getDraftStore().setDraft(getStoreFactory().getConversationStore().getCurrentConversation(),
+            getStoreFactory().draftStore().setDraft(getStoreFactory().conversationStore().getCurrentConversation(),
                                                        cursorView.getText().trim());
         }
-        getStoreFactory().getInAppNotificationStore().removeInAppNotificationObserver(this);
-        getStoreFactory().getParticipantsStore().removeParticipantsStoreObserver(this);
+        getStoreFactory().inAppNotificationStore().removeInAppNotificationObserver(this);
+        getStoreFactory().participantsStore().removeParticipantsStoreObserver(this);
         getControllerFactory().getGlobalLayoutController().removeKeyboardVisibilityObserver(this);
         getControllerFactory().getNavigationController().removePagerControllerObserver(this);
 
-//        messagesListModelObserver.pauseListening();
-        syncIndicatorModelObserver.pauseListening();
-
-        getStoreFactory().getConversationStore().removeConversationStoreObserver(this);
+        getStoreFactory().conversationStore().removeConversationStoreObserver(this);
         getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
         getControllerFactory().getNavigationController().removeNavigationControllerObserver(this);
         getControllerFactory().getSlidingPaneController().removeObserver(this);
@@ -705,7 +682,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 // handle draft
                 if (fromConversation != null && changeToDifferentConversation &&
                     !cursorView.isEditingMessage()) {
-                    getStoreFactory().getDraftStore().setDraft(fromConversation, cursorView.getText().trim());
+                    getStoreFactory().draftStore().setDraft(fromConversation, cursorView.getText().trim());
                 }
 
                 if (toConversation.getType() == IConversation.Type.WAIT_FOR_CONNECTION) {
@@ -719,7 +696,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 if (changeToDifferentConversation) {
                     getControllerFactory().getConversationScreenController().setConversationStreamUiReady(false);
                     toConversationType = toConversation.getType();
-//                    messagesListModelObserver.setAndUpdate(toConversation.getMessages());
                     getControllerFactory().getSharingController().maybeResetSharedText(fromConversation);
                     getControllerFactory().getSharingController().maybeResetSharedUris(fromConversation);
 
@@ -729,7 +705,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                         resetCursor();
                     }
 
-                    final String draftText = getStoreFactory().getDraftStore().getDraft(toConversation);
+                    final String draftText = getStoreFactory().draftStore().getDraft(toConversation);
                     if (TextUtils.isEmpty(draftText)) {
                         resetCursor();
                     } else {
@@ -759,7 +735,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                     } else if (isSharingFiles) {
                         if (PermissionUtils.hasSelfPermissions(getActivity(), FILE_SHARING_PERMISSION)) {
                             for (URI uri : sharedFileUris) {
-                                getStoreFactory().getConversationStore().sendMessage(AssetFactory.fromContentUri(uri),
+                                getStoreFactory().conversationStore().sendMessage(AssetFactory.fromContentUri(uri),
                                                                                      assetErrorHandler);
                             }
                         } else {
@@ -871,7 +847,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             return;
         }
 
-        final IConversation currentConversation = getStoreFactory().getConversationStore().getCurrentConversation();
+        final IConversation currentConversation = getStoreFactory().conversationStore().getCurrentConversation();
 
         if (currentConversation == null || !currentConversation.isMemberOfConversation()) {
             cursorView.setVisibility(View.GONE);
@@ -1053,9 +1029,10 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         });
     }
 
+
     @Override
     public void openExtendedCursor(ExtendedCursorContainer.Type type) {
-        final IConversation conversation = getStoreFactory().getConversationStore().getCurrentConversation();
+        final IConversation conversation = getStoreFactory().conversationStore().getCurrentConversation();
         switch (type) {
             case NONE:
                 break;
@@ -1094,7 +1071,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                     }
                     audioMessageRecordingView.prepareForRecording();
                     audioMessageRecordingView.setVisibility(View.VISIBLE);
-                    final IConversation conversation = getStoreFactory().getConversationStore().getCurrentConversation();
+                    final IConversation conversation = getStoreFactory().conversationStore().getCurrentConversation();
                     ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(OpenedMediaActionEvent.cursorAction(OpenedMediaAction.AUDIO_MESSAGE,
                                                                                                                 conversation));
                     ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new StartedRecordingAudioMessageEvent(
@@ -1140,10 +1117,9 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         ViewUtils.setSoftInputMode(getActivity().getWindow(), softInputMode, TAG);
     }
 
-    @Override
     public void onMessageSent(MessageData msg) {
-      getStoreFactory().getNetworkStore().doIfHasInternetOrNotifyUser(null);
-      getControllerFactory().getSharingController().maybeResetSharedText(getStoreFactory().getConversationStore().getCurrentConversation());
+      getStoreFactory().networkStore().doIfHasInternetOrNotifyUser(null);
+      getControllerFactory().getSharingController().maybeResetSharedText(getStoreFactory().conversationStore().getCurrentConversation());
     }
 
     @Override
@@ -1211,7 +1187,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             case FILE_SHARING_PERMISSION_REQUEST_ID:
                 if (PermissionUtils.verifyPermissions(grantResults)) {
                     for (URI uri : sharingUris) {
-                        getStoreFactory().getConversationStore().sendMessage(AssetFactory.fromContentUri(uri),
+                        getStoreFactory().conversationStore().sendMessage(AssetFactory.fromContentUri(uri),
                                                                              assetErrorHandler);
                     }
                     sharingUris.clear();
@@ -1253,14 +1229,14 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     public void onSendAudioMessage(AudioAssetForUpload audioAssetForUpload,
                                    AudioEffect appliedAudioEffect,
                                    boolean sentWithQuickAction) {
-        getStoreFactory().getConversationStore().sendMessage(audioAssetForUpload, assetErrorHandlerAudio);
+        getStoreFactory().conversationStore().sendMessage(audioAssetForUpload, assetErrorHandlerAudio);
         hideAudioMessageRecording();
         TrackingUtils.tagSentAudioMessageEvent(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                audioAssetForUpload,
                                                appliedAudioEffect,
                                                true,
                                                sentWithQuickAction,
-                                               getStoreFactory().getConversationStore().getCurrentConversation());
+                                               getStoreFactory().conversationStore().getCurrentConversation());
     }
 
     @Override
@@ -1278,14 +1254,14 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
     @Override
     public void sendRecording(AudioAssetForUpload audioAssetForUpload, AudioEffect appliedAudioEffect) {
-        getStoreFactory().getConversationStore().sendMessage(audioAssetForUpload, assetErrorHandlerAudio);
+        getStoreFactory().conversationStore().sendMessage(audioAssetForUpload, assetErrorHandlerAudio);
         hideAudioMessageRecording();
         TrackingUtils.tagSentAudioMessageEvent(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
                                                audioAssetForUpload,
                                                appliedAudioEffect,
                                                false,
                                                false,
-                                               getStoreFactory().getConversationStore().getCurrentConversation());
+                                               getStoreFactory().conversationStore().getCurrentConversation());
         extendedCursorContainer.close(true);
 
     }
@@ -1469,7 +1445,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                                          source,
                                          this);
         imagePreviewLayout.setAccentColor(getControllerFactory().getAccentColorController().getAccentColor().getColor());
-        imagePreviewLayout.setTitle(getStoreFactory().getConversationStore().getCurrentConversation().getName());
+        imagePreviewLayout.setTitle(getStoreFactory().conversationStore().getCurrentConversation().getName());
 
         containerPreview.addView(imagePreviewLayout);
         openPreview(containerPreview);
@@ -1524,9 +1500,9 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
     @Override
     public void onSendPictureFromPreview(ImageAsset imageAsset, ImagePreviewLayout.Source source) {
-        getStoreFactory().getConversationStore().sendMessage(imageAsset);
+        getStoreFactory().conversationStore().sendMessage(imageAsset);
         TrackingUtils.onSentPhotoMessage(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
-                                         getStoreFactory().getConversationStore().getCurrentConversation(),
+                                         getStoreFactory().conversationStore().getCurrentConversation(),
                                          source);
         extendedCursorContainer.close(true);
 
@@ -1539,7 +1515,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             case FILE_SHARING:
                 sharingUris.clear();
                 if (PermissionUtils.hasSelfPermissions(getActivity(), FILE_SHARING_PERMISSION)) {
-                    getStoreFactory().getConversationStore().sendMessage(AssetFactory.fromContentUri(uri),
+                    getStoreFactory().conversationStore().sendMessage(AssetFactory.fromContentUri(uri),
                                                                          assetErrorHandler);
                 } else {
                     sharingUris.add(uri);
@@ -1557,7 +1533,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new SentVideoMessageEvent((int) (AssetUtils.getVideoAssetDurationMilliSec(
                     getContext(),
                     uri) / 1000),
-                                                                                                  getStoreFactory().getConversationStore().getCurrentConversation(),
+                                                                                                  getStoreFactory().conversationStore().getCurrentConversation(),
                                                                                                   SentVideoMessageEvent.Source.CURSOR_BUTTON));
                 break;
             case VIDEO:
@@ -1565,13 +1541,13 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new SentVideoMessageEvent((int) (AssetUtils.getVideoAssetDurationMilliSec(
                     getContext(),
                     uri) / 1000),
-                                                                                                  getStoreFactory().getConversationStore().getCurrentConversation(),
+                                                                                                  getStoreFactory().conversationStore().getCurrentConversation(),
                                                                                                   SentVideoMessageEvent.Source.KEYBOARD));
                 break;
             case CAMERA:
                 sendImage(uri);
                 TrackingUtils.onSentPhotoMessage(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
-                                                 getStoreFactory().getConversationStore().getCurrentConversation(),
+                                                 getStoreFactory().conversationStore().getCurrentConversation(),
                                                  SentPictureEvent.Source.CAMERA,
                                                  SentPictureEvent.Method.FULL_SCREEN);
                 extendedCursorContainer.close(true);
@@ -1581,7 +1557,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
     private void sendVideo(URI uri) {
         AssetForUpload assetForUpload = AssetFactory.fromContentUri(uri);
-        getStoreFactory().getConversationStore().sendMessage(assetForUpload, assetErrorHandlerVideo);
+        getStoreFactory().conversationStore().sendMessage(assetForUpload, assetErrorHandlerVideo);
 
         getControllerFactory().getNavigationController().setRightPage(Page.MESSAGE_STREAM, TAG);
         extendedCursorContainer.close(true);
@@ -1590,7 +1566,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     private void sendImage(URI uri) {
         ImageAsset imageAsset = ImageAssetFactory.getImageAsset(uri);
 
-        getStoreFactory().getConversationStore().sendMessage(imageAsset);
+        getStoreFactory().conversationStore().sendMessage(imageAsset);
     }
 
     @Override
@@ -1644,7 +1620,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     public void onExtendedCursorClosed(ExtendedCursorContainer.Type lastType) {
         cursorView.onExtendedCursorClosed();
         if (lastType == ExtendedCursorContainer.Type.EPHEMERAL) {
-            EphemeralExpiration expiration = getStoreFactory().getConversationStore().getCurrentConversation().getEphemeralExpiration();
+            EphemeralExpiration expiration = getStoreFactory().conversationStore().getCurrentConversation().getEphemeralExpiration();
             if (!expiration.equals(EphemeralExpiration.NONE)) {
                 getControllerFactory().getUserPreferencesController().setLastEphemeralValue(expiration.milliseconds);
             }
@@ -1666,7 +1642,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         if (close) {
             extendedCursorContainer.close(false);
         }
-        getStoreFactory().getConversationStore().getCurrentConversation().setEphemeralExpiration(expiration);
+        getStoreFactory().conversationStore().getCurrentConversation().setEphemeralExpiration(expiration);
     }
 
     public interface Container {

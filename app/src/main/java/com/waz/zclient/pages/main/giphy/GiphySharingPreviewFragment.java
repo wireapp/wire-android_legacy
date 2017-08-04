@@ -203,8 +203,8 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
         KeyboardUtils.hideKeyboard(getActivity());
         giphyGridViewAdapter.setScrollGifCallback(this);
         getControllerFactory().getAccentColorController().addAccentColorObserver(this);
-        getStoreFactory().getNetworkStore().addNetworkStoreObserver(this);
-        giphyTitle.setText(getStoreFactory().getConversationStore().getCurrentConversation().getName());
+        getStoreFactory().networkStore().addNetworkStoreObserver(this);
+        giphyTitle.setText(getStoreFactory().conversationStore().getCurrentConversation().getName());
     }
 
     @Override
@@ -227,7 +227,7 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
     @Override
     public void onStop() {
         getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
-        getStoreFactory().getNetworkStore().removeNetworkStoreObserver(this);
+        getStoreFactory().networkStore().removeNetworkStoreObserver(this);
 
         giphyGridViewAdapter.setScrollGifCallback(null);
         if (giphyResults != null) {
@@ -348,13 +348,13 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
         previewImageAssetView.clearImage();
         loadingIndicator.show();
         if (TextUtils.isEmpty(searchTerm) || searchTerm == null) {
-            giphyResults = getStoreFactory().getZMessagingApiStore()
+            giphyResults = getStoreFactory().zMessagingApiStore()
                                             .getApi()
                                             .getGiphy()
                                             .trending();
 
         } else {
-            giphyResults = getStoreFactory().getZMessagingApiStore()
+            giphyResults = getStoreFactory().zMessagingApiStore()
                                             .getApi()
                                             .getGiphy()
                                             .search(searchTerm);
@@ -397,16 +397,16 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
 
     private void sendGif() {
         TrackingUtils.onSentGifMessage(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
-                                       getStoreFactory().getConversationStore().getCurrentConversation());
+                                       getStoreFactory().conversationStore().getCurrentConversation());
 
         if (TextUtils.isEmpty(searchTerm) || searchTerm == null) {
-            getStoreFactory().getConversationStore().sendMessage(getString(R.string.giphy_preview__message_via_random_trending));
+            getStoreFactory().conversationStore().sendMessage(getString(R.string.giphy_preview__message_via_random_trending));
         } else {
-            getStoreFactory().getConversationStore().sendMessage(getString(R.string.giphy_preview__message_via_search,
+            getStoreFactory().conversationStore().sendMessage(getString(R.string.giphy_preview__message_via_search,
                                                                            searchTerm));
         }
-        getStoreFactory().getNetworkStore().doIfHasInternetOrNotifyUser(null);
-        getStoreFactory().getConversationStore().sendMessage(foundImage);
+        getStoreFactory().networkStore().doIfHasInternetOrNotifyUser(null);
+        getStoreFactory().conversationStore().sendMessage(foundImage);
         getControllerFactory().getGiphyController().close();
     }
 

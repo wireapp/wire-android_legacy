@@ -64,7 +64,6 @@ import com.waz.zclient.controllers.tracking.events.group.RemoveContactEvent;
 import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.core.controllers.tracking.attributes.ConversationType;
 import com.waz.zclient.core.stores.connect.IConnectStore;
-import com.waz.zclient.core.stores.connect.InboxLinkConversation;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
 import com.waz.zclient.core.stores.conversation.ConversationStoreObserver;
 import com.waz.zclient.core.stores.conversation.OnConversationLoadedListener;
@@ -202,7 +201,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
 
             IConversation currentConversation = getStoreFactory() != null &&
                                                 !getStoreFactory().isTornDown() ?
-                                                getStoreFactory().getConversationStore().getCurrentConversation() : null;
+                                                getStoreFactory().conversationStore().getCurrentConversation() : null;
             if (currentConversation != null &&
                 (currentConversation.getType() == IConversation.Type.ONE_TO_ONE ||
                  userRequester == IConnectStore.UserRequester.POPOVER)) {
@@ -257,13 +256,13 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     @Override
     public void onStart() {
         super.onStart();
-        getStoreFactory().getParticipantsStore().addParticipantsStoreObserver(this);
-        getStoreFactory().getConversationStore().addConversationStoreObserver(this);
+        getStoreFactory().participantsStore().addParticipantsStoreObserver(this);
+        getStoreFactory().conversationStore().addConversationStoreObserver(this);
         if (userRequester == IConnectStore.UserRequester.POPOVER) {
-            final User user = getStoreFactory().getSingleParticipantStore().getUser();
-            getStoreFactory().getConnectStore().loadUser(user.getId(), userRequester);
+            final User user = getStoreFactory().singleParticipantStore().getUser();
+            getStoreFactory().connectStore().loadUser(user.getId(), userRequester);
         } else {
-            getStoreFactory().getConversationStore().loadCurrentConversation(this);
+            getStoreFactory().conversationStore().loadCurrentConversation(this);
         }
         if (LayoutSpec.isPhone(getActivity())) {
             // ConversationScreenController is handled in ParticipantDialogFragment for tablets
@@ -274,12 +273,12 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
 
     @Override
     public void onStop() {
-        getStoreFactory().getParticipantsStore().setCurrentConversation(null);
-        getStoreFactory().getConversationStore().removeConversationStoreObserver(this);
+        getStoreFactory().participantsStore().setCurrentConversation(null);
+        getStoreFactory().conversationStore().removeConversationStoreObserver(this);
         if (LayoutSpec.isPhone(getActivity())) {
             getControllerFactory().getConversationScreenController().removeConversationControllerObservers(this);
         }
-        getStoreFactory().getParticipantsStore().removeParticipantsStoreObserver(this);
+        getStoreFactory().participantsStore().removeParticipantsStoreObserver(this);
         getControllerFactory().getPickUserController().removePickUserScreenControllerObserver(this);
 
         super.onStop();
@@ -312,7 +311,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     public void onCurrentConversationHasChanged(IConversation fromConversation,
                                                 IConversation toConversation,
                                                 ConversationChangeRequester conversationChangeRequester) {
-        if (toConversation == null || toConversation instanceof InboxLinkConversation) {
+        if (toConversation == null) {
             return;
         }
         onConversationLoaded(toConversation);
@@ -410,8 +409,8 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
         ConfirmationCallback callback = new TwoButtonConfirmationCallback() {
             @Override
             public void positiveButtonClicked(boolean checkboxIsSelected) {
-                getStoreFactory().getConversationStore().setCurrentConversationToNext(ConversationChangeRequester.BLOCK_USER);
-                getStoreFactory().getConnectStore().blockUser(user);
+                getStoreFactory().conversationStore().setCurrentConversationToNext(ConversationChangeRequester.BLOCK_USER);
+                getStoreFactory().connectStore().blockUser(user);
                 getControllerFactory().getConversationScreenController().hideUser();
                 if (LayoutSpec.isTablet(getActivity())) {
                     getControllerFactory().getConversationScreenController().hideParticipants(false, true);
@@ -481,16 +480,16 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
                                                                                                         DeleteConversationEvent.Response.CANCEL));
                     return;
                 }
-                IConversation currentConversation = getStoreFactory().getConversationStore().getCurrentConversation();
+                IConversation currentConversation = getStoreFactory().conversationStore().getCurrentConversation();
                 boolean deleteCurrentConversation = conversation != null && currentConversation != null &&
                                                     conversation.getId().equals(currentConversation.getId());
-                getStoreFactory().getConversationStore().deleteConversation(conversation, checkboxIsSelected);
+                getStoreFactory().conversationStore().deleteConversation(conversation, checkboxIsSelected);
                 ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new DeleteConversationEvent(ConversationType.getValue(
                     conversation),
                                                                                                     DeleteConversationEvent.Context.PARTICIPANTS,
                                                                                                     DeleteConversationEvent.Response.DELETE));
                 if (deleteCurrentConversation) {
-                    getStoreFactory().getConversationStore().setCurrentConversationToNext(ConversationChangeRequester.DELETE_CONVERSATION);
+                    getStoreFactory().conversationStore().setCurrentConversationToNext(ConversationChangeRequester.DELETE_CONVERSATION);
                 }
                 if (LayoutSpec.isTablet(getActivity())) {
                     getControllerFactory().getConversationScreenController().hideParticipants(false, true);
@@ -526,7 +525,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     }
 
     public void toggleArchiveConversation(final IConversation conversation, final boolean archive) {
-        if (getStoreFactory().getConversationStore() != null) {
+        if (getStoreFactory().conversationStore() != null) {
             getControllerFactory().getNavigationController().setVisiblePage(Page.CONVERSATION_LIST, TAG);
             getControllerFactory().getConversationScreenController().hideParticipants(false, true);
 
@@ -536,7 +535,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
                     if (getContainer() == null) {
                         return;
                     }
-                    getStoreFactory().getConversationStore().archive(conversation, archive);
+                    getStoreFactory().conversationStore().archive(conversation, archive);
                     if (getControllerFactory() == null ||
                         getControllerFactory().isTornDown()) {
                         return;
@@ -560,7 +559,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
         }
 
         if (LayoutSpec.isTablet(getActivity())) {
-            final User user = getStoreFactory().getSingleParticipantStore()
+            final User user = getStoreFactory().singleParticipantStore()
                                                .getUser();
 
             if (user == null) {
@@ -676,7 +675,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
         getControllerFactory().getConversationScreenController().setSingleConversation(conversation.getType().equals(
             IConversation.Type.ONE_TO_ONE));
         getControllerFactory().getConversationScreenController().setMemberOfConversation(conversation.isMemberOfConversation());
-        getStoreFactory().getParticipantsStore().setCurrentConversation(conversation);
+        getStoreFactory().participantsStore().setCurrentConversation(conversation);
         conversationModelObserver.setAndUpdate(conversation);
     }
 
@@ -757,7 +756,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     @Override
     public void onShowUser(final User user) {
         if (user.isMe()) {
-            getStoreFactory().getSingleParticipantStore().setUser(user);
+            getStoreFactory().singleParticipantStore().setUser(user);
             openUserProfileFragment(SingleParticipantFragment.newInstance(false,
                                                                           IConnectStore.UserRequester.PARTICIPANTS),
                                     SingleParticipantFragment.TAG);
@@ -808,7 +807,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     }
 
     private void showAcceptedUser(final User user) {
-        getStoreFactory().getSingleParticipantStore().setUser(user);
+        getStoreFactory().singleParticipantStore().setUser(user);
         openUserProfileFragment(SingleParticipantFragment.newInstance(false,
             IConnectStore.UserRequester.PARTICIPANTS),
             SingleParticipantFragment.TAG);
@@ -909,7 +908,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
                 new Handler().post(new Runnable() {
                     @Override
                     public void run() {
-                        getStoreFactory().getConversationStore().getCurrentConversation().removeMember(user);
+                        getStoreFactory().conversationStore().getCurrentConversation().removeMember(user);
                         ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new RemoveContactEvent(true,
                                                                                                        getParticipantsCount()));
                     }
@@ -955,7 +954,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     }
 
     private int getParticipantsCount() {
-        return getStoreFactory().getConversationStore().getCurrentConversation().getUsers().size();
+        return getStoreFactory().conversationStore().getCurrentConversation().getUsers().size();
     }
 
     @Override
@@ -977,7 +976,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     @Override
     public void onAcceptedConnectRequest(final IConversation conversation) {
         getControllerFactory().getConversationScreenController().hideUser();
-        getStoreFactory().getConversationStore().setCurrentConversation(conversation,
+        getStoreFactory().conversationStore().setCurrentConversation(conversation,
                                                                         ConversationChangeRequester.START_CONVERSATION);
     }
 
@@ -990,7 +989,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     @Override
     public void onUnblockedUser(IConversation restoredConversationWithUser) {
         getControllerFactory().getConversationScreenController().hideUser();
-        getStoreFactory().getConversationStore().setCurrentConversation(restoredConversationWithUser,
+        getStoreFactory().conversationStore().setCurrentConversation(restoredConversationWithUser,
                                                                         ConversationChangeRequester.START_CONVERSATION);
     }
 
@@ -1016,12 +1015,12 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
 
     @Override
     public void onSelectedUsers(List<User> users, ConversationChangeRequester requester) {
-        IConversation currentConversation = getStoreFactory().getConversationStore().getCurrentConversation();
+        IConversation currentConversation = getStoreFactory().conversationStore().getCurrentConversation();
         if (currentConversation.getType() == IConversation.Type.ONE_TO_ONE) {
             getControllerFactory().getPickUserController().hidePickUser(getCurrentPickerDestination(), false);
             dismissDialog();
-            getStoreFactory().getConversationStore().createGroupConversation(users, requester);
-            if (!getStoreFactory().getNetworkStore().hasInternetConnection()) {
+            getStoreFactory().conversationStore().createGroupConversation(users, requester);
+            if (!getStoreFactory().networkStore().hasInternetConnection()) {
                 ViewUtils.showAlertDialog(getActivity(),
                                           R.string.conversation__create_group_conversation__no_network__title,
                                           R.string.conversation__create_group_conversation__no_network__message,
@@ -1033,7 +1032,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
         } else if (currentConversation.getType() == IConversation.Type.GROUP) {
             currentConversation.addMembers(users);
             getControllerFactory().getPickUserController().hidePickUser(getCurrentPickerDestination(), false);
-            if (!getStoreFactory().getNetworkStore().hasInternetConnection()) {
+            if (!getStoreFactory().networkStore().hasInternetConnection()) {
                 ViewUtils.showAlertDialog(getActivity(),
                                           R.string.conversation__add_user__no_network__title,
                                           R.string.conversation__add_user__no_network__message,
@@ -1076,7 +1075,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
 
         IConversation currentConversation = getStoreFactory() != null &&
             !getStoreFactory().isTornDown() ?
-            getStoreFactory().getConversationStore().getCurrentConversation() : null;
+            getStoreFactory().conversationStore().getCurrentConversation() : null;
         String conversationId = currentConversation == null ? null : currentConversation.getId();
 
         if (!groupConversation && otherUser != null) {
@@ -1202,10 +1201,10 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
             @Override
             public void positiveButtonClicked(boolean checkboxIsSelected) {
                 ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new LeaveGroupConversationEvent(true,
-                                                                                                        getStoreFactory().getConversationStore().getCurrentConversation().getUsers().size()));
+                                                                                                        getStoreFactory().conversationStore().getCurrentConversation().getUsers().size()));
 
-                getStoreFactory().getConversationStore().leave(conversation);
-                getStoreFactory().getConversationStore().setCurrentConversationToNext(
+                getStoreFactory().conversationStore().leave(conversation);
+                getStoreFactory().conversationStore().setCurrentConversationToNext(
                     ConversationChangeRequester.LEAVE_CONVERSATION);
                 if (LayoutSpec.isTablet(getActivity())) {
                     getControllerFactory().getConversationScreenController().hideParticipants(false, true);
@@ -1215,7 +1214,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
             @Override
             public void negativeButtonClicked() {
                 ((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class).tagEvent(new LeaveGroupConversationEvent(false,
-                                                                                                        getStoreFactory().getConversationStore().getCurrentConversation().getUsers().size()));
+                                                                                                        getStoreFactory().conversationStore().getCurrentConversation().getUsers().size()));
             }
 
             @Override

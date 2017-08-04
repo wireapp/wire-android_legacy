@@ -60,7 +60,7 @@ public class EmailVerifyEmailFragment extends BaseFragment<EmailVerifyEmailFragm
                                   }
                               })
                               .start();
-                getStoreFactory().getAppEntryStore().resendEmail();
+                getStoreFactory().appEntryStore().resendEmail();
             }
         });
 
@@ -77,7 +77,7 @@ public class EmailVerifyEmailFragment extends BaseFragment<EmailVerifyEmailFragm
     public void onResume() {
         super.onResume();
         onAccentColorHasChanged(getContainer().getAccentColor());
-        onEmailLoaded(getStoreFactory().getAppEntryStore().getEmail());
+        onEmailLoaded(getStoreFactory().appEntryStore().getEmail());
         backButton.setOnClickListener(this);
         TextViewUtils.boldText(checkEmailTextView);
     }
@@ -111,7 +111,7 @@ public class EmailVerifyEmailFragment extends BaseFragment<EmailVerifyEmailFragm
     }
 
     private void goBack() {
-        getStoreFactory().getAppEntryStore().onBackPressed();
+        getStoreFactory().appEntryStore().onBackPressed();
     }
 
     @Override

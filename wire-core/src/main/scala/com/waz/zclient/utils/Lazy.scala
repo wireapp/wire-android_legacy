@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2017 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,11 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.core.stores.pickuser;
+package com.waz.zclient.utils
 
-import com.waz.api.User;
-import com.waz.zclient.core.stores.IStore;
+import com.waz.utils.returning
 
-public interface IPickUserStore extends IStore {
-    User getUser(String userId);
+/*
+  A lazy val with a tearDown method. You can call tearDown without checking if the value is initialized already.
+ */
+class Lazy[T](init: () => T, _tearDown: (T) => Unit) {
+  private var initialized = false
+
+  private lazy val value: T = returning( init() ){ _ => initialized = true }
+
+  def apply(): T = value
+
+  def tearDown(): Unit = if (initialized) _tearDown(value)
+}
+
+object Lazy {
+  def apply[T](init: => T): Lazy[T] = new Lazy[T](() => init, (_: T) => {})
+  def apply[T](init: => T, _tearDown: (T) => Unit): Lazy[T] = new Lazy[T](() => init, _tearDown)
 }

@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2017 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,12 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.core.stores.conversation;
+package com.waz.zclient.core.stores.profile
 
-import com.waz.api.IConversation;
+trait ProfileStoreObserver {
+  def onAccentColorChangedRemotely(sender: Any, color: Int): Unit
 
-import java.util.List;
+  def onMyNameHasChanged(sender: Any, myName: String): Unit
 
-public interface OnInboxLoadedListener {
-    void onConnectRequestInboxConversationsLoaded(List<IConversation> conversations, InboxLoadRequester inboxLoadRequester);
+  def onMyEmailHasChanged(myEmail: String, isVerified: Boolean): Unit
+
+  def onMyPhoneHasChanged(myPhone: String, isVerified: Boolean): Unit
+
+  def onPhoneUpdateFailed(myPhone: String, errorCode: Int, message: String, label: String): Unit
+
+  def onMyEmailAndPasswordHasChanged(myEmail: String): Unit
+
+  def onMyUsernameHasChanged(myUsername: String): Unit
 }
