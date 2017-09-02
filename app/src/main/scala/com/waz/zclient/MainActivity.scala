@@ -53,7 +53,7 @@ import com.waz.zclient.core.controllers.tracking.events.media.OpenedMediaActionE
 import com.waz.zclient.core.controllers.tracking.events.session.LoggedOutEvent
 import com.waz.zclient.core.stores.api.ZMessagingApiStoreObserver
 import com.waz.zclient.core.stores.connect.{ConnectStoreObserver, IConnectStore}
-import com.waz.zclient.core.stores.conversation.{ConversationChangeRequester, ConversationStoreObserver}
+import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.core.stores.profile.ProfileStoreObserver
 import com.waz.zclient.fragments.ConnectivityFragment
 import com.waz.zclient.pages.main.grid.GridFragment
@@ -80,8 +80,7 @@ class MainActivity extends BaseActivity
   with NavigationControllerObserver
   with CallingObserver
   with OtrDeviceLimitFragment.Container
-  with ZMessagingApiStoreObserver
-  with ConversationStoreObserver {
+  with ZMessagingApiStoreObserver {
 
   import Threading.Implicits.Background
 
@@ -178,7 +177,6 @@ class MainActivity extends BaseActivity
     getStoreFactory.connectStore.addConnectRequestObserver(this)
     getControllerFactory.getNavigationController.addNavigationControllerObserver(this)
     getControllerFactory.getCallingController.addCallingObserver(this)
-    getStoreFactory.conversationStore.addConversationStoreObserver(this)
 
     super.onStart()
     //This is needed to drag the user back to the calling activity if they open the app again during a call
@@ -232,7 +230,6 @@ class MainActivity extends BaseActivity
   override def onStop() = {
     super.onStop()
     info("onStop")
-    getStoreFactory.conversationStore.removeConversationStoreObserver(this)
     getControllerFactory.getCallingController.removeCallingObserver(this)
     getStoreFactory.zMessagingApiStore.removeApiObserver(this)
     getStoreFactory.connectStore.removeConnectRequestObserver(this)
@@ -434,16 +431,6 @@ class MainActivity extends BaseActivity
 
   def onAccentColorChangedRemotely(sender: Any, color: Int) = getControllerFactory.getAccentColorController.setColor(AccentColorChangeRequester.REMOTE, color)
 
-  def onMyNameHasChanged(sender: Any, myName: String) = ()
-
-  def onMyEmailHasChanged(myEmail: String, isVerified: Boolean) = ()
-
-  def onMyPhoneHasChanged(myPhone: String, isVerified: Boolean) = ()
-
-  def onPhoneUpdateFailed(myPhone: String, errorCode: Int, message: String, label: String) = ()
-
-  def onMyEmailAndPasswordHasChanged(myEmail: String) = ()
-
   //TODO this is all tracking - make a page controller and set a signal the global tracking controller can listen to
   def onPageVisible(page: Page) = {
     getControllerFactory.getGlobalLayoutController.setSoftInputModeForPage(page)
@@ -591,16 +578,6 @@ class MainActivity extends BaseActivity
     }(Threading.Ui)
   }
 
-  def onConversationListUpdated(conversationsList: ConversationsList) = ()
-
-  def onConversationListStateHasChanged(state: ConversationsList.ConversationsListState) = ()
-
-  def onCurrentConversationHasChanged(fromConversation: IConversation, toConversation: IConversation, conversationChangerSender: ConversationChangeRequester) = ()
-
-  def onConversationSyncingStateHasChanged(syncState: SyncState) = ()
-
-  def onMenuConversationHasChanged(fromConversation: IConversation) = ()
-
   private def checkForUnsupportedEmojis() =
     for {
       cf <- Option(getControllerFactory) if !cf.isTornDown
@@ -621,8 +598,6 @@ class MainActivity extends BaseActivity
 
       if (missing.nonEmpty) prefs.setUnsupportedEmoji(missing.asJava, Emojis.VERSION)
     }
-
-  def onMyUsernameHasChanged(myUsername: String) = ()
 }
 
 object MainActivity {

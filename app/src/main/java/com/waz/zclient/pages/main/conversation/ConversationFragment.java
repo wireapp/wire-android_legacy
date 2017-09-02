@@ -641,11 +641,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     }
 
     @Override
-    public void onConversationListStateHasChanged(ConversationsList.ConversationsListState state) {
-
-    }
-
-    @Override
     public void onCurrentConversationHasChanged(final IConversation fromConversation,
                                                 final IConversation toConversation,
                                                 final ConversationChangeRequester conversationChangeRequester) {

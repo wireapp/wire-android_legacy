@@ -19,16 +19,4 @@ package com.waz.zclient.core.stores.profile;
 
 public interface ProfileStoreObserver {
     void onAccentColorChangedRemotely(Object sender, int color);
-
-    void onMyNameHasChanged(Object sender, String myName);
-
-    void onMyEmailHasChanged(String myEmail, boolean isVerified);
-
-    void onMyPhoneHasChanged(String myPhone, boolean isVerified);
-
-    void onPhoneUpdateFailed(String myPhone, int errorCode, String message, String label);
-
-    void onMyEmailAndPasswordHasChanged(String myEmail);
-
-    void onMyUsernameHasChanged(String myUsername);
 }

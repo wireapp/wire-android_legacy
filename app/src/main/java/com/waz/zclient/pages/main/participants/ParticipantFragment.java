@@ -305,9 +305,6 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     public void onConversationListUpdated(@NonNull ConversationsList conversationsList) { }
 
     @Override
-    public void onConversationListStateHasChanged(ConversationsList.ConversationsListState state) { }
-
-    @Override
     public void onCurrentConversationHasChanged(IConversation fromConversation,
                                                 IConversation toConversation,
                                                 ConversationChangeRequester conversationChangeRequester) {

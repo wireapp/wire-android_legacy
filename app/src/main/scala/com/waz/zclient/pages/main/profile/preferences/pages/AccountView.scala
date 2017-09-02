@@ -199,14 +199,6 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
     } (Threading.Ui)
   }
 
-  /**
-    * TODO store pending email address in AccountData
-    * if a user backs out of the verify email fragment before they've actually verified it, then we lose the new
-    * email and the fact there is a pending verification for this user. This can be a little confusing
-    *
-    * We could temporarily store the email in the account data and continually remind the user to verifiy it
-    * every time they open the account settings, for example (until say 24 hours have passed)
-    */
   view.onEmailClick.onUi { _ =>
     import Threading.Implicits.Ui
     for {

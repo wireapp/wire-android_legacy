@@ -26,8 +26,6 @@ import com.waz.api.SyncState;
 public interface ConversationStoreObserver {
     void onConversationListUpdated(@NonNull ConversationsList conversationsList);
 
-    void onConversationListStateHasChanged(ConversationsList.ConversationsListState state);
-
     void onCurrentConversationHasChanged(IConversation fromConversation,
                                          IConversation toConversation,
                                          ConversationChangeRequester conversationChangerSender);

@@ -141,11 +141,6 @@ public class SecondPageFragment extends BaseFragment<SecondPageFragment.Containe
     }
 
     @Override
-    public void onConversationListStateHasChanged(ConversationsList.ConversationsListState state) {
-
-    }
-
-    @Override
     public void onCurrentConversationHasChanged(IConversation fromConversation,
                                                 final IConversation toConversation,
                                                 final ConversationChangeRequester conversationChangerSender) {

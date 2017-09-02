@@ -17,8 +17,6 @@
  */
 package com.waz.zclient.core.stores.profile;
 
-import com.waz.api.CredentialsUpdateListener;
-import com.waz.api.ImageAsset;
 import com.waz.api.Self;
 import com.waz.api.User;
 import com.waz.api.ZMessagingApi;
@@ -29,39 +27,13 @@ public interface IProfileStore extends IStore {
     /* add an observer to this store */
     void addProfileStoreObserver(ProfileStoreObserver profileStoreObserver);
 
-    void addProfileStoreAndUpdateObserver(ProfileStoreObserver profileStoreObserver);
-
     /* remove an observer from this store */
     void removeProfileStoreObserver(ProfileStoreObserver profileStoreObserver);
 
     void setUser(Self selfUser);
 
-    /*  The name of the user */
-    String getMyName();
-
-    void setMyName(String myName);
-
     /*  The email of the user */
     String getMyEmail();
-
-    /*  The phone numer of the user */
-    String getMyPhoneNumber();
-
-    boolean isEmailVerified();
-
-    boolean isPhoneVerified();
-
-    boolean hasIncomingDevices();
-
-    void setMyPhoneNumber(String phone, CredentialsUpdateListener credentialsUpdateListener);
-
-    void deleteMyPhoneNumber(CredentialsUpdateListener credentialsUpdateListener);
-
-    void setMyEmail(String email, CredentialsUpdateListener credentialsUpdateListener);
-
-    void deleteMyEmail(CredentialsUpdateListener credentialsUpdateListener);
-
-    void setMyEmailAndPassword(String email, String password, CredentialsUpdateListener credentialsUpdateListener);
 
     void resendVerificationEmail(String myEmail);
 
@@ -72,21 +44,6 @@ public interface IProfileStore extends IStore {
 
     /* the color chosen by the user */
     int getAccentColor();
-
-    /*  if the user chose a new color */
-    void setAccentColor(Object sender, int color);
-
-    /*  indicates if it app is launched for the first time */
-    boolean isFirstLaunch();
-
-    /* notifies self store that app is launched for the very first time */
-    void setIsFirstLaunch(boolean isFirstLaunch);
-
-    void setUserPicture(ImageAsset imageAsset);
-
-    boolean hasProfileImage();
-
-    void addEmailAndPassword(String email, String password, CredentialsUpdateListener credentialUpdateListener);
 
     void submitCode(String myPhoneNumber,
                     String code,

@@ -286,11 +286,6 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
     }
 
     @Override
-    public void onConversationListStateHasChanged(ConversationsList.ConversationsListState state) {
-
-    }
-
-    @Override
     public void onCurrentConversationHasChanged(IConversation fromConversation,
                                                 IConversation toConversation,
                                                 ConversationChangeRequester conversationChangerSender) {

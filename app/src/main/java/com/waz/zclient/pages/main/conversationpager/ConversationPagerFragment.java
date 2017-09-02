@@ -139,11 +139,6 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
     }
 
     @Override
-    public void onConversationListStateHasChanged(ConversationsList.ConversationsListState state) {
-
-    }
-
-    @Override
     public void onCurrentConversationHasChanged(IConversation fromConversation,
                                                 final IConversation toConversation,
                                                 ConversationChangeRequester conversationChangeRequester) {

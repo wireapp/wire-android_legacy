@@ -17,8 +17,6 @@
  */
 package com.waz.zclient.core.stores.profile;
 
-import com.waz.api.CoreList;
-import com.waz.api.OtrClient;
 import com.waz.api.Self;
 import com.waz.api.UpdateListener;
 
@@ -28,19 +26,9 @@ import java.util.Set;
 public abstract class ProfileStore implements IProfileStore, UpdateListener {
 
     // observers
-    protected Set<ProfileStoreObserver> profileStoreObservers = new HashSet<>();
-
-    // is first launch
-    private boolean isFirstLaunch;
+    private Set<ProfileStoreObserver> profileStoreObservers = new HashSet<>();
 
     protected Self selfUser;
-    private CoreList<OtrClient> otherClients;
-    private boolean hasOtherUnverifiedClients;
-
-    @Override
-    public boolean isFirstLaunch() {
-        return isFirstLaunch;
-    }
 
     /* add an observer to this store */
     public void addProfileStoreObserver(ProfileStoreObserver profileStoreObserver) {
@@ -48,31 +36,15 @@ public abstract class ProfileStore implements IProfileStore, UpdateListener {
     }
 
     @Override
-    public void addProfileStoreAndUpdateObserver(ProfileStoreObserver profileStoreObserver) {
-        profileStoreObservers.add(profileStoreObserver);
-        if (selfUser == null) {
-            return;
-        }
-        profileStoreObserver.onMyNameHasChanged(this, selfUser.getName());
-        profileStoreObserver.onMyEmailHasChanged(selfUser.getEmail(), selfUser.isEmailVerified());
-        profileStoreObserver.onMyPhoneHasChanged(selfUser.getPhone(), selfUser.isPhoneVerified());
-        profileStoreObserver.onAccentColorChangedRemotely(this, selfUser.getAccent().getColor());
-        profileStoreObserver.onMyUsernameHasChanged(selfUser.getUsername());
-    }
-
-    @Override
     public void setUser(Self selfUser) {
         if (this.selfUser != null) {
             this.selfUser.removeUpdateListener(this);
-            otherClients = null;
         }
         this.selfUser = selfUser;
 
         if (selfUser == null) {
             return;
         }
-
-        otherClients = selfUser.getIncomingOtrClients();
         this.selfUser.addUpdateListener(this);
         updated();
     }
@@ -82,48 +54,9 @@ public abstract class ProfileStore implements IProfileStore, UpdateListener {
         profileStoreObservers.remove(profileStoreObserver);
     }
 
-    @Override
-    public void setIsFirstLaunch(boolean isFirstLaunch) {
-        this.isFirstLaunch = isFirstLaunch;
-    }
-
     protected void notifyMyColorHasChanged(Object sender, int color) {
         for (ProfileStoreObserver profileStoreObserver : profileStoreObservers) {
             profileStoreObserver.onAccentColorChangedRemotely(sender, color);
         }
-    }
-
-    protected void notifyNameHasChanged(Object sender, String myName) {
-        for (ProfileStoreObserver profileStoreObserver : profileStoreObservers) {
-            profileStoreObserver.onMyNameHasChanged(sender, myName);
-        }
-    }
-
-    protected void notifyEmailHasChanged(String myEmail, boolean isVerified) {
-        for (ProfileStoreObserver profileStoreObserver : profileStoreObservers) {
-            profileStoreObserver.onMyEmailHasChanged(myEmail, isVerified);
-        }
-    }
-
-    protected void notifyPhoneHasChanged(String myPhone, boolean isVerified) {
-        for (ProfileStoreObserver profileStoreObserver : profileStoreObservers) {
-            profileStoreObserver.onMyPhoneHasChanged(myPhone, isVerified);
-        }
-    }
-
-    protected void notifyEmailAndPasswordHasChanged(String email) {
-        for (ProfileStoreObserver profileStoreObserver : profileStoreObservers) {
-            profileStoreObserver.onMyEmailAndPasswordHasChanged(email);
-        }
-    }
-
-    protected void notifyUsernameHasChanged(String myUsername) {
-        for (ProfileStoreObserver profileStoreObserver : profileStoreObservers) {
-            profileStoreObserver.onMyUsernameHasChanged(myUsername);
-        }
-    }
-
-    public boolean hasIncomingDevices() {
-        return otherClients.size() > 0;
     }
 }

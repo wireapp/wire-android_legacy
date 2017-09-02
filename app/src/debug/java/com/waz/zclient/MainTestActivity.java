@@ -96,31 +96,6 @@ public class MainTestActivity extends TestActivity implements MainPhoneFragment.
     }
 
     @Override
-    public void onMyNameHasChanged(Object sender, String myName) {
-
-    }
-
-    @Override
-    public void onMyEmailHasChanged(String myEmail, boolean isVerified) {
-
-    }
-
-    @Override
-    public void onMyPhoneHasChanged(String myPhone, boolean isVerified) {
-
-    }
-
-    @Override
-    public void onPhoneUpdateFailed(String myPhone, int errorCode, String message, String label) {
-
-    }
-
-    @Override
-    public void onMyEmailAndPasswordHasChanged(String myEmail) {
-
-    }
-
-    @Override
     public void onInitialized(Self self) {
 
     }
@@ -132,11 +107,6 @@ public class MainTestActivity extends TestActivity implements MainPhoneFragment.
 
     @Override
     public void onForceClientUpdate() {
-
-    }
-
-    @Override
-    public void onMyUsernameHasChanged(String myUsername) {
 
     }
 }

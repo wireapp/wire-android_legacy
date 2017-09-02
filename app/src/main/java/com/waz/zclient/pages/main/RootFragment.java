@@ -347,11 +347,6 @@ public class RootFragment extends BaseFragment<RootFragment.Container> implement
     public void onConversationListUpdated(ConversationsList conversationsList) {
     }
 
-    @Override
-    public void onConversationListStateHasChanged(ConversationsList.ConversationsListState state) {
-
-    }
-
     private void openMessageStream(Page page, Fragment fragment, String tag) {
         getControllerFactory().getNavigationController().setRightPage(page, TAG);
 

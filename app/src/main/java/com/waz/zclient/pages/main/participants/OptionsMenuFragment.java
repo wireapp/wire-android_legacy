@@ -183,11 +183,6 @@ public class OptionsMenuFragment extends BaseFragment<OptionsMenuFragment.Contai
     }
 
     @Override
-    public void onConversationListStateHasChanged(ConversationsList.ConversationsListState state) {
-
-    }
-
-    @Override
     public void onCurrentConversationHasChanged(IConversation fromConversation,
                                                 IConversation toConversation,
                                                 ConversationChangeRequester conversationChangerSender) {

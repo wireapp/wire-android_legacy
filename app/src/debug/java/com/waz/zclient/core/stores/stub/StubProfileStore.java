@@ -17,16 +17,11 @@
  */
 package com.waz.zclient.core.stores.stub;
 
-import com.waz.api.CredentialsUpdateListener;
-import com.waz.api.ImageAsset;
 import com.waz.api.Self;
 import com.waz.api.User;
 import com.waz.api.ZMessagingApi;
 import com.waz.zclient.core.stores.profile.IProfileStore;
 import com.waz.zclient.core.stores.profile.ProfileStoreObserver;
-import java.lang.Object;
-import java.lang.Override;
-import java.lang.String;
 
 public class StubProfileStore implements IProfileStore {
   @Override
@@ -45,68 +40,13 @@ public class StubProfileStore implements IProfileStore {
   }
 
   @Override
-  public boolean hasProfileImage() {
-    return false;
-  }
-
-  @Override
-  public void setIsFirstLaunch(boolean isFirstLaunch) {
-
-  }
-
-  @Override
-  public void setMyName(String myName) {
-
-  }
-
-  @Override
-  public void addProfileStoreAndUpdateObserver(ProfileStoreObserver profileStoreObserver) {
-
-  }
-
-  @Override
   public void submitCode(String myPhoneNumber, String code, ZMessagingApi.PhoneNumberVerificationListener verificationListener) {
 
   }
 
   @Override
-  public void setAccentColor(Object sender, int color) {
-
-  }
-
-  @Override
-  public String getMyPhoneNumber() {
-    return null;
-  }
-
-  @Override
-  public void setMyEmailAndPassword(String email, String password, CredentialsUpdateListener credentialsUpdateListener) {
-
-  }
-
-  @Override
-  public String getMyName() {
-    return null;
-  }
-
-  @Override
-  public boolean hasIncomingDevices() {
-    return false;
-  }
-
-  @Override
   public String getMyEmail() {
     return null;
-  }
-
-  @Override
-  public boolean isEmailVerified() {
-    return false;
-  }
-
-  @Override
-  public void setUserPicture(ImageAsset imageAsset) {
-
   }
 
   @Override
@@ -120,31 +60,6 @@ public class StubProfileStore implements IProfileStore {
   }
 
   @Override
-  public void setMyEmail(String email, CredentialsUpdateListener credentialsUpdateListener) {
-
-  }
-
-  @Override
-  public void deleteMyEmail(CredentialsUpdateListener credentialsUpdateListener) {
-
-  }
-
-  @Override
-  public void addEmailAndPassword(String email, String password, CredentialsUpdateListener credentialUpdateListener) {
-
-  }
-
-  @Override
-  public void setMyPhoneNumber(String phone, CredentialsUpdateListener credentialsUpdateListener) {
-
-  }
-
-  @Override
-  public void deleteMyPhoneNumber(CredentialsUpdateListener credentialsUpdateListener) {
-
-  }
-
-  @Override
   public void setUser(Self selfUser) {
 
   }
@@ -152,16 +67,6 @@ public class StubProfileStore implements IProfileStore {
   @Override
   public void tearDown() {
 
-  }
-
-  @Override
-  public boolean isPhoneVerified() {
-    return false;
-  }
-
-  @Override
-  public boolean isFirstLaunch() {
-    return false;
   }
 
   @Override
