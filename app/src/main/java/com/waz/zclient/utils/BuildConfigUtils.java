@@ -22,7 +22,6 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Environment;
-import com.waz.api.AvsLogLevel;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.R;
 import timber.log.Timber;
@@ -81,24 +80,4 @@ public class BuildConfigUtils {
         return android.util.Log.ASSERT;
 
     }
-
-    public static AvsLogLevel getLogLevelAVS(Context context) {
-        if (BuildConfig.LOG_LEVEL_AVS == context.getResources().getInteger(R.integer.log_level_verbose)) {
-            return AvsLogLevel.DEBUG;
-        }
-        if (BuildConfig.LOG_LEVEL_AVS == context.getResources().getInteger(R.integer.log_level_debug)) {
-            return AvsLogLevel.DEBUG;
-        }
-        if (BuildConfig.LOG_LEVEL_AVS == context.getResources().getInteger(R.integer.log_level_info)) {
-            return AvsLogLevel.INFO;
-        }
-        if (BuildConfig.LOG_LEVEL_AVS == context.getResources().getInteger(R.integer.log_level_warn)) {
-            return AvsLogLevel.WARN;
-        }
-        if (BuildConfig.LOG_LEVEL_AVS == context.getResources().getInteger(R.integer.log_level_error)) {
-            return AvsLogLevel.ERROR;
-        }
-        return AvsLogLevel.ERROR;
-    }
-
 }
