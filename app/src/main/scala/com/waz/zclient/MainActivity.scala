@@ -384,20 +384,25 @@ class MainActivity extends BaseActivity
   def handleNotificationIntent(intent: Intent) = {
     import MessageNotificationsController.NotificationIntent
     verbose(s"handleNotificationIntent: ${intent.log}")
-    if (intent.fromNotification && intent.accountId.isDefined && intent.convId.isDefined) {
+    if (intent.fromNotification && intent.accountId.isDefined) {
       val accounts = ZMessaging.currentAccounts
-
       accounts.activeAccount.head.flatMap {
         case Some(acc) if intent.accountId.contains(acc.id) =>
-          CancellableFuture.delay(MainActivity.LaunchChangeConversationDelay).map { _ =>
-            val conv = getStoreFactory.conversationStore.getConversation(intent.convId.get.str)
-            verbose(s"setting conversation: ${conv.getId}")
-            getStoreFactory.conversationStore.setCurrentConversation(conv, ConversationChangeRequester.NOTIFICATION)
-            if (intent.startCall) startCall(false)
+          (intent.convId match {
+            case Some(id) =>
+              CancellableFuture.delay(MainActivity.LaunchChangeConversationDelay).map { _ =>
+                val conv = getStoreFactory.conversationStore.getConversation(intent.convId.get.str)
+                verbose(s"setting conversation: ${conv.getId}")
+                getStoreFactory.conversationStore.setCurrentConversation(conv, ConversationChangeRequester.NOTIFICATION)
+                if (intent.startCall) startCall(false)
+              } (Threading.Ui).future
+            case _ =>
+              Future.successful({})
+          }).map { _ =>
             //no longer need this intent - remove it to prevent it from being reused
             intent.clearExtras()
             setIntent(intent)
-          }(Threading.Ui)
+          }
         case _ => accounts.switchAccount(intent.accountId.get)
       }(Threading.Background)
     }
