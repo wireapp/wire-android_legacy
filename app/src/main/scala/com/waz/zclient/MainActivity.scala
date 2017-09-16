@@ -32,9 +32,10 @@ import com.waz.ZLog.{error, info, verbose, warn}
 import com.waz.api.{NetworkMode, _}
 import com.waz.model.{AccountId, ConvId}
 import com.waz.service.ZMessaging
+import com.waz.service.ZMessaging.clock
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
-import com.waz.utils.returning
+import com.waz.utils.{RichInstant, returning}
 import com.waz.zclient.AppEntryController.{DeviceLimitStage, EnterAppStage, Unknown}
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.CallPermissionsController
@@ -69,8 +70,9 @@ import com.waz.zclient.utils.{BuildConfigUtils, Emojis, HockeyCrashReporting, In
 import net.hockeyapp.android.{ExceptionHandler, NativeCrashManager}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.util.control.NonFatal
 
 class MainActivity extends BaseActivity
   with ActivityHelper
@@ -385,26 +387,43 @@ class MainActivity extends BaseActivity
     import MessageNotificationsController.NotificationIntent
     verbose(s"handleNotificationIntent: ${intent.log}")
     if (intent.fromNotification && intent.accountId.isDefined) {
-      val accounts = ZMessaging.currentAccounts
-      accounts.activeAccount.head.flatMap {
-        case Some(acc) if intent.accountId.contains(acc.id) =>
+      val switchAccount = {
+        val accounts = ZMessaging.currentAccounts
+        accounts.activeAccount.head.flatMap {
+          case Some(acc) if intent.accountId.contains(acc.id) => Future.successful(false)
+          case _ => accounts.switchAccount(intent.accountId.get).map(_ => true)
+        }
+      }
+
+      switchAccount.flatMap {
+        case false =>
+
           (intent.convId match {
             case Some(id) =>
               CancellableFuture.delay(MainActivity.LaunchChangeConversationDelay).map { _ =>
-                val conv = getStoreFactory.conversationStore.getConversation(intent.convId.get.str)
-                verbose(s"setting conversation: ${conv.getId}")
+                verbose(s"setting conversation: $id")
+                val conv = getStoreFactory.conversationStore.getConversation(id.str)
                 getStoreFactory.conversationStore.setCurrentConversation(conv, ConversationChangeRequester.NOTIFICATION)
                 if (intent.startCall) startCall(false)
-              } (Threading.Ui).future
+              }(Threading.Ui).future
             case _ =>
               Future.successful({})
           }).map { _ =>
             //no longer need this intent - remove it to prevent it from being reused
             intent.clearExtras()
             setIntent(intent)
-          }
-        case _ => accounts.switchAccount(intent.accountId.get)
-      }(Threading.Background)
+          } (Threading.Ui)
+        case true =>
+          //do nothing - intent will be handled again for conversation switching after account switch
+          Future.successful({})
+      }
+
+      try {
+        val t = clock.instant()
+        if (Await.result(switchAccount, 2.seconds)) verbose(s"Account switched before resuming activity lifecycle. Took ${t.until(clock.instant()).toMillis} ms")
+      } catch {
+        case NonFatal(e) => error("Failed to switch accounts", e)
+      }
     }
   }
 
