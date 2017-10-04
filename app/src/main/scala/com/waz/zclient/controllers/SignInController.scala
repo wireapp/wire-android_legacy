@@ -123,7 +123,7 @@ class SignInController(implicit inj: Injector, eventContext: EventContext, conte
           } yield response
         case _ => Future.successful(Right(()))
       }
-      _ = if (res.isRight) tracking.onSignInSuccessful(method)
+      _ = tracking.onSignIn(res, method)
     } yield res
   }
 

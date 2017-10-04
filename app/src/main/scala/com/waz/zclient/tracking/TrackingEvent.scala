@@ -55,6 +55,19 @@ case class SignInEvent(method: SignInMethod, invitation: Option[PersonalToken]) 
   })
 }
 
+case class SignInErrorEvent(method: SignInMethod, errorCode: Int, errorLabel: String) extends TrackingEvent {
+  override val name = method.signType match {
+    case Register => "registration.failed"
+    case Login    => "login.failed"
+  }
+  override val props = Some(returning (new JSONObject()) { o =>
+    val context = if (method.inputType == Email) "email" else "phone"
+    o.put("context", context)
+    o.put("error_code", errorCode)
+    o.put("error_label", errorLabel)
+  })
+}
+
 case class ContributionEvent(action: Action, conversationType: ConversationType, ephExp: EphemeralExpiration, withBot: Boolean) extends TrackingEvent {
   override val name = "contributed"
 
