@@ -107,3 +107,11 @@ object ContributionEvent {
     }
   }
 }
+
+case class ExceptionEvent(exceptionType: String, exceptionDetails: String) extends TrackingEvent {
+  override val name = "exception"
+  override val props = Some(returning(new JSONObject()) { o =>
+    o.put("exceptionType", exceptionType)
+    o.put("exceptionDetails", exceptionDetails)
+  })
+}
