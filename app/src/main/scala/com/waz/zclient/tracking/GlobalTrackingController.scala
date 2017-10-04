@@ -172,13 +172,18 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
   }
 
   //Should wait until a ZMS instance exists before firing the event
-  def onSignInSuccessful(method: SignInMethod): Unit = {
-    for {
-      acc <- ZMessaging.currentAccounts.activeAccount.collect { case Some(acc) => acc }.head
-      zms <- ZMessaging.currentAccounts.activeZms.collect { case Some(zms) => zms }.head
-    } yield {
-      //TODO when are generic tokens still used?
-      trackEvent(zms, SignInEvent(method, acc.invitationToken))
+  def onSignIn(response: Either[EntryError, Unit], method: SignInMethod): Unit = {
+    response match {
+      case Right(_) =>
+        for {
+          acc <- ZMessaging.currentAccounts.activeAccount.collect { case Some(acc) => acc }.head
+          zms <- ZMessaging.currentAccounts.activeZms.collect { case Some(zms) => zms }.head
+        } yield {
+          //TODO when are generic tokens still used?
+          trackEvent(zms, SignInEvent(method, acc.invitationToken))
+        }
+      case Left(error) =>
+        trackEvent(SignInEvent(method, None), None)
     }
   }
 
