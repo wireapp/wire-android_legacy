@@ -40,6 +40,7 @@ import com.waz.zclient.newreg.fragments.SignUpPhotoFragment.UNSPLASH_API_URL
 import com.waz.zclient.newreg.fragments.country.CountryController
 import com.waz.zclient.preferences.PreferencesController
 import com.waz.zclient.preferences.dialogs.ChangeHandleFragment
+import com.waz.zclient.tracking.{CrashController, GlobalTrackingController}
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.{HockeyCrashReporting, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
@@ -136,10 +137,10 @@ class AppEntryActivity extends BaseActivity
     //TODO move hockey crash reporting to globaltracking controller
     val trackingEnabled: Boolean = injectJava(classOf[PreferencesController]).isAnalyticsEnabled
     if (trackingEnabled) {
-      HockeyCrashReporting.checkForCrashes(getApplicationContext, getControllerFactory.getUserPreferencesController.getDeviceId)
+      CrashController.checkForCrashes(getApplicationContext, getControllerFactory.getUserPreferencesController.getDeviceId, inject[GlobalTrackingController])
     }
     else {
-      HockeyCrashReporting.deleteCrashReports(getApplicationContext)
+      CrashController.deleteCrashReports(getApplicationContext)
       NativeCrashManager.deleteDumpFiles(getApplicationContext)
     }
   }

@@ -108,12 +108,12 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     }}
   }
 
-  def trackEvent(zms: ZMessaging, event: TrackingEvent): Unit = trackEvent(Some(zms), event)
+  def trackEvent(zms: ZMessaging, event: TrackingEvent): Unit = trackEvent(event, Some(zms))
   /**
     * Sets super properties and actually performs the tracking of an event. Super properties are user scoped, so for that
     * reason, we need to ensure they're correctly set based on whatever account (zms) they were fired within.
     */
-  def trackEvent(zms: Option[ZMessaging] = None, event: TrackingEvent): Unit = {
+  def trackEvent(event: TrackingEvent, zms: Option[ZMessaging] = None): Unit = {
     def send() = {
       for {
         sProps   <- superProps.head

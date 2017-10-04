@@ -162,15 +162,6 @@ public class UserPreferencesController implements IUserPreferencesController {
     }
 
     @Override
-    @SuppressWarnings("CommitPrefEdits")
-    public void setCrashException(String exception, String details) {
-        userPreferences.edit()
-                       .putString(USER_PREF_APP_CRASH, exception)
-                       .putString(USER_PREF_APP_CRASH_DETAILS, details)
-                       .commit();
-    }
-
-    @Override
     public String getCrashException() {
         String exception = userPreferences.getString(USER_PREF_APP_CRASH, null);
         if (exception != null) {

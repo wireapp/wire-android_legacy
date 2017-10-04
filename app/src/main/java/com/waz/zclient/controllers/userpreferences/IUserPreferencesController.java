@@ -67,8 +67,6 @@ public interface IUserPreferencesController {
 
     boolean hasVerificationCode();
 
-    void setCrashException(String exception, String details);
-
     String getCrashException();
 
     String getCrashDetails();
