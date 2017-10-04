@@ -67,10 +67,6 @@ public interface IUserPreferencesController {
 
     boolean hasVerificationCode();
 
-    String getCrashException();
-
-    String getCrashDetails();
-
     void setPerformedAction(@Action int action);
 
     boolean hasPerformedAction(@Action int action);

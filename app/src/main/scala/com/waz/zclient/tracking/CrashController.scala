@@ -1,3 +1,20 @@
+/**
+ * Wire
+ * Copyright (C) 2017 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package com.waz.zclient.tracking
 
 import java.io.{File, FilenameFilter}
@@ -7,22 +24,16 @@ import android.app.Activity
 import android.content.Context
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
-import com.waz.content.GlobalPreferences
-import com.waz.content.Preferences.PrefKey
 import com.waz.log.InternalLog
 import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
 import com.waz.zclient.{Injectable, Injector, WireContext}
 import net.hockeyapp.android._
 import net.hockeyapp.android.utils.Util
-import timber.log.Timber
 
 import scala.util.control.NonFatal
 
 class CrashController (implicit inj: Injector, cxt: WireContext, eventContext: EventContext) extends Injectable with Thread.UncaughtExceptionHandler {
-
-  private lazy val crashPref        = inject[GlobalPreferences].preference(PrefKey[String]("USER_PREF_APP_CRASH"))
-  private lazy val crashPrefDetails = inject[GlobalPreferences].preference(PrefKey[String]("USER_PREF_APP_CRASH_DETAILS"))
 
   val tracking = inject[GlobalTrackingController]
 
@@ -37,8 +48,7 @@ class CrashController (implicit inj: Injector, cxt: WireContext, eventContext: E
       val stack = cause.getStackTrace
       val details = if (stack != null && stack.nonEmpty) stack(0).toString else null
 
-      crashPref := cause.getClass.getSimpleName
-      crashPrefDetails := details
+      tracking.trackEvent(CrashEvent(cause.getClass.getSimpleName, details))
     }
     catch {
       case NonFatal(_) =>
@@ -71,7 +81,7 @@ object CrashController {
         def accept(dir: File, filename: String): Boolean = filename.endsWith(".stacktrace")
       })
       if (traces != null && traces.length > 256) {
-        Timber.v("checkForCrashes - found too many crash reports: %d, will drop them", traces.length)
+        verbose(s"checkForCrashes - found too many crash reports: ${traces.length}, will drop them")
         CrashManager.deleteStackTraces(new WeakReference[Context](context))
       }
       CrashManager.execute(context, listener)

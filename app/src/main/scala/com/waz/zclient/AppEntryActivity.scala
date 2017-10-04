@@ -42,7 +42,7 @@ import com.waz.zclient.preferences.PreferencesController
 import com.waz.zclient.preferences.dialogs.ChangeHandleFragment
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController}
 import com.waz.zclient.ui.utils.KeyboardUtils
-import com.waz.zclient.utils.{HockeyCrashReporting, ViewUtils}
+import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.views.LoadingIndicatorView
 import net.hockeyapp.android.NativeCrashManager
 

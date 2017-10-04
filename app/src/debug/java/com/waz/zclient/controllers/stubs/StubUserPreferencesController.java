@@ -55,11 +55,6 @@ public class StubUserPreferencesController implements IUserPreferencesController
   }
 
   @Override
-  public String getCrashDetails() {
-    return null;
-  }
-
-  @Override
   public void reset() {
 
   }
@@ -120,11 +115,6 @@ public class StubUserPreferencesController implements IUserPreferencesController
   }
 
   @Override
-  public String getCrashException() {
-    return null;
-  }
-
-  @Override
   public void tearDown() {
 
   }
@@ -138,7 +128,7 @@ public class StubUserPreferencesController implements IUserPreferencesController
   public String getDeviceId() {
     return null;
   }
-    
+
   @Override
   public boolean isPostSessionIdToConversation() {
     return false;
@@ -152,11 +142,6 @@ public class StubUserPreferencesController implements IUserPreferencesController
   @Override
   public String getReferralToken() {
     return null;
-  }
-
-  @Override
-  public void setCrashException(String exception, String details) {
-
   }
 
   @Override
