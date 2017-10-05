@@ -37,9 +37,11 @@ import com.waz.bitmap
 import com.waz.model.AccountId
 import com.waz.service.ZMessaging
 import com.waz.service.push.NotificationService.NotificationInfo
+import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal, Subscription}
 import com.waz.zclient.Intents._
 import com.waz.zclient._
+import com.waz.zclient.controllers.navigation.INavigationController
 import com.waz.zclient.controllers.userpreferences.UserPreferencesController
 import com.waz.zclient.media.SoundController
 import com.waz.zclient.utils.ContextUtils._
@@ -51,11 +53,14 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
 
   import MessageNotificationsController._
   def context = cxt
+  implicit val ec = Threading.Background
 
   val notManager = inject[NotificationManager]
   val sharedPreferences = cxt.getSharedPreferences(UserPreferencesController.USER_PREFS_TAG, Context.MODE_PRIVATE)
   lazy val soundController = inject[SoundController]
+  lazy val navigationController = inject[INavigationController]
 
+  val currentAccount = ZMessaging.currentAccounts.activeAccount
   val accounts = Option(ZMessaging.currentGlobal) match {
     case Some(gl) => gl.notifications.groupedNotifications
     case _ =>
@@ -70,7 +75,13 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
     accs.foreach {
       case (account, notifications) =>
         subs += notifications.onUi { case (shouldBeSilent, nots) =>
-          handleNotifications(account, shouldBeSilent, nots)
+          currentAccount.head.map {
+            case Some(acc) if acc.id == account => {
+              if (navigationController.getCurrentPage != com.waz.zclient.controllers.navigation.Page.CONVERSATION_LIST)
+                handleNotifications(account, shouldBeSilent, nots)
+            }
+            case _ => handleNotifications(account, shouldBeSilent, nots)
+          }
         }
     }
   }
