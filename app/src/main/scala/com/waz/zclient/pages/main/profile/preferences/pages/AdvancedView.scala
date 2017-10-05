@@ -69,7 +69,7 @@ class AdvancedViewImpl(context: Context, attrs: AttributeSet, style: Int) extend
     resetPush.setAlpha(if (enabled) 1.0f else 0.5f)
   }
 
-  analyticsSwitch.onCheckedChange(inject[GlobalTrackingController].onOptOut)
+  analyticsSwitch.pref.flatMap(_.signal).onChanged(inject[GlobalTrackingController].onOptOut)
 }
 
 case class AdvancedBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {

@@ -21,6 +21,7 @@ import com.mixpanel.android.mpmetrics.MixpanelAPI
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.EphemeralExpiration
+import com.waz.content.Preferences.PrefKey
 import com.waz.content.{MembersStorage, UserPreferences, UsersStorage}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
@@ -53,7 +54,11 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
   val zMessaging  = inject[Signal[ZMessaging]]
   val currentConv = inject[Signal[ConversationData]]
 
-  val trackingEnabled = zMessaging.flatMap(_.userPrefs.preference(UserPreferences.AnalyticsEnabled).signal).disableAutowiring()
+  private val prefKey = BuildConfig.APPLICATION_ID match {
+    case "com.wire" | "com.wire.internal" => UserPreferences.AnalyticsEnabled
+    case _ => PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED")
+  }
+  val trackingEnabled = zMessaging.flatMap(_.userPrefs.preference(prefKey).signal).disableAutowiring()
 
   inject[ZmsLifeCycle].uiActive.onChanged {
     case false =>
@@ -131,14 +136,15 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     }
 
     event match {
-      case OptEvent(enabled) =>
-        send() //always send opt events (isTrackingEnabled will be false when the user opts out)
-        mixpanel.foreach { m =>
-          if (enabled) {
-            verbose("Opted in to analytics, re-registering")
-            m.unregisterSuperProperty(MixpanelIgnoreProperty)
-          }
-          else {
+      case OptEvent(true) =>
+        mixpanel.foreach{ m =>
+          verbose("Opted in to analytics, re-registering")
+          m.unregisterSuperProperty(MixpanelIgnoreProperty)
+        }
+        send()
+      case OptEvent(false) =>
+        send().map { _ =>
+          mixpanel.foreach{ m =>
             verbose("Opted out of analytics, flushing and de-registering")
             m.flush()
             m.registerSuperProperties(returning(new JSONObject()) { o =>
@@ -176,13 +182,13 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     }
   }
 
-  def onOptOut(enabled: Boolean): Unit = zMessaging.map(zms => trackEvent(zms, OptEvent(enabled)))
+  def onOptOut(enabled: Boolean): Unit = zMessaging.head.map(zms => trackEvent(zms, OptEvent(enabled)))
 
   //By default assigns events to the current zms (current account)
   def onContributionEvent(action: ContributionEvent.Action): Unit =
     for {
-      z        <- zMessaging
-      conv     <- currentConv
+      z        <- zMessaging.head
+      conv     <- currentConv.head
       isBot    <- isBot(conv, z.usersStorage)
       convType <- convType(conv, z.membersStorage)
     } trackEvent(z, ContributionEvent(action, convType, conv.ephemeral, isBot))

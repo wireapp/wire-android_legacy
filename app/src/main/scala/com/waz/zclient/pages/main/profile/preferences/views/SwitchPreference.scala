@@ -43,32 +43,27 @@ class SwitchPreference(context: Context, attrs: AttributeSet, style: Int) extend
     context.getTheme.obtainStyledAttributes(attrs, R.styleable.SwitchPreference, 0, 0)
 
   val keyAttr = Option(attributesArray.getString(R.styleable.SwitchPreference_key))
-
   val switch = findById[Switch](R.id.preference_switch)
+  val prefKey = Signal[PrefKey[Boolean]]()
+  lazy val zms = inject[Signal[ZMessaging]]
+  lazy val pref = for {
+    z <- zms
+    pKey <- prefKey
+  } yield z.userPrefs.preference(pKey)
+
   override val onCheckedChange = EventStream[Boolean]()
 
-  var prefKey = Signal[PrefKey[Boolean]]()
-
-  if (!isInEditMode) {
-
-    lazy val zms = inject[Signal[ZMessaging]]
-
-    lazy val pref = for {
-      z <- zms
-      pKey <- prefKey
-    } yield z.userPrefs.preference(pKey)
-
-    pref.flatMap(_.signal).on(Threading.Ui) { setChecked }
-    onCheckedChange.on(Threading.Ui) { value =>
-      pref.head.map(_.update(value))(Threading.Ui)
-    }
-    keyAttr.foreach{ key =>
-      prefKey ! PrefKey[Boolean](key, customDefault = false)
-    }
+  pref.flatMap(_.signal).on(Threading.Ui) { setChecked }
+  onCheckedChange.on(Threading.Ui) { value =>
+    pref.head.map(_.update(value))(Threading.Ui)
+  }
+  keyAttr.foreach{ key =>
+    prefKey ! PrefKey[Boolean](key, customDefault = false)
   }
 
   switch.setOnCheckedChangeListener(new OnCheckedChangeListener {
     override def onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) = {
+      pref.head.map(_.update(isChecked))(Threading.Ui)
       onCheckedChange ! isChecked
     }
   })
