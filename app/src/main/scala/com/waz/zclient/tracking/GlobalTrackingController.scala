@@ -101,11 +101,15 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
   private def registerTrackingEventListeners(zms: ZMessaging) = {
 
     val convsUI     = zms.convsUi
+    val push        = zms.push
 
     convsUI.assetUploadStarted.map(_.id) { assetTrackingData(_).map {
       case AssetTrackingData(convType, withOtto, exp, assetSize, m) =>
         trackEvent(zms, ContributionEvent(fromMime(m), convType, exp, withOtto))
     }}
+
+    push.onMissedCloudPushNotifications.map(MissedPushEvent)(trackEvent(zms, _))
+    push.onFetchedPushNotifications(_.foreach(p => trackEvent(zms, ReceivedPushEvent(p))))
   }
 
   def trackEvent(zms: ZMessaging, event: TrackingEvent): Unit = trackEvent(event, Some(zms))

@@ -17,14 +17,18 @@
  */
 package com.waz.zclient.tracking
 
+import java.lang.Math.{abs, max}
+
 import com.waz.api.EphemeralExpiration
 import com.waz.api.Invitations.PersonalToken
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{ConversationData, Mime}
+import com.waz.service.push.{MissedPushes, ReceivedPushData}
 import com.waz.utils.returning
 import com.waz.zclient.controllers.SignInController.{Email, Login, Register, SignInMethod}
 import com.waz.zclient.tracking.ContributionEvent.Action
 import org.json.JSONObject
+import org.threeten.bp.Duration
 
 sealed trait TrackingEvent {
   val name: String
@@ -114,5 +118,30 @@ case class CrashEvent(crashType: String, crashDetails: String) extends TrackingE
   override val props = Some(returning(new JSONObject()) { o =>
     o.put("crashType", crashType)
     o.put("crashDetails", crashDetails)
+  })
+}
+
+case class MissedPushEvent(p: MissedPushes) extends TrackingEvent {
+  override val name = "debug.push_missed"
+  override val props = Some(returning(new JSONObject()) { o =>
+    o.put("time",          p.time.toString)
+    o.put("missed_count",  p.countMissed)
+    o.put("in_background", p.inBackground)
+    o.put("network_mode",  p.networkMode)
+  })
+}
+
+case class ReceivedPushEvent(p: ReceivedPushData) extends TrackingEvent {
+  override val name = "debug.push_received"
+
+  def secondsAndMillis(d: Duration) = max(d.toMillis.toDouble / 1000, 0)
+
+  override val props = Some(returning(new JSONObject()) { o =>
+    o.put("since_sent_seconds", secondsAndMillis(p.sinceSent))
+    o.put("received_at",        p.receivedAt.toString)
+    o.put("network_mode",       p.networkMode)
+    o.put("network_operator",   p.networkOperator)
+    o.put("is_device_idle",     p.isDeviceIdle)
+    p.toFetch.foreach(d => o.put("to_fetch_seconds", secondsAndMillis(d)))
   })
 }
