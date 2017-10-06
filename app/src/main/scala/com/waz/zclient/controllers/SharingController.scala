@@ -89,12 +89,10 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
       sendEvent ! (content, convs, expiration)
       content match {
         case TextContent(t) =>
-          if (convs.size > 1) {
-            zms.head.flatMap(z => RichFuture.traverseSequential(convs.toSeq){ convId =>
-              z.convsUi.setEphemeral(convId, expiration).flatMap(_ =>
-                z.convsUi.sendMessage(convId, new MessageContent.Text(t)))
-            }).map(_ => true)
-          } else Future.successful(false)
+          zms.head.flatMap(z => RichFuture.traverseSequential(convs.toSeq){ convId =>
+            z.convsUi.setEphemeral(convId, expiration).flatMap(_ =>
+              z.convsUi.sendMessage(convId, new MessageContent.Text(t)))
+          }).map(_ => true)
 
         case uriContent =>
           RichFuture.traverseSequential(convs.toSeq) { conv =>

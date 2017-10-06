@@ -72,7 +72,6 @@ import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.camera.controllers.GlobalCameraController;
 import com.waz.zclient.controllers.IControllerFactory;
-import com.waz.zclient.controllers.SharingController;
 import com.waz.zclient.controllers.ThemeController;
 import com.waz.zclient.controllers.UserAccountsController;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
@@ -669,12 +668,9 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 conversationLoadingIndicatorViewView.hide();
                 cursorView.enableMessageWriting();
 
-                final SharingController sharingController = inject(SharingController.class);
-
                 if (changeToDifferentConversation) {
                     getControllerFactory().getConversationScreenController().setConversationStreamUiReady(false);
                     toConversationType = toConversation.getType();
-                    sharingController.clearSharingFor(fromConversation);
 
                     cursorView.setVisibility(toConversation.isActive() ? View.VISIBLE : View.GONE);
                     if (!inSplitPortraitMode()) {
@@ -690,14 +686,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                     cursorView.setConversation(toConversation);
 
                     hideAudioMessageRecording();
-                }
-
-                final String sharedText = sharingController.getSharedText(toConversation.getId());
-                if (!TextUtils.isEmpty(sharedText)) {
-                    cursorView.setText(sharedText);
-                    cursorView.enableMessageWriting();
-                    KeyboardUtils.showKeyboard(getActivity());
-                    sharingController.clearSharingFor(toConversation);
                 }
 
                 if (inputStateIndicator != null) {
@@ -1048,7 +1036,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     @Override
     public void onMessageSent(MessageData msg) {
         getStoreFactory().networkStore().doIfHasInternetOrNotifyUser(null);
-        inject(SharingController.class).clearSharingFor(getStoreFactory().conversationStore().getCurrentConversation());
     }
 
     @Override
