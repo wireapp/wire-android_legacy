@@ -44,12 +44,17 @@ class SwitchPreference(context: Context, attrs: AttributeSet, style: Int) extend
 
   val keyAttr = Option(attributesArray.getString(R.styleable.SwitchPreference_key))
   val switch = findById[Switch](R.id.preference_switch)
-  val prefKey = Signal[PrefKey[Boolean]]()
+  val prefInfo = Signal[PrefInfo]()
   lazy val zms = inject[Signal[ZMessaging]]
   lazy val pref = for {
     z <- zms
-    pKey <- prefKey
-  } yield z.userPrefs.preference(pKey)
+    prefInfo <- prefInfo
+  } yield {
+    if (prefInfo.global)
+      z.prefs.preference(prefInfo.key)
+    else
+      z.userPrefs.preference(prefInfo.key)
+  }
 
   override val onCheckedChange = EventStream[Boolean]()
 
@@ -58,7 +63,7 @@ class SwitchPreference(context: Context, attrs: AttributeSet, style: Int) extend
     pref.head.map(_.update(value))(Threading.Ui)
   }
   keyAttr.foreach{ key =>
-    prefKey ! PrefKey[Boolean](key, customDefault = false)
+    prefInfo ! PrefInfo(PrefKey[Boolean](key, customDefault = false), global = false)
   }
 
   switch.setOnCheckedChangeListener(new OnCheckedChangeListener {
@@ -78,7 +83,9 @@ class SwitchPreference(context: Context, attrs: AttributeSet, style: Int) extend
     switch.setChecked(checked)
   }
 
-  def setPreference(prefKey: PrefKey[Boolean]): Unit = {
-    this.prefKey ! prefKey
+  def setPreference(prefKey: PrefKey[Boolean], global: Boolean = false): Unit = {
+    this.prefInfo ! PrefInfo(prefKey, global)
   }
 }
+
+case class PrefInfo(key: PrefKey[Boolean], global: Boolean)

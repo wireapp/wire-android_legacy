@@ -24,7 +24,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, Toast}
 import com.waz.content.Preferences.PrefKey
-import com.waz.content.UserPreferences
+import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.zclient.pages.main.profile.preferences.views.{SwitchPreference, TextButton}
@@ -48,10 +48,10 @@ class AdvancedViewImpl(context: Context, attrs: AttributeSet, style: Int) extend
 
   analyticsSwitch.setPreference({
     BuildConfig.APPLICATION_ID match {
-      case "com.wire" | "com.wire.internal" => UserPreferences.AnalyticsEnabled //use the true-by-default preference for internal and public
+      case "com.wire" | "com.wire.internal" => GlobalPreferences.AnalyticsEnabled //use the true-by-default preference for internal and public
       case _ => PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED") //use a false-by-default preference for non-internal dev builds
     }
-  })
+  }, global = true)
 
   submitReport.onClickEvent{ _ =>
     DebugUtils.sendDebugReport(context.asInstanceOf[Activity])

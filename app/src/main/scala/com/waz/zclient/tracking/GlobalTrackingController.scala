@@ -22,7 +22,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.EphemeralExpiration
 import com.waz.content.Preferences.PrefKey
-import com.waz.content.{MembersStorage, UserPreferences, UsersStorage}
+import com.waz.content.{GlobalPreferences, MembersStorage, UsersStorage}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
 import com.waz.service.{ZMessaging, ZmsLifeCycle}
@@ -34,8 +34,8 @@ import com.waz.zclient.controllers.SignInController.SignInMethod
 import com.waz.zclient.tracking.ContributionEvent.fromMime
 import org.json.JSONObject
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.Future._
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.{implicitConversions, postfixOps}
 
 class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext) extends Injectable {
@@ -55,10 +55,10 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
   val currentConv = inject[Signal[ConversationData]]
 
   private val prefKey = BuildConfig.APPLICATION_ID match {
-    case "com.wire" | "com.wire.internal" => UserPreferences.AnalyticsEnabled
+    case "com.wire" | "com.wire.internal" => GlobalPreferences.AnalyticsEnabled
     case _ => PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED")
   }
-  val trackingEnabled = zMessaging.flatMap(_.userPrefs.preference(prefKey).signal).disableAutowiring()
+  val trackingEnabled = zMessaging.flatMap(_.prefs.preference(prefKey).signal).disableAutowiring()
 
   inject[ZmsLifeCycle].uiActive.onChanged {
     case false =>
