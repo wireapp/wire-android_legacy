@@ -40,11 +40,8 @@ public class UserPreferencesController implements IUserPreferencesController {
     public static final String USER_PREFS_REFERRAL_TOKEN = "USER_PREFS_REFERRAL_TOKEN";
     public static final String USER_PREFS_GENERIC_INVITATION_TOKEN = "USER_PREFS_GENERIC_INVITATION_TOKEN";
     public static final String USER_PREFS_PERSONAL_INVITATION_TOKEN = "USER_PREFS_PERSONAL_INVITATION_TOKEN";
-    public static final String USER_PERFS_AB_TESTING_GROUP = "USER_PERFS_AB_TESTING_GROUP";
     private static final String USER_PREFS_SHOW_SHARE_CONTACTS_DIALOG = "USER_PREFS_SHOW_SHARE_CONTACTS_DIALOG ";
     private static final String USER_PREF_PHONE_VERIFICATION_CODE = "PREF_PHONE_VERIFICATION_CODE";
-    private static final String USER_PREF_APP_CRASH = "USER_PREF_APP_CRASH";
-    private static final String USER_PREF_APP_CRASH_DETAILS = "USER_PREF_APP_CRASH_DETAILS";
     public static final String USER_PREF_ACTION_PREFIX = "USER_PREF_ACTION_PREFIX";
     private static final String USER_PREF_RECENT_EMOJIS = "USER_PREF_RECENT_EMOJIS";
     private static final String USER_PREF_UNSUPPORTED_EMOJIS = "USER_PREF_UNSUPPORTED_EMOJIS";
@@ -159,33 +156,6 @@ public class UserPreferencesController implements IUserPreferencesController {
     @Override
     public boolean hasVerificationCode() {
         return userPreferences.contains(USER_PREF_PHONE_VERIFICATION_CODE);
-    }
-
-    @Override
-    @SuppressWarnings("CommitPrefEdits")
-    public void setCrashException(String exception, String details) {
-        userPreferences.edit()
-                       .putString(USER_PREF_APP_CRASH, exception)
-                       .putString(USER_PREF_APP_CRASH_DETAILS, details)
-                       .commit();
-    }
-
-    @Override
-    public String getCrashException() {
-        String exception = userPreferences.getString(USER_PREF_APP_CRASH, null);
-        if (exception != null) {
-            userPreferences.edit().putString(USER_PREF_APP_CRASH, null).apply();
-        }
-        return exception;
-    }
-
-    @Override
-    public String getCrashDetails() {
-        String details = userPreferences.getString(USER_PREF_APP_CRASH_DETAILS, null);
-        if (details != null) {
-            userPreferences.edit().putString(USER_PREF_APP_CRASH_DETAILS, null).apply();
-        }
-        return details;
     }
 
     @Override

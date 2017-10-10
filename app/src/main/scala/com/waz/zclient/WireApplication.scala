@@ -56,7 +56,7 @@ import com.waz.zclient.pages.main.conversation.controller.IConversationScreenCon
 import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneController
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.preferences.PreferencesController
-import com.waz.zclient.tracking.{CallingTrackingController, GlobalTrackingController, UiTrackingController}
+import com.waz.zclient.tracking.{CallingTrackingController, CrashController, GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.{BackStackNavigator, BackendPicker, Callback, UiStorage}
 import com.waz.zclient.views.ImageController
 
@@ -98,6 +98,7 @@ object WireApplication {
     bind [INetworkStore]                 toProvider storeFactory.networkStore
 
     // global controllers
+    bind [CrashController]         to new CrashController
     bind [AccentColorController]   to new AccentColorController()
     bind [PasswordController]      to new PasswordController()
     bind [GlobalCallingController] to new GlobalCallingController()
@@ -215,6 +216,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     //TODO [AN-4942] - is this early enough for app launch events?
     inject[GlobalTrackingController]
+    inject[CrashController] //needs to register crash handler
     inject[CallingTrackingController]
     inject[ThemeController]
     inject[PreferencesController]

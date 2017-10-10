@@ -107,3 +107,12 @@ object ContributionEvent {
     }
   }
 }
+
+//only for exceptions that actually crash the app
+case class CrashEvent(crashType: String, crashDetails: String) extends TrackingEvent {
+  override val name = "crash"
+  override val props = Some(returning(new JSONObject()) { o =>
+    o.put("crashType", crashType)
+    o.put("crashDetails", crashDetails)
+  })
+}

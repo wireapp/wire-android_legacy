@@ -97,9 +97,7 @@ public class ZApplication extends WireApplication implements ServiceContainer {
         setLogLevels();
         AndroidThreeTen.init(this);
         TypefaceFactory.getInstance().init(typefaceloader);
-
-        Thread.setDefaultUncaughtExceptionHandler(new WireUncaughtExceptionHandler(getControllerFactory(),
-                                                                                   Thread.getDefaultUncaughtExceptionHandler()));
+        
         // refresh
         AccentColors.setColors(AccentColors.loadArray(getApplicationContext(), R.array.original_accents_color));
     }

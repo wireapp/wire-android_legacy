@@ -44,7 +44,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
   private implicit val dispatcher = new SerialDispatchQueue(name = "Tracking")
 
   private val superProps = Signal(returning(new JSONObject()) { o =>
-    o.put("app", "android")
+    o.put(AppSuperProperty, AppSuperPropertyValue)
   }).disableAutowiring()
 
   private val mixpanel = MixpanelApiToken.map(MixpanelAPI.getInstance(cxt.getApplicationContext, _))
@@ -73,7 +73,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     service <- Signal.future(ZMessaging.accountsService)
     accs    <- service.loggedInAccounts
   } yield accs.exists(_.teamId.fold(_ => false, _.isDefined))) { isTeamUser =>
-    superProps.mutate(_.put("team.is_member", isTeamUser))
+    superProps.mutate(_.put(TeamIsMemberSuperProperty, isTeamUser))
   }
 
   private var registeredZmsInstances = Set.empty[ZMessaging]
@@ -108,21 +108,30 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     }}
   }
 
+  def trackEvent(zms: ZMessaging, event: TrackingEvent): Unit = trackEvent(event, Some(zms))
   /**
     * Sets super properties and actually performs the tracking of an event. Super properties are user scoped, so for that
     * reason, we need to ensure they're correctly set based on whatever account (zms) they were fired within.
     */
-  def trackEvent(zms: ZMessaging, event: TrackingEvent): Unit = {
+  def trackEvent(event: TrackingEvent, zms: Option[ZMessaging] = None): Unit = {
     def send() = {
       for {
-        teamSize <- zms.teamId.fold(Future.successful(0))(_ => zms.teams.searchTeamMembers().head.map(_.size))
         sProps   <- superProps.head
+        teamSize <- zms match {
+          case Some(z) => z.teamId.fold(Future.successful(Option.empty[Int]))(_ => z.teams.searchTeamMembers().head.map(_.size).map(Some(_)))
+          case _ => Future.successful(Option.empty[Int])
+        }
       } yield {
-
-        sProps.put("team.in_team", zms.teamId.isDefined)
-        sProps.put("team.size", teamSize)
-
         mixpanel.foreach { m =>
+          //clear account-based super properties
+          m.unregisterSuperProperty(TeamInTeamSuperProperty)
+          m.unregisterSuperProperty(TeamSizeSuperProperty)
+
+          //set account-based super properties based on supplied zms
+          zms.map(_.teamId).map(_.isDefined).foreach(sProps.put(TeamInTeamSuperProperty, _))
+          teamSize.foreach(sProps.put(TeamSizeSuperProperty, _))
+
+          //register the super properties, and track
           m.registerSuperProperties(sProps)
           m.track(event.name, event.props.orNull)
         }
@@ -202,6 +211,13 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
 object GlobalTrackingController {
 
   private lazy val MixpanelIgnoreProperty = "$ignore"
+
+  private lazy val AppSuperProperty          = "app"
+  private lazy val AppSuperPropertyValue     = "android"
+  private lazy val TeamIsMemberSuperProperty = "team.is_member"
+  private lazy val TeamInTeamSuperProperty   = "team.in_team"
+  private lazy val TeamSizeSuperProperty     = "team.size"
+
 
   //For build flavours that don't have tracking enabled, this should be None
   private lazy val MixpanelApiToken = Option(BuildConfig.MIXPANEL_APP_TOKEN).filter(_.nonEmpty)

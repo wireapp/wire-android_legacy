@@ -53,10 +53,10 @@ import com.waz.zclient.fragments.ConnectivityFragment
 import com.waz.zclient.pages.main.{MainPhoneFragment, MainTabletFragment}
 import com.waz.zclient.pages.startup.UpdateFragment
 import com.waz.zclient.preferences.{PreferencesActivity, PreferencesController}
-import com.waz.zclient.tracking.UiTrackingController
+import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.PhoneUtils.PhoneState
 import com.waz.zclient.utils.StringUtils.TextDrawing
-import com.waz.zclient.utils.{BuildConfigUtils, Emojis, HockeyCrashReporting, IntentUtils, LayoutSpec, PhoneUtils, ViewUtils}
+import com.waz.zclient.utils.{BuildConfigUtils, Emojis, IntentUtils, LayoutSpec, PhoneUtils, ViewUtils}
 import net.hockeyapp.android.{ExceptionHandler, NativeCrashManager}
 
 import scala.collection.JavaConverters._
@@ -114,7 +114,7 @@ class MainActivity extends BaseActivity
     } else getControllerFactory.getNavigationController.onActivityCreated(savedInstanceState)
 
     if (BuildConfigUtils.isHockeyUpdateEnabled && !BuildConfigUtils.isLocalBuild(this))
-      HockeyCrashReporting.checkForUpdates(this)
+      CrashController.checkForUpdates(this)
 
     accentColorController.accentColor.map(_.getColor)(getControllerFactory.getUserPreferencesController.setLastAccentColor)
 
@@ -187,9 +187,9 @@ class MainActivity extends BaseActivity
     Option(ZMessaging.currentGlobal).foreach(_.googleApi.checkGooglePlayServicesAvailable(this))
 
     if (inject[PreferencesController].isAnalyticsEnabled)
-      HockeyCrashReporting.checkForCrashes(getApplicationContext, getControllerFactory.getUserPreferencesController.getDeviceId)
+      CrashController.checkForCrashes(getApplicationContext, getControllerFactory.getUserPreferencesController.getDeviceId, inject[GlobalTrackingController])
     else {
-      HockeyCrashReporting.deleteCrashReports(getApplicationContext)
+      CrashController.deleteCrashReports(getApplicationContext)
       NativeCrashManager.deleteDumpFiles(getApplicationContext)
     }
   }
