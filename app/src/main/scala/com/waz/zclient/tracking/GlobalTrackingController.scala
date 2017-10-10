@@ -58,7 +58,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     case "com.wire" | "com.wire.internal" => GlobalPreferences.AnalyticsEnabled
     case _ => PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED")
   }
-  val trackingEnabled = zMessaging.flatMap(_.prefs.preference(prefKey).signal).disableAutowiring()
+  def trackingEnabled = ZMessaging.globalModule.flatMap(_.prefs.preference(prefKey).apply())
 
   inject[ZmsLifeCycle].uiActive.onChanged {
     case false =>
@@ -118,8 +118,8 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
       for {
         sProps   <- superProps.head
         teamSize <- zms match {
-          case Some(z) => z.teamId.fold(Future.successful(Option.empty[Int]))(_ => z.teams.searchTeamMembers().head.map(_.size).map(Some(_)))
-          case _ => Future.successful(Option.empty[Int])
+          case Some(z) => z.teamId.fold(Future.successful(0))(_ => z.teams.searchTeamMembers().head.map(_.size))
+          case _ => Future.successful(0)
         }
       } yield {
         mixpanel.foreach { m =>
@@ -128,8 +128,8 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
           m.unregisterSuperProperty(TeamSizeSuperProperty)
 
           //set account-based super properties based on supplied zms
-          zms.map(_.teamId).map(_.isDefined).foreach(sProps.put(TeamInTeamSuperProperty, _))
-          teamSize.foreach(sProps.put(TeamSizeSuperProperty, _))
+          sProps.put(TeamInTeamSuperProperty, zms.flatMap(_.teamId).isDefined)
+          sProps.put(TeamSizeSuperProperty, teamSize)
 
           //register the super properties, and track
           m.registerSuperProperties(sProps)
@@ -162,7 +162,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
           }
         }
       case _ =>
-        trackingEnabled.head.map {
+        trackingEnabled.map {
           case true => send()
           case _ => //no action
         }
@@ -192,7 +192,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
           trackEvent(zms, SignInEvent(method, acc.invitationToken))
         }
       case Left(error) =>
-        trackEvent(SignInEvent(method, None), None)
+        trackEvent(SignInErrorEvent(method, error.code, error.label), None)
     }
   }
 
@@ -206,6 +206,8 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
       isBot    <- isBot(conv, z.usersStorage)
       convType <- convType(conv, z.membersStorage)
     } trackEvent(z, ContributionEvent(action, convType, conv.ephemeral, isBot))
+
+  def flushEvents(): Unit = mixpanel.foreach(_.flush())
 }
 
 object GlobalTrackingController {

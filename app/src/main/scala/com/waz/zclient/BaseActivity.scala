@@ -30,6 +30,7 @@ import com.waz.zclient.common.controllers.PermissionActivity
 import com.waz.zclient.controllers.{IControllerFactory, ThemeController}
 import com.waz.zclient.core.stores.IStoreFactory
 import com.waz.zclient.permissions.PermissionRequest
+import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.{PermissionUtils, ViewUtils}
 
 import scala.collection.JavaConverters._
@@ -40,6 +41,7 @@ class BaseActivity extends AppCompatActivity
   with PermissionProvider {
 
   lazy val themeController = inject[ThemeController]
+  lazy val globalTrackingController = inject[GlobalTrackingController]
 
   private var started: Boolean = false
   private var permissionRequest = Option.empty[PermissionRequest]
@@ -86,6 +88,12 @@ class BaseActivity extends AppCompatActivity
       started = false
     }
     super.finish()
+  }
+
+
+  override def onDestroy() = {
+    globalTrackingController.flushEvents()
+    super.onDestroy()
   }
 
   def getStoreFactory: IStoreFactory = ZApplication.from(this).getStoreFactory
