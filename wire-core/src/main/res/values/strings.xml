@@ -407,6 +407,10 @@
     <!-- RE-USING: confirmation_menu.cancel -->
     <string name="connect_request__footer__blocked_label">Blocked</string>
 
+    <!-- MaxAccountsReachedDialog -->
+    <string name="max_accounts_reached__dialog_text">You can only be logged in with two accounts at once. Log out from one to add another</string>
+    <string name="max_accounts_reached__dialog_title">Two accounts active</string>
+
     <!-- Delete conversation -->
     <string name="confirmation_menu__meta_delete">Delete content?</string>
     <string name="confirmation_menu__meta_delete_text">This will clear the conversation history and remove it from the list.</string>

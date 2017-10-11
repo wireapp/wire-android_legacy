@@ -49,6 +49,9 @@ public class IntentUtils {
     private static final String GOOGLE_MAPS_INTENT_PACKAGE = "com.google.android.apps.maps";
     private static final String GOOGLE_MAPS_WEB_LINK = "http://maps.google.com/maps?z=%d&q=loc:%f+%f+(%s)";
     private static final String IMAGE_MIME_TYPE = "image/*";
+    private static final String HTTP_SCHEME = "http";
+    private static final String HTTPS_SCHEME = "https";
+    private static final String WIRE_HOST = "wire.com";
 
     public static boolean isEmailVerificationIntent(@Nullable Intent intent) {
         if (intent == null) {
@@ -86,6 +89,23 @@ public class IntentUtils {
         return data != null &&
                WIRE_SCHEME.equals(data.getScheme()) &&
                SMS_CODE_TOKEN.equals(data.getHost());
+    }
+
+    public static Uri isTeamAccountCreatedIntent(@Nullable Intent intent) {
+        if (intent == null) {
+            return null;
+        }
+
+        String rex = "^/.+/download";
+        Uri data = intent.getData();
+        if(data != null &&
+            (HTTP_SCHEME.equals(data.getScheme()) || HTTPS_SCHEME.equals(data.getScheme())) &&
+            WIRE_HOST.equals(data.getHost()) &&
+            data.getPath().matches(rex)) {
+            return intent.getData();
+        } else {
+            return null;
+        }
     }
 
     @DebugLog
