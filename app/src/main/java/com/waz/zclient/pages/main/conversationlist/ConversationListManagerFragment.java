@@ -340,7 +340,7 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
 
     @Override
     public void onPageVisible(Page page) {
-        if (page != Page.ARCHIVE) {
+        if (page != Page.ARCHIVE && page != Page.CONVERSATION_MENU_OVER_CONVERSATION_LIST) {
             closeArchive();
         }
         if (page == Page.CONVERSATION_LIST) {
