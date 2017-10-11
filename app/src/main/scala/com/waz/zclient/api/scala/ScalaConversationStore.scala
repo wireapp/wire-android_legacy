@@ -199,14 +199,15 @@ class ScalaConversationStore(zMessagingApi: ZMessagingApi, selectionController: 
 
   override def mute(conversation: IConversation, mute: Boolean): Unit = conversation.setMuted(mute)
 
-  override def archive(conversation: IConversation, archive: Boolean): Unit = if (conversation.isSelected) {
-    nextConversation.foreach { conv =>
-      // don't want to change selected item immediately
-      new Handler().postDelayed(new Runnable() {
-        override def run(): Unit = setCurrentConversation(Some(conv), ConversationChangeRequester.ARCHIVED_RESULT)
-      }, ScalaConversationStore.ARCHIVE_DELAY)
+  override def archive(conversation: IConversation, archive: Boolean): Unit = {
+    if (conversation.isSelected && archive) {
+      nextConversation.foreach { conv =>
+        // don't want to change selected item immediately
+        new Handler().postDelayed(new Runnable() {
+          override def run(): Unit = setCurrentConversation(Some(conv), ConversationChangeRequester.ARCHIVED_RESULT)
+        }, ScalaConversationStore.ARCHIVE_DELAY)
+      }
     }
-
     conversation.setArchived(archive)
 
     // Set current conversation to unarchived
