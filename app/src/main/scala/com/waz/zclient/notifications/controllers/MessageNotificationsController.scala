@@ -30,7 +30,7 @@ import android.support.v4.app.NotificationCompat
 import android.text.style.{ForegroundColorSpan, TextAppearanceSpan}
 import android.text.{SpannableString, Spanned, TextUtils}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.{error, verbose}
+import com.waz.ZLog.verbose
 import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.NotificationsHandler.NotificationType._
 import com.waz.bitmap
@@ -38,18 +38,19 @@ import com.waz.model.AccountId
 import com.waz.service.ZMessaging
 import com.waz.service.push.NotificationService.NotificationInfo
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal, Subscription}
+import com.waz.utils.events.{EventContext, EventStreamWithAuxSignal, Signal}
 import com.waz.zclient.Intents._
 import com.waz.zclient._
-import com.waz.zclient.controllers.navigation.INavigationController
+import com.waz.zclient.controllers.navigation.Page
 import com.waz.zclient.controllers.userpreferences.UserPreferencesController
 import com.waz.zclient.media.SoundController
+import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RingtoneUtils
 import com.waz.zms.NotificationsAndroidService
 import org.threeten.bp.Instant
 
-class MessageNotificationsController(implicit inj: Injector, cxt: Context, eventContext: EventContext) extends Injectable {
+class MessageNotificationsController(implicit inj: Injector, cxt: Context, eventContext: EventContext) extends Injectable { self =>
 
   import MessageNotificationsController._
   def context = cxt
@@ -58,32 +59,21 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
   val notManager = inject[NotificationManager]
   val sharedPreferences = cxt.getSharedPreferences(UserPreferencesController.USER_PREFS_TAG, Context.MODE_PRIVATE)
   lazy val soundController = inject[SoundController]
-  lazy val navigationController = inject[INavigationController]
+  lazy val navigationController = inject[NavigationController]
 
   val currentAccount = ZMessaging.currentAccounts.activeAccount
-  val accounts = Option(ZMessaging.currentGlobal) match {
-    case Some(gl) => gl.notifications.groupedNotifications
-    case _ =>
-      //TODO Hockey exception? Or some better way of passing current global around...
-      error("No current global available - notifications will never work")
-      Signal.empty
-  }
 
-  private var subs = Set.empty[Subscription]
-  accounts { accs =>
-    subs.foreach(_.destroy())
-    accs.foreach {
-      case (account, notifications) =>
-        subs += notifications.onUi { case (shouldBeSilent, nots) =>
-          currentAccount.head.map {
-            case Some(acc) if acc.id == account => {
-              if (navigationController.getCurrentPage != com.waz.zclient.controllers.navigation.Page.CONVERSATION_LIST)
-                handleNotifications(account, shouldBeSilent, nots)
-            }
-            case _ => handleNotifications(account, shouldBeSilent, nots)
-          }
-        }
-    }
+  Signal.future(ZMessaging.globalModule).flatMap(_.notifications.groupedNotifications).onUi { _.foreach {
+    case (account, (shouldBeSilent, nots)) => handleNotifications(account, shouldBeSilent, nots)
+  }}
+
+  (for {
+    gl   <- Signal.future(ZMessaging.globalModule)
+    page <- navigationController.visiblePage
+  } yield (gl, page)) {
+    case (gl, page) =>
+      gl.notifications.messageStreamVisible ! (page == Page.MESSAGE_STREAM)
+      gl.notifications.conversationListVisible ! (page == Page.CONVERSATION_LIST)
   }
 
   private def handleNotifications(account: AccountId, silent: Boolean, nots: Seq[NotificationInfo]): Unit = {
