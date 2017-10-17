@@ -697,7 +697,7 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
       if (!LayoutSpec.isPhone(getActivity) && getControllerFactory.getPickUserController.isShowingPickUser(IPickUserController.Destination.CONVERSATION_LIST)) {
         // On tablet, apply Page.MESSAGE_STREAM soft input mode when conversation cursor has focus (soft input mode of page gets changed when left startui is open)
         val softInputMode = getControllerFactory.getGlobalLayoutController.getSoftInputModeForPage(if (hasFocus) Page.MESSAGE_STREAM else Page.PICK_USER)
-        ViewUtils.setSoftInputMode(getActivity.getWindow, softInputMode, TAG)
+        ViewUtils.setSoftInputMode(getActivity.getWindow, softInputMode)
       }
     }
 
