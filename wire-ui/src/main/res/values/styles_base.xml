@@ -49,8 +49,10 @@
     <style name="message__bottom_sheet__base" parent="Theme.Design.Light.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/message__bottom_sheet__modal__base</item>
         <item name="android:windowNoTitle">true</item>
-        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowFullscreen">false</item>
         <item name="android:windowIsFloating">false</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="colorPrimaryDark">@color/transparent</item>
     </style>
 
     <style name="message__bottom_sheet__modal__base" parent="Widget.Design.BottomSheet.Modal">
