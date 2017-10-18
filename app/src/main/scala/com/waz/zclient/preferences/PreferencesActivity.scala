@@ -73,9 +73,9 @@ class PreferencesActivity extends BaseActivity
     if (savedInstanceState == null) {
       backStackNavigator.setup(findViewById(R.id.content).asInstanceOf[ViewGroup])
 
-      getIntent.page match {
-        case Some(Page.Devices) => backStackNavigator.goTo(DevicesBackStackKey())
-        case _                  => backStackNavigator.goTo(ProfileBackStackKey())
+      getIntent match {
+        case OpenPageIntent(Page.Devices) => backStackNavigator.goTo(DevicesBackStackKey())
+        case _                            => backStackNavigator.goTo(ProfileBackStackKey())
       }
 
       Signal(backStackNavigator.currentState, ZMessaging.currentAccounts.loggedInAccounts.map(_.toSeq.length)).on(Threading.Ui){

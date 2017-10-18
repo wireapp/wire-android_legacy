@@ -28,7 +28,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient._
 import com.waz.zclient.pages.main.profile.preferences.views.TextButton
-import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, IntentUtils, RichView, StringUtils, UiStorage, UserSignal}
+import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage, UserSignal}
 import com.waz.zclient.views.FlatWireButton
 
 trait SettingsView {
@@ -73,7 +73,7 @@ class SettingsViewImpl(context: Context, attrs: AttributeSet, style: Int) extend
 
   override def startInviteIntent(name: String, handle: String) = {
     val sharingIntent =
-      IntentUtils.getInviteIntent(
+      Intents.InviteIntent(
         context.getString(R.string.people_picker__invite__share_text__header, name),
         context.getString(R.string.people_picker__invite__share_text__body, StringUtils.formatHandle(handle)))
     context.startActivity(Intent.createChooser(sharingIntent, context.getString(R.string.people_picker__invite__share_details_dialog)))

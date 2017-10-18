@@ -59,7 +59,7 @@ import com.waz.zclient.preferences.{PreferencesActivity, PreferencesController}
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.PhoneUtils.PhoneState
 import com.waz.zclient.utils.StringUtils.TextDrawing
-import com.waz.zclient.utils.{BuildConfigUtils, ContextUtils, Emojis, IntentUtils, LayoutSpec, PhoneUtils, ViewUtils}
+import com.waz.zclient.utils.{BuildConfigUtils, ContextUtils, Emojis, LayoutSpec, PhoneUtils, ViewUtils}
 import net.hockeyapp.android.{ExceptionHandler, NativeCrashManager}
 
 import scala.collection.JavaConverters._
@@ -247,7 +247,9 @@ class MainActivity extends BaseActivity
     super.onNewIntent(intent)
     verbose(s"onNewIntent: $intent")
 
-    if (IntentUtils.isPasswordResetIntent(intent)) onPasswordWasReset()
+    intent match {
+      case PasswordResetIntent() => onPasswordWasReset()
+    }
 
     setIntent(intent)
     handleIntent(intent)
@@ -269,22 +271,16 @@ class MainActivity extends BaseActivity
     getControllerFactory.getNavigationController.setIsLandscape(ContextUtils.isInLandscape(this))
   }
 
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-  //
-  //  Navigation
-  //
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////
   private def enterApplication(self: Self): Unit = {
     error("Entering application")
-    // step 1 - check if app was started via password reset intent
-    if (IntentUtils.isPasswordResetIntent(getIntent)) {
-      error("Password was reset")
-      onPasswordWasReset()
-      return
+    getIntent match {
+      case PasswordResetIntent() =>
+        onPasswordWasReset()
     }
   }
 
   private def onPasswordWasReset() = {
+    error("Password was reset")
     getStoreFactory.zMessagingApiStore.getApi.logout()
     openSignUpPage()
   }
@@ -342,13 +338,13 @@ class MainActivity extends BaseActivity
         val switchAccount = {
           val accounts = ZMessaging.currentAccounts
           accounts.activeAccount.head.flatMap {
-            case Some(acc) if intent.accountId.contains(acc.id) => Future.successful(false)
-            case _ => accounts.switchAccount(intent.accountId.get).map(_ => true)
+            case Some(acc) if accountId.equals(acc.id) => Future.successful(false)
+            case _ => accounts.switchAccount(accountId).map(_ => true)
           }
         }
 
         switchAccount.flatMap { _ =>
-          (intent.convId match {
+          (convId match {
             case Some(id) => switchConversation(id, startCall)
             case _ =>        Future.successful({})
           }).map(_ => clearIntent())(Threading.Ui)

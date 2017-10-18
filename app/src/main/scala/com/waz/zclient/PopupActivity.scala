@@ -61,14 +61,15 @@ class PopupActivity extends BaseActivity with ActivityHelper { self =>
     showQuickReplyFragment(intent)
   }
 
-  private def showQuickReplyFragment(intent: Intent) = {
-
-    (intent.accountId, intent.convId) match {
-      case (Some(acc), Some(conv)) =>
-        getSupportFragmentManager.beginTransaction.replace(R.id.fl__quick_reply__container, QuickReplyFragment.newInstance(acc, conv)).commit
+  private def showQuickReplyFragment(intent: Intent) =
+    intent match {
+      case QuickReplyIntent(acc, conv) =>
+        getSupportFragmentManager
+          .beginTransaction
+          .replace(R.id.fl__quick_reply__container, QuickReplyFragment.newInstance(acc, conv))
+          .commit
       case _ => error("Unknown account or conversation id - can't show QuickReplyFragment")
     }
-  }
 
   override def getBaseTheme: Int = R.style.Theme_Popup
 }

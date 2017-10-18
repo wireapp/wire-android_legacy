@@ -162,7 +162,7 @@
                 <data android:mimeType="*/*" />
             </intent-filter>
         </activity>
-        <activity android:name=".controllers.notifications.ShareSavedImageActivity" />
+        <activity android:name=".ShareSavedImageActivity" />
         <activity
             android:name=".LaunchActivity"
             android:label="@string/app_name"

@@ -29,6 +29,7 @@ import com.waz.api.BugReporter;
 import com.waz.api.ReportListener;
 import com.waz.api.ZmsVersion;
 import com.waz.utils.wrappers.URI;
+import com.waz.zclient.Intents;
 import com.waz.zclient.R;
 import timber.log.Timber;
 
@@ -41,7 +42,7 @@ public class DebugUtils {
             @Override
             public void onReportGenerated(URI fileUri) {
                 if (activity != null) {
-                    Intent debugReportIntent = IntentUtils.getDebugReportIntent(activity, fileUri);
+                    Intent debugReportIntent = Intents.DebugReportIntent(activity, fileUri);
                     activity.startActivityForResult(Intent.createChooser(debugReportIntent, "Send debug report via..."), 12341);
                 }
             }
