@@ -114,6 +114,9 @@ class DocumentResolver {
         long theLastModifiedTime = 0;
         if (files.length > 0) {
             for (File file : files) {
+                if (file.isDirectory()) {
+                    continue;
+                }
                 long modifiedTime = file.lastModified();
                 if (modifiedTime > theLastModifiedTime &&
                     fileHasAcceptableExtension(file, acceptableExtensions)) {
@@ -140,7 +143,7 @@ class DocumentResolver {
         if (acceptableExtensions.contains("*")) {
             return true;
         }
-        String[] fileParts = file.getName().split(".");
+        String[] fileParts = file.getName().split("\\.");
         String fileExtension = fileParts[fileParts.length - 1].toLowerCase();
         return acceptableExtensions.contains(fileExtension);
     }
