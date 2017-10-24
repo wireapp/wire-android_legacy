@@ -25,6 +25,8 @@ import android.provider.MediaStore;
 import android.util.Log;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 class DocumentResolver {
 
@@ -33,11 +35,30 @@ class DocumentResolver {
     private static final String WIRE_DIRECTORY = "wire";
 
     static final File WIRE_TESTING_FILES_DIRECTORY =
-        Environment.getExternalStoragePublicDirectory(WIRE_DIRECTORY + "/files");
-    private static final File WIRE_TESTING_IMAGES_DIRECTORY =
-        Environment.getExternalStoragePublicDirectory(WIRE_DIRECTORY + "/images");
-    private static final File WIRE_TESTING_VIDEOS_DIRECTORY =
-        Environment.getExternalStoragePublicDirectory(WIRE_DIRECTORY + "/video");
+        Environment.getExternalStoragePublicDirectory(WIRE_DIRECTORY);
+
+    private final static List<String> FILE_EXTENSIONS = new ArrayList<String>() {{
+        add("*");
+    }};
+    private final static List<String> VIDEO_EXTENSIONS = new ArrayList<String>() {{
+        add("mp4");
+        add("avi");
+        add("wmv");
+        add("mkv");
+    }};
+    private final static List<String> AUDIO_EXTENSIONS = new ArrayList<String>() {{
+        add("mp3");
+        add("wma");
+        add("ac3");
+        add("ogg");
+    }};
+    private final static List<String> IMAGE_EXTENSIONS = new ArrayList<String>() {{
+        add("gif");
+        add("bmp");
+        add("jpg");
+        add("jpeg");
+        add("png");
+    }};
 
     private final ContentResolver contentResolver;
 
@@ -47,22 +68,22 @@ class DocumentResolver {
 
     Uri getDocumentUri() {
         Log.i(TAG, "Received request for File");
-        return fileQuery(WIRE_TESTING_FILES_DIRECTORY);
+        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, FILE_EXTENSIONS);
     }
 
     Uri getVideoUri() {
         Log.i(TAG, "Received request for Video file");
-        return fileQuery(WIRE_TESTING_VIDEOS_DIRECTORY);
+        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, VIDEO_EXTENSIONS);
     }
 
     Uri getAudioUri() {
         Log.i(TAG, "Received request for Audio file");
-        return fileQuery(WIRE_TESTING_FILES_DIRECTORY);
+        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, AUDIO_EXTENSIONS);
     }
 
     Uri getImageUri() {
         Log.i(TAG, "Received request for Image");
-        return fileQuery(WIRE_TESTING_IMAGES_DIRECTORY);
+        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, IMAGE_EXTENSIONS);
     }
 
     private Uri mediaQuery(Uri baseUri, String[] projection) {
@@ -86,7 +107,7 @@ class DocumentResolver {
         return null;
     }
 
-    private Uri fileQuery(File baseDir) {
+    private Uri fileQuery(File baseDir, List<String> acceptableExtensions) {
         File[] files = baseDir.listFiles();
         Log.i(TAG, String.format("%s files found in %s", files.length, baseDir));
         File lastUpdatedFile = null;
@@ -94,7 +115,9 @@ class DocumentResolver {
         if (files.length > 0) {
             for (File file : files) {
                 long modifiedTime = file.lastModified();
-                if (modifiedTime > theLastModifiedTime) {
+                if (modifiedTime > theLastModifiedTime &&
+                    fileHasAcceptableExtension(file, acceptableExtensions)) {
+
                     theLastModifiedTime = modifiedTime;
                     lastUpdatedFile = file;
                 }
@@ -111,5 +134,14 @@ class DocumentResolver {
         }
         Log.w(TAG, "No files! Returning null!!");
         return null;
+    }
+
+    private boolean fileHasAcceptableExtension(File file, List<String> acceptableExtensions) {
+        if (acceptableExtensions.contains("*")) {
+            return true;
+        }
+        String[] fileParts = file.getName().split(".");
+        String fileExtension = fileParts[fileParts.length - 1].toLowerCase();
+        return acceptableExtensions.contains(fileExtension);
     }
 }
