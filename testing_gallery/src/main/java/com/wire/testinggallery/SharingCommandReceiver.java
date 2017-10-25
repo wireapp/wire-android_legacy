@@ -34,7 +34,7 @@ public class SharingCommandReceiver extends BroadcastReceiver {
     private static final String PACKAGE_COMMAND = "package";
     private static final String FILENAME_COMMAND = "filename";
 
-    // am broadcast -a com.wire.testinggallery.sharing --es package <package name> --es filename <name>
+    // am broadcast -a com.wire.testinggallery.sharing --es package <package name> --es filename "<name of the file in /sdcard/wire>"
     @Override
     public void onReceive(Context context, Intent intent) {
         String requestedPackage = intent.getStringExtra(PACKAGE_COMMAND);
