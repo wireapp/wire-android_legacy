@@ -173,7 +173,6 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
 
   private def createConvNotifications(account: AccountId, silent: Boolean, nots: Seq[NotificationInfo], teamName: Option[String]): Unit = {
     verbose(s"Notifications updated for account: $account: shouldBeSilent: $silent, $nots")
-    val allBeenDisplayed = nots.forall(_.hasBeenDisplayed)
 
     def publishNotification(convId: ConvId, notification: Notification) = {
       attachNotificationLed(notification)
@@ -188,12 +187,16 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
 
       groupedConvs.foreach {
         case (convId, convNots) if convNots.size == 1 =>
+          val allBeenDisplayed = convNots.forall(_.hasBeenDisplayed)
           publishNotification(convId, getSingleMessageNotification(account, convNots.head, silent, if (isGrouped) None else teamName, noTicker = allBeenDisplayed))
 
         case (convId, convNots) =>
+          val allBeenDisplayed = convNots.forall(_.hasBeenDisplayed)
           publishNotification(convId, getMultipleMessagesNotification(account, convNots, silent, noTicker = allBeenDisplayed, if (isGrouped) None else teamName))
       }
     } else {
+      val allBeenDisplayed = nots.forall(_.hasBeenDisplayed)
+
       val notification = if (nots.size == 1)
         getSingleMessageNotification(account, nots.head, silent, teamName, noTicker = allBeenDisplayed)
       else
