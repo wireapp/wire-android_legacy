@@ -26,17 +26,17 @@
         <receiver tools:ignore="ExportedReceiver" android:name="com.waz.zclient.PreferenceReceiver"
             android:enabled="true" android:exported="true">
             <intent-filter>
-                <action android:name="com.waz.zclient.intent.action.AUTO_ANSWER_CALL" />
-                <action android:name="com.waz.zclient.intent.action.ENABLE_GCM" />
-                <action android:name="com.waz.zclient.intent.action.DISABLE_GCM" />
-                <action android:name="com.waz.zclient.intent.action.USE_ASSET_V2" />
-                <action android:name="com.waz.zclient.intent.action.USE_ASSET_V3" />
-                <action android:name="com.waz.zclient.intent.action.CALLING_V2" />
-                <action android:name="com.waz.zclient.intent.action.CALLING_V3" />
-                <action android:name="com.waz.zclient.intent.action.CALLING_BE_SWITCH" />
-                <action android:name="com.waz.zclient.intent.action.SILENT_MODE" />
-                <action android:name="com.waz.zclient.intent.action.NO_CONTACT_SHARING" />
-                <action android:name="com.waz.zclient.intent.action.TRACKING_ID" />
+                <action android:name="${applicationId}.intent.action.AUTO_ANSWER_CALL" />
+                <action android:name="${applicationId}.intent.action.ENABLE_GCM" />
+                <action android:name="${applicationId}.intent.action.DISABLE_GCM" />
+                <action android:name="${applicationId}.intent.action.USE_ASSET_V2" />
+                <action android:name="${applicationId}.intent.action.USE_ASSET_V3" />
+                <action android:name="${applicationId}.intent.action.CALLING_V2" />
+                <action android:name="${applicationId}.intent.action.CALLING_V3" />
+                <action android:name="${applicationId}.intent.action.CALLING_BE_SWITCH" />
+                <action android:name="${applicationId}.intent.action.SILENT_MODE" />
+                <action android:name="${applicationId}.intent.action.NO_CONTACT_SHARING" />
+                <action android:name="${applicationId}.intent.action.TRACKING_ID" />
             </intent-filter>
         </receiver>
     </application>
