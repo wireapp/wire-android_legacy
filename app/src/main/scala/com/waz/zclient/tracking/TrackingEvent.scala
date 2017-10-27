@@ -147,3 +147,18 @@ case class ReceivedPushEvent(p: ReceivedPushData) extends TrackingEvent {
     p.toFetch.foreach(d => o.put("to_fetch_seconds", secondsAndMillis(d)))
   })
 }
+
+case class LoggedOutEvent(reason: String) extends TrackingEvent {
+  override val name = "account.logged_out"
+  override val props = Some(returning(new JSONObject()) { o =>
+    o.put("reason", reason)
+  })
+}
+
+object LoggedOutEvent {
+  val RemovedClient = "removed_client"
+  val InvalidCredentials = "invalid_credentials"
+  val SelfDeleted = "self_deleted"
+  val ResetPassword = "reset_password"
+  val Manual = "manual"
+}

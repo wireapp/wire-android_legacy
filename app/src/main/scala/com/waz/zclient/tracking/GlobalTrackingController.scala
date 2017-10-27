@@ -25,7 +25,7 @@ import com.waz.content.Preferences.PrefKey
 import com.waz.content.{GlobalPreferences, MembersStorage, UsersStorage}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
-import com.waz.service.{ZMessaging, ZmsLifeCycle}
+import com.waz.service.{AccountManager, ZMessaging, ZmsLifeCycle}
 import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal}
@@ -91,6 +91,10 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
       registerTrackingEventListeners(zms)
     case _ => //already registered to this zms, do nothing.
   }
+
+  AccountManager.OnRemovedClient.on(dispatcher) { _ => onLoggedOut(LoggedOutEvent.RemovedClient) }
+  AccountManager.OnInvalidCredentials.on(dispatcher) { _ => onLoggedOut(LoggedOutEvent.InvalidCredentials) }
+  AccountManager.OnSelfDeleted.on(dispatcher) { _ => onLoggedOut(LoggedOutEvent.SelfDeleted) }
 
   /**
     * Register tracking event listeners on SE services in this method. We need a method here, since whenever the signal
@@ -205,6 +209,8 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
         trackEvent(SignInErrorEvent(method, error.code, error.label), None)
     }
   }
+
+  def onLoggedOut(reason: String) = trackEvent(LoggedOutEvent(reason))
 
   def onOptOut(enabled: Boolean): Unit = zMessaging.head.map(zms => trackEvent(zms, OptEvent(enabled)))
 

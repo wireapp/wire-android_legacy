@@ -38,6 +38,7 @@ import com.waz.zclient.pages.main.profile.preferences.dialogs.{ChangeEmailDialog
 import com.waz.zclient.pages.main.profile.preferences.views.{EditNameDialog, PictureTextButton, TextButton}
 import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.preferences.dialogs.AccentColorPickerFragment
+import com.waz.zclient.tracking.{GlobalTrackingController, LoggedOutEvent}
 import com.waz.zclient.ui.utils.TextViewUtils._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils._
@@ -136,6 +137,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   implicit val uiStorage = inject[UiStorage]
   val navigator          = inject[BackStackNavigator]
   val password           = inject[PasswordController].password
+  val tracking           = inject[GlobalTrackingController]
 
   val self = for {
     zms <- zms
@@ -259,6 +261,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
       new DialogInterface.OnClickListener() {
         def onClick(dialog: DialogInterface, which: Int) = {
           context.asInstanceOf[PreferencesActivity].getControllerFactory.getUsernameController.tearDown()
+          tracking.onLoggedOut(LoggedOutEvent.Manual)
           zms.map(_.account).head.flatMap(_.logout(true))(Threading.Ui)
           navigator.back()
           navigator.back()
