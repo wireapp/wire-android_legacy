@@ -449,5 +449,5 @@ object MessageNotificationsController {
 
   val ZETA_MESSAGE_NOTIFICATION_ID: Int = 1339272
   val ZETA_EPHEMERAL_NOTIFICATION_ID: Int = 1339279
-  val BundleEnabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+  val BundleEnabled = Build.VERSION.SDK_INT > Build.VERSION_CODES.M
 }
