@@ -81,9 +81,9 @@ class AppEntryController(implicit inj: Injector, eventContext: EventContext) ext
         InsertPasswordStage
       case (Some(accountData), _) if accountData.clientRegState == ClientRegistrationState.LIMIT_REACHED =>
         DeviceLimitStage
-      case (Some(accountData), _) if accountData.pendingPhone.isDefined && accountData.phone.isEmpty && accountData.clientRegState != ClientRegistrationState.REGISTERED =>
+      case (Some(accountData), _) if accountData.pendingPhone.isDefined && !accountData.verified =>
         VerifyPhoneStage
-      case (Some(accountData), _) if accountData.pendingEmail.isDefined && accountData.password.isDefined =>
+      case (Some(accountData), _) if accountData.pendingEmail.isDefined && accountData.password.isDefined && !accountData.verified =>
         VerifyEmailStage
       case (Some(accountData), _) if accountData.regWaiting =>
         AddNameStage
