@@ -26,7 +26,7 @@ import com.waz.api._
 import com.waz.content.GlobalPreferences
 import com.waz.log.InternalLog
 import com.waz.model.ConversationData
-import com.waz.service.{NetworkModeService, ZMessaging, ZmsLifeCycle}
+import com.waz.service.{NetworkModeService, UiLifeCycle, ZMessaging}
 import com.waz.utils.events.{EventContext, Signal, Subscription}
 import com.waz.zclient.api.scala.ScalaStoreFactory
 import com.waz.zclient.calling.controllers.{CallPermissionsController, CurrentCallController, GlobalCallingController}
@@ -75,7 +75,7 @@ object WireApplication {
     bind [Signal[ZMessaging]]          to inject[Signal[Option[ZMessaging]]].collect { case Some(z) => z }
     bind [GlobalPreferences]           to ZMessaging.currentGlobal.prefs
     bind [NetworkModeService]          to ZMessaging.currentGlobal.network
-    bind [ZmsLifeCycle]                to ZMessaging.currentGlobal.lifecycle
+    bind [UiLifeCycle]                 to ZMessaging.currentGlobal.lifecycle
 
     // old controllers
     // TODO: remove controller factory, reimplement those controllers
@@ -134,14 +134,12 @@ object WireApplication {
     bind [Signal[AccentColor]] to inject[AccentColorController].accentColor
   }
 
-  def services(ctx: WireContext) = new Module {
-    bind [ZMessagingApi]      to new ZMessagingApiProvider(ctx).api
-    bind [Signal[ZMessaging]] to inject[ZMessagingApi].asInstanceOf[com.waz.api.impl.ZMessagingApi].ui.currentZms.collect{case Some(zms)=> zms }
-  }
-
   def controllers(implicit ctx: WireContext) = new Module {
 
     private implicit val eventContext = ctx.eventContext
+
+    bind [ZMessagingApi]      to new ZMessagingApiProvider(ctx, inject[UiLifeCycle]).api
+    bind [Signal[ZMessaging]] to inject[ZMessagingApi].asInstanceOf[com.waz.api.impl.ZMessagingApi].ui.currentZms.collect{case Some(zms)=> zms }
 
     bind [KeyboardController]        to new KeyboardController()
     bind [CurrentCallController]     to new CurrentCallController()
@@ -186,7 +184,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
   protected var controllerFactory: IControllerFactory = _
   protected var storeFactory: IStoreFactory = _
 
-  def contextModule(ctx: WireContext): Injector = controllers(ctx) :: services(ctx) :: ContextModule(ctx)
+  def contextModule(ctx: WireContext): Injector = controllers(ctx) :: ContextModule(ctx)
 
   override def onCreate(): Unit = {
     super.onCreate()
@@ -239,14 +237,20 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
   }
 }
 
-class ZMessagingApiProvider(ctx: WireContext) {
+class ZMessagingApiProvider(ctx: WireContext, uiLifeCycle: UiLifeCycle) {
   val api = ZMessagingApiFactory.getInstance(ctx)
 
   api.onCreate(ctx)
 
   ctx.eventContext.register(new Subscription {
-    override def subscribe(): Unit = api.onResume()
-    override def unsubscribe(): Unit = api.onPause()
+    override def subscribe(): Unit = {
+      api.onResume()
+      uiLifeCycle.acquireUi()
+    }
+    override def unsubscribe(): Unit = {
+      api.onPause()
+      uiLifeCycle.releaseUi()
+    }
     override def enable(): Unit = ()
     override def disable(): Unit = ()
     override def destroy(): Unit = api.onDestroy()

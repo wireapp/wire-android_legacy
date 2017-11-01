@@ -78,7 +78,7 @@ class PreferencesActivity extends BaseActivity
         case _                  => backStackNavigator.goTo(ProfileBackStackKey())
       }
 
-      Signal(backStackNavigator.currentState, ZMessaging.currentAccounts.loggedInAccounts.map(_.length)).on(Threading.Ui){
+      Signal(backStackNavigator.currentState, ZMessaging.currentAccounts.loggedInAccounts.map(_.toSeq.length)).on(Threading.Ui){
         case (state: ProfileBackStackKey, c) if c > 1 =>
           setTitle(R.string.empty_string)
           accountTabsContainer.setVisibility(View.VISIBLE)

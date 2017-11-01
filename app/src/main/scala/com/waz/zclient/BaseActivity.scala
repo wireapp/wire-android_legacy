@@ -26,6 +26,7 @@ import android.support.v7.app.AppCompatActivity
 import android.view.View
 import com.waz.api.{Permission, PermissionProvider}
 import com.waz.log.InternalLog
+import com.waz.service.UiLifeCycle
 import com.waz.zclient.common.controllers.PermissionActivity
 import com.waz.zclient.controllers.{IControllerFactory, ThemeController}
 import com.waz.zclient.core.stores.IStoreFactory
@@ -66,6 +67,7 @@ class BaseActivity extends AppCompatActivity
     if (!started) {
       started = true
       getStoreFactory.zMessagingApiStore.getApi.onResume()
+      inject[UiLifeCycle].acquireUi()
     }
     getStoreFactory.zMessagingApiStore.getApi.setPermissionProvider(this)
     val contentView: View = ViewUtils.getView(getWindow.getDecorView, android.R.id.content)
@@ -75,6 +77,7 @@ class BaseActivity extends AppCompatActivity
   override def onStop() = {
     if (started) {
       getStoreFactory.zMessagingApiStore.getApi.onPause()
+      inject[UiLifeCycle].releaseUi()
       started = false
     }
     getStoreFactory.zMessagingApiStore.getApi.removePermissionProvider(this)
@@ -85,6 +88,7 @@ class BaseActivity extends AppCompatActivity
   override def finish() = {
     if (started) {
       getStoreFactory.zMessagingApiStore.getApi.onPause()
+      inject[UiLifeCycle].releaseUi()
       started = false
     }
     super.finish()

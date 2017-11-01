@@ -67,7 +67,7 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
   var accentColors = Map[AccountId, Int]()
 
   val colors = for {
-    users <- ZMessaging.currentAccounts.loggedInAccounts.map(_.map(acc => acc.id -> acc.userId))
+    users <- ZMessaging.currentAccounts.loggedInAccounts.map(_.map(acc => acc.id -> acc.userId).toSeq)
     collectedUsers = users.collect {
       case (accId, Some(userId)) => accId -> userId
     }
