@@ -212,6 +212,19 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
 
   def onLoggedOut(reason: String) = trackEvent(LoggedOutEvent(reason))
 
+  def onActivation(response: Either[EntryError, Unit], method: SignInMethod): Unit = {
+    response match {
+      case Right(_) =>
+        for {
+          zms <- ZMessaging.currentAccounts.activeZms.collect { case Some(zms) => zms }.head
+        } yield {
+          trackEvent(zms, ActivationEvent(method))
+        }
+      case Left(error) =>
+        trackEvent(ActivationErrorEvent(method, error.code, error.label))
+    }
+  }
+
   def onOptOut(enabled: Boolean): Unit = zMessaging.head.map(zms => trackEvent(zms, OptEvent(enabled)))
 
   //By default assigns events to the current zms (current account)

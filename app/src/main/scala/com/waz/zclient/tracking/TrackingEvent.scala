@@ -72,6 +72,32 @@ case class SignInErrorEvent(method: SignInMethod, errorCode: Int, errorLabel: St
   })
 }
 
+case class ActivationEvent(method: SignInMethod) extends TrackingEvent {
+  override val name = method.signType match {
+    case Register => "registration.activation_succeed"
+    case Login => "login.activation_succeed"
+  }
+
+  override val props = Some(returning(new JSONObject()) { o =>
+    val context = if (method.inputType == Email) "email" else "phone"
+    o.put("context", context)
+  })
+}
+
+case class ActivationErrorEvent(method: SignInMethod, errorCode: Int, errorLabel: String) extends TrackingEvent {
+  override val name = method.signType match {
+    case Register => "registration.activation_failed"
+    case Login => "login.activation_failed"
+  }
+
+  override val props = Some(returning(new JSONObject()) { o =>
+    val context = if (method.inputType == Email) "email" else "phone"
+    o.put("context", context)
+    o.put("error_code", errorCode)
+    o.put("error_label", errorLabel)
+  })
+}
+
 case class ContributionEvent(action: Action, conversationType: ConversationType, ephExp: EphemeralExpiration, withBot: Boolean) extends TrackingEvent {
   override val name = "contributed"
 

@@ -22,11 +22,14 @@ import android.support.v4.content.ContextCompat
 import android.text.{Editable, Html, TextWatcher}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{TextView, Toast}
+import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.zclient._
+import com.waz.zclient.controllers.SignInController.{Login, Phone, Register, SignInMethod}
 import com.waz.zclient.controllers.navigation.Page
 import com.waz.zclient.newreg.views.PhoneConfirmationButton
 import com.waz.zclient.pages.BaseFragment
+import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.ui.text.TypefaceEditText
 import com.waz.zclient.ui.utils.KeyboardUtils
 
@@ -56,6 +59,7 @@ class VerifyPhoneFragment extends BaseFragment[VerifyPhoneFragment.Container] wi
   implicit val executionContext = Threading.Ui
 
   private lazy val appEntryController = inject[AppEntryController]
+  private lazy val tracking           = inject[GlobalTrackingController]
 
   private lazy val resendCodeButton = findById[TextView](getView, R.id.ttv__resend_button)
   private lazy val resendCodeTimer = findById[TextView](getView, R.id.ttv__resend_timer)
@@ -179,16 +183,24 @@ class VerifyPhoneFragment extends BaseFragment[VerifyPhoneFragment.Container] wi
   private def confirmCode(): Unit = {
     getContainer.enableProgress(true)
     KeyboardUtils.hideKeyboard(getActivity)
-    appEntryController.verifyPhone(editTextCode.getText.toString).map {
-      case Left(entryError) =>
-        getContainer.enableProgress(false)
-        getContainer.showError(entryError, {
-          if (getActivity == null) return
-          KeyboardUtils.showKeyboard(getActivity)
-          editTextCode.requestFocus
-          phoneConfirmationButton.setState(PhoneConfirmationButton.State.INVALID)
-        })
-      case _ =>
+    appEntryController.verifyPhone(editTextCode.getText.toString).map { result =>
+      ZMessaging.currentAccounts.getActiveAccount.collect { case Some(acc) => acc.regWaiting }.map { reg =>
+        tracking.onActivation(result, SignInMethod(if (reg) Register else Login, Phone))
+      }
+      result match {
+        case Left(entryError) =>
+          getContainer.enableProgress(false)
+          getContainer.showError(entryError, {
+            if (getActivity == null) return
+            KeyboardUtils.showKeyboard(getActivity)
+            editTextCode.requestFocus
+            phoneConfirmationButton.setState(PhoneConfirmationButton.State.INVALID)
+          })
+        case _ =>
+          ZMessaging.currentAccounts.getActiveAccount.collect { case Some(acc) => acc.regWaiting }.map { reg =>
+            tracking.onActivation(Right(()), SignInMethod(if (reg) Register else Login, Phone))
+          }
+      }
     }
   }
 
