@@ -119,7 +119,7 @@ class AppEntryActivity extends BaseActivity
       case AddNameStage =>
         onShowPhoneNamePage()
       case AddPictureStage =>
-        onShowEmailSetPicturePage()
+        onShowSetPicturePage()
       case VerifyEmailStage =>
         onShowEmailVerifyEmailPage()
       case VerifyPhoneStage =>
@@ -227,16 +227,6 @@ class AppEntryActivity extends BaseActivity
     enableProgress(false)
   }
 
-  def onShowPhoneSetPicturePage(): Unit = {
-    if (getSupportFragmentManager.findFragmentByTag(SignUpPhotoFragment.TAG) != null) {
-      return
-    }
-    val transaction: FragmentTransaction = getSupportFragmentManager.beginTransaction
-    setDefaultAnimation(transaction).replace(R.id.fl_main_content, SignUpPhotoFragment.newInstance(SignUpPhotoFragment.RegistrationType.Phone), SignUpPhotoFragment.TAG).commit
-    enableProgress(false)
-    getControllerFactory.getNavigationController.setLeftPage(Page.REGISTRATION_ADD_PHOTO, AppEntryActivity.TAG)
-  }
-
   def onShowEmailVerifyEmailPage(): Unit = {
     val transaction: FragmentTransaction = getSupportFragmentManager.beginTransaction
     setDefaultAnimation(transaction).replace(R.id.fl_main_content, EmailVerifyEmailFragment.newInstance, EmailVerifyEmailFragment.TAG).commit
@@ -262,13 +252,20 @@ class AppEntryActivity extends BaseActivity
     getControllerFactory.getNavigationController.setLeftPage(Page.LOGIN_REGISTRATION, AppEntryActivity.TAG)
   }
 
-  def onShowEmailSetPicturePage(): Unit = {
+  def onShowSetPicturePage(): Unit = {
     if (getSupportFragmentManager.findFragmentByTag(SignUpPhotoFragment.TAG) != null) {
       return
     }
-    val transaction: FragmentTransaction = getSupportFragmentManager.beginTransaction
-    setDefaultAnimation(transaction).replace(R.id.fl_main_content, SignUpPhotoFragment.newInstance(SignUpPhotoFragment.RegistrationType.Email), SignUpPhotoFragment.TAG).commit
-    enableProgress(false)
+    ZMessaging.currentAccounts.getActiveAccount.map { accountData =>
+      val transaction: FragmentTransaction = getSupportFragmentManager.beginTransaction
+      accountData match {
+        case Some(acc) if acc.phone.isDefined && acc.email.isEmpty =>
+          setDefaultAnimation(transaction).replace(R.id.fl_main_content, SignUpPhotoFragment.newInstance(SignUpPhotoFragment.RegistrationType.Phone), SignUpPhotoFragment.TAG).commit
+        case _ =>
+          setDefaultAnimation(transaction).replace(R.id.fl_main_content, SignUpPhotoFragment.newInstance(SignUpPhotoFragment.RegistrationType.Email), SignUpPhotoFragment.TAG).commit
+      }
+      enableProgress(false)
+    } (Threading.Ui)
   }
 
   def onShowEmailPhoneCodePage(): Unit = {

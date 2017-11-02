@@ -27,13 +27,13 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
 import com.waz.service.{AccountManager, ZMessaging, ZmsLifeCycle}
 import com.waz.threading.{SerialDispatchQueue, Threading}
-import com.waz.utils._
+import com.waz.utils.{RichThreetenBPDuration, _}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient._
-import com.waz.zclient.controllers.SignInController.SignInMethod
+import com.waz.zclient.controllers.SignInController.{InputType, SignInMethod}
+import com.waz.zclient.tracking.AddPhotoOnRegistrationEvent.Source
 import com.waz.zclient.tracking.ContributionEvent.fromMime
 import org.json.JSONObject
-import com.waz.utils.RichThreetenBPDuration
 
 import scala.concurrent.Future._
 import scala.concurrent.duration._
@@ -194,35 +194,36 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     } yield AssetTrackingData(convType, isBot, msg.ephemeral, asset.size, asset.mime)
   }
 
+  def responseToErrorPair(response: Either[EntryError, Unit]) = response.fold({ e => Option((e.code, e.label))}, _ => Option.empty[(Int, String)])
+
   //Should wait until a ZMS instance exists before firing the event
-  def onSignIn(response: Either[EntryError, Unit], method: SignInMethod): Unit = {
-    response match {
-      case Right(_) =>
-        for {
-          acc <- ZMessaging.currentAccounts.activeAccount.collect { case Some(acc) => acc }.head
-          zms <- ZMessaging.currentAccounts.activeZms.collect { case Some(zms) => zms }.head
-        } yield {
-          //TODO when are generic tokens still used?
-          trackEvent(zms, SignInEvent(method, acc.invitationToken))
-        }
-      case Left(error) =>
-        trackEvent(SignInErrorEvent(method, error.code, error.label), None)
-    }
+  def onEnteredCredentials(response: Either[EntryError, Unit], method: SignInMethod): Unit = {
+      for {
+        acc <- ZMessaging.currentAccounts.activeAccount.head
+        invToken = acc.flatMap(_.invitationToken)
+        zms <- ZMessaging.currentAccounts.activeZms.head
+      } yield {
+        //TODO when are generic tokens still used?
+        trackEvent(EnteredCredentialsEvent(method, responseToErrorPair(response), invToken), zms)
+      }
   }
 
   def onLoggedOut(reason: String) = trackEvent(LoggedOutEvent(reason))
 
-  def onActivation(response: Either[EntryError, Unit], method: SignInMethod): Unit = {
-    response match {
-      case Right(_) =>
-        for {
-          zms <- ZMessaging.currentAccounts.activeZms.collect { case Some(zms) => zms }.head
-        } yield {
-          trackEvent(zms, ActivationEvent(method))
-        }
-      case Left(error) =>
-        trackEvent(ActivationErrorEvent(method, error.code, error.label))
-    }
+  def onEnterCode(response: Either[EntryError, Unit], method: SignInMethod): Unit =
+    ZMessaging.currentAccounts.activeZms.head.map{ zms => trackEvent(EnteredCodeEvent(method, responseToErrorPair(response)), zms) }
+
+  def onRequestResendCode(response: Either[EntryError, Unit], method: SignInMethod, isCall: Boolean): Unit =
+    ZMessaging.currentAccounts.activeZms.head.map{ zms => trackEvent(ResendVerificationEvent(method, isCall, responseToErrorPair(response)), zms) }
+
+  def onAddNameOnRegistration(response: Either[EntryError, Unit], inputType: InputType): Unit =
+    ZMessaging.currentAccounts.activeZms.head.map{ zms => trackEvent(EnteredNameOnRegistrationEvent(inputType, responseToErrorPair(response)), zms) }
+
+  def onAddPhotoOnRegistration(inputType: InputType, source: Source, response: Either[EntryError, Unit] = Right(())): Unit =
+    ZMessaging.currentAccounts.activeZms.head.map{ zms => trackEvent(AddPhotoOnRegistrationEvent(inputType, responseToErrorPair(response), source), zms) }
+
+  def onSignUpScreen(method: SignInMethod): Unit = {
+    ZMessaging.currentAccounts.activeZms.head.map{ zms => trackEvent(SignUpScreenEvent(method), zms) }
   }
 
   def onOptOut(enabled: Boolean): Unit = zMessaging.head.map(zms => trackEvent(zms, OptEvent(enabled)))

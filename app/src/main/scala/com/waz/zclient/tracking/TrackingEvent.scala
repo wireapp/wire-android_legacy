@@ -25,10 +25,12 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{ConversationData, Mime}
 import com.waz.service.push.{MissedPushes, ReceivedPushData}
 import com.waz.utils.returning
-import com.waz.zclient.controllers.SignInController.{Email, Login, Register, SignInMethod}
+import com.waz.zclient.controllers.SignInController._
 import com.waz.zclient.tracking.ContributionEvent.Action
 import org.json.JSONObject
 import org.threeten.bp.Duration
+import com.waz.utils._
+import com.waz.zclient.tracking.AddPhotoOnRegistrationEvent.Source
 
 sealed trait TrackingEvent {
   val name: String
@@ -41,61 +43,122 @@ case class OptEvent(enabled: Boolean) extends TrackingEvent {
 }
 
 //TODO - handle generic invitation tokens
-case class SignInEvent(method: SignInMethod, invitation: Option[PersonalToken]) extends TrackingEvent {
-  override val name = method.signType match {
-    case Register => "registration.succeeded"
-    case Login => "account.logged_in"
+case class EnteredCredentialsEvent(method: SignInMethod, error: Option[(Int, String)], invitation: Option[PersonalToken]) extends TrackingEvent {
+  override val name = method match {
+    case SignInMethod(Register, Phone) => "registration.entered_phone"
+    case SignInMethod(Register, Email) => "registration.entered_email_and_password"
+    case SignInMethod(Login, _) => "account.entered_login_credentials"
   }
   override val props = Some(returning(new JSONObject()) { o =>
     val input = if (method.inputType == Email) "email" else "phone"
+    val outcome = error.fold2("success", _ => "fail")
+
     val context = method.signType match {
       case Login => input
       case Register if invitation.isEmpty => input
       case _ => s"personal_invite_$input"
       //TODO - handle generic invitation tokens
-      //      case _                              => s"generic_invite_$input"
+      // case _ => s"generic_invite_$input"
     }
     o.put("context", context)
+    o.put("outcome", outcome)
+    error.foreach { case (code, label) =>
+        o.put("error", code)
+        o.put("error_message", label)
+    }
   })
 }
 
-case class SignInErrorEvent(method: SignInMethod, errorCode: Int, errorLabel: String) extends TrackingEvent {
+case class EnteredCodeEvent(method: SignInMethod, error: Option[(Int, String)]) extends TrackingEvent {
   override val name = method.signType match {
-    case Register => "registration.failed"
-    case Login => "login.failed"
+    case Register => "registration.verified_phone"
+    case Login => "account.entered_login_code"
   }
   override val props = Some(returning(new JSONObject()) { o =>
-    val context = if (method.inputType == Email) "email" else "phone"
-    o.put("context", context)
-    o.put("error_code", errorCode)
-    o.put("error_label", errorLabel)
+    val outcome = error.fold2("success", _ => "fail")
+
+    o.put("outcome", outcome)
+    error.foreach { case (code, label) =>
+      o.put("error", code)
+      o.put("error_message", label)
+    }
   })
 }
 
-case class ActivationEvent(method: SignInMethod) extends TrackingEvent {
-  override val name = method.signType match {
-    case Register => "registration.activation_succeed"
-    case Login => "login.activation_succeed"
-  }
+case class EnteredNameOnRegistrationEvent(inputType: InputType, error: Option[(Int, String)]) extends TrackingEvent {
+  override val name = "registration.entered_name"
 
   override val props = Some(returning(new JSONObject()) { o =>
-    val context = if (method.inputType == Email) "email" else "phone"
+    val outcome = error.fold2("success", _ => "fail")
+    val context = inputType match {
+      case Phone => "phone"
+      case Email => "email"
+    }
+
     o.put("context", context)
+    o.put("outcome", outcome)
+    error.foreach { case (code, label) =>
+      o.put("error", code)
+      o.put("error_message", label)
+    }
   })
 }
 
-case class ActivationErrorEvent(method: SignInMethod, errorCode: Int, errorLabel: String) extends TrackingEvent {
-  override val name = method.signType match {
-    case Register => "registration.activation_failed"
-    case Login => "login.activation_failed"
-  }
+case class AddPhotoOnRegistrationEvent(inputType: InputType, error: Option[(Int, String)], source: Source) extends TrackingEvent {
+  override val name = "registration.added_photo"
 
   override val props = Some(returning(new JSONObject()) { o =>
-    val context = if (method.inputType == Email) "email" else "phone"
+    val outcome = error.fold2("success", _ => "fail")
+    val context = inputType match {
+      case Phone => "phone"
+      case Email => "email"
+    }
+
     o.put("context", context)
-    o.put("error_code", errorCode)
-    o.put("error_label", errorLabel)
+    o.put("source", source.value)
+    o.put("outcome", outcome)
+    error.foreach { case (code, label) =>
+      o.put("error", code)
+      o.put("error_message", label)
+    }
   })
+}
+
+object AddPhotoOnRegistrationEvent {
+  case class Source(value: String)
+
+  val Unsplash = Source("unsplash")
+  val Gallery = Source("gallery")
+}
+
+case class ResendVerificationEvent(method: SignInMethod, isCall: Boolean, error: Option[(Int, String)]) extends TrackingEvent {
+  override val name = method match {
+    case SignInMethod(Login, Phone) if isCall => "account.requested_login_verification_call"
+    case SignInMethod(Login, Phone) => "account.resent_login_verification"
+    case SignInMethod(Register, Phone) if isCall => "registration.requested_phone_verification_call"
+    case SignInMethod(Register, Phone) => "registration.resent_phone_verification"
+    case SignInMethod(Register, Email) => "registration.resent_email_verification"
+    case _ => ""
+  }
+  override val props = Some(returning(new JSONObject()) { o =>
+    val outcome = error.fold2("success", _ => "fail")
+    o.put("outcome", outcome)
+    error.foreach { case (code, label) =>
+      o.put("error", code)
+      o.put("error_message", label)
+    }
+  })
+}
+
+case class SignUpScreenEvent(method: SignInMethod) extends TrackingEvent {
+  override val name = method match {
+    case SignInMethod(Register, Phone) => "registration.opened_phone_signup"
+    case SignInMethod(Register, Email) => "registration.opened_email_signup"
+    case SignInMethod(Login, Phone) => "registration.opened_phone_signin"
+    case SignInMethod(Login, Email) => "registration.opened_email_signin"
+  }
+
+  override val props = Some(returning(new JSONObject()) { _ => })
 }
 
 case class ContributionEvent(action: Action, conversationType: ConversationType, ephExp: EphemeralExpiration, withBot: Boolean) extends TrackingEvent {

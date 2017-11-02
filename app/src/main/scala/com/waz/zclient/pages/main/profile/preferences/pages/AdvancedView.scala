@@ -24,7 +24,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, Toast}
 import com.waz.content.Preferences.PrefKey
-import com.waz.content.{GlobalPreferences, UserPreferences}
+import com.waz.content.GlobalPreferences
 import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.zclient.pages.main.profile.preferences.views.{SwitchPreference, TextButton}

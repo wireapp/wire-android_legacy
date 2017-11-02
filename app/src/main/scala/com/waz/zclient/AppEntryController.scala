@@ -28,7 +28,11 @@ import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.AppEntryController._
+import com.waz.zclient.controllers.SignInController
 import com.waz.zclient.controllers.SignInController._
+import com.waz.zclient.newreg.fragments.SignUpPhotoFragment
+import com.waz.zclient.newreg.fragments.SignUpPhotoFragment.RegistrationType
+import com.waz.zclient.tracking.{AddPhotoOnRegistrationEvent, GlobalTrackingController}
 
 import scala.concurrent.Future
 
@@ -37,6 +41,7 @@ class AppEntryController(implicit inj: Injector, eventContext: EventContext) ext
   implicit val ec = Threading.Background
 
   lazy val optZms = inject[Signal[Option[ZMessaging]]]
+  lazy val tracking = inject[GlobalTrackingController]
   val currentAccount = ZMessaging.currentAccounts.activeAccount
   val currentUser = optZms.flatMap{ _.fold(Signal.const(Option.empty[UserData]))(z => z.usersStorage.optSignal(z.selfUserId)) }
   val invitationToken = Signal(Option.empty[String])
@@ -134,14 +139,26 @@ class AppEntryController(implicit inj: Injector, eventContext: EventContext) ext
   def verifyPhone(code: String): Future[Either[EntryError, Unit]] = {
     ZMessaging.currentAccounts.activeAccount.head.flatMap {
       case Some(accountData) if accountData.regWaiting =>
+        val method = SignInMethod(Register, Phone)
         ZMessaging.currentAccounts.activatePhoneOnRegister(accountData.id, ConfirmationCode(code)).map {
-          case Left(error) => Left(EntryError(error.code, error.label, SignInMethod(Register, Phone)))
-          case _ => Right(())
+          case Left(error) =>
+            val entryError = EntryError(error.code, error.label, method)
+            tracking.onEnterCode(Left(entryError), method)
+            Left(entryError)
+          case _ =>
+            tracking.onEnterCode(Right(()), method)
+            Right(())
         }
       case Some(accountData) =>
+        val method = SignInMethod(Login, Phone)
         ZMessaging.currentAccounts.loginPhone(accountData.id, ConfirmationCode(code)).flatMap {
-          case Left(error) => Future.successful(Left(EntryError(error.code, error.label, SignInMethod(Login, Phone))))
-          case _ => ZMessaging.currentAccounts.switchAccount(accountData.id).map(_ => Right(()))
+          case Left(error) =>
+            val entryError = EntryError(error.code, error.label, method)
+            tracking.onEnterCode(Left(entryError), method)
+            Future.successful(Left(entryError))
+          case _ =>
+            tracking.onEnterCode(Right(()), method)
+            ZMessaging.currentAccounts.switchAccount(accountData.id).map(_ => Right(()))
         }
       case _ => Future.successful(Left(GenericRegisterPhoneError))
     }
@@ -151,8 +168,13 @@ class AppEntryController(implicit inj: Injector, eventContext: EventContext) ext
     ZMessaging.currentAccounts.activeAccount.head.flatMap {
       case Some(accountData) if accountData.phone.isDefined && accountData.regWaiting && accountData.code.isDefined =>
         ZMessaging.currentAccounts.registerNameOnPhone(accountData.id, name).flatMap {
-          case Left(error) => Future.successful(Left(EntryError(error.code, error.label, SignInMethod(Register, Phone))))
-          case _ => ZMessaging.currentAccounts.switchAccount(accountData.id).map(_ => Right(()))
+          case Left(error) =>
+            val entryError = EntryError(error.code, error.label, SignInMethod(Register, Phone))
+            tracking.onAddNameOnRegistration(Left(entryError), SignInController.Phone)
+            Future.successful(Left(entryError))
+          case _ =>
+            tracking.onAddNameOnRegistration(Right(()), SignInController.Phone)
+            ZMessaging.currentAccounts.switchAccount(accountData.id).map(_ => Right(()))
         }
       case _ => Future.successful(Left(GenericRegisterPhoneError))
     }
@@ -193,9 +215,20 @@ class AppEntryController(implicit inj: Injector, eventContext: EventContext) ext
 
   def cancelVerification(): Unit = ZMessaging.currentAccounts.logout(false)
 
-  def setPicture(imageAsset: ImageAsset): Unit = {
+  def setPicture(imageAsset: ImageAsset, source: SignUpPhotoFragment.Source, registrationType: RegistrationType): Unit = {
     optZms.head.map {
-      case Some(zms) => zms.users.updateSelfPicture(imageAsset)
+      case Some(zms) =>
+        zms.users.updateSelfPicture(imageAsset).map { _ =>
+          val trackingSource = source match {
+            case SignUpPhotoFragment.Source.Unsplash => AddPhotoOnRegistrationEvent.Unsplash
+            case SignUpPhotoFragment.Source.Gallery => AddPhotoOnRegistrationEvent.Gallery
+          }
+          val trackingRegType = registrationType match {
+            case SignUpPhotoFragment.RegistrationType.Email => Email
+            case SignUpPhotoFragment.RegistrationType.Phone => Phone
+          }
+          tracking.onAddPhotoOnRegistration(trackingRegType, trackingSource)
+        }
       case _ =>
     }
   }

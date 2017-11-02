@@ -155,24 +155,19 @@ class VerifyPhoneFragment extends BaseFragment[VerifyPhoneFragment.Container] wi
 
   }
 
-  private def resendPhoneNumber(): Unit = {
+  private def requestCode(shouldCall: Boolean) = {
     editTextCode.setText("")
-    appEntryController.resendActivationPhoneCode().map {
-      case Left(entryError) =>
-        getContainer.showError(entryError)
-        editTextCode.requestFocus
-      case _ =>
-        Toast.makeText(getActivity, getResources.getString(R.string.new_reg__code_resent), Toast.LENGTH_LONG).show()
-    }
-  }
-
-  private def requestCallCode(): Unit = {
-    appEntryController.resendActivationPhoneCode(shouldCall = true).map {
-      case Left(entryError) =>
-        getContainer.showError(entryError)
-        editTextCode.requestFocus
-      case _ =>
-        Toast.makeText(getActivity, getResources.getString(R.string.new_reg__code_resent__call), Toast.LENGTH_LONG).show()
+    appEntryController.resendActivationPhoneCode(shouldCall = shouldCall).map { result =>
+      ZMessaging.currentAccounts.getActiveAccount.collect { case Some(acc) => acc.regWaiting }.map { reg =>
+        tracking.onRequestResendCode(result, SignInMethod(if (reg) Register else Login, Phone), isCall = shouldCall)
+      }
+      result match {
+        case Left(entryError) =>
+          getContainer.showError(entryError)
+          editTextCode.requestFocus
+        case _ =>
+          Toast.makeText(getActivity, getResources.getString(R.string.new_reg__code_resent), Toast.LENGTH_LONG).show()
+      }
     }
   }
 
@@ -183,24 +178,16 @@ class VerifyPhoneFragment extends BaseFragment[VerifyPhoneFragment.Container] wi
   private def confirmCode(): Unit = {
     getContainer.enableProgress(true)
     KeyboardUtils.hideKeyboard(getActivity)
-    appEntryController.verifyPhone(editTextCode.getText.toString).map { result =>
-      ZMessaging.currentAccounts.getActiveAccount.collect { case Some(acc) => acc.regWaiting }.map { reg =>
-        tracking.onActivation(result, SignInMethod(if (reg) Register else Login, Phone))
-      }
-      result match {
-        case Left(entryError) =>
-          getContainer.enableProgress(false)
-          getContainer.showError(entryError, {
-            if (getActivity == null) return
-            KeyboardUtils.showKeyboard(getActivity)
-            editTextCode.requestFocus
-            phoneConfirmationButton.setState(PhoneConfirmationButton.State.INVALID)
-          })
-        case _ =>
-          ZMessaging.currentAccounts.getActiveAccount.collect { case Some(acc) => acc.regWaiting }.map { reg =>
-            tracking.onActivation(Right(()), SignInMethod(if (reg) Register else Login, Phone))
-          }
-      }
+    appEntryController.verifyPhone(editTextCode.getText.toString).map {
+      case Left(entryError) =>
+        getContainer.enableProgress(false)
+        getContainer.showError(entryError, {
+          if (getActivity == null) return
+          KeyboardUtils.showKeyboard(getActivity)
+          editTextCode.requestFocus
+          phoneConfirmationButton.setState(PhoneConfirmationButton.State.INVALID)
+        })
+      case _ =>
     }
   }
 
@@ -209,12 +196,12 @@ class VerifyPhoneFragment extends BaseFragment[VerifyPhoneFragment.Container] wi
       case R.id.ll__activation_button__back =>
         goBack()
       case R.id.ttv__resend_button =>
-        resendPhoneNumber()
+        requestCode(shouldCall = false)
         startResendCodeTimer()
       case R.id.pcb__activate =>
         confirmCode()
       case R.id.ttv__call_me_button =>
-        requestCallCode()
+        requestCode(shouldCall = true)
         startResendCodeTimer()
     }
   }

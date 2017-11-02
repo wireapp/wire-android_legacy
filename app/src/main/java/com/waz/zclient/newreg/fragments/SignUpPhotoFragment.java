@@ -35,6 +35,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+
 import com.waz.api.BitmapCallback;
 import com.waz.api.ImageAsset;
 import com.waz.api.LoadHandle;
@@ -55,6 +56,9 @@ import com.waz.zclient.ui.utils.ResourceUtils;
 import com.waz.zclient.ui.views.ZetaButton;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.ProgressView;
+
+import static com.waz.zclient.newreg.fragments.SignUpPhotoFragment.Source.Gallery;
+import static com.waz.zclient.newreg.fragments.SignUpPhotoFragment.Source.Unsplash;
 
 public class SignUpPhotoFragment extends BaseFragment<SignUpPhotoFragment.Container> implements CameraFragment.Container,
                                                                                                 CameraActionObserver,
@@ -82,6 +86,7 @@ public class SignUpPhotoFragment extends BaseFragment<SignUpPhotoFragment.Contai
     private boolean isImageLoaded;
 
     public enum RegistrationType { Phone, Email }
+    public enum Source { Unsplash, Gallery}
 
     public static SignUpPhotoFragment newInstance(RegistrationType registrationType) {
         SignUpPhotoFragment newFragment = new SignUpPhotoFragment();
@@ -117,7 +122,7 @@ public class SignUpPhotoFragment extends BaseFragment<SignUpPhotoFragment.Contai
         keepButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                handleSelectedBitmap(getContainer().getUnsplashImageAsset());
+                handleSelectedBitmap(getContainer().getUnsplashImageAsset(), Unsplash, registrationType);
             }
         });
 
@@ -361,7 +366,7 @@ public class SignUpPhotoFragment extends BaseFragment<SignUpPhotoFragment.Contai
             return;
         }
         dismissCameraFragment();
-        handleSelectedBitmap(imageAsset);
+        handleSelectedBitmap(imageAsset, Gallery, registrationType);
     }
 
     @Override
@@ -379,11 +384,11 @@ public class SignUpPhotoFragment extends BaseFragment<SignUpPhotoFragment.Contai
         getActivity().onBackPressed();
     }
 
-    private void handleSelectedBitmap(final ImageAsset imageAsset)  {
+    private void handleSelectedBitmap(final ImageAsset imageAsset, final Source source, final RegistrationType registrationType)  {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                ((BaseActivity) getActivity()).injectJava(AppEntryController.class).setPicture(imageAsset);
+                ((BaseActivity) getActivity()).injectJava(AppEntryController.class).setPicture(imageAsset, source, registrationType);
             }
         }, getResources().getInteger(R.integer.signup__photo__selected_photo_display_delay));
     }
