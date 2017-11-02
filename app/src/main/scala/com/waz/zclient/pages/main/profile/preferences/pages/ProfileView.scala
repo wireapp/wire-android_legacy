@@ -222,7 +222,7 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
 
   val account = ZMessaging.currentAccounts.activeAccount.collect { case Some(accountData) if accountData.userId.isDefined => accountData}
 
-  account { acc =>
+  account.onUi { acc =>
     view.setManageTeamEnabled(acc.selfPermissions.contains(AccountData.Permission.AddTeamMember))
   }
 
