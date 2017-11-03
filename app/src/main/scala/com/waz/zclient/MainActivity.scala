@@ -298,11 +298,11 @@ class MainActivity extends BaseActivity
   def handleIntent(intent: Intent) = {
     verbose(s"handleIntent: ${intent.log}")
 
-    def switchConversation(convId: ConvId, call: Boolean = false, exp: EphemeralExpiration = EphemeralExpiration.NONE) =
+    def switchConversation(convId: ConvId, call: Boolean = false, exp: Option[EphemeralExpiration] = None) =
       CancellableFuture.delay(750.millis).map { _ =>
         verbose(s"setting conversation: $convId")
         val conv = getStoreFactory.conversationStore.getConversation(convId.str)
-        conv.setEphemeralExpiration(exp)
+        exp.foreach(conv.setEphemeralExpiration)
         getStoreFactory.conversationStore.setCurrentConversation(conv, ConversationChangeRequester.INTENT)
         if (call) startCall(withVideo = false, Option(conv))
     } (Threading.Ui).future
@@ -341,7 +341,7 @@ class MainActivity extends BaseActivity
           convs <- sharingController.targetConvs.head
           exp   <- sharingController.ephemeralExpiration.head
           _     <- sharingController.sendContent(this)
-          _     <- if (convs.size == 1) switchConversation(convs.head, exp = exp) else Future.successful({})
+          _     <- if (convs.size == 1) switchConversation(convs.head, exp = Some(exp)) else Future.successful({})
         } yield clearIntent()
 
       case OpenPageIntent(page) => page match {

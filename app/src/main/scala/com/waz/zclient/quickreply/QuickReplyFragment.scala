@@ -26,7 +26,7 @@ import android.view.{KeyEvent, LayoutInflater, View, ViewGroup}
 import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
-import com.waz.api.MessageContent
+import com.waz.api.{EphemeralExpiration, MessageContent}
 import com.waz.api.impl.Conversation
 import com.waz.model.{AccountId, ConvId}
 import com.waz.service.ZMessaging
@@ -135,6 +135,7 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
             c        <- conv.head
             isBot    <- Conversation.isOtto(c, zs.usersStorage)
             convType <- convType(c, zs.membersStorage)
+            _        <- zs.convsUi.setEphemeral(c.id, EphemeralExpiration.NONE)
             msg      <- zs.convsUi.sendMessage(c.id, new MessageContent.Text(sendText))
           } {
             textView.setEnabled(true)
