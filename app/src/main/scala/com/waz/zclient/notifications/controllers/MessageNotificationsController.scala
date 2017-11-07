@@ -20,6 +20,8 @@ package com.waz.zclient.notifications.controllers
 import android.annotation.TargetApi
 import android.app.{Notification, NotificationManager}
 import android.content.Context
+import android.graphics.Bitmap.Config
+import android.graphics.PorterDuff.Mode
 import android.graphics._
 import android.net.Uri
 import android.os.Build
@@ -32,10 +34,12 @@ import com.waz.ZLog.verbose
 import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.NotificationsHandler.NotificationType._
 import com.waz.api.impl.AccentColor
-import com.waz.model.{AccountId, ConvId, TeamData}
+import com.waz.bitmap.BitmapUtils
+import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.push.NotificationService.NotificationInfo
 import com.waz.threading.Threading
+import com.waz.ui.MemoryImageCache.BitmapRequest
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.Intents._
@@ -45,9 +49,11 @@ import com.waz.zclient.controllers.userpreferences.UserPreferencesController
 import com.waz.zclient.media.SoundController
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.RingtoneUtils
+import com.waz.zclient.utils.{RingtoneUtils, ViewUtils}
 import com.waz.zms.NotificationsAndroidService
 import org.threeten.bp.Instant
+import com.waz.utils._
+import com.waz.utils.wrappers.Bitmap
 
 import scala.concurrent.Future
 
@@ -90,10 +96,8 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
             case _ => Future.successful(Option.empty[TeamData])
           }
         } yield team.map(_.name)
-        teamName.map { teamName =>
-          if (BundleEnabled) createSummaryNotification(account, shouldBeSilent, nots, teamName)
-          createConvNotifications(account, shouldBeSilent, nots, teamName)
-        } (Threading.Ui)
+
+        teamName.map { teamName => createConvNotifications(account, shouldBeSilent, nots, teamName) } (Threading.Ui)
     }
     if (BundleEnabled) {
       val currentBundles = notifications.keys.map(toNotificationGroupId).toSeq
@@ -138,6 +142,32 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
       gl.notifications.notificationsSourceVisible ! convs
   }
 
+  private def getPictureForNotifications(accountId: AccountId, nots: Seq[NotificationInfo]): Future[Option[Bitmap]] = {
+    val pictures = nots.flatMap(_.userPicture).distinct
+
+    val iconWidth = ViewUtils.toPx(context, 64)
+
+    val assetId = if (pictures.size == 1) {
+      pictures.headOption
+    } else {
+      None
+    }
+
+    for {
+      zms <- ZMessaging.currentAccounts.getZMessaging(accountId)
+      assetData <- (zms, assetId) match {
+        case (Some(z), Some(aId)) => z.assetsStorage.get(aId)
+        case _ => Future.successful(None)
+      }
+      bmp <- (zms, assetData) match {
+        case (Some(z), Some(ad)) => z.imageLoader.loadBitmap(ad, BitmapRequest.Single(iconWidth), forceDownload = false).map(Option(_)).future
+        case _ => Future.successful(None)
+      }
+    } yield {
+      bmp.map { original => BitmapUtils.createRoundBitmap(original, iconWidth, 0, Color.TRANSPARENT) }
+    }
+  }
+
   private def createSummaryNotification(account: AccountId, silent: Boolean, nots: Seq[NotificationInfo], teamName: Option[String]): Unit = {
 
     if (nots.isEmpty) {
@@ -172,43 +202,60 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
     notManager.notify(toNotificationGroupId(account), builder.build())
   }
 
-  private def createConvNotifications(account: AccountId, silent: Boolean, nots: Seq[NotificationInfo], teamName: Option[String]): Unit = {
+  private def createConvNotifications(account: AccountId, silent: Boolean, nots: Seq[NotificationInfo], teamName: Option[String]): Future[Unit] = {
     verbose(s"Notifications updated for account: $account: shouldBeSilent: $silent, $nots")
 
-    def publishNotification(convId: ConvId, notification: Notification) = {
-      verbose(s"creating not: ${toNotificationConvId(account, convId)}")
-      notManager.notify(toNotificationConvId(account, convId), notification)
+    def publishNotification(convId: Option[ConvId], notification: Notification) = {
+      convId match {
+        case Some(cId) =>
+          verbose(s"creating not: ${toNotificationConvId(account, cId)}")
+          notManager.notify(toNotificationConvId(account, cId), notification)
+        case _ =>
+          notManager.notify(toNotificationGroupId(account), notification)
+      }
     }
 
-    if (BundleEnabled) {
+    val publishFuture = if (BundleEnabled) {
+      createSummaryNotification(account, silent, nots, teamName)
+
       val groupedConvs = nots.groupBy(_.convId)
       val isGrouped = groupedConvs.keys.size > 1
 
-      groupedConvs.foreach {
+      Future.sequence(
+      groupedConvs.map {
         case (convId, convNots) if convNots.size == 1 =>
           val allBeenDisplayed = convNots.forall(_.hasBeenDisplayed)
-          publishNotification(convId, getSingleMessageNotification(account, convNots.head, silent, if (isGrouped) None else teamName, noTicker = allBeenDisplayed))
-
+          getPictureForNotifications(account, convNots).map { pic =>
+            publishNotification(Some(convId), getSingleMessageNotification(account, convNots.head, silent, if (isGrouped) None else teamName, noTicker = allBeenDisplayed, pic))
+          }
         case (convId, convNots) =>
           val allBeenDisplayed = convNots.forall(_.hasBeenDisplayed)
-          publishNotification(convId, getMultipleMessagesNotification(account, convNots, silent, noTicker = allBeenDisplayed, if (isGrouped) None else teamName))
-      }
+          getPictureForNotifications(account, convNots).map { pic =>
+            publishNotification(Some(convId), getMultipleMessagesNotification(account, convNots, silent, noTicker = allBeenDisplayed, if (isGrouped) None else teamName, pic))
+          }
+      }.toSeq)
     } else {
       val allBeenDisplayed = nots.forall(_.hasBeenDisplayed)
 
-      if (nots.nonEmpty) {
-        val notification = if (nots.size == 1)
-          getSingleMessageNotification(account, nots.head, silent, teamName, noTicker = allBeenDisplayed)
-        else
-          getMultipleMessagesNotification(account, nots, silent, noTicker = allBeenDisplayed, teamName)
+      getPictureForNotifications(account, nots).map { pic =>
 
-        notManager.notify(toNotificationGroupId(account), notification)
-      } else {
-        notManager.cancel(toNotificationGroupId(account))
+        if (nots.nonEmpty) {
+          val notification = if (nots.size == 1)
+            getSingleMessageNotification(account, nots.head, silent, teamName, noTicker = allBeenDisplayed, pic)
+          else
+            getMultipleMessagesNotification(account, nots, silent, noTicker = allBeenDisplayed, teamName, pic)
+
+          publishNotification(None, notification)
+        } else {
+          notManager.cancel(toNotificationGroupId(account))
+        }
       }
     }
 
-    Option(ZMessaging.currentGlobal.notifications.markAsDisplayed(account, nots.map(_.id)))
+    publishFuture.map { _ =>
+      Option(ZMessaging.currentGlobal.notifications.markAsDisplayed(account, nots.map(_.id)))
+    }
+
   }
 
   private def attachNotificationSoundAndLed(builder: NotificationCompat.Builder, ns: Seq[NotificationInfo], silent: Boolean) = {
@@ -269,7 +316,7 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
     builder
   }
 
-  private def getSingleMessageNotification(accountId: AccountId, n: NotificationInfo, silent: Boolean, teamName: Option[String], noTicker: Boolean): Notification = {
+  private def getSingleMessageNotification(accountId: AccountId, n: NotificationInfo, silent: Boolean, teamName: Option[String], noTicker: Boolean, pic: Option[Bitmap] = None): Notification = {
     val title = returning(new SpannableString(getMessageTitle(n, None))) { title =>
       title.setSpan(new StyleSpan(Typeface.BOLD), 0, title.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
@@ -292,14 +339,14 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
     }
 
     attachNotificationSoundAndLed(builder, Seq(n), silent)
-
+    pic.foreach(builder.setLargeIcon(_))
     builder
       .setOnlyAlertOnce(noTicker)
       .setGroup(accountId.str)
       .build
   }
 
-  private def getMultipleMessagesNotification(accountId: AccountId, ns: Seq[NotificationInfo], silent: Boolean, noTicker: Boolean, teamName: Option[String]): Notification = {
+  private def getMultipleMessagesNotification(accountId: AccountId, ns: Seq[NotificationInfo], silent: Boolean, noTicker: Boolean, teamName: Option[String], pic: Option[Bitmap] = None): Notification = {
     val convIds = ns.map(_.convId).toSet
     val users = ns.map(_.userName).toSet
     val isSingleConv = convIds.size == 1
@@ -352,7 +399,7 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
     messages.foreach(inboxStyle.addLine)
 
     attachNotificationSoundAndLed(builder, ns, silent)
-
+    pic.foreach(builder.setLargeIcon(_))
     builder
       .setOnlyAlertOnce(noTicker)
       .setGroup(accountId.str)
@@ -381,8 +428,13 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
       case RENAME                   => getString(R.string.notification__message__group__renamed_conversation, message)
       case MEMBER_LEAVE             => getString(R.string.notification__message__group__remove)
       case MEMBER_JOIN              => getString(R.string.notification__message__group__add)
-      case LIKE if n.message.nonEmpty  => getString(R.string.notification__message__liked, n.message)
-      case LIKE                     => getString(R.string.notification__message__liked_message)
+      case LIKE if n.likedContent.nonEmpty =>
+        n.likedContent.map {
+          case LikedContent.PICTURE =>
+            getString(R.string.notification__message__liked_picture)
+          case LikedContent.TEXT_OR_URL =>
+            getString(R.string.notification__message__liked, n.message)
+        }.getOrElse(getString(R.string.notification__message__liked_message))
       case CONNECT_ACCEPTED         => if (n.userName.isEmpty) getString(R.string.notification__message__generic__accept_request)    else getString(R.string.notification__message__single__accept_request, n.userName.getOrElse(""))
       case MESSAGE_SENDING_FAILED   => getString(R.string.notification__message__send_failed)
       case _ => ""
