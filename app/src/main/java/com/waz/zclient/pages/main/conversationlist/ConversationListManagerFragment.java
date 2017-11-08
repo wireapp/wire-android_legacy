@@ -18,6 +18,7 @@
 package com.waz.zclient.pages.main.conversationlist;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -35,8 +36,6 @@ import com.waz.api.Message;
 import com.waz.api.OtrClient;
 import com.waz.api.SyncState;
 import com.waz.api.User;
-import com.waz.model.ConvId;
-import com.waz.model.UserId;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
@@ -50,7 +49,6 @@ import com.waz.zclient.controllers.confirmation.TwoButtonConfirmationCallback;
 import com.waz.zclient.controllers.currentfocus.IFocusController;
 import com.waz.zclient.controllers.navigation.NavigationControllerObserver;
 import com.waz.zclient.controllers.navigation.Page;
-import com.waz.zclient.conversation.ConversationController;
 import com.waz.zclient.core.stores.connect.IConnectStore;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
 import com.waz.zclient.core.stores.conversation.ConversationStoreObserver;
@@ -78,14 +76,11 @@ import com.waz.zclient.ui.animation.interpolators.penner.Quart;
 import com.waz.zclient.ui.optionsmenu.OptionsMenu;
 import com.waz.zclient.ui.optionsmenu.OptionsMenuItem;
 import com.waz.zclient.ui.utils.KeyboardUtils;
-import com.waz.zclient.utils.Callback;
-import com.waz.zclient.utils.ContextUtils;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.LoadingIndicatorView;
 import com.waz.zclient.views.menus.ConfirmationMenu;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ConversationListManagerFragment extends BaseFragment<ConversationListManagerFragment.Container> implements
@@ -137,8 +132,13 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
         mainContainer = ViewUtils.getView(view, R.id.fl__conversation_list_main);
         startuiLoadingIndicatorView = ViewUtils.getView(view, R.id.liv__conversations__loading_indicator);
         listLoadingIndicatorView = ViewUtils.getView(view, R.id.lbv__conversation_list__loading_indicator);
-        startuiLoadingIndicatorView.setColor(ContextUtils.getColorWithTheme(R.color.people_picker__loading__color, getContext()));
 
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            //noinspection deprecation
+            startuiLoadingIndicatorView.setColor(getResources().getColor(R.color.people_picker__loading__color));
+        } else {
+            startuiLoadingIndicatorView.setColor(getResources().getColor(R.color.people_picker__loading__color, getContext().getTheme()));
+        }
         listLoadingIndicatorView.setColor(getControllerFactory().getAccentColorController().getColor());
 
         confirmationMenu = ViewUtils.getView(view, R.id.cm__confirm_action_light);
@@ -184,13 +184,6 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
         getControllerFactory().getConversationScreenController().addConversationControllerObservers(this);
         getControllerFactory().getNavigationController().addNavigationControllerObserver(this);
         getControllerFactory().getConfirmationController().addConfirmationObserver(this);
-
-        inject(ConversationController.class).onConvChanged(new Callback<ConversationController.ConversationChange>() {
-            @Override
-            public void callback(ConversationController.ConversationChange conversationChange) {
-                onCurrentConversationHasChanged(conversationChange);
-            }
-        });
     }
 
     @Override
@@ -234,25 +227,25 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
     //  ConversationStoreObserver
     //
     //////////////////////////////////////////////////////////////////////////////////////////
-
-    private LoadingIndicatorView.AnimationType animationType = LoadingIndicatorView.SPINNER();
-
     @Override
     public void onConversationListUpdated(@NonNull final ConversationsList conversationsList) {
         if (!Page.CONVERSATION_LIST.equals(getControllerFactory().getNavigationController().getCurrentPage())) {
             return;
         }
         if (conversationsList.size() > 0) {
-            animationType = LoadingIndicatorView.INFINITE_LOADING_BAR();
+            listLoadingIndicatorView.setType(LoadingIndicatorView.INFINITE_LOADING_BAR);
             getControllerFactory().getNavigationController().setPagerEnabled(true);
         } else {
-            animationType = LoadingIndicatorView.SPINNER();
+            listLoadingIndicatorView.setType(LoadingIndicatorView.SPINNER);
             getControllerFactory().getNavigationController().setPagerEnabled(false);
         }
     }
 
-    private void onCurrentConversationHasChanged(ConversationController.ConversationChange change) {
-        switch (change.requester()) {
+    @Override
+    public void onCurrentConversationHasChanged(IConversation fromConversation,
+                                                IConversation toConversation,
+                                                ConversationChangeRequester conversationChangerSender) {
+        switch (conversationChangerSender) {
             case START_CONVERSATION:
             case START_CONVERSATION_FOR_CALL:
             case START_CONVERSATION_FOR_VIDEO_CALL:
@@ -288,7 +281,7 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
         switch (syncState) {
             case SYNCING:
             case WAITING:
-                listLoadingIndicatorView.show(animationType);
+                listLoadingIndicatorView.show();
                 return;
             case COMPLETED:
                 listLoadingIndicatorView.hide();
@@ -297,6 +290,11 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
             default:
                 listLoadingIndicatorView.hide();
         }
+    }
+
+    @Override
+    public void onMenuConversationHasChanged(IConversation fromConversation) {
+
     }
 
     private void animateOnIncomingCall() {
@@ -350,7 +348,8 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
     @Override
     public void showIncomingPendingConnectRequest(IConversation conversation) {
         getControllerFactory().getPickUserController().hidePickUser(getCurrentPickerDestination(), false);
-        inject(ConversationController.class).selectConv(new ConvId(conversation.getId()), ConversationChangeRequester.INBOX);
+
+        getStoreFactory().conversationStore().setCurrentConversation(conversation, ConversationChangeRequester.INBOX);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -367,14 +366,11 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
             User user = users.get(0);
             IConversation conversation = user.getConversation();
             if (conversation != null) {
-                inject(ConversationController.class).selectConv(new ConvId(conversation.getId()), requester);
+                getStoreFactory().conversationStore().setCurrentConversation(conversation,
+                                                                                requester);
             }
         } else {
-            List<UserId> userIds = new ArrayList<>(users.size());
-            for(User user: users) {
-                userIds.add(new UserId(user.getId()));
-            }
-            inject(ConversationController.class).createGroupConversation(userIds, requester);
+            getStoreFactory().conversationStore().createGroupConversation(users, requester);
         }
     }
 
@@ -548,12 +544,14 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
 
     @Override
     public void onAcceptedConnectRequest(IConversation conversation) {
-        inject(ConversationController.class).selectConv(new ConvId(conversation.getId()), ConversationChangeRequester.START_CONVERSATION);
+        getStoreFactory().conversationStore().setCurrentConversation(conversation,
+                                                                        ConversationChangeRequester.START_CONVERSATION);
     }
 
     @Override
     public void onAcceptedPendingOutgoingConnectRequest(IConversation conversation) {
-        inject(ConversationController.class).selectConv(new ConvId(conversation.getId()), ConversationChangeRequester.CONNECT_REQUEST_ACCEPTED);
+        getStoreFactory().conversationStore().setCurrentConversation(conversation,
+                                                                        ConversationChangeRequester.CONNECT_REQUEST_ACCEPTED);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -565,7 +563,8 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
     @Override
     public void onUnblockedUser(IConversation restoredConversationWithUser) {
         getControllerFactory().getPickUserController().hideUserProfile();
-        inject(ConversationController.class).selectConv(new ConvId(restoredConversationWithUser.getId()), ConversationChangeRequester.START_CONVERSATION);
+        getStoreFactory().conversationStore().setCurrentConversation(restoredConversationWithUser,
+                                                                        ConversationChangeRequester.START_CONVERSATION);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -769,25 +768,25 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
     }
 
     @Override
-    public void onOptionsItemClicked(final ConvId convId, User user, OptionsMenuItem item) {
+    public void onOptionsItemClicked(IConversation conversation, User user, OptionsMenuItem item) {
         switch (item) {
             case ARCHIVE:
-                inject(ConversationController.class).archive(convId, true);
+                getStoreFactory().conversationStore().archive(conversation, true);
                 break;
             case UNARCHIVE:
-                inject(ConversationController.class).archive(convId, false);
+                getStoreFactory().conversationStore().archive(conversation, false);
                 break;
             case SILENCE:
-                inject(ConversationController.class).setMuted(convId, true);
+                conversation.setMuted(true);
                 break;
             case UNSILENCE:
-                inject(ConversationController.class).setMuted(convId, false);
+                conversation.setMuted(false);
                 break;
             case LEAVE:
-                leaveConversation(convId);
+                leaveConversation(conversation);
                 break;
             case DELETE:
-                deleteConversation(convId);
+                deleteConversation(conversation);
                 break;
             case BLOCK:
                 showBlockConfirmation(user);
@@ -796,10 +795,10 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
                 user.unblock();
                 break;
             case CALL:
-                callConversation(convId);
+                callConversation(conversation);
                 break;
             case PICTURE:
-                sendPictureToConversation(convId);
+                sendPictureToConversation(conversation);
                 break;
         }
 
@@ -870,7 +869,7 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
 
     @Override
     public void onShowConversationMenu(@IConversationScreenController.ConversationMenuRequester int requester,
-                                       ConvId convId,
+                                       IConversation conversation,
                                        View anchorView) {
         if ((requester != IConversationScreenController.CONVERSATION_LIST_SWIPE &&
             requester != IConversationScreenController.CONVERSATION_LIST_LONG_PRESS) ||
@@ -879,7 +878,7 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
             return;
         }
 
-        optionsMenuControl.createMenu(convId,
+        optionsMenuControl.createMenu(conversation,
                                       requester,
                                       ((BaseActivity) getActivity()).injectJava(ThemeController.class).optionsDarkTheme());
         optionsMenuControl.open();
@@ -911,7 +910,7 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
     //
     //////////////////////////////////////////////////////////////////////////////////////////
 
-    public void leaveConversation(final ConvId convId) {
+    public void leaveConversation(final IConversation conversation) {
         closeMenu();
         ConfirmationCallback callback = new TwoButtonConfirmationCallback() {
             @Override
@@ -922,9 +921,9 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
                     getControllerFactory().isTornDown()) {
                     return;
                 }
-
-
-                inject(ConversationController.class).leave(convId);
+                getStoreFactory().conversationStore().leave(conversation);
+                getStoreFactory().conversationStore().setCurrentConversationToNext(
+                    ConversationChangeRequester.LEAVE_CONVERSATION);
             }
 
             @Override
@@ -955,7 +954,8 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
             .withWireTheme(((BaseActivity) getActivity()).injectJava(ThemeController.class).optionsDarkTheme())
             .build();
 
-        getControllerFactory().getConfirmationController().requestConfirmation(request, IConfirmationController.CONVERSATION_LIST);
+        getControllerFactory().getConfirmationController().requestConfirmation(request,
+                                                                               IConfirmationController.CONVERSATION_LIST);
 
         SoundController ctrl = inject(SoundController.class);
         if (ctrl != null) {
@@ -963,69 +963,78 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
         }
     }
 
-    public void callConversation(ConvId convId) {
-        inject(ConversationController.class).selectConv(convId, ConversationChangeRequester.CONVERSATION_LIST);
+    public void callConversation(final IConversation conversation) {
+        getStoreFactory().conversationStore().setCurrentConversation(conversation, ConversationChangeRequester.CONVERSATION_LIST);
         getControllerFactory().getCallingController().startCall(false);
     }
 
-    public void sendPictureToConversation(ConvId convId) {
-        inject(ConversationController.class).selectConv(convId, ConversationChangeRequester.CONVERSATION_LIST);
+    public void sendPictureToConversation(final IConversation conversation) {
+        getStoreFactory().conversationStore().setCurrentConversation(conversation, ConversationChangeRequester.CONVERSATION_LIST);
         getControllerFactory().getCameraController().openCamera(CameraContext.MESSAGE);
     }
 
-    public void deleteConversation(final ConvId convId) {
+    public void deleteConversation(final IConversation conversation) {
         closeMenu();
-
-        final ConversationController conversationController = inject(ConversationController.class);
-
-        conversationController.withCurrentConvType(new Callback<IConversation.Type>() {
+        ConfirmationCallback callback = new TwoButtonConfirmationCallback() {
             @Override
-            public void callback(final IConversation.Type convType) {
+            public void positiveButtonClicked(boolean checkboxIsSelected) {
 
-                final ConfirmationCallback callback = new TwoButtonConfirmationCallback() {
-                    @Override public void positiveButtonClicked(boolean checkboxIsSelected) { }
-                    @Override public void negativeButtonClicked() { }
+            }
 
-                    @Override public void onHideAnimationEnd(boolean confirmed, boolean canceled, boolean checkboxIsSelected) {
-                        if (getStoreFactory() == null || getStoreFactory().isTornDown() || getControllerFactory() == null || getControllerFactory().isTornDown()) { return; }
+            @Override
+            public void negativeButtonClicked() {
+            }
 
-                        if (!confirmed) {
-                            return;
-                        }
-
-                        conversationController.delete(convId, checkboxIsSelected);
-                    }
-                };
-
-                String header = getString(R.string.confirmation_menu__meta_delete);
-                String text = getString(R.string.confirmation_menu__meta_delete_text);
-                String confirm = getString(R.string.confirmation_menu__confirm_delete);
-                String cancel = getString(R.string.confirmation_menu__cancel);
-                String checkboxLabel = "";
-
-                if (convType == IConversation.Type.GROUP) {
-                    checkboxLabel = getString(R.string.confirmation_menu__delete_conversation__checkbox__label);
+            @Override
+            public void onHideAnimationEnd(boolean confirmed, boolean canceled, boolean checkboxIsSelected) {
+                if (getStoreFactory() == null ||
+                    getStoreFactory().isTornDown() ||
+                    getControllerFactory() == null ||
+                    getControllerFactory().isTornDown()) {
+                    return;
                 }
 
-                ConfirmationRequest request = new ConfirmationRequest.Builder()
-                    .withHeader(header)
-                    .withMessage(text)
-                    .withPositiveButton(confirm)
-                    .withNegativeButton(cancel)
-                    .withConfirmationCallback(callback)
-                    .withCheckboxLabel(checkboxLabel)
-                    .withWireTheme(((BaseActivity) getActivity()).injectJava(ThemeController.class).optionsDarkTheme())
-                    .build();
+                if (!confirmed) {
+                    return;
+                }
 
-                getControllerFactory().getConfirmationController().requestConfirmation(request, IConfirmationController.CONVERSATION_LIST);
+
+                boolean deleteCurrentConversation = getStoreFactory().conversationStore().getCurrentConversation() != null &&
+                                                    conversation.getId().equals(getStoreFactory().conversationStore().getCurrentConversation().getId());
+                getStoreFactory().conversationStore().deleteConversation(conversation, checkboxIsSelected);
+                if (deleteCurrentConversation) {
+                    getStoreFactory().conversationStore().setCurrentConversationToNext(ConversationChangeRequester.DELETE_CONVERSATION);
+                }
             }
-        });
+        };
+        String header = getString(R.string.confirmation_menu__meta_delete);
+        String text = getString(R.string.confirmation_menu__meta_delete_text);
+        String confirm = getString(R.string.confirmation_menu__confirm_delete);
+        String cancel = getString(R.string.confirmation_menu__cancel);
+        String checkboxLabel = "";
+        if (conversation.getType() == IConversation.Type.GROUP) {
+            checkboxLabel = getString(R.string.confirmation_menu__delete_conversation__checkbox__label);
+        }
+
+        ConfirmationRequest request = new ConfirmationRequest.Builder()
+            .withHeader(header)
+            .withMessage(text)
+            .withPositiveButton(confirm)
+            .withNegativeButton(cancel)
+            .withConfirmationCallback(callback)
+            .withCheckboxLabel(checkboxLabel)
+            .withWireTheme(((BaseActivity) getActivity()).injectJava(ThemeController.class).optionsDarkTheme())
+            .build();
+
+        getControllerFactory().getConfirmationController().requestConfirmation(request,
+                                                                               IConfirmationController.CONVERSATION_LIST);
 
         SoundController ctrl = inject(SoundController.class);
         if (ctrl != null) {
             ctrl.playAlert();
         }
     }
+
 
     private void showBlockConfirmation(final User user) {
         ConfirmationCallback callback = new TwoButtonConfirmationCallback() {
@@ -1037,11 +1046,10 @@ public class ConversationListManagerFragment extends BaseFragment<ConversationLi
                     getControllerFactory().isTornDown()) {
                     return;
                 }
-
+                boolean blockingCurrentConversation = user.getConversation().getId().equals(getStoreFactory().conversationStore().getCurrentConversation().getId());
                 getStoreFactory().connectStore().blockUser(user);
-                boolean blockingCurrentConversation = user.getConversation().getId().equals(inject(ConversationController.class).getCurrentConvId().str());
                 if (blockingCurrentConversation) {
-                    inject(ConversationController.class).setCurrentConversationToNext(ConversationChangeRequester.BLOCK_USER);
+                    getStoreFactory().conversationStore().setCurrentConversationToNext(ConversationChangeRequester.BLOCK_USER);
                 }
             }
 

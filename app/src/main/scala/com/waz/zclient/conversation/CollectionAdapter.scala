@@ -31,6 +31,7 @@ import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
+import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.conversation.CollectionAdapter._
 import com.waz.zclient.conversation.CollectionController.{ContentType, _}
 import com.waz.zclient.messages.RecyclerCursor
@@ -49,18 +50,24 @@ class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, inject
   private implicit val tag: LogTag = logTagFor[CollectionAdapter]
 
   private val zms = inject[Signal[ZMessaging]]
-  private val convController = inject[ConversationController]
+  private val selectedConversation = inject[SelectionController].selectedConv
   private val collectionController = inject[CollectionController]
 
   val contentMode = Signal[ContentType](AllContent)
+
+  val conv = for {
+    zs <- zms
+    convId <- selectedConversation
+    conv <- Signal future zs.convsStorage.get(convId)
+  } yield conv
 
   var header: CollectionHeaderLinearLayout = null
 
   val adapterState = Signal[AdapterState](AdapterState(contentMode.currentValue.get, 0, loading = true))
 
-  Signal(convController.currentConv, adapterState).on(Threading.Ui){
-    case (c, AdapterState(AllContent, 0, false)) => collectionController.openedCollection ! Some(CollectionInfo(c, empty = true))
-    case (c, AdapterState(AllContent, count, false)) => collectionController.openedCollection ! Some(CollectionInfo(c, empty = false))
+  Signal(conv, adapterState).on(Threading.Ui){
+    case (Some(c), AdapterState(AllContent, 0, false)) => collectionController.openedCollection ! Some(CollectionInfo(c, empty = true))
+    case (Some(c), AdapterState(AllContent, count, false)) => collectionController.openedCollection ! Some(CollectionInfo(c, empty = false))
     case _ =>
   }
 
@@ -74,8 +81,8 @@ class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, inject
     val notifier = new CollectionRecyclerNotifier(contentType, adapter)
     val cursor = for {
       zs <- zms
-      cId <- convController.currentConvId
-      rc <- Signal(new RecyclerCursor(cId, zs, notifier, Some(MessageFilter(Some(contentType.typeFilter)))))
+      Some(c) <- conv
+      rc <- Signal(new RecyclerCursor(c.id, zs, notifier, Some(MessageFilter(Some(contentType.typeFilter)))))
       _ <- rc.countSignal
     } yield rc
 

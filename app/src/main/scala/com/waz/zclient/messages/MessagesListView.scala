@@ -33,7 +33,7 @@ import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.controllers.AssetsController
-import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.ScrollController.Scroll
 import com.waz.zclient.messages.controllers.MessageActionsController
@@ -150,7 +150,7 @@ object MessagesListView {
 
 case class MessageViewHolder(view: MessageView, adapter: MessagesListAdapter)(implicit ec: EventContext, inj: Injector) extends RecyclerView.ViewHolder(view) with Injectable {
 
-  private val selection = inject[ConversationController].messages
+  private val selection = inject[SelectionController].messages
   private val msgsController = inject[MessagesController]
   private lazy val assets = inject[AssetsController]
 

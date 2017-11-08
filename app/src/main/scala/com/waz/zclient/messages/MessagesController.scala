@@ -22,21 +22,21 @@ import android.view.View
 import com.waz.model.{ConvId, MessageData, MessageId}
 import com.waz.service.ZMessaging
 import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.controllers.navigation._
 import com.waz.zclient.pages.main.conversationpager.controller.{ISlidingPaneController, SlidingPaneObserver}
-import com.waz.zclient.utils.ContextUtils
+import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{Injectable, Injector}
 import org.threeten.bp.Instant
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
-import com.waz.zclient.conversation.ConversationController
 
 class MessagesController()(implicit injector: Injector, ev: EventContext) extends Injectable {
   import com.waz.threading.Threading.Implicits.Background
 
   val zms = inject[Signal[ZMessaging]]
-  implicit val context = inject[Context]
-  val currentConvId = inject[ConversationController].currentConvId
+  val context = inject[Context]
+  val selectedConversation = inject[SelectionController].selectedConv
   val navigationController = inject[INavigationController]
   val slidingPaneController = inject[ISlidingPaneController]
 
@@ -45,7 +45,7 @@ class MessagesController()(implicit injector: Injector, ev: EventContext) extend
 
   val currentConvIndex = for {
     z       <- zms
-    convId  <- currentConvId
+    convId  <- selectedConversation
     index   <- Signal.future(z.messagesStorage.msgsIndex(convId))
   } yield
     index
@@ -65,7 +65,7 @@ class MessagesController()(implicit injector: Injector, ev: EventContext) extend
     // XXX: This is a bit fragile. We are deducing signal state from loosely related events, and we rely on their order.
     navigationController.addNavigationControllerObserver(new NavigationControllerObserver {
       override def onPageVisible(page: Page) =
-        pageVisible ! (page == Page.MESSAGE_STREAM || ContextUtils.isInLandscape)
+        pageVisible ! (page == Page.MESSAGE_STREAM || ViewUtils.isInLandscape(context.getResources.getConfiguration))
     })
 
     slidingPaneController.addObserver(new SlidingPaneObserver {
@@ -80,7 +80,7 @@ class MessagesController()(implicit injector: Injector, ev: EventContext) extend
       case false => Signal const Option.empty[ConvId]
       case true =>
         pageVisible flatMap {
-          case true => currentConvId.map(Some(_))
+          case true => selectedConversation.map(Some(_))
           case false => Signal const Option.empty[ConvId]
         }
     }

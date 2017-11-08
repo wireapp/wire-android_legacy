@@ -51,7 +51,6 @@ import com.waz.zclient.ui.utils.MathUtils;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.images.TouchImageView;
-import com.waz.zclient.utils.ContextUtils;
 
 public class SingleImageUserFragment extends BaseFragment<SingleImageUserFragment.Container> implements ImageDragViewContainer.Callback,
                                                                                                OnBackPressedListener {
@@ -214,7 +213,7 @@ public class SingleImageUserFragment extends BaseFragment<SingleImageUserFragmen
         }
         if (imageAsset.getWidth() > 0) {
             fadeControls(true);
-            bitmapLoadHandle = imageAsset.getBitmap(ContextUtils.getOrientationIndependentDisplayWidth(getActivity()),
+            bitmapLoadHandle = imageAsset.getBitmap(ViewUtils.getOrientationIndependentDisplayWidth(getActivity()),
                                                     new BitmapCallback() {
                                                         @Override
                                                         public void onBitmapLoaded(Bitmap bitmap) {
@@ -272,7 +271,7 @@ public class SingleImageUserFragment extends BaseFragment<SingleImageUserFragmen
         }
         clickedImageLocation = ViewUtils.getLocationOnScreen(clickedImage);
         int dx = 0;
-        int dy = -ContextUtils.getStatusBarHeight(getActivity());
+        int dy = -ViewUtils.getStatusBarHeight(getActivity());
         clickedImageLocation.offset(dx, dy);
     }
 
@@ -286,9 +285,9 @@ public class SingleImageUserFragment extends BaseFragment<SingleImageUserFragmen
     }
 
     private void animateOpeningTransition() {
-        final int displayHeight = ContextUtils.getOrientationDependentDisplayHeight(getActivity()) -
-            ContextUtils.getStatusBarHeight(getActivity());
-        final int displayWidth = ContextUtils.getOrientationDependentDisplayWidth(getActivity());
+        final int displayHeight = ViewUtils.getOrientationDependentDisplayHeight(getActivity()) - ViewUtils.getStatusBarHeight(
+            getActivity());
+        final int displayWidth = ViewUtils.getOrientationDependentDisplayWidth(getActivity());
 
         int fullImageHeight = displayHeight;
         int fullImageWidth = (int) (fullImageHeight * (float) clickedImageWidth / (float) clickedImageHeight);
@@ -412,9 +411,9 @@ public class SingleImageUserFragment extends BaseFragment<SingleImageUserFragmen
         ViewGroup parent = (ViewGroup) animatingImageView.getParent();
         parent.removeView(animatingImageView);
 
-        final int displayHeight = ContextUtils.getOrientationDependentDisplayHeight(getActivity()) - ContextUtils.getStatusBarHeight(
+        final int displayHeight = ViewUtils.getOrientationDependentDisplayHeight(getActivity()) - ViewUtils.getStatusBarHeight(
             getActivity());
-        final int displayWidth = ContextUtils.getOrientationDependentDisplayWidth(getActivity());
+        final int displayWidth = ViewUtils.getOrientationDependentDisplayWidth(getActivity());
         final int finalTop;
         final int finalLeft;
         if (afterFling) {
@@ -492,7 +491,7 @@ public class SingleImageUserFragment extends BaseFragment<SingleImageUserFragmen
 
     @Override
     public void onDragDistance(float distance) {
-        if (ContextUtils.isInPortrait(getActivity()) || LayoutSpec.isTablet(getActivity())) {
+        if (ViewUtils.isInPortrait(getActivity()) || LayoutSpec.isTablet(getActivity())) {
             background.setAlpha(1f - (1f - MIN_BACKGROUND_ALPHA) * ALPHA_INTERPOLATOR.getInterpolation(distance));
         }
         if (distance >= MIN_DRAG_DISTANCE_FADE_CONTROL &&

@@ -28,9 +28,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.waz.api.IConversation;
-import com.waz.model.ConversationData;
 import com.waz.zclient.common.views.UserDetailsView;
-import com.waz.zclient.conversation.ConversationController;
 import com.waz.zclient.ui.R;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
 import com.waz.zclient.ui.animation.interpolators.penner.Quart;
@@ -336,11 +334,12 @@ public class OptionsMenu extends FrameLayout implements View.OnClickListener {
         titleTextView.setText(title);
     }
 
-    public void setConversationDetails(ConversationData conv) {
-        if (conv.convType() != IConversation.Type.GROUP &&
-            conv.convType() != IConversation.Type.UNKNOWN) {
-            userDetailsView.setUserId(ConversationController.getOtherParticipantForOneToOneConv(conv));
+    public void setConversationDetails(IConversation conversation) {
+        if (conversation.getType() == IConversation.Type.GROUP ||
+            conversation.getType() == IConversation.Type.UNKNOWN) {
+            return;
         }
+        userDetailsView.setUser(conversation.getOtherParticipant());
     }
 
     @Override

@@ -28,7 +28,7 @@ import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.zclient.controllers.AssetsController
 import com.waz.zclient.controllers.drawing.IDrawingController.DrawingMethod
-import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.parts.assets.ImageLayoutAssetPart
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
@@ -42,7 +42,7 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends F
 
   override val tpe: MsgPart = MsgPart.Image
 
-  private val selection = inject[ConversationController].messages
+  private val selection = inject[SelectionController].messages
 
   private lazy val assets = inject[AssetsController]
 

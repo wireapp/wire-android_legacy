@@ -20,6 +20,7 @@ package com.waz.zclient.core.stores
 import com.waz.zclient.core.stores.api.IZMessagingApiStore
 import com.waz.zclient.core.stores.connect.IConnectStore
 import com.waz.zclient.core.stores.conversation.IConversationStore
+import com.waz.zclient.core.stores.draft.IDraftStore
 import com.waz.zclient.core.stores.inappnotification.IInAppNotificationStore
 import com.waz.zclient.core.stores.network.INetworkStore
 import com.waz.zclient.core.stores.participants.IParticipantsStore
@@ -51,6 +52,9 @@ trait IStoreFactory {
 
   /* In App notification store (chathead, knocks) */
   def inAppNotificationStore: IInAppNotificationStore
+
+  /* stores started messages */
+  def draftStore: IDraftStore
 
   def zMessagingApiStore: IZMessagingApiStore
 

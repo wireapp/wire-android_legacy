@@ -41,7 +41,6 @@ import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 import com.waz.zclient.ui.animation.fragment.FadeAnimation;
 import com.waz.zclient.ui.theme.ThemeUtils;
 import com.waz.zclient.ui.views.ZetaButton;
-import com.waz.zclient.utils.ContextUtils;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.images.ImageAssetImageView;
@@ -95,8 +94,8 @@ public class BlockedUserProfileFragment extends BaseFragment<BlockedUserProfileF
 
         if (getControllerFactory().getConversationScreenController().getPopoverLaunchMode() != DialogLaunchMode.AVATAR &&
             getControllerFactory().getConversationScreenController().getPopoverLaunchMode() != DialogLaunchMode.COMMON_USER) {
-            int centerX = ContextUtils.getOrientationIndependentDisplayWidth(getActivity()) / 2;
-            int centerY = ContextUtils.getOrientationIndependentDisplayHeight(getActivity()) / 2;
+            int centerX = ViewUtils.getOrientationIndependentDisplayWidth(getActivity()) / 2;
+            int centerY = ViewUtils.getOrientationIndependentDisplayHeight(getActivity()) / 2;
             int duration;
             int delay = 0;
 

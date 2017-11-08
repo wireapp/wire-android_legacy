@@ -18,10 +18,10 @@
 package com.waz.zclient.pages.main.conversation.controller;
 
 import android.view.View;
+import com.waz.api.IConversation;
 import com.waz.api.Message;
 import com.waz.api.OtrClient;
 import com.waz.api.User;
-import com.waz.model.ConvId;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 
 import java.util.HashSet;
@@ -210,9 +210,9 @@ public class ConversationScreenController implements IConversationScreenControll
     }
 
     @Override
-    public void showConversationMenu(@ConversationMenuRequester int requester, ConvId convId, View anchorView) {
+    public void showConversationMenu(@ConversationMenuRequester int requester, IConversation conversation, View anchorView) {
         for (ConversationScreenControllerObserver observer : conversationScreenControllerObservers) {
-            observer.onShowConversationMenu(requester, convId, anchorView);
+            observer.onShowConversationMenu(requester, conversation, anchorView);
         }
     }
 

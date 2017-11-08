@@ -19,10 +19,10 @@ package com.waz.zclient.pages.main.conversation.controller;
 
 import android.support.annotation.IntDef;
 import android.view.View;
+import com.waz.api.IConversation;
 import com.waz.api.Message;
 import com.waz.api.OtrClient;
 import com.waz.api.User;
-import com.waz.model.ConvId;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 
 public interface IConversationScreenController {
@@ -86,7 +86,7 @@ public interface IConversationScreenController {
 
     void setPopoverLaunchedMode(DialogLaunchMode launchedMode);
 
-    void showConversationMenu(@ConversationMenuRequester int requester, ConvId convId, View anchorView);
+    void showConversationMenu(@ConversationMenuRequester int requester, IConversation conversation, View anchorView);
 
     DialogLaunchMode getPopoverLaunchMode();
 

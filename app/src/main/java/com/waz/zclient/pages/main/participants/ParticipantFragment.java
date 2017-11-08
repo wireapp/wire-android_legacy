@@ -22,9 +22,10 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.TimeInterpolator;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.Nullable;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -32,15 +33,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
-
+import com.waz.api.ConversationsList;
 import com.waz.api.IConversation;
 import com.waz.api.Message;
 import com.waz.api.OtrClient;
+import com.waz.api.SyncState;
 import com.waz.api.User;
 import com.waz.api.UsersList;
-import com.waz.model.ConvId;
-import com.waz.model.ConversationData;
-import com.waz.model.UserData;
 import com.waz.model.UserId;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
@@ -53,10 +52,11 @@ import com.waz.zclient.controllers.confirmation.IConfirmationController;
 import com.waz.zclient.controllers.confirmation.TwoButtonConfirmationCallback;
 import com.waz.zclient.controllers.navigation.NavigationController;
 import com.waz.zclient.controllers.navigation.Page;
-import com.waz.zclient.conversation.ConversationController;
 import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.core.stores.connect.IConnectStore;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
+import com.waz.zclient.core.stores.conversation.ConversationStoreObserver;
+import com.waz.zclient.core.stores.conversation.OnConversationLoadedListener;
 import com.waz.zclient.core.stores.participants.ParticipantsStoreObserver;
 import com.waz.zclient.fragments.PickUserFragment;
 import com.waz.zclient.media.SoundController;
@@ -76,15 +76,11 @@ import com.waz.zclient.ui.animation.interpolators.penner.Quart;
 import com.waz.zclient.ui.optionsmenu.OptionsMenu;
 import com.waz.zclient.ui.optionsmenu.OptionsMenuItem;
 import com.waz.zclient.ui.theme.OptionsTheme;
-import com.waz.zclient.utils.Callback;
-import com.waz.zclient.utils.ContextUtils;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.DefaultPageTransitionAnimation;
 import com.waz.zclient.views.LoadingIndicatorView;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class ParticipantFragment extends BaseFragment<ParticipantFragment.Container> implements
@@ -98,7 +94,9 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
                                                                                      PendingConnectRequestFragment.Container,
                                                                                      OptionsMenuFragment.Container,
                                                                                      PickUserFragment.Container,
+                                                                                     OnConversationLoadedListener,
                                                                                      ConversationScreenControllerObserver,
+                                                                                     ConversationStoreObserver,
                                                                                      OnBackPressedListener,
                                                                                      PickUserControllerScreenObserver,
                                                                                      SingleOtrClientFragment.Container {
@@ -117,8 +115,6 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
 
     private boolean groupConversation;
     private User otherUser;
-
-    private ConversationController convController = null;
 
     private final ModelObserver<IConversation> conversationModelObserver = new ModelObserver<IConversation>() {
         @Override
@@ -183,8 +179,41 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_participant, container, false);
 
-        final FragmentManager fragmentManager = getChildFragmentManager();
+        FragmentManager fragmentManager = getChildFragmentManager();
         optionsMenuControl = new OptionsMenuControl();
+        if (savedInstanceState == null) {
+            fragmentManager.beginTransaction()
+                           .replace(R.id.fl__participant__header__container,
+                                ParticipantHeaderFragment.newInstance(userRequester),
+                                ParticipantHeaderFragment.TAG)
+                           .commit();
+
+            IConversation currentConversation = getStoreFactory() != null &&
+                                                !getStoreFactory().isTornDown() ?
+                                                getStoreFactory().conversationStore().getCurrentConversation() : null;
+            if (currentConversation != null &&
+                (currentConversation.getType() == IConversation.Type.ONE_TO_ONE ||
+                 userRequester == IConnectStore.UserRequester.POPOVER)) {
+                fragmentManager.beginTransaction()
+                               .replace(R.id.fl__participant__container,
+                                    TabbedParticipantBodyFragment.newInstance(getArguments().getInt(ARG__FIRST__PAGE)),
+                                    TabbedParticipantBodyFragment.TAG)
+                               .commit();
+            } else {
+                fragmentManager.beginTransaction()
+                               .replace(R.id.fl__participant__container,
+                                    ParticipantBodyFragment.newInstance(userRequester),
+                                    ParticipantBodyFragment.TAG)
+                               .commit();
+            }
+
+            getChildFragmentManager().beginTransaction()
+                                     .replace(R.id.fl__participant__settings_box,
+                                          OptionsMenuFragment.newInstance(false),
+                                          OptionsMenuFragment.TAG)
+                                     .commit();
+
+        }
 
         Fragment overlayFragment = fragmentManager.findFragmentById(R.id.fl__participant__overlay);
         if (overlayFragment != null) {
@@ -196,7 +225,13 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
 
         bodyContainer = ViewUtils.getView(view, R.id.fl__participant__container);
         loadingIndicatorView = ViewUtils.getView(view, R.id.liv__participants__loading_indicator);
-        loadingIndicatorView.setColor(ContextUtils.getColorWithTheme(R.color.people_picker__loading__color, getContext()));
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            //noinspection deprecation
+            loadingIndicatorView.setColor(getResources().getColor(R.color.people_picker__loading__color));
+        } else {
+            loadingIndicatorView.setColor(getResources().getColor(R.color.people_picker__loading__color, getContext().getTheme()));
+        }
 
         participantsContainerView = ViewUtils.getView(view, R.id.ll__participant__container);
         pickUserContainerView = ViewUtils.getView(view, R.id.fl__add_to_conversation__pickuser__container);
@@ -208,79 +243,27 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        final FragmentManager fragmentManager = getChildFragmentManager();
-
-        convController = inject(ConversationController.class);
-
-        if (savedInstanceState == null) {
-            fragmentManager.beginTransaction()
-                .replace(R.id.fl__participant__header__container,
-                    ParticipantHeaderFragment.newInstance(userRequester),
-                    ParticipantHeaderFragment.TAG)
-                .commit();
-
-            if (getStoreFactory() != null && !getStoreFactory().isTornDown()) {
-                convController.withCurrentConvType(new Callback<IConversation.Type>() {
-                    @Override
-                    public void callback(IConversation.Type convType) {
-                        if (convType == IConversation.Type.ONE_TO_ONE ||
-                            userRequester == IConnectStore.UserRequester.POPOVER) {
-                            fragmentManager.beginTransaction()
-                                .replace(R.id.fl__participant__container,
-                                    TabbedParticipantBodyFragment.newInstance(getArguments().getInt(ARG__FIRST__PAGE)),
-                                    TabbedParticipantBodyFragment.TAG)
-                                .commit();
-                        } else {
-                            fragmentManager.beginTransaction()
-                                .replace(R.id.fl__participant__container,
-                                    ParticipantBodyFragment.newInstance(userRequester),
-                                    ParticipantBodyFragment.TAG)
-                                .commit();
-                        }
-                    }
-                });
-            }
-
-            getChildFragmentManager().beginTransaction()
-                .replace(R.id.fl__participant__settings_box,
-                    OptionsMenuFragment.newInstance(false),
-                    OptionsMenuFragment.TAG)
-                .commit();
-
-        }
-
-    }
-
-    @Override
     public void onStart() {
         super.onStart();
         getStoreFactory().participantsStore().addParticipantsStoreObserver(this);
-
+        getStoreFactory().conversationStore().addConversationStoreObserver(this);
         if (userRequester == IConnectStore.UserRequester.POPOVER) {
             final User user = getStoreFactory().singleParticipantStore().getUser();
             getStoreFactory().connectStore().loadUser(user.getId(), userRequester);
         } else {
-            onConversationLoaded(convController.getCurrentConvId());
+            getStoreFactory().conversationStore().loadCurrentConversation(this);
         }
         if (LayoutSpec.isPhone(getActivity())) {
             // ConversationScreenController is handled in ParticipantDialogFragment for tablets
             getControllerFactory().getConversationScreenController().addConversationControllerObservers(this);
         }
         getControllerFactory().getPickUserController().addPickUserScreenControllerObserver(this);
-
-        convController.onConvChanged(new Callback<ConversationController.ConversationChange>() {
-            @Override
-            public void callback(ConversationController.ConversationChange change) {
-                onCurrentConversationHasChanged(change);
-                onConversationLoaded(change.toConvId());
-            }
-        });
     }
 
     @Override
     public void onStop() {
         getStoreFactory().participantsStore().setCurrentConversation(null);
+        getStoreFactory().conversationStore().removeConversationStoreObserver(this);
         if (LayoutSpec.isPhone(getActivity())) {
             getControllerFactory().getConversationScreenController().removeConversationControllerObservers(this);
         }
@@ -307,20 +290,37 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
         super.onDestroyView();
     }
 
-    private void onCurrentConversationHasChanged(ConversationController.ConversationChange change) {
-        if (change.toConvId() == null) {
+    @Override
+    public void onConversationListUpdated(@NonNull ConversationsList conversationsList) { }
+
+    @Override
+    public void onCurrentConversationHasChanged(IConversation fromConversation,
+                                                IConversation toConversation,
+                                                ConversationChangeRequester conversationChangeRequester) {
+        if (toConversation == null) {
             return;
         }
+        onConversationLoaded(toConversation);
 
-        if (change.requester() == ConversationChangeRequester.START_CONVERSATION ||
-            change.requester() == ConversationChangeRequester.START_CONVERSATION_FOR_VIDEO_CALL ||
-            change.requester() == ConversationChangeRequester.START_CONVERSATION_FOR_CALL ||
-            change.requester() == ConversationChangeRequester.START_CONVERSATION_FOR_CAMERA) {
+        if (conversationChangeRequester == ConversationChangeRequester.START_CONVERSATION ||
+            conversationChangeRequester == ConversationChangeRequester.START_CONVERSATION_FOR_VIDEO_CALL ||
+            conversationChangeRequester == ConversationChangeRequester.START_CONVERSATION_FOR_CALL ||
+            conversationChangeRequester == ConversationChangeRequester.START_CONVERSATION_FOR_CAMERA) {
             getChildFragmentManager().popBackStackImmediate(PickUserFragment.TAG(),
                                                             FragmentManager.POP_BACK_STACK_INCLUSIVE);
             getControllerFactory().getPickUserController().hidePickUserWithoutAnimations(
                 getCurrentPickerDestination());
         }
+
+    }
+
+    @Override
+    public void onConversationSyncingStateHasChanged(SyncState syncState) {
+
+    }
+
+    @Override
+    public void onMenuConversationHasChanged(IConversation fromConversation) {
 
     }
 
@@ -357,28 +357,28 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     }
 
     @Override
-    public void onOptionsItemClicked(ConvId convId, User user, OptionsMenuItem item) {
+    public void onOptionsItemClicked(IConversation conversation, User user, OptionsMenuItem item) {
         switch (item) {
             case ARCHIVE:
-                toggleArchiveConversation(convId, true);
+                toggleArchiveConversation(conversation, true);
                 break;
             case UNARCHIVE:
-                toggleArchiveConversation(convId, false);
+                toggleArchiveConversation(conversation, false);
                 break;
             case SILENCE:
-                convController.setMuted(convId,true);
+                conversation.setMuted(true);
                 break;
             case UNSILENCE:
-                convController.setMuted(convId,false);
+                conversation.setMuted(false);
                 break;
             case LEAVE:
-                showLeaveConfirmation(convId);
+                showLeaveConfirmation(conversation);
                 break;
             case RENAME:
                 getControllerFactory().getConversationScreenController().editConversationName(true);
                 break;
             case DELETE:
-                deleteConversation(convId);
+                deleteConversation(conversation);
                 break;
             case BLOCK:
                 showBlockUserConfirmation(user);
@@ -395,7 +395,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
         ConfirmationCallback callback = new TwoButtonConfirmationCallback() {
             @Override
             public void positiveButtonClicked(boolean checkboxIsSelected) {
-                convController.setCurrentConversationToNext(ConversationChangeRequester.BLOCK_USER);
+                getStoreFactory().conversationStore().setCurrentConversationToNext(ConversationChangeRequester.BLOCK_USER);
                 getStoreFactory().connectStore().blockUser(user);
                 getControllerFactory().getConversationScreenController().hideUser();
                 if (LayoutSpec.isTablet(getActivity())) {
@@ -435,62 +435,63 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
         }
     }
 
-    public void deleteConversation(final ConvId convId) {
-
-        convController.withCurrentConvType(new Callback<IConversation.Type>() {
+    public void deleteConversation(final IConversation conversation) {
+        ConfirmationCallback callback = new TwoButtonConfirmationCallback() {
             @Override
-            public void callback(final IConversation.Type convType) {
-                ConfirmationCallback callback = new TwoButtonConfirmationCallback() {
-                    @Override
-                    public void positiveButtonClicked(boolean checkboxIsSelected) {
-                    }
-
-                    @Override
-                    public void negativeButtonClicked() {
-                    }
-
-                    @Override
-                    public void onHideAnimationEnd(boolean confirmed, boolean canceled, boolean checkboxIsSelected) {
-                        if (getStoreFactory() == null || getStoreFactory().isTornDown() || getControllerFactory() == null || getControllerFactory().isTornDown()) {
-                            return;
-                        }
-
-                        if (!confirmed) {
-                            return;
-                        }
-
-                        convController.delete(convId, checkboxIsSelected);
-
-                        if (LayoutSpec.isTablet(getActivity())) {
-                            getControllerFactory().getConversationScreenController().hideParticipants(false, true);
-                        }
-                    }
-                };
-
-                String header = getString(R.string.confirmation_menu__meta_delete);
-                String text = getString(R.string.confirmation_menu__meta_delete_text);
-                String confirm = getString(R.string.confirmation_menu__confirm_delete);
-                String cancel = getString(R.string.confirmation_menu__cancel);
-
-                ConfirmationRequest.Builder builder = new ConfirmationRequest.Builder()
-                    .withHeader(header)
-                    .withMessage(text)
-                    .withPositiveButton(confirm)
-                    .withNegativeButton(cancel)
-                    .withConfirmationCallback(callback)
-                    .withWireTheme(((BaseActivity) getActivity()).injectJava(ThemeController.class).getThemeDependentOptionsTheme());
-
-                if (convType == IConversation.Type.GROUP) {
-                    builder = builder
-                        .withCheckboxLabel(getString(R.string.confirmation_menu__delete_conversation__checkbox__label))
-                        .withCheckboxSelectedByDefault();
-                }
-
-                getControllerFactory().getConfirmationController().requestConfirmation(builder.build(), IConfirmationController.PARTICIPANTS);
+            public void positiveButtonClicked(boolean checkboxIsSelected) {
 
             }
 
-        });
+            @Override
+            public void negativeButtonClicked() {
+
+            }
+
+            @Override
+            public void onHideAnimationEnd(boolean confirmed, boolean canceled, boolean checkboxIsSelected) {
+                if (getStoreFactory() == null ||
+                    getStoreFactory().isTornDown() ||
+                    getControllerFactory() == null ||
+                    getControllerFactory().isTornDown()) {
+                    return;
+                }
+
+                if (!confirmed) {
+                    return;
+                }
+                IConversation currentConversation = getStoreFactory().conversationStore().getCurrentConversation();
+                boolean deleteCurrentConversation = conversation != null && currentConversation != null &&
+                                                    conversation.getId().equals(currentConversation.getId());
+                getStoreFactory().conversationStore().deleteConversation(conversation, checkboxIsSelected);
+                if (deleteCurrentConversation) {
+                    getStoreFactory().conversationStore().setCurrentConversationToNext(ConversationChangeRequester.DELETE_CONVERSATION);
+                }
+                if (LayoutSpec.isTablet(getActivity())) {
+                    getControllerFactory().getConversationScreenController().hideParticipants(false, true);
+                }
+            }
+        };
+        String header = getString(R.string.confirmation_menu__meta_delete);
+        String text = getString(R.string.confirmation_menu__meta_delete_text);
+        String confirm = getString(R.string.confirmation_menu__confirm_delete);
+        String cancel = getString(R.string.confirmation_menu__cancel);
+
+        ConfirmationRequest.Builder builder = new ConfirmationRequest.Builder()
+            .withHeader(header)
+            .withMessage(text)
+            .withPositiveButton(confirm)
+            .withNegativeButton(cancel)
+            .withConfirmationCallback(callback)
+            .withWireTheme(((BaseActivity) getActivity()).injectJava(ThemeController.class).getThemeDependentOptionsTheme());
+
+
+        if (conversation.getType() == IConversation.Type.GROUP) {
+            builder = builder
+                .withCheckboxLabel(getString(R.string.confirmation_menu__delete_conversation__checkbox__label))
+                .withCheckboxSelectedByDefault();
+        }
+
+        getControllerFactory().getConfirmationController().requestConfirmation(builder.build(), IConfirmationController.PARTICIPANTS);
 
         SoundController ctrl = inject(SoundController.class);
         if (ctrl != null) {
@@ -498,23 +499,23 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
         }
     }
 
-    public void toggleArchiveConversation(final ConvId convId, final boolean archive) {
+    public void toggleArchiveConversation(final IConversation conversation, final boolean archive) {
+        if (getStoreFactory().conversationStore() != null) {
+            getControllerFactory().getNavigationController().setVisiblePage(Page.CONVERSATION_LIST, TAG);
+            getControllerFactory().getConversationScreenController().hideParticipants(false, true);
 
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (getContainer() == null) {
-                    return;
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    if (getContainer() == null) {
+                        return;
+                    }
+                    getStoreFactory().conversationStore().archive(conversation, archive);
                 }
-
-                convController.archive(convId, archive);
-                if (archive) {
-                    getControllerFactory().getNavigationController().setVisiblePage(Page.CONVERSATION_LIST, TAG);
-                    getControllerFactory().getConversationScreenController().hideParticipants(false, true);
-                }
-            }
-        }, getResources().getInteger(R.integer.framework_animation_duration_medium));
+            }, getResources().getInteger(R.integer.framework_animation_duration_medium));
+        }
     }
+
 
     @Override
     public void onClickedEmptyBackground() {
@@ -628,23 +629,19 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     @Override
     public void onConversationLoaded() { }
 
-    private void onConversationLoaded(final ConvId convId) {
-        if (convId == null) {
-            return;
-        }
+    //////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  OnConversationLoadedListener
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////
 
-        convController.withConvLoaded(convId, new Callback<ConversationData>() {
-            @Override
-            public void callback(ConversationData conversationData) {
-                getControllerFactory().getConversationScreenController().setSingleConversation(conversationData.convType().equals(
-                    IConversation.Type.ONE_TO_ONE));
-                getControllerFactory().getConversationScreenController().setMemberOfConversation(conversationData.isActive());
-
-                IConversation iConv = convController.iConv(convId);
-                getStoreFactory().participantsStore().setCurrentConversation(iConv);
-                conversationModelObserver.setAndUpdate(iConv);
-            }
-        });
+    @Override
+    public void onConversationLoaded(IConversation conversation) {
+        getControllerFactory().getConversationScreenController().setSingleConversation(conversation.getType().equals(
+            IConversation.Type.ONE_TO_ONE));
+        getControllerFactory().getConversationScreenController().setMemberOfConversation(conversation.isMemberOfConversation());
+        getStoreFactory().participantsStore().setCurrentConversation(conversation);
+        conversationModelObserver.setAndUpdate(conversation);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -661,14 +658,14 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
 
     @Override
     public void onShowConversationMenu(@IConversationScreenController.ConversationMenuRequester int requester,
-                                       ConvId convId,
+                                       IConversation conversation,
                                        View anchorView) {
         if (requester != IConversationScreenController.USER_PROFILE_PARTICIPANTS &&
             requester != IConversationScreenController.CONVERSATION_DETAILS) {
             return;
         }
 
-        optionsMenuControl.createMenu(convId,
+        optionsMenuControl.createMenu(conversation,
                                       requester,
                                       ((BaseActivity) getActivity()).injectJava(ThemeController.class).getThemeDependentOptionsTheme());
         optionsMenuControl.open();
@@ -870,23 +867,13 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     public void showRemoveConfirmation(final User user) {
         // Show confirmation dialog before removing user
         ConfirmationCallback callback = new TwoButtonConfirmationCallback() {
-
             @Override
             public void positiveButtonClicked(boolean checkboxIsSelected) {
                 dismissUserProfile();
                 new Handler().post(new Runnable() {
                     @Override
                     public void run() {
-                        convController.withCurrentConvMembers(new Callback<Collection<UserData>>() {
-                            @Override
-                            public void callback(Collection<UserData> members) {
-                                for(UserData member: members) {
-                                    if (member.id().str().equals(user.getId())) {
-                                        convController.removeMember(member.id());
-                                    }
-                                }
-                            }
-                        });
+                        getStoreFactory().conversationStore().getCurrentConversation().removeMember(user);
                     }
                 });
             }
@@ -895,7 +882,10 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
             public void negativeButtonClicked() {
             }
 
-            @Override public void onHideAnimationEnd(boolean confirmed, boolean canceled, boolean checkboxIsSelected) { }
+            @Override
+            public void onHideAnimationEnd(boolean confirmed, boolean canceled, boolean checkboxIsSelected) {
+
+            }
         };
         String header = getString(R.string.confirmation_menu__header);
         String text = getString(R.string.confirmation_menu_text_with_name, user.getDisplayName());
@@ -924,6 +914,10 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
         getContainer().onOpenUrl(url);
     }
 
+    private int getParticipantsCount() {
+        return getStoreFactory().conversationStore().getCurrentConversation().getUsers().size();
+    }
+
     @Override
     public void dismissUserProfile() {
             getControllerFactory().getConversationScreenController().hideUser();
@@ -943,7 +937,8 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     @Override
     public void onAcceptedConnectRequest(final IConversation conversation) {
         getControllerFactory().getConversationScreenController().hideUser();
-        convController.selectConv(new ConvId(conversation.getId()), ConversationChangeRequester.START_CONVERSATION);
+        getStoreFactory().conversationStore().setCurrentConversation(conversation,
+                                                                        ConversationChangeRequester.START_CONVERSATION);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -955,7 +950,8 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     @Override
     public void onUnblockedUser(IConversation restoredConversationWithUser) {
         getControllerFactory().getConversationScreenController().hideUser();
-        convController.selectConv(new ConvId(restoredConversationWithUser.getId()), ConversationChangeRequester.START_CONVERSATION);
+        getStoreFactory().conversationStore().setCurrentConversation(restoredConversationWithUser,
+                                                                        ConversationChangeRequester.START_CONVERSATION);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -979,40 +975,30 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     //////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onSelectedUsers(final List<User> users, final ConversationChangeRequester requester) {
-        final List<UserId> userIds = new ArrayList<>(users.size());
-        for(User user: users) {
-            userIds.add(new UserId(user.getId()));
-        }
-
-        convController.withCurrentConv(new Callback<ConversationData>() {
-            @Override
-            public void callback(ConversationData conv) {
-                if (conv.convType() == IConversation.Type.ONE_TO_ONE) {
-                    getControllerFactory().getPickUserController().hidePickUser(getCurrentPickerDestination(), false);
-                    dismissDialog();
-                    convController.createGroupConversation(userIds, requester);
-                    if (!getStoreFactory().networkStore().hasInternetConnection()) {
-                        ViewUtils.showAlertDialog(getActivity(),
-                            R.string.conversation__create_group_conversation__no_network__title,
-                            R.string.conversation__create_group_conversation__no_network__message,
-                            R.string.conversation__create_group_conversation__no_network__button,
-                            null, true);
-                    }
-                } else if (conv.convType() == IConversation.Type.GROUP) {
-                    convController.addMembers(conv.id(), userIds);
-                    getControllerFactory().getPickUserController().hidePickUser(getCurrentPickerDestination(), false);
-                    if (!getStoreFactory().networkStore().hasInternetConnection()) {
-                        ViewUtils.showAlertDialog(getActivity(),
-                            R.string.conversation__add_user__no_network__title,
-                            R.string.conversation__add_user__no_network__message,
-                            R.string.conversation__add_user__no_network__button,
-                            null, true);
-                    }
-
-                }
+    public void onSelectedUsers(List<User> users, ConversationChangeRequester requester) {
+        IConversation currentConversation = getStoreFactory().conversationStore().getCurrentConversation();
+        if (currentConversation.getType() == IConversation.Type.ONE_TO_ONE) {
+            getControllerFactory().getPickUserController().hidePickUser(getCurrentPickerDestination(), false);
+            dismissDialog();
+            getStoreFactory().conversationStore().createGroupConversation(users, requester);
+            if (!getStoreFactory().networkStore().hasInternetConnection()) {
+                ViewUtils.showAlertDialog(getActivity(),
+                                          R.string.conversation__create_group_conversation__no_network__title,
+                                          R.string.conversation__create_group_conversation__no_network__message,
+                                          R.string.conversation__create_group_conversation__no_network__button,
+                                          null, true);
             }
-        });
+        } else if (currentConversation.getType() == IConversation.Type.GROUP) {
+            currentConversation.addMembers(users);
+            getControllerFactory().getPickUserController().hidePickUser(getCurrentPickerDestination(), false);
+            if (!getStoreFactory().networkStore().hasInternetConnection()) {
+                ViewUtils.showAlertDialog(getActivity(),
+                                          R.string.conversation__add_user__no_network__title,
+                                          R.string.conversation__add_user__no_network__message,
+                                          R.string.conversation__add_user__no_network__button,
+                                          null, true);
+            }
+        }
     }
 
     @Override
@@ -1045,6 +1031,11 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
         int pickUserAnimation =
             LayoutSpec.isTablet(getActivity()) ? R.anim.fade_in : R.anim.slide_in_from_bottom_pick_user;
 
+        IConversation currentConversation = getStoreFactory() != null &&
+            !getStoreFactory().isTornDown() ?
+            getStoreFactory().conversationStore().getCurrentConversation() : null;
+        String conversationId = currentConversation == null ? null : currentConversation.getId();
+
         if (!groupConversation && otherUser != null) {
             getControllerFactory().getPickUserController().addUser(otherUser);
         }
@@ -1052,7 +1043,7 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
             .beginTransaction()
             .setCustomAnimations(pickUserAnimation, R.anim.fade_out)
             .add(R.id.fl__add_to_conversation__pickuser__container,
-                 PickUserFragment.newInstance(true, groupConversation, convController.getCurrentConvId().str()),
+                 PickUserFragment.newInstance(true, groupConversation, conversationId),
                  PickUserFragment.TAG())
             .addToBackStack(PickUserFragment.TAG())
             .commit();
@@ -1163,12 +1154,13 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     //
     //////////////////////////////////////////////////////////////////////////////////////////
 
-    private void showLeaveConfirmation(final ConvId convId) {
+    private void showLeaveConfirmation(final IConversation conversation) {
         ConfirmationCallback callback = new TwoButtonConfirmationCallback() {
-
             @Override
             public void positiveButtonClicked(boolean checkboxIsSelected) {
-                convController.leave(convId);
+                getStoreFactory().conversationStore().leave(conversation);
+                getStoreFactory().conversationStore().setCurrentConversationToNext(
+                    ConversationChangeRequester.LEAVE_CONVERSATION);
                 if (LayoutSpec.isTablet(getActivity())) {
                     getControllerFactory().getConversationScreenController().hideParticipants(false, true);
                 }
@@ -1177,10 +1169,11 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
             @Override
             public void negativeButtonClicked() { }
 
+            @Override
+            public void onHideAnimationEnd(boolean confirmed, boolean canceled, boolean checkboxIsSelected) {
 
-            @Override public void onHideAnimationEnd(boolean confirmed, boolean canceled, boolean checkboxIsSelected) { }
+            }
         };
-
         String header = getString(R.string.confirmation_menu__meta_remove);
         String text = getString(R.string.confirmation_menu__meta_remove_text);
         String confirm = getString(R.string.confirmation_menu__confirm_leave);

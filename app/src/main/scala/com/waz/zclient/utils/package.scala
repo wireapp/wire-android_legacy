@@ -17,18 +17,24 @@
  */
 package com.waz.zclient
 
+import android.content.Context
+import android.content.res.{Resources, TypedArray}
 import android.graphics.LightingColorFilter
-import android.graphics.drawable.LayerDrawable
-
+import android.graphics.drawable.{Drawable, LayerDrawable}
+import android.os.Build
+import android.support.annotation.StyleableRes
+import android.support.v4.content.ContextCompat
 import android.support.v7.preference.Preference
 import android.support.v7.preference.Preference.{OnPreferenceChangeListener, OnPreferenceClickListener}
 import android.text.{Editable, TextWatcher}
+import android.util.{AttributeSet, TypedValue}
 import android.view.View._
 import android.view.ViewGroup.LayoutParams
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.view.{View, ViewGroup}
 import android.widget.{SeekBar, TextView}
 import com.waz.utils.returning
+import com.waz.zclient.ui.utils.ResourceUtils
 import com.waz.zclient.ui.views.OnDoubleClickListener
 
 package object utils {
@@ -132,4 +138,60 @@ package object utils {
     }
   }
 
+  object ContextUtils {
+
+    def getColor(resId: Int)(implicit context: Context) = ContextCompat.getColor(context, resId)
+
+    def getColorStateList(resId: Int)(implicit context: Context) = ContextCompat.getColorStateList(context, resId)
+
+    def getInt(resId: Int)(implicit context: Context) = context.getResources.getInteger(resId)
+
+    def getString(resId: Int)(implicit context: Context): String = context.getResources.getString(resId)
+    def getString(resId: Int, args: String*)(implicit context: Context): String = context.getResources.getString(resId, args:_*)
+
+    def getStringOrEmpty(resId: Int)(implicit context: Context): String = if (resId > 0) getString(resId) else ""
+    def getStringOrEmpty(resId: Int, args: String*)(implicit context: Context): String = if (resId > 0) getString(resId, args:_*) else ""
+
+    def getQuantityString(resId: Int, quantity: Int, args: AnyRef*)(implicit context: Context): String = context.getResources.getQuantityString(resId, quantity, args:_*)
+
+    def getDimenPx(resId: Int)(implicit context: Context) = context.getResources.getDimensionPixelSize(resId)
+    def getDimen(resId: Int)(implicit context: Context) = context.getResources.getDimension(resId)
+
+    def getDrawable(resId: Int, theme: Option[Resources#Theme] = None)(implicit context: Context): Drawable = {
+      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+        //noinspection ScalaDeprecation
+        context.getResources.getDrawable(resId)
+      } else
+        context.getResources.getDrawable(resId, theme.orNull)
+    }
+
+    def getIntArray(resId: Int)(implicit context: Context) = context.getResources.getIntArray(resId)
+    def getResEntryName(resId: Int)(implicit context: Context) = context.getResources.getResourceEntryName(resId)
+
+    def getResourceFloat(resId: Int)(implicit context: Context) = ResourceUtils.getResourceFloat(context.getResources, resId)
+
+    def toPx(dp: Int)(implicit context: Context) = (dp * context.getResources.getDisplayMetrics.density).toInt
+
+    def getLocale(implicit context: Context) = {
+      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+        //noinspection ScalaDeprecation
+        context.getResources.getConfiguration.locale
+      } else {
+        context.getResources.getConfiguration.getLocales.get(0)
+      }
+    }
+
+    def withStyledAttributes[A](set: AttributeSet, @StyleableRes attrs: Array[Int])(body: TypedArray => A)(implicit context: Context) = {
+      val a = context.getTheme.obtainStyledAttributes(set, attrs, 0, 0)
+      try body(a) finally a.recycle()
+    }
+
+    def getStyledColor(resId: Int)(implicit context: Context): Int = {
+      val typedValue  = new TypedValue
+      val a  = context.obtainStyledAttributes(typedValue.data, Array[Int](resId))
+      val color = a.getColor(0, 0)
+      a.recycle()
+      color
+    }
+  }
 }

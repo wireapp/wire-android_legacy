@@ -25,7 +25,6 @@ import com.waz.zclient.R;
 import com.waz.zclient.core.stores.inappnotification.IInAppNotificationStore;
 import com.waz.zclient.core.stores.inappnotification.SyncErrorObserver;
 import com.waz.zclient.testutils.FragmentTest;
-import com.waz.zclient.views.ConversationFragment;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -115,7 +114,7 @@ public class AudioRecordingTest extends FragmentTest<MainTestActivity> {
         }).when(mockInAppNotificationStore).addInAppNotificationObserver(any(SyncErrorObserver.class));
 
         // attach fragment
-        attachFragment(ConversationFragment.apply(), ConversationFragment.TAG());
+        attachFragment(ConversationFragment.newInstance(), ConversationFragment.TAG);
 
         onView(withText(activity.getString(R.string.audio_message__recording__failure__title))).check(isVisible());
     }

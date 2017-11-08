@@ -30,8 +30,8 @@ import android.widget.LinearLayout.LayoutParams
 import android.widget.TextView.OnEditorActionListener
 import android.widget._
 import com.waz.ZLog.ImplicitTag._
-import com.waz.api.impl.ContentUriAssetForUpload
-import com.waz.api.EphemeralExpiration
+import com.waz.api
+import com.waz.api.{AssetFactory, EphemeralExpiration}
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{MessageContent => _, _}
@@ -156,18 +156,18 @@ class ShareToMultipleFragment extends BaseFragment[ShareToMultipleFragment.Conta
           getContext.getResources.getDimensionPixelSize(R.dimen.collections__multi_share__file_preview__height)))
 
         val contentView = inflater.inflate(R.layout.share_preview_file, contentLayout)
-        val assetForUpload = ContentUriAssetForUpload(AssetId(), uris.head)
-        assetForUpload.name.onComplete{
+        val assetForUpload = Option(AssetFactory.fromContentUri(uris.head).asInstanceOf[api.impl.AssetForUpload])
+        assetForUpload.foreach(_.name.onComplete{
           case Success(Some(name)) => contentView.findViewById(R.id.file_name).asInstanceOf[TextView].setText(name)
           case _ =>
-        }(Threading.Ui)
-        assetForUpload.sizeInBytes.onComplete{
+        }(Threading.Ui))
+        assetForUpload.foreach(_.sizeInBytes.onComplete{
           case Success(Some(size)) =>
             val textView = contentView.findViewById(R.id.file_info).asInstanceOf[TextView]
             textView.setVisibility(View.GONE)
             textView.setText(Formatter.formatFileSize(getContext, size))
           case _ => contentView.findViewById(R.id.file_info).asInstanceOf[TextView].setVisibility(View.GONE)
-        }(Threading.Ui)
+        }(Threading.Ui))
       case _ =>
     }
 

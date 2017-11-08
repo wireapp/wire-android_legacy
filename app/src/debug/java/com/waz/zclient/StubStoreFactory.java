@@ -21,6 +21,7 @@ import com.waz.zclient.core.stores.IStoreFactory;
 import com.waz.zclient.core.stores.api.IZMessagingApiStore;
 import com.waz.zclient.core.stores.connect.IConnectStore;
 import com.waz.zclient.core.stores.conversation.IConversationStore;
+import com.waz.zclient.core.stores.draft.IDraftStore;
 import com.waz.zclient.core.stores.inappnotification.IInAppNotificationStore;
 import com.waz.zclient.core.stores.network.INetworkStore;
 import com.waz.zclient.core.stores.participants.IParticipantsStore;
@@ -76,6 +77,11 @@ public class StubStoreFactory implements IStoreFactory {
 
     @Override
     public IInAppNotificationStore inAppNotificationStore() {
+        return null;
+    }
+
+    @Override
+    public IDraftStore draftStore() {
         return null;
     }
 

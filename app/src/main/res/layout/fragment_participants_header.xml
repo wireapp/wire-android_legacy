@@ -44,7 +44,7 @@
             android:gravity="start|center_vertical"
             >
 
-            <com.waz.zclient.views.e2ee.ShieldView
+            <com.waz.zclient.ui.views.e2ee.ShieldView
                 android:id="@+id/sv__otr__verified_shield"
                 android:layout_width="@dimen/wire__icon_button__diameter"
                 android:layout_height="@dimen/wire__icon_button__diameter"

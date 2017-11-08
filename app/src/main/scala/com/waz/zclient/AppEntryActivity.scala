@@ -171,7 +171,7 @@ class AppEntryActivity extends BaseActivity
 
   def enableProgress(enabled: Boolean): Unit = {
     if (enabled)
-      progressView.show(LoadingIndicatorView.SpinnerWithDimmedBackground, darkTheme = true)
+      progressView.show(LoadingIndicatorView.SPINNER_WITH_DIMMED_BACKGROUND, true)
     else
       progressView.hide()
   }

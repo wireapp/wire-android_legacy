@@ -37,7 +37,7 @@ class CollectionController(implicit injector: Injector) extends Injectable {
 
   val zms = inject[Signal[ZMessaging]]
 
-  lazy val convController = inject[ConversationController]
+  val currentConv = zms.flatMap(_.convsStats.selectedConversationId).collect { case Some(id) => id }
 
   val msgStorage = zms.map(_.messagesStorage)
 
@@ -45,9 +45,9 @@ class CollectionController(implicit injector: Injector) extends Injectable {
 
   private var observers = Set.empty[CollectionsObserver]
 
-  //val conversation = zms.zip(currentConv) flatMap { case (zms, convId) => zms.convsStorage.signal(convId) }
+  val conversation = zms.zip(currentConv) flatMap { case (zms, convId) => zms.convsStorage.signal(convId) }
 
-  lazy val conversationName = convController.currentConv map (data => if (data.convType == IConversation.Type.GROUP) data.name.filter(!_.isEmpty).getOrElse(data.generatedName) else data.generatedName)
+  val conversationName = conversation map (data => if (data.convType == IConversation.Type.GROUP) data.name.filter(!_.isEmpty).getOrElse(data.generatedName) else data.generatedName)
 
   val focusedItem: SourceSignal[Option[MessageData]] = Signal(None)
 
@@ -59,9 +59,9 @@ class CollectionController(implicit injector: Injector) extends Injectable {
 
   val contentSearchQuery = Signal[ContentSearchQuery](ContentSearchQuery.empty)
 
-  lazy val matchingTextSearchMessages = for {
+  val matchingTextSearchMessages = for {
     z <- zms
-    convId <- convController.currentConvId
+    convId <- currentConv
     query <- contentSearchQuery
     res <- if (query.isEmpty) Signal.const(Set.empty[MessageId])
            else Signal future z.messagesIndexStorage.matchingMessages(query, Some(convId))

@@ -103,7 +103,7 @@ public class MockHelper {
     }
 
     public static void setupConversationMocks(final IConversation mockConversation, final TestActivity activity) {
-       /* IConversationStore mockConversationStore = activity.getStoreFactory().conversationStore();
+        IConversationStore mockConversationStore = activity.getStoreFactory().conversationStore();
         when(mockConversationStore.getCurrentConversation()).thenReturn(mockConversation);
 
         doAnswer(new Answer<Void>() {
@@ -133,7 +133,7 @@ public class MockHelper {
                 o.onCurrentConversationHasChanged(null, mockConversation, ConversationChangeRequester.UPDATER);
                 return null;
             }
-        }).when(mockConversationStore).addConversationStoreObserver(any(ConversationStoreObserver.class));*/
+        }).when(mockConversationStore).addConversationStoreObserver(any(ConversationStoreObserver.class));
     }
 
     public static void setupObservableMocks(final UiObservable observable, final TestActivity activity) {

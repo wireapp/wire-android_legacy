@@ -19,12 +19,14 @@ package com.waz.zclient.controllers
 
 import android.content.Context
 import com.waz.ZLog.ImplicitTag._
+import com.waz.api.IConversation
+import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.core.stores.conversation.{ConversationChangeRequester, OnConversationLoadedListener}
+import com.waz.zclient.utils.Callback
 import com.waz.zclient.{BaseActivity, Injectable, Injector}
 
 import scala.concurrent.Future
@@ -85,7 +87,17 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
     countMap <- Signal.sequence(zmsSet.map(z => z.convsStorage.convsSignal.map(c => z.accountId -> c.conversations.map(unreadCountForConv).sum)).toSeq:_*)
   } yield countMap.toMap
 
-  def createAndOpenConversation(users: Array[UserId], requester: ConversationChangeRequester,  activity: BaseActivity): Future[Unit] = {
+  //Things for java
+  //TODO hacky mchackerson - needed for the conversation fragment, remove ASAP
+  def setIsGroupListener(id: ConvId, callback: Callback[java.lang.Boolean]): Unit =
+    for {
+      Some(conv) <- zms.map(_.convsStorage).head.flatMap(_.get(id))
+      isGroup    <-
+        if (conv.team.isEmpty) Future.successful(conv.convType == ConversationType.Group)
+        else zms.map(_.membersStorage).head.flatMap(_.getByConv(conv.id)).map(_.map(_.userId).size > 2)
+    } callback.callback(isGroup)
+
+  def createAndOpenConversation(users: Array[UserId], requester: ConversationChangeRequester,  activity: BaseActivity): Unit = {
     val createConv = for {
       z <- zms.head
       user <- z.usersStorage.get(z.selfUserId)
@@ -96,12 +108,12 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
           z.convsUi.createGroupConversation(ConvId(), users, teamId)
     } yield conv
 
-    val conversationController = inject[ConversationController]
-    (for {
-      conv <- createConv
-      Some(loaded) <- conversationController.loadConv(conv.id) // is this necessary?
-      _ <- conversationController.selectConv(Some(loaded.id), requester)
-    } yield ())(Threading.Ui)
+    createConv.map { convData =>
+      activity.getStoreFactory.conversationStore.loadConversation(convData.id.str, new OnConversationLoadedListener {
+        override def onConversationLoaded(conversation: IConversation) =
+          activity.getStoreFactory.conversationStore.setCurrentConversation(Some(conversation), requester)
+      })
+    }(Threading.Ui)
   }
 
   zms.map(_.teamId) { case teamId => _teamId = teamId }

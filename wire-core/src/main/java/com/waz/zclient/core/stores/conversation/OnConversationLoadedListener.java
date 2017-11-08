@@ -17,20 +17,8 @@
  */
 package com.waz.zclient.core.stores.conversation;
 
-import android.support.annotation.NonNull;
-
-import com.waz.api.ConversationsList;
 import com.waz.api.IConversation;
-import com.waz.api.SyncState;
 
-public interface ConversationStoreObserver {
-    void onConversationListUpdated(@NonNull ConversationsList conversationsList);
-
-    void onCurrentConversationHasChanged(IConversation fromConversation,
-                                         IConversation toConversation,
-                                         ConversationChangeRequester conversationChangerSender);
-
-    void onConversationSyncingStateHasChanged(SyncState syncState);
-
-    void onMenuConversationHasChanged(IConversation fromConversation);
+public interface OnConversationLoadedListener {
+    void onConversationLoaded(IConversation conversation);
 }

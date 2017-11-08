@@ -27,11 +27,12 @@ import android.view.animation.Animation;
 import android.widget.TextView;
 import com.waz.api.IConversation;
 import com.waz.api.User;
+import com.waz.model.ConvId;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
 import com.waz.zclient.common.views.UserDetailsView;
 import com.waz.zclient.controllers.UserAccountsController;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
-import com.waz.zclient.conversation.ConversationController;
 import com.waz.zclient.core.stores.connect.ConnectStoreObserver;
 import com.waz.zclient.core.stores.connect.IConnectStore;
 import com.waz.zclient.pages.BaseFragment;
@@ -44,7 +45,6 @@ import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.ui.views.ZetaButton;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
-import com.waz.zclient.utils.ContextUtils;
 import com.waz.zclient.views.images.ImageAssetImageView;
 import com.waz.zclient.views.menus.FooterMenu;
 import com.waz.zclient.views.menus.FooterMenuCallback;
@@ -91,8 +91,8 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
 
         if (getControllerFactory().getConversationScreenController().getPopoverLaunchMode() != DialogLaunchMode.AVATAR &&
             getControllerFactory().getConversationScreenController().getPopoverLaunchMode() != DialogLaunchMode.COMMON_USER) {
-            int centerX = ContextUtils.getOrientationIndependentDisplayWidth(getActivity()) / 2;
-            int centerY = ContextUtils.getOrientationIndependentDisplayHeight(getActivity()) / 2;
+            int centerX = ViewUtils.getOrientationIndependentDisplayWidth(getActivity()) / 2;
+            int centerY = ViewUtils.getOrientationIndependentDisplayHeight(getActivity()) / 2;
             int duration;
             int delay = 0;
 
@@ -262,10 +262,11 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
             }
         });
 
-        final Boolean permissionToRemove = inject(UserAccountsController.class).hasRemoveConversationMemberPermission(
-            inject(ConversationController.class).getCurrentConvId()
-        );
-
+        String convId = getStoreFactory() != null &&
+                        getStoreFactory().conversationStore().getCurrentConversation() != null ?
+                        getStoreFactory().conversationStore().getCurrentConversation().getId() :
+                        "";
+        final Boolean permissionToRemove = ((BaseActivity) getActivity()).injectJava(UserAccountsController.class).hasRemoveConversationMemberPermission(new ConvId(convId));
         if (userRequester == IConnectStore.UserRequester.PARTICIPANTS && permissionToRemove) {
             footerMenu.setRightActionText(getString(R.string.glyph__minus));
         }

@@ -59,7 +59,7 @@ public class CursorUtils {
     public static int getDistanceOfAudioMessageIconToLeftScreenEdge(Context context, int totalWidth) {
         int cursorToolbarMarginRight = context.getResources().getDimensionPixelSize(R.dimen.cursor_toolbar_padding_horizontal_edge);
         int cursorButtonWidth = context.getResources().getDimensionPixelSize(R.dimen.new_cursor_menu_button_width);
-        int cursorButtonMarginRight = getMarginBetweenCursorButtons(context);
+        int cursorButtonMarginRight = CursorUtils.getMarginBetweenCursorButtons(context);
 
         if (LayoutSpec.isTablet(context)) {
             return totalWidth - (getCursorMenuLeftMargin(context, totalWidth) +

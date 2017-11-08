@@ -286,7 +286,7 @@ public class SingleOtrClientFragment extends BaseFragment<SingleOtrClientFragmen
     }
 
     private void resetSession() {
-        getContainer().getLoadingViewIndicator().show(LoadingIndicatorView.SPINNER_WITH_DIMMED_BACKGROUND(),
+        getContainer().getLoadingViewIndicator().show(LoadingIndicatorView.SPINNER_WITH_DIMMED_BACKGROUND,
             ((BaseActivity) getActivity()).injectJava(ThemeController.class).isDarkTheme());
         resetSessionButton.setEnabled(false);
         otrClient.resetSession(new OtrClient.ResetCallback() {

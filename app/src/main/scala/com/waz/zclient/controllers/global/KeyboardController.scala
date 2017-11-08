@@ -25,7 +25,7 @@ import com.waz.threading.CancellableFuture
 import com.waz.utils.events.Signal
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.zclient.ui.utils.KeyboardUtils
-import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.ViewUtils
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -45,7 +45,7 @@ class KeyboardController(implicit inj: Injector) extends ViewTreeObserver.OnGlob
   }
 
   override def onGlobalLayout() = rootLayout.foreach { rootLayout =>
-      val statusAndNavigationBarHeight = getNavigationBarHeight(rootLayout.getContext) + getStatusBarHeight(rootLayout.getContext)
+      val statusAndNavigationBarHeight = ViewUtils.getNavigationBarHeight(rootLayout.getContext) + ViewUtils.getStatusBarHeight(rootLayout.getContext)
 
       val r = new Rect
       rootLayout.getWindowVisibleDisplayFrame(r)

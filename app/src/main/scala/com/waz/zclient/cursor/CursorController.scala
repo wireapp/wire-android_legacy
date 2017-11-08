@@ -46,7 +46,6 @@ import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.LayoutSpec
 import com.waz.zclient.ui.cursor.{CursorMenuItem => JCursorMenuItem}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.zclient.conversation.ConversationController
 
 import concurrent.duration._
 
@@ -55,8 +54,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
   import Threading.Implicits.Ui
 
   val zms = inject[Signal[ZMessaging]]
-  val conversationController = inject[ConversationController]
-  val conv = conversationController.currentConv
+  val conv = inject[Signal[ConversationData]]
 
   val keyboard = Signal[KeyboardState](KeyboardState.Hidden)
   val editingMsg = Signal(Option.empty[MessageData])
@@ -117,8 +115,8 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
   // notify SE about typing state
   enteredText { text =>
     for {
-      typing <- zms.map(_.typing)
-      convId <- conversationController.currentConvId
+      typing <- zms.map(_.typing).head
+      convId <- conv.map(_.id).head
     } {
       if (text.isEmpty) typing.selfClearedInput(convId)
       else typing.selfChangedInput(convId)
@@ -127,7 +125,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
 
   val typingIndicatorVisible = for {
     typing <- zms.map(_.typing)
-    convId <- conversationController.currentConvId
+    convId <- conv.map(_.id)
     users <- typing.typingUsers(convId)
   } yield
     users.nonEmpty
@@ -165,9 +163,9 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
     if (TextUtils.isEmpty(msg.trim)) return false
 
     for {
-      cId <- conversationController.currentConvId.head
+      c <- conv.head.map(_.id)
       cs <- zms.head.map(_.convsUi)
-      m <- cs.sendMessage(cId, new MessageContent.Text(msg))
+      m <- cs.sendMessage(c, new MessageContent.Text(msg))
     } {
       m foreach { msg =>
         onMessageSent ! msg
@@ -180,17 +178,17 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
 
   def onApproveEditMessage(): Unit =
     for {
-      cId <- conversationController.currentConvId.head
+      c <- conv.head
       cs <- zms.head.map(_.convsUi)
       m <- editingMsg.head if m.isDefined
       msg = m.get
       text <- enteredText.head
     } {
       if (text.trim().isEmpty) {
-        cs.recallMessage(cId, msg.id)
+        cs.recallMessage(c.id, msg.id)
         Toast.makeText(ctx, R.string.conversation__message_action__delete__confirmation, Toast.LENGTH_SHORT).show()
       } else {
-        cs.updateMessage(cId, msg.id, new MessageContent.Text(text))
+        cs.updateMessage(c.id, msg.id, new MessageContent.Text(text))
       }
       editingMsg ! None
       keyboard ! KeyboardState.Hidden
@@ -199,10 +197,10 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
   lazy val userPreferences = inject[IUserPreferencesController]
 
   def toggleEphemeralMode() = {
-    val lastExpiration = EphemeralExpiration.getForMillis(userPreferences.getLastEphemeralValue)
-    if (lastExpiration != EphemeralExpiration.NONE) {
+    val lastExpiraton = EphemeralExpiration.getForMillis(userPreferences.getLastEphemeralValue)
+    if (lastExpiraton != EphemeralExpiration.NONE) {
       conv.head foreach { c =>
-        zms.head.flatMap { _.convsUi.setEphemeral(c.id, if (c.ephemeral == EphemeralExpiration.NONE) lastExpiration else EphemeralExpiration.NONE) } foreach {
+        zms.head.flatMap { _.convsUi.setEphemeral(c.id, if (c.ephemeral == EphemeralExpiration.NONE) lastExpiraton else EphemeralExpiration.NONE) } foreach {
           case Some((prev, current)) if prev.ephemeral == EphemeralExpiration.NONE =>
             onEphemeralExpirationSelected ! current
           case _ => // ignore
@@ -225,7 +223,6 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
   lazy val activity = inject[Activity]
 
   import CursorMenuItem._
-
   onCursorItemClick {
     case CursorMenuItem.More => secondaryToolbarVisible ! true
     case CursorMenuItem.Less => secondaryToolbarVisible ! false
@@ -237,8 +234,8 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
       networkStore.doIfHasInternetOrNotifyUser(new DefaultNetworkAction() {
         override def execute(networkMode: NetworkMode): Unit = for {
           z <- zms.head
-          cId <- conversationController.currentConvId.head
-          _ <- z.convsUi.knock(cId)
+          c <- conv.head
+          _ <- z.convsUi.knock(c.id)
         } {
           soundController.playPingFromMe()
         }

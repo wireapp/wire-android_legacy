@@ -28,7 +28,6 @@ import android.view.Gravity;
 import com.waz.zclient.R;
 import com.waz.zclient.pages.main.conversation.ConversationUtils;
 import com.waz.zclient.ui.text.GlyphTextView;
-import com.waz.zclient.utils.ContextUtils;
 
 public class ConversationIndicatorView extends GlyphTextView {
 
@@ -68,7 +67,12 @@ public class ConversationIndicatorView extends GlyphTextView {
         state = State.UNREAD;
 
         setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimensionPixelSize(R.dimen.list__unsent_indicator_text_size));
-        setTextColor(ContextUtils.getColorWithTheme(R.color.list__unsent_indicator_text_color, getContext()));
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            //noinspection deprecation
+            setTextColor(getResources().getColor(R.color.list__unsent_indicator_text_color));
+        } else {
+            setTextColor(getResources().getColor(R.color.list__unsent_indicator_text_color, getContext().getTheme()));
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             setTextAlignment(TEXT_ALIGNMENT_CENTER);
         }
@@ -101,7 +105,12 @@ public class ConversationIndicatorView extends GlyphTextView {
                 break;
             case UNSENT:
                 paint.setStyle(Paint.Style.FILL);
-                paint.setColor(ContextUtils.getColorWithTheme(R.color.list__unsent_indicator_color, getContext()));
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                    //noinspection deprecation
+                    paint.setColor(getResources().getColor(R.color.list__unsent_indicator_color));
+                } else {
+                    paint.setColor(getResources().getColor(R.color.list__unsent_indicator_color, getContext().getTheme()));
+                }
                 setText(R.string.glyph__attention);
                 break;
         }

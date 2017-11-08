@@ -54,7 +54,7 @@
                 android:orientation="horizontal"
                 >
 
-                <com.waz.zclient.views.e2ee.ShieldView
+                <com.waz.zclient.ui.views.e2ee.ShieldView
                     android:id="@+id/sv__conversation_toolbar__verified_shield"
                     android:layout_width="wrap_content"
                     android:layout_height="@dimen/wire__otr__shield__small_width"
@@ -133,7 +133,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:visibility="invisible"
         />
 
 

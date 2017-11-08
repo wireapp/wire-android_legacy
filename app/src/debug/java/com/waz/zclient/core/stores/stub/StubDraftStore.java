@@ -15,22 +15,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.core.stores.conversation;
+package com.waz.zclient.core.stores.stub;
 
-import android.support.annotation.NonNull;
-
-import com.waz.api.ConversationsList;
 import com.waz.api.IConversation;
-import com.waz.api.SyncState;
+import com.waz.zclient.core.stores.draft.IDraftStore;
+import java.lang.Override;
+import java.lang.String;
 
-public interface ConversationStoreObserver {
-    void onConversationListUpdated(@NonNull ConversationsList conversationsList);
+public class StubDraftStore implements IDraftStore {
+  @Override
+  public String getDraft(IConversation conversation) {
+    return null;
+  }
 
-    void onCurrentConversationHasChanged(IConversation fromConversation,
-                                         IConversation toConversation,
-                                         ConversationChangeRequester conversationChangerSender);
+  @Override
+  public void tearDown() {
 
-    void onConversationSyncingStateHasChanged(SyncState syncState);
+  }
 
-    void onMenuConversationHasChanged(IConversation fromConversation);
+  @Override
+  public void setDraft(IConversation conversation, String text) {
+
+  }
 }

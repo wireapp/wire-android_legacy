@@ -123,23 +123,29 @@ public class NavigationController implements INavigationController {
     @Override
     public void setLeftPage(Page leftPage, String sender) {
         lastPageLeft = leftPage;
-        setPage(leftPage, sender, FIRST_PAGE);
+
+        if (isPhone) {
+            if (currentPagerPos == FIRST_PAGE) {
+                setVisiblePage(leftPage, sender);
+            }
+        } else {
+            if (currentPagerPos == FIRST_PAGE || isInLandscape) {
+                setVisiblePage(leftPage, sender);
+            }
+        }
     }
 
     @Override
     public void setRightPage(Page rightPage, String sender) {
         lastPageRight = rightPage;
-        setPage(rightPage, sender, SECOND_PAGE);
-    }
 
-    private void setPage(Page page, String sender, int pageIndex) {
         if (isPhone) {
-            if (currentPagerPos == pageIndex) {
-                setVisiblePage(page, sender);
+            if (currentPagerPos == SECOND_PAGE) {
+                setVisiblePage(rightPage, sender);
             }
         } else {
-            if (currentPagerPos == pageIndex || isInLandscape) {
-                setVisiblePage(page, sender);
+            if (currentPagerPos == SECOND_PAGE || isInLandscape) {
+                setVisiblePage(rightPage, sender);
             }
         }
     }

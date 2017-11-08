@@ -261,6 +261,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
       new DialogInterface.OnClickListener() {
         def onClick(dialog: DialogInterface, which: Int) = {
           context.asInstanceOf[PreferencesActivity].getControllerFactory.getUsernameController.tearDown()
+          tracking.onLoggedOut(LoggedOutEvent.Manual)
           zms.map(_.account).head.flatMap(_.logout(true))(Threading.Ui)
           navigator.back()
           navigator.back()

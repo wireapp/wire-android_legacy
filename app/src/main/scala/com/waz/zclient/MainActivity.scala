@@ -29,7 +29,7 @@ import android.text.TextUtils
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.{error, info, verbose}
 import com.waz.api.{NetworkMode, _}
-import com.waz.model.{AccountId, ConvId, ConversationData}
+import com.waz.model.{AccountId, ConvId}
 import com.waz.service.ZMessaging
 import com.waz.service.ZMessaging.clock
 import com.waz.threading.{CancellableFuture, Threading}
@@ -42,10 +42,9 @@ import com.waz.zclient.calling.controllers.CallPermissionsController
 import com.waz.zclient.common.controllers.PermissionsController
 import com.waz.zclient.controllers.accentcolor.AccentColorChangeRequester
 import com.waz.zclient.controllers.calling.CallingObserver
-import com.waz.zclient.controllers.global.AccentColorController
+import com.waz.zclient.controllers.global.{AccentColorController, SelectionController}
 import com.waz.zclient.controllers.navigation.{NavigationControllerObserver, Page}
 import com.waz.zclient.controllers.{SharingController, UserAccountsController}
-import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.api.ZMessagingApiStoreObserver
 import com.waz.zclient.core.stores.connect.{ConnectStoreObserver, IConnectStore}
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
@@ -57,7 +56,7 @@ import com.waz.zclient.preferences.{PreferencesActivity, PreferencesController}
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, LoggedOutEvent, UiTrackingController}
 import com.waz.zclient.utils.PhoneUtils.PhoneState
 import com.waz.zclient.utils.StringUtils.TextDrawing
-import com.waz.zclient.utils.{BuildConfigUtils, ContextUtils, Emojis, IntentUtils, LayoutSpec, PhoneUtils, ViewUtils}
+import com.waz.zclient.utils.{BuildConfigUtils, Emojis, IntentUtils, LayoutSpec, PhoneUtils, ViewUtils}
 import net.hockeyapp.android.{ExceptionHandler, NativeCrashManager}
 
 import scala.collection.JavaConverters._
@@ -84,7 +83,7 @@ class MainActivity extends BaseActivity
   lazy val accentColorController    = inject[AccentColorController]
   lazy val callPermissionController = inject[CallPermissionsController]
   lazy val permissions              = inject[PermissionsController]
-  lazy val conversationController   = inject[ConversationController]
+  lazy val selectionController      = inject[SelectionController]
   lazy val userAccountsController   = inject[UserAccountsController]
   lazy val appEntryController       = inject[AppEntryController]
   lazy val tracking                 = inject[GlobalTrackingController]
@@ -264,7 +263,7 @@ class MainActivity extends BaseActivity
     // Make sure we have a running OrientationController instance
     getControllerFactory.getOrientationController
     // Here comes code for adding other dependencies to controllers...
-    getControllerFactory.getNavigationController.setIsLandscape(ContextUtils.isInLandscape(this))
+    getControllerFactory.getNavigationController.setIsLandscape(ViewUtils.isInLandscape(this))
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -283,6 +282,7 @@ class MainActivity extends BaseActivity
   }
 
   private def onPasswordWasReset() = {
+    tracking.onLoggedOut(LoggedOutEvent.ResetPassword)
     getStoreFactory.zMessagingApiStore.getApi.logout()
     openSignUpPage()
   }
@@ -301,10 +301,10 @@ class MainActivity extends BaseActivity
     def switchConversation(convId: ConvId, call: Boolean = false, exp: Option[EphemeralExpiration] = None) =
       CancellableFuture.delay(750.millis).map { _ =>
         verbose(s"setting conversation: $convId")
-        conversationController.selectConv(convId, ConversationChangeRequester.INTENT).map { _ =>
-          exp.foreach(conversationController.setEphemeralExpiration)
-          if (call) conversationController.currentConv.head.map { conv => startCall(withVideo = false, conv) }
-        }
+        val conv = getStoreFactory.conversationStore.getConversation(convId.str)
+        exp.foreach(conv.setEphemeralExpiration)
+        getStoreFactory.conversationStore.setCurrentConversation(conv, ConversationChangeRequester.INTENT)
+        if (call) startCall(withVideo = false, Option(conv))
     } (Threading.Ui).future
 
     def clearIntent() = {
@@ -388,6 +388,7 @@ class MainActivity extends BaseActivity
         info("onLogout")
         getStoreFactory.reset()
         getControllerFactory.getPickUserController.hideUserProfile()
+        getStoreFactory.conversationStore.onLogout()
         getControllerFactory.getNavigationController.resetPagerPositionToDefault()
         val intent: Intent = new Intent(this, classOf[MainActivity])
         intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK)
@@ -408,8 +409,7 @@ class MainActivity extends BaseActivity
 
   def onConnectUserUpdated(user: User, usertype: IConnectStore.UserRequester) = ()
 
-  def onInviteRequestSent(conversation: IConversation) =
-    conversationController.selectConv(Option(new ConvId(conversation.getId)), ConversationChangeRequester.INVITE)
+  def onInviteRequestSent(conversation: IConversation) = getStoreFactory.conversationStore.setCurrentConversation(Some(conversation), ConversationChangeRequester.INVITE)
 
   def onOpenUrl(url: String) = {
     try {
@@ -448,31 +448,32 @@ class MainActivity extends BaseActivity
 
   def onInitialized(self: Self) = enterApplication(self)
 
-  def onStartCall(withVideo: Boolean) = conversationController.currentConv.head.map { conv =>
-    handleOnStartCall(withVideo, conv)
+  def onStartCall(withVideo: Boolean) = {
+    val conversation = getStoreFactory.conversationStore.currentConversation
+    handleOnStartCall(withVideo, conversation)
   }
 
-  private def handleOnStartCall(withVideo: Boolean, conversation: ConversationData) = {
+  private def handleOnStartCall(withVideo: Boolean, conversation: Option[IConversation]) = {
     if (PhoneUtils.getPhoneState(this) ne PhoneState.IDLE) cannotStartGSM()
     else startCallIfInternet(withVideo, conversation)
   }
 
-  private def startCall(withVideo: Boolean, c: ConversationData): Unit = {
-    def call() = callPermissionController.startCall(c.id, withVideo)
-
-    if (c.convType == ConversationData.ConversationType.Group) conversationController.loadMembers(c.id).foreach { members =>
-      if (members.size > 5) ViewUtils.showAlertDialog(
+  private def startCall(withVideo: Boolean, conversation: Option[IConversation]): Unit = conversation.foreach {
+    case c if c.getType == IConversation.Type.GROUP && c.getUsers.size() >= 5 =>
+      ViewUtils.showAlertDialog(
         this,
         getString(R.string.group_calling_title),
-        getString(R.string.group_calling_message, Integer.valueOf(members.size)),
+        getString(R.string.group_calling_message, Integer.valueOf(c.getUsers.size())),
         getString(R.string.group_calling_confirm),
         getString(R.string.group_calling_cancel),
         new DialogInterface.OnClickListener() {
-          def onClick(dialog: DialogInterface, which: Int) = call()
-        }, null
-      ) else call()
-    }
-    else call()
+          def onClick(dialog: DialogInterface, which: Int) = {
+            callPermissionController.startCall(new ConvId(c.getId), withVideo)
+          }
+      }, null)
+
+    case c =>
+      callPermissionController.startCall(new ConvId(c.getId), withVideo)
   }
 
   private def cannotStartGSM() =
@@ -484,7 +485,7 @@ class MainActivity extends BaseActivity
       null,
       true)
 
-  private def startCallIfInternet(withVideo: Boolean, conversation: ConversationData) = {
+  private def startCallIfInternet(withVideo: Boolean, conversation: Option[IConversation]) = {
     zms.flatMap(_.network.networkMode).head.map {
       case NetworkMode.OFFLINE =>
         ViewUtils.showAlertDialog(

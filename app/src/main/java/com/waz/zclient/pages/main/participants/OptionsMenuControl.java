@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.pages.main.participants;
 
-import com.waz.model.ConvId;
+import com.waz.api.IConversation;
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController;
 import com.waz.zclient.ui.theme.OptionsTheme;
 
@@ -42,9 +42,9 @@ public class OptionsMenuControl {
         return false;
     }
 
-    public void createMenu(ConvId convId, @IConversationScreenController.ConversationMenuRequester int requester, OptionsTheme optionsTheme) {
+    public void createMenu(IConversation conversation, @IConversationScreenController.ConversationMenuRequester int requester, OptionsTheme optionsTheme) {
         if (callback != null) {
-            callback.onCreateMenu(convId, requester, optionsTheme);
+            callback.onCreateMenu(conversation, requester, optionsTheme);
         }
     }
 
@@ -53,7 +53,6 @@ public class OptionsMenuControl {
 
         boolean onCloseRequest();
 
-        void onCreateMenu(ConvId convId, @IConversationScreenController.ConversationMenuRequester int requester, OptionsTheme optionsTheme);
+        void onCreateMenu(IConversation conversation, @IConversationScreenController.ConversationMenuRequester int requester, OptionsTheme optionsTheme);
     }
 }
-

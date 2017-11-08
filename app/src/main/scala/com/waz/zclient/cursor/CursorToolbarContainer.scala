@@ -71,15 +71,13 @@ class CursorToolbarContainer(context: Context, attrs: AttributeSet, defStyleAttr
   val editVisible = controller.isEditingMessage
 
   def updateToolbarVisibility() = {
-    import Threading.Implicits.Ui
-
+    editVisible.currentValue foreach { editToolbar.setVisible }
     for {
-      edit <- editVisible.head
-      secondary <- controller.secondaryToolbarVisible.head
+      edit <- editVisible.currentValue
+      secondary <- controller.secondaryToolbarVisible.currentValue
     } {
       mainToolbar.setVisible(!edit && !secondary)
       secondaryToolbar.setVisible(!edit && secondary)
-      editToolbar.setVisible(edit)
     }
   }
 

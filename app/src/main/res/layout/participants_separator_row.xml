@@ -25,7 +25,7 @@
               android:orientation="horizontal"
     >
 
-    <com.waz.zclient.views.e2ee.ShieldView
+    <com.waz.zclient.ui.views.e2ee.ShieldView
         android:layout_width="@dimen/wire__otr__shield__small_width"
         android:layout_height="@dimen/wire__otr__shield__small_height"
         android:layout_gravity="center_vertical"

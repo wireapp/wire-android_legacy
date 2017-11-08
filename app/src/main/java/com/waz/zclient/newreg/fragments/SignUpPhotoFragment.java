@@ -23,6 +23,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
@@ -55,7 +56,6 @@ import com.waz.zclient.ui.utils.ResourceUtils;
 import com.waz.zclient.ui.views.ZetaButton;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.ProgressView;
-import com.waz.zclient.utils.ContextUtils;
 
 import static com.waz.zclient.newreg.fragments.SignUpPhotoFragment.Source.Gallery;
 import static com.waz.zclient.newreg.fragments.SignUpPhotoFragment.Source.Unsplash;
@@ -151,7 +151,7 @@ public class SignUpPhotoFragment extends BaseFragment<SignUpPhotoFragment.Contai
             initImage.setVisibility(View.GONE);
         }
 
-        final int displayWidth = ContextUtils.getOrientationDependentDisplayWidth(getActivity());
+        final int displayWidth = ViewUtils.getOrientationDependentDisplayWidth(getActivity());
         if (unsplashImageLoadHandle != null) {
             unsplashImageLoadHandle.cancel();
             unsplashImageLoadHandle = null;
@@ -272,7 +272,12 @@ public class SignUpPhotoFragment extends BaseFragment<SignUpPhotoFragment.Contai
     public void onAccentColorHasChanged(Object sender, int color) {
         chooseOwnButton.setAccentColor(color);
         keepButton.setAccentColor(color);
-        keepButton.setTextColor(ContextUtils.getColorWithTheme(R.color.text__primary_dark, getContext()));
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            //noinspection deprecation
+            keepButton.setTextColor(getResources().getColor(R.color.text__primary_dark));
+        } else {
+            keepButton.setTextColor(getResources().getColor(R.color.text__primary_dark, getContext().getTheme()));
+        }
     }
 
     @Override

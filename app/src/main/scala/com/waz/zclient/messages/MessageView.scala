@@ -27,7 +27,7 @@ import com.waz.model.{Dim2, MessageData, MessageId}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.RichOption
 import com.waz.zclient.controllers.AssetsController
-import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.controllers.global.SelectionController
 import com.waz.zclient.messages.MessageViewLayout.PartDesc
 import com.waz.zclient.messages.MsgPart._
 import com.waz.zclient.messages.controllers.MessageActionsController
@@ -47,7 +47,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
   def this(context: Context) = this(context, null, 0)
 
   protected val factory = inject[MessageViewFactory]
-  private val selection = inject[ConversationController].messages
+  private val selection = inject[SelectionController].messages
   private lazy val messageActions = inject[MessageActionsController]
   private lazy val assetsController = inject[AssetsController]
 

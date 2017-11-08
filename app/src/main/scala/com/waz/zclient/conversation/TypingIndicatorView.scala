@@ -25,8 +25,8 @@ import android.widget.{FrameLayout, TextView}
 import com.waz.model.UserId
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
-
-import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.ViewHelper
+import com.waz.zclient.R
 
 class TypingIndicatorView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends FrameLayout(context, attrs, defStyleAttr) with ViewHelper {
@@ -34,7 +34,6 @@ class TypingIndicatorView(val context: Context, val attrs: AttributeSet, val def
   def this(context: Context) = this(context, null)
 
   val zms = inject[Signal[ZMessaging]]
-  lazy val convController = inject[ConversationController]
   inflate(R.layout.typing_indicator)
 
   val nameTextView = findById[TextView](R.id.ttv__typing_indicator_names)
@@ -44,12 +43,15 @@ class TypingIndicatorView(val context: Context, val attrs: AttributeSet, val def
   private var animationRunning: Boolean = false
   private val handler = new Handler
 
-  lazy val typingUsers = for {
+  val typingUsers = for {
     z <- zms
-    convId <- convController.currentConvId
-    userIds <- z.typing.typingUsers(convId)
-    users <- z.usersStorage.listSignal(userIds.filterNot(_ == z.selfUserId))
-  } yield users
+    convIdOpt <- z.convsStats.selectedConversationId
+    userIds <- convIdOpt match {
+      case Some(convId) => z.typing.typingUsers(convId)
+      case None => Signal.const(IndexedSeq.empty[UserId])
+    }
+    names <- z.usersStorage.listSignal(userIds)
+  } yield names
 
   typingUsers.onUi { users =>
     if (users.isEmpty) {
@@ -64,9 +66,7 @@ class TypingIndicatorView(val context: Context, val attrs: AttributeSet, val def
   }
 
   private def startAnimation() =
-    animationRunning match {
-      case true => Unit
-      case false =>
+    if(!animationRunning) {
         animationRunning = true
         runAnimation()
     }

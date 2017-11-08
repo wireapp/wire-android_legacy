@@ -23,13 +23,13 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.os.Build;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import com.waz.zclient.R;
 import com.waz.zclient.ui.utils.MathUtils;
 import com.waz.zclient.ui.utils.TypefaceUtils;
 import com.waz.zclient.ui.text.SpannableEditText;
-import com.waz.zclient.utils.ContextUtils;
 
 public class UserTokenSpan extends SpannableEditText.TokenSpan {
     private final String userId;
@@ -74,9 +74,17 @@ public class UserTokenSpan extends SpannableEditText.TokenSpan {
         backgroundBottomPadding = context.getResources().getDimensionPixelSize(R.dimen.wire__padding__4);
         backgroundRadius = backgroundBottomPadding + backgroundHeight / 2;
 
-        int tokenBackgroundColor = ContextUtils.getColorWithTheme(R.color.people_picker__input_person_token__background_color, context);
-        int textColor = ContextUtils.getColorWithTheme(R.color.text__primary_light, context);
-
+        int tokenBackgroundColor;
+        int textColor;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            //noinspection deprecation
+            tokenBackgroundColor = context.getResources().getColor(R.color.people_picker__input_person_token__background_color);
+            //noinspection deprecation
+            textColor = context.getResources().getColor(R.color.text__primary_light);
+        } else {
+            tokenBackgroundColor = context.getResources().getColor(R.color.people_picker__input_person_token__background_color, context.getTheme());
+            textColor = context.getResources().getColor(R.color.text__primary_light, context.getTheme());
+        }
         int textSize = context.getResources().getDimensionPixelSize(R.dimen.wire__text_size__regular);
 
         // Paints

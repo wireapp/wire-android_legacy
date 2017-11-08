@@ -48,7 +48,6 @@ import com.waz.zclient.controllers.navigation.NavigationController
 import com.waz.zclient.controllers.permission.RequestPermissionsObserver
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
 import com.waz.zclient.controllers.{SearchUserController, ThemeController, UserAccountsController}
-import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.core.stores.network.DefaultNetworkAction
 import com.waz.zclient.pages.BaseFragment
@@ -60,15 +59,12 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.device.DeviceDetector
-import com.waz.zclient.utils.{IntentUtils, LayoutSpec, PermissionUtils, StringUtils, UiStorage, UserSignal}
-import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.{IntentUtils, LayoutSpec, PermissionUtils, StringUtils, UiStorage, UserSignal, ViewUtils}
 import com.waz.zclient.views._
 import com.waz.zclient.views.pickuser.{ContactRowView, SearchBoxView, UserRowView}
 import com.waz.zclient.{BaseActivity, FragmentHelper, OnBackPressedListener, R}
-import com.waz.zclient.utils.ViewUtils
 
 import scala.collection.JavaConverters._
-import scala.concurrent. Future
 
 object PickUserFragment {
   val TAG: String = classOf[PickUserFragment].getName
@@ -151,7 +147,6 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val accentColor = inject[AccentColorController].accentColor.map(_.getColor())
   private lazy val themeController = inject[ThemeController]
-  private lazy val conversationController = inject[ConversationController]
 
   private case class PickableUser(userId : UserId, userName: String) extends PickableElement {
     def id: String = userId.str
@@ -192,7 +187,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
       return super.onCreateAnimation(transit, enter, nextAnim)
     }
     if (getControllerFactory.getPickUserController.isHideWithoutAnimations) {
-      return new DefaultPageTransitionAnimation(0, getOrientationIndependentDisplayHeight(getActivity), enter, 0, 0, 1f)
+      return new DefaultPageTransitionAnimation(0, ViewUtils.getOrientationIndependentDisplayHeight(getActivity), enter, 0, 0, 1f)
     }
     if (enter) {
       // Fade animation in participants dialog on tablet
@@ -540,10 +535,9 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
     }
   }
 
-  private def getUser(id: UserId) = getStoreFactory.zMessagingApiStore.getApi.getUser(id.str)
-
   override def onUserClicked(userId: UserId, position: Int, anchorView: View): Unit = {
-    val user: User = getUser(userId)
+
+    val user: User = getStoreFactory.zMessagingApiStore.getApi.getUser(userId.str)
     if (user == null || user.isMe || getControllerFactory == null || getControllerFactory.isTornDown) {
       return
     }
@@ -557,21 +551,21 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
     }(Threading.Ui)
   }
 
-  override def onUserDoubleClicked(userId: UserId, position: Int, anchorView: View): Future[Unit] =
-    if (anchorView.isInstanceOf[ChatheadWithTextFooter] && searchUserController.selectedUsers.isEmpty) {
-
-    Option(getUser(userId)) match {
-      case Some(user) if !user.isMe && user.getConnectionStatus == User.ConnectionStatus.ACCEPTED =>
-       conversationController.getOrCreateConv(userId).flatMap { conv =>
-          conversationController.selectConv(Some(conv.id), ConversationChangeRequester.START_CONVERSATION)
-        }(Threading.Ui)
-      case _ => Future.successful({})
+  override def onUserDoubleClicked(userId: UserId, position: Int, anchorView: View): Unit = {
+    if (!anchorView.isInstanceOf[ChatheadWithTextFooter]) {
+      return
     }
-  } else Future.successful({})
+    val user: User = getStoreFactory.zMessagingApiStore.getApi.getUser(userId.str)
+    if (user == null || user.isMe || (user.getConnectionStatus ne User.ConnectionStatus.ACCEPTED) || searchUserController.selectedUsers.nonEmpty) {
+      return
+    }
+    getStoreFactory.conversationStore.setCurrentConversation(Option(user.getConversation), ConversationChangeRequester.START_CONVERSATION)
+  }
 
   override def onConversationClicked(conversationData: ConversationData, position: Int): Unit = {
+    val conversation: IConversation = getStoreFactory.conversationStore.getConversation(conversationData.id.str)
     KeyboardUtils.hideKeyboard(getActivity)
-    conversationController.selectConv(Some(conversationData.id), ConversationChangeRequester.START_CONVERSATION)
+    getStoreFactory.conversationStore.setCurrentConversation(Option(conversation), ConversationChangeRequester.START_CONVERSATION)
   }
 
   override def getSelectedUsers: Set[UserId] = searchUserController.selectedUsers
@@ -579,7 +573,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
   def getSelectedAndExcluded: Set[UserId] = searchUserController.selectedUsers ++ searchUserController.excludedUsers.currentValue.getOrElse(Set[UserId]())
 
   override def onContactListUserClicked(userId: UserId): Unit = {
-    val user: User = getUser(userId)
+    val user: User = getStoreFactory.zMessagingApiStore.getApi.getUser(userId.str)
     if (user == null) {
       return
     }
@@ -706,7 +700,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
           val conversation: IConversation = user.getConversation
           if (conversation != null) {
             KeyboardUtils.hideKeyboard(getActivity)
-            conversationController.selectConv(new ConvId(conversation.getId), ConversationChangeRequester.START_CONVERSATION)
+            getStoreFactory.conversationStore.setCurrentConversation(Option(conversation), ConversationChangeRequester.START_CONVERSATION)
           }
         }
       case ConnectionStatus.PendingFromUser |
@@ -760,7 +754,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
 
   private def setFocusByCurrentPickerDestination(): Unit = {
     // Don't trigger setting focus in closed split mode on tablet portrait, search is not visible then
-    if (LayoutSpec.isTablet(getActivity) && isInPortrait(getActivity) && getControllerFactory.getNavigationController.getPagerPosition == NavigationController.SECOND_PAGE) {
+    if (LayoutSpec.isTablet(getActivity) && ViewUtils.isInPortrait(getActivity) && getControllerFactory.getNavigationController.getPagerPosition == NavigationController.SECOND_PAGE) {
       return
     }
     if ((getCurrentPickerDestination eq IPickUserController.Destination.CONVERSATION_LIST) && (LayoutSpec.isTablet(getActivity) || getControllerFactory.getNavigationController.getPagerPosition == NavigationController.FIRST_PAGE)) {

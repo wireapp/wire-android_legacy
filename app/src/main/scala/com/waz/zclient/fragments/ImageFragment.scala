@@ -44,8 +44,6 @@ import com.waz.zclient.views.{ImageAssetDrawable, ImageViewPager}
 import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R}
 import org.threeten.bp.{LocalDateTime, ZoneId}
 
-import com.waz.zclient.utils.ContextUtils._
-
 object ImageFragment {
   val TAG = ImageFragment.getClass.getSimpleName
 
@@ -219,7 +217,7 @@ class ImageFragment extends BaseFragment[ImageFragment.Container] with FragmentH
     }
 
     val clickedImageLocation = ViewUtils.getLocationOnScreen(clickedImage)
-    clickedImageLocation.offset(imagePadding.l, imagePadding.t - topToolbar.getHeight - getStatusBarHeight(getActivity))
+    clickedImageLocation.offset(imagePadding.l, imagePadding.t - topToolbar.getHeight - ViewUtils.getStatusBarHeight(getActivity))
 
     val fullContainerWidth: Int = background.getWidth
     val fullContainerHeight: Int = background.getHeight

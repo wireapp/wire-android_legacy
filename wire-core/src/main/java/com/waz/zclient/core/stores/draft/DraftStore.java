@@ -15,22 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.core.stores.conversation;
+package com.waz.zclient.core.stores.draft;
 
-import android.support.annotation.NonNull;
+public abstract class DraftStore implements IDraftStore {
 
-import com.waz.api.ConversationsList;
-import com.waz.api.IConversation;
-import com.waz.api.SyncState;
-
-public interface ConversationStoreObserver {
-    void onConversationListUpdated(@NonNull ConversationsList conversationsList);
-
-    void onCurrentConversationHasChanged(IConversation fromConversation,
-                                         IConversation toConversation,
-                                         ConversationChangeRequester conversationChangerSender);
-
-    void onConversationSyncingStateHasChanged(SyncState syncState);
-
-    void onMenuConversationHasChanged(IConversation fromConversation);
 }

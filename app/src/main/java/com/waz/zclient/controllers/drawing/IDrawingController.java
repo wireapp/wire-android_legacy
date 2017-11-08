@@ -21,13 +21,13 @@ import com.waz.api.ImageAsset;
 
 public interface IDrawingController {
 
-    public enum DrawingDestination {
+    enum DrawingDestination {
         SINGLE_IMAGE_VIEW,
         CAMERA_PREVIEW_VIEW,
         SKETCH_BUTTON
     }
 
-    public enum DrawingMethod {
+    enum DrawingMethod {
         DRAW,
         EMOJI,
         TEXT

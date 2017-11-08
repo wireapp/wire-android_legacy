@@ -27,6 +27,7 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RoundRectShape;
@@ -36,24 +37,36 @@ import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
+import android.util.DisplayMetrics;
+import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 
 import java.lang.reflect.Field;
 
+import static android.R.attr.width;
 
 public class ViewUtils {
 
     private static final int DEFAULT_CHILD_ANIMATION_DURATION = 350;
 
-    public static boolean isInPortrait(@NonNull Context context) { // still used in wire-ui
+    public static boolean isInLandscape(@NonNull Context context) {
+        return isInLandscape(context.getResources().getConfiguration());
+    }
+
+    public static boolean isInLandscape(@NonNull Configuration configuration) {
+        return configuration.orientation == Configuration.ORIENTATION_LANDSCAPE;
+    }
+
+    public static boolean isInPortrait(@NonNull Context context) {
         return isInPortrait(context.getResources().getConfiguration());
     }
 
-    private static boolean isInPortrait(@NonNull Configuration configuration) {
+    public static boolean isInPortrait(@NonNull Configuration configuration) {
         return configuration.orientation == Configuration.ORIENTATION_PORTRAIT;
     }
 
@@ -91,17 +104,78 @@ public class ViewUtils {
         view.setBackground(context.getResources().getDrawable(resource));
     }
 
+    public static int getNavigationBarHeight(Context context) {
+        Resources resources = context.getResources();
+        String name = ViewUtils.isInPortrait(context) ? "navigation_bar_height" : "navigation_bar_height_landscape";
+        int resourceId = resources.getIdentifier(name, "dimen", "android");
+        if (resourceId > 0) {
+            return resources.getDimensionPixelSize(resourceId);
+        }
+        return 0;
+    }
+
+    public static int getStatusBarHeight(Context context) {
+        int result = 0;
+        int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = context.getResources().getDimensionPixelSize(resourceId);
+        }
+        return result;
+    }
+
+    public static Rect getOrientationDependentDisplayBounds(Context context) {
+        return new Rect(
+            0, 0,
+            getOrientationDependentDisplayWidth(context),
+            getOrientationDependentDisplayHeight(context)
+        );
+    }
+
     /**
      * @return everytime the amount of pixels of the (in portrait) horizontal axis of the phone
      */
-    public static int getOrientationIndependentDisplayWidth(Context context) { // still used in wire-ui
+    public static int getOrientationIndependentDisplayWidth(Context context) {
         int pixels;
-        if (isInPortrait(context)) {
+        if (ViewUtils.isInPortrait(context)) {
             pixels = context.getResources().getDisplayMetrics().widthPixels;
         } else {
             pixels = context.getResources().getDisplayMetrics().heightPixels;
         }
         return pixels;
+    }
+
+    /**
+     * @return the amount of pixels of the horizontal axis of the phone
+     */
+    public static int getOrientationDependentDisplayWidth(Context context) {
+        return context.getResources().getDisplayMetrics().widthPixels;
+    }
+
+    /**
+     * @return everytime the amount of pixels of the (in portrait) width axis of the phone
+     */
+    public static int getOrientationIndependentDisplayHeight(Context context) {
+        int pixels;
+        if (ViewUtils.isInPortrait(context)) {
+            pixels = context.getResources().getDisplayMetrics().heightPixels;
+        } else {
+            pixels = context.getResources().getDisplayMetrics().widthPixels;
+        }
+        return pixels;
+    }
+
+    /**
+     * @return the amount of pixels of the vertical axis of the phone
+     */
+    public static int getOrientationDependentDisplayHeight(Context context) {
+        return context.getResources().getDisplayMetrics().heightPixels;
+    }
+
+    public static int getRealDisplayWidth(Context context) {
+        Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        DisplayMetrics realMetrics = new DisplayMetrics();
+        display.getRealMetrics(realMetrics);
+        return realMetrics.widthPixels;
     }
 
     public static int toPx(Context context, int dp) {
@@ -389,5 +463,6 @@ public class ViewUtils {
             return DEFAULT_CHILD_ANIMATION_DURATION;
         }
     }
+
 
 }

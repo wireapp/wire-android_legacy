@@ -18,10 +18,10 @@
 package com.waz.zclient.controllers.stubs;
 
 import android.view.View;
+import com.waz.api.IConversation;
 import com.waz.api.Message;
 import com.waz.api.OtrClient;
 import com.waz.api.User;
-import com.waz.model.ConvId;
 import com.waz.zclient.pages.main.conversation.controller.ConversationScreenControllerObserver;
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
@@ -53,7 +53,7 @@ public class StubConversationScreenController implements IConversationScreenCont
     }
 
     @Override
-    public void showConversationMenu(int requester, ConvId convId, View anchorView) {
+    public void showConversationMenu(int requester, IConversation conversation, View anchorView) {
 
     }
 

@@ -18,6 +18,7 @@
 package com.waz.zclient.pages.extendedcursor.voicefilter;
 
 import android.content.Context;
+import android.os.Build;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -33,7 +34,6 @@ import com.waz.api.RecordingControls;
 import com.waz.zclient.R;
 import com.waz.zclient.ui.animation.interpolators.penner.Quad;
 import com.waz.zclient.ui.text.GlyphTextView;
-import com.waz.zclient.utils.ContextUtils;
 import com.waz.zclient.utils.StringUtils;
 import com.waz.zclient.utils.ViewUtils;
 import org.threeten.bp.Instant;
@@ -112,7 +112,12 @@ public class VoiceFilterGridLayout extends FrameLayout implements
 
                 if (c < numCols - 1) {
                     View view = new View(getContext());
-                    view.setBackgroundColor(ContextUtils.getColorWithTheme(R.color.white_16, getContext()));
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                        //noinspection deprecation
+                        view.setBackgroundColor(getResources().getColor(R.color.white_16));
+                    } else {
+                        view.setBackgroundColor(getResources().getColor(R.color.white_16, getContext().getTheme()));
+                    }
                     row.addView(view,
                                 new LayoutParams(ViewUtils.toPx(getContext(), 0.5f),
                                                  ViewGroup.LayoutParams.MATCH_PARENT));
@@ -124,7 +129,12 @@ public class VoiceFilterGridLayout extends FrameLayout implements
             container.addView(row, params);
             if (r < numRows - 1) {
                 View view = new View(getContext());
-                view.setBackgroundColor(ContextUtils.getColorWithTheme(R.color.white_16, getContext()));
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                    //noinspection deprecation
+                    view.setBackgroundColor(getResources().getColor(R.color.white_16));
+                } else {
+                    view.setBackgroundColor(getResources().getColor(R.color.white_16, getContext().getTheme()));
+                }
                 container.addView(view,
                                   new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                                                    ViewUtils.toPx(getContext(), 0.5f)));
@@ -227,7 +237,12 @@ public class VoiceFilterGridLayout extends FrameLayout implements
 
     private void setSelectedView(GlyphTextView glyphTextView) {
         if (selectedView != null) {
-            selectedView.setTextColor(ContextUtils.getColorWithTheme(R.color.text__primary_dark, getContext()));
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                //noinspection deprecation
+                selectedView.setTextColor(getResources().getColor(R.color.text__primary_dark));
+            } else {
+                selectedView.setTextColor(getResources().getColor(R.color.text__primary_dark, getContext().getTheme()));
+            }
         }
         glyphTextView.setTextColor(accentColor);
         selectedView = glyphTextView;

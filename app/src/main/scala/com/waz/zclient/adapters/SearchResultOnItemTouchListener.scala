@@ -23,8 +23,6 @@ import android.view.{GestureDetector, MotionEvent, View}
 import com.waz.model.{ConversationData, UserId}
 import com.waz.zclient.views.pickuser.{ConversationRowView, UserRowView}
 
-import scala.concurrent.Future
-
 object SearchResultOnItemTouchListener {
 
   trait Callback {
@@ -32,7 +30,7 @@ object SearchResultOnItemTouchListener {
 
     def onConversationClicked(conversation: ConversationData, position: Int): Unit
 
-    def onUserDoubleClicked(userId: UserId, position: Int, anchorView: View): Future[Unit]
+    def onUserDoubleClicked(userId: UserId, position: Int, anchorView: View): Unit
   }
 
 }
