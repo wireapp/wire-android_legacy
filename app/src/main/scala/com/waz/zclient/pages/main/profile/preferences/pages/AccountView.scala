@@ -34,10 +34,10 @@ import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.controllers.global.PasswordController
-import com.waz.zclient.pages.main.profile.preferences.dialogs.{ChangeEmailDialog, ChangePhoneDialog, VerifyEmailPreferenceFragment, VerifyPhoneNumberPreferenceFragment}
+import com.waz.zclient.pages.main.profile.preferences.dialogs.{ChangeEmailDialog, ChangePhoneDialog, VerifyEmailPreferenceFragment}
 import com.waz.zclient.pages.main.profile.preferences.views.{EditNameDialog, PictureTextButton, TextButton}
 import com.waz.zclient.preferences.PreferencesActivity
-import com.waz.zclient.preferences.dialogs.AccentColorPickerFragment
+import com.waz.zclient.preferences.dialogs.{AccentColorPickerFragment, VerifyPhoneFragment}
 import com.waz.zclient.tracking.{GlobalTrackingController, LoggedOutEvent}
 import com.waz.zclient.ui.utils.TextViewUtils._
 import com.waz.zclient.utils.ContextUtils._
@@ -228,12 +228,12 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
         returning(ChangePhoneDialog(ph.map(_.str), email.isDefined)) {
           _.onPhoneChanged {
             case Some(p) =>
-              val f = VerifyPhoneNumberPreferenceFragment.newInstance(p.str)
+              val f = VerifyPhoneFragment.newInstance(p.str)
               //hide the verification screen when complete
               self.map(_.phone).onChanged.filter(_.contains(p)).onUi { _ =>
                 f.dismiss()
               }
-              showPrefDialog(f, VerifyPhoneNumberPreferenceFragment.TAG)
+              showPrefDialog(f, VerifyPhoneFragment.TAG)
             case _ =>
           }
         },

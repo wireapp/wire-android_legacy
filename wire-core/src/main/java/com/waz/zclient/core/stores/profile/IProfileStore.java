@@ -19,7 +19,6 @@ package com.waz.zclient.core.stores.profile;
 
 import com.waz.api.Self;
 import com.waz.api.User;
-import com.waz.api.ZMessagingApi;
 import com.waz.zclient.core.stores.IStore;
 
 public interface IProfileStore extends IStore {
@@ -37,15 +36,8 @@ public interface IProfileStore extends IStore {
 
     void resendVerificationEmail(String myEmail);
 
-    void resendPhoneVerificationCode(String myPhoneNumber,
-                                     ZMessagingApi.PhoneConfirmationCodeRequestListener confirmationListener);
-
     User getSelfUser();
 
     /* the color chosen by the user */
     int getAccentColor();
-
-    void submitCode(String myPhoneNumber,
-                    String code,
-                    ZMessagingApi.PhoneNumberVerificationListener verificationListener);
 }

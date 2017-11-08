@@ -17,8 +17,6 @@
  */
 package com.waz.zclient.core.api.scala;
 
-import com.waz.api.KindOfAccess;
-import com.waz.api.KindOfVerification;
 import com.waz.api.User;
 import com.waz.api.ZMessagingApi;
 import com.waz.zclient.core.stores.profile.ProfileStore;
@@ -26,11 +24,9 @@ import com.waz.zclient.core.stores.profile.ProfileStore;
 public class ScalaProfileStore extends ProfileStore {
     public static final String TAG = ScalaProfileStore.class.getName();
 
-    private ZMessagingApi zMessagingApi;
     private int myColor;
 
     public ScalaProfileStore(ZMessagingApi zMessagingApi) {
-        this.zMessagingApi = zMessagingApi;
         setUser(zMessagingApi.getSelf());
     }
 
@@ -40,7 +36,6 @@ public class ScalaProfileStore extends ProfileStore {
             selfUser.removeUpdateListener(this);
             selfUser = null;
         }
-        zMessagingApi = null;
     }
 
     @Override
@@ -54,13 +49,6 @@ public class ScalaProfileStore extends ProfileStore {
     }
 
     @Override
-    public void resendPhoneVerificationCode(String myPhoneNumber, final ZMessagingApi.PhoneConfirmationCodeRequestListener confirmationListener) {
-        zMessagingApi.requestPhoneConfirmationCode(myPhoneNumber,
-                                                   KindOfAccess.REGISTRATION,
-                                                   confirmationListener);
-    }
-
-    @Override
     public User getSelfUser() {
         return selfUser.getUser();
     }
@@ -68,16 +56,6 @@ public class ScalaProfileStore extends ProfileStore {
     @Override
     public int getAccentColor() {
         return selfUser.getAccent().getColor();
-    }
-
-    @Override
-    public void submitCode(String myPhoneNumber,
-                           String code,
-                           ZMessagingApi.PhoneNumberVerificationListener verificationListener) {
-        zMessagingApi.verifyPhoneNumber(myPhoneNumber,
-                                        code,
-                                        KindOfVerification.VERIFY_ON_UPDATE,
-                                        verificationListener);
     }
 
     /**

@@ -19,7 +19,6 @@ package com.waz.zclient.core.stores.stub;
 
 import com.waz.api.Self;
 import com.waz.api.User;
-import com.waz.api.ZMessagingApi;
 import com.waz.zclient.core.stores.profile.IProfileStore;
 import com.waz.zclient.core.stores.profile.ProfileStoreObserver;
 
@@ -30,17 +29,7 @@ public class StubProfileStore implements IProfileStore {
   }
 
   @Override
-  public void resendPhoneVerificationCode(String myPhoneNumber, ZMessagingApi.PhoneConfirmationCodeRequestListener confirmationListener) {
-
-  }
-
-  @Override
   public void addProfileStoreObserver(ProfileStoreObserver profileStoreObserver) {
-
-  }
-
-  @Override
-  public void submitCode(String myPhoneNumber, String code, ZMessagingApi.PhoneNumberVerificationListener verificationListener) {
 
   }
 
