@@ -46,12 +46,7 @@ class AdvancedViewImpl(context: Context, attrs: AttributeSet, style: Int) extend
   val submitReport    = findById[TextButton](R.id.preferences_debug_report)
   val resetPush       = findById[TextButton](R.id.preferences_reset_push)
 
-  analyticsSwitch.setPreference({
-    BuildConfig.APPLICATION_ID match {
-      case "com.wire" | "com.wire.internal" => GlobalPreferences.AnalyticsEnabled //use the true-by-default preference for internal and public
-      case _ => PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED") //use a false-by-default preference for non-internal dev builds
-    }
-  }, global = true)
+  analyticsSwitch.setPreference(GlobalTrackingController.analyticsPrefKey, global = true)
 
   submitReport.onClickEvent{ _ =>
     DebugUtils.sendDebugReport(context.asInstanceOf[Activity])
