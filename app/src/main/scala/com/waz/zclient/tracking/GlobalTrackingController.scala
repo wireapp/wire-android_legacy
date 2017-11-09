@@ -26,7 +26,7 @@ import com.waz.content.{GlobalPreferences, MembersStorage, UsersStorage}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
 import com.waz.service.{AccountManager, ZMessaging, ZmsLifeCycle}
-import com.waz.threading.{SerialDispatchQueue, Threading}
+import com.waz.threading.{DispatchQueue, SerialDispatchQueue, Threading}
 import com.waz.utils.{RichThreetenBPDuration, _}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient._
@@ -43,14 +43,24 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
 
   import GlobalTrackingController._
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "Tracking")
+  private implicit val dispatcher: DispatchQueue = new SerialDispatchQueue(name = "Tracking")
 
   private val superProps = Signal(returning(new JSONObject()) { o =>
     o.put(AppSuperProperty, AppSuperPropertyValue)
   }).disableAutowiring()
 
-  private val mixpanel = MixpanelApiToken.map(MixpanelAPI.getInstance(cxt.getApplicationContext, _))
-  verbose(s"For build: ${BuildConfig.APPLICATION_ID}, mixpanel: $mixpanel was created using token: ${BuildConfig.MIXPANEL_APP_TOKEN}")
+  private var mixpanel: Option[MixpanelAPI] = None
+
+  private def initMixpanel(): Unit = if (mixpanel.isEmpty) {
+    mixpanel = MixpanelApiToken.map(MixpanelAPI.getInstance(cxt.getApplicationContext, _))
+    verbose(s"For build: ${BuildConfig.APPLICATION_ID}, mixpanel: $mixpanel was created using token: ${BuildConfig.MIXPANEL_APP_TOKEN}")
+  }
+
+  private def closeMixpanel(): Unit = if (mixpanel.nonEmpty) {
+    verbose(s"closing mixpanel instance")
+    mixpanel.foreach(_.reset())
+    mixpanel = None
+  }
 
   //For automation tests
   def getId = mixpanel.map(_.getDistinctId).getOrElse("")
@@ -59,12 +69,9 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
   val zMessaging = inject[Signal[ZMessaging]]
   val currentConv = inject[Signal[ConversationData]]
 
-  private val prefKey = BuildConfig.APPLICATION_ID match {
-    case "com.wire" | "com.wire.internal" => GlobalPreferences.AnalyticsEnabled
-    case _ => PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED")
-  }
+  def trackingEnabled = ZMessaging.globalModule.flatMap(_.prefs.preference(analyticsPrefKey).apply())
 
-  def trackingEnabled = ZMessaging.globalModule.flatMap(_.prefs.preference(prefKey).apply())
+  trackingEnabled.foreach(onOptOut)
 
   inject[ZmsLifeCycle].uiActive.onChanged {
     case false =>
@@ -146,7 +153,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
           m.track(event.name, event.props.orNull)
         }
         verbose(
-          s"""
+          s"""MI
              |trackEvent: ${event.name}
              |properties: ${event.props.map(_.toString(2))}
              |superProps: ${mixpanel.map(_.getSuperProperties).getOrElse(sProps).toString(2)}
@@ -160,6 +167,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
       case e: ReceivedPushEvent if e.p.toFetch.forall(_.asScala < 10.seconds) =>
         //don't track - there are a lot of these events! We want to keep the event count lower
       case OptEvent(true) =>
+        initMixpanel()
         mixpanel.foreach { m =>
           verbose("Opted in to analytics, re-registering")
           m.unregisterSuperProperty(MixpanelIgnoreProperty)
@@ -174,6 +182,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
               o.put(MixpanelIgnoreProperty, true)
             })
           }
+          closeMixpanel()
         }
       case _ =>
         trackingEnabled.map {
@@ -226,7 +235,10 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     ZMessaging.currentAccounts.activeZms.head.map{ zms => trackEvent(SignUpScreenEvent(method), zms) }
   }
 
-  def onOptOut(enabled: Boolean): Unit = zMessaging.head.map(zms => trackEvent(zms, OptEvent(enabled)))
+  def onOptOut(enabled: Boolean): Unit = {
+    verbose(s"onOptOut($enabled)")
+    zMessaging.head.map(zms => trackEvent(zms, OptEvent(enabled)))
+  }
 
   //By default assigns events to the current zms (current account)
   def onContributionEvent(action: ContributionEvent.Action): Unit =
@@ -249,6 +261,10 @@ object GlobalTrackingController {
   private lazy val TeamInTeamSuperProperty = "team.in_team"
   private lazy val TeamSizeSuperProperty = "team.size"
 
+  val analyticsPrefKey = BuildConfig.APPLICATION_ID match {
+    case "com.wire" | "com.wire.internal" => GlobalPreferences.AnalyticsEnabled
+    case _ => PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED")
+  }
 
   //For build flavours that don't have tracking enabled, this should be None
   private lazy val MixpanelApiToken = Option(BuildConfig.MIXPANEL_APP_TOKEN).filter(_.nonEmpty)
