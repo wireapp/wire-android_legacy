@@ -1,21 +1,4 @@
 /**
- * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-/**
   * Wire
   * Copyright (C) 2017 Wire Swiss GmbH
   *
@@ -35,7 +18,7 @@
 package com.waz.zclient.notifications.controllers
 
 import android.app.{Notification, NotificationManager, PendingIntent}
-import android.graphics.Bitmap
+import android.graphics.{Bitmap, Color}
 import android.support.v4.app.NotificationCompat
 import com.waz.ZLog._
 import com.waz.bitmap.BitmapUtils
@@ -80,7 +63,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
       bitmap   <- inject[ImageController].imageSignal(z, id, Regular(callImageSizePx))
     } yield
       bitmap match {
-        case BitmapLoaded(bmp, _) => Option(BitmapUtils.cropRect(bmp, callImageSizePx))
+        case BitmapLoaded(bmp, _) => Option(BitmapUtils.createRoundBitmap(bmp, callImageSizePx, 0, Color.TRANSPARENT))
         case _ => None
       })
     .orElse(Signal.const(Option.empty[Bitmap]))
