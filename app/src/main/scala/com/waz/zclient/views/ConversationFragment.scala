@@ -659,6 +659,7 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
   private val orientationControllerObserver = new  OrientationControllerObserver {
     override def onOrientationHasChanged(squareOrientation: SquareOrientation): Unit = inLandscape.head.foreach { oldInLandscape =>
       implicit val ctx: Context = getActivity
+      if (ctx == null) return
       val newInLandscape = isInLandscape
       oldInLandscape match {
         case Some(landscape) if landscape != newInLandscape =>
