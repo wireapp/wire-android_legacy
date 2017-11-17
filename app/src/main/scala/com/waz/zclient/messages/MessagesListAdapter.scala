@@ -43,12 +43,11 @@ class MessagesListAdapter(listDim: Signal[Dim2])(implicit inj: Injector, ec: Eve
 
   var unreadIndex = UnreadIndex(0)
 
-  val cursor = for {
+  val cursor = (for {
     zs <- zms
-    cId <- conversationController.currentConvId
-    convType <- conversationController.currentConvType
-  } yield {
-    (new RecyclerCursor(cId, zs, notifier), convType)
+    conv <- conversationController.currentConv
+  } yield (zs, conv.id, conv.convType)).map {
+    case (zs, cId, cType) => (new RecyclerCursor(cId, zs, notifier), cType)
   }
 
   private var messages = Option.empty[RecyclerCursor]
