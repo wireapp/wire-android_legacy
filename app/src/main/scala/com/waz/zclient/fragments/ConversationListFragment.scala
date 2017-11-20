@@ -57,6 +57,7 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
 
   val layoutId: Int
   lazy val userAccountsController = inject[UserAccountsController]
+  lazy val conversationController = inject[ConversationController]
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle) =
     inflater.inflate(layoutId, container, false)
@@ -95,13 +96,10 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
   def init(view: View, adapter: ConversationListAdapter): Unit
 
   private def handleItemClick(conversationData: ConversationData): Unit = {
-    val conversationChangeRequester =
-      if (conversationData.archived)
-        ConversationChangeRequester.CONVERSATION_LIST_UNARCHIVED_CONVERSATION
-      else
-        ConversationChangeRequester.CONVERSATION_LIST
-
-    inject[ConversationController].selectConv(Option(conversationData.id), conversationChangeRequester)
+    import Threading.Implicits.Background
+    conversationController.selectConv(Option(conversationData.id), ConversationChangeRequester.CONVERSATION_LIST).map { _ =>
+      conversationController.archive(conversationData.id, archive = false)
+    }
   }
 
   private def handleItemLongClick(conversationData: ConversationData, anchorView: View): Unit = {
