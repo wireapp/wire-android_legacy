@@ -119,7 +119,7 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
     accounts <- ZMessaging.currentAccounts.loggedInAccounts
     zms <- zms
     uiActive <- gl.lifecycle.uiActive
-    convId <- convController.currentConvId
+    convId <- convController.currentConvId.map(Option(_)).orElse(Signal.const(Option.empty[ConvId]))
     conversationsSet <- zms.convsStorage.convsSignal
     page <- navigationController.visiblePage
   } yield (gl, accounts.map { acc =>
@@ -131,7 +131,7 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
           case Page.CONVERSATION_LIST =>
             conversationsSet.conversations.map(_.id)
           case Page.MESSAGE_STREAM =>
-            Set(convId)
+            Set(convId).flatten
           case _ =>
             Set.empty[ConvId]
         }
