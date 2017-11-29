@@ -149,14 +149,6 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
         footerMenu.setVisibility(View.GONE);
         unblockButton.setVisibility(View.GONE);
 
-        // Toggle color background
-        view.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                getContainer().onClickedEmptyBackground();
-            }
-        });
-
         return view;
     }
 
@@ -218,22 +210,7 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
     //////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onShowParticipants(View anchorView, boolean isSingleConversation, boolean isMemberOfConversation, boolean showDeviceTabIfSingle) {
-        if (participantsGridView == null) {
-            return;
-        }
-        if (isSingleConversation) {
-            // Enable toggling of colour background for 1:1 conversations
-            participantsGridView.setCallback(new ParticipantsGridView.Callback() {
-                @Override
-                public void onClicked() {
-                    getContainer().onClickedEmptyBackground();
-                }
-            });
-            return;
-        }
-        participantsGridView.setCallback(null);
-    }
+    public void onShowParticipants(View anchorView, boolean isSingleConversation, boolean isMemberOfConversation, boolean showDeviceTabIfSingle) {}
 
     @Override
     public void onHideParticipants(boolean backOrButtonPressed,
@@ -679,8 +656,6 @@ public class ParticipantBodyFragment extends BaseFragment<ParticipantBodyFragmen
     }
 
     public interface Container {
-
-        void onClickedEmptyBackground();
 
         void toggleBlockUser(User otherUser, boolean block);
 

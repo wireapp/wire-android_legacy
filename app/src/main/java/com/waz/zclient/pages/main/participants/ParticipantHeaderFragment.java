@@ -571,9 +571,6 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
     }
 
     public interface Container {
-
-        void onClickedEmptyBackground();
-
         void dismissDialog();
     }
 }
