@@ -171,11 +171,11 @@ public class MainTabletFragment extends BaseFragment<MainTabletFragment.Containe
     //////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onShowSingleImage(Message message) {
+    public void onShowSingleImage(String messageId) {
         getChildFragmentManager().beginTransaction()
                                  .add(R.id.fl__overlay_container,
-                                      ImageFragment.newInstance(message.getId()),
-                                     ImageFragment.TAG())
+                                      ImageFragment.newInstance(messageId),
+                                      ImageFragment.TAG())
                                  .addToBackStack(ImageFragment.TAG())
                                  .commit();
         getControllerFactory().getNavigationController().setRightPage(Page.SINGLE_MESSAGE, TAG);

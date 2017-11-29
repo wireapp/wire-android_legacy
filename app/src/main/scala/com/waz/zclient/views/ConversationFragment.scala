@@ -742,7 +742,7 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
   }
 
   private val singleImageObserver = new SingleImageObserver {
-    override def onShowSingleImage(message: Message): Unit = {}
+    override def onShowSingleImage(messageId: String): Unit = {}
     override def onShowUserImage(user: User): Unit = {}
     override def onHideSingleImage(): Unit = getControllerFactory.getNavigationController.setRightPage(Page.MESSAGE_STREAM, TAG)
   }

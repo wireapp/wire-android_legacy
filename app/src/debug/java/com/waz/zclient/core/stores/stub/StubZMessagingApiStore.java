@@ -18,7 +18,6 @@
 package com.waz.zclient.core.stores.stub;
 
 import android.content.Context;
-
 import com.waz.api.ConnectionIndicator;
 import com.waz.api.Contacts;
 import com.waz.api.ConversationsList;
@@ -96,7 +95,6 @@ public class StubZMessagingApiStore implements IZMessagingApiStore {
             public void logout() {
 
             }
-
 
             @Override
             public Self getSelf() {
