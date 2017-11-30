@@ -18,25 +18,18 @@
 package com.waz.zclient.core.stores.stub;
 
 import android.content.Context;
-import com.waz.api.AccentColor;
+
 import com.waz.api.ConnectionIndicator;
 import com.waz.api.Contacts;
 import com.waz.api.ConversationsList;
-import com.waz.api.Credentials;
 import com.waz.api.ErrorsList;
 import com.waz.api.Giphy;
 import com.waz.api.InitListener;
 import com.waz.api.Invitations;
-import com.waz.api.KindOfAccess;
-import com.waz.api.KindOfVerification;
-import com.waz.api.LoginListener;
 import com.waz.api.PermissionProvider;
-import com.waz.api.Search;
 import com.waz.api.Self;
-import com.waz.api.Spotify;
 import com.waz.api.User;
 import com.waz.api.Usernames;
-import com.waz.api.ZCache;
 import com.waz.api.ZMessagingApi;
 import com.waz.zclient.core.stores.api.IZMessagingApiStore;
 import com.waz.zclient.core.stores.api.ZMessagingApiStoreObserver;
@@ -100,42 +93,7 @@ public class StubZMessagingApiStore implements IZMessagingApiStore {
             }
 
             @Override
-            public void login(Credentials credentials, LoginListener loginListener) {
-
-            }
-
-            @Override
             public void logout() {
-
-            }
-
-            @Override
-            public void register(Credentials credentials,
-                                 String s,
-                                 AccentColor accentColor,
-                                 ZMessagingApi.RegistrationListener registrationListener) {
-
-            }
-
-            @Override
-            public void requestPhoneConfirmationCode(String s,
-                                                     KindOfAccess kindOfAccess,
-                                                     ZMessagingApi.PhoneConfirmationCodeRequestListener phoneConfirmationCodeRequestListener) {
-
-            }
-
-            @Override
-            public void requestPhoneConfirmationCall(String s,
-                                                     KindOfAccess kindOfAccess,
-                                                     ZMessagingApi.PhoneConfirmationCodeRequestListener phoneConfirmationCodeRequestListener) {
-
-            }
-
-            @Override
-            public void verifyPhoneNumber(String s,
-                                          String s1,
-                                          KindOfVerification kindOfVerification,
-                                          ZMessagingApi.PhoneNumberVerificationListener phoneNumberVerificationListener) {
 
             }
 
@@ -146,16 +104,6 @@ public class StubZMessagingApiStore implements IZMessagingApiStore {
 
             @Override
             public ConversationsList getConversations() {
-                return null;
-            }
-
-            @Override
-            public Search search() {
-                return null;
-            }
-
-            @Override
-            public ZCache getCache() {
                 return null;
             }
 
@@ -181,11 +129,6 @@ public class StubZMessagingApiStore implements IZMessagingApiStore {
 
             @Override
             public Giphy getGiphy() {
-                return null;
-            }
-
-            @Override
-            public Spotify getSpotify() {
                 return null;
             }
 
