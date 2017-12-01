@@ -522,24 +522,6 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     }
 
     @Override
-    public void onClickedEmptyBackground() {
-        if (!getControllerFactory().getConversationScreenController().isSingleConversation()) {
-            return;
-        }
-
-        if (LayoutSpec.isTablet(getActivity())) {
-            final User user = getStoreFactory().singleParticipantStore()
-                                               .getUser();
-
-            if (user == null) {
-                return;
-            }
-            getControllerFactory().getSingleImageController().setViewReferences(bodyContainer);
-            getControllerFactory().getSingleImageController().showSingleImage(user);
-        }
-    }
-
-    @Override
     public void toggleBlockUser(User otherUser, boolean block) { }
 
     @Override

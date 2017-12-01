@@ -103,29 +103,11 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   }
 
   // display full screen image for given message
-  def showSingleImage(msg: MessageData, container: View) = {
-    // FIXME: don't use java api, it's ugly and buggy
-    // obtain java message and wait for image asset to be loaded,
-    // this is required for SingleImageFragment to work properly
-    val m = ZMessaging.currentUi.messages.cachedOrNew(msg.id)
-    val p = Promise[Message]()
-    val imObserver = new ModelObserver[ImageAsset] {
-      override def updated(model: ImageAsset): Unit = if (model.getWidth > 0) p.trySuccess(m)
-    }
-    val observer = new ModelObserver[Message] {
-      override def updated(model: Message): Unit = imObserver.setAndUpdate(model.getImage)
-    }
-    observer.setAndUpdate(m)
-    p.future.onComplete { _ =>
-      observer.clear()
-      imObserver.clear()
-    }
-    p.future.foreach( m => if (!(m.isEphemeral && m.isExpired)) {
-      verbose(s"message loaded, opening single image for $m")
+  def showSingleImage(msg: MessageData, container: View) =
+    if (!(msg.isEphemeral && msg.expired)) {
       singleImage.setViewReferences(container)
-      singleImage.showSingleImage(m)
-    })
-  }
+      singleImage.showSingleImage(msg.id.str)
+    }
 
   //FIXME: don't use java api
   def openDrawingFragment(msg: MessageData, drawingMethod: DrawingMethod) = {

@@ -25,8 +25,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import com.waz.api.ErrorsList;
-import com.waz.api.Message;
-import com.waz.api.User;
 import com.waz.model.MessageData;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
@@ -45,7 +43,6 @@ import com.waz.zclient.conversation.ShareToMultipleFragment;
 import com.waz.zclient.core.stores.inappnotification.SyncErrorObserver;
 import com.waz.zclient.fragments.ImageFragment;
 import com.waz.zclient.pages.BaseFragment;
-import com.waz.zclient.pages.main.conversation.SingleImageUserFragment;
 import com.waz.zclient.pages.main.conversationlist.ConfirmationFragment;
 import com.waz.zclient.pages.main.conversationpager.ConversationPagerFragment;
 import com.waz.zclient.pages.main.giphy.GiphySharingPreviewFragment;
@@ -57,7 +54,6 @@ import net.hockeyapp.android.ExceptionHandler;
 public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container> implements OnBackPressedListener,
                                                                                             ConversationPagerFragment.Container,
                                                                                             SingleImageObserver,
-                                                                                            SingleImageUserFragment.Container,
                                                                                             GiphyObserver,
                                                                                             ConfirmationObserver,
                                                                                             AccentColorObserver,
@@ -148,9 +144,7 @@ public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container>
         if (getChildFragmentManager().getBackStackEntryCount() > 0) {
             Fragment topFragment = getChildFragmentManager().findFragmentByTag(getChildFragmentManager().getBackStackEntryAt(
                 getChildFragmentManager().getBackStackEntryCount() - 1).getName());
-            if (topFragment instanceof SingleImageUserFragment) {
-                return ((SingleImageUserFragment) topFragment).onBackPressed();
-            } else if (topFragment instanceof GiphySharingPreviewFragment) {
+            if (topFragment instanceof GiphySharingPreviewFragment) {
                 if (!((GiphySharingPreviewFragment) topFragment).onBackPressed()) {
                     getChildFragmentManager().popBackStackImmediate(GiphySharingPreviewFragment.TAG,
                                                                     FragmentManager.POP_BACK_STACK_INCLUSIVE);
@@ -194,23 +188,12 @@ public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container>
     }
 
     @Override
-    public void onShowSingleImage(Message message) {
+    public void onShowSingleImage(String messageId) {
         getChildFragmentManager().beginTransaction()
                                  .add(R.id.fl__overlay_container,
-                                     ImageFragment.newInstance(message.getId()),
+                                     ImageFragment.newInstance(messageId),
                                      ImageFragment.TAG())
                                  .addToBackStack(ImageFragment.TAG())
-                                 .commit();
-        getControllerFactory().getNavigationController().setRightPage(Page.SINGLE_MESSAGE, TAG);
-    }
-
-    @Override
-    public void onShowUserImage(User user) {
-        getChildFragmentManager().beginTransaction()
-                                 .add(R.id.fl__overlay_container,
-                                      SingleImageUserFragment.newInstance(user),
-                                      SingleImageUserFragment.TAG)
-                                 .addToBackStack(SingleImageUserFragment.TAG)
                                  .commit();
         getControllerFactory().getNavigationController().setRightPage(Page.SINGLE_MESSAGE, TAG);
     }
