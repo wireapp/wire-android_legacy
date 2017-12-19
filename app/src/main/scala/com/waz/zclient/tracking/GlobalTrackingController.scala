@@ -121,8 +121,8 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
       }
 
       event match {
-        case _: MissedPushEvent if !BuildConfig.FLAVOR.equals("internal") =>
-          //This event is high volume, so we limit it to only internal clients
+        case _: MissedPushEvent =>
+        //don't track - this event is being fired a lot and it's only used on internal
         case e: ReceivedPushEvent if e.p.toFetch.forall(_.asScala < 10.seconds) =>
         //don't track - there are a lot of these events! We want to keep the event count lower
         case OptInEvent =>
