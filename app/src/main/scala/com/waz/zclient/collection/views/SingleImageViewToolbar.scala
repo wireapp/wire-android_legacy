@@ -31,6 +31,7 @@ import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.common.views.GlyphButton
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.ZLog.ImplicitTag._
 
 class SingleImageViewToolbar(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -50,7 +51,10 @@ class SingleImageViewToolbar(context: Context, attrs: AttributeSet, style: Int) 
   private val deleteButton: GlyphButton = findById(R.id.toolbar_delete)
   private val viewButton: GlyphButton = findById(R.id.toolbar_view)
 
-  val message = collectionController.focusedItem collect { case Some(msg) => msg }
+  val message = collectionController.focusedItem
+    .collect { case Some(msg) => msg }
+    .disableAutowiring()
+
 
   val likedBySelf = collectionController.focusedItem flatMap {
     case Some(m) => zms.flatMap { z =>
@@ -76,7 +80,13 @@ class SingleImageViewToolbar(context: Context, attrs: AttributeSet, style: Int) 
   Seq(likeButton, downloadButton, shareButton, deleteButton, viewButton)
     .foreach(_.setPressedBackgroundColor(ContextCompat.getColor(getContext, R.color.light_graphite)))
 
-  likeButton.onClick( message.head.foreach(msg => messageActionsController.onMessageAction ! (MessageAction.Like, msg)))
+  likeButton.onClick( Signal(message, likedBySelf).head.foreach{
+    case (msg, true) =>
+      messageActionsController.onMessageAction ! (MessageAction.Unlike, msg)
+    case (msg, false) =>
+      messageActionsController.onMessageAction ! (MessageAction.Like, msg)
+  })
+
   downloadButton.onClick( message.head.foreach(msg => messageActionsController.onMessageAction ! (MessageAction.Save, msg)))
   shareButton.onClick( message.head.foreach(msg => messageActionsController.onMessageAction ! (MessageAction.Forward, msg)))
 
@@ -84,5 +94,5 @@ class SingleImageViewToolbar(context: Context, attrs: AttributeSet, style: Int) 
     messageActionsController.onMessageAction ! (MessageAction.Delete, msg)
   })
 
-  viewButton.onClick(message.head.foreach { msg => messageActionsController.onMessageAction ! (MessageAction.Reveal, msg)})
+  viewButton.onClick( message.head.foreach { msg => messageActionsController.onMessageAction ! (MessageAction.Reveal, msg)})
 }

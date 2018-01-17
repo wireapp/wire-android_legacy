@@ -95,10 +95,6 @@ class CollectionController(implicit injector: Injector) extends Injectable {
 object CollectionController {
 
   val GridColumns = 4
-  def injectedCollectionController(injectable: Injectable)(implicit injector: Injector): CollectionController =  {
-    injectable.inject[CollectionController]
-  }
-
   case class CollectionInfo(conversation: ConversationData, empty: Boolean)
 
   trait ContentType {

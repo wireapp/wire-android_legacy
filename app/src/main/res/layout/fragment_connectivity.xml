@@ -23,12 +23,6 @@
              android:layout_height="wrap_content"
     >
 
-    <com.waz.zclient.pages.main.connectivity.ConnectivityIndicatorView
-        android:id="@+id/civ__connectivity_indicator"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        />
-
     <com.waz.zclient.views.LoadingIndicatorView
         android:id="@+id/liv__server_connecting_indicator"
         android:layout_width="match_parent"
@@ -43,6 +37,12 @@
         android:src="@drawable/offline_bar_minimized_overlay"
         android:scaleType="fitXY"
         android:layout_gravity="top"
+        />
+
+    <com.waz.zclient.pages.main.connectivity.ConnectivityIndicatorView
+        android:id="@+id/civ__connectivity_indicator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         />
 
 </FrameLayout>

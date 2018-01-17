@@ -32,22 +32,25 @@ import com.waz.model.{AssetId, MessageData}
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, EventStream, Signal, SourceSignal}
+import com.waz.utils.events.{EventContext, EventStream, Signal, SourceSignal, _}
 import com.waz.zclient.collection.controllers.CollectionController
-import com.waz.zclient.collection.controllers.CollectionController.{AllContent, ContentType, Images}
+import com.waz.zclient.collection.controllers.CollectionController.Images
+import com.waz.zclient.common.views.ImageAssetDrawable
+import com.waz.zclient.common.views.ImageController.WireImage
 import com.waz.zclient.messages.RecyclerCursor
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.pages.main.conversationpager.CustomPagerTransformer
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageController.WireImage
 import com.waz.zclient.views.images.TouchImageView
 import com.waz.zclient.{Injectable, Injector, ViewHelper}
 
 import scala.collection.mutable
+import scala.concurrent.Future
 
 class ImageViewPager(context: Context, attrs: AttributeSet) extends ViewPager(context, attrs) with ViewHelper {
   def this(context: Context) = this(context, null)
+
+  implicit val exc = Threading.Ui
 
   lazy val collectionController = inject[CollectionController]
 
@@ -87,7 +90,20 @@ class ImageViewPager(context: Context, attrs: AttributeSet) extends ViewPager(co
       override def onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int): Unit = {}
       override def onPageSelected(position: Int): Unit = collectionController.focusedItem ! adapter.getItem(position)
     })
-    messageData.flatMap(adapter.positionForMessage).on(Threading.Ui) { pos => if (pos >= 0) setCurrentItem(pos, false) }
+    messageData.flatMap(adapter.positionForMessage).on(Threading.Ui) { pos =>
+      if (pos >= 0)
+        setCurrentItem(pos, false)
+    }
+    (for {
+      storage <- collectionController.msgStorage
+      currentMessage <- messageData.map(_.id)
+      message <- storage.optSignal(currentMessage)
+      refreshed <- RefreshingSignal(Future(adapter.getItem(getCurrentItem)), adapter.cursorChanged)
+    } yield (message, refreshed)).onUi {
+      case (m, Some(r)) if m.forall(_.isDeleted) =>
+        collectionController.focusedItem ! Some(r)
+      case _ =>
+    }
     adapter
   }
 
@@ -120,7 +136,8 @@ class ImageSwipeAdapter(context: Context)(implicit injector: Injector, ev: Event
 
   private val zms = inject[Signal[ZMessaging]]
 
-  val contentMode = Signal[ContentType](AllContent)
+  private val selectedConversation = inject[ConversationController].currentConv
+  val cursorChanged = EventStream[Unit]()
 
   val notifier = new RecyclerNotifier(){
     override def notifyDataSetChanged(): Unit = self.notifyDataSetChanged()
@@ -132,6 +149,11 @@ class ImageSwipeAdapter(context: Context)(implicit injector: Injector, ev: Event
     override def notifyItemRangeRemoved(pos: Int, count: Int): Unit = self.notifyDataSetChanged()
   }
 
+  override def notifyDataSetChanged() = {
+    super.notifyDataSetChanged()
+    cursorChanged ! (())
+  }
+
   var recyclerCursor: Option[RecyclerCursor] = None
   val cursor = for {
     zs <- zms
@@ -141,10 +163,7 @@ class ImageSwipeAdapter(context: Context)(implicit injector: Injector, ev: Event
   implicit val executionContext = Threading.Ui
 
   def positionForMessage(msg: MessageData): Signal[Int] =
-    for {
-    c <- cursor
-    pos <- Signal.future(c.positionForMessage(msg))
-  } yield pos
+    RefreshingSignal(cursor.head.flatMap(_.positionForMessage(msg)), cursorChanged)
 
   cursor.on(Threading.Ui) { c =>
     if (!recyclerCursor.contains(c)) {
@@ -179,6 +198,8 @@ class ImageSwipeAdapter(context: Context)(implicit injector: Injector, ev: Event
   override def isViewFromObject(view: View, obj: scala.Any): Boolean = view.getTag.equals(obj.asInstanceOf[View].getTag)
 
   override def getCount: Int = recyclerCursor.fold(0)(_.count)
+
+  override def getItemPosition(obj: scala.Any) = PagerAdapter.POSITION_NONE
 }
 
 class SwipeImageView(context: Context, attrs: AttributeSet, style: Int)(implicit injector: Injector, ev: EventContext) extends TouchImageView(context, attrs, style) with Injectable {

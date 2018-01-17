@@ -81,13 +81,15 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, val adapter: RecyclerNot
 
   private def setCursor(c: MessagesCursor): Unit = {
     verbose(s"setCursor: c: $c, count: ${c.size}")
-    self.cursor ! Some(c)
-    cursorLoaded ! true
-    window.cursorChanged(c)
-    notifyFromHistory(c.createTime)
-    countSignal ! c.size
-    onChangedSub.foreach(_.destroy())
-    onChangedSub = Some(c.onUpdate.on(Threading.Ui) { case (prev, current) => onUpdated(prev, current) })
+    if (!closed.currentValue.getOrElse(false)) {
+      self.cursor ! Some(c)
+      cursorLoaded ! true
+      notifyFromHistory(c.createTime)
+      countSignal ! c.size
+      onChangedSub.foreach(_.destroy())
+      onChangedSub = Some(c.onUpdate.on(Threading.Ui) { case (prev, current) => onUpdated(prev, current) })
+      window.cursorChanged(c)
+    }
   }
 
   private def notifyFromHistory(time: Instant): Unit = {
@@ -100,9 +102,9 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, val adapter: RecyclerNot
   private def onUpdated(prev: MessageAndLikes, current: MessageAndLikes): Unit =
     window.onUpdated(prev.message, current.message)
 
-  def count: Int = cursor.currentValue.flatMap(_.map(_.size)).getOrElse(0)
+  def count: Int = cursor.currentValue.map(_.size).getOrElse(0)
 
-  def apply(position: Int): MessageAndLikes = cursor.currentValue.getOrElse(None).fold2(null, { c =>
+  def apply(position: Int): MessageAndLikes = cursor.currentValue.flatten.fold2(null, { c =>
     if (window.shouldReload(position)) {
       verbose(s"reloading window at position: $position")
       window.reload(c, position)
@@ -113,8 +115,15 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, val adapter: RecyclerNot
 
   def lastReadIndex: Int = cursor.currentValue.flatMap(_.map(_.lastReadIndex)).getOrElse(-1)
 
-  def positionForMessage(messageData: MessageData): Future[Int] =
-    cursor.collect { case Some(c) => c } .head.flatMap(_.asyncIndexOf(messageData.time, binarySearch = true))
+  def positionForMessage(messageData: MessageData) = {
+    (for {
+      true   <- cursorLoaded.head
+      cursor <- cursor.head
+    } yield cursor).flatMap {
+      case Some(c) => c.asyncIndexOf(messageData.time, binarySearch = true)
+      case _ => Future.successful(-1)
+    }
+  }
 }
 
 object RecyclerCursor {
