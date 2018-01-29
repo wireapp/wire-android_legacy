@@ -364,12 +364,13 @@ public class ParticipantsDialogFragment extends BaseFragment<ParticipantsDialogF
                     user = getStoreFactory().pickUserStore().getUser(userId);
                 }
             }
+
+
             if (getArguments().getBoolean(ARG__ADD_TO_CONVERSATION)) {
-                transaction.replace(R.id.fl__participant_dialog__main__container,
-                                    PickUserFragment.newInstance(true,
-                                                                 getArguments().getBoolean(ARG__GROUP_CONVERSATION),
-                                                                 inject(ConversationController.class).getCurrentConvId().str()),
-                                    PickUserFragment.TAG());
+                ConvId convId = inject(ConversationController.class).getCurrentConvId();
+                if (convId != null) transaction.replace(R.id.fl__participant_dialog__main__container,
+                                                        PickUserFragment.newInstance(true, convId.str()),
+                                                        PickUserFragment.TAG());
 
             } else if (getControllerFactory().getConversationScreenController().getPopoverLaunchMode() == DialogLaunchMode.PARTICIPANT_BUTTON ||
                 getControllerFactory().getConversationScreenController().getPopoverLaunchMode() == DialogLaunchMode.CONVERSATION_TOOLBAR) {
@@ -727,10 +728,10 @@ public class ParticipantsDialogFragment extends BaseFragment<ParticipantsDialogF
         if (convId == null) {
             getControllerFactory().getDialogBackgroundImageController().setImageAsset(null, false);
         } else {
-            inject(ConversationController.class).withCurrentConvType(new Callback<IConversation.Type>() {
+            inject(ConversationController.class).isGroup(convId, new Callback<Boolean>() {
                 @Override
-                public void callback(IConversation.Type convType) {
-                    boolean blurred = convType == IConversation.Type.GROUP &&
+                public void callback(Boolean isGroup) {
+                    boolean blurred = isGroup &&
                         getControllerFactory().getConversationScreenController().getPopoverLaunchMode() == DialogLaunchMode.PARTICIPANT_BUTTON;
                     getControllerFactory().getDialogBackgroundImageController().setImageAsset(ConversationController.emptyImageAsset(), blurred);
                 }
@@ -752,6 +753,7 @@ public class ParticipantsDialogFragment extends BaseFragment<ParticipantsDialogF
             requester != IConversationScreenController.CONVERSATION_DETAILS) {
             return;
         }
+
         Fragment fragment = getChildFragmentManager().findFragmentByTag(ParticipantFragment.TAG);
         if (fragment instanceof ConversationScreenControllerObserver) {
             ((ConversationScreenControllerObserver) fragment).onShowConversationMenu(requester,

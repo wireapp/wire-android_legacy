@@ -25,6 +25,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.LinearLayout
 import com.waz.api.{IConversation, NetworkMode, User, UsersList}
 import com.waz.model.ConvId
+import com.waz.model.ConversationData.ConversationType
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -177,61 +178,70 @@ class ParticipantBodyFragment extends BaseFragment[ParticipantBodyFragment.Conta
     super.onDestroyView()
   }
 
-  override def conversationUpdated(conv: IConversation): Unit = {
-    footerMenu.setVisibility(View.VISIBLE)
-    if (conv.getType == IConversation.Type.ONE_TO_ONE) {
-      footerMenu.setLeftActionText(getString(R.string.glyph__plus))
-      getStoreFactory.singleParticipantStore.setUser(conv.getOtherParticipant)
-    } else {
-      imageAssetImageView.setVisibility(View.GONE)
-
-      // Check if self user is member for group conversation and has permission to add
-      if (conv.isMemberOfConversation &&
-          userAccountsController.hasAddConversationMemberPermission(new ConvId(conv.getId))
-      ) {
-        footerMenu.setLeftActionText(getString(R.string.glyph__add_people))
-        footerMenu.setLeftActionLabelText(getString(R.string.conversation__action__add_people))
-      } else {
-        footerMenu.setLeftActionText("")
-        footerMenu.setLeftActionLabelText("")
-      }
-    }
-
-    footerMenu.setRightActionText(getString(R.string.glyph__more))
-
-    footerMenu.setCallback(new FooterMenuCallback() {
-      override def onLeftActionClicked(): Unit = {
-        if (userRequester == IConnectStore.UserRequester.POPOVER) {
-          val user = getStoreFactory.singleParticipantStore.getUser
-          if (user.isMe) {
-            convScreenController.hideParticipants(true, false)
-            // Go to conversation with this user
-            pickUserController.hidePickUserWithoutAnimations(getContainer.getCurrentPickerDestination)
-            convController.selectConv(new ConvId(user.getConversation.getId), ConversationChangeRequester.CONVERSATION_LIST)
-            return
+  override def conversationUpdated(conv: IConversation): Unit =
+      convController.isGroup(ConvId(conv.getId)).zip(convController.isWithBot(ConvId(conv.getId))).foreach { case (isGroup, isWithBot) =>
+      footerMenu.setVisibility(View.VISIBLE)
+      if (!isGroup && !isWithBot) {
+        footerMenu.setLeftActionText(getString(R.string.glyph__plus))
+        if (conv.getType == ConversationType.OneToOne)
+          getStoreFactory.singleParticipantStore.setUser(conv.getOtherParticipant)
+        else {
+          import Threading.Implicits.Ui
+          convController.loadMembers(ConvId(conv.getId)).map(_.filterNot(_.isSelf).head).foreach { userData =>
+            val user = getStoreFactory.zMessagingApiStore.getApi.getUser(userData.id.str)
+            getStoreFactory.singleParticipantStore.setUser(user)
           }
         }
+      } else {
+        imageAssetImageView.setVisibility(View.GONE)
 
-        if (conv.isMemberOfConversation && userAccountsController.hasAddConversationMemberPermission(new ConvId(conv.getId)))
-          convScreenController.addPeopleToConversation()
+        // Check if self user is member for group conversation and has permission to add
+        if (conv.isMemberOfConversation &&
+            userAccountsController.hasAddConversationMemberPermission(new ConvId(conv.getId))
+        ) {
+          footerMenu.setLeftActionText(getString(R.string.glyph__add_people))
+          footerMenu.setLeftActionLabelText(getString(R.string.conversation__action__add_people))
+        } else {
+          footerMenu.setLeftActionText("")
+          footerMenu.setLeftActionLabelText("")
+        }
       }
 
-      override def onRightActionClicked(): Unit = getStoreFactory.networkStore.doIfHasInternetOrNotifyUser(new NetworkAction() {
-        override def execute(networkMode: NetworkMode): Unit = if (conv.isMemberOfConversation) {
+      footerMenu.setRightActionText(getString(R.string.glyph__more))
+
+      footerMenu.setCallback(new FooterMenuCallback() {
+        override def onLeftActionClicked(): Unit = {
           if (userRequester == IConnectStore.UserRequester.POPOVER) {
-            val otherUser = conv.getOtherParticipant
-            getContainer.toggleBlockUser(otherUser, otherUser.getConnectionStatus != User.ConnectionStatus.BLOCKED)
-          } else convScreenController.showConversationMenu(IConversationScreenController.CONVERSATION_DETAILS, new ConvId(conv.getId))
+            val user = getStoreFactory.singleParticipantStore.getUser
+            if (user.isMe) {
+              convScreenController.hideParticipants(true, false)
+              // Go to conversation with this user
+              pickUserController.hidePickUserWithoutAnimations(getContainer.getCurrentPickerDestination)
+              convController.selectConv(new ConvId(user.getConversation.getId), ConversationChangeRequester.CONVERSATION_LIST)
+              return
+            }
+          }
+
+          if (conv.isMemberOfConversation && userAccountsController.hasAddConversationMemberPermission(new ConvId(conv.getId)))
+            convScreenController.addPeopleToConversation()
         }
 
-        override def onNoNetwork(): Unit = ViewUtils.showAlertDialog(getActivity,
-          R.string.alert_dialog__no_network__header, R.string.leave_conversation_failed__message,
-          R.string.alert_dialog__confirmation, null, true
-        )
-      })
+        override def onRightActionClicked(): Unit = getStoreFactory.networkStore.doIfHasInternetOrNotifyUser(new NetworkAction() {
+          override def execute(networkMode: NetworkMode): Unit = if (conv.isMemberOfConversation) {
+            if (userRequester == IConnectStore.UserRequester.POPOVER && conv.getType == ConversationType.OneToOne) {
+              val otherUser = conv.getOtherParticipant
+              getContainer.toggleBlockUser(otherUser, otherUser.getConnectionStatus != User.ConnectionStatus.BLOCKED)
+            } else convScreenController.showConversationMenu(IConversationScreenController.CONVERSATION_DETAILS, new ConvId(conv.getId))
+          }
 
-    })
-  }
+          override def onNoNetwork(): Unit = ViewUtils.showAlertDialog(getActivity,
+            R.string.alert_dialog__no_network__header, R.string.leave_conversation_failed__message,
+            R.string.alert_dialog__confirmation, null, true
+          )
+        })
+
+      })
+    }(Threading.Ui)
 
   override def participantsUpdated(participants: UsersList): Unit =
     participantsAdapter.notifyDataSetChanged()
@@ -262,39 +272,44 @@ class ParticipantBodyFragment extends BaseFragment[ParticipantBodyFragment.Conta
     footerMenu.setVisibility(View.VISIBLE)
 
     convController.currentConv.head.foreach { conv =>
-      (conv.convType, user.isMe) match {
-        case (IConversation.Type.ONE_TO_ONE, true) =>
+      convController.isGroup(conv).foreach {
+        case false if user.isMe =>
           footerMenu.setLeftActionText(getString(R.string.glyph__people))
           footerMenu.setLeftActionLabelText(getString(R.string.popover__action__profile))
           footerMenu.setRightActionText("")
           footerMenu.setRightActionLabelText("")
-        case (IConversation.Type.ONE_TO_ONE, false) =>
+        case false =>
           footerMenu.setLeftActionText(getString(R.string.glyph__add_people))
           footerMenu.setLeftActionLabelText(getString(R.string.conversation__action__create_group))
           footerMenu.setRightActionText(getString(R.string.glyph__block))
           footerMenu.setRightActionLabelText(getString(R.string.popover__action__block))
-        case (_, true) =>
+        case true if user.isMe =>
           footerMenu.setLeftActionText(getString(R.string.glyph__people))
           footerMenu.setLeftActionLabelText(getString(R.string.popover__action__profile))
           footerMenu.setRightActionText(getString(R.string.glyph__minus))
           footerMenu.setRightActionLabelText("")
-        case (_, false) =>
+        case true =>
           footerMenu.setLeftActionText(getString(R.string.glyph__conversation))
           footerMenu.setLeftActionLabelText(getString(R.string.popover__action__open))
           footerMenu.setRightActionText(getString(R.string.glyph__minus))
           footerMenu.setRightActionLabelText(getString(R.string.popover__action__remove))
-      }
+      }(Threading.Ui)
 
       footerMenu.setCallback(new FooterMenuCallback() {
-        override def onLeftActionClicked(): Unit = if (user.isMe || (conv.convType != IConversation.Type.ONE_TO_ONE)) {
-          convScreenController.hideParticipants(true, false)
-          pickUserController.hidePickUserWithoutAnimations(getContainer.getCurrentPickerDestination)
-          convController.selectConv(new ConvId(user.getConversation.getId), ConversationChangeRequester.CONVERSATION_LIST)
-        } else convScreenController.addPeopleToConversation()
+        override def onLeftActionClicked(): Unit =
+          (if (user.isMe) Future.successful(true) else convController.isGroup(conv)).foreach {
+            case true =>
+              convScreenController.hideParticipants(true, false)
+              pickUserController.hidePickUserWithoutAnimations(getContainer.getCurrentPickerDestination)
+              convController.selectConv(new ConvId(user.getConversation.getId), ConversationChangeRequester.CONVERSATION_LIST)
+            case false =>
+              convScreenController.addPeopleToConversation()
+          }(Threading.Ui)
 
-        override def onRightActionClicked(): Unit = if (conv.convType == IConversation.Type.ONE_TO_ONE) {
-          if (!user.isMe) getContainer.toggleBlockUser(user, user.getConnectionStatus ne User.ConnectionStatus.BLOCKED)
-          else getStoreFactory.networkStore.doIfHasInternetOrNotifyUser(new NetworkAction() {
+
+        override def onRightActionClicked(): Unit = convController.isGroup(conv).foreach {
+          case true if !user.isMe => getContainer.toggleBlockUser(user, user.getConnectionStatus != User.ConnectionStatus.BLOCKED)
+          case true => getStoreFactory.networkStore.doIfHasInternetOrNotifyUser(new NetworkAction() {
             override def execute(networkMode: NetworkMode): Unit =
               if (user.isMe) showLeaveConfirmation(conv.id)
               else getContainer.showRemoveConfirmation(user)
@@ -306,7 +321,8 @@ class ParticipantBodyFragment extends BaseFragment[ParticipantBodyFragment.Conta
               else R.string.remove_from_conversation__no_network__message,
               R.string.alert_dialog__confirmation, null, true)
           })
-        }
+          case false =>
+        }(Threading.Ui)
       })
     }(Threading.Ui)
   }

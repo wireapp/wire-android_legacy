@@ -54,16 +54,10 @@ class ParticipantsChatheadAdapter(numOfColumns: Int)(implicit context: Context, 
     val (verified, unverified) = people.partition(_.isVerified)
 
     unverified.map(data => Left(data.id)) :::
-      (if (verified.nonEmpty)
-        Right(SEPARATOR_VERIFIED) :: verified.map(data => Left(data.id))
-       else
-        List.empty[Either[UserId, Int]]
-      ) :::
-      (if (bots.nonEmpty)
-        Right(SEPARATOR_BOTS) :: bots.map(data => Left(data.id))
-       else
-        List.empty[Either[UserId, Int]]
-      )
+      (if (unverified.nonEmpty && verified.nonEmpty) List(Right(SEPARATOR_VERIFIED)) else Nil) :::
+      verified.map(data => Left(data.id)) :::
+      (if (bots.nonEmpty && (unverified.nonEmpty || verified.nonEmpty)) List(Right(SEPARATOR_BOTS)) else Nil) :::
+      bots.map(data => Left(data.id))
   }
 
   positions.onUi { list =>

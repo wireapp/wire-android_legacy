@@ -369,7 +369,10 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
       audioMessageRecordingView.hide()
     }
 
-    getControllerFactory.getConversationScreenController.setSingleConversation(toConv.convType == IConversation.Type.ONE_TO_ONE)
+    convController.isGroup(toConv).foreach { b =>
+      verbose(s"BOTS updateConv, conv is group: $b")
+      getControllerFactory.getConversationScreenController.setSingleConversation(!b)
+    }
     // TODO: ConversationScreenController should listen to this signal and do it itself
     extendedCursorContainer.close(true)
   }

@@ -36,6 +36,7 @@ import com.waz.model.ConvId;
 import com.waz.model.ConversationData;
 import com.waz.model.IntegrationId;
 import com.waz.model.ProviderId;
+import com.waz.model.UserData;
 import com.waz.model.UserId;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.R;
@@ -57,6 +58,9 @@ import com.waz.zclient.utils.ContextUtils;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.conversation.ParticipantDetailsTab;
 import com.waz.zclient.views.menus.FooterMenuCallback;
+
+import java.util.Collection;
+
 
 public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipantBodyFragment.Container> implements
                                                                                                ParticipantsStoreObserver,
@@ -231,53 +235,69 @@ public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipan
             final ParticipantDetailsTab tab = (ParticipantDetailsTab) view;
             tab.setUser(user);
 
-            inject(ConversationController.class).withCurrentConvType(new Callback<IConversation.Type>() {
-                @Override
-                public void callback(IConversation.Type convType) {
+            boolean isGroup = inject(ConversationController.class).getIsCurrentConvGroup();
 
-                    if (convType == IConversation.Type.ONE_TO_ONE && permissionToCreate) {
-                        tab.updateFooterMenu(R.string.glyph__add_people,
-                            R.string.conversation__action__create_group,
-                            R.string.glyph__more,
-                            R.string.empty_string,
-                            callbacks);
-                    } else if (convType == IConversation.Type.GROUP  && permissionToRemove) {
-                        tab.updateFooterMenu(R.string.glyph__conversation,
-                            R.string.empty_string,
-                            R.string.glyph__minus,
-                            R.string.empty_string,
-                            callbacks);
-                    } else {
-                        tab.updateFooterMenu(R.string.glyph__conversation,
-                            R.string.empty_string,
-                            R.string.empty_string,
-                            R.string.empty_string,
-                            callbacks);
-                    }
-                }
-            });
+            if (!isGroup && permissionToCreate) {
+                tab.updateFooterMenu(R.string.glyph__add_people,
+                    R.string.conversation__action__create_group,
+                    R.string.glyph__more,
+                    R.string.empty_string,
+                    callbacks);
+            } else if (isGroup  && permissionToRemove) {
+                tab.updateFooterMenu(R.string.glyph__conversation,
+                    R.string.empty_string,
+                    R.string.glyph__minus,
+                    R.string.empty_string,
+                    callbacks);
+            } else {
+                tab.updateFooterMenu(R.string.glyph__conversation,
+                    R.string.empty_string,
+                    R.string.empty_string,
+                    R.string.empty_string,
+                    callbacks);
+            }
+
         }
     }
 
     private void updateUser() {
-        ConversationController ctrl = inject(ConversationController.class);
+        final ConversationController ctrl = inject(ConversationController.class);
 
         ctrl.withCurrentConv(new Callback<ConversationData>() {
             @Override
             public void callback(ConversationData conv) {
-                permissionToRemove = inject(UserAccountsController.class).hasRemoveConversationMemberPermission(conv.id());
-                permissionToCreate = inject(UserAccountsController.class).hasCreateConversationPermission();
+                UserAccountsController userAccountsController = inject(UserAccountsController.class);
+                permissionToRemove = userAccountsController.hasRemoveConversationMemberPermission(conv.id());
+                permissionToCreate = userAccountsController.hasCreateConversationPermission();
 
-                final User updatedUser;
-                if (conv.convType() == IConversation.Type.ONE_TO_ONE) {
-                    UserId id = ConversationController.getOtherParticipantForOneToOneConv(conv);
-                    updatedUser = getStoreFactory().zMessagingApiStore().getApi().getUser(id.str());
+                if (!ctrl.getIsCurrentConvGroup() && !ctrl.getIsCurrentConvWithBot()) {
+                    if (conv.convType() == IConversation.Type.ONE_TO_ONE) {
+                        UserId id = ConversationController.getOtherParticipantForOneToOneConv(conv);
+                        User updatedUser = getStoreFactory().zMessagingApiStore().getApi().getUser(id.str());
+                        userModelObserver.setAndUpdate(updatedUser);
+                        userModelObserverForTabs.setAndUpdate(updatedUser);
+                    } else {
+                        ctrl.withCurrentConvMembers(new Callback<Collection<UserData>>() {
+                            @Override
+                            public void callback(Collection<UserData> users) {
+                                for(UserData user: users) {
+                                    if (!user.isSelf()) {
+                                        User updatedUser = getStoreFactory().zMessagingApiStore().getApi().getUser(user.id().str());
+                                        getStoreFactory().singleParticipantStore().setUser(updatedUser);
+                                        userModelObserver.setAndUpdate(updatedUser);
+                                        userModelObserverForTabs.setAndUpdate(updatedUser);
+                                    }
+                                }
+                            }
+                        });
+                    }
                 } else {
-                    updatedUser = getStoreFactory().singleParticipantStore().getUser();
+                    User updatedUser = getStoreFactory().singleParticipantStore().getUser();
+                    userModelObserver.setAndUpdate(updatedUser);
+                    userModelObserverForTabs.setAndUpdate(updatedUser);
                 }
 
-                userModelObserver.setAndUpdate(updatedUser);
-                userModelObserverForTabs.setAndUpdate(updatedUser);
+
             }
         });
     }
@@ -386,21 +406,18 @@ public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipan
                 return;
             }
 
-            inject(ConversationController.class).withCurrentConvType(new Callback<IConversation.Type>() {
-                @Override
-                public void callback(IConversation.Type convType) {
-                    if (convType == IConversation.Type.ONE_TO_ONE && permissionToCreate) {
-                        getControllerFactory().getConversationScreenController().addPeopleToConversation();
-                    } else {
-                        getControllerFactory().getConversationScreenController().hideParticipants(true, false);
-                        BaseActivity activity = (BaseActivity) getActivity();
-                        inject(UserAccountsController.class).createAndOpenConversation(
-                            new UserId[]{new UserId(user.getId())},
-                            ConversationChangeRequester.START_CONVERSATION,
-                            activity);
-                    }
-                }
-            });
+            boolean isGroup = inject(ConversationController.class).getIsCurrentConvGroup();
+
+            if (!isGroup && permissionToCreate) {
+                getControllerFactory().getConversationScreenController().addPeopleToConversation();
+            } else {
+                getControllerFactory().getConversationScreenController().hideParticipants(true, false);
+                BaseActivity activity = (BaseActivity) getActivity();
+                inject(UserAccountsController.class).createAndOpenConversation(
+                    new UserId[]{new UserId(user.getId())},
+                    ConversationChangeRequester.START_CONVERSATION,
+                    activity);
+            }
         }
 
         @Override
@@ -410,10 +427,11 @@ public class TabbedParticipantBodyFragment extends BaseFragment<TabbedParticipan
                 return;
             }
 
-            inject(ConversationController.class).withCurrentConv(new Callback<ConversationData>() {
+            final ConversationController ctrl = inject(ConversationController.class);
+            ctrl.withCurrentConv(new Callback<ConversationData>() {
                 @Override
                 public void callback(ConversationData conv) {
-                    if (conv.convType() == IConversation.Type.ONE_TO_ONE) {
+                    if (!ctrl.getIsCurrentConvGroup()) {
                         getControllerFactory().getConversationScreenController().showConversationMenu(
                             IConversationScreenController.CONVERSATION_DETAILS,
                             conv.id()

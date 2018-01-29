@@ -29,6 +29,7 @@ import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 import java.util.HashSet;
 import java.util.Set;
 
+
 public class ConversationScreenController implements IConversationScreenController {
     private Set<ConversationScreenControllerObserver> conversationScreenControllerObservers = new HashSet<>();
 

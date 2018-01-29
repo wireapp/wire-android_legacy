@@ -18,30 +18,29 @@
 package com.waz.zclient.conversation
 
 import android.content.Context
-import com.waz.api.{EphemeralExpiration, IConversation, Verification}
-import com.waz.model.ConversationData.ConversationType
-import com.waz.model._
-import com.waz.service.ZMessaging
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
-import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
-import com.waz.zclient.conversation.ConversationController.ConversationChange
-import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
-import com.waz.zclient.utils.Callback
-import com.waz.zclient.{Injectable, Injector}
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.api
 import com.waz.api.MessageContent.Asset.ErrorHandler
 import com.waz.api.impl.{AssetForUpload, ImageAsset}
+import com.waz.api.{EphemeralExpiration, IConversation, Verification}
+import com.waz.model.ConversationData.ConversationType
+import com.waz.model._
 import com.waz.model.otr.Client
-import com.waz.utils.{Serialized, returning}
+import com.waz.service.ZMessaging
+import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
+import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
+import com.waz.utils.{Serialized, returning, _}
+import com.waz.zclient.conversation.ConversationController.ConversationChange
 import com.waz.zclient.core.stores.IStoreFactory
+import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.utils.Callback
+import com.waz.zclient.{Injectable, Injector}
 import org.threeten.bp.Instant
 
-import scala.concurrent.Future
 import scala.collection.JavaConverters._
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import com.waz.utils._
 
 class ConversationController(implicit injector: Injector, context: Context, ec: EventContext) extends Injectable {
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationController")
@@ -62,10 +61,10 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     conv <- storage.optSignal(convId)
   } yield conv
 
-  val currentConvType: Signal[ConversationType] = currentConv.map(_.convType).disableAutowiring()
   val currentConvName: Signal[String] = currentConv.map { _.displayName } // the name of the current conversation can be edited (without switching)
   val currentConvIsVerified: Signal[Boolean] = currentConv.map { _.verified == Verification.VERIFIED }
   val currentConvIsGroup: Signal[Boolean] = currentConv.flatMap { conv => Signal.future(isGroup(conv)) }
+  val currentConvIsWithBot: Signal[Boolean] = currentConvId.flatMap { convId => Signal.future(isWithBot(convId)) }
 
   currentConvId { convId =>
     zms(_.conversations.forceNameUpdate(convId))
@@ -102,6 +101,11 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     conv <- z.convsUi.getOrCreateOneToOneConversation(userId)
   } yield conv
 
+  def isGroup(convId: ConvId): Future[Boolean] = loadConv(convId).flatMap {
+    case Some(conv) => isGroup(conv)
+    case None => Future.successful(false)
+  }
+
   def isGroup(conv: ConversationData): Future[Boolean] =
     if (conv.team.isEmpty) Future.successful(conv.convType == ConversationType.Group)
     else zms.map(_.conversations).head.flatMap(_.isGroupConversation(conv.id))
@@ -111,6 +115,13 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
       case false => loadMembers(conv.id).map(_.exists(_.isWireBot))
       case _ => Future.successful(false)
     }
+
+  def isWithBot(convId: ConvId): Future[Boolean] = loadMembers(convId).map(_.exists(_.isWireBot))
+
+  def isVerified(convId: ConvId): Future[Boolean] = loadConv(convId).map {
+    case Some(conv) => conv.verified == Verification.VERIFIED
+    case _ => false
+  }
 
   def setEphemeralExpiration(expiration: EphemeralExpiration): Future[Unit] = for {
     z <- zms.head
@@ -132,6 +143,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     z <- zms.head
     convId <- currentConvId.head
   } yield z.convsUi.sendMessage(convId, text)
+
   def sendMessage(imageAsset: com.waz.api.ImageAsset): Future[Unit] = imageAsset match { // TODO: remove when not used anymore
     case a: com.waz.api.impl.ImageAsset => currentConvId.head.map { convId => sendMessage(convId, a) }
     case _ => Future.successful({})
@@ -191,9 +203,22 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   def withCurrentConv(callback: Callback[ConversationData]): Unit = currentConv.head.foreach( callback.callback )(Threading.Ui)
   def withCurrentConvName(callback: Callback[String]): Unit = currentConvName.head.foreach(callback.callback)(Threading.Ui)
-  def withCurrentConvType(callback: Callback[IConversation.Type]): Unit = currentConvType.head.foreach(callback.callback)(Threading.Ui)
 
-  def getCurrentConvId: ConvId = currentConvId.currentValue.orNull
+  def isGroup(convId: ConvId, callback: Callback[java.lang.Boolean]): Unit = isGroup(convId).foreach( b => callback.callback(b) )(Threading.Ui)
+  def isWithBot(convId: ConvId, callback: Callback[java.lang.Boolean]): Unit = isWithBot(convId).foreach( b => callback.callback(b) )(Threading.Ui)
+  def isVerified(convId: ConvId, callback: Callback[java.lang.Boolean]): Unit = isVerified(convId).foreach( b => callback.callback(b) )(Threading.Ui)
+
+  private var _currentConvId = Option.empty[ConvId]
+  currentConvId.onUi { id => _currentConvId = Option(id) }
+  private var _currentConvIsGroup = false
+  currentConvIsGroup.onUi { _currentConvIsGroup = _ }
+  private var _currentConvIsWithBot = false
+  currentConvIsWithBot.onUi { _currentConvIsWithBot = _ }
+
+  def getCurrentConvId: ConvId = _currentConvId.orNull
+  def getIsCurrentConvGroup: Boolean = _currentConvIsGroup
+  def getIsCurrentConvWithBot: Boolean = _currentConvIsWithBot
+
   def withConvLoaded(convId: ConvId, callback: Callback[ConversationData]): Unit = loadConv(convId).foreach {
     case Some(data) => callback.callback(data)
     case None =>

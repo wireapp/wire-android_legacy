@@ -231,33 +231,51 @@ public class ParticipantHeaderFragment extends BaseFragment<ParticipantHeaderFra
     }
 
     @Override
-    public void conversationUpdated(IConversation conversation) {
-        if (conversation == null) {
+    public void conversationUpdated(final IConversation iConv) {
+        if (iConv == null) {
             return;
         }
-        isGroupConversation = conversation.getType() == IConversation.Type.GROUP;
-        if (isGroupConversation) {
-            membersCountTextView.setVisibility(View.VISIBLE);
-            userDetailsView.setVisibility(View.GONE);
-            headerReadOnlyTextView.setText(conversation.getName());
-            if (conversation.isMemberOfConversation()) {
-                headerEditText.setText(conversation.getName());
-                headerEditText.setVisibility(View.VISIBLE);
-            } else {
-                headerEditText.setVisibility(View.GONE);
+
+        final ConversationController ctrl = inject(ConversationController.class);
+        final ConvId convId = new ConvId(iConv.getId());
+
+        ctrl.isGroup(convId, new Callback<Boolean>() {
+            @Override
+            public void callback(final Boolean isGroup) {
+                ctrl.isWithBot(convId, new Callback<Boolean>() {
+                    @Override
+                    public void callback(final Boolean isWithBot) {
+                        if (isGroup || isWithBot) {
+                            membersCountTextView.setVisibility(View.VISIBLE);
+                            userDetailsView.setVisibility(View.GONE);
+                            headerReadOnlyTextView.setText(iConv.getName());
+                            if (iConv.isMemberOfConversation()) {
+                                headerEditText.setText(iConv.getName());
+                                headerEditText.setVisibility(View.VISIBLE);
+                            } else {
+                                headerEditText.setVisibility(View.GONE);
+                            }
+
+                            shieldView.setVisibility(View.GONE);
+                            penIcon.setVisibility(View.VISIBLE);
+
+                        } else {
+                            membersCountTextView.setVisibility(View.GONE);
+                            userDetailsView.setVisibility(View.VISIBLE);
+                            headerEditText.setVisibility(View.GONE);
+                            penIcon.setVisibility(View.GONE);
+                            ctrl.isVerified(convId, new Callback<Boolean>() {
+                                @Override
+                                public void callback(Boolean isVerified) {
+                                    shieldView.setVisibility(isVerified ? View.VISIBLE : View.GONE);
+                                }
+                            });
+                        }
+                    }
+                });
             }
+        });
 
-            shieldView.setVisibility(View.GONE);
-            penIcon.setVisibility(View.VISIBLE);
-
-        } else {
-            membersCountTextView.setVisibility(View.GONE);
-            userDetailsView.setVisibility(View.VISIBLE);
-            headerEditText.setVisibility(View.GONE);
-            penIcon.setVisibility(View.GONE);
-            shieldView.setVisibility(conversation.getOtherParticipant().getVerified() == Verification.VERIFIED ?
-                                     View.VISIBLE : View.GONE);
-        }
     }
 
     @Override

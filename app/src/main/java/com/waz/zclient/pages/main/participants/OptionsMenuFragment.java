@@ -166,47 +166,53 @@ public class OptionsMenuFragment extends BaseFragment<OptionsMenuFragment.Contai
     }
 
 
-    public void onMenuConversationHasChanged(ConversationData conv) {
-        List<OptionsMenuItem> items = new ArrayList<>();
+    public void onMenuConversationHasChanged(final ConversationData conv) {
+        ConversationController conversationController = inject(ConversationController.class);
+        conversationController.isGroup(conv.id(), new Callback<Boolean>() {
+            @Override public void callback(Boolean isGroup) {
+                List<OptionsMenuItem> items = new ArrayList<>();
 
-        if (conv.convType() == IConversation.Type.GROUP) {
-            if (conv.isActive()) {
-                // silence/unsilence
-                if (conv.muted()) {
-                    items.add(OptionsMenuItem.UNSILENCE);
-                } else {
-                    items.add(OptionsMenuItem.SILENCE);
-                }
+                if (isGroup) {
+                    if (conv.isActive()) {
+                        // silence/unsilence
+                        if (conv.muted()) {
+                            items.add(OptionsMenuItem.UNSILENCE);
+                        } else {
+                            items.add(OptionsMenuItem.SILENCE);
+                        }
 
-                if (inConversationList) {
+                        if (inConversationList) {
+                            items.add(OptionsMenuItem.CALL);
+                            items.add(OptionsMenuItem.PICTURE);
+                        } else { //in ParticipantsFragment
+                            items.add(OptionsMenuItem.RENAME);
+                        }
+                    }
+
+                    // archive
+                    if (conv.archived()) {
+                        items.add(OptionsMenuItem.UNARCHIVE);
+                    } else {
+                        items.add(OptionsMenuItem.ARCHIVE);
+                    }
+
+                    items.add(OptionsMenuItem.DELETE);
+
+                    // leave
+                    if (conv.isActive()) {
+                        items.add(OptionsMenuItem.LEAVE);
+                    }
+                    optionsMenu.setMenuItems(items, optionsTheme);
+                } else if (conv.convType() == IConversation.Type.ONE_TO_ONE) {
                     items.add(OptionsMenuItem.CALL);
                     items.add(OptionsMenuItem.PICTURE);
-                } else { //in ParticipantsFragment
-                    items.add(OptionsMenuItem.RENAME);
+                    connectUser(ConversationController.getOtherParticipantForOneToOneConv(conv));
+                } else if (conv.convType() == IConversation.Type.WAIT_FOR_CONNECTION) {
+                    connectUser(ConversationController.getOtherParticipantForOneToOneConv(conv));
                 }
             }
+        });
 
-            // archive
-            if (conv.archived()) {
-                items.add(OptionsMenuItem.UNARCHIVE);
-            } else {
-                items.add(OptionsMenuItem.ARCHIVE);
-            }
-
-            items.add(OptionsMenuItem.DELETE);
-
-            // leave
-            if (conv.isActive()) {
-                items.add(OptionsMenuItem.LEAVE);
-            }
-            optionsMenu.setMenuItems(items, optionsTheme);
-        } else if (conv.convType() == IConversation.Type.ONE_TO_ONE) {
-            items.add(OptionsMenuItem.CALL);
-            items.add(OptionsMenuItem.PICTURE);
-            connectUser(ConversationController.getOtherParticipantForOneToOneConv(conv));
-        } else if (conv.convType() == IConversation.Type.WAIT_FOR_CONNECTION) {
-            connectUser(ConversationController.getOtherParticipantForOneToOneConv(conv));
-        }
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
