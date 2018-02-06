@@ -169,13 +169,24 @@ public class AssetIntentsManager {
         return file != null ? AndroidURIUtil.fromFile(file) : null;
     }
 
+    private static File getDirectoryForType(IntentType type) {
+        switch (type) {
+            case VIDEO:
+                return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES), "");
+            case CAMERA:
+                return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "");
+            default:
+                return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "");
+        }
+    }
+
     /**
      * Create a File for saving an image or video
      *
      * @param type
      */
     private static File getOutputMediaFile(IntentType type) {
-        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "WIRE_MEDIA");
+        File mediaStorageDir = getDirectoryForType(type);
         if (!mediaStorageDir.exists() && !mediaStorageDir.mkdirs()) {
             return null;
         }
