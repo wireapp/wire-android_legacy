@@ -791,44 +791,6 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
     @Override
     public void showIncomingPendingConnectRequest(ConvId conv) { }
 
-    //////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  PickUserFragment.Container
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public void onSelectedUsers(final List<UserId> userIds, final ConversationChangeRequester requester) {
-        convController.withCurrentConv(new Callback<ConversationData>() {
-            @Override
-            public void callback(ConversationData conv) {
-                if (conv.convType() == IConversation.Type.ONE_TO_ONE) {
-                    getControllerFactory().getPickUserController().hidePickUser(getCurrentPickerDestination());
-                    dismissDialog();
-                    convController.createGroupConversation(userIds, requester);
-                    if (!getStoreFactory().networkStore().hasInternetConnection()) {
-                        ViewUtils.showAlertDialog(getActivity(),
-                            R.string.conversation__create_group_conversation__no_network__title,
-                            R.string.conversation__create_group_conversation__no_network__message,
-                            R.string.conversation__create_group_conversation__no_network__button,
-                            null, true);
-                    }
-                } else if (conv.convType() == IConversation.Type.GROUP) {
-                    convController.addMembers(conv.id(), userIds);
-                    getControllerFactory().getPickUserController().hidePickUser(getCurrentPickerDestination());
-                    if (!getStoreFactory().networkStore().hasInternetConnection()) {
-                        ViewUtils.showAlertDialog(getActivity(),
-                            R.string.conversation__add_user__no_network__title,
-                            R.string.conversation__add_user__no_network__message,
-                            R.string.conversation__add_user__no_network__button,
-                            null, true);
-                    }
-
-                }
-            }
-        });
-    }
-
     @Override
     public LoadingIndicatorView getLoadingViewIndicator() {
         return loadingIndicatorView;
@@ -859,14 +821,14 @@ public class ParticipantFragment extends BaseFragment<ParticipantFragment.Contai
         int pickUserAnimation =
             LayoutSpec.isTablet(getActivity()) ? R.anim.fade_in : R.anim.slide_in_from_bottom_pick_user;
 
-        fragmentManager
-            .beginTransaction()
-            .setCustomAnimations(pickUserAnimation, R.anim.fade_out)
-            .add(R.id.fl__add_to_conversation__pickuser__container,
-                 PickUserFragment.newInstance(true, groupConversation, convController.getCurrentConvId().str()),
-                 PickUserFragment.TAG())
-            .addToBackStack(PickUserFragment.TAG())
-            .commit();
+//        fragmentManager
+//            .beginTransaction()
+//            .setCustomAnimations(pickUserAnimation, R.anim.fade_out)
+//            .add(R.id.fl__add_to_conversation__pickuser__container,
+//                 PickUserFragment.newInstance(true, groupConversation, convController.getCurrentConvId().str()),
+//                 PickUserFragment.TAG())
+//            .addToBackStack(PickUserFragment.TAG())
+//            .commit();
 
         if (LayoutSpec.isPhone(getActivity())) {
             getControllerFactory().getNavigationController().setRightPage(Page.PICK_USER_ADD_TO_CONVERSATION, TAG);

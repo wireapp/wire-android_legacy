@@ -17,21 +17,24 @@
  */
 package com.waz.zclient.conversationlist
 
+import com.waz.ZLog.ImplicitTag._
+import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.SerialDispatchQueue
+import com.waz.utils._
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
-import com.waz.zclient.conversationlist.ConversationListController.{LastMessageCache, MembersCache}
+import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.conversationlist.ConversationListManagerFragment.ConvListUpdateThrottling
 import com.waz.zclient.conversationlist.views.ConversationAvatarView
 import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector}
-import com.waz.utils._
-import com.waz.ZLog.ImplicitTag._
-import com.waz.zclient.common.controllers.UserAccountsController
 
 import scala.collection.mutable
 
 class ConversationListController(implicit inj: Injector, ec: EventContext) extends Injectable {
+
+  import ConversationListController._
 
   val zms = inject[Signal[ZMessaging]]
   val membersCache = zms map { new MembersCache(_) }
@@ -56,9 +59,17 @@ class ConversationListController(implicit inj: Injector, ec: EventContext) exten
   }
 
   private def userData(id: Option[UserId]) = id.fold2(Signal.const(Option.empty[UserData]), uid => UserSignal(uid).map(Option(_)))
+
+  lazy val establishedConversations = for {
+    z          <- zms
+    convs      <- z.convsContent.conversationsSignal.throttle(ConvListUpdateThrottling )
+  } yield convs.conversations.filter(EstablishedListFilter)
 }
 
 object ConversationListController {
+
+  lazy val RegularListFilter: (ConversationData => Boolean) = { c => !c.hidden && !c.archived && c.convType != ConversationType.Incoming && c.convType != ConversationType.Self }
+  lazy val EstablishedListFilter: (ConversationData => Boolean) = { c => RegularListFilter(c) && c.convType != ConversationType.WaitForConnection }
 
   // Maintains a short list of members for each conversation.
   // Only keeps up to 4 users other than self user, this list is to be used for avatar in conv list.

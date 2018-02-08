@@ -33,29 +33,6 @@
         android:background="@color/light_graphite_8">
 
         <android.support.v7.widget.Toolbar
-            android:id="@+id/t_pickuser_toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="@dimen/toolbar__padding__right"
-            android:clickable="false"
-            app:contentInsetStart="@dimen/content__padding_left"
-            style="?startUiToolbar"
-            android:visibility="gone"
-            >
-
-            <com.waz.zclient.ui.text.TypefaceTextView
-                android:id="@+id/ttv__pickuser__add_header"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="start|center_vertical"
-                android:layout_marginEnd="@dimen/wire__padding__regular"
-                android:maxLines="1"
-                android:ellipsize="end"
-                style="?startUiToolbar"
-                />
-        </android.support.v7.widget.Toolbar>
-
-        <android.support.v7.widget.Toolbar
             android:id="@+id/pickuser_toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
@@ -179,12 +156,6 @@
             />
 
     </FrameLayout>
-
-    <com.waz.zclient.common.views.FlatWireButton
-        android:id="@+id/confirmation_button"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/flat_wire_button_height"
-        />
 
     <com.waz.zclient.common.views.FlatWireButton
         android:id="@+id/invite_button"

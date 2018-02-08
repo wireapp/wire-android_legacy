@@ -512,38 +512,6 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
     }
 
     @Override
-    public void onSelectedUsers(final List<UserId> users, final ConversationChangeRequester requester) {
-        // TODO https://wearezeta.atlassian.net/browse/AN-3730
-        getControllerFactory().getPickUserController().hidePickUser(getCurrentPickerDestination());
-
-        final ConversationController conversationController = inject(ConversationController.class);
-        conversationController.withCurrentConv(new Callback<ConversationData>() {
-            @Override
-            public void callback(ConversationData conv) {
-                if (conv.convType() == IConversation.Type.ONE_TO_ONE) {
-                    conversationController.createGroupConversation(users, requester);
-                    if (!getStoreFactory().networkStore().hasInternetConnection()) {
-                        ViewUtils.showAlertDialog(getActivity(),
-                            R.string.conversation__create_group_conversation__no_network__title,
-                            R.string.conversation__create_group_conversation__no_network__message,
-                            R.string.conversation__create_group_conversation__no_network__button,
-                            null, true);
-                    }
-                } else if (conv.convType() == IConversation.Type.GROUP) {
-                    conversationController.addMembers(conv.id(), users);
-                    if (!getStoreFactory().networkStore().hasInternetConnection()) {
-                        ViewUtils.showAlertDialog(getActivity(),
-                            R.string.conversation__add_user__no_network__title,
-                            R.string.conversation__add_user__no_network__message,
-                            R.string.conversation__add_user__no_network__button,
-                            null, true);
-                    }
-                }
-            }
-        });
-    }
-
-    @Override
     public LoadingIndicatorView getLoadingViewIndicator() {
         return loadingIndicatorView;
     }
@@ -566,17 +534,17 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
 
         getControllerFactory().getNavigationController().setRightPage(Page.PICK_USER_ADD_TO_CONVERSATION, TAG);
 
-        getChildFragmentManager()
-            .beginTransaction()
-            .setCustomAnimations(R.anim.slide_in_from_bottom_pick_user,
-                                 R.anim.open_new_conversation__thread_list_out,
-                                 R.anim.open_new_conversation__thread_list_in,
-                                 R.anim.slide_out_to_bottom_pick_user)
-            .replace(R.id.fl__conversation_manager__message_list_container,
-                     PickUserFragment.newInstance(true, groupConversation, inject(ConversationController.class).getCurrentConvId().str()),
-                     PickUserFragment.TAG())
-            .addToBackStack(PickUserFragment.TAG())
-            .commit();
+//        getChildFragmentManager()
+//            .beginTransaction()
+//            .setCustomAnimations(R.anim.slide_in_from_bottom_pick_user,
+//                                 R.anim.open_new_conversation__thread_list_out,
+//                                 R.anim.open_new_conversation__thread_list_in,
+//                                 R.anim.slide_out_to_bottom_pick_user)
+//            .replace(R.id.fl__conversation_manager__message_list_container,
+//                     PickUserFragment.newInstance(true, groupConversation, inject(ConversationController.class).getCurrentConvId().str()),
+//                     PickUserFragment.TAG())
+//            .addToBackStack(PickUserFragment.TAG())
+//            .commit();
     }
 
     @Override

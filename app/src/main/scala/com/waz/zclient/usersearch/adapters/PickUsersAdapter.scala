@@ -301,8 +301,6 @@ object PickUsersAdapter {
   val CollapsedGroups = 5
 
   trait Callback {
-    def getSelectedUsers: Set[UserId]
-    def onContactListUserClicked(userId: UserId): Unit
     def onContactListContactClicked(contactDetails: ContactDetails): Unit
     def onCreateConvClicked(): Unit
   }
