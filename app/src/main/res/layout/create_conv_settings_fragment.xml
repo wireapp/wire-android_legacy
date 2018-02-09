@@ -27,7 +27,7 @@
         android:id='@+id/input_box'
         android:layout_gravity='center'
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="wrap_content"
         app:hasButton="false"
         app:hint="GROUP NAME"/>
 

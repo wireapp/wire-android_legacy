@@ -20,7 +20,7 @@ package com.waz.zclient.conversation.creation
 import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
+import android.support.v7.widget.{LinearLayoutManager, RecyclerView, Toolbar}
 import android.view.{ContextThemeWrapper, LayoutInflater, View, ViewGroup}
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
@@ -28,8 +28,10 @@ import com.waz.model.{UserData, UserId}
 import com.waz.service.{SearchState, ZMessaging}
 import com.waz.utils.events.{EventContext, Signal, SourceSignal}
 import com.waz.zclient.common.views.{PickableElement, PickerSpannableEditText}
+import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.usersearch.views.{SearchEditText, SearchResultUserRowView}
 import com.waz.zclient.{FragmentHelper, R, ViewHelper}
+import com.waz.zclient.utils.RichView
 
 import scala.collection.immutable.Set
 
@@ -41,6 +43,9 @@ class NewConversationPickFragment extends Fragment with FragmentHelper {
   private lazy val searchFilter = Signal("")
   private lazy val adapter = NewConvAdapter(getContext, newConvController.users)
 
+  private lazy val toolbar = view[Toolbar](R.id.toolbar)
+  private lazy val nextButton = view[TypefaceTextView](R.id.next_button)
+
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
 
@@ -48,11 +53,19 @@ class NewConversationPickFragment extends Fragment with FragmentHelper {
       zms <- zms
       searchFilter <- searchFilter
       convId <- newConvController.convId
-      searchState = SearchState(searchFilter, hasSelectedUsers = false, Some(convId))
+      searchState = SearchState(searchFilter, hasSelectedUsers = false, convId)
       results <- zms.userSearch.search(searchState, Set.empty[UserId])
-    } yield results
+    } yield results.localResults
 
-    searchResults.onUi(_.localResults.foreach(adapter.setData))
+    searchResults.onUi(_.foreach(adapter.setData))
+
+    newConvController.convId.map(_.nonEmpty).onUi { hasConv =>
+      toolbar.foreach(_.setVisibility(if (hasConv) View.VISIBLE else View.GONE))
+    }
+
+    newConvController.users.map(_.nonEmpty).onUi { hasUsers =>
+      nextButton.foreach(_.setEnabled(hasUsers))
+    }
   }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
@@ -68,6 +81,14 @@ class NewConversationPickFragment extends Fragment with FragmentHelper {
     searchBox.setCallback(new PickerSpannableEditText.Callback{
       override def onRemovedTokenSpan(element: PickableElement): Unit = {}
       override def afterTextChanged(s: String): Unit = searchFilter ! s
+    })
+
+    toolbar.setVisibility(if (newConvController.convId.currentValue.flatten.nonEmpty) View.VISIBLE else View.GONE)
+    nextButton.setEnabled(newConvController.users.currentValue.exists(_.nonEmpty))
+
+    nextButton.foreach(_.onClick{
+      newConvController.addUsersToConversation()
+      getFragmentManager.popBackStack()
     })
   }
 }

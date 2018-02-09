@@ -46,6 +46,8 @@ import com.waz.zclient.controllers.drawing.IDrawingController;
 import com.waz.zclient.controllers.location.LocationObserver;
 import com.waz.zclient.controllers.navigation.Page;
 import com.waz.zclient.conversation.ConversationController;
+import com.waz.zclient.conversation.creation.NewConversationController;
+import com.waz.zclient.conversation.creation.NewConversationPickFragment;
 import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.core.stores.connect.IConnectStore;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
@@ -530,18 +532,18 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
         }
 
         getControllerFactory().getNavigationController().setRightPage(Page.PICK_USER_ADD_TO_CONVERSATION, TAG);
+        inject(NewConversationController.class).setAddToConversation(inject(ConversationController.class).getCurrentConvId());
 
-//        getChildFragmentManager()
-//            .beginTransaction()
-//            .setCustomAnimations(R.anim.slide_in_from_bottom_pick_user,
-//                                 R.anim.open_new_conversation__thread_list_out,
-//                                 R.anim.open_new_conversation__thread_list_in,
-//                                 R.anim.slide_out_to_bottom_pick_user)
-//            .replace(R.id.fl__conversation_manager__message_list_container,
-//                     PickUserFragment.newInstance(true, groupConversation, inject(ConversationController.class).getCurrentConvId().str()),
-//                     PickUserFragment.TAG())
-//            .addToBackStack(PickUserFragment.TAG())
-//            .commit();
+        getChildFragmentManager()
+            .beginTransaction()
+            .setCustomAnimations(R.anim.slide_in_from_bottom_pick_user,
+                                 R.anim.open_new_conversation__thread_list_out,
+                                 R.anim.open_new_conversation__thread_list_in,
+                                 R.anim.slide_out_to_bottom_pick_user)
+            .replace(R.id.fl__conversation_manager__message_list_container,
+                new NewConversationPickFragment(), NewConversationPickFragment.Tag())
+            .addToBackStack(PickUserFragment.TAG())
+            .commit();
     }
 
     @Override

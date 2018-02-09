@@ -1297,5 +1297,7 @@
 
     <string name="next_button">NEXT</string>
     <string name="skip_button">SKIP</string>
-    <string name="create_button">CREATE</string>
+    <string name="done_button">DONE</string>
+    <string name="add_members_header">ADD MEMBERS</string>
+    <string name="new_group_header">NEW GROUP</string>
 </resources>

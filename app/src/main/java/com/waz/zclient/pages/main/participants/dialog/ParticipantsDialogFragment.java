@@ -54,6 +54,8 @@ import com.waz.zclient.controllers.confirmation.ConfirmationRequest;
 import com.waz.zclient.controllers.confirmation.IConfirmationController;
 import com.waz.zclient.controllers.globallayout.KeyboardHeightObserver;
 import com.waz.zclient.conversation.ConversationController;
+import com.waz.zclient.conversation.creation.NewConversationController;
+import com.waz.zclient.conversation.creation.NewConversationPickFragment;
 import com.waz.zclient.core.stores.connect.IConnectStore;
 import com.waz.zclient.core.stores.participants.ParticipantsStoreObserver;
 import com.waz.zclient.pages.BaseFragment;
@@ -362,12 +364,10 @@ public class ParticipantsDialogFragment extends BaseFragment<ParticipantsDialogF
                 }
             }
             if (getArguments().getBoolean(ARG__ADD_TO_CONVERSATION)) {
-                Timber.v(TAG, "Button not implemented");
-//                transaction.replace(R.id.fl__participant_dialog__main__container,
-//                                    PickUserFragment.newInstance(true,
-//                                                                 getArguments().getBoolean(ARG__GROUP_CONVERSATION),
-//                                                                 inject(ConversationController.class).getCurrentConvId().str()),
-//                                    PickUserFragment.TAG());
+                inject(NewConversationController.class).setAddToConversation(inject(ConversationController.class).getCurrentConvId());
+                transaction.replace(R.id.fl__participant_dialog__main__container,
+                    new NewConversationPickFragment(),
+                    NewConversationPickFragment.Tag());
 
             } else if (getControllerFactory().getConversationScreenController().getPopoverLaunchMode() == DialogLaunchMode.PARTICIPANT_BUTTON ||
                 getControllerFactory().getConversationScreenController().getPopoverLaunchMode() == DialogLaunchMode.CONVERSATION_TOOLBAR) {

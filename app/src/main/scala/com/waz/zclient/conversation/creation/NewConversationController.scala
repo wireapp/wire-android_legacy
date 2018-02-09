@@ -22,6 +22,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.model.{ConvId, UserId}
 import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.utils.UiStorage
 import com.waz.zclient.{Injectable, Injector}
 
 import scala.concurrent.Future
@@ -32,23 +33,36 @@ class NewConversationController(implicit inj: Injector) extends Injectable {
   ZLog.verbose("NewConversationController started")
 
   private lazy val conversationController = inject[ConversationController]
+  private implicit lazy val uiStorage = inject[UiStorage]
 
-  val convId: SourceSignal[ConvId] = Signal(ConvId())
+  val convId: SourceSignal[Option[ConvId]] = Signal(None)
   val name: SourceSignal[String] = Signal("")
   val users: SourceSignal[Set[UserId]] = Signal(Set.empty[UserId])
 
-  def reset(): Unit = {
+  def setCreateConversation(): Unit = {
     name ! ""
     users ! Set()
-    convId ! ConvId()
+    convId ! None
+  }
+
+  def setAddToConversation(conv: ConvId): Unit = {
+    name ! ""
+    users ! Set()
+    convId ! Some(conv)
   }
 
   def createConversation(): Future[ConvId] =
     for {
-      convId <- convId.head
       name <- name.head
       users <- users.head
-      conv <- conversationController.createGroupConversation(users.toSeq, Some(name), convId)
+      conv <- conversationController.createGroupConversation(users.toSeq, Some(name))
     } yield conv.id
 
+  def addUsersToConversation(): Future[Unit] = {
+    for {
+      Some(convId) <- convId.head
+      users <- users.head
+      _ <- conversationController.addMembers(convId, users)
+    } yield ()
+  }
 }

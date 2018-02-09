@@ -56,7 +56,7 @@ class NewConversationFragment extends Fragment with FragmentHelper with OnBackPr
   } yield currentPage match {
     case SettingsPage if name.nonEmpty => (true, R.string.next_button)
     case SettingsPage => (false, R.string.next_button)
-    case PickerPage if users.nonEmpty => (true, R.string.create_button)
+    case PickerPage if users.nonEmpty => (true, R.string.done_button)
     case PickerPage => (true, R.string.skip_button)
   }
 
@@ -83,7 +83,7 @@ class NewConversationFragment extends Fragment with FragmentHelper with OnBackPr
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
-    newConvController.reset()
+    newConvController.setCreateConversation()
 
     buttonState.onUi{ case (enabled, textId) =>
       nextButton.foreach { btn =>
