@@ -41,6 +41,7 @@ import com.waz.zclient.controllers.confirmation._
 import com.waz.zclient.controllers.currentfocus.IFocusController
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.conversation.creation.NewConversationFragment
 import com.waz.zclient.core.stores.connect.IConnectStore
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.integrations.IntegrationDetailsFragment
@@ -405,6 +406,7 @@ class ConversationListManagerFragment extends Fragment
         case Some(f: IntegrationDetailsFragment) if f.onBackPressed() => true
         case Some(f: PickUserFragment) if f.onBackPressed() => true
         case Some(f: ArchiveListFragment) if f.onBackPressed() => true
+        case Some(f: NewConversationFragment) if f.onBackPressed() => true
         case _ if pickUserController.isShowingPickUser(getCurrentPickerDestination) =>
           pickUserController.hidePickUser(getCurrentPickerDestination)
           true

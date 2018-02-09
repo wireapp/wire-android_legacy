@@ -35,9 +35,9 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils.{getDimenPx, getInt}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.views.DefaultPageTransitionAnimation
-import com.waz.zclient.{FragmentHelper, R}
+import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R}
 
-class NewConversationFragment extends Fragment with FragmentHelper {
+class NewConversationFragment extends Fragment with FragmentHelper with OnBackPressedListener {
 
   implicit private def ctx = getContext
 
@@ -159,6 +159,15 @@ class NewConversationFragment extends Fragment with FragmentHelper {
   private def close() = getFragmentManager.popBackStack()
 
   private def back(): Unit = getChildFragmentManager.popBackStack()
+
+  override def onBackPressed(): Boolean = {
+    currentPage.currentValue.foreach {
+      case SettingsPage => close()
+      case PickerPage => back()
+      case _ =>
+    }
+    true
+  }
 }
 
 object NewConversationFragment {

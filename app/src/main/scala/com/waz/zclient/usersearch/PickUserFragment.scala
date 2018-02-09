@@ -63,6 +63,7 @@ import com.waz.zclient.usersearch.views.{ContactRowView, SearchBoxView, SearchEd
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{IntentUtils, RichView, StringUtils, UiStorage, UserSignal}
 import com.waz.zclient.views._
+import com.waz.zclient.conversation.creation.NewConversationFragment
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -292,7 +293,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
   }
 
   override def onStop(): Unit = {
-    getContainer.getLoadingViewIndicator.hide()
+    //getContainer.getLoadingViewIndicator.hide()
     globalLayoutController.removeKeyboardVisibilityObserver(this)
     super.onStop()
   }
@@ -351,7 +352,17 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
   }
 
   override def onCreateConvClicked(): Unit = {
+    getFragmentManager.beginTransaction
+      .setCustomAnimations(
+        R.anim.slide_in_from_bottom_pick_user,
+        R.anim.open_new_conversation__thread_list_out,
+        R.anim.open_new_conversation__thread_list_in,
+        R.anim.slide_out_to_bottom_pick_user)
+      .replace(R.id.fl__conversation_list_main, new NewConversationFragment, NewConversationFragment.Tag)
+      .addToBackStack(NewConversationFragment.Tag)
+      .commit()
 
+    //inject[INavigationController].setLeftPage(Page.CREATE_CONV, PickUserFragment.TAG)
   }
 
   override def onContactListContactClicked(contactDetails: ContactDetails): Unit = {
