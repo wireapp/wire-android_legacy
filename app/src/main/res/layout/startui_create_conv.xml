@@ -46,7 +46,7 @@
         android:layout_toEndOf="@+id/glyphTextView"
         android:paddingEnd="@dimen/wire__padding__regular"
         android:paddingStart="@dimen/wire__padding__regular"
-        android:text="Create a new conversation"
+        android:text="@string/people_picker__create_group_conversation"
         android:textColor="@color/white"
         android:textSize="@dimen/wire__text_size__regular"
         app:w_font="@string/wire__typeface__regular"/>

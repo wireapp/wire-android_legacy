@@ -150,8 +150,6 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
       else
         View.GONE)
       .onUi(v.setVisibility(_))
-
-    v.foreach(_.onClick(browser.openUrl(AndroidURIUtil.parse(getString(R.string.pick_user_manage_team_url)))))
   }
 
   final val searchBoxViewCallback = new SearchBoxView.Callback {
@@ -211,8 +209,8 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
     inviteButton.setText(R.string.pref_invite_title)
     inviteButton.setGlyph(R.string.glyph__invite)
 
+    emptyListButton.foreach(_.onClick(browser.openUrl(AndroidURIUtil.parse(getString(R.string.pick_user_manage_team_url)))))
     errorMessageView
-    emptyListButton
     toolbarTitle
 
     showLoadingBarDelay = getResources.getInteger(R.integer.people_picker__loading_bar__show_delay)
