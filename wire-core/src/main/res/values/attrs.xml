@@ -252,6 +252,7 @@
 
     <declare-styleable name="InputBox">
         <attr name="hint" format="string"/>
+        <attr name="hasButton" format="boolean"/>
     </declare-styleable>
 
     <attr name="wireDividerColor" format="color"/>

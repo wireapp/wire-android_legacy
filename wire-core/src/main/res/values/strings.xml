@@ -1292,4 +1292,8 @@
     <string name="integrations_create_conversation">Create a new conversation</string>
 
     <string name="no_matches_found">No matches found</string>
+
+    <string name="next_button">NEXT</string>
+    <string name="skip_button">SKIP</string>
+    <string name="create_button">CREATE</string>
 </resources>

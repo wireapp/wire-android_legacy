@@ -28,6 +28,7 @@ import android.widget.TextView.OnEditorActionListener
 import android.widget.{LinearLayout, ProgressBar, TextView}
 import com.waz.model.EmailAddress
 import com.waz.threading.Threading
+import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.zclient.common.views.InputBox._
 import com.waz.zclient.ui.cursor.CursorEditText
 import com.waz.zclient.ui.text.TypefaceTextView
@@ -47,6 +48,7 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
   private val attributesArray: TypedArray =
     context.getTheme.obtainStyledAttributes(attrs, R.styleable.InputBox, 0, 0)
   private val hintAttr = Option(attributesArray.getString(R.styleable.InputBox_hint))
+  private val hasButtonAttr = attributesArray.getBoolean(R.styleable.InputBox_hasButton, true)
   private var shouldDisableOnClick = true
   private var removeTextOnClick = false
 
@@ -61,10 +63,13 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
   private var onClick = (_: String) => Future.successful(Option.empty[String])
   private var linkifyError = Option.empty[() => Unit]
 
+  val text: SourceSignal[String] = Signal("")
+
   confirmationButton.setBackgroundColors(ContextUtils.getColor(R.color.accent_blue), ContextUtils.getColor(R.color.teams_inactive_button))
   hintAttr.foreach(hintText.setText)
   editText.setAccentColor(ContextUtils.getColor(R.color.accent_blue))
   editText.addTextListener { text =>
+    this.text ! text
     validate(text)
     hideErrorMessage()
     hintText.setVisible(text.isEmpty)
@@ -72,7 +77,7 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
   validate(editText.getText.toString)
   progressBar.setIndeterminate(true)
   progressBar.setVisible(false)
-  confirmationButton.setVisible(true)
+  confirmationButton.setVisible(hasButtonAttr)
   errorText.setVisible(false)
   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
     progressBar.setIndeterminateTintList(ColorStateList.valueOf(ContextUtils.getColor(R.color.teams_inactive_button)))
@@ -103,7 +108,7 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
     onClick(content).map { errorMessage =>
       errorMessage.foreach(t => showErrorMessage(Some(t)))
       progressBar.setVisible(false)
-      confirmationButton.setVisible(true)
+      confirmationButton.setVisible(hasButtonAttr)
       if (shouldDisableOnClick) editText.setEnabled(true)
       confirmationButton.setEnabled(true)
       if(errorMessage.isEmpty && removeTextOnClick) {
@@ -169,6 +174,8 @@ object InputBox {
   }
 
   object NameValidator extends Validator(_.trim.length >= 2)
+
+  object GroupNameValidator extends Validator(_.trim.length >= 1)
 
   //TODO: Unify this code with the one from the change username fragment
   object UsernameValidator extends Validator({ t =>

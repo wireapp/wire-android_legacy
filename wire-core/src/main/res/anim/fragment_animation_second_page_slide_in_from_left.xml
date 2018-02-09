@@ -18,12 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<selector xmlns:android="http://schemas.android.com/apk/res/android"
-          android:enterFadeDuration="@integer/wire__animation__delay__short"
-          android:exitFadeDuration="@integer/wire__animation__delay__short">
-    <item android:state_focused="true" android:state_enabled="true" android:color="@color/teams_headline_text_pressed"/>
-    <item android:state_pressed="true" android:state_enabled="true" android:color="@color/teams_headline_text_pressed" />
-    <item android:state_selected="true" android:state_enabled="true" android:color="@color/teams_headline_text_pressed" />
-    <item android:state_enabled="false" android:color="@color/teams_inactive_button" />
-    <item android:color="@color/teams_headline_text"/>
-</selector>
+<translate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="350"
+    android:fromXDelta="-100%"
+    android:toXDelta="0%" />

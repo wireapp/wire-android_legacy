@@ -72,6 +72,7 @@ import com.waz.zclient.common.views.ImageController
 import com.waz.zclient.controllers.calling.ICallingController
 import com.waz.zclient.controllers.confirmation.IConfirmationController
 import com.waz.zclient.controllers.currentfocus.IFocusController
+import com.waz.zclient.conversation.creation.NewConversationController
 import com.waz.zclient.usersearch.ContactsController
 
 object WireApplication {
@@ -186,6 +187,7 @@ object WireApplication {
     bind [CursorController]             to new CursorController()
     bind [ConversationListController]   to new ConversationListController()
     bind [IntegrationDetailsController] to new IntegrationDetailsController()
+    bind [NewConversationController]    to new NewConversationController()
 
     /**
       * Since tracking controllers will immediately instantiate other necessary controllers, we keep them separated

@@ -160,7 +160,8 @@ class PickUsersAdapter(topUsersOnItemTouchListener: SearchResultOnItemTouchListe
       }
     }
 
-    if (searchUserController.searchState.currentValue.exists(_.filter.isEmpty)) {
+    if (searchUserController.searchState.currentValue.exists(_.filter.isEmpty) &&
+        searchUserController.searchState.currentValue.exists(_.addingToConversation.isEmpty)) {
       mergedResult = mergedResult ++ Seq(SearchResult(NewConversation, TopUsersSection, 0))
     }
 

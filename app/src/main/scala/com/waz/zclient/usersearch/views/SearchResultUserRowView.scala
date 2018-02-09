@@ -22,11 +22,12 @@ import android.support.v4.content.ContextCompat
 import android.support.v7.widget.AppCompatCheckBox
 import android.util.AttributeSet
 import android.view.View
-import android.widget.FrameLayout
+import android.view.View.OnClickListener
+import android.widget.{CompoundButton, FrameLayout}
 import com.waz.model.{UserData, UserId}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.waz.utils.events.{EventStream, Signal, SourceStream}
 import com.waz.utils.returning
 import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.ui.text.TypefaceTextView
@@ -50,8 +51,15 @@ class SearchResultUserRowView(val context: Context, val attrs: AttributeSet, val
     btn.setLevel(1)
     checkbox.setButtonDrawable(btn)
   }
+  checkbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener {
+    override def onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean): Unit =
+      onSelectionChanged ! isChecked
+  })
   setClickable(true)
   setFocusable(true)
+  setOnClickListener(new OnClickListener {
+    override def onClick(v: View): Unit = checkbox.toggle()
+  })
 
   private val isGuest = for{
     z <- inject[Signal[ZMessaging]]
@@ -61,6 +69,8 @@ class SearchResultUserRowView(val context: Context, val attrs: AttributeSet, val
   } yield isGuest && knownUsers.contains(uId)
 
   private var userData = Option.empty[UserData]
+
+  val onSelectionChanged: SourceStream[Boolean] = EventStream()
 
   def setUser(userData: UserData): Unit = {
     this.userData = Some(userData)
@@ -79,9 +89,8 @@ class SearchResultUserRowView(val context: Context, val attrs: AttributeSet, val
     setSelected(!isSelected && showCheckbox)
   }
 
-  override def setSelected(selected: Boolean): Unit = {
-    super.setSelected(selected)
-    checkbox.setChecked(selected)
+  def setChecked(checked: Boolean): Unit ={
+    checkbox.setChecked(checked)
   }
 
   def applyDarkTheme(): Unit = {
