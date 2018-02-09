@@ -43,7 +43,7 @@
             app:w_font="@string/wire__typeface__medium"/>
 
         <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/next_button"
+            android:id="@+id/confirmation_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity='end'

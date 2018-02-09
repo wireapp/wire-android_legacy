@@ -44,7 +44,7 @@ class NewConversationPickFragment extends Fragment with FragmentHelper {
   private lazy val adapter = NewConvAdapter(getContext, newConvController.users)
 
   private lazy val toolbar = view[Toolbar](R.id.toolbar)
-  private lazy val nextButton = view[TypefaceTextView](R.id.next_button)
+  private lazy val nextButton = view[TypefaceTextView](R.id.confirmation_button)
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)

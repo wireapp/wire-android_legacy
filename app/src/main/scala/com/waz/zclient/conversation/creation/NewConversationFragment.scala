@@ -44,7 +44,7 @@ class NewConversationFragment extends Fragment with FragmentHelper with OnBackPr
   private lazy val newConvController = inject[NewConversationController]
   private lazy val conversationController = inject[ConversationController]
 
-  private lazy val nextButton = view[TypefaceTextView](R.id.next_button)
+  private lazy val nextButton = view[TypefaceTextView](R.id.confirmation_button)
   private lazy val toolbar = view[Toolbar](R.id.toolbar)
 
   private lazy val currentPage: SourceSignal[Int] = Signal()
@@ -54,7 +54,7 @@ class NewConversationFragment extends Fragment with FragmentHelper with OnBackPr
     name <- newConvController.name
     users <- newConvController.users
   } yield currentPage match {
-    case SettingsPage if name.nonEmpty => (true, R.string.next_button)
+    case SettingsPage if name.trim.nonEmpty => (true, R.string.next_button)
     case SettingsPage => (false, R.string.next_button)
     case PickerPage if users.nonEmpty => (true, R.string.done_button)
     case PickerPage => (true, R.string.skip_button)

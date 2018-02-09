@@ -35,7 +35,7 @@ class ConversationStartPartView(context: Context, attrs: AttributeSet, style: In
 
   private val users = inject[UsersController]
 
-  private val titleView = findById[TypefaceTextView](R.id.conversation_start_text)
+  private val titleView = findById[TypefaceTextView](R.id.introduction_message)
   private val subtitleView = findById[TypefaceTextView](R.id.conversation_start_subtext)
 
   private val creator = message.map(_.userId).flatMap(users.displayName)

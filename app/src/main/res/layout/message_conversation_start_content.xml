@@ -32,7 +32,7 @@
         />
 
     <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/conversation_start_text"
+        android:id="@+id/introduction_message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:w_font="@string/wire__typeface__medium"
