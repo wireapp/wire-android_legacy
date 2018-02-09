@@ -17,21 +17,17 @@
  */
 package com.waz.zclient.conversationlist
 
-import java.util
-
 import android.content.Intent
 import android.os.Bundle
 import android.support.v4.app.{Fragment, FragmentManager}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.FrameLayout
-import com.waz.ZLog.{verbose, warn}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
-import com.waz.api._
+import com.waz.ZLog.{verbose, warn}
 import com.waz.api.SyncState._
-import com.waz.model.ConversationData.ConversationType
-import com.waz.model.sync.SyncCommand._
+import com.waz.api._
 import com.waz.model._
+import com.waz.model.sync.SyncCommand._
 import com.waz.service.ZMessaging
 import com.waz.sync.SyncRequestServiceImpl.SyncMatcher
 import com.waz.threading.{CancellableFuture, Threading}
@@ -92,6 +88,7 @@ class ConversationListManagerFragment extends Fragment
   lazy val users        = inject[UsersController]
   lazy val themes       = inject[ThemeController]
   lazy val sounds       = inject[SoundController]
+  lazy val convListController = inject[ConversationListController]
 
   lazy val convController          = inject[ConversationController]
   lazy val accentColor             = inject[AccentColorController]
@@ -108,10 +105,7 @@ class ConversationListManagerFragment extends Fragment
   private var mainContainer          : FrameLayout          = _
   private var confirmationMenu       : ConfirmationMenu     = _
 
-  lazy val hasConvs = for {
-    z          <- zms
-    convs      <- z.convsContent.conversationsSignal.throttle(ConvListUpdateThrottling )
-  } yield !convs.conversations.exists(EstablishedListFilter)
+  lazy val hasConvs = convListController.establishedConversations.map(_.nonEmpty)
 
   lazy val animationType = {
     import LoadingIndicatorView._
@@ -223,7 +217,7 @@ class ConversationListManagerFragment extends Fragment
                   R.anim.open_new_conversation__thread_list_out,
                   R.anim.open_new_conversation__thread_list_in,
                   R.anim.slide_out_to_bottom_pick_user)
-                .replace(R.id.fl__conversation_list_main, PickUserFragment.newInstance(addToConversation = false, null), PickUserFragment.TAG)
+                .replace(R.id.fl__conversation_list_main, PickUserFragment.newInstance(), PickUserFragment.TAG)
                 .addToBackStack(PickUserFragment.TAG)
                 .commit
           }
@@ -338,13 +332,6 @@ class ConversationListManagerFragment extends Fragment
     verbose(s"showIncomingPendingConnectRequest $conv")
     pickUserController.hidePickUser(getCurrentPickerDestination)
     convController.selectConv(conv, ConversationChangeRequester.INBOX)
-  }
-
-  override def onSelectedUsers(us: util.List[UserId], requester: ConversationChangeRequester) = {
-    pickUserController.hidePickUser(getCurrentPickerDestination)
-    userAccounts.getConversationId(us.asScala.toSet).flatMap { conv =>
-      convController.selectConv(conv, requester)
-    }
   }
 
   override def getLoadingViewIndicator =
@@ -503,11 +490,7 @@ class ConversationListManagerFragment extends Fragment
 }
 
 object ConversationListManagerFragment {
-
-  //TODO make a conversationsList controller or something
   lazy val SyncMatchers = Seq(SyncConversations, SyncSelf, SyncConnections).map(SyncMatcher(_, None))
-  lazy val RegularListFilter: (ConversationData => Boolean) = { c => !c.hidden && !c.archived && c.convType != ConversationType.Incoming && c.convType != ConversationType.Self }
-  lazy val EstablishedListFilter: (ConversationData => Boolean) = { c => RegularListFilter(c) && c.convType != ConversationType.WaitForConnection }
 
   lazy val ConvListUpdateThrottling = 250.millis
 

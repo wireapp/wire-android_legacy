@@ -74,6 +74,7 @@
         android:button="@drawable/checkbox_black"
         android:layout_marginStart="@dimen/wire__padding__regular"
         android:layout_marginEnd="@dimen/wire__padding__regular"
+        android:visibility="gone"
         tools:targetApi="lollipop"/>
 
 </LinearLayout>

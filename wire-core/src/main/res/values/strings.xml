@@ -157,6 +157,8 @@
     <string name="people_picker__search_people">PEOPLE</string>
     <string name="people_picker__search_services">SERVICES</string>
 
+    <string name="people_picker__create_group_conversation">Create a new conversation</string>
+
     <!-- Bots / Integrations / Services -->
     <string name="integrations_picker__section_title">Services</string>
     <string name="integrations_picker__add">Add Service</string>

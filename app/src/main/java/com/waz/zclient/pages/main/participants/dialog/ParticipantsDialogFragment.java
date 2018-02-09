@@ -365,11 +365,11 @@ public class ParticipantsDialogFragment extends BaseFragment<ParticipantsDialogF
                 }
             }
             if (getArguments().getBoolean(ARG__ADD_TO_CONVERSATION)) {
-                transaction.replace(R.id.fl__participant_dialog__main__container,
-                                    PickUserFragment.newInstance(true,
-                                                                 getArguments().getBoolean(ARG__GROUP_CONVERSATION),
-                                                                 inject(ConversationController.class).getCurrentConvId().str()),
-                                    PickUserFragment.TAG());
+//                transaction.replace(R.id.fl__participant_dialog__main__container,
+//                                    PickUserFragment.newInstance(true,
+//                                                                 getArguments().getBoolean(ARG__GROUP_CONVERSATION),
+//                                                                 inject(ConversationController.class).getCurrentConvId().str()),
+//                                    PickUserFragment.TAG());
 
             } else if (getControllerFactory().getConversationScreenController().getPopoverLaunchMode() == DialogLaunchMode.PARTICIPANT_BUTTON ||
                 getControllerFactory().getConversationScreenController().getPopoverLaunchMode() == DialogLaunchMode.CONVERSATION_TOOLBAR) {
@@ -1016,41 +1016,6 @@ public class ParticipantsDialogFragment extends BaseFragment<ParticipantsDialogF
     @Override
     public void showIncomingPendingConnectRequest(ConvId conversation) {
         // noop
-    }
-
-    @Override
-    public void onSelectedUsers(final List<UserId> userIds, final ConversationChangeRequester requester) {
-        // TODO https://wearezeta.atlassian.net/browse/AN-3730
-        getControllerFactory().getPickUserController().hidePickUser(getCurrentPickerDestination());
-
-        final ConversationController ctrl = inject(ConversationController.class);
-
-        ctrl.withCurrentConv(new Callback<ConversationData>() {
-            @Override
-            public void callback(ConversationData conv) {
-                if (conv.convType() == IConversation.Type.ONE_TO_ONE) {
-                    ctrl.createGroupConversation(userIds, requester);
-                    if (!getStoreFactory().networkStore().hasInternetConnection()) {
-                        ViewUtils.showAlertDialog(getActivity(),
-                            R.string.conversation__create_group_conversation__no_network__title,
-                            R.string.conversation__create_group_conversation__no_network__message,
-                            R.string.conversation__create_group_conversation__no_network__button,
-                            null, true);
-                    }
-                } else if (conv.convType() == IConversation.Type.GROUP) {
-                    ctrl.addMembers(conv.id(), userIds);
-                    if (!getStoreFactory().networkStore().hasInternetConnection()) {
-                        ViewUtils.showAlertDialog(getActivity(),
-                            R.string.conversation__add_user__no_network__title,
-                            R.string.conversation__add_user__no_network__message,
-                            R.string.conversation__add_user__no_network__button,
-                            null, true);
-                    }
-                }
-            }
-        });
-
-        hide();
     }
 
     @Override

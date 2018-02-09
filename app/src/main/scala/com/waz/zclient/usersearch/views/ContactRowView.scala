@@ -21,7 +21,6 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
-import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.{UserData, UserId}
 import com.waz.threading.Threading
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -76,34 +75,13 @@ class ContactRowView(val context: Context, val attrs: AttributeSet, val defStyle
     chathead.setSelected(selected)
   }
 
-  private def drawUser(userData: UserData): Unit = {
-    chathead.setUserId(userData.id)
-    userData.connection match {
-      case ConnectionStatus.Unconnected | ConnectionStatus.Cancelled =>
-        contactInviteButton.setVisibility(View.VISIBLE)
-        contactInviteButton.setText(getResources.getText(R.string.people_picker__contact_list__contact_selection_button__label))
-      case ConnectionStatus.Accepted =>
-        setSelected(callback.exists(_.getSelectedUsers.contains(userData.id)))
-        contactInviteButton.setVisibility(View.GONE)
-      case ConnectionStatus.PendingFromUser | ConnectionStatus.PendingFromOther =>
-        contactInviteButton.setVisibility(View.GONE)
-      case _ =>
-    }
-    contactInviteButton.setOnClickListener(new View.OnClickListener() {
-      def onClick(view: View): Unit =
-        callback.foreach(_.onContactListUserClicked(userData.id))
-    })
-  }
-
   private def drawContact(contact: ContactDetails): Unit = {
     chathead.setContactDetails(contact)
     contactListItemTextView.setContact(contact.contact)
 
     if (contact.invited) {
       contactInviteButton.setVisibility(View.GONE)
-      setOnClickListener(new View.OnClickListener() {
-        def onClick(view: View): Unit = callback.foreach(_.onContactListContactClicked(contact))
-      })
+      setOnClickListener(null)
     } else {
       contactInviteButton.setVisibility(View.VISIBLE)
       contactInviteButton.setText(getResources.getText(R.string.people_picker__contact_list__contact_selection_button__label))

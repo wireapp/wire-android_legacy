@@ -19,9 +19,8 @@ package com.waz.zclient.usersearch.adapters
 
 import android.support.v7.widget.RecyclerView
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
+import com.waz.ZLog._
 import com.waz.model._
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
@@ -67,7 +66,7 @@ class PickUsersAdapter(topUsersOnItemTouchListener: SearchResultOnItemTouchListe
 
   searchUserController.allDataSignal.throttle(500.millis).on(Threading.Ui) {
     case (newTopUsers, newLocalResults, newConversations, newContacts, newDirectoryResults) =>
-      ZLog.verbose(s"searchUserController.allDataSignal ${newTopUsers.map(_.size)} ${newLocalResults.map(_.size)} ${newConversations.map(_.size)} ${newContacts.size} ${newDirectoryResults.map(_.size)}")
+      verbose(s"searchUserController.allDataSignal ${newTopUsers.map(_.size)} ${newLocalResults.map(_.size)} ${newConversations.map(_.size)} ${newContacts.size} ${newDirectoryResults.map(_.size)}")
       newTopUsers.foreach(topUsers = _)
       newLocalResults.foreach(localResults = _)
       newConversations.foreach(conversations = _)
@@ -78,7 +77,6 @@ class PickUsersAdapter(topUsersOnItemTouchListener: SearchResultOnItemTouchListe
 
   integrationsController.searchIntegrations.throttle(500.millis).on(Threading.Ui) {
     case Some(newIntegrations) =>
-      verbose(s"IN we're having some new integrations! ${newIntegrations.map(_.name)}")
       integrations = newIntegrations
       updateMergedResults()
     case _ =>
@@ -152,7 +150,6 @@ class PickUsersAdapter(topUsersOnItemTouchListener: SearchResultOnItemTouchListe
 
     def addIntegrations(): Unit = {
       if (integrations.nonEmpty) {
-        verbose(s"IN adding integrations: ${integrations.map(_.name)}")
         mergedResult = mergedResult ++ Seq(SearchResult(SectionHeader, IntegrationsSection, 0))
         mergedResult = mergedResult ++ integrations.indices.map { i =>
           SearchResult(Integration, IntegrationsSection, i, integrations(i).id.str.hashCode)
@@ -180,7 +177,6 @@ class PickUsersAdapter(topUsersOnItemTouchListener: SearchResultOnItemTouchListe
       addConnections()
     }
 
-    ZLog.debug(s"IN Merged contacts updated: ${mergedResult.size}")
     notifyDataSetChanged()
   }
 
@@ -219,7 +215,6 @@ class PickUsersAdapter(topUsersOnItemTouchListener: SearchResultOnItemTouchListe
         })
       case Integration =>
         val integration = integrations(item.index)
-        verbose(s"IN binding integration: ${integration.name}")
         holder.asInstanceOf[IntegrationViewHolder].bind(integration)
       case _ =>
     }
@@ -302,8 +297,6 @@ object PickUsersAdapter {
   val CollapsedGroups = 5
 
   trait Callback {
-    def getSelectedUsers: Set[UserId]
-    def onContactListUserClicked(userId: UserId): Unit
     def onContactListContactClicked(contactDetails: ContactDetails): Unit
     def onCreateConvClicked(): Unit
   }
