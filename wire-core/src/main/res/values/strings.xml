@@ -213,12 +213,13 @@
     <string name="conversation_quick_menu__conversation_button__group_label">CREATE GROUP</string>
 
     <!-- Conversation: System messages -->
-    <string name="content__system__other_added_participant">[[%1$s]] added %2$s</string>
-    <string name="content__system__other_started_participant">with %2$s</string>
-    <string name="content__system__other_added_you">[[%1$s]] added you</string>
+    <string name="content__system__with_participant">with %1$s</string>
+    <string name="content__system__you_started_participant">[[You]] started a conversation with %2$s</string>
     <string name="content__system__other_started_you">[[%1$s]] started a conversation with you</string>
+    <string name="content__system__other_started_participant">[[%1$s]] started a conversation with %2$s</string>
+    <string name="content__system__other_added_participant">[[%1$s]] added %2$s</string>
+    <string name="content__system__other_added_you">[[%1$s]] added you</string>
     <string name="content__system__you_added_participant">[[You]] added %2$s</string>
-    <string name="content__system__you_started_participant">with %2$s</string>
     <string name="content__system__other_left">[[%1$s]] left</string>
     <string name="content__system__you_left">[[You]] left</string>
     <string name="content__system__other_removed_other">[[%1$s]] removed %2$s</string>
