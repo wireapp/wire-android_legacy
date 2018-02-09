@@ -43,7 +43,6 @@ import com.waz.api.OtrClient;
 import com.waz.api.User;
 import com.waz.api.UsersList;
 import com.waz.model.ConvId;
-import com.waz.model.ConversationData;
 import com.waz.model.IntegrationId;
 import com.waz.model.ProviderId;
 import com.waz.model.UserId;
@@ -56,7 +55,6 @@ import com.waz.zclient.controllers.confirmation.IConfirmationController;
 import com.waz.zclient.controllers.globallayout.KeyboardHeightObserver;
 import com.waz.zclient.conversation.ConversationController;
 import com.waz.zclient.core.stores.connect.IConnectStore;
-import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
 import com.waz.zclient.core.stores.participants.ParticipantsStoreObserver;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment;
@@ -80,8 +78,7 @@ import com.waz.zclient.utils.ContextUtils;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.LoadingIndicatorView;
 import com.waz.zclient.views.menus.ConfirmationMenu;
-
-import java.util.List;
+import timber.log.Timber;
 
 public class ParticipantsDialogFragment extends BaseFragment<ParticipantsDialogFragment.Container> implements
                                                                                                    ParticipantsStoreObserver,
@@ -365,6 +362,7 @@ public class ParticipantsDialogFragment extends BaseFragment<ParticipantsDialogF
                 }
             }
             if (getArguments().getBoolean(ARG__ADD_TO_CONVERSATION)) {
+                Timber.v(TAG, "Button not implemented");
 //                transaction.replace(R.id.fl__participant_dialog__main__container,
 //                                    PickUserFragment.newInstance(true,
 //                                                                 getArguments().getBoolean(ARG__GROUP_CONVERSATION),
