@@ -69,8 +69,8 @@ import com.waz.zclient.pages.main.conversation.controller.ConversationScreenCont
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController;
 import com.waz.zclient.pages.main.pickuser.controller.PickUserControllerScreenObserver;
-import com.waz.zclient.participants.fragments.ParticipantBodyFragment;
 import com.waz.zclient.participants.OptionsMenuFragment;
+import com.waz.zclient.participants.fragments.ParticipantBodyFragment;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
 import com.waz.zclient.ui.animation.interpolators.penner.Linear;
 import com.waz.zclient.ui.animation.interpolators.penner.Quart;
@@ -84,7 +84,6 @@ import com.waz.zclient.views.LoadingIndicatorView;
 import timber.log.Timber;
 
 import java.util.Collection;
-import java.util.List;
 
 public class ParticipantFragment extends BaseFragment<ParticipantFragment.Container> implements
                                                                                      ParticipantHeaderFragment.Container,
