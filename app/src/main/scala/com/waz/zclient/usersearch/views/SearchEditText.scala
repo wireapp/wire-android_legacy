@@ -80,9 +80,11 @@ class SearchEditText(context: Context, attrs: AttributeSet, style: Int) extends 
     if (apply) {
       searchBox.setTextColor(ContextCompat.getColor(getContext, R.color.text__primary_dark))
       searchBox.setCompoundDrawablesRelativeWithIntrinsicBounds(ContextCompat.getDrawable(getContext, R.drawable.search), null, null, null)
+      searchBox.setAccentColor(ContextCompat.getColor(getContext, R.color.text__primary_dark))
     } else {
       searchBox.setTextColor(ContextCompat.getColor(getContext, R.color.text__primary_light))
       searchBox.setCompoundDrawablesRelativeWithIntrinsicBounds(ContextCompat.getDrawable(getContext, R.drawable.search_dark), null, null, null)
+      searchBox.setAccentColor(ContextCompat.getColor(getContext, R.color.text__primary_light))
     }
   }
 

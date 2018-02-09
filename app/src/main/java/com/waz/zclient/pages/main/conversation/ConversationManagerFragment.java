@@ -47,6 +47,7 @@ import com.waz.zclient.controllers.location.LocationObserver;
 import com.waz.zclient.controllers.navigation.Page;
 import com.waz.zclient.conversation.ConversationController;
 import com.waz.zclient.conversation.creation.NewConversationController;
+import com.waz.zclient.conversation.creation.NewConversationFragment;
 import com.waz.zclient.conversation.creation.NewConversationPickFragment;
 import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.core.stores.connect.IConnectStore;
@@ -65,10 +66,13 @@ import com.waz.zclient.pages.main.profile.camera.CameraFragment;
 import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.usersearch.PickUserFragment;
 import com.waz.zclient.utils.Callback;
+import com.waz.zclient.utils.ContextUtils;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.ConversationFragment;
 import com.waz.zclient.views.LoadingIndicatorView;
+
+import scala.collection.immutable.Set;
 
 public class ConversationManagerFragment extends BaseFragment<ConversationManagerFragment.Container> implements ParticipantFragment.Container,
                                                                                                                 LikesListFragment.Container,
@@ -531,19 +535,34 @@ public class ConversationManagerFragment extends BaseFragment<ConversationManage
             KeyboardUtils.hideKeyboard(getActivity());
         }
 
-        getControllerFactory().getNavigationController().setRightPage(Page.PICK_USER_ADD_TO_CONVERSATION, TAG);
-        inject(NewConversationController.class).setAddToConversation(inject(ConversationController.class).getCurrentConvId());
+        ContextUtils.showToast("Under construction", getContext());
 
-        getChildFragmentManager()
-            .beginTransaction()
-            .setCustomAnimations(R.anim.slide_in_from_bottom_pick_user,
-                                 R.anim.open_new_conversation__thread_list_out,
-                                 R.anim.open_new_conversation__thread_list_in,
-                                 R.anim.slide_out_to_bottom_pick_user)
-            .replace(R.id.fl__conversation_manager__message_list_container,
-                new NewConversationPickFragment(), NewConversationPickFragment.Tag())
-            .addToBackStack(PickUserFragment.TAG())
-            .commit();
+//        getControllerFactory().getNavigationController().setRightPage(Page.PICK_USER_ADD_TO_CONVERSATION, TAG);
+//        if (groupConversation) {
+//            inject(NewConversationController.class).setAddToConversation(inject(ConversationController.class).getCurrentConvId());
+//            getChildFragmentManager()
+//                .beginTransaction()
+//                .setCustomAnimations(R.anim.slide_in_from_bottom_pick_user,
+//                    R.anim.open_new_conversation__thread_list_out,
+//                    R.anim.open_new_conversation__thread_list_in,
+//                    R.anim.slide_out_to_bottom_pick_user)
+//                .replace(R.id.fl__conversation_manager__message_list_container,
+//                    new NewConversationPickFragment(), NewConversationPickFragment.Tag())
+//                .addToBackStack(PickUserFragment.TAG())
+//                .commit();
+//        } else {
+//            inject(NewConversationController.class).setCreateConversation(new Set.Set1<>(new UserId("")));
+//            getChildFragmentManager()
+//                .beginTransaction()
+//                .setCustomAnimations(R.anim.slide_in_from_bottom_pick_user,
+//                    R.anim.open_new_conversation__thread_list_out,
+//                    R.anim.open_new_conversation__thread_list_in,
+//                    R.anim.slide_out_to_bottom_pick_user)
+//                .replace(R.id.fl__conversation_manager__message_list_container,
+//                    new NewConversationFragment(), NewConversationFragment.Tag())
+//                .addToBackStack(PickUserFragment.TAG())
+//                .commit();
+//        }
     }
 
     @Override

@@ -82,6 +82,7 @@ class NewConversationPickFragment extends Fragment with FragmentHelper {
       override def onRemovedTokenSpan(element: PickableElement): Unit = {}
       override def afterTextChanged(s: String): Unit = searchFilter ! s
     })
+    searchBox.applyDarkTheme(false)
 
     toolbar.setVisibility(if (newConvController.convId.currentValue.flatten.nonEmpty) View.VISIBLE else View.GONE)
     nextButton.setEnabled(newConvController.users.currentValue.exists(_.nonEmpty))

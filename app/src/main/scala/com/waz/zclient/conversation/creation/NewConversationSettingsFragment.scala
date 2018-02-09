@@ -19,6 +19,7 @@ package com.waz.zclient.conversation.creation
 
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.text.InputFilter.LengthFilter
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
@@ -42,6 +43,7 @@ class NewConversationSettingsFragment extends Fragment with FragmentHelper {
 
     inputBox.foreach { box =>
       box.text.onUi(convController.name ! _)
+      box.editText.setFilters(Array(new LengthFilter(64)))
     }
   }
 

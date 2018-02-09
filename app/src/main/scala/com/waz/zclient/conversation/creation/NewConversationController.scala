@@ -39,9 +39,9 @@ class NewConversationController(implicit inj: Injector) extends Injectable {
   val name: SourceSignal[String] = Signal("")
   val users: SourceSignal[Set[UserId]] = Signal(Set.empty[UserId])
 
-  def setCreateConversation(): Unit = {
+  def setCreateConversation(preSelectedUsers: Set[UserId] = Set()): Unit = {
     name ! ""
-    users ! Set()
+    users ! preSelectedUsers
     convId ! None
   }
 
