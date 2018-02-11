@@ -25,7 +25,8 @@ import android.view.{ContextThemeWrapper, LayoutInflater, View, ViewGroup}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.{UserData, UserId}
 import com.waz.service.ZMessaging
-import com.waz.utils.events.{EventContext, Signal, SourceSignal}
+import com.waz.threading.Threading
+import com.waz.utils.events._
 import com.waz.utils.returning
 import com.waz.zclient.common.views.PickableElement
 import com.waz.zclient.ui.text.TypefaceTextView
@@ -38,10 +39,10 @@ import scala.collection.immutable.Set
 class NewConversationPickFragment extends Fragment with FragmentHelper {
 
   import NewConversationPickFragment._
-  import com.waz.threading.Threading.Implicits.Background
+  import Threading.Implicits.Background
   implicit def cxt: Context = getContext
 
-  private lazy val zms = inject[Signal[ZMessaging]]
+  private lazy val zms               = inject[Signal[ZMessaging]]
   private lazy val newConvController = inject[NewConversationController]
 
   private lazy val searchFilter = Signal("")
@@ -53,9 +54,7 @@ class NewConversationPickFragment extends Fragment with FragmentHelper {
     results <- zms.userSearch.searchLocal(filter, toConv = convId)
   } yield results
 
-  private lazy val adapter = returning(NewConvAdapter(newConvController.users)) { a =>
-    searchResults.onUi(a.setData)
-  }
+  private lazy val adapter = NewConvAdapter(searchResults, newConvController.users)
 
   private lazy val toolbar = returning(view[Toolbar](R.id.toolbar)) { vh =>
     newConvController.convId.map(_.nonEmpty).onUi { hasConv =>
@@ -63,9 +62,21 @@ class NewConversationPickFragment extends Fragment with FragmentHelper {
     }
   }
 
-  private lazy val nextButton = returning(view[TypefaceTextView](R.id.next_button)) { vh =>
+  private lazy val nextButton = returning(view[TypefaceTextView](R.id.confirmation_button)) { vh =>
     newConvController.users.map(_.nonEmpty).onUi { hasUsers =>
       vh.foreach(_.setEnabled(hasUsers))
+    }
+  }
+
+  private lazy val searchBox = returning(view[SearchEditText](R.id.search_box)) { vh =>
+    new FutureEventStream[(UserId, Boolean), (PickableUser, Boolean)](adapter.onUserSelectionChanged, {
+      case (userId, selected) =>
+        zms.head.flatMap(_.users.getUser(userId).collect { case Some(u) => (PickableUser(userId, u.name), selected) })
+    }).onUi {
+      case (pu, selected) =>
+        vh.foreach { v =>
+          if (selected) v.addElement(pu) else v.removeElement(pu)
+        }
     }
   }
 
@@ -78,25 +89,35 @@ class NewConversationPickFragment extends Fragment with FragmentHelper {
     recyclerView.setLayoutManager(new LinearLayoutManager(getContext))
     recyclerView.setAdapter(adapter)
 
-    val searchBox = findById[SearchEditText](R.id.search_box)
-    searchBox.setCallback(new PickerSpannableEditText.Callback{
-      override def onRemovedTokenSpan(element: PickableElement): Unit = {}
-      override def afterTextChanged(s: String): Unit = searchFilter ! s
-    })
-    searchBox.applyDarkTheme(false)
+    toolbar.foreach(_.setVisibility(if (newConvController.convId.currentValue.flatten.nonEmpty) View.VISIBLE else View.GONE))
 
-    toolbar.setVisibility(if (newConvController.convId.currentValue.flatten.nonEmpty) View.VISIBLE else View.GONE)
-    nextButton.setEnabled(newConvController.users.currentValue.exists(_.nonEmpty))
+    nextButton.foreach { v =>
+      v.onClick {
+        newConvController.addUsersToConversation()
+        getFragmentManager.popBackStack()
+      }
+      v.setEnabled(newConvController.users.currentValue.exists(_.nonEmpty))
+    }
 
-    nextButton.foreach(_.onClick{
-      newConvController.addUsersToConversation()
-      getFragmentManager.popBackStack()
-    })
+    searchBox.foreach { v =>
+      v.applyDarkTheme(false)
+      v.setCallback(new PickerSpannableEditText.Callback{
+        override def onRemovedTokenSpan(element: PickableElement): Unit =
+          newConvController.users.mutate(_ - UserId(element.id))
+        override def afterTextChanged(s: String): Unit =
+          searchFilter ! s
+      })
+    }
   }
 }
 
 object NewConversationPickFragment {
   val Tag = implicitLogTag
+
+  private case class PickableUser(userId : UserId, userName: String) extends PickableElement {
+    def id: String = userId.str
+    def name: String = userName
+  }
 }
 
 
@@ -107,23 +128,33 @@ case class NewConvUserViewHolder(v: SearchResultUserRowView) extends RecyclerVie
   }
 }
 
-case class NewConvAdapter(selectedUsers: SourceSignal[Set[UserId]])(implicit context: Context, eventContext: EventContext) extends RecyclerView.Adapter[NewConvUserViewHolder] {
+case class NewConvAdapter(searchResults: Signal[IndexedSeq[UserData]], selectedUsers: SourceSignal[Set[UserId]])(implicit context: Context, eventContext: EventContext) extends RecyclerView.Adapter[NewConvUserViewHolder] {
   private implicit val ctx = context
 
-  private var data = Seq.empty[UserData]
+  private var users  = Seq.empty[UserData]
+  private var selected = Set.empty[UserId]
 
-  def setData(data: Seq[UserData]): Unit = {
-    this.data = data
-    notifyDataSetChanged()
+
+  val onUserSelectionChanged = EventStream[(UserId, Boolean)]()
+
+  (for {
+    res <- searchResults
+    sel <- selectedUsers
+  } yield (res, sel)).onUi {
+    case (res, sel) =>
+      this.users = res
+      this.selected = sel
+      notifyDataSetChanged()
   }
 
-  override def getItemCount: Int = data.size
+  override def getItemCount: Int = users.size
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): NewConvUserViewHolder = {
     val view = ViewHelper.inflate[SearchResultUserRowView](R.layout.startui_user, parent, addToParent = false)
     view.setIsAddingPeople(true)
     view.onSelectionChanged.onUi { selected =>
       view.getUser.foreach { user =>
+        onUserSelectionChanged ! (user, selected)
         if (selected)
           selectedUsers.mutate(_ + user)
         else
@@ -134,7 +165,7 @@ case class NewConvAdapter(selectedUsers: SourceSignal[Set[UserId]])(implicit con
   }
 
   override def onBindViewHolder(holder: NewConvUserViewHolder, position: Int): Unit = {
-    val user = data(position)
-    holder.bind(user, selectedUsers.currentValue.exists(_.contains(user.id)))
+    val user = users(position)
+    holder.bind(user, selected.contains(user.id))
   }
 }

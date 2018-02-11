@@ -515,15 +515,6 @@ object PickUserFragment {
   def newInstance(): PickUserFragment =
     new PickUserFragment
 
-  private case class PickableUser(userId : UserId, userName: String) extends PickableElement {
-    def id: String = userId.str
-    def name: String = userName
-  }
-
-  private object PickableUser {
-    def apply(userData: UserData): PickableUser = new PickableUser(userData.id, userData.getDisplayName)
-  }
-
   trait Container {
     def showIncomingPendingConnectRequest(conv: ConvId): Unit
 
