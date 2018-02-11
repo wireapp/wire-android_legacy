@@ -36,7 +36,8 @@ import com.waz.content.UserPreferences
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.permissions.PermissionsService
-import com.waz.service.{NetworkModeService, SearchState, ZMessaging}
+import com.waz.service.ContactResult.ContactMethod
+import com.waz.service.{ContactResult, NetworkModeService, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
@@ -48,6 +49,7 @@ import com.waz.zclient.common.views.{FlatWireButton, PickableElement}
 import com.waz.zclient.controllers.globallayout.{IGlobalLayoutController, KeyboardVisibilityObserver}
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.conversation.creation.NewConversationFragment
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.integrations.{IntegrationDetailsController, IntegrationDetailsFragment}
@@ -57,13 +59,11 @@ import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.KeyboardUtils
-import com.waz.zclient.usersearch.ContactsController.{ContactDetails, ContactMethod}
 import com.waz.zclient.usersearch.adapters.PickUsersAdapter
-import com.waz.zclient.usersearch.views.{ContactRowView, SearchBoxView, SearchEditText}
+import com.waz.zclient.usersearch.views.{ContactRowView, SearchEditText}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{IntentUtils, RichView, StringUtils, UiStorage, UserSignal}
 import com.waz.zclient.views._
-import com.waz.zclient.conversation.creation.NewConversationFragment
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -88,7 +88,6 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
   private lazy val conversationController = inject[ConversationController]
   private lazy val browser                = inject[BrowserController]
   private lazy val integrationsController = inject[IntegrationsController]
-  private lazy val contactsController     = inject[ContactsController]
   private lazy val convListController     = inject[ConversationListController]
 
   private lazy val pickUserController     = inject[IPickUserController]
@@ -112,7 +111,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
   private var showLoadingBarDelay: Long = 0L
   private var lastInputIsKeyboardDoneAction: Boolean = false
 
-  private lazy val searchUserController = new SearchUserController(SearchState("", hasSelectedUsers = false, addingToConversation = None))
+  private lazy val searchUserController = new SearchUserController()
 
   private lazy val searchResultRecyclerView = view[RecyclerView](R.id.rv__pickuser__header_list_view)
   private lazy val startUiToolbar           = view[Toolbar](R.id.pickuser_toolbar)
@@ -144,7 +143,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
       zms         <- zms
       permissions <- userAccountsController.permissions.orElse(Signal.const(Set.empty[AccountData.Permission]))
       members     <- zms.teams.searchTeamMembers().orElse(Signal.const(Set.empty[UserData]))
-      searching   <- Option(searchUserController).fold(Signal.const(false))(_.searchState.map(!_.empty))
+      searching   <- searchUserController.filter.map(_.nonEmpty)
     } yield
       if (zms.teamId.nonEmpty && permissions(AccountData.Permission.AddTeamMember) && !members.exists(_.id != zms.selfUserId) && !searching)
         View.VISIBLE
@@ -153,9 +152,8 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
       .onUi(v.setVisibility(_))
   }
 
-  final val searchBoxViewCallback = new SearchBoxView.Callback {
-    override def onRemovedTokenSpan(element: PickableElement): Unit =
-      searchUserController.removeUser(UserId(element.id))
+  private val searchBoxViewCallback = new SearchEditText.Callback {
+    override def onRemovedTokenSpan(element: PickableElement): Unit = {}
 
     override def onFocusChange(hasFocus: Boolean): Unit = {}
 
@@ -163,7 +161,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
 
     override def afterTextChanged(s: String): Unit = {
       val filter = searchBoxView.getSearchFilter
-      searchUserController.setFilter(filter)
+      searchUserController.filter ! filter
       integrationsController.searchQuery ! filter
       searchBoxIsEmpty = filter.isEmpty
       lastInputIsKeyboardDoneAction = false
@@ -261,7 +259,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
       .map(_.teamId.nonEmpty && internalVersion)
       .map(show => tabs.setVisibility(if (show) View.VISIBLE else View.GONE))(Threading.Ui)
 
-    searchUserController.setFilter("")
+    searchUserController.filter ! ""
     integrationsController.searchQuery ! ""
   }
 
@@ -315,7 +313,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
       .setColor(if (keyboardIsVisible || !searchBoxIsEmpty) getColor(R.color.people_picker__loading__color) else accentColor.currentValue.getOrElse(0))
 
     val inviteVisibility =
-      if (keyboardIsVisible || searchUserController.selectedUsers.nonEmpty || isTeamAccount) View.GONE
+      if (keyboardIsVisible || searchUserController.selectedUsers.currentValue.exists(_.nonEmpty) || isTeamAccount) View.GONE
       else View.VISIBLE
     inviteButton.foreach(_.setVisibility(inviteVisibility))
   }
@@ -365,7 +363,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
     //inject[INavigationController].setLeftPage(Page.CREATE_CONV, PickUserFragment.TAG)
   }
 
-  override def onContactListContactClicked(contactDetails: ContactDetails): Unit = {
+  override def onContactListContactClicked(contactDetails: ContactResult): Unit = {
     if (inject[NetworkModeService].isOnlineMode) {
       contactDetails.contactMethods.toList match {
         case method :: Nil if method.getType == ContactMethod.Phone =>
@@ -405,8 +403,8 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
   }
 
   private def sendEmailInvite(contactMethod: ContactMethod) = {
-    contactsController.invite(contactMethod, " ", null)
-    Toast.makeText(getActivity, getResources.getString(R.string.people_picker__invite__sent_feedback), Toast.LENGTH_LONG).show()
+    zms.head.flatMap(_.invitations.invite(contactMethod.contact.id, contactMethod.method, contactMethod.contact.name, " ", None))
+    showToast(R.string.people_picker__invite__sent_feedback)
   }
 
   private def sendSMSInvite(contactMethod: ContactMethod): Unit = {
@@ -430,7 +428,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
     }(Threading.Ui)
 
   private def setConversationQuickMenuVisible(show: Boolean): Unit = {
-    val visible = show || searchUserController.selectedUsers.nonEmpty
+    val visible = show || searchUserController.selectedUsers.currentValue.exists(_.nonEmpty)
     inviteButton.foreach(_.setVisibility(if (visible || isKeyboardVisible || isTeamAccount) View.GONE else View.VISIBLE))
   }
 
@@ -440,7 +438,7 @@ class PickUserFragment extends BaseFragment[PickUserFragment.Container]
 
   private def closeStartUI(): Unit = {
     KeyboardUtils.hideKeyboard(getActivity)
-    searchUserController.setFilter("")
+    searchUserController.filter ! ""
     integrationsController.searchQuery ! ""
     searchResultAdapter.peopleOrServices ! false
     pickUserController.hidePickUser(getCurrentPickerDestination)

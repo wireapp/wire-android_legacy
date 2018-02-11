@@ -19,8 +19,8 @@ package com.waz.zclient.usersearch.viewholders
 
 import android.support.v7.widget.RecyclerView
 import android.view.View
+import com.waz.service.ContactResult
 import com.waz.zclient.R
-import com.waz.zclient.usersearch.ContactsController.ContactDetails
 import com.waz.zclient.usersearch.adapters.PickUsersAdapter
 import com.waz.zclient.usersearch.views.ContactRowView
 import com.waz.zclient.utils.ViewUtils
@@ -29,7 +29,7 @@ class AddressBookContactViewHolder(val view: View, val darkTheme: Boolean) exten
   private val contactRowView: ContactRowView = ViewUtils.getView(view, R.id.crv__contactlist_user)
   if (darkTheme) contactRowView.applyDarkTheme()
 
-  def bind(contact: ContactDetails, callback: PickUsersAdapter.Callback): Unit = {
+  def bind(contact: ContactResult, callback: PickUsersAdapter.Callback): Unit = {
     contactRowView.setCallback(callback)
     contactRowView.setContact(contact)
   }

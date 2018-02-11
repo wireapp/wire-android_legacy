@@ -22,49 +22,50 @@ import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView, Toolbar}
 import android.view.{ContextThemeWrapper, LayoutInflater, View, ViewGroup}
-import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.{UserData, UserId}
-import com.waz.service.{SearchState, ZMessaging}
+import com.waz.service.ZMessaging
 import com.waz.utils.events.{EventContext, Signal, SourceSignal}
-import com.waz.zclient.common.views.{PickableElement, PickerSpannableEditText}
+import com.waz.utils.returning
+import com.waz.zclient.common.views.PickableElement
 import com.waz.zclient.ui.text.TypefaceTextView
-import com.waz.zclient.usersearch.views.{SearchEditText, SearchResultUserRowView}
-import com.waz.zclient.{FragmentHelper, R, ViewHelper}
+import com.waz.zclient.usersearch.views.{PickerSpannableEditText, SearchEditText, SearchResultUserRowView}
 import com.waz.zclient.utils.RichView
+import com.waz.zclient.{FragmentHelper, R, ViewHelper}
 
 import scala.collection.immutable.Set
 
 class NewConversationPickFragment extends Fragment with FragmentHelper {
 
+  import NewConversationPickFragment._
+  import com.waz.threading.Threading.Implicits.Background
+  implicit def cxt: Context = getContext
+
   private lazy val zms = inject[Signal[ZMessaging]]
   private lazy val newConvController = inject[NewConversationController]
 
   private lazy val searchFilter = Signal("")
-  private lazy val adapter = NewConvAdapter(getContext, newConvController.users)
 
-  private lazy val toolbar = view[Toolbar](R.id.toolbar)
-  private lazy val nextButton = view[TypefaceTextView](R.id.confirmation_button)
+  private lazy val searchResults = for {
+    zms     <- zms
+    filter  <- searchFilter
+    convId  <- newConvController.convId
+    results <- zms.userSearch.searchLocal(filter, toConv = convId)
+  } yield results
 
-  override def onCreate(savedInstanceState: Bundle): Unit = {
-    super.onCreate(savedInstanceState)
+  private lazy val adapter = returning(NewConvAdapter(newConvController.users)) { a =>
+    searchResults.onUi(a.setData)
+  }
 
-    val searchResults = for {
-      zms <- zms
-      searchFilter <- searchFilter
-      convId <- newConvController.convId
-      searchState = SearchState(searchFilter, hasSelectedUsers = false, convId)
-      results <- zms.userSearch.search(searchState, Set.empty[UserId])
-    } yield results.localResults
-
-    searchResults.onUi(_.foreach(adapter.setData))
-
+  private lazy val toolbar = returning(view[Toolbar](R.id.toolbar)) { vh =>
     newConvController.convId.map(_.nonEmpty).onUi { hasConv =>
-      toolbar.foreach(_.setVisibility(if (hasConv) View.VISIBLE else View.GONE))
+      vh.foreach(_.setVisibility(if (hasConv) View.VISIBLE else View.GONE))
     }
+  }
 
+  private lazy val nextButton = returning(view[TypefaceTextView](R.id.next_button)) { vh =>
     newConvController.users.map(_.nonEmpty).onUi { hasUsers =>
-      nextButton.foreach(_.setEnabled(hasUsers))
+      vh.foreach(_.setEnabled(hasUsers))
     }
   }
 
@@ -95,7 +96,7 @@ class NewConversationPickFragment extends Fragment with FragmentHelper {
 }
 
 object NewConversationPickFragment {
-  val Tag = ZLog.ImplicitTag.implicitLogTag
+  val Tag = implicitLogTag
 }
 
 
@@ -106,7 +107,7 @@ case class NewConvUserViewHolder(v: SearchResultUserRowView) extends RecyclerVie
   }
 }
 
-case class NewConvAdapter(context: Context, selectedUsers: SourceSignal[Set[UserId]])(implicit eventContext: EventContext) extends RecyclerView.Adapter[NewConvUserViewHolder]{
+case class NewConvAdapter(selectedUsers: SourceSignal[Set[UserId]])(implicit context: Context, eventContext: EventContext) extends RecyclerView.Adapter[NewConvUserViewHolder] {
   private implicit val ctx = context
 
   private var data = Seq.empty[UserData]

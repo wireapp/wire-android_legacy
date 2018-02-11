@@ -15,12 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.common.views
+package com.waz.zclient.usersearch.views
 
 import android.content.Context
 import android.graphics.drawable.ShapeDrawable
 import android.os.Build
-import android.support.annotation.{NonNull, Nullable}
+import android.support.annotation.NonNull
 import android.text._
 import android.text.style.{AbsoluteSizeSpan, ReplacementSpan}
 import android.util.AttributeSet
@@ -28,15 +28,16 @@ import android.view.ActionMode.Callback
 import android.view._
 import android.view.inputmethod.{EditorInfo, InputConnection, InputConnectionWrapper}
 import com.waz.zclient.R
+import com.waz.zclient.common.views.PickableElement
 import com.waz.zclient.pages.main.pickuser.UserTokenSpan
 import com.waz.zclient.ui.text.SpannableEditText
 import com.waz.zclient.utils.ContextUtils._
 
 class PickerSpannableEditText(val context: Context, val attrs: AttributeSet, val defStyle: Int) extends SpannableEditText(context, attrs, defStyle) with TextWatcher {
+  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
+  def this(context: Context) = this(context, null)
 
   implicit val cxt = context
-  initAttributes(attrs)
-  init()
 
   private var flagNotifyAfterTextChanged = true
   private var hintTextSmallScreen = ""
@@ -46,46 +47,38 @@ class PickerSpannableEditText(val context: Context, val attrs: AttributeSet, val
   private var hasText = false
   private var callback: PickerSpannableEditText.Callback = _
 
-  def this(context: Context, attrs: AttributeSet) = {
-    this(context, attrs, 0)
+  Option(attrs).foreach { attrs =>
+    val a = getContext.obtainStyledAttributes(attrs, R.styleable.PickUserEditText)
+    hintTextSmallScreen = a.getString(R.styleable.PickUserEditText_hintSmallScreen)
+    hintTextSize = a.getDimensionPixelSize(R.styleable.PickUserEditText_hintTextSize, 0)
+    a.recycle()
   }
 
-  def this(context: Context) = {
-    this(context, null)
-  }
+  setCustomSelectionActionModeCallback(new Callback { //TODO set null?
+    override def onDestroyActionMode(mode: ActionMode) = {}
+    override def onCreateActionMode(mode: ActionMode, menu: Menu) = false
+    override def onActionItemClicked(mode: ActionMode, item: MenuItem) = false
+    override def onPrepareActionMode(mode: ActionMode, menu: Menu) = false
+  })
 
-  def applyLightTheme(lightTheme: Boolean): Unit = {
+  setLongClickable(false)
+  setTextIsSelectable(false)
+  addTextChangedListener(this)
+  setHintText(getHint)
+
+  def applyLightTheme(lightTheme: Boolean): Unit =
     this.lightTheme = lightTheme
-  }
-
-  private def initAttributes(@Nullable attrs: AttributeSet): Unit =
-    Option(attrs).foreach { attrs =>
-      val a = getContext.obtainStyledAttributes(attrs, R.styleable.PickUserEditText)
-      hintTextSmallScreen = a.getString(R.styleable.PickUserEditText_hintSmallScreen)
-      hintTextSize = a.getDimensionPixelSize(R.styleable.PickUserEditText_hintTextSize, 0)
-      a.recycle()
-    }
-
-  private def init(): Unit = {
-    setCustomSelectionActionModeCallback(new Callback {
-      override def onDestroyActionMode(mode: ActionMode) = {}
-
-      override def onCreateActionMode(mode: ActionMode, menu: Menu) = false
-
-      override def onActionItemClicked(mode: ActionMode, item: MenuItem) = false
-
-      override def onPrepareActionMode(mode: ActionMode, menu: Menu) = false
-    })
-
-    setLongClickable(false)
-    setTextIsSelectable(false)
-    addTextChangedListener(this)
-    setHintText(getHint)
-  }
 
   override protected def onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int): Unit = {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-    adjustHintTextForSmallScreen()
+    if (!TextUtils.isEmpty(getHint) && !TextUtils.isEmpty(hintTextSmallScreen)) {
+      val paint = getPaint
+      val hintWidth: Float = paint.measureText(getHint, 0, getHint.length)
+      val availableTextSpace: Float = getMeasuredWidth - getPaddingLeft - getPaddingRight
+      if (hintWidth > availableTextSpace) {
+        setHint(hintTextSmallScreen)
+      }
+    }
   }
 
   def setHintText(newHint: CharSequence): Unit = {
@@ -140,16 +133,16 @@ class PickerSpannableEditText(val context: Context, val attrs: AttributeSet, val
       resetDeleteModeForSpans()
     }
 
-  def getElements: Set[PickableElement] = elements
+  def getElements: Set[PickableElement] =
+    elements
 
   def reset(): Unit = {
     clearNonSpannableText()
     setText("")
   }
 
-  def getSearchFilter: String = {
+  def getSearchFilter: String =
     getNonSpannableText
-  }
 
   override def onCreateInputConnection(@NonNull outAttrs: EditorInfo): InputConnection = {
     val conn: InputConnection = super.onCreateInputConnection(outAttrs)
@@ -183,16 +176,6 @@ class PickerSpannableEditText(val context: Context, val attrs: AttributeSet, val
       case _ => //
     }
   }
-
-  private def adjustHintTextForSmallScreen(): Unit =
-    if (!TextUtils.isEmpty(getHint) && !TextUtils.isEmpty(hintTextSmallScreen)) {
-      val paint = getPaint
-      val hintWidth: Float = paint.measureText(getHint, 0, getHint.length)
-      val availableTextSpace: Float = getMeasuredWidth - getPaddingLeft - getPaddingRight
-      if (hintWidth > availableTextSpace) {
-        setHint(hintTextSmallScreen)
-      }
-    }
 
   private def removeSelectedElementToken(): Boolean = {
     val buffer = getText
@@ -230,7 +213,6 @@ class PickerSpannableEditText(val context: Context, val attrs: AttributeSet, val
 
   override def onTextChanged(s: CharSequence, start: Int, before: Int, count: Int): Unit =
     moveTypedTextToEnd(start, before, count)
-
 
   def afterTextChanged(s: Editable): Unit =
     if (notifyTextWatcher) {

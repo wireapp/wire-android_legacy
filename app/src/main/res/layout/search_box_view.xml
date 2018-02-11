@@ -23,7 +23,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     >
 
-    <com.waz.zclient.common.views.PickerSpannableEditText
+    <com.waz.zclient.usersearch.views.PickerSpannableEditText
         android:id="@+id/puet_pickuser__searchbox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

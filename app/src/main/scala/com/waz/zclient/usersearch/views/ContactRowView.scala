@@ -22,11 +22,11 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
 import com.waz.model.{UserData, UserId}
+import com.waz.service.ContactResult
 import com.waz.threading.Threading
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.ui.views.ZetaButton
-import com.waz.zclient.usersearch.ContactsController.ContactDetails
 import com.waz.zclient.usersearch.adapters.PickUsersAdapter
 import com.waz.zclient.utils.UiStorage
 import com.waz.zclient.{Injectable, R, ViewHelper}
@@ -44,7 +44,7 @@ class ContactRowView(val context: Context, val attrs: AttributeSet, val defStyle
   private val contactInviteButton = findById[ZetaButton](R.id.zb__contactlist__user_selected_button)
 
   private var user = Option.empty[UserData]
-  private var contactDetails = Option.empty[ContactDetails]
+  private var contactDetails = Option.empty[ContactResult]
   private var callback = Option.empty[PickUsersAdapter.Callback]
 
   inject[AccentColorController].accentColor.on(Threading.Ui) { accentColor =>
@@ -53,7 +53,7 @@ class ContactRowView(val context: Context, val attrs: AttributeSet, val defStyle
 
   def setCallback(callback: PickUsersAdapter.Callback): Unit = this.callback = Some(callback)
 
-  def setContact(contact: ContactDetails): Unit = {
+  def setContact(contact: ContactResult): Unit = {
     contactDetails = Option(contact)
     drawContact(contact)
   }
@@ -75,7 +75,7 @@ class ContactRowView(val context: Context, val attrs: AttributeSet, val defStyle
     chathead.setSelected(selected)
   }
 
-  private def drawContact(contact: ContactDetails): Unit = {
+  private def drawContact(contact: ContactResult): Unit = {
     chathead.setContactDetails(contact)
     contactListItemTextView.setContact(contact.contact)
 

@@ -30,17 +30,16 @@ import com.waz.api.User.ConnectionStatus
 import com.waz.api.User.ConnectionStatus._
 import com.waz.api.impl.AccentColor
 import com.waz.model.{AssetData, UserData, UserId, _}
-import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapResult
 import com.waz.service.assets.AssetService.BitmapResult.BitmapLoaded
 import com.waz.service.images.BitmapSignal
+import com.waz.service.{ContactResult, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache.BitmapRequest.{Round, Single}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.{NameParts, returning}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.ui.utils.TypefaceUtils
-import com.waz.zclient.usersearch.ContactsController.ContactDetails
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 
@@ -128,7 +127,7 @@ class ChatheadView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   def setUserId(userId: UserId): Unit = ctrl.setUserId(userId)
 
-  def setContactDetails(contactDetails: ContactDetails): Unit = ctrl.setContactDetails(contactDetails)
+  def setContactDetails(contactDetails: ContactResult): Unit = ctrl.setContactDetails(contactDetails)
 
   def setIntegration(integration: IntegrationData): Unit = ctrl.setIntegration(integration)
 
@@ -278,7 +277,7 @@ protected class ChatheadController(val setSelectable:            Boolean        
 
   def setUserId(userId: UserId): Unit = Option(userId).fold(throw new IllegalArgumentException("UserId should not be null"))(u => assignInfo ! Some(AssignDetails(u)))
 
-  def setContactDetails(contactDetails: ContactDetails): Unit = Option(contactDetails).fold(throw new IllegalArgumentException("ContactDetails should not be null"))(c => assignInfo ! Some(AssignDetails(c)))
+  def setContactDetails(contactDetails: ContactResult): Unit = Option(contactDetails).fold(throw new IllegalArgumentException("ContactDetails should not be null"))(c => assignInfo ! Some(AssignDetails(c)))
 
   def setIntegration(integration: IntegrationData): Unit = Option(integration).fold(throw new IllegalArgumentException("ContactDetails should not be null"))(i => assignInfo ! Some(AssignDetails(i)))
 
@@ -376,13 +375,13 @@ protected class ChatheadController(val setSelectable:            Boolean        
   //Everything else that requires a redraw
   val invalidate = Signal(bitmap, selected, borderWidth).zip(Signal(initials, hasBeenInvited, connectionStatus)).onChanged
 
-  case class AssignDetails(userId: Option[UserId], contact: Option[ContactDetails], integration: Option[IntegrationData]){
+  case class AssignDetails(userId: Option[UserId], contact: Option[ContactResult], integration: Option[IntegrationData]){
     assert(userId.nonEmpty || contact.nonEmpty || integration.nonEmpty)
   }
 
   object AssignDetails {
     def apply(userId: UserId): AssignDetails = AssignDetails(Some(userId), None, None)
-    def apply(contact: ContactDetails): AssignDetails = AssignDetails(None, Some(contact), None)
+    def apply(contact: ContactResult): AssignDetails = AssignDetails(None, Some(contact), None)
     def apply(integration: IntegrationData): AssignDetails = AssignDetails(None, None, Some(integration))
   }
 
@@ -408,7 +407,7 @@ protected class ChatheadController(val setSelectable:            Boolean        
       )
     }
 
-    def apply(contactDetails: ContactDetails): ChatheadDetails = {
+    def apply(contactDetails: ContactResult): ChatheadDetails = {
       val accentColor = contactBackgroundColor
       val connectionStatus = UNCONNECTED
       val teamMember = false

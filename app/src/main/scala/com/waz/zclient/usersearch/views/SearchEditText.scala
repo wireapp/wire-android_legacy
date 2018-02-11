@@ -23,10 +23,12 @@ import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
 import android.widget.RelativeLayout
 import android.widget.TextView.OnEditorActionListener
-import com.waz.zclient.common.views.{PickableElement, PickerSpannableEditText}
+import com.waz.zclient.common.views.PickableElement
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
+
+import scala.collection.immutable.Set
 
 class SearchEditText(context: Context, attrs: AttributeSet, style: Int) extends RelativeLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -93,4 +95,13 @@ class SearchEditText(context: Context, attrs: AttributeSet, style: Int) extends 
   def setFocus(): Unit = searchBox.requestFocus()
 
   def getElements: Set[PickableElement] = Option(searchBox.getElements).getOrElse(Set())
+}
+
+object SearchEditText {
+
+  trait Callback extends PickerSpannableEditText.Callback {
+    def onFocusChange(hasFocus: Boolean): Unit
+
+    def onClearButton(): Unit
+  }
 }
