@@ -183,7 +183,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def knock(id: ConvId): Unit = zms(_.convsUi.knock(id))
 
   def createGroupConversation(users: Seq[UserId], name: Option[String], localId: ConvId = ConvId()): Future[ConversationData] =
-    zms.head.flatMap { _.convsUi.createGroupConversation(localId, name, users) }
+    zms.head.flatMap { z => z.convsUi.createGroupConversation(localId, name, users, z.teamId) }
 
   // TODO: remove when not used anymore
   def iConv(id: ConvId): IConversation = convStore.getConversation(id.str)
