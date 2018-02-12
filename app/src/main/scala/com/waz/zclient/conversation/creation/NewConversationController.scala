@@ -55,7 +55,7 @@ class NewConversationController(implicit inj: Injector) extends Injectable {
     for {
       name <- name.head
       users <- users.head
-      conv <- conversationController.createGroupConversation(users.toSeq, Some(name))
+      conv <- conversationController.createGroupConversation(users.toSeq, Some(name.trim))
     } yield conv.id
 
   def addUsersToConversation(): Future[Unit] = {
