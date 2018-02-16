@@ -29,7 +29,7 @@ import android.widget.TextView.OnEditorActionListener
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.{UserData, UserId}
 import com.waz.service.ZMessaging
-import com.waz.service.tracking.{GroupConversationEvent, OpenSelectParticipants, TrackingService}
+import com.waz.service.tracking.{OpenSelectParticipants, TrackingService}
 import com.waz.threading.Threading
 import com.waz.utils.events._
 import com.waz.utils.returning
@@ -44,6 +44,7 @@ import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R, ViewHelper}
 
 import scala.collection.immutable.Set
+import scala.concurrent.Future
 
 class NewConversationPickFragment extends Fragment with FragmentHelper with OnBackPressedListener {
 
@@ -158,6 +159,12 @@ class NewConversationPickFragment extends Fragment with FragmentHelper with OnBa
           if (actionId == EditorInfo.IME_ACTION_SEARCH) keyboard.hideKeyboardIfVisible() else false
       })
     }
+
+    (for {
+      zms <- zms.head
+      selectedIds <- newConvController.users.head
+      selected <- Future.sequence(selectedIds.map(zms.users.getUser))
+    } yield selected.flatten).map(_.foreach { user => searchBox.addElement(PickableUser(user.id, user.name)) })(Threading.Ui)
 
     toolbar.foreach(_.setNavigationOnClickListener(new OnClickListener() {
       override def onClick(v: View): Unit = close()
