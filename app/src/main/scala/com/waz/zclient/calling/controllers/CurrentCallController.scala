@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.calling.controllers
 
-import _root_.com.waz.zclient.utils.LayoutSpec
+import _root_.com.waz.zclient.utils.{DeprecationUtils, LayoutSpec}
 import android.media.AudioManager
 import android.os.Vibrator
 import com.waz.ZLog.ImplicitTag._
@@ -179,13 +179,14 @@ class CurrentCallController(implicit inj: Injector, cxt: WireContext) extends In
   }
 
   def vibrate(): Unit = {
+    import com.waz.zclient.utils.ContextUtils._
     val audioManager = Option(inject[AudioManager])
     val vibrator = Option(inject[Vibrator])
 
     val disableRepeat = -1
     (audioManager, vibrator) match {
       case (Some(am), Some(vib)) if am.getRingerMode != AudioManager.RINGER_MODE_SILENT =>
-        vib.vibrate(cxt.getResources.getIntArray(R.array.call_control_enter).map(_.toLong), disableRepeat)
+        DeprecationUtils.vibrate(vib, getIntArray(R.array.call_control_enter).map(_.toLong), disableRepeat)
       case _ =>
     }
   }

@@ -23,7 +23,6 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.{Rect, SurfaceTexture}
 import android.hardware.Camera
-import android.hardware.Camera.{AutoFocusCallback, PictureCallback, ShutterCallback}
 import android.view.{OrientationEventListener, Surface, WindowManager}
 import com.waz.ZLog
 import com.waz.service.images.ImageAssetGenerator
@@ -32,7 +31,8 @@ import com.waz.utils.RichFuture
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.WireContext
 import com.waz.zclient.camera.{CameraFacing, FlashMode}
-import com.waz.zclient.utils.Callback
+import com.waz.zclient.utils.DeprecationUtils.CameraWrap
+import com.waz.zclient.utils.{AutoFocusCallbackDeprecation, Callback, CameraParamsWrapper, CameraSizeWrapper, CameraWrapper, DeprecationUtils, PictureCallbackDeprecated, ShutterCallbackDeprecated}
 import timber.log.Timber
 
 import scala.collection.JavaConverters._
@@ -132,9 +132,9 @@ class AndroidCameraFactory extends CameraFactory {
     new AndroidCamera(info, texture, w, h, cxt, devOrientation, flashMode)
 
   override def getCameraInfos = try {
-    val info = new Camera.CameraInfo
-    Seq.tabulate(Camera.getNumberOfCameras) { i =>
-      Camera.getCameraInfo(i, info)
+    val info = DeprecationUtils.CameraInfoFactory()
+    Seq.tabulate(DeprecationUtils.NUMBER_OF_CAMERAS) { i =>
+      DeprecationUtils.getCameraInfo(i, info)
       CameraInfo(i, CameraFacing.getFacing(info.facing), info.orientation)
     }
   } catch {
@@ -195,12 +195,13 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
 
   camera.foreach { c =>
     val pms = c.getParameters
+    val wrapper = new CameraParamsWrapper(pms)
     c.setPreviewTexture(texture)
-    val ps = getPreviewSize(pms, w, h)
+    val ps = getPreviewSize(wrapper, w, h)
     pms.setPreviewSize(ps.w.toInt, ps.h.toInt)
     previewSize = Some(ps)
 
-    val pictureSize = getPictureSize(pms)
+    val pictureSize = getPictureSize(wrapper)
     pms.setPictureSize(pictureSize.width, pictureSize.height)
 
     pms.setRotation(getCameraRotation(devOrientation.orientation, info))
@@ -210,8 +211,8 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
     if (supportedFlashModes.contains(flashMode)) pms.setFlashMode(flashMode.mode)
     else pms.setFlashMode(FlashMode.OFF.mode)
 
-    if (clickToFocusSupported) setFocusMode(pms, FOCUS_MODE_AUTO)
-    else setFocusMode(pms, FOCUS_MODE_CONTINUOUS_PICTURE)
+    if (clickToFocusSupported) setFocusMode(wrapper, FOCUS_MODE_AUTO)
+    else setFocusMode(wrapper, FOCUS_MODE_CONTINUOUS_PICTURE)
 
     c.setParameters(pms)
     c.startPreview()
@@ -222,16 +223,16 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
     camera match {
       case Some(c) => try {
         c.takePicture(
-          new ShutterCallback {
+          DeprecationUtils.shutterCallback(new ShutterCallbackDeprecated {
             override def onShutter(): Unit = Future(shutter)(Threading.Ui)
-          },
+          }),
           null,
-          new PictureCallback {
-            override def onPictureTaken(data: Array[Byte], camera: Camera) = {
+          DeprecationUtils.pictureCallback(new PictureCallbackDeprecated {
+            override def onPictureTaken(data: Array[Byte], camera: CameraWrapper): Unit = {
               c.startPreview() //restarts the preview as it gets stopped by camera.takePicture()
               promise.success(data)
             }
-          })
+          }))
       } catch {
         case e: Throwable => promise.failure(e)
       }
@@ -248,7 +249,10 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
     camera = None
   }
 
-  override def setOrientation(o: Orientation) = setParams(_.setRotation(getCameraRotation(o.orientation, info)))
+  override def setOrientation(o: Orientation) = DeprecationUtils.setParams(camera.orNull,
+    new CameraWrap {
+      def f(params: CameraParamsWrapper) = params.get.setRotation(getCameraRotation(o.orientation, info))
+    })
 
   override def getSupportedFlashModes = supportedFlashModes
 
@@ -261,18 +265,21 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
       case Some(c) =>
         if (touchRect.width == 0 || touchRect.height == 0) promise.success(())
         else if (clickToFocusSupported) {
-          val focusArea = new Camera.Area(new Rect(
+          val focusArea = DeprecationUtils.Area(new Rect(
             touchRect.left * camCoordsRange / w - camCoordsOffset,
             touchRect.top * camCoordsRange / h - camCoordsOffset,
             touchRect.right * camCoordsRange / w - camCoordsOffset,
             touchRect.bottom * camCoordsRange / h - camCoordsOffset
           ), focusWeight)
 
-          setParams(_.setFocusAreas(List(focusArea).asJava))
+          DeprecationUtils.setParams(camera.orNull, new CameraWrap {
+            override def f(wrapper: CameraParamsWrapper): Unit = wrapper.get.setFocusAreas(List(focusArea).asJava)
+          })
           if (!settingFocus) try {
             settingFocus = true
-            c.autoFocus(new AutoFocusCallback {
-              override def onAutoFocus(s: Boolean, cam: Camera) = {
+
+            DeprecationUtils.setAutoFocusCallback(c, new AutoFocusCallbackDeprecation {
+              def onAutoFocus(s: java.lang.Boolean, cam: CameraWrapper): Unit = {
                 if (!s) Timber.w("Focus was unsuccessful - ignoring")
                 promise.success(())
                 settingFocus = false
@@ -288,14 +295,16 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
     promise.future
   }
 
-  override def setFlashMode(fm: FlashMode) = setParams(_.setFlashMode(fm.mode))
+  override def setFlashMode(fm: FlashMode): Unit = DeprecationUtils.setParams(camera.orNull, new CameraWrap {
+    override def f(wrapper: CameraParamsWrapper): Unit = wrapper.get.setFlashMode(fm.mode)
+  })
 
-  private def getPreviewSize(params: Camera#Parameters, viewWidth: Int, viewHeight: Int) = {
-    val targetRatio = params.getPictureSize.width.toDouble / params.getPictureSize.height.toDouble
+  private def getPreviewSize(params: CameraParamsWrapper, viewWidth: Int, viewHeight: Int) = {
+    val targetRatio = params.get.getPictureSize.width.toDouble / params.get.getPictureSize.height.toDouble
     val targetHeight = Math.min(viewHeight, viewWidth)
-    val sizes = params.getSupportedPreviewSizes.asScala.toVector
+    val sizes = params.get.getSupportedPreviewSizes.asScala.toVector.map(new CameraSizeWrapper(_))
 
-    def byHeight(s: Camera#Size) = Math.abs(s.height - targetHeight)
+    def byHeight(s: CameraSizeWrapper): Int = Math.abs(s.height - targetHeight)
 
     val filteredSizes = sizes.filterNot(s => Math.abs(s.width.toDouble / s.height.toDouble - targetRatio) > ASPECT_TOLERANCE)
     val optimalSize = if (filteredSizes.isEmpty) sizes.minBy(byHeight) else filteredSizes.minBy(byHeight)
@@ -304,8 +313,10 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
     PreviewSize(w, h)
   }
 
-  private def getPictureSize(pms: Camera#Parameters) = {
-    val (bigger, smaller) = pms.getSupportedPictureSizes.asScala.partition(_.height >= ImageAssetGenerator.MediumSize)
+  private def getPictureSize(pms: CameraParamsWrapper) = {
+    val (bigger, smaller) = pms.get.getSupportedPictureSizes.asScala.map(new CameraSizeWrapper(_)).partition { size =>
+      size.height >= ImageAssetGenerator.MediumSize
+    }
     if (bigger.nonEmpty) bigger.minBy(_.width) else smaller.maxBy(_.width)
   }
 
@@ -326,17 +337,11 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
     Option(c.getParameters.getSupportedFlashModes).fold(Set.empty[FlashMode])(_.asScala.toSet.map(FlashMode.get))
   }
 
-  private def clickToFocusSupported = camera.fold(false)(c => c.getParameters.getMaxNumFocusAreas > 0 && supportsFocusMode(c.getParameters, FOCUS_MODE_AUTO))
+  private def clickToFocusSupported = camera.fold(false)(c => c.getParameters.getMaxNumFocusAreas > 0 && supportsFocusMode(new CameraParamsWrapper(c.getParameters), FOCUS_MODE_AUTO))
 
-  private def supportsFocusMode(pms: Camera#Parameters, mode: String) = Option(pms.getSupportedFocusModes).fold(false)(_.contains(mode))
+  private def supportsFocusMode(pms: CameraParamsWrapper, mode: String) = Option(pms.get.getSupportedFocusModes).fold(false)(_.contains(mode))
 
-  private def setFocusMode(pms: Camera#Parameters, mode: String) = if (supportsFocusMode(pms, mode)) pms.setFocusMode(mode)
-
-  private def setParams(f: Camera#Parameters => Unit) = camera.foreach { c =>
-    val params = c.getParameters
-    f(params)
-    c.setParameters(params)
-  }
+  private def setFocusMode(pms: CameraParamsWrapper, mode: String) = if (supportsFocusMode(pms, mode)) pms.get.setFocusMode(mode)
 }
 
 object WireCamera {

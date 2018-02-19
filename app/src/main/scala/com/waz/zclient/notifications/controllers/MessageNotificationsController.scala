@@ -49,7 +49,7 @@ import com.waz.zclient.controllers.userpreferences.UserPreferencesController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{RingtoneUtils, ViewUtils}
+import com.waz.zclient.utils.{DeprecationUtils, RingtoneUtils, ViewUtils}
 import com.waz.zms.NotificationsAndroidService
 import org.threeten.bp.Instant
 
@@ -180,7 +180,7 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
 
       val inboxStyle = new NotificationCompat.InboxStyle()
 
-      val builder = new NotificationCompat.Builder(cxt)
+      val builder = DeprecationUtils.getBuilder(cxt)
         .setWhen(nots.minBy(_.time).time.toEpochMilli)
         .setShowWhen(true)
         .setCategory(NotificationCompat.CATEGORY_MESSAGE)
@@ -294,7 +294,7 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
   }
 
   private def commonBuilder(accountId: AccountId, title: CharSequence, displayTime: Instant, style: NotificationCompat.Style, silent: Boolean) = {
-    val builder = new NotificationCompat.Builder(cxt)
+    val builder = DeprecationUtils.getBuilder(cxt)
       .setShowWhen(true)
       .setCategory(NotificationCompat.CATEGORY_MESSAGE)
       .setPriority(NotificationCompat.PRIORITY_HIGH)

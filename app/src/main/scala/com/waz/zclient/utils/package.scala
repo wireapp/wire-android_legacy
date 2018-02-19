@@ -23,7 +23,6 @@ import android.graphics.LightingColorFilter
 import android.graphics.drawable.LayerDrawable
 import android.support.v7.preference.Preference
 import android.support.v7.preference.Preference.{OnPreferenceChangeListener, OnPreferenceClickListener}
-import android.support.v7.widget.SwitchCompat
 import android.text.{Editable, TextWatcher}
 import android.view.View._
 import android.view.ViewGroup.LayoutParams

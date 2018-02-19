@@ -36,6 +36,7 @@ import com.waz.zclient.calling.controllers.GlobalCallingController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.common.views.ImageController
 import com.waz.zclient._
+import com.waz.zclient.utils.DeprecationUtils
 import com.waz.zms.CallWakeService
 
 class CallingNotificationsController(implicit cxt: WireContext, eventContext: EventContext, inj: Injector) extends Injectable {
@@ -81,7 +82,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
       val message = getCallStateMessage(state, video)
       val title = if (group) getString(R.string.system_notification__group_call_title, callerName, conv.displayName) else conv.displayName
 
-      val builder = new NotificationCompat.Builder(cxt)
+      val builder = DeprecationUtils.getBuilder(cxt)
         .setSmallIcon(R.drawable.ic_menu_logo)
         .setLargeIcon(bmp.orNull)
         .setContentTitle(title)
@@ -111,7 +112,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
 
       def buildNotification = {
         val notification = builder.build
-        notification.priority = Notification.PRIORITY_MAX
+        DeprecationUtils.setPriority(notification, DeprecationUtils.PRIORITY_MAX)
         if (state != OtherCalling) notification.flags |= Notification.FLAG_NO_CLEAR
         notification
       }

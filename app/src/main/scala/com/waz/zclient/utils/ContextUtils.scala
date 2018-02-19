@@ -59,8 +59,7 @@ object ContextUtils {
 
   def getDrawable(resId: Int, theme: Option[Resources#Theme] = None)(implicit context: Context): Drawable = {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-      //noinspection ScalaDeprecation
-      context.getResources.getDrawable(resId)
+      DeprecationUtils.getDrawable(context, resId)
     } else
       context.getResources.getDrawable(resId, theme.orNull)
   }
@@ -74,8 +73,7 @@ object ContextUtils {
 
   def getLocale(implicit context: Context) = {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-      //noinspection ScalaDeprecation
-      context.getResources.getConfiguration.locale
+      DeprecationUtils.getDefaultLocale(context)
     } else {
       context.getResources.getConfiguration.getLocales.get(0)
     }

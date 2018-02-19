@@ -32,6 +32,7 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.common.controllers.SoundController
 import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.DeprecationUtils
 import com.waz.zclient.{Injectable, Injector, R, WireContext}
 
 class GlobalCallingController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext) extends Injectable {
@@ -275,7 +276,7 @@ private class ScreenManager(implicit injector: Injector) extends Injectable {
 
   private def createWakeLock() = {
     val flags = if (stayAwake)
-      PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP
+      DeprecationUtils.WAKE_LOCK_OPTIONS
     else PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK
     releaseWakeLock()
     wakeLock = powerManager.map(_.newWakeLock(flags, TAG))

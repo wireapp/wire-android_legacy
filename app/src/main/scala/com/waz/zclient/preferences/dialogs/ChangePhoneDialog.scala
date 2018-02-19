@@ -50,7 +50,7 @@ import com.waz.zclient.appentry.{GenericRegisterPhoneError, PhoneExistsError}
 import com.waz.zclient.controllers.deviceuser.IDeviceUserController
 import com.waz.zclient.newreg.fragments.country.{Country, CountryController}
 import com.waz.zclient.ui.utils.{DrawableUtils, MathUtils}
-import com.waz.zclient.utils.{RichView, ViewUtils}
+import com.waz.zclient.utils.{DeprecationUtils, RichView, ViewUtils}
 import com.waz.ZLog.ImplicitTag._
 
 import scala.concurrent.Future
@@ -222,7 +222,7 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
       errorView.setText(error)
       errorView.setVisible(true)
       if (animate) {
-        if (MathUtils.floatEqual(ViewCompat.getAlpha(errorView), 1f)) ViewCompat.setAlpha(errorView, 0f)
+        if (MathUtils.floatEqual(DeprecationUtils.getAlpha(errorView), 1f)) DeprecationUtils.setAlpha(errorView, 0f)
         ViewCompat.animate(errorView).alpha(1f).setDuration(AnimationDuration).setInterpolator(LINEAR_OUT_SLOW_IN_INTERPOLATOR).setListener(new ViewPropertyAnimatorListenerAdapter() {
           override def onAnimationStart(view: View) = view.setVisible(true)
         }).start()

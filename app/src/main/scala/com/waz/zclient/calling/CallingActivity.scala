@@ -29,7 +29,7 @@ import com.waz.threading.Threading
 import com.waz.zclient._
 import com.waz.zclient.calling.controllers.GlobalCallingController
 import com.waz.zclient.calling.views.VideoCallingView
-import com.waz.zclient.utils.RichView
+import com.waz.zclient.utils.{DeprecationUtils, RichView}
 
 class CallingActivity extends BaseActivity {
   import CallingActivity._
@@ -86,7 +86,7 @@ class CallingActivity extends BaseActivity {
         WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
         WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
         WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-        WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+        DeprecationUtils.FLAG_DISMISS_KEYGUARD
     )
   }
 

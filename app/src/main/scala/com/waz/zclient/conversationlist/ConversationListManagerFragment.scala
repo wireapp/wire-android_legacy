@@ -48,7 +48,6 @@ import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.connect.{BlockedUserProfileFragment, ConnectRequestLoadMode, PendingConnectRequestManagerFragment, SendConnectRequestFragment}
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController.Destination
-import com.waz.zclient.pages.main.pickuser.controller.IPickUserController.Destination._
 import com.waz.zclient.pages.main.pickuser.controller.{IPickUserController, PickUserControllerScreenObserver}
 import com.waz.zclient.participants.OptionsMenuFragment
 import com.waz.zclient.ui.animation.interpolators.penner.{Expo, Quart}
@@ -103,6 +102,8 @@ class ConversationListManagerFragment extends Fragment
 
   lazy val hasConvs = convListController.establishedConversations.map(_.nonEmpty)
 
+  import pickUserController._
+
   lazy val animationType = {
     import LoadingIndicatorView._
     hasConvs.map {
@@ -141,14 +142,14 @@ class ConversationListManagerFragment extends Fragment
         v.resetFullScreenPadding()
       }
 
+
       if (savedInstanceState == null) {
         val fm = getChildFragmentManager
-        import pickUserController._
         // When re-starting app to open into specific page, child fragments may exist despite savedInstanceState == null
         if (isShowingUserProfile) hideUserProfile()
-        if (isShowingPickUser(CONVERSATION_LIST)) {
-          hidePickUser(CONVERSATION_LIST)
-          Option(fm.findFragmentByTag(SearchUIFragment.TAG)).foreach { f =>
+        if (isShowingPickUser(Destination.CONVERSATION_LIST)) {
+          hidePickUser(Destination.CONVERSATION_LIST)
+          Option(fm.findFragmentByTag(SearchUIFragment.TAG)).foreach { _ =>
             fm.popBackStack(SearchUIFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE)
           }
         }
@@ -171,23 +172,19 @@ class ConversationListManagerFragment extends Fragment
         }
       }
 
-      convController.convChanged.map(_.requester).onUi { req =>
-        import ConversationChangeRequester._
+      convController.convChanged.map(_.requester).onUi {
+        case ConversationChangeRequester.START_CONVERSATION |
+             ConversationChangeRequester.START_CONVERSATION_FOR_CALL |
+             ConversationChangeRequester.START_CONVERSATION_FOR_VIDEO_CALL |
+             ConversationChangeRequester.START_CONVERSATION_FOR_CAMERA |
+             ConversationChangeRequester.INTENT =>
+          stripToConversationList()
 
-        req match {
-          case START_CONVERSATION |
-               START_CONVERSATION_FOR_CALL |
-               START_CONVERSATION_FOR_VIDEO_CALL |
-               START_CONVERSATION_FOR_CAMERA |
-               INTENT =>
-            stripToConversationList()
+        case ConversationChangeRequester.INCOMING_CALL =>
+          stripToConversationList()
+          animateOnIncomingCall()
 
-          case INCOMING_CALL =>
-            stripToConversationList()
-            animateOnIncomingCall()
-
-          case _ => //
-        }
+        case _ => //
       }
 
       accentColor.accentColor.onUi { c =>

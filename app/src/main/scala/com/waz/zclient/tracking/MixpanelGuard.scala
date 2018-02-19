@@ -27,7 +27,6 @@ import com.waz.zclient.{BuildConfig, WireContext}
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import scala.language.{implicitConversions, reflectiveCalls}
 
 object MixpanelGuard {
 

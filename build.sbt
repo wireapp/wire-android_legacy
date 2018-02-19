@@ -112,7 +112,7 @@ lazy val app = Project("zclient-app", file("app"))
     dexMaxHeap := "6144M",
     minSdkVersion := "17",
     libraryDependencies ++= Seq (multidex, supportannotations, supportdesign, audioNotifications, cardview,
-      spotifyAuth, spotifyPlayer, nineoldandroids, localytics, psBase, psGcm, psMaps, psLocation, mp4parser,
+      nineoldandroids, localytics, psBase, psGcm, psMaps, psLocation, mp4parser,
       "com.jakewharton.hugo" % "hugo-annotations" % "1.2.1" % "provided",
       "com.wire" % "testutils" % zmsDevVersion % Test,
       "com.geteit" %% "robotest" % "0.7" % Test exclude("org.scalatest", "scalatest"),

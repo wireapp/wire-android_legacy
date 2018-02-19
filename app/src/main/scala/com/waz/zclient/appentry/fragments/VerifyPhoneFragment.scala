@@ -19,7 +19,7 @@ package com.waz.zclient.appentry.fragments
 
 import android.os.{Build, Bundle, Handler}
 import android.support.v4.content.ContextCompat
-import android.text.{Editable, Html, TextWatcher}
+import android.text.{Editable, TextWatcher}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{TextView, Toast}
 import com.waz.service.ZMessaging
@@ -34,6 +34,7 @@ import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.ui.text.TypefaceEditText
 import com.waz.zclient.ui.utils.KeyboardUtils
+import com.waz.zclient.utils.DeprecationUtils
 
 object VerifyPhoneFragment {
   val TAG: String = classOf[VerifyPhoneFragment].getName
@@ -149,12 +150,7 @@ class VerifyPhoneFragment extends BaseFragment[VerifyPhoneFragment.Container] wi
 
   private def onPhoneNumberLoaded(phone: String): Unit = {
     val text = String.format(getResources.getString(R.string.activation_code_info_manual), phone)
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N)
-      //noinspection ScalaDeprecation
-      textViewInfo.setText(Html.fromHtml(text))
-    else
-      textViewInfo.setText(Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY))
-
+    textViewInfo.setText(DeprecationUtils.fromHtml(text))
   }
 
   private def requestCode(shouldCall: Boolean) = {

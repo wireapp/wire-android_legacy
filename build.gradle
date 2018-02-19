@@ -65,7 +65,7 @@ ext {
     targetSdkVersion = 23
     buildToolsVersion = '26.0.1'
     scalaMajorVersion = '2.11'
-    scalaVersion = scalaMajorVersion + '.8'
+    scalaVersion = scalaMajorVersion + '.12'
     sourceCompatibilityVersion = JavaVersion.VERSION_1_7
     targetCompatibilityVersion = JavaVersion.VERSION_1_7
     preDexLibs = !project.hasProperty('disablePreDex')

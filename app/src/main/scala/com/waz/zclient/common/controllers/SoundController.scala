@@ -30,7 +30,7 @@ import com.waz.media.manager.context.IntensityLevel
 import com.waz.service.ZMessaging
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.RingtoneUtils
+import com.waz.zclient.utils.{DeprecationUtils, RingtoneUtils}
 import com.waz.zclient.utils.RingtoneUtils.{getUriForRawId, isDefaultValue}
 import com.waz.zclient.{R, _}
 
@@ -138,7 +138,7 @@ class SoundController(implicit inj: Injector, cxt: Context) extends Injectable {
     (audioManager, vibrator) match {
       case (Some(am), Some(vib)) if play && am.getRingerMode != AudioManager.RINGER_MODE_SILENT && isVibrationEnabled =>
         vib.cancel() // cancel any current vibrations
-        vib.vibrate(getIntArray(patternId).map(_.toLong), if (loop) 0 else -1)
+        DeprecationUtils.vibrate(vib, getIntArray(patternId).map(_.toLong), if (loop) 0 else -1)
       case (_, Some(vib)) => vib.cancel()
       case _ =>
     }

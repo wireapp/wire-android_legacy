@@ -139,13 +139,12 @@ class OptionsMenu(val context: Context, val attrs: AttributeSet, val defStyleAtt
         val item = items(itemNumber)
 
         row.addView(returning(LayoutInflater.from(getContext).inflate(R.layout.options_menu__item, this, false)) { container =>
-          import OptionsTheme.Type._
           returning(getView[FrameLayout](container, R.id.fl_options_menu_button)) { v =>
             val drawable = (item.isToggled, theme.getType) match {
-              case (true,  DARK) => R.drawable.selector__icon_button__background__dark_toggled
-              case (true,  _)    => R.drawable.selector__icon_button__background__light_toggled
-              case (false, DARK) => R.drawable.selector__icon_button__background__dark
-              case (false, _)    => R.drawable.selector__icon_button__background__light
+              case (true,  OptionsTheme.Type.DARK) => R.drawable.selector__icon_button__background__dark_toggled
+              case (true,  _)                      => R.drawable.selector__icon_button__background__light_toggled
+              case (false, OptionsTheme.Type.DARK) => R.drawable.selector__icon_button__background__dark
+              case (false, _)                      => R.drawable.selector__icon_button__background__light
             }
             v.setBackground(getDrawable(drawable))
           }
@@ -153,9 +152,9 @@ class OptionsMenu(val context: Context, val attrs: AttributeSet, val defStyleAtt
           returning(getView[GlyphTextView](container, R.id.gtv__options_menu_button__glyph)) { v =>
             v.setText(item.resGlyphId)
             val inverted = (item.isToggled, theme.getType) match {
-              case (true,  DARK) => ctrl.themes.optionsLightTheme
-              case (true,  _)    => ctrl.themes.optionsDarkTheme
-              case (false, _)    => theme
+              case (true,  OptionsTheme.Type.DARK) => ctrl.themes.optionsLightTheme
+              case (true,  _)                      => ctrl.themes.optionsDarkTheme
+              case (false, _)                      => theme
             }
             v.setTextColor(inverted.getTextColorPrimarySelector)
           }

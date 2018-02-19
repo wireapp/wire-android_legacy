@@ -35,7 +35,8 @@ import com.waz.zclient._
 import com.waz.zclient.appentry.EntryError
 import com.waz.zclient.appentry.controllers.SignInController.{InputType, SignInMethod}
 import com.waz.zclient.tracking.AddPhotoOnRegistrationEvent.Source
-import net.hockeyapp.android.{CrashManagerListener, ExceptionHandler}
+import com.waz.zclient.utils.DeprecationUtils
+import net.hockeyapp.android.CrashManagerListener
 import org.json.JSONObject
 
 import scala.collection.JavaConverters._
@@ -214,7 +215,7 @@ object GlobalTrackingController {
     t match {
       case _: RSRuntimeException => //
       case _ =>
-        ExceptionHandler.saveException(t, new CrashManagerListener {
+        DeprecationUtils.saveException(t, new CrashManagerListener {
           override def shouldAutoUploadCrashes: Boolean = true
           override def getUserID: String = Try(ZMessaging.context.getSharedPreferences("zprefs", Context.MODE_PRIVATE).getString("com.waz.device.id", "???")).getOrElse("????")
           override def getDescription: String = s"zmessaging - $tag - $description"

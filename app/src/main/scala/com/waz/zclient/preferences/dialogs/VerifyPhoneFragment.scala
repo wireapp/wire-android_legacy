@@ -21,7 +21,6 @@ import android.os.Bundle
 import android.support.design.widget.TextInputLayout
 import android.support.v4.app.DialogFragment
 import android.support.v4.app.DialogFragment.STYLE_NO_FRAME
-import android.telephony.PhoneNumberUtils
 import android.text.{Editable, TextUtils}
 import android.view.View.OnKeyListener
 import android.view.WindowManager.LayoutParams.{SOFT_INPUT_ADJUST_RESIZE, SOFT_INPUT_STATE_ALWAYS_HIDDEN}
@@ -36,7 +35,7 @@ import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.pages.main.profile.views.OnTextChangedListener
 import com.waz.zclient.ui.utils.TypefaceUtils
-import com.waz.zclient.utils.RichView
+import com.waz.zclient.utils.{DeprecationUtils, RichView}
 import com.waz.zclient.{FragmentHelper, R}
 
 class VerifyPhoneFragment extends DialogFragment with FragmentHelper {
@@ -61,7 +60,7 @@ class VerifyPhoneFragment extends DialogFragment with FragmentHelper {
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
 
-    val phonNumber = PhoneNumber(PhoneNumberUtils.formatNumber(getArguments.getString(ArgPhone, "")))
+    val phoneNumber = PhoneNumber(DeprecationUtils.formatNumber(getArguments.getString(ArgPhone, "")))
 
     val view = inflater.inflate(R.layout.fragment_preference_phone_number_verification, container, false)
 
@@ -73,7 +72,7 @@ class VerifyPhoneFragment extends DialogFragment with FragmentHelper {
       v.setEnabled(false)
       v.onClick {
         ZMessaging.accountsService.flatMap {
-          _.verifyPhoneNumber(PhoneCredentials(phonNumber, Option(ConfirmationCode(new String(verificationCode)))), KindOfVerification.VERIFY_ON_UPDATE).map {
+          _.verifyPhoneNumber(PhoneCredentials(phoneNumber, Option(ConfirmationCode(new String(verificationCode)))), KindOfVerification.VERIFY_ON_UPDATE).map {
             case Right(()) => dismiss()
             case _         => verificationCodeInputLayout.setError(getString(R.string.new_reg_phone_generic_error_header))
           } (Threading.Ui)
@@ -89,7 +88,7 @@ class VerifyPhoneFragment extends DialogFragment with FragmentHelper {
         v.animate.alpha(0f).start()
 
         ZMessaging.accountsService.flatMap {
-          _.requestPhoneConfirmationCode(phonNumber, KindOfAccess.REGISTRATION).map {
+          _.requestPhoneConfirmationCode(phoneNumber, KindOfAccess.REGISTRATION).map {
             case ActivateResult.Success =>
               v.animate.alpha(1f).start()
             case _ =>
@@ -102,7 +101,7 @@ class VerifyPhoneFragment extends DialogFragment with FragmentHelper {
     }
 
     returning(findById[TextView](view, R.id.tv__verification_description)) {
-      _.setText(getString(R.string.pref__account_action__phone_verification__description, phonNumber.str))
+      _.setText(getString(R.string.pref__account_action__phone_verification__description, phoneNumber.str))
     }
 
     textBoxes = Seq(

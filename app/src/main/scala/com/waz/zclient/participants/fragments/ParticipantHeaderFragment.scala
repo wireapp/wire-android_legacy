@@ -24,16 +24,13 @@ import android.support.v7.widget.Toolbar
 import android.view._
 import android.view.animation.{AlphaAnimation, Animation}
 import android.widget.TextView
-import com.waz.api.Verification
-import com.waz.model.UserData
-import com.waz.utils.events.{Signal, Subscription}
+import com.waz.utils.events.Subscription
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.utils.{RichView, ViewUtils}
-import com.waz.zclient.views.e2ee.ShieldView
 import com.waz.zclient.{FragmentHelper, R}
 
 class ParticipantHeaderFragment extends BaseFragment[ParticipantHeaderFragment.Container] with FragmentHelper {
