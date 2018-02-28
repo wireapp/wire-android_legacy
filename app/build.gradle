@@ -298,7 +298,14 @@ dependencies {
 }
 
 tasks.withType(ScalaCompile) {
-    scalaCompileOptions.additionalParameters = ["-feature", "-target:jvm-1.7", "-Xfuture", "-deprecation", "-Yinline-warnings", "-Ywarn-unused-import", "-encoding", "UTF-8"]
+    scalaCompileOptions.additionalParameters = [
+        "-feature",
+        "-Xfuture",
+        "-Xfatal-warnings",
+        "-deprecation",
+        "-Ywarn-unused-import",
+        "-encoding",
+        "UTF-8"]
 }
 
 def getDate() {

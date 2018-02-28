@@ -17,9 +17,18 @@ scalaVersion in Global := "2.11.8"
 
 compileOrder in Global := CompileOrder.Mixed
 
-javacOptions in Global ++= Seq("-source", "1.7", "-target", "1.7")
+javacOptions in Global ++= Seq("-source", "1.7", "-target", "-Werror" , "1.7")
 
-scalacOptions in Global ++= Seq("-feature", "-target:jvm-1.7", "-Xfuture", "-deprecation", "-Yinline-warnings", "-Ywarn-unused-import", "-encoding", "UTF-8")
+scalacOptions in Global ++= Seq(
+    "-feature",
+    "-target:jvm-1.7",
+    "-Xfuture",
+    "-Xfatal-warnings" ,
+    "-deprecation",
+    "-Yinline-warnings",
+    "-Ywarn-unused-import",
+    "-encoding",
+    "UTF-8")
 
 resolvers in Global ++= Seq (
   "Local Maven Repository" at "file://" + Path.userHome.absolutePath + "/.m2/repository",

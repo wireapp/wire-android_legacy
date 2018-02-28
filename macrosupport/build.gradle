@@ -26,7 +26,3 @@ dependencies {
     provided deps.scalaReflect
 
 }
-
-tasks.withType(ScalaCompile) {
-    scalaCompileOptions.additionalParameters = ["-feature", "-target:jvm-1.7", "-Xfuture", "-deprecation", "-Yinline-warnings", "-Ywarn-unused-import", "-encoding", "UTF-8"]
-}
