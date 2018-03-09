@@ -17,12 +17,8 @@
  */
 package com.waz.zclient.pages.main.conversation.controller;
 
-import android.view.View;
 import com.waz.api.Message;
-import com.waz.api.User;
 import com.waz.model.ConvId;
-import com.waz.model.IntegrationId;
-import com.waz.model.ProviderId;
 import com.waz.model.UserId;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 
@@ -32,12 +28,8 @@ import java.util.Set;
 public class ConversationScreenController implements IConversationScreenController {
     private Set<ConversationScreenControllerObserver> conversationScreenControllerObservers = new HashSet<>();
 
-    private boolean isShowingParticipant;
-    private boolean isSingleConversation;
-    private boolean isMemberOfConversation;
     private boolean isShowingUser;
     private DialogLaunchMode launchMode;
-    private User showDevicesTabForUser;
 
     @Override
     public void addConversationControllerObservers(ConversationScreenControllerObserver conversationScreenControllerObserver) {
@@ -58,28 +50,6 @@ public class ConversationScreenController implements IConversationScreenControll
     }
 
     @Override
-    public void showParticipants(View anchorView, boolean showDeviceTabIfSingle) {
-        isShowingParticipant = true;
-        for (ConversationScreenControllerObserver conversationScreenControllerObserver : conversationScreenControllerObservers) {
-            conversationScreenControllerObserver.onShowParticipants(anchorView, isSingleConversation, isMemberOfConversation, showDeviceTabIfSingle);
-        }
-    }
-
-    @Override
-    public void hideParticipants(boolean backOrButtonPressed, boolean hideByConversationChange) {
-        if (!isShowingParticipant &&
-            launchMode == null) {
-            return;
-        }
-        for (ConversationScreenControllerObserver conversationScreenControllerObserver : conversationScreenControllerObservers) {
-            conversationScreenControllerObserver.onHideParticipants(backOrButtonPressed,
-                                                                    hideByConversationChange,
-                                                                    isSingleConversation);
-        }
-        resetToMessageStream();
-    }
-
-    @Override
     public void editConversationName(boolean edit) {
         for (ConversationScreenControllerObserver conversationManagerScreenControllerObserver : conversationScreenControllerObservers) {
             conversationManagerScreenControllerObserver.onShowEditConversationName(edit);
@@ -87,43 +57,7 @@ public class ConversationScreenController implements IConversationScreenControll
     }
 
     @Override
-    public void setShowDevicesTab(User user) {
-        this.showDevicesTabForUser = user;
-    }
-
-    @Override
-    public boolean shouldShowDevicesTab() {
-        return showDevicesTabForUser != null;
-    }
-
-    @Override
-    public boolean isShowingParticipant() {
-        return isShowingParticipant;
-    }
-
-    @Override
-    public void resetToMessageStream() {
-        isShowingParticipant = false;
-        isShowingUser = false;
-        showDevicesTabForUser = null;
-        launchMode = null;
-    }
-
-    @Override
     public void setSingleConversation(boolean isSingleConversation) {
-        this.isSingleConversation = isSingleConversation;
-    }
-
-    @Override
-    public void setMemberOfConversation(boolean isMemberOfConversation) {
-        this.isMemberOfConversation = isMemberOfConversation;
-    }
-
-    @Override
-    public void addPeopleToConversation() {
-        for (ConversationScreenControllerObserver observer : conversationScreenControllerObservers) {
-            observer.onAddPeopleToConversation();
-        }
     }
 
     @Override
@@ -188,13 +122,6 @@ public class ConversationScreenController implements IConversationScreenControll
     public void showLikesList(Message message) {
         for (ConversationScreenControllerObserver observer : conversationScreenControllerObservers) {
             observer.onShowLikesList(message);
-        }
-    }
-
-    @Override
-    public void showIntegrationDetails(ProviderId providerId, IntegrationId integrationId) {
-        for (ConversationScreenControllerObserver observer : conversationScreenControllerObservers) {
-            observer.onShowIntegrationDetails(providerId, integrationId);
         }
     }
 }

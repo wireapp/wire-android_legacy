@@ -28,14 +28,14 @@ import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.pages.BaseFragment
-import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
+import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
 
 class ParticipantHeaderFragment extends BaseFragment[ParticipantHeaderFragment.Container] with FragmentHelper {
   implicit def cxt: Context = getActivity
 
-  private lazy val screenController       = inject[IConversationScreenController]
+  private lazy val participantsController = inject[ParticipantsController]
   private lazy val themeController        = inject[ThemeController]
 
   private var subs = Set.empty[Subscription]
@@ -55,7 +55,7 @@ class ParticipantHeaderFragment extends BaseFragment[ParticipantHeaderFragment.C
   }
 
   private lazy val closeIcon = returning(view[TextView](R.id.participants_header__close_icon)) { vh =>
-    vh.onClick(_ => screenController.hideParticipants(true, false))
+    vh.onClick(_ => participantsController.onHideParticipants ! {})
   }
 
   private lazy val headerReadOnlyTextView = returning(view[TextView](R.id.participants__header)) { vh =>

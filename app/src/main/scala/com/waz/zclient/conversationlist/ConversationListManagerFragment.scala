@@ -20,7 +20,7 @@ package com.waz.zclient.conversationlist
 import android.content.Intent
 import android.os.Bundle
 import android.support.v4.app.{Fragment, FragmentManager}
-import android.view.{LayoutInflater, View, ViewGroup}
+import android.view.{LayoutInflater, ViewGroup}
 import android.widget.FrameLayout
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.{verbose, warn}
@@ -438,28 +438,15 @@ class ConversationListManagerFragment extends Fragment
   override def dismissSingleUserProfile() =
     dismissUserProfile()
 
-  override def onShowParticipants(anchorView:             View,
-                                  isSingleConversation:   Boolean,
-                                  isMemberOfConversation: Boolean,
-                                  showDeviceTabIfSingle:  Boolean) = {}
-
-  override def onHideParticipants(backOrButtonPressed:      Boolean,
-                                  hideByConversationChange: Boolean,
-                                  isSingleConversation:     Boolean) = {}
-
   override def onShowEditConversationName(show: Boolean) = {}
 
   override def onHideUser() = {}
-
-  override def onAddPeopleToConversation() = {}
 
   override def onHideOtrClient() = {}
 
   override def onShowLikesList(message: Message) = {}
 
   override def showRemoveConfirmation(userId: UserId) = {}
-
-  override def onShowIntegrationDetails(providerId: ProviderId, integrationId: IntegrationId): Unit = {}
 }
 
 object ConversationListManagerFragment {

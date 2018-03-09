@@ -119,7 +119,7 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
     }
   }
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
     verbose(s"set $part")
     part foreach { content ! _ }

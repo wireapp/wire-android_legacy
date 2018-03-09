@@ -18,15 +18,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-    >
-
-    <FrameLayout
-        android:id="@+id/fl__conversation_manager__message_list_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
-
-</FrameLayout>
+<com.waz.zclient.messages.parts.WirelessLinkPartView xmlns:android="http://schemas.android.com/apk/res/android"
+                                                     android:orientation="vertical"
+                                                     android:layout_width="match_parent"
+                                                     android:layout_height="match_parent"
+                                                     android:gravity="start"
+                                                     android:paddingStart="@dimen/content__padding_left"
+                                                     android:paddingEnd="@dimen/wire__padding__large"/>

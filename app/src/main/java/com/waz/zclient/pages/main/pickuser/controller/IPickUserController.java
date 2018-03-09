@@ -45,8 +45,6 @@ public interface IPickUserController {
 
     boolean isShowingPickUser(Destination destination);
 
-    void resetShowingPickUser(Destination destination);
-
     void showUserProfile(UserId userId);
 
     void hideUserProfile();

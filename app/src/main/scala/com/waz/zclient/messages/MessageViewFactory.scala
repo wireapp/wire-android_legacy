@@ -60,6 +60,7 @@ class MessageViewFactory {
         case MemberChange       => ViewHelper.inflate(R.layout.message_member_change, parent, false)
         case ConnectRequest     => ViewHelper.inflate(R.layout.message_connect_request, parent, false)
         case ConversationStart  => ViewHelper.inflate(R.layout.message_conversation_start, parent, false)
+        case WirelessLink       => ViewHelper.inflate(R.layout.message_wireless_link, parent, false)
         case OtrMessage         => ViewHelper.inflate(R.layout.message_otr_part, parent, false)
         case SoundMedia         => ViewHelper.inflate(R.layout.message_soundmedia, parent, false)
         case MissedCall         => ViewHelper.inflate(R.layout.message_missed_call, parent, false)

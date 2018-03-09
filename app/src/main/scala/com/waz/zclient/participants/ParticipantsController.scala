@@ -18,7 +18,6 @@
 package com.waz.zclient.participants
 
 import android.content.Context
-import android.view.View
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model._
 import com.waz.service.ZMessaging
@@ -45,7 +44,9 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
   private lazy val screenController       = inject[IConversationScreenController]
 
   private lazy val selectedParticipant = Signal(Option.empty[UserId])
-  val showParticipantsRequest = EventStream[(View, Boolean)]()
+
+  val onShowParticipants = EventStream[Option[String]]() //Option[String] = fragment tag //TODO use type?
+  val onHideParticipants = EventStream[Unit]()
 
   lazy val otherParticipants = convController.currentConvMembers
   lazy val conv              = convController.currentConv

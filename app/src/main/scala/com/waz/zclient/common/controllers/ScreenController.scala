@@ -18,27 +18,18 @@
 package com.waz.zclient.common.controllers
 
 import android.content.Context
-import android.view.View
 import com.waz.model.MessageId
 import com.waz.service.ZMessaging
 import com.waz.zclient.Intents.ShowDevicesIntent
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
-import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.{Injectable, Injector}
 
 class ScreenController(implicit injector: Injector, context: Context) extends Injectable {
 
   private lazy val conversationController = inject[IConversationScreenController]
-  private lazy val participantsController = inject[ParticipantsController]
 
   def openOtrDevicePreferences() =
     context.startActivity(ShowDevicesIntent)
-
-  def showParticipants(anchorView: View, showDeviceTabIfSingle: Boolean = false) = {
-    // TODO: remove the call to IConversationScreenController when no longer used
-    conversationController.showParticipants(anchorView, showDeviceTabIfSingle)
-    participantsController.showParticipantsRequest ! (anchorView, showDeviceTabIfSingle)
-  }
 
   def showUsersWhoLike(mId: MessageId) = conversationController.showLikesList(ZMessaging.currentUi.messages.cachedOrNew(mId))
 

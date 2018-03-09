@@ -18,15 +18,14 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-    >
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/light_graphite_24" />
+    <corners android:radius="@dimen/button__corner_radius" />
+    <padding
+        android:left="@dimen/wire__padding__regular"
+        android:top="@dimen/background__picture__outer_stroke_width"
+        android:right="@dimen/wire__padding__regular"
+        android:bottom="@dimen/background__picture__outer_stroke_width"
+    />
 
-    <FrameLayout
-        android:id="@+id/fl__conversation_manager__message_list_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
-
-</FrameLayout>
+</shape>

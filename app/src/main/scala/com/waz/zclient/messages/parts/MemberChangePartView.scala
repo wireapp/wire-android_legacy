@@ -31,6 +31,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.messages._
 import com.waz.zclient.utils.ContextUtils._
@@ -63,9 +64,10 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) ex
   }
 
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MessageView.MsgBindOptions) = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]) = {
     super.set(msg, part, opts)
-    position ! opts.position
+    opts.foreach(position ! _.position)
+
   }
 
   val memberNames = users.memberDisplayNames(message, boldNames = true)

@@ -66,11 +66,13 @@ class MissedCallPartView(context: Context, attrs: AttributeSet, style: Int) exte
     TextViewUtils.boldText(tvMessage)
   }
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
     userId ! msg.message.userId
 
-    gtvIcon.setText(if (opts.isSelf) R.string.glyph__call else R.string.glyph__end_call)
-    gtvIcon.setTextColor(getColor(if (opts.isSelf) R.color.accent_green else R.color.accent_red))
+    opts.foreach { o =>
+      gtvIcon.setText(if (o.isSelf) R.string.glyph__call else R.string.glyph__end_call)
+      gtvIcon.setTextColor(getColor(if (o.isSelf) R.color.accent_green else R.color.accent_red))
+    }
   }
 }

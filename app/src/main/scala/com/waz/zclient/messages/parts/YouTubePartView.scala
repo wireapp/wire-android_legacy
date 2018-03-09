@@ -98,9 +98,9 @@ class YouTubePartView(context: Context, attrs: AttributeSet, style: Int) extends
     setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, h))
   }
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
-    width.mutateOrDefault(identity, opts.listDimensions.width)
+    width.mutateOrDefault(identity, opts.map(_.listDimensions.width).getOrElse(0))
     part foreach { content ! _ }
   }
 

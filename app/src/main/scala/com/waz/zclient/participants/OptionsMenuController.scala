@@ -51,6 +51,7 @@ class OptionsMenuController(implicit injector: Injector, context: Context, ec: E
 
   val zMessaging             = inject[Signal[ZMessaging]]
   val convController         = inject[ConversationController]
+  val participantsController = inject[ParticipantsController]
   val navController          = inject[INavigationController]
   val confirmationController = inject[IConfirmationController]
   val themes                 = inject[ThemeController]
@@ -167,7 +168,7 @@ class OptionsMenuController(implicit injector: Injector, context: Context, ec: E
           convController.archive(cId, archive = true)
           if (!inConvList) CancellableFuture.delay(getInt(R.integer.framework_animation_duration_medium).millis).map { _ =>
             navController.setVisiblePage(Page.CONVERSATION_LIST, tag)
-            screenController.hideParticipants(false, true)
+            participantsController.onHideParticipants ! {}
           }
 
         case UNARCHIVE => convController.archive(cId, archive = false)

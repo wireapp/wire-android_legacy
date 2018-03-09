@@ -153,7 +153,7 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
     height ! (bottom - top)
   }
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
     hideAnim.cancel()
     contentAnim.cancel()
@@ -161,7 +161,7 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
     hideAnim.size ! 1f
     closing ! false
 
-    controller.opts.publish(opts, Threading.Ui)
+    opts.foreach(controller.opts.publish(_, Threading.Ui))
     controller.messageAndLikes.publish(msg, Threading.Ui)
   }
 

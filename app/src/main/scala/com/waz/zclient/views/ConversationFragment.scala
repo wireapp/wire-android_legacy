@@ -71,6 +71,7 @@ import com.waz.zclient.pages.main.conversationlist.ConversationListAnimation
 import com.waz.zclient.pages.main.conversationpager.controller.SlidingPaneObserver
 import com.waz.zclient.pages.main.profile.camera.CameraContext
 import com.waz.zclient.participants.ParticipantsController
+import com.waz.zclient.participants.fragments.SingleParticipantFragment
 import com.waz.zclient.ui.animation.interpolators.penner.Expo
 import com.waz.zclient.ui.cursor.CursorMenuItem
 import com.waz.zclient.ui.text.TypefaceTextView
@@ -291,8 +292,7 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
 
     toolbar.setOnClickListener(new View.OnClickListener() {
       override def onClick(v: View): Unit = {
-        getControllerFactory.getConversationScreenController.showParticipants(toolbar, false)
-        participantsController.showParticipantsRequest ! (toolbar, false)
+        participantsController.onShowParticipants ! None
       }
     })
 
@@ -795,14 +795,11 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
               errorDescription.dismiss()
             }
 
-            override def onHideAnimationEnd(confirmed: Boolean, cancelled: Boolean, checkboxIsSelected: Boolean): Unit = if (!confirmed && !cancelled) {
-              if (onlySelfChanged) getContext.startActivity(ShowDevicesIntent(getActivity))
-              else {
-                val view = findById[View](R.id.cursor_menu_item_participant)
-                getControllerFactory.getConversationScreenController.showParticipants(view, true)
-                participantsController.showParticipantsRequest ! (view, true)
+            override def onHideAnimationEnd(confirmed: Boolean, cancelled: Boolean, checkboxIsSelected: Boolean): Unit =
+              if (!confirmed && !cancelled) {
+                if (onlySelfChanged) getContext.startActivity(ShowDevicesIntent(getActivity))
+                else participantsController.onShowParticipants ! Some(SingleParticipantFragment.TagDevices)
               }
-            }
 
             override def negativeButtonClicked(): Unit = {}
 
@@ -862,7 +859,7 @@ object ConversationFragment {
   val SAVED_STATE_PREVIEW = "SAVED_STATE_PREVIEW"
   val REQUEST_VIDEO_CAPTURE = 911
 
-  def apply() = new ConversationFragment
+  def newInstance() = new ConversationFragment
 
   trait Container {
 

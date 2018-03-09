@@ -89,7 +89,7 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
     case false => animator.end()
   }
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     animator.end()
     super.set(msg, part, opts)
     setTextSize(TypedValue.COMPLEX_UNIT_PX, if (isEmojiOnly(msg.message, part)) textSizeEmoji else textSizeRegular)

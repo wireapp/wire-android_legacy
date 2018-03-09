@@ -25,6 +25,7 @@ import android.view.ViewGroup.LayoutParams
 import android.view.{Gravity, LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, LinearLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.verbose
 import com.waz.model.ConvId
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.returning
@@ -66,7 +67,10 @@ class OptionsMenuFragment extends Fragment with FragmentHelper {
     optionsMenu.foreach(_.open())
   }
 
-  def close(): Boolean = optionsMenu.exists(_.close())
+  def close(): Boolean = {
+    verbose(s"close")
+    optionsMenu.exists(_.close())
+  }
 }
 
 object OptionsMenuFragment {

@@ -31,10 +31,8 @@ import com.waz.model.otr.ClientId
 import com.waz.threading.Threading
 import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
-import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.controllers.singleimage.ISingleImageController
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.core.stores.connect.IConnectStore
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester._
 import com.waz.zclient.integrations.IntegrationDetailsFragment
@@ -49,12 +47,16 @@ import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.views.DefaultPageTransitionAnimation
 import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
 
+import scala.concurrent.Future
+
 class ParticipantFragment extends BaseFragment[ParticipantFragment.Container] with ManagerFragment
   with ConversationScreenControllerObserver
   with ParticipantHeaderFragment.Container
   with SendConnectRequestFragment.Container
   with BlockedUserProfileFragment.Container
   with PendingConnectRequestFragment.Container {
+
+  import ParticipantFragment._
 
   implicit def ctx: Context = getActivity
   import Threading.Implicits.Ui
@@ -71,7 +73,6 @@ class ParticipantFragment extends BaseFragment[ParticipantFragment.Container] wi
   private lazy val screenController       = inject[IConversationScreenController]
   private lazy val pickUserController     = inject[IPickUserController]
   private lazy val singleImageController  = inject[ISingleImageController]
-  private lazy val navigationController   = inject[INavigationController]
 
   private var subs = Set.empty[Subscription]
 
@@ -105,31 +106,23 @@ class ParticipantFragment extends BaseFragment[ParticipantFragment.Container] wi
 
   override def onViewCreated(view: View, @Nullable savedInstanceState: Bundle): Unit = {
     if (Option(savedInstanceState).isEmpty) {
-      participantsController.isGroupOrBot.head.foreach { groupOrBot =>
-        getChildFragmentManager.beginTransaction
-          .replace(
-            R.id.fl__participant__header__container,
-            headerFragment,
-            ParticipantHeaderFragment.TAG
-          )
-          .replace(
-            R.id.fl__participant__settings_box,
-            optionsFragment,
-            OptionsMenuFragment.Tag
-          )
-          .replace(
-            R.id.fl__participant__container,
-            if (groupOrBot)
-              GroupParticipantsFragment.newInstance()
-            else
-              SingleParticipantFragment.newInstance(getArguments.getInt(ParticipantFragment.ARG__FIRST__PAGE)),
-            if (groupOrBot)
-              GroupParticipantsFragment.Tag
-            else
-              SingleParticipantFragment.Tag
-          )
-          .addToBackStack(if (groupOrBot) GroupParticipantsFragment.Tag else SingleParticipantFragment.Tag)
-          .commit
+
+      (getStringArg(PageToOpenArg) match {
+        case Some(GuestOptionsFragment.Tag) => Future.successful((new GuestOptionsFragment, GuestOptionsFragment.Tag))
+        case Some(SingleParticipantFragment.TagDevices) => Future.successful((SingleParticipantFragment.newInstance(Some(SingleParticipantFragment.TagDevices)), SingleParticipantFragment.Tag))
+        case _ =>
+          participantsController.isGroupOrBot.head.map {
+            case true => (GroupParticipantsFragment.newInstance(), GroupParticipantsFragment.Tag)
+            case false => (SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
+          }
+      }).map {
+        case (f, tag) =>
+          getChildFragmentManager.beginTransaction
+            .replace(R.id.fl__participant__header__container, headerFragment, ParticipantHeaderFragment.TAG)
+            .replace(R.id.fl__participant__settings_box, optionsFragment, OptionsMenuFragment.Tag)
+            .replace(R.id.fl__participant__container, f, tag)
+            .addToBackStack(tag)
+            .commit
       }
 
       setNavigationIconVisible(false)
@@ -144,8 +137,6 @@ class ParticipantFragment extends BaseFragment[ParticipantFragment.Container] wi
         pickUserController.hidePickUserWithoutAnimations(IPickUserController.Destination.PARTICIPANTS)
       case _ =>
     }
-
-    subs += participantsController.conv.map(_.isActive).onUi { screenController.setMemberOfConversation }
 
     subs += participantsController.isGroupOrBot.onUi { isGroupOrBot =>
       screenController.setSingleConversation(!isGroupOrBot)
@@ -171,27 +162,25 @@ class ParticipantFragment extends BaseFragment[ParticipantFragment.Container] wi
     super.onDestroyView()
   }
 
-  override def onBackPressed: Boolean = withBackstackHead {
-    case Some(f: FragmentHelper) if f.onBackPressed() => true
-    case _ if optionsFragment.close() =>
-      verbose(s"close with OptionsMenuFragment")
-      true
-    case _ if pickUserController.isShowingPickUser(IPickUserController.Destination.PARTICIPANTS) =>
-      verbose(s"onBackPressed with isShowingPickUser")
-      pickUserController.hidePickUser(IPickUserController.Destination.PARTICIPANTS)
-      true
-    case _ if screenController.isShowingUser =>
-      verbose(s"onBackPressed with screenController.isShowingUser")
-      screenController.hideUser()
-      participantsController.unselectParticipant()
-      true
-    case _ if screenController.isShowingParticipant =>
-      verbose(s"onBackPressed with isShowingParticipant")
-      screenController.hideParticipants(true, false)
-      true
-    case _ =>
-      verbose(s"onBackPressed not handled here")
-      false
+  override def onBackPressed(): Boolean = {
+    withContentFragment {
+      case _ if pickUserController.isShowingPickUser(IPickUserController.Destination.PARTICIPANTS) =>
+        verbose(s"onBackPressed with isShowingPickUser")
+        pickUserController.hidePickUser(IPickUserController.Destination.PARTICIPANTS)
+        true
+      case _ if screenController.isShowingUser =>
+        verbose(s"onBackPressed with screenController.isShowingUser")
+        screenController.hideUser()
+        participantsController.unselectParticipant()
+        true
+      case Some(f: FragmentHelper) if f.onBackPressed() => true
+      case _ =>
+        optionsFragment.close() || {
+          super.onBackPressed()
+          participantsController.onHideParticipants ! {}
+          true
+        }
+    }
   }
 
   override def onShowEditConversationName(show: Boolean): Unit =
@@ -199,9 +188,6 @@ class ParticipantFragment extends BaseFragment[ParticipantFragment.Container] wi
       if (show) ViewUtils.fadeOutView(view)
       else ViewUtils.fadeInView(view)
     }
-
-  override def onAddPeopleToConversation(): Unit =
-    pickUserController.showPickUser(IPickUserController.Destination.PARTICIPANTS)
 
   override def onShowConversationMenu(inConvList: Boolean, convId: ConvId): Unit =
     if (!inConvList) getChildFragmentManager.findFragmentByTag(OptionsMenuFragment.Tag) match {
@@ -261,8 +247,7 @@ class ParticipantFragment extends BaseFragment[ParticipantFragment.Container] wi
   }
 
   override def onHideUser(): Unit = if (screenController.isShowingUser) {
-    getChildFragmentManager.popBackStack
-    navigationController.setRightPage(if (screenController.isShowingParticipant) Page.PARTICIPANT else Page.MESSAGE_STREAM, ParticipantFragment.TAG)
+    getChildFragmentManager.popBackStack()
   }
 
   override def showRemoveConfirmation(userId: UserId): Unit =
@@ -286,30 +271,22 @@ class ParticipantFragment extends BaseFragment[ParticipantFragment.Container] wi
 
   override def onConnectRequestWasSentToUser(): Unit = screenController.hideUser()
 
-  override def onShowParticipants(anchorView: View, isSingleConversation: Boolean, isMemberOfConversation: Boolean, showDeviceTabIfSingle: Boolean): Unit = {}
-
-  override def onHideParticipants(backOrButtonPressed: Boolean, hideByConversationChange: Boolean, isSingleConversation: Boolean): Unit = {}
-
   override def onHideOtrClient(): Unit = getChildFragmentManager.popBackStack
 
   override def onShowLikesList(message: Message): Unit = {}
-
-  override def onShowIntegrationDetails(providerId: ProviderId, integrationId: IntegrationId): Unit = {}
 
   override def onConversationUpdated(conversation: ConvId): Unit = {}
 }
 
 object ParticipantFragment {
   val TAG: String = classOf[ParticipantFragment].getName
-  private val ARG_USER_REQUESTER = "ARG_USER_REQUESTER"
-  private val ARG__FIRST__PAGE = "ARG__FIRST__PAGE"
+  private val PageToOpenArg = "ARG__FIRST__PAGE"
 
-  def newInstance(userRequester: IConnectStore.UserRequester, firstPage: Int): ParticipantFragment =
-    returning(new ParticipantFragment) {
-      _.setArguments(returning(new Bundle) { args =>
-        args.putSerializable(ARG_USER_REQUESTER, userRequester)
-        args.putInt(ARG__FIRST__PAGE, firstPage)
-      })
+  def newInstance(page: Option[String]): ParticipantFragment =
+    returning(new ParticipantFragment) { f =>
+      page.foreach { p =>
+        f.setArguments(returning(new Bundle)(_.putString(PageToOpenArg, p)))
+      }
     }
 
   trait Container {}

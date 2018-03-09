@@ -41,7 +41,7 @@ import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.{LocalDateTime, ZoneId}
 
-trait SearchResultRowView extends MessageViewPart with ViewHelper{
+trait SearchResultRowView extends MessageViewPart with ViewHelper {
   val searchedQuery = Signal[ContentSearchQuery]()
 }
 

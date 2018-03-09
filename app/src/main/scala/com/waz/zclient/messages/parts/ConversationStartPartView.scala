@@ -19,11 +19,15 @@ package com.waz.zclient.messages.parts
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.View
 import android.widget.LinearLayout
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, UsersController}
+import com.waz.zclient.participants.ParticipantsController
+import com.waz.zclient.participants.fragments.GuestOptionsFragment
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
 
 class ConversationStartPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
@@ -47,4 +51,16 @@ class ConversationStartPartView(context: Context, attrs: AttributeSet, style: In
 
   subtitleText.onUi { subtitleView.setText }
   message.map(_.name).onUi { name => titleView.setText(name.getOrElse("")) }
+}
+
+class WirelessLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
+  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
+  def this(context: Context) = this(context, null, 0)
+
+  inflate(R.layout.message_wireless_link_content)
+
+  override val tpe: MsgPart = MsgPart.WirelessLink
+
+  findById[View](R.id.invite_button).onClick(inject[ParticipantsController].onShowParticipants ! Some(GuestOptionsFragment.Tag))
+
 }

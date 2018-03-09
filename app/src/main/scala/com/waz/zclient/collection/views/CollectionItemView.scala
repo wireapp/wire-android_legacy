@@ -35,8 +35,9 @@ import com.waz.utils.events.{EventContext, EventStream, Signal, SourceSignal}
 import com.waz.utils.wrappers.AndroidURIUtil
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers.BrowserController
-import com.waz.zclient.common.views.ProgressDotsDrawable
-import com.waz.zclient.messages.MessageView.MsgBindOptions
+import com.waz.zclient.common.views.ImageAssetDrawable.RequestBuilder
+import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
+import com.waz.zclient.common.views.{ImageAssetDrawable, ProgressDotsDrawable, RoundedImageAssetDrawable}
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.messages.parts.WebLinkPartView
 import com.waz.zclient.messages.parts.assets.FileAssetPartView
@@ -44,9 +45,6 @@ import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.pages.main.conversation.views.AspectRatioImageView
 import com.waz.zclient.utils.ZTimeFormatter._
 import com.waz.zclient.utils.{RichView, ViewUtils, _}
-import com.waz.zclient.common.views.ImageAssetDrawable.RequestBuilder
-import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
-import com.waz.zclient.common.views.{ImageAssetDrawable, RoundedImageAssetDrawable}
 import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.{LocalDateTime, ZoneId}
 
@@ -88,7 +86,7 @@ trait CollectionNormalItemView extends CollectionItemView with ClickableViewPart
       messageTime.setText(timeStr)
   }
 
-  messageAndLikesResolver.on(Threading.Ui) { mal => set(mal, content, CollectionNormalItemView.DefaultBindingOptions) }
+  messageAndLikesResolver.on(Threading.Ui) { mal => set(mal, content) }
 
   onClicked.on(Threading.Ui){
     _ => messageData.currentValue.foreach(collectionController.clickedMessage ! _)
@@ -98,10 +96,6 @@ trait CollectionNormalItemView extends CollectionItemView with ClickableViewPart
     this.content = content
     this.messageData ! messageData
   }
-}
-
-object CollectionNormalItemView{
-  val DefaultBindingOptions = MsgBindOptions(0, isSelf = false, isLast = false, isLastSelf = false, isFirstUnread = false, listDimensions = Dim2.Empty, ConversationData.ConversationType.Unknown)
 }
 
 class CollectionImageView(context: Context) extends AspectRatioImageView(context) with CollectionItemView {

@@ -72,7 +72,7 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper { self =>
 trait ActionableAssetPart extends AssetPart {
   protected val assetActionButton: AssetActionButton = findById(R.id.action_button)
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
     assetActionButton.message.publish(msg.message, Threading.Ui)
   }
@@ -176,10 +176,12 @@ trait ImageLayoutAssetPart extends AssetPart {
   }
 
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
-    maxWidth.mutateOrDefault(identity, opts.listDimensions.width)
-    maxHeight ! opts.listDimensions.height
+    opts.foreach { o =>
+      maxWidth.mutateOrDefault(identity, o.listDimensions.width)
+      maxHeight ! o.listDimensions.height
+    }
   }
 
   override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {

@@ -157,7 +157,7 @@ object MessagesListView {
   case class UnreadIndex(index: Int) extends AnyVal
 
   abstract class Adapter extends RecyclerView.Adapter[MessageViewHolder] {
-    def getConvId: ConvId
+    def getConvId: Option[ConvId]
     def getUnreadIndex: UnreadIndex
   }
 }

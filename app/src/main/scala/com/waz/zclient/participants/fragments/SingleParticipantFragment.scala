@@ -30,7 +30,7 @@ import com.waz.utils._
 import com.waz.zclient.common.controllers.{BrowserController, ThemeController, UserAccountsController}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
-import com.waz.zclient.participants.fragments.SingleParticipantFragment.{ArgFirstPage, DevicePage}
+import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.{ParticipantOtrDeviceAdapter, ParticipantsController, TabbedParticipantPagerAdapter}
 import com.waz.zclient.ui.views.tab.TabIndicatorLayout
 import com.waz.zclient.utils.ContextUtils._
@@ -42,9 +42,11 @@ class SingleParticipantFragment extends FragmentHelper {
   import Threading.Implicits.Ui
   implicit def ctx: Context = getActivity
 
+  import SingleParticipantFragment._
+
   private lazy val participantOtrDeviceAdapter = new ParticipantOtrDeviceAdapter
 
-  private var viewPager = Option.empty[ViewPager]
+  private lazy val viewPager = view[ViewPager](R.id.vp_single_participant_viewpager)
 
   private lazy val convController         = inject[ConversationController]
   private lazy val participantsController = inject[ParticipantsController]
@@ -52,6 +54,7 @@ class SingleParticipantFragment extends FragmentHelper {
   private lazy val screenController       = inject[IConversationScreenController]
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val browserController      = inject[BrowserController]
+  private lazy val pickUserController     = inject[IPickUserController]
 
   private lazy val userNameView = returning(view[TextView](R.id.user_name)) { vh =>
     participantsController.otherParticipantId.map(_.isDefined).onUi { visible =>
@@ -86,34 +89,6 @@ class SingleParticipantFragment extends FragmentHelper {
     }.onUi { str => vh.foreach(_.setText(str)) }
   }
 
-  private lazy val callback = new FooterMenuCallback {
-
-    override def onLeftActionClicked(): Unit =
-      participantsController.isGroup.head.foreach {
-        case false if userAccountsController.hasCreateConversationPermission =>
-          screenController.addPeopleToConversation()
-        case _ =>
-          screenController.hideParticipants(true, false)
-          participantsController.otherParticipantId.head.foreach {
-            case Some(userId) => userAccountsController.getOrCreateAndOpenConvFor(userId)
-            case _ =>
-          }
-      }
-
-    override def onRightActionClicked(): Unit = (for {
-      isGroup <- participantsController.isGroup.head
-      convId  <- convController.currentConvId.head
-    } yield (isGroup, convId)).foreach {
-      case (false, convId) => screenController.showConversationMenu(false, convId)
-      case (true, convId) if userAccountsController.hasRemoveConversationMemberPermission(convId) =>
-        participantsController.otherParticipantId.head.foreach {
-          case Some(userId) => participantsController.showRemoveConfirmation(userId)
-          case _            =>
-        }
-      case _ =>
-    }
-  }
-
   // This is a workaround for the bug where child fragments disappear when
   // the parent is removed (as all children are first removed from the parent)
   // See https://code.google.com/p/android/issues/detail?id=55228
@@ -128,29 +103,51 @@ class SingleParticipantFragment extends FragmentHelper {
     }
 
   override def onCreateView(inflater: LayoutInflater, viewGroup: ViewGroup, savedInstanceState: Bundle): View =
-    returning(inflater.inflate(R.layout.fragment_participants_single_tabbed, viewGroup, false)) { v =>
-      viewPager = Option(returning(findById[ViewPager](v, R.id.vp_single_participant_viewpager)) { pager =>
-        pager.setAdapter(new TabbedParticipantPagerAdapter(participantOtrDeviceAdapter, callback))
-
-        val tabIndicatorLayout = findById[TabIndicatorLayout](v, R.id.til_single_participant_tabs)
-        tabIndicatorLayout.setPrimaryColor(getColorWithTheme(
-          if (themeController.isDarkTheme) R.color.text__secondary_dark else R.color.text__secondary_light,
-          getContext
-        ))
-
-        tabIndicatorLayout.setViewPager(pager)
-      })
-    }
+    inflater.inflate(R.layout.fragment_participants_single_tabbed, viewGroup, false)
 
   override def onViewCreated(v: View, @Nullable savedInstanceState: Bundle): Unit = {
     super.onViewCreated(v, savedInstanceState)
 
+    viewPager.foreach { pager =>
+      pager.setAdapter(new TabbedParticipantPagerAdapter(participantOtrDeviceAdapter, new FooterMenuCallback {
+
+        override def onLeftActionClicked(): Unit =
+          participantsController.isGroup.head.foreach {
+            case false if userAccountsController.hasCreateConversationPermission =>
+              pickUserController.showPickUser(IPickUserController.Destination.PARTICIPANTS)
+            case _ =>
+              participantsController.onHideParticipants ! {}
+              participantsController.otherParticipantId.head.foreach {
+                case Some(userId) => userAccountsController.getOrCreateAndOpenConvFor(userId)
+                case _ =>
+              }
+          }
+
+        override def onRightActionClicked(): Unit = (for {
+          isGroup <- participantsController.isGroup.head
+          convId <- convController.currentConvId.head
+        } yield (isGroup, convId)).foreach {
+          case (false, convId) => screenController.showConversationMenu(false, convId)
+          case (true, convId) if userAccountsController.hasRemoveConversationMemberPermission(convId) =>
+            participantsController.otherParticipantId.head.foreach {
+              case Some(userId) => participantsController.showRemoveConfirmation(userId)
+              case _ =>
+            }
+          case _ =>
+        }
+      }))
+
+      val tabIndicatorLayout = findById[TabIndicatorLayout](v, R.id.til_single_participant_tabs)
+      tabIndicatorLayout.setPrimaryColor(getColorWithTheme(if (themeController.isDarkTheme) R.color.text__secondary_dark else R.color.text__secondary_light, getContext))
+      tabIndicatorLayout.setViewPager(pager)
+    }
+
     if (Option(savedInstanceState).isEmpty) viewPager.foreach { pager =>
-      if (screenController.shouldShowDevicesTab) {
-        pager.setCurrentItem(DevicePage)
-        screenController.setShowDevicesTab(null)
-      } else
-        pager.setCurrentItem(getArguments.getInt(ArgFirstPage))
+      pager.setCurrentItem(getStringArg(ArgPageToOpen) match {
+        case Some(TagDevices) => 1
+        case _                => 0
+      })
+
     }
 
     participantOtrDeviceAdapter.onClientClick.onUi { client =>
@@ -168,24 +165,8 @@ class SingleParticipantFragment extends FragmentHelper {
       _ => browserController.openUrl(getString(R.string.url_otr_learn_why))
     }
 
-    participantsController.showParticipantsRequest.onUi { case (_, showDeviceTabIfSingle) =>
-      viewPager.foreach { pager =>
-        if (screenController.shouldShowDevicesTab) {
-          pager.setCurrentItem(DevicePage)
-          screenController.setShowDevicesTab(null)
-        } else participantsController.isGroup.head.foreach { isGroup =>
-          if (!isGroup && showDeviceTabIfSingle) pager.setCurrentItem(DevicePage)
-        }
-      }
-    }
-
     userNameView
     userHandle
-  }
-
-  override def onDestroyView(): Unit = {
-    viewPager = None
-    super.onDestroyView()
   }
 
   override def onBackPressed(): Boolean =
@@ -200,14 +181,16 @@ class SingleParticipantFragment extends FragmentHelper {
 
 object SingleParticipantFragment {
   val Tag: String = classOf[SingleParticipantFragment].getName
-  private val ArgFirstPage: String = "ArgFirstPage"
-  val UserPage: Int = 0
-  val DevicePage: Int = 1
+  val TagDevices: String = s"${classOf[SingleParticipantFragment].getName}/devices"
 
-  def newInstance(firstPage: Int): SingleParticipantFragment =
-    returning(new SingleParticipantFragment){
-      _.setArguments(returning(new Bundle){
-        _.putInt(ArgFirstPage, firstPage)
-      })
+  private val ArgPageToOpen: String = "ARG_PAGE_TO_OPEN"
+
+  def newInstance(pageToOpen: Option[String] = None): SingleParticipantFragment =
+    returning(new SingleParticipantFragment) { f =>
+      pageToOpen.foreach { p =>
+        f.setArguments(returning(new Bundle){
+          _.putString(ArgPageToOpen, p)
+        })
+      }
     }
 }

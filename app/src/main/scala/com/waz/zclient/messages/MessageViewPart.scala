@@ -50,9 +50,13 @@ trait MessageViewPart extends View {
   protected val message = messageAndLikes.map(_.message)
   message.disableAutowiring() //important to ensure the signal keeps updating itself in the absence of any listeners
 
-  def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  final def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit =
+    set(msg, part, Some(opts))
+
+  //super must be called!!
+  def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions] = None): Unit =
     messageAndLikes.publish(msg, Threading.Ui)
-  }
+
 
   //By default disable clicks for all view types. There are fewer that need click functionality than those that don't
   this.onClick {}
@@ -106,10 +110,10 @@ trait TimeSeparator extends MessageViewPart with ViewHelper {
 
   text.on(Threading.Ui)(timeText.setTransformedText)
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
     this.time ! msg.message.time
-    unreadDot.show ! opts.isFirstUnread
+    opts.foreach(unreadDot.show ! _.isFirstUnread)
   }
 }
 
@@ -191,7 +195,7 @@ class UserPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
   stateGlyph.collect { case Some(glyph) => glyph } { tvStateGlyph.setText }
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
     userId ! msg.message.userId
   }
@@ -234,7 +238,7 @@ class EphemeralDotsView(context: Context, attrs: AttributeSet, style: Int) exten
 
   setBackground(background)
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
     background.setMessage(msg.message.id)
   }

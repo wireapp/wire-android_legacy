@@ -83,7 +83,7 @@ class WifiWarningPartView(context: Context, attrs: AttributeSet, style: Int) ext
     }
   }
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
     this.setVisible(false) //setVisible(true) is called for all view parts shortly before setting...
   }

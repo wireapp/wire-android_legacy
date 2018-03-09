@@ -27,7 +27,6 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v7.preference.Preference
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup, ViewStub}
-import com.waz.ZLog
 import com.waz.ZLog._
 import com.waz.utils.events._
 import com.waz.utils.returning
@@ -152,10 +151,11 @@ trait FragmentHelper extends Fragment with OnBackPressedListener with ViewFinder
     h
   }
 
-  lazy val className: String = ZLog.ImplicitTag.implicitLogTag
+  def getStringArg(key: String): Option[String] =
+    Option(getArguments).flatMap(a => Option(a.getString(key)))
 
   override def onBackPressed(): Boolean = {
-    verbose(s"onBackPressed")(className)
+    verbose(s"onBackPressed")(getClass.getSimpleName)
     false
   }
 
@@ -203,6 +203,8 @@ trait ManagerFragment extends FragmentHelper {
         currentContentTag ! withFragmentOpt(contentId)(_.map(_.getTag))
     })
   }
+
+  def withContentFragment[A](f: Option[Fragment] => A): A = withFragmentOpt(contentId)(f)
 }
 
 trait DialogHelper extends Dialog with Injectable with EventContext {

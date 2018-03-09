@@ -24,7 +24,7 @@ import android.view.ViewGroup
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.{ContentSearchQuery, MessageFilter}
-import com.waz.model.{ConvId, ConversationData, Dim2}
+import com.waz.model.ConvId
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
@@ -32,7 +32,6 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.RecyclerCursor
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.zclient.usersearch.views.{SearchResultRowView, TextSearchResultRowView}
@@ -122,11 +121,6 @@ class SearchResultRowViewHolder(view: SearchResultRowView)(implicit eventContext
     contentSearchQuery{view.searchedQuery ! _}
   }
 
-  def set(message: MessageAndLikes): Unit ={
-    view.set(message, None, SearchResultView.DefaultBindingOptions)
-  }
-}
-
-object SearchResultView{
-  val DefaultBindingOptions = MsgBindOptions(0, isSelf = false, isLast = false, isLastSelf = false, isFirstUnread = false, listDimensions = Dim2.Empty, ConversationData.ConversationType.Unknown)
+  def set(message: MessageAndLikes): Unit =
+    view.set(message, None)
 }

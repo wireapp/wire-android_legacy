@@ -22,8 +22,7 @@ import java.util
 import android.view.ViewGroup
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.model.ConversationData.ConversationType
-import com.waz.model.{ConvId, Dim2, MessageData, MessageId}
+import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
@@ -44,36 +43,39 @@ class MessagesListAdapter(listDim: Signal[Dim2])(implicit inj: Injector, ec: Eve
   var unreadIndex = UnreadIndex(0)
 
   val cursor = (for {
-    zs <- zms
-    conv <- conversationController.currentConv
-  } yield (zs, conv.id, conv.convType)).map {
-    case (zs, cId, cType) => (new RecyclerCursor(cId, zs, notifier), cType)
+    zs      <- zms
+    conv    <- conversationController.currentConv
+    isGroup <- Signal.future(zs.conversations.isGroupConversation(conv.id))
+  } yield (zs, conv, isGroup)).map {
+    case (zs, c, group) => (new RecyclerCursor(c.id, zs, notifier), zs.teamId, c, group)
   }
 
-  private var messages = Option.empty[RecyclerCursor]
-  private var convId = ConvId()
-  private var convType = ConversationType.Group
+  private var _cursor = Option.empty[RecyclerCursor]
+  private var conv    = Option.empty[ConversationData]
+  private var teamId  = Option.empty[TeamId]
+  private var isGroup = false
 
-  cursor.on(Threading.Ui) { case (c, tpe) =>
-    if (!messages.contains(c)) {
+  cursor.onUi { case (c, teamId, conv, group) =>
+    if (!_cursor.contains(c)) {
       verbose(s"cursor changed: ${c.count}")
-      messages.foreach(_.close())
-      messages = Some(c)
-      convType = tpe
-      convId = c.conv
+      _cursor.foreach(_.close())
+      _cursor = Some(c)
+      this.conv = Some(conv)
+      this.teamId = teamId
+      this.isGroup = group
       notifier.notifyDataSetChanged()
     }
   }
 
-  override def getConvId: ConvId = convId
+  override def getConvId = conv.map(_.id)
 
   override def getUnreadIndex = unreadIndex
 
-  override def getItemCount: Int = messages.fold(0)(_.count)
+  override def getItemCount: Int = _cursor.fold(0)(_.count)
 
-  def message(position: Int) = messages.get.apply(position)
+  def message(position: Int) = _cursor.get.apply(position)
 
-  def lastReadIndex = messages.fold(-1)(_.lastReadIndex)
+  def lastReadIndex = _cursor.fold(-1)(_.lastReadIndex)
 
   override def getItemViewType(position: Int): Int = MessageView.viewType(message(position).message.msgType)
 
@@ -89,7 +91,7 @@ class MessagesListAdapter(listDim: Signal[Dim2])(implicit inj: Injector, ec: Eve
     val isSelf = zms.currentValue.exists(_.selfUserId == data.message.userId)
     val isFirstUnread = pos > 0 && !isSelf && unreadIndex.index == pos
     val isLastSelf = listController.isLastSelf(data.message.id)
-    val opts = MsgBindOptions(pos, isSelf, isLast, isLastSelf, isFirstUnread = isFirstUnread, listDim.currentValue.getOrElse(Dim2(0, 0)), convType)
+    val opts = MsgBindOptions(pos, isSelf, isLast, isLastSelf, isFirstUnread = isFirstUnread, listDim.currentValue.getOrElse(Dim2(0, 0)), conv.get, isGroup, teamId)
 
     val prev = if (pos == 0) None else Some(message(pos - 1).message)
     val next = if (isLast) None else Some(message(pos + 1).message)

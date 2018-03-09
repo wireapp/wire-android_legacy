@@ -39,6 +39,7 @@ import com.waz.zclient.core.stores.connect.IConnectStore
 import com.waz.zclient.integrations.IntegrationDetailsController
 import com.waz.zclient.pages.main.connect.{BlockedUserProfileFragment, ConnectRequestLoadMode, PendingConnectRequestFragment, SendConnectRequestFragment}
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
+import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.{ParticipantsAdapter, ParticipantsController}
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.ui.utils.KeyboardUtils
@@ -56,6 +57,7 @@ class GroupParticipantsFragment extends FragmentHelper {
   private lazy val convScreenController         = inject[IConversationScreenController]
   private lazy val userAccountsController       = inject[UserAccountsController]
   private lazy val integrationDetailsController = inject[IntegrationDetailsController]
+  private lazy val pickUserController           = inject[IPickUserController]
 
   private lazy val participantsView = view[RecyclerView](R.id.pgv__participants)
   private lazy val footerMenu = returning(view[FooterMenu](R.id.fm__participants__footer)) { fm =>
@@ -146,7 +148,7 @@ class GroupParticipantsFragment extends FragmentHelper {
     participantsController.getUser(userId).foreach {
       case Some(user) if user.connection == ACCEPTED || userAccountsController.isTeamAccount && userAccountsController.isTeamMember(userId) =>
         participantsController.selectParticipant(userId)
-        openUserProfileFragment(SingleParticipantFragment.newInstance(SingleParticipantFragment.UserPage), SingleParticipantFragment.Tag)
+        openUserProfileFragment(SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
 
       case Some(user) if user.connection == PENDING_FROM_OTHER || user.connection == PENDING_FROM_USER || user.connection == IGNORED =>
         import PendingConnectRequestFragment._
@@ -202,7 +204,7 @@ class GroupParticipantsFragment extends FragmentHelper {
           isGroup <- participantsController.isGroup.head
         } yield (conv.id, conv.isActive, isGroup)).foreach {
           case (convId, true, true) if userAccountsController.hasAddConversationMemberPermission(convId) =>
-            convScreenController.addPeopleToConversation()
+            pickUserController.showPickUser(IPickUserController.Destination.PARTICIPANTS)
           case _ =>
         }
       }

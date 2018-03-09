@@ -52,9 +52,12 @@ class ParticipantsAdapter(numOfColumns: Int)(implicit context: Context, injector
   private lazy val convController         = inject[ConversationController]
   private lazy val themeController        = inject[ThemeController]
 
-  private var items              = List.empty[Either[ParticipantData, Int]]
-  private var teamId             = Option.empty[TeamId]
-  private var conversation       = Option.empty[ConversationData]
+  private var items        = List.empty[Either[ParticipantData, Int]]
+  private var teamId       = Option.empty[TeamId]
+  private var convId       = Option.empty[ConvId]
+  private var convName     = Option.empty[String]
+  private var convVerified = false
+
   private var convNameViewHolder = Option.empty[ConversationNameViewHolder]
 
   val onClick             = EventStream[UserId]()
@@ -92,9 +95,18 @@ class ParticipantsAdapter(numOfColumns: Int)(implicit context: Context, injector
     notifyDataSetChanged()
   }
 
-  convController.currentConv.onUi { c =>
-    conversation = Some(c)
-    notifyDataSetChanged()
+  val conv = convController.currentConv
+
+  (for {
+    id   <- conv.map(_.id)
+    name <- conv.map(_.displayName)
+    ver  <- conv.map(_.verified == Verification.VERIFIED)
+  } yield (id, name, ver)).onUi {
+    case (id, name, ver) =>
+      convId = Some(id)
+      convName = Some(name)
+      convVerified = ver
+      notifyDataSetChanged()
   }
 
   zms.map(_.teamId).onUi { tId =>
@@ -124,7 +136,7 @@ class ParticipantsAdapter(numOfColumns: Int)(implicit context: Context, injector
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = (items(position), holder) match {
     case (Left(userData), h: ParticipantRowViewHolder)            => h.bind(userData, teamId)
-    case (Right(ConversationName), h: ConversationNameViewHolder) => conversation.foreach(h.bind)
+    case (Right(ConversationName), h: ConversationNameViewHolder) => for (id <- convId; name <- convName) h.bind(id, name, convVerified)
     case (Right(sepType), h: SeparatorViewHolder) if Set(PeopleSeparator, BotsSeparator).contains(sepType) =>
       val count = items.count {
         case Left(a)
@@ -202,15 +214,15 @@ object ParticipantsAdapter {
     private val penGlyph = view.findViewById[GlyphTextView](R.id.conversation_name_edit_glyph)
     private val verifiedShield = view.findViewById[ImageView](R.id.conversation_verified_shield)
 
-    private var conversationData = Option.empty[ConversationData]
-    private val isBeingEdited = Signal(false)
+    private var convId = Option.empty[ConvId]
+    private var convName = Option.empty[String]
+
+    private var isBeingEdited = false
 
     private def stopEditing() = {
       editText.setSelected(false)
       editText.clearFocus()
       Selection.removeSelection(editText.getText)
-      penGlyph.setVisible(true)
-      isBeingEdited ! false
     }
 
     editText.setAccentColor(Color.BLACK)
@@ -219,9 +231,9 @@ object ParticipantsAdapter {
       override def onEditorAction(v: TextView, actionId: Int, event: KeyEvent): Boolean = {
         if (actionId == EditorInfo.IME_ACTION_DONE) {
           stopEditing()
-          conversationData.foreach { c =>
+          convId.foreach { c =>
             import Threading.Implicits.Background
-            zms.head.flatMap(_.convsUi.setConversationName(c.id, v.getText.toString))
+            zms.head.flatMap(_.convsUi.setConversationName(c, v.getText.toString))
           }
         }
         false
@@ -230,23 +242,26 @@ object ParticipantsAdapter {
 
     editText.setOnSelectionChangedListener(new OnSelectionChangedListener {
       override def onSelectionChanged(selStart: Int, selEnd: Int): Unit = {
+        isBeingEdited = selStart > 0 
         penGlyph.animate().alpha(if (selStart >= 0) 0.0f else 1.0f).start()
-        isBeingEdited ! true
       }
     })
 
-    def bind(conversationData: ConversationData): Unit = {
-      this.conversationData = Some(conversationData)
-      editText.setText(conversationData.displayName)
+    def bind(id: ConvId, displayName: String, verified: Boolean): Unit = {
+      convId = Some(id)
+      convName = Some(displayName)
+
+      editText.setText(displayName)
       Selection.removeSelection(editText.getText)
-      verifiedShield.setVisible(conversationData.verified == Verification.VERIFIED)
+      verifiedShield.setVisible(verified)
     }
 
-    def onBackPressed(): Boolean = if (isBeingEdited.currentValue.getOrElse(false)) {
-      conversationData.foreach(c => editText.setText(c.displayName))
-      stopEditing()
-      true
-    } else false
+    def onBackPressed(): Boolean =
+      if (isBeingEdited) {
+        convName.foreach(editText.setText)
+        stopEditing()
+        true
+      } else false
   }
 
 }

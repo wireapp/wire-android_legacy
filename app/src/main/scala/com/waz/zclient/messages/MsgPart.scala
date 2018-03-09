@@ -41,6 +41,7 @@ object MsgPart {
   case object ConnectRequest extends MsgPart
   case object Footer extends MsgPart
   case object ConversationStart extends MsgPart
+  case object WirelessLink extends MsgPart
   case object OtrMessage extends MsgPart
   case object MissedCall extends MsgPart
   case object EphemeralDots extends MsgPart

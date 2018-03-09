@@ -17,29 +17,18 @@
  */
 package com.waz.zclient.pages.main.conversation.controller;
 
-import android.view.View;
 import com.waz.api.Message;
 import com.waz.model.ConvId;
-import com.waz.model.IntegrationId;
-import com.waz.model.ProviderId;
 
 public interface ConversationScreenControllerObserver {
-
-    void onShowParticipants(View anchorView, boolean isSingleConversation, boolean isMemberOfConversation, boolean showDeviceTabIfSingle);
-
-    void onHideParticipants(boolean backOrButtonPressed, boolean hideByConversationChange, boolean isSingleConversation);
 
     void onShowEditConversationName(boolean show);
 
     void onHideUser();
-
-    void onAddPeopleToConversation();
 
     void onShowConversationMenu(boolean inConvList, ConvId convId);
 
     void onHideOtrClient();
 
     void onShowLikesList(Message message);
-
-    void onShowIntegrationDetails(ProviderId providerId, IntegrationId integrationId);
 }

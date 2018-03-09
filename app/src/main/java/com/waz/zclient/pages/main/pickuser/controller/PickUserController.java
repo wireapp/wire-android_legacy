@@ -101,11 +101,6 @@ public class PickUserController implements IPickUserController {
     }
 
     @Override
-    public void resetShowingPickUser(Destination destination) {
-        visibleDestinations.remove(destination);
-    }
-
-    @Override
     public void showUserProfile(UserId userId) {
         for (PickUserControllerScreenObserver pickUserControllerScreenObserver : pickUserControllerScreenObservers) {
             pickUserControllerScreenObserver.onShowUserProfile(userId);

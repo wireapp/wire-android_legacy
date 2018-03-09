@@ -22,12 +22,13 @@ import android.util.AttributeSet
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.threading.Threading
-import com.waz.utils.wrappers.AndroidURIUtil
 import com.waz.utils.events.Signal
-import com.waz.zclient.common.controllers.{BrowserController, ScreenController}
+import com.waz.utils.wrappers.AndroidURIUtil
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.common.controllers.ScreenController
+import com.waz.zclient.common.controllers.{BrowserController, ScreenController}
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, SystemMessageView, UsersController}
+import com.waz.zclient.participants.ParticipantsController
+import com.waz.zclient.participants.fragments.SingleParticipantFragment
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 
@@ -40,6 +41,7 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends 
   override val tpe = MsgPart.OtrMessage
 
   lazy val screenController = inject[ScreenController]
+  lazy val participantsController = inject[ParticipantsController]
   lazy val browserController = inject[BrowserController]
 
   val accentColor = inject[AccentColorController]
@@ -85,7 +87,7 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends 
     case (msg, text, color, isMe) => setTextWithLink(text, color.getColor()) {
       (msg.msgType, isMe) match {
         case (OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED, true)  => screenController.openOtrDevicePreferences()
-        case (OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED, false) => screenController.showParticipants(this, showDeviceTabIfSingle = true)
+        case (OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED, false) => participantsController.onShowParticipants ! Some(SingleParticipantFragment.TagDevices)
         case (STARTED_USING_DEVICE, _)                  => screenController.openOtrDevicePreferences()
         case (OTR_ERROR, _)                             => browserController.openUrl(AndroidURIUtil parse getString(R.string.url_otr_decryption_error_1))
         case (OTR_IDENTITY_CHANGED, _)                  => browserController.openUrl(AndroidURIUtil parse getString(R.string.url_otr_decryption_error_2))

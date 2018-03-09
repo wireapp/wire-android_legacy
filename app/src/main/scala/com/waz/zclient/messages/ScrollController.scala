@@ -31,7 +31,7 @@ class ScrollController(adapter: MessagesListView.Adapter, listHeight: Signal[Int
   private var lastVisiblePosition = LastVisiblePosition(0, lastMessage = false)
   private var dragging = false
   private var prevCount = 0
-  private var prevConv = ConvId()
+  private var prevConv = Option.empty[ConvId]
 
   val scrollToPositionRequested = EventStream[Int]
   val onScrollToBottomRequested = EventStream[Unit]
@@ -57,7 +57,7 @@ class ScrollController(adapter: MessagesListView.Adapter, listHeight: Signal[Int
   adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver {
     override def onChanged(): Unit = {
       ZLog.verbose(s"AdapterDataObserver onChanged")
-      if (prevConv != adapter.getConvId || prevCount == 0) {
+      if (prevConv.isDefined && prevConv != adapter.getConvId || prevCount == 0) {
         targetPosition match {
           case Some(pos) =>
             scrollToPositionRequested ! pos
