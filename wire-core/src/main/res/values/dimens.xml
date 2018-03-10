@@ -28,6 +28,7 @@
     <dimen name="options_menu_row_item_total_width">104dp</dimen>
 
     <!-- Buttons-->
+    <dimen name="button__corner_radius_small">2dp</dimen>
     <dimen name="button__corner_radius">4dp</dimen>
     <dimen name="button__stroke_width">1dp</dimen>
     <dimen name="button__height">28dp</dimen>

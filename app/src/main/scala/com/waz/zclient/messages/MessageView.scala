@@ -80,7 +80,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
 
     import opts._
     val isOneToOne = !isGroup
-    val canHaveLink = conv.team.isDefined && conv.team == teamId && !conv.isTeamOnly
+    val canHaveLink = isGroup && conv.team.isDefined && conv.team == teamId && !conv.isTeamOnly
 
     val contentParts = {
       if (msg.msgType == Message.Type.MEMBER_JOIN && msg.firstMessage) {

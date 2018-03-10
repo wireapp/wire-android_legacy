@@ -39,7 +39,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:w_font="@string/wire__typeface__medium"
-        android:textSize="@dimen/wire__text_size__regular"
+        android:textSize="@dimen/wire__text_size__regular_small"
         android:textColor="?wirePrimaryTextColor"
         android:text="@string/invite_people"
         android:background="@drawable/invite_button_background"
