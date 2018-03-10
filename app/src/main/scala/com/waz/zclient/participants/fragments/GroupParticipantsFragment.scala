@@ -23,7 +23,6 @@ import android.os.Bundle
 import android.support.annotation.Nullable
 import android.support.v4.app.Fragment
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
-import android.view.animation.{AlphaAnimation, Animation}
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
@@ -164,19 +163,6 @@ class GroupParticipantsFragment extends FragmentHelper {
       case _ =>
     }
   }
-
-  // This is a workaround for the bug where child fragments disappear when
-  // the parent is removed (as all children are first removed from the parent)
-  // See https://code.google.com/p/android/issues/detail?id=55228
-  // Apply the workaround only if this is a child fragment, and the parent is being removed.
-  override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation =
-    Option(getParentFragment) match {
-      case Some(parent) if !enter && parent.isRemoving =>
-        returning(new AlphaAnimation(1, 1)) {
-          _.setDuration(ViewUtils.getNextAnimationDuration(parent))
-        }
-      case _ => super.onCreateAnimation(transit, enter, nextAnim)
-    }
 
   override def onCreateView(inflater: LayoutInflater, viewGroup: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_group_participant, viewGroup, false)

@@ -19,7 +19,6 @@ package com.waz.zclient.integrations
 
 import android.os.Bundle
 import android.support.v4.app.Fragment
-import android.view.animation.{AlphaAnimation, Animation}
 import android.view.{ContextThemeWrapper, LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
@@ -31,7 +30,7 @@ import com.waz.zclient.common.controllers.IntegrationsController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils.{getDrawable, showToast}
-import com.waz.zclient.utils.{RichView, ViewUtils}
+import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, R}
 
 import scala.concurrent.Future
@@ -50,15 +49,6 @@ class IntegrationDetailsSummaryFragment extends Fragment with FragmentHelper {
 
   private lazy val descriptionText = returning(view[TypefaceTextView](R.id.integration_description)) { summaryText =>
     integrationDetailsViewController.currentIntegration.map(_.description).onUi(d => summaryText.foreach(_.setText(d)))
-  }
-
-  override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation = {
-    val parent = getParentFragment
-    if (!enter && parent != null && parent.isRemoving) {
-      returning(new AlphaAnimation(1, 1)) {
-        _.setDuration(ViewUtils.getNextAnimationDuration(parent))
-      }
-    } else super.onCreateAnimation(transit, enter, nextAnim)
   }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View ={

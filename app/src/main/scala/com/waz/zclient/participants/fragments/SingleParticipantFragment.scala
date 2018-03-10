@@ -21,7 +21,6 @@ import android.content.Context
 import android.os.Bundle
 import android.support.annotation.Nullable
 import android.support.v4.view.ViewPager
-import android.view.animation.{AlphaAnimation, Animation}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
@@ -34,7 +33,7 @@ import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.{ParticipantOtrDeviceAdapter, ParticipantsController, TabbedParticipantPagerAdapter}
 import com.waz.zclient.ui.views.tab.TabIndicatorLayout
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{RichView, StringUtils, ViewUtils}
+import com.waz.zclient.utils.{RichView, StringUtils}
 import com.waz.zclient.views.menus.FooterMenuCallback
 import com.waz.zclient.{FragmentHelper, R}
 
@@ -88,19 +87,6 @@ class SingleParticipantFragment extends FragmentHelper {
       case _       => ""
     }.onUi { str => vh.foreach(_.setText(str)) }
   }
-
-  // This is a workaround for the bug where child fragments disappear when
-  // the parent is removed (as all children are first removed from the parent)
-  // See https://code.google.com/p/android/issues/detail?id=55228
-  // Apply the workaround only if this is a child fragment, and the parent is being removed.
-  override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation =
-    Option(getParentFragment) match {
-      case Some(parent) if !enter && parent.isRemoving =>
-        returning(new AlphaAnimation(1, 1)) {
-          _.setDuration(ViewUtils.getNextAnimationDuration(parent))
-        }
-      case _ => super.onCreateAnimation(transit, enter, nextAnim)
-    }
 
   override def onCreateView(inflater: LayoutInflater, viewGroup: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_participants_single_tabbed, viewGroup, false)

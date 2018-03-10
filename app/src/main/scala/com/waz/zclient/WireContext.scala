@@ -19,6 +19,7 @@ package com.waz.zclient
 
 import android.annotation.SuppressLint
 import android.app.{Dialog, Service}
+import android.content.res.Resources
 import android.content.{Context, ContextWrapper, DialogInterface}
 import android.os.Bundle
 import android.support.annotation.IdRes
@@ -26,10 +27,12 @@ import android.support.v4.app.{Fragment, FragmentActivity, FragmentManager}
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.preference.Preference
 import android.view.View.OnClickListener
+import android.view.animation.{AlphaAnimation, Animation, AnimationUtils}
 import android.view.{LayoutInflater, View, ViewGroup, ViewStub}
 import com.waz.ZLog._
 import com.waz.utils.events._
 import com.waz.utils.returning
+import com.waz.zclient.FragmentHelper.getNextAnimationDuration
 
 import scala.language.implicitConversions
 
@@ -131,6 +134,30 @@ trait FragmentHelper extends Fragment with OnBackPressedListener with ViewFinder
     else getActivity.findViewById(id).asInstanceOf[V]
   }
 
+
+  /*
+   * This part (the methods onCreateAnimation and the accompanying util method, getNextAnimationDuration) of the Wire
+   * software are based heavily off of code posted in this Stack Overflow answer.
+   * https://stackoverflow.com/a/23276145/1751834
+   *
+   * That work is licensed under a Creative Commons Attribution-ShareAlike 2.5 Generic License.
+   * (http://creativecommons.org/licenses/by-sa/2.5)
+   *
+   * Contributors on StackOverflow:
+   *  - kcoppock (https://stackoverflow.com/users/321697/kcoppock)
+   *
+   * This is a workaround for the bug where child fragments disappear when the parent is removed (as all children are
+   * first removed from the parent) See https://code.google.com/p/android/issues/detail?id=55228. Apply the workaround
+   * only if this is a child fragment, and the parent is being removed.
+   */
+  override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation =
+    Option(getParentFragment) match {
+      case Some(parent: Fragment) if !enter && parent.isRemoving =>
+        returning(new AlphaAnimation(1, 1))(_.setDuration(getNextAnimationDuration(parent)))
+      case _ =>
+        super.onCreateAnimation(transit, enter, nextAnim)
+    }
+
   def withBackstackHead[A](f: Option[Fragment] => A): A = {
     import scala.collection.JavaConverters._
     f(getChildFragmentManager.getFragments.asScala.toList.flatMap(Option(_)).lastOption)
@@ -188,6 +215,26 @@ trait FragmentHelper extends Fragment with OnBackPressedListener with ViewFinder
     super.onDestroy()
     onContextDestroy()
   }
+}
+
+object FragmentHelper {
+
+  private val DefaultAnimationDuration = 350L //TODO is this value correct?
+
+  def getNextAnimationDuration(fragment: Fragment) =
+    try { // Attempt to get the resource ID of the next animation that
+      // will be applied to the given fragment.
+      val nextAnimField = classOf[Fragment].getDeclaredField("mNextAnim")
+      nextAnimField.setAccessible(true)
+      val nextAnimResource = nextAnimField.getInt(fragment)
+      val nextAnim = AnimationUtils.loadAnimation(fragment.getActivity, nextAnimResource)
+      // ...and if it can be loaded, return that animation's duration
+      if (nextAnim == null) DefaultAnimationDuration
+      else nextAnim.getDuration
+    } catch {
+      case (_: NoSuchFieldException | _: IllegalAccessException | _: Resources.NotFoundException) =>
+        DefaultAnimationDuration
+    }
 }
 
 trait ManagerFragment extends FragmentHelper {

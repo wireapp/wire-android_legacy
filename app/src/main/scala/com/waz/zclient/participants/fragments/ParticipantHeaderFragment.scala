@@ -19,17 +19,15 @@ package com.waz.zclient.participants.fragments
 
 import android.content.Context
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.support.v7.widget.Toolbar
 import android.view._
-import android.view.animation.{AlphaAnimation, Animation}
 import android.widget.TextView
 import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.participants.ParticipantsController
-import com.waz.zclient.utils.{RichView, ViewUtils}
+import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
 
 class ParticipantHeaderFragment extends BaseFragment[ParticipantHeaderFragment.Container] with FragmentHelper {
@@ -61,26 +59,13 @@ class ParticipantHeaderFragment extends BaseFragment[ParticipantHeaderFragment.C
   private lazy val headerReadOnlyTextView = returning(view[TextView](R.id.participants__header)) { vh =>
     (Option(getParentFragment) match {
       case Some(f: ManagerFragment) => f.currentContentTag
-      case _                        => Signal.const(None)
-    }).map { tag: Option[String] =>
-      tag.contains(GroupParticipantsFragment.Tag) || tag.contains(GuestOptionsFragment.Tag)
-    }.onUi(vis => vh.foreach(_.setVisible(vis)))
+      case _                        => Signal.const(Option.empty[String])
+    }).map(tag => tag.contains(GroupParticipantsFragment.Tag) || tag.contains(GuestOptionsFragment.Tag))
+      .onUi(vis => vh.foreach(_.setVisible(vis)))
   }
 
-  // This is a workaround for the bug where child fragments disappear when
-  // the parent is removed (as all children are first removed from the parent)
-  // See https://code.google.com/p/android/issues/detail?id=55228
-  // Apply the workaround only if this is a child fragment, and the parent is being removed.
-  override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation = Option(getParentFragment) match {
-    case Some(parent: Fragment) if enter && parent.isRemoving => returning(new AlphaAnimation(1, 1)){
-      _.setDuration(ViewUtils.getNextAnimationDuration(parent))
-    }
-    case _ => super.onCreateAnimation(transit, enter, nextAnim)
-  }
-
-  override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
+  override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle) =
     inflater.inflate(R.layout.fragment_participants_header, container, false)
-  }
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)

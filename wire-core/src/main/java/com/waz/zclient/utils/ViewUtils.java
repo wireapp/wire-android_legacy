@@ -34,20 +34,14 @@ import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
-
-import java.lang.reflect.Field;
 
 
 public class ViewUtils {
 
-    private static final int DEFAULT_CHILD_ANIMATION_DURATION = 350;
 
     public static boolean isInPortrait(@NonNull Context context) { // still used in wire-ui
         return isInPortrait(context.getResources().getConfiguration());
@@ -373,25 +367,6 @@ public class ViewUtils {
     @SuppressLint("com.waz.ViewUtils")
     public static <T extends View> T getView(@NonNull Activity activity, @IdRes int resId) {
         return  (T) activity.findViewById(resId);
-    }
-
-    public static int getAlphaValue(int opacity) {
-        return (int) (255.00 * ((double) opacity / 100.00));
-    }
-
-    public static long getNextAnimationDuration(Fragment fragment) {
-        try {
-            // Attempt to get the resource ID of the next animation that
-            // will be applied to the given fragment.
-            Field nextAnimField = Fragment.class.getDeclaredField("mNextAnim");
-            nextAnimField.setAccessible(true);
-            int nextAnimResource = nextAnimField.getInt(fragment);
-            Animation nextAnim = AnimationUtils.loadAnimation(fragment.getActivity(), nextAnimResource);
-            // ...and if it can be loaded, return that animation's duration
-            return (nextAnim == null) ? DEFAULT_CHILD_ANIMATION_DURATION : nextAnim.getDuration();
-        } catch (NoSuchFieldException | IllegalAccessException | Resources.NotFoundException ex) {
-            return DEFAULT_CHILD_ANIMATION_DURATION;
-        }
     }
 
 }
