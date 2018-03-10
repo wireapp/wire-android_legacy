@@ -204,6 +204,8 @@ trait ManagerFragment extends FragmentHelper {
     })
   }
 
+  def getContentFragment: Option[Fragment] = withContentFragment(identity)
+
   def withContentFragment[A](f: Option[Fragment] => A): A = withFragmentOpt(contentId)(f)
 }
 

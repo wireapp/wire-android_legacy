@@ -131,11 +131,6 @@ class GuestOptionsFragment extends FragmentHelper {
     guestsSwitch.foreach(_.setOnCheckedChangeListener(null))
     super.onStop()
   }
-
-  override def onBackPressed(): Boolean = {
-    super.onBackPressed()
-    getFragmentManager.popBackStackImmediate()
-  }
 }
 
 object GuestOptionsFragment {

@@ -106,7 +106,6 @@ class ParticipantFragment extends BaseFragment[ParticipantFragment.Container] wi
 
   override def onViewCreated(view: View, @Nullable savedInstanceState: Bundle): Unit = {
     if (Option(savedInstanceState).isEmpty) {
-
       (getStringArg(PageToOpenArg) match {
         case Some(GuestOptionsFragment.Tag) => Future.successful((new GuestOptionsFragment, GuestOptionsFragment.Tag))
         case Some(SingleParticipantFragment.TagDevices) => Future.successful((SingleParticipantFragment.newInstance(Some(SingleParticipantFragment.TagDevices)), SingleParticipantFragment.Tag))
@@ -141,7 +140,6 @@ class ParticipantFragment extends BaseFragment[ParticipantFragment.Container] wi
     subs += participantsController.isGroupOrBot.onUi { isGroupOrBot =>
       screenController.setSingleConversation(!isGroupOrBot)
     }
-
   }
 
   override def onStart(): Unit = {
@@ -164,6 +162,7 @@ class ParticipantFragment extends BaseFragment[ParticipantFragment.Container] wi
 
   override def onBackPressed(): Boolean = {
     withContentFragment {
+      case _ if optionsFragment.close() => true
       case _ if pickUserController.isShowingPickUser(IPickUserController.Destination.PARTICIPANTS) =>
         verbose(s"onBackPressed with isShowingPickUser")
         pickUserController.hidePickUser(IPickUserController.Destination.PARTICIPANTS)
@@ -174,12 +173,13 @@ class ParticipantFragment extends BaseFragment[ParticipantFragment.Container] wi
         participantsController.unselectParticipant()
         true
       case Some(f: FragmentHelper) if f.onBackPressed() => true
+      case Some(_: FragmentHelper) =>
+        if (getChildFragmentManager.getBackStackEntryCount <= 1) participantsController.onHideParticipants ! {}
+        else getChildFragmentManager.popBackStack()
+        true
       case _ =>
-        optionsFragment.close() || {
-          super.onBackPressed()
-          participantsController.onHideParticipants ! {}
-          true
-        }
+        warn("OnBackPressed was not handled anywhere")
+        false
     }
   }
 
@@ -271,7 +271,7 @@ class ParticipantFragment extends BaseFragment[ParticipantFragment.Container] wi
 
   override def onConnectRequestWasSentToUser(): Unit = screenController.hideUser()
 
-  override def onHideOtrClient(): Unit = getChildFragmentManager.popBackStack
+  override def onHideOtrClient(): Unit = getChildFragmentManager.popBackStack()
 
   override def onShowLikesList(message: Message): Unit = {}
 
