@@ -210,7 +210,7 @@ public class SendConnectRequestFragment extends BaseFragment<SendConnectRequestF
             }
         });
 
-        final Boolean permissionToRemove = inject(UserAccountsController.class).hasRemoveConversationMemberPermission(
+        final Boolean permissionToRemove = inject(UserAccountsController.class).hasRemoveConversationMemberPermissionJava(
             inject(ConversationController.class).getCurrentConvId()
         );
 
