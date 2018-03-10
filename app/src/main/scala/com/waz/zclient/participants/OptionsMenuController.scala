@@ -20,7 +20,6 @@ package com.waz.zclient.participants
 import android.content.Context
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
-import com.waz.model.ConversationData.ConversationType.isOneToOne
 import com.waz.model.{ConvId, ConversationData, UserData, UserId}
 import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
@@ -92,16 +91,11 @@ class OptionsMenuController(implicit injector: Injector, context: Context, ec: E
   val otherUser: Signal[Option[UserData]] = (for {
     zms          <- zMessaging
     Some(convId) <- convId
-    id <- zms.teamId.isDefined match {
-      case true => zms.membersStorage.activeMembers(convId).filter(us => us.size == 2).map(_.find(_ != zms.selfUserId))
-      case _    => zms.convsStorage.signal(convId).collect {
-        case c if isOneToOne(c.convType) => Some(UserId(c.id.str))
-      }
-    }
+    isGroup      <- Signal.future(zms.conversations.isGroupConversation(convId))
+    id <- if (isGroup) Signal.const(Option.empty[UserId]) else zms.membersStorage.activeMembers(convId).filter(_ != zms.selfUserId).map(_.headOption)
     user <- id.fold(Signal.const(Option.empty[UserData]))(zms.users.userSignal(_).map(Some(_)))
   } yield user)
     .orElse(Signal.const(Option.empty[UserData]))
-  otherUser (v => verbose(s"otherUser: $v"))
 
   val isGroup = otherUser.map(_.isEmpty)
 
