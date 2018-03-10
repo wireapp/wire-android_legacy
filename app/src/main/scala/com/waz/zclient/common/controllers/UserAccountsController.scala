@@ -19,6 +19,7 @@ package com.waz.zclient.common.controllers
 
 import android.content.Context
 import com.waz.ZLog.ImplicitTag._
+import com.waz.model.AccountData.Permission._
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -35,37 +36,49 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
   val accounts = Option(ZMessaging.currentAccounts).fold(Signal.const(Seq.empty[AccountData]))(_.loggedInAccounts.map(_.toSeq.sortBy(acc => (acc.isTeamAccount, acc.id.str))))
   val convCtrl = inject[ConversationController]
 
-  val currentUser = for {
+  lazy val currentUser = for {
     zms     <- zms
     account <- ZMessaging.currentAccounts.activeAccount
     user    <- account.flatMap(_.userId).fold(Signal.const(Option.empty[UserData]))(accId => zms.usersStorage.signal(accId).map(Some(_)))
   } yield user
 
-  private var _permissions = Set[AccountData.Permission]()
+  lazy val teamId: Signal[Option[TeamId]] = zms.map(_.teamId)
 
-  private var _teamId = Option.empty[TeamId]
-  private var _teamMembers = Set.empty[UserId]
+  lazy val isTeam: Signal[Boolean] = teamId.map(_.isDefined)
 
-  val permissions = for {
-    zms <- zms
-    accountData <- zms.account.accountData
-  } yield accountData.selfPermissions
-
-  permissions { p =>
-    _permissions = p
-  }
-
-  val teamData = for {
+  lazy val teamData = for {
     zms <- zms
     teamData <- zms.teams.selfTeam
   } yield teamData
 
-  val teamMembersSignal = for {
+  lazy val selfPermissions = for {
     zms <- zms
-    teamMembers <- zms.teams.searchTeamMembers()
-  } yield teamMembers.map(_.id)
+    accountData <- zms.account.accountData
+  } yield accountData.selfPermissions
 
-  teamMembersSignal.onUi(members => _teamMembers = members)
+  lazy val hasCreateConvPermission: Signal[Boolean] =
+    selfPermissions.map(_.contains(CreateConversation))
+
+  def hasAddConversationMemberPermission(convId: ConvId): Signal[Boolean] =
+    hasConvPermission(convId, AddConversationMember)
+
+  def hasRemoveConversationMemberPermission(convId: ConvId): Signal[Boolean] =
+    hasConvPermission(convId, RemoveConversationMember)
+
+  private def hasConvPermission(convId: ConvId, toCheck: AccountData.Permission): Signal[Boolean] = {
+    for {
+      z    <- zms
+      conv <- z.convsStorage.signal(convId)
+      ps   <- selfPermissions
+    } yield
+      conv.team.isEmpty || (conv.team == z.teamId && ps(toCheck))
+  }
+
+  def isTeamMember(userId: UserId) =
+    for {
+      z    <- zms
+      user <- z.usersStorage.signal(userId)
+    } yield z.teamId.isDefined && z.teamId == user.teamId
 
   private def unreadCountForConv(conversationData: ConversationData): Int = {
     if (conversationData.archived || conversationData.muted || conversationData.hidden || conversationData.convType == ConversationData.ConversationType.Self)
@@ -74,7 +87,7 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
       conversationData.unreadCount.total
   }
 
-  val unreadCount = for {
+  lazy val unreadCount = for {
     zmsSet   <- ZMessaging.currentAccounts.zmsInstances
     countMap <- Signal.sequence(zmsSet.map(z => z.convsStorage.convsSignal.map(c => z.accountId -> c.conversations.map(unreadCountForConv).sum)).toSeq:_*)
   } yield countMap.toMap
@@ -88,30 +101,8 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
   def getOrCreateAndOpenConvFor(user: UserId) =
     getConversationId(user).flatMap(convCtrl.selectConv(_, ConversationChangeRequester.START_CONVERSATION))
 
-  lazy val teamId = zms.map(_.teamId)
-  teamId.onUi(_teamId = _)
-
-  val isTeam: Signal[Boolean] = teamId.map(_.isDefined)
-
-  def isTeamAccount = _teamId.isDefined
-  def isTeamMember(userId: UserId) = _teamMembers.contains(userId)
-
-  //TODO should perhaps clean this up a tad
-  private def getTeamId(convId: ConvId): Option[TeamId] = zms.currentValue.flatMap(_.convsStorage.conversations.find(_.id == convId).flatMap(_.team))
-
-  private def isPartOfTeam(tId: TeamId): Boolean = _teamId match {
-    case Some(id) => id == tId
-    case _ => false
-  }
-
-  def hasCreateConversationPermission: Boolean = !isTeamAccount || _permissions(AccountData.Permission.CreateConversation)
-  def hasRemoveConversationMemberPermission(convId: ConvId): Boolean = getTeamId(convId) match {
-    case Some(id) => isPartOfTeam(id) && _permissions(AccountData.Permission.RemoveConversationMember)
-    case _ => true
-  }
-  def hasAddConversationMemberPermission(convId: ConvId): Boolean = getTeamId(convId) match {
-    case Some(id) => isPartOfTeam(id) && _permissions(AccountData.Permission.AddConversationMember)
-    case _ => true
-  }
+  //TODO remove when SendConnectRequestFragment is rewritten
+  def hasRemoveConversationMemberPermissionJava(convId: ConvId): Boolean =
+    hasRemoveConversationMemberPermission(convId).currentValue.getOrElse(false)
 
 }

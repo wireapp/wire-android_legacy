@@ -272,7 +272,7 @@ protected class ChatheadController(val setSelectable:            Boolean        
   def setIntegration(integration: IntegrationData): Unit = Option(integration).fold(throw new IllegalArgumentException("IntegrationDetails should not be null"))(i => assignInfo ! Some(AssignDetails(i)))
 
   val chatheadInfo: Signal[Option[ChatheadDetails]] = zMessaging.zip(assignInfo).flatMap {
-    case (zms, Some(AssignDetails(Some(userId), _))) => zms.usersStorage.signal(userId).map(ud => Some(ChatheadDetails(ud)))
+    case (zms, Some(AssignDetails(Some(userId), _))) => zms.usersStorage.signal(userId).map(ud => Some(ChatheadDetails(ud, zms.teamId.isDefined && zms.teamId == ud.teamId)))
     case (_, Some(AssignDetails(_, Some(integration)))) => Signal.const(Some(ChatheadDetails(integration)))
     case _ => Signal.const(None)
   }
@@ -381,19 +381,17 @@ protected class ChatheadController(val setSelectable:            Boolean        
                             )
 
   object ChatheadDetails {
-    def apply(user: UserData): ChatheadDetails = {
-      val teamMember = teamsAndUserController.isTeamMember(user.id)
+    def apply(user: UserData, isTeamMember: Boolean): ChatheadDetails = {
       val knownUser = user.isConnected || user.isSelf
 
       ChatheadDetails(
         accentColor = ColorVal(AccentColor(user.accent).getColor()),
         connectionStatus = user.connection,
-        teamMember = teamMember,
         initials = NameParts.parseFrom(user.name).initials,
         knownUser = knownUser,
-        grayScale = !(user.isConnected || user.isSelf || teamMember),
+        grayScale = !(user.isConnected || user.isSelf || isTeamMember),
         assetId = user.picture,
-        selectable = knownUser || teamMember,
+        selectable = knownUser || isTeamMember,
         isBot = user.isWireBot
       )
     }

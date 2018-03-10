@@ -59,25 +59,25 @@ class GroupParticipantsFragment extends FragmentHelper {
   private lazy val pickUserController           = inject[IPickUserController]
 
   private lazy val participantsView = view[RecyclerView](R.id.pgv__participants)
-  private lazy val footerMenu = returning(view[FooterMenu](R.id.fm__participants__footer)) { fm =>
-    val showAddPeople = for {
-      conv    <- participantsController.conv
-      isGroup <- participantsController.isGroup
-    } yield conv.isActive && isGroup && userAccountsController.hasAddConversationMemberPermission(conv.id)
 
+  lazy val showAddPeople = for {
+    conv    <- participantsController.conv
+    isGroup <- participantsController.isGroup
+    hasPerm <- userAccountsController.hasAddConversationMemberPermission(conv.id)
+  } yield conv.isActive && isGroup && hasPerm
+
+  private lazy val footerMenu = returning(view[FooterMenu](R.id.fm__participants__footer)) { fm =>
     showAddPeople.map {
       case true  => R.string.glyph__add_people
       case false => R.string.empty_string
-    }.onUi { textId =>
-      fm.foreach(_.setLeftActionText(getString(textId)))
-    }
+    }.map(getString)
+     .onUi(t => fm.foreach(_.setLeftActionText(t)))
 
     showAddPeople.map {
       case true  => R.string.conversation__action__add_people
       case false => R.string.empty_string
-    }.onUi { textId =>
-      fm.foreach(_.setLeftActionLabelText(getString(textId)))
-    }
+    }.map(getString)
+     .onUi(t => fm.foreach(_.setLeftActionLabelText(t)))
   }
   private lazy val emptyListIcon = view[GlyphTextView](R.id.empty_group_watermark)
 
@@ -144,8 +144,12 @@ class GroupParticipantsFragment extends FragmentHelper {
     }
 
     KeyboardUtils.hideKeyboard(getActivity)
-    participantsController.getUser(userId).foreach {
-      case Some(user) if user.connection == ACCEPTED || userAccountsController.isTeamAccount && userAccountsController.isTeamMember(userId) =>
+
+    for {
+      userOpt      <- participantsController.getUser(userId)
+      isTeamMember <- userAccountsController.isTeamMember(userId).head
+    } userOpt match {
+      case Some(user) if user.connection == ACCEPTED || isTeamMember =>
         participantsController.selectParticipant(userId)
         openUserProfileFragment(SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
 
@@ -185,13 +189,9 @@ class GroupParticipantsFragment extends FragmentHelper {
     super.onResume()
     footerMenu.foreach(_.setCallback(new FooterMenuCallback() {
       override def onLeftActionClicked(): Unit = {
-        (for {
-          conv    <- participantsController.conv.head
-          isGroup <- participantsController.isGroup.head
-        } yield (conv.id, conv.isActive, isGroup)).foreach {
-          case (convId, true, true) if userAccountsController.hasAddConversationMemberPermission(convId) =>
-            pickUserController.showPickUser(IPickUserController.Destination.PARTICIPANTS)
-          case _ =>
+        showAddPeople.head.map {
+          case true => pickUserController.showPickUser(IPickUserController.Destination.PARTICIPANTS)
+          case _ => //
         }
       }
 

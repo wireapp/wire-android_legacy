@@ -74,39 +74,43 @@ class ParticipantDetailsTab(val context: Context, callback: FooterMenuCallback) 
 
   imageView.setImageDrawable(new ImageAssetDrawable(picture, scaleType = ScaleType.CenterInside, request = RequestBuilder.Round))
 
-  usersController.availabilityVisible.onUi { userAvailability.setVisible }
+  usersController.availabilityVisible.onUi(userAvailability.setVisible)
 
   (for {
     Some(uId) <- participantsController.otherParticipantId
     av        <- usersController.availability(uId)
-  } yield av).onUi {
-    userAvailability.set
-  }
+  } yield av).onUi(userAvailability.set)
 
-  participantsController.isGroupOrBot.map {
-    case false if userAccountsController.hasCreateConversationPermission => R.string.glyph__add_people
-    case _                                                               => R.string.glyph__conversation
-  }.onUi { id =>
-    footerMenu.setLeftActionText(getString(id))
-  }
 
-  participantsController.isGroupOrBot.map {
-    case false if userAccountsController.hasCreateConversationPermission => R.string.conversation__action__create_group
-    case _                                                               => R.string.empty_string
-  }.onUi { id =>
-    footerMenu.setLeftActionLabelText(getString(id))
-  }
+  participantsController.isGroupOrBot.flatMap {
+    case false => userAccountsController.hasCreateConvPermission.map {
+      case true => R.string.glyph__add_people
+      case _    => R.string.empty_string
+    }
+    case _ => Signal.const(R.string.glyph__conversation)
+  }.map(getString)
+   .onUi(footerMenu.setLeftActionText)
 
-  (for {
-    convId     <- participantsController.conv.map(_.id)
-    groupOrBot <- participantsController.isGroupOrBot
-  } yield (groupOrBot, convId)).map {
-    case (false, _)     if userAccountsController.hasCreateConversationPermission               => R.string.glyph__more
-    case (true, convId) if userAccountsController.hasRemoveConversationMemberPermission(convId) => R.string.glyph__minus
-    case _ => R.string.empty_string
-  }.onUi { id =>
-    footerMenu.setRightActionText(getString(id))
-  }
+  participantsController.isGroupOrBot.flatMap {
+    case false => userAccountsController.hasCreateConvPermission.map {
+      case true => R.string.conversation__action__create_group
+      case _    => R.string.empty_string
+    }
+    case _ => Signal.const(R.string.empty_string)
+  }.map(getString)
+   .onUi(footerMenu.setLeftActionLabelText)
+
+  participantsController.isGroupOrBot.flatMap {
+    case false => userAccountsController.hasCreateConvPermission.map {
+      case true => R.string.glyph__more
+      case _    => R.string.empty_string
+    }
+    case _ => for {
+      convId  <- participantsController.conv.map(_.id)
+      remPerm <- userAccountsController.hasRemoveConversationMemberPermission(convId)
+    } yield if (remPerm) R.string.glyph__minus else R.string.empty_string
+  }.map(getString)
+   .onUi(footerMenu.setRightActionText)
 
 }
 

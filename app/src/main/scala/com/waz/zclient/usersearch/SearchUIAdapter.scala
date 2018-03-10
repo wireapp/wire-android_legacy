@@ -168,7 +168,7 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
     def addGroupCreationButton(): Unit =
       mergedResult = mergedResult ++ Seq(SearchResult(NewConversation, TopUsersSection, 0))
 
-    if (userAccountsController.isTeamAccount) {
+    if (team.isDefined) {
       if (peopleOrServices.currentValue.contains(true)) {
         addIntegrations()
       } else {
