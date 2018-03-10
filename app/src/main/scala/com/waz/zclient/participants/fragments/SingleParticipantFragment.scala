@@ -155,14 +155,10 @@ class SingleParticipantFragment extends FragmentHelper {
     userHandle
   }
 
-  override def onBackPressed(): Boolean =
-    if (participantsController.isGroupOrBot.currentValue.getOrElse(false)){
-      super.onBackPressed()
-      screenController.hideUser()
-      participantsController.unselectParticipant()
-      true
-    } else false
-
+  override def onBackPressed(): Boolean = {
+    participantsController.unselectParticipant()
+    super.onBackPressed()
+  }
 }
 
 object SingleParticipantFragment {
