@@ -65,10 +65,10 @@ class SecondPageFragment extends FragmentHelper
     (for {
       conv <- conversationController.currentConv
       convMembers <- conversationController.currentConvMembers
-    } yield conv -> convMembers.headOption).onUi { case (conv, maybeUserId) =>
-      info(s"Conversation: ${conv.id} type: ${conv.convType}")
+    } yield (conv.id, conv.convType, convMembers.headOption)).onUi { case (convId, convType, maybeUserId) =>
+      info(s"Conversation: $convId type: $convType")
 
-      val (page, fragment, tag) = (conv.convType, maybeUserId) match {
+      val (page, fragment, tag) = (convType, maybeUserId) match {
         case (Type.INCOMING_CONNECTION, Some(userId)) =>
           import ConnectRequestFragment._
           (Page.CONNECT_REQUEST_INBOX, newInstance(userId), FragmentTag)

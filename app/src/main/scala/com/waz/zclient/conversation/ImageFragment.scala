@@ -75,7 +75,7 @@ class ImageFragment extends FragmentHelper {
     case None => Signal.const(false)
   }
 
-  lazy val message = collectionController.focusedItem collect { case Some(msg) => msg }
+  lazy val message = collectionController.focusedItem.collect { case Some(msg) => msg }.disableAutowiring()
 
   lazy val topCursorItems: Signal[Seq[ToolbarItem]] = {
     message.flatMap { m =>
