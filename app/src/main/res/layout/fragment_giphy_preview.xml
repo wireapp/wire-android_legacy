@@ -102,8 +102,8 @@
         android:layout_weight="1"
         >
 
-        <com.waz.zclient.views.images.ImageAssetView
-            android:id="@+id/iv__giphy_preview__preview"
+        <ImageView
+            android:id="@+id/giphy_preview"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center"

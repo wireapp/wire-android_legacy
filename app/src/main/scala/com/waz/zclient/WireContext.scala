@@ -86,6 +86,9 @@ trait ViewHelper extends View with ViewFinder with Injectable with ViewEventCont
 
 object ViewHelper {
 
+  def findById[V <: View](parent: View)(id: Int): V =
+    parent.findViewById[V](id)
+
   @SuppressLint(Array("LogNotTimber"))
   def inflate[T <: View](layoutResId: Int, group: ViewGroup, addToParent: Boolean)(implicit logTag: LogTag) =
     try LayoutInflater.from(group.getContext).inflate(layoutResId, group, addToParent).asInstanceOf[T]
@@ -118,6 +121,8 @@ trait ServiceHelper extends Service with Injectable with WireContext with EventC
     onContextDestroy()
   }
 }
+
+
 
 trait FragmentHelper extends Fragment with OnBackPressedListener with ViewFinder with Injectable with EventContext {
 
@@ -344,6 +349,8 @@ class ViewHolder[T <: View](id: Int, finder: ViewFinder) {
     view = Option.empty
 
   def foreach(f: T => Unit): Unit = Option(get).foreach(f)
+
+  def fold[B](ifEmpty: => B)(f: T => B): B = Option(get).fold(ifEmpty)(f)
 
   def map[A](f: T => A): Option[A] = Option(get).map(f)
 

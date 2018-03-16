@@ -40,10 +40,10 @@ import com.waz.zclient.controllers.navigation.Page;
 import com.waz.zclient.controllers.singleimage.SingleImageObserver;
 import com.waz.zclient.conversation.ImageFragment;
 import com.waz.zclient.core.stores.inappnotification.SyncErrorObserver;
+import com.waz.zclient.giphy.GiphySharingPreviewFragment;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.pages.main.conversationlist.ConfirmationFragment;
 import com.waz.zclient.pages.main.conversationpager.ConversationPagerFragment;
-import com.waz.zclient.pages.main.giphy.GiphySharingPreviewFragment;
 import com.waz.zclient.utils.SyncErrorUtils;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.menus.ConfirmationMenu;
@@ -144,7 +144,7 @@ public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container>
                 getChildFragmentManager().getBackStackEntryCount() - 1).getName());
             if (topFragment instanceof GiphySharingPreviewFragment) {
                 if (!((GiphySharingPreviewFragment) topFragment).onBackPressed()) {
-                    getChildFragmentManager().popBackStackImmediate(GiphySharingPreviewFragment.TAG,
+                    getChildFragmentManager().popBackStackImmediate(GiphySharingPreviewFragment.Tag(),
                                                                     FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 }
                 return true;
@@ -206,8 +206,8 @@ public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container>
         getChildFragmentManager().beginTransaction()
                                  .add(R.id.fl__overlay_container,
                                       GiphySharingPreviewFragment.newInstance(keyword),
-                                      GiphySharingPreviewFragment.TAG)
-                                 .addToBackStack(GiphySharingPreviewFragment.TAG)
+                                      GiphySharingPreviewFragment.Tag())
+                                 .addToBackStack(GiphySharingPreviewFragment.Tag())
                                  .commit();
     }
 
@@ -216,8 +216,8 @@ public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container>
         getChildFragmentManager().beginTransaction()
                                  .add(R.id.fl__overlay_container,
                                       GiphySharingPreviewFragment.newInstance(),
-                                      GiphySharingPreviewFragment.TAG)
-                                 .addToBackStack(GiphySharingPreviewFragment.TAG)
+                                      GiphySharingPreviewFragment.Tag())
+                                 .addToBackStack(GiphySharingPreviewFragment.Tag())
                                  .commit();
     }
 
@@ -226,20 +226,20 @@ public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container>
         getChildFragmentManager().beginTransaction()
                                  .add(R.id.fl__overlay_container,
                                       GiphySharingPreviewFragment.newInstance(),
-                                      GiphySharingPreviewFragment.TAG)
-                                 .addToBackStack(GiphySharingPreviewFragment.TAG)
+                                      GiphySharingPreviewFragment.Tag())
+                                 .addToBackStack(GiphySharingPreviewFragment.Tag())
                                  .commit();
     }
 
     @Override
     public void onCloseGiphy() {
-        getChildFragmentManager().popBackStackImmediate(GiphySharingPreviewFragment.TAG,
+        getChildFragmentManager().popBackStackImmediate(GiphySharingPreviewFragment.Tag(),
                                                         FragmentManager.POP_BACK_STACK_INCLUSIVE);
     }
 
     @Override
     public void onCancelGiphy() {
-        getChildFragmentManager().popBackStackImmediate(GiphySharingPreviewFragment.TAG,
+        getChildFragmentManager().popBackStackImmediate(GiphySharingPreviewFragment.Tag(),
                                                         FragmentManager.POP_BACK_STACK_INCLUSIVE);
     }
 

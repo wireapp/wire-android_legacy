@@ -147,7 +147,7 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
         loadingIndicator = ViewUtils.getView(view, R.id.liv__giphy_preview__loading);
         toolbar = ViewUtils.getView(view, R.id.t__giphy__toolbar);
         giphySearchEditText = ViewUtils.getView(view, R.id.cet__giphy_preview__search);
-        previewImageAssetView = ViewUtils.getView(view, R.id.iv__giphy_preview__preview);
+        previewImageAssetView = ViewUtils.getView(view, R.id.giphy_preview);
         errorView = ViewUtils.getView(view, R.id.ttv__giphy_preview__error);
         giphyTitle = ViewUtils.getView(view, R.id.ttv__giphy_preview__title);
         recyclerView = ViewUtils.getView(view, R.id.rv__giphy_image_preview);
