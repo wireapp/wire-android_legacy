@@ -32,8 +32,6 @@ class ScalaStoreFactory(context: Context) extends StoreFactory {
 
   protected def createProfileStore = new ScalaProfileStore(zMessagingApiStore.getApi)
 
-  protected def createPickUserStore = new ScalaPickUserStore(zMessagingApiStore.getApi)
-
   protected def createInAppNotificationStore = new ScalaInAppNotificationStore(zMessagingApiStore.getApi)
 
   override def tearDown() = super.tearDown()
