@@ -24,17 +24,12 @@ import com.waz.zclient.core.stores.conversation.IConversationStore
 class ScalaConversationStore(zMessagingApi: ZMessagingApi) extends IConversationStore  {
 
   private val conversationsList = zMessagingApi.getConversations
-  private val establishedConversationsList = conversationsList.getEstablishedConversations
-
-  override def getConversation(conversationId: String): IConversation = conversationsList.getConversation(conversationId)
 
   override def nextConversation(convId: ConvId): Option[ConvId] =
     if (conversationsList.size() <= 1) None else
       (0 until conversationsList.size()).find(i => conversationsList.get(i).getId == convId.str)
       .map { i => if (i == conversationsList.size() - 1)  conversationsList.get(i - 1) else  conversationsList.get(i + 1)}
       .map(ic => new ConvId(ic.getId))
-
-  override def numberOfActiveConversations: Int = if (establishedConversationsList == null) 0 else establishedConversationsList.size
 
   override def tearDown(): Unit = {}
 }

@@ -185,9 +185,6 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def createGroupConversation(name: Option[String], users: Set[UserId], teamOnly: Boolean): Future[ConversationData] =
     zms.head.flatMap { z => z.convsUi.createGroupConversation(name, users, teamOnly).map(_._1) }
 
-  // TODO: remove when not used anymore
-  def iConv(id: ConvId): IConversation = convStore.getConversation(id.str)
-
   def withCurrentConvName(callback: Callback[String]): Unit = currentConvName.head.foreach(callback.callback)(Threading.Ui)
 
   def getCurrentConvId: ConvId = currentConvId.currentValue.orNull

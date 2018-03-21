@@ -17,7 +17,6 @@
  */
 package com.waz.zclient.core.stores.conversation
 
-import com.waz.api.IConversation
 import com.waz.model.ConvId
 import com.waz.zclient.core.stores.IStore
 
@@ -30,9 +29,5 @@ trait IConversationStore extends IStore {
    * otherwise the conversation above
    */
   def nextConversation(convId: ConvId): Option[ConvId]
-
-  def getConversation(conversationId: String): IConversation
-
-  def numberOfActiveConversations: Int
 
 }
