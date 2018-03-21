@@ -17,20 +17,12 @@
   */
 package com.waz.zclient
 
-import java.util.NoSuchElementException
-
-import android.app.Activity
-import android.content.{Context, DialogInterface, Intent, SharedPreferences}
-import android.preference.PreferenceManager
-import android.support.v7.app.AlertDialog
+import android.content.Intent
 import com.waz.api.ClientRegistrationState.PASSWORD_MISSING
-import com.waz.api.{ClientRegistrationState, InitListener, Self}
-import com.waz.service.{BackendConfig, ZMessaging}
+import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.zclient.appentry.AppEntryActivity
-import com.waz.zclient.utils.BackendPicker
-import com.waz.zclient.utils.Callback
-import timber.log.Timber
+import com.waz.zclient.utils.{BackendPicker, Callback}
 
 
 class LaunchActivity extends BaseActivity {
@@ -39,7 +31,9 @@ class LaunchActivity extends BaseActivity {
   override def onBaseActivityStart() = {
     new BackendPicker(getApplicationContext).withBackend(this, new Callback[Void]() {
       override def callback(aVoid: Void) = {
-        super.onBaseActivityStart()
+        superOnBaseActivityStart()
+
+        //TODO - could this be racing with setting the active account?
         ZMessaging.currentAccounts.getActiveAccount.map {
           case Some(acc) if acc.clientRegState == PASSWORD_MISSING => startSignUp()
           case Some(_)                                             => startMain()
@@ -48,6 +42,9 @@ class LaunchActivity extends BaseActivity {
       }
     })
   }
+
+  //Can't call super from within anonymous class
+  private def superOnBaseActivityStart() = super.onBaseActivityStart()
 
   override protected def onNewIntent(intent: Intent) = {
     super.onNewIntent(intent)
@@ -68,8 +65,6 @@ class LaunchActivity extends BaseActivity {
 
 object LaunchActivity {
   val Tag = classOf[LaunchActivity].getName
-  val CustomBackendPref = "custom_backend_pref"
-
 }
 
 

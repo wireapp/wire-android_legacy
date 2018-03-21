@@ -22,17 +22,7 @@ import com.waz.zclient.core.stores.IStore;
 
 public interface IZMessagingApiStore extends IStore {
 
-    void addApiObserver(ZMessagingApiStoreObserver observer);
-
-    void removeApiObserver(ZMessagingApiStoreObserver observer);
-
-    boolean isInitialized();
-
     ZMessagingApi getApi();
-
-    void logout();
-
-    void delete();
 
     void tearDown();
 }

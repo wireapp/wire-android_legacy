@@ -707,7 +707,7 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
   }
 
   private val accentColorObserver = new AccentColorObserver {
-    override def onAccentColorHasChanged(sender: Any, color: Int): Unit = {
+    override def onAccentColorHasChanged(color: Int): Unit = {
       loadingIndicatorView.setColor(color)
       extendedCursorContainer.setAccentColor(color)
     }

@@ -28,7 +28,7 @@ public interface IAccentColorController {
 
     int getColor();
 
-    void setColor(AccentColorChangeRequester accentColorChangeRequester, int color);
+    void setColor(int color);
 
     void tearDown();
 }

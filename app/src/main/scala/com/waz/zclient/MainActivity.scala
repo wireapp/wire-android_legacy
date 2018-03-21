@@ -42,14 +42,11 @@ import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.CallPermissionsController
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
 import com.waz.zclient.common.controllers.{SharingController, UserAccountsController}
-import com.waz.zclient.controllers.accentcolor.AccentColorChangeRequester
 import com.waz.zclient.controllers.calling.CallingObserver
 import com.waz.zclient.controllers.navigation.{NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.core.stores.api.ZMessagingApiStoreObserver
 import com.waz.zclient.core.stores.connect.{ConnectStoreObserver, IConnectStore}
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
-import com.waz.zclient.core.stores.profile.ProfileStoreObserver
 import com.waz.zclient.fragments.ConnectivityFragment
 import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.pages.startup.UpdateFragment
@@ -60,6 +57,7 @@ import com.waz.zclient.utils.StringUtils.TextDrawing
 import com.waz.zclient.utils.{BuildConfigUtils, ContextUtils, Emojis, IntentUtils, PhoneUtils, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
 import net.hockeyapp.android.{ExceptionHandler, NativeCrashManager}
+import com.waz.zclient.views.LoadingIndicatorView.Spinner
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -70,12 +68,10 @@ class MainActivity extends BaseActivity
   with ActivityHelper
   with MainPhoneFragment.Container
   with UpdateFragment.Container
-  with ProfileStoreObserver
   with ConnectStoreObserver
   with NavigationControllerObserver
   with CallingObserver
-  with OtrDeviceLimitFragment.Container
-  with ZMessagingApiStoreObserver {
+  with OtrDeviceLimitFragment.Container {
 
   import Threading.Implicits.Background
 
@@ -117,7 +113,10 @@ class MainActivity extends BaseActivity
     if (BuildConfigUtils.isHockeyUpdateEnabled && !BuildConfigUtils.isLocalBuild(this))
       CrashController.checkForUpdates(this)
 
-    accentColorController.accentColor.map(_.getColor)(getControllerFactory.getUserPreferencesController.setLastAccentColor)
+    accentColorController.accentColor.map(_.getColor) { color =>
+      getControllerFactory.getUserPreferencesController.setLastAccentColor(color)
+      getControllerFactory.getAccentColorController.setColor(color)
+    }
 
     handleIntent(getIntent)
 
@@ -136,6 +135,24 @@ class MainActivity extends BaseActivity
       case _ => openSignUpPage()
     }
 
+    userAccountsController.accounts.map(_.isEmpty).onUi {
+      case true =>
+        info("onLogout")
+        getStoreFactory.reset()
+        getControllerFactory.getPickUserController.hideUserProfile()
+        getControllerFactory.getNavigationController.resetPagerPositionToDefault()
+        finish()
+        startActivity(returning(new Intent(this, classOf[MainActivity]))(_.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK)))
+      case _ =>
+    }
+
+    ZMessaging.currentGlobal.blacklist.upToDate.head.map {
+      case false =>
+        startActivity(new Intent(getApplicationContext, classOf[ForceUpdateActivity]))
+        finish()
+      case _ => //
+    } (Threading.Ui)
+
     val loadingIndicator = findViewById[LoadingIndicatorView](R.id.progress_spinner)
 
     (for {
@@ -150,12 +167,10 @@ class MainActivity extends BaseActivity
   override protected def onResumeFragments() = {
     info("onResumeFragments")
     super.onResumeFragments()
-    getStoreFactory.zMessagingApiStore.addApiObserver(this)
   }
 
   override def onStart() = {
     info("onStart")
-    getStoreFactory.profileStore.addProfileStoreObserver(this)
     getStoreFactory.connectStore.addConnectRequestObserver(this)
     getControllerFactory.getNavigationController.addNavigationControllerObserver(this)
     getControllerFactory.getCallingController.addCallingObserver(this)
@@ -166,17 +181,6 @@ class MainActivity extends BaseActivity
 
     if (!getControllerFactory.getUserPreferencesController.hasCheckedForUnsupportedEmojis(Emojis.VERSION))
       Future(checkForUnsupportedEmojis())(Threading.Background)
-
-    try
-        if ("com.wire" == getApplicationContext.getPackageName) {
-          Option(getStoreFactory.profileStore.getMyEmail).filter(e => e.endsWith("@wire.com") || e.endsWith("@wearezeta.com")).foreach { email =>
-            ExceptionHandler.saveException(new RuntimeException(email), null, null)
-            ViewUtils.showAlertDialog(this, "Yo dude!", "Please use Wire Internal", "I promise", null, false)
-          }
-        }
-    catch {
-      case _: Throwable => /*noop*/
-    }
   }
 
   override protected def onResume() = {
@@ -208,9 +212,7 @@ class MainActivity extends BaseActivity
     super.onStop()
     info("onStop")
     getControllerFactory.getCallingController.removeCallingObserver(this)
-    getStoreFactory.zMessagingApiStore.removeApiObserver(this)
     getStoreFactory.connectStore.removeConnectRequestObserver(this)
-    getStoreFactory.profileStore.removeProfileStoreObserver(this)
     getControllerFactory.getNavigationController.removeNavigationControllerObserver(this)
   }
 
@@ -265,14 +267,6 @@ class MainActivity extends BaseActivity
     getControllerFactory.getNavigationController.setIsLandscape(ContextUtils.isInLandscape(this))
   }
 
-  private def enterApplication(): Unit = {
-    verbose("Entering application")
-    if (IntentUtils.isPasswordResetIntent(getIntent)) {
-      verbose("Password was reset")
-      onPasswordWasReset()
-    }
-  }
-
   private def onPasswordWasReset() =
     for {
       Some(am) <- ZMessaging.currentAccounts.getActiveAccountManager
@@ -283,7 +277,6 @@ class MainActivity extends BaseActivity
   private def onUserLoggedInAndVerified(self: Self) = {
     verbose("onUserLoggedInAndVerified")
     getStoreFactory.profileStore.setUser(self)
-    getControllerFactory.getAccentColorController.setColor(AccentColorChangeRequester.LOGIN, self.getAccent.getColor)
     if (getSupportFragmentManager.findFragmentByTag(MainPhoneFragment.TAG) == null) replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.TAG)
   }
 
@@ -353,33 +346,9 @@ class MainActivity extends BaseActivity
     finish()
   }
 
-  private def openForceUpdatePage() = {
-    startActivity(new Intent(getApplicationContext, classOf[ForceUpdateActivity]))
-    finish()
-  }
-
   private def replaceMainFragment(fragment: Fragment, TAG: String) = {
     getSupportFragmentManager.beginTransaction.replace(R.id.fl_main_content, fragment, TAG).commit
   }
-
-  def onLogout() = {
-    userAccountsController.accounts.head.map{ accounts =>
-      if (accounts.isEmpty) {
-        info("onLogout")
-        getStoreFactory.reset()
-        getControllerFactory.getPickUserController.hideUserProfile()
-        getControllerFactory.getNavigationController.resetPagerPositionToDefault()
-        val intent: Intent = new Intent(this, classOf[MainActivity])
-        intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK)
-        finish()
-        startActivity(intent)
-      }
-    } (Threading.Ui)
-  }
-
-  def onForceClientUpdate() = openForceUpdatePage()
-
-  def onAccentColorChangedRemotely(sender: Any, color: Int) = getControllerFactory.getAccentColorController.setColor(AccentColorChangeRequester.REMOTE, color)
 
   def onPageVisible(page: Page) =
     getControllerFactory.getGlobalLayoutController.setSoftInputModeForPage(page)
@@ -413,9 +382,12 @@ class MainActivity extends BaseActivity
           .commitAllowingStateLoss
   }
 
-  def logout() = {
+  override def logout() = {
     getSupportFragmentManager.popBackStackImmediate
-    getStoreFactory.zMessagingApiStore.logout()
+    ZMessaging.currentAccounts.getActiveAccountManager.flatMap {
+      case Some(am) => am.logout(flushCredentials = true)
+      case _ => Future.successful({})
+    }
   }
 
   def manageDevices() = {
@@ -424,8 +396,6 @@ class MainActivity extends BaseActivity
   }
 
   def dismissOtrDeviceLimitFragment() = getSupportFragmentManager.popBackStackImmediate
-
-  def onInitialized(self: Self) = enterApplication()
 
   def onStartCall(withVideo: Boolean) = conversationController.currentConv.head.map { conv =>
     handleOnStartCall(withVideo, conv)

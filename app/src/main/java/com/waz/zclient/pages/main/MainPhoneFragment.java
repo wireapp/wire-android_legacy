@@ -275,7 +275,7 @@ public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container>
     //////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onAccentColorHasChanged(Object sender, int color) {
+    public void onAccentColorHasChanged(int color) {
         if (getView() == null) {
             return;
         }

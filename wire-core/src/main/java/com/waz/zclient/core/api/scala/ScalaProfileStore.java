@@ -17,14 +17,12 @@
  */
 package com.waz.zclient.core.api.scala;
 
-import com.waz.api.User;
 import com.waz.api.ZMessagingApi;
 import com.waz.zclient.core.stores.profile.ProfileStore;
 
 public class ScalaProfileStore extends ProfileStore {
     public static final String TAG = ScalaProfileStore.class.getName();
 
-    private int myColor;
 
     public ScalaProfileStore(ZMessagingApi zMessagingApi) {
         setUser(zMessagingApi.getSelf());
@@ -33,43 +31,14 @@ public class ScalaProfileStore extends ProfileStore {
     @Override
     public void tearDown() {
         if (selfUser != null) {
-            selfUser.removeUpdateListener(this);
             selfUser = null;
         }
     }
 
     @Override
-    public String getMyEmail() {
-        return selfUser.getEmail();
-    }
-
-    @Override
     public void resendVerificationEmail(String myEmail) {
-        selfUser.resendVerificationEmail(myEmail);
-    }
-
-    @Override
-    public User getSelfUser() {
-        return selfUser.getUser();
-    }
-
-    @Override
-    public int getAccentColor() {
-        return selfUser.getAccent().getColor();
-    }
-
-    /**
-     * User has been updated in core.
-     */
-    @Override
-    public void updated() {
-        if (selfUser == null) {
-            return;
-        }
-
-        if (selfUser.getAccent().getColor() != myColor) {
-            myColor = selfUser.getAccent().getColor();
-            notifyMyColorHasChanged(this, myColor);
+        if (selfUser != null) {
+            selfUser.resendVerificationEmail(myEmail);
         }
     }
 }

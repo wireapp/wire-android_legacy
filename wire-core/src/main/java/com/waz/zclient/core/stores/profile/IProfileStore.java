@@ -18,26 +18,11 @@
 package com.waz.zclient.core.stores.profile;
 
 import com.waz.api.Self;
-import com.waz.api.User;
 import com.waz.zclient.core.stores.IStore;
 
 public interface IProfileStore extends IStore {
 
-    /* add an observer to this store */
-    void addProfileStoreObserver(ProfileStoreObserver profileStoreObserver);
-
-    /* remove an observer from this store */
-    void removeProfileStoreObserver(ProfileStoreObserver profileStoreObserver);
-
     void setUser(Self selfUser);
 
-    /*  The email of the user */
-    String getMyEmail();
-
     void resendVerificationEmail(String myEmail);
-
-    User getSelfUser();
-
-    /* the color chosen by the user */
-    int getAccentColor();
 }

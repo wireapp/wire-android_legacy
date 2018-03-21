@@ -122,7 +122,7 @@ public class ConfirmationFragment extends BaseFragment<ConfirmationFragment.Cont
     }
 
     @Override
-    public void onAccentColorHasChanged(Object sender, int color) {
+    public void onAccentColorHasChanged(int color) {
         confirmationMenu.setButtonColor(color);
     }
 

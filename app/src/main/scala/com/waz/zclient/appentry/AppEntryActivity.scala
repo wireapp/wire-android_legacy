@@ -69,6 +69,8 @@ class AppEntryActivity extends BaseActivity
   with CreateTeamFragment.Container
   with AddEmailFragment.Container {
 
+  import Threading.Implicits.Ui
+
   private lazy val unsplashInitImageAsset = ImageAssetFactory.getImageAsset(AndroidURIUtil.parse(UNSPLASH_API_URL))
   private var unsplashInitLoadHandle: LoadHandle = null
   private lazy val progressView = ViewUtils.getView(this, R.id.liv__progress).asInstanceOf[LoadingIndicatorView]
@@ -194,7 +196,6 @@ class AppEntryActivity extends BaseActivity
   }
 
   def abortAddAccount(): Unit = {
-    implicit val ec = Threading.Ui
     enableProgress(true)
     ZMessaging.currentAccounts.loggedInAccounts.head.map { accounts =>
       accounts.headOption.fold {
@@ -265,7 +266,7 @@ class AppEntryActivity extends BaseActivity
             case _ => RegistrationType.Email
           }
           showFragment(newInstance(tpe), TAG)
-        } (Threading.Ui)
+        }
     }
 
   def onShowEmailPhoneCodePage(): Unit =
@@ -339,11 +340,13 @@ class AppEntryActivity extends BaseActivity
   }
 
   override def onChooseUsernameChosen() = {
-    getSupportFragmentManager.beginTransaction
-      .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-      .add(ChangeHandleFragment.newInstance(getStoreFactory.profileStore.getSelfUser.getUsername, cancellable = false), ChangeHandleFragment.FragmentTag)
-      .addToBackStack(ChangeHandleFragment.FragmentTag)
-      .commit
+    ZMessaging.currentAccounts.getActiveAccount.map(_.flatMap(_.handle.map(_.string)).getOrElse("")).map { userName =>
+      getSupportFragmentManager.beginTransaction
+        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+        .add(ChangeHandleFragment.newInstance(userName, cancellable = false), ChangeHandleFragment.FragmentTag)
+        .addToBackStack(ChangeHandleFragment.FragmentTag)
+        .commit
+    }
   }
 
   override def onKeepUsernameChosen(username: String) =
@@ -351,5 +354,5 @@ class AppEntryActivity extends BaseActivity
       case Left(_) =>
         Toast.makeText(AppEntryActivity.this, getString(R.string.username__set__toast_error), Toast.LENGTH_SHORT).show()
       case Right(_) =>
-    } (Threading.Ui)
+    }
 }

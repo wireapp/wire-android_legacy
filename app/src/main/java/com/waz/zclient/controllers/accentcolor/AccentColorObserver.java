@@ -18,5 +18,5 @@
 package com.waz.zclient.controllers.accentcolor;
 
 public interface AccentColorObserver {
-    void onAccentColorHasChanged(Object sender, int color);
+    void onAccentColorHasChanged(int color);
 }

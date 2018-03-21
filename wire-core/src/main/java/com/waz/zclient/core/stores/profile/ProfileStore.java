@@ -18,45 +18,12 @@
 package com.waz.zclient.core.stores.profile;
 
 import com.waz.api.Self;
-import com.waz.api.UpdateListener;
 
-import java.util.HashSet;
-import java.util.Set;
-
-public abstract class ProfileStore implements IProfileStore, UpdateListener {
-
-    // observers
-    private Set<ProfileStoreObserver> profileStoreObservers = new HashSet<>();
-
+public abstract class ProfileStore implements IProfileStore {
     protected Self selfUser;
-
-    /* add an observer to this store */
-    public void addProfileStoreObserver(ProfileStoreObserver profileStoreObserver) {
-        profileStoreObservers.add(profileStoreObserver);
-    }
 
     @Override
     public void setUser(Self selfUser) {
-        if (this.selfUser != null) {
-            this.selfUser.removeUpdateListener(this);
-        }
         this.selfUser = selfUser;
-
-        if (selfUser == null) {
-            return;
-        }
-        this.selfUser.addUpdateListener(this);
-        updated();
-    }
-
-    /* remove an observer from this store */
-    public void removeProfileStoreObserver(ProfileStoreObserver profileStoreObserver) {
-        profileStoreObservers.remove(profileStoreObserver);
-    }
-
-    protected void notifyMyColorHasChanged(Object sender, int color) {
-        for (ProfileStoreObserver profileStoreObserver : profileStoreObservers) {
-            profileStoreObserver.onAccentColorChangedRemotely(sender, color);
-        }
     }
 }

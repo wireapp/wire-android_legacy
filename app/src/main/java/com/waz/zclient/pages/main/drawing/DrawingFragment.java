@@ -536,7 +536,7 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
     }
 
     @Override
-    public void onAccentColorHasChanged(Object sender, int color) {
+    public void onAccentColorHasChanged(int color) {
         // TODO uncomment once AN-4649 is fixed
         //colorPickerScrollBar.setBackgroundColor(color);
         if (drawingCanvasView.isEmpty()) {
