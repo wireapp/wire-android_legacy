@@ -32,6 +32,7 @@ import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal, SourceSignal}
 import com.waz.utils.returning
+import com.waz.zclient._
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
 import com.waz.zclient.common.views.ImageAssetDrawable
@@ -42,11 +43,9 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.giphy.GiphyGridViewAdapter.ScrollGifCallback
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.profile.views.{ConfirmationMenu, ConfirmationMenuListener}
-import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.{ContextUtils, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
-import com.waz.zclient._
 
 class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragment.Container]
   with FragmentHelper
@@ -66,7 +65,7 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
   private lazy val spinnerController = inject[SpinnerController]
 
   private lazy val searchTerm = Signal[String]()
-  private lazy val isPreviewShown = Signal[Boolean]()
+  private lazy val isPreviewShown = Signal[Boolean](false)
   private lazy val selectedGif = Signal[Option[AssetData]]()
   private lazy val gifImage: Signal[ImageSource] = selectedGif.map {
     case Some(asset) => DataImage(asset)
@@ -110,11 +109,42 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
         }
       }
     }
-    isPreviewShown.map(isPreview => if (isPreview) showView else hideView)
-      .onUi(animate => vh.foreach(animate))
+    isPreviewShown.map(isPreview => if (isPreview) showView else hideView).onUi(animate => vh.foreach(animate))
+    vh.foreach { v =>
+      v.setConfirmationMenuListener(new ConfirmationMenuListener() {
+        override def confirm(): Unit = isOnline.head.filter(_ == true).foreach(_ => sendGif())
+        override def cancel(): Unit = {
+          isPreviewShown ! false
+          selectedGif ! None
+        }
+      })
+      v.setConfirm(getString(R.string.sharing__image_preview__confirm_action))
+      v.setCancel(getString(R.string.confirmation_menu__cancel))
+      v.setWireTheme(themeController.getThemeDependentOptionsTheme)
+    }
   }
 
-  private lazy val toolbar = view[Toolbar](R.id.t__giphy__toolbar)
+  private lazy val toolbar = returning(view[Toolbar](R.id.t__giphy__toolbar)) { vh =>
+    isPreviewShown.map {
+      case true =>
+        if (themeController.isDarkTheme) R.drawable.action_back_light
+        else R.drawable.action_back_dark
+      case false =>
+        if (themeController.isDarkTheme) R.drawable.ic_action_search_light
+        else R.drawable.ic_action_search_dark
+    }.onUi(icon => vh.foreach(_.setNavigationIcon(icon)))
+
+    vh.foreach { v =>
+      v.setNavigationOnClickListener(new View.OnClickListener() {
+        override def onClick(view: View): Unit = {
+          isPreviewShown.currentValue.foreach { _ =>
+            isPreviewShown ! false
+            selectedGif ! None
+          }
+        }
+      })
+    }
+  }
   private lazy val giphySearchEditText = returning(view[EditText](R.id.cet__giphy_preview__search)) { vh =>
     vh.foreach { _.afterTextChangedSignal() pipeTo searchTerm }
     isPreviewShown.map(isPreview => if (isPreview) hideView else showView)
@@ -123,6 +153,14 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
 
   private lazy val errorView = returning(view[TextView](R.id.ttv__giphy_preview__error)) { vh =>
     isPreviewShown.onUi(_ => vh.foreach(ViewUtils.fadeOutView))
+    val isResultsEmpty = giphySearchResults.map(_.isEmpty)
+    isResultsEmpty.map(isEmpty => if (isEmpty) View.VISIBLE else View.GONE)
+      .onUi(visibility => vh.foreach(_.setVisibility(visibility)))
+    isResultsEmpty.map(isEmpty => if (isEmpty) getString(R.string.giphy_preview__error) else "")
+      .onUi(msg => vh.foreach { v =>
+        v.setText(msg)
+        TextViewUtils.mediumText(v)
+      })
   }
 
   private lazy val recyclerView: ViewHolder[RecyclerView] = returning(view[RecyclerView](R.id.rv__giphy_image_preview)) { vh =>
@@ -135,22 +173,19 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
   }
 
   private lazy val closeButton = returning(view[View](R.id.gtv__giphy_preview__close_button)) { vh =>
-    vh.onClick { _ => getControllerFactory.getGiphyController.cancel() }
+    vh.onClick { _ => giphyController.cancel() }
   }
 
-  private lazy val giphyGridViewAdapter = new GiphyGridViewAdapter(
+  private lazy val giphyGridViewAdapter = returning(new GiphyGridViewAdapter(
     scrollGifCallback = new ScrollGifCallback {
       override def setSelectedGifFromGridView(gifAsset: AssetData): Unit = {
         isPreviewShown ! true
         selectedGif ! Some(gifAsset)
         keyboardController.hideKeyboardIfVisible()
-
-        if (themeController.isDarkTheme) toolbar.setNavigationIcon(R.drawable.action_back_light)
-        else toolbar.setNavigationIcon(R.drawable.action_back_dark)
       }
     },
     assetLoader = BitmapSignal.apply(zms.currentValue.get, _, _)
-  )
+  )) { adapter => giphySearchResults.filter(_.nonEmpty).onUi(adapter.setGiphyResults) }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_giphy_preview, container, false)
@@ -158,10 +193,15 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     closeButton
     giphySearchEditText
+    recyclerView
+    errorView
+    confirmationMenu
+    toolbar
 
     searchTerm.onUi(_ => spinnerController.showSpinner(LoadingIndicatorView.InfiniteLoadingBar))
     giphySearchResults.onUi(_ => spinnerController.hideSpinner())
     selectedGif.filter(_.isDefined).onUi(_ => spinnerController.showSpinner(LoadingIndicatorView.InfiniteLoadingBar))
+    isPreviewShown.filter(_ == false).onUi(_ => spinnerController.hideSpinner())
 
     Option(getArguments).orElse(Option(savedInstanceState)).foreach { bundle =>
       giphySearchEditText.foreach(_.setText(bundle.getString(ArgSearchTerm)))
@@ -173,51 +213,7 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
       .collect { case _ : State.Loaded | _ : State.Failed => () }
       .onUi(_ => spinnerController.hideSpinner())
 
-    giphySearchResults.onUi { results =>
-      if (results.isEmpty) {
-        errorView.setText(R.string.giphy_preview__error)
-        TextViewUtils.mediumText(errorView)
-        errorView.setVisibility(View.VISIBLE)
-      } else {
-        errorView.setVisibility(View.GONE)
-        giphyGridViewAdapter.setGiphyResults(results)
-      }
-    }
-
-    confirmationMenu.foreach { v =>
-      v.setConfirmationMenuListener(new ConfirmationMenuListener() {
-        override def confirm(): Unit = isOnline.head.filter(_ == true).foreach(_ => sendGif())
-        override def cancel(): Unit = {
-          isPreviewShown ! false
-          selectedGif ! None
-        }
-      })
-      v.setConfirm(getString(R.string.sharing__image_preview__confirm_action))
-      v.setCancel(getString(R.string.confirmation_menu__cancel))
-      v.setWireTheme(themeController.getThemeDependentOptionsTheme)
-      v.setVisibility(View.GONE)
-    }
-
-    errorView.setVisibility(View.GONE)
-    previewImage.setVisibility(View.GONE)
-    recyclerView.setVisibility(View.VISIBLE)
-    giphyTitle.setVisibility(View.GONE)
-
-    toolbar.foreach { v =>
-      v.setNavigationIcon(
-        if (ThemeUtils.isDarkTheme(getContext)) R.drawable.ic_action_search_light
-        else R.drawable.ic_action_search_dark
-      )
-
-      v.setNavigationOnClickListener(new View.OnClickListener() {
-        override def onClick(view: View): Unit = {
-          isPreviewShown
-          isPreviewShown ! false
-          selectedGif ! None
-        }
-      })
-
-    }
+    giphyTitle.foreach(_.setVisibility(View.GONE))
   }
 
   override def onStart(): Unit = {
