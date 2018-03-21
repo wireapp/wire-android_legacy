@@ -173,7 +173,6 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
       .collect { case _ : State.Loaded | _ : State.Failed => () }
       .onUi(_ => spinnerController.hideSpinner())
 
-
     giphySearchResults.onUi { results =>
       if (results.isEmpty) {
         errorView.setText(R.string.giphy_preview__error)
