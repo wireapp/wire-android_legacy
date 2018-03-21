@@ -15,11 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.core.stores.connect;
+package com.waz.zclient.participants;
 
-import com.waz.api.User;
-
-public interface ConnectStoreObserver {
-
-    void onConnectUserUpdated(User user, IConnectStore.UserRequester userRequester);
+public enum UserRequester {
+    SEARCH, CONVERSATION, PARTICIPANTS, INVITE, POPOVER, CALL
 }

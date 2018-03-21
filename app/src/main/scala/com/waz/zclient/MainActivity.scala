@@ -27,7 +27,7 @@ import android.os.{Build, Bundle}
 import android.support.v4.app.Fragment
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.{error, info, verbose}
-import com.waz.api.{NetworkMode, User, _}
+import com.waz.api.{NetworkMode, _}
 import com.waz.model.{AccountId, ConvId, ConversationData}
 import com.waz.service.ZMessaging
 import com.waz.service.ZMessaging.clock
@@ -45,7 +45,6 @@ import com.waz.zclient.common.controllers.{SharingController, UserAccountsContro
 import com.waz.zclient.controllers.calling.CallingObserver
 import com.waz.zclient.controllers.navigation.{NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.core.stores.connect.{ConnectStoreObserver, IConnectStore}
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.fragments.ConnectivityFragment
 import com.waz.zclient.pages.main.MainPhoneFragment
@@ -68,7 +67,6 @@ class MainActivity extends BaseActivity
   with ActivityHelper
   with MainPhoneFragment.Container
   with UpdateFragment.Container
-  with ConnectStoreObserver
   with NavigationControllerObserver
   with CallingObserver
   with OtrDeviceLimitFragment.Container {
@@ -171,7 +169,6 @@ class MainActivity extends BaseActivity
 
   override def onStart() = {
     info("onStart")
-    getStoreFactory.connectStore.addConnectRequestObserver(this)
     getControllerFactory.getNavigationController.addNavigationControllerObserver(this)
     getControllerFactory.getCallingController.addCallingObserver(this)
 
@@ -212,7 +209,6 @@ class MainActivity extends BaseActivity
     super.onStop()
     info("onStop")
     getControllerFactory.getCallingController.removeCallingObserver(this)
-    getStoreFactory.connectStore.removeConnectRequestObserver(this)
     getControllerFactory.getNavigationController.removeNavigationControllerObserver(this)
   }
 
@@ -352,8 +348,6 @@ class MainActivity extends BaseActivity
 
   def onPageVisible(page: Page) =
     getControllerFactory.getGlobalLayoutController.setSoftInputModeForPage(page)
-
-  def onConnectUserUpdated(user: User, userRequester: IConnectStore.UserRequester): Unit = {}
 
   def onInviteRequestSent(conversation: String) = {
     info(s"onInviteRequestSent($conversation)")

@@ -41,13 +41,12 @@ import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.confirmation._
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.core.stores.connect.IConnectStore
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
 import com.waz.zclient.pages.main.pickuser.controller.{IPickUserController, PickUserControllerScreenObserver}
-import com.waz.zclient.participants.OptionsMenu
+import com.waz.zclient.participants.{OptionsMenu, UserRequester}
 import com.waz.zclient.ui.animation.interpolators.penner.{Expo, Quart}
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.usersearch.SearchUIFragment
@@ -260,20 +259,20 @@ class ConversationListManagerFragment extends Fragment
         case Some(userData) => userData.connection match {
           case CANCELLED | UNCONNECTED =>
             if (!userData.isConnected) {
-              show(SendConnectRequestFragment.newInstance(userId.str, IConnectStore.UserRequester.SEARCH), SendConnectRequestFragment.Tag)
+              show(SendConnectRequestFragment.newInstance(userId.str, UserRequester.SEARCH), SendConnectRequestFragment.Tag)
               navController.setLeftPage(Page.SEND_CONNECT_REQUEST, Tag)
             }
 
           case PENDING_FROM_OTHER | PENDING_FROM_USER | IGNORED =>
             show(
-              PendingConnectRequestManagerFragment.newInstance(userId, IConnectStore.UserRequester.SEARCH),
+              PendingConnectRequestManagerFragment.newInstance(userId, UserRequester.SEARCH),
               PendingConnectRequestManagerFragment.Tag
             )
             navController.setLeftPage(Page.PENDING_CONNECT_REQUEST, Tag)
 
           case BLOCKED =>
             show (
-              BlockedUserProfileFragment.newInstance(userId.str, IConnectStore.UserRequester.SEARCH),
+              BlockedUserProfileFragment.newInstance(userId.str, UserRequester.SEARCH),
               BlockedUserProfileFragment.Tag
             )
             navController.setLeftPage(Page.PENDING_CONNECT_REQUEST, Tag)

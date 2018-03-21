@@ -18,7 +18,6 @@
 package com.waz.zclient.core.stores
 
 import com.waz.zclient.core.stores.api.IZMessagingApiStore
-import com.waz.zclient.core.stores.connect.IConnectStore
 import com.waz.zclient.core.stores.conversation.IConversationStore
 import com.waz.zclient.core.stores.inappnotification.IInAppNotificationStore
 import com.waz.zclient.core.stores.network.INetworkStore
@@ -38,9 +37,6 @@ trait IStoreFactory {
 
   /* managing the pick user view */
   def pickUserStore: IPickUserStore
-
-  /* managing connecting & blocking to users */
-  def connectStore: IConnectStore
 
   /* In App notification store (chathead, knocks) */
   def inAppNotificationStore: IInAppNotificationStore

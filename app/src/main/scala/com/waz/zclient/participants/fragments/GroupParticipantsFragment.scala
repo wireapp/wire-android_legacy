@@ -34,12 +34,11 @@ import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events._
 import com.waz.zclient.common.controllers.UserAccountsController
-import com.waz.zclient.conversation.creation.{CreateConversationController, AddParticipantsFragment}
-import com.waz.zclient.core.stores.connect.IConnectStore
+import com.waz.zclient.conversation.creation.{AddParticipantsFragment, CreateConversationController}
 import com.waz.zclient.integrations.IntegrationDetailsController
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
-import com.waz.zclient.participants.{ParticipantsAdapter, ParticipantsController}
+import com.waz.zclient.participants.{ParticipantsAdapter, ParticipantsController, UserRequester}
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils
@@ -138,15 +137,15 @@ class GroupParticipantsFragment extends FragmentHelper {
 
       case Some(user) if user.connection == PENDING_FROM_OTHER || user.connection == PENDING_FROM_USER || user.connection == IGNORED =>
         import com.waz.zclient.connect.PendingConnectRequestFragment._
-        openUserProfileFragment(newInstance(userId, IConnectStore.UserRequester.PARTICIPANTS), Tag)
+        openUserProfileFragment(newInstance(userId, UserRequester.PARTICIPANTS), Tag)
 
       case Some(user) if user.connection == BLOCKED =>
         import BlockedUserProfileFragment._
-        openUserProfileFragment(newInstance(userId.str, IConnectStore.UserRequester.PARTICIPANTS), Tag)
+        openUserProfileFragment(newInstance(userId.str, UserRequester.PARTICIPANTS), Tag)
 
       case Some(user) if user.connection == CANCELLED || user.connection == UNCONNECTED =>
         import com.waz.zclient.connect.SendConnectRequestFragment._
-        openUserProfileFragment(newInstance(userId.str, IConnectStore.UserRequester.PARTICIPANTS), Tag)
+        openUserProfileFragment(newInstance(userId.str, UserRequester.PARTICIPANTS), Tag)
       case _ =>
     }
   }
