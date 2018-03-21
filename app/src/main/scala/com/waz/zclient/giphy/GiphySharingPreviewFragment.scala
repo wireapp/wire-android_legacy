@@ -46,7 +46,7 @@ import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.{ContextUtils, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
-import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R, ViewHolder}
+import com.waz.zclient._
 
 class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragment.Container]
   with FragmentHelper
@@ -63,6 +63,7 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
   private lazy val networkService = inject[NetworkModeService]
   private lazy val giphyController = inject[IGiphyController]
   private lazy val giphyService = zms.map(_.giphy)
+  private lazy val spinnerController = inject[SpinnerController]
 
   private lazy val searchTerm = Signal[String]()
   private lazy val isPreviewShown = Signal[Boolean]()
@@ -120,13 +121,6 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
       .onUi(animate => vh.foreach(animate))
   }
 
-  private lazy val loadingIndicator = returning(view[LoadingIndicatorView](R.id.liv__giphy_preview__loading)) { vh =>
-    accentColorController.accentColor.onUi(color => vh.foreach(_.setColor(color.getColor)))
-    searchTerm.onUi(_ => vh.foreach(_.show(LoadingIndicatorView.InfiniteLoadingBar)))
-    giphySearchResults.onUi(_ => vh.foreach(_.hide()))
-    selectedGif.filter(_.isDefined).onUi(_ => vh.foreach(_.show(LoadingIndicatorView.InfiniteLoadingBar)))
-  }
-
   private lazy val errorView = returning(view[TextView](R.id.ttv__giphy_preview__error)) { vh =>
     isPreviewShown.onUi(_ => vh.foreach(ViewUtils.fadeOutView))
   }
@@ -163,8 +157,11 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     closeButton
-    loadingIndicator
     giphySearchEditText
+
+    searchTerm.onUi(_ => spinnerController.showSpinner(LoadingIndicatorView.InfiniteLoadingBar))
+    giphySearchResults.onUi(_ => spinnerController.hideSpinner())
+    selectedGif.filter(_.isDefined).onUi(_ => spinnerController.showSpinner(LoadingIndicatorView.InfiniteLoadingBar))
 
     Option(getArguments).orElse(Option(savedInstanceState)).foreach { bundle =>
       giphySearchEditText.foreach(_.setText(bundle.getString(ArgSearchTerm)))
@@ -174,7 +171,7 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
     previewImage.setImageDrawable(gifDrawable)
     gifDrawable.state
       .collect { case _ : State.Loaded | _ : State.Failed => () }
-      .onUi(_ => loadingIndicator.foreach(_.hide()))
+      .onUi(_ => spinnerController.hideSpinner())
 
 
     giphySearchResults.onUi { results =>

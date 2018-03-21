@@ -144,7 +144,7 @@ public class GiphySharingPreviewFragment extends BaseFragment<GiphySharingPrevie
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_giphy_preview, container, false);
-        loadingIndicator = ViewUtils.getView(view, R.id.liv__giphy_preview__loading);
+//        loadingIndicator = ViewUtils.getView(view, R.id.liv__giphy_preview__loading);
         toolbar = ViewUtils.getView(view, R.id.t__giphy__toolbar);
         giphySearchEditText = ViewUtils.getView(view, R.id.cet__giphy_preview__search);
         previewImageAssetView = ViewUtils.getView(view, R.id.giphy_preview);

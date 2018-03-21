@@ -18,10 +18,14 @@
 package com.waz.zclient
 
 import com.waz.utils.events.{EventContext, Signal, SourceSignal}
+import com.waz.zclient.views.LoadingIndicatorView._
 
 class SpinnerController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext) extends Injectable {
 
-  val spinnerShowing: SourceSignal[Boolean] = Signal(false)
+  val spinnerShowing: SourceSignal[Option[AnimationType]] = Signal(None)
 
-  def showSpinner(show: Boolean): Unit = spinnerShowing ! show
+  def showSpinner(animationType: AnimationType = Spinner): Unit = spinnerShowing ! Some(animationType)
+
+  def hideSpinner(): Unit = spinnerShowing ! None
+
 }

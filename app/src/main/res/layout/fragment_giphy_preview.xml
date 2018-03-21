@@ -27,12 +27,6 @@
               style="?wireBackground"
     >
 
-    <com.waz.zclient.views.LoadingIndicatorView
-        android:id="@+id/liv__giphy_preview__loading"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/giphy_preview__loading_indicator__height"
-        />
-
     <android.support.v7.widget.Toolbar
         android:id="@+id/t__giphy__toolbar"
         android:layout_width="match_parent"

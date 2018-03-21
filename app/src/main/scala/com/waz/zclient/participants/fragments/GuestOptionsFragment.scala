@@ -109,23 +109,23 @@ class GuestOptionsFragment extends FragmentHelper {
 
     linkButton.foreach(_.onClick {
       tracking.track(TrackingEvent("guest_rooms.link_created"))
-      spinnerController.showSpinner(true)
+      spinnerController.showSpinner()
       zms.head.map { zms =>
         convCtrl.currentConv.head.flatMap { conv =>
           conv.link match {
             case Some(link) =>
               copyToClipboard(link.url)
-              spinnerController.showSpinner(false)
+              spinnerController.hideSpinner()
               Future.successful(())
             case _ =>
               zms.conversations.createLink(conv.id).map {
                 case Left(_) =>
-                  spinnerController.showSpinner(false)
+                  spinnerController.hideSpinner()
                   ViewUtils.showAlertDialog(getContext, R.string.empty_string, R.string.allow_guests_error_title, android.R.string.ok, new DialogInterface.OnClickListener {
                     override def onClick(dialog: DialogInterface, which: Int): Unit = dialog.dismiss()
                   }, true)
                 case _ =>
-                  spinnerController.showSpinner(false)
+                  spinnerController.hideSpinner()
               } (Threading.Ui)
           }
         } (Threading.Ui)
@@ -155,19 +155,19 @@ class GuestOptionsFragment extends FragmentHelper {
         new DialogInterface.OnClickListener {
           override def onClick(dialog: DialogInterface, which: Int): Unit = {
             tracking.track(TrackingEvent("guest_rooms.link_revoked"))
-            spinnerController.showSpinner(true)
+            spinnerController.showSpinner()
             (for {
               zms  <- zms.head
               conv <- convCtrl.currentConv.head
               res  <- zms.conversations.removeLink(conv.id)
             } yield res).map {
               case Left(_) =>
-                spinnerController.showSpinner(false)
+                spinnerController.hideSpinner()
                 ViewUtils.showAlertDialog(getContext, R.string.empty_string, R.string.allow_guests_error_title, android.R.string.ok, new DialogInterface.OnClickListener {
                   override def onClick(dialog: DialogInterface, which: Int): Unit = dialog.dismiss()
                 }, true)
               case _ =>
-                spinnerController.showSpinner(false)
+                spinnerController.hideSpinner()
             } (Threading.Ui)
             dialog.dismiss()
           }

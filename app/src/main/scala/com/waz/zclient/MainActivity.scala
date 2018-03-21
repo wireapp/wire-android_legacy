@@ -59,7 +59,6 @@ import com.waz.zclient.utils.PhoneUtils.PhoneState
 import com.waz.zclient.utils.StringUtils.TextDrawing
 import com.waz.zclient.utils.{BuildConfigUtils, ContextUtils, Emojis, IntentUtils, PhoneUtils, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
-import com.waz.zclient.views.LoadingIndicatorView.Spinner
 import net.hockeyapp.android.{ExceptionHandler, NativeCrashManager}
 
 import scala.collection.JavaConverters._
@@ -143,8 +142,8 @@ class MainActivity extends BaseActivity
       darkTheme <- themeController.darkThemeSet
       show <- spinnerController.spinnerShowing
     }  yield (show, darkTheme)).onUi{
-      case (true, theme) => loadingIndicator.show(Spinner, theme, 300)
-      case (false, _) => loadingIndicator.hide()
+      case (Some(animation), theme) => loadingIndicator.show(animation, theme, 300)
+      case (None, _) => loadingIndicator.hide()
     }
   }
 
