@@ -26,17 +26,17 @@ import android.widget.{EditText, ImageView, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.ImageAssetFactory
 import com.waz.model.AssetData
-import com.waz.service.assets.AssetService.BitmapResult
 import com.waz.service.images.BitmapSignal
 import com.waz.service.tracking.ContributionEvent
 import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.ui.MemoryImageCache.BitmapRequest
 import com.waz.utils.events.{EventContext, Signal, SourceSignal}
 import com.waz.utils.returning
-import com.waz.utils.wrappers.Bitmap
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
+import com.waz.zclient.common.views.ImageAssetDrawable
+import com.waz.zclient.common.views.ImageAssetDrawable.{ScaleType, State}
+import com.waz.zclient.common.views.ImageController.{DataImage, ImageSource, NoImage}
 import com.waz.zclient.controllers.giphy.IGiphyController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.giphy.GiphyGridViewAdapter.ScrollGifCallback
@@ -67,19 +67,10 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
   private lazy val searchTerm = Signal[String]()
   private lazy val isPreviewShown = Signal[Boolean]()
   private lazy val selectedGif = Signal[Option[AssetData]]()
-  private lazy val downloadedGif: Signal[Option[Bitmap]] = for {
-    zms <- zms
-    data <- selectedGif
-    result <- data match {
-      case Some(d) =>
-        BitmapSignal(zms, d, BitmapRequest.Regular(getView.getWidth)).map {
-          case BitmapResult.BitmapLoaded(bitmap, _) => Some(bitmap)
-          case _ => None
-        }
-      case None =>
-        Signal.const(Option.empty[Bitmap])
-    }
-  } yield result
+  private lazy val gifImage: Signal[ImageSource] = selectedGif.map {
+    case Some(asset) => DataImage(asset)
+    case _ => NoImage()
+  }
 
   private val showView: View => Unit = ViewUtils.fadeInView
   private val hideView: View => Unit = ViewUtils.fadeOutView
@@ -98,11 +89,8 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
 
   private lazy val previewImage = returning(view[ImageView](R.id.giphy_preview)) { vh =>
     isOnline.onUi(isOnline => vh.foreach(_.setClickable(isOnline)))
-    selectedGif.onUi(_ => vh.foreach(ViewUtils.fadeInView))
-    downloadedGif.onUi {
-      case Some(bitmap) => vh.foreach(_.setImageBitmap(bitmap))
-      case _ => vh.foreach(_.setImageBitmap(null))
-    }
+    isPreviewShown.map(isPreview => if (isPreview) showView else hideView)
+      .onUi(animate => vh.foreach(animate))
   }
 
   private lazy val giphyTitle = returning(view[TextView](R.id.ttv__giphy_preview__title)) { vh =>
@@ -123,12 +111,11 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
     }
     isPreviewShown.map(isPreview => if (isPreview) showView else hideView)
       .onUi(animate => vh.foreach(animate))
-    downloadedGif.map(_.isDefined).onUi(isEnabled => vh.foreach(_.setConfirmEnabled(isEnabled)))
   }
 
   private lazy val toolbar = view[Toolbar](R.id.t__giphy__toolbar)
   private lazy val giphySearchEditText = returning(view[EditText](R.id.cet__giphy_preview__search)) { vh =>
-    vh.foreach { _.onTextChangedSignal() pipeTo searchTerm }
+    vh.foreach { _.afterTextChangedSignal() pipeTo searchTerm }
     isPreviewShown.map(isPreview => if (isPreview) hideView else showView)
       .onUi(animate => vh.foreach(animate))
   }
@@ -136,11 +123,8 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
   private lazy val loadingIndicator = returning(view[LoadingIndicatorView](R.id.liv__giphy_preview__loading)) { vh =>
     accentColorController.accentColor.onUi(color => vh.foreach(_.setColor(color.getColor)))
     searchTerm.onUi(_ => vh.foreach(_.show(LoadingIndicatorView.InfiniteLoadingBar)))
-    isPreviewShown.filter(_ == true)
-      .flatMap(_ => selectedGif)
-      .onUi(_ => vh.foreach(_.show(LoadingIndicatorView.InfiniteLoadingBar)))
     giphySearchResults.onUi(_ => vh.foreach(_.hide()))
-    downloadedGif.onUi(_ => vh.foreach(_.hide()))
+    selectedGif.filter(_.isDefined).onUi(_ => vh.foreach(_.show(LoadingIndicatorView.InfiniteLoadingBar)))
   }
 
   private lazy val errorView = returning(view[TextView](R.id.ttv__giphy_preview__error)) { vh =>
@@ -186,9 +170,15 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
       giphySearchEditText.foreach(_.setText(bundle.getString(ArgSearchTerm)))
     }
 
+    val gifDrawable = new ImageAssetDrawable(gifImage, scaleType = ScaleType.CenterInside)
+    previewImage.setImageDrawable(gifDrawable)
+    gifDrawable.state
+      .collect { case _ : State.Loaded | _ : State.Failed => () }
+      .onUi(_ => loadingIndicator.foreach(_.hide()))
+
+
     giphySearchResults.onUi { results =>
       if (results.isEmpty) {
-        previewImage.setImageBitmap(null)
         errorView.setText(R.string.giphy_preview__error)
         TextViewUtils.mediumText(errorView)
         errorView.setVisibility(View.VISIBLE)
@@ -225,6 +215,7 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
 
       v.setNavigationOnClickListener(new View.OnClickListener() {
         override def onClick(view: View): Unit = {
+          isPreviewShown
           isPreviewShown ! false
           selectedGif ! None
         }
@@ -278,7 +269,7 @@ object GiphySharingPreviewFragment {
   }
 
   implicit class RichEditText(et: EditText) {
-    def onTextChangedSignal(withInitialValue: Boolean = true): Signal[String] = new Signal[String]() {
+    def afterTextChangedSignal(withInitialValue: Boolean = true): Signal[String] = new Signal[String]() {
       if (withInitialValue) publish(et.getText.toString)
       private val textWatcher = new TextWatcher {
         override def onTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int): Unit = ()
