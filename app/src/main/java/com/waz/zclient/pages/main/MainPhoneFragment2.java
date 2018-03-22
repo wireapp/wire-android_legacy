@@ -49,7 +49,7 @@ import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.menus.ConfirmationMenu;
 import net.hockeyapp.android.ExceptionHandler;
 
-public class MainPhoneFragment extends BaseFragment<MainPhoneFragment.Container> implements OnBackPressedListener,
+public class MainPhoneFragment2 extends BaseFragment<MainPhoneFragment2.Container> implements OnBackPressedListener,
                                                                                             ConversationPagerFragment.Container,
                                                                                             SingleImageObserver,
                                                                                             GiphyObserver,
