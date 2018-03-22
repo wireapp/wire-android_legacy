@@ -55,8 +55,7 @@ import com.waz.zclient.utils.PhoneUtils.PhoneState
 import com.waz.zclient.utils.StringUtils.TextDrawing
 import com.waz.zclient.utils.{BuildConfigUtils, ContextUtils, Emojis, IntentUtils, PhoneUtils, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
-import net.hockeyapp.android.{ExceptionHandler, NativeCrashManager}
-import com.waz.zclient.views.LoadingIndicatorView.Spinner
+import net.hockeyapp.android.NativeCrashManager
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._

@@ -654,10 +654,7 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
 
     override def hideExtendedCursor(): Unit = if (extendedCursorContainer.isExpanded) extendedCursorContainer.close(false)
 
-    override def onMessageSent(msg: MessageData): Unit = {
-      getStoreFactory.networkStore.doIfHasInternetOrNotifyUser(null)
-      listView.scrollToBottom()
-    }
+    override def onMessageSent(msg: MessageData): Unit = listView.scrollToBottom()
 
     override def openExtendedCursor(tpe: ExtendedCursorContainer.Type): Unit = ConversationFragment.this.openExtendedCursor(tpe)
 

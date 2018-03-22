@@ -57,7 +57,6 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.CreateConversationController
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.core.stores.IStoreFactory
-import com.waz.zclient.core.stores.network.INetworkStore
 import com.waz.zclient.cursor.CursorController
 import com.waz.zclient.integrations.IntegrationDetailsController
 import com.waz.zclient.messages.controllers.{MessageActionsController, NavigationController}
@@ -111,7 +110,6 @@ object WireApplication {
     bind [IConfirmationController]       toProvider controllerFactory.getConfirmationController
 
     bind [IStoreFactory]                 toProvider storeFactory
-    bind [INetworkStore]                 toProvider storeFactory.networkStore
 
     // global controllers
     bind [CrashController]         to new CrashController

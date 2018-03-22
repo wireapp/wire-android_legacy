@@ -26,8 +26,6 @@ class ScalaStoreFactory(context: Context) extends StoreFactory {
 
   override protected def createZMessagingApiStore = new ZMessagingApiStore(context)
 
-  protected def createNetworkStore = new ScalaNetworkStore(zMessagingApiStore.getApi)
-
   protected def createConversationStore = new ScalaConversationStore(zMessagingApiStore.getApi)
 
   protected def createProfileStore = new ScalaProfileStore(zMessagingApiStore.getApi)

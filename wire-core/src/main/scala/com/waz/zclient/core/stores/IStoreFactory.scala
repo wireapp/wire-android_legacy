@@ -20,7 +20,6 @@ package com.waz.zclient.core.stores
 import com.waz.zclient.core.stores.api.IZMessagingApiStore
 import com.waz.zclient.core.stores.conversation.IConversationStore
 import com.waz.zclient.core.stores.inappnotification.IInAppNotificationStore
-import com.waz.zclient.core.stores.network.INetworkStore
 import com.waz.zclient.core.stores.profile.IProfileStore
 
 trait IStoreFactory {
@@ -38,8 +37,6 @@ trait IStoreFactory {
   def inAppNotificationStore: IInAppNotificationStore
 
   def zMessagingApiStore: IZMessagingApiStore
-
-  def networkStore: INetworkStore
 
   def reset(): Unit
 }
