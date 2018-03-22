@@ -37,7 +37,7 @@ import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
-import com.waz.zclient.pages.main.profile.preferences.dialogs.VerifyEmailPreferenceFragment
+import com.waz.zclient.preferences.dialogs.VerifyEmailFragment
 import com.waz.zclient.preferences.dialogs.{AccentColorPickerFragment, ChangeEmailDialog, ChangePhoneDialog, VerifyPhoneFragment}
 import com.waz.zclient.preferences.views.{EditNameDialog, PictureTextButton, TextButton}
 import com.waz.zclient.ui.utils.TextViewUtils._
@@ -211,12 +211,12 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
       showPrefDialog(
         returning(ChangeEmailDialog(addingEmail = email.isEmpty)) {
           _.onEmailChanged { e =>
-            val f = VerifyEmailPreferenceFragment.newInstance(e)
+            val f = VerifyEmailFragment.newInstance(e)
             //hide the verification screen when complete
             self.map(_.email).onChanged.filter(_.contains(EmailAddress(e))).onUi { _ =>
               f.dismiss()
             }
-            showPrefDialog(f, VerifyEmailPreferenceFragment.TAG)
+            showPrefDialog(f, VerifyEmailFragment.Tag)
           }
         },
         ChangeEmailDialog.FragmentTag)
