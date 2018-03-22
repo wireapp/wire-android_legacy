@@ -21,16 +21,18 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.ZMessaging
-import com.waz.threading.SerialDispatchQueue
+import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils._
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.conversationlist.ConversationListAdapter.{Incoming, ListMode, Normal}
 import com.waz.zclient.conversationlist.ConversationListManagerFragment.ConvListUpdateThrottling
 import com.waz.zclient.conversationlist.views.ConversationAvatarView
 import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector}
 
 import scala.collection.mutable
+import scala.concurrent.Future
 
 class ConversationListController(implicit inj: Injector, ec: EventContext) extends Injectable {
 
@@ -64,12 +66,39 @@ class ConversationListController(implicit inj: Injector, ec: EventContext) exten
     z          <- zms
     convs      <- z.convsContent.conversationsSignal.throttle(ConvListUpdateThrottling )
   } yield convs.conversations.filter(EstablishedListFilter)
+
+  def conversationListData(listMode: ListMode) = for {
+    z             <- zms
+    processing    <- z.push.processing
+    if !processing
+    conversations <- z.convsStorage.convsSignal
+    incomingConvs = conversations.conversations.filter(Incoming.filter).toSeq
+    members <- Signal.sequence(incomingConvs.map(c => z.membersStorage.activeMembers(c.id).map(_.find(_ != z.selfUserId))):_*)
+  } yield {
+    val regular = conversations.conversations
+      .filter{ conversationData =>
+        listMode.filter(conversationData)
+      }
+      .toSeq
+      .sorted(listMode.sort)
+    val incoming = if (listMode == Normal) (incomingConvs, members.flatten) else (Seq(), Seq())
+    (z.accountId, regular, incoming)
+  }
+
+  def nextConversation(convId: ConvId): Future[Option[ConvId]] =
+    conversationListData(Normal).head.map {
+      case (_, regular, _) => regular.lift(regular.indexWhere(_.id == convId) + 1).map(_.id)
+    } (Threading.Background)
 }
 
 object ConversationListController {
 
-  lazy val RegularListFilter: (ConversationData => Boolean) = { c => !c.hidden && !c.archived && c.convType != ConversationType.Incoming && c.convType != ConversationType.Self }
+  lazy val RegularListFilter: (ConversationData => Boolean) = { c => Set(ConversationType.OneToOne, ConversationType.Group, ConversationType.WaitForConnection).contains(c.convType) && !c.hidden && !c.archived }
+  lazy val IncomingListFilter: (ConversationData => Boolean) = { c => !c.hidden && !c.archived && c.convType == ConversationType.Incoming }
+  lazy val ArchivedListFilter: (ConversationData => Boolean) = { c => Set(ConversationType.OneToOne, ConversationType.Group, ConversationType.Incoming, ConversationType.WaitForConnection).contains(c.convType) && !c.hidden && c.archived }
   lazy val EstablishedListFilter: (ConversationData => Boolean) = { c => RegularListFilter(c) && c.convType != ConversationType.WaitForConnection }
+  lazy val EstablishedArchivedListFilter: (ConversationData => Boolean) = { c => ArchivedListFilter(c) && c.convType != ConversationType.WaitForConnection }
+  lazy val IntegrationFilter: (ConversationData => Boolean) = { c => c.convType == ConversationType.Group && !c.hidden }
 
   // Maintains a short list of members for each conversation.
   // Only keeps up to 4 users other than self user, this list is to be used for avatar in conv list.
