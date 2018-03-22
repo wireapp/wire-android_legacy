@@ -60,6 +60,4 @@ class UserDetailsView(val context: Context, val attrs: AttributeSet, val defStyl
   def setUserId(id: UserId): Unit =
     Option(id).fold(throw new IllegalArgumentException("UserId should not be null"))(userId ! _)
 
-  def setUser(user: User): Unit = setUserId(UserId(user.getId))
-
 }
