@@ -17,25 +17,23 @@
  */
 package com.waz.zclient.messages
 
-import android.content.Context
 import android.view.View
+import com.waz.ZLog.ImplicitTag._
+import com.waz.api.Message
 import com.waz.model.{ConvId, MessageData, MessageId}
 import com.waz.service.ZMessaging
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.controllers.navigation._
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.pages.main.conversationpager.controller.{ISlidingPaneController, SlidingPaneObserver}
 import com.waz.zclient.utils.ContextUtils
-import com.waz.zclient.{Injectable, Injector}
+import com.waz.zclient.{Injectable, Injector, WireContext}
 import org.threeten.bp.Instant
-import com.waz.ZLog.ImplicitTag._
-import com.waz.api.Message
-import com.waz.zclient.conversation.ConversationController
 
-class MessagesController()(implicit injector: Injector, ev: EventContext) extends Injectable {
+class MessagesController()(implicit injector: Injector, cxt: WireContext, ev: EventContext) extends Injectable {
   import com.waz.threading.Threading.Implicits.Background
 
   val zms = inject[Signal[ZMessaging]]
-  implicit val context = inject[Context]
   val currentConvId = inject[ConversationController].currentConvId
   val navigationController = inject[INavigationController]
   val slidingPaneController = inject[ISlidingPaneController]

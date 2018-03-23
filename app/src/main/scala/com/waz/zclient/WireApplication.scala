@@ -19,10 +19,13 @@ package com.waz.zclient
 
 import java.util.Calendar
 
-import android.content.Context
-import android.os.Build
+import android.app.{Activity, ActivityManager, NotificationManager}
+import android.content.{ClipboardManager, Context, ContextWrapper}
+import android.media.AudioManager
+import android.os.{Build, PowerManager, Vibrator}
 import android.renderscript.RenderScript
 import android.support.multidex.MultiDexApplication
+import android.support.v4.app.{FragmentActivity, FragmentManager}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
 import com.waz.api._
@@ -32,9 +35,9 @@ import com.waz.model.ConversationData
 import com.waz.permissions.PermissionsService
 import com.waz.service.tracking.TrackingService
 import com.waz.service.{NetworkModeService, UiLifeCycle, ZMessaging}
-import com.waz.utils.events.{EventContext, Signal, Subscription}
+import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.api.scala.ScalaStoreFactory
-import com.waz.zclient.appentry.controllers.{AddEmailController, AppEntryController, SignInController, InvitationsController}
+import com.waz.zclient.appentry.controllers.{AddEmailController, AppEntryController, InvitationsController, SignInController}
 import com.waz.zclient.calling.controllers.{CallPermissionsController, CurrentCallController, GlobalCallingController}
 import com.waz.zclient.camera.controllers.{AndroidCameraFactory, GlobalCameraController}
 import com.waz.zclient.collection.controllers.CollectionController
@@ -76,8 +79,19 @@ object WireApplication {
   var APP_INSTANCE: WireApplication = _
 
   lazy val Global = new Module {
-    implicit lazy val wContext     = inject[WireContext]
-    implicit lazy val eventContext = inject[EventContext]
+
+    implicit lazy val ctx:          WireApplication = WireApplication.APP_INSTANCE
+    implicit lazy val wContext:     WireContext     = ctx
+    implicit lazy val eventContext: EventContext    = EventContext.Global
+
+    //Android services
+    bind [ActivityManager]      to ctx.getSystemService(Context.ACTIVITY_SERVICE).asInstanceOf[ActivityManager]
+    bind [PowerManager]         to ctx.getSystemService(Context.POWER_SERVICE).asInstanceOf[PowerManager]
+    bind [Vibrator]             to ctx.getSystemService(Context.VIBRATOR_SERVICE).asInstanceOf[Vibrator]
+    bind [AudioManager]         to ctx.getSystemService(Context.AUDIO_SERVICE).asInstanceOf[AudioManager]
+    bind [NotificationManager]  to ctx.getSystemService(Context.NOTIFICATION_SERVICE).asInstanceOf[NotificationManager]
+    bind [ClipboardManager]     to ctx.getSystemService(Context.CLIPBOARD_SERVICE).asInstanceOf[ClipboardManager]
+    bind [RenderScript]         to RenderScript.create(ctx)
 
     def controllerFactory = APP_INSTANCE.asInstanceOf[ZApplication].getControllerFactory
     def storeFactory = APP_INSTANCE.asInstanceOf[ZApplication].getStoreFactory
@@ -108,8 +122,6 @@ object WireApplication {
     bind [ICameraController]             toProvider controllerFactory.getCameraController
     bind [ICallingController]            toProvider controllerFactory.getCallingController
     bind [IConfirmationController]       toProvider controllerFactory.getConfirmationController
-
-    bind [IStoreFactory]                 toProvider storeFactory
 
     // global controllers
     bind [CrashController]         to new CrashController
@@ -149,20 +161,20 @@ object WireApplication {
 
     // drafts
     bind [DraftMap] to new DraftMap()
-
-  }
-
-  def services(ctx: WireContext) = new Module {
-    bind [ZMessagingApi]      to new ZMessagingApiProvider(ctx, inject[UiLifeCycle]).api
-    bind [Signal[ZMessaging]] to inject[ZMessagingApi].asInstanceOf[com.waz.api.impl.ZMessagingApi].ui.currentZms.collect{case Some(zms)=> zms }
   }
 
   def controllers(implicit ctx: WireContext) = new Module {
 
     private implicit val eventContext = ctx.eventContext
 
-    bind [ZMessagingApi]      to new ZMessagingApiProvider(ctx, inject[UiLifeCycle]).api
-    bind [Signal[ZMessaging]] to inject[ZMessagingApi].asInstanceOf[com.waz.api.impl.ZMessagingApi].ui.currentZms.collect{case Some(zms)=> zms }
+    bind [Activity] to {
+      def getActivity(ctx: Context): Activity = ctx match {
+        case a: Activity => a
+        case w: ContextWrapper => getActivity(w.getBaseContext)
+      }
+      getActivity(ctx)
+    }
+    bind [FragmentManager] to inject[Activity].asInstanceOf[FragmentActivity].getSupportFragmentManager
 
     bind [KeyboardController]        to new KeyboardController()
     bind [CurrentCallController]     to new CurrentCallController()
@@ -217,17 +229,15 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
   override def eventContext: EventContext = EventContext.Global
 
-  lazy val module: Injector = Global :: AppModule
+  lazy val module: Injector = Global
 
   protected var controllerFactory: IControllerFactory = _
   protected var storeFactory: IStoreFactory = _
 
-  def contextModule(ctx: WireContext): Injector = controllers(ctx) :: ContextModule(ctx)
+  def contextModule(ctx: WireContext): Injector = controllers(ctx)
 
   override def onCreate(): Unit = {
     super.onCreate()
-
-
     InternalLog.init(getApplicationContext.getApplicationInfo.dataDir)
 
     verbose("onCreate")
@@ -242,9 +252,8 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
   def ensureInitialized() = {
     if (storeFactory == null) {
-      //TODO initialization of ZMessaging happens here - make this more explicit?
+      ZMessaging.onCreate(this)
       storeFactory = new ScalaStoreFactory(getApplicationContext)
-      storeFactory.zMessagingApiStore.getApi
     }
 
     inject[MessageNotificationsController]
@@ -274,25 +283,4 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     super.onTerminate()
   }
-}
-
-class ZMessagingApiProvider(ctx: WireContext, uiLifeCycle: UiLifeCycle) {
-  val api = ZMessagingApiFactory.getInstance(ctx)
-
-  api.onCreate(ctx)
-
-  ctx.eventContext.register(new Subscription {
-    override def subscribe(): Unit = {
-      api.onResume()
-      uiLifeCycle.acquireUi()
-    }
-    override def unsubscribe(): Unit = {
-      api.onPause()
-      uiLifeCycle.releaseUi()
-    }
-    override def enable(): Unit = ()
-    override def disable(): Unit = ()
-    override def destroy(): Unit = api.onDestroy()
-    override def disablePauseWithContext(): Unit = ()
-  })
 }

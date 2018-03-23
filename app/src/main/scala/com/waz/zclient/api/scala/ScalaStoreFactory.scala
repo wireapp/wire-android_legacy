@@ -17,16 +17,20 @@
  */
 package com.waz.zclient.api.scala
 
-import android.content.Context
+import android.content.{ContentResolver, Context}
+import android.net.Uri
+import com.waz.api.impl.ErrorsList
+import com.waz.service.ZMessaging
 import com.waz.zclient.core.api.scala._
 import com.waz.zclient.core.stores.StoreFactory
-import com.waz.zclient.core.stores.api.ZMessagingApiStore
 
 class ScalaStoreFactory(context: Context) extends StoreFactory {
 
-  override protected def createZMessagingApiStore = new ZMessagingApiStore(context)
-
-  protected def createInAppNotificationStore = new ScalaInAppNotificationStore(zMessagingApiStore.getApi)
+  protected def createInAppNotificationStore() = new ScalaInAppNotificationStore(ZMessaging.currentUi.cached(Uris.ErrorsUri, new ErrorsList()(ZMessaging.currentUi)))
 
   override def tearDown() = super.tearDown()
+}
+
+object Uris {
+  val ErrorsUri = Uri.parse(s"${ContentResolver.SCHEME_CONTENT}://com.waz/errors")
 }

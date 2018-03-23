@@ -18,15 +18,14 @@
 package com.waz.zclient.core.api.scala;
 
 import com.waz.api.ErrorsList;
-import com.waz.api.ZMessagingApi;
 import com.waz.zclient.core.stores.inappnotification.InAppNotificationStore;
 
 public class ScalaInAppNotificationStore extends InAppNotificationStore implements ErrorsList.ErrorListener {
 
     private ErrorsList syncErrors;
 
-    public ScalaInAppNotificationStore(ZMessagingApi zMessagingApi) {
-        syncErrors = zMessagingApi.getErrors();
+    public ScalaInAppNotificationStore(ErrorsList syncErrors) {
+        this.syncErrors = syncErrors;
         syncErrors.addErrorListener(this);
     }
 

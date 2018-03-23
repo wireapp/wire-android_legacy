@@ -17,33 +17,26 @@
  */
 package com.waz.zclient.core.stores
 
-import com.waz.zclient.core.stores.api.IZMessagingApiStore
 import com.waz.zclient.core.stores.inappnotification.IInAppNotificationStore
 import com.waz.zclient.utils.Lazy
 
 abstract class StoreFactory extends IStoreFactory {
 
   private val _inAppNotificationStore = lazyStore { createInAppNotificationStore() }
-  private val _zMessagingApiStore = lazyStore { createZMessagingApiStore() }
 
   private var tornDown = false
 
-  protected def createZMessagingApiStore(): IZMessagingApiStore
   protected def createInAppNotificationStore(): IInAppNotificationStore
 
-  override def zMessagingApiStore = _zMessagingApiStore()
   override def inAppNotificationStore = _inAppNotificationStore()
 
   override def reset(): Unit = {
     inAppNotificationStore.tearDown()
-
     tornDown = false
   }
 
   override def tearDown(): Unit = {
     reset()
-
-    zMessagingApiStore.tearDown()
     tornDown = true
   }
 

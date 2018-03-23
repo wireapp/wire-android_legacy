@@ -523,7 +523,7 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
         } catch (Throwable t) {
             // ignore
         }
-        return ImageAssetFactory.getImageAsset(finalBitmap, ExifInterface.ORIENTATION_NORMAL);
+        return null; // TODO ... ImageAssetFactory.getImageAsset(finalBitmap, ExifInterface.ORIENTATION_NORMAL);
     }
 
     @Override

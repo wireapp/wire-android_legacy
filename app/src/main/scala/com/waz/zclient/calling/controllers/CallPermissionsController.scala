@@ -30,16 +30,16 @@ import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.utils.ViewUtils
 import com.waz.ZLog.ImplicitTag._
+import com.waz.utils.events.EventContext
 
 /**
   * This class is intended to be a relatively small controller that every PermissionsActivity can have access to in order
   * to start and accept calls. This controller requires a PermissionsActivity so that it can request and display the
   * related permissions dialogs, that's why it can't be in the GlobalCallController
   */
-class CallPermissionsController(implicit inj: Injector, cxt: WireContext) extends Injectable {
+class CallPermissionsController(implicit inj: Injector, cxt: WireContext, ec: EventContext) extends Injectable {
 
   import Threading.Implicits.Background
-  private implicit val eventContext = cxt.eventContext
 
   val globController = inject[GlobalCallingController]
   import globController._

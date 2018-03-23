@@ -17,7 +17,6 @@
  */
 package com.waz.zclient.core.stores
 
-import com.waz.zclient.core.stores.api.IZMessagingApiStore
 import com.waz.zclient.core.stores.inappnotification.IInAppNotificationStore
 
 trait IStoreFactory {
@@ -27,8 +26,6 @@ trait IStoreFactory {
 
   /* In App notification store (chathead, knocks) */
   def inAppNotificationStore: IInAppNotificationStore
-
-  def zMessagingApiStore: IZMessagingApiStore
 
   def reset(): Unit
 }

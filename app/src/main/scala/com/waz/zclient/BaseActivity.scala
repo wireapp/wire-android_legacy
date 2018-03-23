@@ -26,7 +26,7 @@ import android.support.v7.app.AppCompatActivity
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
 import com.waz.log.InternalLog
-import com.waz.service.UiLifeCycle
+import com.waz.service.{UiLifeCycle, ZMessaging}
 import com.waz.permissions.PermissionsService
 import com.waz.permissions.PermissionsService.{Permission, PermissionProvider}
 import com.waz.utils.returning
@@ -73,7 +73,7 @@ class BaseActivity extends AppCompatActivity
     getControllerFactory.setActivity(this)
     if (!started) {
       started = true
-      getStoreFactory.zMessagingApiStore.getApi.onResume()
+      ZMessaging.currentUi.onStart()
       inject[UiLifeCycle].acquireUi()
     }
     if (!this.isInstanceOf[LaunchActivity]) permissions.registerProvider(this)
@@ -82,7 +82,7 @@ class BaseActivity extends AppCompatActivity
 
   override def onStop() = {
     if (started) {
-      getStoreFactory.zMessagingApiStore.getApi.onPause()
+      ZMessaging.currentUi.onPause()
       inject[UiLifeCycle].releaseUi()
       started = false
     }
@@ -92,7 +92,7 @@ class BaseActivity extends AppCompatActivity
 
   override def finish() = {
     if (started) {
-      getStoreFactory.zMessagingApiStore.getApi.onPause()
+      ZMessaging.currentUi.onPause()
       inject[UiLifeCycle].releaseUi()
       started = false
     }
@@ -102,6 +102,7 @@ class BaseActivity extends AppCompatActivity
 
   override def onDestroy() = {
     globalTrackingController.flushEvents()
+    ZMessaging.currentUi.onDestroy()
     permissions.unregisterProvider(this)
     super.onDestroy()
   }

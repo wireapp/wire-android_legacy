@@ -18,7 +18,6 @@
 package com.waz.zclient.common.controllers.global
 
 import android.app.Activity
-import android.content.Context
 import android.graphics.Rect
 import android.view.{View, ViewTreeObserver}
 import com.waz.ZLog.ImplicitTag._
@@ -26,11 +25,9 @@ import com.waz.ZLog.verbose
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.{Injectable, Injector}
+import com.waz.zclient.{Injectable, Injector, WireContext}
 
-class KeyboardController(implicit inj: Injector, ec: EventContext) extends ViewTreeObserver.OnGlobalLayoutListener with Injectable {
-
-  private val cxt = inject[Context]
+class KeyboardController(implicit inj: Injector, cxt: WireContext, ec: EventContext) extends ViewTreeObserver.OnGlobalLayoutListener with Injectable {
 
   val isKeyboardVisible = Signal(false)
   isKeyboardVisible(v => verbose(s"Keyboard visible: $v"))
