@@ -18,7 +18,6 @@
 package com.waz.zclient.core.stores
 
 import com.waz.zclient.core.stores.api.IZMessagingApiStore
-import com.waz.zclient.core.stores.conversation.IConversationStore
 import com.waz.zclient.core.stores.inappnotification.IInAppNotificationStore
 import com.waz.zclient.core.stores.profile.IProfileStore
 import com.waz.zclient.utils.Lazy
@@ -28,7 +27,6 @@ abstract class StoreFactory extends IStoreFactory {
   /*
     Lazy loaded stores
   */
-  private val _conversationStore = lazyStore { createConversationStore() }
   private val _profileStore = lazyStore { createProfileStore() }
   private val _inAppNotificationStore = lazyStore { createInAppNotificationStore() }
   private val _zMessagingApiStore = lazyStore { createZMessagingApiStore() }
@@ -36,17 +34,14 @@ abstract class StoreFactory extends IStoreFactory {
   private var tornDown = false
 
   protected def createZMessagingApiStore(): IZMessagingApiStore
-  protected def createConversationStore(): IConversationStore
   protected def createProfileStore(): IProfileStore
   protected def createInAppNotificationStore(): IInAppNotificationStore
 
   override def zMessagingApiStore = _zMessagingApiStore()
-  override def conversationStore = _conversationStore()
   override def profileStore = _profileStore()
   override def inAppNotificationStore = _inAppNotificationStore()
 
   override def reset(): Unit = {
-    conversationStore.tearDown()
     profileStore.tearDown()
     inAppNotificationStore.tearDown()
 

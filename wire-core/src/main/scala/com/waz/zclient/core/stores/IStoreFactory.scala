@@ -18,7 +18,6 @@
 package com.waz.zclient.core.stores
 
 import com.waz.zclient.core.stores.api.IZMessagingApiStore
-import com.waz.zclient.core.stores.conversation.IConversationStore
 import com.waz.zclient.core.stores.inappnotification.IInAppNotificationStore
 import com.waz.zclient.core.stores.profile.IProfileStore
 
@@ -26,9 +25,6 @@ trait IStoreFactory {
   def tearDown(): Unit
 
   def isTornDown: Boolean
-
-  /* managing the conversation list */
-  def conversationStore: IConversationStore
 
   /* managing settings and properties of the user */
   def profileStore: IProfileStore
