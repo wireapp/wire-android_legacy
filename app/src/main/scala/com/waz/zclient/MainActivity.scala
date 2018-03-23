@@ -370,8 +370,8 @@ class MainActivity extends BaseActivity
       case None =>
         getSupportFragmentManager
           .beginTransaction
-          .replace(R.id.fl_main_otr_warning, OtrDeviceLimitFragment.newInstance, OtrDeviceLimitFragment.TAG)
-          .addToBackStack(OtrDeviceLimitFragment.TAG)
+          .replace(R.id.fl_main_otr_warning, OtrDeviceLimitFragment.newInstance, OtrDeviceLimitFragment.Tag)
+          .addToBackStack(OtrDeviceLimitFragment.Tag)
           .commitAllowingStateLoss
   }
 
