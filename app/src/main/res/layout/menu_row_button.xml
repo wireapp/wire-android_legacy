@@ -29,18 +29,28 @@
         android:layout_height="@dimen/user_row_icon_size"
         android:layout_alignParentStart="true"
         android:layout_centerVertical="true"
-        android:layout_marginEnd="@dimen/wire__padding__regular"
         android:layout_marginStart="@dimen/wire__padding__regular"/>
 
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/wire__padding__regular"
         android:layout_centerVertical="true"
         android:layout_toEndOf="@id/icon"
         app:w_font="@string/wire__typeface__regular"
         android:textSize="@dimen/wire__text_size__regular"
         />
+
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="@dimen/progress_spinner_size"
+        android:layout_height="@dimen/progress_spinner_size"
+        android:layout_marginEnd="@dimen/wire__padding__regular"
+        android:layout_marginStart="@dimen/wire__padding__regular"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:visibility="gone"/>
 
     <View
         android:id="@+id/divider"

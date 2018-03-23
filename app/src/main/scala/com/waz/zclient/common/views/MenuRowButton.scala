@@ -21,12 +21,16 @@ import android.content.Context
 import android.content.res.TypedArray
 import android.util.AttributeSet
 import android.view.View
-import android.widget.RelativeLayout
+import android.view.View.OnClickListener
+import android.widget.{ProgressBar, RelativeLayout}
 import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.utils.ContextUtils
+
+import scala.concurrent.Future
 
 class MenuRowButton(context: Context, attrs: AttributeSet, style: Int) extends RelativeLayout(context, attrs, style) {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -42,16 +46,41 @@ class MenuRowButton(context: Context, attrs: AttributeSet, style: Int) extends R
   private val textAttr = Option(attributesArray.getString(R.styleable.MenuRowButton_buttonText))
   private val iconAttr = Option(attributesArray.getString(R.styleable.MenuRowButton_buttonIcon))
   private val colorAttr = Option(attributesArray.getColorStateList(R.styleable.MenuRowButton_buttonTextColor))
+  private val dividerVisible = attributesArray.getBoolean(R.styleable.MenuRowButton_rowDividerVisible, true)
+  private val fontAttr = Option(attributesArray.getString(R.styleable.MenuRowButton_buttonTextFont))
 
   val text: TypefaceTextView = returning(findViewById[TypefaceTextView](R.id.text)){ text =>
     textAttr.foreach(text.setText)
     colorAttr.foreach(text.setTextColor)
+    fontAttr.foreach(text.setTypeface)
   }
   val icon: GlyphTextView = returning(findViewById[GlyphTextView](R.id.icon)) { icon =>
-    iconAttr.foreach(icon.setText)
+    iconAttr.fold {
+      icon.setVisibility(View.GONE)
+    } { text =>
+      icon.setVisibility(View.VISIBLE)
+      icon.setText(text)
+    }
     colorAttr.foreach(icon.setTextColor)
   }
-  val divider: View = findViewById[View](R.id.divider)
+  val divider: View = returning(findViewById[View](R.id.divider)) {
+    _.setVisibility(if (dividerVisible) View.VISIBLE else View.GONE)
+  }
+  val progressBar: ProgressBar = findViewById(R.id.progress_bar)
+
+  def setOnClickProcess[T](process: => Future[T]): Unit = {
+    setOnClickListener(new OnClickListener {
+      override def onClick(v: View): Unit = {
+        progressBar.setVisibility(View.VISIBLE)
+        setClickable(false)
+        process.map { result =>
+          progressBar.setVisibility(View.GONE)
+          setClickable(true)
+          result
+        } (Threading.Ui)
+      }
+    })
+  }
 
   setBackground(ContextUtils.getDrawable(R.drawable.selector__transparent_button))
   setClickable(true)

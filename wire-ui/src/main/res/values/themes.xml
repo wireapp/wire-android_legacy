@@ -343,6 +343,7 @@
         <item name="windowActionModeOverlay">true</item>
 
         <item name="wirePrimaryTextColor">@color/text__primary_dark</item>
+        <item name="wireSecondaryTextColor">@color/text__secondary_dark</item>
         <item name="thinDividerColor">@color/white_16</item>
     </style>
 

@@ -74,6 +74,8 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   inflate(R.layout.preferences_account_layout)
 
+  val navigator = inject[BackStackNavigator]
+
   val nameButton          = findById[TextButton](R.id.preferences_account_name)
   val handleButton        = findById[TextButton](R.id.preferences_account_handle)
   val emailButton         = findById[TextButton](R.id.preferences_account_email)
@@ -83,6 +85,7 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   val resetPasswordButton = findById[TextButton](R.id.preferences_account_reset_pw)
   val logoutButton        = findById[TextButton](R.id.preferences_account_logout)
   val deleteAccountButton = findById[TextButton](R.id.preferences_account_delete)
+  val backupButton        = findById[TextButton](R.id.preferences_backup)
 
   override val onNameClick          = nameButton.onClickEvent.map(_ => ())
   override val onHandleClick        = handleButton.onClickEvent.map(_ => ())
@@ -109,6 +112,10 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   override def setDeleteAccountEnabled(enabled: Boolean) = deleteAccountButton.setVisible(enabled)
 
   override def setPhoneNumberEnabled(enabled: Boolean) = phoneButton.setVisible(enabled)
+
+  backupButton.onClickEvent { _ =>
+    navigator.goTo(BackupExportKey())
+  }
 }
 
 case class AccountBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {

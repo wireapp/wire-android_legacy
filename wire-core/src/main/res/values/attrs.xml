@@ -262,6 +262,8 @@
         <attr name="buttonText" format="string"/>
         <attr name="buttonIcon" format="string"/>
         <attr name="buttonTextColor" format="color"/>
+        <attr name="rowDividerVisible" format="boolean"/>
+        <attr name="buttonTextFont" format="string" />
     </declare-styleable>
 
 </resources>
