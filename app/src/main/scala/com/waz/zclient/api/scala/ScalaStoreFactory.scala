@@ -25,8 +25,6 @@ import com.waz.zclient.core.stores.api.ZMessagingApiStore
 class ScalaStoreFactory(context: Context) extends StoreFactory {
 
   override protected def createZMessagingApiStore = new ZMessagingApiStore(context)
-  
-  protected def createProfileStore = new ScalaProfileStore(zMessagingApiStore.getApi)
 
   protected def createInAppNotificationStore = new ScalaInAppNotificationStore(zMessagingApiStore.getApi)
 

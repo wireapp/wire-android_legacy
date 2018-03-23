@@ -51,17 +51,6 @@ public class ScalaInAppNotificationStore extends InAppNotificationStore implemen
     }
 
     @Override
-    public ErrorsList.ErrorDescription getError(String errorId) {
-        for (int i = 0, length = syncErrors.size(); i < length; i++) {
-            ErrorsList.ErrorDescription error = syncErrors.get(i);
-            if (error.getId().equals(errorId)) {
-                return error;
-            }
-        }
-        return null;
-    }
-
-    @Override
     public void onError(ErrorsList.ErrorDescription error) {
         notifySyncErrorObservers(error);
     }

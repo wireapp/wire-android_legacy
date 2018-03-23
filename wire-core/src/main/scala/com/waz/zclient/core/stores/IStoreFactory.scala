@@ -19,15 +19,11 @@ package com.waz.zclient.core.stores
 
 import com.waz.zclient.core.stores.api.IZMessagingApiStore
 import com.waz.zclient.core.stores.inappnotification.IInAppNotificationStore
-import com.waz.zclient.core.stores.profile.IProfileStore
 
 trait IStoreFactory {
   def tearDown(): Unit
 
   def isTornDown: Boolean
-
-  /* managing settings and properties of the user */
-  def profileStore: IProfileStore
 
   /* In App notification store (chathead, knocks) */
   def inAppNotificationStore: IInAppNotificationStore

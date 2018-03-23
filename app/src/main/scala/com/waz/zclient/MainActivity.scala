@@ -125,7 +125,8 @@ class MainActivity extends BaseActivity
     }
 
     appEntryController.entryStage.onUi {
-      case EnterAppStage => onUserLoggedInAndVerified(getStoreFactory.zMessagingApiStore.getApi.getSelf)
+      case EnterAppStage =>
+        if (getSupportFragmentManager.findFragmentByTag(MainPhoneFragment.TAG) == null) replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.TAG)
       case DeviceLimitStage => showUnableToRegisterOtrClientDialog()
       case Unknown =>
         error("Unknown state")
@@ -268,12 +269,6 @@ class MainActivity extends BaseActivity
       token    <- ZMessaging.currentAccounts.getActiveAccount.map(_.flatMap(_.accessToken))
       _        <- am.auth.checkLoggedIn(token)
     } yield {}
-
-  private def onUserLoggedInAndVerified(self: Self) = {
-    verbose("onUserLoggedInAndVerified")
-    getStoreFactory.profileStore.setUser(self)
-    if (getSupportFragmentManager.findFragmentByTag(MainPhoneFragment.TAG) == null) replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.TAG)
-  }
 
   def handleIntent(intent: Intent) = {
     verbose(s"handleIntent: ${intent.log}")
