@@ -30,9 +30,9 @@ import android.view.animation.AnimationUtils
 import android.view.{LayoutInflater, View, ViewGroup, WindowManager}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.warn
-import com.waz.api.impl.Usernames
 import com.waz.model.Handle
 import com.waz.service.ZMessaging
+import com.waz.sync.client.HandlesClient
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
@@ -86,7 +86,7 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
               z         <- zms.head
               curHandle <- currentHandle.head
               if !curHandle.map(_.string).contains(normalText)
-              _ <- z.zNetClient.withErrorHandling("isUsernameAvailable", Request.Head(Usernames.checkSingleAvailabilityPath + normalText)) {
+              _ <- z.zNetClient.withErrorHandling("isUsernameAvailable", Request.Head(HandlesClient.checkSingleAvailabilityPath + normalText)) {
                 case Response(SuccessHttpStatus(), _, _) =>
                   setErrorMessage(AlreadyTaken)
                   okButton.setEnabled(false)
