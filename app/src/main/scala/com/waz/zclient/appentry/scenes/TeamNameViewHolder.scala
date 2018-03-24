@@ -53,24 +53,10 @@ case class TeamNameViewHolder(root: View)(implicit val context: Context, eventCo
     inputField.editText.requestFocus()
     KeyboardUtils.showKeyboard(context.asInstanceOf[Activity])
     inputField.setOnClick( text =>
-      if (appEntryController.termsOfUseAB) {
-        appEntryController.setTeamName(text).map {
-          case Left(error) =>
-            Some(getString(EntryError(error.code, error.label, SignInMethod(Register, Email)).bodyResource))
-          case _ => None
-        }
-      } else {
-        AppEntryDialogs.showTermsAndConditions(context).flatMap {
-          case true =>
-            tracking.track(TeamAcceptedTerms(TeamAcceptedTerms.AfterName))
-            appEntryController.setTeamName(text).map {
-              case Left(error) =>
-                Some(getString(EntryError(error.code, error.label, SignInMethod(Register, Email)).bodyResource))
-              case _ => None
-            }
-          case false =>
-            Future.successful(None)
-        }
+      appEntryController.setTeamName(text).map {
+        case Left(error) =>
+          Some(getString(EntryError(error.code, error.label, SignInMethod(Register, Email)).bodyResource))
+        case _ => None
       }
     )
     about.setOnClickListener(new View.OnClickListener {

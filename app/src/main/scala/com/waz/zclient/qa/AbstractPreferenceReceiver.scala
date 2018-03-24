@@ -82,7 +82,7 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver {
         val wireApplication = context.getApplicationContext.asInstanceOf[WireApplication]
         implicit val injector = wireApplication.module
         val appEntryController = wireApplication.inject[AppEntryController]
-        appEntryController.termsOfUseAB = intent.getBooleanExtra(TEAM_CREATION_TOU_AB_EXTRA_KEY, false)
+        //TODO coordinate remove of this block with QA
       case _ =>
         setResultData("Unknown Intent!")
         setResultCode(Activity.RESULT_CANCELED)

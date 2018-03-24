@@ -359,9 +359,7 @@ class AppEntryController(implicit inj: Injector, eventContext: EventContext) ext
     ZMessaging.accountsService.flatMap(_.getActiveAccountManager)
       .collect { case Some(acc) => acc }
       .flatMap(_.updateHandle(Handle(username)))
-
-  var termsOfUseAB: Boolean = true
-
+  
   def skipInvitations(): Unit = ZMessaging.accountsService.flatMap(_.updateCurrentAccount(_.copy(pendingTeamName = None)))
 
 }

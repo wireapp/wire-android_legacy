@@ -57,15 +57,15 @@ class CreateTeamFragment extends BaseFragment[Container] with FragmentHelper {
       implicit val ctx: Context = getContext
 
       val viewHolder = state match {
-        case NoAccountState(FirstScreen) => FirstScreenViewHolder(inflator.inflate(R.layout.app_entry_scene, null))
+        case NoAccountState(FirstScreen)        => FirstScreenViewHolder(inflator.inflate(R.layout.app_entry_scene, null))
         case NoAccountState(RegisterTeamScreen) => TeamNameViewHolder(inflator.inflate(R.layout.create_team_name_scene, null))
-        case SetTeamEmail => SetEmailViewHolder(inflator.inflate(R.layout.set_email_scene, null))
-        case VerifyTeamEmail => VerifyEmailViewHolder(inflator.inflate(R.layout.verify_email_scene, null))
-        case SetUsersNameTeam => SetNameViewHolder(inflator.inflate(R.layout.set_name_scene, null))
-        case SetPasswordTeam => SetPasswordViewHolder(inflator.inflate(R.layout.set_password_scene, null))
-        case SetUsernameTeam => SetUsernameViewHolder(inflator.inflate(R.layout.set_username_scene, null))
-        case InviteToTeam => InviteToTeamViewHolder(inflator.inflate(R.layout.invite_team_scene, null))
-        case _ => EmptyViewHolder(new View(getContext))
+        case SetTeamEmail                       => SetEmailViewHolder(inflator.inflate(R.layout.set_email_scene, null))
+        case VerifyTeamEmail                    => VerifyEmailViewHolder(inflator.inflate(R.layout.verify_email_scene, null))
+        case SetUsersNameTeam                   => SetNameViewHolder(inflator.inflate(R.layout.set_name_scene, null))
+        case SetPasswordTeam                    => SetPasswordViewHolder(inflator.inflate(R.layout.set_password_scene, null))
+        case SetUsernameTeam                    => SetUsernameViewHolder(inflator.inflate(R.layout.set_username_scene, null))
+        case InviteToTeam                       => InviteToTeamViewHolder(inflator.inflate(R.layout.invite_team_scene, null))
+        case _                                  => EmptyViewHolder(new View(getContext))
       }
 
       val forward = previousStage.fold(true)(_.depth < state.depth)

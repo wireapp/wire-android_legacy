@@ -54,24 +54,16 @@ case class SetPasswordViewHolder(root: View)(implicit val context: Context, even
     inputField.editText.requestFocus()
     KeyboardUtils.showKeyboard(context.asInstanceOf[Activity])
     inputField.setOnClick( text =>
-      if (appEntryController.termsOfUseAB) {
-        AppEntryDialogs.showTermsAndConditions(context).flatMap {
-          case true =>
-            tracking.track(TeamAcceptedTerms(TeamAcceptedTerms.AfterPassword))
-            appEntryController.setPassword(text).map {
-              case Left(error) =>
-                Some(getString(EntryError(error.code, error.label, SignInMethod(Register, Email)).bodyResource))
-              case _ => None
-            }
-          case false =>
-            Future.successful(None)
-        }
-      } else {
-        appEntryController.setPassword(text).map {
-          case Left(error) =>
-            Some(getString(EntryError(error.code, error.label, SignInMethod(Register, Email)).bodyResource))
-          case _ => None
-        }
+      AppEntryDialogs.showTermsAndConditions(context).flatMap {
+        case true =>
+          tracking.track(TeamAcceptedTerms(TeamAcceptedTerms.AfterPassword))
+          appEntryController.setPassword(text).map {
+            case Left(error) =>
+              Some(getString(EntryError(error.code, error.label, SignInMethod(Register, Email)).bodyResource))
+            case _ => None
+          }
+        case false =>
+          Future.successful(None)
       })
   }
 }
