@@ -19,10 +19,12 @@ package com.waz.zclient.appentry.controllers
 
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
+import com.waz.api.ImageAsset
 import com.waz.api.impl.ErrorResponse
-import com.waz.api.{ClientRegistrationState, ImageAsset, KindOfAccess}
 import com.waz.client.RegistrationClientImpl.ActivateResult
 import com.waz.client.RegistrationClientImpl.ActivateResult.{Failure, PasswordExists}
+import com.waz.content.GlobalPreferences
+import com.waz.content.Preferences.PrefKey
 import com.waz.model._
 import com.waz.model.otr.{ClientId, UserClients}
 import com.waz.service.ZMessaging
@@ -44,31 +46,43 @@ class AppEntryController(implicit inj: Injector, eventContext: EventContext) ext
 
   implicit val ec = Threading.Background
 
-  lazy val optZms = inject[Signal[Option[ZMessaging]]]
-  lazy val tracking = inject[TrackingService]
+  lazy val prefs      = inject[GlobalPreferences]
+  lazy val optZms     = inject[Signal[Option[ZMessaging]]]
+  lazy val tracking   = inject[TrackingService]
   lazy val uiTracking = inject[GlobalTrackingController] //TODO slowly move away from referencing this class
+
   val currentAccount = ZMessaging.currentAccounts.activeAccount
-  val currentUser = optZms.flatMap{ _.fold(Signal.const(Option.empty[UserData]))(z => z.usersStorage.optSignal(z.selfUserId)) }
-  val firstStage = Signal[FirstStage](FirstScreen)
+  val currentUser    = optZms.flatMap{ _.fold(Signal.const(Option.empty[UserData]))(z => z.usersStorage.optSignal(z.selfUserId)) }
+  val firstStage     = Signal[FirstStage](FirstScreen)
 
   val userClientsCount = for {
     Some(manager) <- ZMessaging.currentAccounts.activeAccountManager
-    Some(user)  <- currentUser
-    selfClientId  <- manager.accountData.map(_.clientId)
+    Some(user)    <- currentUser
+    selfClientId  <- manager.clientId
     clients       <- Signal.future(manager.storage.otrClientsStorage.get(user.id))
   } yield clients.fold(0)(_.clients.values.count(client => !selfClientId.contains(client.id)))
 
   val userHasOtherClients = for {
-    manager <- ZMessaging.currentAccounts.activeAccountManager
-    user <- currentUser.map(_.map(_.id))
-    selfClientId <- manager.fold(Signal.const(Option.empty[ClientId]))(_.accountData.map(_.clientId))
-    clients <- (manager, user) match {
+    manager      <- ZMessaging.currentAccounts.activeAccountManager
+    user         <- currentUser.map(_.map(_.id))
+    selfClientId <- manager.fold(Signal.const(Option.empty[ClientId]))(_.clientId)
+    clients      <- (manager, user) match {
       case (Some(m), Some(u)) => m.storage.otrClientsStorage.signal(u).map(Some(_))
       case _ => Signal.const(Option.empty[UserClients])
     }
     clientCount = clients.fold(0)(_.clients.values.count(client => !selfClientId.contains(client.id)))
     _ = ZLog.verbose(s"userClientsCount $manager $user $clientCount")
   } yield clientCount >= 1
+
+
+  //TODO move prefs down to SE
+  //TODO should these be typed? (e.g. EmailAddress)
+  val pendingTeamName = prefs(PrefKey[Option[String]]("pending_team"))
+  val pendingEmail    = prefs(PrefKey[Option[String]]("pending_email"))
+  val pendingPhone    = prefs(PrefKey[Option[String]]("pending_phone"))
+
+  val pendingPassword = Signal(Option.empty[String]) //TODO make Password type with obfuscated toString
+  val pendingCode     = Signal(Option.empty[ConfirmationCode])
 
   //Vars to persist text in edit boxes
   var teamName = ""
@@ -88,11 +102,11 @@ class AppEntryController(implicit inj: Injector, eventContext: EventContext) ext
   }
 
   val entryStage = for {
-    account <- currentAccount
-    user <- currentUser.orElse(Signal.const(None))
-    firstPageState <- firstStage
+    account         <- currentAccount
+    user            <- currentUser.orElse(Signal.const(None))
+    firstPageState  <- firstStage
     hasOtherClients <- userHasOtherClients
-    state <- Signal.const(stateForAccountAndUser(account, user, firstPageState, hasOtherClients)).collect{ case s if s != Waiting => s }
+    state           <- Signal.const(stateForAccountAndUser(account, user, firstPageState, hasOtherClients)).collect { case s if s != Waiting => s }
   } yield state
 
   entryStage.onUi { stage =>
@@ -156,6 +170,19 @@ class AppEntryController(implicit inj: Injector, eventContext: EventContext) ext
     }
   }
 
+  def setTeamName(name: String): Future[Unit] =
+    pendingTeamName := Some(name)
+
+  //TODO remove methods?
+  def gotToFirstPage(): Unit = firstStage ! FirstScreen
+
+  def createTeam(): Unit = firstStage ! RegisterTeamScreen
+
+  def cancelCreateTeam(): Unit = firstStage ! FirstScreen
+
+  def goToLoginScreen(): Unit = firstStage ! LoginScreen
+
+
   def createTeamBack(): Unit = {
     ZMessaging.currentAccounts.activeAccount.currentValue.foreach {
       case Some(accountData) if accountData.pendingTeamName.isDefined && accountData.name.isDefined =>
@@ -174,35 +201,6 @@ class AppEntryController(implicit inj: Injector, eventContext: EventContext) ext
       case _ =>
         teamName = ""
         Future.successful(firstStage ! FirstScreen)
-    }
-  }
-
-
-  def loginPhone(phone: String): Future[Either[EntryError, Unit]] = {
-    ZMessaging.currentAccounts.loginPhone(PhoneNumber(phone)).map {
-      case Left(error) => Left(EntryError(error.code, error.label, SignInMethod(Login, Phone)))
-      case Right(_) => Right(())
-    }
-  }
-
-  def loginEmail(email: String, password: String): Future[Either[EntryError, Unit]] = {
-    ZMessaging.currentAccounts.loginEmail(EmailAddress(email), password).map {
-      case Left(error) => Left(EntryError(error.code, error.label, SignInMethod(Login, Email)))
-      case _ => Right(())
-    }
-  }
-
-  def registerEmail(name: String, email: String, password: String): Future[Either[EntryError, Unit]] = {
-    ZMessaging.currentAccounts.registerEmail(EmailAddress(email), password, name).map {
-      case Left(error) => Left(EntryError(error.code, error.label, SignInMethod(Register, Email)))
-      case _ => Right(())
-    }
-  }
-
-  def registerPhone(phone: String): Future[Either[EntryError, Unit]] = {
-    ZMessaging.currentAccounts.registerPhone(PhoneNumber(phone)).map {
-      case Left(error) => Left(EntryError(error.code, error.label, SignInMethod(Register, Phone)))
-      case _ => Right(())
     }
   }
 
@@ -307,17 +305,6 @@ class AppEntryController(implicit inj: Injector, eventContext: EventContext) ext
     }
   }
 
-  def gotToFirstPage(): Unit = firstStage ! FirstScreen
-
-  def createTeam(): Unit = firstStage ! RegisterTeamScreen
-
-  def cancelCreateTeam(): Unit = firstStage ! FirstScreen
-
-  def goToLoginScreen(): Unit = firstStage ! LoginScreen
-
-  def setTeamName(name: String): ErrorOr[Unit] =
-    ZMessaging.currentAccounts.createTeamAccount(name).map(_ => Right(()))
-
   def requestTeamEmailVerificationCode(email: String): Future[Either[Unit, ErrorResponse]] = {
     ZMessaging.currentAccounts.requestActivationCode(EmailAddress(email)).map {
       case Right(()) => Left(())
@@ -359,7 +346,7 @@ class AppEntryController(implicit inj: Injector, eventContext: EventContext) ext
     ZMessaging.accountsService.flatMap(_.getActiveAccountManager)
       .collect { case Some(acc) => acc }
       .flatMap(_.updateHandle(Handle(username)))
-  
+
   def skipInvitations(): Unit = ZMessaging.accountsService.flatMap(_.updateCurrentAccount(_.copy(pendingTeamName = None)))
 
 }

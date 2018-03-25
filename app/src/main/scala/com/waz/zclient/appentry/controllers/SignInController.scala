@@ -18,46 +18,34 @@
 package com.waz.zclient.appentry.controllers
 
 import android.content.Context
-import com.waz.api.ClientRegistrationState
-import com.waz.service.ZMessaging
+import com.waz.ZLog.ImplicitTag._
+import com.waz.api.{EmailCredentials, PhoneCredentials}
+import com.waz.model.{ConfirmationCode, EmailAddress, PhoneNumber}
+import com.waz.service.AccountsService
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.zclient.appentry.controllers.AppEntryController.InsertPasswordStage
 import com.waz.zclient.appentry.EntryError
 import com.waz.zclient.appentry.controllers.SignInController._
 import com.waz.zclient.newreg.fragments.country.{Country, CountryController}
 import com.waz.zclient.pages.main.profile.validator.{EmailValidator, NameValidator, PasswordValidator}
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.{Injectable, Injector}
-import com.waz.ZLog.ImplicitTag._
 
 import scala.concurrent.Future
 
 class SignInController(implicit inj: Injector, eventContext: EventContext, context: Context) extends Injectable with CountryController.Observer {
 
-  private lazy val appEntryController = inject[AppEntryController]
+  private lazy val accountsService    = inject[AccountsService]
   private lazy val tracking           = inject[GlobalTrackingController]
 
-  lazy val isAddingAccount = ZMessaging.currentAccounts.loggedInAccounts.map(_.exists(_.clientRegState == ClientRegistrationState.REGISTERED))
+  lazy val isAddingAccount = accountsService.zmsInstances.map(_.nonEmpty)
+
   val uiSignInState = Signal[SignInMethod](SignInMethod(Register, Phone))
 
-  val email = Signal("")
+  val email    = Signal("")
   val password = Signal("")
-  val name = Signal("")
-  val phone = Signal("")
-
-  Signal(appEntryController.entryStage, appEntryController.currentAccount).onUi {
-    case (InsertPasswordStage, Some(acc)) if acc.email.isDefined =>
-      acc.email.orElse(acc.pendingEmail).foreach(email ! _.str)
-      password ! ""
-      uiSignInState ! SignInMethod(Login, Email)
-    case (InsertPasswordStage, _) =>
-      //TODO: This is an invalid state with no current way of getting out
-      email ! ""
-      password ! ""
-      uiSignInState ! SignInMethod(Login, Email)
-    case _ =>
-  }
+  val name     = Signal("")
+  val phone    = Signal("")
 
   lazy val countryController = new CountryController(context)
   countryController.addObserver(this)
@@ -87,40 +75,33 @@ class SignInController(implicit inj: Injector, eventContext: EventContext, conte
 
   def attemptSignIn(): Future[Either[EntryError, Unit]] = {
     implicit val ec = Threading.Ui
-
     for {
-      method <- uiSignInState.head
-      res    <- method match {
-        case SignInMethod(Login, Email) =>
+      method      <- uiSignInState.head
+      credentials <- method.inputType match {
+        case Email =>
           for{
             email    <- email.head
             password <- password.head
-            response <- appEntryController.loginEmail(email, password)
-          } yield response
-        case SignInMethod(Login, Phone) =>
+          } yield EmailCredentials(EmailAddress(email), password)
+        case Phone =>
           for {
             phone    <- phone.head
             code     <- phoneCountry.head.map(_.getCountryCode)
-            response <- appEntryController.loginPhone(s"+$code$phone")
-          } yield response
-        case SignInMethod(Register, Email) =>
-          for{
-            name     <- name.head
-            email    <- email.head
-            password <- password.head
-            response <- appEntryController.registerEmail(name, email, password)
-          } yield response
-
-        case SignInMethod(Register, Phone) =>
-          for{
-            phone    <- phone.head
-            code     <- phoneCountry.head.map(_.getCountryCode)
-            response <- appEntryController.registerPhone(s"+$code$phone")
-          } yield response
-        case _ => Future.successful(Right(()))
+          } yield PhoneCredentials(PhoneNumber(phone), ConfirmationCode(code))
       }
-      _ = tracking.onEnteredCredentials(res, method)
-    } yield res
+      resp <- (method.signType match {
+        case Login    => accountsService.login(credentials)
+        case Register =>
+          for {
+            n    <- name.head
+            resp <- accountsService.register(credentials, n) //TODO - do we want to persist the credentials in case the user kills the app during verification?
+          } yield resp
+      }).map {
+        case Left(error) => Left(EntryError(error.code, error.label, method))
+        case Right(_) => Right(())
+      }
+      _ = tracking.onEnteredCredentials(resp, method)
+    } yield resp
   }
 
   override def onCountryHasChanged(country: Country): Unit = phoneCountry ! country
@@ -135,11 +116,11 @@ class SignInController(implicit inj: Injector, eventContext: EventContext, conte
 
 object SignInController {
 
-  trait SignType
+  sealed trait SignType
   object Login extends SignType
   object Register extends SignType
 
-  trait InputType
+  sealed trait InputType
   object Email extends InputType
   object Phone extends InputType
 

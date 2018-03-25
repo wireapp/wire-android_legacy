@@ -45,6 +45,7 @@ import com.waz.zclient.ui.text.{GlyphTextView, TypefaceEditText, TypefaceTextVie
 import com.waz.zclient.ui.utils.{KeyboardUtils, TextViewUtils}
 import com.waz.zclient.ui.views.tab.TabIndicatorLayout
 import com.waz.zclient.ui.views.tab.TabIndicatorLayout.Callback
+import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 
 class SignInFragment extends BaseFragment[Container] with FragmentHelper with View.OnClickListener {
@@ -109,7 +110,7 @@ class SignInFragment extends BaseFragment[Container] with FragmentHelper with Vi
     }
 
     termsOfService.foreach { text =>
-      TextViewUtils.linkifyText(text, ContextCompat.getColor(getContext, R.color.white), true, new Runnable {
+      TextViewUtils.linkifyText(text, getColor(R.color.white), true, new Runnable {
         override def run() = getContainer.onOpenUrl(getString(R.string.url_terms_of_service_personal))
       })
     }
@@ -163,18 +164,19 @@ class SignInFragment extends BaseFragment[Container] with FragmentHelper with Vi
     } (Threading.Ui)
 
     //TODO: remove when login by email available on phones
-    if (LayoutSpec.isPhone(getActivity)) {
-      signInController.uiSignInState.onUi {
-        case SignInMethod(Register, Email) =>
-          signInController.uiSignInState ! SignInMethod(Register, Phone)
-        case SignInMethod(Register, _) =>
-          phoneButton.setVisible(false)
-          emailButton.setVisible(false)
-        case _ =>
-          phoneButton.setVisible(true)
-          emailButton.setVisible(true)
-      }
-    }
+    //TODO put back after testing...
+//    if (LayoutSpec.isPhone(getActivity)) {
+//      signInController.uiSignInState.onUi {
+//        case SignInMethod(Register, Email) =>
+//          signInController.uiSignInState ! SignInMethod(Register, Phone)
+//        case SignInMethod(Register, _) =>
+//          phoneButton.setVisible(false)
+//          emailButton.setVisible(false)
+//        case _ =>
+//          phoneButton.setVisible(true)
+//          emailButton.setVisible(true)
+//      }
+//    }
 
     signInController.uiSignInState.onUi { state =>
       state match {
@@ -199,37 +201,35 @@ class SignInFragment extends BaseFragment[Container] with FragmentHelper with Vi
           setPhoneButtonSelected()
           phoneField.foreach(_.requestFocus())
       }
-      signInController.phoneCountry.currentValue.foreach{ onCountryHasChanged }
+      signInController.phoneCountry.currentValue.foreach(onCountryHasChanged)
     }
 
     signInController.uiSignInState.map(s => SignInMethod(s.signType, Phone)).onUi { method =>
       ZMessaging.globalModule.map(_.trackingService.track(SignUpScreenEvent(method)))(Threading.Ui)
     }
 
-    signInController.isValid.onUi { setConfirmationButtonActive }
-    signInController.phoneCountry.onUi { onCountryHasChanged }
-    signInController.isAddingAccount.onUi { closeButton.setVisible }
+    signInController.isValid.onUi(setConfirmationButtonActive)
+    signInController.phoneCountry.onUi(onCountryHasChanged)
+    signInController.isAddingAccount.onUi(closeButton.setVisible)
   }
 
   private def setConfirmationButtonActive(active: Boolean): Unit = {
-    if(active)
-      confirmationButton.foreach(_.setState(PhoneConfirmationButton.State.CONFIRM))
-    else
-      confirmationButton.foreach(_.setState(PhoneConfirmationButton.State.NONE))
+    import PhoneConfirmationButton.State._
+    confirmationButton.foreach(_.setState(if (active) CONFIRM else NONE))
   }
 
   private def setPhoneButtonSelected() = {
-    phoneButton.setBackground(ContextCompat.getDrawable(getContext, R.drawable.selector__reg__signin))
-    phoneButton.setTextColor(ContextCompat.getColor(getContext, R.color.white))
+    phoneButton.setBackground(getDrawable(R.drawable.selector__reg__signin))
+    phoneButton.setTextColor(getColor(R.color.white))
     emailButton.setBackground(null)
-    emailButton.setTextColor(ContextCompat.getColor(getContext, R.color.white_40))
+    emailButton.setTextColor(getColor(R.color.white_40))
   }
 
   private def setEmailButtonSelected() = {
-    emailButton.setBackground(ContextCompat.getDrawable(getContext, R.drawable.selector__reg__signin))
-    emailButton.setTextColor(ContextCompat.getColor(getContext, R.color.white))
+    emailButton.setBackground(getDrawable(R.drawable.selector__reg__signin))
+    emailButton.setTextColor(getColor(R.color.white))
     phoneButton.setBackground(null)
-    phoneButton.setTextColor(ContextCompat.getColor(getContext, R.color.white_40))
+    phoneButton.setTextColor(getColor(R.color.white_40))
   }
 
   override def onClick(v: View) = {

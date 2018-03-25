@@ -22,18 +22,17 @@ import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
-import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.zclient.appentry.EntryError
 import com.waz.zclient.appentry.controllers.SignInController
+import com.waz.zclient.appentry.controllers.SignInController._
+import com.waz.zclient.appentry.fragments.InsertPasswordFragment._
 import com.waz.zclient.newreg.views.PhoneConfirmationButton
 import com.waz.zclient.newreg.views.PhoneConfirmationButton.State._
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.profile.views.GuidedEditText
 import com.waz.zclient.utils._
 import com.waz.zclient.{FragmentHelper, R}
-import InsertPasswordFragment._
-import com.waz.zclient.appentry.controllers.SignInController._
 
 class InsertPasswordFragment extends BaseFragment[Container] with FragmentHelper with View.OnClickListener {
 
@@ -78,7 +77,7 @@ class InsertPasswordFragment extends BaseFragment[Container] with FragmentHelper
     v.getId match {
       case R.id.cancel_button =>
         onBackPressed()
-      case R.id.`confirmation_button` =>
+      case R.id.confirmation_button =>
         getContainer.enableProgress(true)
         signInController.attemptSignIn().map {
           case Left(error) =>
@@ -93,7 +92,6 @@ class InsertPasswordFragment extends BaseFragment[Container] with FragmentHelper
   }
 
   override def onBackPressed() = {
-    ZMessaging.currentAccounts.removeCurrentAccount()
     signInController.uiSignInState ! SignInMethod(Login, Phone)
     true
   }

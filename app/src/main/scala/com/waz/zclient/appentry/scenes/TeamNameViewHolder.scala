@@ -25,17 +25,11 @@ import com.waz.service.tracking.TrackingService
 import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
 import com.waz.zclient._
-import com.waz.zclient.appentry.{AppEntryDialogs, EntryError}
 import com.waz.zclient.appentry.controllers.AppEntryController
-import com.waz.zclient.appentry.controllers.SignInController.{Email, Register, SignInMethod}
 import com.waz.zclient.common.views.InputBox
 import com.waz.zclient.common.views.InputBox.NameValidator
-import com.waz.zclient.tracking.TeamAcceptedTerms
 import com.waz.zclient.ui.utils.KeyboardUtils
-import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
-
-import scala.concurrent.Future
 
 case class TeamNameViewHolder(root: View)(implicit val context: Context, eventContext: EventContext, injector: Injector) extends ViewHolder with Injectable {
 
@@ -53,18 +47,13 @@ case class TeamNameViewHolder(root: View)(implicit val context: Context, eventCo
     inputField.editText.requestFocus()
     KeyboardUtils.showKeyboard(context.asInstanceOf[Activity])
     inputField.setOnClick( text =>
-      appEntryController.setTeamName(text).map {
-        case Left(error) =>
-          Some(getString(EntryError(error.code, error.label, SignInMethod(Register, Email)).bodyResource))
-        case _ => None
-      }
+      appEntryController.setTeamName(text).map(_ => None)
     )
     about.setOnClickListener(new View.OnClickListener {
       override def onClick(v: View): Unit = openUrl(R.string.url_about_teams)
     })
   }
 
-  private def openUrl(id: Int): Unit ={
+  private def openUrl(id: Int): Unit =
     context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(context.getString(id))))
-  }
 }
