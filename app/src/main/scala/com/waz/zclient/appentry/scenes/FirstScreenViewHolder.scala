@@ -23,34 +23,32 @@ import android.widget.LinearLayout
 import com.waz.utils.events.EventContext
 import com.waz.zclient._
 import com.waz.zclient.appentry.AppEntryButtonOnTouchListener
-import com.waz.zclient.appentry.controllers.SignInController._
 import com.waz.zclient.appentry.controllers.AppEntryController
-import com.waz.zclient.utils.LayoutSpec
 
 case class FirstScreenViewHolder(root: View)(implicit val context: Context, eventContext: EventContext, injector: Injector) extends ViewHolder with Injectable {
 
   val appEntryController = inject[AppEntryController]
-  val signInController = inject[SignInController]
 
   lazy val createTeamButton = root.findViewById[LinearLayout](R.id.create_team_button)
   lazy val createAccountButton = root.findViewById[LinearLayout](R.id.create_account_button)
   lazy val loginButton = root.findViewById[View](R.id.login_button)
 
   def onCreate(): Unit = {
-    createAccountButton.setOnTouchListener(AppEntryButtonOnTouchListener({
+//    createAccountButton.setOnTouchListener(AppEntryButtonOnTouchListener({
       () =>
         appEntryController.goToLoginScreen()
-        if (LayoutSpec.isPhone(context))
-          signInController.uiSignInState ! SignInMethod(Register, Phone)
-        else
-          signInController.uiSignInState ! SignInMethod(Register, Email)
-    }))
-    createTeamButton.setOnTouchListener(AppEntryButtonOnTouchListener(() => appEntryController.createTeam()))
-    loginButton.setOnClickListener(new View.OnClickListener {
-      override def onClick(v: View): Unit = {
-        appEntryController.goToLoginScreen()
-        signInController.uiSignInState ! SignInMethod(Login, Email)
-      }
-    })
+//        TODO
+//        if (LayoutSpec.isPhone(context))
+//          signInController.uiSignInState ! SignInMethod(Register, Phone)
+//        else
+//          signInController.uiSignInState ! SignInMethod(Register, Email)
+//    }))
+//    createTeamButton.setOnTouchListener(AppEntryButtonOnTouchListener(() => appEntryController.createTeam()))
+//    loginButton.setOnClickListener(new View.OnClickListener {
+//      override def onClick(v: View): Unit = {
+//        appEntryController.goToLoginScreen()
+////        signInController.uiSignInState ! SignInMethod(Login, Email)
+//      }
+//    })
   }
 }

@@ -109,14 +109,14 @@ class AppEntryController(implicit inj: Injector, eventContext: EventContext) ext
     state           <- Signal.const(stateForAccountAndUser(account, user, firstPageState, hasOtherClients)).collect { case s if s != Waiting => s }
   } yield state
 
-  entryStage.onUi { stage =>
-    ZLog.verbose(s"Current stage: $stage")
-    stage match {
-      case NoAccountState(FirstScreen) => tracking.track(OpenedStartScreen())
-      case NoAccountState(RegisterTeamScreen) => tracking.track(OpenedTeamRegistration())
-      case _ =>
-    }
-  }
+//  entryStage.onUi { stage =>
+//    ZLog.verbose(s"Current stage: $stage")
+//    stage match {
+//      case NoAccountState(FirstScreen) => tracking.track(OpenedStartScreen())
+//      case NoAccountState(RegisterTeamScreen) => tracking.track(OpenedTeamRegistration())
+//      case _ =>
+//    }
+//  }
 
   ZMessaging.currentAccounts.loggedInAccounts.map(_.isEmpty) {
     case true =>
@@ -124,51 +124,6 @@ class AppEntryController(implicit inj: Injector, eventContext: EventContext) ext
     case false =>
   }
 
-  def stateForAccountAndUser(account: Option[AccountData], user: Option[UserData], firstPageState: FirstStage, hasOtherClients: Boolean): AppEntryStage = {
-    ZLog.verbose(s"Current account and user: $account $user $hasOtherClients")
-    (account, user) match {
-      case (None, _) =>
-        NoAccountState(firstPageState)
-      case (Some(accountData), None) if accountData.pendingTeamName.isDefined && accountData.pendingEmail.isEmpty && accountData.password.isEmpty =>
-        SetTeamEmail
-      case (Some(accountData), None) if accountData.pendingTeamName.isDefined && accountData.code.isEmpty && accountData.password.isEmpty =>
-        VerifyTeamEmail
-      case (Some(accountData), None) if accountData.pendingTeamName.isDefined && accountData.name.isEmpty && accountData.password.isEmpty =>
-        SetUsersNameTeam
-      case (Some(accountData), None) if accountData.pendingTeamName.isDefined =>
-        SetPasswordTeam
-      case (Some(accountData), _) if accountData.pendingPhone.isDefined && (!accountData.verified || !accountData.canLogin || (accountData.pendingPhone == accountData.phone)) && accountData.cookie.isEmpty =>
-        VerifyPhoneStage
-      case (Some(accountData), _) if accountData.clientRegState == ClientRegistrationState.PASSWORD_MISSING || (accountData.pendingPhone == accountData.phone && !accountData.canLogin && accountData.cookie.isEmpty) =>
-        InsertPasswordStage
-      case (Some(accountData), _) if accountData.email.isEmpty && accountData.pendingEmail.isEmpty && hasOtherClients =>
-        AddEmailStage
-      case (Some(accountData), _) if accountData.pendingEmail.isDefined && ((!accountData.verified && accountData.password.isDefined) || (accountData.email.isEmpty && hasOtherClients) ) =>
-        VerifyEmailStage
-      case (Some(accountData), _) if accountData.clientRegState == ClientRegistrationState.LIMIT_REACHED =>
-        DeviceLimitStage
-      case (Some(accountData), _) if accountData.regWaiting =>
-        AddNameStage
-      case (Some(accountData), None) if accountData.cookie.isDefined || accountData.accessToken.isDefined =>
-        Waiting
-      case (Some(accountData), Some(userData)) if accountData.handle.isEmpty && (accountData.pendingTeamName.isDefined || accountData.teamId.fold(_ => false, _.isDefined)) =>
-        SetUsernameTeam
-      case (Some(accountData), Some(userData)) if userData.picture.isEmpty && (accountData.pendingTeamName.isDefined || accountData.teamId.fold(_ => false, _.isDefined)) =>
-        TeamSetPicture
-      case (Some(accountData), Some(userData)) if userData.picture.isEmpty && !(accountData.pendingTeamName.isDefined || accountData.teamId.fold(_ => false, _.isDefined)) =>
-        AddPictureStage
-      case (Some(accountData), Some(userData)) if userData.handle.isEmpty && !(accountData.pendingTeamName.isDefined || accountData.teamId.fold(_ => false, _.isDefined)) =>
-        AddHandleStage
-      case (Some(accountData), Some(_)) if accountData.pendingTeamName.isDefined =>
-        InviteToTeam
-      case (Some(accountData), Some(userData)) if accountData.firstLogin && accountData.clientRegState == ClientRegistrationState.REGISTERED && hasOtherClients =>
-        FirstEnterAppStage
-      case (Some(accountData), Some(userData)) if accountData.clientRegState == ClientRegistrationState.REGISTERED =>
-        EnterAppStage
-      case _ =>
-        NoAccountState(firstPageState)
-    }
-  }
 
   def setTeamName(name: String): Future[Unit] =
     pendingTeamName := Some(name)
@@ -184,170 +139,190 @@ class AppEntryController(implicit inj: Injector, eventContext: EventContext) ext
 
 
   def createTeamBack(): Unit = {
-    ZMessaging.currentAccounts.activeAccount.currentValue.foreach {
-      case Some(accountData) if accountData.pendingTeamName.isDefined && accountData.name.isDefined =>
-        password = ""
-        ZMessaging.currentAccounts.updateCurrentAccount(_.copy(name = None))
-      case Some(accountData) if accountData.pendingTeamName.isDefined && accountData.code.isDefined =>
-        teamUserName = ""
-        code = ""
-        ZMessaging.currentAccounts.updateCurrentAccount(_.copy(code = None, pendingEmail = None))
-      case Some(accountData) if accountData.pendingTeamName.isDefined && accountData.pendingEmail.isDefined =>
-        code = ""
-        ZMessaging.currentAccounts.updateCurrentAccount(_.copy(pendingEmail = None))
-      case Some(accountData) if accountData.pendingTeamName.isDefined =>
-        teamEmail = ""
-        ZMessaging.currentAccounts.logout(false)
-      case _ =>
-        teamName = ""
-        Future.successful(firstStage ! FirstScreen)
-    }
+//    ZMessaging.currentAccounts.activeAccount.currentValue.foreach {
+//      case Some(accountData) if accountData.pendingTeamName.isDefined && accountData.name.isDefined =>
+//        password = ""
+//        ZMessaging.currentAccounts.updateCurrentAccount(_.copy(name = None))
+//      case Some(accountData) if accountData.pendingTeamName.isDefined && accountData.code.isDefined =>
+//        teamUserName = ""
+//        code = ""
+//        ZMessaging.currentAccounts.updateCurrentAccount(_.copy(code = None, pendingEmail = None))
+//      case Some(accountData) if accountData.pendingTeamName.isDefined && accountData.pendingEmail.isDefined =>
+//        code = ""
+//        ZMessaging.currentAccounts.updateCurrentAccount(_.copy(pendingEmail = None))
+//      case Some(accountData) if accountData.pendingTeamName.isDefined =>
+//        teamEmail = ""
+//        ZMessaging.currentAccounts.logout(false)
+//      case _ =>
+//        teamName = ""
+//        Future.successful(firstStage ! FirstScreen)
+//    }
   }
 
   def verifyPhone(code: String): Future[Either[EntryError, Unit]] = {
-    ZMessaging.currentAccounts.activeAccount.head.flatMap {
-      case Some(accountData) if accountData.regWaiting =>
-        val method = SignInMethod(Register, Phone)
-        ZMessaging.currentAccounts.activatePhoneOnRegister(accountData.id, ConfirmationCode(code)).map {
-          case Left(error) =>
-            val entryError = EntryError(error.code, error.label, method)
-            uiTracking.onEnterCode(Left(entryError), method)
-            Left(entryError)
-          case _ =>
-            uiTracking.onEnterCode(Right(()), method)
-            Right(())
-        }
-      case Some(accountData) =>
-        val method = SignInMethod(Login, Phone)
-        ZMessaging.currentAccounts.loginPhone(accountData.id, ConfirmationCode(code)).flatMap {
-          case Left(error) =>
-            val entryError = EntryError(error.code, error.label, method)
-            uiTracking.onEnterCode(Left(entryError), method)
-            Future.successful(Left(entryError))
-          case _ =>
-            uiTracking.onEnterCode(Right(()), method)
-            ZMessaging.currentAccounts.switchAccount(accountData.id).map(_ => Right(()))
-        }
-      case _ => Future.successful(Left(GenericRegisterPhoneError))
-    }
+    throw new NotImplementedError("")
+//    ZMessaging.currentAccounts.activeAccount.head.flatMap {
+//      case Some(accountData) if accountData.regWaiting =>
+//        val method = SignInMethod(Register, Phone)
+//        ZMessaging.currentAccounts.activatePhoneOnRegister(accountData.id, ConfirmationCode(code)).map {
+//          case Left(error) =>
+//            val entryError = EntryError(error.code, error.label, method)
+//            uiTracking.onEnterCode(Left(entryError), method)
+//            Left(entryError)
+//          case _ =>
+//            uiTracking.onEnterCode(Right(()), method)
+//            Right(())
+//        }
+//      case Some(accountData) =>
+//        val method = SignInMethod(Login, Phone)
+//        ZMessaging.currentAccounts.loginPhone(accountData.id, ConfirmationCode(code)).flatMap {
+//          case Left(error) =>
+//            val entryError = EntryError(error.code, error.label, method)
+//            uiTracking.onEnterCode(Left(entryError), method)
+//            Future.successful(Left(entryError))
+//          case _ =>
+//            uiTracking.onEnterCode(Right(()), method)
+//            ZMessaging.currentAccounts.switchAccount(accountData.id).map(_ => Right(()))
+//        }
+//      case _ => Future.successful(Left(GenericRegisterPhoneError))
+//    }
   }
 
   def registerName(name: String): Future[Either[EntryError, Unit]] = {
-    ZMessaging.currentAccounts.activeAccount.head.flatMap {
-      case Some(accountData) if accountData.phone.isDefined && accountData.regWaiting && accountData.code.isDefined =>
-        ZMessaging.currentAccounts.registerNameOnPhone(accountData.id, name).flatMap {
-          case Left(error) =>
-            val entryError = EntryError(error.code, error.label, SignInMethod(Register, Phone))
-            uiTracking.onAddNameOnRegistration(Left(entryError), SignInController.Phone)
-            Future.successful(Left(entryError))
-          case _ =>
-            uiTracking.onAddNameOnRegistration(Right(()), SignInController.Phone)
-            ZMessaging.currentAccounts.switchAccount(accountData.id).map(_ => Right(()))
-        }
-      case _ => Future.successful(Left(GenericRegisterPhoneError))
-    }
+    throw new NotImplementedError("")
+//    ZMessaging.currentAccounts.activeAccount.head.flatMap {
+//      case Some(accountData) if accountData.phone.isDefined && accountData.regWaiting && accountData.code.isDefined =>
+//        ZMessaging.currentAccounts.registerNameOnPhone(accountData.id, name).flatMap {
+//          case Left(error) =>
+//            val entryError = EntryError(error.code, error.label, SignInMethod(Register, Phone))
+//            uiTracking.onAddNameOnRegistration(Left(entryError), SignInController.Phone)
+//            Future.successful(Left(entryError))
+//          case _ =>
+//            uiTracking.onAddNameOnRegistration(Right(()), SignInController.Phone)
+//            ZMessaging.currentAccounts.switchAccount(accountData.id).map(_ => Right(()))
+//        }
+//      case _ => Future.successful(Left(GenericRegisterPhoneError))
+//    }
   }
 
   def resendActivationEmail(): Unit = {
-    ZMessaging.currentAccounts.getActiveAccount.map {
-      case Some(account) if account.pendingEmail.isDefined =>
-        ZMessaging.currentAccounts.requestVerificationEmail(account.pendingEmail.get)
-      case _ =>
-    }
+    throw new NotImplementedError("")
+//    ZMessaging.currentAccounts.getActiveAccount.map {
+//      case Some(account) if account.pendingEmail.isDefined =>
+//        ZMessaging.currentAccounts.requestVerificationEmail(account.pendingEmail.get)
+//      case _ =>
+//    }
   }
 
   def resendActivationPhoneCode(shouldCall: Boolean = false): Future[Either[EntryError, Unit]] = {
-
-    def requestCode(accountData: AccountData, kindOfAccess: KindOfAccess): Future[ActivateResult] = {
-      if (shouldCall)
-        ZMessaging.currentAccounts.requestPhoneConfirmationCall(accountData.pendingPhone.get, kindOfAccess).future
-      else
-        ZMessaging.currentAccounts.requestPhoneConfirmationCode(accountData.pendingPhone.get, kindOfAccess).future
-    }
-
-    ZMessaging.currentAccounts.getActiveAccount.flatMap {
-      case Some(account) if account.pendingPhone.isDefined =>
-         val kindOfAccess = if (account.regWaiting) KindOfAccess.REGISTRATION else KindOfAccess.LOGIN
-        requestCode(account, kindOfAccess).map {
-          case Failure(error) =>
-            Left(EntryError(error.code, error.label, SignInMethod(Register, Phone)))
-          case PasswordExists =>
-            val validationType = if (account.regWaiting) Register else Login
-            Left(EntryError(ErrorResponse.PasswordExists.code, ErrorResponse.PasswordExists.label, SignInMethod(validationType, Phone)))
-          case _ =>
-            Right(())
-        }
-      case _ => Future.successful(Left(GenericRegisterPhoneError))
-    }
+    throw new NotImplementedError("")
+//
+//    def requestCode(accountData: AccountData, kindOfAccess: KindOfAccess): Future[ActivateResult] = {
+//      if (shouldCall)
+//        ZMessaging.currentAccounts.requestPhoneConfirmationCall(accountData.pendingPhone.get, kindOfAccess).future
+//      else
+//        ZMessaging.currentAccounts.requestPhoneConfirmationCode(accountData.pendingPhone.get, kindOfAccess).future
+//    }
+//
+//    ZMessaging.currentAccounts.getActiveAccount.flatMap {
+//      case Some(account) if account.pendingPhone.isDefined =>
+//         val kindOfAccess = if (account.regWaiting) KindOfAccess.REGISTRATION else KindOfAccess.LOGIN
+//        requestCode(account, kindOfAccess).map {
+//          case Failure(error) =>
+//            Left(EntryError(error.code, error.label, SignInMethod(Register, Phone)))
+//          case PasswordExists =>
+//            val validationType = if (account.regWaiting) Register else Login
+//            Left(EntryError(ErrorResponse.PasswordExists.code, ErrorResponse.PasswordExists.label, SignInMethod(validationType, Phone)))
+//          case _ =>
+//            Right(())
+//        }
+//      case _ => Future.successful(Left(GenericRegisterPhoneError))
+//    }
   }
 
-  def removeCurrentAccount(): Unit = ZMessaging.currentAccounts.logout(false)
+  def removeCurrentAccount(): Unit = {
+    throw new NotImplementedError("")
+//    ZMessaging.currentAccounts.logout(false)
+  }
 
-  def cancelEmailVerification(): Unit = ZMessaging.currentAccounts.updateCurrentAccount(_.copy(pendingEmail = None))
+  def cancelEmailVerification(): Unit = {
+    throw new NotImplementedError("")
+//    ZMessaging.currentAccounts.updateCurrentAccount(_.copy(pendingEmail = None))
+  }
 
   def setPicture(imageAsset: ImageAsset, source: SignUpPhotoFragment.Source, registrationType: RegistrationType): Unit = {
-    optZms.head.map {
-      case Some(zms) =>
-        zms.users.updateSelfPicture(imageAsset).map { _ =>
-          if (source != SignUpPhotoFragment.Source.Auto) {
-            val trackingSource = source match {
-              case SignUpPhotoFragment.Source.Unsplash => AddPhotoOnRegistrationEvent.Unsplash
-              case _ => AddPhotoOnRegistrationEvent.Gallery
-            }
-            val trackingRegType = registrationType match {
-              case SignUpPhotoFragment.RegistrationType.Email => Email
-              case SignUpPhotoFragment.RegistrationType.Phone => Phone
-            }
-            uiTracking.onAddPhotoOnRegistration(trackingRegType, trackingSource)
-          }
-        }
-      case _ =>
-    }
+    throw new NotImplementedError("")
+//    optZms.head.map {
+//      case Some(zms) =>
+//        zms.users.updateSelfPicture(imageAsset).map { _ =>
+//          if (source != SignUpPhotoFragment.Source.Auto) {
+//            val trackingSource = source match {
+//              case SignUpPhotoFragment.Source.Unsplash => AddPhotoOnRegistrationEvent.Unsplash
+//              case _ => AddPhotoOnRegistrationEvent.Gallery
+//            }
+//            val trackingRegType = registrationType match {
+//              case SignUpPhotoFragment.RegistrationType.Email => Email
+//              case SignUpPhotoFragment.RegistrationType.Phone => Phone
+//            }
+//            uiTracking.onAddPhotoOnRegistration(trackingRegType, trackingSource)
+//          }
+//        }
+//      case _ =>
+//    }
   }
 
   def requestTeamEmailVerificationCode(email: String): Future[Either[Unit, ErrorResponse]] = {
-    ZMessaging.currentAccounts.requestActivationCode(EmailAddress(email)).map {
-      case Right(()) => Left(())
-      case Left(e) => Right(e)
-    }
+    throw new NotImplementedError("")
+//    ZMessaging.currentAccounts.requestActivationCode(EmailAddress(email)).map {
+//      case Right(()) => Left(())
+//      case Left(e) => Right(e)
+//    }
   }
 
   def resendTeamEmailVerificationCode(): ErrorOr[Unit] = {
-    ZMessaging.currentAccounts.getActiveAccount.flatMap {
-      case Some(accountData) if accountData.pendingEmail.isDefined =>
-        ZMessaging.currentAccounts.requestActivationCode(accountData.pendingEmail.get)
-      case _ =>
-        Future.successful(Right(ErrorResponse.internalError("No pending email or account")))
-    }
+    throw new NotImplementedError("")
+//    ZMessaging.currentAccounts.getActiveAccount.flatMap {
+//      case Some(accountData) if accountData.pendingEmail.isDefined =>
+//        ZMessaging.currentAccounts.requestActivationCode(accountData.pendingEmail.get)
+//      case _ =>
+//        Future.successful(Right(ErrorResponse.internalError("No pending email or account")))
+//    }
   }
 
   def setEmailVerificationCode(code: String, copyPaste: Boolean = false): ErrorOr[Unit] = {
-    import TeamsEnteredVerification._
-    ZMessaging.currentAccounts.verify(ConfirmationCode(code)).map { resp =>
-      val err = resp.fold(e => Some((e.code, e.label)), _ => None)
-      tracking.track(TeamsEnteredVerification(if (copyPaste) CopyPaste else Manual, err))
-      if (err.isEmpty) tracking.track(TeamVerified())
-      resp
-    }
+    throw new NotImplementedError("")
+//    import TeamsEnteredVerification._
+//    ZMessaging.currentAccounts.verify(ConfirmationCode(code)).map { resp =>
+//      val err = resp.fold(e => Some((e.code, e.label)), _ => None)
+//      tracking.track(TeamsEnteredVerification(if (copyPaste) CopyPaste else Manual, err))
+//      if (err.isEmpty) tracking.track(TeamVerified())
+//      resp
+//    }
   }
 
-  def setName(name: String): ErrorOr[Unit] =
-    ZMessaging.currentAccounts.updateCurrentAccount(_.copy(name = Some(name))).map(_ => Right(()))
+  def setName(name: String): ErrorOr[Unit] = {
+    throw new NotImplementedError("")
+//    ZMessaging.currentAccounts.updateCurrentAccount(_.copy(name = Some(name))).map(_ => Right(()))
+  }
 
   def setPassword(password: String): ErrorOr[Unit] =
-    ZMessaging.currentAccounts.updateCurrentAccount(_.copy(password = Some(password))) flatMap { _ =>
-      ZMessaging.currentAccounts.register().map { resp =>
-        if (resp.isRight) tracking.track(TeamCreated())
-        resp
-      }
-    }
+    throw new NotImplementedError("")
+//    ZMessaging.currentAccounts.updateCurrentAccount(_.copy(password = Some(password))) flatMap { _ =>
+//      ZMessaging.currentAccounts.register().map { resp =>
+//        if (resp.isRight) tracking.track(TeamCreated())
+//        resp
+//      }
+//    }
 
   def setUsername(username: String): ErrorOr[Unit] =
-    ZMessaging.accountsService.flatMap(_.getActiveAccountManager)
-      .collect { case Some(acc) => acc }
-      .flatMap(_.updateHandle(Handle(username)))
+    throw new NotImplementedError("")
+//    ZMessaging.accountsService.flatMap(_.getActiveAccountManager)
+//      .collect { case Some(acc) => acc }
+//      .flatMap(_.updateHandle(Handle(username)))
 
-  def skipInvitations(): Unit = ZMessaging.accountsService.flatMap(_.updateCurrentAccount(_.copy(pendingTeamName = None)))
+  def skipInvitations(): Unit =
+    throw new NotImplementedError("")
+//  ZMessaging.accountsService.flatMap(_.updateCurrentAccount(_.copy(pendingTeamName = None)))
 
 }
 

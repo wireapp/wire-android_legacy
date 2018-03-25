@@ -29,8 +29,8 @@ import android.widget.{FrameLayout, LinearLayout}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
-import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered}
-import com.waz.service.{AccountManager, AccountsService, ZMessaging}
+import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, Registered}
+import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
@@ -64,7 +64,18 @@ class SignInFragment extends BaseFragment[Container]
   lazy val tracking          = inject[GlobalTrackingController]
 
   lazy val isAddingAccount = accountsService.zmsInstances.map(_.nonEmpty)
-  val uiSignInState = Signal[SignInMethod](SignInMethod(Register, Phone))
+
+  lazy val uiSignInState = {
+    val sign = getArguments.getString(SignTypeArg, "Register") match {
+      case "Login" => Login
+      case _       => Register
+    }
+    val input = getArguments.getString(InputTypeArg, "Phone") match {
+      case "Email" => Email
+      case _       => Phone
+    }
+    Signal(SignInMethod(sign, input))
+  }
 
   val email    = Signal("")
   val password = Signal("")
@@ -314,13 +325,9 @@ class SignInFragment extends BaseFragment[Container]
               email    <- email.head
               password <- password.head
               Right(_) <- accountsService.loginEmail(email, password).map(onResponse(_, m))
-              Some(am: AccountManager) <- accountsService.getActiveAccountManager
+              Some(am) <- accountsService.getActiveAccountManager
               Right(client) <- am.registerClient().map(onResponse(_, m))
-            } yield client match {
-              case Registered(_) => activity.onEnterApplication(openSettings = false)
-              case LimitReached  => activity.showFragment(OtrDeviceLimitFragment.newInstance, OtrDeviceLimitFragment.Tag)
-              case _ => warn("Should be impossible to get here in email login")
-            }
+            } yield activity.onEnterApplication(openSettings = false)
           case _ => throw new NotImplementedError("Only login with email works right now") //TODO
         }
 
@@ -358,6 +365,21 @@ class SignInFragment extends BaseFragment[Container]
 }
 
 object SignInFragment {
+
+  val SignTypeArg = "SIGN_IN_TYPE"
+  val InputTypeArg = "INPUT_TYPE"
+
+  def newInstance() = new SignInFragment
+
+  def newInstance(signInMethod: SignInMethod): SignInFragment = {
+    returning(new SignInFragment()) {
+      _.setArguments(returning(new Bundle) { b =>
+          b.putString(SignTypeArg, signInMethod.signType.toString)
+          b.putString(InputTypeArg, signInMethod.inputType.toString)
+      })
+    }
+  }
+
   val Tag = logTagFor[SignInFragment]
   trait Container {
     def abortAddAccount(): Unit

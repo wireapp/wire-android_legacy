@@ -26,7 +26,7 @@ import com.waz.utils.events.EventContext
 import com.waz.zclient._
 import com.waz.zclient.appentry.EntryError
 import com.waz.zclient.appentry.controllers.AppEntryController
-import com.waz.zclient.appentry.controllers.SignInController.{Email, Register, SignInMethod}
+import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Register, SignInMethod}
 import com.waz.zclient.common.views.NumberCodeInput
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.KeyboardUtils
@@ -50,14 +50,15 @@ case class VerifyEmailViewHolder(root: View)(implicit val context: Context, even
   def onCreate(): Unit = {
     import Threading.Implicits.Ui
 
-    ZMessaging.currentAccounts.getActiveAccount.map {
-      _.flatMap(_.pendingEmail) match {
-        case Some(email) =>
-          subtitle.setText(ContextUtils.getString(R.string.teams_verify_email_subtitle, email.str))
-        case _ =>
-          subtitle.setText("")
-      }
-    }
+    //TODO
+//    ZMessaging.currentAccounts.getActiveAccount.map {
+//      _.flatMap(_.pendingEmail) match {
+//        case Some(email) =>
+//          subtitle.setText(ContextUtils.getString(R.string.teams_verify_email_subtitle, email.str))
+//        case _ =>
+//          subtitle.setText("")
+//      }
+//    }
 
     codeField.requestInputFocus()
     if (appEntryController.code.nonEmpty)

@@ -25,19 +25,20 @@ import android.graphics.{Color, Paint, PixelFormat}
 import android.net.Uri
 import android.os.{Build, Bundle}
 import android.support.v4.app.Fragment
+import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.{error, info, verbose}
 import com.waz.api.{NetworkMode, _}
-import com.waz.model.{AccountId, ConvId, ConversationData}
-import com.waz.service.ZMessaging
+import com.waz.model.{ConvId, ConversationData, UserId}
+import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, Registered}
 import com.waz.service.ZMessaging.clock
+import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import com.waz.utils.{RichInstant, returning}
 import com.waz.zclient.Intents._
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.appentry.controllers.AppEntryController
-import com.waz.zclient.appentry.controllers.AppEntryController.{DeviceLimitStage, EnterAppStage, Unknown}
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.CallPermissionsController
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
@@ -73,6 +74,7 @@ class MainActivity extends BaseActivity
   import Threading.Implicits.Background
 
   lazy val zms                      = inject[Signal[ZMessaging]]
+  lazy val accountsService          = inject[AccountsService]
   lazy val sharingController        = inject[SharingController]
   lazy val accentColorController    = inject[AccentColorController]
   lazy val callPermissionController = inject[CallPermissionsController]
@@ -124,13 +126,13 @@ class MainActivity extends BaseActivity
       case _ =>
     }
 
-    appEntryController.entryStage.onUi {
-      case EnterAppStage =>
-        if (getSupportFragmentManager.findFragmentByTag(MainPhoneFragment.TAG) == null) replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.TAG)
-      case DeviceLimitStage => showUnableToRegisterOtrClientDialog()
-      case Unknown =>
-        error("Unknown state")
-      case _ => openSignUpPage()
+    accountsService.getActiveAccountManager.flatMap {
+      case Some(am) => am.clientState.head.map {
+        case Registered(_) => // nothing to do
+        case LimitReached  => showUnableToRegisterOtrClientDialog()
+        case _             => openSignUpPage() //TODO where to though?
+      } (Threading.Ui)
+      case _ => ZLog.warn("This shouldn't happen!"); Future.successful({}) //TODO better warning...
     }
 
     userAccountsController.accounts.map(_.isEmpty).onUi {
@@ -231,7 +233,7 @@ class MainActivity extends BaseActivity
 
     if (requestCode == PreferencesActivity.SwitchAccountCode && data != null) {
       Option(data.getStringExtra(PreferencesActivity.SwitchAccountExtra)).foreach { extraStr =>
-        ZMessaging.currentAccounts.switchAccount(AccountId(extraStr))
+        accountsService.setAccount(Some(UserId(extraStr)))
       }
     }
   }
@@ -291,10 +293,9 @@ class MainActivity extends BaseActivity
       case NotificationIntent(accountId, convId, startCall) =>
         verbose(s"notification intent, accountId=$accountId, convId=$convId")
         val switchAccount = {
-          val accounts = ZMessaging.currentAccounts
-          accounts.activeAccount.head.flatMap {
+          accountsService.activeAccount.head.flatMap {
             case Some(acc) if intent.accountId.contains(acc.id) => Future.successful(false)
-            case _ => accounts.switchAccount(intent.accountId.get).map(_ => true)
+            case _ => accountsService.setAccount(intent.accountId).map(_ => true)
           }
         }
 
@@ -372,10 +373,7 @@ class MainActivity extends BaseActivity
 
   override def logout() = {
     getSupportFragmentManager.popBackStackImmediate
-    ZMessaging.currentAccounts.getActiveAccountManager.flatMap {
-      case Some(am) => am.logout(flushCredentials = true)
-      case _ => Future.successful({})
-    }
+    accountsService.activeAccountId.head.flatMap(_.fold(Future.successful({}))(accountsService.logout))
   }
 
   def manageDevices() = {

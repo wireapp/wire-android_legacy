@@ -25,15 +25,16 @@ import android.view.View
 import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
 import com.waz.zclient._
+import com.waz.zclient.appentry.EntryError
+import com.waz.zclient.appentry.controllers.AppEntryController
+import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Register, SignInMethod}
+import com.waz.zclient.appentry.scenes.SetEmailViewHolder._
 import com.waz.zclient.common.views.InputBox
 import com.waz.zclient.common.views.InputBox.EmailValidator
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.KeyboardUtils
+import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.utils._
-import SetEmailViewHolder._
-import com.waz.zclient.appentry.EntryError
-import com.waz.zclient.appentry.controllers.AppEntryController
-import com.waz.zclient.appentry.controllers.SignInController.{Email, Register, SignInMethod}
 
 case class SetEmailViewHolder(root: View)(implicit val context: Context, eventContext: EventContext, injector: Injector) extends ViewHolder with Injectable {
 
@@ -54,7 +55,7 @@ case class SetEmailViewHolder(root: View)(implicit val context: Context, eventCo
     KeyboardUtils.showKeyboard(context.asInstanceOf[Activity])
     inputField.setOnClick( text => appEntryController.requestTeamEmailVerificationCode(text).map {
       case Right(error) =>
-        val errorMessage = ContextUtils.getString(EntryError(error.code, error.label, SignInMethod(Register, Email)).bodyResource)
+        val errorMessage = getString(EntryError(error.code, error.label, SignInMethod(Register, Email)).bodyResource)
         if (error.code == DuplicateEmailErrorCode) {
           aboutButton.setVisible(true)
         }

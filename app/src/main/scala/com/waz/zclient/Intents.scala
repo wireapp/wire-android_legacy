@@ -19,7 +19,7 @@ package com.waz.zclient
 
 import android.app.PendingIntent
 import android.content.{Context, Intent}
-import com.waz.model.{AccountId, ConvId}
+import com.waz.model.{AccountId, ConvId, UserId}
 import com.waz.utils.returning
 import com.waz.zclient.preferences.PreferencesActivity
 
@@ -82,7 +82,7 @@ object Intents {
     def fromSharing      = Option(intent).exists(_.getBooleanExtra(FromSharingExtra, false))
 
     def startCall        = Option(intent).exists(_.getBooleanExtra(StartCallExtra, false))
-    def accountId        = Option(intent).map(_.getStringExtra(AccountIdExtra)).filter(_ != null).map(AccountId)
+    def accountId        = Option(intent).map(_.getStringExtra(AccountIdExtra)).filter(_ != null).map(UserId)
     def convId           = Option(intent).map(_.getStringExtra(ConvIdExtra)).filter(_ != null).map(ConvId)
 
     def page             = Option(intent).map(_.getStringExtra(OpenPageExtra)).filter(_ != null)

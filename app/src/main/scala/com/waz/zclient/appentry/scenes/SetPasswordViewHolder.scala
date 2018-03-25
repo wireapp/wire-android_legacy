@@ -27,7 +27,7 @@ import com.waz.utils.events.EventContext
 import com.waz.zclient._
 import com.waz.zclient.appentry.{AppEntryDialogs, EntryError}
 import com.waz.zclient.appentry.controllers.AppEntryController
-import com.waz.zclient.appentry.controllers.SignInController.{Email, Register, SignInMethod}
+import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Register, SignInMethod}
 import com.waz.zclient.common.views.InputBox
 import com.waz.zclient.common.views.InputBox.PasswordValidator
 import com.waz.zclient.tracking.TeamAcceptedTerms

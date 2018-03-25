@@ -21,7 +21,7 @@ import android.content.res.Configuration
 import android.content.{DialogInterface, Intent}
 import android.graphics.Bitmap
 import android.net.Uri
-import android.os.{Build, Bundle}
+import android.os.Bundle
 import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.widget.Toast
 import com.waz.ZLog.ImplicitTag._
@@ -32,14 +32,12 @@ import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.utils.wrappers.AndroidURIUtil
 import com.waz.zclient._
-import com.waz.zclient.appentry.controllers.AppEntryController._
 import com.waz.zclient.appentry.controllers.AppEntryController
 import com.waz.zclient.appentry.fragments._
 import com.waz.zclient.newreg.fragments.SignUpPhotoFragment
 import com.waz.zclient.newreg.fragments.SignUpPhotoFragment.UNSPLASH_API_URL
 import com.waz.zclient.newreg.fragments.country.CountryController
 import com.waz.zclient.preferences.PreferencesController
-import com.waz.zclient.preferences.dialogs.ChangeHandleFragment
 import com.waz.zclient.tracking.CrashController
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ViewUtils
@@ -78,7 +76,6 @@ class AppEntryActivity extends BaseActivity
   private var isPaused: Boolean = false
 
   private lazy val appEntryController = inject[AppEntryController]
-  private lazy val signInController = inject[SignInController]
 
   ZMessaging.currentGlobal.blacklist.upToDate.onUi {
     case false =>
@@ -108,9 +105,14 @@ class AppEntryActivity extends BaseActivity
     enableProgress(false)
     createdFromSavedInstance = savedInstanceState != null
 
-    if (!createdFromSavedInstance) {
-      appEntryController.clearCredentials()
-      signInController.clearCredentials()
+//    if (!createdFromSavedInstance) {
+//      appEntryController.clearCredentials()
+//      signInController.clearCredentials()
+//    }
+
+    withFragmentOpt(CreateTeamFragment.TAG) {
+      case Some(_) =>
+      case None => showFragment(CreateTeamFragment.newInstance, CreateTeamFragment.TAG)
     }
 
     unsplashInitLoadHandle = unsplashInitImageAsset.getSingleBitmap(AppEntryActivity.PREFETCH_IMAGE_WIDTH, new BitmapCallback() {
@@ -119,35 +121,35 @@ class AppEntryActivity extends BaseActivity
       }
     })
 
-    appEntryController.entryStage.onUi {
-      case EnterAppStage =>
-        onEnterApplication(false)
-      case FirstEnterAppStage =>
-        onShowFirstLaunchPage()
-      case NoAccountState(LoginScreen) =>
-        onShowSignInPage()
-      case NoAccountState(_) | SetTeamEmail | VerifyTeamEmail | SetUsersNameTeam | SetPasswordTeam | SetUsernameTeam | InviteToTeam =>
-        onShowCreateTeamFragment()
-      case DeviceLimitStage =>
-        onEnterApplication(false)
-      case AddNameStage =>
-        onShowPhoneNamePage()
-      case AddPictureStage =>
-        onShowSetPicturePage()
-      case VerifyEmailStage =>
-        onShowEmailVerifyEmailPage()
-      case VerifyPhoneStage =>
-        onShowPhoneCodePage()
-      case AddHandleStage =>
-        onShowSetUsername()
-      case InsertPasswordStage =>
-        onShowInsertPassword()
-      case TeamSetPicture =>
-        appEntryController.setPicture(unsplashInitImageAsset, SignUpPhotoFragment.Source.Auto, SignUpPhotoFragment.RegistrationType.Email)
-      case AddEmailStage =>
-        onShowAddEmail()
-      case _ =>
-    }
+//    appEntryController.entryStage.onUi {
+//      case EnterAppStage =>
+//        onEnterApplication(false)
+//      case FirstEnterAppStage =>
+//        onShowFirstLaunchPage()
+//      case NoAccountState(LoginScreen) =>
+//        onShowSignInPage()
+//      case NoAccountState(_) | SetTeamEmail | VerifyTeamEmail | SetUsersNameTeam | SetPasswordTeam | SetUsernameTeam | InviteToTeam =>
+//        onShowCreateTeamFragment()
+//      case DeviceLimitStage =>
+//        onEnterApplication(false)
+//      case AddNameStage =>
+//        onShowPhoneNamePage()
+//      case AddPictureStage =>
+//        onShowSetPicturePage()
+//      case VerifyEmailStage =>
+//        onShowEmailVerifyEmailPage()
+//      case VerifyPhoneStage =>
+//        onShowPhoneCodePage()
+//      case AddHandleStage =>
+//        onShowSetUsername()
+//      case InsertPasswordStage =>
+//        onShowInsertPassword()
+//      case TeamSetPicture =>
+//        appEntryController.setPicture(unsplashInitImageAsset, SignUpPhotoFragment.Source.Auto, SignUpPhotoFragment.RegistrationType.Email)
+//      case AddEmailStage =>
+//        onShowAddEmail()
+//      case _ =>
+//    }
   }
 
   override protected def onResume(): Unit = {
@@ -197,22 +199,22 @@ class AppEntryActivity extends BaseActivity
 
   def abortAddAccount(): Unit = {
     enableProgress(true)
-    ZMessaging.currentAccounts.loggedInAccounts.head.map { accounts =>
-      accounts.headOption.fold {
-        if (appEntryController.entryStage.currentValue.exists(_ != NoAccountState(FirstScreen))) {
-          appEntryController.gotToFirstPage()
-        } else {
-          if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
-            finish()
-          else
-            finishAfterTransition()
-        }
-      } { acc =>
-        ZMessaging.currentAccounts.switchAccount(acc.id).map { _ =>
-          onEnterApplication(openSettings = true)
-        }
-      }
-    }
+//    ZMessaging.currentAccounts.loggedInAccounts.head.map { accounts =>
+//      accounts.headOption.fold {
+//        if (appEntryController.entryStage.currentValue.exists(_ != NoAccountState(FirstScreen))) {
+//          appEntryController.gotToFirstPage()
+//        } else {
+//          if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+//            finish()
+//          else
+//            finishAfterTransition()
+//        }
+//      } { acc =>
+//        ZMessaging.currentAccounts.switchAccount(acc.id).map { _ =>
+//          onEnterApplication(openSettings = true)
+//        }
+//      }
+//    }
   }
 
   def onOpenUrl(url: String): Unit =
@@ -253,19 +255,19 @@ class AppEntryActivity extends BaseActivity
         showFragment(new SignInFragment, SignInFragment.Tag)
     }
 
-  def onShowSetPicturePage(): Unit =
-    withFragmentOpt(SignUpPhotoFragment.TAG) {
-      case Some(_) => //
-      case None =>
-        ZMessaging.currentAccounts.getActiveAccount.map { accountData =>
-          import SignUpPhotoFragment._
-          val tpe = accountData match {
-            case Some(acc) if acc.phone.isDefined && acc.email.isEmpty => RegistrationType.Phone
-            case _ => RegistrationType.Email
-          }
-          showFragment(newInstance(tpe), TAG)
-        }
-    }
+  def onShowSetPicturePage(): Unit = {}
+//    withFragmentOpt(SignUpPhotoFragment.TAG) {
+//      case Some(_) => //
+//      case None =>
+//        ZMessaging.currentAccounts.getActiveAccount.map { accountData =>
+//          import SignUpPhotoFragment._
+//          val tpe = accountData match {
+//            case Some(acc) if acc.phone.isDefined && acc.email.isEmpty => RegistrationType.Phone
+//            case _ => RegistrationType.Email
+//          }
+//          showFragment(newInstance(tpe), TAG)
+//        }
+//    }
 
   def onShowEmailPhoneCodePage(): Unit =
     showFragment(VerifyPhoneFragment.newInstance(true), VerifyPhoneFragment.TAG)
@@ -337,13 +339,13 @@ class AppEntryActivity extends BaseActivity
   }
 
   override def onChooseUsernameChosen() = {
-    ZMessaging.currentAccounts.getActiveAccount.map(_.flatMap(_.handle.map(_.string)).getOrElse("")).map { userName =>
-      getSupportFragmentManager.beginTransaction
-        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-        .add(ChangeHandleFragment.newInstance(userName, cancellable = false), ChangeHandleFragment.FragmentTag)
-        .addToBackStack(ChangeHandleFragment.FragmentTag)
-        .commit
-    }
+//    ZMessaging.currentAccounts.getActiveAccount.map(_.flatMap(_.handle.map(_.string)).getOrElse("")).map { userName =>
+//      getSupportFragmentManager.beginTransaction
+//        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+//        .add(ChangeHandleFragment.newInstance(userName, cancellable = false), ChangeHandleFragment.FragmentTag)
+//        .addToBackStack(ChangeHandleFragment.FragmentTag)
+//        .commit
+//    }
   }
 
   override def onKeepUsernameChosen(username: String) =
