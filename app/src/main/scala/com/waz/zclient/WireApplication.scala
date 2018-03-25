@@ -37,7 +37,7 @@ import com.waz.service.tracking.TrackingService
 import com.waz.service.{NetworkModeService, UiLifeCycle, ZMessaging}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.api.scala.ScalaStoreFactory
-import com.waz.zclient.appentry.controllers.{AddEmailController, AppEntryController, InvitationsController, SignInController}
+import com.waz.zclient.appentry.controllers.{AddEmailController, AppEntryController, InvitationsController}
 import com.waz.zclient.calling.controllers.{CallPermissionsController, CurrentCallController, GlobalCallingController}
 import com.waz.zclient.camera.controllers.{AndroidCameraFactory, GlobalCameraController}
 import com.waz.zclient.collection.controllers.CollectionController

@@ -24,7 +24,6 @@ import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.threading.Threading
 import com.waz.zclient.appentry.EntryError
-import com.waz.zclient.appentry.controllers.SignInController
 import com.waz.zclient.appentry.controllers.SignInController._
 import com.waz.zclient.appentry.fragments.InsertPasswordFragment._
 import com.waz.zclient.newreg.views.PhoneConfirmationButton

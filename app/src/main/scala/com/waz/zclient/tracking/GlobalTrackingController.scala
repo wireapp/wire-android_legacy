@@ -33,7 +33,7 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.{RichThreetenBPDuration, _}
 import com.waz.zclient._
 import com.waz.zclient.appentry.EntryError
-import com.waz.zclient.appentry.controllers.SignInController.{InputType, SignInMethod}
+import com.waz.zclient.appentry.fragments.SignInFragment.{InputType, SignInMethod}
 import com.waz.zclient.tracking.AddPhotoOnRegistrationEvent.Source
 import com.waz.zclient.utils.DeprecationUtils
 import net.hockeyapp.android.CrashManagerListener
@@ -174,15 +174,14 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     }
   }
 
-  private def responseToErrorPair(response: Either[EntryError, Unit]) = response.fold({ e => Option((e.code, e.label))}, _ => Option.empty[(Int, String)])
+  private def responseToErrorPair(response: Either[EntryError, _]) = response.fold({ e => Option((e.code, e.label))}, _ => Option.empty[(Int, String)])
 
-  def onEnteredCredentials(response: Either[EntryError, Unit], method: SignInMethod): Unit =
-
-  for {
-    //Should wait until a ZMS instance exists before firing the event
-    _   <- ZMessaging.currentAccounts.activeZms.collect { case Some(z) => z }.head
-    acc <- ZMessaging.currentAccounts.activeAccount.collect { case Some(acc) => acc }.head
-  } yield track(EnteredCredentialsEvent(method, responseToErrorPair(response)), Some(acc.id))
+  def onEnteredCredentials(response: Either[EntryError, _], method: SignInMethod): Unit =
+    for {
+      //Should wait until a ZMS instance exists before firing the event
+      _   <- ZMessaging.currentAccounts.activeZms.collect { case Some(z) => z }.head
+      acc <- ZMessaging.currentAccounts.activeAccount.collect { case Some(acc) => acc }.head
+    } yield track(EnteredCredentialsEvent(method, responseToErrorPair(response)), Some(acc.id))
 
   def onEnterCode(response: Either[EntryError, Unit], method: SignInMethod): Unit =
     track(EnteredCodeEvent(method, responseToErrorPair(response)))

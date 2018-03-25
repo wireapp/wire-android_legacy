@@ -24,7 +24,7 @@ import com.waz.utils.events.EventContext
 import com.waz.zclient._
 import com.waz.zclient.appentry.AppEntryButtonOnTouchListener
 import com.waz.zclient.appentry.controllers.SignInController._
-import com.waz.zclient.appentry.controllers.{AppEntryController, SignInController}
+import com.waz.zclient.appentry.controllers.AppEntryController
 import com.waz.zclient.utils.LayoutSpec
 
 case class FirstScreenViewHolder(root: View)(implicit val context: Context, eventContext: EventContext, injector: Injector) extends ViewHolder with Injectable {

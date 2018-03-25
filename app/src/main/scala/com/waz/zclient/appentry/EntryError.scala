@@ -18,7 +18,7 @@
 package com.waz.zclient.appentry
 
 import com.waz.zclient.R
-import com.waz.zclient.appentry.controllers.SignInController._
+import com.waz.zclient.appentry.fragments.SignInFragment._
 
 case class EntryError(code: Int, label: String, signInMethod: SignInMethod) {
   def headerResource: Int = error._1

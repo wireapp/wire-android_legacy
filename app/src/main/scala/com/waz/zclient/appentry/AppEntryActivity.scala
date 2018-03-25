@@ -24,18 +24,17 @@ import android.net.Uri
 import android.os.{Build, Bundle}
 import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.widget.Toast
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.api._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.utils.wrappers.AndroidURIUtil
 import com.waz.zclient._
-import com.waz.zclient.appentry.controllers.{AppEntryController, SignInController}
 import com.waz.zclient.appentry.controllers.AppEntryController._
+import com.waz.zclient.appentry.controllers.AppEntryController
 import com.waz.zclient.appentry.fragments._
-import com.waz.zclient.controllers.navigation.Page
 import com.waz.zclient.newreg.fragments.SignUpPhotoFragment
 import com.waz.zclient.newreg.fragments.SignUpPhotoFragment.UNSPLASH_API_URL
 import com.waz.zclient.newreg.fragments.country.CountryController
@@ -156,6 +155,7 @@ class AppEntryActivity extends BaseActivity
 
     val trackingEnabled: Boolean = injectJava(classOf[PreferencesController]).isAnalyticsEnabled
     if (trackingEnabled) {
+      //TODO move to new preferences
       CrashController.checkForCrashes(getApplicationContext, getControllerFactory.getUserPreferencesController.getDeviceId)
     }
     else {
@@ -238,7 +238,6 @@ class AppEntryActivity extends BaseActivity
   def onShowPhoneCodePage(): Unit =
     if (!isPaused) {
       showFragment(VerifyPhoneFragment.newInstance(false), VerifyPhoneFragment.TAG)
-      getControllerFactory.getNavigationController.setLeftPage(Page.PHONE_VERIFY_CODE, AppEntryActivity.TAG)
     }
 
   def onShowPhoneVerifyEmailPage(): Unit =
@@ -252,7 +251,6 @@ class AppEntryActivity extends BaseActivity
       case Some(_) =>
       case None =>
         showFragment(new SignInFragment, SignInFragment.Tag)
-        getControllerFactory.getNavigationController.setLeftPage(Page.LOGIN_REGISTRATION, AppEntryActivity.TAG)
     }
 
   def onShowSetPicturePage(): Unit =
@@ -277,7 +275,6 @@ class AppEntryActivity extends BaseActivity
 
   def onShowPhoneNamePage(): Unit = {
     showFragment(PhoneSetNameFragment.newInstance, PhoneSetNameFragment.TAG)
-    getControllerFactory.getNavigationController.setLeftPage(Page.PHONE_REGISTRATION_ADD_NAME, AppEntryActivity.TAG)
   }
 
   def onEnterApplication(openSettings: Boolean): Unit = {
@@ -332,7 +329,7 @@ class AppEntryActivity extends BaseActivity
   def onShowAddEmail(): Unit =
     showFragment(AddEmailFragment(), AddEmailFragment.Tag)
 
-  private def showFragment(f: => Fragment, tag: String): Unit = {
+  def showFragment(f: => Fragment, tag: String): Unit = {
     setDefaultAnimation(getSupportFragmentManager.beginTransaction)
       .replace(R.id.fl_main_content, f, tag)
       .commit

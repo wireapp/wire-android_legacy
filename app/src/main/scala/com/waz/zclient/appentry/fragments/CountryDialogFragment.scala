@@ -23,7 +23,6 @@ import android.os.Bundle
 import android.support.v4.content.ContextCompat
 import android.view.{LayoutInflater, View}
 import android.widget.{AdapterView, ListView}
-import com.waz.zclient.appentry.controllers.SignInController
 import com.waz.zclient.appentry.fragments.CountryDialogFragment._
 import com.waz.zclient.newreg.fragments.country.{CountryCodeAdapter, CountryController}
 import com.waz.zclient.pages.BaseDialogFragment

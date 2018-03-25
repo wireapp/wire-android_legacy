@@ -29,7 +29,7 @@ import com.waz.threading.Threading
 import com.waz.threading.Threading.Implicits.Ui
 import com.waz.zclient.appentry.controllers.AppEntryController.{LoginScreen, RegisterTeamScreen}
 import com.waz.zclient.appentry.controllers.SignInController.{Email, Login, SignInMethod}
-import com.waz.zclient.appentry.controllers.{AppEntryController, SignInController}
+import com.waz.zclient.appentry.controllers.AppEntryController
 import com.waz.zclient.{DialogHelper, R}
 
 class ProfileBottomSheetDialog(val context: Context, theme: Int) extends BottomSheetDialog(context, theme) with DialogHelper {
