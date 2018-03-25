@@ -43,29 +43,31 @@ class AddEmailController(implicit inj: Injector, eventContext: EventContext, con
     password <- password
   } yield emailValidator.validate(email) && passwordValidator.validate(password)
 
-  (for {
-    Some(accountManager) <- ZMessaging.currentAccounts.activeAccountManager
-    true <- isValid
-    password <- password
-    Some(_) <- ZMessaging.currentAccounts.activeAccount.map(_.flatMap(_.email))
-    None <- ZMessaging.currentAccounts.activeAccount.map(_.flatMap(_.pendingEmail))
-  } yield (accountManager, password)){ case (am, p) =>
-    am.updatePassword(p, None)
-  }
+  //TODO
+//  (for {
+//    Some(accountManager) <- ZMessaging.currentAccounts.activeAccountManager
+//    true <- isValid
+//    password <- password
+//    Some(_) <- ZMessaging.currentAccounts.activeAccount.map(_.flatMap(_.email))
+//    None <- ZMessaging.currentAccounts.activeAccount.map(_.flatMap(_.pendingEmail))
+//  } yield (accountManager, password)){ case (am, p) =>
+//    am.updatePassword(p, None)
+//  }
 
   def addEmailAndPassword(): Future[Either[ErrorResponse, Unit]] = {
     import com.waz.threading.Threading.Implicits.Background
-
-    for {
-      email <- email.head
-      Some(accountManager) <- ZMessaging.currentAccounts.activeAccountManager.head
-      emailRes <- accountManager.updateEmail(EmailAddress(email)).future
-      res <- emailRes match {
-        case Right(_) =>
-          accountManager.accounts.updateCurrentAccount(_.copy(pendingEmail = Some(EmailAddress(email))))
-            .map(_ => Right(()))
-        case Left(err) => Future.successful(Left(err))
-      }
-    } yield res
+    throw new NotImplementedError("")
+    //TODO
+//    for {
+//      email <- email.head
+//      Some(accountManager) <- ZMessaging.currentAccounts.activeAccountManager.head
+//      emailRes <- accountManager.updateEmail(EmailAddress(email)).future
+//      res <- emailRes match {
+//        case Right(_) =>
+//          accountManager.accounts.updateCurrentAccount(_.copy(pendingEmail = Some(EmailAddress(email))))
+//            .map(_ => Right(()))
+//        case Left(err) => Future.successful(Left(err))
+//      }
+//    } yield res
   }
 }

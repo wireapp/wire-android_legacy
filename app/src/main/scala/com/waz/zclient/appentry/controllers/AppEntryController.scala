@@ -21,8 +21,6 @@ import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.ImageAsset
 import com.waz.api.impl.ErrorResponse
-import com.waz.client.RegistrationClientImpl.ActivateResult
-import com.waz.client.RegistrationClientImpl.ActivateResult.{Failure, PasswordExists}
 import com.waz.content.GlobalPreferences
 import com.waz.content.Preferences.PrefKey
 import com.waz.model._
@@ -31,12 +29,11 @@ import com.waz.service.ZMessaging
 import com.waz.service.tracking.TrackingService
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
+import com.waz.zclient.appentry.EntryError
 import com.waz.zclient.appentry.controllers.AppEntryController._
-import com.waz.zclient.appentry.controllers.SignInController._
-import com.waz.zclient.appentry.{EntryError, GenericRegisterPhoneError}
 import com.waz.zclient.newreg.fragments.SignUpPhotoFragment
 import com.waz.zclient.newreg.fragments.SignUpPhotoFragment.RegistrationType
-import com.waz.zclient.tracking.{AddPhotoOnRegistrationEvent, GlobalTrackingController, _}
+import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.znet.ZNetClient.ErrorOr
 
@@ -101,13 +98,13 @@ class AppEntryController(implicit inj: Injector, eventContext: EventContext) ext
     password = ""
   }
 
-  val entryStage = for {
-    account         <- currentAccount
-    user            <- currentUser.orElse(Signal.const(None))
-    firstPageState  <- firstStage
-    hasOtherClients <- userHasOtherClients
-    state           <- Signal.const(stateForAccountAndUser(account, user, firstPageState, hasOtherClients)).collect { case s if s != Waiting => s }
-  } yield state
+//  val entryStage = for {
+//    account         <- currentAccount
+//    user            <- currentUser.orElse(Signal.const(None))
+//    firstPageState  <- firstStage
+//    hasOtherClients <- userHasOtherClients
+//    state           <- Signal.const(stateForAccountAndUser(account, user, firstPageState, hasOtherClients)).collect { case s if s != Waiting => s }
+//  } yield state
 
 //  entryStage.onUi { stage =>
 //    ZLog.verbose(s"Current stage: $stage")

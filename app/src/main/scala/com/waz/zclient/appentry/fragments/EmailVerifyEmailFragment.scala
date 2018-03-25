@@ -54,10 +54,11 @@ class EmailVerifyEmailFragment extends BaseFragment[EmailVerifyEmailFragment.Con
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
 
-    appEntryController.currentAccount.map(_.flatMap(acc => acc.pendingEmail.orElse(acc.email))).onUi {
-      case Some(email) => setEmailText(email.str)
-      case _ => setEmailText("")
-    }
+    //TODO
+//    appEntryController.currentAccount.map(_.flatMap(acc => acc.pendingEmail.orElse(acc.email))).onUi {
+//      case Some(email) => setEmailText(email.str)
+//      case _ => setEmailText("")
+//    }
   }
 
   override def onCreateView(inflater: LayoutInflater, viewGroup: ViewGroup, savedInstanceState: Bundle): View = {
@@ -84,12 +85,12 @@ class EmailVerifyEmailFragment extends BaseFragment[EmailVerifyEmailFragment.Con
 
   private def back(): Unit = {
     import com.waz.threading.Threading.Implicits.Background
-    appEntryController.currentAccount.map(_.map(_.phone.isDefined)).head.foreach {
-      case Some(true) =>
-        appEntryController.cancelEmailVerification()
-      case _ =>
-        appEntryController.removeCurrentAccount()
-    }
+//    appEntryController.currentAccount.map(_.map(_.phone.isDefined)).head.foreach { //TODO
+//      case Some(true) =>
+//        appEntryController.cancelEmailVerification()
+//      case _ =>
+//        appEntryController.removeCurrentAccount()
+//    }
   }
 
   def onClick(v: View): Unit = {

@@ -35,7 +35,7 @@ import com.waz.api.impl.ContentUriAssetForUpload
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{MessageContent => _, _}
-import com.waz.service.ZMessaging
+import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events._
 import com.waz.utils.returning
@@ -63,6 +63,7 @@ class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener 
   implicit def cxt = getContext
 
   lazy val zms = inject[Signal[ZMessaging]]
+  lazy val accounts = inject[AccountsService]
   lazy val assetsController = inject[AssetsController]
   lazy val messagesController = inject[MessagesController]
   lazy val sharingController = inject[SharingController]
@@ -178,7 +179,7 @@ class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener 
       list.setAdapter(adapter)
     }
 
-    accountTabs.map(_.onTabClick.map(_.id)(ZMessaging.currentAccounts.switchAccount)).foreach(subs += _)
+    accountTabs.map(_.onTabClick.map(a => Some(a.id))(accounts.setAccount)).foreach(subs += _)
 
     sendButton.foreach(_.onClick {
       if (!adapter.selectedConversations.currentValue.forall(_.isEmpty)) {

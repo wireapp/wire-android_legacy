@@ -39,6 +39,8 @@ class IntegrationsController(implicit injector: Injector, context: Context) exte
   private lazy val integrations = inject[Signal[ZMessaging]].map(_.integrations)
   private implicit lazy val uiStorage = inject[UiStorage]
 
+  lazy val userAccs = inject[UserAccountsController]
+
   val searchQuery = Signal[String]("")
 
   def searchIntegrations = for {
@@ -75,10 +77,10 @@ class IntegrationsController(implicit injector: Injector, context: Context) exte
 
   def hasPermissionToRemoveBot(cId: ConvId): Future[Boolean] = {
     for {
-      zms <- zms.head
-      account <- zms.account.accountData.head
+      tId <- userAccs.teamId.head
+      ps  <- userAccs.selfPermissions.head
       conv <- ConversationSignal(cId).head
-    } yield zms.teamId == conv.team && account.selfPermissions.contains(AccountData.Permission.RemoveConversationMember)
+    } yield tId == conv.team && ps.contains(AccountDataOld.Permission.RemoveConversationMember)
   }
 
   def errorMessage(e: ErrorResponse): String =

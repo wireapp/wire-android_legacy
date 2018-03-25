@@ -31,7 +31,7 @@ import android.view.{LayoutInflater, View, ViewGroup, WindowManager}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.warn
 import com.waz.model.Handle
-import com.waz.service.ZMessaging
+import com.waz.service.{AccountManager, ZMessaging}
 import com.waz.sync.client.HandlesClient
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -127,7 +127,6 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
               case NoError =>
                 disableEditing()
                 updateHandle(inputHandle).map {
-
                   case Right(_) =>
                     dismiss()
 
@@ -239,7 +238,7 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
     handleEditText.startAnimation(AnimationUtils.loadAnimation(getContext, R.anim.shake_animation))
 
   private def updateHandle(handle: String) =
-    zms.map(_.account).head.flatMap(_.updateHandle(Handle(handle)))
+    inject[Signal[AccountManager]].head.flatMap(_.updateHandle(Handle(handle)))
 }
 
 object ChangeHandleFragment {

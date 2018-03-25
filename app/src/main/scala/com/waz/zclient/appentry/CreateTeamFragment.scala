@@ -17,6 +17,7 @@
   */
 package com.waz.zclient.appentry
 
+import android.content.Context
 import android.os.Bundle
 import android.view.View.OnLayoutChangeListener
 import android.view.{LayoutInflater, View, ViewGroup}
@@ -32,12 +33,14 @@ import com.waz.zclient.appentry.scenes.FirstScreenViewHolder
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.KeyboardUtils
+import com.waz.zclient.utils.ContextUtils.getStatusBarHeight
 import com.waz.zclient.utils.{ContextUtils, RichView}
 import com.waz.zclient.{FragmentHelper, R}
 
 class CreateTeamFragment extends BaseFragment[Container] with FragmentHelper {
 
   def activity = getActivity.asInstanceOf[AppEntryActivity]
+  implicit def context: Context = activity
 
   private lazy val appEntryController = inject[AppEntryController]
   private lazy val accountsService    = inject[AccountsService]
@@ -122,14 +125,13 @@ class CreateTeamFragment extends BaseFragment[Container] with FragmentHelper {
   }
 
   def setKeyboardAnimation(view: ViewGroup): Unit = {
-    implicit val ctx = getContext
     view.getLayoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
     view.addOnLayoutChangeListener(new OnLayoutChangeListener {
       override def onLayoutChange(v: View, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int): Unit = {
         val softKeysHeight = KeyboardUtils.getSoftButtonsBarHeight(getActivity)
         val kHeight = KeyboardUtils.getKeyboardHeight(view)
         val padding = ContextUtils.getDimenPx(R.dimen.app_entry_keyboard_content_padding)
-        val screenHeight = ctx.getResources.getDisplayMetrics.heightPixels - ContextUtils.getStatusBarHeight(ctx) - softKeysHeight
+        val screenHeight = getContext.getResources.getDisplayMetrics.heightPixels - getStatusBarHeight - softKeysHeight
 
         if (v.getTranslationY == 0 && lastKeyboardHeight > 0) {
           v.setTranslationY(screenHeight - lastKeyboardHeight - padding - v.getHeight + 2 * softKeysHeight)

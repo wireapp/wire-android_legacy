@@ -23,7 +23,7 @@ import android.content.Context
 import com.waz.api.OtrClientType
 import com.waz.model.UserId
 import com.waz.model.otr.{Client, ClientId, UserClients}
-import com.waz.service.ZMessaging
+import com.waz.service.{AccountManager, ZMessaging}
 import com.waz.sync.SyncResult
 import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.events.Signal
@@ -39,18 +39,15 @@ class ClientsController(implicit inj: Injector) extends Injectable {
 
   import com.waz.threading.Threading.Implicits.Background
 
-  val accountManager =  ZMessaging.currentAccounts.activeAccountManager.collect { case Some(a) => a }
+  val accountManager = inject[Signal[AccountManager]]
 
-  val zms = inject[Signal[ZMessaging]]
+  val zms            = inject[Signal[ZMessaging]]
   val convController = inject[ConversationController]
   val userAccounts   = inject[UserAccountsController]
 
-  val self = accountManager.flatMap(_.userId).collect { case Some(id) => id }
+  val self = accountManager.map(_.userId)
 
-  private def selfClientId = for {
-    am      <- accountManager
-    account <- am.accountData
-  } yield account.clientId
+  private def selfClientId = accountManager.flatMap(_.clientId)
 
   def client(userId: UserId, clientId: ClientId): Signal[Option[Client]] = for {
     manager <- accountManager

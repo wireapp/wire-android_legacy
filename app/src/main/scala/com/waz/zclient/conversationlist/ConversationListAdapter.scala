@@ -41,17 +41,15 @@ class ConversationListAdapter(implicit injector: Injector, eventContext: EventCo
 
   var _conversations = Seq.empty[ConversationData]
   var _incomingRequests = (Seq.empty[ConversationData], Seq.empty[UserId])
-  var _currentAccount = Option.empty[AccountId]
 
   val onConversationClick = EventStream[ConvId]()
   val onConversationLongClick = EventStream[ConversationData]()
 
   var maxAlpha = 1.0f
 
-  def setData(accountId: AccountId, convs: Seq[ConversationData], incoming: (Seq[ConversationData], Seq[UserId])): Unit = {
+  def setData(convs: Seq[ConversationData], incoming: (Seq[ConversationData], Seq[UserId])): Unit = {
     _conversations = convs
     _incomingRequests = incoming
-    _currentAccount = Some(accountId)
     verbose(s"Conversation list updated => conversations: ${convs.size}, requests: ${incoming._2.size}")
     notifyDataSetChanged()
   }

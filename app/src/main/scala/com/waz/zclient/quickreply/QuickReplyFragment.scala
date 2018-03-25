@@ -27,8 +27,8 @@ import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
 import com.waz.api.{EphemeralExpiration, MessageContent}
-import com.waz.model.{AccountId, ConvId}
-import com.waz.service.ZMessaging
+import com.waz.model.{AccountId, ConvId, UserId}
+import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.service.tracking.ContributionEvent
 import com.waz.service.tracking.ContributionEvent.Action
 import com.waz.utils.events.Signal
@@ -45,7 +45,7 @@ object QuickReplyFragment {
   private val ConvIdExtra = "EXTRA_CONVERSATION_ID"
   private val AccountIdExtra = "EXTRA_ACCOUNT_ID"
 
-  def newInstance(accountId: AccountId, convId: ConvId): Fragment = {
+  def newInstance(accountId: UserId, convId: ConvId): Fragment = {
     returning(new QuickReplyFragment) {
       _.setArguments(returning(new Bundle) { args =>
         args.putString(ConvIdExtra, convId.str)
@@ -60,10 +60,11 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
   import com.waz.threading.Threading.Implicits.Ui
 
   lazy val convId = ConvId(getArguments.getString(ConvIdExtra))
-  lazy val accountId = AccountId(getArguments.getString(AccountIdExtra))
+  lazy val accountId = UserId(getArguments.getString(AccountIdExtra))
+  lazy val accounts = inject[AccountsService]
 
   //TODO make an accounts/zms controller or something
-  lazy val zms = ZMessaging.currentAccounts.zms(accountId).collect { case Some(z) => z }
+  lazy val zms = accounts.zms(accountId).collect { case Some(z) => z }
 
   lazy val sharing  = inject[SharingController]
 
@@ -139,7 +140,7 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
               if (msg.isDefined) {
                 ZMessaging.globalModule.map(_.trackingService.track(
                   ContributionEvent(Action.Text, isGroup, c.ephemeral, withService, !c.isTeamOnly, c.isMemberFromTeamGuest(z.teamId)),
-                  Some(z.accountId)
+                  Some(z.selfUserId)
                 ))
                 getActivity.finish()
               }
@@ -151,7 +152,7 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
     })
 
     openWire onClick {
-      ZMessaging.currentAccounts.switchAccount(accountId).onComplete { _ =>
+      ZMessaging.currentAccounts.setAccount(Some(accountId)).onComplete { _ =>
         Option(getActivity) foreach { activity =>
           sharing.publishTextContent(message.getText.toString)
           sharing.onContentShared(activity, Set(convId))

@@ -26,6 +26,7 @@ import android.support.v7.app.AlertDialog
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, WindowManager}
 import android.widget.{EditText, TextView}
+import com.waz.model.AccountData.Password
 import com.waz.utils.events.EventStream
 import com.waz.utils.returning
 import com.waz.zclient.{FragmentHelper, R}
@@ -35,7 +36,7 @@ import scala.util.Try
 class RemoveDeviceDialog extends DialogFragment with FragmentHelper {
   import RemoveDeviceDialog._
 
-  val onDelete = EventStream[String]()
+  val onDelete = EventStream[Password]()
 
   private lazy val root = LayoutInflater.from(getActivity).inflate(R.layout.remove_otr_device_dialog, null)
 
@@ -44,7 +45,7 @@ class RemoveDeviceDialog extends DialogFragment with FragmentHelper {
       def onEditorAction(v: TextView, actionId: Int, event: KeyEvent) =
         actionId match {
           case EditorInfo.IME_ACTION_DONE =>
-            onDelete ! v.getText.toString
+            onDelete ! Password(v.getText.toString)
             dismiss()
             true
           case _ => false
@@ -72,7 +73,7 @@ class RemoveDeviceDialog extends DialogFragment with FragmentHelper {
     Try(getDialog.asInstanceOf[AlertDialog]).toOption.foreach { d =>
       d.getButton(BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
         def onClick(v: View) = {
-          onDelete ! passwordEditText.getText.toString
+          onDelete ! Password(passwordEditText.getText.toString)
           dismiss()
         }
       })

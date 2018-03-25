@@ -24,7 +24,6 @@ import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.threading.Threading
 import com.waz.zclient.appentry.EntryError
-import com.waz.zclient.appentry.controllers.SignInController._
 import com.waz.zclient.appentry.fragments.InsertPasswordFragment._
 import com.waz.zclient.newreg.views.PhoneConfirmationButton
 import com.waz.zclient.newreg.views.PhoneConfirmationButton.State._
@@ -35,7 +34,6 @@ import com.waz.zclient.{FragmentHelper, R}
 
 class InsertPasswordFragment extends BaseFragment[Container] with FragmentHelper with View.OnClickListener {
 
-  lazy val signInController = inject[SignInController]
 
   lazy val confirmationButton = Option(findById[PhoneConfirmationButton](R.id.confirmation_button))
 
@@ -44,54 +42,54 @@ class InsertPasswordFragment extends BaseFragment[Container] with FragmentHelper
 
   override def onViewCreated(view: View, savedInstanceState: Bundle) = {
 
-    Option(findById[GuidedEditText](getView, R.id.email_field)).foreach { field =>
-      field.setValidator(signInController.emailValidator)
-      field.setResource(R.layout.guided_edit_text_sign_in__email)
-      signInController.email { field.setText }
-      field.setEditable(false)
-    }
-
-    Option(findById[GuidedEditText](getView, R.id.password_field)).foreach { field =>
-      field.setValidator(signInController.passwordValidator)
-      field.setResource(R.layout.guided_edit_text_sign_in__password)
-      signInController.password { field.setText }
-      field.getEditText.addTextListener(signInController.password ! _)
-    }
-
-    confirmationButton.foreach { button =>
-      button.setOnClickListener(this)
-      button.setAccentColor(Color.WHITE)
-    }
-
-    setConfirmationButtonActive(signInController.isValid.currentValue.getOrElse(false))
-    signInController.isValid.onUi { setConfirmationButtonActive }
-    Option(findById[View](R.id.cancel_button)).foreach(_.setOnClickListener(this))
-    Option(findById[View](R.id.ttv_signin_forgot_password)).foreach(_.setOnClickListener(this))
+//    Option(findById[GuidedEditText](getView, R.id.email_field)).foreach { field =>
+//      field.setValidator(signInController.emailValidator)
+//      field.setResource(R.layout.guided_edit_text_sign_in__email)
+//      signInController.email { field.setText }
+//      field.setEditable(false)
+//    }
+//
+//    Option(findById[GuidedEditText](getView, R.id.password_field)).foreach { field =>
+//      field.setValidator(signInController.passwordValidator)
+//      field.setResource(R.layout.guided_edit_text_sign_in__password)
+//      signInController.password { field.setText }
+//      field.getEditText.addTextListener(signInController.password ! _)
+//    }
+//
+//    confirmationButton.foreach { button =>
+//      button.setOnClickListener(this)
+//      button.setAccentColor(Color.WHITE)
+//    }
+//
+//    setConfirmationButtonActive(signInController.isValid.currentValue.getOrElse(false))
+//    signInController.isValid.onUi { setConfirmationButtonActive }
+//    Option(findById[View](R.id.cancel_button)).foreach(_.setOnClickListener(this))
+//    Option(findById[View](R.id.ttv_signin_forgot_password)).foreach(_.setOnClickListener(this))
   }
 
   private def setConfirmationButtonActive(active: Boolean): Unit =
     confirmationButton.foreach(_.setState(if(active) CONFIRM else NONE))
 
   override def onClick(v: View) = {
-    v.getId match {
-      case R.id.cancel_button =>
-        onBackPressed()
-      case R.id.confirmation_button =>
-        getContainer.enableProgress(true)
-        signInController.attemptSignIn().map {
-          case Left(error) =>
-            getContainer.enableProgress(false)
-            getContainer.showError(error)
-          case _ =>
-        } (Threading.Ui)
-      case R.id.ttv_signin_forgot_password =>
-        getContainer.onOpenUrl(getString(R.string.url_password_reset))
-      case _ =>
-    }
+//    v.getId match {
+//      case R.id.cancel_button =>
+//        onBackPressed()
+//      case R.id.confirmation_button =>
+//        getContainer.enableProgress(true)
+//        signInController.attemptSignIn().map {
+//          case Left(error) =>
+//            getContainer.enableProgress(false)
+//            getContainer.showError(error)
+//          case _ =>
+//        } (Threading.Ui)
+//      case R.id.ttv_signin_forgot_password =>
+//        getContainer.onOpenUrl(getString(R.string.url_password_reset))
+//      case _ =>
+//    }
   }
 
   override def onBackPressed() = {
-    signInController.uiSignInState ! SignInMethod(Login, Phone)
+//    signInController.uiSignInState ! SignInMethod(Login, Phone)
     true
   }
 }

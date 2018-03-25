@@ -29,7 +29,6 @@ import android.widget.{FrameLayout, LinearLayout}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
-import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, Registered}
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -66,14 +65,16 @@ class SignInFragment extends BaseFragment[Container]
   lazy val isAddingAccount = accountsService.zmsInstances.map(_.nonEmpty)
 
   lazy val uiSignInState = {
-    val sign = getArguments.getString(SignTypeArg, "Register") match {
+    //TODO add a nicer method to FragmentHelper
+    val sign = Option(getArguments).map(_.getString(SignTypeArg, "Register") match {
       case "Login" => Login
       case _       => Register
-    }
-    val input = getArguments.getString(InputTypeArg, "Phone") match {
+    }).getOrElse(Register)
+
+    val input = Option(getArguments).map(_.getString(InputTypeArg, "Phone") match {
       case "Email" => Email
       case _       => Phone
-    }
+    }).getOrElse(Phone)
     Signal(SignInMethod(sign, input))
   }
 
@@ -82,8 +83,7 @@ class SignInFragment extends BaseFragment[Container]
   val name     = Signal("")
   val phone    = Signal("")
 
-  lazy val countryController = new CountryController(context)
-  countryController.addObserver(this)
+  lazy val countryController = new CountryController(context) //TODO rewrite && inject
   lazy val phoneCountry = Signal[Country]()
 
   lazy val nameValidator = new NameValidator()
@@ -286,6 +286,18 @@ class SignInFragment extends BaseFragment[Container]
     emailButton.setTextColor(getColor(R.color.white))
     phoneButton.setBackground(null)
     phoneButton.setTextColor(getColor(R.color.white_40))
+  }
+
+
+  override def onResume() = {
+    super.onResume()
+    countryController.addObserver(this)
+  }
+
+
+  override def onPause() = {
+    super.onPause()
+    countryController.removeObserver(this)
   }
 
   override def onClick(v: View) = {

@@ -19,9 +19,10 @@ package com.waz.zclient.common.controllers
 
 import android.content.Context
 import com.waz.ZLog.ImplicitTag._
-import com.waz.model.AccountData.Permission._
+import com.waz.content.UserPreferences.SelfPermissions
+import com.waz.model.AccountDataOld.Permission._
 import com.waz.model._
-import com.waz.service.ZMessaging
+import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.conversation.ConversationController
@@ -31,15 +32,16 @@ import com.waz.zclient.{Injectable, Injector}
 class UserAccountsController(implicit injector: Injector, context: Context, ec: EventContext) extends Injectable {
   import Threading.Implicits.Ui
 
-  val zms = inject[Signal[ZMessaging]]
+  val zms             = inject[Signal[ZMessaging]]
+  val accountsService = inject[AccountsService]
 
-  val accounts = Option(ZMessaging.currentAccounts).fold(Signal.const(Seq.empty[AccountData]))(_.loggedInAccounts.map(_.toSeq.sortBy(acc => (acc.isTeamAccount, acc.id.str))))
+  val accounts = Option(accountsService).fold(Signal.const(Seq.empty[AccountData]))(_.loggedInAccounts.map(_.toSeq.sortBy(acc => (acc.teamId.isDefined, acc.id.str))))
   val convCtrl = inject[ConversationController]
 
   lazy val currentUser = for {
     zms     <- zms
-    account <- ZMessaging.currentAccounts.activeAccount
-    user    <- account.flatMap(_.userId).fold(Signal.const(Option.empty[UserData]))(accId => zms.usersStorage.signal(accId).map(Some(_)))
+    account <- accountsService.activeAccount
+    user    <- account.map(_.id).fold(Signal.const(Option.empty[UserData]))(accId => zms.usersStorage.signal(accId).map(Some(_)))
   } yield user
 
   lazy val teamId: Signal[Option[TeamId]] = zms.map(_.teamId)
@@ -53,8 +55,8 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
 
   lazy val selfPermissions = for {
     zms <- zms
-    accountData <- zms.account.accountData
-  } yield accountData.selfPermissions
+    prefs <- zms.userPrefs(SelfPermissions).signal
+  } yield AccountDataOld.decodeBitmask(prefs)
 
   lazy val hasCreateConvPermission: Signal[Boolean] = teamId.flatMap {
     case Some(_) => selfPermissions.map(_.contains(CreateConversation))
@@ -67,7 +69,7 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
   def hasRemoveConversationMemberPermission(convId: ConvId): Signal[Boolean] =
     hasConvPermission(convId, RemoveConversationMember)
 
-  private def hasConvPermission(convId: ConvId, toCheck: AccountData.Permission): Signal[Boolean] = {
+  private def hasConvPermission(convId: ConvId, toCheck: AccountDataOld.Permission): Signal[Boolean] = {
     for {
       z    <- zms
       conv <- z.convsStorage.signal(convId)
@@ -90,8 +92,8 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
   }
 
   lazy val unreadCount = for {
-    zmsSet   <- ZMessaging.currentAccounts.zmsInstances
-    countMap <- Signal.sequence(zmsSet.map(z => z.convsStorage.convsSignal.map(c => z.accountId -> c.conversations.map(unreadCountForConv).sum)).toSeq:_*)
+    zmsSet   <- accountsService.zmsInstances
+    countMap <- Signal.sequence(zmsSet.map(z => z.convsStorage.convsSignal.map(c => z.selfUserId -> c.conversations.map(unreadCountForConv).sum)).toSeq:_*)
   } yield countMap.toMap
 
   def getConversationId(user: UserId) =

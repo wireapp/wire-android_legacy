@@ -17,22 +17,25 @@
  */
 package com.waz.zclient.common.controllers.global
 
-import com.waz.service.ZMessaging
-import com.waz.threading.Threading
 import com.waz.ZLog.ImplicitTag._
+import com.waz.model.AccountData.Password
+import com.waz.service.{AccountsService, GlobalModule}
+import com.waz.threading.Threading
 import com.waz.zclient.{Injectable, Injector}
 
 class PasswordController(implicit inj: Injector) extends Injectable {
   import Threading.Implicits.Background
 
-  val password = ZMessaging.currentAccounts.activeAccount.map(_.flatMap(_.password)).disableAutowiring()
+  val accounts = inject[AccountsService]
+  val global   = inject[GlobalModule]
+  val password = accounts.activeAccount.map(_.flatMap(_.password)).disableAutowiring()
 
   //The password is never saved in the database, this will just update the in-memory version of the current account
   //so that the password is globally correct.
-  def setPassword(p: String) =
+  def setPassword(p: Password) =
     for {
-      Some(accountData) <- ZMessaging.currentAccounts.activeAccount.head
-      _ <- ZMessaging.currentAccounts.storage.update(accountData.id, _.copy(password = Some(p)))
+      Some(accountData) <- accounts.activeAccount.head
+      _ <- global.accountsStorage.update(accountData.id, _.copy(password = Some(p)))
     } yield {}
 
 }

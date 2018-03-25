@@ -24,7 +24,7 @@ import android.view.View
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.{LinearLayout, ScrollView}
 import com.waz.model.otr.Client
-import com.waz.service.ZMessaging
+import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.preferences.views.DeviceButton
@@ -95,19 +95,18 @@ case class DevicesBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
 
 case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: EventContext) extends Injectable {
   val zms = inject[Signal[Option[ZMessaging]]]
+  val accounts = inject[AccountsService]
 
   val otherClients = for {
-    Some(manager) <- ZMessaging.currentAccounts.activeAccountManager
-    Some(userId)  <- manager.accountData.map(_.userId)
-    selfClientId  <- manager.accountData.map(_.clientId)
-    clients       <- Signal.future(manager.storage.otrClientsStorage.get(userId))
+    Some(am)      <- accounts.activeAccountManager
+    selfClientId  <- am.clientId
+    clients       <- Signal.future(am.storage.otrClientsStorage.get(am.userId))
   } yield clients.fold(Seq[Client]())(_.clients.values.filter(client => !selfClientId.contains(client.id)).toSeq.sortBy(_.regTime).reverse)
 
   val incomingClients = for {
-    Some(manager)      <- ZMessaging.currentAccounts.activeAccountManager
-    Some(userId)       <- manager.accountData.map(_.userId)
-    Some(selfClientId) <- manager.accountData.map(_.clientId)
-    clients            <- manager.storage.otrClientsStorage.incomingClientsSignal(userId, selfClientId)
+    Some(am)           <- accounts.activeAccountManager
+    Some(selfClientId) <- am.clientId
+    clients            <- am.storage.otrClientsStorage.incomingClientsSignal(am.userId, selfClientId)
   } yield clients
 
   val selfClient = for {
@@ -115,8 +114,8 @@ case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: 
     selfClient <- zms.fold(Signal.const(Option.empty[Client]))(_.otrClientsService.selfClient.map(Option(_)))
   } yield selfClient
 
-  selfClient.onUi{ view.setSelfDevice }
-  otherClients.onUi{ view.setOtherDevices }
+  selfClient.onUi(view.setSelfDevice)
+  otherClients.onUi(view.setOtherDevices)
 
   def onViewClose(): Unit = {
     implicit val ec = Threading.Background

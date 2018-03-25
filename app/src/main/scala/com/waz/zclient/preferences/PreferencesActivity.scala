@@ -31,8 +31,7 @@ import android.view.{MenuItem, View, ViewGroup}
 import android.widget._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.ImageAsset
-import com.waz.content.GlobalPreferences.CurrentAccountPref
-import com.waz.content.{GlobalPreferences, UserPreferences}
+import com.waz.content.UserPreferences
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -58,7 +57,6 @@ class PreferencesActivity extends BaseActivity
   private lazy val backStackNavigator = inject[BackStackNavigator]
   private lazy val zms = inject[Signal[ZMessaging]]
 
-  lazy val currentAccountPref = inject[GlobalPreferences].preference(CurrentAccountPref)
   lazy val accentColor = inject[AccentColorController].accentColor
 
   @SuppressLint(Array("PrivateResource"))
@@ -111,7 +109,7 @@ class PreferencesActivity extends BaseActivity
         intent.putExtra(SwitchAccountExtra, account.id.str)
         setResult(Activity.RESULT_OK, intent)
       } else {
-        ZMessaging.currentAccounts.switchAccount(account.id)
+        ZMessaging.currentAccounts.setAccount(Some(account.id))
         setResult(Activity.RESULT_CANCELED, intent)
       }
       finish()

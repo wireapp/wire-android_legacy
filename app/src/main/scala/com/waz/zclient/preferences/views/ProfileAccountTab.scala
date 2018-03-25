@@ -23,8 +23,9 @@ import android.view.{View, ViewGroup}
 import android.widget.FrameLayout.LayoutParams
 import android.widget.{FrameLayout, ImageView}
 import com.waz.api.impl.AccentColor
-import com.waz.model.{AccountId, AssetId, TeamData, UserData}
-import com.waz.service.ZMessaging
+import com.waz.content.{AccountStorage, TeamsStorage}
+import com.waz.model._
+import com.waz.service.AccountsService
 import com.waz.utils.NameParts
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.UserAccountsController
@@ -50,15 +51,18 @@ class ProfileAccountTab(val context: Context, val attrs: AttributeSet, val defSt
 
   val drawable = new TeamIconDrawable
 
-  private val accountId = Signal[AccountId]()
+  private val accountId = Signal[UserId]()
 
-  val account = accountId.flatMap(ZMessaging.currentAccounts.storage.signal).disableAutowiring()
+  lazy val accounts = inject[AccountsService]
+  lazy val accStorage = inject[AccountStorage]
+
+  val account = accountId.flatMap(accStorage.signal).disableAutowiring()
 
   val selected = Signal(false)
 
   val zmsSelected = (for {
     acc    <- accountId
-    active <- ZMessaging.currentAccounts.activeAccountPref.signal
+    active <- accounts.activeAccountId
   } yield active.contains(acc))
     .disableAutowiring()
 
@@ -67,10 +71,10 @@ class ProfileAccountTab(val context: Context, val attrs: AttributeSet, val defSt
   val teamAndUser: Signal[(UserData, Option[TeamData])] =
     for{
       teamId <- account.map(_.teamId)
-      Some(userId) <- account.map(_.userId)
-      user <- UserSignal(userId)
-      team <- teamId match {
-        case Right(Some(t)) => ZMessaging.currentGlobal.teamsStorage.optSignal(t)
+      userId <- account.map(_.id)
+      user   <- UserSignal(userId)
+      team   <- teamId match {
+        case Some(t) => inject[TeamsStorage].optSignal(t)
         case _ => Signal.const(Option.empty[TeamData])
       }
     } yield (user, team)
@@ -121,6 +125,6 @@ class ProfileAccountTab(val context: Context, val attrs: AttributeSet, val defSt
     case (userData, Some(team)) => team.name
   }.onUi { setContentDescription }
 
-  def setAccount(id: AccountId) = accountId ! id
+  def setAccount(id: UserId) = accountId ! id
 
 }

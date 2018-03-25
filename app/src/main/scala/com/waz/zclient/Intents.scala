@@ -19,7 +19,7 @@ package com.waz.zclient
 
 import android.app.PendingIntent
 import android.content.{Context, Intent}
-import com.waz.model.{AccountId, ConvId, UserId}
+import com.waz.model.{ConvId, UserId}
 import com.waz.utils.returning
 import com.waz.zclient.preferences.PreferencesActivity
 
@@ -39,17 +39,17 @@ object Intents {
     lazy val Devices  = "Devices"
   }
 
-  def CallIntent(accountId: AccountId, convId: ConvId, requestCode: Int)(implicit context: Context) =
-    Intent(context, accountId, Some(convId), requestCode, startCall = true)
+  def CallIntent(userId: UserId, convId: ConvId, requestCode: Int)(implicit context: Context) =
+    Intent(context, userId, Some(convId), requestCode, startCall = true)
 
-  def QuickReplyIntent(accountId: AccountId, convId: ConvId, requestCode: Int)(implicit context: Context) =
-    Intent(context, accountId, Some(convId), requestCode, classOf[PopupActivity])
+  def QuickReplyIntent(userId: UserId, convId: ConvId, requestCode: Int)(implicit context: Context) =
+    Intent(context, userId, Some(convId), requestCode, classOf[PopupActivity])
 
-  def OpenConvIntent(accountId: AccountId, convId: ConvId, requestCode: Int)(implicit context: Context) =
-    Intent(context, accountId, Some(convId), requestCode)
+  def OpenConvIntent(userId: UserId, convId: ConvId, requestCode: Int)(implicit context: Context) =
+    Intent(context, userId, Some(convId), requestCode)
 
-  def OpenAccountIntent(accountId: AccountId, requestCode: Int = System.currentTimeMillis().toInt)(implicit context: Context) =
-    Intent(context, accountId)
+  def OpenAccountIntent(userId: UserId, requestCode: Int = System.currentTimeMillis().toInt)(implicit context: Context) =
+    Intent(context, userId)
 
   def SharingIntent(implicit context: Context) =
     new Intent(context, classOf[MainActivity]).putExtra(FromSharingExtra, true)
@@ -64,7 +64,7 @@ object Intents {
     new Intent(context, classOf[PreferencesActivity]).putExtra(OpenPageExtra, Page.Devices)
 
   private def Intent(context:     Context,
-                     accountId:   AccountId,
+                     userId:      UserId,
                      convId:      Option[ConvId] = None,
                      requestCode: Int            = System.currentTimeMillis().toInt,
                      clazz:       Class[_]       = classOf[MainActivity],
@@ -72,7 +72,7 @@ object Intents {
     val intent = new Intent(context, clazz)
       .putExtra(FromNotificationExtra,        true)
       .putExtra(StartCallExtra,         startCall)
-      .putExtra(AccountIdExtra,         accountId.str)
+      .putExtra(AccountIdExtra,         userId.str)
     convId.foreach(c => intent.putExtra(ConvIdExtra, c.str))
     PendingIntent.getActivity(context, requestCode, intent, 0)
   }
@@ -108,7 +108,7 @@ object Intents {
   }
 
   object NotificationIntent {
-    def unapply(i: Intent): Option[(AccountId, Option[ConvId], Boolean)] =
+    def unapply(i: Intent): Option[(UserId, Option[ConvId], Boolean)] =
       if (i.fromNotification && i.accountId.isDefined) Some(i.accountId.get, i.convId, i.startCall)
       else None
   }

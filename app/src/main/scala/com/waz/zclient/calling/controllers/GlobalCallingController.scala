@@ -56,7 +56,7 @@ class GlobalCallingController(implicit inj: Injector, cxt: WireContext, eventCon
   val zmsOpt = {
     for {
       acc <- ZMessaging.currentGlobal.calling.activeAccount
-      zms <- acc.fold(inject[Signal[Option[ZMessaging]]])(id => Signal.future(ZMessaging.currentAccounts.getZMessaging(id)))
+      zms <- acc.fold(inject[Signal[Option[ZMessaging]]])(id => Signal.future(ZMessaging.currentAccounts.getZms(id)))
     } yield zms
   }
 

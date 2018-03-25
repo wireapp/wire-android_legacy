@@ -19,13 +19,12 @@ package com.waz.zclient.tracking
 
 import com.waz.model.Availability
 import com.waz.service.tracking.TrackingEvent
-import com.waz.utils.returning
-import com.waz.zclient.appentry.controllers.SignInController._
-import org.json.JSONObject
-import com.waz.utils._
+import com.waz.utils.{returning, _}
+import com.waz.zclient.appentry.fragments.SignInFragment._
 import com.waz.zclient.tracking.AddPhotoOnRegistrationEvent.Source
 import com.waz.zclient.tracking.AvailabilityChanged.Method
 import com.waz.zclient.tracking.TeamAcceptedTerms.Occurrence
+import org.json.JSONObject
 
 case class EnteredCredentialsEvent(method: SignInMethod, error: Option[(Int, String)]) extends TrackingEvent {
   override val name = method match {

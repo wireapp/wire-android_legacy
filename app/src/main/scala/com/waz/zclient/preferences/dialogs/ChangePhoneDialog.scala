@@ -161,14 +161,14 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
       getString(R.string.pref__account_action__dialog__delete_phone_or_email__confirm__message, currentPhone.getOrElse("")),
       getString(android.R.string.ok), getString(android.R.string.cancel),
       new DialogInterface.OnClickListener() {
-        def onClick(dialog: DialogInterface, which: Int) =
-          zms.head.flatMap(_.account.clearPhone().map {
-            case Right(_) =>
-              onPhoneChanged ! None
-              dismiss()
-            case Left(_) =>
-              showError(getString(R.string.pref__account_action__dialog__delete_phone__error))
-          }(Threading.Ui))(Threading.Background)
+        def onClick(dialog: DialogInterface, which: Int) = {} //TODO
+//          zms.head.flatMap(_.account.clearPhone().map {
+//            case Right(_) =>
+//              onPhoneChanged ! None
+//              dismiss()
+//            case Left(_) =>
+//              showError(getString(R.string.pref__account_action__dialog__delete_phone__error))
+//          }(Threading.Ui))(Threading.Background)
       }, null)
   }
 
@@ -192,21 +192,22 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
           getString(android.R.string.ok),
           getString(android.R.string.cancel),
           new DialogInterface.OnClickListener() {
-            def onClick(dialog: DialogInterface, which: Int) = for {
-              z <- zms.head
-              p <- z.account.accountData.head.map(_.phone)
-              _ <- if (p.contains(n)) Future(dismiss())(Threading.Ui)
-              else z.account.updatePhone(n).future.map {
-                case Right(_) =>
-                  onPhoneChanged ! Some(n)
-                  dismiss()
-                case Left(ErrorResponse(c, _, l)) =>
-                  if (PhoneExistsError.code == c && PhoneExistsError.label == l)
-                    showError(getString(PhoneExistsError.headerResource))
-                  else
-                    showError(getString(GenericRegisterPhoneError.headerResource))
-              } (Threading.Ui)
-            } yield {}
+            def onClick(dialog: DialogInterface, which: Int) = {} // TODO
+//              for {
+//              z <- zms.head
+//              p <- z.account.accountData.head.map(_.phone)
+//              _ <- if (p.contains(n)) Future(dismiss())(Threading.Ui)
+//              else z.account.updatePhone(n).future.map {
+//                case Right(_) =>
+//                  onPhoneChanged ! Some(n)
+//                  dismiss()
+//                case Left(ErrorResponse(c, _, l)) =>
+//                  if (PhoneExistsError.code == c && PhoneExistsError.label == l)
+//                    showError(getString(PhoneExistsError.headerResource))
+//                  else
+//                    showError(getString(GenericRegisterPhoneError.headerResource))
+//              } (Threading.Ui)
+//            } yield {}
           },
           null
         )

@@ -30,9 +30,9 @@ import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R}
 import AddEmailFragment._
 import com.waz.ZLog
 import com.waz.zclient.appentry.EntryError
-import com.waz.zclient.appentry.controllers.SignInController.{Email, Register, SignInMethod}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.threading.Threading.Implicits.Ui
+import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Register, SignInMethod}
 
 case class AddEmailFragment() extends BaseFragment[Container] with FragmentHelper with OnBackPressedListener {
 

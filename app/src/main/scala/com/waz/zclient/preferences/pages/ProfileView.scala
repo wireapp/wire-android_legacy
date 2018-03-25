@@ -30,18 +30,20 @@ import android.widget.{ImageView, LinearLayout}
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.AccentColor
-import com.waz.model.{AccountData, Availability}
+import com.waz.content.UserPreferences
 import com.waz.model.otr.Client
-import com.waz.service.ZMessaging
+import com.waz.model.{AccountDataOld, Availability}
 import com.waz.service.tracking.TrackingService
+import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient._
+import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
-import com.waz.zclient.preferences.views.TextButton
 import com.waz.zclient.messages.UsersController
+import com.waz.zclient.preferences.views.TextButton
 import com.waz.zclient.tracking.OpenedManageTeam
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage, UserSignal, ZTimeFormatter}
@@ -203,17 +205,21 @@ case class ProfileBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
 }
 
 class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: EventContext) extends Injectable {
-  private val zms = inject[Signal[ZMessaging]]
-  implicit val uiStorage = inject[UiStorage]
-  private val tracking = inject[TrackingService]
-  private lazy val usersController = inject [UsersController]
-  val MaxAccountsCount = 2
+  import ProfileViewController._
 
-  val currentUser = ZMessaging.currentAccounts.activeAccount.collect { case Some(account) if account.userId.isDefined => account.userId.get }
+  implicit val uiStorage = inject[UiStorage]
+
+  lazy val accounts        = inject[AccountsService]
+  lazy val zms             = inject[Signal[ZMessaging]]
+  lazy val tracking        = inject[TrackingService]
+  lazy val usersController = inject[UsersController]
+  lazy val usersAccounts   = inject[UserAccountsController]
+
+  val currentUser = accounts.activeAccountId.collect { case Some(id) => id }
 
   val self = for {
     userId <- currentUser
-    self <- UserSignal(userId)
+    self   <- UserSignal(userId)
   } yield self
 
   val team = zms.flatMap(_.teams.selfTeam)
@@ -222,8 +228,8 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
 
   val incomingClients = for {
     z       <- zms
-    acc     <- z.account.accountData
-    clients <- acc.clientId.fold(Signal.empty[Seq[Client]])(aid => z.otrClientsStorage.incomingClientsSignal(z.selfUserId, aid))
+    client  <- z.userPrefs(UserPreferences.SelfClient).signal
+    clients <- client.clientId.fold(Signal.empty[Seq[Client]])(aid => z.otrClientsStorage.incomingClientsSignal(z.selfUserId, aid))
   } yield clients
 
   view.setProfilePictureDrawable(new ImageAssetDrawable(selfPicture, scaleType = ScaleType.CenterInside, request = RequestBuilder.Round))
@@ -235,7 +241,7 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
   }
 
   for {
-    userId <- currentUser
+    userId    <- currentUser
     avVisible <- usersController.availabilityVisible
     av <- usersController.availability(userId)
   } yield (av)
@@ -252,13 +258,15 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
     zms.head.flatMap(z => z.otrClientsService.updateUnknownToUnverified(z.selfUserId))(Threading.Background)
   }
 
-  val account = ZMessaging.currentAccounts.activeAccount.collect { case Some(accountData) if accountData.userId.isDefined => accountData}
-
-  account.onUi { acc =>
-    view.setManageTeamEnabled(acc.selfPermissions.contains(AccountData.Permission.AddTeamMember))
-  }
+  usersAccounts.selfPermissions
+    .map(_.contains(AccountDataOld.Permission.AddTeamMember))
+    .onUi(view.setManageTeamEnabled)
 
   ZMessaging.currentAccounts.loggedInAccounts.map(_.size < MaxAccountsCount).onUi(view.setAddAccountEnabled)
 
-  view.onManageTeamClick { _ => tracking.track(OpenedManageTeam(), zms.map(_.accountId).currentValue) }
+  view.onManageTeamClick { _ => tracking.track(OpenedManageTeam(), currentUser.currentValue) }
+}
+
+object ProfileViewController {
+  val MaxAccountsCount = 2
 }

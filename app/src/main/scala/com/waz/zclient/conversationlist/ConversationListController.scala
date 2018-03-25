@@ -82,7 +82,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext) exten
       .toSeq
       .sorted(listMode.sort)
     val incoming = if (listMode == Normal) (incomingConvs, members.flatten) else (Seq(), Seq())
-    (z.accountId, regular, incoming)
+    (z.selfUserId, regular, incoming)
   }
 
   def nextConversation(convId: ConvId): Future[Option[ConvId]] =

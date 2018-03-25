@@ -24,8 +24,8 @@ import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
 import com.waz.model.ConversationData.ConversationType
-import com.waz.model.{AccountId, ConvId, MessageData, MessageId}
-import com.waz.service.ZMessaging
+import com.waz.model._
+import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.messages.RecyclerCursor
@@ -34,12 +34,12 @@ import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.{StringUtils, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R}
 
-class QuickReplyContentAdapter(context: Context, accountId: AccountId, convId: ConvId)(implicit inj: Injector, evc: EventContext)
+class QuickReplyContentAdapter(context: Context, accountId: UserId, convId: ConvId)(implicit inj: Injector, evc: EventContext)
 extends RecyclerView.Adapter[QuickReplyContentAdapter.ViewHolder] with Injectable { adapter =>
 
   import QuickReplyContentAdapter._
 
-  lazy val zms = ZMessaging.currentAccounts.zmsInstances.map(_.find(_.accountId == accountId)).collect { case Some(z) => z }
+  lazy val zms = inject[AccountsService].zmsInstances.map(_.find(_.selfUserId == accountId)).collect { case Some(z) => z }
 
   val ephemeralCount = Signal(Set.empty[MessageId])
 
@@ -100,10 +100,10 @@ extends RecyclerView.Adapter[QuickReplyContentAdapter.ViewHolder] with Injectabl
 
 object QuickReplyContentAdapter {
 
-  class ViewHolder(context: Context, accountId: AccountId, convType: ConversationType, itemView: View)(implicit inj: Injector, evc: EventContext)
+  class ViewHolder(context: Context, accountId: UserId, convType: ConversationType, itemView: View)(implicit inj: Injector, evc: EventContext)
         extends RecyclerView.ViewHolder(itemView) with Injectable {
 
-    lazy val zms = ZMessaging.currentAccounts.zmsInstances.map(_.find(_.accountId == accountId)).collect { case Some(z) => z }
+    lazy val zms = inject[AccountsService].zmsInstances.map(_.find(_.selfUserId == accountId)).collect { case Some(z) => z }
 
     val isGroupConv = convType == ConversationType.Group
 

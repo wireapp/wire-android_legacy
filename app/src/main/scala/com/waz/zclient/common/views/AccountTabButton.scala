@@ -26,10 +26,11 @@ import android.widget.FrameLayout.LayoutParams
 import android.widget.{FrameLayout, ImageView, RelativeLayout}
 import com.waz.api.impl.AccentColors
 import com.waz.model._
-import com.waz.service.ZMessaging
+import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.NameParts
 import com.waz.ZLog.ImplicitTag._
+import com.waz.content.{AccountStorage, TeamsStorage}
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -48,6 +49,9 @@ class AccountTabButton(val context: Context, val attrs: AttributeSet, val defSty
 
   implicit val uiStorage = inject[UiStorage]
   val userAccountsController = inject[UserAccountsController]
+  val accounts   = inject[AccountsService]
+  val teams      = inject[TeamsStorage]
+  val accStorage = inject[AccountStorage]
 
   val icon                = findById[ImageView](R.id.team_icon)
   val name                = findById[TypefaceTextView](R.id.team_name)
@@ -70,7 +74,7 @@ class AccountTabButton(val context: Context, val attrs: AttributeSet, val defSty
 
   private var selectedColor = AccentColors.defaultColor.getColor()
 
-  private val accountId = Signal[AccountId]()
+  private val accountId = Signal[UserId]()
 
   val account = accountId.flatMap(ZMessaging.currentAccounts.storage.signal).disableAutowiring()
 
@@ -80,15 +84,13 @@ class AccountTabButton(val context: Context, val attrs: AttributeSet, val defSty
   } yield active.contains(acc))
     .disableAutowiring()
 
-  val teamOrUser: Signal[Either[TeamData, UserData]] = account.flatMap { acc =>
-    acc.teamId match {
-      case Right(Some(t)) => ZMessaging.currentGlobal.teamsStorage.signal(t).map(Left(_))
-      case _ => (acc.userId match {
-        case Some(id) => UserSignal(id)
-        case None     => Signal.empty[UserData]
-      }).map(Right(_))
+  val teamOrUser: Signal[Either[TeamData, UserData]] =
+    account.flatMap { acc =>
+      acc.teamId match {
+        case Some(t) => teams.signal(t).map(Left(_))
+        case _       => UserSignal(acc.id).map(Right(_))
+      }
     }
-  }
 
   private val unreadCount = for {
     accountId <- accountId
@@ -131,7 +133,7 @@ class AccountTabButton(val context: Context, val attrs: AttributeSet, val defSty
     unreadIndicatorName.setAccentColor(accentColor.getColor())
   }
 
-  def setAccount(id: AccountId) = accountId ! id
+  def setAccount(id: UserId) = accountId ! id
 
   def animateExpand(): Unit = {
     nameContainer.animate().translationY(0f).setDuration(animationDuration).start()

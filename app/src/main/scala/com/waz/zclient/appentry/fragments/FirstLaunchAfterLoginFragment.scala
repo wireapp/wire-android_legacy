@@ -74,9 +74,10 @@ class FirstLaunchAfterLoginFragment extends BaseFragment[FirstLaunchAfterLoginFr
   }
 
   private def onConfirmClicked(): Unit = {
-    appEntryController.currentAccount.head.map {
-      case Some(acc) => ZMessaging.currentAccounts.setLoggedIn(acc.id)
-      case _ =>
-    } (Threading.Ui)
+    //TODO
+//    appEntryController.currentAccount.head.map {
+//      case Some(acc) => ZMessaging.currentAccounts.setLoggedIn(acc.id)
+//      case _ =>
+//    } (Threading.Ui)
   }
 }

@@ -27,15 +27,14 @@ import android.widget.LinearLayout
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.threading.Threading.Implicits.Ui
-import com.waz.zclient.appentry.controllers.AppEntryController.{LoginScreen, RegisterTeamScreen}
-import com.waz.zclient.appentry.controllers.SignInController.{Email, Login, SignInMethod}
 import com.waz.zclient.appentry.controllers.AppEntryController
+import com.waz.zclient.appentry.controllers.AppEntryController.LoginScreen
+import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Login, SignInMethod}
 import com.waz.zclient.{DialogHelper, R}
 
 class ProfileBottomSheetDialog(val context: Context, theme: Int) extends BottomSheetDialog(context, theme) with DialogHelper {
 
   lazy val appEntryController = inject[AppEntryController]
-  lazy val signInController = inject[SignInController]
   val MaxAccountsCount = 2
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
@@ -50,7 +49,8 @@ class ProfileBottomSheetDialog(val context: Context, theme: Int) extends BottomS
     createTeamButton.setOnClickListener(new OnClickListener {
       override def onClick(v: View): Unit = {
         createTeamButton.setEnabled(false)
-        ZMessaging.currentAccounts.logout(false).map( _ => appEntryController.firstStage ! RegisterTeamScreen)
+        //TODO
+//        ZMessaging.currentAccounts.logout(false).map( _ => appEntryController.firstStage ! RegisterTeamScreen)
         dismiss()
       }
     })
@@ -58,10 +58,11 @@ class ProfileBottomSheetDialog(val context: Context, theme: Int) extends BottomS
     addAccountButton.setOnClickListener(new OnClickListener {
       override def onClick(v: View): Unit = {
         addAccountButton.setEnabled(false)
-        ZMessaging.currentAccounts.logout(false).map{ _ =>
-          appEntryController.firstStage ! LoginScreen
-          signInController.uiSignInState ! SignInMethod(Login, Email)
-        }
+        //TODO
+//        ZMessaging.currentAccounts.logout(false).map{ _ =>
+//          appEntryController.firstStage ! LoginScreen
+//          signInController.uiSignInState ! SignInMethod(Login, Email)
+//        }
         dismiss()
       }
     })

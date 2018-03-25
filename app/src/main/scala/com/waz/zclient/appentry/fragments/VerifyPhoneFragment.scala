@@ -27,7 +27,6 @@ import com.waz.threading.Threading
 import com.waz.zclient._
 import com.waz.zclient.appentry.EntryError
 import com.waz.zclient.appentry.controllers.AppEntryController
-import com.waz.zclient.appentry.controllers.SignInController._
 import com.waz.zclient.controllers.navigation.Page
 import com.waz.zclient.newreg.views.PhoneConfirmationButton
 import com.waz.zclient.pages.BaseFragment
@@ -100,11 +99,12 @@ class VerifyPhoneFragment extends BaseFragment[VerifyPhoneFragment.Container] wi
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
       editTextCode.setLetterSpacing(1)
     }
-    appEntryController.currentAccount.map(_.flatMap(_.pendingPhone)).onUi{
-      case Some(phone) =>
-        onPhoneNumberLoaded(phone.str)
-      case _ =>
-    }
+    //TODO
+//    appEntryController.currentAccount.map(_.flatMap(_.pendingPhone)).onUi{
+//      case Some(phone) =>
+//        onPhoneNumberLoaded(phone.str)
+//      case _ =>
+//    }
   }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
@@ -156,9 +156,10 @@ class VerifyPhoneFragment extends BaseFragment[VerifyPhoneFragment.Container] wi
   private def requestCode(shouldCall: Boolean) = {
     editTextCode.setText("")
     appEntryController.resendActivationPhoneCode(shouldCall = shouldCall).map { result =>
-      ZMessaging.currentAccounts.getActiveAccount.collect { case Some(acc) => acc.regWaiting }.map { reg =>
-        tracking.onRequestResendCode(result, SignInMethod(if (reg) Register else Login, Phone), isCall = shouldCall)
-      }
+      //TODO
+//      ZMessaging.currentAccounts.getActiveAccount.collect { case Some(acc) => acc.regWaiting }.map { reg =>
+//        tracking.onRequestResendCode(result, SignInMethod(if (reg) Register else Login, Phone), isCall = shouldCall)
+//      }
       result match {
         case Left(entryError) =>
           getContainer.showError(entryError)

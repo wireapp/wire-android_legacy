@@ -19,9 +19,9 @@ package com.waz.zclient
 
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.api.ClientRegistrationState
-import com.waz.service.ZMessaging
-import com.waz.utils.events.Subscription
+import com.waz.service.AccountManager.ClientRegistrationState.LimitReached
+import com.waz.service.{AccountManager, ZMessaging}
+import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
 import com.waz.zclient.pages.BaseDialogFragment
 import com.waz.zclient.ui.views.ZetaButton
@@ -29,9 +29,10 @@ import com.waz.zclient.utils.{ContextUtils, RichView}
 
 class OtrDeviceLimitFragment extends BaseDialogFragment[OtrDeviceLimitFragment.Container] with FragmentHelper {
 
-  private lazy val limitReached = ZMessaging.currentAccounts.activeAccount.collect {
-    case Some(account) => account
-  }.map(_.clientRegState == ClientRegistrationState.LIMIT_REACHED)
+  private lazy val limitReached = inject[Signal[AccountManager]].flatMap(_.clientState).map {
+    case LimitReached => true
+    case _ => false
+  }
 
   private lazy val logoutButton = returning(view[ZetaButton](R.id.zb__otr_device_limit__logout)) ( _.foreach { button =>
     button.setIsFilled(false)

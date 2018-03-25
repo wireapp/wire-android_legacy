@@ -45,13 +45,14 @@ class InvitationsController(implicit inj: Injector, eventContext: EventContext, 
   def sendInvite(email: EmailAddress): Future[Either[ErrorResponse, Unit]] = {
     import com.waz.threading.Threading.Implicits.Background
     for {
-      zms <- zms.head
-      account <- zms.accounts.getActiveAccount
+      zms         <- zms.head
+      account     <- zms.accounts.getActiveAccount
       alreadySent <- invitations.head
+      name        <- zms.usersStorage.get(zms.selfUserId).map(_.map(_.name))
       response <- if (alreadySent.keySet.contains(email))
           CancellableFuture.successful(Left(ErrorResponse(ErrorResponse.InternalErrorCode, "Already sent", "already-sent")))
         else
-          zms.invitations.inviteToTeam(email, account.flatMap(_.name))
+          zms.invitations.inviteToTeam(email, name)
     } yield
       response match {
         case Left(e) => Left(e)

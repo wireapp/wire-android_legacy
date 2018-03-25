@@ -18,8 +18,7 @@
 package com.waz.zclient
 
 import android.content.Intent
-import com.waz.api.ClientRegistrationState.PASSWORD_MISSING
-import com.waz.service.ZMessaging
+import com.waz.service.AccountsService
 import com.waz.threading.Threading
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.utils.{BackendPicker, Callback}
@@ -34,10 +33,9 @@ class LaunchActivity extends BaseActivity {
         superOnBaseActivityStart()
 
         //TODO - could this be racing with setting the active account?
-        ZMessaging.currentAccounts.getActiveAccount.map {
-          case Some(acc) if acc.clientRegState == PASSWORD_MISSING => startSignUp()
-          case Some(_)                                             => startMain()
-          case _                                                   => startSignUp()
+        inject[AccountsService].getActiveAccountId.map {
+          case Some(_) => startMain()
+          case _       => startSignUp()
         } (Threading.Ui)
       }
     })

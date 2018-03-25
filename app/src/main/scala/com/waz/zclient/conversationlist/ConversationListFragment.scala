@@ -29,7 +29,6 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.model.ConversationData.ConversationType._
 import com.waz.model._
-import com.waz.model.otr.Client
 import com.waz.service.ZMessaging
 import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
@@ -80,7 +79,7 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
     userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
 
     convListController.conversationListData(adapterMode).onUi {
-      case (aId, regular, incoming) => a.setData(aId, regular, incoming)
+      case (aId, regular, incoming) => a.setData(regular, incoming)
     }
 
     a.onConversationClick { conv =>
@@ -169,8 +168,7 @@ class NormalConversationFragment extends ConversationListFragment {
   lazy val accentColor = inject[AccentColorController].accentColor
   lazy val incomingClients = for{
     z       <- zms
-    acc     <- z.account.accountData
-    clients <- acc.clientId.fold(Signal.empty[Seq[Client]])(aid => z.otrClientsStorage.incomingClientsSignal(z.selfUserId, aid))
+    clients <- z.otrClientsStorage.incomingClientsSignal(z.selfUserId, z.clientId)
   } yield clients
 
   private lazy val unreadCount = (for {

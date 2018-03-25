@@ -28,9 +28,11 @@ import android.widget.{LinearLayout, ScrollView, Toast}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
+import com.waz.model.AccountData.Password
 import com.waz.model.ConvId
 import com.waz.model.otr.{ClientId, Location}
-import com.waz.service.ZMessaging
+import com.waz.service.AccountManager.ClientRegistrationState.LimitReached
+import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.sync.SyncResult
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
@@ -46,6 +48,7 @@ import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichClient, Rich
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper, _}
 import org.threeten.bp.{Instant, LocalDateTime, ZoneId}
 
+import scala.concurrent.Future
 import scala.util.Try
 
 trait DeviceDetailsView {
@@ -172,12 +175,14 @@ object DeviceDetailsBackStackKey {
 
 case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: ClientId)(implicit inj: Injector, ec: EventContext, context: Context) extends Injectable {
   import Threading.Implicits.Background
-  val zms      = inject[Signal[ZMessaging]]
+
+  val zms                = inject[Signal[ZMessaging]]
   val passwordController = inject[PasswordController]
   val backStackNavigator = inject[BackStackNavigator]
-  val clientsController = inject[ClientsController]
+  val clientsController  = inject[ClientsController]
 
-  val accountManager =  ZMessaging.currentAccounts.activeAccountManager.collect{case Some(a) => a}
+  val accounts       = inject[AccountsService]
+  val accountManager = inject[Signal[AccountManager]]
 
   val client = clientsController.selfClient(clientId).collect { case Some(c) => c }
   val isCurrentClient = clientsController.isCurrentClient(clientId)
@@ -194,13 +199,13 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
   client.map(_.isVerified).onUi(view.setVerified)
   fingerPrint.onUi{ _.foreach(view.setFingerPrint) }
 
-  val otrClientsService = accountManager.flatMap(_.userModule).map(_.clientsService)
+  val otrClientsService = accountManager.map(_.clientsService)
 
   view.onVerifiedChecked { checked =>
     for {
-      Some(userId)      <- accountManager.flatMap(_.userId)
-      otrClientsStorage <- accountManager.map(_.storage.otrClientsStorage)
-      _                 <- otrClientsStorage.updateVerified(userId, clientId, checked)
+      userId     <- accountManager.map(_.userId)
+      otrStorage <- accountManager.map(_.storage.otrClientsStorage)
+      _ <- otrStorage.updateVerified(userId, clientId, checked)
     } {}
   }
 
@@ -228,13 +233,20 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
     }
   }
 
-  private def removeDevice(password: String): Unit = {
+  private def removeDevice(password: Password): Unit = {
     for {
-      otrClientsService <- otrClientsService.head
-      _ <- otrClientsService.deleteClient(clientId, password).map {
+      am  <- accountManager.head
+      otr <- otrClientsService.head
+      limitReached <- am.clientState.head.map {
+        case LimitReached => true
+        case _ => false
+      }
+      _ <- otr.deleteClient(clientId, password).map { //TODO use password instead of str
         case Right(_) =>
-          passwordController.setPassword(password)
-          context.asInstanceOf[BaseActivity].onBackPressed()
+          for {
+            _ <- passwordController.setPassword(password)
+            _ <- if (limitReached) am.registerClient() else Future.successful({})
+          } yield context.asInstanceOf[BaseActivity].onBackPressed()
         case Left(ErrorResponse(_, msg, _)) =>
           showRemoveDeviceDialog(Some(getString(R.string.otr__remove_device__error)))
       } (Threading.Ui)

@@ -128,7 +128,7 @@ class MainActivity extends BaseActivity
 
     accountsService.getActiveAccountManager.flatMap {
       case Some(am) => am.clientState.head.map {
-        case Registered(_) => // nothing to do
+        case Registered(_) => if (getSupportFragmentManager.findFragmentByTag(MainPhoneFragment.TAG) == null) replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.TAG)
         case LimitReached  => showUnableToRegisterOtrClientDialog()
         case _             => openSignUpPage() //TODO where to though?
       } (Threading.Ui)

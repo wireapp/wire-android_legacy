@@ -26,19 +26,20 @@ import android.support.v7.app.AlertDialog
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, WindowManager}
 import android.widget.{EditText, TextView}
+import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.ErrorResponse
+import com.waz.model.AccountData.Password
 import com.waz.model.EmailAddress
-import com.waz.service.ZMessaging
+import com.waz.service.{AccountManager, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.appentry.EntryError
-import com.waz.zclient.appentry.controllers.SignInController.{Email, Register, SignInMethod}
+import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Register, SignInMethod}
 import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.pages.main.profile.validator.{EmailValidator, PasswordValidator}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, R}
-import com.waz.ZLog.ImplicitTag._
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -51,6 +52,7 @@ class ChangeEmailDialog extends DialogFragment with FragmentHelper {
   val onError = EventStream[ErrorResponse]()
 
   lazy val zms = inject[Signal[ZMessaging]]
+  lazy val accountManager = inject[Signal[AccountManager]]
   lazy val passwordController = inject[PasswordController]
 
   private var addingNewEmail = false
@@ -125,18 +127,18 @@ class ChangeEmailDialog extends DialogFragment with FragmentHelper {
   //TODO move all this stuff to some account controller?
   private def handleInput(): Unit = {
     val email = Option(emailInputLayout.getEditText.getText.toString.trim).filter(emailValidator.validate)
-    val password = Option(passwordInputLayout.getEditText.getText.toString.trim).filter(passwordValidator.validate)
+    val password = Option(passwordInputLayout.getEditText.getText.toString.trim).filter(passwordValidator.validate).map(Password)
 
     (email, password) match {
       case (Some(e), Some(newPassword)) if addingNewEmail =>
-        zms.head.flatMap { z =>
+        accountManager.head.flatMap { am =>
           //Check now that a password was saved - since updating the password could have succeeded, while the email not
           //and further more, the user could change the password again!
           //TODO - there is a bug here where if the app is killed (losing the password) before an email is set, we won't be able to
           //update the password properly, and the user will have to go through the password reset steps - whicih won't be obvious.
           passwordController.password.head.flatMap { oldPassword =>
-            z.account.updatePassword(newPassword, oldPassword).flatMap {
-              case Right(_) => z.account.updateEmail(EmailAddress(e))
+            am.updatePassword(newPassword, oldPassword).flatMap {
+              case Right(_) => am.updateEmail(EmailAddress(e))
               case err => Future.successful(err)
             }
           }
@@ -147,14 +149,14 @@ class ChangeEmailDialog extends DialogFragment with FragmentHelper {
           case Left(error) => onError ! error
         }
       case (Some(e), Some(newPassword)) =>
-        zms.head.flatMap { _.account.updateEmail(EmailAddress(e))}.map { _ =>
+        accountManager.head.flatMap { _.updateEmail(EmailAddress(e))}.map { _ =>
           onEmailChanged ! e
           dismiss()
         }
       case (Some(e), _) if !addingNewEmail =>
         for {
-          z <- zms.head
-          res <- z.account.updateEmail(EmailAddress(e))
+          am <- accountManager.head
+          res <- am.updateEmail(EmailAddress(e))
         } res match {
           case Right(_) =>
             onEmailChanged ! e

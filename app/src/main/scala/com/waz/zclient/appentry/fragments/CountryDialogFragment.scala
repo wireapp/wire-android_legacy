@@ -39,7 +39,6 @@ object CountryDialogFragment {
 
 class CountryDialogFragment extends BaseDialogFragment[Container] with FragmentHelper with AdapterView.OnItemClickListener {
 
-  private lazy val signInController = inject[SignInController]
   private lazy val countryAdapter = new CountryCodeAdapter
 
   override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
@@ -59,7 +58,8 @@ class CountryDialogFragment extends BaseDialogFragment[Container] with FragmentH
   }
 
   def onItemClick(adapterView: AdapterView[_], view: View, i: Int, l: Long): Unit = {
-    signInController.phoneCountry ! countryAdapter.getItem(i)
+    //TODO
+//    signInController.phoneCountry ! countryAdapter.getItem(i)
     dismiss()
   }
 }

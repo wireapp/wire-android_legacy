@@ -303,7 +303,7 @@ tasks.withType(ScalaCompile) {
         "-Xfuture",
         "-Xfatal-warnings",
         "-deprecation",
-        "-Ywarn-unused-import",
+//        "-Ywarn-unused-import", //TODO turn back on and tidy up!
         "-encoding",
         "UTF-8"]
 }

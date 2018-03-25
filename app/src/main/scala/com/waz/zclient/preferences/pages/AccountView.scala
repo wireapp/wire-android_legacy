@@ -27,8 +27,8 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import com.waz.api.impl.AccentColor
-import com.waz.model.EmailAddress
-import com.waz.service.ZMessaging
+import com.waz.model.{EmailAddress, PhoneNumber}
+import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.utils.returning
@@ -45,6 +45,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils._
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage, UserSignal}
 import com.waz.ZLog.ImplicitTag._
+import com.waz.content.UserPreferences
 
 trait AccountView {
   val onNameClick:          EventStream[Unit]
@@ -59,8 +60,8 @@ trait AccountView {
 
   def setName(name: String): Unit
   def setHandle(handle: String): Unit
-  def setEmail(email: Option[String]): Unit
-  def setPhone(phone: Option[String]): Unit
+  def setEmail(email: Option[EmailAddress]): Unit
+  def setPhone(phone: Option[PhoneNumber]): Unit
   def setPictureDrawable(drawable: Drawable): Unit
   def setAccentDrawable(drawable: Drawable): Unit
   def setDeleteAccountEnabled(enabled: Boolean): Unit
@@ -97,9 +98,9 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setHandle(handle: String) = handleButton.setTitle(handle)
 
-  override def setEmail(email: Option[String]) = emailButton.setTitle(email.getOrElse(getString(R.string.pref_account_add_email_title)))
+  override def setEmail(email: Option[EmailAddress]) = emailButton.setTitle(email.map(_.str).getOrElse(getString(R.string.pref_account_add_email_title)))
 
-  override def setPhone(phone: Option[String]) = phoneButton.setTitle(phone.getOrElse(getString(R.string.pref_account_add_phone_title)))
+  override def setPhone(phone: Option[PhoneNumber]) = phoneButton.setTitle(phone.map(_.str).getOrElse(getString(R.string.pref_account_add_phone_title)))
 
   override def setPictureDrawable(drawable: Drawable) = pictureButton.setDrawableStart(Some(drawable))
 
@@ -135,6 +136,7 @@ object AccountBackStackKey {
 class AccountViewController(view: AccountView)(implicit inj: Injector, ec: EventContext, context: Context) extends Injectable {
 
   val zms                = inject[Signal[ZMessaging]]
+  val accounts           = inject[AccountsService]
   implicit val uiStorage = inject[UiStorage]
   val navigator          = inject[BackStackNavigator]
   val password           = inject[PasswordController].password
@@ -144,17 +146,15 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
     self <- UserSignal(zms.selfUserId)
   } yield self
 
-  val account = for {
-    zms <- zms
-    account <- zms.account.accountData
-  } yield account
-
   val isTeam = zms.map(_.teamId.isDefined)
 
-  val isPhoneNumerEnabled = for {
-    hasPhone <- account.map(a => a.phone.isDefined || a.pendingPhone.isDefined)
+  val phone = zms.flatMap(_.userPrefs(UserPreferences.Phone).signal)
+  val email = zms.flatMap(_.userPrefs(UserPreferences.Email).signal)
+
+  val isPhoneNumberEnabled = for {
+    p      <- phone
     isTeam <- isTeam
-  } yield hasPhone || !isTeam
+  } yield p.isDefined || !isTeam
 
   val selfPicture: Signal[ImageSource] = self.map(_.picture).collect{case Some(pic) => WireImage(pic)}
 
@@ -180,14 +180,12 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
     })
   }
 
-  account.onUi { account =>
-    view.setEmail(account.email.map(_.str))
-    view.setPhone(account.phone.map(_.str))
-  }
+  phone.onUi(view.setPhone)
+  email.onUi(view.setEmail)
 
   isTeam.onUi(t => view.setDeleteAccountEnabled(!t))
 
-  isPhoneNumerEnabled.onUi(view.setPhoneNumberEnabled)
+  isPhoneNumberEnabled.onUi(view.setPhoneNumberEnabled)
 
   view.onNameClick.onUi { _ =>
     self.head.map { self =>
@@ -267,7 +265,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
       getString(R.string.pref_account_sign_out_warning_cancel),
       new DialogInterface.OnClickListener() {
         def onClick(dialog: DialogInterface, which: Int) = {
-          zms.map(_.account).head.flatMap(_.logout(true))(Threading.Ui)
+          zms.map(_.selfUserId).head.flatMap(accounts.logout)(Threading.Ui)
           navigator.back()
           navigator.back()
         }

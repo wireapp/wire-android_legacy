@@ -130,11 +130,11 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
   private lazy val emptyListButton = returning(view[RelativeLayout](R.id.empty_list_button)) { v =>
     (for {
       zms <- zms
-      permissions <- userAccountsController.selfPermissions.orElse(Signal.const(Set.empty[AccountData.Permission]))
+      permissions <- userAccountsController.selfPermissions.orElse(Signal.const(Set.empty[AccountDataOld.Permission]))
       members <- zms.teams.searchTeamMembers().orElse(Signal.const(Set.empty[UserData]))
       searching <- adapter.filter.map(_.nonEmpty)
      } yield
-       zms.teamId.nonEmpty && permissions(AccountData.Permission.AddTeamMember) && !members.exists(_.id != zms.selfUserId) && !searching
+       zms.teamId.nonEmpty && permissions(AccountDataOld.Permission.AddTeamMember) && !members.exists(_.id != zms.selfUserId) && !searching
     ).onUi(visible => v.foreach(_.setVisible(visible)))
   }
 

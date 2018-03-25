@@ -22,7 +22,7 @@ import android.graphics.{Bitmap, Color}
 import android.support.v4.app.NotificationCompat
 import com.waz.ZLog._
 import com.waz.bitmap.BitmapUtils
-import com.waz.model.{AccountId, ConvId}
+import com.waz.model.{ConvId, UserId}
 import com.waz.service.assets.AssetService.BitmapResult.BitmapLoaded
 import com.waz.service.call.CallInfo.CallState
 import com.waz.service.call.CallInfo.CallState._
@@ -32,10 +32,10 @@ import com.waz.utils.LoggedTry
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.{Context, Intent}
 import com.waz.zclient.Intents.OpenAccountIntent
-import com.waz.zclient.calling.controllers.GlobalCallingController
-import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.common.views.ImageController
 import com.waz.zclient._
+import com.waz.zclient.calling.controllers.GlobalCallingController
+import com.waz.zclient.common.views.ImageController
+import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DeprecationUtils
 import com.waz.zms.CallWakeService
 
@@ -77,7 +77,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
     group      <- groupCall
     video      <- videoCall
     bmp        <- bitmap
-  } yield (z.accountId, conv, callerName, state, group, video, bmp)).on(Threading.Ui) {
+  } yield (z.selfUserId, conv, callerName, state, group, video, bmp)).on(Threading.Ui) {
     case (account, conv, callerName, state, group, video, bmp) =>
       val message = getCallStateMessage(state, video)
       val title = if (group) getString(R.string.system_notification__group_call_title, callerName, conv.displayName) else conv.displayName
@@ -142,12 +142,12 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
 
   }
 
-  private def silenceIntent(account: AccountId, convId: ConvId) = pendingIntent(SilenceRequestCode, CallWakeService.silenceIntent(Context.wrap(cxt), account, convId))
+  private def silenceIntent(account: UserId, convId: ConvId) = pendingIntent(SilenceRequestCode, CallWakeService.silenceIntent(Context.wrap(cxt), account, convId))
 
-  private def leaveIntent(account: AccountId, convId: ConvId) = pendingIntent(LeaveRequestCode, CallWakeService.leaveIntent(Context.wrap(cxt), account, convId))
+  private def leaveIntent(account: UserId, convId: ConvId) = pendingIntent(LeaveRequestCode, CallWakeService.leaveIntent(Context.wrap(cxt), account, convId))
 
-  private def joinIntent(account: AccountId, convId: ConvId) = pendingIntent(JoinRequestCode, CallWakeService.joinIntent(Context.wrap(cxt), account, convId))
-  private def joinGroupIntent(account: AccountId, convId: ConvId) = pendingIntent(JoinRequestCode, CallWakeService.joinGroupIntent(Context.wrap(cxt), account, convId))
+  private def joinIntent(account: UserId, convId: ConvId) = pendingIntent(JoinRequestCode, CallWakeService.joinIntent(Context.wrap(cxt), account, convId))
+  private def joinGroupIntent(account: UserId, convId: ConvId) = pendingIntent(JoinRequestCode, CallWakeService.joinGroupIntent(Context.wrap(cxt), account, convId))
 
   private def pendingIntent(reqCode: Int, intent: Intent) = PendingIntent.getService(cxt, reqCode, Intent.unwrap(intent), PendingIntent.FLAG_UPDATE_CURRENT)
 }

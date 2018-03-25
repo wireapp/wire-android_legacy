@@ -47,7 +47,7 @@ class AccountTabsView(val context: Context, val attrs: AttributeSet, val defStyl
 }
 
 class AccountTabViewHolder(view: ProfileAccountTab) extends RecyclerView.ViewHolder(view){
-  def bind(accountId: AccountId): Unit = view.setAccount(accountId)
+  def bind(accountId: UserId): Unit = view.setAccount(accountId)
 }
 
 class AccountTabsAdapter(context: Context)(implicit injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[AccountTabViewHolder] with Injectable {
@@ -55,7 +55,7 @@ class AccountTabsAdapter(context: Context)(implicit injector: Injector, eventCon
 
   val onItemClick = EventStream[AccountData]()
 
-  private var accounts = Seq.empty[AccountId]
+  private var accounts = Seq.empty[UserId]
   controller.accounts.map(_.map(_.id)).onUi { accs =>
     accounts = accs
     notifyDataSetChanged()
@@ -100,5 +100,5 @@ class AccountTabsAdapter(context: Context)(implicit injector: Injector, eventCon
     new AccountTabViewHolder(view)
   }
 
-  def getItem(position: Int): Option[AccountId] = accounts.lift(position)
+  def getItem(position: Int): Option[UserId] = accounts.lift(position)
 }
