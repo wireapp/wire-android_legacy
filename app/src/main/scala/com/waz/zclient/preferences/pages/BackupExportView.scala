@@ -26,15 +26,13 @@ import android.view.View
 import android.widget.LinearLayout
 import com.waz.ZLog.ImplicitTag._
 import com.waz.service.ZMessaging
-import com.waz.threading.{CancellableFuture, Threading}
+import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.views.MenuRowButton
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, ContextUtils}
 import com.waz.zclient.{R, SpinnerController, ViewHelper}
 
 import scala.concurrent.Future
-import scala.concurrent.duration._
-
 
 class BackupExportView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -53,11 +51,15 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int) extend
   private def backupData: Future[Unit] = {
     spinnerController.showDimmedSpinner(show = true, ContextUtils.getString(R.string.back_up_progress))
     import Threading.Implicits.Ui
-    //TODO: actual backup
-    CancellableFuture.delayed(5.seconds)(()).map { _ =>
-      spinnerController.showDimmedSpinner(show = false)
+
+    (for {
+      z                <- zms.head
+      Some(accManager) <- z.accounts.activeAccountManager.head
+      res              <- accManager.exportDatabase()
+    } yield res).map { file =>
       val intent = ShareCompat.IntentBuilder.from(context.asInstanceOf[Activity]).setType("text/plain").setText("backup").getIntent
       context.startActivity(intent)
+      spinnerController.showDimmedSpinner(show = false)
     }
   }
 }
