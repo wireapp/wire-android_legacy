@@ -250,8 +250,7 @@ class MainPhoneFragment extends BaseFragment[MainPhoneFragment.Container]
       case CANNOT_SEND_MESSAGE_TO_UNVERIFIED_CONVERSATION |
            RECORDING_FAILURE |
            CANNOT_SEND_ASSET_FILE_NOT_FOUND |
-           CANNOT_SEND_ASSET_TOO_LARGE =>
-        // Handled in ConversationFragment
+           CANNOT_SEND_ASSET_TOO_LARGE => // Handled in ConversationFragment
       case _ =>
         ExceptionHandler.saveException(new RuntimeException("Unexpected error " + error.errType), null, null)
     }
