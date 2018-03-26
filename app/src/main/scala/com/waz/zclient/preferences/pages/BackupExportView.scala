@@ -17,8 +17,10 @@
  */
 package com.waz.zclient.preferences.pages
 
+import android.app.Activity
 import android.content.Context
 import android.os.Bundle
+import android.support.v4.app.ShareCompat
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
@@ -50,8 +52,13 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int) extend
 
   private def backupData: Future[Unit] = {
     spinnerController.showDimmedSpinner(show = true, ContextUtils.getString(R.string.back_up_progress))
-    import Threading.Implicits.Background
-    CancellableFuture.delayed(5.seconds)(()).map(_ => spinnerController.showDimmedSpinner(show = false))
+    import Threading.Implicits.Ui
+    //TODO: actual backup
+    CancellableFuture.delayed(5.seconds)(()).map { _ =>
+      spinnerController.showDimmedSpinner(show = false)
+      val intent = ShareCompat.IntentBuilder.from(context.asInstanceOf[Activity]).setType("text/plain").setText("backup").getIntent
+      context.startActivity(intent)
+    }
   }
 }
 
