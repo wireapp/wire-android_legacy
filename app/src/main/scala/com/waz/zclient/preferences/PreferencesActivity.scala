@@ -42,7 +42,8 @@ import com.waz.zclient.common.views.AccountTabsView
 import com.waz.zclient.pages.main.profile.camera.{CameraContext, CameraFragment}
 import com.waz.zclient.preferences.pages.{DevicesBackStackKey, OptionsView, ProfileBackStackKey}
 import com.waz.zclient.utils.{BackStackNavigator, RingtoneUtils, ViewUtils}
-import com.waz.zclient.{ActivityHelper, BaseActivity, MainActivity, R}
+import com.waz.zclient.views.LoadingIndicatorView
+import com.waz.zclient._
 
 class PreferencesActivity extends BaseActivity
   with ActivityHelper
@@ -56,6 +57,7 @@ class PreferencesActivity extends BaseActivity
 
   private lazy val backStackNavigator = inject[BackStackNavigator]
   private lazy val zms = inject[Signal[ZMessaging]]
+  private lazy val spinnerController = inject[SpinnerController]
 
   lazy val accentColor = inject[AccentColorController].accentColor
 
@@ -113,6 +115,13 @@ class PreferencesActivity extends BaseActivity
         setResult(Activity.RESULT_CANCELED, intent)
       }
       finish()
+    }
+
+    val loadingIndicator = findViewById[LoadingIndicatorView](R.id.progress_spinner)
+
+    spinnerController.spinnerShowing.onUi {
+      case Some(animation) => loadingIndicator.show(animation, darkTheme = true)
+      case None => loadingIndicator.hide()
     }
   }
 

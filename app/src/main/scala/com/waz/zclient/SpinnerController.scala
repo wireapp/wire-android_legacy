@@ -28,4 +28,6 @@ class SpinnerController(implicit inj: Injector, cxt: WireContext, eventContext: 
 
   def hideSpinner(): Unit = spinnerShowing ! None
 
+  def showSpinner(show: Boolean): Unit = spinnerShowing ! (if (show) Some(Spinner) else None)
+  def showDimmedSpinner(show: Boolean, text: String = ""): Unit = spinnerShowing ! (if (show) Some(SpinnerWithDimmedBackground(text)) else None)
 }

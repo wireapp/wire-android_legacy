@@ -1347,8 +1347,6 @@
     <string name="guest_time_left_minutes">Less than %1$sm left</string>
     <string name="backup_description">Back up your conversation history to a safe place. If you lose your phone or switch to a new one, your conversation history will be safe. You can restore your conversation history when you log in. You can only restore history from a backup of the same platform.
 The back up is not protected by Wire end-to-end encryption.</string>
-    <string name="backup_restore_warning_title">Log out</string>
-    <string name="backup_restore_warning_content">You need to log out before you import the backup.</string>
-    <string name="backup_restore_warning_confirm">Log out</string>
     <string name="pref_account_backup_title">History Back Up</string>
+    <string name="back_up_progress">Backing up...</string>
 </resources>

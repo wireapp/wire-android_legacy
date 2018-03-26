@@ -27,9 +27,10 @@ import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.views.MenuRowButton
-import com.waz.zclient.utils.{BackStackKey, BackStackNavigator}
-import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, ContextUtils}
+import com.waz.zclient.{R, SpinnerController, ViewHelper}
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 
@@ -41,10 +42,17 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int) extend
 
   val zms                = inject[Signal[ZMessaging]]
   val navigator          = inject[BackStackNavigator]
+  val spinnerController  = inject[SpinnerController]
 
   private lazy val backupButton = findById[MenuRowButton](R.id.backup_button)
 
-  backupButton.setOnClickProcess(CancellableFuture.delayed(5.seconds)(())(Threading.Background))
+  backupButton.setOnClickProcess(backupData, showSpinner = false)
+
+  private def backupData: Future[Unit] = {
+    spinnerController.showDimmedSpinner(show = true, ContextUtils.getString(R.string.back_up_progress))
+    import Threading.Implicits.Background
+    CancellableFuture.delayed(5.seconds)(()).map(_ => spinnerController.showDimmedSpinner(show = false))
+  }
 }
 
 object BackupExportView {

@@ -68,10 +68,10 @@ class MenuRowButton(context: Context, attrs: AttributeSet, style: Int) extends R
   }
   val progressBar: ProgressBar = findViewById(R.id.progress_bar)
 
-  def setOnClickProcess[T](process: => Future[T]): Unit = {
+  def setOnClickProcess[T](process: => Future[T], showSpinner: Boolean = true): Unit = {
     setOnClickListener(new OnClickListener {
       override def onClick(v: View): Unit = {
-        progressBar.setVisibility(View.VISIBLE)
+        if (showSpinner) progressBar.setVisibility(View.VISIBLE)
         setClickable(false)
         process.map { result =>
           progressBar.setVisibility(View.GONE)

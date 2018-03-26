@@ -29,7 +29,7 @@
         android:layout_height="128dp"
         android:layout_marginTop="@dimen/wire__padding__regular"
         android:layout_gravity="center_horizontal"
-        android:src="@drawable/wire_logo_shield"/>
+        android:src="@drawable/com_mixpanel_android_ic_sync"/>
 
     <com.waz.zclient.ui.text.TypefaceTextView
         android:layout_width="wrap_content"
