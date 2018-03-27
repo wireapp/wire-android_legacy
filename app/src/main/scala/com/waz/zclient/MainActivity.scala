@@ -22,7 +22,6 @@ import android.content.res.Configuration
 import android.content.{DialogInterface, Intent}
 import android.graphics.drawable.ColorDrawable
 import android.graphics.{Color, Paint, PixelFormat}
-import android.net.Uri
 import android.os.{Build, Bundle}
 import android.support.v4.app.Fragment
 import com.waz.ZLog.ImplicitTag._
@@ -69,7 +68,6 @@ import scala.util.control.NonFatal
 
 class MainActivity extends BaseActivity
   with ActivityHelper
-  with MainPhoneFragment.Container
   with UpdateFragment.Container
   with ProfileStoreObserver
   with ConnectStoreObserver
@@ -285,7 +283,7 @@ class MainActivity extends BaseActivity
     verbose("onUserLoggedInAndVerified")
     getStoreFactory.profileStore.setUser(self)
     getControllerFactory.getAccentColorController.setColor(AccentColorChangeRequester.LOGIN, self.getAccent.getColor)
-    if (getSupportFragmentManager.findFragmentByTag(MainPhoneFragment.TAG) == null) replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.TAG)
+    if (getSupportFragmentManager.findFragmentByTag(MainPhoneFragment.Tag) == null) replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.Tag)
   }
 
   def handleIntent(intent: Intent) = {
@@ -390,17 +388,6 @@ class MainActivity extends BaseActivity
   def onInviteRequestSent(conversation: String) = {
     info(s"onInviteRequestSent($conversation)")
     conversationController.selectConv(Option(new ConvId(conversation)), ConversationChangeRequester.INVITE)
-  }
-
-  def onOpenUrl(url: String) = {
-    try {
-      val normUrl = Uri.parse(if (!url.startsWith("http://") && !url.startsWith("https://")) s"http://$url" else url)
-      val browserIntent = returning(new Intent(ACTION_VIEW, normUrl))(_.addFlags(FLAG_ACTIVITY_NEW_TASK))
-      startActivity(browserIntent)
-    }
-    catch {
-      case e: Exception => error(s"Failed to open URL: $url")
-    }
   }
 
   private def showUnableToRegisterOtrClientDialog() =
