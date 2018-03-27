@@ -21,51 +21,32 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.v4.app.FragmentManager
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.model.ErrorData
+import com.waz.model.{ErrorData, Uid}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.collection.fragments.CollectionFragment
+import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.collections.CollectionsObserver
-import com.waz.zclient.controllers.confirmation.{ConfirmationObserver, ConfirmationRequest}
-import com.waz.zclient.controllers.giphy.GiphyObserver
-import com.waz.zclient.controllers.navigation.Page
-import com.waz.zclient.controllers.singleimage.SingleImageObserver
+import com.waz.zclient.controllers.confirmation.{ConfirmationObserver, ConfirmationRequest, IConfirmationController}
+import com.waz.zclient.controllers.giphy.{GiphyObserver, IGiphyController}
+import com.waz.zclient.controllers.navigation.{INavigationController, Page}
+import com.waz.zclient.controllers.singleimage.{ISingleImageController, SingleImageObserver}
 import com.waz.zclient.conversation.{ConversationController, ImageFragment}
 import com.waz.zclient.messages.UsersController
-import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.conversationlist.ConfirmationFragment
 import com.waz.zclient.pages.main.conversationpager.ConversationPagerFragment
 import com.waz.zclient.pages.main.giphy.GiphySharingPreviewFragment
 import com.waz.zclient.views.menus.ConfirmationMenu
-import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R}
+import com.waz.zclient.{ErrorsController, FragmentHelper, OnBackPressedListener, R}
 import net.hockeyapp.android.ExceptionHandler
 
 import scala.concurrent.Future
 
-/**
-  * Wire
-  * Copyright (C) 2018 Wire Swiss GmbH
-  *
-  * This program is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 3 of the License, or
-  * (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  */
-
-class MainPhoneFragment extends BaseFragment[MainPhoneFragment.Container]
-  with FragmentHelper
+class MainPhoneFragment extends FragmentHelper
   with OnBackPressedListener
   with ConversationPagerFragment.Container
   with SingleImageObserver
@@ -79,10 +60,17 @@ class MainPhoneFragment extends BaseFragment[MainPhoneFragment.Container]
 
   private lazy val zms = inject[Signal[ZMessaging]]
 
-  private lazy val usersController = inject[UsersController]
+  private lazy val usersController        = inject[UsersController]
   private lazy val conversationController = inject[ConversationController]
-  private lazy val accentColorController = inject[AccentColorController]
-  private lazy val collectionController = inject[CollectionController]
+  private lazy val accentColorController  = inject[AccentColorController]
+  private lazy val collectionController   = inject[CollectionController]
+  private lazy val browserController      = inject[BrowserController]
+  private lazy val errorsController       = inject[ErrorsController]
+
+  private lazy val navigationController   = inject[INavigationController]
+  private lazy val singleImageController  = inject[ISingleImageController]
+  private lazy val giphyController        = inject[IGiphyController]
+  private lazy val confirmationController = inject[IConfirmationController]
 
   private lazy val confirmationMenu = returning(view[ConfirmationMenu](R.id.cm__confirm_action_light)) { vh =>
     accentColorController.accentColor.onUi(color => vh.foreach(_.setButtonColor(color.getColor)))
@@ -105,16 +93,16 @@ class MainPhoneFragment extends BaseFragment[MainPhoneFragment.Container]
 
   override def onStart(): Unit = {
     super.onStart()
-    getControllerFactory.getSingleImageController.addSingleImageObserver(this)
-    getControllerFactory.getGiphyController.addObserver(this)
-    getControllerFactory.getConfirmationController.addConfirmationObserver(this)
+    singleImageController.addSingleImageObserver(this)
+    giphyController.addObserver(this)
+    confirmationController.addConfirmationObserver(this)
     collectionController.addObserver(this)
   }
 
   override def onStop(): Unit = {
-    getControllerFactory.getGiphyController.removeObserver(this)
-    getControllerFactory.getSingleImageController.removeSingleImageObserver(this)
-    getControllerFactory.getConfirmationController.removeConfirmationObserver(this)
+    giphyController.removeObserver(this)
+    singleImageController.removeSingleImageObserver(this)
+    confirmationController.removeConfirmationObserver(this)
     collectionController.removeObserver(this)
     super.onStop()
   }
@@ -156,7 +144,7 @@ class MainPhoneFragment extends BaseFragment[MainPhoneFragment.Container]
 
   } getOrElse getChildFragmentManager.popBackStackImmediate
 
-  override def onOpenUrl(url: String): Unit = getContainer.onOpenUrl(url)
+  override def onOpenUrl(url: String): Unit = browserController.openUrl(url)
 
   override def onShowSingleImage(messageId: String): Unit = {
     getChildFragmentManager
@@ -164,7 +152,7 @@ class MainPhoneFragment extends BaseFragment[MainPhoneFragment.Container]
       .add(R.id.fl__overlay_container, ImageFragment.newInstance(messageId), ImageFragment.Tag)
       .addToBackStack(ImageFragment.Tag)
       .commit
-    getControllerFactory.getNavigationController.setRightPage(Page.SINGLE_MESSAGE, Tag)
+    navigationController.setRightPage(Page.SINGLE_MESSAGE, Tag)
   }
 
   override def onHideSingleImage(): Unit = ()
@@ -266,18 +254,10 @@ class MainPhoneFragment extends BaseFragment[MainPhoneFragment.Container]
     dismissError(dialogId)
   }
 
-  private def dismissError(errorId: String) = {
-    if (getActivity != null && !getStoreFactory.isTornDown)
-      getStoreFactory.inAppNotificationStore.dismissError(errorId)
-  }
+  private def dismissError(errorId: String) = errorsController.dismissSyncError(Uid(errorId))
 }
 
 object MainPhoneFragment {
   val Tag: String = classOf[MainPhoneFragment].getName
-
-  trait Container {
-    def onOpenUrl(url: String): Unit
-  }
-
 }
 

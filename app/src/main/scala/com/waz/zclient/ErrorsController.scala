@@ -18,17 +18,15 @@
 
 package com.waz.zclient
 
+import com.waz.ZLog.ImplicitTag._
 import com.waz.model.Uid
 import com.waz.service.ZMessaging
-import com.waz.threading.SerialDispatchQueue
 import com.waz.utils.events.Signal
-import com.waz.ZLog.ImplicitTag._
 
 import scala.concurrent.Future
 
 class ErrorsController(implicit inj: Injector) extends Injectable {
-
-  private implicit val dispatcher = new SerialDispatchQueue(name = "ErrorsController")
+  import com.waz.threading.Threading.Implicits.Background
 
   private val zms = inject[Signal[ZMessaging]]
 
