@@ -23,6 +23,7 @@ import android.support.v4.app.FragmentManager
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.model.ErrorData
 import com.waz.service.ZMessaging
+import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.collection.controllers.CollectionController
@@ -74,9 +75,9 @@ class MainPhoneFragment extends BaseFragment[MainPhoneFragment.Container]
   with ConfirmationFragment.Container {
 
   import MainPhoneFragment._
+  import Threading.Implicits.Ui
 
   private lazy val zms = inject[Signal[ZMessaging]]
-  zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
 
   private lazy val usersController = inject[UsersController]
   private lazy val conversationController = inject[ConversationController]
@@ -99,6 +100,7 @@ class MainPhoneFragment extends BaseFragment[MainPhoneFragment.Container]
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     confirmationMenu.foreach(_.setVisibility(View.GONE))
+    zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
   }
 
   override def onStart(): Unit = {
@@ -122,7 +124,7 @@ class MainPhoneFragment extends BaseFragment[MainPhoneFragment.Container]
     withFragment(R.id.fl_fragment_main_content)(_.onActivityResult(requestCode, resultCode, data))
   }
 
-  override def onBackPressed: Boolean = confirmationMenu flatMap { confirmationMenu =>
+  override def onBackPressed(): Boolean = confirmationMenu flatMap { confirmationMenu =>
     if (confirmationMenu.getVisibility == View.VISIBLE) {
       confirmationMenu.animateToShow(false)
       return true
@@ -130,8 +132,8 @@ class MainPhoneFragment extends BaseFragment[MainPhoneFragment.Container]
 
     val backStackSize = getChildFragmentManager.getBackStackEntryCount
     lazy val topFragment = getChildFragmentManager.findFragmentByTag(getChildFragmentManager.getBackStackEntryAt(backStackSize - 1).getName)
-    lazy val mainContentFragment = getChildFragmentManager.findFragmentById(R.id.fl_fragment_main_content)
-    lazy val overlayContentFragment = getChildFragmentManager.findFragmentById(R.id.fl__overlay_container)
+    val mainContentFragment = getChildFragmentManager.findFragmentById(R.id.fl_fragment_main_content)
+    val overlayContentFragment = getChildFragmentManager.findFragmentById(R.id.fl__overlay_container)
 
     if (backStackSize > 0) {
       Option(topFragment) collect {
@@ -147,16 +149,14 @@ class MainPhoneFragment extends BaseFragment[MainPhoneFragment.Container]
       // it's then delivered to the main content.
       Option(mainContentFragment) collect {
         case f : OnBackPressedListener if f.onBackPressed() => true
-      } orElse Option(overlayContentFragment) collect {
+      } orElse (Option(overlayContentFragment) collect {
         case f : OnBackPressedListener if f.onBackPressed() => true
-      }
+      })
     }
 
   } getOrElse getChildFragmentManager.popBackStackImmediate
 
-  override def onOpenUrl(url: String): Unit = {
-    getContainer.onOpenUrl(url)
-  }
+  override def onOpenUrl(url: String): Unit = getContainer.onOpenUrl(url)
 
   override def onShowSingleImage(messageId: String): Unit = {
     getChildFragmentManager
@@ -203,6 +203,7 @@ class MainPhoneFragment extends BaseFragment[MainPhoneFragment.Container]
 
   private def handleSyncError(error: ErrorData): Unit = {
     import ConfirmationFragment._
+    import com.waz.ZLog.ImplicitTag._
     import com.waz.api.ErrorType._
 
     def getGroupErrorMessage: Future[String] = {

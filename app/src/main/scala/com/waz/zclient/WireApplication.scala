@@ -190,6 +190,8 @@ object WireApplication {
     bind [SpinnerController]            to new SpinnerController()
     bind [AddEmailController]           to new AddEmailController()
 
+    bind [ErrorsController]             to new ErrorsController()
+
     /**
       * Since tracking controllers will immediately instantiate other necessary controllers, we keep them separated
       * based on the activity responsible for generating their events (we don't want to instantiate an uneccessary
