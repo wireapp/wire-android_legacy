@@ -19,10 +19,9 @@ package com.waz.testutils
 
 import java.util.concurrent.{CountDownLatch, TimeUnit, TimeoutException}
 
-import android.support.v4.app.FragmentActivity
-import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils._
-import com.waz.zclient.{ActivityHelper, Injector, WireContext}
+import com.waz.utils.events.{EventContext, Signal}
+import com.waz.zclient.WireContext
 import org.robolectric.Robolectric
 import org.threeten.bp.Instant
 
@@ -34,6 +33,8 @@ object TestUtils {
 
   implicit val eventContext = EventContext.Implicits.global
   implicit val executionContext = ExecutionContext.Implicits.global
+  implicit val logTag = com.waz.ZLog.ImplicitTag.implicitLogTag
+
   val timeout = 1000
 
   def signalTest[A](signal: Signal[A])(test: A => Boolean)(trigger: => Unit)(implicit printVals: PrintValues, timeoutMillis: Int = timeout): Unit = {
@@ -70,11 +71,11 @@ object TestUtils {
 abstract class TestWireContext extends WireContext {
   override def eventContext = EventContext.Implicits.global
 }
-
+/*
 class ViewTestActivity extends FragmentActivity with ActivityHelper {
 
   var inj: Injector = _
 
   override lazy val injector = inj
 }
-
+*/

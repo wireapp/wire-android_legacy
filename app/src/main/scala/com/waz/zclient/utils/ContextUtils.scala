@@ -28,8 +28,8 @@ import android.view.WindowManager
 import android.widget.Toast
 import com.waz.zclient.ui.utils.ResourceUtils
 
-
 object ContextUtils {
+
   def getColor(resId: Int)(implicit context: Context): Int = ContextCompat.getColor(context, resId)
 
   def getColorWithTheme(resId: Int, context: Context): Int =
@@ -41,7 +41,9 @@ object ContextUtils {
   def getInt(resId: Int)(implicit context: Context) = context.getResources.getInteger(resId)
 
   def getString(resId: Int)(implicit context: Context): String = context.getResources.getString(resId)
-  def getString(resId: Int, args: String*)(implicit context: Context): String = context.getResources.getString(resId, args:_*)
+
+  def getString(resId: Int, args: String*)(implicit context: Context): String =
+    context.getResources.getString(resId, args:_*)
 
   def showToast(resId: Int, long: Boolean = true)(implicit context: Context): Unit =
     Toast.makeText(context, resId, if (long) Toast.LENGTH_LONG else Toast.LENGTH_SHORT).show()

@@ -17,40 +17,39 @@
  */
 package com.waz.zclient.common.controllers.global
 
-import com.waz.api.impl.{AccentColor, AccentColors}
-import com.waz.content.GlobalPreferences
-import com.waz.content.Preferences.PrefKey
-import com.waz.service.ZMessaging
-import com.waz.utils.crypto.ZSecureRandom
+import com.waz.api.impl.AccentColor
+import com.waz.content.UsersStorage
+import com.waz.model.AccountId
+import com.waz.service.AccountsService
 import com.waz.utils.events.Signal
 import com.waz.zclient.{Injectable, Injector}
 
 class AccentColorController(implicit inj: Injector) extends Injectable {
-  private lazy val prefs = inject[GlobalPreferences]
+  private lazy val accountId = inject[Signal[Option[AccountId]]]
 
-  private val zms = inject[Signal[Option[ZMessaging]]]
-
-  private val randomColorPref = prefs.preference(PrefKey[Int]("random_accent_color", ZSecureRandom.nextInt(AccentColors.colors.length)))
-
-  val accentColor: Signal[com.waz.api.AccentColor] = zms.flatMap {
-    case Some(z) => accentColor(z)
-    case _ => randomColorPref.signal.map {
-      AccentColors.colors(_)
-    }
+  val accentColor: Signal[com.waz.api.AccentColor] = accountId.flatMap(
+    _.fold(Signal.const(Option.empty[com.waz.api.AccentColor]))(accentColor(_))
+  ).flatMap {
+    case Some(color) => Signal.const(color)
+    case None        => inject[Signal[com.waz.api.AccentColor]]
   }
 
   val accentColorNoEmpty: Signal[com.waz.api.AccentColor] = for {
-    Some(z) <- zms
-    color <- accentColor(z)
+    Some(accId) <- accountId
+    Some(color) <- accentColor(accId)
   } yield color
 
-  def accentColor(z: ZMessaging): Signal[com.waz.api.AccentColor] = z.usersStorage.optSignal(z.selfUserId).map {
-    case Some(u) => Some(AccentColor(u.accent))
-    case _ => None
-  }.flatMap {
-    case Some(c) => Signal.const(c)
-    case None => randomColorPref.signal.map {
-      AccentColors.colors(_)
-    }
+  def accentColor(accountId: AccountId): Signal[Option[com.waz.api.AccentColor]] = {
+    colors.map(_.get(accountId))
   }
+
+  lazy val colors: Signal[Map[AccountId, AccentColor]] = for {
+    users          <- inject[AccountsService].loggedInAccounts.map(_.map(acc => acc.id -> acc.userId).toSeq)
+    collectedUsers = users.collect { case (accId, Some(userId)) => accId -> userId }
+    usersStorage   <- inject[Signal[UsersStorage]]
+    userData       <- Signal.sequence(collectedUsers.map {
+                        case (accId, userId) => usersStorage.signal(userId).map(accId -> _)
+                      }: _*)
+  } yield userData.map(u => u._1 -> AccentColor(u._2.accent)).toMap
+
 }

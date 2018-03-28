@@ -50,10 +50,11 @@ class GuestOptionsFragment extends FragmentHelper {
   private lazy val spinnerController = inject[SpinnerController]
   private lazy val tracking = inject[TrackingService]
 
+  private lazy val currentConvIsTeamOnly: Signal[Boolean] = convCtrl.currentConv.map(_.isTeamOnly)
   //TODO look into using something more similar to SwitchPreference
   private lazy val guestsSwitch = returning(view[SwitchCompat](R.id.guest_toggle)) { vh =>
-    convCtrl.currentConvIsTeamOnly.currentValue.foreach(teamOnly => vh.foreach(_.setChecked(!teamOnly)))
-    convCtrl.currentConvIsTeamOnly.onUi(teamOnly => vh.foreach(_.setChecked(!teamOnly)))
+    currentConvIsTeamOnly.currentValue.foreach(teamOnly => vh.foreach(_.setChecked(!teamOnly)))
+    currentConvIsTeamOnly.onUi(teamOnly => vh.foreach(_.setChecked(!teamOnly)))
   }
 
   private lazy val guestsTitle = view[TextView](R.id.guest_toggle_title)

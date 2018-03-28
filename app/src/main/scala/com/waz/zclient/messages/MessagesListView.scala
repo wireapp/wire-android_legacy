@@ -32,8 +32,8 @@ import com.waz.model.{ConvId, Dim2, MessageData}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.common.controllers.AssetsController
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.ScrollController.{BottomScroll, PositionScroll}
 import com.waz.zclient.messages.controllers.MessageActionsController

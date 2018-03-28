@@ -69,7 +69,7 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
 
   lazy val accentColor = for {
     z <- zms
-    accent  <- inject[AccentColorController].accentColor(z)
+    Some(accent) <- inject[AccentColorController].accentColor(z.accountId)
   } yield accent
 
   lazy val message = findById[TypefaceEditText](R.id.tet__quick_reply__message)

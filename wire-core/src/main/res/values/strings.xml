@@ -721,6 +721,7 @@
     <string name="notification__message__group__renamed_conversation">renamed the conversation to %1$s</string>
     <string name="notification__message__group__add">added people to the conversation</string>
     <string name="notification__message__group__remove">removed people from the conversation</string>
+    <string name="notification__message__connection_request">%1$s wants to connect</string>
     <string name="notification__message__generic__accept_request">You have a new connection</string>
     <string name="notification__message__single__accept_request">You and %1$s are now connected</string>
     <string name="notification__message__group__default_conversation_name">group conversation</string>
@@ -732,6 +733,7 @@
     <string name="notification__message__liked_file">\u2764 your file</string>
 
     <!-- ephemeral -->
+    <string name="notification__message__ephemeral_someone">Someone</string>
     <string name="notification__message__ephemeral_details">Press for more</string>
     <plurals name="notification__message__ephemeral">
         <item quantity="one">Someone sent you a message</item>

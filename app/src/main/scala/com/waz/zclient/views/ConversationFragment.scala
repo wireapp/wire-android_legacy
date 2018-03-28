@@ -226,8 +226,7 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
     leftMenu = findById(R.id.conversation_left_menu)
     toolbar = findById(R.id.t_conversation_toolbar)
     toolbarTitle = ViewUtils.getView(toolbar, R.id.tv__conversation_toolbar__title).asInstanceOf[TextView]
-    convController.currentConvName.onUi { updateTitle }
-
+    convController.currentConv.map(_.displayName).onUi { updateTitle }
 
     cancelPreviewOnChange.onUi {
       case (change, Some(true)) if !change.noChange => imagePreviewCallback.onCancelPreview()

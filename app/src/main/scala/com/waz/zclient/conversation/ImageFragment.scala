@@ -165,7 +165,7 @@ class ImageFragment extends FragmentHelper {
       }
     }
 
-    convController.currentConvName.onUi(headerTitle.setText)
+    convController.currentConv.map(_.displayName).onUi(headerTitle.setText)
 
     collectionController.focusedItem
       .collect { case Some(msg) => LocalDateTime.ofInstant(msg.time, ZoneId.systemDefault()).toLocalDate.toString }

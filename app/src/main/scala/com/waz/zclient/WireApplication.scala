@@ -19,26 +19,35 @@ package com.waz.zclient
 
 import java.util.Calendar
 
+import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import android.renderscript.RenderScript
 import android.support.multidex.MultiDexApplication
+import com.waz.NotificationManagerWrapper
+import com.waz.NotificationManagerWrapper.AndroidNotificationsManager
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
 import com.waz.api._
-import com.waz.content.GlobalPreferences
+import com.waz.api.impl.AccentColors
+import com.waz.content.Preferences.PrefKey
+import com.waz.content._
 import com.waz.log.InternalLog
-import com.waz.model.ConversationData
+import com.waz.model.{AccountData, AccountId, ConversationData, UserId}
 import com.waz.permissions.PermissionsService
+import com.waz.service._
+import com.waz.service.conversation.{ConversationsListStateService, ConversationsService, ConversationsUiService}
+import com.waz.service.images.ImageLoader
+import com.waz.service.push.GlobalNotificationsService
 import com.waz.service.tracking.TrackingService
-import com.waz.service.{NetworkModeService, UiLifeCycle, ZMessaging}
+import com.waz.utils.crypto.ZSecureRandom
 import com.waz.utils.events.{EventContext, Signal, Subscription}
 import com.waz.zclient.api.scala.ScalaStoreFactory
 import com.waz.zclient.appentry.controllers.{AddEmailController, AppEntryController, SignInController, InvitationsController}
 import com.waz.zclient.calling.controllers.{CallPermissionsController, CurrentCallController, GlobalCallingController}
 import com.waz.zclient.camera.controllers.{AndroidCameraFactory, GlobalCameraController}
 import com.waz.zclient.collection.controllers.CollectionController
-import com.waz.zclient.common.controllers.global.{AccentColorController, ClientsController, KeyboardController, PasswordController}
+import com.waz.zclient.common.controllers.global._
 import com.waz.zclient.common.controllers.{SoundController, _}
 import com.waz.zclient.common.views.ImageController
 import com.waz.zclient.controllers._
@@ -83,14 +92,48 @@ object WireApplication {
     def controllerFactory = APP_INSTANCE.asInstanceOf[ZApplication].getControllerFactory
     def storeFactory = APP_INSTANCE.asInstanceOf[ZApplication].getStoreFactory
 
-    // SE services
-    bind [Signal[Option[ZMessaging]]]  to ZMessaging.currentUi.currentZms
+
+    bind [NotificationManagerWrapper] to new AndroidNotificationsManager(APP_INSTANCE.getSystemService(Context.NOTIFICATION_SERVICE).asInstanceOf[NotificationManager])
+
+    bind [GlobalModule]    to ZMessaging.currentGlobal
+    bind [AccountsService] to ZMessaging.currentAccounts
+
+    bind [Signal[GlobalModule]]    to Signal.future(ZMessaging.globalModule)
+    bind [Signal[AccountsService]] to Signal.future(ZMessaging.accountsService)
+
+    bind [Signal[Option[AccountData]]] to inject[AccountsService].activeAccount
+    bind [Signal[Option[ZMessaging]]]  to inject[AccountsService].activeZms
     bind [Signal[ZMessaging]]          to inject[Signal[Option[ZMessaging]]].collect { case Some(z) => z }
-    bind [GlobalPreferences]           to ZMessaging.currentGlobal.prefs
-    bind [NetworkModeService]          to ZMessaging.currentGlobal.network
-    bind [UiLifeCycle]                 to ZMessaging.currentGlobal.lifecycle
-    bind [TrackingService]             to ZMessaging.currentGlobal.trackingService
-    bind [PermissionsService]          to ZMessaging.currentGlobal.permissions
+
+    bind [GlobalPreferences]          to inject[GlobalModule].prefs
+    bind [NetworkModeService]         to inject[GlobalModule].network
+    bind [UiLifeCycle]                to inject[GlobalModule].lifecycle
+    bind [TrackingService]            to inject[GlobalModule].trackingService
+    bind [PermissionsService]         to inject[GlobalModule].permissions
+    bind [GlobalNotificationsService] to inject[GlobalModule].notifications
+    bind [AccountsStorage]            to inject[GlobalModule].accountsStorage
+    bind [TeamsStorage]               to inject[GlobalModule].teamsStorage
+
+    // services  and storages of the current zms
+    bind [Signal[ConversationsService]]          to inject[Signal[ZMessaging]].map(_.conversations)
+    bind [Signal[ConversationsListStateService]] to inject[Signal[ZMessaging]].map(_.convsStats)
+    bind [Signal[ConversationsUiService]]        to inject[Signal[ZMessaging]].map(_.convsUi)
+    bind [Signal[UserService]]                   to inject[Signal[ZMessaging]].map(_.users)
+    bind [Signal[ConversationStorage]]           to inject[Signal[ZMessaging]].map(_.convsStorage)
+    bind [Signal[NotificationStorage]]           to inject[Signal[ZMessaging]].map(_.notifStorage)
+    bind [Signal[UsersStorage]]                  to inject[Signal[ZMessaging]].map(_.usersStorage)
+    bind [Signal[MembersStorage]]                to inject[Signal[ZMessaging]].map(_.membersStorage)
+    bind [Signal[OtrClientsStorage]]             to inject[Signal[ZMessaging]].map(_.otrClientsStorage)
+    bind [Signal[AssetsStorage]]                 to inject[Signal[ZMessaging]].map(_.assetsStorage)
+    bind [Signal[ImageLoader]]                   to inject[Signal[ZMessaging]].map(_.imageLoader)
+
+    bind [Signal[Option[AccountId]]] to inject[AccountsService].activeAccount.map(_.map(_.id))
+    bind [Signal[AccountId]]         to inject[AccountsService].activeAccount.collect { case Some(account) => account.id }
+    bind [Signal[UserId]]            to inject[Signal[ZMessaging]].map(_.selfUserId) // the current user's id
+
+    // random accent color
+    private lazy val randomColorPref = inject[GlobalPreferences].preference(PrefKey[Int]("random_accent_color", ZSecureRandom.nextInt(AccentColors.colors.length)))
+    bind[Signal[com.waz.api.AccentColor]] to randomColorPref.signal.map { id => AccentColors.colors(id) }
 
     // old controllers
     // TODO: remove controller factory, reimplement those controllers
@@ -133,7 +176,8 @@ object WireApplication {
     bind [UserAccountsController]          to new UserAccountsController()
 
     bind [SharingController]               to new SharingController()
-    bind [ConversationController]          to new ConversationController()
+
+    bind [ConversationController]          to new ConversationController
 
     bind [NavigationController]            to new NavigationController()
     bind [AppEntryController]              to new AppEntryController()

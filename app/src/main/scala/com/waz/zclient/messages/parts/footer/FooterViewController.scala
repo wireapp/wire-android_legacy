@@ -18,6 +18,7 @@
 package com.waz.zclient.messages.parts.footer
 
 import android.content.Context
+import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
 import com.waz.api.Message.Status
 import com.waz.model.ConversationData.ConversationType
@@ -27,15 +28,14 @@ import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.CancellableFuture
 import com.waz.utils._
 import com.waz.utils.events.{ClockSignal, EventContext, Signal}
-import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{LikesController, UsersController}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ZTimeFormatter
 import com.waz.zclient.{Injectable, Injector, R}
 import org.threeten.bp.{DateTimeUtils, Instant}
-import com.waz.ZLog.ImplicitTag._
 
 import scala.concurrent.duration._
 

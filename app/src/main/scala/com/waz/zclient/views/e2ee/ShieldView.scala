@@ -20,6 +20,7 @@ package com.waz.zclient.views.e2ee
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.ImageView
+import com.waz.api.Verification
 import com.waz.utils.returning
 import com.waz.zclient.ViewHelper
 import com.waz.zclient.conversation.ConversationController
@@ -37,5 +38,5 @@ class ShieldView(context: Context, attrs: AttributeSet, defStyleAttr: Int) exten
 
   setImageResource(if (verified) R.drawable.shield_full else R.drawable.shield_half)
 
-  inject[ConversationController].currentConvIsVerified.onUi { this.setVisible }
+  inject[ConversationController].currentConv.map(_.verified == Verification.VERIFIED).onUi { this.setVisible }
 }
