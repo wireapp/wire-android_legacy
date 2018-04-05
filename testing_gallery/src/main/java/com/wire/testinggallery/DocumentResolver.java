@@ -17,9 +17,11 @@
  */
 package com.wire.testinggallery;
 
+import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -28,6 +30,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+@TargetApi(Build.VERSION_CODES.FROYO)
 class DocumentResolver {
 
     private static final String TAG = "TestingGallery";

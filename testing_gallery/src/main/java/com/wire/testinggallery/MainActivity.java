@@ -18,18 +18,50 @@
 package com.wire.testinggallery;
 
 
-import android.Manifest;
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
+import android.content.pm.PackageInfo;
+import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ShareCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.wire.testinggallery.backup.ExportFile;
+
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+import static android.content.pm.PackageManager.NameNotFoundException;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static android.widget.Toast.LENGTH_LONG;
+import static com.wire.testinggallery.DocumentResolver.WIRE_TESTING_FILES_DIRECTORY;
 
 public class MainActivity extends AppCompatActivity {
     private static final String COMMAND = "command";
@@ -44,20 +76,55 @@ public class MainActivity extends AppCompatActivity {
     private static final String DEFAULT_TEST_TEXT = "QA AUTOMATION TEST";
     private static final String DEFAULT_PACKAGE_NAME = "com.wire.candidate";
     private static final int TESTING_GALLERY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 23456789;
+    private static final int TESTING_GALLERY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 23456790;
+
 
     @Override
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) !=
-            PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+        showInfoUi();
+        checkRightsAndDirectory();
+        registerReceiver(broadcastReceiver,
+            new IntentFilter("com.wire.testinggallery.main.receiver"));
+    }
+
+    @TargetApi(Build.VERSION_CODES.M)
+    private void checkRightsAndDirectory() {
+        if (ActivityCompat.checkSelfPermission(this, READ_EXTERNAL_STORAGE) !=
+            PERMISSION_GRANTED) {
+            requestPermissions(new String[]{READ_EXTERNAL_STORAGE},
                 TESTING_GALLERY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
-            return;
         }
-        registerReceiver(broadcastReceiver, new IntentFilter("com.wire.testinggallery.main.receiver"));
+        if (ActivityCompat.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE) !=
+            PERMISSION_GRANTED) {
+            requestPermissions(new String[]{WRITE_EXTERNAL_STORAGE},
+                TESTING_GALLERY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+        }
+        if (!WIRE_TESTING_FILES_DIRECTORY.exists()) {
+            if (!WIRE_TESTING_FILES_DIRECTORY.mkdirs()) {
+                Toast.makeText(getApplicationContext(),
+                    "Unable to create directory for testing files!!", Toast.LENGTH_LONG)
+                    .show();
+            }
+        }
+    }
+
+    private void showInfoUi() {
+        ViewGroup view = findViewById(android.R.id.content);
+        View mainView = LayoutInflater.from(getApplicationContext()).inflate(R.layout.main_view, view, true);
+        try {
+            PackageInfo pInfo = this.getPackageManager().getPackageInfo(getPackageName(), 0);
+            String version = pInfo.versionName;
+            TextView versionValueTextView = mainView.findViewById(R.id.version_value);
+            versionValueTextView.setText(version);
+        } catch (NameNotFoundException e) {
+            e.printStackTrace();
+        }
+
     }
 
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @TargetApi(Build.VERSION_CODES.DONUT)
         @Override
         public void onReceive(Context context, Intent intent) {
             Intent shareIntent;
@@ -121,4 +188,129 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkRightsAndDirectory();
+        Intent intent = getIntent();
+        String action = intent.getAction();
+        String type = intent.getType();
+        if (Intent.ACTION_SEND.equals(action) && type != null) {
+            Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+            handleFile(uri, false);
+        }
+        if (Intent.ACTION_VIEW.equals(action) && type != null) {
+            Uri uri = intent.getData();
+            handleFile(uri, true);
+        }
+    }
+
+    private void showToast(String message) {
+        Toast.makeText(getApplicationContext(),
+            message, LENGTH_LONG)
+            .show();
+    }
+
+    @TargetApi(Build.VERSION_CODES.CUPCAKE)
+    private void handleFile(Uri backupUri, boolean analyze) {
+        File file = new File(backupUri.getPath());
+        File targetFile = new File(String.format("%s/%s", WIRE_TESTING_FILES_DIRECTORY, file.getName()));
+            if (targetFile.exists()) {
+                targetFile.delete();
+            }
+            try {
+                targetFile.createNewFile();
+                InputStream inputStream = getContentResolver().openInputStream(backupUri);
+                FileOutputStream fileOutputStream = new FileOutputStream(targetFile);
+                assert inputStream != null;
+                copyStreams(inputStream, fileOutputStream);
+
+            } catch (IOException e) {
+                showAlert("Unable to save a file!");
+                return;
+            }
+
+            try {
+                if (analyze) {
+                    ExportFile exportFile = ExportFile.fromJson(getFileFromArchiveAsString(targetFile, "export.json"));
+                    showAlert(String.format("%s was saved\nBackup user id:%s", file.getName(), exportFile.getUserId()));
+                    return;
+                }
+                showToast(String.format("%s was saved", file.getName()));
+            } catch (IOException e) {
+                showAlert(String.format("There was an error during file analyze: %s", e.getLocalizedMessage()));
+            }
+    }
+
+    private void showAlert(String message) {
+        AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+        alertDialog.setMessage(message);
+        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+            new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                    finish();
+                }
+            });
+        alertDialog.show();
+    }
+
+    private String getFileFromArchiveAsString(File zipFile, String desiredFileName) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        OutputStream out = byteArrayOutputStream;
+        FileInputStream fileInputStream = new FileInputStream(zipFile);
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+        ZipInputStream zipInputStream = new ZipInputStream(bufferedInputStream);
+        ZipEntry zipEntry;
+        while ((zipEntry = zipInputStream.getNextEntry()) != null) {
+            if (zipEntry.getName().equals(desiredFileName)) {
+                byte[] buffer = new byte[8192];
+                int len;
+                while ((len = zipInputStream.read(buffer)) != -1) {
+                    out.write(buffer, 0, len);
+                }
+                out.close();
+                break;
+            }
+        }
+        return new String(byteArrayOutputStream.toByteArray(), Charset.defaultCharset());
+    }
+
+    private void copyStreams(InputStream from, OutputStream to) {
+        try {
+            byte[] buffer = new byte[4096]; // To hold file contents
+            int bytes_read; // How many bytes in buffer
+
+            // Read a chunk of bytes into the buffer, then write them out,
+            // looping until we reach the end of the file (when read() returns
+            // -1). Note the combination of assignment and comparison in this
+            // while loop. This is a common I/O programming idiom.
+            while ((bytes_read = from.read(buffer)) != -1)
+                // Read until EOF
+                to.write(buffer, 0, bytes_read); // write
+        }
+        // Always close the streams, even if exceptions were thrown
+        catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (from != null)
+                try {
+                    from.close();
+                } catch (IOException e) {
+                    ;
+                }
+            if (to != null)
+                try {
+                    to.close();
+                } catch (IOException e) {
+                    ;
+                }
+        }
+    }
 }
