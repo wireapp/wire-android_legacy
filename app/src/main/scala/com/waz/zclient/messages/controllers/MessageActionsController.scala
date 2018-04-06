@@ -174,7 +174,15 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
       getAsset(message.assetId) foreach {
         case (Some(data), Some(uri)) =>
           dialog.dismiss()
-          intentBuilder.setType(if (data.mime.str.equals("text/plain")) "text/*" else data.mime.str)
+          val mime =
+            if (data.mime.str.equals("text/plain"))
+              "text/*"
+            else if (data.mime == Mime.Unknown)
+              //TODO: should be fixed on file receiver side
+              Mime.Default.str
+            else
+              data.mime.str
+          intentBuilder.setType(mime)
           intentBuilder.addStream(AndroidURIUtil.unwrap(uri))
           intentBuilder.startChooser()
         case _ =>

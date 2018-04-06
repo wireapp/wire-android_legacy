@@ -19,7 +19,6 @@ package com.wire.testinggallery;
 
 
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -199,15 +198,14 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         checkRightsAndDirectory();
         Intent intent = getIntent();
+        if (intent == null) {
+            return;
+        }
         String action = intent.getAction();
         String type = intent.getType();
         if (Intent.ACTION_SEND.equals(action) && type != null) {
             Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
-            handleFile(uri, false);
-        }
-        if (Intent.ACTION_VIEW.equals(action) && type != null) {
-            Uri uri = intent.getData();
-            handleFile(uri, true);
+            handleFile(uri);
         }
     }
 
@@ -218,9 +216,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @TargetApi(Build.VERSION_CODES.CUPCAKE)
-    private void handleFile(Uri backupUri, boolean analyze) {
-        File file = new File(backupUri.getPath());
-        File targetFile = new File(String.format("%s/%s", WIRE_TESTING_FILES_DIRECTORY, file.getName()));
+    private void handleFile(Uri backupUri) {
+        String fileName = getFilename(backupUri);
+        if (!fileName.isEmpty()) {
+            File targetFile = new File(String.format("%s/%s", WIRE_TESTING_FILES_DIRECTORY, fileName));
             if (targetFile.exists()) {
                 targetFile.delete();
             }
@@ -232,20 +231,34 @@ public class MainActivity extends AppCompatActivity {
                 copyStreams(inputStream, fileOutputStream);
 
             } catch (IOException e) {
+                setIntent(null);
                 showAlert("Unable to save a file!");
                 return;
             }
 
             try {
-                if (analyze) {
+                if (fileName.toLowerCase().endsWith("_wbu")) {
                     ExportFile exportFile = ExportFile.fromJson(getFileFromArchiveAsString(targetFile, "export.json"));
-                    showAlert(String.format("%s was saved\nBackup user id:%s", file.getName(), exportFile.getUserId()));
+                    setIntent(null);
+                    showAlert(String.format("%s was saved\nBackup user id:%s", fileName, exportFile.getUserId()));
                     return;
                 }
-                showToast(String.format("%s was saved", file.getName()));
+                setIntent(null);
+                showToast(String.format("%s was saved", fileName));
+                return;
             } catch (IOException e) {
                 showAlert(String.format("There was an error during file analyze: %s", e.getLocalizedMessage()));
             }
+        }
+        showAlert("Received file has no name!!!");
+    }
+
+    private String getFilename(Uri uri) {
+        Cursor cursor =
+            getContentResolver().query(uri, null, null, null, null);
+        int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+        cursor.moveToFirst();
+        return cursor.getString(nameIndex);
     }
 
     private void showAlert(String message) {
