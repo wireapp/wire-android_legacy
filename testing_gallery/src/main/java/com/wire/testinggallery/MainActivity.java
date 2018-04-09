@@ -293,34 +293,24 @@ public class MainActivity extends AppCompatActivity {
 
     private void copyStreams(InputStream from, OutputStream to) {
         try {
-            byte[] buffer = new byte[4096]; // To hold file contents
-            int bytes_read; // How many bytes in buffer
-
-            // Read a chunk of bytes into the buffer, then write them out,
-            // looping until we reach the end of the file (when read() returns
-            // -1). Note the combination of assignment and comparison in this
-            // while loop. This is a common I/O programming idiom.
+            byte[] buffer = new byte[4096];
+            int bytes_read;
             while ((bytes_read = from.read(buffer)) != -1) {
-                // Read until EOF
-                to.write(buffer, 0, bytes_read); // write
+                to.write(buffer, 0, bytes_read);
             }
-        }
-        // Always close the streams, even if exceptions were thrown
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         } finally {
             if (from != null) {
                 try {
                     from.close();
                 } catch (IOException ignored) {
-                    ;
                 }
             }
             if (to != null) {
                 try {
                     to.close();
                 } catch (IOException ignored) {
-                    ;
                 }
             }
         }
