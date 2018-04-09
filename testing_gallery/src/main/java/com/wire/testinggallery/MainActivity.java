@@ -99,12 +99,8 @@ public class MainActivity extends AppCompatActivity {
             requestPermissions(new String[]{WRITE_EXTERNAL_STORAGE},
                 TESTING_GALLERY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
         }
-        if (!WIRE_TESTING_FILES_DIRECTORY.exists()) {
-            if (!WIRE_TESTING_FILES_DIRECTORY.mkdirs()) {
-                Toast.makeText(getApplicationContext(),
-                    "Unable to create directory for testing files!!", Toast.LENGTH_LONG)
-                    .show();
-            }
+        if (!WIRE_TESTING_FILES_DIRECTORY.exists() && !WIRE_TESTING_FILES_DIRECTORY.mkdirs()) {
+            showToast("Unable to create directory for testing files!!");
         }
     }
 
@@ -262,7 +258,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showAlert(String message) {
-        AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+        AlertDialog alertDialog = new AlertDialog.Builder(this).create();
         alertDialog.setMessage(message);
         alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
             new DialogInterface.OnClickListener() {
@@ -304,26 +300,29 @@ public class MainActivity extends AppCompatActivity {
             // looping until we reach the end of the file (when read() returns
             // -1). Note the combination of assignment and comparison in this
             // while loop. This is a common I/O programming idiom.
-            while ((bytes_read = from.read(buffer)) != -1)
+            while ((bytes_read = from.read(buffer)) != -1) {
                 // Read until EOF
                 to.write(buffer, 0, bytes_read); // write
+            }
         }
         // Always close the streams, even if exceptions were thrown
         catch (IOException e) {
             e.printStackTrace();
         } finally {
-            if (from != null)
+            if (from != null) {
                 try {
                     from.close();
-                } catch (IOException e) {
+                } catch (IOException ignored) {
                     ;
                 }
-            if (to != null)
+            }
+            if (to != null) {
                 try {
                     to.close();
-                } catch (IOException e) {
+                } catch (IOException ignored) {
                     ;
                 }
+            }
         }
     }
 }

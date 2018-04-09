@@ -1,17 +1,17 @@
 /**
  * Wire
  * Copyright (C) 2018 Wire Swiss GmbH
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -53,24 +53,29 @@ public class FileCopy {
         // First make sure the source file exists, is a file, and is readable.
         // These tests are also performed by the FileInputStream constructor
         // which throws a FileNotFoundException if they fail.
-        if (!from_file.exists())
+        if (!from_file.exists()) {
             abort("no such source file: " + from_name);
-        if (!from_file.isFile())
+        }
+        if (!from_file.isFile()) {
             abort("can't copy directory: " + from_name);
-        if (!from_file.canRead())
+        }
+        if (!from_file.canRead()) {
             abort("source file is unreadable: " + from_name);
+        }
 
         // If the destination is a directory, use the source file name
         // as the destination file name
-        if (to_file.isDirectory())
+        if (to_file.isDirectory()) {
             to_file = new File(to_file, from_file.getName());
+        }
 
         // If the destination exists, make sure it is a writeable file
         // and ask before overwriting it. If the destination doesn't
         // exist, make sure the directory exists and is writeable.
         if (to_file.exists()) {
-            if (!to_file.canWrite())
+            if (!to_file.canWrite()) {
                 abort("destination file is unwriteable: " + to_name);
+            }
             // Ask whether to overwrite it
             System.out.print("Overwrite existing file " + to_file.getName() + "? (Y/N): ");
             System.out.flush();
@@ -78,23 +83,29 @@ public class FileCopy {
             BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
             String response = in.readLine();
             // Check the response. If not a Yes, abort the copy.
-            if (!response.equals("Y") && !response.equals("y"))
+            if (!response.equals("Y") && !response.equals("y")) {
                 abort("existing file was not overwritten.");
+            }
         } else {
             // If file doesn't exist, check if directory exists and is
             // writeable. If getParent() returns null, then the directory is
             // the current dir. so look up the user.dir system property to
             // find out what that is.
             String parent = to_file.getParent(); // The destination directory
-            if (parent == null) // If none, use the current directory
+            if (parent == null) {
+                // If none, use the current directory
                 parent = System.getProperty("user.dir");
+            }
             File dir = new File(parent); // Convert it to a file.
-            if (!dir.exists())
+            if (!dir.exists()) {
                 abort("destination directory doesn't exist: " + parent);
-            if (dir.isFile())
+            }
+            if (dir.isFile()) {
                 abort("destination is not a directory: " + parent);
-            if (!dir.canWrite())
+            }
+            if (!dir.canWrite()) {
                 abort("destination directory is unwriteable: " + parent);
+            }
         }
 
         // If we've gotten this far, then everything is okay.
@@ -111,24 +122,27 @@ public class FileCopy {
             // looping until we reach the end of the file (when read() returns
             // -1). Note the combination of assignment and comparison in this
             // while loop. This is a common I/O programming idiom.
-            while ((bytes_read = from.read(buffer)) != -1)
+            while ((bytes_read = from.read(buffer)) != -1) {
                 // Read until EOF
                 to.write(buffer, 0, bytes_read); // write
+            }
         }
         // Always close the streams, even if exceptions were thrown
         finally {
-            if (from != null)
+            if (from != null) {
                 try {
                     from.close();
-                } catch (IOException e) {
+                } catch (IOException ignored) {
                     ;
                 }
-            if (to != null)
+            }
+            if (to != null) {
                 try {
                     to.close();
-                } catch (IOException e) {
+                } catch (IOException ignored) {
                     ;
                 }
+            }
         }
     }
 
