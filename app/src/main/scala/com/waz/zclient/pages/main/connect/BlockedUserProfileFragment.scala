@@ -47,11 +47,11 @@ import com.waz.utils.returning
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
-import com.waz.zclient.core.stores.connect.IConnectStore
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment._
 import com.waz.zclient.pages.main.participants.ProfileAnimation
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode
+import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.ui.animation.fragment.FadeAnimation
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.views.ZetaButton
@@ -66,7 +66,7 @@ object BlockedUserProfileFragment {
   val ARGUMENT_USER_REQUESTER = "ARGUMENT_USER_REQUESTER"
   val STATE_IS_SHOWING_FOOTER_MENU = "STATE_IS_SHOWING_FOOTER_MENU"
 
-  def newInstance(userId: String, userRequester: IConnectStore.UserRequester): BlockedUserProfileFragment = {
+  def newInstance(userId: String, userRequester: UserRequester): BlockedUserProfileFragment = {
     val newFragment = new BlockedUserProfileFragment
     val args = new Bundle
     args.putString(ARGUMENT_USER_REQUESTER, userRequester.toString)
@@ -96,7 +96,7 @@ class BlockedUserProfileFragment extends BaseFragment[BlockedUserProfileFragment
   private lazy val pictureSignal: Signal[ImageSource] = user.map(_.picture).collect { case Some(pic) => WireImage(pic) }
   private lazy val profileDrawable = new ImageAssetDrawable(pictureSignal, ImageAssetDrawable.ScaleType.CenterInside, ImageAssetDrawable.RequestBuilder.Round)
 
-  private var userRequester = Option.empty[IConnectStore.UserRequester]
+  private var userRequester = Option.empty[UserRequester]
   private var isShowingFooterMenu = true
   private var goToConversationWithUser = false
 
@@ -123,7 +123,7 @@ class BlockedUserProfileFragment extends BaseFragment[BlockedUserProfileFragment
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
-    userRequester = Option(IConnectStore.UserRequester.valueOf(getArguments.getString(ARGUMENT_USER_REQUESTER)))
+    userRequester = Option(UserRequester.valueOf(getArguments.getString(ARGUMENT_USER_REQUESTER)))
   }
 
   override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation = {
@@ -157,7 +157,7 @@ class BlockedUserProfileFragment extends BaseFragment[BlockedUserProfileFragment
     cancelButton.foreach(_.setIsFilled(true))
     smallUnblockButton.foreach(_.setIsFilled(true))
 
-    if (userRequester.contains(IConnectStore.UserRequester.PARTICIPANTS)) {
+    if (userRequester.contains(UserRequester.PARTICIPANTS)) {
       unblockButton.foreach(_.setVisibility(View.GONE))
       toggleUnblockAndFooterMenu(isShowingFooterMenu)
       footerMenu.foreach { menu =>

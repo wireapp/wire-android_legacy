@@ -24,10 +24,10 @@ import com.waz.model.UserId
 import com.waz.service.NetworkModeService
 import com.waz.utils.returning
 import com.waz.zclient.controllers.navigation.Page
-import com.waz.zclient.core.stores.connect.IConnectStore
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.connect.UserProfileContainer
+import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R}
 
@@ -44,7 +44,7 @@ class PendingConnectRequestManagerFragment extends BaseFragment[PendingConnectRe
   private lazy val navigationController = inject[NavigationController]
 
   private lazy val userRequester =
-    IConnectStore.UserRequester.valueOf(getArguments.getString(ArgUserRequester))
+    UserRequester.valueOf(getArguments.getString(ArgUserRequester))
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_connect_request_pending_manager, container, false)
@@ -85,7 +85,7 @@ class PendingConnectRequestManagerFragment extends BaseFragment[PendingConnectRe
 
   private def restoreCurrentPageAfterClosingOverlay() = {
     val targetLeftPage =
-      if (userRequester == IConnectStore.UserRequester.CONVERSATION)
+      if (userRequester == UserRequester.CONVERSATION)
         Page.PENDING_CONNECT_REQUEST_AS_CONVERSATION
       else
         Page.PENDING_CONNECT_REQUEST
@@ -103,7 +103,7 @@ object PendingConnectRequestManagerFragment {
   val ArgUserId = "ARGUMENT_USER_ID"
   val ArgUserRequester = "ARGUMENT_USER_REQUESTER"
 
-  def newInstance(userId: UserId, userRequester: IConnectStore.UserRequester): PendingConnectRequestManagerFragment =
+  def newInstance(userId: UserId, userRequester: UserRequester): PendingConnectRequestManagerFragment =
     returning(new PendingConnectRequestManagerFragment)(fragment =>
       fragment.setArguments(returning(new Bundle) { args =>
         args.putString(ArgUserId, userId.str)

@@ -32,7 +32,7 @@ import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.utils.{Serialized, returning, _}
 import com.waz.zclient.conversation.ConversationController.ConversationChange
-import com.waz.zclient.core.stores.IStoreFactory
+import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.utils.Callback
 import com.waz.zclient.{Injectable, Injector, R}
@@ -45,7 +45,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationController")
 
   val zms = inject[Signal[ZMessaging]]
-  private lazy val convStore = inject[IStoreFactory].conversationStore
+  lazy val convListController = inject[ConversationListController]
 
   private var lastConvId = Option.empty[ConvId]
 
@@ -161,8 +161,8 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   def setCurrentConversationToNext(requester: ConversationChangeRequester): Future[Unit] =
     currentConvId.head
-      .map { id => convStore.nextConversation(id) }
-      .map { convId => selectConv(convId, requester) }
+      .flatMap { id => convListController.nextConversation(id) }
+      .flatMap { convId => selectConv(convId, requester) }
 
   def archive(convId: ConvId, archive: Boolean): Unit = {
     zms.head.map { _.convsUi.setConversationArchived(convId, archive) }
@@ -184,9 +184,6 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   def createGroupConversation(name: Option[String], users: Set[UserId], teamOnly: Boolean): Future[ConversationData] =
     zms.head.flatMap { z => z.convsUi.createGroupConversation(name, users, teamOnly).map(_._1) }
-
-  // TODO: remove when not used anymore
-  def iConv(id: ConvId): IConversation = convStore.getConversation(id.str)
 
   def withCurrentConvName(callback: Callback[String]): Unit = currentConvName.head.foreach(callback.callback)(Threading.Ui)
 

@@ -17,8 +17,6 @@
  */
 package com.waz.zclient.core.stores.inappnotification;
 
-import android.support.annotation.Nullable;
-import com.waz.api.ErrorsList;
 import com.waz.zclient.core.stores.IStore;
 
 public interface IInAppNotificationStore extends IStore {
@@ -30,6 +28,4 @@ public interface IInAppNotificationStore extends IStore {
     void removeInAppNotificationObserver(SyncErrorObserver messageListener);
 
     void dismissError(String errorId);
-
-    @Nullable ErrorsList.ErrorDescription getError(String errorId);
 }

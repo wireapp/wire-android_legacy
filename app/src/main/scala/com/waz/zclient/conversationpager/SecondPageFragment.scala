@@ -30,9 +30,9 @@ import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.connect.{ConnectRequestFragment, PendingConnectRequestManagerFragment}
 import com.waz.zclient.controllers.navigation.{INavigationController, Page, PagerControllerObserver}
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.core.stores.connect.IConnectStore.UserRequester
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.pages.main.conversation.ConversationManagerFragment
+import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.ui.utils.MathUtils
 import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R}
 

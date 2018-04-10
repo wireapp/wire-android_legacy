@@ -17,37 +17,15 @@
  */
 package com.waz.zclient.core.stores
 
-import com.waz.zclient.core.stores.api.IZMessagingApiStore
-import com.waz.zclient.core.stores.connect.IConnectStore
-import com.waz.zclient.core.stores.conversation.IConversationStore
 import com.waz.zclient.core.stores.inappnotification.IInAppNotificationStore
-import com.waz.zclient.core.stores.network.INetworkStore
-import com.waz.zclient.core.stores.pickuser.IPickUserStore
-import com.waz.zclient.core.stores.profile.IProfileStore
 
 trait IStoreFactory {
   def tearDown(): Unit
 
   def isTornDown: Boolean
 
-  /* managing the conversation list */
-  def conversationStore: IConversationStore
-
-  /* managing settings and properties of the user */
-  def profileStore: IProfileStore
-
-  /* managing the pick user view */
-  def pickUserStore: IPickUserStore
-
-  /* managing connecting & blocking to users */
-  def connectStore: IConnectStore
-
   /* In App notification store (chathead, knocks) */
   def inAppNotificationStore: IInAppNotificationStore
-
-  def zMessagingApiStore: IZMessagingApiStore
-
-  def networkStore: INetworkStore
 
   def reset(): Unit
 }

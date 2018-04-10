@@ -654,7 +654,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
     }
 
     @Override
-    public void onAccentColorHasChanged(Object sender, int color) {
+    public void onAccentColorHasChanged(int color) {
         selectedLocationPin.setTextColor(color);
         marker = null;
     }

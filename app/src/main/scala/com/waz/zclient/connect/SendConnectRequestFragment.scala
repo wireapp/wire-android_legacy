@@ -36,12 +36,12 @@ import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleTyp
 import com.waz.zclient.common.views.ImageController.WireImage
 import com.waz.zclient.connect.PendingConnectRequestFragment.ArgUserRequester
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.core.stores.connect.IConnectStore
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.connect.UserProfileContainer
 import com.waz.zclient.pages.main.participants.ProfileAnimation
 import com.waz.zclient.paintcode.GuestIcon
+import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.views.ZetaButton
 import com.waz.zclient.utils.ContextUtils._
@@ -61,7 +61,7 @@ class SendConnectRequestFragment extends BaseFragment[SendConnectRequestFragment
   implicit def context: Context = getActivity
 
   private lazy val userToConnectId = UserId(getArguments.getString(ArgumentUserId))
-  private lazy val userRequester = IConnectStore.UserRequester.valueOf(getArguments.getString(ArgumentUserRequester))
+  private lazy val userRequester = UserRequester.valueOf(getArguments.getString(ArgumentUserRequester))
 
   private lazy val usersController = inject[UsersController]
   private lazy val userAccountsController = inject[UserAccountsController]
@@ -76,7 +76,7 @@ class SendConnectRequestFragment extends BaseFragment[SendConnectRequestFragment
   private lazy val removeConvMemberFeatureEnabled = for {
     convId <- conversationController.currentConvId
     permission <- userAccountsController.hasRemoveConversationMemberPermission(convId)
-  } yield permission && userRequester == IConnectStore.UserRequester.PARTICIPANTS
+  } yield permission && userRequester == UserRequester.PARTICIPANTS
 
   private lazy val connectButton = returning(view[ZetaButton](R.id.zb__send_connect_request__connect_button)) { vh =>
     accentColorController.accentColor.onUi { color => vh.foreach(_.setAccentColor(color.getColor)) }
@@ -141,8 +141,8 @@ class SendConnectRequestFragment extends BaseFragment[SendConnectRequestFragment
     def defaultAnimation = super.onCreateAnimation(transit, enter, nextAnim)
 
     def isConvRequester = {
-      val userRequester = IConnectStore.UserRequester.valueOf(getArguments.getString(ArgUserRequester))
-      userRequester == IConnectStore.UserRequester.CONVERSATION
+      val userRequester = UserRequester.valueOf(getArguments.getString(ArgUserRequester))
+      userRequester == UserRequester.CONVERSATION
     }
 
     if (isConvRequester || nextAnim != 0) defaultAnimation
@@ -180,7 +180,7 @@ class SendConnectRequestFragment extends BaseFragment[SendConnectRequestFragment
     val backgroundContainer = findById[View](R.id.background_container)
     backgroundContainer.setClickable(true)
 
-    if (userRequester == IConnectStore.UserRequester.PARTICIPANTS) {
+    if (userRequester == UserRequester.PARTICIPANTS) {
       backgroundContainer.setBackgroundColor(Color.TRANSPARENT)
       footerMenu.foreach(_.setVisibility(View.VISIBLE))
       connectButton.foreach(_.setVisibility(View.GONE))
@@ -222,7 +222,7 @@ object SendConnectRequestFragment {
   val ArgumentUserId = "ARGUMENT_USER_ID"
   val ArgumentUserRequester = "ARGUMENT_USER_REQUESTER"
 
-  def newInstance(userId: String, userRequester: IConnectStore.UserRequester): SendConnectRequestFragment =
+  def newInstance(userId: String, userRequester: UserRequester): SendConnectRequestFragment =
     returning(new SendConnectRequestFragment)(fragment =>
       fragment.setArguments(returning(new Bundle) { args =>
         args.putString(ArgumentUserId, userId)

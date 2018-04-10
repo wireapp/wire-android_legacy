@@ -40,7 +40,6 @@ import com.waz.utils.returning
 import com.waz.zclient.Intents._
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.views.AccountTabsView
-import com.waz.zclient.controllers.accentcolor.AccentColorChangeRequester
 import com.waz.zclient.pages.main.profile.camera.{CameraContext, CameraFragment}
 import com.waz.zclient.preferences.pages.{DevicesBackStackKey, OptionsView, ProfileBackStackKey}
 import com.waz.zclient.utils.{BackStackNavigator, RingtoneUtils, ViewUtils}
@@ -103,7 +102,7 @@ class PreferencesActivity extends BaseActivity
 
     accentColor.on(Threading.Ui) { color =>
       getControllerFactory.getUserPreferencesController.setLastAccentColor(color.getColor())
-      getControllerFactory.getAccentColorController.setColor(AccentColorChangeRequester.REMOTE, color.getColor())
+      getControllerFactory.getAccentColorController.setColor(color.getColor())
     }
 
     accountTabs.onTabClick.onUi { account =>

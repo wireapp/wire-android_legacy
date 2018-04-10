@@ -451,7 +451,7 @@ public class CameraFragment extends BaseFragment<CameraFragment.Container> imple
     }
 
     @Override
-    public void onAccentColorHasChanged(Object sender, int color) {
+    public void onAccentColorHasChanged(int color) {
         previewProgressBar.setTextColor(color);
     }
 

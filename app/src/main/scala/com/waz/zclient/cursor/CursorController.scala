@@ -29,7 +29,7 @@ import com.waz.api._
 import com.waz.content.UserPreferences
 import com.waz.model.{ConversationData, MessageData}
 import com.waz.permissions.PermissionsService
-import com.waz.service.ZMessaging
+import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers._
@@ -40,7 +40,6 @@ import com.waz.zclient.controllers.location.ILocationController
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversationlist.ConversationListController
-import com.waz.zclient.core.stores.network.{DefaultNetworkAction, INetworkStore}
 import com.waz.zclient.messages.MessageBottomSheetDialog.MessageAction
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
@@ -242,7 +241,6 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
   lazy val locationController = inject[ILocationController]
   lazy val soundController = inject[SoundController]
   lazy val permissions = inject[PermissionsService]
-  lazy val networkStore = inject[INetworkStore]
   lazy val activity = inject[Activity]
 
   import CursorMenuItem._
@@ -255,15 +253,12 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
     case Camera =>
         keyboard ! KeyboardState.ExtendedCursor(ExtendedCursorContainer.Type.IMAGES)
     case Ping =>
-      networkStore.doIfHasInternetOrNotifyUser(new DefaultNetworkAction() {
-        override def execute(networkMode: NetworkMode): Unit = for {
-          z <- zms.head
-          cId <- conversationController.currentConvId.head
-          _ <- z.convsUi.knock(cId)
-        } {
-          soundController.playPingFromMe()
-        }
-      })
+      for {
+        true <- inject[NetworkModeService].networkMode.map(m => m != NetworkMode.OFFLINE && m != NetworkMode.UNKNOWN).head
+        z    <- zms.head
+        cId  <- conversationController.currentConvId.head
+        _    <- z.convsUi.knock(cId)
+      } soundController.playPingFromMe()
     case Sketch =>
       drawingController.showDrawing(null, IDrawingController.DrawingDestination.SKETCH_BUTTON)
     case File =>

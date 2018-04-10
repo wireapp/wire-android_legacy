@@ -22,7 +22,6 @@ import android.view.View.OnLongClickListener
 import android.view.{View, ViewGroup}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.utils.events.{EventContext, EventStream, Signal}
@@ -39,43 +38,22 @@ class ConversationListAdapter(implicit injector: Injector, eventContext: EventCo
 
   lazy val zms = inject[Signal[ZMessaging]]
   lazy val userAccountsController = inject[UserAccountsController]
-  val currentMode = Signal[ListMode]()
 
   var _conversations = Seq.empty[ConversationData]
   var _incomingRequests = (Seq.empty[ConversationData], Seq.empty[UserId])
   var _currentAccount = Option.empty[AccountId]
-
-  lazy val conversationListData = for {
-    z             <- zms
-    processing    <- z.push.processing
-    if !processing
-    conversations <- z.convsStorage.convsSignal
-    incomingConvs = conversations.conversations.filter(Incoming.filter).toSeq
-    members <- Signal.sequence(incomingConvs.map(c => z.membersStorage.activeMembers(c.id).map(_.find(_ != z.selfUserId))):_*)
-    mode <- currentMode
-  } yield {
-    val regular = conversations.conversations
-      .filter{ conversationData =>
-        mode.filter(conversationData)
-      }
-      .toSeq
-      .sorted(mode.sort)
-    val incoming = if (mode == Normal) (incomingConvs, members.flatten) else (Seq(), Seq())
-    (z.accountId, regular, incoming)
-  }
 
   val onConversationClick = EventStream[ConvId]()
   val onConversationLongClick = EventStream[ConversationData]()
 
   var maxAlpha = 1.0f
 
-  conversationListData.onUi {
-    case (currentAccount, convs, requests) =>
-      _conversations = convs
-      _incomingRequests = requests
-      _currentAccount = Some(currentAccount)
-      verbose(s"Conversation list updated => conversations: ${convs.size}, requests: ${requests._2.size}")
-      notifyDataSetChanged()
+  def setData(accountId: AccountId, convs: Seq[ConversationData], incoming: (Seq[ConversationData], Seq[UserId])): Unit = {
+    _conversations = convs
+    _incomingRequests = incoming
+    _currentAccount = Some(accountId)
+    verbose(s"Conversation list updated => conversations: ${convs.size}, requests: ${incoming._2.size}")
+    notifyDataSetChanged()
   }
 
   private def getConversation(position: Int): Option[ConversationData] =
@@ -164,26 +142,22 @@ object ConversationListAdapter {
 
   case object Normal extends ListMode {
     override lazy val nameId = R.string.conversation_list__header__title
-    override val filter = (c: ConversationData) =>
-      Set(ConversationType.OneToOne, ConversationType.Group, ConversationType.WaitForConnection).contains(c.convType) && !c.hidden && !c.archived
+    override val filter = ConversationListController.RegularListFilter
   }
 
   case object Archive extends ListMode {
     override lazy val nameId = R.string.conversation_list__header__archive_title
-    override val filter = (c: ConversationData) =>
-      Set(ConversationType.OneToOne, ConversationType.Group, ConversationType.Incoming, ConversationType.WaitForConnection).contains(c.convType) && !c.hidden && c.archived
+    override val filter = ConversationListController.ArchivedListFilter
   }
 
   case object Incoming extends ListMode {
     override lazy val nameId = R.string.conversation_list__header__archive_title
-    override val filter = (c: ConversationData) =>
-      c.convType == ConversationType.Incoming && !c.hidden
+    override val filter = ConversationListController.IncomingListFilter
   }
 
   case object Integration extends ListMode {
     override lazy val nameId = R.string.conversation_list__header__archive_title
-    override val filter = (c: ConversationData) =>
-      c.convType == ConversationType.Group && !c.hidden
+    override val filter = ConversationListController.IntegrationFilter
   }
 
   trait ConversationRowViewHolder extends RecyclerView.ViewHolder

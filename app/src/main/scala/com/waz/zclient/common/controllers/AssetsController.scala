@@ -27,7 +27,7 @@ import android.view.{Gravity, View}
 import android.widget.{TextView, Toast}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.api.{ImageAsset, Message}
+import com.waz.api.Message
 import com.waz.content.UserPreferences.DownloadImagesAlways
 import com.waz.model.{AssetData, AssetId, MessageData, Mime}
 import com.waz.service.ZMessaging
@@ -40,7 +40,6 @@ import com.waz.utils.wrappers.{AndroidURIUtil, URI}
 import com.waz.zclient.controllers.drawing.IDrawingController
 import com.waz.zclient.controllers.drawing.IDrawingController.DrawingMethod
 import com.waz.zclient.controllers.singleimage.ISingleImageController
-import com.waz.zclient.core.api.scala.ModelObserver
 import com.waz.zclient.messages.MessageBottomSheetDialog.MessageAction
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.ui.utils.TypefaceUtils
@@ -49,7 +48,6 @@ import com.waz.zclient.{Injectable, Injector, R}
 import org.threeten.bp.Duration
 
 import scala.PartialFunction._
-import scala.concurrent.Promise
 import scala.util.Success
 
 class AssetsController(implicit context: Context, inj: Injector, ec: EventContext) extends Injectable { controller =>
@@ -111,27 +109,8 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     }
 
   //FIXME: don't use java api
-  def openDrawingFragment(msg: MessageData, drawingMethod: DrawingMethod) = {
-    // obtain java message and wait for image asset to be loaded,
-    // this is required for SingleImageFragment to work properly
-    val m = ZMessaging.currentUi.messages.cachedOrNew(msg.id)
-    val p = Promise[ImageAsset]()
-    val imObserver = new ModelObserver[ImageAsset] {
-      override def updated(img: ImageAsset): Unit = if (img.getWidth > 0) p.trySuccess(img)
-    }
-    val observer = new ModelObserver[Message] {
-      override def updated(model: Message): Unit = imObserver.setAndUpdate(model.getImage)
-    }
-    observer.setAndUpdate(m)
-    p.future.onComplete { _ =>
-      observer.clear()
-      imObserver.clear()
-    }
-    p.future foreach { img =>
-      verbose(s"image loaded, opening drawing fragment for: $img")
-      drawingController.showDrawing(img, IDrawingController.DrawingDestination.SINGLE_IMAGE_VIEW, drawingMethod)
-    }
-  }
+  def openDrawingFragment(msg: MessageData, drawingMethod: DrawingMethod) =
+    drawingController.showDrawing(ZMessaging.currentUi.images.getImageAsset(msg.assetId), IDrawingController.DrawingDestination.SINGLE_IMAGE_VIEW, drawingMethod)
 
   def openFile(asset: AssetData) =
     assets.head.flatMap(_.getContentUri(asset.id)) foreach {

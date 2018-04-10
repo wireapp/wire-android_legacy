@@ -129,7 +129,4 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
       inject[SoundController].playAlert()
     case _ =>
   }(Threading.Ui)
-
-
-
 }

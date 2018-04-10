@@ -29,19 +29,17 @@ import com.waz.service.call.Avs.VideoReceiveState
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.{ButtonSignal, ClockSignal, Signal}
+import com.waz.utils.events.{ButtonSignal, ClockSignal, EventContext, Signal}
 import com.waz.zclient._
 import com.waz.zclient.calling.views.CallControlButtonView.{ButtonColor, ButtonSettings}
 import org.threeten.bp.Duration._
 import org.threeten.bp.Instant._
 import org.threeten.bp.{Duration, Instant}
 
-class CurrentCallController(implicit inj: Injector, cxt: WireContext) extends Injectable { self =>
+class CurrentCallController(implicit inj: Injector, cxt: WireContext, ec: EventContext) extends Injectable { self =>
 
   val glob = inject[GlobalCallingController]
   import glob._
-
-  private implicit val eventContext = cxt.eventContext
 
   import Threading.Implicits.Background
 

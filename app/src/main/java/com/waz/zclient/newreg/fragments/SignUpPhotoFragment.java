@@ -269,7 +269,7 @@ public class SignUpPhotoFragment extends BaseFragment<SignUpPhotoFragment.Contai
     }
 
     @Override
-    public void onAccentColorHasChanged(Object sender, int color) {
+    public void onAccentColorHasChanged(int color) {
         chooseOwnButton.setAccentColor(color);
         keepButton.setAccentColor(color);
         keepButton.setTextColor(ContextUtils.getColorWithTheme(R.color.text__primary_dark, getContext()));

@@ -15,11 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.core.stores.pickuser;
+package com.waz.zclient.participants;
 
-import com.waz.api.User;
-import com.waz.zclient.core.stores.IStore;
-
-public interface IPickUserStore extends IStore {
-    User getUser(String userId);
+public enum UserRequester {
+    SEARCH, CONVERSATION, PARTICIPANTS, INVITE, POPOVER, CALL
 }

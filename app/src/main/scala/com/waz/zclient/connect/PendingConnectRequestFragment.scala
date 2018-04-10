@@ -32,8 +32,7 @@ import com.waz.utils.returning
 import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.common.views.ImageController.WireImage
-import com.waz.zclient.core.stores.connect.IConnectStore
-import com.waz.zclient.core.stores.connect.IConnectStore.UserRequester
+import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.connect.UserProfileContainer
@@ -56,7 +55,7 @@ class PendingConnectRequestFragment extends BaseFragment[PendingConnectRequestFr
   private lazy val zms              = inject[Signal[ZMessaging]]
 
   private lazy val userId         = UserId(getArguments.getString(ArgUserId))
-  private lazy val userRequester  = IConnectStore.UserRequester.valueOf(getArguments.getString(ArgUserRequester))
+  private lazy val userRequester  = UserRequester.valueOf(getArguments.getString(ArgUserRequester))
 
   private lazy val user  = usersController.user(userId)
   private lazy val userConnection = user.map(_.connection)
@@ -98,8 +97,8 @@ class PendingConnectRequestFragment extends BaseFragment[PendingConnectRequestFr
   override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation = {
     def defaultAnimation = super.onCreateAnimation(transit, enter, nextAnim)
     def isConvRequester = {
-      val userRequester = IConnectStore.UserRequester.valueOf(getArguments.getString(ArgUserRequester))
-      userRequester == IConnectStore.UserRequester.CONVERSATION
+      val userRequester = UserRequester.valueOf(getArguments.getString(ArgUserRequester))
+      userRequester == UserRequester.CONVERSATION
     }
 
     if (isConvRequester || nextAnim != 0) defaultAnimation
@@ -132,7 +131,7 @@ class PendingConnectRequestFragment extends BaseFragment[PendingConnectRequestFr
 
     userNameView.foreach { v =>
       val paddingTop =
-        if (userRequester == IConnectStore.UserRequester.PARTICIPANTS) 0
+        if (userRequester == UserRequester.PARTICIPANTS) 0
         else getDimenPx(R.dimen.wire__padding__regular)
 
       v.setPaddingRelative(0, paddingTop, 0, 0)
@@ -144,7 +143,7 @@ class PendingConnectRequestFragment extends BaseFragment[PendingConnectRequestFr
           usersController.connectToUser(userId).foreach(_.foreach { _ =>
             getContainer.onAcceptedConnectRequest(userId)
           })
-        case ConnectionStatus.PENDING_FROM_OTHER if userRequester == IConnectStore.UserRequester.PARTICIPANTS =>
+        case ConnectionStatus.PENDING_FROM_OTHER if userRequester == UserRequester.PARTICIPANTS =>
           usersController.connectToUser(userId).foreach(_.foreach { _ =>
             getContainer.onAcceptedConnectRequest(userId)
           })
@@ -155,7 +154,7 @@ class PendingConnectRequestFragment extends BaseFragment[PendingConnectRequestFr
         case _ =>
       }
       override def onRightActionClicked(): Unit = userConnection.head foreach {
-        case ConnectionStatus.PENDING_FROM_OTHER if userRequester == IConnectStore.UserRequester.PARTICIPANTS =>
+        case ConnectionStatus.PENDING_FROM_OTHER if userRequester == UserRequester.PARTICIPANTS =>
           getContainer.showRemoveConfirmation(userId)
         case _ =>
       }
@@ -170,7 +169,7 @@ object PendingConnectRequestFragment {
   val ArgUserId = "ARGUMENT_USER_ID"
   val ArgUserRequester = "ARGUMENT_USER_REQUESTER"
 
-  def newInstance(userId: UserId, userRequester: IConnectStore.UserRequester): PendingConnectRequestFragment =
+  def newInstance(userId: UserId, userRequester: UserRequester): PendingConnectRequestFragment =
     returning(new PendingConnectRequestFragment)(fragment =>
       fragment.setArguments(
         returning(new Bundle) { args =>

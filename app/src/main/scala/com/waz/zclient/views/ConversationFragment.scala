@@ -35,6 +35,7 @@ import com.waz.api.impl.ContentUriAssetForUpload
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{MessageContent => _, _}
 import com.waz.permissions.PermissionsService
+import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{EventStreamWithAuxSignal, Signal}
 import com.waz.utils.returningF
@@ -56,9 +57,8 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.ConversationController.ConversationChange
 import com.waz.zclient.conversation.toolbar.AudioMessageRecordingView
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
-import com.waz.zclient.core.stores.inappnotification.SyncErrorObserver
 import com.waz.zclient.cursor.{CursorCallback, CursorController, CursorView}
-import com.waz.zclient.messages.MessagesListView
+import com.waz.zclient.messages.{MessagesController, MessagesListView}
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
 import com.waz.zclient.pages.extendedcursor.emoji.EmojiKeyboardLayout
@@ -78,9 +78,8 @@ import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, SquareOrientation, ViewUtils}
 import com.waz.zclient.views.e2ee.ShieldView
-import com.waz.zclient.{FragmentHelper, R}
+import com.waz.zclient.{ErrorsController, FragmentHelper, R}
 
-import scala.collection.JavaConversions._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -88,11 +87,15 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
   import ConversationFragment._
   import Threading.Implicits.Ui
 
+  private lazy val zms = inject[Signal[ZMessaging]]
+
   private lazy val convController       = inject[ConversationController]
+  private lazy val messagesController   = inject[MessagesController]
   private lazy val collectionController = inject[CollectionController]
   private lazy val permissions          = inject[PermissionsService]
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val keyboardController   = inject[KeyboardController]
+  private lazy val errorsController   = inject[ErrorsController]
 
   private val previewShown = Signal(false)
   private lazy val convChange = convController.convChanged.filter { _.to.isDefined }
@@ -195,7 +198,7 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
     super.onViewCreated(view, savedInstanceState)
 
     if (savedInstanceState != null) previewShown ! savedInstanceState.getBoolean(SAVED_STATE_PREVIEW, false)
-
+    zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
 
     implicit val ctx: Context = getActivity
 
@@ -335,7 +338,6 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
     getControllerFactory.getSingleImageController.addSingleImageObserver(singleImageObserver)
     getControllerFactory.getAccentColorController.addAccentColorObserver(accentColorObserver)
     getControllerFactory.getGlobalLayoutController.addKeyboardVisibilityObserver(keyboardVisibilityObserver)
-    getStoreFactory.inAppNotificationStore.addInAppNotificationObserver(syncErrorObserver)
     getControllerFactory.getSlidingPaneController.addObserver(slidingPaneObserver)
   }
 
@@ -372,7 +374,6 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
 
     if (!cursorView.isEditingMessage) draftMap.setCurrent(cursorView.getText.trim)
 
-    getStoreFactory.inAppNotificationStore.removeInAppNotificationObserver(syncErrorObserver)
     getControllerFactory.getGlobalLayoutController.removeKeyboardVisibilityObserver(keyboardVisibilityObserver)
     getControllerFactory.getAccentColorController.removeAccentColorObserver(accentColorObserver)
 
@@ -651,10 +652,7 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
 
     override def hideExtendedCursor(): Unit = if (extendedCursorContainer.isExpanded) extendedCursorContainer.close(false)
 
-    override def onMessageSent(msg: MessageData): Unit = {
-      getStoreFactory.networkStore.doIfHasInternetOrNotifyUser(null)
-      listView.scrollToBottom()
-    }
+    override def onMessageSent(msg: MessageData): Unit = listView.scrollToBottom()
 
     override def openExtendedCursor(tpe: ExtendedCursorContainer.Type): Unit = ConversationFragment.this.openExtendedCursor(tpe)
 
@@ -704,7 +702,7 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
   }
 
   private val accentColorObserver = new AccentColorObserver {
-    override def onAccentColorHasChanged(sender: Any, color: Int): Unit = {
+    override def onAccentColorHasChanged(color: Int): Unit = {
       loadingIndicatorView.setColor(color)
       extendedCursorContainer.setAccentColor(color)
     }
@@ -715,114 +713,114 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
       inject[CursorController].notifyKeyboardVisibilityChanged(keyboardIsVisible)
   }
 
-  private val syncErrorObserver = new SyncErrorObserver {
-    override def onSyncError(errorDescription: ErrorsList.ErrorDescription): Unit = errorDescription.getType match {
-      case ErrorType.CANNOT_SEND_ASSET_FILE_NOT_FOUND =>
-        ViewUtils.showAlertDialog(
+  private def handleSyncError(err: ErrorData): Unit = err.errType match {
+    case ErrorType.CANNOT_SEND_ASSET_FILE_NOT_FOUND =>
+      ViewUtils.showAlertDialog(
+        getActivity,
+        R.string.asset_upload_error__not_found__title,
+        R.string.asset_upload_error__not_found__message,
+        R.string.asset_upload_error__not_found__button,
+        null,
+        true
+      )
+      errorsController.dismissSyncError(err.id)
+    case ErrorType.CANNOT_SEND_ASSET_TOO_LARGE =>
+      val maxAllowedSizeInBytes = AssetFactory.getMaxAllowedAssetSizeInBytes
+      if (maxAllowedSizeInBytes > 0) {
+        val dialog = ViewUtils.showAlertDialog(
           getActivity,
-          R.string.asset_upload_error__not_found__title,
-          R.string.asset_upload_error__not_found__message,
-          R.string.asset_upload_error__not_found__button,
+          R.string.asset_upload_error__file_too_large__title,
+          R.string.asset_upload_error__file_too_large__message_default,
+          R.string.asset_upload_error__file_too_large__button,
           null,
           true
         )
-        errorDescription.dismiss()
-      case ErrorType.CANNOT_SEND_ASSET_TOO_LARGE =>
-        val maxAllowedSizeInBytes = AssetFactory.getMaxAllowedAssetSizeInBytes
-        if (maxAllowedSizeInBytes > 0) {
-          val dialog = ViewUtils.showAlertDialog(
-            getActivity,
-            R.string.asset_upload_error__file_too_large__title,
-            R.string.asset_upload_error__file_too_large__message_default,
-            R.string.asset_upload_error__file_too_large__button,
-            null,
-            true
-          )
-          dialog.setMessage(getString(R.string.asset_upload_error__file_too_large__message, Formatter.formatShortFileSize(getContext, maxAllowedSizeInBytes)))
-        }
-        errorDescription.dismiss()
-      case ErrorType.RECORDING_FAILURE =>
-        ViewUtils.showAlertDialog(
-          getActivity,
-          R.string.audio_message__recording__failure__title,
-          R.string.audio_message__recording__failure__message,
-          R.string.alert_dialog__confirmation,
-          null,
-          true
-        )
-        errorDescription.dismiss()
-      case ErrorType.CANNOT_SEND_MESSAGE_TO_UNVERIFIED_CONVERSATION =>
-        onErrorCanNotSentMessageToUnverifiedConversation(errorDescription)
-      case err =>
-        error(s"Unhandled onSyncError: $errorDescription")
-    }
+        dialog.setMessage(getString(R.string.asset_upload_error__file_too_large__message, Formatter.formatShortFileSize(getContext, maxAllowedSizeInBytes)))
+      }
+      errorsController.dismissSyncError(err.id)
+    case ErrorType.RECORDING_FAILURE =>
+      ViewUtils.showAlertDialog(
+        getActivity,
+        R.string.audio_message__recording__failure__title,
+        R.string.audio_message__recording__failure__message,
+        R.string.alert_dialog__confirmation,
+        null,
+        true
+      )
+      errorsController.dismissSyncError(err.id)
+    case ErrorType.CANNOT_SEND_MESSAGE_TO_UNVERIFIED_CONVERSATION =>
+      err.convId.foreach(onErrorCanNotSentMessageToUnverifiedConversation(err, _))
+    case errType =>
+      error(s"Unhandled onSyncError: $errType")
+  }
 
-    private def onErrorCanNotSentMessageToUnverifiedConversation(errorDescription: ErrorsList.ErrorDescription) =
-      if (getControllerFactory.getNavigationController.getCurrentPage == Page.MESSAGE_STREAM) {
-        KeyboardUtils.hideKeyboard(getActivity)
+  private def onErrorCanNotSentMessageToUnverifiedConversation(err: ErrorData, convId: ConvId) =
+    if (getControllerFactory.getNavigationController.getCurrentPage == Page.MESSAGE_STREAM) {
+      KeyboardUtils.hideKeyboard(getActivity)
 
-        (for {
-          self <- inject[UserAccountsController].currentUser.head
-          members <- convController.loadMembers(new ConvId(errorDescription.getConversation.getId))
-          unverifiedUsers = (members ++ self.map(Seq(_)).getOrElse(Nil)).filter {
-            !_.isVerified
-          }
-          unverifiedDevices <-
+      (for {
+        self <- inject[UserAccountsController].currentUser.head
+        members <- convController.loadMembers(convId)
+        unverifiedUsers = (members ++ self.map(Seq(_)).getOrElse(Nil)).filter { !_.isVerified }
+        unverifiedDevices <-
           if (unverifiedUsers.size == 1) Future.sequence(unverifiedUsers.map(u => convController.loadClients(u.id).map(_.filter(!_.isVerified)))).map(_.flatten.size)
           else Future.successful(0) // in other cases we don't need this number
-        } yield (self, unverifiedUsers, unverifiedDevices)).map { case (self, unverifiedUsers, unverifiedDevices) =>
+      } yield (self, unverifiedUsers, unverifiedDevices)).map { case (self, unverifiedUsers, unverifiedDevices) =>
 
-          val unverifiedNames = unverifiedUsers.map { u => if (self.map(_.id).contains(u.id)) getString(R.string.conversation_degraded_confirmation__header__you) else u.displayName }
+        val unverifiedNames = unverifiedUsers.map { u =>
+          if (self.map(_.id).contains(u.id)) getString(R.string.conversation_degraded_confirmation__header__you)
+          else u.displayName
+        }
 
-          val header =
-            if (unverifiedUsers.isEmpty) getResources.getString(R.string.conversation__degraded_confirmation__header__someone)
-            else if (unverifiedUsers.size == 1)
-              getResources.getQuantityString(R.plurals.conversation__degraded_confirmation__header__single_user, unverifiedDevices, unverifiedNames.head)
-            else getString(R.string.conversation__degraded_confirmation__header__multiple_user, unverifiedNames.mkString(","))
+        val header =
+          if (unverifiedUsers.isEmpty) getResources.getString(R.string.conversation__degraded_confirmation__header__someone)
+          else if (unverifiedUsers.size == 1)
+            getResources.getQuantityString(R.plurals.conversation__degraded_confirmation__header__single_user, unverifiedDevices, unverifiedNames.head)
+          else getString(R.string.conversation__degraded_confirmation__header__multiple_user, unverifiedNames.mkString(","))
 
-          val onlySelfChanged = unverifiedUsers.size == 1 && self.map(_.id).contains(unverifiedUsers.head.id)
+        val onlySelfChanged = unverifiedUsers.size == 1 && self.map(_.id).contains(unverifiedUsers.head.id)
 
-          val callback = new ConfirmationCallback {
-            override def positiveButtonClicked(checkboxIsSelected: Boolean): Unit = {
-              errorDescription.getMessages.toSeq.foreach(_.retry())
-              errorDescription.dismiss()
-            }
-
-            override def onHideAnimationEnd(confirmed: Boolean, cancelled: Boolean, checkboxIsSelected: Boolean): Unit =
-              if (!confirmed && !cancelled) {
-                if (onlySelfChanged) getContext.startActivity(ShowDevicesIntent(getActivity))
-                else participantsController.onShowParticipants ! Some(SingleParticipantFragment.TagDevices)
-              }
-
-            override def negativeButtonClicked(): Unit = {}
-
-            override def canceled(): Unit = {}
+        val callback = new ConfirmationCallback {
+          override def positiveButtonClicked(checkboxIsSelected: Boolean): Unit = {
+            messagesController.retryMessageSending(err.messages)
+            errorsController.dismissSyncError(err.id)
           }
 
-          val positiveButton = getString(R.string.conversation__degraded_confirmation__positive_action)
-          val negativeButton =
-            if (onlySelfChanged) getString(R.string.conversation__degraded_confirmation__negative_action_self)
-            else getResources.getQuantityString(R.plurals.conversation__degraded_confirmation__negative_action, unverifiedUsers.size)
+          override def onHideAnimationEnd(confirmed: Boolean, cancelled: Boolean, checkboxIsSelected: Boolean): Unit =
+            if (!confirmed && !cancelled) {
+              if (onlySelfChanged) getContext.startActivity(ShowDevicesIntent(getActivity))
+              else participantsController.onShowParticipants ! Some(SingleParticipantFragment.TagDevices)
+            }
 
-          val messageCount = Math.max(1, errorDescription.getMessages.toSeq.size)
-          val message = getResources.getQuantityString(R.plurals.conversation__degraded_confirmation__message, messageCount)
+          override def negativeButtonClicked(): Unit = {}
 
-          val request =
-            new ConfirmationRequest.Builder()
-              .withHeader(header)
-              .withMessage(message)
-              .withPositiveButton(positiveButton)
-              .withNegativeButton(negativeButton)
-              .withConfirmationCallback(callback)
-              .withCancelButton()
-              .withBackgroundImage(R.drawable.degradation_overlay)
-              .withWireTheme(inject[ThemeController].getThemeDependentOptionsTheme)
-              .build
-
-          getControllerFactory.getConfirmationController.requestConfirmation(request, IConfirmationController.CONVERSATION)
+          override def canceled(): Unit = {}
         }
+
+        val positiveButton = getString(R.string.conversation__degraded_confirmation__positive_action)
+        val negativeButton =
+          if (onlySelfChanged) getString(R.string.conversation__degraded_confirmation__negative_action_self)
+          else getResources.getQuantityString(R.plurals.conversation__degraded_confirmation__negative_action, unverifiedUsers.size)
+
+        val messageCount = Math.max(1, err.messages.size)
+        val message = getResources.getQuantityString(R.plurals.conversation__degraded_confirmation__message, messageCount)
+
+        val request =
+          new ConfirmationRequest.Builder()
+            .withHeader(header)
+            .withMessage(message)
+            .withPositiveButton(positiveButton)
+            .withNegativeButton(negativeButton)
+            .withConfirmationCallback(callback)
+            .withCancelButton()
+            .withBackgroundImage(R.drawable.degradation_overlay)
+            .withWireTheme(inject[ThemeController].getThemeDependentOptionsTheme)
+            .build
+
+        getControllerFactory.getConfirmationController.requestConfirmation(request, IConfirmationController.CONVERSATION)
       }
-  }
+
+    }
 
   private val slidingPaneObserver = new SlidingPaneObserver {
     override def onPanelSlide(panel: View, slideOffset: Float): Unit = {}
