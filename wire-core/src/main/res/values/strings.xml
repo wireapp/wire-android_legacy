@@ -286,14 +286,14 @@
 
     <!-- Conversation actions -->
     <string name="conversation__action__rename">Rename</string>
-    <string name="conversation__action__delete">Delete</string>
+    <string name="conversation__action__delete">Delete content…</string>
     <string name="conversation__action__archive">Archive</string>
     <string name="conversation__action__unarchive">Unarchive</string>
     <string name="conversation__action__add_people">ADD PEOPLE</string>
     <string name="conversation__action__create_group">CREATE GROUP</string>
     <string name="conversation__action__silence">Mute</string>
     <string name="conversation__action__unsilence">Unmute</string>
-    <string name="conversation__action__leave">Leave</string>
+    <string name="conversation__action__leave">Leave…</string>
     <string name="conversation__action__remove">Remove</string>
     <string name="conversation__action__call">Call</string>
     <string name="conversation__action__picture">Picture</string>
@@ -1374,7 +1374,7 @@
 
     <string name="export_generic_error_title">The file could not be saved</string>
     <string name="export_generic_error_text">You may not have enough space or permission to save it there.</string>
-    <string name="backup_button">Try again</string>
+    <string name="backup_button">Back Up Now</string>
 
 
     <string name="backup_import_error_unknown">Something went wrong</string>

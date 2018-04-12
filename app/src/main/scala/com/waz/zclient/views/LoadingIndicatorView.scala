@@ -101,7 +101,7 @@ class LoadingIndicatorView(context: Context, attrs: AttributeSet, defStyle: Int)
     view.setVisible(false)
     view.setTextColor(Color.WHITE)
     view.setTypeface(getString(R.string.wire__typeface__regular))
-    view.setTextSize(getDimen(R.dimen.wire__text_size__tiny))
+    view.setTextSize(TypedValue.COMPLEX_UNIT_PX, getDimenPx(R.dimen.wire__text_size__smaller))
 
     val params = new FrameLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
     params.gravity = Gravity.CENTER
