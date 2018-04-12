@@ -32,7 +32,7 @@ import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.views.MenuRowButton
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, ContextUtils, ViewUtils}
-import com.waz.zclient.{R, SpinnerController, ViewHelper}
+import com.waz.zclient.{BuildConfig, R, SpinnerController, ViewHelper}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -66,6 +66,7 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int) extend
     backupProcess.onComplete {
       case Success(file) =>
         val intent = ShareCompat.IntentBuilder.from(context.asInstanceOf[Activity]).setType("application/octet-stream").setStream(Uri.fromFile(file)).getIntent
+        if (BuildConfig.DEVELOPER_FEATURES_ENABLED) intent.setPackage("com.wire.testinggallery")
         context.startActivity(intent)
         spinnerController.hideSpinner(Some(ContextUtils.getString(R.string.back_up_progress_complete)))
       case Failure(err) =>
