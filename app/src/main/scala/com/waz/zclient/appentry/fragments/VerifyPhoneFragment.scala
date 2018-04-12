@@ -40,6 +40,8 @@ import com.waz.zclient.ui.text.TypefaceEditText
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.DeprecationUtils
 
+import scala.concurrent.Future
+
 object VerifyPhoneFragment {
   val Tag: String = classOf[VerifyPhoneFragment].getName
   private val PhoneArg: String = "phone_arg"
@@ -201,7 +203,8 @@ class VerifyPhoneFragment extends BaseFragment[VerifyPhoneFragment.Container] wi
         case Right(userId) =>
           getContainer.enableProgress(false)
           for {
-            _ <- accountService.createAccountManager(userId, None)
+            am <- accountService.createAccountManager(userId, None)
+            _ <- am.fold(Future.successful(()))(_.getOrRegisterClient(None).map(_ => ()))
             _ <- accountService.setAccount(Some(userId))
           } yield activity.onEnterApplication(false)
       }

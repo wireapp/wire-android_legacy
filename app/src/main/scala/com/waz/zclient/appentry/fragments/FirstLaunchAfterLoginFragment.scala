@@ -44,6 +44,7 @@ import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{FragmentHelper, R, ShareActivity}
 
 import scala.async.Async.{async, await}
+import scala.concurrent.Future
 
 object FirstLaunchAfterLoginFragment {
   val Tag: String = classOf[FirstLaunchAfterLoginFragment].getName
@@ -150,8 +151,13 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
     async {
       val userId = getStringArg(UserIdArg).map(UserId(_))
       if (userId.nonEmpty) {
-        await { accountsService.createAccountManager(userId.get, backup) }
+        val accountManager = await { accountsService.createAccountManager(userId.get, backup) }
+        val account = await { accountsService.activeAccount.head }
         await { accountsService.setAccount(userId) }
+        await { (for {
+          account <- account
+          accountManager <- accountManager
+        } yield accountManager.getOrRegisterClient(account.password)).getOrElse(Future.successful(())) }
         activity.onEnterApplication(openSettings = false)
       }
     } logFailure() recover {
