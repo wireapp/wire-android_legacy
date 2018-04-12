@@ -260,20 +260,34 @@ class MainActivity extends BaseActivity
     }
   }
 
-  def replaceMainFragment(fragment: Fragment, tag: String, reverse: Boolean = false, addToBackStack: Boolean = true): Unit = {
-    verbose(s"replaceMainFragment: $tag")
-    val frag = Option(getSupportFragmentManager.findFragmentByTag(tag)) match {
+  def replaceMainFragment(fragment: Fragment, newTag: String, reverse: Boolean = false, addToBackStack: Boolean = true): Unit = {
+
+    import scala.collection.JavaConverters._
+    val oldTag = getSupportFragmentManager.getFragments.asScala.toList.flatMap(Option(_)).lastOption.flatMap {
+      case _: SetOrRequestPasswordFragment => Some(SetOrRequestPasswordFragment.Tag)
+      case _: VerifyEmailFragment          => Some(VerifyEmailFragment.Tag)
+      case _: AddEmailFragment             => Some(AddEmailFragment.Tag)
+      case _ => None
+    }
+
+    verbose(s"replaceMainFragment: $oldTag -> $newTag")
+
+    val (in, out) = (MainActivity.isSlideAnimation(oldTag, newTag), reverse) match {
+      case (true, true)  => (R.anim.fragment_animation_second_page_slide_in_from_left_no_alpha, R.anim.fragment_animation_second_page_slide_out_to_right_no_alpha)
+      case (true, false) => (R.anim.fragment_animation_second_page_slide_in_from_right_no_alpha, R.anim.fragment_animation_second_page_slide_out_to_left_no_alpha)
+      case _             => (R.anim.fade_in, R.anim.fade_out)
+    }
+
+    val frag = Option(getSupportFragmentManager.findFragmentByTag(newTag)) match {
       case Some(f) => returning(f)(_.setArguments(fragment.getArguments))
       case _       => fragment
     }
+
     val transaction = getSupportFragmentManager
       .beginTransaction
-      .setCustomAnimations(
-        if (reverse) R.anim.fragment_animation_second_page_slide_in_from_left_no_alpha else R.anim.fragment_animation_second_page_slide_in_from_right_no_alpha,
-        if (reverse) R.anim.fragment_animation_second_page_slide_out_to_right_no_alpha else R.anim.fragment_animation_second_page_slide_out_to_left_no_alpha
-      )
-      .replace(R.id.fl_main_content, frag, tag)
-    if (addToBackStack) transaction.addToBackStack(tag)
+      .setCustomAnimations(in, out)
+      .replace(R.id.fl_main_content, frag, newTag)
+    if (addToBackStack) transaction.addToBackStack(newTag)
     transaction.commit
     spinnerController.hideSpinner()
   }
@@ -518,5 +532,17 @@ class MainActivity extends BaseActivity
       .commit
 
   override def onUsernameSet(): Unit = replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.Tag, addToBackStack = false)
+}
+
+object MainActivity {
+  private val slideAnimations = Set(
+    (SetOrRequestPasswordFragment.Tag, VerifyEmailFragment.Tag),
+    (SetOrRequestPasswordFragment.Tag,  AddEmailFragment.Tag),
+    (VerifyEmailFragment.Tag, AddEmailFragment.Tag)
+  )
+
+  private def isSlideAnimation(oldTag: Option[String], newTag: String) = oldTag.fold(false) { old =>
+    slideAnimations.contains((old, newTag)) || slideAnimations.contains((newTag, old))
+  }
 }
 
