@@ -18,7 +18,7 @@
 package com.waz.zclient.preferences.dialogs
 
 import android.app.Dialog
-import android.content.DialogInterface.BUTTON_POSITIVE
+import android.content.DialogInterface.{BUTTON_NEUTRAL, BUTTON_POSITIVE}
 import android.os.Bundle
 import android.support.design.widget.TextInputLayout
 import android.support.v4.app.DialogFragment
@@ -29,6 +29,7 @@ import android.widget.{EditText, TextView}
 import com.waz.model.AccountData.Password
 import com.waz.utils.events.EventStream
 import com.waz.utils.returning
+import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.{FragmentHelper, R}
 
 import scala.util.Try
@@ -52,10 +53,10 @@ class RemoveDeviceDialog extends DialogFragment with FragmentHelper {
         }
     })
   }
+
   private lazy val textInputLayout = findById[TextInputLayout](root, R.id.til__remove_otr_device)
 
   override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
-
     passwordEditText
     textInputLayout
     Option(getArguments.getString(ErrorArg)).foreach(textInputLayout.setError)
@@ -65,6 +66,7 @@ class RemoveDeviceDialog extends DialogFragment with FragmentHelper {
       .setMessage(R.string.otr__remove_device__message)
       .setPositiveButton(R.string.otr__remove_device__button_delete, null)
       .setNegativeButton(R.string.otr__remove_device__button_cancel, null)
+      .setNeutralButton(R.string.new_reg__password__forgot, null)
       .create
   }
 
@@ -77,7 +79,19 @@ class RemoveDeviceDialog extends DialogFragment with FragmentHelper {
           dismiss()
         }
       })
+
+      d.getButton(BUTTON_NEUTRAL).setOnClickListener(new View.OnClickListener {
+        def onClick(v: View): Unit = inject[BrowserController].openUrl(getString(R.string.url_password_reset))
+      })
     }
+  }
+
+  override def onStop(): Unit = {
+    Try(getDialog.asInstanceOf[AlertDialog]).toOption.foreach { d =>
+      d.getButton(BUTTON_POSITIVE).setOnClickListener(null)
+      d.getButton(BUTTON_NEUTRAL).setOnClickListener(null)
+    }
+    super.onStop()
   }
 
   override def onActivityCreated(savedInstanceState: Bundle) = {
