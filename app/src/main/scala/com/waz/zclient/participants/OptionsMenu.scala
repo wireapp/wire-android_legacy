@@ -20,22 +20,18 @@ package com.waz.zclient.participants
 import android.content.Context
 import android.os.Bundle
 import android.support.design.widget.BottomSheetDialog
-import android.view.ViewGroup
+import android.view.{View, ViewGroup}
 import android.widget.{LinearLayout, TextView}
-import com.waz.model.ConvId
 import com.waz.utils.returning
 import com.waz.zclient.ui.animation.interpolators.penner.{Expo, Quart}
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.utils.ViewUtils.getView
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{DialogHelper, R}
+import com.waz.zclient.utils.ContextUtils._
 
-case class OptionsMenu(context: Context, inConvList: Boolean, convId: ConvId) extends BottomSheetDialog(context, R.style.message__bottom_sheet__base) with DialogHelper {
-  private implicit val ctx = context
-
-  val ctrl = OptionsMenuController(convId, inConvList)
-
-  private val data = ctrl.optionItems.disableAutowiring()
+case class OptionsMenu(context: Context, controller: OptionsMenuController) extends BottomSheetDialog(context, R.style.message__bottom_sheet__base) with DialogHelper {
+  private implicit val ctx: Context = context
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
@@ -44,7 +40,7 @@ case class OptionsMenu(context: Context, inConvList: Boolean, convId: ConvId) ex
 
     def params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewUtils.toPx(getContext, 48))
 
-    data.onUi { items =>
+    controller.optionItems.onUi { items =>
 
       view.removeAllViews()
 
@@ -52,13 +48,18 @@ case class OptionsMenu(context: Context, inConvList: Boolean, convId: ConvId) ex
         view.addView(returning(getLayoutInflater.inflate(R.layout.message__bottom__menu__row, view, false)) { itemView =>
 
           returning(getView[GlyphTextView](itemView, R.id.icon)) { v =>
-            v.setText(item.resGlyphId)
+            item.glyphId.fold(v.setVisibility(View.GONE)) { g =>
+              v.setVisibility(View.VISIBLE)
+              v.setText(g)
+            }
+            item.colorId.map(getColor).foreach(v.setTextColor(_))
           }
           returning(getView[TextView](itemView, R.id.text)) { v =>
-            v.setText(item.resTextId)
+            v.setText(item.titleId)
+            item.colorId.map(getColor).foreach(v.setTextColor(_))
           }
           itemView.onClick {
-            ctrl.onMenuItemClicked ! item
+            controller.onMenuItemClicked ! item
             dismiss()
           }
         }, params)

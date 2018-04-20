@@ -156,7 +156,7 @@ object ContextUtils {
       .setCancelable(false)
       .setTitle(headerRes)
       .setMessage(msgRes)
-      .setNeutralButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+      .setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
         def onClick(dialog: DialogInterface, which: Int): Unit = {
           dialog.dismiss()
           p.complete(Success({}))

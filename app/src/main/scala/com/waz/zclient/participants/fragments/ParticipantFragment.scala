@@ -36,7 +36,8 @@ import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.integrations.IntegrationDetailsFragment
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
-import com.waz.zclient.participants.{OptionsMenu, ParticipantsController}
+import com.waz.zclient.participants.ConversationOptionsMenuController.Normal
+import com.waz.zclient.participants.{ConversationOptionsMenuController, OptionsMenu, ParticipantsController}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.DefaultPageTransitionAnimation
 import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
@@ -149,7 +150,7 @@ class ParticipantFragment extends ManagerFragment
   }
 
   override def onShowConversationMenu(inConvList: Boolean, convId: ConvId): Unit =
-    if (!inConvList) OptionsMenu(getContext, inConvList, convId).show()
+    if (!inConvList) OptionsMenu(getContext, new ConversationOptionsMenuController(convId, Normal(inConvList))).show()
 
   def showOtrClient(userId: UserId, clientId: ClientId): Unit =
     getChildFragmentManager

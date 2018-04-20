@@ -46,7 +46,8 @@ import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
 import com.waz.zclient.pages.main.pickuser.controller.{IPickUserController, PickUserControllerScreenObserver}
-import com.waz.zclient.participants.{OptionsMenu, UserRequester}
+import com.waz.zclient.participants.ConversationOptionsMenuController.{Deleting, Normal}
+import com.waz.zclient.participants.{ConversationOptionsMenuController, OptionsMenu, UserRequester}
 import com.waz.zclient.ui.animation.interpolators.penner.{Expo, Quart}
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.usersearch.SearchUIFragment
@@ -401,7 +402,13 @@ class ConversationListManagerFragment extends Fragment
   }
 
   override def onShowConversationMenu(inConvList: Boolean, convId: ConvId): Unit =
-    if (inConvList) OptionsMenu(getContext, inConvList, convId).show()
+    if (inConvList) {
+      val controller = ConversationOptionsMenuController(convId, Normal(inConvList))
+      controller.onDeleteConv.onUi { convId =>
+        OptionsMenu(getContext, ConversationOptionsMenuController(convId, Deleting(inConvList))).show()
+      }
+      OptionsMenu(getContext, controller).show()
+    }
 
   override def dismissUserProfile() =
     pickUserController.hideUserProfile()

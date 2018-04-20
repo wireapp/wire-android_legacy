@@ -38,7 +38,11 @@ public enum OptionsMenuItem {
     DELETE(R.string.conversation__action__delete, R.string.glyph__delete_me),
     LEAVE(R.string.conversation__action__leave, R.string.glyph__leave),
     BLOCK(R.string.confirmation_menu__confirm_block, R.string.glyph__block),
-    UNBLOCK(R.string.connect_request__unblock__button__text, R.string.glyph__block);
+    UNBLOCK(R.string.connect_request__unblock__button__text, R.string.glyph__block),
+    LEAVE_ONLY(R.string.conversation__action__leave, R.string.empty_string),
+    LEAVE_AND_DELETE(R.string.conversation__action__leave, R.string.empty_string),
+    DELETE_ONLY(R.string.conversation__action__delete, R.string.empty_string),
+    DELETE_AND_LEAVE(R.string.conversation__action__delete, R.string.empty_string);
 
     public final int resTextId;
     public final int resGlyphId;

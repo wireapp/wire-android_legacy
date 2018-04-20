@@ -274,6 +274,13 @@
     <string name="conversation__action__remove">Remove</string>
     <string name="conversation__action__call">Call</string>
     <string name="conversation__action__picture">Picture</string>
+    <string name="conversation__action__block">Block…</string>
+    <string name="conversation__action__unblock">Unblock</string>
+
+    <string name="conversation__action__leave_and_delete">\tLeave and delete content</string>
+    <string name="conversation__action__leave_only">\tLeave group</string>
+    <string name="conversation__action__delete_and_leave">\tDelete content and leave</string>
+    <string name="conversation__action__delete_only">\tDelete content</string>
 
     <!-- Conversation: Profile Popover -->
     <string name="popover__action__open">OPEN</string>
@@ -399,7 +406,7 @@
     <!-- Block someone dialogue -->
     <string name="confirmation_menu__block_header">Block?</string>
     <string name="confirmation_menu__block_text_with_name">%1$s won\'t be able to contact you or add you to group conversations.</string>
-    <string name="confirmation_menu__confirm_block">Block…</string>
+    <string name="confirmation_menu__confirm_block">Block</string>
     <!-- RE-USING: confirmation_menu.cancel -->
     <string name="connect_request__footer__blocked_label">Blocked</string>
 
