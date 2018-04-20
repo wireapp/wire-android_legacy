@@ -64,6 +64,7 @@ class ScrollController(adapter: MessagesListView.Adapter, listHeight: Signal[Int
           case _ if shouldScrollToBottom && lastVisiblePosition.lastMessage =>
             onScrollToBottomRequested ! false
           case _ =>
+            lastVisiblePosition = LastVisiblePosition(adapter.getUnreadIndex.index, adapter.getUnreadIndex.index == adapter.getItemCount - 1 || adapter.getItemCount == 0)
             onListLoaded ! adapter.getUnreadIndex
         }
       }
@@ -74,7 +75,9 @@ class ScrollController(adapter: MessagesListView.Adapter, listHeight: Signal[Int
 
     override def onItemRangeInserted(positionStart: Int, itemCount: Int): Unit = {
       ZLog.verbose(s"AdapterDataObserver onItemRangeInserted positionStart : $positionStart, itemCount: $itemCount, prevCount: $prevCount, adapter item count: ${adapter.getItemCount}")
-      if (adapter.getItemCount == positionStart + itemCount && positionStart != 0)
+      if (itemCount == adapter.getItemCount)
+        onChanged()
+      else if (adapter.getItemCount == positionStart + itemCount && positionStart != 0)
           onMessageAdded ! positionStart + itemCount - 1
     }
   })
@@ -84,7 +87,7 @@ class ScrollController(adapter: MessagesListView.Adapter, listHeight: Signal[Int
     onScrollToBottomRequested.map(smooth => BottomScroll(smooth = smooth)),
     listHeight.onChanged.filter(_ => shouldScrollToBottom && targetPosition.isEmpty && lastVisiblePosition.lastMessage).map(_ => BottomScroll(smooth = false)),
     listHeight.onChanged.filter(_ => !shouldScrollToBottom && targetPosition.nonEmpty).map(_ => PositionScroll(targetPosition.get, smooth = false)),
-    onMessageAdded.filter(_ => !dragging && targetPosition.isEmpty && lastVisiblePosition.lastMessage).map(pos => PositionScroll(pos, smooth = true)),
+    onMessageAdded.filter(_ => !dragging && targetPosition.isEmpty && lastVisiblePosition.lastMessage).map(_ => BottomScroll(smooth = true)),
     scrollToPositionRequested.map(pos => PositionScroll(pos, smooth = false))
   )
 }
