@@ -160,7 +160,8 @@ ext {
             gson                : 'com.google.code.gson:gson:2.2.4',
 
             // Java Native Access
-            jna                 : 'net.java.dev.jna:jna:4.4.0@aar'
+            jna                 : 'net.java.dev.jna:jna:4.4.0@aar',
+            guava               : 'com.google.guava:guava:19.0'
     ]
 }
 

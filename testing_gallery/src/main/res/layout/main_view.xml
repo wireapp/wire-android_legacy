@@ -26,6 +26,142 @@
     android:layout_alignParentBottom="true">
 
 
+    <TableLayout
+        android:id="@+id/check_table"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:stretchColumns="1">
+
+        <TableRow style="@style/tableRow">
+
+            <TextView
+                style="@style/checkTitle"
+                android:text="@string/testing_gallery_checks_title" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+
+            <TextView
+                android:id="@+id/permissionsLabel"
+                style="@style/checkLabel"
+                android:text="@string/permissions_check" />
+
+            <TextView
+                android:id="@+id/permissionsValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/permissionsFix"
+                style="@style/fixButton"
+                android:text="@string/fix_manually_button" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+
+            <TextView
+                android:id="@+id/directoryLabel"
+                style="@style/checkLabel"
+                android:tag="label"
+                android:text="@string/test_directory_check" />
+
+            <TextView
+                android:id="@+id/directoryValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/directoryFix"
+                style="@style/fixButton"
+                android:text="@string/fix_automatically_button" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+
+            <TextView
+                android:id="@+id/documentResolverLabel"
+                style="@style/checkLabel"
+                android:text="@string/document_resolver_check" />
+
+            <TextView
+                android:id="@+id/documentResolverValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/documentResolverFix"
+                style="@style/fixButton"
+                android:text="@string/fix_manually_button" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+
+            <TextView
+                android:id="@+id/lockScreenLabel"
+                style="@style/checkLabel"
+                android:baselineAligned="false"
+                android:text="@string/lock_screen_check" />
+
+            <TextView
+                android:id="@+id/lockScreenValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/lockScreenFix"
+                style="@style/fixButton"
+                android:text="@string/fix_manually_button" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+
+            <TextView
+                android:id="@+id/notificationAccessLabel"
+                style="@style/checkLabel"
+                android:text="@string/notification_access_check" />
+
+            <TextView
+                android:id="@+id/notificationAccessValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/notificationAccessFix"
+                style="@style/fixButton"
+                android:text="@string/fix_manually_button" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+
+            <TextView
+                android:id="@+id/brightnessLabel"
+                style="@style/checkLabel"
+                android:text="@string/brightness_check" />
+
+            <TextView
+                android:id="@+id/brightnessValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/brightnessFix"
+                style="@style/fixButton"
+                android:text="@string/fix_automatically_button" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+
+            <TextView
+                android:id="@+id/stayAwakeLabel"
+                style="@style/checkLabel"
+                android:text="@string/stay_awake_check" />
+
+            <TextView
+                android:id="@+id/stayAwakeValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/stayAwakeFix"
+                style="@style/fixButton"
+                android:text="@string/fix_automatically_button" />
+        </TableRow>
+
+    </TableLayout>
+
     <TextView
         android:id="@+id/version_label"
         android:layout_width="wrap_content"

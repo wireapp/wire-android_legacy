@@ -26,41 +26,36 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.OpenableColumns;
 import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ShareCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.google.common.base.Supplier;
 import com.wire.testinggallery.backup.ExportFile;
+import com.wire.testinggallery.precondition.PreconditionCheckers;
+import com.wire.testinggallery.precondition.PreconditionFixers;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.HashMap;
 
-import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
-import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.content.pm.PackageManager.NameNotFoundException;
-import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-import static android.widget.Toast.LENGTH_LONG;
 import static com.wire.testinggallery.DocumentResolver.WIRE_TESTING_FILES_DIRECTORY;
+import static com.wire.testinggallery.precondition.PreconditionsManager.requestSilentlyRights;
+import static com.wire.testinggallery.utils.FileUtils.copyStreams;
+import static com.wire.testinggallery.utils.FileUtils.getFileFromArchiveAsString;
+import static com.wire.testinggallery.utils.InfoDisplayManager.showToast;
+import static com.wire.testinggallery.utils.UriUtils.getFilename;
 
 public class MainActivity extends AppCompatActivity {
     private static final String COMMAND = "command";
@@ -74,48 +69,31 @@ public class MainActivity extends AppCompatActivity {
     private static final String COMMAND_CHECK_NOTIFICATION_ACCESS = "check_notification_access";
     private static final String DEFAULT_TEST_TEXT = "QA AUTOMATION TEST";
     private static final String DEFAULT_PACKAGE_NAME = "com.wire.candidate";
-    private static final int TESTING_GALLERY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 23456789;
-    private static final int TESTING_GALLERY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 23456790;
 
+    private AlertDialog alertDialog = null;
 
     @Override
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
         showInfoUi();
-        checkRightsAndDirectory();
+        requestSilentlyRights(this);
+        mapTableHandlers();
+        checkPreconditions();
         registerReceiver(broadcastReceiver,
             new IntentFilter("com.wire.testinggallery.main.receiver"));
     }
 
-    @TargetApi(Build.VERSION_CODES.M)
-    private void checkRightsAndDirectory() {
-        if (ActivityCompat.checkSelfPermission(this, READ_EXTERNAL_STORAGE) !=
-            PERMISSION_GRANTED) {
-            requestPermissions(new String[]{READ_EXTERNAL_STORAGE},
-                TESTING_GALLERY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
-        }
-        if (ActivityCompat.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE) !=
-            PERMISSION_GRANTED) {
-            requestPermissions(new String[]{WRITE_EXTERNAL_STORAGE},
-                TESTING_GALLERY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
-        }
-        if (!WIRE_TESTING_FILES_DIRECTORY.exists() && !WIRE_TESTING_FILES_DIRECTORY.mkdirs()) {
-            showToast("Unable to create directory for testing files!!");
-        }
-    }
-
     private void showInfoUi() {
         ViewGroup view = findViewById(android.R.id.content);
-        View mainView = LayoutInflater.from(getApplicationContext()).inflate(R.layout.main_view, view, true);
+        View mainView = LayoutInflater.from(this).inflate(R.layout.main_view, view, true);
         try {
-            PackageInfo pInfo = this.getPackageManager().getPackageInfo(getPackageName(), 0);
+            PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
             String version = pInfo.versionName;
             TextView versionValueTextView = mainView.findViewById(R.id.version_value);
             versionValueTextView.setText(version);
         } catch (NameNotFoundException e) {
             e.printStackTrace();
         }
-
     }
 
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
@@ -148,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 switch (command) {
                     case COMMAND_CHECK_NOTIFICATION_ACCESS:
-                        if (Settings.Secure.getString(getContentResolver(), "enabled_notification_listeners").contains(getApplicationContext().getPackageName())) {
+                        if (Settings.Secure.getString(getContentResolver(), "enabled_notification_listeners").contains(getPackageName())) {
                             setResultData("VERIFIED");
                         } else {
                             setResultData("UNVERIFIED");
@@ -192,7 +170,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        checkRightsAndDirectory();
+        requestSilentlyRights(this);
+        checkPreconditions();
         Intent intent = getIntent();
         if (intent == null) {
             return;
@@ -205,15 +184,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void showToast(String message) {
-        Toast.makeText(getApplicationContext(),
-            message, LENGTH_LONG)
-            .show();
-    }
-
     @TargetApi(Build.VERSION_CODES.CUPCAKE)
     private void handleFile(Uri backupUri, String scheme) {
-        String fileName = getFilename(backupUri, scheme);
+        String fileName = getFilename(getContentResolver(), backupUri, scheme);
         if (!fileName.isEmpty()) {
             File targetFile = new File(String.format("%s/%s", WIRE_TESTING_FILES_DIRECTORY, fileName));
             if (targetFile.exists()) {
@@ -240,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 setIntent(null);
-                showToast(String.format("%s was saved", fileName));
+                showToast(this, String.format("%s was saved", fileName));
                 return;
             } catch (IOException e) {
                 showAlert(String.format("There was an error during file analyze: %s", e.getLocalizedMessage()));
@@ -249,28 +222,11 @@ public class MainActivity extends AppCompatActivity {
         showAlert("Received file has no name!!!");
     }
 
-    private String getFilename(Uri uri, String scheme) {
-        if (scheme == null || scheme.equals("file")) {
-            return new File(uri.getPath()).getName();
+    private AlertDialog showAlert(String message) {
+        if (alertDialog == null) {
+            alertDialog = new AlertDialog.Builder(this).create();
         }
-        if (scheme.equals("content")) {
-            Cursor cursor =
-                getContentResolver().query(uri, null, null, null, null);
-            if (cursor != null) {
-                int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                cursor.moveToFirst();
-                String fileName = cursor.getString(nameIndex);
-                cursor.close();
-                return fileName;
-            }
-            return "";
-
-        }
-        return "";
-    }
-
-    private void showAlert(String message) {
-        AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+        alertDialog.hide();
         alertDialog.setMessage(message);
         alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
             new DialogInterface.OnClickListener() {
@@ -280,50 +236,57 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         alertDialog.show();
+        return alertDialog;
     }
 
-    private String getFileFromArchiveAsString(File zipFile, String desiredFileName) throws IOException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        OutputStream out = byteArrayOutputStream;
-        FileInputStream fileInputStream = new FileInputStream(zipFile);
-        BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-        ZipInputStream zipInputStream = new ZipInputStream(bufferedInputStream);
-        ZipEntry zipEntry;
-        while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-            if (zipEntry.getName().equals(desiredFileName)) {
-                byte[] buffer = new byte[8192];
-                int len;
-                while ((len = zipInputStream.read(buffer)) != -1) {
-                    out.write(buffer, 0, len);
+    private void mapTableHandlers() {
+        final PreconditionFixers fixers = new PreconditionFixers(this);
+        HashMap<Integer, Supplier<Void>> fixMap = new HashMap<Integer, Supplier<Void>>() {{
+            put(R.id.permissionsFix, fixers.permissionsFix());
+            put(R.id.directoryFix, fixers.directoryFix());
+            put(R.id.documentResolverFix, fixers.documentResolverFix());
+            put(R.id.lockScreenFix, fixers.lockScreenFix());
+            put(R.id.notificationAccessFix, fixers.notificationAccessFix());
+            put(R.id.brightnessFix, fixers.brightnessFix());
+            put(R.id.stayAwakeFix, fixers.stayAwakeFix());
+        }};
+
+        for (Integer id : fixMap.keySet()) {
+            final Supplier<Void> fixSupplier = fixMap.get(id);
+
+            Button fixButton = findViewById(id);
+            fixButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    fixSupplier.get();
+                    checkPreconditions();
                 }
-                out.close();
-                break;
-            }
+            });
         }
-        return new String(byteArrayOutputStream.toByteArray(), Charset.defaultCharset());
     }
 
-    private void copyStreams(InputStream from, OutputStream to) {
-        try {
-            byte[] buffer = new byte[4096];
-            int bytes_read;
-            while ((bytes_read = from.read(buffer)) != -1) {
-                to.write(buffer, 0, bytes_read);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (from != null) {
-                try {
-                    from.close();
-                } catch (IOException ignored) {
-                }
-            }
-            if (to != null) {
-                try {
-                    to.close();
-                } catch (IOException ignored) {
-                }
+    private void checkPreconditions() {
+        final PreconditionCheckers checkers = new PreconditionCheckers(this);
+        HashMap<Integer, Supplier<Boolean>> fixMap = new HashMap<Integer, Supplier<Boolean>>() {{
+            put(R.id.permissionsValue, checkers.permissionChecker());
+            put(R.id.directoryValue, checkers.directoryChecker());
+            put(R.id.documentResolverValue, checkers.documentResolverChecker());
+            put(R.id.lockScreenValue, checkers.lockScreenChecker());
+            put(R.id.notificationAccessValue, checkers.notificationAccessChecker());
+            put(R.id.brightnessValue, checkers.brightnessCheck());
+            put(R.id.stayAwakeValue, checkers.stayAwakeCheck());
+        }};
+
+        for (Integer id : fixMap.keySet()) {
+            final Supplier<Boolean> checkSupplier = fixMap.get(id);
+
+            TextView valueLabel = findViewById(id);
+            if (checkSupplier.get()) {
+                valueLabel.setTextAppearance(this, R.style.checkPass);
+                valueLabel.setText(R.string.check_result_pass);
+            } else {
+                valueLabel.setTextAppearance(this, R.style.checkFail);
+                valueLabel.setText(R.string.check_result_fail);
             }
         }
     }

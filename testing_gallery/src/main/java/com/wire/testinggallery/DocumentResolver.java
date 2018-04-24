@@ -31,13 +31,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @TargetApi(Build.VERSION_CODES.FROYO)
-class DocumentResolver {
+public class DocumentResolver {
 
     private static final String TAG = "TestingGallery";
 
     private static final String WIRE_DIRECTORY = "wire";
 
-    static final File WIRE_TESTING_FILES_DIRECTORY =
+    public static final File WIRE_TESTING_FILES_DIRECTORY =
         Environment.getExternalStoragePublicDirectory(WIRE_DIRECTORY);
 
     private final static List<String> FILE_EXTENSIONS = new ArrayList<String>() {{

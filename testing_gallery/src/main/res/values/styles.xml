@@ -24,4 +24,49 @@
         <!-- Customize your theme here. -->
     </style>
 
+    <style name="checkTitle" parent="tableCell">
+        <item name="android:textSize">24sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_span">3</item>
+    </style>
+
+    <style name="checkLabel" parent="tableCell">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="checkPass" parent="check">
+        <item name="android:textColor">#00ff00</item>
+        <item name="android:text">@string/check_result_pass</item>
+    </style>
+
+    <style name="checkFail" parent="check">
+        <item name="android:textColor">#ff0000</item>
+        <item name="android:text">@string/check_result_fail</item>
+    </style>
+
+    <style name="checkUnknown" parent="check">
+        <item name="android:textColor">#fff</item>
+        <item name="android:text">@string/check_result_unknown</item>
+    </style>
+
+    <style name="check" parent="tableCell">
+        <item name="android:textSize">18sp</item>
+        <item name="android:gravity">center_horizontal</item>
+    </style>
+
+    <style name="fixButton" parent="tableCell"/>
+
+    <style name="tableCell">
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">wrap_content</item>
+    </style>
+
+    <style name="tableRow">
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_width">match_parent</item>
+    </style>
+
+    <string name="check_result_fail">FAIL</string>
+    <string name="check_result_pass">PASS</string>
 </resources>
