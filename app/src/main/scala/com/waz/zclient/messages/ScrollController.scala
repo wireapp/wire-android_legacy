@@ -46,6 +46,8 @@ class ScrollController(adapter: MessagesListView.Adapter, listHeight: Signal[Int
     ZLog.verbose(s"onScrolled $lastVisiblePosition")
   }
 
+  def onScrolledInvisible() = this.lastVisiblePosition = LastVisiblePosition(lastVisiblePosition.position, lastVisiblePosition.position == lastPosition)
+
   def onDragging(): Unit = {
     dragging = true
     targetPosition = None
@@ -77,8 +79,10 @@ class ScrollController(adapter: MessagesListView.Adapter, listHeight: Signal[Int
       ZLog.verbose(s"AdapterDataObserver onItemRangeInserted positionStart : $positionStart, itemCount: $itemCount, prevCount: $prevCount, adapter item count: ${adapter.getItemCount}")
       if (itemCount == adapter.getItemCount)
         onChanged()
-      else if (adapter.getItemCount == positionStart + itemCount && positionStart != 0)
-          onMessageAdded ! positionStart + itemCount - 1
+      else if (adapter.getItemCount == positionStart + itemCount && positionStart != 0) {
+        onMessageAdded ! positionStart + itemCount - 1
+        prevCount = adapter.getItemCount
+      }
     }
   })
 

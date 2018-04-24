@@ -32,8 +32,9 @@ import com.waz.model.{ConvId, Dim2, MessageData}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.common.controllers.AssetsController
+import com.waz.zclient.controllers.navigation.{INavigationController, Page}
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.ScrollController.{BottomScroll, PositionScroll}
 import com.waz.zclient.messages.controllers.MessageActionsController
@@ -132,8 +133,13 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
   addOnScrollListener(new OnScrollListener {
     override def onScrollStateChanged(recyclerView: RecyclerView, newState: Int): Unit = newState match {
       case RecyclerView.SCROLL_STATE_IDLE =>
-        scrollController.onScrolled(layoutManager.findLastVisibleItemPosition())
-        messagesController.scrolledToBottom ! (layoutManager.findLastCompletelyVisibleItemPosition() ==  adapter.getItemCount - 1)
+        val page = inject[INavigationController].getCurrentPage
+        if (page == Page.MESSAGE_STREAM) {
+          scrollController.onScrolled(layoutManager.findLastVisibleItemPosition())
+          messagesController.scrolledToBottom ! (layoutManager.findLastCompletelyVisibleItemPosition() == adapter.getItemCount - 1)
+        } else {
+          scrollController.onScrolledInvisible()
+        }
       case RecyclerView.SCROLL_STATE_DRAGGING => {
         scrollController.onDragging()
         messagesController.scrolledToBottom ! false
