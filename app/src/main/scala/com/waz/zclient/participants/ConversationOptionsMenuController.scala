@@ -38,10 +38,9 @@ import com.waz.zclient.participants.OptionsMenuController._
 import com.waz.zclient.utils.ContextUtils.{getInt, getString}
 import com.waz.zclient.{Injectable, Injector, R}
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
 
-case class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit injector: Injector, context: Context, ec: EventContext) extends OptionsMenuController with Injectable {
+class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit injector: Injector, context: Context, ec: EventContext) extends OptionsMenuController with Injectable {
   import Threading.Implicits.Ui
 
   private val zMessaging             = inject[Signal[ZMessaging]]
@@ -55,9 +54,7 @@ case class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implici
 
   override val onMenuItemClicked: SourceStream[MenuItem] = EventStream()
 
-  val onDeleteConv: SourceStream[ConvId] = EventStream[ConvId]()
-
-  def tag: String = if (mode.inConversationList) "OptionsMenu_ConvList" else "OptionsMenu_Participants"
+  lazy val tag: String = if (mode.inConversationList) "OptionsMenu_ConvList" else "OptionsMenu_Participants"
 
   val conv: Signal[Option[ConversationData]] = convController.conversationData(convId)
 
@@ -91,11 +88,11 @@ case class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implici
     val builder = Set.newBuilder[MenuItem]
 
     mode match {
-      case Leaving(_) =>
+      case Mode.Leaving(_) =>
         builder ++= Set(LeaveOnly, LeaveAndDelete)
-      case Deleting(_) =>
+      case Mode.Deleting(_) =>
         builder ++= Set(DeleteOnly, DeleteAndLeave)
-      case Normal(_) =>
+      case Mode.Normal(_) =>
         builder += (if (conv.archived) Unarchive else Archive)
         if (isGroup) {
           if (conv.isActive) {
@@ -136,12 +133,7 @@ case class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implici
         case Leave     => leaveConversation(cId)
         case Delete    => deleteConversation(cId)
         case Block     => user.map(_.id).foreach(showBlockConfirmation(cId, _))
-        case Unblock   => zMessaging.head.flatMap { zms =>
-          user.map(_.id) match {
-            case Some(uId) => zms.connection.unblockConnection(uId)
-            case _         => Future.successful({})
-          }
-        }
+        case Unblock   => user.map(_.id).foreach(uId => zMessaging.head.flatMap(_.connection.unblockConnection(uId)))
         case Call      => callConversation(cId)
         case Picture   => takePictureInConversation(cId)
         case _ =>
@@ -165,27 +157,19 @@ case class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implici
   def deleteConversation(convId: ConvId): Unit = {
     isGroup.head.flatMap { isGroup =>
       isMember.head.map { isMember =>
+        val dialogBuilder = new AlertDialog.Builder(context, R.style.Theme_Light_Dialog_Alert_Destructive)
+          .setCancelable(true)
+          .setTitle(R.string.confirmation_menu__meta_delete)
+          .setMessage(R.string.confirmation_menu__meta_delete_text)
+          .setPositiveButton(R.string.conversation__action__delete_only, new DialogInterface.OnClickListener {
+            override def onClick(dialog: DialogInterface, which: Int): Unit = convController.delete(convId, alsoLeave = false)
+          })
         if (isGroup && isMember) {
-          val dialog = new AlertDialog.Builder(context, R.style.Theme_Light_Dialog_Alert_Destructive)
-            .setCancelable(true)
-            .setTitle(R.string.confirmation_menu__meta_delete)
-            .setMessage(R.string.confirmation_menu__meta_delete_text)
-            .setPositiveButton(R.string.conversation__action__delete_only, new DialogInterface.OnClickListener {
-              override def onClick(dialog: DialogInterface, which: Int): Unit = convController.delete(convId, alsoLeave = false)
-            }).setNegativeButton(R.string.conversation__action__delete_and_leave, new DialogInterface.OnClickListener {
+          dialogBuilder.setNegativeButton(R.string.conversation__action__delete_and_leave, new DialogInterface.OnClickListener {
             override def onClick(dialog: DialogInterface, which: Int): Unit = convController.delete(convId, alsoLeave = true)
-          }).create
-          dialog.show()
-        } else {
-          val dialog = new AlertDialog.Builder(context, R.style.Theme_Light_Dialog_Alert_Destructive)
-            .setCancelable(true)
-            .setTitle(R.string.confirmation_menu__meta_delete)
-            .setMessage(R.string.confirmation_menu__meta_delete_text)
-            .setPositiveButton(R.string.conversation__action__delete_only, new DialogInterface.OnClickListener {
-              override def onClick(dialog: DialogInterface, which: Int): Unit = convController.delete(convId, alsoLeave = false)
-            }).create
-          dialog.show()
+          })
         }
+        dialogBuilder.create.show()
       }
     }
   }
@@ -239,9 +223,11 @@ object ConversationOptionsMenuController {
   sealed trait Mode {
     val inConversationList: Boolean
   }
-  case class Normal(inConversationList: Boolean) extends Mode
-  case class Deleting(inConversationList: Boolean) extends Mode
-  case class Leaving(inConversationList: Boolean) extends Mode
+  object Mode{
+    case class Normal(inConversationList: Boolean) extends Mode
+    case class Deleting(inConversationList: Boolean) extends Mode
+    case class Leaving(inConversationList: Boolean) extends Mode
+  }
 
   object Picture   extends MenuItem(R.string.conversation__action__picture, Some(R.string.glyph__camera))
   object Call      extends MenuItem(R.string.conversation__action__call, Some(R.string.glyph__call))
