@@ -42,9 +42,10 @@ case class EnteredCredentialsEvent(method: SignInMethod, error: Option[(Int, Str
 }
 
 case class EnteredCodeEvent(method: SignInMethod, error: Option[(Int, String)]) extends TrackingEvent {
-  override val name = method.signType match {
-    case Register => "registration.verified_phone"
-    case Login => "account.entered_login_code"
+  override val name = method match {
+    case SignInMethod(Register, Phone)=> "registration.verified_phone"
+    case SignInMethod(Register, Email)=> "registration.verified_email"
+    case SignInMethod(Login, _)=> "account.entered_login_code"
   }
   override val props = Some(returning(new JSONObject()) { o =>
     val outcome = error.fold2("success", _ => "fail")
@@ -77,10 +78,13 @@ case class EnteredNameOnRegistrationEvent(inputType: InputType, error: Option[(I
 }
 
 //TODO - this needs to be re-implemented for emails. For now, this only affects tablets (not super critical)
-case class RegistrationSuccessfulEvent() extends TrackingEvent {
+case class RegistrationSuccessfulEvent(inputType: InputType) extends TrackingEvent {
   override val name = "registration.succeeded"
   override val props = Some(returning (new JSONObject()) { o =>
-    o.put("context", "phone")
+    o.put("context", inputType match {
+      case Phone => "phone"
+      case Email => "email"
+    })
   })
 }
 

@@ -33,6 +33,7 @@ import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.{RichThreetenBPDuration, _}
 import com.waz.zclient._
+import com.waz.zclient.appentry.fragments.SignInFragment
 import com.waz.zclient.appentry.fragments.SignInFragment.{InputType, SignInMethod}
 import com.waz.zclient.utils.DeprecationUtils
 import net.hockeyapp.android.CrashManagerListener
@@ -71,7 +72,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
   val zMessaging = inject[Signal[ZMessaging]]
   val currentConv = inject[Signal[ConversationData]]
 
-  private def trackingEnabled = ZMessaging.globalModule.flatMap(_.prefs.preference(analyticsPrefKey).apply())
+  private def trackingEnabled = Future.successful(true)//ZMessaging.globalModule.flatMap(_.prefs.preference(analyticsPrefKey).apply())
 
   inject[UiLifeCycle].uiActive.onChanged {
     case false =>
@@ -173,14 +174,8 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     }
   }
 
-  private def responseToErrorPair(response: Either[ErrorResponse, _]) = response.fold({ e => Option((e.code, e.label))}, _ => Option.empty[(Int, String)])
-
   def onEnteredCredentials(response: Either[ErrorResponse, _], method: SignInMethod): Unit =
-    for {
-      //Should wait until a ZMS instance exists before firing the event
-      _   <- ZMessaging.currentAccounts.activeZms.collect { case Some(z) => z }.head
-      acc <- ZMessaging.currentAccounts.activeAccount.collect { case Some(acc) => acc }.head
-    } yield track(EnteredCredentialsEvent(method, responseToErrorPair(response)), Some(acc.id))
+    track(EnteredCredentialsEvent(method, responseToErrorPair(response)), None)
 
   def onEnterCode(response: Either[ErrorResponse, Unit], method: SignInMethod): Unit =
     track(EnteredCodeEvent(method, responseToErrorPair(response)))
@@ -195,7 +190,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
       acc <- ZMessaging.currentAccounts.activeAccount.collect { case Some(acc) => acc }.head
     } yield {
       track(EnteredNameOnRegistrationEvent(inputType, responseToErrorPair(response)), Some(acc.id))
-      track(RegistrationSuccessfulEvent(), Some(acc.id))
+      track(RegistrationSuccessfulEvent(SignInFragment.Phone), Some(acc.id))
     }
 
   def flushEvents(): Unit = mixpanelGuard.flush()
@@ -227,5 +222,7 @@ object GlobalTrackingController {
   def isBot(conv: ConversationData, users: UsersStorage): Future[Boolean] =
     if (conv.convType == ConversationType.OneToOne) users.get(UserId(conv.id.str)).map(_.exists(_.isWireBot))(Threading.Background)
     else successful(false)
+
+  def responseToErrorPair(response: Either[ErrorResponse, _]) = response.fold({ e => Option((e.code, e.label))}, _ => Option.empty[(Int, String)])
 
 }

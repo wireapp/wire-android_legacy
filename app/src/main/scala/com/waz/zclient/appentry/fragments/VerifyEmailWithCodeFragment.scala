@@ -26,15 +26,19 @@ import com.waz.api.EmailCredentials
 import com.waz.model.AccountData.Password
 import com.waz.model.{ConfirmationCode, EmailAddress}
 import com.waz.service.AccountsService
+import com.waz.service.tracking.TrackingService.track
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.appentry.DialogErrorMessage.EmailError
+import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Register, SignInMethod}
 import com.waz.zclient.appentry.fragments.VerifyEmailWithCodeFragment._
 import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
 import com.waz.zclient.controllers.navigation.Page
 import com.waz.zclient.newreg.views.PhoneConfirmationButton
+import com.waz.zclient.tracking.{EnteredCodeEvent, RegistrationSuccessfulEvent}
+import com.waz.zclient.tracking.GlobalTrackingController._
 import com.waz.zclient.ui.text.TypefaceEditText
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils._
@@ -167,17 +171,21 @@ class VerifyEmailWithCodeFragment extends FragmentHelper with View.OnClickListen
   private def confirmCode(): Unit = {
     activity.enableProgress(true)
     KeyboardUtils.hideKeyboard(getActivity)
-    accountService.register(EmailCredentials(emailAddress, password, Some(confirmationCode)), name).foreach {
-      case Left(error) =>
-        activity.enableProgress(false)
-        showErrorDialog(EmailError(error)).map { _ =>
-          KeyboardUtils.showKeyboard(activity)
-          editTextCode.requestFocus
-          phoneConfirmationButton.setState(PhoneConfirmationButton.State.INVALID)
-        }
-      case _ =>
-        activity.enableProgress(false)
-        activity.onEnterApplication(false)
+    accountService.register(EmailCredentials(emailAddress, password, Some(confirmationCode)), name).foreach { response =>
+      track(EnteredCodeEvent(SignInMethod(Register, Email), responseToErrorPair(response)))
+      response match {
+        case Left(error) =>
+          activity.enableProgress(false)
+          showErrorDialog(EmailError(error)).map { _ =>
+            KeyboardUtils.showKeyboard(activity)
+            editTextCode.requestFocus
+            phoneConfirmationButton.setState(PhoneConfirmationButton.State.INVALID)
+          }
+        case _ =>
+          track(RegistrationSuccessfulEvent(SignInFragment.Email))
+          activity.enableProgress(false)
+          activity.onEnterApplication(false)
+      }
     }
   }
 
