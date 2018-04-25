@@ -244,12 +244,13 @@ public class MainActivity extends AppCompatActivity {
         HashMap<Integer, Supplier<Void>> fixMap = new HashMap<Integer, Supplier<Void>>() {{
             put(R.id.permissionsFix, fixers.permissionsFix());
             put(R.id.directoryFix, fixers.directoryFix());
-            put(R.id.documentResolverFix, fixers.documentResolverFix());
+            put(R.id.getDocumentResolverFix, fixers.getDocumentResolverFix());
             put(R.id.lockScreenFix, fixers.lockScreenFix());
             put(R.id.notificationAccessFix, fixers.notificationAccessFix());
             put(R.id.brightnessFix, fixers.brightnessFix());
             put(R.id.stayAwakeFix, fixers.stayAwakeFix());
             put(R.id.defaultVideoRecorderFix, fixers.videoRecorderFix());
+            put(R.id.defaultDocumentReceiverFix, fixers.defaultDocumentReceiverFix());
         }};
 
         for (Integer id : fixMap.keySet()) {
@@ -271,12 +272,13 @@ public class MainActivity extends AppCompatActivity {
         HashMap<Integer, Supplier<Boolean>> fixMap = new HashMap<Integer, Supplier<Boolean>>() {{
             put(R.id.permissionsValue, checkers.permissionChecker());
             put(R.id.directoryValue, checkers.directoryChecker());
-            put(R.id.documentResolverValue, checkers.documentResolverChecker());
+            put(R.id.getDocumentResolverValue, checkers.getDocumentResolverChecker());
             put(R.id.lockScreenValue, checkers.lockScreenChecker());
             put(R.id.notificationAccessValue, checkers.notificationAccessChecker());
             put(R.id.brightnessValue, checkers.brightnessCheck());
             put(R.id.stayAwakeValue, checkers.stayAwakeCheck());
             put(R.id.defaultVideoRecorderValue, checkers.videoRecorderCheck());
+            put(R.id.defaultDocumentReceiverValue, checkers.defaultDocumentReceiverCheck());
         }};
 
         for (Integer id : fixMap.keySet()) {

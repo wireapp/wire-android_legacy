@@ -34,6 +34,8 @@ public class PreconditionsManager {
     private static final String EXPECTED_PACKAGE_NAME = "com.wire.testinggallery";
     private static final String GET_DOCUMENT_ACTION = "com.wire.testing.GET_DOCUMENT";
     private static final String RECORD_VIDEO_ACTION = "android.media.action.VIDEO_CAPTURE";
+    private static final String DOCUMENT_RECEIVER_ACTION = "android.intent.action.SEND";
+    private static final String DOCUMENT_RECEIVER_TYPE = "application/octet-stream";
     private static final int TESTING_GALLERY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 23456789;
     private static final int TESTING_GALLERY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 23456790;
 
@@ -92,7 +94,7 @@ public class PreconditionsManager {
         return false;
     }
 
-    static boolean isDefaultDocumentResolver(Context context) {
+    static boolean isDefaultGetDocumentResolver(Context context) {
         Intent intent = new Intent(GET_DOCUMENT_ACTION);
         intent.addCategory(Intent.CATEGORY_DEFAULT);
         intent.setType("*/*");
@@ -100,7 +102,7 @@ public class PreconditionsManager {
         return packageForIntent.equals(EXPECTED_PACKAGE_NAME);
     }
 
-    static void fixDefaultDocumentResolver(Context context) {
+    static void fixDefaultGetDocumentResolver(Context context) {
         Intent sendIntent = new Intent();
         sendIntent.setAction(GET_DOCUMENT_ACTION);
         sendIntent.setType("text/plain");
@@ -208,5 +210,18 @@ public class PreconditionsManager {
     static void goToStayAwake(Activity activity) {
         Intent devOptions = new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS);
         activity.startActivity(devOptions);
+    }
+
+    static boolean isDefaultDocumentReceiver(Context context) {
+        Intent intent = new Intent(DOCUMENT_RECEIVER_ACTION);
+        intent.setType(DOCUMENT_RECEIVER_TYPE);
+        String packageForIntent = getPackageForIntent(context, intent);
+        return packageForIntent.equals(EXPECTED_PACKAGE_NAME);
+    }
+
+    static void fixDefaultDocumentReceiver(Context context) {
+        Intent intent = new Intent(DOCUMENT_RECEIVER_ACTION);
+        intent.setType(DOCUMENT_RECEIVER_TYPE);
+        context.startActivity(intent);
     }
 }

@@ -31,11 +31,11 @@ public class PreconditionCheckers {
         };
     }
 
-    public Supplier<Boolean> documentResolverChecker() {
+    public Supplier<Boolean> getDocumentResolverChecker() {
         return new Supplier<Boolean>() {
             @Override
             public Boolean get() {
-                return PreconditionsManager.isDefaultDocumentResolver(activity.getApplicationContext());
+                return PreconditionsManager.isDefaultGetDocumentResolver(activity.getApplicationContext());
             }
         };
     }
@@ -89,6 +89,15 @@ public class PreconditionCheckers {
             @Override
             public Boolean get() {
                 return PreconditionsManager.isDefaultVideoRecorder(activity);
+            }
+        };
+    }
+
+    public Supplier<Boolean> defaultDocumentReceiverCheck() {
+        return new Supplier<Boolean>() {
+            @Override
+            public Boolean get() {
+                return PreconditionsManager.isDefaultDocumentReceiver(activity);
             }
         };
     }

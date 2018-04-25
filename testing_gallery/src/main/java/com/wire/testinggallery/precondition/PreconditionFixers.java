@@ -32,11 +32,11 @@ public class PreconditionFixers {
         };
     }
 
-    public Supplier<Void> documentResolverFix() {
+    public Supplier<Void> getDocumentResolverFix() {
         return new Supplier<Void>() {
             @Override
             public Void get() {
-                PreconditionsManager.fixDefaultDocumentResolver(activity);
+                PreconditionsManager.fixDefaultGetDocumentResolver(activity);
                 return null;
             }
         };
@@ -87,6 +87,16 @@ public class PreconditionFixers {
             @Override
             public Void get() {
                 PreconditionsManager.fixDefaultVideoRecorder(activity);
+                return null;
+            }
+        };
+    }
+
+    public Supplier<Void> defaultDocumentReceiverFix() {
+        return new Supplier<Void>() {
+            @Override
+            public Void get() {
+                PreconditionsManager.fixDefaultDocumentReceiver(activity);
                 return null;
             }
         };

@@ -77,16 +77,16 @@
         <TableRow style="@style/tableRow">
 
             <TextView
-                android:id="@+id/documentResolverLabel"
+                android:id="@+id/getDocumentResolverLabel"
                 style="@style/checkLabel"
                 android:text="@string/document_resolver_check" />
 
             <TextView
-                android:id="@+id/documentResolverValue"
+                android:id="@+id/getDocumentResolverValue"
                 style="@style/checkUnknown" />
 
             <Button
-                android:id="@+id/documentResolverFix"
+                android:id="@+id/getDocumentResolverFix"
                 style="@style/fixButton"
                 android:text="@string/fix_button" />
         </TableRow>
@@ -161,7 +161,6 @@
         </TableRow>
 
         <TableRow style="@style/tableRow">
-
             <TextView
                 android:id="@+id/defaultVideoRecorderLabel"
                 style="@style/checkLabel"
@@ -173,6 +172,22 @@
 
             <Button
                 android:id="@+id/defaultVideoRecorderFix"
+                style="@style/fixButton"
+                android:text="@string/fix_button" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+            <TextView
+                android:id="@+id/defaultDocumentReceiverLabel"
+                style="@style/checkLabel"
+                android:text="@string/default_document_receiver" />
+
+            <TextView
+                android:id="@+id/defaultDocumentReceiverValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/defaultDocumentReceiverFix"
                 style="@style/fixButton"
                 android:text="@string/fix_button" />
         </TableRow>
