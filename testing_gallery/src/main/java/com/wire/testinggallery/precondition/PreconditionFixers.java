@@ -81,4 +81,14 @@ public class PreconditionFixers {
             }
         };
     }
+
+    public Supplier<Void> videoRecorderFix() {
+        return new Supplier<Void>() {
+            @Override
+            public Void get() {
+                PreconditionsManager.fixDefaultVideoRecorder(activity);
+                return null;
+            }
+        };
+    }
 }

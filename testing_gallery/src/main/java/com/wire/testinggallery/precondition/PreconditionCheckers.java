@@ -76,10 +76,19 @@ public class PreconditionCheckers {
             @Override
             public Boolean get() {
                 try {
-                    return PreconditionsManager.getStayAwake(activity) == 7;
+                    return PreconditionsManager.getStayAwake(activity) >= 3;
                 } catch (Settings.SettingNotFoundException e) {
                     return false;
                 }
+            }
+        };
+    }
+
+    public Supplier<Boolean> videoRecorderCheck() {
+        return new Supplier<Boolean>() {
+            @Override
+            public Boolean get() {
+                return PreconditionsManager.isDefaultVideoRecorder(activity);
             }
         };
     }

@@ -249,6 +249,7 @@ public class MainActivity extends AppCompatActivity {
             put(R.id.notificationAccessFix, fixers.notificationAccessFix());
             put(R.id.brightnessFix, fixers.brightnessFix());
             put(R.id.stayAwakeFix, fixers.stayAwakeFix());
+            put(R.id.defaultVideoRecorderFix, fixers.videoRecorderFix());
         }};
 
         for (Integer id : fixMap.keySet()) {
@@ -275,6 +276,7 @@ public class MainActivity extends AppCompatActivity {
             put(R.id.notificationAccessValue, checkers.notificationAccessChecker());
             put(R.id.brightnessValue, checkers.brightnessCheck());
             put(R.id.stayAwakeValue, checkers.stayAwakeCheck());
+            put(R.id.defaultVideoRecorderValue, checkers.videoRecorderCheck());
         }};
 
         for (Integer id : fixMap.keySet()) {

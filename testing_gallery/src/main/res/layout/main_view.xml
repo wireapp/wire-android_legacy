@@ -53,7 +53,7 @@
             <Button
                 android:id="@+id/permissionsFix"
                 style="@style/fixButton"
-                android:text="@string/fix_manually_button" />
+                android:text="@string/fix_button" />
         </TableRow>
 
         <TableRow style="@style/tableRow">
@@ -71,7 +71,7 @@
             <Button
                 android:id="@+id/directoryFix"
                 style="@style/fixButton"
-                android:text="@string/fix_automatically_button" />
+                android:text="@string/fix_button" />
         </TableRow>
 
         <TableRow style="@style/tableRow">
@@ -88,7 +88,7 @@
             <Button
                 android:id="@+id/documentResolverFix"
                 style="@style/fixButton"
-                android:text="@string/fix_manually_button" />
+                android:text="@string/fix_button" />
         </TableRow>
 
         <TableRow style="@style/tableRow">
@@ -106,7 +106,7 @@
             <Button
                 android:id="@+id/lockScreenFix"
                 style="@style/fixButton"
-                android:text="@string/fix_manually_button" />
+                android:text="@string/fix_button" />
         </TableRow>
 
         <TableRow style="@style/tableRow">
@@ -123,7 +123,7 @@
             <Button
                 android:id="@+id/notificationAccessFix"
                 style="@style/fixButton"
-                android:text="@string/fix_manually_button" />
+                android:text="@string/fix_button" />
         </TableRow>
 
         <TableRow style="@style/tableRow">
@@ -140,7 +140,7 @@
             <Button
                 android:id="@+id/brightnessFix"
                 style="@style/fixButton"
-                android:text="@string/fix_automatically_button" />
+                android:text="@string/fix_button" />
         </TableRow>
 
         <TableRow style="@style/tableRow">
@@ -157,7 +157,24 @@
             <Button
                 android:id="@+id/stayAwakeFix"
                 style="@style/fixButton"
-                android:text="@string/fix_automatically_button" />
+                android:text="@string/fix_button" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+
+            <TextView
+                android:id="@+id/defaultVideoRecorderLabel"
+                style="@style/checkLabel"
+                android:text="@string/default_video_recorder" />
+
+            <TextView
+                android:id="@+id/defaultVideoRecorderValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/defaultVideoRecorderFix"
+                style="@style/fixButton"
+                android:text="@string/fix_button" />
         </TableRow>
 
     </TableLayout>

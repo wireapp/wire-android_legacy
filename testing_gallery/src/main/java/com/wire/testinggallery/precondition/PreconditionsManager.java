@@ -33,6 +33,7 @@ import static com.wire.testinggallery.utils.InfoDisplayManager.showToast;
 public class PreconditionsManager {
     private static final String EXPECTED_PACKAGE_NAME = "com.wire.testinggallery";
     private static final String GET_DOCUMENT_ACTION = "com.wire.testing.GET_DOCUMENT";
+    private static final String RECORD_VIDEO_ACTION = "android.media.action.VIDEO_CAPTURE";
     private static final int TESTING_GALLERY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 23456789;
     private static final int TESTING_GALLERY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 23456790;
 
@@ -104,6 +105,19 @@ public class PreconditionsManager {
         sendIntent.setAction(GET_DOCUMENT_ACTION);
         sendIntent.setType("text/plain");
         context.startActivity(sendIntent);
+    }
+
+    static boolean isDefaultVideoRecorder(Context context) {
+        Intent intent = new Intent(RECORD_VIDEO_ACTION);
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        String packageForIntent = getPackageForIntent(context, intent);
+        return packageForIntent.equals(EXPECTED_PACKAGE_NAME);
+    }
+
+    static void fixDefaultVideoRecorder(Context context) {
+        Intent intent = new Intent(RECORD_VIDEO_ACTION);
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        context.startActivity(intent);
     }
 
     @NonNull

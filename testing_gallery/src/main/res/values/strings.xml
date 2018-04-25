@@ -25,12 +25,12 @@
     <string name="permissions_check">Permissions:</string>
     <string name="test_directory_check">Test directory:</string>
     <string name="check_result_unknown">Unknown</string>
-    <string name="fix_automatically_button">Fix</string>
-    <string name="fix_manually_button">Fix´</string>
+    <string name="fix_button">Fix</string>
     <string name="testing_gallery_checks_title">Testing Gallery Checks</string>
     <string name="document_resolver_check">Default Gallery:</string>
     <string name="lock_screen_check">LockScreen:</string>
     <string name="notification_access_check">Notification Access:</string>
     <string name="brightness_check">Brightness:</string>
     <string name="stay_awake_check">Stay Awake:</string>
+    <string name="default_video_recorder">Default Video recorder:</string>
 </resources>
