@@ -64,12 +64,13 @@
     <dimen name="calling__button_incoming__margin_top">46dp</dimen>
     <dimen name="calling__bottom_outgoing__margin_top">128dp</dimen>
     <dimen name="calling__header__margin__bottom">24dp</dimen>
-    <dimen name="calling__controls__max_width">264dp</dimen>
+    <dimen name="calling__controls__max_width">282dp</dimen>
     <dimen name="calling__controls__margin__top">32dp</dimen>
-    <dimen name="calling__controls__button__dimension">48dp</dimen>
-    <dimen name="calling__controls__button_label__dimension">80dp</dimen>
+    <dimen name="calling__controls__button__dimension">64dp</dimen>
+    <dimen name="calling__controls__button_label__dimension">64dp</dimen>
     <dimen name="calling__controls__button_position_height">64dp</dimen>
     <dimen name="calling__controls__button__label__margin_top">8dp</dimen>
+    <dimen name="calling__controls__button__margin_bottom">56dp</dimen>
     <dimen name="calling__participants_max_diameter">264dp</dimen>
     <dimen name="calling__participants_group_call">132dp</dimen>
     <dimen name="calling__ongoing_call_controls__max_diameter">296dp</dimen>

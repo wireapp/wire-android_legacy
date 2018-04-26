@@ -32,7 +32,6 @@ import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
 import com.waz.utils.events.{ButtonSignal, ClockSignal, EventContext, Signal}
 import com.waz.zclient.calling.CallingActivity
-import com.waz.zclient.calling.views.CallControlButtonView.{ButtonColor, ButtonSettings}
 import com.waz.zclient.common.controllers.SoundController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.utils.ContextUtils._
@@ -88,7 +87,9 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val isCallIncoming    = callStateOpt.map(_.contains(OtherCalling))
 
   val isMuted           = currentCall.map(_.muted)
-  val isVideoCall       = currentCall.map(_.isVideoCall)
+  val isVideoCall       = currentCall.map{ c =>
+    c.videoSendState != VideoSendState.DONT_SEND || c.videoReceiveState != VideoReceiveState.Stopped
+  }
   val videoSendState    = currentCall.map(_.videoSendState)
   val videoReceiveState = currentCall.map(_.videoReceiveState)
   val isGroupCall       = currentCall.map(_.isGroup)
@@ -380,37 +381,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     case (mm, isSpeakerSet) => mm.setSpeaker(!isSpeakerSet)
   }
 
-  val leftButtonSettings = convDegraded.map {
-    case true  => ButtonSettings(R.string.glyph__close, R.string.confirmation_menu__cancel, () => leaveCall())
-    case false => ButtonSettings(R.string.glyph__microphone_off, R.string.incoming__controls__ongoing__mute, () => toggleMuted())
-  }
-
-  val middleButtonSettings = convDegraded.flatMap {
-    case true  =>
-      isCallOutgoing.map { outgoing =>
-        val text = if (outgoing) R.string.conversation__action__call else R.string.incoming__controls__incoming__accept
-        ButtonSettings(R.string.glyph__call, text, () => continueDegradedCall(), ButtonColor.Green)
-      }
-    case false => Signal(ButtonSettings(R.string.glyph__end_call, R.string.incoming__controls__ongoing__hangup, () => leaveCall(), ButtonColor.Red))
-  }
-
-  val rightButtonSettings = isVideoCall.map {
-    case true  => ButtonSettings(R.string.glyph__video,        R.string.incoming__controls__ongoing__video,   () => toggleVideo())
-    case false => ButtonSettings(R.string.glyph__speaker_loud, R.string.incoming__controls__ongoing__speaker, () => speakerButton.press())
-  }
-
   val isTablet = Signal(!LayoutSpec.isPhone(cxt))
-
-  val rightButtonShown = convDegraded.flatMap {
-    case true  => Signal(false)
-    case false => Signal(isVideoCall, isCallEstablished, captureDevices, isTablet) map {
-      case (true, false, _, _) => false
-      case (true, true, captureDevices, _) => captureDevices.size >= 0
-      case (false, _, _, isTablet) => !isTablet //Tablets don't have ear-pieces, so you can't switch between speakers
-      case _ => false
-    }
-  }
-
 }
 
 private class ScreenManager(implicit injector: Injector) extends Injectable {

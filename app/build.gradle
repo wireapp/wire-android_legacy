@@ -69,6 +69,7 @@ android {
     dexOptions {
         preDexLibraries false
         javaMaxHeapSize '4g'
+        //keepRuntimeAnnotatedClasses false // uncomment if you need to set minSdkVersion to < 21
     }
 
     buildTypes {

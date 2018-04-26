@@ -304,6 +304,7 @@
     <string name="incoming__controls__ongoing__speaker">SPEAKER</string>
     <string name="incoming__controls__ongoing__mute">MUTE</string>
     <string name="incoming__controls__ongoing__video">VIDEO</string>
+    <string name="incoming__controls__ongoing__flip">FLIP</string>
     <string name="ongoing__other_turned_off_video">%1$s TURNED OFF THE VIDEO</string>
     <string name="ongoing__other_unable_to_send_video">%1$s IS UNABLE TO SEND VIDEO</string>
     <string name="ongoing__poor_connection_message">VIDEO STOPPED DUE TO POOR CONNECTION</string>

@@ -28,8 +28,8 @@ import com.waz.zclient.calling.views.CallControlButtonView.ButtonColor
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.theme.{OptionsDarkTheme, OptionsLightTheme}
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.utils.RichView
+import com.waz.zclient.{R, ViewHelper}
 
 import scala.util.Try
 
@@ -56,7 +56,8 @@ class CallControlButtonView(val context: Context, val attrs: AttributeSet, val d
     } (_ => a.recycle())
   }.getOrElse((0, 0, 0, ""))
 
-  private var _isPressed: Boolean = false
+  private var pressed: Boolean = false
+  private var active: Boolean = true
 
   private val buttonView = returning(new GlyphTextView(getContext, null, defStyleAttr)) { b =>
     b.setLayoutParams(new LinearLayout.LayoutParams(circleIconDimension, circleIconDimension))
@@ -78,13 +79,26 @@ class CallControlButtonView(val context: Context, val attrs: AttributeSet, val d
       addView(b, params)
     }
 
-  def setButtonPressed(isPressed: Boolean) = if (this._isPressed != isPressed) {
-    this._isPressed = isPressed
-    if (isPressed) {
+  setButtonColors()
+
+  def setButtonPressed(pressed: Boolean): Unit = if (this.pressed != pressed) {
+    this.pressed = pressed
+    setButtonColors()
+  }
+
+  def setButtonActive(active: Boolean): Unit = if (this.active != active) {
+    this.active = active
+    setButtonColors()
+  }
+
+  private def setButtonColors(): Unit = {
+    if (!active) {
+      buttonView.setTextColor(getColorStateList(R.color.selector__icon_button__text_color__light))
+      buttonView.setBackground(ContextCompat.getDrawable(getContext, R.drawable.selector__icon_button__background__calling))
+    } else if (pressed) {
       buttonView.setTextColor(new OptionsLightTheme(getContext).getTextColorPrimarySelector)
       buttonView.setBackground(ContextCompat.getDrawable(getContext, R.drawable.selector__icon_button__background__calling_toggled))
-    }
-    else {
+    } else {
       buttonView.setTextColor(new OptionsDarkTheme(getContext).getTextColorPrimarySelector)
       buttonView.setBackground(ContextCompat.getDrawable(getContext, R.drawable.selector__icon_button__background__calling))
     }
@@ -93,6 +107,13 @@ class CallControlButtonView(val context: Context, val attrs: AttributeSet, val d
   def setGlyph(glyphId: Int): Unit = buttonView.setText(getResources.getText(glyphId))
 
   def setText(stringId: Int): Unit = buttonLabelView.setText(getResources.getText(stringId))
+
+  def set(glyphId: Int, labelStringId: Int, onClick: () => Unit, color: ButtonColor = ButtonColor.Transparent): Unit = {
+    setGlyph(glyphId)
+    setText(labelStringId)
+    setColor(color)
+    this.onClick { if (active) onClick() }
+  }
 
   import ButtonColor._
   def setColor(color: ButtonColor) = {
@@ -116,15 +137,4 @@ object CallControlButtonView {
   }
   type ButtonColor = ButtonColor.Value
 
-  case class ButtonSettings(glyphId: Int, labelStringId: Int, onClick: () => Unit, color: ButtonColor = ButtonColor.Transparent) {
-    def set(button: CallControlButtonView, controlsView: OutgoingControlsView) = {
-      button.setGlyph(glyphId)
-      button.setText(labelStringId)
-      button.setColor(color)
-      button.onClick {
-        onClick()
-        controlsView.callOnClick()
-      }
-    }
-  }
 }

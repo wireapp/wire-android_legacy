@@ -27,19 +27,23 @@ import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.{R, ViewHelper}
 
-class HeaderLayoutAudio(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
+class HeaderLayoutAV(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
+
   def this(context: Context) =  this(context, null)
 
+  lazy val chathead: ChatheadView = findById(R.id.chv__other_user_chathead)
   lazy val nameView: TextView = findById(R.id.ttv__calling__header__name)
   lazy val subtitleView: TextView = findById(R.id.ttv__calling__header__subtitle)
   lazy val bitRateModeView: TextView = findById(R.id.ttv__calling__header__bitrate)
 
-  LayoutInflater.from(context).inflate(R.layout.calling_header_audio, this, true)
-  setOrientation(LinearLayout.VERTICAL)
+  LayoutInflater.from(context).inflate(R.layout.calling_header_av, this, true)
+  setOrientation(LinearLayout.HORIZONTAL)
 
   val controller = inject[CallController]
+
+  controller.otherUser.on(Threading.Ui)(_.foreach(user => chathead.setUserId(user.id)))
 
   controller.subtitleText.on(Threading.Ui)(subtitleView.setText)
 
@@ -50,26 +54,4 @@ class HeaderLayoutAudio(val context: Context, val attrs: AttributeSet, val defSt
     case false => ""
   }.on(Threading.Ui)(bitRateModeView.setText)
 
-}
-
-class HeaderLayoutVideo (val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
-
-  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
-
-  def this(context: Context) = this(context, null)
-
-  lazy val chathead: ChatheadView = findById(R.id.chv__other_user_chathead)
-  lazy val nameView: TextView = findById(R.id.ttv__calling__header__name)
-  lazy val subtitleView: TextView = findById(R.id.ttv__calling__header__subtitle)
-
-  LayoutInflater.from(context).inflate(R.layout.calling_header_video, this, true)
-  setOrientation(LinearLayout.HORIZONTAL)
-
-  val controller = inject[CallController]
-
-  controller.otherUser.on(Threading.Ui)(_.foreach(user => chathead.setUserId(user.id)))
-
-  controller.subtitleText.on(Threading.Ui)(subtitleView.setText)
-
-  controller.conversationName.on(Threading.Ui)(nameView.setText)
 }

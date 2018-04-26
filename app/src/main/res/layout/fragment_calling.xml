@@ -18,14 +18,35 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/background"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/calling_background">
+    android:layout_height="match_parent">
 
-    <com.waz.zclient.calling.views.HeaderLayoutAudio
+    <View
+        android:id="@+id/video_background_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/calling_video_overlay"
+        />
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/video_warning_message"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/calling_background"
+        android:gravity="center"
+        android:textAlignment="center"
+        android:textAllCaps="true"
+        android:textColor="@color/text__primary_dark"
+        android:textSize="@dimen/wire__text_size__small"
+        android:visibility="gone"
+        app:w_font="@string/wire__typeface__light"
+        />
+
+    <com.waz.zclient.calling.views.HeaderLayoutAV
+        android:id="@+id/header_layout"
         android:layout_width="@dimen/calling__participants_max_diameter"
         android:layout_height="wrap_content"
         android:layout_gravity="top|center"
@@ -33,11 +54,36 @@
         />
 
     <LinearLayout
+        android:id="@+id/self_view_layout"
         android:orientation="vertical"
         android:layout_gravity="center"
         android:layout_width="match_parent"
         android:layout_marginBottom="@dimen/wire__margin__huge"
         android:layout_height="wrap_content">
+
+        <com.waz.zclient.ui.calling.RoundedLayout
+            android:id="@+id/rounded_layout"
+            android:layout_width="@dimen/calling__self_video_preview__dimension"
+            android:layout_height="@dimen/calling__self_video_preview__dimension"
+            android:background="@color/graphite"
+            >
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/self_preview_place_holder"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/calling__self_preview_unavailable"
+                android:textAlignment="center"
+                android:textAllCaps="true"
+                android:textColor="@color/text__primary_dark"
+                android:textSize="@dimen/wire__text_size__small"
+                android:background="@color/graphite"
+                app:w_font="@string/wire__typeface__light"
+                android:visibility="gone"
+                />
+
+        </com.waz.zclient.ui.calling.RoundedLayout>
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/degraded_warning"
@@ -53,13 +99,6 @@
             app:w_font="@string/wire__typeface__light"
             android:visibility="gone"/>
 
-        <com.waz.zclient.calling.views.AudioParticipantsView
-            android:id="@+id/participants"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            />
-
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/degraded_confirmation"
             android:layout_gravity="center"
@@ -72,13 +111,15 @@
             android:textSize="@dimen/wire__text_size__regular"
             app:w_font="@string/wire__typeface__light"
             android:visibility="gone"/>
-
     </LinearLayout>
 
     <com.waz.zclient.calling.views.ControlsView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:id="@+id/controls_grid"
+        android:layout_width="@dimen/calling__controls__max_width"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|bottom"
+        android:layout_marginBottom="@dimen/wire__margin__huge"
         />
 
-</FrameLayout>
 
+</FrameLayout>

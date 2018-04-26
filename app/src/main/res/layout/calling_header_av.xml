@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <!--
 
     Wire
@@ -19,9 +18,9 @@
 
 -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
-       xmlns:app="http://schemas.android.com/apk/res-auto"
-       android:layout_width="match_parent"
-       android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     >
 
     <com.waz.zclient.common.views.ChatheadView
@@ -63,4 +62,17 @@
 
     </LinearLayout>
 
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/ttv__calling__header__bitrate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/wire__padding__small"
+        android:textAlignment="center"
+        android:textAllCaps="true"
+        android:textColor="@color/text__primary_dark"
+        android:textSize="@dimen/wire__text_size__regular"
+        android:visibility="gone"
+        app:w_font="@string/wire__typeface__light"
+        />
 </merge>
+

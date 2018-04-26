@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<GridLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:columnCount="3"
+    android:rowCount="2"
+    android:layout_gravity="top|center"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <com.waz.zclient.calling.views.CallControlButtonView
+        android:id="@+id/mute_call"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        app:circleIconDimension="@dimen/calling__controls__button__dimension"
+        app:labelWidth="@dimen/calling__controls__button_label__dimension"
+        app:labelFont="@string/wire__typeface__light"
+        app:labelTextSize="@dimen/wire__text_size__smaller"
+        android:paddingBottom="@dimen/calling__controls__button__margin_bottom"
+        />
+
+    <com.waz.zclient.calling.views.CallControlButtonView
+        android:id="@+id/video_call"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:clickable="true"
+        app:circleIconDimension="@dimen/calling__controls__button__dimension"
+        app:labelWidth="@dimen/calling__controls__button_label__dimension"
+        app:labelFont="@string/wire__typeface__light"
+        app:labelTextSize="@dimen/wire__text_size__smaller"
+        android:paddingBottom="@dimen/calling__controls__button__margin_bottom"
+        />
+
+    <!-- speaker and flip buttons use the same position -->
+    <com.waz.zclient.calling.views.CallControlButtonView
+        android:id="@+id/speaker_flip_call"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        app:circleIconDimension="@dimen/calling__controls__button__dimension"
+        app:labelWidth="@dimen/calling__controls__button_label__dimension"
+        app:labelFont="@string/wire__typeface__light"
+        app:labelTextSize="@dimen/wire__text_size__small"
+        android:paddingBottom="@dimen/calling__controls__button__margin_bottom"
+        />
+
+    <com.waz.zclient.calling.views.CallControlButtonView
+        android:id="@+id/reject_call"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:clickable="true"
+        app:circleIconDimension="@dimen/calling__controls__button__dimension"
+        app:labelWidth="@dimen/calling__controls__button_label__dimension"
+        />
+
+    <com.waz.zclient.calling.views.CallControlButtonView
+        android:id="@+id/end_call"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:clickable="true"
+        app:circleIconDimension="@dimen/calling__controls__button__dimension"
+        app:labelWidth="@dimen/calling__controls__button_label__dimension"
+        />
+
+    <com.waz.zclient.calling.views.CallControlButtonView
+        android:id="@+id/accept_call"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        app:circleIconDimension="@dimen/calling__controls__button__dimension"
+        app:labelWidth="@dimen/calling__controls__button_label__dimension"
+        />
+</GridLayout>
