@@ -71,10 +71,13 @@ public class MainActivity extends AppCompatActivity {
     private static final String DEFAULT_PACKAGE_NAME = "com.wire.candidate";
 
     private AlertDialog alertDialog = null;
+    private HashMap<Integer, Supplier<Boolean>> checkMap;
+    private HashMap<Integer, Supplier<Void>> fixMap;
 
     @Override
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
+        initCheckAndFix();
         showInfoUi();
         requestSilentlyRights(this);
         mapTableHandlers();
@@ -240,19 +243,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void mapTableHandlers() {
-        final PreconditionFixers fixers = new PreconditionFixers(this);
-        HashMap<Integer, Supplier<Void>> fixMap = new HashMap<Integer, Supplier<Void>>() {{
-            put(R.id.permissionsFix, fixers.permissionsFix());
-            put(R.id.directoryFix, fixers.directoryFix());
-            put(R.id.getDocumentResolverFix, fixers.getDocumentResolverFix());
-            put(R.id.lockScreenFix, fixers.lockScreenFix());
-            put(R.id.notificationAccessFix, fixers.notificationAccessFix());
-            put(R.id.brightnessFix, fixers.brightnessFix());
-            put(R.id.stayAwakeFix, fixers.stayAwakeFix());
-            put(R.id.defaultVideoRecorderFix, fixers.videoRecorderFix());
-            put(R.id.defaultDocumentReceiverFix, fixers.defaultDocumentReceiverFix());
-        }};
-
         for (Integer id : fixMap.keySet()) {
             final Supplier<Void> fixSupplier = fixMap.get(id);
 
@@ -268,8 +258,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkPreconditions() {
+        for (Integer id : checkMap.keySet()) {
+            final Supplier<Boolean> checkSupplier = checkMap.get(id);
+
+            TextView valueLabel = findViewById(id);
+            if (checkSupplier.get()) {
+                valueLabel.setTextAppearance(this, R.style.checkPass);
+                valueLabel.setText(R.string.check_result_pass);
+            } else {
+                valueLabel.setTextAppearance(this, R.style.checkFail);
+                valueLabel.setText(R.string.check_result_fail);
+            }
+        }
+    }
+
+    private void initCheckAndFix() {
         final PreconditionCheckers checkers = new PreconditionCheckers(this);
-        HashMap<Integer, Supplier<Boolean>> fixMap = new HashMap<Integer, Supplier<Boolean>>() {{
+        checkMap = new HashMap<Integer, Supplier<Boolean>>() {{
             put(R.id.permissionsValue, checkers.permissionChecker());
             put(R.id.directoryValue, checkers.directoryChecker());
             put(R.id.getDocumentResolverValue, checkers.getDocumentResolverChecker());
@@ -281,17 +286,17 @@ public class MainActivity extends AppCompatActivity {
             put(R.id.defaultDocumentReceiverValue, checkers.defaultDocumentReceiverCheck());
         }};
 
-        for (Integer id : fixMap.keySet()) {
-            final Supplier<Boolean> checkSupplier = fixMap.get(id);
-
-            TextView valueLabel = findViewById(id);
-            if (checkSupplier.get()) {
-                valueLabel.setTextAppearance(this, R.style.checkPass);
-                valueLabel.setText(R.string.check_result_pass);
-            } else {
-                valueLabel.setTextAppearance(this, R.style.checkFail);
-                valueLabel.setText(R.string.check_result_fail);
-            }
-        }
+        final PreconditionFixers fixers = new PreconditionFixers(this);
+        fixMap = new HashMap<Integer, Supplier<Void>>() {{
+            put(R.id.permissionsFix, fixers.permissionsFix());
+            put(R.id.directoryFix, fixers.directoryFix());
+            put(R.id.getDocumentResolverFix, fixers.getDocumentResolverFix());
+            put(R.id.lockScreenFix, fixers.lockScreenFix());
+            put(R.id.notificationAccessFix, fixers.notificationAccessFix());
+            put(R.id.brightnessFix, fixers.brightnessFix());
+            put(R.id.stayAwakeFix, fixers.stayAwakeFix());
+            put(R.id.defaultVideoRecorderFix, fixers.videoRecorderFix());
+            put(R.id.defaultDocumentReceiverFix, fixers.defaultDocumentReceiverFix());
+        }};
     }
 }
