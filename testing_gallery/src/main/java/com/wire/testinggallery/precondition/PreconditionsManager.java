@@ -3,20 +3,17 @@ package com.wire.testinggallery.precondition;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.KeyguardManager;
-import android.app.admin.DevicePolicyManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.os.BatteryManager;
 import android.os.Build;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
-import android.view.WindowManager;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -24,7 +21,6 @@ import java.util.Set;
 
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
-import static android.Manifest.permission.WRITE_SETTINGS;
 import static android.content.ContentValues.TAG;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static com.wire.testinggallery.DocumentResolver.WIRE_TESTING_FILES_DIRECTORY;
@@ -125,7 +121,9 @@ public class PreconditionsManager {
     @NonNull
     private static String getPackageForIntent(Context context, Intent intent) {
         ResolveInfo resolveInfo = context.getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
-        if (resolveInfo == null) return "";
+        if (resolveInfo == null) {
+            return "";
+        }
         return resolveInfo.activityInfo.packageName;
     }
 
@@ -204,7 +202,7 @@ public class PreconditionsManager {
     }
 
     static int getStayAwake(Activity activity) throws Settings.SettingNotFoundException {
-        return Settings.Global.getInt(activity.getContentResolver(),Settings.Global.STAY_ON_WHILE_PLUGGED_IN);
+        return Settings.Global.getInt(activity.getContentResolver(), Settings.Global.STAY_ON_WHILE_PLUGGED_IN);
     }
 
     static void goToStayAwake(Activity activity) {

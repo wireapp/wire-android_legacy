@@ -48,6 +48,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Map;
 
 import static android.content.pm.PackageManager.NameNotFoundException;
 import static com.wire.testinggallery.DocumentResolver.WIRE_TESTING_FILES_DIRECTORY;
@@ -71,8 +72,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String DEFAULT_PACKAGE_NAME = "com.wire.candidate";
 
     private AlertDialog alertDialog = null;
-    private HashMap<Integer, Supplier<Boolean>> checkMap;
-    private HashMap<Integer, Supplier<Void>> fixMap;
+    private Map<Integer, Supplier<Boolean>> checkMap;
+    private Map<Integer, Supplier<Void>> fixMap;
 
     @Override
     protected void onCreate(Bundle bundle) {

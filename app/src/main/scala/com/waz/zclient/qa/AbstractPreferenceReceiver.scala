@@ -78,7 +78,6 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver {
         globalPrefs.map(_.preference(DeveloperAnalyticsEnabled) := false)
         setResultCode(Activity.RESULT_OK)
       case PHONE_LOGIN =>
-        globalPrefs.map(_.preference() := false)
         setResultCode(Activity.RESULT_OK)
       case _ =>
         setResultData("Unknown Intent!")
