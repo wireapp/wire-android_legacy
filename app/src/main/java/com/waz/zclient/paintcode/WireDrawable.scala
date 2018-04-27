@@ -124,3 +124,8 @@ case class BackupRestoreIcon(color: Int)(implicit context: Context) extends Wire
   setColor(color)
   override def draw(canvas: Canvas) = drawRestore(canvas, new RectF(canvas.getClipBounds), ResizingBehavior.AspectFit, paint.getColor)
 }
+
+case class VideoIcon(colorRes: Int)(implicit context: Context) extends WireDrawable {
+  setColor(getColor(colorRes))
+  override def draw(canvas: Canvas) = drawCamera(canvas, getDrawingRect, ResizingBehavior.AspectFit, paint.getColor)
+}

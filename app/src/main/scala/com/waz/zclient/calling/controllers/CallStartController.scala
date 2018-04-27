@@ -43,8 +43,8 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
 
   import Threading.Implicits.Ui
 
-  val globController = inject[CallController]
-  import globController._
+  val callController = inject[CallController]
+  import callController._
 
   for {
     Some(call) <- currentCallOpt
@@ -99,7 +99,7 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
         }
 
         //ignore withVideo flag if call is incoming
-        curWithVideo = curCall.map(_.isVideoCall).getOrElse(withVideo)
+        curWithVideo <- if (curCall.isDefined) isVideoCall.head else Future.successful(withVideo)
         _ = verbose(s"curWithVideo: $curWithVideo")
 
         //check network state, proceed if okay

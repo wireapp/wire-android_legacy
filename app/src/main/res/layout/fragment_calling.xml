@@ -113,6 +113,14 @@
             android:visibility="gone"/>
     </LinearLayout>
 
+    <com.waz.zclient.calling.views.CallParticipantsView
+        android:id="@+id/participants"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        />
+
     <com.waz.zclient.calling.views.ControlsView
         android:id="@+id/controls_grid"
         android:layout_width="@dimen/calling__controls__max_width"

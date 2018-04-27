@@ -69,6 +69,16 @@
             android:visibility="gone"
             />
 
+        <ImageView
+            android:id="@+id/video_indicator"
+            android:layout_width="@dimen/user_row_icon_size"
+            android:layout_height="@dimen/user_row_icon_size"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="@dimen/wire__padding__small"
+            android:layout_marginEnd="@dimen/wire__padding__small"
+            android:visibility="gone"
+            />
+
         <android.support.v7.widget.AppCompatCheckBox
             android:id="@+id/checkbox"
             android:layout_width="@dimen/share_extension__row__checkbox_size"
