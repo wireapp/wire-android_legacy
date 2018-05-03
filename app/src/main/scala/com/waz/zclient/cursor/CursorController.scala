@@ -45,6 +45,7 @@ import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
 import com.waz.zclient.ui.cursor.{CursorMenuItem => JCursorMenuItem}
 import com.waz.zclient.ui.utils.KeyboardUtils
+import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.duration._
@@ -271,7 +272,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
         KeyboardUtils.hideKeyboard(activity)
         locationController.showShareLocation()
       }
-      else Toast.makeText(ctx, R.string.location_sharing__missing_play_services, Toast.LENGTH_LONG).show()
+      else showToast(R.string.location_sharing__missing_play_services)
     case Gif =>
       enteredText.head foreach { giphyController.handleInput }
     case Send =>

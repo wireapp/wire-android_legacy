@@ -41,7 +41,7 @@ import com.waz.utils.events.{EventStreamWithAuxSignal, Signal}
 import com.waz.utils.returningF
 import com.waz.utils.wrappers.URI
 import com.waz.zclient.Intents.ShowDevicesIntent
-import com.waz.zclient.calling.controllers.CallStartController
+import com.waz.zclient.calling.controllers.{CallController, CallStartController}
 import com.waz.zclient.camera.controllers.GlobalCameraController
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers.global.KeyboardController
@@ -96,7 +96,8 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val keyboardController     = inject[KeyboardController]
   private lazy val errorsController       = inject[ErrorsController]
-  private lazy val callController         = inject[CallStartController]
+  private lazy val callController         = inject[CallController]
+  private lazy val callStartController    = inject[CallStartController]
 
   private val previewShown = Signal(false)
   private lazy val convChange = convController.convChanged.filter { _.to.isDefined }
@@ -240,14 +241,16 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
     convController.currentConv.onUi {
       case conv if conv.isActive =>
         inflateCollectionIcon()
-        convController.hasOtherParticipants(conv.id).flatMap {
-          case true => convController.isGroup(conv.id).map(isGroup => Some(if (isGroup) R.menu.conversation_header_menu_audio else R.menu.conversation_header_menu_video))
-          case false => Future.successful(None)
+        callController.currentCallOpt.head.flatMap {
+          case Some(call) if call.convId == conv.id => Future.successful(None)
+          case _ => convController.hasOtherParticipants(conv.id).flatMap {
+            case true => convController.isGroup(conv.id).map(isGroup => Some(if (isGroup) R.menu.conversation_header_menu_audio else R.menu.conversation_header_menu_video))
+            case false => Future.successful(None)
+          }
         }.foreach { id =>
           toolbar.getMenu.clear()
           id.foreach(toolbar.inflateMenu)
         }(Threading.Ui)
-
       case _ => toolbar.getMenu.clear()
     }
 
@@ -279,7 +282,7 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
       override def onMenuItemClick(item: MenuItem): Boolean =
         item.getItemId match {
           case R.id.action_audio_call | R.id.action_video_call =>
-            callController.startCallInCurrentConv(withVideo = item.getItemId == R.id.action_video_call)
+            callStartController.startCallInCurrentConv(withVideo = item.getItemId == R.id.action_video_call)
             cursorView.closeEditMessage(false)
             true
           case _ => false

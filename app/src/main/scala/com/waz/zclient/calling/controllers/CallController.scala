@@ -159,12 +159,13 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     } yield cs.endCall(cId)
   }
 
-  def toggleMuted(): Unit =
+  def toggleMuted(): Unit = {
     verbose(s"toggleMuted")
     for {
       muted <- isMuted.head
       cs    <- callingService.head
     } yield cs.setCallMuted(!muted)
+  }
 
   def toggleVideo(): Unit = {
     verbose(s"toggleVideo")
@@ -314,7 +315,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     case (true,  OtherCalling)  => R.string.call_banner_incoming_video
     case (false, OtherCalling)  => R.string.call_banner_incoming
     case (_,     SelfJoining)   => R.string.call_banner_joining
-    case (false, SelfConnected) => R.string.call_banner_tap_to_return_to_call
+    case (_,     SelfConnected) => R.string.call_banner_tap_to_return_to_call
     case _                      => R.string.empty_string
   }
 
