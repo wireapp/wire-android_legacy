@@ -27,14 +27,14 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.threading.Threading
 import com.waz.zclient._
-import com.waz.zclient.calling.controllers.GlobalCallingController
+import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.VideoCallingView
 import com.waz.zclient.utils.{DeprecationUtils, RichView}
 
 class CallingActivity extends BaseActivity {
   import CallingActivity._
 
-  private lazy val controller = inject[GlobalCallingController]
+  private lazy val controller = inject[CallController]
   import controller._
 
   lazy val degradedWarningTextView      = findById[TextView](R.id.degraded_warning)
@@ -45,19 +45,19 @@ class CallingActivity extends BaseActivity {
     verbose("Creating CallingActivity")
     getWindow.setBackgroundDrawableResource(R.color.calling_background)
 
-    activeCall.on(Threading.Ui) {
+    isCallActive.on(Threading.Ui) {
       case false =>
         verbose("call no longer exists, finishing activity")
         finish()
       case _ =>
     }
 
-    convId.onChanged.on(Threading.Ui)(_ => restartActivity())
+    callConvId.onChanged.on(Threading.Ui)(_ => restartActivity())
 
     //ensure activity gets killed to allow content to change if the conv degrades (no need to kill activity on audio call)
     (for {
       degraded <- convDegraded
-      video    <- videoCall
+      video    <- isVideoCall
     } yield degraded && video).onChanged.filter(_ == true).on(Threading.Ui)(_ => finish())
 
     //can only set content view once - so do so on first value of `showVideoView`
@@ -77,9 +77,6 @@ class CallingActivity extends BaseActivity {
         degradationConfirmationText.on(Threading.Ui)(degradedConfirmationTextView.setText)
     }(Threading.Ui)
   }
-
-  //don't allow user to go back during call - no way to re-enter call
-  override def onBackPressed(): Unit = ()
 
   override def onAttachedToWindow(): Unit = {
     getWindow.addFlags(
@@ -108,7 +105,7 @@ object CallingActivity extends Injectable {
 
   def startIfCallIsActive(context: WireContext) = {
     import context.injector
-    inject[GlobalCallingController].activeCall.head.foreach {
+    inject[CallController].isCallActive.head.foreach {
       case true => start(context)
       case false =>
     } (Threading.Ui)

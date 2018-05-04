@@ -39,7 +39,7 @@ import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache.BitmapRequest.Round
 import com.waz.utils.NameParts
 import com.waz.utils.events.{EventStream, Signal}
-import com.waz.zclient.calling.controllers.{CallPermissionsController, CurrentCallController}
+import com.waz.zclient.calling.controllers.{CallController, CallStartController}
 import com.waz.zclient.ui.animation.interpolators.penner.{Expo, Quart}
 import com.waz.zclient.ui.text.TypefaceFactory
 import com.waz.zclient.ui.utils.{ResourceUtils, TypefaceUtils}
@@ -57,7 +57,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   val onClickEvent = EventStream[Unit]
 
-  lazy val controller = inject[CurrentCallController]
+  lazy val controller = inject[CallController]
 
   LayoutInflater.from(context).inflate(R.layout.calling_controls, this, true)
   private val outgoingControls: ViewGroup = findById(R.id.ocl_outgoing_controls)
@@ -86,10 +86,9 @@ private[calling] class OutgoingControlsView(val context: Context, val attrs: Att
   val rightButton:  CallControlButtonView = findById(R.id.ccbv__button_right)
   val rightSpacer:  View                  = findById(R.id.v__right_view_spacer)
 
-  val controller = inject[CurrentCallController]
+  val controller = inject[CallController]
 
   import controller._
-  import controller.glob._
 
   leftButtonSettings.on(Threading.Ui)(_.set(leftButton, this))
   middleButtonSettings.on(Threading.Ui)(_.set(middleButton, this))
@@ -100,9 +99,9 @@ private[calling] class OutgoingControlsView(val context: Context, val attrs: Att
     rightButton.setVisible(v)
   }
 
-  muted.on(Threading.Ui)(leftButton.setButtonPressed)
+  isMuted.on(Threading.Ui)(leftButton.setButtonPressed)
 
-  Signal(videoCall, speakerButton, videoSendState).map {
+  Signal(isVideoCall, speakerButton, videoSendState).map {
     case (true, _, videoSendState) => videoSendState == SEND
     case (false, speakerEnabled, _) => speakerEnabled
   }.on(Threading.Ui)(rightButton.setButtonPressed)
@@ -116,8 +115,8 @@ private class IncomingControlsView(val context: Context, val attrs: AttributeSet
 
   def this(context: Context) = this(context, null)
 
-  lazy val callController = inject[CurrentCallController]
-  lazy val callPermissionsController = inject[CallPermissionsController]
+  lazy val callController = inject[CallController]
+  lazy val callPermissionsController = inject[CallStartController]
 
   private val glyphSize = getResources.getDimensionPixelSize(R.dimen.wire__icon_button__text_size)
   private val textColor = ContextCompat.getColor(getContext, R.color.text__primary_dark)
@@ -188,16 +187,16 @@ private class IncomingControlsView(val context: Context, val attrs: AttributeSet
 
   private var textRect = new Rect
 
-  private val allowClickOnActionButtons = callController.glob.wasUiActiveOnCallStart
+  private val allowClickOnActionButtons = callController.wasUiActiveOnCallStart
 
   setBackgroundColor(Color.TRANSPARENT)
 
-  val rightButtonGlyphSignal = callController.glob.videoCall map {
+  val rightButtonGlyphSignal = callController.isVideoCall map {
     case true => getResources.getString(R.string.glyph__video)
     case false => getResources.getString(R.string.glyph__call)
   }
 
-  val bitmapSignal = callController.glob.zms.zip(callController.glob.selfUser).flatMap {
+  val bitmapSignal = callController.callingZms.zip(callController.selfUser).flatMap {
     case (zms, selfUser) =>
       selfUser.picture.fold {
         Signal.const[Option[BitmapResult]](None)
@@ -212,9 +211,9 @@ private class IncomingControlsView(val context: Context, val attrs: AttributeSet
     case _ => None
   }
 
-  val userInitials = callController.glob.selfUser.map(data => NameParts.parseFrom(data.name).initials)
+  val userInitials = callController.selfUser.map(data => NameParts.parseFrom(data.name).initials)
 
-  val accentColor = callController.glob.selfUser.map(data => AccentColor(data.accent).getColor())
+  val accentColor = callController.selfUser.map(data => AccentColor(data.accent).getColor())
 
   Signal(rightButtonGlyphSignal, userInitials, accentColor, bitmapSignal).on(Threading.Ui) { _ =>
     invalidate()
@@ -424,10 +423,10 @@ private class IncomingControlsView(val context: Context, val attrs: AttributeSet
       case MotionEvent.ACTION_UP | MotionEvent.ACTION_CANCEL =>
         if (allowClickOnActionButtons) {
           if (touchDownOnLeftAction && distPoint(targets.head, last) <= buttonRadius) {
-            callController.dismissCall()
+            callController.leaveCall()
           }
           else if (touchDownOnRightAction && distPoint(targets.last, last) <= buttonRadius) {
-            callController.glob.convId.currentValue.foreach(callPermissionsController.startCall(_))
+            callPermissionsController.acceptCall()
           }
         }
         touchDownOnLeftAction = false
@@ -485,11 +484,9 @@ private class IncomingControlsView(val context: Context, val attrs: AttributeSet
         ySpring.setEndValue(target.y)
         dropInTarget(target)
         if (target == targets.head) {
-          callController.dismissCall()
+          callController.leaveCall()
         }
-        else {
-          callController.glob.convId.currentValue.foreach(callPermissionsController.startCall(_))
-        }
+        else callPermissionsController.acceptCall()
       }
       else if (target == targets.last && !dragging) {
         xSpring.setSpringConfig(CONVERGING)

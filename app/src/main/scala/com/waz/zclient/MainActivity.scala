@@ -17,19 +17,19 @@
  */
 package com.waz.zclient
 
+import android.content.Intent
 import android.content.Intent._
 import android.content.res.Configuration
-import android.content.{DialogInterface, Intent}
 import android.graphics.drawable.ColorDrawable
 import android.graphics.{Color, Paint, PixelFormat}
 import android.os.{Build, Bundle}
 import android.support.v4.app.{Fragment, FragmentTransaction}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.{error, info, verbose, warn}
-import com.waz.api.{NetworkMode, _}
+import com.waz.api._
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.content.UserPreferences._
-import com.waz.model.{ConvId, ConversationData, UserId}
+import com.waz.model.{ConvId, UserId}
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
 import com.waz.service.ZMessaging.clock
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
@@ -40,11 +40,9 @@ import com.waz.zclient.Intents._
 import com.waz.zclient.MainActivity._
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient.appentry.AppEntryActivity
-import com.waz.zclient.calling.CallingActivity
-import com.waz.zclient.calling.controllers.CallPermissionsController
+import com.waz.zclient.calling.controllers.CallStartController
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
 import com.waz.zclient.common.controllers.{SharingController, UserAccountsController}
-import com.waz.zclient.controllers.calling.CallingObserver
 import com.waz.zclient.controllers.navigation.{NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
@@ -55,9 +53,8 @@ import com.waz.zclient.preferences.dialogs.ChangeHandleFragment
 import com.waz.zclient.preferences.{PreferencesActivity, PreferencesController}
 import com.waz.zclient.tracking.{CrashController, UiTrackingController}
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.PhoneUtils.PhoneState
 import com.waz.zclient.utils.StringUtils.TextDrawing
-import com.waz.zclient.utils.{BuildConfigUtils, Emojis, IntentUtils, PhoneUtils, ViewUtils}
+import com.waz.zclient.utils.{BuildConfigUtils, Emojis, IntentUtils, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
 import net.hockeyapp.android.NativeCrashManager
 
@@ -67,10 +64,9 @@ import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 
 class MainActivity extends BaseActivity
-  with ActivityHelper
+  with CallingBannerActivity
   with UpdateFragment.Container
   with NavigationControllerObserver
-  with CallingObserver
   with OtrDeviceLimitFragment.Container
   with SetHandleFragment.Container {
 
@@ -83,7 +79,7 @@ class MainActivity extends BaseActivity
   lazy val accountsService          = inject[AccountsService]
   lazy val sharingController        = inject[SharingController]
   lazy val accentColorController    = inject[AccentColorController]
-  lazy val callPermissionController = inject[CallPermissionsController]
+  lazy val callStart                = inject[CallStartController]
   lazy val conversationController   = inject[ConversationController]
   lazy val userAccountsController   = inject[UserAccountsController]
   lazy val spinnerController        = inject[SpinnerController]
@@ -161,6 +157,7 @@ class MainActivity extends BaseActivity
       case Hide(Some(message))=> loadingIndicator.hideWithMessage(message, 750)
       case Hide(_) => loadingIndicator.hide()
     }
+
   }
 
   override protected def onResumeFragments() = {
@@ -171,11 +168,8 @@ class MainActivity extends BaseActivity
   override def onStart() = {
     info("onStart")
     getControllerFactory.getNavigationController.addNavigationControllerObserver(this)
-    getControllerFactory.getCallingController.addCallingObserver(this)
 
     super.onStart()
-    //This is needed to drag the user back to the calling activity if they open the app again during a call
-    CallingActivity.startIfCallIsActive(this)
 
     if (!getControllerFactory.getUserPreferencesController.hasCheckedForUnsupportedEmojis(Emojis.VERSION))
       Future(checkForUnsupportedEmojis())(Threading.Background)
@@ -316,7 +310,6 @@ class MainActivity extends BaseActivity
   override def onStop() = {
     super.onStop()
     info("onStop")
-    getControllerFactory.getCallingController.removeCallingObserver(this)
     getControllerFactory.getNavigationController.removeNavigationControllerObserver(this)
   }
 
@@ -374,7 +367,11 @@ class MainActivity extends BaseActivity
         verbose(s"setting conversation: $convId")
         conversationController.selectConv(convId, ConversationChangeRequester.INTENT).map { _ =>
           exp.foreach(conversationController.setEphemeralExpiration)
-          if (call) conversationController.currentConv.head.map { conv => startCall(withVideo = false, conv) }
+          if (call)
+            for {
+              Some(acc) <- account.map(_.map(_.userId)).head
+              _         <- callStart.startCall(acc, convId)
+            } yield {}
         }
     } (Threading.Ui).future
 
@@ -443,71 +440,6 @@ class MainActivity extends BaseActivity
   def manageDevices() = startActivity(ShowDevicesIntent(this))
 
   def dismissOtrDeviceLimitFragment() = withFragmentOpt(OtrDeviceLimitFragment.Tag)(_.foreach(removeFragment))
-
-  def onStartCall(withVideo: Boolean) = conversationController.currentConv.head.map { conv =>
-    handleOnStartCall(withVideo, conv)
-  }
-
-  private def handleOnStartCall(withVideo: Boolean, conversation: ConversationData) = {
-    if (PhoneUtils.getPhoneState(this) ne PhoneState.IDLE) cannotStartGSM()
-    else startCallIfInternet(withVideo, conversation)
-  }
-
-  private def startCall(withVideo: Boolean, c: ConversationData): Unit = {
-    def call() = callPermissionController.startCall(c.id, withVideo)
-
-    if (c.convType == ConversationData.ConversationType.Group) conversationController.loadMembers(c.id).foreach { members =>
-      if (members.size > 5) ViewUtils.showAlertDialog(
-        this,
-        getString(R.string.group_calling_title),
-        getString(R.string.group_calling_message, Integer.valueOf(members.size)),
-        getString(R.string.group_calling_confirm),
-        getString(R.string.group_calling_cancel),
-        new DialogInterface.OnClickListener() {
-          def onClick(dialog: DialogInterface, which: Int) = call()
-        }, null
-      ) else call()
-    }(Threading.Ui)
-    else call()
-  }
-
-  private def cannotStartGSM() =
-    ViewUtils.showAlertDialog(
-      this,
-      R.string.calling__cannot_start__title,
-      R.string.calling__cannot_start__message,
-      R.string.calling__cannot_start__button,
-      null,
-      true)
-
-  private def startCallIfInternet(withVideo: Boolean, conversation: ConversationData) = {
-    zms.flatMap(_.network.networkMode).head.map {
-      case NetworkMode.OFFLINE =>
-        ViewUtils.showAlertDialog(
-          this,
-          R.string.alert_dialog__no_network__header,
-          R.string.calling__call_drop__message,
-          R.string.alert_dialog__confirmation,
-          null, false)
-      case NetworkMode._2G =>
-        ViewUtils.showAlertDialog(
-          this,
-          R.string.calling__slow_connection__title,
-          R.string.calling__slow_connection__message,
-          R.string.calling__slow_connection__button,
-          null, true)
-      case NetworkMode.EDGE if withVideo =>
-        ViewUtils.showAlertDialog(
-          this,
-          R.string.calling__slow_connection__title,
-          R.string.calling__video_call__slow_connection__message,
-          R.string.calling__slow_connection__button,
-          new DialogInterface.OnClickListener() {
-            def onClick(dialogInterface: DialogInterface, i: Int) = startCall(withVideo = true, conversation)
-          }, true)
-      case _ => startCall(withVideo, conversation)
-    }(Threading.Ui)
-  }
 
   private def checkForUnsupportedEmojis() =
     for {

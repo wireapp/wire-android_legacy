@@ -64,7 +64,6 @@
 
     <!--*********************************************** ERRORS ***********************************************-->
 
-    <string name="permissions_denied_dialog_acknowledge">OK</string>
     <string name="permissions_denied_dialog_settings">Settings</string>
 
     <string name="camera_not_available">CAMERA NOT AVAILABLE</string>
@@ -291,21 +290,14 @@
     <!-- Calling/voice -->
     <string name="calling__slow_connection__title">Slow Internet</string>
     <string name="calling__slow_connection__message">Your Internet connection is too slow to call right now. Please try again later.</string>
-    <string name="calling__slow_connection__button">OK</string>
     <string name="calling__cannot_start__title">Calling not available</string>
     <string name="calling__cannot_start__message">To call, hang up your current call.</string>
     <string name="calling__cannot_start__no_permission__message">To call, grant permission to access the microphone.</string>
     <string name="calling__cannot_start__ongoing_different_kind__title">%1$s is busy</string>
     <string name="calling__cannot_start__ongoing_different_kind__message">Try again later</string>
     <string name="calling__cannot_start__no_video_permission__message">To video call, grant permission to access the microphone and camera.</string>
-    <string name="calling__cannot_start__button">OK</string>
     <string name="calling__cannot_start__button_settings">Settings</string>
     <string name="calling__video_call__slow_connection__message">You might experience issues during the call</string>
-    <string name="calling__header__joining">joining</string>
-    <string name="calling__header__outgoing_subtitle">ringing</string>
-    <string name="calling__header__outgoing_video_subtitle">ringing</string>
-    <string name="calling__header__incoming_subtitle">calling</string>
-    <string name="calling__header__incoming_subtitle__video">video calling</string>
     <string name="incoming__controls__incoming__decline">DECLINE</string>
     <string name="incoming__controls__incoming__accept">ACCEPT</string>
     <string name="incoming__controls__ongoing__hangup">HANG UP</string>
@@ -319,11 +311,28 @@
     <string name="calling__self_preview_unavailable">VIDEO OFF</string>
     <string name="calling__self_preview_unavailable_long">CAMERA NOT AVAILABLE</string>
 
+    <string name="calling__header__joining">joining</string>
+    <string name="calling__header__outgoing_subtitle">ringing</string>
+    <string name="calling__header__outgoing_video_subtitle">ringing</string>
+    <string name="calling__header__incoming_subtitle">calling</string>
+    <string name="calling__header__incoming_subtitle__video">video calling</string>
+
+    <string name="call_banner_joining">JOINING</string>
+    <string name="call_banner_outgoing">RINGING</string>
+    <string name="call_banner_incoming">CALLING</string>
+    <string name="call_banner_incoming_video">VIDEO CALLING</string>
+    <string name="call_banner_tap_to_return_to_call">TAP TO RETURN TO CALL</string>
+
+    <string name="calling_ongoing_call_title">Ongoing call</string>
+    <string name="calling_ongoing_call_start_message">Are you sure you want to start a call?\nThis will hang up your current call.</string>
+    <string name="calling_ongoing_call_join_message">Are you sure you want to join this call?\nThis will hang up your current call.</string>
+    <string name="calling_ongoing_call_start_anyway">CALL ANYWAY</string>
+    <string name="calling_ongoing_call_join_anyway">JOIN ANYWAY</string>
+
     <!-- Calling in group conversation -->
     <string name="group_calling_title">Start a call</string>
-    <string name="group_calling_message" tools:ignore="PluralsCandidate">This will call %1$d people</string>
+    <string name="group_calling_message" tools:ignore="PluralsCandidate">This will call %1$s people</string>
     <string name="group_calling_confirm">Call</string>
-    <string name="group_calling_cancel">Cancel</string>
 
     <!-- Connect request -->
     <string name="connect__message">Hi %1$s,\nLet\'s connect on Wire.\n%2$s</string>

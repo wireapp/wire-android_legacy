@@ -36,7 +36,6 @@ import com.waz.utils.returning
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.controllers.{SoundController, ThemeController, UserAccountsController}
 import com.waz.zclient.connect.{PendingConnectRequestManagerFragment, SendConnectRequestFragment}
-import com.waz.zclient.controllers.calling.ICallingController
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.confirmation._
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page}
@@ -90,7 +89,6 @@ class ConversationListManagerFragment extends Fragment
   private lazy val convScreenController           = inject[IConversationScreenController]
   private lazy val confirmationController         = inject[IConfirmationController]
   private lazy val cameraController               = inject[ICameraController]
-  private lazy val callingController              = inject[ICallingController]
   private lazy val userAccountsController         = inject[UserAccountsController]
 
   private var startUiLoadingIndicator: LoadingIndicatorView = _

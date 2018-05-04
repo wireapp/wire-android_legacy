@@ -18,15 +18,18 @@
 package com.waz.zclient.utils
 
 import android.content.res.{Configuration, Resources, TypedArray}
-import android.content.{Context, DialogInterface}
+import android.content.{Context, DialogInterface, Intent}
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import android.support.annotation.StyleableRes
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
 import android.util.{AttributeSet, DisplayMetrics, TypedValue}
 import android.view.WindowManager
 import android.widget.Toast
+import com.waz.utils.returning
 import com.waz.zclient.R
 import com.waz.zclient.appentry.DialogErrorMessage
 import com.waz.zclient.ui.utils.ResourceUtils
@@ -150,6 +153,7 @@ object ContextUtils {
   def showErrorDialog(dialogErrorMessage: DialogErrorMessage)(implicit context: Context): Future[Unit] =
     showErrorDialog(dialogErrorMessage.headerResource, dialogErrorMessage.bodyResource)
 
+  //INFORMATION ABOUT DIALOGS: https://developer.android.com/guide/topics/ui/dialogs
   def showErrorDialog(headerRes: Int, msgRes: Int)(implicit context: Context): Future[Unit] = {
     val p = Promise[Unit]()
     val dialog = new AlertDialog.Builder(context)
@@ -162,6 +166,47 @@ object ContextUtils {
           p.complete(Success({}))
         }
       }).create
+    dialog.show()
+    p.future
+  }
+
+  def showConfirmationDialog(title:    String,
+                             msg:      String,
+                             positiveRes: Int = android.R.string.ok,
+                             negativeRes: Int = android.R.string.cancel)
+                            (implicit context: Context): Future[Boolean] = {
+    val p = Promise[Boolean]()
+    val dialog = new AlertDialog.Builder(context)
+      .setTitle(title)
+      .setMessage(msg)
+      .setPositiveButton(positiveRes, new DialogInterface.OnClickListener {
+        override def onClick(dialog: DialogInterface, which: Int) = p.complete(Success(true))
+      })
+      .setNegativeButton(negativeRes, new DialogInterface.OnClickListener() {
+        def onClick(dialog: DialogInterface, which: Int): Unit = dialog.cancel()
+      })
+      .setOnCancelListener(new DialogInterface.OnCancelListener {
+        override def onCancel(dialog: DialogInterface) = p.complete(Success(false))
+      })
+      .create
+    dialog.show()
+    p.future
+  }
+
+  def showPermissionsErrorDialog(titleRes: Int, msgRes: Int, ackRes: Int = android.R.string.ok)(implicit cxt: Context) = {
+    val p = Promise[Unit]()
+    val dialog = new AlertDialog.Builder(cxt)
+      .setTitle(titleRes)
+      .setMessage(msgRes)
+      .setPositiveButton(ackRes, null)
+      .setNegativeButton(R.string.permissions_denied_dialog_settings, new DialogInterface.OnClickListener() {
+        def onClick(dialog: DialogInterface, which: Int): Unit =
+          cxt.startActivity(returning(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", cxt.getPackageName, null)))(_.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)))
+      })
+      .setOnDismissListener(new DialogInterface.OnDismissListener { //From the docs: The system calls onDismiss() upon each event that invokes the onCancel() callback
+        override def onDismiss(dialog: DialogInterface) = p.complete(Success({}))
+      })
+    .create
     dialog.show()
     p.future
   }

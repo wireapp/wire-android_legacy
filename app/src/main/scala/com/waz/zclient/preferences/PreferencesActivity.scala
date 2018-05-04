@@ -42,12 +42,11 @@ import com.waz.zclient.common.views.AccountTabsView
 import com.waz.zclient.pages.main.profile.camera.{CameraContext, CameraFragment}
 import com.waz.zclient.preferences.pages.{DevicesBackStackKey, OptionsView, ProfileBackStackKey}
 import com.waz.zclient.utils.{BackStackNavigator, RingtoneUtils, ViewUtils}
-import com.waz.zclient.{ActivityHelper, BaseActivity, R}
 import com.waz.zclient.views.LoadingIndicatorView
-import com.waz.zclient._
+import com.waz.zclient.{BaseActivity, R, _}
 
 class PreferencesActivity extends BaseActivity
-  with ActivityHelper
+  with CallingBannerActivity
   with CameraFragment.Container {
 
   import PreferencesActivity._

@@ -21,7 +21,6 @@ import android.app.Activity;
 import android.view.View;
 
 import com.waz.zclient.controllers.accentcolor.IAccentColorController;
-import com.waz.zclient.controllers.calling.ICallingController;
 import com.waz.zclient.controllers.camera.ICameraController;
 import com.waz.zclient.controllers.confirmation.IConfirmationController;
 import com.waz.zclient.controllers.deviceuser.IDeviceUserController;
@@ -68,8 +67,6 @@ public interface IControllerFactory {
   ISlidingPaneController getSlidingPaneController();
 
   IAccentColorController getAccentColorController();
-
-  ICallingController getCallingController();
 
   void setActivity(Activity activity);
 

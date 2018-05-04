@@ -18,33 +18,75 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<merge xmlns:android="http://schemas.android.com/apk/res/android"
-       android:layout_width="match_parent"
-       android:layout_height="match_parent"
-    >
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent">
 
     <com.waz.zclient.common.views.BackgroundImageView
         android:id="@+id/bl__background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        />
+    />
 
-    <FrameLayout
-        android:id="@+id/fl_main_content"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        />
+        android:orientation="vertical">
 
-    <FrameLayout
-        android:id="@+id/fl__offline__container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
+        <LinearLayout
+            android:id="@+id/call_banner"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/network_indicator__expanded_height"
+            android:orientation="horizontal"
+            android:gravity="center|bottom"
+            android:background="@color/accent_green"
+            android:visibility="gone"
+            android:paddingBottom="@dimen/wire__padding__tiny"
+        >
 
-    <com.waz.zclient.views.LoadingIndicatorView
-        android:id="@+id/progress_spinner"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
+            <TextView
+                android:id="@+id/call_banner_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="@dimen/wire__text_size__small"
+            />
 
-</merge>
+            <TextView
+                android:paddingStart="@dimen/wire__padding__small"
+                android:id="@+id/call_banner_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="@dimen/wire__text_size__small"
+            />
+
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <FrameLayout
+                android:id="@+id/fl_main_content"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+            />
+
+            <FrameLayout
+                android:id="@+id/fl__offline__container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+            />
+
+            <com.waz.zclient.views.LoadingIndicatorView
+                android:id="@+id/progress_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+            />
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

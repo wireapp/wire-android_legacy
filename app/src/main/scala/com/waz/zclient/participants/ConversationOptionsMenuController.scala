@@ -25,7 +25,7 @@ import com.waz.model.{ConvId, ConversationData, UserData, UserId}
 import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events._
-import com.waz.zclient.controllers.calling.ICallingController
+import com.waz.zclient.calling.controllers.CallStartController
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
@@ -48,7 +48,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
   private val participantsController = inject[ParticipantsController]
   private val navController          = inject[INavigationController]
   private val users                  = inject[UsersController]
-  private val callingController      = inject[ICallingController]
+  private val callingController      = inject[CallStartController]
   private val cameraController       = inject[ICameraController]
   private val screenController       = inject[IConversationScreenController]
 
@@ -202,7 +202,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
   private def callConversation(convId: ConvId) = {
     verbose(s"callConversation $convId")
     convController.selectConv(convId, ConversationChangeRequester.CONVERSATION_LIST).map { _ =>
-      callingController.startCall(false)
+      callingController.startCallInCurrentConv(withVideo = false)
     }
   }
 

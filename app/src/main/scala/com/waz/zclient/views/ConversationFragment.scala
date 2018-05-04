@@ -41,6 +41,7 @@ import com.waz.utils.events.{EventStreamWithAuxSignal, Signal}
 import com.waz.utils.returningF
 import com.waz.utils.wrappers.URI
 import com.waz.zclient.Intents.ShowDevicesIntent
+import com.waz.zclient.calling.controllers.{CallController, CallStartController}
 import com.waz.zclient.camera.controllers.GlobalCameraController
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers.global.KeyboardController
@@ -56,7 +57,6 @@ import com.waz.zclient.controllers.singleimage.SingleImageObserver
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.ConversationController.ConversationChange
 import com.waz.zclient.conversation.toolbar.AudioMessageRecordingView
-import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.cursor.{CursorCallback, CursorController, CursorView}
 import com.waz.zclient.messages.{MessagesController, MessagesListView}
 import com.waz.zclient.pages.BaseFragment
@@ -89,13 +89,15 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
 
   private lazy val zms = inject[Signal[ZMessaging]]
 
-  private lazy val convController       = inject[ConversationController]
-  private lazy val messagesController   = inject[MessagesController]
-  private lazy val collectionController = inject[CollectionController]
-  private lazy val permissions          = inject[PermissionsService]
+  private lazy val convController         = inject[ConversationController]
+  private lazy val messagesController     = inject[MessagesController]
+  private lazy val collectionController   = inject[CollectionController]
+  private lazy val permissions            = inject[PermissionsService]
   private lazy val participantsController = inject[ParticipantsController]
-  private lazy val keyboardController   = inject[KeyboardController]
-  private lazy val errorsController   = inject[ErrorsController]
+  private lazy val keyboardController     = inject[KeyboardController]
+  private lazy val errorsController       = inject[ErrorsController]
+  private lazy val callController         = inject[CallController]
+  private lazy val callStartController    = inject[CallStartController]
 
   private val previewShown = Signal(false)
   private lazy val convChange = convController.convChanged.filter { _.to.isDefined }
@@ -239,14 +241,16 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
     convController.currentConv.onUi {
       case conv if conv.isActive =>
         inflateCollectionIcon()
-        convController.hasOtherParticipants(conv.id).flatMap {
-          case true => convController.isGroup(conv.id).map(isGroup => Some(if (isGroup) R.menu.conversation_header_menu_audio else R.menu.conversation_header_menu_video))
-          case false => Future.successful(None)
+        callController.currentCallOpt.head.flatMap {
+          case Some(call) if call.convId == conv.id => Future.successful(None)
+          case _ => convController.hasOtherParticipants(conv.id).flatMap {
+            case true => convController.isGroup(conv.id).map(isGroup => Some(if (isGroup) R.menu.conversation_header_menu_audio else R.menu.conversation_header_menu_video))
+            case false => Future.successful(None)
+          }
         }.foreach { id =>
           toolbar.getMenu.clear()
           id.foreach(toolbar.inflateMenu)
         }(Threading.Ui)
-
       case _ => toolbar.getMenu.clear()
     }
 
@@ -258,23 +262,6 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
               from.foreach{ id => draftMap.set(id, cursorView.getText.trim) }
               if (toConv.convType != ConversationType.WaitForConnection) updateConv(from, toConv)
             case None =>
-          }
-        }
-
-        // Saving factories since this fragment may be re-created before the runnable is done,
-        // but we still want runnable to work.
-        val controllerFactory = Option(getControllerFactory)
-        // TODO: Remove when call issue is resolved with https://wearezeta.atlassian.net/browse/CM-645
-        // And also why do we use the ConversationFragment to start a call from somewhere else....
-        CancellableFuture.delay(1000.millis).map { _ =>
-          (controllerFactory, requester) match {
-            case (Some(cf), ConversationChangeRequester.START_CONVERSATION_FOR_VIDEO_CALL) if !cf.isTornDown =>
-              cf.getCallingController.startCall(true)
-            case (Some(cf), ConversationChangeRequester.START_CONVERSATION_FOR_CALL) if !cf.isTornDown =>
-              cf.getCallingController.startCall(false)
-            case (Some(cf), ConversationChangeRequester.START_CONVERSATION_FOR_CAMERA) if !cf.isTornDown =>
-              cf.getCameraController.openCamera(CameraContext.MESSAGE)
-            case _ =>
           }
         }
 
@@ -292,16 +279,13 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
     })
 
     toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-      override def onMenuItemClick(item: MenuItem): Boolean = item.getItemId match {
-        case R.id.action_audio_call =>
-          getControllerFactory.getCallingController.startCall(false)
-          cursorView.closeEditMessage(false)
-          true
-        case R.id.action_video_call =>
-          getControllerFactory.getCallingController.startCall(true)
-          cursorView.closeEditMessage(false)
-          true
-        case _ => false
+      override def onMenuItemClick(item: MenuItem): Boolean =
+        item.getItemId match {
+          case R.id.action_audio_call | R.id.action_video_call =>
+            callStartController.startCallInCurrentConv(withVideo = item.getItemId == R.id.action_video_call)
+            cursorView.closeEditMessage(false)
+            true
+          case _ => false
       }
     })
 

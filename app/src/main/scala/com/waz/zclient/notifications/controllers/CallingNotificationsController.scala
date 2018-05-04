@@ -33,7 +33,7 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.{Context, Intent}
 import com.waz.zclient.Intents.OpenAccountIntent
 import com.waz.zclient._
-import com.waz.zclient.calling.controllers.GlobalCallingController
+import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.views.ImageController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DeprecationUtils
@@ -47,10 +47,10 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
 
   val notificationManager = inject[NotificationManager]
 
-  val callCtrler = inject[GlobalCallingController]
+  val callCtrler = inject[CallController]
   import callCtrler._
 
-  activeCall.on(Threading.Ui) {
+  isCallActive.on(Threading.Ui) {
     case (false) =>
       notificationManager.cancel(ZETA_CALL_ONGOING_NOTIFICATION_ID)
       notificationManager.cancel(ZETA_CALL_INCOMING_NOTIFICATION_ID)
@@ -59,7 +59,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
 
   val bitmap =
     (for {
-      z        <- zms
+      z        <- callingZms
       Some(id) <- callerData.map(_.picture)
       bitmap   <- inject[ImageController].imageSignal(z, id, Regular(callImageSizePx))
     } yield
@@ -70,12 +70,12 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
     .orElse(Signal.const(Option.empty[Bitmap]))
 
   (for {
-    z          <- zms
+    z          <- callingZms
     conv       <- conversation
     callerName <- callerData.map(_.name)
     state      <- callState
-    group      <- groupCall
-    video      <- videoCall
+    group      <- isGroupCall
+    video      <- isVideoCall
     bmp        <- bitmap
   } yield (z.selfUserId, conv, callerName, state, group, video, bmp)).on(Threading.Ui) {
     case (account, conv, callerName, state, group, video, bmp) =>

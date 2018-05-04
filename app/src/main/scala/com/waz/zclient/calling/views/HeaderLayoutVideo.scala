@@ -22,14 +22,14 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.{LinearLayout, TextView}
 import com.waz.threading.Threading
-import com.waz.zclient.calling.controllers.CurrentCallController
+import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.{R, ViewHelper}
 
 class HeaderLayoutAudio(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
-
   def this(context: Context) =  this(context, null)
 
   lazy val nameView: TextView = findById(R.id.ttv__calling__header__name)
@@ -39,13 +39,16 @@ class HeaderLayoutAudio(val context: Context, val attrs: AttributeSet, val defSt
   LayoutInflater.from(context).inflate(R.layout.calling_header_audio, this, true)
   setOrientation(LinearLayout.VERTICAL)
 
-  val controller = inject[CurrentCallController]
+  val controller = inject[CallController]
 
   controller.subtitleText.on(Threading.Ui)(subtitleView.setText)
 
-  controller.glob.conversationName.on(Threading.Ui)(nameView.setText)
+  controller.conversationName.on(Threading.Ui)(nameView.setText)
 
-  controller.cbrEnabled.on(Threading.Ui)(bitRateModeView.setText)
+  controller.cbrEnabled.map {
+    case true => getString(R.string.audio_message__constant_bit_rate)
+    case false => ""
+  }.on(Threading.Ui)(bitRateModeView.setText)
 
 }
 
@@ -62,11 +65,11 @@ class HeaderLayoutVideo (val context: Context, val attrs: AttributeSet, val defS
   LayoutInflater.from(context).inflate(R.layout.calling_header_video, this, true)
   setOrientation(LinearLayout.HORIZONTAL)
 
-  val controller = inject[CurrentCallController]
+  val controller = inject[CallController]
 
   controller.otherUser.on(Threading.Ui)(_.foreach(user => chathead.setUserId(user.id)))
 
   controller.subtitleText.on(Threading.Ui)(subtitleView.setText)
 
-  controller.glob.conversationName.on(Threading.Ui)(nameView.setText)
+  controller.conversationName.on(Threading.Ui)(nameView.setText)
 }

@@ -23,8 +23,6 @@ import android.view.View;
 
 import com.waz.zclient.controllers.accentcolor.AccentColorController;
 import com.waz.zclient.controllers.accentcolor.IAccentColorController;
-import com.waz.zclient.controllers.calling.CallingController;
-import com.waz.zclient.controllers.calling.ICallingController;
 import com.waz.zclient.controllers.camera.CameraController;
 import com.waz.zclient.controllers.camera.ICameraController;
 import com.waz.zclient.controllers.confirmation.ConfirmationController;
@@ -58,8 +56,6 @@ import com.waz.zclient.pages.main.pickuser.controller.PickUserController;
 
 public class ControllerFactory implements IControllerFactory {
   protected IAccentColorController accentColorController;
-
-  protected ICallingController callingController;
 
   protected ICameraController cameraController;
 
@@ -115,10 +111,6 @@ public class ControllerFactory implements IControllerFactory {
     if (accentColorController != null) {
       accentColorController.tearDown();
       accentColorController = null;
-    }
-    if (callingController != null) {
-      callingController.tearDown();
-      callingController = null;
     }
     if (cameraController != null) {
       cameraController.tearDown();
@@ -236,15 +228,6 @@ public class ControllerFactory implements IControllerFactory {
       pickUserController = new PickUserController();
     }
     return pickUserController;
-  }
-
-  @Override
-  public ICallingController getCallingController() {
-    verifyLifecycle();
-    if (callingController == null) {
-      callingController = new CallingController();
-    }
-    return callingController;
   }
 
   @Override

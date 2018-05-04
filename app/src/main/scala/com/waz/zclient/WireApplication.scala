@@ -34,18 +34,17 @@ import com.waz.content.{AccountStorage, GlobalPreferences, TeamsStorage}
 import com.waz.log.InternalLog
 import com.waz.model.ConversationData
 import com.waz.permissions.PermissionsService
-import com.waz.service.tracking.TrackingService
 import com.waz.service._
+import com.waz.service.tracking.TrackingService
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.appentry.controllers.{CreateTeamController, InvitationsController}
-import com.waz.zclient.calling.controllers.{CallPermissionsController, CurrentCallController, GlobalCallingController}
+import com.waz.zclient.calling.controllers.{CallStartController, CallController}
 import com.waz.zclient.camera.controllers.{AndroidCameraFactory, GlobalCameraController}
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers.global.{AccentColorController, ClientsController, KeyboardController, PasswordController}
 import com.waz.zclient.common.controllers.{SoundController, _}
 import com.waz.zclient.common.views.ImageController
 import com.waz.zclient.controllers._
-import com.waz.zclient.controllers.calling.ICallingController
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.confirmation.IConfirmationController
 import com.waz.zclient.controllers.deviceuser.IDeviceUserController
@@ -125,14 +124,13 @@ object WireApplication {
     bind [ILocationController]           toProvider controllerFactory.getLocationController
     bind [IGiphyController]              toProvider controllerFactory.getGiphyController
     bind [ICameraController]             toProvider controllerFactory.getCameraController
-    bind [ICallingController]            toProvider controllerFactory.getCallingController
     bind [IConfirmationController]       toProvider controllerFactory.getConfirmationController
 
     // global controllers
     bind [CrashController]         to new CrashController
     bind [AccentColorController]   to new AccentColorController()
     bind [PasswordController]      to new PasswordController()
-    bind [GlobalCallingController] to new GlobalCallingController()
+    bind [CallController] to new CallController()
     bind [GlobalCameraController]  to new GlobalCameraController(new AndroidCameraFactory)
     bind [SoundController]         to new SoundController
     bind [ThemeController]         to new ThemeController
@@ -182,8 +180,7 @@ object WireApplication {
     bind [FragmentManager] to inject[Activity].asInstanceOf[FragmentActivity].getSupportFragmentManager
 
     bind [KeyboardController]        to new KeyboardController()
-    bind [CurrentCallController]     to new CurrentCallController()
-    bind [CallPermissionsController] to new CallPermissionsController()
+    bind [CallStartController]       to new CallStartController()
     bind [AssetsController]          to new AssetsController()
     bind [BrowserController]         to new BrowserController()
     bind [MessageViewFactory]        to new MessageViewFactory()

@@ -31,7 +31,7 @@ import com.waz.api.VideoSendState
 import com.waz.avs.{VideoPreview, VideoRenderer}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
-import com.waz.zclient.calling.controllers.CurrentCallController
+import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.ui.calling.{CallControlCameraToggleButtonView, RoundedLayout}
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{R, ViewHelper}
@@ -70,13 +70,23 @@ class VideoCallingView(val context: Context, val attrs: AttributeSet, val defSty
   var isCallEstablished = false
   var inOrFadingIn = false
 
-  val controller = inject[CurrentCallController]
+  val controller = inject[CallController]
 
   LayoutInflater.from(context).inflate(R.layout.calling_video, this, true)
 
   setId(R.id.video_calling_view) //for QA's automation tests
 
   this.onClick(toggleControlVisibility())
+
+  controller.isCallActive.map {
+    case true => Some(videoPreview)
+    case false => None
+  }.on(Threading.Ui)(controller.setVideoPreview)
+
+  controller.isCallEstablished.map {
+    case true => Some(videoView)
+    case false => None
+  }.on(Threading.Ui)(controller.setVideoView)
 
   cameraToggleButton.onClick {
     controller.currentCaptureDeviceIndex.mutate(_ + 1)
@@ -85,17 +95,7 @@ class VideoCallingView(val context: Context, val attrs: AttributeSet, val defSty
 
   callingControls.onClickEvent.on(Threading.Ui)(_ => extendControlsDisplay())
 
-  controller.glob.activeCall.map {
-    case true => Some(videoPreview)
-    case false => None
-  }.on(Threading.Ui)(controller.setVideoPreview)
-
-  controller.glob.activeCallEstablished.map {
-    case true => Some(videoView)
-    case false => None
-  }.on(Threading.Ui)(controller.setVideoView)
-
-  Signal(controller.glob.activeCall, controller.glob.activeCallEstablished).on(Threading.Ui) {
+  Signal(controller.isCallActive, controller.isCallEstablished).on(Threading.Ui) {
     case (true, false) if !hasFullScreenBeenSet =>
       Timber.d("Attaching videoPreview to fullScreen (call active, but not established")
       setFullScreenView(videoPreview)
@@ -109,11 +109,11 @@ class VideoCallingView(val context: Context, val attrs: AttributeSet, val defSty
     case _ =>
   }
 
-  controller.glob.activeCallEstablished.on(Threading.Ui)(selfViewLayout.setVisible)
+  controller.isCallEstablished.on(Threading.Ui)(selfViewLayout.setVisible)
 
-  controller.glob.activeCallEstablished.on(Threading.Ui)(est => headerView.setVisible(!est))
+  controller.isCallEstablished.on(Threading.Ui)(est => headerView.setVisible(!est))
 
-  controller.glob.activeCallEstablished(isCallEstablished = _)
+  controller.isCallEstablished(isCallEstablished = _)
 
   controller.stateMessageText.on(Threading.Ui) {
     case (Some(message)) =>
@@ -123,17 +123,17 @@ class VideoCallingView(val context: Context, val attrs: AttributeSet, val defSty
       messageView.setVisibility(GONE)
   }
 
-  Signal(controller.glob.activeCallEstablished, controller.cameraFailed, controller.videoSendState).map {
+  Signal(controller.isCallEstablished, controller.cameraFailed, controller.videoSendState).map {
     case (true, false, VideoSendState.SEND) => GONE
     case _ => VISIBLE
   }.on(Threading.Ui)(selfPreviewPlaceHolder.setVisibility)
 
-  Signal(controller.glob.activeCallEstablished, controller.cameraFailed, controller.videoSendState).map {
+  Signal(controller.isCallEstablished, controller.cameraFailed, controller.videoSendState).map {
     case (true, false, VideoSendState.SEND) => VISIBLE
     case _ => GONE
   }.on(Threading.Ui)(setSelfPreviewVisible)
 
-  Signal(controller.glob.activeCallEstablished, controller.cameraFailed, controller.videoSendState, controller.captureDevices).map {
+  Signal(controller.isCallEstablished, controller.cameraFailed, controller.videoSendState, controller.captureDevices).map {
     case (true, false, VideoSendState.SEND, devices) if devices.size > 1 =>
       isCameraToggleButtonVisible = true
       VISIBLE
@@ -215,7 +215,7 @@ class VideoCallingView(val context: Context, val attrs: AttributeSet, val defSty
     for {
       v <- Option(layout.getChildAt(0))
       t <- Option(v.getTag)
-      if (t == videoViewTag)
+      if t == videoViewTag
     } yield v
 }
 

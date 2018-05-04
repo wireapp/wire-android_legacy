@@ -29,11 +29,14 @@ import android.support.v7.preference.Preference
 import android.view.View.OnClickListener
 import android.view.animation.{AlphaAnimation, Animation, AnimationUtils}
 import android.view.{LayoutInflater, View, ViewGroup, ViewStub}
+import android.widget.TextView
 import com.waz.ZLog._
 import com.waz.utils.events._
 import com.waz.utils.returning
 import com.waz.zclient.FragmentHelper.getNextAnimationDuration
-
+import com.waz.zclient.calling.CallingActivity
+import com.waz.zclient.calling.controllers.CallController
+import com.waz.zclient.utils.RichView
 import scala.language.implicitConversions
 
 object WireContext {
@@ -339,6 +342,28 @@ trait ActivityHelper extends AppCompatActivity with ViewFinder with Injectable w
   override def onDestroy(): Unit = {
     super.onDestroy()
     onContextDestroy()
+  }
+}
+
+trait CallingBannerActivity extends ActivityHelper {
+  lazy val callController = inject[CallController]
+
+  lazy val callBanner = returning(findById[View](R.id.call_banner)) { v =>
+    v.onClick(CallingActivity.startIfCallIsActive(this))
+  }
+  lazy val callBannerStatus   = findById[TextView](R.id.call_banner_status)
+  lazy val callBannerDuration = findById[TextView](R.id.call_banner_duration)
+
+  override def onCreate(savedInstanceState: Bundle) = {
+    super.onCreate(savedInstanceState)
+
+    callController.isCallActiveDelay.onUi { est =>
+      getWindow.setStatusBarColor(getColor(if (est) R.color.accent_green else android.R.color.transparent))
+      callBanner.setVisibility(if (est) View.VISIBLE else View.GONE)
+    }
+
+    callController.callBannerText.onUi(callBannerStatus.setText)
+    callController.durationFormatted.onUi(callBannerDuration.setText)
   }
 }
 

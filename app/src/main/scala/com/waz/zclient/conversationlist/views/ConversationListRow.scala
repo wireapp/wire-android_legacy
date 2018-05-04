@@ -33,7 +33,7 @@ import com.waz.service.call.CallInfo
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events.Signal
-import com.waz.zclient.calling.controllers.CallPermissionsController
+import com.waz.zclient.calling.controllers.CallStartController
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversationlist.ConversationListController
@@ -71,7 +71,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   val zms = inject[Signal[ZMessaging]]
   val accentColor = inject[AccentColorController].accentColor
-  val callPermissionsController = inject[CallPermissionsController]
+  val callPermissionsController = inject[CallStartController]
   lazy val userAccountsController = inject[UserAccountsController]
 
   val selfId = zms.map(_.selfUserId)
@@ -202,7 +202,10 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   badge.onClickEvent{
     case ConversationBadge.IncomingCall =>
-      conversationData.map(_.id).foreach( convId => callPermissionsController.startCall(convId))
+      (zms.map(_.selfUserId).currentValue, conversationData.map(_.id)) match {
+        case (Some(acc), Some(cId)) => callPermissionsController.startCall(acc, cId)
+        case _ => //
+      }
     case _=>
   }
 

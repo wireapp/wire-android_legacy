@@ -36,6 +36,37 @@
         android:orientation="vertical"
         >
 
+        <LinearLayout
+            android:id="@+id/call_banner"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/network_indicator__expanded_height"
+            android:orientation="horizontal"
+            android:gravity="center|bottom"
+            android:background="@color/accent_green"
+            android:visibility="gone"
+            android:paddingBottom="@dimen/wire__padding__tiny"
+        >
+
+            <TextView
+                android:id="@+id/call_banner_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="@dimen/wire__text_size__small"
+                android:text="@string/call_banner_tap_to_return_to_call"
+            />
+
+            <TextView
+                android:paddingStart="@dimen/wire__padding__small"
+                android:id="@+id/call_banner_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="@dimen/wire__text_size__small"
+            />
+
+        </LinearLayout>
+
         <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"

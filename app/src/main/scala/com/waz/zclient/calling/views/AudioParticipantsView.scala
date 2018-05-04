@@ -33,7 +33,7 @@ import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.zclient.calling.controllers.{CurrentCallController, GlobalCallingController}
+import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.calling.CallingGainView
@@ -47,7 +47,7 @@ class AudioParticipantsView(val context: Context, val attrs: AttributeSet, val d
 
   def this(context: Context) = this(context, null)
 
-  val controller = inject[CurrentCallController]
+  val controller = inject[CallController]
 
   val layoutManager = new LinearLayoutManager(context, HORIZONTAL, false)
   setLayoutManager(layoutManager)
@@ -118,7 +118,7 @@ protected class AudioParticipantChatheadView(val context: Context, val attrs: At
   val normalChatheadMargin = getDimenPx(R.dimen.wire__padding__small)
   val largeChatheadMargin = getDimenPx(R.dimen.list_padding_top)
 
-  val controller = inject[CurrentCallController]
+  val controller = inject[CallController]
 
   val userId = Signal[UserId]
 
@@ -130,7 +130,7 @@ protected class AudioParticipantChatheadView(val context: Context, val attrs: At
   lazy val gainView:     CallingGainView = findById(R.id.voice_gain)
 
   (for {
-    userStorage <- controller.glob.userStorage
+    userStorage <- controller.userStorage
     userId <- userId
     userData <- userStorage.signal(userId)
   } yield userData).on(Threading.Ui)(data => gainView.setGainColor(AccentColor(data.accent).getColor()))
@@ -142,7 +142,7 @@ protected class AudioParticipantChatheadView(val context: Context, val attrs: At
     chatheadView.setUserId(userId)
   }
 
-  controller.glob.activeCallEstablished.zip(controller.participantIdsToDisplay).map {
+  controller.isCallEstablished.zip(controller.participantIdsToDisplay).map {
     case (true, otherParticipants) if otherParticipants.size > 1 => VISIBLE
     case _ => View.GONE
   }.on(Threading.Ui)(nameView.setVisibility)
@@ -165,7 +165,7 @@ class DegradableChatheadView(context: Context, attrs: AttributeSet, defStyleAttr
   def this (context: Context) = this (context, null)
 
   lazy val degradedDrawable = getDrawable(R.drawable.degradation_overlay)
-  val convDegraded = inject[GlobalCallingController].convDegraded.disableAutowiring()
+  val convDegraded = inject[CallController].convDegraded.disableAutowiring()
 
   convDegraded.onChanged(_ => postInvalidate())
 
