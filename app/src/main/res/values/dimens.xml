@@ -147,6 +147,7 @@
     <dimen name="wire__text_size__tiny">8sp</dimen>
     <dimen name="wire__text_size__small">12sp</dimen>
     <dimen name="wire__text_size__regular">16sp</dimen>
+    <dimen name="wire__text_size__20">20sp</dimen>
     <dimen name="wire__text_size__medium">24sp</dimen>
     <dimen name="wire__text_size__big">28sp</dimen>
     <dimen name="wire__text_size__huge">32sp</dimen>

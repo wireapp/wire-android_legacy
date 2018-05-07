@@ -45,45 +45,27 @@
         app:w_font="@string/wire__typeface__light"
         />
 
-    <com.waz.zclient.calling.views.HeaderLayoutAV
-        android:id="@+id/header_layout"
-        android:layout_width="@dimen/calling__participants_max_diameter"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|center"
-        android:layout_marginTop="@dimen/wire__padding__huge"
-        />
-
     <LinearLayout
         android:id="@+id/self_view_layout"
         android:orientation="vertical"
-        android:layout_gravity="center"
         android:layout_width="match_parent"
         android:layout_marginBottom="@dimen/wire__margin__huge"
         android:layout_height="wrap_content">
+
+        <com.waz.zclient.calling.views.CallingInfoLayout
+            android:id="@+id/calling_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center"
+            android:layout_marginTop="@dimen/wire__padding__huge"
+            />
 
         <com.waz.zclient.ui.calling.RoundedLayout
             android:id="@+id/rounded_layout"
             android:layout_width="@dimen/calling__self_video_preview__dimension"
             android:layout_height="@dimen/calling__self_video_preview__dimension"
             android:background="@color/graphite"
-            >
-
-            <com.waz.zclient.ui.text.TypefaceTextView
-                android:id="@+id/self_preview_place_holder"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="@string/calling__self_preview_unavailable"
-                android:textAlignment="center"
-                android:textAllCaps="true"
-                android:textColor="@color/text__primary_dark"
-                android:textSize="@dimen/wire__text_size__small"
-                android:background="@color/graphite"
-                app:w_font="@string/wire__typeface__light"
-                android:visibility="gone"
-                />
-
-        </com.waz.zclient.ui.calling.RoundedLayout>
+            />
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/degraded_warning"
@@ -113,14 +95,6 @@
             android:visibility="gone"/>
     </LinearLayout>
 
-    <com.waz.zclient.calling.views.CallParticipantsView
-        android:id="@+id/participants"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone"
-        />
-
     <com.waz.zclient.calling.views.ControlsView
         android:id="@+id/controls_grid"
         android:layout_width="@dimen/calling__controls__max_width"
@@ -128,6 +102,5 @@
         android:layout_gravity="center|bottom"
         android:layout_marginBottom="@dimen/wire__margin__huge"
         />
-
 
 </FrameLayout>

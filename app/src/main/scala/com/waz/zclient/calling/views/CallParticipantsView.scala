@@ -64,8 +64,8 @@ class CallParticipantsView(val context: Context, val attrs: AttributeSet, val de
     }
 
     Signal(callController.isVideoCall, themeController.darkThemeSet).map{
-      case (true, _) => Theme.TransparentDark
-      case (false, true) => Theme.TransparentDark
+      case (true, _)      => Theme.TransparentDark
+      case (false, true)  => Theme.TransparentDark
       case (false, false) => Theme.TransparentLight
     }.onUi { theme =>
       this.theme = theme
@@ -75,9 +75,8 @@ class CallParticipantsView(val context: Context, val attrs: AttributeSet, val de
     override def getItemCount: Int = participantsToDisplay.size
 
     override def onBindViewHolder(holder: CallParticipantViewHolder, position: Int): Unit ={
-      participantsToDisplay.lift(position).foreach(holder.bind)
-      val view = holder.itemView.asInstanceOf[SingleUserRowView]
-      view.setTheme(theme)
+      participantsToDisplay.lift(position).foreach(info => holder.bind(info, selfTeamId))
+      holder.itemView.asInstanceOf[SingleUserRowView].setTheme(theme)
     }
 
     override def onCreateViewHolder(parent: ViewGroup, viewType: Int): CallParticipantViewHolder = {
@@ -91,8 +90,8 @@ object CallParticipantsView {
 }
 
 class CallParticipantViewHolder(view: SingleUserRowView) extends RecyclerView.ViewHolder(view) {
-  def bind(callParticipantInfo: CallParticipantInfo): Unit = {
-    view.setUserData(callParticipantInfo.userData, None)
+  def bind(callParticipantInfo: CallParticipantInfo, teamId: Option[TeamId]): Unit = {
+    view.setUserData(callParticipantInfo.userData, teamId)
     view.setVideoEnabled(callParticipantInfo.videoEnabled)
   }
 }

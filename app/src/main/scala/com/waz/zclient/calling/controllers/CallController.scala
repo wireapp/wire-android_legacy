@@ -21,7 +21,7 @@ import android.media.AudioManager
 import android.os.{PowerManager, Vibrator}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.api.{IConversation, Verification, VideoSendState}
+import com.waz.api.{Verification, VideoSendState}
 import com.waz.avs.{VideoPreview, VideoRenderer}
 import com.waz.model.{UserData, UserId}
 import com.waz.service.call.Avs.VideoReceiveState
@@ -90,6 +90,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val isVideoCall       = currentCall.map{ c =>
     c.videoSendState != VideoSendState.DONT_SEND || c.videoReceiveState != VideoReceiveState.Stopped
   }
+
   val videoSendState    = currentCall.map(_.videoSendState)
   val videoReceiveState = currentCall.map(_.videoReceiveState)
   val isGroupCall       = currentCall.map(_.isGroup)
@@ -144,7 +145,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
 
   val conversation = callingZms.zip(callConvId) flatMap { case (z, cId) => z.convsStorage.signal(cId) }
-  val conversationName = conversation map (data => if (data.convType == IConversation.Type.GROUP) data.name.filter(!_.isEmpty).getOrElse(data.generatedName) else data.generatedName)
+  val conversationName = conversation.map(_.displayName)
 
   val otherUser = Signal(isGroupCall, userStorage, callConvId).flatMap {
     case (isGroupCall, usersStorage, convId) if !isGroupCall =>
@@ -307,7 +308,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     } yield (fm, rConvId, userId)).on(Threading.Ui) {
       case (fm, rConvId, userId) =>
         verbose(s"Setting ViewRenderer on Flowmanager, rConvId: $rConvId, userId: $userId, view: $view")
-        view.foreach(fm.setVideoView(rConvId, userId, _))
+        fm.setVideoView(rConvId, userId, view.orNull)
     }
   }
 
@@ -377,9 +378,9 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     }
   }
 
-  val speakerButton = ButtonSignal(callingZms.map(_.mediamanager), callingZms.flatMap(_.mediamanager.isSpeakerOn)) {
+  lazy val speakerButton = ButtonSignal(callingZms.map(_.mediamanager), callingZms.flatMap(_.mediamanager.isSpeakerOn)) {
     case (mm, isSpeakerSet) => mm.setSpeaker(!isSpeakerSet)
-  }
+  }.disableAutowiring()
 
   val isTablet = Signal(!LayoutSpec.isPhone(cxt))
 }

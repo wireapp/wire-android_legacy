@@ -26,19 +26,19 @@ import android.support.v4.app.Fragment
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.view._
 import android.widget.FrameLayout.LayoutParams
-import android.widget.{FrameLayout, LinearLayout, TextView}
+import android.widget.{FrameLayout, TextView}
 import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.ZLog.verbose
 import com.waz.api.VideoSendState
 import com.waz.avs.{VideoPreview, VideoRenderer}
 import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.Signal
+import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController
-import com.waz.zclient.calling.views.{ControlsView, HeaderLayoutAV}
+import com.waz.zclient.calling.views.{CallingInfoLayout, ControlsView}
 import com.waz.zclient.ui.calling.RoundedLayout
 import com.waz.zclient.utils.{RichView, ViewUtils}
-import com.waz.zclient.{BaseActivity, FragmentHelper, R}
+import com.waz.zclient.{FragmentHelper, R}
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -58,17 +58,20 @@ class CallingFragment extends FragmentHelper {
     controller.degradationConfirmationText.onUi { text => vh.foreach(_.setText(text))}
   }
 
-  private lazy val overlayView: View = findById(R.id.video_background_overlay)
-
-  private lazy val headerView = returning(view[HeaderLayoutAV](R.id.header_layout)) { vh =>
-    controller.isCallEstablished.onUi { est =>
-      verbose(s"header visible: $est"); vh.foreach(_.setVisible(!est))
+  private lazy val overlayView = returning(view[View](R.id.video_background_overlay)) { vh =>
+    controller.showVideoView.onUi { visible =>
+      verbose(s"overlay visible: $visible")
+      vh.foreach(_.setVisible(visible))
     }
   }
 
+  private lazy val infoView = view[CallingInfoLayout](R.id.calling_info)
+
   private lazy val messageView = returning(view[TextView](R.id.video_warning_message)) { vh =>
+    val startedAsVideo = controller.isVideoCall.currentValue.getOrElse(false)
+
     controller.stateMessageText.onUi {
-      case (Some(message)) =>
+      case (Some(message)) if startedAsVideo =>
         vh.foreach { messageView =>
           messageView.setVisible(true)
           messageView.setText(message)
@@ -80,16 +83,10 @@ class CallingFragment extends FragmentHelper {
     }
   }
 
-  private lazy val selfViewLayout = returning(view[LinearLayout](R.id.self_view_layout)) { vh =>
-    controller.isCallEstablished.onUi { est =>
-      verbose(s"self view visible: $est"); vh.foreach(_.setVisible(est))
-    }
-  }
-
   private lazy val roundedLayout = returning(view[RoundedLayout](R.id.rounded_layout)) { vh =>
     Signal(controller.showVideoView, controller.isCallEstablished, controller.cameraFailed, controller.videoSendState).map {
       case (true, true, false, VideoSendState.SEND) => true
-      case _                                  => false
+      case _                                        => false
     }.onUi { visible =>
       vh.foreach { view =>
         verbose(s"video view visible: $visible")
@@ -98,25 +95,12 @@ class CallingFragment extends FragmentHelper {
     }
   }
 
-  private lazy val selfPreviewPlaceHolder = returning(view[View](R.id.self_preview_place_holder)) { vh =>
-    Signal(controller.showVideoView, controller.isCallEstablished, controller.cameraFailed, controller.videoSendState).map {
-      case (true, _, _, _) => false
-      case (_, true, false, VideoSendState.SEND) => false
-      case _ => true
-    }.onUi { visible => verbose(s"self preview placeHolder visible: $visible"); vh.foreach(_.setVisible(visible)) }
-  }
-
-
-  private lazy val callingControls = returning(view[ControlsView](R.id.controls_grid)) {
-    _.foreach(_.onClickEvent.onUi(_ => extendControlsDisplay()))
-  }
-
+  private lazy val callingControls = view[ControlsView](R.id.controls_grid)
   private lazy val videoView = new VideoRenderer(ctx, false)
   private lazy val videoPreview = new VideoPreview(ctx)
 
   private var hasFullScreenBeenSet = false //need to make sure we don't set the FullScreen preview on call tear down! never gets set back to false
   private var inOrFadingIn = false
-  private var isCallEstablished = false
   private var tapFuture: CancellableFuture[Unit] = _
 
   override def onCreateView(inflater: LayoutInflater, viewGroup: ViewGroup, savedInstanceState: Bundle): View =
@@ -125,14 +109,12 @@ class CallingFragment extends FragmentHelper {
   override def onViewCreated(v: View, @Nullable savedInstanceState: Bundle): Unit = {
     super.onViewCreated(v, savedInstanceState)
 
-    verbose(s"onViewCreated")
-
     getActivity.getWindow.setBackgroundDrawableResource(R.color.calling_background)
 
     controller.isCallActive.onUi {
       case false =>
         verbose("call no longer exists, finishing activity")
-        getActivity.asInstanceOf[BaseActivity].finish()
+        getActivity.finish()
       case _ =>
     }
 
@@ -142,29 +124,28 @@ class CallingFragment extends FragmentHelper {
     (for {
       degraded <- controller.convDegraded
       video    <- controller.isVideoCall
-    } yield degraded && video).onChanged.filter(_ == true).onUi(_ => getActivity.asInstanceOf[BaseActivity].finish())
+    } yield degraded && video).onChanged.filter(_ == true).onUi(_ => getActivity.finish())
 
     v.onClick(toggleControlVisibility())
-
-    controller.isCallEstablished(isCallEstablished = _)
-
-    controller.isCallEstablished.map {
-      case true  => Some(videoView)
-      case false => None
-    }.onUi(controller.setVideoView)
 
     Signal(controller.showVideoView, controller.isCallActive, controller.isCallEstablished).onUi {
       case (true, true, false) if !hasFullScreenBeenSet =>
         verbose("Attaching videoPreview to fullScreen (call active, but not established)")
+        videoPreview.setVisible(true)
         setFullScreenView(videoPreview)
         hasFullScreenBeenSet = true
       case (true, true, true) =>
         verbose("Attaching videoView to fullScreen and videoPreview to round layout, call active and established")
+        videoView.setVisible(true)
         setFullScreenView(videoView)
+        videoPreview.setVisible(true)
         setSmallPreview(videoPreview)
         extendControlsDisplay()
         hasFullScreenBeenSet = true //for the rare case the first match never fires
       case _ =>
+        verbose("hiding video view and preview")
+        videoPreview.setVisible(false)
+        videoView.setVisible(false)
     }
 
     controller.videoSendState.map {
@@ -175,25 +156,39 @@ class CallingFragment extends FragmentHelper {
     overlayView
     degradedWarningTextView
     degradedConfirmationTextView
-    headerView
+    infoView
     messageView
-    selfViewLayout
     roundedLayout
-    selfPreviewPlaceHolder
     callingControls
     videoView
+  }
+
+  private var subs = Set[Subscription]()
+
+  override def onStart(): Unit = {
+    super.onStart()
+
+    callingControls.foreach(controls =>
+      subs += controls.onButtonClick.onUi(_ => extendControlsDisplay())
+    )
+  }
+
+  override def onStop(): Unit = {
+    subs.foreach(_.destroy())
+
+    super.onStop()
   }
 
   override def onBackPressed(): Boolean = true
 
   private def restart() = {
     verbose("restart")
-    getActivity.asInstanceOf[BaseActivity].finish()
+    getActivity.finish()
     CallingActivity.start(ctx)
     getActivity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
   }
 
-  private def toggleControlVisibility(): Unit = {
+  private def toggleControlVisibility(): Unit = if (controller.showVideoView.currentValue.getOrElse(false)) {
     if (inOrFadingIn) {
       fadeOutControls()
     } else {
@@ -202,7 +197,7 @@ class CallingFragment extends FragmentHelper {
     }
   }
 
-  private def extendControlsDisplay(): Unit = if (isCallEstablished) {
+  private def extendControlsDisplay(): Unit = if (controller.showVideoView.currentValue.getOrElse(false)) {
     verbose(s"extendControlsDisplay")
     Option(tapFuture).foreach(_.cancel())
     tapFuture = CancellableFuture.delay(CallingFragment.tapDelay)
@@ -211,14 +206,14 @@ class CallingFragment extends FragmentHelper {
 
   private def fadeInControls(): Unit = {
     verbose(s"fadeInControls")
-    ViewUtils.fadeInView(overlayView)
+    overlayView.foreach(ViewUtils.fadeInView)
     callingControls.foreach(ViewUtils.fadeInView)
     inOrFadingIn = true
   }
 
   private def fadeOutControls(): Unit = {
     verbose(s"fadeOutControls")
-    ViewUtils.fadeOutView(overlayView)
+    overlayView.foreach(ViewUtils.fadeOutView)
     callingControls.foreach(ViewUtils.fadeOutView)
     inOrFadingIn = false
   }
@@ -244,20 +239,16 @@ class CallingFragment extends FragmentHelper {
     * Needed to remove a TextureView from its parent in case we try and set it as a child of a different layout
     * (the self-preview TextureView moves from fullscreen to the small layout when call is answered)
     */
-  private def removeVideoViewFromParent(videoView: View): Unit = {
-    val layout = Option(videoView.getParent.asInstanceOf[ViewGroup])
-    layout.foreach(_.removeView(videoView))
-  }
+  private def removeVideoViewFromParent(videoView: View): Unit =
+    Option(videoView.getParent.asInstanceOf[ViewGroup]).foreach(_.removeView(videoView))
 
-  private def removeVideoViewFromLayoutByTag(layout: ViewGroup): Unit = {
+  private def removeVideoViewFromLayoutByTag(layout: ViewGroup): Unit =
     findVideoView(layout).foreach(layout.removeView)
-  }
 
   private def findVideoView(layout: ViewGroup) =
     for {
       v <- Option(layout.getChildAt(0))
-      t <- Option(v.getTag)
-      if (t == CallingFragment.videoViewTag)
+      t <- Option(v.getTag) if t == CallingFragment.videoViewTag
     } yield v
 }
 

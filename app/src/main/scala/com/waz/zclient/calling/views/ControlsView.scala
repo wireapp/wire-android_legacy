@@ -38,61 +38,86 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   private lazy val controller = inject[CallController]
 
-  val onClickEvent = EventStream[Unit]
+  val onButtonClick = EventStream[Unit]
 
   private val isVideoBeingSent = controller.videoSendState.map(_ != VideoSendState.DONT_SEND)
 
   private val incomingNotEstablished = Signal(controller.isCallIncoming, controller.isCallEstablished).map {
     case (in, est) => in && !est
   }
-
-  private lazy val startedAsVideo = controller.isVideoCall.currentValue.getOrElse(false)
-
   // first row
   returning(findById[CallControlButtonView](R.id.mute_call)) { button =>
-    button.set(R.string.glyph__microphone_off, R.string.incoming__controls__ongoing__mute, () => controller.toggleMuted())
+    button.set(R.string.glyph__microphone_off, R.string.incoming__controls__ongoing__mute, mute)
 
     controller.isMuted.onUi(button.setButtonPressed)
   }
 
   returning(findById[CallControlButtonView](R.id.video_call)) { button =>
-    button.set(R.string.glyph__video, R.string.incoming__controls__ongoing__video, () => controller.toggleVideo())
+    button.set(R.string.glyph__video, R.string.incoming__controls__ongoing__video, video)
 
     isVideoBeingSent.onUi(button.setButtonPressed)
 
     Signal(controller.isCallIncoming, controller.isCallEstablished).map {
-      case (in, est) => est || (startedAsVideo && in)
+      case (in, est) => est || in
     }.onUi(button.setButtonActive)
   }
 
   returning(findById[CallControlButtonView](R.id.speaker_flip_call)) { button =>
     isVideoBeingSent.onUi {
       case true =>
-        button.set(R.string.glyph__flip, R.string.incoming__controls__ongoing__flip, () => controller.currentCaptureDeviceIndex.mutate(_ + 1))
+        button.set(R.string.glyph__flip, R.string.incoming__controls__ongoing__flip, flip)
       case false =>
-        button.set(R.string.glyph__speaker_loud, R.string.incoming__controls__ongoing__speaker, () => controller.speakerButton.press())
+        button.set(R.string.glyph__speaker_loud, R.string.incoming__controls__ongoing__speaker, speaker)
         controller.speakerButton.buttonState.onUi(button.setButtonPressed)
     }
   }
 
   // second row
   returning(findById[CallControlButtonView](R.id.reject_call)) { button =>
-    button.set(R.string.glyph__end_call, R.string.empty_string, () => controller.leaveCall(), ButtonColor.Red)
+    button.set(R.string.glyph__end_call, R.string.empty_string, leave, ButtonColor.Red)
 
     incomingNotEstablished.onUi(button.setVisible)
   }
 
   returning(findById[CallControlButtonView](R.id.end_call)) { button =>
-    button.set(R.string.glyph__end_call, R.string.empty_string, () => controller.leaveCall(), ButtonColor.Red)
+    button.set(R.string.glyph__end_call, R.string.empty_string, leave, ButtonColor.Red)
 
     incomingNotEstablished.map(!_).onUi(button.setVisible)
   }
 
   returning(findById[CallControlButtonView](R.id.accept_call)) { button =>
-    button.set(R.string.glyph__call, R.string.empty_string, () => controller.continueDegradedCall(), ButtonColor.Green)
+    button.set(R.string.glyph__call, R.string.empty_string, accept, ButtonColor.Green)
 
     incomingNotEstablished.onUi(button.setVisible)
   }
 
-  this.onClick(onClickEvent ! Unit)
+  private def accept(): Unit = {
+    onButtonClick ! {}
+    controller.continueDegradedCall()
+  }
+
+  private def leave(): Unit = {
+    onButtonClick ! {}
+    controller.leaveCall()
+  }
+
+  private def flip(): Unit = {
+    onButtonClick ! {}
+    controller.currentCaptureDeviceIndex.mutate(_ + 1)
+  }
+
+  private def speaker(): Unit = {
+    onButtonClick ! {}
+    controller.speakerButton.press()
+  }
+
+  private def video(): Unit = {
+    onButtonClick ! {}
+    controller.toggleVideo()
+  }
+
+  private def mute(): Unit = {
+    onButtonClick ! {}
+    controller.toggleMuted()
+  }
 }
