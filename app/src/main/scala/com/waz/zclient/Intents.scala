@@ -21,6 +21,7 @@ import android.app.PendingIntent
 import android.content.{Context, Intent}
 import com.waz.model.{ConvId, UserId}
 import com.waz.utils.returning
+import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.preferences.PreferencesActivity
 
 object Intents {
@@ -50,6 +51,9 @@ object Intents {
 
   def OpenAccountIntent(userId: UserId, requestCode: Int = System.currentTimeMillis().toInt)(implicit context: Context) =
     Intent(context, userId)
+
+  def OpenCallingScreen()(implicit context: Context) =
+    PendingIntent.getActivity(context, System.currentTimeMillis().toInt, new Intent(context, classOf[CallingActivity]), 0)
 
   def SharingIntent(implicit context: Context) =
     new Intent(context, classOf[MainActivity]).putExtra(FromSharingExtra, true)

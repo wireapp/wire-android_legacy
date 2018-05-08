@@ -31,7 +31,7 @@ import com.waz.ui.MemoryImageCache.BitmapRequest.Regular
 import com.waz.utils.LoggedTry
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.{Context, Intent}
-import com.waz.zclient.Intents.OpenAccountIntent
+import com.waz.zclient.Intents.OpenCallingScreen
 import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.views.ImageController
@@ -87,7 +87,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
         .setLargeIcon(bmp.orNull)
         .setContentTitle(title)
         .setContentText(message)
-        .setContentIntent(OpenAccountIntent(account))
+        .setContentIntent(OpenCallingScreen())
         .setStyle(new NotificationCompat.BigTextStyle()
           .setBigContentTitle(title)
           .bigText(message))
