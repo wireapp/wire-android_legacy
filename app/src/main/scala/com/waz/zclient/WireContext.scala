@@ -364,7 +364,7 @@ trait CallingBannerActivity extends ActivityHelper {
     }
 
     callController.callBannerText.onUi(callBannerStatus.setText)
-    callController.durationFormatted.onUi(callBannerDuration.setText)
+    callController.duration.onUi(callBannerDuration.setText)
   }
 }
 

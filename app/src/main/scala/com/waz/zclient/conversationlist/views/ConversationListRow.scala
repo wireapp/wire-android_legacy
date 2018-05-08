@@ -33,10 +33,12 @@ import com.waz.service.call.CallInfo
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events.Signal
-import com.waz.zclient.calling.controllers.CallStartController
+import com.waz.zclient.calling.CallingActivity
+import com.waz.zclient.calling.controllers.{CallController, CallStartController}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversationlist.ConversationListController
+import com.waz.zclient.conversationlist.views.ConversationBadge.OngoingCall
 import com.waz.zclient.conversationlist.views.ConversationListRow._
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
 import com.waz.zclient.pages.main.conversationlist.views.listview.SwipeListView
@@ -71,7 +73,8 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   val zms = inject[Signal[ZMessaging]]
   val accentColor = inject[AccentColorController].accentColor
-  val callPermissionsController = inject[CallStartController]
+  val callStartController = inject[CallStartController]
+  val callController      = inject[CallController]
   lazy val userAccountsController = inject[UserAccountsController]
 
   val selfId = zms.map(_.selfUserId)
@@ -111,11 +114,13 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   } yield typingUser
 
   val badgeInfo = for {
-    z <- zms
-    conv <- conversation
-    typing <- userTyping.map(_.nonEmpty)
+    z              <- zms
+    conv           <- conversation
+    typing         <- userTyping.map(_.nonEmpty)
     availableCalls <- z.calling.availableCalls
-  } yield (conv.id, badgeStatusForConversation(conv, conv.unreadCount.messages, typing, availableCalls))
+    call           <- z.calling.currentCall
+    callDuration   <- call.filter(_.convId == conv.id).fold(Signal.const(""))(_.durationFormatted)
+  } yield (conv.id, badgeStatusForConversation(conv, conv.unreadCount.messages, typing, availableCalls, callDuration))
 
   val subtitleText = for {
     z <- zms
@@ -200,12 +205,14 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
       verbose("Outdated avatar info")
   }
 
-  badge.onClickEvent{
+  badge.onClickEvent {
     case ConversationBadge.IncomingCall =>
       (zms.map(_.selfUserId).currentValue, conversationData.map(_.id)) match {
-        case (Some(acc), Some(cId)) => callPermissionsController.startCall(acc, cId)
+        case (Some(acc), Some(cId)) => callStartController.startCall(acc, cId)
         case _ => //
       }
+    case OngoingCall(_) =>
+      CallingActivity.startIfCallIsActive(getContext)
     case _=>
   }
 
@@ -218,14 +225,6 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   private var swipeable: Boolean = true
   private var moveToAnimator: ObjectAnimator = null
   private var shouldRedraw = false
-
-  private def showSubtitle(): Unit = {
-    subtitle.setVisibility(View.VISIBLE)
-  }
-
-  private def hideSubtitle(): Unit = {
-    subtitle.setVisibility(View.GONE)
-  }
 
   def setConversation(conversationData: ConversationData): Unit = if (this.conversationData.forall(_.id != conversationData.id)) {
     this.conversationData = Some(conversationData)
@@ -329,8 +328,6 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   def setMaxAlpha(maxAlpha: Float): Unit = {
     this.maxAlpha = maxAlpha
   }
-
-
 }
 
 object ConversationListRow {
@@ -348,10 +345,16 @@ object ConversationListRow {
   def badgeStatusForConversation(conversationData: ConversationData,
                                  unreadCount:      Int,
                                  typing:           Boolean,
-                                 availableCalls:   Map[ConvId, CallInfo]): ConversationBadge.Status = {
+                                 availableCalls:   Map[ConvId, CallInfo],
+                                 callDuration:     String): ConversationBadge.Status = {
 
-    if (availableCalls.contains(conversationData.id)) {
-      ConversationBadge.IncomingCall
+    if (callDuration.nonEmpty) {
+      ConversationBadge.OngoingCall(Some(callDuration))
+    } else if (availableCalls.contains(conversationData.id)) {
+      availableCalls(conversationData.id).state match {
+        case Some(CallInfo.CallState.SelfCalling) => OngoingCall(None)
+        case _                                    => ConversationBadge.IncomingCall
+      }
     } else if (conversationData.convType == ConversationType.WaitForConnection || conversationData.convType == ConversationType.Incoming) {
       ConversationBadge.WaitingConnection
     } else if (conversationData.muted) {

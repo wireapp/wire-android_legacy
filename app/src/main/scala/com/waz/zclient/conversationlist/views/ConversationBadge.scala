@@ -31,13 +31,13 @@ import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{R, ViewHelper}
 
 object ConversationBadge {
-  trait Status
+  sealed trait Status
   case object Muted extends Status
   case object Empty extends Status
   case object WaitingConnection extends Status
   case object Ping extends Status
   case object Typing extends Status
-  case object OngoingCall extends Status
+  case class OngoingCall(duration: Option[String]) extends Status
   case object IncomingCall extends Status
   case object MissedCall extends Status
   case class Count(count: Int) extends Status
@@ -87,7 +87,8 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
 
   def setCount(count: Int): Unit = setText(count.toString, R.drawable.conversation_badge_white, R.color.black)
   def setIncomingCalling() = setText(getString(R.string.conversation_list__action_join_call), R.drawable.conversation_badge_green)
-  def setOngoingCall() = setGlyph(R.string.glyph__call, R.drawable.conversation_badge_green)
+  def setOngoingCall(duration: Option[String]) =
+    duration.fold(setGlyph(R.string.glyph__call, R.drawable.conversation_badge_green))(d => setText(d, R.drawable.conversation_badge_green))
   def setMissedCall() = setGlyph(R.string.glyph__end_call, R.drawable.conversation_badge_white, R.color.black)
 
   def setStatus(status: Status): Unit = {
@@ -101,8 +102,8 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
         setWaitingForConnection()
       case Ping =>
         setPing()
-      case OngoingCall =>
-        setOngoingCall()
+      case OngoingCall(duration) =>
+        setOngoingCall(duration)
       case IncomingCall =>
         setIncomingCalling()
       case MissedCall =>

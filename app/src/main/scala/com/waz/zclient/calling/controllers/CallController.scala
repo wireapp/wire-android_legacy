@@ -29,8 +29,7 @@ import com.waz.service.call.CallInfo
 import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
 import com.waz.service.{AccountsService, GlobalModule, NetworkModeService, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils._
-import com.waz.utils.events.{ButtonSignal, ClockSignal, EventContext, Signal}
+import com.waz.utils.events.{ButtonSignal, EventContext, Signal}
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.views.CallControlButtonView.{ButtonColor, ButtonSettings}
 import com.waz.zclient.common.controllers.SoundController
@@ -38,9 +37,6 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{DeprecationUtils, LayoutSpec}
 import com.waz.zclient.{Injectable, Injector, R, WireContext}
-import org.threeten.bp.Duration
-import org.threeten.bp.Duration.between
-import org.threeten.bp.Instant.now
 
 import scala.concurrent.duration._
 
@@ -93,19 +89,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val videoReceiveState = currentCall.map(_.videoReceiveState)
   val isGroupCall       = currentCall.map(_.isGroup)
   val cbrEnabled        = currentCall.map(_.isCbrEnabled)
-
-  val duration = currentCall.map(_.estabTime).flatMap {
-    case Some(inst) => ClockSignal(Duration.ofSeconds(1).asScala).map(_ => Option(between(inst, now)))
-    case None => Signal.const(Option.empty[Duration])
-  }
-
-  val durationFormatted = duration.map {
-    case Some(d) =>
-      val seconds = ((d.toMillis / 1000) % 60).toInt
-      val minutes = ((d.toMillis / 1000) / 60).toInt
-      f"$minutes%02d:$seconds%02d"
-    case None => ""
-  }
+  val duration          = currentCall.flatMap(_.durationFormatted)
 
   val flowManager = callingZms.map(_.flowmanager)
 
@@ -324,7 +308,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     case false => (for {
       video <- isVideoCall
       state <- callState
-      dur   <- durationFormatted
+      dur   <- duration
     } yield (video, state, dur)).map {
       case (true,  SelfCalling,  _)  => cxt.getString(R.string.calling__header__outgoing_video_subtitle)
       case (false, SelfCalling,  _)  => cxt.getString(R.string.calling__header__outgoing_subtitle)
