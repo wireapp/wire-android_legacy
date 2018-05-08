@@ -32,6 +32,7 @@ import com.waz.permissions.PermissionsService
 import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.controllers._
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.drawing.IDrawingController
@@ -54,9 +55,11 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
   import CursorController._
   import Threading.Implicits.Ui
 
-  val zms = inject[Signal[ZMessaging]]
-  val conversationController = inject[ConversationController]
+  val zms                     = inject[Signal[ZMessaging]]
+  val conversationController  = inject[ConversationController]
   lazy val convListController = inject[ConversationListController]
+  lazy val callController     = inject[CallController]
+
   val conv = conversationController.currentConv
 
   val keyboard = Signal[KeyboardState](KeyboardState.Hidden)
@@ -250,7 +253,11 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
     case CursorMenuItem.More => secondaryToolbarVisible ! true
     case CursorMenuItem.Less => secondaryToolbarVisible ! false
     case AudioMessage =>
-        keyboard ! KeyboardState.ExtendedCursor(ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING)
+        callController.isCallActive.head.foreach {
+          case true  => showErrorDialog(R.string.calling_ongoing_call_title, R.string.calling_ongoing_call_audio_message)
+          case false => keyboard ! KeyboardState.ExtendedCursor(ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING)
+        }
+
     case Camera =>
         keyboard ! KeyboardState.ExtendedCursor(ExtendedCursorContainer.Type.IMAGES)
     case Ping =>

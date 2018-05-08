@@ -643,12 +643,17 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
 
     override def openFileSharing(): Unit = assetIntentsManager.foreach { _.openFileSharing() }
 
-    override def onCursorButtonLongPressed(cursorMenuItem: CursorMenuItem): Unit = cursorMenuItem match {
-      case CursorMenuItem.AUDIO_MESSAGE =>
-        extendedCursorContainer.close(true)
-        audioMessageRecordingView.show()
-      case _ => //
-    }
+    override def onCursorButtonLongPressed(cursorMenuItem: CursorMenuItem): Unit =
+      cursorMenuItem match {
+        case CursorMenuItem.AUDIO_MESSAGE =>
+          callController.isCallActive.head.foreach {
+            case true  => showErrorDialog(R.string.calling_ongoing_call_title, R.string.calling_ongoing_call_audio_message)
+            case false =>
+              extendedCursorContainer.close(true)
+              audioMessageRecordingView.show()
+          }
+        case _ => //
+      }
   }
 
   private val navigationControllerObserver = new NavigationControllerObserver {

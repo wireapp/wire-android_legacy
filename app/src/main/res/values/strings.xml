@@ -326,6 +326,7 @@
     <string name="calling_ongoing_call_title">Ongoing call</string>
     <string name="calling_ongoing_call_start_message">Are you sure you want to start a call?\nThis will hang up your current call.</string>
     <string name="calling_ongoing_call_join_message">Are you sure you want to join this call?\nThis will hang up your current call.</string>
+    <string name="calling_ongoing_call_audio_message">You can\'t record an audio message while on a call</string>
     <string name="calling_ongoing_call_start_anyway">CALL ANYWAY</string>
     <string name="calling_ongoing_call_join_anyway">JOIN ANYWAY</string>
 
