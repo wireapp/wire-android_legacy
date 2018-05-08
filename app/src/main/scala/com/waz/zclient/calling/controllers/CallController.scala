@@ -53,6 +53,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   //The zms of the account that's currently active (if any)
   val activeZmsOpt = inject[Signal[Option[ZMessaging]]]
 
+  val callScreenShown = Signal(false)
   //the zms of the account that currently has an active call (if any)
   val callingZmsOpt =
     for {
@@ -187,13 +188,16 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   }(EventContext.Global)
 
   (for {
-    v <- isVideoCall
+    v  <- isVideoCall
     st <- callStateOpt
-  } yield (v, st)) {
-    case (true, _) => screenManager.setStayAwake()
-    case (false, Some(OtherCalling)) => screenManager.setStayAwake()
-    case (false, Some(SelfCalling | SelfJoining | SelfConnected)) => screenManager.setProximitySensorEnabled()
-    case _ => screenManager.releaseWakeLock()
+    callingShown <- callScreenShown
+  } yield (v, callingShown, st)) {
+    case (true, _, _)                       => screenManager.setStayAwake()
+    case (false, true, Some(OtherCalling))  => screenManager.setStayAwake()
+    case (false, true, Some(SelfCalling |
+                            SelfJoining |
+                            SelfConnected)) => screenManager.setProximitySensorEnabled()
+    case _                                  => screenManager.releaseWakeLock()
   }
 
   (for {

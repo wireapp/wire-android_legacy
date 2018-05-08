@@ -78,6 +78,18 @@ class CallingActivity extends BaseActivity {
     }(Threading.Ui)
   }
 
+
+  override def onStart() = {
+    super.onStart()
+    controller.callScreenShown ! true
+  }
+
+
+  override def onStop() = {
+    controller.callScreenShown ! false
+    super.onStop()
+  }
+
   override def onAttachedToWindow(): Unit = {
     getWindow.addFlags(
         WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
