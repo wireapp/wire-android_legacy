@@ -329,6 +329,7 @@
     <string name="calling_ongoing_call_join_message">Are you sure you want to join this call?\nThis will hang up your current call.</string>
     <string name="calling_ongoing_call_start_anyway">CALL ANYWAY</string>
     <string name="calling_ongoing_call_join_anyway">JOIN ANYWAY</string>
+    <string name="calling_ongoing_call_participants_header">PARTICIPANTS</string>
 
     <!-- Calling in group conversation -->
     <string name="group_calling_title">Start a call</string>

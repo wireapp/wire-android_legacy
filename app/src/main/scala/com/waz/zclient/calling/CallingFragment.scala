@@ -179,7 +179,10 @@ class CallingFragment extends FragmentHelper {
     super.onStop()
   }
 
-  override def onBackPressed(): Boolean = true
+  override def onBackPressed(): Boolean = {
+    super.onBackPressed()
+    true
+  }
 
   private def restart() = {
     verbose("restart")

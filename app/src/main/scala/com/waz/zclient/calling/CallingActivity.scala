@@ -19,19 +19,15 @@ package com.waz.zclient.calling
 
 import android.content.{Context, Intent}
 import android.os.Bundle
-
 import android.view.WindowManager
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.threading.Threading
 import com.waz.zclient._
-
 import com.waz.zclient.calling.controllers.CallController
-
 import com.waz.zclient.utils.DeprecationUtils
 
 class CallingActivity extends BaseActivity {
-  import CallingActivity._
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
@@ -40,10 +36,8 @@ class CallingActivity extends BaseActivity {
     setContentView(R.layout.calling_layout)
     getSupportFragmentManager
       .beginTransaction()
-      .replace(R.id.calling_layout, CallingFragment.newInstance, CallingFragment.Tag)
-      .addToBackStack(CallingFragment.Tag)
+      .replace(R.id.calling_layout, OuterCallingFragment(), OuterCallingFragment.Tag)
       .commit
-
   }
 
   override def onAttachedToWindow(): Unit = {
@@ -55,13 +49,10 @@ class CallingActivity extends BaseActivity {
     )
   }
 
-  private def restartActivity() = {
-    info("restartActivity")
-    finish()
-    start(this)
-    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+  override def onBackPressed() = {
+    verbose("onBackPressed")
+    super.onBackPressed()
   }
-
 }
 
 object CallingActivity extends Injectable {
