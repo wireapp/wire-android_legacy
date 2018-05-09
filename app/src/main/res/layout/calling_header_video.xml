@@ -46,7 +46,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:textAlignment="viewStart"
-            android:textColor="@color/text__primary_dark"
+            android:textColor="?wirePrimaryTextColor"
             android:textSize="@dimen/wire__text_size__regular"
             app:w_font="@string/wire__typeface__medium"
             />
@@ -56,7 +56,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textAlignment="viewStart"
-            android:textColor="@color/text__primary_dark"
+            android:textColor="?wirePrimaryTextColor"
             android:textSize="@dimen/wire__text_size__regular"
             app:w_font="@string/wire__typeface__light"
             />

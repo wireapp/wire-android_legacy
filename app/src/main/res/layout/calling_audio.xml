@@ -23,21 +23,22 @@
     android:id="@+id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/calling_background">
-
-    <com.waz.zclient.calling.views.HeaderLayoutAudio
-        android:layout_width="@dimen/calling__participants_max_diameter"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|center"
-        android:layout_marginTop="@dimen/wire__padding__huge"
-        />
+    style="?wireBackground">
 
     <LinearLayout
         android:orientation="vertical"
-        android:layout_gravity="center"
+        android:layout_gravity="top"
         android:layout_width="match_parent"
         android:layout_marginBottom="@dimen/wire__margin__huge"
+        android:layout_marginTop="@dimen/wire__padding__regular"
         android:layout_height="wrap_content">
+
+        <com.waz.zclient.calling.views.HeaderLayoutAudio
+            android:layout_width="@dimen/calling__participants_max_diameter"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center"
+            android:layout_marginTop="@dimen/wire__padding__huge"
+            />
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/degraded_warning"
@@ -53,7 +54,7 @@
             app:w_font="@string/wire__typeface__light"
             android:visibility="gone"/>
 
-        <com.waz.zclient.calling.views.AudioParticipantsView
+        <com.waz.zclient.calling.views.CallParticipantsView
             android:id="@+id/participants"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

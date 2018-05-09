@@ -31,7 +31,7 @@
         android:textAlignment="center"
         android:ellipsize="end"
         android:maxLines="1"
-        android:textColor="@color/text__primary_dark"
+        android:textColor="?wirePrimaryTextColor"
         android:textSize="@dimen/wire__text_size__regular"
         app:w_font="@string/wire__typeface__medium"
         />
@@ -43,7 +43,7 @@
         android:layout_marginTop="@dimen/wire__padding__small"
         android:textAlignment="center"
         android:textAllCaps="false"
-        android:textColor="@color/text__primary_dark"
+        android:textColor="?wirePrimaryTextColor"
         android:textSize="@dimen/wire__text_size__regular"
         app:w_font="@string/wire__typeface__light"
         />
@@ -55,7 +55,7 @@
         android:layout_marginTop="@dimen/wire__padding__small"
         android:textAlignment="center"
         android:textAllCaps="true"
-        android:textColor="@color/text__primary_dark"
+        android:textColor="?wirePrimaryTextColor"
         android:textSize="@dimen/wire__text_size__regular"
         app:w_font="@string/wire__typeface__light"
     />

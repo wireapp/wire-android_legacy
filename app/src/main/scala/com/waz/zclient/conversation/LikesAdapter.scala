@@ -24,6 +24,7 @@ import com.waz.model.{UserData, UserId}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.views.SingleUserRowView
+import com.waz.zclient.common.views.SingleUserRowView.Theme
 import com.waz.zclient.conversation.LikesAdapter.ViewHolder
 import com.waz.zclient.utils.{UiStorage, UserSetSignal}
 import com.waz.zclient.{BaseActivity, R}
@@ -45,7 +46,7 @@ class LikesAdapter(context: Context)(implicit ec: EventContext) extends Recycler
 
   def onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder = {
     val view = LayoutInflater.from(parent.getContext).inflate(R.layout.single_user_row, parent, false).asInstanceOf[SingleUserRowView]
-    view.setTheme(if (isDarkTheme) SingleUserRowView.Dark else SingleUserRowView.Light)
+    view.setTheme(if (isDarkTheme) Theme.Dark else Theme.Light)
     new ViewHolder(view)
   }
 
