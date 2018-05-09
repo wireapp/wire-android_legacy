@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!--
 
     Wire
@@ -17,21 +18,28 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<merge xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="@dimen/wire__padding__regular"
+    android:layout_marginRight="@dimen/wire__padding__regular"
+    android:orientation="horizontal"
+    android:layout_gravity="center"
     >
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/calling_header_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+
+        />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/wire__padding__regular"
-        android:layout_marginRight="@dimen/wire__padding__regular"
-        android:orientation="vertical"
-        android:layout_gravity="center"
-        >
-
+        android:layout_height="match_parent"
+        android:orientation="vertical">
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/ttv__calling__header__name"
             android:layout_width="match_parent"
@@ -67,33 +75,14 @@
             android:visibility="gone"
             app:w_font="@string/wire__typeface__light"
             />
-
-        <com.waz.zclient.common.views.ChatheadView
-            android:id="@+id/call_chathead"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            app:show_border="false"
-            app:allow_icon="false"
-            app:is_round="true"
-            app:isSelectable="false"
-            app:show_waiting="false"
-            app:gray_on_unconnected="false"
-            app:initials_font_size="@dimen/participant_initials_text_size"
-            android:visibility="gone"
-            android:layout_marginTop="@dimen/wire__margin_top__big"
-            android:layout_marginBottom="@dimen/wire__margin_top__big"
-            />
-
-        <com.waz.zclient.calling.views.CallParticipantsView
-            android:id="@+id/call_participants"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top|start"
-            android:visibility="gone"
-            />
-
     </LinearLayout>
 
-</merge>
 
+    <com.waz.zclient.ui.calling.RoundedLayout
+        android:id="@+id/rounded_layout"
+        android:layout_width="@dimen/calling__self_video_preview__dimension"
+        android:layout_height="@dimen/calling__self_video_preview__dimension"
+        android:background="@color/graphite"
+        android:visibility="gone"
+        />
+</LinearLayout>

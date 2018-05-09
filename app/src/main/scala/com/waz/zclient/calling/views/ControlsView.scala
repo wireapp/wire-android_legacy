@@ -22,6 +22,7 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.GridLayout
 import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.ZLog._
 import com.waz.api.VideoSendState
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.returning
@@ -43,7 +44,9 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   private val isVideoBeingSent = controller.videoSendState.map(_ != VideoSendState.DONT_SEND)
 
   private val incomingNotEstablished = Signal(controller.isCallIncoming, controller.isCallEstablished).map {
-    case (in, est) => in && !est
+    case (in, est) =>
+      verbose(s"incoming not established ($in, $est) => ${in && !est}")
+      in && !est
   }
   // first row
   returning(findById[CallControlButtonView](R.id.mute_call)) { button =>

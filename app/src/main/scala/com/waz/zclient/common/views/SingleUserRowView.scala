@@ -81,14 +81,14 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
 
   def showArrow(show: Boolean): Unit = nextIndicator.setVisibility(if (show) View.VISIBLE else View.GONE)
 
-  def setUserData(userData: UserData, teamId: Option[TeamId]): Unit = {
+  def setUserData(userData: UserData, teamId: Option[TeamId], showSubtitle: Boolean = true): Unit = {
     chathead.setUserId(userData.id)
     setTitle(userData.getDisplayName)
     if (teamId.isDefined) setAvailability(userData.availability)
     setVerified(userData.isVerified)
     val handle = userData.handle.map(h => StringUtils.formatHandle(h.string))
     val expiration = userData.expiresAt.map(GuestUtils.timeRemainingString(_, Instant.now))
-    setSubtitle(expiration.orElse(handle))
+    if (showSubtitle) setSubtitle(expiration.orElse(handle)) else usernameView.setVisibility(View.GONE)
     setIsGuest(userData.isGuest(teamId))
   }
 

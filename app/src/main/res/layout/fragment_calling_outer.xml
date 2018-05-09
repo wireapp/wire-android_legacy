@@ -34,11 +34,4 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <TextView
-        android:id="@+id/test_button"
-        android:text="try me!"
-        android:background="@color/white"
-        android:layout_width="30dp"
-        android:layout_height="30dp"/>
-
 </FrameLayout>

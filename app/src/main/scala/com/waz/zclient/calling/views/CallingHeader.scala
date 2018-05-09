@@ -19,34 +19,39 @@ package com.waz.zclient.calling.views
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.LayoutInflater
+import android.view.{LayoutInflater, TextureView}
 import android.widget.{LinearLayout, TextView}
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.ZLog.verbose
+import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.api.VideoSendState
 import com.waz.utils.events.Signal
+import com.waz.zclient.calling.ControlsFragment
 import com.waz.zclient.calling.controllers.CallController
-import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.ui.calling.RoundedLayout
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
 
-class CallingInfoLayout(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
-
+class CallingHeader(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
-
   def this(context: Context) =  this(context, null)
 
   private lazy val nameView: TextView = findById(R.id.ttv__calling__header__name)
   private lazy val subtitleView: TextView = findById(R.id.ttv__calling__header__subtitle)
   private lazy val bitRateModeView: TextView = findById(R.id.ttv__calling__header__bitrate)
-  private lazy val chathead = findById[ChatheadView](R.id.call_chathead)
+  private lazy val roundedLayout = findById[RoundedLayout](R.id.rounded_layout)
 
-  private lazy val participants = findById[CallParticipantsView](R.id.call_participants)
+  private val controller = inject[CallController]
 
-  LayoutInflater.from(context).inflate(R.layout.calling_info, this, true)
-  setOrientation(LinearLayout.HORIZONTAL)
+  Signal(controller.showVideoView, controller.isCallEstablished, controller.cameraFailed, controller.videoSendState).map {
+    case (true, true, false, VideoSendState.SEND) => true
+    case _                                        => false
+  }.onUi { visible =>
+    verbose(s"video view visible: $visible")
+    roundedLayout.setVisible(visible)
+  }
 
-  val controller = inject[CallController]
+  LayoutInflater.from(context).inflate(R.layout.calling_header, this, true)
 
   controller.subtitleText.onUi(subtitleView.setText)
 
@@ -57,23 +62,5 @@ class CallingInfoLayout(val context: Context, val attrs: AttributeSet, val defSt
     case false => ""
   }.onUi(bitRateModeView.setText)
 
-  Signal(controller.isCallIncoming, controller.isCallEstablished,  controller.showVideoView, controller.isGroupCall)
-    .map { case (in, est, video, group) => (in || est)  && !video && !group }
-    .onUi { visible =>
-      verbose(s"chathead visible: $visible")
-      chathead.setVisible(visible)
-    }
-
-  controller.otherUser.map(_.map(_.id)).onUi {
-    case Some(userId) => chathead.setUserId(userId)
-    case None =>
-  }
-
-  Signal(controller.isCallEstablished,  controller.showVideoView, controller.isGroupCall)
-    .map { case (est, video, group) => est && !video && group }
-    .onUi { visible =>
-      verbose(s"participants visible: $visible")
-      participants.setVisible(visible)
-    }
-
+  def setPreview(view: TextureView) = ControlsFragment.addVideoViewToLayout(roundedLayout, view)
 }

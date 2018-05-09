@@ -30,7 +30,7 @@ import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
 import com.waz.service.{AccountsService, GlobalModule, NetworkModeService, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
-import com.waz.utils.events.{ButtonSignal, ClockSignal, EventContext, Signal}
+import com.waz.utils.events._
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.common.controllers.SoundController
 import com.waz.zclient.conversation.ConversationController
@@ -81,6 +81,8 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
   val callStateOpt      = currentCallOpt.map(_.flatMap(_.state))
   val callState         = callStateOpt.collect { case Some(s) => s }
+
+  val prevCallStateOpt = currentCallOpt.map(_.flatMap(_.prevState))
 
   val isCallEstablished = callStateOpt.map(_.contains(SelfConnected))
   val isCallOutgoing    = callStateOpt.map(_.contains(SelfCalling))
@@ -148,10 +150,12 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val conversationName = conversation.map(_.displayName)
 
   val otherUser = Signal(isGroupCall, userStorage, callConvId).flatMap {
-    case (isGroupCall, usersStorage, convId) if !isGroupCall =>
+    case (false, usersStorage, convId) =>
       usersStorage.optSignal(UserId(convId.str)) // one-to-one conversation has the same id as the other user, so we can access it directly
     case _ => Signal.const[Option[UserData]](None) //Need a none signal to help with further signals
   }
+
+  val onShowAllClick = EventStream[Unit]()
 
   def leaveCall(): Unit = {
     verbose(s"leaveCall")

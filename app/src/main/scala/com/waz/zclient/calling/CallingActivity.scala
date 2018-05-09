@@ -36,7 +36,7 @@ class CallingActivity extends BaseActivity {
     setContentView(R.layout.calling_layout)
     getSupportFragmentManager
       .beginTransaction()
-      .replace(R.id.calling_layout, OuterCallingFragment(), OuterCallingFragment.Tag)
+      .replace(R.id.calling_layout, CallingFragment(), CallingFragment.Tag)
       .commit
   }
 
