@@ -20,30 +20,15 @@ package com.waz.zclient.calling
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.{FragmentHelper, R}
 
 class CallingFragment extends FragmentHelper {
-
-  private lazy val controller = inject[CallController]
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle) =
     inflater.inflate(R.layout.fragment_calling_outer, container, false)
 
   override def onViewCreated(view: View, savedInstanceState: Bundle) = {
     super.onViewCreated(view, savedInstanceState)
-
-    controller.onShowAllClick.onUi { _ =>
-      getChildFragmentManager.beginTransaction
-        .setCustomAnimations(
-          R.anim.fragment_animation_second_page_slide_in_from_right,
-          R.anim.fragment_animation_second_page_slide_out_to_left,
-          R.anim.fragment_animation_second_page_slide_in_from_left,
-          R.anim.fragment_animation_second_page_slide_out_to_right)
-        .replace(R.id.controls_layout, CallParticipantsFragment(), CallParticipantsFragment.Tag)
-        .addToBackStack(CallParticipantsFragment.Tag)
-        .commit
-    }
 
     getChildFragmentManager.beginTransaction
       .replace(R.id.controls_layout, ControlsFragment.newInstance, ControlsFragment.Tag)

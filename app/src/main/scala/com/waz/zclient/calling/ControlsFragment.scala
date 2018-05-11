@@ -66,6 +66,7 @@ class ControlsFragment extends FragmentHelper {
 
   private lazy val callingHeader = view[CallingHeader](R.id.calling_header)
   private lazy val callingMiddle = view[CallingMiddleLayout](R.id.calling_middle)
+
   private lazy val callingControls = view[ControlsView](R.id.controls_grid)
 
   private lazy val messageView = returning(view[TextView](R.id.video_warning_message)) { vh =>
@@ -158,6 +159,18 @@ class ControlsFragment extends FragmentHelper {
     callingControls.foreach(controls =>
       subs += controls.onButtonClick.onUi(_ => extendControlsDisplay())
     )
+
+    callingMiddle.foreach(vh => subs += vh.onShowAllClicked.onUi { _ =>
+      getFragmentManager.beginTransaction
+        .setCustomAnimations(
+          R.anim.fragment_animation_second_page_slide_in_from_right,
+          R.anim.fragment_animation_second_page_slide_out_to_left,
+          R.anim.fragment_animation_second_page_slide_in_from_left,
+          R.anim.fragment_animation_second_page_slide_out_to_right)
+        .replace(R.id.controls_layout, CallParticipantsFragment(), CallParticipantsFragment.Tag)
+        .addToBackStack(CallParticipantsFragment.Tag)
+        .commit
+    })
   }
 
   override def onStop(): Unit = {

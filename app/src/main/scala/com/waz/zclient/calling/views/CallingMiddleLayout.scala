@@ -27,11 +27,9 @@ import com.waz.utils.events.Signal
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.CallingMiddleLayout.CallDisplay
 import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.utils.ContextUtils.getDimenPx
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
-
-import com.waz.ZLog._
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 
 class CallingMiddleLayout(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -40,23 +38,31 @@ class CallingMiddleLayout(val context: Context, val attrs: AttributeSet, val def
   private lazy val chathead = findById[ChatheadView](R.id.call_chathead)
   private lazy val participants = findById[CallParticipantsView](R.id.call_participants)
 
+  lazy val onShowAllClicked = participants.onShowAllClicked
+
+  override def onMeasure(widthSpec: Int, heightSpec: Int): Unit = {
+    super.onMeasure(widthSpec, heightSpec)
+
+    participants.setMaxRows( this.getMeasuredHeight / getDimenPx(R.dimen.user_row_height) )
+  }
+
   LayoutInflater.from(context).inflate(R.layout.calling_middle_layout, this, true)
 
   private val controller = inject[CallController]
 
   private val callState: Signal[CallInfo.CallState] = Signal(controller.callState, controller.prevCallStateOpt).collect {
-    case (OtherCalling, _)                 => verbose(s"CC oc"); OtherCalling
-    case (SelfCalling, _)                  => verbose(s"CC sc"); SelfCalling
-    case (SelfConnected, _)                => verbose(s"CC es"); SelfConnected
-    case (SelfJoining, Some(OtherCalling)) => verbose(s"CC oc"); OtherCalling
-    case (SelfJoining, Some(SelfCalling))  => verbose(s"CC sc"); SelfCalling
+    case (OtherCalling, _)                 => OtherCalling
+    case (SelfCalling, _)                  => SelfCalling
+    case (SelfConnected, _)                => SelfConnected
+    case (SelfJoining, Some(OtherCalling)) => OtherCalling
+    case (SelfJoining, Some(SelfCalling))  => SelfCalling
   }
 
   Signal(callState,  controller.showVideoView, controller.isGroupCall).map {
-    case (_, false, false)           => verbose(s"CC ch"); CallDisplay.Chathead
-    case (OtherCalling, false, true) => verbose(s"CC ch"); CallDisplay.Chathead
-    case (SelfConnected, _, true)    => verbose(s"CC pa"); CallDisplay.Participants
-    case _                           => verbose(s"CC em"); CallDisplay.Empty
+    case (_, false, false)           => CallDisplay.Chathead
+    case (OtherCalling, false, true) => CallDisplay.Chathead
+    case (SelfConnected, _, true)    => CallDisplay.Participants
+    case _                           => CallDisplay.Empty
   }.onUi { display =>
     chathead.setVisible(display == CallDisplay.Chathead)
     participants.setVisible(display == CallDisplay.Participants)

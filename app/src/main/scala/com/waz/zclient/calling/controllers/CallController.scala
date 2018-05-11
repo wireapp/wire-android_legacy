@@ -102,9 +102,9 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
   val participantIds = currentCall.map(_.others.toVector)
 
-  def participantInfos(take: Int = -1) =
+  def participantInfos(take: Option[Int] = None) =
     for {
-      ids         <- if (take > 0) participantIds.map(_.take(take)) else participantIds
+      ids         <- take.fold(participantIds)(t => participantIds.map(_.take(t)))
       videoStates <- Signal.const(Map.empty[UserId, VideoReceiveState]) //TODO use actual video receive states
       users       <- Signal.sequence(ids.map(UserSignal(_)):_*)
       teamId      <- callingZms.map(_.teamId)

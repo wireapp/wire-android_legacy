@@ -25,7 +25,7 @@ import android.util.AttributeSet
 import android.view._
 import android.widget.ImageView
 import com.waz.ZLog.ImplicitTag._
-import com.waz.utils.events.{EventContext, Signal}
+import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.zclient.ViewHelper._
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
@@ -43,30 +43,46 @@ class CallParticipantsView(val context: Context, val attrs: AttributeSet, val de
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 
-  private val adapter = new CallParticipantsAdapter(context, inject[ThemeController], inject[CallController])
+  val onShowAllClicked = EventStream[Unit]()
+
+  private val adapter = new CallParticipantsAdapter(context, inject[ThemeController], inject[CallController], onShowAllClicked)
 
   setLayoutManager(new LinearLayoutManager(context, VERTICAL, false))
   setAdapter(adapter)
+
+  def setMaxRows(maxRows: Int): Unit = adapter.setMaxRows(maxRows)
 }
 
-
-class CallParticipantsAdapter(context: Context, themeController: ThemeController, callController: CallController)(implicit eventContext: EventContext)
+class CallParticipantsAdapter(context: Context,
+                              themeController: ThemeController,
+                              callController: CallController,
+                              onShowAllClicked: SourceStream[Unit]
+                             )
+                             (implicit eventContext: EventContext)
   extends RecyclerView.Adapter[ViewHolder] {
   import com.waz.zclient.calling.views.CallParticipantsAdapter._
 
   private var items = Seq.empty[CallParticipantInfo]
-  private var allParticipantsNumber = 0
+  private var numOfParticipants = 0
   private var theme: Theme = Theme.TransparentDark
 
-  private lazy val maxRows = 5
+  private var maxRows = Option.empty[Int]
 
-  callController.participantInfos(maxRows - 1).onUi { v =>
+  def setMaxRows(maxRows: Int) = if (!this.maxRows.contains(maxRows)){
+    this.maxRows =
+      if (maxRows > 0) Some(maxRows)
+      else if (maxRows == 0) Some(1)  // we try to show the "Show all" button anyway
+      else None
+    notifyDataSetChanged()
+  }
+
+  callController.participantInfos(maxRows.map(_ - 1)).onUi { v =>
     items = v
     notifyDataSetChanged()
   }
 
   callController.participantIds.map(_.size).onUi { size =>
-    allParticipantsNumber = size
+    numOfParticipants = size
     notifyDataSetChanged()
   }
 
@@ -95,7 +111,7 @@ class CallParticipantsAdapter(context: Context, themeController: ThemeController
     case (h: CallParticipantViewHolder, pos) if pos < items.size =>
       h.bind(items(position), theme)
     case (h: ShowAllButtonViewHolder, pos) if pos == items.size =>
-      h.bind(allParticipantsNumber, theme)
+      h.bind(numOfParticipants, theme)
     case _ =>
   }
 
@@ -104,7 +120,7 @@ class CallParticipantsAdapter(context: Context, themeController: ThemeController
       CallParticipantViewHolder(inflate[SingleUserRowView](R.layout.single_user_row, parent, addToParent = false))
     case ShowAll =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.list_options_button, parent, false)
-      view.onClick(callController.onShowAllClick ! {})
+      view.onClick(onShowAllClicked ! {})
       ShowAllButtonViewHolder(view)
   }
 }
@@ -126,7 +142,7 @@ case class ShowAllButtonViewHolder(view: View) extends ViewHolder(view) {
   private implicit val ctx: Context = view.getContext
   view.findViewById[ImageView](R.id.icon).setImageDrawable(GuestIconWithColor(getStyledColor(R.attr.wirePrimaryTextColor)))
   view.findViewById[ImageView](R.id.next_indicator).setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40))
-
+  view.setMarginTop(0)
   private lazy val nameView = view.findViewById[TypefaceTextView](R.id.name_text)
 
   def bind(numOfParticipants: Int, theme: Theme): Unit = {
