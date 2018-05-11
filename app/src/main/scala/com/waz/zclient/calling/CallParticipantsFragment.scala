@@ -43,11 +43,6 @@ class CallParticipantsFragment extends FragmentHelper {
     super.onPause()
   }
 
-  override def onBackPressed() = {
-    super.onBackPressed()
-    getFragmentManager.popBackStack()
-    true
-  }
 }
 
 object CallParticipantsFragment {

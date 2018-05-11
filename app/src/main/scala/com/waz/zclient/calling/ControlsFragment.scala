@@ -155,7 +155,6 @@ class ControlsFragment extends FragmentHelper {
 
   override def onStart(): Unit = {
     super.onStart()
-
     callingControls.foreach(controls =>
       subs += controls.onButtonClick.onUi(_ => extendControlsDisplay())
     )
@@ -163,13 +162,7 @@ class ControlsFragment extends FragmentHelper {
 
   override def onStop(): Unit = {
     subs.foreach(_.destroy())
-
     super.onStop()
-  }
-
-  override def onBackPressed(): Boolean = {
-    super.onBackPressed()
-    true
   }
 
   private def restart() = {

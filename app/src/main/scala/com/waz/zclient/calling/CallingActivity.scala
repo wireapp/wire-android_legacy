@@ -51,7 +51,11 @@ class CallingActivity extends BaseActivity {
 
   override def onBackPressed() = {
     verbose("onBackPressed")
-    super.onBackPressed()
+
+    Option(getSupportFragmentManager.findFragmentById(R.id.calling_layout)).foreach {
+      case f: OnBackPressedListener if f.onBackPressed() => //
+      case _ => super.onBackPressed()
+    }
   }
 }
 
