@@ -27,6 +27,7 @@ import android.widget.{CompoundButton, ImageView, LinearLayout, RelativeLayout}
 import com.waz.model.{Availability, IntegrationData, TeamId, UserData}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning
+import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.views.SingleUserRowView.Theme._
 import com.waz.zclient.common.views.SingleUserRowView._
 import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIcon, VideoIcon}
@@ -46,7 +47,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
 
   private lazy val chathead = findById[ChatheadView](R.id.chathead)
   private lazy val nameView = findById[TypefaceTextView](R.id.name_text)
-  private lazy val usernameView = findById[TypefaceTextView](R.id.username_text)
+  private lazy val subtitleView = findById[TypefaceTextView](R.id.username_text)
   private lazy val checkbox = findById[AppCompatCheckBox](R.id.checkbox)
   private lazy val verifiedShield = findById[ImageView](R.id.verified_shield)
   private lazy val guestIndicator = returning(findById[ImageView](R.id.guest_indicator))(_.setImageDrawable(GuestIcon(R.color.light_graphite)))
@@ -70,9 +71,9 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
     nameView.setText(text)
   }
 
-  def setSubtitle(text: Option[String]): Unit = text.fold(usernameView.setVisibility(View.GONE)) { t =>
-    usernameView.setVisibility(View.VISIBLE)
-    usernameView.setText(t)
+  def setSubtitle(text: Option[String]): Unit = text.fold(subtitleView.setVisibility(View.GONE)) { t =>
+    subtitleView.setVisibility(View.VISIBLE)
+    subtitleView.setText(t)
   }
 
   def setChecked(checked: Boolean): Unit = checkbox.setChecked(checked)
@@ -81,6 +82,15 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
 
   def showArrow(show: Boolean): Unit = nextIndicator.setVisibility(if (show) View.VISIBLE else View.GONE)
 
+  def setCallParticipantInfo(user: CallParticipantInfo): Unit = {
+    chathead.setUserId(user.userId)
+    setTitle(user.displayName)
+    setVerified(user.isVerified)
+    subtitleView.setVisibility(View.GONE)
+    setIsGuest(user.isGuest)
+    videoIndicator.setVisibility(if (user.isVideoEnabled) View.VISIBLE else View.GONE)
+  }
+
   def setUserData(userData: UserData, teamId: Option[TeamId], showSubtitle: Boolean = true): Unit = {
     chathead.setUserId(userData.id)
     setTitle(userData.getDisplayName)
@@ -88,7 +98,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
     setVerified(userData.isVerified)
     val handle = userData.handle.map(h => StringUtils.formatHandle(h.string))
     val expiration = userData.expiresAt.map(GuestUtils.timeRemainingString(_, Instant.now))
-    if (showSubtitle) setSubtitle(expiration.orElse(handle)) else usernameView.setVisibility(View.GONE)
+    if (showSubtitle) setSubtitle(expiration.orElse(handle)) else subtitleView.setVisibility(View.GONE)
     setIsGuest(userData.isGuest(teamId))
   }
 
@@ -146,8 +156,6 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
     AvailabilityView.displayLeftOfText(nameView, availability, nameView.getCurrentTextColor, pushDown = true)
 
   def setSeparatorVisible(visible: Boolean): Unit = separator.setVisibility(if (visible) View.VISIBLE else View.GONE)
-
-  def setVideoEnabled(enabled: Boolean): Unit = videoIndicator.setVisibility(if (enabled) View.VISIBLE else View.GONE)
 
   def setCustomViews(views: Seq[View]): Unit = {
     auxContainer.removeAllViews()

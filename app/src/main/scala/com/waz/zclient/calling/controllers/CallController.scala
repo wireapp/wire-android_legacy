@@ -23,7 +23,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.{Verification, VideoSendState}
 import com.waz.avs.{VideoPreview, VideoRenderer}
-import com.waz.model.{UserData, UserId}
+import com.waz.model.{AssetId, UserData, UserId}
 import com.waz.service.call.Avs.VideoReceiveState
 import com.waz.service.call.CallInfo
 import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
@@ -32,10 +32,11 @@ import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
 import com.waz.utils.events._
 import com.waz.zclient.calling.CallingActivity
+import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.SoundController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{DeprecationUtils, LayoutSpec}
+import com.waz.zclient.utils.{DeprecationUtils, LayoutSpec, UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector, R, WireContext}
 import org.threeten.bp.Duration
 import org.threeten.bp.Duration.between
@@ -46,6 +47,7 @@ import scala.concurrent.duration._
 class CallController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext) extends Injectable {
 
   import Threading.Implicits.Background
+  private implicit val uiStorage: UiStorage = inject[UiStorage]
 
   private val screenManager  = new ScreenManager
   val soundController        = inject[SoundController]
@@ -98,6 +100,25 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val isGroupCall       = currentCall.map(_.isGroup)
   val cbrEnabled        = currentCall.map(_.isCbrEnabled)
 
+  val participantIds = currentCall.map(_.others.toVector)
+
+  def participantInfos(take: Int = -1) =
+    for {
+      ids         <- if (take > 0) participantIds.map(_.take(take)) else participantIds
+      videoStates <- Signal.const(Map.empty[UserId, VideoReceiveState]) //TODO use actual video receive states
+      users       <- Signal.sequence(ids.map(UserSignal(_)):_*)
+      teamId      <- callingZms.map(_.teamId)
+    } yield
+      users.map { u =>
+        CallParticipantInfo(
+          u.id,
+          u.picture,
+          u.displayName,
+          u.isGuest(teamId),
+          u.isVerified,
+          videoStates.get(u.id).contains(VideoReceiveState.Started))
+      }
+
   val duration = currentCall.map(_.estabTime).flatMap {
     case Some(inst) => ClockSignal(Duration.ofSeconds(1).asScala).map(_ => Option(between(inst, now)))
     case None => Signal.const(Option.empty[Duration])
@@ -134,7 +155,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
   val cameraFailed = flowManager.flatMap(_.cameraFailedSig)
 
-  val userStorage = callingZms map (_.usersStorage)
+  val userStorage = callingZms.map(_.usersStorage)
   val prefs       = callingZms.map(_.prefs)
 
   val callingService = callingZms.map(_.calling).disableAutowiring()
@@ -363,8 +384,6 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     }
   }.orElse(Signal(true)) //ensure that controls are ALWAYS visible in case something goes wrong...
 
-  val participantIdsToDisplay = currentCall.map(_.others.toVector)
-
   def continueDegradedCall(): Unit = callingServiceAndCurrentConvId.head.map {
     case (cs, _) => cs.continueDegradedCall()
   }
@@ -436,3 +455,6 @@ private class ScreenManager(implicit injector: Injector) extends Injectable {
   }
 }
 
+object CallController {
+  case class CallParticipantInfo(userId: UserId, assetId: Option[AssetId], displayName: String, isGuest: Boolean, isVerified: Boolean, isVideoEnabled: Boolean)
+}

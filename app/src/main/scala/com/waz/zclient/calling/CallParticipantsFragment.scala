@@ -18,7 +18,8 @@
 package com.waz.zclient.calling
 
 import android.os.Bundle
-import android.support.v7.widget.Toolbar
+import android.support.v7.widget.RecyclerView.ViewHolder
+import android.support.v7.widget.{RecyclerView, Toolbar}
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.zclient.{FragmentHelper, R}
@@ -46,6 +47,18 @@ class CallParticipantsFragment extends FragmentHelper {
 }
 
 object CallParticipantsFragment {
+
+  class AllParticipantsAdapter() extends RecyclerView.Adapter[ViewHolder] {
+
+
+    override def getItemCount = ???
+
+    override def onCreateViewHolder(parent: ViewGroup, viewType: Int) = ???
+
+    override def onBindViewHolder(holder: ViewHolder, position: Int) = ???
+  }
+
+
 
   def apply(): CallParticipantsFragment = new CallParticipantsFragment()
 

@@ -25,11 +25,10 @@ import android.util.AttributeSet
 import android.view._
 import android.widget.ImageView
 import com.waz.ZLog.ImplicitTag._
-import com.waz.model._
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.ViewHelper._
 import com.waz.zclient.calling.controllers.CallController
-import com.waz.zclient.calling.views.CallParticipantsView.CallParticipantInfo
+import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.views.SingleUserRowView
 import com.waz.zclient.common.views.SingleUserRowView.Theme
@@ -37,14 +36,12 @@ import com.waz.zclient.common.views.SingleUserRowView.Theme.{Dark, Light, Transp
 import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIconWithColor}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{RichView, UiStorage, UserSignal}
+import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
 
 class CallParticipantsView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends RecyclerView(context, attrs, defStyleAttr) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
-
-  private implicit val uiStorage: UiStorage = inject[UiStorage]
 
   private val adapter = new CallParticipantsAdapter(context, inject[ThemeController], inject[CallController])
 
@@ -52,37 +49,23 @@ class CallParticipantsView(val context: Context, val attrs: AttributeSet, val de
   setAdapter(adapter)
 }
 
-object CallParticipantsView {
-  sealed case class CallParticipantInfo(userData: UserData, videoEnabled: Boolean)
-}
 
-class CallParticipantsAdapter(context: Context, themeController: ThemeController, callController: CallController)
-                             (implicit eventContext: EventContext, uiStorage: UiStorage)
+class CallParticipantsAdapter(context: Context, themeController: ThemeController, callController: CallController)(implicit eventContext: EventContext)
   extends RecyclerView.Adapter[ViewHolder] {
   import com.waz.zclient.calling.views.CallParticipantsAdapter._
 
-  private var items = List.empty[CallParticipantInfo]
+  private var items = Seq.empty[CallParticipantInfo]
   private var allParticipantsNumber = 0
-  private var selfTeamId = Option.empty[TeamId]
   private var theme: Theme = Theme.TransparentDark
 
   private lazy val maxRows = 5
 
-  callController.callingZms.map(_.teamId).onUi { teamId =>
-    selfTeamId = teamId
+  callController.participantInfos(maxRows - 1).onUi { v =>
+    items = v
     notifyDataSetChanged()
   }
 
-  callController.participantIdsToDisplay
-    .map(v => v.take(maxRows - 1))
-    .flatMap(users => Signal.sequence(users.map(UserSignal(_)):_*))
-    .onUi { data =>
-      items = data.map(u => CallParticipantInfo(u, videoEnabled = false)).toList
-      //TODO: get video info
-      notifyDataSetChanged()
-    }
-
-  callController.participantIdsToDisplay.map(_.size).onUi { size =>
+  callController.participantIds.map(_.size).onUi { size =>
     allParticipantsNumber = size
     notifyDataSetChanged()
   }
@@ -104,13 +87,13 @@ class CallParticipantsAdapter(context: Context, themeController: ThemeController
 
   override def getItemId(position: Int): Long =
     if (position == items.size) 0
-    else items(position).userData.id.hashCode()
+    else items(position).userId.hashCode()
 
   setHasStableIds(true)
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = (holder, position) match {
     case (h: CallParticipantViewHolder, pos) if pos < items.size =>
-      h.bind(items(position), selfTeamId, theme)
+      h.bind(items(position), theme)
     case (h: ShowAllButtonViewHolder, pos) if pos == items.size =>
       h.bind(allParticipantsNumber, theme)
     case _ =>
@@ -132,9 +115,8 @@ object CallParticipantsAdapter {
 }
 
 case class CallParticipantViewHolder(view: SingleUserRowView) extends ViewHolder(view) {
-  def bind(callParticipantInfo: CallParticipantInfo, teamId: Option[TeamId], theme: Theme): Unit = {
-    view.setUserData(callParticipantInfo.userData, teamId, showSubtitle = false)
-    view.setVideoEnabled(callParticipantInfo.videoEnabled)
+  def bind(callParticipantInfo: CallParticipantInfo, theme: Theme): Unit = {
+    view.setCallParticipantInfo(callParticipantInfo)
     view.setTheme(theme)
     view.setSeparatorVisible(false)
   }

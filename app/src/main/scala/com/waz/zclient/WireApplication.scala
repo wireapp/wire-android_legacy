@@ -136,6 +136,8 @@ object WireApplication {
     bind [ThemeController]         to new ThemeController
     bind [SpinnerController]       to new SpinnerController()
 
+    bind [UiStorage] to new UiStorage()
+
     //notifications
     bind [MessageNotificationsController]  to new MessageNotificationsController()
     bind [ImageNotificationsController]    to new ImageNotificationsController()
@@ -190,7 +192,6 @@ object WireApplication {
     bind [MessagesController]        to new MessagesController()
     bind [LikesController]           to new LikesController()
     bind [CollectionController]      to new CollectionController()
-    bind [UiStorage]                 to new UiStorage()
     bind [BackStackNavigator]        to new BackStackNavigator()
 
     bind [CursorController]             to new CursorController()
