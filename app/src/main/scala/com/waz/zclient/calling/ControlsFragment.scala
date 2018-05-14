@@ -31,17 +31,16 @@ import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.ZLog.verbose
 import com.waz.api.VideoSendState
 import com.waz.avs.{VideoPreview, VideoRenderer}
-import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
+import com.waz.zclient.R
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.{CallingHeader, CallingMiddleLayout, ControlsView}
-import com.waz.zclient.utils.{RichView, ViewUtils}
-import com.waz.zclient.{FragmentHelper, R}
+import com.waz.zclient.utils.RichView
 
 import scala.concurrent.duration.FiniteDuration
 
-class ControlsFragment extends FragmentHelper {
+class ControlsFragment extends FadingControls {
 
   implicit def ctx: Context = getActivity
 
@@ -89,8 +88,6 @@ class ControlsFragment extends FragmentHelper {
   private lazy val videoPreview = new VideoPreview(ctx)
 
   private var hasFullScreenBeenSet = false //need to make sure we don't set the FullScreen preview on call tear down! never gets set back to false
-  private var inOrFadingIn = false
-  private var tapFuture: CancellableFuture[Unit] = _
 
   override def onCreateView(inflater: LayoutInflater, viewGroup: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_calling_controls, viewGroup, false)
@@ -99,6 +96,17 @@ class ControlsFragment extends FragmentHelper {
     super.onViewCreated(v, savedInstanceState)
 
     getActivity.getWindow.setBackgroundDrawableResource(R.color.calling_background)
+
+    overlayView
+    degradedWarningTextView
+    degradedConfirmationTextView
+    callingHeader
+    callingMiddle
+    callingControls
+    messageView
+    videoView
+
+    setFadingControls(overlayView, callingHeader, callingMiddle, callingControls)
 
     controller.isCallActive.onUi {
       case false =>
@@ -115,7 +123,7 @@ class ControlsFragment extends FragmentHelper {
       video    <- controller.isVideoCall
     } yield degraded && video).onChanged.filter(_ == true).onUi(_ => getActivity.finish())
 
-    v.onClick(toggleControlVisibility())
+    v.onClick(if (controller.showVideoView.currentValue.getOrElse(false)) toggleControlVisibility())
 
     Signal(controller.showVideoView, controller.isCallActive, controller.isCallEstablished).onUi {
       case (true, true, false) if !hasFullScreenBeenSet =>
@@ -135,6 +143,7 @@ class ControlsFragment extends FragmentHelper {
         verbose("hiding video view and preview")
         videoPreview.setVisible(false)
         videoView.setVisible(false)
+        stopFadeOut()
     }
 
     controller.videoSendState.map {
@@ -142,22 +151,15 @@ class ControlsFragment extends FragmentHelper {
       case _                        => Some(videoPreview)
     }.onUi(controller.setVideoPreview)
 
-    overlayView
-    degradedWarningTextView
-    degradedConfirmationTextView
-    callingHeader
-    callingMiddle
-    callingControls
-    messageView
-    videoView
   }
 
   private var subs = Set[Subscription]()
 
   override def onStart(): Unit = {
     super.onStart()
+
     callingControls.foreach(controls =>
-      subs += controls.onButtonClick.onUi(_ => extendControlsDisplay())
+      subs += controls.onButtonClick.onUi(_ => if (controller.showVideoView.currentValue.getOrElse(false)) extendControlsDisplay())
     )
 
     callingMiddle.foreach(vh => subs += vh.onShowAllClicked.onUi { _ =>
@@ -175,6 +177,7 @@ class ControlsFragment extends FragmentHelper {
 
   override def onStop(): Unit = {
     subs.foreach(_.destroy())
+    subs = Set.empty
     super.onStop()
   }
 
@@ -185,42 +188,12 @@ class ControlsFragment extends FragmentHelper {
     getActivity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
   }
 
-  private def toggleControlVisibility(): Unit = if (controller.showVideoView.currentValue.getOrElse(false)) {
-    if (inOrFadingIn) {
-      fadeOutControls()
-    } else {
-      fadeInControls()
-      extendControlsDisplay()
-    }
-  }
-
-  private def extendControlsDisplay(): Unit = if (controller.showVideoView.currentValue.getOrElse(false)) {
-    verbose(s"extendControlsDisplay")
-    Option(tapFuture).foreach(_.cancel())
-    tapFuture = CancellableFuture.delay(ControlsFragment.tapDelay)
-    tapFuture.foreach { _ => fadeOutControls() }(Threading.Ui)
-  }
-
-  private def fadeInControls(): Unit = {
-    verbose(s"fadeInControls")
-    overlayView.foreach(ViewUtils.fadeInView)
-    callingControls.foreach(ViewUtils.fadeInView)
-    inOrFadingIn = true
-  }
-
-  private def fadeOutControls(): Unit = {
-    verbose(s"fadeOutControls")
-    overlayView.foreach(ViewUtils.fadeOutView)
-    callingControls.foreach(ViewUtils.fadeOutView)
-    inOrFadingIn = false
-  }
-
   private def setFullScreenView(view: TextureView) = ControlsFragment.addVideoViewToLayout(getView.asInstanceOf[FrameLayout], view)
 }
 
 object ControlsFragment {
-  private val videoViewTag = "VIDEO_VIEW_TAG"
-  private val tapDelay = FiniteDuration(3000, TimeUnit.MILLISECONDS)
+  val VideoViewTag = "VIDEO_VIEW_TAG"
+  val TapDelay = FiniteDuration(3000, TimeUnit.MILLISECONDS)
   val Tag = classOf[ControlsFragment].getName
 
   def newInstance: Fragment = new ControlsFragment
@@ -234,7 +207,7 @@ object ControlsFragment {
     removeVideoViewFromParent(videoView) //in case the videoView belongs to another parent
     removeVideoViewFromLayoutByTag(layout) //in case the layout has another videoView
 
-    videoView.setTag(ControlsFragment.videoViewTag)
+    videoView.setTag(ControlsFragment.VideoViewTag)
     layout.addView(videoView, 0, new LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.CENTER))
   }
 
@@ -251,6 +224,6 @@ object ControlsFragment {
   private def findVideoView(layout: ViewGroup) =
     for {
       v <- Option(layout.getChildAt(0))
-      t <- Option(v.getTag) if t == ControlsFragment.videoViewTag
+      t <- Option(v.getTag) if t == ControlsFragment.VideoViewTag
     } yield v
 }

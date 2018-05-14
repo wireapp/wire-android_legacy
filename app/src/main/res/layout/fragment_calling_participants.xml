@@ -50,4 +50,11 @@
 
     </android.support.v7.widget.Toolbar>
 
+    <com.waz.zclient.calling.views.CallParticipantsView
+        android:id="@+id/full_call_participants"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        />
+
 </LinearLayout>

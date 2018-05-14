@@ -24,6 +24,8 @@ import com.waz.zclient.{FragmentHelper, R}
 
 class CallingFragment extends FragmentHelper {
 
+  private lazy val controlsFragment = ControlsFragment.newInstance
+
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle) =
     inflater.inflate(R.layout.fragment_calling_outer, container, false)
 
@@ -31,7 +33,7 @@ class CallingFragment extends FragmentHelper {
     super.onViewCreated(view, savedInstanceState)
 
     getChildFragmentManager.beginTransaction
-      .replace(R.id.controls_layout, ControlsFragment.newInstance, ControlsFragment.Tag)
+      .replace(R.id.controls_layout, controlsFragment, ControlsFragment.Tag)
       .commit
 
   }
