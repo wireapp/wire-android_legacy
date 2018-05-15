@@ -304,6 +304,7 @@
     <string name="incoming__controls__ongoing__speaker">SPEAKER</string>
     <string name="incoming__controls__ongoing__mute">MUTE</string>
     <string name="incoming__controls__ongoing__video">VIDEO</string>
+    <string name="incoming__controls__ongoing__flip">FLIP</string>
     <string name="ongoing__other_turned_off_video">%1$s TURNED OFF THE VIDEO</string>
     <string name="ongoing__other_unable_to_send_video">%1$s IS UNABLE TO SEND VIDEO</string>
     <string name="ongoing__poor_connection_message">VIDEO STOPPED DUE TO POOR CONNECTION</string>
@@ -328,6 +329,7 @@
     <string name="calling_ongoing_call_join_message">Are you sure you want to join this call?\nThis will hang up your current call.</string>
     <string name="calling_ongoing_call_start_anyway">CALL ANYWAY</string>
     <string name="calling_ongoing_call_join_anyway">JOIN ANYWAY</string>
+    <string name="calling_ongoing_call_participants_header">PARTICIPANTS</string>
 
     <!-- Calling in group conversation -->
     <string name="group_calling_title">Start a call</string>
@@ -1315,6 +1317,7 @@
     <string name="open_this_conversation_to_people_outside_your_team">Open this conversation to people outside your team.</string>
     <string name="allow_guests">Allow Guests</string>
     <string name="guest_options_title">Guest Options</string>
+    <string name="show_all_participants">Show all (%1$s)</string>
 
     <string name="allow_guests_error_title">Something went wrong</string>
     <string name="allow_guests_error_body">Could not allow guests. Please try again.</string>

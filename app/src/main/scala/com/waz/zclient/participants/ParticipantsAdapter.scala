@@ -35,6 +35,7 @@ import com.waz.utils.events._
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.views.SingleUserRowView
+import com.waz.zclient.common.views.SingleUserRowView.Theme
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIconWithColor}
 import com.waz.zclient.ui.text.TypefaceEditText.OnSelectionChangedListener
@@ -121,13 +122,13 @@ class ParticipantsAdapter(numOfColumns: Int)(implicit context: Context, injector
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder = viewType match {
     case GuestOptions =>
-      val view = LayoutInflater.from(parent.getContext).inflate(R.layout.guest_options_button, parent, false)
+      val view = LayoutInflater.from(parent.getContext).inflate(R.layout.list_options_button, parent, false)
       view.onClick(onGuestOptionsClick ! {})
       GuestOptionsButtonViewHolder(view)
     case UserRow =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.single_user_row, parent, false).asInstanceOf[SingleUserRowView]
       view.showArrow(true)
-      view.setTheme(if (themeController.isDarkTheme) SingleUserRowView.Dark else SingleUserRowView.Light)
+      view.setTheme(if (themeController.isDarkTheme) Theme.Dark else Theme.Light)
       ParticipantRowViewHolder(view, onClick)
     case ConversationName =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.conversation_name_row, parent, false)
@@ -188,8 +189,9 @@ object ParticipantsAdapter {
 
   case class GuestOptionsButtonViewHolder(view: View) extends ViewHolder(view) {
     private implicit val ctx = view.getContext
-    view.setId(R.id.guest_options)
+    //view.setId(R.id.guest_options)
     view.findViewById[ImageView](R.id.icon).setImageDrawable(GuestIconWithColor(ContextUtils.getStyledColor(R.attr.wirePrimaryTextColor)))
+    view.findViewById[TextView](R.id.name_text).setText(R.string.guest_options_title)
     view.findViewById[ImageView](R.id.next_indicator).setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40))
   }
 

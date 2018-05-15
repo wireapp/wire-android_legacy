@@ -62,7 +62,6 @@
         android:layout_centerVertical="true"
         android:layout_toEndOf="@id/icon"
         android:layout_toStartOf="@id/next_indicator"
-        android:text="@string/guest_options_title"
         />
 
 </RelativeLayout>

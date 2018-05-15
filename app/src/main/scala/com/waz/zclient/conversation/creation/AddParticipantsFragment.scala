@@ -34,6 +34,7 @@ import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.controllers.global.KeyboardController
+import com.waz.zclient.common.views.SingleUserRowView.Theme
 import com.waz.zclient.common.views.{PickableElement, SingleUserRowView}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.usersearch.views.{PickerSpannableEditText, SearchEditText}
@@ -191,7 +192,7 @@ case class AddParticipantsAdapter(searchResults: Signal[IndexedSeq[UserData]], s
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): SelectableUserRowViewHolder = {
     val view = ViewHelper.inflate[SingleUserRowView](R.layout.single_user_row, parent, addToParent = false)
     view.showCheckbox(true)
-    view.setTheme(if (themeController.isDarkTheme) SingleUserRowView.Dark else SingleUserRowView.Light)
+    view.setTheme(if (themeController.isDarkTheme) Theme.Dark else Theme.Light)
     view.setBackground(null)
     val viewHolder = SelectableUserRowViewHolder(view)
 

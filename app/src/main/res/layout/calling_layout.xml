@@ -19,21 +19,9 @@
 
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-             android:padding="@dimen/wire__padding__small">
-
-
-    <com.waz.zclient.ui.text.GlyphTextView
-        android:id="@+id/gtv__calling_controls__ongoing_camera"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center"
-        android:text="@string/glyph__flip"
-        android:textSize="@dimen/wire__text_size__regular"
-        android:clickable="false"
-        android:textColor="@drawable/selector__camera__control__button"
-        />
+    android:id="@+id/calling_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/calling_background">
 
 </FrameLayout>

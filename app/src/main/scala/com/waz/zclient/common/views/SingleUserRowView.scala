@@ -21,14 +21,16 @@ import android.content.Context
 import android.support.v4.content.ContextCompat
 import android.support.v7.widget.AppCompatCheckBox
 import android.util.AttributeSet
-import android.view.View
+import android.view.{Gravity, View, ViewGroup}
 import android.view.View.OnClickListener
-import android.widget.{CompoundButton, ImageView, RelativeLayout}
+import android.widget.{CompoundButton, ImageView, LinearLayout, RelativeLayout}
 import com.waz.model.{Availability, IntegrationData, TeamId, UserData}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning
+import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
+import com.waz.zclient.common.views.SingleUserRowView.Theme._
 import com.waz.zclient.common.views.SingleUserRowView._
-import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIcon}
+import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIcon, VideoIcon}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{GuestUtils, StringUtils}
@@ -45,12 +47,14 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
 
   private lazy val chathead = findById[ChatheadView](R.id.chathead)
   private lazy val nameView = findById[TypefaceTextView](R.id.name_text)
-  private lazy val usernameView = findById[TypefaceTextView](R.id.username_text)
+  private lazy val subtitleView = findById[TypefaceTextView](R.id.username_text)
   private lazy val checkbox = findById[AppCompatCheckBox](R.id.checkbox)
   private lazy val verifiedShield = findById[ImageView](R.id.verified_shield)
   private lazy val guestIndicator = returning(findById[ImageView](R.id.guest_indicator))(_.setImageDrawable(GuestIcon(R.color.light_graphite)))
+  private lazy val videoIndicator = returning(findById[ImageView](R.id.video_indicator))(_.setImageDrawable(VideoIcon(R.color.light_graphite)))
   private lazy val nextIndicator = returning(findById[ImageView](R.id.next_indicator))(_.setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40)))
   private lazy val separator = findById[View](R.id.separator)
+  private lazy val auxContainer = findById[ViewGroup](R.id.aux_container)
 
   val onSelectionChanged: SourceStream[Boolean] = EventStream()
 
@@ -67,9 +71,9 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
     nameView.setText(text)
   }
 
-  def setSubtitle(text: Option[String]): Unit = text.fold(usernameView.setVisibility(View.GONE)) { t =>
-    usernameView.setVisibility(View.VISIBLE)
-    usernameView.setText(t)
+  def setSubtitle(text: Option[String]): Unit = text.fold(subtitleView.setVisibility(View.GONE)) { t =>
+    subtitleView.setVisibility(View.VISIBLE)
+    subtitleView.setText(t)
   }
 
   def setChecked(checked: Boolean): Unit = checkbox.setChecked(checked)
@@ -78,14 +82,23 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
 
   def showArrow(show: Boolean): Unit = nextIndicator.setVisibility(if (show) View.VISIBLE else View.GONE)
 
-  def setUserData(userData: UserData, teamId: Option[TeamId]): Unit = {
+  def setCallParticipantInfo(user: CallParticipantInfo): Unit = {
+    chathead.setUserId(user.userId)
+    setTitle(user.displayName)
+    setVerified(user.isVerified)
+    subtitleView.setVisibility(View.GONE)
+    setIsGuest(user.isGuest)
+    videoIndicator.setVisibility(if (user.isVideoEnabled) View.VISIBLE else View.GONE)
+  }
+
+  def setUserData(userData: UserData, teamId: Option[TeamId], showSubtitle: Boolean = true): Unit = {
     chathead.setUserId(userData.id)
     setTitle(userData.getDisplayName)
     if (teamId.isDefined) setAvailability(userData.availability)
     setVerified(userData.isVerified)
     val handle = userData.handle.map(h => StringUtils.formatHandle(h.string))
     val expiration = userData.expiresAt.map(GuestUtils.timeRemainingString(_, Instant.now))
-    setSubtitle(expiration.orElse(handle))
+    if (showSubtitle) setSubtitle(expiration.orElse(handle)) else subtitleView.setVisibility(View.GONE)
     setIsGuest(userData.isGuest(teamId))
   }
 
@@ -120,13 +133,21 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
         nameView.setTextColor(getColor(R.color.wire__text_color_primary_dark_selector))
         separator.setBackgroundColor(getStyledColor(R.attr.thinDividerColor))
         setBackgroundColor(getColor(R.color.background_dark))
-      case Transparent =>
+      case TransparentDark =>
         returning(ContextCompat.getDrawable(getContext, R.drawable.checkbox)){ btn =>
           btn.setLevel(1)
           checkbox.setButtonDrawable(btn)
         }
         nameView.setTextColor(getColor(R.color.wire__text_color_primary_dark_selector))
         separator.setBackgroundColor(getColor(R.color.white_16))
+        setBackground(getDrawable(R.drawable.selector__transparent_button))
+      case TransparentLight =>
+        returning(ContextCompat.getDrawable(getContext, R.drawable.checkbox_black)){ btn =>
+          btn.setLevel(1)
+          checkbox.setButtonDrawable(btn)
+        }
+        nameView.setTextColor(getColor(R.color.wire__text_color_primary_light_selector))
+        separator.setBackgroundColor(getStyledColor(R.attr.thinDividerColor))
         setBackground(getDrawable(R.drawable.selector__transparent_button))
     }
   }
@@ -135,11 +156,23 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
     AvailabilityView.displayLeftOfText(nameView, availability, nameView.getCurrentTextColor, pushDown = true)
 
   def setSeparatorVisible(visible: Boolean): Unit = separator.setVisibility(if (visible) View.VISIBLE else View.GONE)
+
+  def setCustomViews(views: Seq[View]): Unit = {
+    auxContainer.removeAllViews()
+    views.foreach { v =>
+      val params = returning(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))(_.gravity = Gravity.CENTER)
+      v.setLayoutParams(params)
+      auxContainer.addView(v)
+    }
+  }
 }
 
 object SingleUserRowView {
-  trait Theme
-  object Light extends Theme
-  object Dark extends Theme
-  object Transparent extends Theme
+  sealed trait Theme
+  object Theme {
+    object Light extends Theme
+    object Dark extends Theme
+    object TransparentDark extends Theme
+    object TransparentLight extends Theme
+  }
 }

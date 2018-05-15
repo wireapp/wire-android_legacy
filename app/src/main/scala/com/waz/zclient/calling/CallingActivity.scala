@@ -19,63 +19,25 @@ package com.waz.zclient.calling
 
 import android.content.{Context, Intent}
 import android.os.Bundle
-import android.view.ViewGroup.LayoutParams
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
-import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.threading.Threading
 import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
-import com.waz.zclient.calling.views.VideoCallingView
-import com.waz.zclient.utils.{DeprecationUtils, RichView}
+import com.waz.zclient.utils.DeprecationUtils
 
 class CallingActivity extends BaseActivity {
-  import CallingActivity._
-
-  private lazy val controller = inject[CallController]
-  import controller._
-
-  lazy val degradedWarningTextView      = findById[TextView](R.id.degraded_warning)
-  lazy val degradedConfirmationTextView = findById[TextView](R.id.degraded_confirmation)
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
     verbose("Creating CallingActivity")
-    getWindow.setBackgroundDrawableResource(R.color.calling_background)
 
-    isCallActive.on(Threading.Ui) {
-      case false =>
-        verbose("call no longer exists, finishing activity")
-        finish()
-      case _ =>
-    }
-
-    callConvId.onChanged.on(Threading.Ui)(_ => restartActivity())
-
-    //ensure activity gets killed to allow content to change if the conv degrades (no need to kill activity on audio call)
-    (for {
-      degraded <- convDegraded
-      video    <- isVideoCall
-    } yield degraded && video).onChanged.filter(_ == true).on(Threading.Ui)(_ => finish())
-
-    //can only set content view once - so do so on first value of `showVideoView`
-    showVideoView.head.map {
-      case true =>
-        verbose("Setting video view")
-        setContentView(new VideoCallingView(this), new LayoutParams(MATCH_PARENT, MATCH_PARENT))
-      case _ =>
-        verbose("Setting audio view")
-        setContentView(R.layout.calling_audio)
-
-        convDegraded.on(Threading.Ui){ degraded =>
-          degradedWarningTextView.setVisible(degraded)
-          degradedConfirmationTextView.setVisible(degraded)
-        }
-        degradationWarningText.on(Threading.Ui)(degradedWarningTextView.setText)
-        degradationConfirmationText.on(Threading.Ui)(degradedConfirmationTextView.setText)
-    }(Threading.Ui)
+    setContentView(R.layout.calling_layout)
+    getSupportFragmentManager
+      .beginTransaction()
+      .replace(R.id.calling_layout, CallingFragment(), CallingFragment.Tag)
+      .commit
   }
 
   override def onAttachedToWindow(): Unit = {
@@ -87,11 +49,13 @@ class CallingActivity extends BaseActivity {
     )
   }
 
-  private def restartActivity() = {
-    info("restartActivity")
-    finish()
-    start(this)
-    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+  override def onBackPressed() = {
+    verbose("onBackPressed")
+
+    Option(getSupportFragmentManager.findFragmentById(R.id.calling_layout)).foreach {
+      case f: OnBackPressedListener if f.onBackPressed() => //
+      case _ => super.onBackPressed()
+    }
   }
 }
 

@@ -66,7 +66,7 @@ class ParticipantFragment extends ManagerFragment
   private lazy val singleImageController  = inject[ISingleImageController]
   private lazy val userAccountsController = inject[UserAccountsController]
 
-  private lazy val headerFragment  = ParticipantHeaderFragment.newInstance
+  private lazy val headerFragment = ParticipantHeaderFragment.newInstance
 
   override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation =
     if (nextAnim == 0 || getParentFragment == null)

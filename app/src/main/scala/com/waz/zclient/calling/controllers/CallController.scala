@@ -21,22 +21,22 @@ import android.media.AudioManager
 import android.os.{PowerManager, Vibrator}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.api.{IConversation, Verification, VideoSendState}
+import com.waz.api.{Verification, VideoSendState}
 import com.waz.avs.{VideoPreview, VideoRenderer}
-import com.waz.model.{UserData, UserId}
+import com.waz.model.{AssetId, UserData, UserId}
 import com.waz.service.call.Avs.VideoReceiveState
 import com.waz.service.call.CallInfo
 import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
 import com.waz.service.{AccountsService, GlobalModule, NetworkModeService, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
-import com.waz.utils.events.{ButtonSignal, ClockSignal, EventContext, Signal}
+import com.waz.utils.events._
 import com.waz.zclient.calling.CallingActivity
-import com.waz.zclient.calling.views.CallControlButtonView.{ButtonColor, ButtonSettings}
+import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.SoundController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{DeprecationUtils, LayoutSpec}
+import com.waz.zclient.utils.{DeprecationUtils, LayoutSpec, UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector, R, WireContext}
 import org.threeten.bp.Duration
 import org.threeten.bp.Duration.between
@@ -47,6 +47,7 @@ import scala.concurrent.duration._
 class CallController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext) extends Injectable {
 
   import Threading.Implicits.Background
+  private implicit val uiStorage: UiStorage = inject[UiStorage]
 
   private val screenManager  = new ScreenManager
   val soundController        = inject[SoundController]
@@ -83,16 +84,40 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val callStateOpt      = currentCallOpt.map(_.flatMap(_.state))
   val callState         = callStateOpt.collect { case Some(s) => s }
 
+  val prevCallStateOpt = currentCallOpt.map(_.flatMap(_.prevState))
+
   val isCallEstablished = callStateOpt.map(_.contains(SelfConnected))
   val isCallOutgoing    = callStateOpt.map(_.contains(SelfCalling))
   val isCallIncoming    = callStateOpt.map(_.contains(OtherCalling))
 
   val isMuted           = currentCall.map(_.muted)
-  val isVideoCall       = currentCall.map(_.isVideoCall)
+  val isVideoCall       = currentCall.map{ c =>
+    c.videoSendState != VideoSendState.DONT_SEND || c.videoReceiveState != VideoReceiveState.Stopped
+  }
+
   val videoSendState    = currentCall.map(_.videoSendState)
   val videoReceiveState = currentCall.map(_.videoReceiveState)
   val isGroupCall       = currentCall.map(_.isGroup)
   val cbrEnabled        = currentCall.map(_.isCbrEnabled)
+
+  val participantIds = currentCall.map(_.others.toVector)
+
+  def participantInfos(take: Option[Int] = None) =
+    for {
+      ids         <- take.fold(participantIds)(t => participantIds.map(_.take(t)))
+      videoStates <- Signal.const(Map.empty[UserId, VideoReceiveState]) //TODO use actual video receive states
+      users       <- Signal.sequence(ids.map(UserSignal(_)):_*)
+      teamId      <- callingZms.map(_.teamId)
+    } yield
+      users.map { u =>
+        CallParticipantInfo(
+          u.id,
+          u.picture,
+          u.displayName,
+          u.isGuest(teamId),
+          u.isVerified,
+          videoStates.get(u.id).contains(VideoReceiveState.Started))
+      }
 
   val duration = currentCall.map(_.estabTime).flatMap {
     case Some(inst) => ClockSignal(Duration.ofSeconds(1).asScala).map(_ => Option(between(inst, now)))
@@ -130,7 +155,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
   val cameraFailed = flowManager.flatMap(_.cameraFailedSig)
 
-  val userStorage = callingZms map (_.usersStorage)
+  val userStorage = callingZms.map(_.usersStorage)
   val prefs       = callingZms.map(_.prefs)
 
   val callingService = callingZms.map(_.calling).disableAutowiring()
@@ -143,13 +168,15 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
 
   val conversation = callingZms.zip(callConvId) flatMap { case (z, cId) => z.convsStorage.signal(cId) }
-  val conversationName = conversation map (data => if (data.convType == IConversation.Type.GROUP) data.name.filter(!_.isEmpty).getOrElse(data.generatedName) else data.generatedName)
+  val conversationName = conversation.map(_.displayName)
 
   val otherUser = Signal(isGroupCall, userStorage, callConvId).flatMap {
-    case (isGroupCall, usersStorage, convId) if !isGroupCall =>
+    case (false, usersStorage, convId) =>
       usersStorage.optSignal(UserId(convId.str)) // one-to-one conversation has the same id as the other user, so we can access it directly
     case _ => Signal.const[Option[UserData]](None) //Need a none signal to help with further signals
   }
+
+  val onShowAllClick = EventStream[Unit]()
 
   def leaveCall(): Unit = {
     verbose(s"leaveCall")
@@ -306,7 +333,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     } yield (fm, rConvId, userId)).on(Threading.Ui) {
       case (fm, rConvId, userId) =>
         verbose(s"Setting ViewRenderer on Flowmanager, rConvId: $rConvId, userId: $userId, view: $view")
-        view.foreach(fm.setVideoView(rConvId, userId, _))
+        fm.setVideoView(rConvId, userId, view.orNull)
     }
   }
 
@@ -357,8 +384,6 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     }
   }.orElse(Signal(true)) //ensure that controls are ALWAYS visible in case something goes wrong...
 
-  val participantIdsToDisplay = currentCall.map(_.others.toVector)
-
   def continueDegradedCall(): Unit = callingServiceAndCurrentConvId.head.map {
     case (cs, _) => cs.continueDegradedCall()
   }
@@ -376,41 +401,11 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     }
   }
 
-  val speakerButton = ButtonSignal(callingZms.map(_.mediamanager), callingZms.flatMap(_.mediamanager.isSpeakerOn)) {
+  lazy val speakerButton = ButtonSignal(callingZms.map(_.mediamanager), callingZms.flatMap(_.mediamanager.isSpeakerOn)) {
     case (mm, isSpeakerSet) => mm.setSpeaker(!isSpeakerSet)
-  }
-
-  val leftButtonSettings = convDegraded.map {
-    case true  => ButtonSettings(R.string.glyph__close, R.string.confirmation_menu__cancel, () => leaveCall())
-    case false => ButtonSettings(R.string.glyph__microphone_off, R.string.incoming__controls__ongoing__mute, () => toggleMuted())
-  }
-
-  val middleButtonSettings = convDegraded.flatMap {
-    case true  =>
-      isCallOutgoing.map { outgoing =>
-        val text = if (outgoing) R.string.conversation__action__call else R.string.incoming__controls__incoming__accept
-        ButtonSettings(R.string.glyph__call, text, () => continueDegradedCall(), ButtonColor.Green)
-      }
-    case false => Signal(ButtonSettings(R.string.glyph__end_call, R.string.incoming__controls__ongoing__hangup, () => leaveCall(), ButtonColor.Red))
-  }
-
-  val rightButtonSettings = isVideoCall.map {
-    case true  => ButtonSettings(R.string.glyph__video,        R.string.incoming__controls__ongoing__video,   () => toggleVideo())
-    case false => ButtonSettings(R.string.glyph__speaker_loud, R.string.incoming__controls__ongoing__speaker, () => speakerButton.press())
-  }
+  }.disableAutowiring()
 
   val isTablet = Signal(!LayoutSpec.isPhone(cxt))
-
-  val rightButtonShown = convDegraded.flatMap {
-    case true  => Signal(false)
-    case false => Signal(isVideoCall, isCallEstablished, captureDevices, isTablet) map {
-      case (true, false, _, _) => false
-      case (true, true, captureDevices, _) => captureDevices.size >= 0
-      case (false, _, _, isTablet) => !isTablet //Tablets don't have ear-pieces, so you can't switch between speakers
-      case _ => false
-    }
-  }
-
 }
 
 private class ScreenManager(implicit injector: Injector) extends Injectable {
@@ -460,3 +455,6 @@ private class ScreenManager(implicit injector: Injector) extends Injectable {
   }
 }
 
+object CallController {
+  case class CallParticipantInfo(userId: UserId, assetId: Option[AssetId], displayName: String, isGuest: Boolean, isVerified: Boolean, isVideoEnabled: Boolean)
+}
