@@ -26,7 +26,8 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.{RichInstant, Serialized, returning}
 import com.waz.znet.AuthenticationManager.{AccessToken, Cookie}
-import com.waz.znet.Response.{Cancelled, Status}
+import com.waz.znet.LoginClient.LoginResult
+import com.waz.znet.Response.Status
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -69,7 +70,7 @@ class AuthenticationManagerSpec extends AndroidFreeSpec {
         Future.successful(Some((account, newAccount)))
       }
 
-      (loginClient.access _).expects(account.cookie, Some(oldToken)).returning(CancellableFuture.successful(Right(newToken, None, None)))
+      (loginClient.access _).expects(account.cookie, Some(oldToken)).returning(Future.successful(Right(LoginResult(newToken, None, None))))
 
       val manager = getManager
 
@@ -97,7 +98,7 @@ class AuthenticationManagerSpec extends AndroidFreeSpec {
         Future.successful(Some((account, newAccount)))
       }
 
-      (loginClient.access _).expects(account.cookie, account.accessToken).returning(CancellableFuture.successful(Right(newToken, Some(newCookie), Some(Label("")))))
+      (loginClient.access _).expects(account.cookie, account.accessToken).returning(Future.successful(Right(LoginResult(newToken, Some(newCookie), Some(Label(""))))))
       val manager = getManager
 
       result(manager.currentToken()) shouldEqual Right(newToken)
@@ -125,7 +126,7 @@ class AuthenticationManagerSpec extends AndroidFreeSpec {
         }
       }
 
-      (loginClient.access _).expects(account.cookie, Some(oldToken)).once().returning(CancellableFuture.successful(Right(newToken, None, None)))
+      (loginClient.access _).expects(account.cookie, Some(oldToken)).once().returning(Future.successful(Right(LoginResult(newToken, None, None))))
 
       val manager = getManager
 
@@ -148,7 +149,7 @@ class AuthenticationManagerSpec extends AndroidFreeSpec {
 
       (accStorage.remove _).expects(account1Id).returning(Future.successful({}))
 
-      (loginClient.access _).expects(account.cookie, account.accessToken).returning(CancellableFuture.successful(Left(ErrorResponse(Status.Forbidden, "", ""))))
+      (loginClient.access _).expects(account.cookie, account.accessToken).returning(Future.successful(Left(ErrorResponse(Status.Forbidden, "", ""))))
 
       val manager = getManager
 
@@ -193,8 +194,8 @@ class AuthenticationManagerSpec extends AndroidFreeSpec {
         }
       }
 
-      (loginClient.access _).expects(account.cookie, None).once().returning(CancellableFuture.successful(Left(ErrorResponse(Status.Forbidden, "", ""))))
-      (loginClient.login _).expects(emailCredentials).once().returning(CancellableFuture.successful(Right((newToken, Some(newCookie), Some(Label("label"))))))
+      (loginClient.access _).expects(account.cookie, None).once().returning(Future.successful(Left(ErrorResponse(Status.Forbidden, "", ""))))
+      (loginClient.login _).expects(emailCredentials).once().returning(Future.successful(Right(LoginResult(newToken, Some(newCookie), Some(Label("label"))))))
       val manager = getManager
 
       manager.onPasswordReset(Some(emailCredentials))
@@ -226,7 +227,7 @@ class AuthenticationManagerSpec extends AndroidFreeSpec {
       (loginClient.access _).expects(account.cookie, Some(oldToken)).anyNumberOfTimes().onCall { (cookie, token) =>
         returning(CancellableFuture.successful(attempts match {
           case 0|1|2 => Left(ErrorResponse(500, "Some server error", "Some server error"))
-          case 3     => Right((newToken, None, None))
+          case 3     => Right(LoginResult(newToken, None, None))
           case _     => fail("Unexpected number of access attempts")
         }))(_ => attempts += 1)
       }

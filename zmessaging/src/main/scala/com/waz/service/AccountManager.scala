@@ -40,6 +40,7 @@ import com.waz.utils.events.Signal
 import com.waz.utils.wrappers.Context
 import com.waz.znet.Response.Status
 import com.waz.znet.ZNetClient._
+import com.waz.znet2.AuthRequestInterceptor
 
 import scala.collection.immutable.ListMap
 import scala.concurrent.Future
@@ -88,7 +89,8 @@ class AccountManager(val userId:   UserId,
   val auth              = global.factory.auth(userId)
   val netClient         = global.factory.client(auth)
   val otrClient         = new OtrClient(netClient)
-  val credentialsClient = global.factory.credentialsClient(netClient)
+  val authRequestInterceptor: AuthRequestInterceptor = new AuthRequestInterceptor(auth)
+  val credentialsClient = global.factory.credentialsClient(global.backend, global.httpClient, authRequestInterceptor)
 
   val timeouts       = global.timeouts
   val network        = global.network

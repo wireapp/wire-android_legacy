@@ -17,64 +17,68 @@
  */
 package com.waz.znet
 
+import java.net.URL
+
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.Credentials
 import com.waz.api.impl.ErrorResponse
-import com.waz.client.RegistrationClientImpl
 import com.waz.model.AccountData.Label
-import com.waz.model.{TeamData, TeamId, UserInfo}
+import com.waz.model.{TeamId, UserInfo}
+import com.waz.model2.transport.Team
+import com.waz.model2.transport.responses.TeamsResponse
 import com.waz.service.BackendConfig
 import com.waz.service.ZMessaging.clock
 import com.waz.service.tracking.TrackingService
-import com.waz.sync.client.TeamsClient.{TeamBindingResponse, teamsPaginatedQuery}
+import com.waz.sync.client.TeamsClient.teamsPaginatedQuery
 import com.waz.sync.client.UsersClient
 import com.waz.threading.CancellableFuture.CancelException
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.{ExponentialBackoff, JsonEncoder, _}
 import com.waz.znet.AuthenticationManager._
-import com.waz.znet.ContentEncoder.{EmptyRequestContent, JsonContentEncoder}
 import com.waz.znet.LoginClient.LoginResult
-import com.waz.znet.Response.{Status, SuccessHttpStatus}
+import com.waz.znet.Response.{Headers, Status}
 import com.waz.znet.ZNetClient.ErrorOr
+import com.waz.znet2.http.HttpClient
+import com.waz.znet2.http.HttpClient.dsl._
+import com.waz.znet2.http
 import org.json.JSONObject
 import org.threeten.bp
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.Try
 
 trait LoginClient {
-  def access(cookie: Cookie, token: Option[AccessToken]): CancellableFuture[LoginResult]
-  def login(credentials: Credentials): CancellableFuture[LoginResult]
+  def access(cookie: Cookie, token: Option[AccessToken]): ErrorOr[LoginResult]
+  def login(credentials: Credentials): ErrorOr[LoginResult]
   def getSelfUserInfo(token: AccessToken): ErrorOr[UserInfo]
 
-  def findSelfTeam(accessToken: AccessToken, start: Option[TeamId] = None): ErrorOr[Option[TeamData]]
-  def getTeams(accessToken: AccessToken, start: Option[TeamId]): ErrorOr[TeamBindingResponse]
+  def findSelfTeam(accessToken: AccessToken, start: Option[TeamId] = None): ErrorOr[Option[Team]]
+  def getTeams(accessToken: AccessToken, start: Option[TeamId]): ErrorOr[TeamsResponse]
 }
 
-class LoginClientImpl(client: AsyncClient, backend: BackendConfig, tracking: TrackingService) extends LoginClient {
+class LoginClientImpl(backend: BackendConfig, tracking: TrackingService)(implicit val client: HttpClient) extends LoginClient {
   import com.waz.znet.LoginClient._
   private implicit val dispatcher = new SerialDispatchQueue(name = "LoginClient")
 
   private[znet] var lastRequestTime = 0L
   private[znet] var failedAttempts = 0
-  private var lastResponse = Status.Success
-  private var loginFuture = CancellableFuture.successful[LoginResult](Left(ErrorResponse.Cancelled))
+  private var lastResponseCode = http.ResponseCode.Success
+  private var loginFuture: ErrorOr[LoginResult] = CancellableFuture.successful(Left(ErrorResponse.Cancelled))
 
   def requestDelay =
     if (failedAttempts == 0) Duration.Zero
     else {
-      val minDelay = if (lastResponse == Status.RateLimiting || lastResponse == Status.LoginRateLimiting) 5.seconds else Duration.Zero
+      val minDelay = if (lastResponseCode == Status.RateLimiting || lastResponseCode == Status.LoginRateLimiting) 5.seconds else Duration.Zero
       val nextRunTime = lastRequestTime + Throttling.delay(failedAttempts, minDelay).toMillis
       math.max(nextRunTime - System.currentTimeMillis(), 0).millis
     }
 
-  override def login(credentials: Credentials) = throttled(loginNow(credentials))
+  override def login(credentials: Credentials): ErrorOr[LoginResult] = throttled(loginNow(credentials))
 
   override def access(cookie: Cookie, token: Option[AccessToken]) = throttled(accessNow(cookie, token))
 
-  def throttled(request: => CancellableFuture[LoginResult]): CancellableFuture[LoginResult] = dispatcher {
+  def throttled(request: => ErrorOr[LoginResult]): ErrorOr[LoginResult] = dispatcher {
     loginFuture = loginFuture.recover {
       case e: CancelException => Left(ErrorResponse.Cancelled)
       case ex: Throwable =>
@@ -82,86 +86,99 @@ class LoginClientImpl(client: AsyncClient, backend: BackendConfig, tracking: Tra
         Left(ErrorResponse.internalError("Unexpected error when trying to log in: " + ex.getMessage))
     } flatMap { _ =>
       verbose(s"throttling, delay: $requestDelay")
-      CancellableFuture.delay(requestDelay)
+      CancellableFuture.delay(requestDelay).future
     } flatMap { _ =>
       verbose(s"starting request")
       lastRequestTime = System.currentTimeMillis()
       request.map {
         case Left(error) =>
           failedAttempts += 1
-          lastResponse = error.code
+          lastResponseCode = error.code
           Left(error)
         case resp =>
           failedAttempts = 0
-          lastResponse = Status.Success
+          lastResponseCode = Status.Success
           resp
       }
     }
     loginFuture
-  }.flatten
+  }.future.flatten
 
-  def loginNow(credentials: Credentials) = {
+  private implicit val FIXED_AccessTokenDecoder: JsonDecoder[AccessToken] = new JsonDecoder[AccessToken] {
+    import JsonDecoder._
+    override def apply(implicit js: JSONObject): AccessToken =
+      AccessToken(
+        'access_token,
+        'token_type,
+        clock.instant() + bp.Duration.ofMillis(('expires_in: Long) * 1000)
+      )
+  }
+
+  def loginNow(credentials: Credentials): ErrorOr[LoginResult] = {
     debug(s"trying to login with credentials: $credentials")
     val label = Label()
     val params = JsonEncoder { o =>
       credentials.addToLoginJson(o)
       o.put("label", label.str)
     }
-    val request = Request.Post(LoginUriStr, JsonContentEncoder(params), baseUri = Some(backend.baseUrl), timeout = RegistrationClientImpl.timeout)
-    client(request).map(responseHandler(Some(label)))
+    val request = http.Request.create(url = new URL(backend.baseUrl.toString + LoginUriStr), body = params)
+    Prepare(request).withResultType[http.Response[AccessToken]].withErrorType[ErrorResponse].executeSafe
+      .map { _.right.map(resp => LoginResult(resp.body, resp.headers, Some(label))) }
+      .future
   }
 
-  def accessNow(cookie: Cookie, token: Option[AccessToken]) = {
+  def accessNow(cookie: Cookie, token: Option[AccessToken]): ErrorOr[LoginResult] = {
     val headers = token.fold(Request.EmptyHeaders)(_.headers) ++ cookie.headers
-    val request = Request.Post[Unit](AccessPath, data = EmptyRequestContent, baseUri = Some(backend.baseUrl), headers = headers, timeout = RegistrationClientImpl.timeout)
-    client(request).map(responseHandler(None))
+    val request = http.Request.create(
+      url = new URL(backend.baseUrl.toString + AccessPath),
+      method = http.Method.Post,
+      headers = http.Headers(headers),
+      body = ""
+    )
+    Prepare(request).withResultType[http.Response[AccessToken]].withErrorType[ErrorResponse].executeSafe
+      .map { _.right.map(resp => LoginResult(resp.body, resp.headers, None)) }
+      .future
   }
 
-  private def responseHandler(cookieLabel: Option[Label]): PartialFunction[Response, LoginResult] = {
-    case Response(SuccessHttpStatus(), JsonObjectResponse(TokenResponse(token)), responseHeaders) =>
-      debug(s"receivedAccessToken: '$token', headers: $responseHeaders")
-      Right((token, getCookieFromHeaders(responseHeaders), cookieLabel))
-    case r @ Response(_, ErrorResponse(code, msg, label), _) =>
-      warn(s"failed login attempt: $r")
-      Left(ErrorResponse(code, msg, label))
-    case r @ Response(status, _, _) => Left(ErrorResponse(status.status, s"unexpected login response: $r", ""))
+  override def getSelfUserInfo(token: AccessToken): ErrorOr[UserInfo] = {
+    val request = http.Request.withoutBody(
+      url = new URL(backend.baseUrl.toString + UsersClient.SelfPath),
+      headers = http.Headers.create(token.headers)
+    )
+    Prepare(request).withResultType[UserInfo].withErrorType[ErrorResponse].executeSafe.future
   }
 
-  override def getSelfUserInfo(token: AccessToken) = {
-    val request = Request.Get(UsersClient.SelfPath, baseUri = Some(backend.baseUrl), headers = token.headers)
-    client(request).map {
-      case Response(SuccessHttpStatus(), UsersClient.UserResponseExtractor(user), _) => Right(user)
-      case resp =>
-        info(s"Failed to get self user id")
-        Left(ErrorResponse(resp.status.status, resp.status.msg, "unknown"))
-    }.future
-  }
-
-  override def findSelfTeam(accessToken: AccessToken, start: Option[TeamId] = None) =
+  override def findSelfTeam(accessToken: AccessToken, start: Option[TeamId] = None): ErrorOr[Option[Team]] =
     getTeams(accessToken, start).flatMap {
       case Left(err) => Future.successful(Left(err))
-      case Right(TeamBindingResponse(teams, hasMore)) =>
-        teams.find(_._2).map(_._1) match {
-          case Some(teamId) => Future.successful(Right(Some(teamId)))
-          case None if hasMore => findSelfTeam(accessToken, teams.lastOption.map(_._1.id))
+      case Right(TeamsResponse(hasMore, teams)) =>
+        teams.find(_.binding) match {
+          case Some(team) => Future.successful(Right(Some(team)))
+          case None if hasMore => findSelfTeam(accessToken, teams.lastOption.map(_.id))
           case None => Future.successful(Right(None))
         }
     }
 
-  override def getTeams(token: AccessToken, start: Option[TeamId]) = {
-    val request = Request.Get(teamsPaginatedQuery(start), baseUri = Some(backend.baseUrl), headers = token.headers)
-    client(request).map {
-      case Response(SuccessHttpStatus(), TeamBindingResponse(teams, hasMore), _) => Right(TeamBindingResponse(teams, hasMore))
-      case resp =>
-        info(s"Failed to get self user id")
-        Left(ErrorResponse(resp.status.status, resp.status.msg, "unknown"))
-    }.future
+  override def getTeams(token: AccessToken, start: Option[TeamId]): ErrorOr[TeamsResponse] = {
+    val request = http.Request.withoutBody(
+      url = new URL(backend.baseUrl.toString + teamsPaginatedQuery(start)),
+      headers = http.Headers.create(token.headers)
+    )
+    Prepare(request).withResultType[TeamsResponse].withErrorType[ErrorResponse].executeSafe.future
   }
 
 }
 
 object LoginClient {
-  type LoginResult = Either[ErrorResponse, (AccessToken, Option[Cookie], Option[Label])]
+
+  case class LoginResult(accessToken: AccessToken, cookie: Option[Cookie], label: Option[Label])
+
+  object LoginResult {
+
+    def apply(accessToken: AccessToken, headers: http.Headers, label: Option[Label]): LoginResult =
+      new LoginResult(accessToken, getCookieFromHeaders(headers), label)
+
+  }
 
   val SetCookie = "Set-Cookie"
   val Cookie = "Cookie"
@@ -173,7 +190,7 @@ object LoginClient {
 
   val Throttling = new ExponentialBackoff(1000.millis, 10.seconds)
 
-  def getCookieFromHeaders(headers: Response.Headers): Option[Cookie] = headers(SetCookie) flatMap {
+  def getCookieFromHeaders(headers: http.Headers): Option[Cookie] = headers.get(SetCookie) flatMap {
     case header @ CookieHeader(cookie) =>
       verbose(s"parsed cookie from header: $header, cookie: $cookie")
       Some(AuthenticationManager.Cookie(cookie))
@@ -182,11 +199,13 @@ object LoginClient {
       None
   }
 
-  object TokenResponse {
-    def unapply(json: JSONObject): Option[AccessToken] = {
-      implicit val js = json
-      import com.waz.utils.JsonDecoder._
-      Try(AccessToken('access_token, 'token_type, clock.instant() + bp.Duration.ofMillis(('expires_in: Long) * 1000))).toOption
-    }
+  def getCookieFromHeaders(headers: Headers): Option[Cookie] = headers(SetCookie) flatMap {
+    case header @ CookieHeader(cookie) =>
+      verbose(s"parsed cookie from header: $header, cookie: $cookie")
+      Some(AuthenticationManager.Cookie(cookie))
+    case header =>
+      warn(s"Unexpected content for Set-Cookie header: $header")
+      None
   }
+
 }

@@ -18,6 +18,7 @@
 package com.waz.service.downloads
 
 import java.io._
+import java.net.URL
 import java.security.{DigestOutputStream, MessageDigest}
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -38,7 +39,7 @@ import com.waz.model.AssetData.{RemoteData, WithExternalUri, WithProxy, WithRemo
 import com.waz.model._
 import com.waz.service.assets.AudioTranscoder
 import com.waz.service.tracking.TrackingService
-import com.waz.service.{NetworkModeService, UserService, ZMessaging}
+import com.waz.service.{BackendConfig, NetworkModeService, UserService, ZMessaging}
 import com.waz.sync.client.AssetClient
 import com.waz.threading.CancellableFuture.CancelException
 import com.waz.threading.{CancellableFuture, Threading}
@@ -50,6 +51,8 @@ import com.waz.utils.wrappers.{Context, URI}
 import com.waz.znet.Response.{DefaultResponseBodyDecoder, ResponseBodyDecoder}
 import com.waz.znet.ResponseConsumer.{FileConsumer, JsonConsumer}
 import com.waz.znet.{FileResponse, Request}
+import com.waz.znet2.http
+import com.waz.znet2.http.RequestInterceptor
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
@@ -68,13 +71,15 @@ trait AssetLoader {
 
 class AssetLoaderImpl(context:         Context,
                       network:         NetworkModeService,
+                      backend:         BackendConfig,
                       client:          AssetClient,
                       audioTranscoder: AudioTranscoder,
                       videoTranscoder: VideoTranscoder,
                       cache:           CacheService,
                       imgCache:        MemoryImageCache,
                       bitmapDecoder:   BitmapDecoder,
-                      tracking:        TrackingService) extends AssetLoader {
+                      tracking:        TrackingService)
+                     (private implicit val authInterceptor: RequestInterceptor) extends AssetLoader {
 
   private lazy val downloadAlways = Option(ZMessaging.currentAccounts).map(_.activeZms).map {
     _.flatMap {
@@ -129,18 +134,23 @@ class AssetLoaderImpl(context:         Context,
       })
     }
 
+    //TODO Strange situation, only in one case we need request without authorization. Maybe we can get rid of this special case
     (asset match {
       case WithRemoteData(RemoteData(Some(rId), token, otrKey, sha, _)) =>
         verbose(s"Downloading wire asset: ${asset.id}: $rId")
         val path = AssetClient.getAssetPath(rId, otrKey, asset.convId)
         val headers = token.fold(Map.empty[String, String])(t => Map("Asset-Token" -> t.str))
-        val decoder = new AssetBodyDecoder(cache, otrKey, sha)
-        client.loadAsset(Request.Get(path, decoder = Some(decoder), headers = headers, downloadCallback = Some(callback)))
+//        val decoder = new AssetBodyDecoder(cache, otrKey, sha)
+//        client.loadAsset(Request.Get(path, decoder = Some(decoder), headers = headers, downloadCallback = Some(callback)))
+        val request = http.Request.withoutBody(new URL(backend.baseUrl.toString + path), headers = http.Headers.create(headers))
+        client.loadAsset(request, otrKey, sha, callback)
 
       case WithExternalUri(uri) =>
         verbose(s"Downloading external asset: ${asset.id}: $uri")
-        val decoder = new AssetBodyDecoder(cache)
-        val resp = client.loadAsset(Request[Unit](baseUri = Some(uri), requiresAuthentication = false, decoder = Some(decoder), downloadCallback = Some(callback)))
+//        val decoder = new AssetBodyDecoder(cache)
+//        val resp = client.loadAsset(Request[Unit](baseUri = Some(uri), requiresAuthentication = false, decoder = Some(decoder), downloadCallback = Some(callback)))
+        val request = http.Request.withoutBody(new URL(uri.toString))
+        val resp = client.loadAsset(request, callback = callback)
         if (uri == UserService.UnsplashUrl)
           resp.flatMap {
             case Right(entry) => CancellableFuture.successful(Right(entry))
@@ -155,8 +165,11 @@ class AssetLoaderImpl(context:         Context,
 
       case WithProxy(proxy) =>
         verbose(s"Downloading asset from proxy: ${asset.id}: $proxy")
-        val decoder = new AssetBodyDecoder(cache)
-        client.loadAsset(Request.Get(proxy, decoder = Some(decoder), downloadCallback = Some(callback)))
+//        val decoder = new AssetBodyDecoder(cache)
+//        client.loadAsset(Request.Get(proxy, decoder = Some(decoder), downloadCallback = Some(callback)))
+        val request = http.Request.withoutBody(new URL(backend.baseUrl.toString + proxy))
+        client.loadAsset(request, callback = callback)
+
 
       case _ => CancellableFuture.successful(Left(internalError(s"Tried to download asset ${asset.id} without enough information to complete download")))
     }).flatMap {

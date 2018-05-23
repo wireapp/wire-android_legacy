@@ -31,7 +31,7 @@ import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.znet.ZNetClient._
 
 class AssetSyncHandler(cache:   CacheService,
-                       client:  AssetClient,
+                       client:  AssetClient, //TODO assetClient not used
                        assets:  AssetService,
                        otrSync: OtrSyncHandler) {
 

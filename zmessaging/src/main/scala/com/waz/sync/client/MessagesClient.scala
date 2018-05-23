@@ -17,31 +17,80 @@
  */
 package com.waz.sync.client
 
+import java.io.ByteArrayInputStream
+
+import com.google.protobuf.nano.MessageNano
 import com.waz.ZLog._
+import com.waz.api.impl.ErrorResponse
 import com.waz.model._
-import com.waz.sync.client.OtrClient.{ClientMismatchResponse, MessageResponse}
+import com.waz.service.BackendConfig
+import com.waz.sync.client.OtrClient.{ClientMismatch, MessageResponse}
 import com.waz.sync.otr.OtrMessage
 import com.waz.utils._
-import com.waz.znet.Response.{HttpStatus, Status, SuccessHttpStatus}
 import com.waz.znet.ZNetClient._
-import com.waz.znet.{Request, Response, ZNetClient}
+import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http._
+import com.wire.messages.nano.Otr
 
-class MessagesClient(netClient: ZNetClient) {
+trait MessagesClient {
+  def postMessage(
+      conv: RConvId,
+      content: OtrMessage,
+      ignoreMissing: Boolean,
+      receivers: Option[Set[UserId]] = None
+  ): ErrorOrResponse[MessageResponse]
+}
+
+class MessagesClientImpl(implicit
+                         private val backendConfig: BackendConfig,
+                         private val httpClient: HttpClient,
+                         private val authRequestInterceptor: AuthRequestInterceptor) extends MessagesClient {
+
+  import BackendConfig.backendUrl
+  import HttpClient.dsl._
   import MessagesClient._
   import com.waz.threading.Threading.Implicits.Background
 
-  def postMessage(conv: RConvId, content: OtrMessage, ignoreMissing: Boolean, receivers: Option[Set[UserId]] = None): ErrorOrResponse[MessageResponse] = {
-    netClient.withErrorHandling("postOtrMessage", Request.Post(ConvMessagesPath(conv, ignoreMissing, receivers), content)) {
-      case Response(SuccessHttpStatus(), ClientMismatchResponse(mismatch), _) => MessageResponse.Success(mismatch)
-      case Response(HttpStatus(Status.PreconditionFailed, _), ClientMismatchResponse(mismatch), _) => MessageResponse.Failure(mismatch)
-    }
+  private implicit val OtrMessageSerializer: RawBodySerializer[OtrMessage] = RawBodySerializer.create { m =>
+    val msg = new Otr.NewOtrMessage
+    msg.sender = OtrClient.clientId(m.sender)
+    msg.nativePush = m.nativePush
+    msg.recipients = m.recipients.userEntries
+    m.blob foreach { msg.blob = _ }
+
+    val bytes = MessageNano.toByteArray(msg)
+    RawBody(mediaType = Some(MediaType.Protobuf), new ByteArrayInputStream(bytes), dataLength = Some(bytes.length))
+  }
+
+  override def postMessage(
+      conv: RConvId,
+      content: OtrMessage,
+      ignoreMissing: Boolean,
+      receivers: Option[Set[UserId]] = None
+  ): ErrorOrResponse[MessageResponse] = {
+    val request = Request.create(
+      url = backendUrl(convMessagesPath(conv, ignoreMissing, receivers)),
+      body = content
+    )
+
+    Prepare(request)
+      .withResultHttpCodes(ResponseCode.successCodes + ResponseCode.PreconditionFailed)
+      .withResultType[Response[ClientMismatch]]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+      .map(
+        _.map { case Response(code, _, body) =>
+            if (code == ResponseCode.PreconditionFailed) MessageResponse.Failure(body)
+            else MessageResponse.Success(body)
+        }
+      )
   }
 }
 
 object MessagesClient {
   private implicit val tag: LogTag = logTagFor[MessagesClient]
 
-  def ConvMessagesPath(conv: RConvId, ignoreMissing: Boolean, receivers: Option[Set[UserId]] = None) = {
+  def convMessagesPath(conv: RConvId, ignoreMissing: Boolean, receivers: Option[Set[UserId]] = None): String = {
     val base = s"/conversations/$conv/otr/messages"
     if (ignoreMissing) s"$base?ignore_missing=true"
     else receivers.fold2(base, uids => s"$base?report_missing=${uids.iterator.map(_.str).mkString(",")}")

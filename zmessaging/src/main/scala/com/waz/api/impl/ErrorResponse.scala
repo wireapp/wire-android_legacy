@@ -20,11 +20,15 @@ package com.waz.api.impl
 import com.waz.utils.{JsonEncoder, JsonDecoder}
 import com.waz.znet.Response.Status
 import com.waz.znet.{JsonObjectResponse, ResponseContent}
+import com.waz.znet2.http.HttpClient
+import com.waz.znet2.http.HttpClient.CustomErrorConstructor
 import org.json.JSONObject
+import com.waz.ZLog._
+import com.waz.ZLog.ImplicitTag._
 
 import scala.util.Try
 
-case class ErrorResponse(code: Int, message: String, label: String) {
+case class ErrorResponse(code: Int, message: String, label: String) extends Throwable {
   /**
     * Returns true if retrying the request will always fail.
     * Non-fatal errors are temporary and retrying the request with the same parameters could eventually succeed.
@@ -63,6 +67,16 @@ object ErrorResponse {
       o.put("label", v.label)
     }
   }
+
+  //TODO Add proper construction function
+  implicit val errorResponseConstructor: CustomErrorConstructor[ErrorResponse] =
+    new CustomErrorConstructor[ErrorResponse] {
+      override def constructFrom(error: HttpClient.HttpClientError): ErrorResponse = error match {
+        case _ =>
+          verbose(s"Constructing ErrorResponse from http client error. \n$error")
+          ErrorResponse.InternalError
+      }
+    }
 
   def unapply(resp: ResponseContent): Option[(Int, String, String)] = resp match {
     case JsonObjectResponse(js) => Try((js.getInt("code"), js.getString("message"), js.getString("label"))).toOption

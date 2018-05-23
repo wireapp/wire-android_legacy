@@ -58,6 +58,11 @@ object ExponentialBackoff {
     override def delay(retry: Int, minDelay: FiniteDuration = Duration.Zero): FiniteDuration = Duration.Zero
   }
 
+  def constantBackof(duration: FiniteDuration) = new ExponentialBackoff(duration, duration) {
+    override val maxRetries = Int.MaxValue
+    override def delay(retry: Int, minDelay: FiniteDuration = Duration.Zero): FiniteDuration = duration
+  }
+
   lazy val minimalBackoff = new ExponentialBackoff(1.millis, 1.millis)
   
   lazy val standardBackoff = new ExponentialBackoff(250.millis, 5.minutes)

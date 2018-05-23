@@ -136,6 +136,17 @@ package object utils {
     def flatMapFuture[B](f: A => Future[Option[B]]): Future[Option[B]] = fold2(Future.successful(None), f(_))
   }
 
+  object RichOption {
+    def sequence[A](opts: Iterable[Option[A]]): Option[List[A]] = traverse(opts)(identity)
+    def traverse[A,B](opts: Iterable[A])(f: A => Option[B]): Option[List[B]] =
+      opts.foldRight(Option(List.empty[B])) { (value, acc) =>
+        for {
+          a <- acc
+          v <- f(value)
+        } yield v :: a
+      }
+  }
+
   implicit class RichEither[L, R](val sum: Either[L, R]) extends AnyVal {
     def map[S](f: R => S): Either[L, S] = sum.right.map(f)
     def flatMap[M >: L, S](f: R => Either[M, S]): Either[M, S] = sum.right.flatMap(f)

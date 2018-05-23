@@ -17,6 +17,8 @@
  */
 package com.waz.service
 
+import java.net.URL
+
 import android.content.Context
 import com.google.firebase.FirebaseApp
 import com.waz.service.BackendConfig.FirebaseOptions
@@ -51,4 +53,7 @@ object BackendConfig {
   lazy val byName = Seq(StagingBackend, ProdBackend).map(b => b.environment -> b).toMap
 
   def apply(baseUrl: String): BackendConfig = BackendConfig(URI.parse(baseUrl), "", StagingFirebaseOptions, "") // XXX only use for testing!
+
+  def backendUrl(path: String)(implicit config: BackendConfig): URL = new URL(config.baseUrl.toString + path)
+
 }

@@ -17,6 +17,8 @@
  */
 package com.waz.service
 
+import java.util.concurrent.Executors
+
 import android.content.{Context => AContext}
 import com.softwaremill.macwire._
 import com.waz.api.ZmsVersion
@@ -32,15 +34,17 @@ import com.waz.service.downloads._
 import com.waz.service.images.{ImageLoader, ImageLoaderImpl}
 import com.waz.service.push.{GlobalNotificationsService, GlobalNotificationsServiceImpl, GlobalTokenService}
 import com.waz.service.tracking.{TrackingService, TrackingServiceImpl}
-import com.waz.sync.client.{AssetClient, VersionBlacklistClient}
+import com.waz.sync.client.{AssetClient, AssetClientImpl, VersionBlacklistClient, VersionBlacklistClientImpl}
 import com.waz.ui.MemoryImageCache
 import com.waz.ui.MemoryImageCache.{Entry, Key}
 import com.waz.utils.Cache
 import com.waz.utils.wrappers.{Context, GoogleApi, GoogleApiImpl, URI}
 import com.waz.znet.Response.ResponseBodyDecoder
 import com.waz.znet._
+import com.waz.znet2.http.{HttpClient, RequestInterceptor}
+import com.waz.znet2.HttpClientOkHttpImpl
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 trait GlobalModule {
   def context:              AContext
@@ -66,6 +70,8 @@ trait GlobalModule {
   def decoder:              ResponseBodyDecoder
   def loginClient:          LoginClient
   def regClient:            RegistrationClient
+  def httpClient:           HttpClient
+  def httpClientForLongRunning: HttpClient
   def globalAssetClient:    AssetClient
   def globalLoader:         AssetLoader
   def videoTranscoder:      VideoTranscoder
@@ -130,8 +136,13 @@ class GlobalModuleImpl(val context: AContext, val backend: BackendConfig) extend
   lazy val loginClient:         LoginClient                      = wire[LoginClientImpl]
   lazy val regClient:           RegistrationClient               = wire[RegistrationClientImpl]
 
+  implicit lazy val httpClient: HttpClient                       = new HttpClientOkHttpImpl()(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
+  lazy val httpClientForLongRunning: HttpClient         = new HttpClientOkHttpImpl()(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
+
+  implicit lazy val requestInterceptor: RequestInterceptor       = RequestInterceptor.identity
+
   //Not to be used in zms instances
-  lazy val globalAssetClient:   AssetClient                      = AssetClient(globalClient)
+  lazy val globalAssetClient:   AssetClient                      = new AssetClientImpl(cache, backend)(httpClientForLongRunning)
   lazy val globalLoader:        AssetLoader                      = wire[AssetLoaderImpl]
   //end of warning...
 
@@ -154,7 +165,7 @@ class GlobalModuleImpl(val context: AContext, val backend: BackendConfig) extend
 
   lazy val imageLoader:         ImageLoader                      = new ImageLoaderImpl(context, cache, imageCache, bitmapDecoder, permissions, loaderService, globalLoader) { override def tag = "Global" }
 
-  lazy val blacklistClient                                       = new VersionBlacklistClient(globalClient, backend)
+  lazy val blacklistClient                                       = new VersionBlacklistClientImpl(backend)(httpClient)
   lazy val blacklist                                             = new VersionBlacklistService(metadata, prefs, blacklistClient)
 
   lazy val factory                                               = new ZMessagingFactory(this)

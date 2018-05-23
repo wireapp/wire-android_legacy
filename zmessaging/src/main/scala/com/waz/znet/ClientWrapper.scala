@@ -23,6 +23,7 @@ import javax.net.ssl._
 import com.github.ghik.silencer.silent
 import com.google.android.gms.security.ProviderInstaller
 import com.koushikdutta.async._
+import com.koushikdutta.async.http.{WebSocket => AWebSocket}
 import com.koushikdutta.async.future.{FutureCallback, Future => AFuture}
 import com.koushikdutta.async.http._
 import com.koushikdutta.async.http.callback._
@@ -38,7 +39,7 @@ import scala.concurrent.{Future, Promise}
 
 trait ClientWrapper {
   def execute(request: HttpRequest, callback: HttpConnectCallback): CancellableFuture[HttpResponse]
-  def websocket(request: HttpRequest, protocol: String, callback: AsyncHttpClient.WebSocketConnectCallback): CancellableFuture[WebSocket]
+  def websocket(request: HttpRequest, protocol: String, callback: AsyncHttpClient.WebSocketConnectCallback): CancellableFuture[AWebSocket]
   def stop(): Unit
 }
 
@@ -47,7 +48,7 @@ class ClientWrapperImpl(val client: AsyncHttpClient) extends ClientWrapper {
   import Threading.Implicits.Background
 
   override def execute(request: HttpRequest, callback: HttpConnectCallback): CancellableFuture[HttpResponse] = client.execute(request, callback).map(res => HttpResponse(res))
-  override def websocket(request: HttpRequest, protocol: String, callback: AsyncHttpClient.WebSocketConnectCallback): CancellableFuture[WebSocket] = client.websocket(request, protocol, callback)
+  override def websocket(request: HttpRequest, protocol: String, callback: AsyncHttpClient.WebSocketConnectCallback): CancellableFuture[AWebSocket] = client.websocket(request, protocol, callback)
   override def stop(): Unit = client.getServer().stop()
 }
 

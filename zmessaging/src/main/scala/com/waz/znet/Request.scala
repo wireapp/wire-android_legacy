@@ -275,11 +275,13 @@ object ContentEncoder {
   def protobuf(msg: MessageNano) = BinaryRequestContent(MessageNano.toByteArray(msg), "application/x-protobuf")
 }
 
+//TODO Remove this
 trait RetryPolicy {
   val backoff: ExponentialBackoff
   def shouldRetry(status: Response.Status, retry: Int): Boolean
 }
 
+//TODO Remove this
 object RetryPolicy {
   object NeverRetry extends RetryPolicy {
     override val backoff: ExponentialBackoff = new ExponentialBackoff(1.second, 1.second)

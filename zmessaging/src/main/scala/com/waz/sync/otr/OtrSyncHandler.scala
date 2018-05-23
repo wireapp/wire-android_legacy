@@ -36,7 +36,7 @@ import com.waz.service.otr.{OtrClientsService, OtrService}
 import com.waz.service.push.PushService
 import com.waz.service.{ErrorsService, UserService}
 import com.waz.sync.SyncResult
-import com.waz.sync.client.AssetClient.{Retention, UploadResponse}
+import com.waz.sync.client.AssetClient.{Metadata, Retention, UploadResponse}
 import com.waz.sync.client.OtrClient.{ClientMismatch, EncryptedContent, MessageResponse}
 import com.waz.sync.client.{AssetClient, MessagesClient, OtrClient, UsersClient}
 import com.waz.threading.CancellableFuture
@@ -171,12 +171,12 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
     case Some(_) =>
       key match {
         case Some(k) => CancellableFuture.lift(service.encryptAssetData(k, data)) flatMap {
-          case (sha, encrypted, encryptionAlg) => assetClient.uploadAsset(encrypted, Mime.Default, retention = retention).map { //encrypted data => Default mime
+          case (sha, encrypted, encryptionAlg) => assetClient.uploadAsset(Metadata(retention = retention), encrypted, Mime.Default).map { //encrypted data => Default mime
             case Right(UploadResponse(rId, _, token)) => Right(RemoteData(Some(rId), token, key, Some(sha), Some(encryptionAlg)))
             case Left(err) => Left(err)
           }
         }
-        case _ => assetClient.uploadAsset(data, mime, public = true).map {
+        case _ => assetClient.uploadAsset(Metadata(public = true), data, mime).map {
           case Right(UploadResponse(rId, _, _)) => Right(RemoteData(Some(rId)))
           case Left(err) => Left(err)
         }

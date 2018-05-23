@@ -77,6 +77,7 @@ class EventStream[E] extends EventSource[E] with Observable[EventListener[E]] {
   def foreach(op: E => Unit)(implicit context: EventContext): Unit = apply(op)(context)
 
   def map[V](f: E => V): EventStream[V] = new MapEventStream[E, V](this, f)
+  def flatMap[V](f: E => EventStream[V]): EventStream[V] = new FlatMapLatestEventStream[E, V](this, f)
   def mapAsync[V](f: E => Future[V]): EventStream[V] = new FutureEventStream[E, V](this, f)
   def filter(f: E => Boolean): EventStream[E] = new FilterEventStream[E](this, f)
   def collect[V](pf: PartialFunction[E, V]) = new CollectEventStream[E, V](this, pf)
@@ -96,11 +97,36 @@ class EventStream[E] extends EventSource[E] with Observable[EventListener[E]] {
 
 abstract class ProxyEventStream[A, E](sources: EventStream[A]*) extends EventStream[E] with EventListener[A] {
   override protected def onWire() = sources foreach (_.subscribe(this))
-  override protected def onUnwire() = sources foreach (_.unsubscribe(this))
+  override protected[events] def onUnwire() = sources foreach (_.unsubscribe(this))
 }
 
 class MapEventStream[E, V](source: EventStream[E], f: E => V) extends ProxyEventStream[E, V](source) {
   override protected[events] def onEvent(event: E, sourceContext: Option[ExecutionContext]): Unit = dispatch(f(event), sourceContext)
+}
+
+class FlatMapLatestEventStream[E, V](source: EventStream[E], f: E => EventStream[V]) extends EventStream[V] with EventListener[E] {
+  @volatile private var mapped: Option[EventStream[V]] = None
+
+  private val mappedListener = new EventListener[V] {
+    override protected[events] def onEvent(event: V, currentContext: Option[ExecutionContext]): Unit = {
+      dispatch(event, currentContext)
+    }
+  }
+
+  override protected[events] def onEvent(event: E, currentContext: Option[ExecutionContext]): Unit = {
+    mapped.foreach(_.unsubscribe(mappedListener))
+    mapped = Some(returning(f(event))(_.subscribe(mappedListener)))
+  }
+
+  override protected def onWire(): Unit = {
+    source.subscribe(this)
+  }
+
+  override protected def onUnwire(): Unit = {
+    mapped.foreach(_.unsubscribe(mappedListener))
+    mapped = None
+    source.unsubscribe(this)
+  }
 }
 
 class FutureEventStream[E, V](source: EventStream[E], f: E => Future[V]) extends ProxyEventStream[E, V](source) {

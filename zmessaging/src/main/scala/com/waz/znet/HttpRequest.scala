@@ -21,8 +21,8 @@ import com.koushikdutta.async.http._
 import com.waz.utils.wrappers.{AndroidURI, URI}
 import com.waz.znet.ContentEncoder.{EmptyRequestContent, RequestContent}
 
-import scala.concurrent.duration._
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 
 trait HttpRequest {
   def absoluteUri: Option[URI]
