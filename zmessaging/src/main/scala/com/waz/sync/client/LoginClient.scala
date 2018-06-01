@@ -15,9 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.znet
-
-import java.net.URL
+package com.waz.sync.client
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
@@ -30,18 +28,14 @@ import com.waz.model2.transport.responses.TeamsResponse
 import com.waz.service.BackendConfig
 import com.waz.service.ZMessaging.clock
 import com.waz.service.tracking.TrackingService
-import com.waz.sync.client.TeamsClient.teamsPaginatedQuery
-import com.waz.sync.client.UsersClient
-import com.waz.threading.CancellableFuture.CancelException
+import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
+import com.waz.sync.client.LoginClient.LoginResult
+import com.waz.sync.client.TeamsClient.{TeamsPageSize, TeamsPath}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.{ExponentialBackoff, JsonEncoder, _}
-import com.waz.znet.AuthenticationManager._
-import com.waz.znet.LoginClient.LoginResult
-import com.waz.znet.Response.{Headers, Status}
-import com.waz.znet.ZNetClient.ErrorOr
-import com.waz.znet2.http.HttpClient
-import com.waz.znet2.http.HttpClient.dsl._
 import com.waz.znet2.http
+import com.waz.znet2.http.HttpClient.dsl._
+import com.waz.znet2.http._
 import org.json.JSONObject
 import org.threeten.bp
 
@@ -57,19 +51,25 @@ trait LoginClient {
   def getTeams(accessToken: AccessToken, start: Option[TeamId]): ErrorOr[TeamsResponse]
 }
 
-class LoginClientImpl(backend: BackendConfig, tracking: TrackingService)(implicit val client: HttpClient) extends LoginClient {
-  import com.waz.znet.LoginClient._
-  private implicit val dispatcher = new SerialDispatchQueue(name = "LoginClient")
+class LoginClientImpl(tracking: TrackingService)
+                     (implicit
+                      backend: BackendConfig,
+                      client: HttpClient) extends LoginClient {
 
-  private[znet] var lastRequestTime = 0L
-  private[znet] var failedAttempts = 0
+  import BackendConfig.backendUrl
+  import LoginClient._
+
+  private implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(name = "LoginClient")
+
+  private var lastRequestTime = 0L
+  private var failedAttempts = 0
   private var lastResponseCode = http.ResponseCode.Success
-  private var loginFuture: ErrorOr[LoginResult] = CancellableFuture.successful(Left(ErrorResponse.Cancelled))
+  private var loginFuture: ErrorOr[LoginResult] = Future.successful(Left(ErrorResponse.Cancelled))
 
   def requestDelay =
     if (failedAttempts == 0) Duration.Zero
     else {
-      val minDelay = if (lastResponseCode == Status.RateLimiting || lastResponseCode == Status.LoginRateLimiting) 5.seconds else Duration.Zero
+      val minDelay = if (lastResponseCode == ResponseCode.RateLimiting || lastResponseCode == ResponseCode.LoginRateLimiting) 5.seconds else Duration.Zero
       val nextRunTime = lastRequestTime + Throttling.delay(failedAttempts, minDelay).toMillis
       math.max(nextRunTime - System.currentTimeMillis(), 0).millis
     }
@@ -80,7 +80,6 @@ class LoginClientImpl(backend: BackendConfig, tracking: TrackingService)(implici
 
   def throttled(request: => ErrorOr[LoginResult]): ErrorOr[LoginResult] = dispatcher {
     loginFuture = loginFuture.recover {
-      case e: CancelException => Left(ErrorResponse.Cancelled)
       case ex: Throwable =>
         tracking.exception(ex, "Unexpected error when trying to log in.")
         Left(ErrorResponse.internalError("Unexpected error when trying to log in: " + ex.getMessage))
@@ -97,7 +96,7 @@ class LoginClientImpl(backend: BackendConfig, tracking: TrackingService)(implici
           Left(error)
         case resp =>
           failedAttempts = 0
-          lastResponseCode = Status.Success
+          lastResponseCode = ResponseCode.Success
           resp
       }
     }
@@ -121,31 +120,33 @@ class LoginClientImpl(backend: BackendConfig, tracking: TrackingService)(implici
       credentials.addToLoginJson(o)
       o.put("label", label.str)
     }
-    val request = http.Request.create(url = new URL(backend.baseUrl.toString + LoginUriStr), body = params)
-    Prepare(request).withResultType[http.Response[AccessToken]].withErrorType[ErrorResponse].executeSafe
+    Request
+      .Post(url = backendUrl(LoginPath), queryParameters = queryParameters("persist" -> true), body = params)
+      .withResultType[http.Response[AccessToken]]
+      .withErrorType[ErrorResponse]
+      .executeSafe
       .map { _.right.map(resp => LoginResult(resp.body, resp.headers, Some(label))) }
       .future
   }
 
   def accessNow(cookie: Cookie, token: Option[AccessToken]): ErrorOr[LoginResult] = {
-    val headers = token.fold(Request.EmptyHeaders)(_.headers) ++ cookie.headers
-    val request = http.Request.create(
-      url = new URL(backend.baseUrl.toString + AccessPath),
-      method = http.Method.Post,
-      headers = http.Headers(headers),
-      body = ""
-    )
-    Prepare(request).withResultType[http.Response[AccessToken]].withErrorType[ErrorResponse].executeSafe
+    Request.Post(
+        url = backendUrl(AccessPath),
+        headers = Headers(token.map(_.headers).getOrElse(Map.empty) ++ cookie.headers),
+        body = ""
+      )
+      .withResultType[Response[AccessToken]]
+      .withErrorType[ErrorResponse].executeSafe
       .map { _.right.map(resp => LoginResult(resp.body, resp.headers, None)) }
       .future
   }
 
   override def getSelfUserInfo(token: AccessToken): ErrorOr[UserInfo] = {
-    val request = http.Request.withoutBody(
-      url = new URL(backend.baseUrl.toString + UsersClient.SelfPath),
-      headers = http.Headers.create(token.headers)
-    )
-    Prepare(request).withResultType[UserInfo].withErrorType[ErrorResponse].executeSafe.future
+    Request.Get(url = backendUrl(UsersClient.SelfPath), headers = http.Headers(token.headers))
+      .withResultType[UserInfo]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+      .future
   }
 
   override def findSelfTeam(accessToken: AccessToken, start: Option[TeamId] = None): ErrorOr[Option[Team]] =
@@ -160,11 +161,16 @@ class LoginClientImpl(backend: BackendConfig, tracking: TrackingService)(implici
     }
 
   override def getTeams(token: AccessToken, start: Option[TeamId]): ErrorOr[TeamsResponse] = {
-    val request = http.Request.withoutBody(
-      url = new URL(backend.baseUrl.toString + teamsPaginatedQuery(start)),
-      headers = http.Headers.create(token.headers)
-    )
-    Prepare(request).withResultType[TeamsResponse].withErrorType[ErrorResponse].executeSafe.future
+    Request
+      .Get(
+        url = backendUrl(TeamsPath),
+        headers = http.Headers(token.headers),
+        queryParameters = queryParameters("size" -> TeamsPageSize, "start" -> start)
+      )
+      .withResultType[TeamsResponse]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+      .future
   }
 
 }
@@ -186,20 +192,10 @@ object LoginClient {
   val LoginPath = "/login"
   val AccessPath = "/access"
   val ActivateSendPath = "/activate/send"
-  val LoginUriStr = Request.query(LoginPath, ("persist", true))
 
   val Throttling = new ExponentialBackoff(1000.millis, 10.seconds)
 
-  def getCookieFromHeaders(headers: http.Headers): Option[Cookie] = headers.get(SetCookie) flatMap {
-    case header @ CookieHeader(cookie) =>
-      verbose(s"parsed cookie from header: $header, cookie: $cookie")
-      Some(AuthenticationManager.Cookie(cookie))
-    case header =>
-      warn(s"Unexpected content for Set-Cookie header: $header")
-      None
-  }
-
-  def getCookieFromHeaders(headers: Headers): Option[Cookie] = headers(SetCookie) flatMap {
+  def getCookieFromHeaders(headers: Headers): Option[Cookie] = headers.get(SetCookie) flatMap {
     case header @ CookieHeader(cookie) =>
       verbose(s"parsed cookie from header: $header, cookie: $cookie")
       Some(AuthenticationManager.Cookie(cookie))

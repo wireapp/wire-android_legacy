@@ -27,6 +27,7 @@ import okhttp3.mockwebserver.{MockResponse, MockWebServer}
 import okio.{Buffer, Okio}
 import org.json.JSONObject
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable.ArrayBuffer
 
 class HttpClientSpec extends ZSpec {
@@ -70,9 +71,8 @@ class HttpClientSpec extends ZSpec {
     }
   }
 
-
   private def createClient(): HttpClientOkHttpImpl = {
-    new HttpClientOkHttpImpl()(scala.concurrent.ExecutionContext.global)
+    new HttpClientOkHttpImpl(HttpClientOkHttpImpl.createOkHttpClient())
   }
 
   private var mockServer: MockWebServer = _
@@ -100,7 +100,7 @@ class HttpClientSpec extends ZSpec {
       )
 
       val client = createClient()
-      val request = Request.withoutBody(mockServer.url("/test").url())
+      val request = Request.Get(mockServer.url("/test").url())
 
       var response: Response[Array[Byte]] = null
 
@@ -124,7 +124,7 @@ class HttpClientSpec extends ZSpec {
     )
 
     val client = createClient()
-    val request = Request.withoutBody(mockServer.url("/test").url())
+    val request = Request.Get(mockServer.url("/test").url())
 
     val responseObjectFuture = client.result[EmptyBody, Foo](request)
     var responseObject: Foo = null
@@ -147,7 +147,7 @@ class HttpClientSpec extends ZSpec {
     )
 
     val client = createClient()
-    val request = Request.withoutBody(mockServer.url("/test").url())
+    val request = Request.Get(mockServer.url("/test").url())
     implicit val deserializer: RawBodyDeserializer[File] = tempFileBodyDeserializer
 
     val responseObjectFuture = client.result[EmptyBody, File](request)
@@ -172,7 +172,7 @@ class HttpClientSpec extends ZSpec {
     )
 
     val client = createClient()
-    val request = Request.withoutBody(mockServer.url("/test").url())
+    val request = Request.Get(mockServer.url("/test").url())
 
     val responseObjectFuture = client.resultWithDecodedErrorSafe[EmptyBody, FooError, Foo](request)
     var responseObject: Either[FooError, Foo] = null
@@ -195,7 +195,7 @@ class HttpClientSpec extends ZSpec {
     )
 
     val client = createClient()
-    val request = Request.withoutBody(mockServer.url("/test").url())
+    val request = Request.Get(mockServer.url("/test").url())
 
     val responseObjectFuture = client.resultWithDecodedErrorSafe[EmptyBody, FooError, Foo](request)
     var responseObject: Either[FooError, Foo] = null
@@ -213,7 +213,7 @@ class HttpClientSpec extends ZSpec {
     mockServer.enqueue(new MockResponse().setResponseCode(testResponseCode).setBody("we do not care"))
 
     val client = createClient()
-    val request = Request.create(mockServer.url("/test").url(), method = Method.Post, body = testRequestBody)
+    val request = Request.Post(mockServer.url("/test").url(), body = testRequestBody)
 
     val progressAcc = ArrayBuffer.empty[Progress]
     noException shouldBe thrownBy {
@@ -235,7 +235,7 @@ class HttpClientSpec extends ZSpec {
     mockServer.enqueue(new MockResponse().setResponseCode(testResponseCode).setBody(buffer))
 
     val client = createClient()
-    val request = Request.withoutBody(mockServer.url("/test").url())
+    val request = Request.Get(mockServer.url("/test").url())
     implicit val deserializer: RawBodyDeserializer[File] = tempFileBodyDeserializer
 
     val progressAcc = ArrayBuffer.empty[Progress]

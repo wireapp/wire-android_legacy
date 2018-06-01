@@ -17,13 +17,12 @@
  */
 package com.waz.znet2
 
-import java.io.ByteArrayInputStream
 import java.net.URL
 
 import com.waz.utils.events.EventContext
 import com.waz.znet2
 import com.waz.znet2.WebSocketFactory.SocketEvent
-import com.waz.znet2.http.{Body, RawBody, Request}
+import com.waz.znet2.http.{Body, Request}
 import io.fabric8.mockwebserver.DefaultMockServer
 import org.scalatest.{BeforeAndAfterEach, Inside, MustMatchers, WordSpec}
 
@@ -37,8 +36,7 @@ class OkHttpWebSocketSpec extends WordSpec with MustMatchers with Inside with Be
 
   private val testPath = "/test"
   private val defaultWaiting = 100
-  private def testWebSocketRequest(url: String): Request[Body] =
-    Request.create(new URL(url), body = RawBody(None, new ByteArrayInputStream(Array.empty[Byte])))
+  private def testWebSocketRequest(url: String): Request[Body] = Request.Get(new URL(url))
 
   private var mockServer: DefaultMockServer = _
 

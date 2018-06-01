@@ -18,8 +18,8 @@
 package com.waz.znet2
 
 import com.waz.ZLog.{info, warn}
+import com.waz.sync.client.{JsonObjectResponse, ResponseContent, StringResponse, BinaryResponse}
 import com.waz.utils.events.EventStream
-import com.waz.znet.{BinaryResponse, JsonObjectResponse, ResponseContent, StringResponse}
 import com.waz.znet2.WebSocketFactory.SocketEvent
 import com.waz.znet2.http.{Body, Request}
 import okio.ByteString
@@ -44,7 +44,6 @@ trait WebSocketFactory {
 }
 
 object OkHttpWebSocketFactory extends WebSocketFactory {
-  import OkHttpConverters._
   import com.waz.ZLog.ImplicitTag._
   import okhttp3.{
     OkHttpClient,
@@ -54,6 +53,7 @@ object OkHttpWebSocketFactory extends WebSocketFactory {
     Response => OkResponse,
     WebSocket => OkWebSocket
   }
+  import HttpClientOkHttpImpl.convertHttpRequest
 
   private lazy val okHttpClient = new OkHttpClient()
 
@@ -93,7 +93,7 @@ object OkHttpWebSocketFactory extends WebSocketFactory {
           }
 
           override def onFailure(webSocket: OkWebSocket, ex: Throwable, response: okhttp3.Response): Unit = {
-            warn("WebSocket connection has been failed", ex)
+            warn(s"WebSocket connection has been failed: ${ex.getMessage}")
             publish(SocketEvent.Closed(new OkHttpWebSocket(webSocket), Some(ex)))
           }
         })

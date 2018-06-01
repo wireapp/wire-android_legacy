@@ -35,7 +35,7 @@ import com.waz.testutils.TestBackoff
 import com.waz.threading.CancellableFuture.CancelException
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
-import com.waz.znet.Response
+import com.waz.znet2.http.ResponseCode
 
 import scala.collection.mutable
 import scala.concurrent.Promise
@@ -140,7 +140,7 @@ class AssetLoaderServiceSpec extends AndroidFreeSpec {
   feature("Failures") {
     scenario("Unrecoverable failure should abort download") {
       val asset = getWireAsset()
-      (loader.loadAsset _).expects(asset, *, *).anyNumberOfTimes.returning(CancellableFuture.failed(DownloadFailedException(ErrorResponse(Response.Status.Forbidden, "", ""))))
+      (loader.loadAsset _).expects(asset, *, *).anyNumberOfTimes.returning(CancellableFuture.failed(DownloadFailedException(ErrorResponse(ResponseCode.Forbidden, "", ""))))
       assert(!intercept[DownloadFailedException](result(getService.loadRevealAttempts(asset)(loader))).isRecoverable)
     }
   }

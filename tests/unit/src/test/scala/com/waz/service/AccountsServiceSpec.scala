@@ -23,12 +23,12 @@ import com.waz.client.RegistrationClient
 import com.waz.content.{AccountStorage, AccountsStorageOld, GlobalPreferences}
 import com.waz.model._
 import com.waz.specs.AndroidFreeSpec
+import com.waz.sync.client.LoginClient
 import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
 import com.waz.threading.CancellableFuture
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.returning
-import com.waz.znet.AuthenticationManager.{AccessToken, Cookie}
-import com.waz.znet.{LoginClient, Response}
+import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import org.scalatest.Inside
 
 import scala.concurrent.Future

@@ -18,32 +18,39 @@
 package com.waz.api
 
 import java.io.File
+import java.net.URL
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.waz.utils.wrappers.URI
-import com.waz.znet.ContentEncoder.MultipartRequestContent
-import com.waz.znet.Response.SuccessHttpStatus
-import com.waz.znet.{Request, Response}
+import com.waz.znet2.http.MultipartBodyFormData.Part
+import com.waz.znet2.http._
 
-import scala.concurrent.duration._
+import scala.concurrent.Future
 
 object HockeyCrashReporter {
   import Threading.Implicits.Background
+  import com.waz.znet2.http.HttpClient.dsl._
 
-  def uploadCrashReport(hockeyId: String, dump: File, log: File) = {
-    val baseUri = URI.parse("https://rink.hockeyapp.net")
-    val path = s"/api/2/apps/$hockeyId/crashes/upload"
-
-    val request = Request.Post(path, MultipartRequestContent(Seq("attachment0" -> dump, "log" -> log)), baseUri = Some(baseUri), timeout = 1.minute)
-    ZMessaging.currentGlobal.client(request) map {
-      case Response(SuccessHttpStatus(), _, _) => verbose("crash report successfully sent")
-      case resp => error(s"Unexpected response from hockey crash report request: $resp")
-    } map { _ =>
-      dump.delete()
-      log.delete()
-    }
+  def uploadCrashReport(hockeyId: String, dump: File, log: File): Future[Unit] = {
+    implicit val httpClient: HttpClient = ZMessaging.currentGlobal.httpClientForLongRunning
+    Request
+      .Post(
+        url = new URL(s"https://rink.hockeyapp.net/api/2/apps/$hockeyId/crashes/upload"),
+        body = MultipartBodyFormData(Part(dump, name = "attachment0"), Part(log, name = "log"))
+      )
+      .withResultType[Response[Unit]]
+      .execute
+      .map { _ =>
+        verbose("crash report successfully sent")
+        dump.delete()
+        log.delete()
+      }
+      .recover {
+        case err => error(s"Unexpected response from hockey crash report request: $err")
+      }
+      .map(_ => ())
+      .future
   }
 }

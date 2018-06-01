@@ -161,6 +161,7 @@ package object utils {
       case Success(s) => Right(s)
       case Failure(t) => Left(f(t))
     }
+    def toEither: Either[Throwable, A] = toRight(identity)
     def mapFailure(f: Throwable => Throwable): Try[A] = t.recoverWith { case err => Failure(err) }
     def mapFailureIfNot[T: ClassTag](f: Throwable => Throwable): Try[A] = t.recoverWith {
       case err: T => Failure(err)

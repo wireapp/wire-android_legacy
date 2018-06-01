@@ -28,7 +28,7 @@ import com.waz.sync.client.AssetClient
 import com.waz.sync.client.AssetClient.Retention
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.znet.ZNetClient._
+import com.waz.sync.client.ErrorOrResponse
 
 class AssetSyncHandler(cache:   CacheService,
                        client:  AssetClient, //TODO assetClient not used

@@ -17,15 +17,11 @@
  */
 package com.waz.sync.client
 
-import java.net.URL
-
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.{AddressBook, ContactId, UserId}
 import com.waz.service.BackendConfig
 import com.waz.sync.client.AddressBookClient.UserAndContactIds
 import com.waz.utils.JsonDecoder
-import com.waz.znet.{JsonArrayResponse, JsonObjectResponse, ResponseContent}
-import com.waz.znet.ZNetClient.ErrorOrResponse
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.{Headers, HttpClient, RawBodyDeserializer, Request}
 import org.json.JSONObject
@@ -36,10 +32,12 @@ trait AddressBookClient {
   def postAddressBook(book: AddressBook): ErrorOrResponse[Seq[UserAndContactIds]]
 }
 
-class AddressBookClientImpl(private val backendConfig: BackendConfig)
-                           (implicit
-                            private val httpClient: HttpClient,
-                            private val authRequestInterceptor: AuthRequestInterceptor) extends AddressBookClient {
+class AddressBookClientImpl(implicit
+                            backendConfig: BackendConfig,
+                            httpClient: HttpClient,
+                            authRequestInterceptor: AuthRequestInterceptor) extends AddressBookClient {
+
+  import BackendConfig.backendUrl
   import HttpClient.dsl._
   import com.waz.sync.client.AddressBookClient._
 
@@ -47,13 +45,7 @@ class AddressBookClientImpl(private val backendConfig: BackendConfig)
     RawBodyDeserializer[JSONObject].map(json => UsersListResponse.unapplySeq(JsonObjectResponse(json)).get)
 
   override def postAddressBook(book: AddressBook): ErrorOrResponse[Seq[UserAndContactIds]] = {
-    val request = Request.create(
-      url = new URL(backendConfig.baseUrl.toString + AddressBookPath),
-      headers = Headers.create("Content-Encoding" -> "gzip"),
-      body = book
-    )
-
-    Prepare(request)
+    Request.Post(url = backendUrl(AddressBookPath), headers = Headers("Content-Encoding" -> "gzip"), body = book)
       .withResultType[Seq[UserAndContactIds]]
       .withErrorType[ErrorResponse]
       .executeSafe

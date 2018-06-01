@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.znet
+package com.waz.sync.client
 
 import com.waz.api.EmailCredentials
 import com.waz.api.impl.ErrorResponse
@@ -23,18 +23,19 @@ import com.waz.content.AccountStorage
 import com.waz.model.AccountData.{Label, Password}
 import com.waz.model._
 import com.waz.specs.AndroidFreeSpec
+import com.waz.sync.client
+import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
+import com.waz.sync.client.LoginClient.LoginResult
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.{RichInstant, Serialized, returning}
-import com.waz.znet.AuthenticationManager.{AccessToken, Cookie}
-import com.waz.znet.LoginClient.LoginResult
-import com.waz.znet.Response.Status
+import com.waz.znet2.http.ResponseCode
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class AuthenticationManagerSpec extends AndroidFreeSpec {
 
-  val loginClient = mock[LoginClient]
+  val loginClient = mock[client.LoginClient]
   val accStorage  = mock[AccountStorage]
 
   feature("Successful logins") {
@@ -43,12 +44,12 @@ class AuthenticationManagerSpec extends AndroidFreeSpec {
       val account = AccountData(
         account1Id,
         cookie      = Cookie("cookie"),
-        accessToken = Some(AccessToken("token", "token", clock.instant() + AuthenticationManager.ExpireThreshold + 1.second)))
+        accessToken = Some(AccessToken("token", "token", clock.instant() + client.AuthenticationManager.ExpireThreshold + 1.second)))
 
       (accStorage.get _).expects(account1Id).anyNumberOfTimes().returning(Future.successful(Some(account)))
       val manager = getManager
 
-      result(manager.currentToken()) shouldEqual Right(AccessToken("token", "token", clock.instant() + AuthenticationManager.ExpireThreshold + 1.second))
+      result(manager.currentToken()) shouldEqual Right(AccessToken("token", "token", clock.instant() + client.AuthenticationManager.ExpireThreshold + 1.second))
     }
 
     scenario("Request new token if old token is invalid") {
@@ -149,11 +150,11 @@ class AuthenticationManagerSpec extends AndroidFreeSpec {
 
       (accStorage.remove _).expects(account1Id).returning(Future.successful({}))
 
-      (loginClient.access _).expects(account.cookie, account.accessToken).returning(Future.successful(Left(ErrorResponse(Status.Forbidden, "", ""))))
+      (loginClient.access _).expects(account.cookie, account.accessToken).returning(Future.successful(Left(ErrorResponse(ResponseCode.Forbidden, "", ""))))
 
       val manager = getManager
 
-      result(manager.currentToken()) shouldEqual Left(ErrorResponse(Status.Forbidden, "", ""))
+      result(manager.currentToken()) shouldEqual Left(ErrorResponse(ResponseCode.Forbidden, "", ""))
     }
 
     scenario("Account logout should cancel authentication attempts") {
@@ -194,7 +195,7 @@ class AuthenticationManagerSpec extends AndroidFreeSpec {
         }
       }
 
-      (loginClient.access _).expects(account.cookie, None).once().returning(Future.successful(Left(ErrorResponse(Status.Forbidden, "", ""))))
+      (loginClient.access _).expects(account.cookie, None).once().returning(Future.successful(Left(ErrorResponse(ResponseCode.Forbidden, "", ""))))
       (loginClient.login _).expects(emailCredentials).once().returning(Future.successful(Right(LoginResult(newToken, Some(newCookie), Some(Label("label"))))))
       val manager = getManager
 
@@ -238,5 +239,5 @@ class AuthenticationManagerSpec extends AndroidFreeSpec {
     }
   }
 
-  def getManager = new AuthenticationManager(account1Id, accStorage, loginClient, tracking)
+  def getManager = new client.AuthenticationManager(account1Id, accStorage, loginClient, tracking)
 }

@@ -23,8 +23,6 @@ import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetMetaData.Image.Tag.{Medium, Preview}
 import com.waz.model.AssetStatus.UploadDone
 import com.waz.utils.{JsonDecoder, JsonEncoder}
-import com.waz.znet.ContentEncoder
-import com.waz.znet.ContentEncoder.JsonContentEncoder
 import org.json
 import org.json.{JSONArray, JSONObject}
 
@@ -157,11 +155,11 @@ object UserInfo {
     }
   }
 
-  implicit lazy val ContentEncoder: ContentEncoder[UserInfo] = JsonContentEncoder.map { (info: UserInfo) =>
-    JsonEncoder { o =>
-      info.name.foreach(o.put("name", _))
-      info.accentId.foreach(o.put("accent_id", _))
-      info.picture.foreach(ps => o.put("assets", encodeAsset(ps)))
-    }
-  }
+//  implicit lazy val ContentEncoder: ContentEncoder[UserInfo] = JsonContentEncoder.map { (info: UserInfo) =>
+//    JsonEncoder { o =>
+//      info.name.foreach(o.put("name", _))
+//      info.accentId.foreach(o.put("accent_id", _))
+//      info.picture.foreach(ps => o.put("assets", encodeAsset(ps)))
+//    }
+//  }
 }

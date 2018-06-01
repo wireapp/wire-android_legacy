@@ -27,7 +27,6 @@ import com.waz.service.BackendConfig
 import com.waz.sync.client.OtrClient.{ClientMismatch, MessageResponse}
 import com.waz.sync.otr.OtrMessage
 import com.waz.utils._
-import com.waz.znet.ZNetClient._
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http._
 import com.wire.messages.nano.Otr
@@ -51,39 +50,20 @@ class MessagesClientImpl(implicit
   import MessagesClient._
   import com.waz.threading.Threading.Implicits.Background
 
-  private implicit val OtrMessageSerializer: RawBodySerializer[OtrMessage] = RawBodySerializer.create { m =>
-    val msg = new Otr.NewOtrMessage
-    msg.sender = OtrClient.clientId(m.sender)
-    msg.nativePush = m.nativePush
-    msg.recipients = m.recipients.userEntries
-    m.blob foreach { msg.blob = _ }
-
-    val bytes = MessageNano.toByteArray(msg)
-    RawBody(mediaType = Some(MediaType.Protobuf), new ByteArrayInputStream(bytes), dataLength = Some(bytes.length))
-  }
-
   override def postMessage(
       conv: RConvId,
       content: OtrMessage,
       ignoreMissing: Boolean,
       receivers: Option[Set[UserId]] = None
   ): ErrorOrResponse[MessageResponse] = {
-    val request = Request.create(
-      url = backendUrl(convMessagesPath(conv, ignoreMissing, receivers)),
-      body = content
-    )
-
-    Prepare(request)
-      .withResultHttpCodes(ResponseCode.successCodes + ResponseCode.PreconditionFailed)
+    Request.Post(url = backendUrl(convMessagesPath(conv, ignoreMissing, receivers)), body = content)
+      .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.PreconditionFailed)
       .withResultType[Response[ClientMismatch]]
       .withErrorType[ErrorResponse]
-      .executeSafe
-      .map(
-        _.map { case Response(code, _, body) =>
-            if (code == ResponseCode.PreconditionFailed) MessageResponse.Failure(body)
-            else MessageResponse.Success(body)
-        }
-      )
+      .executeSafe { case Response(code, _, body) =>
+        if (code == ResponseCode.PreconditionFailed) MessageResponse.Failure(body)
+        else MessageResponse.Success(body)
+      }
   }
 }
 
@@ -95,4 +75,16 @@ object MessagesClient {
     if (ignoreMissing) s"$base?ignore_missing=true"
     else receivers.fold2(base, uids => s"$base?report_missing=${uids.iterator.map(_.str).mkString(",")}")
   }
+
+  implicit val OtrMessageSerializer: RawBodySerializer[OtrMessage] = RawBodySerializer.create { m =>
+    val msg = new Otr.NewOtrMessage
+    msg.sender = OtrClient.clientId(m.sender)
+    msg.nativePush = m.nativePush
+    msg.recipients = m.recipients.userEntries
+    m.blob foreach { msg.blob = _ }
+
+    val bytes = MessageNano.toByteArray(msg)
+    RawBody(mediaType = Some(MediaType.Protobuf), new ByteArrayInputStream(bytes), dataLength = Some(bytes.length))
+  }
+
 }

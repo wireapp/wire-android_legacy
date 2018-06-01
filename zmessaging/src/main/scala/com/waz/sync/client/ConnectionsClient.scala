@@ -17,8 +17,6 @@
  */
 package com.waz.sync.client
 
-import java.net.URL
-
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
@@ -29,11 +27,9 @@ import com.waz.sync.client.ConnectionsClient.PageSize
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.JsonDecoder._
 import com.waz.utils.{Json, _}
-import com.waz.znet.ZNetClient._
-import com.waz.znet.{JsonObjectResponse, ResponseContent}
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.HttpClient.HttpClientError
-import com.waz.znet2.http.{HttpClient, Method, RawBodyDeserializer, Request}
+import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
 import org.json.JSONObject
 
 import scala.util.Try
@@ -46,14 +42,15 @@ trait ConnectionsClient {
   def updateConnection(user: UserId, status: ConnectionStatus): ErrorOrResponse[Option[UserConnectionEvent]]
 }
 
-class ConnectionsClientImpl(private val backendConfig: BackendConfig)
-                           (implicit
-                            private val httpClient: HttpClient,
-                            private val authRequestInterceptor: AuthRequestInterceptor) extends ConnectionsClient {
+class ConnectionsClientImpl(implicit
+                            backendConfig: BackendConfig,
+                            httpClient: HttpClient,
+                            authRequestInterceptor: AuthRequestInterceptor) extends ConnectionsClient {
 
+  import BackendConfig.backendUrl
   import HttpClient.dsl._
-  import com.waz.sync.client.ConnectionsClient._
   import Threading.Implicits.Background
+  import com.waz.sync.client.ConnectionsClient._
 
   private implicit val UserConnectionEventDeserializer: RawBodyDeserializer[UserConnectionEvent] =
     RawBodyDeserializer[JSONObject].map(json => ConnectionResponseExtractor.unapply(JsonObjectResponse(json)).get)
@@ -62,12 +59,11 @@ class ConnectionsClientImpl(private val backendConfig: BackendConfig)
     RawBodyDeserializer[JSONObject].map(json => ConnectionsResponseExtractor.unapply(JsonObjectResponse(json)).get)
 
   override def loadConnections(start: Option[UserId] = None, pageSize: Int = PageSize): ErrorOrResponse[Seq[UserConnectionEvent]] = {
-    val request = Request.withoutBody(
-      url = new URL(backendConfig.baseUrl.toString + ConnectionsPath),
-      queryParameters = ("size" -> pageSize.toString) :: start.fold2(List.empty, s => List("start" -> s.str))
-    )
-
-    Prepare(request)
+    Request
+      .Get(
+        url = backendUrl(ConnectionsPath),
+        queryParameters = ("size" -> pageSize.toString) :: start.fold2(List.empty, s => List("start" -> s.str))
+      )
       .withResultType[(Seq[UserConnectionEvent], Boolean)]
       .withErrorType[ErrorResponse]
       .execute
@@ -82,8 +78,7 @@ class ConnectionsClientImpl(private val backendConfig: BackendConfig)
   }
 
   override def loadConnection(id: UserId): ErrorOrResponse[UserConnectionEvent] = {
-    val request = Request.withoutBody(url = new URL(backendConfig.baseUrl.toString + s"$ConnectionsPath/$id"))
-    Prepare(request)
+    Request.Get(url = backendUrl(s"$ConnectionsPath/$id"))
       .withResultType[UserConnectionEvent]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -91,8 +86,7 @@ class ConnectionsClientImpl(private val backendConfig: BackendConfig)
 
   override def createConnection(user: UserId, name: String, message: String): ErrorOrResponse[UserConnectionEvent] = {
     val jsonData = Json("user" -> user.toString, "name" -> name, "message" -> message)
-    val request = Request.create(url = new URL(backendConfig.baseUrl.toString + ConnectionsPath), body = jsonData)
-    Prepare(request)
+    Request.Post(url = backendUrl(ConnectionsPath), body = jsonData)
       .withResultType[UserConnectionEvent]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -100,13 +94,7 @@ class ConnectionsClientImpl(private val backendConfig: BackendConfig)
 
   override def updateConnection(user: UserId, status: ConnectionStatus): ErrorOrResponse[Option[UserConnectionEvent]] = {
     val jsonData = Json("status" -> status.code)
-    val request = Request.create(
-      url = new URL(backendConfig.baseUrl.toString + ConnectionsPath),
-      method = Method.Put,
-      body = jsonData
-    )
-
-    Prepare(request)
+    Request.Put(url = backendUrl(ConnectionsPath), body = jsonData)
       .withResultType[Option[UserConnectionEvent]]
       .withErrorType[ErrorResponse]
       .executeSafe

@@ -24,11 +24,10 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.model.{Uid, UserId}
 import com.waz.service.push.WSPushServiceImpl.RequestCreator
 import com.waz.specs.ZMockSpec
-import com.waz.sync.client.PushNotificationEncoded
+import com.waz.sync.client.AuthenticationManager.AccessToken
+import com.waz.sync.client.{AccessTokenProvider, JsonObjectResponse, PushNotificationEncoded}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.{Backoff, ExponentialBackoff}
-import com.waz.znet.AuthenticationManager.AccessToken
-import com.waz.znet.{AccessTokenProvider, JsonObjectResponse}
 import com.waz.znet2.WebSocketFactory.SocketEvent
 import com.waz.znet2._
 import com.waz.znet2.http.EmptyBodyImpl
@@ -49,7 +48,7 @@ class WSPushServiceSpec extends ZMockSpec {
 
   private val accessTokenSuccess = Future.successful(Right(AccessToken("token", "type")))
   private val accessTokenError = Future.successful(Left(ErrorResponse.InternalError))
-  private val httpRequest = http.Request.create[http.Body](new URL("http://www.test.com"), body = EmptyBodyImpl)
+  private val httpRequest = http.Request.Post[http.Body](new URL("http://www.test.com"), body = EmptyBodyImpl)
 
   private val fakeWebSocketEvents: SourceStream[SocketEvent] = EventStream()
 

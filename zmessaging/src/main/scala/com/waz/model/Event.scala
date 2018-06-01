@@ -32,8 +32,6 @@ import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.sync.client.OtrClient
 import com.waz.utils.JsonDecoder._
 import com.waz.utils.{JsonDecoder, JsonEncoder, _}
-import com.waz.znet.ContentEncoder
-import com.waz.znet.ContentEncoder.JsonContentEncoder
 import org.json.{JSONException, JSONObject}
 import org.threeten.bp.Instant
 
@@ -176,8 +174,6 @@ object ConversationState {
     }
   }
 
-  implicit val StateContentEncoder: ContentEncoder[ConversationState] =
-    JsonContentEncoder map { (state: ConversationState) => JsonEncoder { encode(state, _) } }
 }
 
 object Event {

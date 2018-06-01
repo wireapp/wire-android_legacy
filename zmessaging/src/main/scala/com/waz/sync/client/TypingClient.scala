@@ -21,7 +21,6 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.model.RConvId
 import com.waz.service.BackendConfig
 import com.waz.utils.JsonEncoder
-import com.waz.znet.ZNetClient.ErrorOrResponse
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.{HttpClient, Request}
 
@@ -30,9 +29,9 @@ trait TypingClient {
 }
 
 class TypingClientImpl(implicit
-                       private val backendConfig: BackendConfig,
-                       private val httpClient: HttpClient,
-                       private val authRequestInterceptor: AuthRequestInterceptor) extends TypingClient {
+                       backendConfig: BackendConfig,
+                       httpClient: HttpClient,
+                       authRequestInterceptor: AuthRequestInterceptor) extends TypingClient {
 
   import BackendConfig.backendUrl
   import HttpClient.dsl._
@@ -40,9 +39,7 @@ class TypingClientImpl(implicit
 
   def updateTypingState(id: RConvId, isTyping: Boolean): ErrorOrResponse[Unit] = {
     val payload = JsonEncoder { _.put("status", if (isTyping) "started" else "stopped") }
-    val request = Request.create(url = backendUrl(typingPath(id)), body = payload)
-
-    Prepare(request)
+    Request.Post(url = backendUrl(typingPath(id)), body = payload)
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe

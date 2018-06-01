@@ -21,11 +21,9 @@ import java.net.URL
 
 import com.waz.api.impl.ErrorResponse
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
-import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.utils.wrappers.URI
-import com.waz.znet.ZNetClient.ErrorOrResponse
-import com.waz.znet._
-import com.waz.znet2.http.{HttpClient, RawBodyDeserializer}
+import com.waz.utils.{JsonDecoder, JsonEncoder}
+import com.waz.znet2.http.{Headers, HttpClient, RawBodyDeserializer, Request}
 import org.json.JSONObject
 
 import scala.util.matching.Regex
@@ -34,7 +32,7 @@ trait OpenGraphClient {
   def loadMetadata(uri: URI): ErrorOrResponse[Option[OpenGraphData]]
 }
 
-class OpenGraphClientImpl(implicit private val httpClient: HttpClient) extends OpenGraphClient {
+class OpenGraphClientImpl(implicit httpClient: HttpClient) extends OpenGraphClient {
   import OpenGraphClient._
   import com.waz.znet2.http
   import com.waz.znet2.http.HttpClient.dsl._
@@ -43,10 +41,7 @@ class OpenGraphClientImpl(implicit private val httpClient: HttpClient) extends O
     RawBodyDeserializer[String].map(bodyStr => OpenGraphDataResponse.unapply(StringResponse(bodyStr)).get)
 
   override def loadMetadata(uri: URI): ErrorOrResponse[Option[OpenGraphData]] = {
-    val headers = Map(AsyncClient.UserAgentHeader -> DesktopUserAgent)  // using empty User-Agent to avoid getting mobile website version
-    val request = http.Request.withoutBody(url = new URL(uri.toString), headers = http.Headers.create(headers))
-
-    Prepare(request)
+    Request.Get(url = new URL(uri.toString), headers = Headers("User-Agent" -> DesktopUserAgent))
       .withResultType[Option[OpenGraphData]]
       .withErrorType[ErrorResponse]
       .executeSafe

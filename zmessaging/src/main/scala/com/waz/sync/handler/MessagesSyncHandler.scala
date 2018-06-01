@@ -43,8 +43,8 @@ import com.waz.sync.{SyncResult, SyncServiceHandle}
 import com.waz.threading.CancellableFuture
 import com.waz.threading.CancellableFuture.CancelException
 import com.waz.utils.{RichFutureEither, _}
-import com.waz.znet.Response.Status
-import com.waz.znet.ZNetClient.{ErrorOr, ErrorOrResponse}
+import com.waz.sync.client.{ErrorOr, ErrorOrResponse}
+import com.waz.znet2.http.ResponseCode
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
@@ -213,7 +213,7 @@ class MessagesSyncHandler(selfUserId: UserId,
       case Right(time) =>
         verbose(s"postOtrMessage($msg) successful $time")
         messageSent(conv.id, msg, time) map { _ => SyncResult.Success }
-      case Left(error@ErrorResponse(Status.Forbidden, _, "unknown-client")) =>
+      case Left(error@ErrorResponse(ResponseCode.Forbidden, _, "unknown-client")) =>
         verbose(s"postOtrMessage($msg), failed: $error")
         clients.onCurrentClientRemoved() map { _ => SyncResult(error) }
       case Left(error@ErrorResponse.Cancelled) =>

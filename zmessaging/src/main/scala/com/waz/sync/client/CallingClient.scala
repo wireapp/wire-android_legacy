@@ -17,34 +17,33 @@
  */
 package com.waz.sync.client
 
-import java.net.URL
-
 import com.waz.api.impl.ErrorResponse
-import com.waz.model._
 import com.waz.service.BackendConfig
-import com.waz.utils.wrappers.URI
+import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.{HttpClient, Request}
 
-trait VersionBlacklistClient {
-  def loadVersionBlacklist(): ErrorOrResponse[VersionBlacklist]
+trait CallingClient {
+  def getConfig: ErrorOrResponse[String]
 }
 
-class VersionBlacklistClientImpl(backendConfig: BackendConfig)
-                                (implicit httpClient: HttpClient) extends VersionBlacklistClient {
+class CallingClientImpl(implicit
+                        backend: BackendConfig,
+                        client: HttpClient,
+                        authRequestInterceptor: AuthRequestInterceptor) extends CallingClient {
 
-  import HttpClient.dsl._
-  import VersionBlacklistClientImpl._
+  import CallingClientImpl._
+  import com.waz.service.BackendConfig.backendUrl
+  import com.waz.znet2.http.HttpClient.dsl._
 
-  def loadVersionBlacklist(): ErrorOrResponse[VersionBlacklist] = {
-    Request.Get(url = blacklistsUrl(backendConfig.environment))
-      .withResultType[VersionBlacklist]
+  override def getConfig: ErrorOrResponse[String] = {
+    Request.Get(url = backendUrl(CallConfigPath))
+      .withResultType[String]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
+
 }
 
-object VersionBlacklistClientImpl {
-  def blacklistsUrl(env: String): URL = new URL(
-    URI.parse(s"https://clientblacklist.wire.com/${Option(env) filterNot (_.isEmpty) getOrElse "prod"}/android").toString
-  )
+object CallingClientImpl {
+  val CallConfigPath = "/calls/config"
 }

@@ -17,14 +17,11 @@
  */
 package com.waz.api.impl
 
-import com.waz.utils.{JsonEncoder, JsonDecoder}
-import com.waz.znet.Response.Status
-import com.waz.znet.{JsonObjectResponse, ResponseContent}
-import com.waz.znet2.http.HttpClient
+import com.waz.sync.client.{JsonObjectResponse, ResponseContent}
+import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.znet2.http.HttpClient.CustomErrorConstructor
+import com.waz.znet2.http.{BodyDeserializer, HttpClient, ResponseCode}
 import org.json.JSONObject
-import com.waz.ZLog._
-import com.waz.ZLog.ImplicitTag._
 
 import scala.util.Try
 
@@ -33,7 +30,7 @@ case class ErrorResponse(code: Int, message: String, label: String) extends Thro
     * Returns true if retrying the request will always fail.
     * Non-fatal errors are temporary and retrying the request with the same parameters could eventually succeed.
     */
-  def isFatal = Status.isFatal(code)
+  def isFatal = ResponseCode.isFatal(code)
 
   // if this error should be reported to hockey
   def shouldReportError = isFatal && code != ErrorResponse.CancelledCode && code != ErrorResponse.UnverifiedCode
@@ -72,9 +69,17 @@ object ErrorResponse {
   implicit val errorResponseConstructor: CustomErrorConstructor[ErrorResponse] =
     new CustomErrorConstructor[ErrorResponse] {
       override def constructFrom(error: HttpClient.HttpClientError): ErrorResponse = error match {
-        case _ =>
-          verbose(s"Constructing ErrorResponse from http client error. \n$error")
-          ErrorResponse.InternalError
+        case HttpClient.EncodingError(err) =>
+          ErrorResponse.InternalError.copy(message = s"Encoding error: $err")
+        case HttpClient.DecodingError(err, response) =>
+          val bodyStr = BodyDeserializer[String].deserialize(response.body)
+          ErrorResponse.InternalError.copy(message = s"Decoding body error: $err \nBody string: $bodyStr")
+        case HttpClient.ConnectionError(err) =>
+          ErrorResponse(ErrorResponse.ConnectionErrorCode, message = s"connection error: $err", label = "")
+        case HttpClient.ErrorResponse(response) =>
+          ErrorResponse(response.code, message = "error response", label = "")
+        case HttpClient.UnknownError(err) =>
+          ErrorResponse.InternalError.copy(message = s"Unknown error: $err")
       }
     }
 

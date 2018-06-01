@@ -24,8 +24,6 @@ import com.waz.model.AccountDataOld.PermissionsMasks
 import com.waz.model._
 import com.waz.service.BackendConfig
 import com.waz.utils.JsonDecoder
-import com.waz.znet.ZNetClient.ErrorOrResponse
-import com.waz.znet.{JsonObjectResponse, ResponseContent}
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
 import org.json.JSONObject
@@ -40,9 +38,10 @@ trait TeamsClient {
 }
 
 class TeamsClientImpl(implicit
-                      private val backendConfig: BackendConfig,
-                      private val httpClient: HttpClient,
-                      private val authRequestInterceptor: AuthRequestInterceptor) extends TeamsClient {
+                      backendConfig: BackendConfig,
+                      httpClient: HttpClient,
+                      authRequestInterceptor: AuthRequestInterceptor) extends TeamsClient {
+
   import BackendConfig.backendUrl
   import HttpClient.dsl._
   import TeamsClient._
@@ -59,24 +58,21 @@ class TeamsClientImpl(implicit
     RawBodyDeserializer[(UserId, PermissionsMasks)].map(_._2)
 
   override def getTeamMembers(id: TeamId): ErrorOrResponse[Map[UserId, PermissionsMasks]] = {
-    val request = Request.withoutBody(url = backendUrl(teamMembersPath(id)))
-    Prepare(request)
+    Request.Get(url = backendUrl(teamMembersPath(id)))
       .withResultType[Map[UserId, PermissionsMasks]]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def getTeamData(id: TeamId): ErrorOrResponse[TeamData] = {
-    val request = Request.withoutBody(url = backendUrl(teamPath(id)))
-    Prepare(request)
+    Request.Get(url = backendUrl(teamPath(id)))
       .withResultType[TeamData]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def getPermissions(teamId: TeamId, userId: UserId): ErrorOrResponse[PermissionsMasks] = {
-    val request = Request.withoutBody(url = backendUrl(memberPath(teamId, userId)))
-    Prepare(request)
+    Request.Get(url = backendUrl(memberPath(teamId, userId)))
       .withResultType[PermissionsMasks]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -90,12 +86,6 @@ object TeamsClient {
   val TeamsPageSize = 100
 
   def teamMembersPath(id: TeamId) = s"$TeamsPath/${id.str}/members"
-
-  def teamsPaginatedQuery(start: Option[TeamId]): String =
-    com.waz.znet.Request.query(TeamsPath, ("size", TeamsPageSize) :: start.toList.map("start" -> _.str) : _*)
-
-  def teamsBatchQuery(ids: Set[TeamId]): String =
-    com.waz.znet.Request.query(TeamsPath, ("ids", ids.mkString(",")))
 
   def teamPath(id: TeamId): String = s"$TeamsPath/${id.str}"
 

@@ -41,7 +41,7 @@ import com.waz.sync.client.OtrClient.{ClientMismatch, EncryptedContent, MessageR
 import com.waz.sync.client.{AssetClient, MessagesClient, OtrClient, UsersClient}
 import com.waz.threading.CancellableFuture
 import com.waz.utils.crypto.AESUtils
-import com.waz.znet.ZNetClient.ErrorOrResponse
+import com.waz.sync.client.ErrorOrResponse
 
 import scala.concurrent.Future
 import scala.concurrent.Future.successful

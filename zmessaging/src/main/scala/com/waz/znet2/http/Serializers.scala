@@ -60,9 +60,15 @@ object BodySerializer {
     override def serialize(body: T): Body = f(body)
   }
 
-  implicit val MultipartBodySerializer: BodySerializer[MultipartBody] = create { multipartBody =>
-    RawMultipartBody(multipartBody.mediaType, multipartBody.parts.map(p => RawBodyPart(p.serialize, p.headers)))
-  }
+  implicit val MultipartMixedBodySerializer: BodySerializer[MultipartBodyMixed] =
+    create { body =>
+      RawMultipartBodyMixed(body.parts.map(p => RawMultipartBodyMixed.Part(p.serialize, p.headers)))
+    }
+
+  implicit val MultipartFormDataBodySerializer: BodySerializer[MultipartBodyFormData] =
+    create { body =>
+      RawMultipartBodyFormData(body.parts.map(p => RawMultipartBodyFormData.Part(p.serialize, p.name, p.fileName)))
+    }
 
   implicit def bodySerializerFromRawBodySerializer[T](implicit rbs: RawBodySerializer[T]): BodySerializer[T] =
     create(rbs.serialize)

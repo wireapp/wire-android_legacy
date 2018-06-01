@@ -21,20 +21,20 @@ import java.net.URL
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.waz.ZLog._
-import com.waz.api.ErrorResponse
+import com.waz.api.impl.ErrorResponse
 import com.waz.model.UserId
 import com.waz.model.otr.ClientId
 import com.waz.service.ZMessaging.accountTag
 import com.waz.service.push.WSPushServiceImpl.RequestCreator
 import com.waz.service.{AccountContext, BackendConfig}
-import com.waz.sync.client.PushNotificationEncoded
+import com.waz.sync.client.{AccessTokenProvider, PushNotificationEncoded}
 import com.waz.sync.client.PushNotificationsClient.NotificationsResponseEncoded
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.events._
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{Backoff, ExponentialBackoff}
-import com.waz.znet.AuthenticationManager.AccessToken
-import com.waz.znet.{AccessTokenProvider, AsyncClient}
+import com.waz.sync.client.AuthenticationManager.AccessToken
+import com.waz.sync.client
 import com.waz.znet2.WebSocketFactory.SocketEvent
 import com.waz.znet2.{WebSocket, WebSocketFactory, http}
 
@@ -63,13 +63,12 @@ object WSPushServiceImpl {
       val uri = URI.parse(backend.websocketUrl).buildUpon.appendQueryParameter("client", clientId.str).build
       val headers = token.headers ++ Map(
         "Accept-Encoding" -> "identity", // XXX: this is a hack for Backend In The Box problem: 'Accept-Encoding: gzip' header causes 500
-        AsyncClient.UserAgentHeader -> AsyncClient.userAgent()
+        "User-Agent" -> client.userAgent()
       )
 
-      http.Request.withoutBody(
-        method = http.Method.Get,
+      http.Request.Get(
         url = new URL(uri.toString),
-        headers = http.Headers.create(headers)
+        headers = http.Headers(headers)
       ).asInstanceOf[http.Request[http.Body]]
     }
 
@@ -157,9 +156,11 @@ class WSPushServiceImpl(userId:              UserId,
         socket.close(WebSocket.CloseCodes.NormalClosure)
       case Right(SocketEvent.Closed(_, Some(error))) =>
         info(s"WebSocket closed with error: $error")
+        connected ! false
         restartWebSocketProcess(initialDelay = backoff.delay(retryCount.incrementAndGet()))
       case Right(SocketEvent.Closed(_, _)) =>
         info(s"WebSocket closed")
+        connected ! false
         restartWebSocketProcess(initialDelay = backoff.delay(retryCount.incrementAndGet()))
       case Right(SocketEvent.Message(_, NotificationsResponseEncoded(notifs @ _*))) =>
         info("Push notifications received")

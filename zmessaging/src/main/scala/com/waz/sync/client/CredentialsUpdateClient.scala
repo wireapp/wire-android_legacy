@@ -24,7 +24,6 @@ import com.waz.model.{EmailAddress, Handle, PhoneNumber}
 import com.waz.service.BackendConfig
 import com.waz.threading.Threading
 import com.waz.utils.{JsonDecoder, JsonEncoder}
-import com.waz.znet.ZNetClient.ErrorOrResponse
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http._
 import org.json.JSONObject
@@ -50,103 +49,69 @@ trait CredentialsUpdateClient {
 }
 
 class CredentialsUpdateClientImpl(implicit
-                                  private val backendConfig: BackendConfig,
-                                  private val httpClient: HttpClient,
-                                  private val authRequestInterceptor: AuthRequestInterceptor)
+                                  backendConfig: BackendConfig,
+                                  httpClient: HttpClient,
+                                  authRequestInterceptor: AuthRequestInterceptor)
   extends CredentialsUpdateClient {
 
   import BackendConfig.backendUrl
   import CredentialsUpdateClientImpl._
   import HttpClient.dsl._
   import Threading.Implicits.Background
+
   private implicit val logTag: LogTag = logTagFor[CredentialsUpdateClientImpl]
 
   override def updateEmail(email: EmailAddress): ErrorOrResponse[Unit] = {
-    val request = Request.create(
-      url = backendUrl(EmailPath),
-      method = Method.Put,
-      body = JsonEncoder { _.put("email", email.str) }
-    )
-
-    Prepare(request)
+    Request.Put(url = backendUrl(EmailPath), body = JsonEncoder { _.put("email", email.str) })
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def clearEmail(): ErrorOrResponse[Unit] = {
-    val request = Request.withoutBody(
-      url = backendUrl(EmailPath),
-      method = Method.Delete
-    )
-
-    Prepare(request)
+    Request.Delete(url = backendUrl(EmailPath))
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def updatePhone(phone: PhoneNumber): ErrorOrResponse[Unit] = {
-    val request = Request.create(
-      url = backendUrl(PhonePath),
-      method = Method.Put,
-      body = JsonEncoder { _.put("phone", phone.str) }
-    )
-
-    Prepare(request)
+    Request.Put(url = backendUrl(PhonePath), body = JsonEncoder { _.put("phone", phone.str) })
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def clearPhone(): ErrorOrResponse[Unit] = {
-    val request = Request.withoutBody(
-      url = backendUrl(PhonePath),
-      method = Method.Delete
-    )
-
-    Prepare(request)
+    Request.Delete(url = backendUrl(PhonePath))
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def updatePassword(newPassword: Password, currentPassword: Option[Password]): ErrorOrResponse[Unit] = {
-    val request = Request.create(
-      url = backendUrl(PasswordPath),
-      method = Method.Put,
-      body = JsonEncoder { o =>
-        o.put("new_password", newPassword.str)
-        currentPassword.map(_.str).foreach(o.put("old_password", _))
-      }
-    )
-
-    Prepare(request)
+    Request
+      .Put(
+        url = backendUrl(PasswordPath),
+        body = JsonEncoder { o =>
+          o.put("new_password", newPassword.str)
+          currentPassword.map(_.str).foreach(o.put("old_password", _))
+        }
+      )
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def updateHandle(handle: Handle): ErrorOrResponse[Unit] = {
-    val request = Request.create(
-      url = backendUrl(HandlePath),
-      method = Method.Put,
-      body = JsonEncoder { _.put("handle", handle.toString) }
-    )
-
-    Prepare(request)
+    Request.Put(url = backendUrl(HandlePath), body = JsonEncoder { _.put("handle", handle.toString) })
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def hasPassword(): ErrorOrResponse[Boolean] = {
-    val request = Request.withoutBody(
-      url = backendUrl(PasswordPath),
-      method = Method.Head
-    )
-
-    Prepare(request)
+    Request.Head(url = backendUrl(PasswordPath))
       .withResultType[Response[Unit]]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -158,8 +123,7 @@ class CredentialsUpdateClientImpl(implicit
   }
 
   override def hasMarketingConsent: Future[Boolean] = {
-    val request = Request.withoutBody(url = backendUrl(ConsentPath))
-    Prepare(request)
+    Request.Get(url = backendUrl(ConsentPath))
       .withResultType[JSONObject]
       .execute
       .map { json =>
@@ -178,8 +142,7 @@ class CredentialsUpdateClientImpl(implicit
       o.put("value", if (receiving) 1 else 0)
       o.put("source", s"Android $majorVersion.$minorVersion")
     }
-    val request = Request.create(url = backendUrl(ConsentPath), method = Method.Put, body = body)
-    Prepare(request)
+    Request.Put(url = backendUrl(ConsentPath), body = body)
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe

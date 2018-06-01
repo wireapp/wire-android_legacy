@@ -23,10 +23,8 @@ import com.waz.model.otr.ClientId
 import com.waz.service.BackendConfig
 import com.waz.sync.client.PushTokenClient.PushTokenRegistration
 import com.waz.utils.{JsonDecoder, JsonEncoder}
-import com.waz.znet.ContentEncoder
-import com.waz.znet.ZNetClient.ErrorOrResponse
 import com.waz.znet2.AuthRequestInterceptor
-import com.waz.znet2.http.{HttpClient, Method, Request}
+import com.waz.znet2.http.{HttpClient, Request}
 import org.json.JSONObject
 
 trait PushTokenClient {
@@ -35,25 +33,23 @@ trait PushTokenClient {
 }
 
 class PushTokenClientImpl(implicit
-                          private val backendConfig: BackendConfig,
-                          private val httpClient: HttpClient,
-                          private val authRequestInterceptor: AuthRequestInterceptor) extends PushTokenClient {
+                          backendConfig: BackendConfig,
+                          httpClient: HttpClient,
+                          authRequestInterceptor: AuthRequestInterceptor) extends PushTokenClient {
 
   import BackendConfig.backendUrl
   import HttpClient.dsl._
   import PushTokenClient._
 
   override def postPushToken(token: PushTokenRegistration): ErrorOrResponse[PushTokenRegistration] = {
-    val request = Request.create(url = backendUrl(PushesPath), body = token)
-    Prepare(request)
+    Request.Post(url = backendUrl(PushesPath), body = token)
       .withResultType[PushTokenRegistration]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def deletePushToken(token: String): ErrorOrResponse[Unit] = {
-    val request = Request.withoutBody(url = backendUrl(s"$PushesPath/$token"), method = Method.Delete)
-    Prepare(request)
+    Request.Delete(url = backendUrl(s"$PushesPath/$token"))
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -82,7 +78,7 @@ object PushTokenClient {
       }
     }
 
-    implicit val TokenContentEncoder: ContentEncoder[PushTokenRegistration] =
-      ContentEncoder.json[PushTokenRegistration]
+//    implicit val TokenContentEncoder: ContentEncoder[PushTokenRegistration] =
+//      ContentEncoder.json[PushTokenRegistration]
   }
 }

@@ -32,7 +32,7 @@ import com.waz.model.otr.ClientId
 import com.waz.model.{AccountId, UserId}
 import com.waz.utils.wrappers.DB
 import com.waz.utils.{JsonDecoder, JsonEncoder, Resource}
-import com.waz.znet.AuthenticationManager.AccessToken
+import com.waz.sync.client.AuthenticationManager.AccessToken
 
 class ZGlobalDB(context: Context, dbNameSuffix: String = "")
   extends DaoDB(context.getApplicationContext, DbName + dbNameSuffix, null, DbVersion, daos, Migrations.migrations(context)) {

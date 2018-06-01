@@ -118,9 +118,7 @@ lazy val zmessaging = project
       Deps.supportV4 % Provided,
       "org.scala-lang.modules" %% "scala-async" % "0.9.7",
       "com.evernote" % "android-job" % "1.2.0",
-      "com.koushikdutta.async" % "androidasync" % "2.2.1",
       "com.squareup.okhttp3" % "okhttp" % "3.9.0",
-      "com.squareup.okhttp3" % "logging-interceptor" % "3.9.0",
       "com.googlecode.libphonenumber" % "libphonenumber" % "7.1.1", // 7.2.x breaks protobuf
       "com.softwaremill.macwire" %% "macros" % "2.2.2" % Provided,
       "com.google.android.gms" % "play-services-base" % "11.0.0" % Provided exclude("com.android.support", "support-v4"),

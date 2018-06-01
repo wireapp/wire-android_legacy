@@ -41,34 +41,20 @@ trait GiphyClient {
 }
 
 class GiphyClientImpl(implicit
-                      private val backendConfig: BackendConfig,
-                      private val httpClient: HttpClient,
-                      private val authRequestInterceptor: AuthRequestInterceptor) extends GiphyClient {
+                      backendConfig: BackendConfig,
+                      httpClient: HttpClient,
+                      authRequestInterceptor: AuthRequestInterceptor) extends GiphyClient {
+
   import BackendConfig.backendUrl
   import GiphyClient._
   import HttpClient.dsl._
   import com.waz.threading.Threading.Implicits.Background
 
-  private implicit val giphyDeserializer: RawBodyDeserializer[(Option[AssetData], AssetData)] =
-    RawBodyDeserializer[JSONObject].map(json => RandomGiphyResponse.unapply(JsonObjectResponse(json)).get)
-
   private implicit val giphySeqDeserializer: RawBodyDeserializer[Seq[(Option[AssetData], AssetData)]] =
-    RawBodyDeserializer[JSONObject].map(json => SearchGiphyResponse.unapply(JsonObjectResponse(json)).get)
-
-  override def loadRandom(): CancellableFuture[(Option[AssetData], AssetData)] = {
-    val request = Request.withoutBody(url = backendUrl(RandomGifPath))
-    Prepare(request)
-      .withResultType[(Option[AssetData], AssetData)]
-      .execute
-      .recover { case err =>
-        warn(s"unexpected response for load random: $err")
-        (None, AssetData.Empty)
-      }
-  }
+    RawBodyDeserializer[JSONObject].map(json => GiphyResponse.unapply(JsonObjectResponse(json)).get)
 
   override def loadTrending(offset: Int = 0, limit: Int = 25): CancellableFuture[Seq[(Option[AssetData], AssetData)]] = {
-    val request = Request.withoutBody(url = backendUrl(trendingPath(offset, limit)))
-    Prepare(request)
+    Request.Get(url = backendUrl(trendingPath(offset, limit)))
       .withResultType[Seq[(Option[AssetData], AssetData)]]
       .execute
       .recover { case err =>
@@ -78,8 +64,7 @@ class GiphyClientImpl(implicit
   }
 
   override def search(keyword: String, offset: Int = 0, limit: Int = 25): CancellableFuture[Seq[(Option[AssetData], AssetData)]] = {
-    val request = Request.withoutBody(url = backendUrl(searchPath(keyword, offset, limit)))
-    Prepare(request)
+    Request.Get(url = backendUrl(searchPath(keyword, offset, limit)))
       .withResultType[Seq[(Option[AssetData], AssetData)]]
       .execute
       .recover { case err =>

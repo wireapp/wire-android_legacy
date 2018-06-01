@@ -17,10 +17,10 @@
  */
 package com.waz.znet2.http
 
-import java.io.{File, FileOutputStream}
+import java.io.{ File, FileOutputStream }
 
-import com.waz.utils.{IoUtils, JsonDecoder, returning}
-import org.json.{JSONArray, JSONObject}
+import com.waz.utils.{ returning, IoUtils, JsonDecoder }
+import org.json.{ JSONArray, JSONObject }
 
 trait ResponseDeserializer[T] {
   def deserialize(response: Response[Body]): T
@@ -66,15 +66,17 @@ object BodyDeserializer {
   }
 
   implicit def bodyDeserializerFrom[T](implicit d: RawBodyDeserializer[T]): BodyDeserializer[T] = create {
-    case body: RawBody       => d.deserialize(body)
-    case _: EmptyBody        => throw new IllegalArgumentException("Body is empty")
-    case _: RawMultipartBody => throw new IllegalArgumentException("Can not decode multipart body")
+    case body: RawBody => d.deserialize(body)
+    case _: EmptyBody  => throw new IllegalArgumentException("Body is empty")
+    case obj =>
+      throw new IllegalArgumentException(s"Can not decode ${obj.getClass.getSimpleName}")
   }
 
   implicit def optionBodyDeserializerFrom[T](implicit d: RawBodyDeserializer[T]): BodyDeserializer[Option[T]] = create {
-    case body: RawBody       => Some(d.deserialize(body))
-    case _: EmptyBody        => None
-    case _: RawMultipartBody => throw new IllegalArgumentException("Can not decode multipart body")
+    case body: RawBody => Some(d.deserialize(body))
+    case _: EmptyBody  => None
+    case obj =>
+      throw new IllegalArgumentException(s"Can not decode ${obj.getClass.getSimpleName}")
   }
 
 }

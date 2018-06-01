@@ -21,7 +21,6 @@ import java.util.concurrent.Executors
 
 import android.content.{Context => AContext}
 import com.softwaremill.macwire._
-import com.waz.api.ZmsVersion
 import com.waz.bitmap.BitmapDecoder
 import com.waz.bitmap.video.VideoTranscoder
 import com.waz.cache.CacheService
@@ -34,17 +33,16 @@ import com.waz.service.downloads._
 import com.waz.service.images.{ImageLoader, ImageLoaderImpl}
 import com.waz.service.push.{GlobalNotificationsService, GlobalNotificationsServiceImpl, GlobalTokenService}
 import com.waz.service.tracking.{TrackingService, TrackingServiceImpl}
-import com.waz.sync.client.{AssetClient, AssetClientImpl, VersionBlacklistClient, VersionBlacklistClientImpl}
+import com.waz.sync.client._
+import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache
 import com.waz.ui.MemoryImageCache.{Entry, Key}
 import com.waz.utils.Cache
-import com.waz.utils.wrappers.{Context, GoogleApi, GoogleApiImpl, URI}
-import com.waz.znet.Response.ResponseBodyDecoder
-import com.waz.znet._
-import com.waz.znet2.http.{HttpClient, RequestInterceptor}
+import com.waz.utils.wrappers.{Context, GoogleApi, GoogleApiImpl}
 import com.waz.znet2.HttpClientOkHttpImpl
+import com.waz.znet2.http.{HttpClient, RequestInterceptor}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 trait GlobalModule {
   def context:              AContext
@@ -67,7 +65,6 @@ trait GlobalModule {
   def permissions:          PermissionsService
   def avs:                  Avs
   def reporting:            GlobalReportingService
-  def decoder:              ResponseBodyDecoder
   def loginClient:          LoginClient
   def regClient:            RegistrationClient
   def httpClient:           HttpClient
@@ -83,9 +80,6 @@ trait GlobalModule {
   def teamsStorage:         TeamsStorage
   def recordingAndPlayback: GlobalRecordAndPlayService
   def tempFiles:            TempFileService
-  def clientWrapper:        Future[ClientWrapper]
-  def client:               AsyncClientImpl
-  def globalClient:         ZNetClient
   def imageLoader:          ImageLoader
   def blacklistClient:      VersionBlacklistClient
   def blacklist:            VersionBlacklistService
@@ -132,18 +126,17 @@ class GlobalModuleImpl(val context: AContext, val backend: BackendConfig) extend
 
   lazy val reporting                                             = wire[GlobalReportingService]
 
-  lazy val decoder                                               = Response.CacheResponseBodyDecoder(cache)
-  lazy val loginClient:         LoginClient                      = wire[LoginClientImpl]
-  lazy val regClient:           RegistrationClient               = wire[RegistrationClientImpl]
+  lazy val loginClient:         LoginClient                      = new LoginClientImpl(trackingService)(backend, httpClient)
+  lazy val regClient:           RegistrationClient               = new RegistrationClientImpl()(backend, httpClient)
 
-  implicit lazy val httpClient: HttpClient                       = new HttpClientOkHttpImpl()(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
-  lazy val httpClientForLongRunning: HttpClient         = new HttpClientOkHttpImpl()(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
+  implicit lazy val httpClient: HttpClient                       = HttpClientOkHttpImpl(Threading.BlockingIO)
+  lazy val httpClientForLongRunning: HttpClient                  = HttpClientOkHttpImpl(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
 
   implicit lazy val requestInterceptor: RequestInterceptor       = RequestInterceptor.identity
 
   //Not to be used in zms instances
-  lazy val globalAssetClient:   AssetClient                      = new AssetClientImpl(cache, backend)(httpClientForLongRunning)
-  lazy val globalLoader:        AssetLoader                      = wire[AssetLoaderImpl]
+  lazy val globalAssetClient:   AssetClient                      = new AssetClientImpl(cache)(backend, httpClientForLongRunning)
+  lazy val globalLoader:        AssetLoader                      = new AssetLoaderImpl(context, network, globalAssetClient, audioTranscoder, videoTranscoder, cache, imageCache, bitmapDecoder, trackingService)(backend, requestInterceptor)
   //end of warning...
 
   lazy val tempFiles:           TempFileService                  = wire[TempFileService]
@@ -158,10 +151,10 @@ class GlobalModuleImpl(val context: AContext, val backend: BackendConfig) extend
   lazy val teamsStorage:        TeamsStorage                     = wire[TeamsStorageImpl]
   lazy val recordingAndPlayback                                  = wire[GlobalRecordAndPlayService]
 
-  lazy val clientWrapper:       Future[ClientWrapper]            = ClientWrapper()
-  lazy val client:              AsyncClientImpl                  = new AsyncClientImpl(decoder, AsyncClient.userAgent(metadata.appVersion.toString, ZmsVersion.ZMS_VERSION), clientWrapper)
-  
-  lazy val globalClient:        ZNetClient                       = new ZNetClientImpl(None, client, URI.parse(""))
+//  lazy val clientWrapper:       Future[ClientWrapper]            = ClientWrapper()
+//  lazy val client:              AsyncClientImpl                  = new AsyncClientImpl(decoder, AsyncClient.userAgent(metadata.appVersion.toString, ZmsVersion.ZMS_VERSION), clientWrapper)
+//
+//  lazy val globalClient:        ZNetClient                       = new ZNetClientImpl(None, client, URI.parse(""))
 
   lazy val imageLoader:         ImageLoader                      = new ImageLoaderImpl(context, cache, imageCache, bitmapDecoder, permissions, loaderService, globalLoader) { override def tag = "Global" }
 
@@ -196,7 +189,6 @@ class EmptyGlobalModule extends GlobalModule {
   override def permissions:           PermissionsService                                  = ???
   override def avs:                   Avs                                                 = ???
   override def reporting:             GlobalReportingService                              = ???
-  override def decoder:               Response.ResponseBodyDecoder                        = ???
   override def loginClient:           LoginClient                                         = ???
   override def regClient:             RegistrationClient                                  = ???
   override def globalAssetClient:     AssetClient                                         = ???
@@ -210,9 +202,6 @@ class EmptyGlobalModule extends GlobalModule {
   override def teamsStorage:          TeamsStorage                                        = ???
   override def recordingAndPlayback:  GlobalRecordAndPlayService                          = ???
   override def tempFiles:             TempFileService                                     = ???
-  override def clientWrapper:         Future[ClientWrapper]                               = ???
-  override def client:                AsyncClientImpl                                     = ???
-  override def globalClient:          ZNetClient                                          = ???
   override def imageLoader:           ImageLoader                                         = ???
   override def blacklistClient:       VersionBlacklistClient                              = ???
   override def blacklist:             VersionBlacklistService                             = ???
@@ -220,5 +209,7 @@ class EmptyGlobalModule extends GlobalModule {
   override def lifecycle:             UiLifeCycle                                         = ???
   override def flowmanager:           FlowManagerService                                  = ???
   override def mediaManager:          MediaManagerService                                 = ???
+  override def httpClient: HttpClient = ???
+  override def httpClientForLongRunning: HttpClient = ???
 }
 

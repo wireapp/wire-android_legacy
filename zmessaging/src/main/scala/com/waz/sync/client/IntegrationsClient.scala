@@ -26,10 +26,8 @@ import com.waz.model._
 import com.waz.service.BackendConfig
 import com.waz.sync.client.ConversationsClient.ConversationsPath
 import com.waz.utils.{Json, JsonDecoder}
-import com.waz.znet.ZNetClient.ErrorOrResponse
-import com.waz.znet.{JsonObjectResponse, ResponseContent}
 import com.waz.znet2.AuthRequestInterceptor
-import com.waz.znet2.http.{HttpClient, Method, RawBodyDeserializer, Request}
+import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
 import org.json.JSONObject
 
 import scala.util.Try
@@ -44,9 +42,9 @@ trait IntegrationsClient {
 }
 
 class IntegrationsClientImpl(implicit
-                             private val backendConfig: BackendConfig,
-                             private val httpClient: HttpClient,
-                             private val authRequestInterceptor: AuthRequestInterceptor) extends IntegrationsClient {
+                             backendConfig: BackendConfig,
+                             httpClient: HttpClient,
+                             authRequestInterceptor: AuthRequestInterceptor) extends IntegrationsClient {
 
   import BackendConfig.backendUrl
   import HttpClient.dsl._
@@ -59,24 +57,21 @@ class IntegrationsClientImpl(implicit
     RawBodyDeserializer[JSONObject].map(json => AddRemoveBotResponse.unapply(JsonObjectResponse(json)).get)
 
   def searchIntegrations(startWith: String): ErrorOrResponse[Map[IntegrationData, Option[AssetData]]] = {
-    val request = Request.withoutBody(url = backendUrl(integrationsSearchPath(startWith)))
-    Prepare(request)
+    Request.Get(url = backendUrl(IntegrationsSearchPath), queryParameters = queryParameters("tags" -> DefaultTag, "start" -> startWith))
       .withResultType[Map[IntegrationData, Option[AssetData]]]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   def getIntegration(pId: ProviderId, iId: IntegrationId): ErrorOrResponse[(IntegrationData, Option[AssetData])] = {
-    val request = Request.withoutBody(url = backendUrl(integrationPath(pId, iId)))
-    Prepare(request)
+    Request.Get(url = backendUrl(integrationPath(pId, iId)))
       .withResultType[(IntegrationData, Option[AssetData])]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   def getProvider(pId: ProviderId): ErrorOrResponse[ProviderData] = {
-    val request = Request.withoutBody(url = backendUrl(providerPath(pId)))
-    Prepare(request)
+    Request.Get(url = backendUrl(providerPath(pId)))
       .withResultType[ProviderData]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -84,12 +79,11 @@ class IntegrationsClientImpl(implicit
 
   def addBot(rConvId: RConvId, pId: ProviderId, iId: IntegrationId): ErrorOrResponse[ConversationEvent] = {
     debug(s"addBot: rConvId: $rConvId, providerId: $pId, integrationId: $iId")
-    val request = Request.create(
-      url = backendUrl(s"$ConversationsPath/${rConvId.str}/bots"),
-      body = Json("provider" -> pId.str, "service" -> iId.str)
-    )
-
-    Prepare(request)
+    Request
+      .Post(
+        url = backendUrl(s"$ConversationsPath/${rConvId.str}/bots"),
+        body = Json("provider" -> pId.str, "service" -> iId.str)
+      )
       .withResultType[ConversationEvent]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -97,12 +91,7 @@ class IntegrationsClientImpl(implicit
 
   def removeBot(rConvId: RConvId, botId: UserId): ErrorOrResponse[ConversationEvent] = {
     debug(s"removeBot: convId: $rConvId, botId: $botId")
-    val request = Request.withoutBody(
-      url = backendUrl(s"$ConversationsPath/${rConvId.str}/bots/$botId"),
-      method = Method.Delete
-    )
-
-    Prepare(request)
+    Request.Delete(url = backendUrl(s"$ConversationsPath/${rConvId.str}/bots/$botId"))
       .withResultType[ConversationEvent]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -117,9 +106,6 @@ object IntegrationsClient {
   val DefaultTag = "integration"
   val ProvidersPath = "/providers"
   val IntegrationConvPath = "/conversations"
-
-  def integrationsSearchPath(startWith: String): String =
-    com.waz.znet.Request.query(IntegrationsSearchPath, "tags" -> DefaultTag, "start" -> startWith)
 
   def integrationPath(providerId: ProviderId, integrationId: IntegrationId): String =
     s"$ProvidersPath/$providerId/services/$integrationId"

@@ -15,23 +15,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.znet
+package com.waz.sync.client
 
-import com.koushikdutta.async.http.AsyncHttpRequest
 import com.waz.ZLog._
 import com.waz.api.EmailCredentials
 import com.waz.api.impl.ErrorResponse
+import com.waz.api.impl.ErrorResponse.Cancelled
 import com.waz.content.AccountStorage
 import com.waz.model.{AccountData, UserId}
 import com.waz.service.ZMessaging.{accountTag, clock}
 import com.waz.service.tracking.TrackingService
+import com.waz.sync.client.AuthenticationManager.AccessToken
+import com.waz.sync.client.LoginClient.LoginResult
 import com.waz.threading.SerialDispatchQueue
 import com.waz.utils.JsonEncoder.encodeInstant
 import com.waz.utils.{JsonDecoder, JsonEncoder, _}
-import com.waz.znet.AuthenticationManager.AccessToken
-import com.waz.znet.LoginClient.LoginResult
-import com.waz.znet.Response._
-import com.waz.znet.ZNetClient.ErrorOr
+import com.waz.znet2.http.ResponseCode
 import org.json.JSONObject
 import org.threeten.bp.Instant
 
@@ -53,7 +52,7 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
 
   lazy implicit val logTag: LogTag = accountTag[AuthenticationManager](id)
 
-  import com.waz.znet.AuthenticationManager._
+  import AuthenticationManager._
 
   implicit val dispatcher = new SerialDispatchQueue(name = "AuthenticationManager")
 
@@ -94,7 +93,7 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
       case token => cookie.flatMap { cookie =>
         debug(s"Non existent or potentially expired token: $token, will attempt to refresh with cookie: $cookie")
         dispatchRequest(client.access(cookie, token)) {
-          case Left(resp@ErrorResponse(Status.Forbidden | Status.Unauthorized, message, label)) =>
+          case Left(resp @ ErrorResponse(ResponseCode.Forbidden | ResponseCode.Unauthorized, message, label)) =>
             verbose(s"access request failed (label: $label, message: $message), will try login request. currToken: $token, cookie: $cookie, access resp: $resp")
             tracking.exception(new RuntimeException(s"Access request failed: msg: $message, label: $label, cookie expired at: ${cookie.expiry} (is valid: ${cookie.isValid}), currToken expired at: ${token.map(_.expiresAt)} (is valid: ${token.exists(_.isValid)})"), null)
             wipeCredentials().map(_ => Left(resp))
@@ -113,12 +112,12 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
       cookie.flatMap { cookie =>
         debug(s"Attempting access request to see if cookie is still valid: $cookie")
         dispatchRequest(client.access(cookie, None)) {
-          case Left(resp @ ErrorResponse(Status.Forbidden | Status.Unauthorized, _, _)) =>
+          case Left(resp @ ErrorResponse(ResponseCode.Forbidden | ResponseCode.Unauthorized, _, _)) =>
             emailCredentials match {
               case Some(credentials) =>
                 client.login(credentials).flatMap {
                   case Right(LoginResult(token, c, _)) => updateCredentials(Some(token), c).map(_ => Right(token))
-                  case Left(resp @ ErrorResponse(Status.Forbidden | Status.Unauthorized, _, _)) => wipeCredentials().map(_ => Left(resp)) //credentials didn't match - log user out
+                  case Left(resp @ ErrorResponse(ResponseCode.Forbidden | ResponseCode.Unauthorized, _, _)) => wipeCredentials().map(_ => Left(resp)) //credentials didn't match - log user out
                   case Left(err) => Future.successful(Left(err))
                 }
               case None =>
@@ -135,7 +134,7 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
         debug(s"receivedAccessToken: '$token'")
         updateCredentials(Some(token), cookie).map(_ => Right(token))
 
-      case Left(err @ ErrorResponse(Cancelled.status, msg, label)) =>
+      case Left(err @ ErrorResponse(Cancelled.code, msg, label)) =>
         debug(s"request has been cancelled")
         Future.successful(Left(err))
 
@@ -173,8 +172,6 @@ object AuthenticationManager {
 
   case class AccessToken(accessToken: String, tokenType: String, expiresAt: Instant = Instant.EPOCH) {
     val headers = Map(AccessToken.AuthorizationHeader -> s"$tokenType $accessToken")
-    def prepare(req: AsyncHttpRequest) = req.addHeader(AccessToken.AuthorizationHeader, s"$tokenType $accessToken")
-
     def isValid = expiresAt isAfter clock.instant()
 
     override def toString = s"${accessToken.take(10)}, exp: $expiresAt, isValid: $isValid"

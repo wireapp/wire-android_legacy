@@ -17,8 +17,8 @@
  */
 package com.waz.znet2
 
+import com.waz.sync.client.AccessTokenProvider
 import com.waz.threading.CancellableFuture
-import com.waz.znet.AccessTokenProvider
 import com.waz.znet2.http.{Body, Headers, Request, RequestInterceptor}
 
 class AuthRequestInterceptor(tokenProvider: AccessTokenProvider) extends RequestInterceptor {
@@ -26,7 +26,7 @@ class AuthRequestInterceptor(tokenProvider: AccessTokenProvider) extends Request
   override def intercept(request: Request[Body]): CancellableFuture[Request[Body]] = {
     CancellableFuture.lift(tokenProvider.currentToken()).map {
       case Right(token) =>
-        request.copy(headers = Headers.create(request.headers.headers ++ token.headers))
+        request.copy(headers = Headers(request.headers.headers ++ token.headers))
       case Left(err) =>
         throw new IllegalArgumentException(err.toString)
     }
