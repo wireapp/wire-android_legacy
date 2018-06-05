@@ -204,6 +204,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     verbose(s"toggleVideo")
     updateCall { case (call, cs) =>
       import VideoState._
+      if (call.videoSendState == Stopped) callingZms.head.flatMap(_.mediamanager.setSpeaker(true))
       cs.setVideoSendState(call.convId, if (call.videoSendState != Started) Started else Stopped)
     }
   }
