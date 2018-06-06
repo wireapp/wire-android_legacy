@@ -358,10 +358,11 @@ class CallingService(val accountId:       UserId,
    */
   def endCall(convId: ConvId): Future[Unit] = {
     withConv(convId) { (w, conv) =>
-      val state = currentCall.currentValue.flatMap(_.flatMap(_.state))
-      verbose(s"endCall: $convId. Active call in state: $state")
-      //avs reject and end call will always trigger the onClosedCall callback - there we handle the end of the call
-      if (state.contains(OtherCalling)) avs.rejectCall(w, conv.remoteId) else avs.endCall(w, conv.remoteId)
+      withCallInfo(convId, { call =>
+        verbose(s"endCall: $convId. Active call in state: ${call.state}")
+        //avs reject and end call will always trigger the onClosedCall callback - there we handle the end of the call
+        if (call.state.contains(OtherCalling)) avs.rejectCall(w, conv.remoteId) else avs.endCall(w, conv.remoteId)
+      })("endCall")
     }
     returning(Promise[Unit]())(p => closingPromise = Some(p)).future
   }
@@ -501,6 +502,9 @@ class CallingService(val accountId:       UserId,
       })
     }
   }
+
+  private def withCallInfo(convId: ConvId, f: CallInfo => Unit)(caller: String): Future[Unit] =
+    callProfile.head.map(_.availableCalls.get(convId).foreach(f))
 }
 
 object CallingService {
