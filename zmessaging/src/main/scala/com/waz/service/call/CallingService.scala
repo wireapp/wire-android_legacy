@@ -413,6 +413,7 @@ class CallingService(val accountId:       UserId,
     withConv(convId) { (w, conv) =>
       verbose(s"setVideoSendActive: $convId, $state")
       updateCallInfo(convId, { c =>
+        if (state == VideoState.Started) mediaManagerService.setSpeaker(true)
         avs.setVideoSendState(w, conv.remoteId, state)
         c.updateVideoState(accountId, state)
       })("setVideoSendState")
