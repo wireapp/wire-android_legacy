@@ -357,7 +357,7 @@ class CallingService(val accountId:       UserId,
    * @return Future as this function is called from background service
    */
   def endCall(convId: ConvId): Future[Unit] = {
-    withConv(convId) { (w, conv) =>
+    withConvAsync(convId) { (w, conv) =>
       withCallInfo(convId, { call =>
         verbose(s"endCall: $convId. Active call in state: ${call.state}")
         //avs reject and end call will always trigger the onClosedCall callback - there we handle the end of the call
