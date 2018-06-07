@@ -18,6 +18,8 @@
 package com.waz.service.call
 
 
+import android.Manifest.permission.CAMERA
+
 import com.sun.jna.Pointer
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
@@ -25,6 +27,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.content.{MembersStorage, UserPreferences}
 import com.waz.model.otr.ClientId
 import com.waz.model.{ConvId, RConvId, UserId, _}
+import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.service.call.Avs.AvsClosedReason.{StillOngoing, reasonString}
@@ -79,6 +82,7 @@ class CallingService(val accountId:       UserId,
                      netClient:           ZNetClient,
                      errors:              ErrorsService,
                      userPrefs:           UserPreferences,
+                     permissions:         PermissionsService,
                      tracking:            TrackingService)(implicit accountContext: AccountContext) { self =>
 
   import CallingService._
@@ -137,26 +141,32 @@ class CallingService(val accountId:       UserId,
   def onIncomingCall(convId: RConvId, userId: UserId, videoCall: Boolean, shouldRing: Boolean) = withConvAndIsGroup(convId) { (_, conv, isGroup) =>
     verbose(s"Incoming call from $userId in conv: $convId (should ring: $shouldRing)")
 
-    val newCall = CallInfo(
-      conv.id,
-      accountId,
-      isGroup,
-      userId,
-      Some(OtherCalling),
-      others = Set(userId),
-      startedAsVideoCall = videoCall,
-      //Assume that when a video call starts, sendingVideo will be true. From here on, we can then listen to state handler
-      videoSendState = if (videoCall) VideoState.Started else VideoState.Stopped)
+    permissions.allPermissions(Set(CAMERA)).head.foreach { granted =>
 
-    callProfile.mutate { p =>
-      val newActive = p.activeId match {
-        case None if shouldRing =>
-          Some(newCall.convId)
-        case _ =>
-          verbose(s"Incoming call from $userId while in a call or call shouldn't ring - ignoring")
-          p.activeId
+      val newCall = CallInfo(
+        conv.id,
+        accountId,
+        isGroup,
+        userId,
+        Some(OtherCalling),
+        others = Set(userId),
+        startedAsVideoCall = videoCall,
+        videoSendState = (videoCall, granted) match {
+          case (true, false) => VideoState.NoCameraPermission
+          case (true, true)  => VideoState.Started
+          case _             => VideoState.Stopped
+        })
+
+      callProfile.mutate { p =>
+        val newActive = p.activeId match {
+          case None if shouldRing =>
+            Some(newCall.convId)
+          case _ =>
+            verbose(s"Incoming call from $userId while in a call or call shouldn't ring - ignoring")
+            p.activeId
+        }
+        p.copy(activeId = newActive, availableCalls = p.availableCalls + (newCall.convId -> newCall))
       }
-      p.copy(activeId = newActive, availableCalls = p.availableCalls + (newCall.convId -> newCall))
     }
   }
 

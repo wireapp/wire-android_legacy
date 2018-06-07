@@ -90,7 +90,10 @@ case class CallInfo(convId:             ConvId,
 
   val allVideoReceiveStates = videoReceiveStates + (account -> videoSendState)
 
-  val isVideoCall = allVideoReceiveStates.exists(_._2 != Stopped)
+  val isVideoCall = state match {
+    case Some(OtherCalling) => startedAsVideoCall
+    case _                  => allVideoReceiveStates.exists(_._2 != Stopped)
+  }
 
   val stateCollapseJoin = (state, prevState) match {
     case (Some(OtherCalling),  _)                  => Some(OtherCalling)

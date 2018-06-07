@@ -17,6 +17,8 @@
  */
 package com.waz.service.call
 
+import android.Manifest.permission.CAMERA
+
 import com.sun.jna.Pointer
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NetworkMode
@@ -24,6 +26,7 @@ import com.waz.content.MembersStorage
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.otr.ClientId
 import com.waz.model.{UserId, _}
+import com.waz.permissions.PermissionsService
 import com.waz.service.call.Avs.AvsClosedReason.{AnsweredElsewhere, Normal, StillOngoing}
 import com.waz.service.call.Avs.{VideoState, WCall, WCallConvType, WCallType}
 import com.waz.service.call.CallInfo.CallState._
@@ -55,6 +58,7 @@ class CallingServiceSpec extends AndroidFreeSpec {
   val convs          = mock[ConversationsContentUpdater]
   val convsService   = mock[ConversationsService]
   val messages       = mock[MessagesService]
+  val permissions    = mock[PermissionsService]
 
   val clientId = ClientId("selfClient")
 
@@ -73,6 +77,7 @@ class CallingServiceSpec extends AndroidFreeSpec {
       (convs.convById _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(_1t1Conv)))
       (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(false))
       (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(otherUser)))
+      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
 
       val service = initCallingService()
       val checkpoint1 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(SelfJoining)))
@@ -84,7 +89,6 @@ class CallingServiceSpec extends AndroidFreeSpec {
       }
       service.startCall(_1t1Conv.id)
       result(checkpoint1.head)
-      println("What")
       result(checkpoint2.head)
     }
 
@@ -97,6 +101,7 @@ class CallingServiceSpec extends AndroidFreeSpec {
       (convs.convById _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(groupConv)))
       (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(true))
       (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(groupMember1, groupMember2)))
+      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
 
       val service = initCallingService()
       val checkpoint1 = callCheckpoint(service, _.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state.contains(SelfJoining)))
@@ -182,6 +187,7 @@ class CallingServiceSpec extends AndroidFreeSpec {
       (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(false))
       (avs.startCall _).expects(*, _1t1Conv.remoteId, WCallType.Normal, WCallConvType.OneOnOne, *).once().returning(Future.successful(0))
       (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(otherUser, account1Id)))
+      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
 
       val service = initCallingService()
       val checkpoint1 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(SelfCalling) && cur.caller == account1Id && cur.others == Set(otherUser)))
@@ -206,6 +212,7 @@ class CallingServiceSpec extends AndroidFreeSpec {
       (convs.convById _).expects(_1t1Conv.id).anyNumberOfTimes().returning(Future.successful(Some(_1t1Conv)))
       (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(false))
       (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(otherUser, account1Id)))
+      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
 
       val service = initCallingService()
       val checkpoint1 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(SelfJoining)))
@@ -265,6 +272,7 @@ class CallingServiceSpec extends AndroidFreeSpec {
       (convs.convById _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(groupConv)))
       (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(true))
       (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(groupMember1, groupMember2)))
+      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
 
       val service = initCallingService()
       val estTime = clock.instant() + 10.seconds
@@ -303,6 +311,7 @@ class CallingServiceSpec extends AndroidFreeSpec {
       (convs.convById _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(groupConv)))
       (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(true))
       (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(groupMember1, groupMember2)))
+      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
 
       val service = initCallingService()
       val checkpoint1 = callCheckpoint(service, _.contains(groupConv.id), _.exists(_.state.contains(OtherCalling)))
@@ -323,6 +332,7 @@ class CallingServiceSpec extends AndroidFreeSpec {
       (convs.convById _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(_1t1Conv)))
       (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(false))
       (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(otherUser)))
+      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
 
       val service = initCallingService()
       val checkpoint1 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(OtherCalling)))
@@ -377,6 +387,7 @@ class CallingServiceSpec extends AndroidFreeSpec {
 
       (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(false))
       (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(firstUser)))
+      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
 
       (convs.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { rConvId: RConvId =>
         Future.successful(rConvId match {
@@ -423,7 +434,7 @@ class CallingServiceSpec extends AndroidFreeSpec {
         _ <- service.endCall(firstConv.id)
         _ <- service.startCall(secondConv.id)
       } yield {}
-      
+
       await(checkpoint2.head)
       await(checkpoint3.head)
     }
@@ -441,6 +452,7 @@ class CallingServiceSpec extends AndroidFreeSpec {
       val incomingConv = ConversationData(ConvId(incomingUserId.str), RConvId(incomingUserId.str), Some("Incoming Conv"), account1Id, ConversationType.OneToOne)
       (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(true))
       (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(incomingUserId)))
+      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
 
       (convs.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { rConvId: RConvId =>
         Future.successful(rConvId match {
@@ -511,6 +523,7 @@ class CallingServiceSpec extends AndroidFreeSpec {
       }}
 
       (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(groupMember1, groupMember2)))
+      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
 
       (avs.setVideoSendState _).expects(*, otoConv.remoteId, Avs.VideoState.Stopped).anyNumberOfTimes()
       val service = initCallingService()
@@ -686,7 +699,7 @@ class CallingServiceSpec extends AndroidFreeSpec {
     (avs.registerAccount _).expects(*).once().returning(Future.successful(wCall))
     val service = new CallingService(
       account1Id, clientId, context, avs, convs, convsService, members, null,
-      flows, messages, media, null, network, null, null, prefs, tracking
+      flows, messages, media, null, network, null, null, prefs, permissions, tracking
     )
     result(service.wCall)
     service
