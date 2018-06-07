@@ -31,7 +31,7 @@ import com.waz.service.call.Avs.AvsClosedReason.{StillOngoing, reasonString}
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsClosedReason, VideoState, WCall}
 import com.waz.service.call.CallInfo.CallState._
-import com.waz.service.call.CallingService.{CallProfile, GlobalCallProfile}
+import com.waz.service.call.CallingService.GlobalCallProfile
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService

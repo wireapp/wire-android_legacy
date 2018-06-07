@@ -582,6 +582,7 @@ class CallingServiceSpec extends AndroidFreeSpec {
       (convs.convById _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(_1t1Conv)))
       (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(false))
       (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(otherUser)))
+      (media.setSpeaker _).expects(true).once()
 
       val lastTrackedCall = Signal[CallInfo]()
       (tracking.trackCallState _).expects(*, *, *).anyNumberOfTimes().onCall { (user, call, _) =>
