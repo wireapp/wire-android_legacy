@@ -31,6 +31,7 @@ import com.waz.service.call.Avs.AvsClosedReason.{StillOngoing, reasonString}
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsClosedReason, VideoState, WCall}
 import com.waz.service.call.CallInfo.CallState._
+import com.waz.service.call.CallingService.{CallProfile, GlobalCallProfile}
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
@@ -51,23 +52,15 @@ import scala.util.control.NonFatal
 
 class GlobalCallingService() {
 
+  lazy val globalCallProfile: Signal[GlobalCallProfile] = ZMessaging.currentAccounts.zmsInstances.flatMap(zs => Signal.sequence(zs.map(_.calling.callProfile).toSeq: _*)).map { profiles =>
+    val allCalls = profiles.flatMap(_.availableCalls.map(c => (c._2.account, c._2.convId) -> c._2)).sortBy(_._2.startTime)
+    GlobalCallProfile(allCalls.headOption.map(_._1), allCalls.toMap)
+  }
+
   lazy val services: Signal[Set[(UserId, CallingService)]] = ZMessaging.currentAccounts.zmsInstances.map(_.map(z => z.selfUserId -> z.calling))
 
   //If there is an active call in one or more of the logged in accounts, returns the account id for the one with the oldest call
-  lazy val activeAccount: Signal[Option[UserId]] = services.flatMap { ss =>
-    val signals = ss.toSeq.map { case (id, s) =>
-      s.currentCall.map {
-        case Some(call) => Some((id, call))
-        case _          => None
-      }
-    }
-
-    /**
-      * Sort by call start time (sort returns oldest call to newest call) and then always take the oldest.
-      * This should stop any new (should only be incoming) calls from another account from hi-jacking any currently active call
-      */
-    Signal.sequence(signals: _*).map(_.flatten.sortBy(_._2.startTime).headOption).map(_.map(_._1))
-  }
+  lazy val activeAccount: Signal[Option[UserId]] = globalCallProfile.map(_.activeCall.map(_.account))
 }
 
 class CallingService(val accountId:       UserId,
@@ -95,7 +88,7 @@ class CallingService(val accountId:       UserId,
   //need to ensure that flow manager and media manager are initialised for v3 (they are lazy values)
   private val fm = flowManagerService.flowManager
 
-  private val callProfile = Signal(CallProfile.Empty)
+  val callProfile = Signal(CallProfile.Empty)
 
   private var closingPromise = Option.empty[Promise[Unit]]
 
@@ -523,6 +516,16 @@ object CallingService {
 
   object CallProfile {
     val Empty = CallProfile(None, Map.empty)
+  }
+
+  case class GlobalCallProfile(activeId: Option[(UserId, ConvId)], availableCalls: Map[(UserId, ConvId), CallInfo]) {
+    val activeCall: Option[CallInfo]  = activeId.flatMap(availableCalls.get)
+    val nonActiveCalls: Seq[CallInfo] = activeId.fold(availableCalls)(availableCalls - _).values.toSeq
+
+  }
+
+  object GlobalCallProfile {
+    val Empty = GlobalCallProfile(None, Map.empty)
   }
 
   object CallConfigResponse {
