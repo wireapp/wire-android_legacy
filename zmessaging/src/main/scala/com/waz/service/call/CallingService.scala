@@ -332,6 +332,7 @@ class CallingService(val accountId:       UserId,
               avs.answerCall(w, conv.remoteId, callType, !vbr)
               val active = call.updateCallState(SelfJoining).copy(joinedTime = None, estabTime = None) // reset previous call state if exists
               callProfile.mutate(_.copy(activeId = Some(call.convId), availableCalls = profile.availableCalls + (convId -> active)))
+              setCallMuted(muted = false)
               if (forceOption)
                 setVideoSendState(convId, if (isVideo)  Avs.VideoState.Started else Avs.VideoState.Stopped)
             case None =>
