@@ -308,7 +308,7 @@ class CallingService(val accountId:       UserId,
       vbr <- userPrefs.preference(UserPreferences.VBREnabled).apply()
     } yield {
       val callType =
-        if (isVideo && mems.size > 4) Avs.WCallType.ForcedAudio
+        if (isVideo && mems.size > VideoCallMaxMembers) Avs.WCallType.ForcedAudio
         else if (isVideo) Avs.WCallType.Video
         else Avs.WCallType.Normal
 
@@ -512,6 +512,9 @@ class CallingService(val accountId:       UserId,
 }
 
 object CallingService {
+
+  val VideoCallMaxMembers: Int = 2
+
   val CallConfigPath = "/calls/config"
 
   /**
