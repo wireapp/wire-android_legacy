@@ -37,7 +37,7 @@ case class CallInfo(convId:             ConvId,
                     caller:             UserId,
                     state:              Option[CallState]                 = None,
                     prevState:          Option[CallState]                 = None,
-                    others:             Set[UserId]                       = Set.empty,
+                    others:             Map[UserId, Option[Instant]]      = Map.empty,
                     maxParticipants:    Int                               = 0, //maintains the largest number of users that were ever in the call (for tracking)
                     muted:              Boolean                           = false,
                     isCbrEnabled:       Boolean                           = false,
