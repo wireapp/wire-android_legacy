@@ -21,7 +21,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse._
 import com.waz.cache.CacheService
-import com.waz.model.AssetStatus.UploadInProgress
+import com.waz.model.AssetStatus.{UploadCancelled, UploadInProgress, UploadNotStarted}
 import com.waz.model._
 import com.waz.service.assets.AssetService
 import com.waz.sync.client.AssetClient
@@ -38,20 +38,23 @@ class AssetSyncHandler(cache:   CacheService,
   import Threading.Implicits.Background
 
   def uploadAssetData(assetId: AssetId, public: Boolean = false, retention: Retention): ErrorOrResponse[Option[AssetData]] =
-    CancellableFuture.lift(assets.updateAsset(assetId, _.copy(status = UploadInProgress)).zip(assets.getLocalData(assetId))) flatMap {
+    CancellableFuture.lift(assets.updateAsset(assetId, asset => asset.copy(status = if (asset.status == UploadNotStarted) UploadInProgress else asset.status )).zip(assets.getLocalData(assetId))) flatMap {
       case (Some(asset), Some(data)) if data.length > AssetData.MaxAllowedAssetSizeInBytes =>
         debug(s"Local data too big. Data length: ${data.length}, max size: ${AssetData.MaxAllowedAssetSizeInBytes}, local data: $data, asset: $asset")
         CancellableFuture successful Left(internalError(AssetSyncHandler.AssetTooLarge))
       case (Some(asset), _) if asset.remoteId.isDefined =>
         warn(s"asset has already been uploaded, skipping: $asset")
         CancellableFuture.successful(Right(None))
-      case (Some(asset), Some(data)) =>
+      case (Some(asset), Some(data)) if asset.status == UploadInProgress =>
         otrSync.uploadAssetDataV3(data, if (public) None else Some(AESKey()), asset.mime, retention).flatMap {
           case Right(remoteData) => CancellableFuture.lift(assets.updateAsset(asset.id, _.copyWithRemoteData(remoteData)).map {
             Right(_)
           })
           case Left(err) => CancellableFuture successful Left(err)
         }
+      case (Some(asset), Some(_)) if asset.status == UploadCancelled =>
+        debug(s"Upload for asset was cancelled")
+        CancellableFuture successful Right(None)
       case (Some(asset), None) =>
         debug(s"An asset found, but its remote id is not defined, and local data is missing. Asset: $asset")
         CancellableFuture successful Right(None)
@@ -60,6 +63,9 @@ class AssetSyncHandler(cache:   CacheService,
         CancellableFuture successful Right(None)
       case (None, None) =>
         debug(s"No asset data found, no local data found")
+        CancellableFuture successful Right(None)
+      case _ =>
+        debug(s"Unexpected error")
         CancellableFuture successful Right(None)
     }
 }

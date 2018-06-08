@@ -209,7 +209,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         }
     }
 
-    post flatMap {
+    post.flatMap {
       case Right(time) =>
         verbose(s"postOtrMessage($msg) successful $time")
         messageSent(conv.id, msg, time) map { _ => SyncResult.Success }
@@ -222,6 +222,10 @@ class MessagesSyncHandler(selfUserId: UserId,
       case Left(error) =>
         verbose(s"postOtrMessage($msg), failed: $error")
         successful(SyncResult(error))
+    }.recover {
+      case _ : CancelException =>
+        verbose(s"postOtrMessage($msg) cancelled")
+        SyncResult(ErrorResponse.Cancelled)
     }
   }
 

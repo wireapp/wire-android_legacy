@@ -22,8 +22,8 @@ import java.lang.Math.max
 import com.waz.ZLog.LogTag
 import com.waz.api.{EphemeralExpiration, NetworkMode}
 import com.waz.model.{IntegrationId, Mime}
+import com.waz.service.call.Avs.AvsClosedReason
 import com.waz.service.call.Avs.AvsClosedReason.reasonString
-import com.waz.service.call.CallInfo.EndedReason
 import com.waz.service.push.ReceivedPushData
 import com.waz.utils.returning
 import org.json
@@ -246,35 +246,29 @@ class CallingEvent(partName:              String,
                    isGroup:               Boolean,
                    groupMemberCount:      Int,
                    withService:           Boolean,
-                   uiActive:              Boolean,
                    incoming:              Boolean,
-                   guestsAllowed:         Option[Boolean]     = None,
-                   callParticipantsCount: Option[Int]         = None,
-                   setupTime:             Option[Duration]    = None,
-                   callDuration:          Option[Duration]    = None,
-                   endReason:             Option[EndedReason] = None) extends TrackingEvent {
+                   guestsAllowed:         Option[Boolean]         = None,
+                   callParticipantsCount: Option[Int]             = None,
+                   setupTime:             Option[Duration]        = None,
+                   callDuration:          Option[Duration]        = None,
+                   endReason:             Option[AvsClosedReason] = None,
+                   videoAudioToggled:     Option[Boolean]         = None) extends TrackingEvent {
 
-  override lazy val name = s"calling.$partName${if (video) "_video" else ""}_call"
+  override lazy val name = s"calling.${partName}_call"
   override val props = Some(returning(new JSONObject()) { o =>
     o.put("conversation_type", if (isGroup) "group" else "one_to_one")
     o.put("conversation_participants", groupMemberCount)
     o.put("with_service", withService)
+    o.put("started_as_video", video)
 
-    o.put("app_is_active", uiActive)
     o.put("direction", if (incoming) "incoming" else "outgoing")
 
     guestsAllowed.foreach(v => o.put("is_allow_guests", v))
-    callParticipantsCount.foreach(v => o.put("conversation_participants_in_call", v))
-    setupTime.foreach(v => o.put("setup_time", v.getSeconds))
+    callParticipantsCount.foreach(v => o.put("conversation_participants_in_call_max", v))
     callDuration.foreach(v => o.put("duration", v.getSeconds))
-
-    import EndedReason._
-    endReason.foreach(v => o.put("reason", v match {
-      case SelfEnded      => "self"
-      case OtherEnded     => "other"
-      case GSMInterrupted => "gsm_call"
-      case Dropped(r)     => reasonString(r)
-    }))
+    setupTime.foreach(v => o.put("setup_time", v))
+    endReason.foreach(v => o.put("reason", reasonString(v)))
+    videoAudioToggled.foreach(v => o.put("AV_switch_toggled", v))
   })
 }
 

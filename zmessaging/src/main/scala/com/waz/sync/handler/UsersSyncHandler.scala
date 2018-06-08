@@ -19,7 +19,7 @@ package com.waz.sync.handler
 
 import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
-import com.waz.api.impl.ErrorResponse
+import com.waz.api.impl.{AccentColor, ErrorResponse}
 import com.waz.content.UsersStorage
 import com.waz.model._
 import com.waz.service.UserService
@@ -55,6 +55,22 @@ class UsersSyncHandler(assetSync: AssetSyncHandler,
   def syncSelfUser(): Future[SyncResult] = usersClient.loadSelf().future flatMap {
     case Right(user) =>
       userService.updateSyncedUsers(IndexedSeq(user)) map { _ => SyncResult.Success }
+    case Left(error) =>
+      warn(s"load self request failed")
+      Future.successful(SyncResult(error))
+  }
+
+  def postSelfName(name: String): Future[SyncResult] = usersClient.loadSelf().future flatMap {
+    case Right(user) =>
+      updatedSelfToSyncResult(usersClient.updateSelf(UserInfo(user.id, name = Some(name))))
+    case Left(error) =>
+      warn(s"load self request failed")
+      Future.successful(SyncResult(error))
+  }
+
+  def postSelfAccentColor(color: AccentColor): Future[SyncResult] = usersClient.loadSelf().future flatMap {
+    case Right(user) =>
+      updatedSelfToSyncResult(usersClient.updateSelf(UserInfo(user.id, accentId = Some(color.id))))
     case Left(error) =>
       warn(s"load self request failed")
       Future.successful(SyncResult(error))

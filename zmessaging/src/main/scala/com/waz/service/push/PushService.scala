@@ -29,8 +29,8 @@ import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.ZMessaging.{accountTag, clock}
 import com.waz.service._
-import com.waz.service.tracking.{MissedPushEvent, ReceivedPushEvent, TrackingService}
 import com.waz.service.otr.OtrService
+import com.waz.service.tracking.{MissedPushEvent, ReceivedPushEvent, TrackingService}
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.PushNotificationsClient.{LoadNotificationsResponse, NotificationsResponseEncoded}
 import com.waz.sync.client.{PushNotificationEncoded, PushNotificationsClient}
@@ -44,7 +44,7 @@ import org.threeten.bp.{Duration, Instant}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future, Promise}
-import scala.util.{Failure, Success}
+import scala.util.control.NonFatal
 
 /** PushService handles notifications coming from FCM, WebSocket, and fetch.
   * We assume FCM notifications are unreliable, so we use them only as information that we should perform a fetch (syncHistory).
@@ -95,11 +95,10 @@ class PushServiceImpl(userId:               UserId,
   implicit val logTag: LogTag = accountTag[PushServiceImpl](userId)
   private implicit val dispatcher = new SerialDispatchQueue(name = "PushService")
 
-  private val pipelineKey = "pipeline_processing"
-
   override val onHistoryLost = new SourceSignal[Instant] with BgEventSource
   override val processing = Signal(false)
-  override def afterProcessing[T](f : => Future[T])(implicit ec: ExecutionContext): Future[T] = processing.filter(_ == false).head.flatMap(_ => f)
+  override def afterProcessing[T](f : => Future[T])(implicit ec: ExecutionContext): Future[T] =
+    processing.filter(_ == false).head.flatMap(_ => f)
 
   private val beDriftPref = prefs.preference(BackendDrift)
   override val beDrift = beDriftPref.signal.disableAutowiring()
@@ -110,7 +109,65 @@ class PushServiceImpl(userId:               UserId,
 
   private var subs = Seq.empty[Subscription]
 
-  notificationStorage.registerEventHandler(processEncryptedNotifications)
+  notificationStorage.registerEventHandler { () =>
+    returning {
+      Serialized.future(PipelineKey) {
+        processing ! true
+        for {
+          _ <- processEncryptedRows()
+          _ <- processDecryptedRows()
+        } yield processing ! false
+      }
+    }(_.failed.foreach { e =>
+      processing ! false
+      throw e
+    })
+  }
+
+  private def processEncryptedRows() =
+    notificationStorage.encryptedEvents.flatMap { rows =>
+      verbose(s"Processing ${rows.size} encrypted rows")
+      Future.sequence(rows.map { row =>
+        if (!isOtrEventJson(row.event)) notificationStorage.setAsDecrypted(row.index)
+        else {
+          val otrEvent = ConversationEvent.ConversationEventDecoder(row.event).asInstanceOf[OtrEvent]
+          val writer = notificationStorage.writeClosure(row.index)
+          otrService.decryptStoredOtrEvent(otrEvent, writer).flatMap {
+            case Left(Duplicate) =>
+              verbose("Ignoring duplicate message")
+              notificationStorage.remove(row.index)
+            case Left(error) =>
+              val e = OtrErrorEvent(otrEvent.convId, otrEvent.time, otrEvent.from, error)
+              verbose(s"Got error when decrypting: ${e.toString}\nOtrError: ${error.toString}")
+              notificationStorage.writeError(row.index, e)
+            case Right(_) => Future.successful(())
+          }
+        }
+      })
+    }
+
+  private def processDecryptedRows(): Future[Unit] = {
+    def decodeRow(event: PushNotificationEvent) =
+      if(event.plain.isDefined) {
+        val msg = GenericMessage(event.plain.get)
+        val msgEvent = ConversationEvent.ConversationEventDecoder(event.event)
+        //If there is plain text, then the message is an OtrMessageEvent, so this cast is safe
+        otrService.parseGenericMessage(msgEvent.asInstanceOf[OtrMessageEvent], msg)
+      } else {
+        Some(EventDecoder(event.event))
+      }
+
+    notificationStorage.getDecryptedRows().flatMap { rows =>
+      verbose(s"Processing ${rows.size} rows")
+      if (rows.nonEmpty)
+        for {
+          _ <- pipeline(rows.flatMap(decodeRow))
+          _ <- notificationStorage.removeRows(rows.map(_.index))
+          _ <- processDecryptedRows()
+        } yield {}
+      else Future.successful(())
+    }
+  }
 
   webSocket.client.on(dispatcher) {
     case None =>
@@ -142,77 +199,12 @@ class PushServiceImpl(userId:               UserId,
   webSocket.connected.onChanged.map(_ => "web socket connection change").on(dispatcher)(syncHistory(_))
 
   private def storeNotifications(notifications: Seq[PushNotificationEncoded]): Future[Unit] =
-    Serialized.future(pipelineKey)(notificationStorage.saveAll(notifications).flatMap { _ =>
+    Serialized.future(PipelineKey)(notificationStorage.saveAll(notifications).flatMap { _ =>
       notifications.lift(notifications.lastIndexWhere(!_.transient)).fold(Future.successful(()))(n => idPref := Some(n.id))
     })
 
-  private def processEncryptedNotifications(): Future[Unit] =
-    Serialized.future(pipelineKey) {
-      processing ! true
-      notificationStorage.encryptedEvents.flatMap { rows =>
-        verbose(s"Processing ${rows.size} encrypted rows")
-        Future.sequence {
-          rows
-            .map { row =>
-              if (!isOtrEventJson(row.event)) {
-                notificationStorage.setAsDecrypted(row.pushId, row.index)
-              } else {
-                val otrEvent = ConversationEvent.ConversationEventDecoder(row.event).asInstanceOf[OtrEvent]
-                val writer = notificationStorage.writeClosure(row.pushId, row.index)
-                otrService.decryptStoredOtrEvent(otrEvent, writer).flatMap {
-                  case Left(Duplicate) =>
-                    verbose("Ignoring duplicate message")
-                    notificationStorage.remove(row.pushId, row.index)
-                  case Left(error) =>
-                    val e = OtrErrorEvent(otrEvent.convId, otrEvent.time, otrEvent.from, error)
-                    verbose(s"Got error when decrypting: ${e.toString}\nOtrError: ${error.toString}")
-                    notificationStorage.writeError(row.pushId, row.index, e)
-                  case Right(_) => Future.successful(())
-                }
-              }
-            }
-        }
-      }.andThen {
-        case Success(_) => processStoredNotifications()
-        case Failure(ex) =>
-          processing ! false
-          throw ex
-      }.map(_ => ())
-    }
-
   private def isOtrEventJson(ev: JSONObject) =
     ev.getString("type").equals("conversation.otr-message-add")
-
-  private def processStoredNotifications(): Future[Unit] = {
-    def decodeRow(event: PushNotificationEvent) =
-      if(event.plain.isDefined) {
-        val msg = GenericMessage(event.plain.get)
-        val msgEvent = ConversationEvent.ConversationEventDecoder(event.event)
-        //If there is plain text, then the message is an OtrMessageEvent, so this cast is safe
-        otrService.parseGenericMessage(msgEvent.asInstanceOf[OtrMessageEvent], msg)
-      } else {
-        Some(EventDecoder(event.event))
-      }
-
-    def processBlock(blocks: Iterator[Seq[((Uid, Int), Option[Event])]]): Future[Unit] = {
-      if (blocks.hasNext) {
-        val block = blocks.next()
-        val events = block.flatMap(_._2)
-        pipeline(events)
-          .flatMap(_ => notificationStorage.removeRows(block.map(_._1)))
-          .flatMap(_ => processBlock(blocks))
-          .map(_ => ())
-      } else {
-        Future.successful(())
-      }
-    }
-
-    notificationStorage.decryptedEvents.map(_.map(event => ((event.pushId, event.index), decodeRow(event))))
-      .flatMap { events =>
-        processBlock(events.grouped(100))
-      }
-      .andThen { case _ => processing ! false }
-  }
 
   case class Results(notifications: Vector[PushNotificationEncoded], time: Option[Instant], firstSync: Boolean, historyLost: Boolean)
 
@@ -300,6 +292,8 @@ class PushServiceImpl(userId:               UserId,
 }
 
 object PushService {
+
+  val PipelineKey = "pipeline_processing"
 
   case class FetchFailedException(err: ErrorResponse) extends Exception(s"Failed to fetch notifications: ${err.message}")
 

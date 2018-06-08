@@ -35,7 +35,7 @@ object MsgAuthCode {
 /*
  * The MAC uses HMAC-SHA256.
  *
- * TODO remove - not used anymore...
+ * TODO remove - not used anymore... (https://github.com/wireapp/android-project/issues/50)
  */
 case class SignalingKey(encKey: AESKey, macKey: String) {
 

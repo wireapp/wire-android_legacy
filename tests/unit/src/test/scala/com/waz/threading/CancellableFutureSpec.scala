@@ -17,15 +17,17 @@
  */
 package com.waz.threading
 
-import java.util.concurrent.{CountDownLatch, TimeUnit, TimeoutException}
+import java.util.concurrent.{CountDownLatch, Executors, TimeUnit, TimeoutException}
 
+import com.waz.ZLog
 import com.waz.ZLog.LogTag
 import com.waz.specs.AndroidFreeSpec
 import com.waz.testutils.Matchers._
 import com.waz.threading.CancellableFuture.CancelException
+import com.waz.utils.returning
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future, Promise}
+import scala.concurrent.{Await, ExecutionContext, Future, Promise}
 import scala.util.{Failure, Random, Success, Try}
 
 class CancellableFutureSpec extends AndroidFreeSpec {
@@ -33,9 +35,9 @@ class CancellableFutureSpec extends AndroidFreeSpec {
   private implicit lazy val dispatcher = Threading.Background
 
   feature("Await result") {
-    
+
     scenario("Await fast task result") {
-      Await.result(CancellableFuture { 1 }, 10.millis) shouldEqual 1
+      Await.result(CancellableFuture(1), 10.millis) shouldEqual 1
     }
 
     scenario("Await longer running task result") {
@@ -47,7 +49,7 @@ class CancellableFutureSpec extends AndroidFreeSpec {
   }
 
   scenario("Cancel long running task") {
-    val future = CancellableFuture { Thread.sleep(100) }
+    val future = CancellableFuture(Thread.sleep(100))
     future.cancel()
 
     intercept[CancelException] {
@@ -109,14 +111,14 @@ class CancellableFutureSpec extends AndroidFreeSpec {
 
   feature("Map") {
     scenario("Await for mapped result") {
-      Await.result(CancellableFuture { 1 } map (_ + 1), 10.millis) shouldEqual 2
-      Await.result(CancellableFuture { 1 } map (_ + 1) map (_ + 1), 10.millis) shouldEqual 3
+      Await.result(CancellableFuture(1) map (_ + 1), 10.millis) shouldEqual 2
+      Await.result(CancellableFuture(1) map (_ + 1) map (_ + 1), 10.millis) shouldEqual 3
       Await.result(CancellableFuture.delayed(100.millis)(1) map (_ + 1), 120.millis) shouldEqual 2
     }
 
     scenario("Cancel mapped future before map is executed") {
       @volatile var mapped = false
-      val future = CancellableFuture.delay(100.millis) .map { _ => mapped = true }
+      val future = CancellableFuture.delay(100.millis).map { _ => mapped = true }
       future.cancel()
       Await.ready(future, 10.millis) // should return immediately
       Thread.sleep(150)
@@ -126,7 +128,9 @@ class CancellableFutureSpec extends AndroidFreeSpec {
     scenario("Cancel mapped future when map function is being executed") {
       @volatile var mapped = false
       @volatile var completed = false
-      val future = CancellableFuture { 1 } .map { _ =>
+      val future = CancellableFuture {
+        1
+      }.map { _ =>
         mapped = true
         Thread.sleep(100)
         completed = true
@@ -153,29 +157,29 @@ class CancellableFutureSpec extends AndroidFreeSpec {
 
     scenario("Execute flatMap recursively") {
 
-      def sum(n: Int, acc: Int = 0): CancellableFuture[Int] = CancellableFuture { n } flatMap {
+      def sum(n: Int, acc: Int = 0): CancellableFuture[Int] = CancellableFuture(n) flatMap {
         case 0 => CancellableFuture.successful(acc)
         case s => sum(s - 1, acc + s)
       }
 
       Await.result(sum(100), 100.millis) shouldEqual 5050
       Await.result(sum(1000), 1000.millis) shouldEqual 500500
-      Await.ready(sum(100000), 5000.millis)// this will take more time, but should complete pretty fast
+      Await.ready(sum(100000), 5000.millis) // this will take more time, but should complete pretty fast
     }
-    
+
     scenario("Execute recursive flatMap with high memory usage") {
 
-      def run(n: Int): CancellableFuture[Array[Int]] = CancellableFuture { new Array[Int](32 * 1024 * 1024) } flatMap { arr =>
+      def run(n: Int): CancellableFuture[Array[Int]] = CancellableFuture(new Array[Int](32 * 1024 * 1024)) flatMap { arr =>
         if (n == 0) CancellableFuture.successful(arr)
         else run(n - 1)
       }
-      
+
       Await.result(run(100), 20.seconds)
     }
-    
+
     scenario("Cancel flatMapped future before flatMap is executed") {
       @volatile var mapped = false
-      val future = CancellableFuture.delay(100.millis) .flatMap { _ =>
+      val future = CancellableFuture.delay(100.millis).flatMap { _ =>
         mapped = true
         CancellableFuture.successful(1)
       }
@@ -188,7 +192,7 @@ class CancellableFutureSpec extends AndroidFreeSpec {
     scenario("Cancel flatMapped future when flatMap function is being executed") {
       @volatile var mapped = false
       @volatile var completed = false
-      val future = CancellableFuture { 1 } .flatMap { _ =>
+      val future = CancellableFuture(1) .flatMap { _ =>
         mapped = true
         Thread.sleep(100)
         completed = true
@@ -208,10 +212,12 @@ class CancellableFutureSpec extends AndroidFreeSpec {
     scenario("Cancel while flatMapped future is executing") {
       @volatile var mapped = false
       @volatile var completed = false
-      val future = CancellableFuture { 1 } .flatMap { _ =>
+      val future = CancellableFuture {
+        1
+      }.flatMap { _ =>
         mapped = true
         CancellableFuture.delay(100.millis)
-      } .flatMap { _ =>
+      }.flatMap { _ =>
         completed = true
         CancellableFuture.successful(3)
       }
@@ -229,12 +235,12 @@ class CancellableFutureSpec extends AndroidFreeSpec {
     scenario("Cancel while second flatMapped future is executing") {
       @volatile var mapped = false
       @volatile var completed = false
-      val future = CancellableFuture { 1 } .flatMap { _ =>
+      val future = CancellableFuture(1) .flatMap { _ =>
         CancellableFuture { 2 }
       } .flatMap { _ =>
         mapped = true
         CancellableFuture.delay(100.millis)
-      } .flatMap { _ =>
+      }.flatMap { _ =>
         completed = true
         CancellableFuture.successful(3)
       }
@@ -283,7 +289,7 @@ class CancellableFutureSpec extends AndroidFreeSpec {
     scenario("Cancel while inner most future is executing") {
       @volatile var completed = false
 
-      def sum(n: Int, acc: Int = 0): CancellableFuture[Int] = CancellableFuture { n } flatMap {
+      def sum(n: Int, acc: Int = 0): CancellableFuture[Int] = CancellableFuture(n) flatMap {
         case 0 => CancellableFuture.delayed(2.seconds){ completed = true; acc }
         case s => sum(s - 1, acc + s)
       }
@@ -301,7 +307,7 @@ class CancellableFutureSpec extends AndroidFreeSpec {
       intercept[CancelException] {
         Await.result(future1, 10.millis)
       }
-      
+
       Thread.sleep(2000)
       completed shouldEqual false // both futures were cancelled, delayed task should never be executed
     }
@@ -336,15 +342,15 @@ class CancellableFutureSpec extends AndroidFreeSpec {
 
     scenario("Execute multiple delays with timeout") {
       Await.result(CancellableFuture.sequence[Boolean](Seq.fill(100) {
-        CancellableFuture.delay(1.second).withTimeout(Random.nextInt(500).millis).map(_ => false).recover { case _: TimeoutException => true}
+        CancellableFuture.delay(1.second).withTimeout(Random.nextInt(500).millis).map(_ => false).recover { case _: TimeoutException => true }
       }), 600.millis) shouldEqual Seq.fill(100)(true)
     }
   }
 
   feature("Recover") {
     scenario("recoverWith from error") {
-      val f = dispatcher { throw new RuntimeException("error") } .recoverWith {
-        case e: RuntimeException => CancellableFuture.delayed(100.millis) { 1 }
+      val f = dispatcher(throw new RuntimeException("error")) .recoverWith {
+        case e: RuntimeException => CancellableFuture.delayed(100.millis)(1)
       }
       Await.result(f, 1.second) shouldEqual 1
     }
@@ -387,7 +393,7 @@ class CancellableFutureSpec extends AndroidFreeSpec {
     }
 
     scenario("recover with exception") {
-      val f = CancellableFuture.delayed(1.second)( throw new RuntimeException).recover {
+      val f = CancellableFuture.delayed(1.second)(throw new RuntimeException).recover {
         case e: CancelException => throw e
         case _: RuntimeException => 1
       }
@@ -458,10 +464,10 @@ class CancellableFutureSpec extends AndroidFreeSpec {
       val f2 = common.map(_ + 2)
 
       f1.cancel()
-      intercept[CancelException] { Await.result(f1, 1.second) }
+      intercept[CancelException](Await.result(f1, 1.second))
       // this shows very dangerous side effect of cancel operation
       // due to this, we shouldn't use CancellableFutures by default
-      intercept[CancelException] { Await.result(f2, 1.second) }
+      intercept[CancelException](Await.result(f2, 1.second))
     }
 
     scenario("Prevent common ancestor cancelling") {
@@ -471,8 +477,48 @@ class CancellableFutureSpec extends AndroidFreeSpec {
       val f2 = CancellableFuture.lift(common).map(_ + 2)
 
       f1.cancel()
-      intercept[CancelException] { Await.result(f1, 1.second) }
+      intercept[CancelException](Await.result(f1, 1.second))
       f2 should eventually(be(3))
     }
+  }
+
+  /**
+    * I'll leave this here for future reference:
+    *
+    * Note that reportFailure is only called when an execption is thrown inside Future.onComplete. After delving into the
+    * implementation of Future, one can find that map, flatmap, recover, filter etc (all methods that return Future[T]) all
+    * try/catch any possible exceptions and encode the failure in the return type.
+    *
+    * Only exceptions in foreach/onSuccess/onFailure or in a raw onComplete callback will trigger the method
+    *
+    * To test, try moving the exception to different future callbacks
+    */
+  scenario("Test threads") {
+
+    val dispatcher = new ExecutionContext {
+      val executor = Executors.newFixedThreadPool(1)
+      override def execute(runnable: Runnable): Unit = {
+        ZLog.verbose(s"Running: $runnable")
+        executor.execute(runnable)
+      }
+
+      override def reportFailure(cause: Throwable): Unit = {
+        ZLog.error("Test failed!", cause)
+      }
+    }
+
+    def f = returning(Future {
+      ZLog.verbose("What...")("TEST")
+      throw new Exception("failed the test")
+      ZLog.verbose("What...2")("TEST")
+    } (dispatcher)
+    )(_.failed.foreach(throw _)(dispatcher))
+
+    val f2 = f.map(_ => println("won't print - will however prevent app crashing..."))(dispatcher)
+
+//    result(f2)
+
+//    Thread.sleep(3000)
+
   }
 }

@@ -30,7 +30,9 @@ import com.waz.utils.events.EventContext
 
 import scala.concurrent.Future
 
-class ConnectionsSyncHandler(usersStorage: UsersStorage, connectionService: ConnectionServiceImpl, connectionsClient: ConnectionsClient, pipeline: EventPipeline) {
+class ConnectionsSyncHandler(usersStorage:      UsersStorage,
+                             connectionService: ConnectionServiceImpl,
+                             connectionsClient: ConnectionsClient) {
 
   import Threading.Implicits.Background
   private implicit val ec = EventContext.Global
@@ -41,7 +43,7 @@ class ConnectionsSyncHandler(usersStorage: UsersStorage, connectionService: Conn
         warn("syncConnections failed")
         Future.successful(SyncResult(error))
       case Right(connections) =>
-        pipeline(connections) map (_ => SyncResult.Success)
+        connectionService.handleUserConnectionEvents(connections).map(_ => SyncResult.Success)
     }
   }
 
@@ -49,7 +51,7 @@ class ConnectionsSyncHandler(usersStorage: UsersStorage, connectionService: Conn
     connectionsClient.createConnection(userId, name, message).future flatMap {
       case Right(event) =>
         verbose(s"postConnection($userId) success: $event")
-        pipeline(Seq(event)) map { _ => SyncResult.Success }
+        connectionService.handleUserConnectionEvents(Seq(event)).map(_ => SyncResult.Success)
 
       case Left(error) =>
         warn("postConnection failed")
@@ -59,7 +61,7 @@ class ConnectionsSyncHandler(usersStorage: UsersStorage, connectionService: Conn
   def postConnectionStatus(userId: UserId, status: Option[ConnectionStatus]): Future[SyncResult] = usersStorage.get(userId) flatMap {
     case Some(user) => connectionsClient.updateConnection(userId, status getOrElse user.connection).future flatMap {
       case Right(Some(event)) =>
-        pipeline(Seq(event)) map { _ => SyncResult.Success }
+        connectionService.handleUserConnectionEvents(Seq(event)).map(_ => SyncResult.Success)
 
       case Right(None) =>
         warn("postConnectionStatus was successful, but didn't return an event, no change")

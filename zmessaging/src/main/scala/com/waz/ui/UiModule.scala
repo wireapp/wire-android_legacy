@@ -74,18 +74,18 @@ trait UiEventContext {
   }
 }
 
-class UiModule(val accounts: AccountsServiceImpl) extends UiEventContext with ZMessagingResolverComponent {
+class UiModule(val global: GlobalModule) extends UiEventContext with ZMessagingResolverComponent {
 
   private implicit val ui: UiModule = this
 
   val zms = new ZMessagingResolver(this)
   val uiCache = new UiCache[Uri, AnyRef](0)(this)
 
-  val global = accounts.global
-  def imageCache = global.imageCache
+  def imageCache    = global.imageCache
   def bitmapDecoder = global.bitmapDecoder
-  val tracking = global.trackingService
-  val assetLoader = global.globalLoader
+  val tracking      = global.trackingService
+  val assetLoader   = global.globalLoader
+  val accounts      = global.accountsService
 
   val currentAccount = accounts.activeAccountManager
   val currentZms = accounts.activeZms

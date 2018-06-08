@@ -23,6 +23,7 @@ import java.util.concurrent.{Executor, ExecutorService, Executors}
 import android.os.{Handler, HandlerThread, Looper}
 import com.waz.ZLog._
 import com.waz.api.ZmsVersion
+import com.waz.service.tracking.TrackingService.exception
 import com.waz.utils.returning
 
 import scala.concurrent.{ExecutionContext, Future, Promise, blocking}
@@ -41,20 +42,23 @@ object Threading {
 
   val Cpus = math.max(2, Runtime.getRuntime.availableProcessors())
 
-  def executionContext(service: ExecutorService): ExecutionContext = new ExecutionContext {
-    override def reportFailure(cause: Throwable): Unit = error(cause.getMessage, cause)("MainThreadPool")
+  def executionContext(service: ExecutorService)(implicit tag: LogTag): ExecutionContext = new ExecutionContext {
+    override def reportFailure(cause: Throwable): Unit = {
+      exception(cause, "ExecutionContext failed")
+      error(cause.getMessage, cause)
+    }
     override def execute(runnable: Runnable): Unit = service.execute(runnable)
   }
 
   /**
    * Thread pool for non-blocking background tasks.
    */
-  val ThreadPool: DispatchQueue = new LimitedDispatchQueue(Cpus, executionContext(Executors.newCachedThreadPool()), "CpuThreadPool")
+  val ThreadPool: DispatchQueue = new LimitedDispatchQueue(Cpus, executionContext(Executors.newCachedThreadPool())("CpuThreadPool"), "CpuThreadPool")
 
   /**
    * Thread pool for blocking IO tasks.
    */
-  val IOThreadPool: DispatchQueue = new LimitedDispatchQueue(Cpus, executionContext(Executors.newCachedThreadPool()), "IoThreadPool")
+  val IOThreadPool: DispatchQueue = new LimitedDispatchQueue(Cpus, executionContext(Executors.newCachedThreadPool())("IoThreadPool"), "IoThreadPool")
 
   val Background = ThreadPool
 
@@ -70,7 +74,10 @@ object Threading {
     override def execute(runnable: Runnable): Unit = delegate.execute(new Runnable {
         override def run(): Unit = blocking(runnable.run())
       })
-    override def reportFailure(cause: Throwable): Unit = delegate.reportFailure(cause)
+    override def reportFailure(cause: Throwable): Unit = {
+      exception(cause, "BlockingIO ExecutionContext failed")("BlockingIOThreadPool")
+      delegate.reportFailure(cause)
+    }
   }
 
   // var for tests

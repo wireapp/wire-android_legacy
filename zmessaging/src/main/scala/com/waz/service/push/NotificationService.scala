@@ -156,8 +156,8 @@ class NotificationService(context:         Context,
     add(events collect {
       case ev @ UserConnectionEvent(_, _, userId, msg, ConnectionStatus.PendingFromOther, time, name) =>
         NotificationData(NotId(CONNECT_REQUEST, userId), msg.getOrElse(""), ConvId(userId.str), userId, CONNECT_REQUEST, time.instant, userName = name)
-//      case ev @ UserConnectionEvent(_, _, userId, _, ConnectionStatus.Accepted, time, name) =>
-//        NotificationData(NotId(CONNECT_ACCEPTED, userId), "", ConvId(userId.str), userId, CONNECT_ACCEPTED, userName = name)
+      case ev @ UserConnectionEvent(_, _, userId, _, ConnectionStatus.Accepted, time, name) =>
+        NotificationData(NotId(CONNECT_ACCEPTED, userId), "", ConvId(userId.str), userId, CONNECT_ACCEPTED, time = time.instant, userName = name)
       case ContactJoinEvent(userId, _) =>
         verbose("ContactJoinEvent")
         NotificationData(NotId(CONTACT_JOIN, userId), "", ConvId(userId.str), userId, CONTACT_JOIN)

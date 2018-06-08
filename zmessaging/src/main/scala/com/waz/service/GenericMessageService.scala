@@ -18,7 +18,6 @@
 package com.waz.service
 
 import com.waz.ZLog._
-import com.waz.content.UsersStorage
 import com.waz.model.GenericContent._
 import com.waz.model._
 import com.waz.service.conversation.{ConversationOrderEventsService, ConversationsContentUpdaterImpl}
@@ -34,7 +33,7 @@ class GenericMessageService(selfUserId: UserId,
                             convEvents: ConversationOrderEventsService,
                             reactions:  ReactionsService,
                             receipts:   ReceiptService,
-                            users:      UsersStorage) {
+                            users:      UserService) {
 
   private implicit val tag: LogTag = logTagFor[GenericMessageService]
   import com.waz.threading.Threading.Implicits.Background
@@ -64,7 +63,6 @@ class GenericMessageService(selfUserId: UserId,
       case GenericMessageEvent(_, _, _, GenericMessage(_, Receipt(msg))) => msg
     }
 
-    //TODO maybe we should move the availabilities processing to the user service?
     val availabilities = (events collect {
       case GenericMessageEvent(_, _, userId, GenericMessage(_, AvailabilityStatus(available))) => userId -> available
     }).toMap
@@ -79,7 +77,7 @@ class GenericMessageService(selfUserId: UserId,
         convs.processConvWithRemoteId(remoteId, retryAsync = true) { conv => convs.updateConversationCleared(conv.id, timestamp) }
       }
       _ <- receipts.processReceipts(confirmed)
-      _ <- users.updateAll2(availabilities.keySet, u => availabilities.get(u.id).fold(u)(av => u.copy(availability = av)))
+      _ <- users.storeAvailabilities(availabilities)
     } yield ()
   }
 }

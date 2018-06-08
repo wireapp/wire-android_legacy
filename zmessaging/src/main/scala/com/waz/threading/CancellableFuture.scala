@@ -21,7 +21,6 @@ import java.util.TimerTask
 
 import com.waz.ZLog._
 import com.waz.service.tracking.TrackingService.NoReporting
-import com.waz.utils.LoggedTry
 import com.waz.utils.events.{BaseSubscription, EventContext}
 
 import scala.collection.generic.CanBuild
@@ -36,26 +35,32 @@ class CancellableFuture[+A](promise: Promise[A]) extends Awaitable[A] { self =>
   
   val future = promise.future
   
-  def cancel()(implicit tag: LogTag): Boolean = promise tryFailure { new CancelException(s"[$tag] cancel") with NoReporting } // TODO: switch to DefaultCancelFuture for performance (once this is stable)
+  def cancel()(implicit tag: LogTag): Boolean =
+    promise.tryFailure(new CancelException(s"[$tag] cancel") with NoReporting) // TODO: switch to DefaultCancelFuture for performance (once this is stable)
 
-  def fail(ex: Exception): Boolean = promise tryFailure ex
+  def fail(ex: Exception): Boolean =
+    promise.tryFailure(ex)
 
-  def onComplete[B](f: Try[A] => B)(implicit executor: ExecutionContext): Unit = future.onComplete(f)
+  def onComplete[B](f: Try[A] => B)(implicit executor: ExecutionContext): Unit =
+    future.onComplete(f)
 
-  def onSuccess[U](pf: PartialFunction[A, U])(implicit executor: ExecutionContext): Unit = future.onSuccess(pf)
+  def onSuccess[U](pf: PartialFunction[A, U])(implicit executor: ExecutionContext): Unit =
+    future.onSuccess(pf)
 
-  def onFailure[U](pf: PartialFunction[Throwable, U])(implicit executor: ExecutionContext): Unit = future.onFailure(pf)
+  def onFailure[U](pf: PartialFunction[Throwable, U])(implicit executor: ExecutionContext): Unit =
+    future.onFailure(pf)
 
-  def onCancelled(body: => Unit)(implicit executor: ExecutionContext): Unit = future.onFailure {
-    case _: CancelException => body
-  }
+  def onCancelled(body: => Unit)(implicit executor: ExecutionContext): Unit =
+    future.onFailure {
+      case _: CancelException => body
+    }
 
   def map[B](f: A => B)(implicit executor: ExecutionContext, tag: LogTag = "CancellableFuture"): CancellableFuture[B] = {
     val p = Promise[B]()
     @volatile var cancelFunc = Option(self.cancel()(_: LogTag))
     future.onComplete { v =>
       cancelFunc = None
-      p tryComplete (v flatMap { res => LoggedTry(f(res)) })
+      p.tryComplete(v.flatMap(res => Try(f(res))))
     }
     new CancellableFuture(p) {
       override def cancel()(implicit tag: LogTag): Boolean = {
@@ -67,12 +72,14 @@ class CancellableFuture[+A](promise: Promise[A]) extends Awaitable[A] { self =>
     }
   }
 
-  def filter(f: (A) => Boolean)(implicit executor: ExecutionContext, tag: LogTag = "CancellableFuture"): CancellableFuture[A] = flatMap { res =>
-    if (f(res)) CancellableFuture.successful(res)
-    else CancellableFuture.failed(new NoSuchElementException(s"[$tag] CancellableFuture.filter failed"))
-  }
+  def filter(f: (A) => Boolean)(implicit executor: ExecutionContext, tag: LogTag = "CancellableFuture"): CancellableFuture[A] =
+    flatMap { res =>
+      if (f(res)) CancellableFuture.successful(res)
+      else CancellableFuture.failed(new NoSuchElementException(s"[$tag] CancellableFuture.filter failed"))
+    }
 
-  final def withFilter(p: A => Boolean)(implicit executor: ExecutionContext, tag: LogTag = "CancellableFuture"): CancellableFuture[A] = filter(p)(executor)
+  final def withFilter(p: A => Boolean)(implicit executor: ExecutionContext, tag: LogTag = "CancellableFuture"): CancellableFuture[A] =
+    filter(p)(executor)
 
   def flatMap[B](f: A => CancellableFuture[B])(implicit executor: ExecutionContext, tag: LogTag = "CancellableFuture"): CancellableFuture[B] = {
     val p = Promise[B]()
@@ -83,7 +90,7 @@ class CancellableFuture[+A](promise: Promise[A]) extends Awaitable[A] { self =>
       if (!p.isCompleted) res match {
         case f: Failure[_] => p tryComplete f.asInstanceOf[Failure[B]]
         case Success(v) =>
-          LoggedTry(f(v)) match {
+          Try(f(v)) match {
             case Success(fut) =>
               cancelFunc = Option(fut.cancel()(_: LogTag))
               fut onComplete { res =>
@@ -137,9 +144,11 @@ class CancellableFuture[+A](promise: Promise[A]) extends Awaitable[A] { self =>
     }
   }
 
-  def flatten[B](implicit executor: ExecutionContext, evidence: A <:< CancellableFuture[B]): CancellableFuture[B] = flatMap(x => x)
+  def flatten[B](implicit executor: ExecutionContext, evidence: A <:< CancellableFuture[B]): CancellableFuture[B] =
+    flatMap(x => x)
 
-  def zip[B](other: CancellableFuture[B])(implicit executor: ExecutionContext): CancellableFuture[(A, B)] = CancellableFuture.zip(self, other)
+  def zip[B](other: CancellableFuture[B])(implicit executor: ExecutionContext): CancellableFuture[(A, B)] =
+    CancellableFuture.zip(self, other)
 
   @throws[InterruptedException](classOf[InterruptedException])
   @throws[TimeoutException](classOf[TimeoutException])
@@ -190,10 +199,8 @@ object CancellableFuture {
   class PromiseCompletingRunnable[T](body: => T) extends Runnable {
     val promise = Promise[T]()
 
-    override def run() = {
-      if (!promise.isCompleted)
-        promise tryComplete LoggedTry(body)("CancellableFuture")
-    }
+    override def run() =
+      if (!promise.isCompleted) promise.tryComplete(Try(body))
   }
   
   def apply[A](body: => A)(implicit executor: ExecutionContext, tag: LogTag = ""): CancellableFuture[A] = {
@@ -252,7 +259,6 @@ object CancellableFuture {
     in.foldLeft(successful(cbf())) {
       (fr, fa) => for (r <- fr; a <- fa) yield r += a
     } map (_.result())
-
 
   def traverse[A, B](in: Seq[A])(f: A => CancellableFuture[B])(implicit executor: ExecutionContext): CancellableFuture[Seq[B]] = sequence(in.map(f))
   

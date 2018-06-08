@@ -20,7 +20,7 @@ package com.waz.sync.handler
 import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.otr.ClientId
-import com.waz.model.{AccountId, PushToken}
+import com.waz.model.PushToken
 import com.waz.service.BackendConfig
 import com.waz.service.push.PushTokenService
 import com.waz.sync.SyncResult

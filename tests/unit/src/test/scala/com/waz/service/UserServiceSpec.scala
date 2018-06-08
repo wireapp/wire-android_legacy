@@ -65,10 +65,13 @@ class UserServiceSpec extends AndroidFreeSpec {
   (assetService.updateAssets _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
   (usersStorage.updateOrCreateAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
 
-  private def getService = new UserServiceImpl(
-    users.head.id, accountsService, accountsStrg, usersStorage, userPrefs,
-    pushService, assetService, usersClient, sync, assetsStorage, credentials
-  )
+  private def getService = {
+
+    result(userPrefs(UserPreferences.ShouldSyncUsers) := false)
+
+    new UserServiceImpl(users.head.id, accountsService, accountsStrg, usersStorage, userPrefs,
+      pushService, assetService, usersClient, sync, assetsStorage, credentials)
+  }
 
   feature("activity status") {
     scenario("change activity status") {

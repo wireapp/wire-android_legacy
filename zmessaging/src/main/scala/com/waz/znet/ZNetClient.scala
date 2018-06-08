@@ -132,7 +132,8 @@ class ZNetClientImpl(auth: Option[AuthenticationManager] = None, override val cl
             auth match {
               case Some(am) => CancellableFuture.lift(am.currentToken()) flatMap {
                 case Right(token) => client(request.withHeaders(token.headers))
-                case Left(error) => CancellableFuture.successful(Response(HttpStatus(error.code, error.message))) //TODO it would be good to merge ErrorResponse and Response under one trait...
+                case Left(error) => CancellableFuture.successful(Response(HttpStatus(error.code, error.message)))
+                //TODO it would be good to merge ErrorResponse and Response under one trait (https://github.com/wireapp/android-project/issues/55)
               }
               case _ => CancellableFuture.failed(throw new Exception("Attempted to perform request that requires authentication using a non-authenticated global ZNetClient"))
             }

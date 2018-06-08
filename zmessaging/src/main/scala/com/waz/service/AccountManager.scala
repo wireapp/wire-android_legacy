@@ -65,7 +65,8 @@ class AccountManager(val userId:   UserId,
       OtrLastPrekey.str,
       ClientRegVersion.str,
       LastSelfClientsSyncRequestedTime.str,
-      LastStableNotification.str
+      LastStableNotification.str,
+      ShouldSyncInitial.str
     ))(userPrefs.remove).map(_ => ())
 
   val storage   = global.factory.baseStorage(userId)

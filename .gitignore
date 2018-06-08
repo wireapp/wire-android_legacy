@@ -14,3 +14,4 @@ BUILDCONTROL.local
 user.sbt
 proguard-sbt.txt
 credentials.sbt
+tags

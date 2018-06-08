@@ -19,6 +19,7 @@ package com.waz.sync
 
 import com.waz.api.EphemeralExpiration
 import com.waz.api.IConversation.{Access, AccessRole}
+import com.waz.api.impl.AccentColor
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.ShouldSyncInitial
 import com.waz.model.UserData.ConnectionStatus
@@ -58,6 +59,8 @@ trait SyncServiceHandle {
 
   def postSelfUser(info: UserInfo): Future[SyncId]
   def postSelfPicture(picture: Option[AssetId]): Future[SyncId]
+  def postSelfName(name: String): Future[SyncId]
+  def postSelfAccentColor(color: AccentColor): Future[SyncId]
   def postAvailability(status: Availability): Future[SyncId]
   def postMessage(id: MessageId, conv: ConvId, editTime: Instant): Future[SyncId]
   def postDeleted(conv: ConvId, msg: MessageId): Future[SyncId]
@@ -74,7 +77,6 @@ trait SyncServiceHandle {
   def postLastRead(id: ConvId, time: Instant): Future[SyncId]
   def postCleared(id: ConvId, time: Instant): Future[SyncId]
   def postAddressBook(ab: AddressBook): Future[SyncId]
-  def postInvitation(i: Invitation): Future[SyncId]
   def postTypingState(id: ConvId, typing: Boolean): Future[SyncId]
   def postOpenGraphData(conv: ConvId, msg: MessageId, editTime: Instant): Future[SyncId]
   def postReceipt(conv: ConvId, message: MessageId, user: UserId, tpe: ReceiptType): Future[SyncId]
@@ -133,13 +135,14 @@ class AndroidSyncServiceHandle(service: SyncRequestService, timeouts: Timeouts, 
 
   def postSelfUser(info: UserInfo) = addRequest(PostSelf(info))
   def postSelfPicture(picture: Option[AssetId]) = addRequest(PostSelfPicture(picture))
+  def postSelfName(name: String) = addRequest(PostSelfName(name))
+  def postSelfAccentColor(color: AccentColor) = addRequest(PostSelfAccentColor(color))
   def postAvailability(status: Availability) = addRequest(PostAvailability(status))
   def postMessage(id: MessageId, conv: ConvId, time: Instant) = addRequest(PostMessage(conv, id, time), timeout = System.currentTimeMillis() + timeouts.messages.sendingTimeout.toMillis, forceRetry = true)
   def postDeleted(conv: ConvId, msg: MessageId) = addRequest(PostDeleted(conv, msg))
   def postRecalled(conv: ConvId, msg: MessageId, recalled: MessageId) = addRequest(PostRecalled(conv, msg, recalled))
   def postAssetStatus(id: MessageId, conv: ConvId, exp: EphemeralExpiration, status: AssetStatus.Syncable) = addRequest(PostAssetStatus(conv, id, exp, status))
   def postAddressBook(ab: AddressBook) = addRequest(PostAddressBook(ab))
-  def postInvitation(i: Invitation) = addRequest(PostInvitation(i))
   def postConnection(user: UserId, name: String, message: String) = addRequest(PostConnection(user, name, message))
   def postConnectionStatus(user: UserId, status: ConnectionStatus) = addRequest(PostConnectionStatus(user, Some(status)))
   def postTypingState(conv: ConvId, typing: Boolean) = addRequest(PostTypingState(conv, typing), optional = true, timeout = System.currentTimeMillis() + timeouts.typing.refreshDelay.toMillis)
@@ -214,9 +217,10 @@ class AccountSyncHandler(zms: ZMessaging) extends SyncHandler {
     case DeleteAccount                          => zms.usersSync.deleteAccount()
     case PostSelf(info)                         => zms.usersSync.postSelfUser(info)
     case PostSelfPicture(_)                     => zms.usersSync.postSelfPicture()
+    case PostSelfName(name)                     => zms.usersSync.postSelfName(name)
+    case PostSelfAccentColor(color)             => zms.usersSync.postSelfAccentColor(color)
     case PostAvailability(availability)         => zms.usersSync.postAvailability(availability)
     case PostAddressBook(ab)                    => zms.addressbookSync.postAddressBook(ab)
-    case PostInvitation(i)                      => zms.invitationSync.postInvitation(i)
     case RegisterPushToken(token)               => zms.gcmSync.registerPushToken(token)
     case PostLiking(convId, liking)             => zms.reactionsSync.postReaction(convId, liking)
     case PostAddBot(cId, pId, iId)              => zms.integrationsSync.addBot(cId, pId, iId)

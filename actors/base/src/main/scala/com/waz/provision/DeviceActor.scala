@@ -40,7 +40,6 @@ import com.waz.provision.DeviceActor.responseTimeout
 import com.waz.service.AccountManager.ClientRegistrationState.Registered
 import com.waz.service._
 import com.waz.service.call.FlowManagerService
-import com.waz.service.otr.CryptoBoxService
 import com.waz.testutils.Implicits._
 import com.waz.threading.{DispatchQueueStats, _}
 import com.waz.ui.UiModule
@@ -108,6 +107,12 @@ class DeviceActor(val deviceName: String,
     ZMessaging.currentGlobal = this
     lifecycle.acquireUi()
 
+    override lazy val accountsService = new AccountsServiceImpl(this) {
+      ZMessaging.currentAccounts = this
+      Await.ready(prefs(GlobalPreferences.FirstTimeWithTeams) := false, 5.seconds)
+      Await.ready(prefs(GlobalPreferences.DatabasesRenamed) := true, 5.seconds)
+    }
+
     override lazy val storage: Database = new GlobalDatabase(application, Random.nextInt().toHexString)
     override lazy val clientWrapper: Future[ClientWrapper] = wrapper
 
@@ -119,16 +124,16 @@ class DeviceActor(val deviceName: String,
 
     override lazy val flowmanager = new FlowManagerService {
       override def flowManager = None
-      override def getVideoCaptureDevices = Future.successful(Vector())
-      override def setVideoCaptureDevice(id: RConvId, deviceId: String) = Future.successful(())
-      override def setVideoPreview(view: View) = Future.successful(())
-      override def setVideoView(id: RConvId, partId: Option[UserId], view: View) = Future.successful(())
-      override val cameraFailedSig = Signal[Boolean](false)
-    }
 
-    override lazy val factory: ZMessagingFactory = new ZMessagingFactory(global) {
-      override def zmessaging(teamId: Option[TeamId], clientId: ClientId, accountManager: AccountManager, storage: StorageModule, cryptoBox: CryptoBoxService): ZMessaging =
-        new ZMessaging(teamId, clientId, accountManager, storage, cryptoBox)
+      override def getVideoCaptureDevices = Future.successful(Vector())
+
+      override def setVideoCaptureDevice(id: RConvId, deviceId: String) = Future.successful(())
+
+      override def setVideoPreview(view: View) = Future.successful(())
+
+      override def setVideoView(id: RConvId, partId: Option[UserId], view: View) = Future.successful(())
+
+      override val cameraFailedSig = Signal[Boolean](false)
     }
 
     override lazy val mediaManager = new MediaManagerService {
@@ -137,17 +142,11 @@ class DeviceActor(val deviceName: String,
       override def isSpeakerOn = Signal.empty[Boolean]
       override def setSpeaker(enable: Boolean) = Future.successful({})
     }
-
-
   }
 
-  val accountsService = new AccountsServiceImpl(globalModule) {
-    ZMessaging.currentAccounts = this
-    Await.ready(prefs(GlobalPreferences.FirstTimeWithTeams) := false, 5.seconds)
-    Await.ready(prefs(GlobalPreferences.DatabasesRenamed) := true, 5.seconds)
-  }
+  val accountsService = globalModule.accountsService
 
-  val ui = returning(new UiModule(accountsService)) { ui =>
+  val ui = returning(new UiModule(globalModule)) { ui =>
     ui.onStart()
   }
 
@@ -400,7 +399,11 @@ class DeviceActor(val deviceName: String,
 
     case SetStatus(status) =>
       Availability.all.find(_.toString.toLowerCase == status.toLowerCase) match {
-        case Some(availability) => zms.head.flatMap(_.users.updateAvailability(availability)).map(_ => Successful)
+        case Some(availability) =>
+          for {
+            z            <- zms.head
+            _            <- z.users.storeAvailabilities(Map(z.selfUserId -> availability))
+          } yield Successful
         case None => Future.successful(Failed(s"Unknown availability: $status"))
       }
 

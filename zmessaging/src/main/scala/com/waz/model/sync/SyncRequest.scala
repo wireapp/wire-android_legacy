@@ -21,11 +21,13 @@ import com.waz.ZLog.error
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.EphemeralExpiration
 import com.waz.api.IConversation.{Access, AccessRole}
+import com.waz.api.impl.AccentColor
 import com.waz.model.AddressBook.AddressBookDecoder
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.ClientId
 import com.waz.model.{Availability, SearchQuery, _}
 import com.waz.service.ZMessaging
+import com.waz.service.tracking.TrackingService
 import com.waz.sync.client.{ConversationsClient, UsersClient}
 import com.waz.sync.queue.SyncJobMerger._
 import com.waz.utils._
@@ -89,12 +91,6 @@ object SyncRequest {
     override def isDuplicateOf(req: SyncRequest): Boolean = req.cmd == Cmd.PostAddressBook
   }
 
-  case class PostInvitation(invitation: Invitation) extends BaseRequest(Cmd.PostInvitation) {
-    override val mergeKey: Any = (cmd, invitation.id, invitation.method)
-    override def merge(req: SyncRequest) = mergeHelper[PostInvitation](req)(Merged(_))
-    override def isDuplicateOf(req: SyncRequest) = req.mergeKey == mergeKey
-  }
-
   case class PostSelf(data: UserInfo) extends BaseRequest(Cmd.PostSelf) {
     override def merge(req: SyncRequest) = mergeHelper[PostSelf](req)(Merged(_))
   }
@@ -123,6 +119,14 @@ object SyncRequest {
 
   case class PostSelfPicture(assetId: Option[AssetId]) extends BaseRequest(Cmd.PostSelfPicture) {
     override def merge(req: SyncRequest) = mergeHelper[PostSelfPicture](req)(Merged(_))
+  }
+
+  case class PostSelfName(name: String) extends BaseRequest(Cmd.PostSelfName) {
+    override def merge(req: SyncRequest) = mergeHelper[PostSelfName](req)(Merged(_))
+  }
+
+  case class PostSelfAccentColor(color: AccentColor) extends BaseRequest(Cmd.PostSelfAccentColor) {
+    override def merge(req: SyncRequest) = mergeHelper[PostSelfName](req)(Merged(_))
   }
 
   case class PostAvailability(availability: Availability) extends BaseRequest(Cmd.PostAvailability) {
@@ -347,6 +351,8 @@ object SyncRequest {
           case Cmd.PostTypingState       => PostTypingState(convId, 'typing)
           case Cmd.PostConnectionStatus  => PostConnectionStatus(userId, opt('status, js => ConnectionStatus(js.getString("status"))))
           case Cmd.PostSelfPicture       => PostSelfPicture(decodeOptAssetId('asset))
+          case Cmd.PostSelfName          => PostSelfName(decodeString('name))
+          case Cmd.PostSelfAccentColor   => PostSelfAccentColor(AccentColor(decodeInt('color)))
           case Cmd.PostAvailability      => PostAvailability(Availability(decodeInt('availability)))
           case Cmd.PostMessage           => PostMessage(convId, messageId, 'time)
           case Cmd.PostDeleted           => PostDeleted(convId, messageId)
@@ -367,7 +373,6 @@ object SyncRequest {
           case Cmd.RegisterPushToken     => RegisterPushToken(decodeId[PushToken]('token))
           case Cmd.PostSelf              => PostSelf(JsonDecoder[UserInfo]('user))
           case Cmd.PostAddressBook       => PostAddressBook(JsonDecoder.opt[AddressBook]('addressBook).getOrElse(AddressBook.Empty))
-          case Cmd.PostInvitation        => PostInvitation(JsonDecoder[Invitation]('invitation))
           case Cmd.SyncSelfClients       => SyncSelfClients
           case Cmd.SyncSelfPermissions   => SyncSelfPermissions
           case Cmd.SyncClients           => SyncClients(userId)
@@ -385,7 +390,7 @@ object SyncRequest {
       } catch {
         case NonFatal(e) =>
           error(s"Error reading SyncCommand: $cmd", e)
-          ZMessaging.exceptionEvent(e, s"Error reading SyncCommand: $cmd")
+          TrackingService.exception(e, s"Error reading SyncCommand: $cmd")
           Unknown
       }
     }
@@ -428,6 +433,8 @@ object SyncRequest {
         case RegisterPushToken(token)         => putId("token", token)
         case SyncRichMedia(messageId)         => putId("message", messageId)
         case PostSelfPicture(assetId)         => assetId.foreach(putId("asset", _))
+        case PostSelfName(name)               => o.put("name", name)
+        case PostSelfAccentColor(color)       => o.put("color", color.id)
         case PostAvailability(availability)   => o.put("availability", availability.id)
         case PostMessage(_, messageId, time)  =>
           putId("message", messageId)
@@ -476,7 +483,6 @@ object SyncRequest {
           o.put("access", JsonEncoder.encodeAccess(access))
           o.put("access_role", JsonEncoder.encodeAccessRole(accessRole))
         case PostAddressBook(ab) => o.put("addressBook", JsonEncoder.encode(ab))
-        case PostInvitation(i) => o.put("invitation", JsonEncoder.encode(i))
         case PostLiking(_, liking) =>
           o.put("liking", JsonEncoder.encode(liking))
         case PostClientLabel(id, label) =>

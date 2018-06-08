@@ -47,6 +47,8 @@ trait GlobalModule {
   def backend:              BackendConfig
   def tokenService:         GlobalTokenService
   def notifications:        GlobalNotificationsService
+  def accountsService:      AccountsService
+  def calling:              GlobalCallingService
   def prefs:                GlobalPreferences
   def googleApi:            GoogleApi
   def storage:              Database
@@ -96,8 +98,11 @@ class GlobalModuleImpl(val context: AContext, val backend: BackendConfig) extend
   val googleApi:                GoogleApi                        = new GoogleApiImpl(context, backend, prefs)
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
   val network:                  DefaultNetworkModeService        = wire[DefaultNetworkModeService]
+
   val tokenService:             GlobalTokenService               = wire[GlobalTokenService]
 
+  lazy val accountsService:     AccountsService                  = new AccountsServiceImpl(this)
+  lazy val trackingService:     TrackingService                  = TrackingServiceImpl(accountsService)
   lazy val notifications:       GlobalNotificationsService       = wire[GlobalNotificationsServiceImpl]
   lazy val calling:             GlobalCallingService             = new GlobalCallingService
 
@@ -152,9 +157,53 @@ class GlobalModuleImpl(val context: AContext, val backend: BackendConfig) extend
 
   lazy val flowmanager:         FlowManagerService               = wire[DefaultFlowManagerService]
   lazy val mediaManager:        MediaManagerService              = wire[DefaultMediaManagerService]
+}
 
-  private lazy val trackingZmsProvider: TrackingService.ZmsProvider = TrackingService.defaultZmsProvider
-  lazy val trackingService:     TrackingService                  = wire[TrackingServiceImpl]
-
+class EmptyGlobalModule extends GlobalModule {
+  override def accountsService:       AccountsService                                     = ???
+  override def trackingService:       TrackingService                                     = ???
+  override def context:               AContext                                            = ???
+  override def backend:               BackendConfig                                       = ???
+  override def tokenService:          GlobalTokenService                                  = ???
+  override def notifications:         GlobalNotificationsService                          = ???
+  override def calling:               GlobalCallingService                                = ???
+  override def prefs:                 GlobalPreferences                                   = ???
+  override def googleApi:             GoogleApi                                           = ???
+  override def storage:               Database                                            = ???
+  override def metadata:              MetaDataService                                     = ???
+  override def cache:                 CacheService                                        = ???
+  override def bitmapDecoder:         BitmapDecoder                                       = ???
+  override def trimmingLruCache:      Cache[MemoryImageCache.Key, MemoryImageCache.Entry] = ???
+  override def imageCache:            MemoryImageCache                                    = ???
+  override def network:               DefaultNetworkModeService                           = ???
+  override def phoneNumbers:          PhoneNumberService                                  = ???
+  override def timeouts:              Timeouts                                            = ???
+  override def permissions:           PermissionsService                                  = ???
+  override def avs:                   Avs                                                 = ???
+  override def reporting:             GlobalReportingService                              = ???
+  override def decoder:               Response.ResponseBodyDecoder                        = ???
+  override def loginClient:           LoginClient                                         = ???
+  override def regClient:             RegistrationClient                                  = ???
+  override def globalAssetClient:     AssetClient                                         = ???
+  override def globalLoader:          AssetLoader                                         = ???
+  override def videoTranscoder:       VideoTranscoder                                     = ???
+  override def audioTranscoder:       AudioTranscoder                                     = ???
+  override def loaderService:         AssetLoaderService                                  = ???
+  override def cacheCleanup:          CacheCleaningService                                = ???
+  override def accountsStorage:       AccountStorage                                      = ???
+  override def accountsStorageOld:    AccountsStorageOld                                  = ???
+  override def teamsStorage:          TeamsStorage                                        = ???
+  override def recordingAndPlayback:  GlobalRecordAndPlayService                          = ???
+  override def tempFiles:             TempFileService                                     = ???
+  override def clientWrapper:         Future[ClientWrapper]                               = ???
+  override def client:                AsyncClientImpl                                     = ???
+  override def globalClient:          ZNetClient                                          = ???
+  override def imageLoader:           ImageLoader                                         = ???
+  override def blacklistClient:       VersionBlacklistClient                              = ???
+  override def blacklist:             VersionBlacklistService                             = ???
+  override def factory:               ZMessagingFactory                                   = ???
+  override def lifecycle:             UiLifeCycle                                         = ???
+  override def flowmanager:           FlowManagerService                                  = ???
+  override def mediaManager:          MediaManagerService                                 = ???
 }
 

@@ -76,7 +76,6 @@ import org.threeten.bp.Instant
     scenario("SyncRichMedia requests") { SyncRichMedia(MessageId()) should beUnchangedByEncodingAndDecoding }
     scenario("PostAddressBook requests") { PostAddressBook(AddressBook(Seq("test"), Seq(ContactHashes(ContactId(), Set("hash1"))))) should beUnchangedByEncodingAndDecoding }
     scenario("Empty PostAddressBook requests") { PostAddressBook(AddressBook.Empty) should beUnchangedByEncodingAndDecoding }
-    scenario("PostInvitation requests") { forAll((_: PostInvitation) should beUnchangedByEncodingAndDecoding) }
     scenario("PostLiking requests") { forAll((_: PostLiking) should beUnchangedByEncodingAndDecoding) }
     scenario("PostLastRead requests") { forAll((_: PostLastRead) should beUnchangedByEncodingAndDecoding) }
     scenario("SyncPreKeys requests") { forAll((_: SyncPreKeys) should beUnchangedByEncodingAndDecoding) }

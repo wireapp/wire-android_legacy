@@ -22,7 +22,8 @@ import java.util.concurrent.ConcurrentHashMap
 import android.content.Context
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.api.{ErrorResponse, Message, MessageFilter}
+import com.waz.api.impl.ErrorResponse
+import com.waz.api.{Message, MessageFilter}
 import com.waz.model.ConversationData.UnreadCount
 import com.waz.model.MessageData.{MessageDataDao, MessageEntry}
 import com.waz.model._

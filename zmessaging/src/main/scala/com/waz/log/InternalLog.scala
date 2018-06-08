@@ -22,6 +22,8 @@ import java.util.Calendar
 
 import com.waz.ZLog.LogTag
 import com.waz.api.ZmsVersion
+import com.waz.service.ZMessaging
+import com.waz.service.ZMessaging.clock
 
 import scala.collection.mutable
 
@@ -83,17 +85,7 @@ object InternalLog {
     case None    => ""
   }
 
-  def dateTag = {
-    val cal = Calendar.getInstance
-    StringBuilder.newBuilder
-      .append(cal.get(Calendar.YEAR)).append('-')
-      .append(twoc(cal.get(Calendar.MONTH)+1)).append('-')
-      .append(twoc(cal.get(Calendar.DAY_OF_MONTH))).append('_')
-      .append(twoc(cal.get(Calendar.HOUR_OF_DAY))).append(':')
-      .append(twoc(cal.get(Calendar.MINUTE))).append(':')
-      .append(twoc(cal.get(Calendar.SECOND))).append('.')
-      .append(threec(cal.get(Calendar.MILLISECOND))).toString
-  }
+  def dateTag = s"${clock.instant().toString}-TID:${Thread.currentThread().getId}"
 
   private final def twoc(n: Int) =
     if(n < 10) "0"+n.toString

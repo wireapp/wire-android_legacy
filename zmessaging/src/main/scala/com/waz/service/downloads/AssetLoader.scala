@@ -21,7 +21,6 @@ import java.io._
 import java.security.{DigestOutputStream, MessageDigest}
 import java.util.concurrent.atomic.AtomicBoolean
 
-import android.content.{Context => AContext}
 import android.graphics.Bitmap
 import android.media.ExifInterface
 import com.waz.ZLog.ImplicitTag._
@@ -45,7 +44,7 @@ import com.waz.threading.CancellableFuture.CancelException
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.ui.MemoryImageCache
 import com.waz.ui.MemoryImageCache.BitmapRequest
-import com.waz.utils.CancellableStream
+import com.waz.utils.{CancellableStream, returning}
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.wrappers.{Context, URI}
 import com.waz.znet.Response.{DefaultResponseBodyDecoder, ResponseBodyDecoder}
@@ -102,7 +101,7 @@ class AssetLoaderImpl(context:         Context,
 
   override def loadAsset(asset: AssetData, callback: Callback, force: Boolean) = {
     verbose(s"loadAsset: ${asset.id}, isDownloadable?: ${asset.isDownloadable}, force?: $force, mime: ${asset.mime}")
-    asset match {
+    returning(asset match {
       case _ if asset.mime == Mime.Audio.PCM => transcodeAudio(asset, callback)
       case _ => CancellableFuture.lift(cache.getEntry(asset.cacheKey)).flatMap {
         case Some(cd) => CancellableFuture.successful(cd)
@@ -118,7 +117,7 @@ class AssetLoaderImpl(context:         Context,
             case _                         => CancellableFuture.failed(new Exception(s"Not enough information to load asset data: ${asset.id}"))
           }
       }
-    }
+    })(_.failed.foreach(throw _))
   }
 
   private def download(asset: AssetData, callback: Callback) = {
@@ -184,13 +183,13 @@ class AssetLoaderImpl(context:         Context,
     }
   }
 
-  def openStream(uri: URI) = AssetLoader.openStream(context, uri)
+  private def openStream(uri: URI) = AssetLoader.openStream(context, uri)
 
   private def transcodeVideo(cacheKey: CacheKey, mime: Mime, name: Option[String], uri: URI, callback: Callback) = {
     verbose(s"transcodeVideo: cacheKey: $cacheKey, mime: $mime, name: $name, uri: $uri")
     val entry = cache.createManagedFile()
     // TODO: check input type, size, bitrate, maybe we don't need to transcode it
-    videoTranscoder(uri, entry.cacheFile, callback).flatMap { _ =>
+    returning(videoTranscoder(uri, entry.cacheFile, callback).flatMap { _ =>
       verbose(s"loaded video from $cacheKey, resulting file size: ${entry.length}")
       CancellableFuture.lift(cache.move(cacheKey, entry, Mime.Video.MP4, if (mime == Mime.Video.MP4) name else name.map(_ + ".mp4"), cacheLocation = Some(cache.cacheDir)))
         .map { entry =>
@@ -200,10 +199,10 @@ class AssetLoaderImpl(context:         Context,
         }
     }.recoverWith {
       case ex: CancelException => CancellableFuture.failed(ex)
-      case ex: Exception =>
+      case NonFatal(ex) =>
         tracking.exception(ex, s"video transcoding failed for uri")
         addStreamToCache(cacheKey, mime, name, openStream(uri))
-    }
+    })(_.failed.foreach(throw _))
   }
 
   private def addStreamToCache(cacheKey: CacheKey, mime: Mime, name: Option[String], stream: => InputStream) = {

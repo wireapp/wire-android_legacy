@@ -19,6 +19,7 @@ package com.waz.testutils
 
 import com.waz.api.EphemeralExpiration
 import com.waz.api.IConversation.{Access, AccessRole}
+import com.waz.api.impl.AccentColor
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.{Availability, _}
 import com.waz.model.otr.ClientId
@@ -58,6 +59,8 @@ trait EmptySyncServiceTrait extends SyncServiceHandle {
   override def postDeleted(conv: ConvId, msg: MessageId): Future[SyncId] = sid
   override def postRecalled(conv: ConvId, msg: MessageId, recalled: MessageId): Future[SyncId] = sid
   override def postSelfPicture(picture: Option[AssetId]) = sid
+  override def postSelfName(name: String) = sid
+  override def postSelfAccentColor(color: AccentColor) = sid
   override def postAvailability(status: Availability) = sid
   override def postConversationName(id: ConvId, n: String) = sid
   override def postConversationMemberJoin(id: ConvId, members: Seq[UserId]) = sid
@@ -67,7 +70,6 @@ trait EmptySyncServiceTrait extends SyncServiceHandle {
   override def postLastRead(id: ConvId, time: Instant) = sid
   override def postCleared(id: ConvId, time: Instant): Future[SyncId] = sid
   override def postAddressBook(ab: AddressBook) = sid
-  override def postInvitation(i: Invitation) = sid
   override def postTypingState(id: ConvId, t: Boolean) = sid
   override def postOpenGraphData(conv: ConvId, msg: MessageId, time: Instant) = sid
   override def postReceipt(conv: ConvId, message: MessageId, user: UserId, tpe: ReceiptType) = sid

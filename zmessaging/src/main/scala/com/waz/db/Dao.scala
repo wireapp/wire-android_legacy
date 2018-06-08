@@ -152,6 +152,10 @@ abstract class BaseDao[T] extends Reader[T] {
     }
   }
 
+  def maxWithDefault(col: String, default: Long = -1): String = s"SELECT COALESCE(MAX(${col}), $default) FROM ${table.name}"
+
+  def queryForLong(sql: String)(implicit db: DB): Long = withStatement(sql)(_.simpleQueryForLong())
+
   def insertOrIgnore(item: T)(implicit db: DB): T = returning(item)(i => db.insertOrIgnore(table.name, values(i)))
 
   def insertOrReplace(item: T)(implicit db: DB): T = returning(item)(i => db.insertOrReplace(table.name, values(i)))

@@ -28,6 +28,7 @@ import com.waz.model.{PushToken, PushTokenRemoveEvent, UserId}
 import com.waz.service.AccountsService.{Active, InForeground}
 import com.waz.service.ZMessaging.accountTag
 import com.waz.service._
+import com.waz.service.tracking.TrackingService.exception
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.events.{EventContext, Signal}
@@ -36,7 +37,7 @@ import com.waz.utils.{Backoff, ExponentialBackoff, returning}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.control.NonFatal
+import scala.util.control.NoStackTrace
 
 /**
   * Responsible for deciding when to generate and register push tokens and whether they should be active at all.
@@ -162,23 +163,21 @@ class GlobalTokenService(googleApi: GoogleApi,
   }
 
   private def retry[A](f: => A, attempts: Int = 0): Future[A] = {
-    dispatcher(f).future.recoverWith {
+    returning(dispatcher(f).future.recoverWith {
       case ex: IOException =>
         error(s"Failed action on google APIs, probably due to server connectivity error, will retry again", ex)
         for {
+          _ <- if (attempts % logAfterAttempts == 0) exception(new Exception("Too many push token registration attempts") with NoStackTrace, s"Failed to register an FCM push token after $logAfterAttempts attempts") else Future.successful({})
           _ <- CancellableFuture.delay(ResetBackoff.delay(attempts)).future
           _ <- network.networkMode.filter(_ != NetworkMode.OFFLINE).head
           t <- retry(f, attempts + 1)
         } yield t
-
-      case NonFatal(ex) =>
-        error(s"Something went wrong trying using google APIs, aborting", ex)
-        Future.failed(ex)
-    }
+    })(_.failed.foreach(throw _))
   }
 }
 
 object PushTokenService {
+  val logAfterAttempts = 5
   var ResetBackoff: Backoff = new ExponentialBackoff(1000.millis, 10.seconds)
   case class PushSenderId(str: String) extends AnyVal
 }

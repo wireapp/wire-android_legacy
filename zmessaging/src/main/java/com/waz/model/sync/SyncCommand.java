@@ -40,6 +40,8 @@ public enum SyncCommand {
     PostTypingState("post-typing-state"),
     PostConnectionStatus("post-conn-status"),
     PostSelfPicture("post-picture"),
+    PostSelfName("post-name"),
+    PostSelfAccentColor("post-accent-color"),
     PostAvailability("post-availability"),
     PostMessage("post-message"),
     PostDeleted("post-deleted"),
@@ -53,7 +55,6 @@ public enum SyncCommand {
     RegisterPushToken("register-push-token"),
     PostSelf("post-self"),
     PostAddressBook("post-addressbook"),
-    PostInvitation("post-invitation"),
     SyncSelfClients("sync-clients"),   // sync user clients, register current client and update prekeys when needed
     SyncSelfPermissions("sync-self-permissions"),
     SyncClients("sync-user-clients"),

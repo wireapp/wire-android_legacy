@@ -20,7 +20,8 @@ package com.waz.service.messages
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.Message.{Status, Type}
-import com.waz.api.{ErrorResponse, Message}
+import com.waz.api.Message
+import com.waz.api.impl.ErrorResponse
 import com.waz.content.{EditHistoryStorage, MembersStorage, MessagesStorage}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GenericContent._

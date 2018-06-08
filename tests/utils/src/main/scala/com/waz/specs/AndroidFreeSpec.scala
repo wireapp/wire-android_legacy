@@ -19,12 +19,13 @@ package com.waz.specs
 
 import java.util.concurrent.{Executors, ThreadFactory, TimeoutException}
 
-import com.waz.ZLog.{LogTag, error}
+import com.waz.ZLog
+import com.waz.ZLog.LogTag
 import com.waz.log.{InternalLog, SystemLogOutput}
 import com.waz.model.UserId
 import com.waz.service.AccountsService.{AccountState, InForeground, LoggedOut}
+import com.waz.service._
 import com.waz.service.tracking.TrackingService
-import com.waz.service.{AccountContext, AccountsService, ZMessaging}
 import com.waz.testutils.TestClock
 import com.waz.threading.Threading.{Background, IO, ImageDispatcher, Ui}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
@@ -36,10 +37,9 @@ import org.scalatest._
 import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future, Promise}
 
 abstract class AndroidFreeSpec extends FeatureSpec with BeforeAndAfterAll with BeforeAndAfterEach with Matchers with MockFactory with OneInstancePerTest { this: Suite =>
-
   import AndroidFreeSpec._
 
   val clock = AndroidFreeSpec.clock
@@ -49,11 +49,19 @@ abstract class AndroidFreeSpec extends FeatureSpec with BeforeAndAfterAll with B
   val tracking    = mock[TrackingService]
 
   (tracking.exception(_: Throwable, _: String, _: Option[UserId])(_: LogTag)).expects(*, *, *, *).anyNumberOfTimes().onCall { (t, description, _, tag) =>
-    t match {
-      case e: exceptions.TestFailedException => swallowedFailure = Some(e)
-      case _ => error(s"Exception sent to HockeyApp: $description", t)(tag)
-    }
+    Future {
+      t match {
+        case e: exceptions.TestFailedException => swallowedFailure = Some(e)
+        case _ => ZLog.error(s"Exception sent to HockeyApp: $description", t)(tag)
+      }
+    } (Threading.Background)
   }
+
+  ZMessaging.currentGlobal = new EmptyGlobalModule {
+    override def trackingService = tracking
+  }
+  ZMessaging.globalReady = Promise[GlobalModule]()
+  ZMessaging.globalReady.success(ZMessaging.currentGlobal)
 
   val accountStates = Signal[Map[UserId, AccountState]](Map(account1Id -> InForeground))
 
@@ -93,7 +101,7 @@ abstract class AndroidFreeSpec extends FeatureSpec with BeforeAndAfterAll with B
         override def newThread(r: Runnable) = {
           new Thread(r, Threading.testUiThreadName)
         }
-      }))
+      }))(Threading.testUiThreadName)
     }, Threading.testUiThreadName))
   }
 

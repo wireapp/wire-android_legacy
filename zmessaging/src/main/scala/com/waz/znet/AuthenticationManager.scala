@@ -37,7 +37,6 @@ import org.json.JSONObject
 import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
-import scala.util.control.NonFatal
 
 trait AccessTokenProvider {
   def currentToken(): ErrorOr[AccessToken]
@@ -45,8 +44,6 @@ trait AccessTokenProvider {
   //If the user has recently provided a new password, supply it here so that we can attempt to get a new cookie and avoid them being logged out
   def onPasswordReset(emailCredentials: Option[EmailCredentials] = None): ErrorOr[Unit]
 }
-
-case class LoggedOutException(msg: String) extends Throwable
 
 /**
  * Manages authentication token, and dispatches login requests when needed.
@@ -66,7 +63,7 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
   private def withAccount[A](f: (AccountData) => A): CancellableFuture[A] = {
     CancellableFuture.lift(accStorage.get(id)).map {
       case Some(acc) => f(acc)
-      case _         => throw new LoggedOutException("Account has been logged out - aborting all authentication attempts")
+      case _         => throw LoggedOutException
     }
   }
 
@@ -88,7 +85,7 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
   /**
    * Returns current token if not expired or performs access request. Failing that, the user gets logged out
    */
-  override def currentToken() = Serialized("login-client") {
+  override def currentToken() = returning(Serialized("login-client") {
     verbose("currentToken")
     token.flatMap {
       case Some(token) if !isExpired(token) =>
@@ -105,13 +102,13 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
       }
     }
   }.recover {
-    case LoggedOutException(ex) =>
+    case LoggedOutException =>
       warn(s"Request failed as we are logged out")
       Left(ErrorResponse.Unauthorized)
-    case NonFatal(ex) =>
-      warn(s"login failed", ex)
+    case _:CancelException =>
+      warn(s"login cancelled")
       Left(ErrorResponse.Cancelled)
-  }.future
+  }.future)(_.failed.foreach(throw _))
 
   override def onPasswordReset(emailCredentials: Option[EmailCredentials]) =
     Serialized("login-client") {
@@ -157,6 +154,8 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
 }
 
 object AuthenticationManager {
+
+  case object LoggedOutException extends RuntimeException
   val MaxRetryCount = 3
   val ExpireThreshold = 15.seconds // refresh access token on background if it is close to expire
 

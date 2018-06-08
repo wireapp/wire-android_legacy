@@ -28,7 +28,6 @@ import com.waz.model.ConversationData.ConversationDataDao
 import com.waz.model.ConversationMemberData.ConversationMemberDataDao
 import com.waz.model.EditHistory.EditHistoryDao
 import com.waz.model.ErrorData.ErrorDataDao
-import com.waz.model.InvitedContacts.InvitedContactsDao
 import com.waz.model.KeyValueData.KeyValueDataDao
 import com.waz.model.Liking.LikingDao
 import com.waz.model.MessageContentIndexDao
@@ -53,13 +52,13 @@ class ZMessagingDB(context: Context, dbName: String) extends DaoDB(context.getAp
 }
 
 object ZMessagingDB {
-  val DbVersion = 104
+  val DbVersion = 106
 
   lazy val daos = Seq (
     UserDataDao, SearchQueryCacheDao, AssetDataDao, ConversationDataDao,
     ConversationMemberDataDao, MessageDataDao, KeyValueDataDao,
     SyncJobDao, NotificationDataDao, ErrorDataDao, ReceivedPushDataDao,
-    ContactHashesDao, ContactsOnWireDao, InvitedContactsDao, UserClientsDao, LikingDao,
+    ContactHashesDao, ContactsOnWireDao, UserClientsDao, LikingDao,
     ContactsDao, EmailAddressesDao, PhoneNumbersDao, MsgDeletionDao,
     EditHistoryDao, MessageContentIndexDao, PushNotificationEventsDao
   )
@@ -203,6 +202,15 @@ object ZMessagingDB {
     },
     Migration(103, 104) { db =>
       db.execSQL("delete from MessageContentIndex where message_id in (select message_id from MessageContentIndex left join Messages on MessageContentIndex.message_id == Messages._id WHERE Messages._id IS null)")
+    },
+    Migration(104, 105) { db =>
+      db.execSQL("CREATE TABLE PushNotificationEventsCopy(pushId TEXT, event_index INTEGER PRIMARY KEY, decrypted INTEGER, event TEXT, plain BLOB, transient BOOLEAN);")
+      db.execSQL("INSERT INTO PushNotificationEventsCopy (pushId, decrypted, event, plain, transient) SELECT pushid, decrypted, event, plain, transient FROM PushNotificationEvents;")
+      db.execSQL("DROP TABLE PushNotificationEvents;")
+      db.execSQL("ALTER TABLE PushNotificationEventsCopy RENAME TO PushNotificationEvents;")
+    },
+    Migration(105, 106) { db =>
+      db.execSQL("DROP TABLE IF EXISTS InvitedContacts")
     }
   )
 }

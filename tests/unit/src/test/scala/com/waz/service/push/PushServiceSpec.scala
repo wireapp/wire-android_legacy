@@ -19,13 +19,14 @@ package com.waz.service.push
 
 import android.net.Uri
 import com.koushikdutta.async.http.WebSocket
+import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NetworkMode
 import com.waz.api.impl.ErrorResponse
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.UserPreferences.LastStableNotification
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.otr.OtrService
+import com.waz.service.push.PushNotificationEventsStorage.EventHandler
 import com.waz.service.{EventPipeline, NetworkModeService, UiLifeCycle}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
@@ -34,16 +35,15 @@ import com.waz.sync.client.{PushNotificationEncoded, PushNotificationsClient}
 import com.waz.testutils.{TestBackoff, TestGlobalPreferences, TestUserPreferences}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
-import com.waz.utils.events.Signal
+import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.Context
 import com.waz.znet._
 import org.json.{JSONArray, JSONObject}
-import org.scalatest.Ignore
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.concurrent.{Future, Promise}
 
-@Ignore class PushServiceSpec extends AndroidFreeSpec { test =>
+class PushServiceSpec extends AndroidFreeSpec { test =>
 
   val wsConnected = Signal(false)
 
@@ -70,10 +70,15 @@ import scala.concurrent.duration._
   (websocket.connected _).expects().anyNumberOfTimes().returning(wsConnected)
   (websocket.client _).expects().anyNumberOfTimes().returning(wsClient)
 
-  val processedEvents = Signal(Set.empty[Event]).disableAutowiring()
+  val notsHandler = Signal[EventHandler]()
+  (notificationStorage.registerEventHandler (_: EventHandler)(_: EventContext)).expects(*, *).onCall { (handler: EventHandler, ec: EventContext) =>
+    Future(notsHandler ! handler)
+  }
 
-  (pipeline.apply _).expects(*).anyNumberOfTimes().onCall { ev: Traversable[Event] =>
-    processedEvents.mutate(_ ++ ev.toSet)
+  val savedEvents = Signal(Set.empty[PushNotificationEncoded]).disableAutowiring()
+
+  (notificationStorage.saveAll _).expects(*).anyNumberOfTimes().onCall { ev: Seq[PushNotificationEncoded] =>
+    savedEvents.mutate(_ ++ ev.toSet)
     Future.successful({})
   }
   (lifeCycle.uiActive _).expects().anyNumberOfTimes().returning(uiActive)
@@ -115,7 +120,7 @@ import scala.concurrent.duration._
         CancellableFuture.successful(Right( LoadNotificationsResponse(Vector(pushNotification), hasMore = false, None) ))
       )
 
-      getService.syncHistory("cloud messaging push")
+      getService().syncHistory("cloud messaging push")
       result(idPref.signal.filter(_.contains(pushNotification.id)).head)
     }
 
@@ -124,11 +129,11 @@ import scala.concurrent.duration._
       idPref := None
       result(idPref.signal.filter(_.isEmpty).head)
 
-      (client.loadNotifications _).expects(*, *).once().returning(
+      (client.loadLastNotification _).expects(clientId).once().returning(
           CancellableFuture.successful(Right( LoadNotificationsResponse(Vector(pushNotification), hasMore = false, None) ))
       )
 
-      getService
+      getService()
 
       wsClient ! Some(ws)
       wsConnected ! true
@@ -144,7 +149,7 @@ import scala.concurrent.duration._
         CancellableFuture.successful(Right( LoadNotificationsResponse(Vector(notification1, notification2), hasMore = false, None) ))
       )
 
-      getService
+      getService()
       wsClient ! Some(ws)
       wsConnected ! true
 
@@ -164,7 +169,7 @@ import scala.concurrent.duration._
           CancellableFuture.successful(Right( LoadNotificationsResponse(Vector(EmptyPushNotificationEncoded, EmptyPushNotificationEncoded), hasMore = false, None) ))
       )
 
-      val service = getService
+      val service = getService()
       wsClient ! Some(ws)
       wsConnected ! true
 
@@ -187,7 +192,7 @@ import scala.concurrent.duration._
 
       PushService.syncHistoryBackoff = TestBackoff()
 
-      getService
+      getService()
       wsClient ! Some(ws)
       wsConnected ! true
 
@@ -205,7 +210,7 @@ import scala.concurrent.duration._
         CancellableFuture.successful(Right( LoadNotificationsResponse(Vector(notification1, notification2), hasMore = false, None) ))
       )
 
-      val service = getService
+      val service = getService()
       PushService.syncHistoryBackoff = TestBackoff(testDelay = 1.day) // long enough so we don't have to worry about it
       wsClient ! Some(ws)
       wsConnected ! true
@@ -225,7 +230,7 @@ import scala.concurrent.duration._
 
       PushService.syncHistoryBackoff = TestBackoff(testDelay = 1.days) // long enough so we don't have to worry about it
 
-      getService
+      getService()
 
       wsClient ! Some(ws)
       wsConnected ! true
@@ -250,7 +255,7 @@ import scala.concurrent.duration._
         CancellableFuture.successful(Right(LoadNotificationsResponse(Vector(pushNot), hasMore = false, None)))
       )
 
-      getService
+      getService()
       wsClient ! Some(ws)
       wsConnected ! true
 
@@ -281,12 +286,12 @@ import scala.concurrent.duration._
         }
       }
 
-      getService
+      getService()
       wsClient ! Some(ws)
       wsConnected ! true
 
       result(idPref.signal.filter(_.contains(wsNot.id)).head) // processed as second even though received first
-      result(processedEvents.filter(_.size == 2).head)
+      result(savedEvents.filter(_.size == 2).head)
     }
   }
 
@@ -304,7 +309,7 @@ import scala.concurrent.duration._
       )
 
       PushService.syncHistoryBackoff = TestBackoff()
-      getService
+      getService()
       wsConnected ! true
       wsClient ! Some(ws)
 
@@ -326,7 +331,7 @@ import scala.concurrent.duration._
       )
 
       (client.loadNotifications _).expects(Some(pushNotification.id), *).never()
-      val service = getService
+      val service = getService()
 
       service.syncHistory("cloud message push")
 
@@ -334,23 +339,79 @@ import scala.concurrent.duration._
       wsConnected ! true
       result(idPref.signal.filter(_.contains(pushNotification.id)).head)
     }
+
+    scenario("Ensure that push service notification pipeline executes atomically") {
+
+      val event1Json = JsonEncoder { o =>
+        o.put("type",     "conversation.call-message")
+        o.put("convId",   "convId")
+        o.put("time",     clock.instant().toString)
+        o.put("from",     "user_id")
+        o.put("sender",   "client_id")
+        o.put("content",  "abc")
+
+      }
+
+      val event1 = PushNotificationEvent(Uid(), 1, decrypted = false, event1Json, None, transient = false)
+
+      (notificationStorage.encryptedEvents _).expects().returning(Future(Seq(event1)))
+
+      (notificationStorage.setAsDecrypted _).expects(1).returning(Future.successful({}))
+
+      @volatile var decryptedCalls = 0
+      object lock
+      (notificationStorage.getDecryptedRows _).expects(*).twice().onCall { _: Int =>
+        Future {
+          lock.synchronized {
+            decryptedCalls += 1
+
+            decryptedCalls match {
+              case 1 => IndexedSeq(event1.copy(decrypted = true))
+              case 2 => IndexedSeq.empty
+              case _ => fail("Unexpected call to getDecryptedRows")
+            }
+          }
+        }
+      }
+
+      (notificationStorage.removeRows _).expects(*).returning(Future.successful({}))
+
+      val pipelinePromise = Promise[Unit]()
+      val pipeline = new EventPipeline {
+        override def apply(input: Traversable[Event]) =
+          Future(pipelinePromise.success({}))
+      }
+
+      getService(pipeline)
+
+      result(notsHandler.head.flatMap(_.apply()))
+      result(pipelinePromise.future)
+    }
   }
 
-  def getService = new PushServiceImpl(account1Id, context, userPrefs, prefs, receivedPushes, notificationStorage,
-    client, clientId, pipeline, otrService, websocket, network, lifeCycle, tracking, sync)
+
+  def getService(pipeline: EventPipeline = pipeline) = {
+
+    (websocket.client _).expects().anyNumberOfTimes().returning(Signal.const(Option.empty[WebSocketClient]))
+    (websocket.connected _).expects().anyNumberOfTimes().returning(Signal.const(false))
+
+    new PushServiceImpl(account1Id, context, userPrefs, prefs, receivedPushes, notificationStorage,
+      client, clientId, pipeline, otrService, websocket, network, lifeCycle, tracking, sync)
+  }
+
 
   val lastId = Uid("last-id")
   val notJson = s"""
       | {
-      |         "id":"ws-not-id",
-      |         "payload":[
-      |           {
-      |             "type": "user.client-remove",
-      |             "client": {
-      |               "id": "some-client"
-      |             }
-      |          }
-      |        ]
+      |   "id":"ws-not-id",
+      |   "payload":[
+      |     {
+      |       "type": "user.client-remove",
+      |       "client": {
+      |         "id": "some-client"
+      |       }
+      |    }
+      |   ]
       | }
     """.stripMargin
   val notObject = new JSONObject(notJson)

@@ -34,6 +34,7 @@ import com.waz.cache.{CacheEntry, CacheService, Expiration, LocalData}
 import com.waz.content.WireContentProvider.CacheUri
 import com.waz.content._
 import com.waz.model.AssetData.{ProcessingTaskKey, UploadTaskKey}
+import com.waz.model.AssetMetaData.Image.Tag.Medium
 import com.waz.model.AssetStatus.Order._
 import com.waz.model.AssetStatus.{DownloadFailed, UploadCancelled, UploadDone, UploadFailed, UploadInProgress}
 import com.waz.model.ErrorData.AssetError
@@ -63,6 +64,8 @@ trait AssetService {
   def cancelUpload(id: AssetId, msg: MessageId): Future[Unit]
   def markUploadFailed(id: AssetId, status: AssetStatus.Syncable): Future[Any] // should be: Future[SyncId]
   def addImageAsset(image: com.waz.api.ImageAsset, isProfilePic: Boolean = false): Future[AssetData]
+  def createImageFrom(bytes: Array[Byte], isProfilePic: Boolean): Future[AssetData]
+  def createImageFrom(uri: URI, isProfilePic: Boolean): Future[AssetData]
   def addImage(image: AssetData, isProfilePic: Boolean = false): Future[AssetData]
   def updateAssets(data: Seq[AssetData]): Future[Set[AssetData]]
   def getLocalData(id: AssetId): CancellableFuture[Option[LocalData]]
@@ -167,6 +170,16 @@ class AssetServiceImpl(storage:         AssetsStorage,
           addImage(asset, isProfilePic).andThen({ case _ => ref set null })
         case _ => Future.failed(new IllegalArgumentException(s"Unsupported ImageAsset: $image"))
       }
+  }
+
+  def createImageFrom(bytes: Array[Byte], isProfilePic: Boolean) = {
+    val asset = AssetData.newImageAsset(tag = Medium).copy(sizeInBytes = bytes.length, data = Some(bytes))
+    addImage(asset, isProfilePic)
+  }
+
+  def createImageFrom(uri: URI, isProfilePic: Boolean) = {
+    val asset = AssetData.newImageAssetFromUri(tag = Medium, uri = uri)
+    addImage(asset, isProfilePic)
   }
 
   def addImage(asset: AssetData, isProfilePic: Boolean = false): Future[AssetData] = {

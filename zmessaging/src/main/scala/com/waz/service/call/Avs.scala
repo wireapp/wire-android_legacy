@@ -33,17 +33,18 @@ import org.threeten.bp.Instant
 import scala.concurrent.{Future, Promise}
 
 trait Avs {
+  import Avs._
   def registerAccount(callingService: CallingService): Future[WCall]
   def unregisterAccount(wCall: WCall): Future[Unit]
   def onNetworkChanged(wCall: WCall): Future[Unit]
-  def startCall(wCall: WCall, convId: RConvId, isVideoCall: Boolean, isGroup: Boolean, cbrEnabled: Boolean): Future[Int]
-  def answerCall(wCall: WCall, convId: RConvId, cbrEnabled: Boolean): Unit
+  def startCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, convType: WCallConvType.Value, cbrEnabled: Boolean): Future[Int]
+  def answerCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, cbrEnabled: Boolean): Unit
   def onHttpResponse(wCall: WCall, status: Int, reason: String, arg: Pointer): Future[Unit]
   def onConfigRequest(wCall: WCall, error: Int, json: String): Future[Unit]
   def onReceiveMessage(wCall: WCall, msg: String, currTime: Instant, msgTime: Instant, convId: RConvId, userId: UserId, clientId: ClientId): Unit
   def endCall(wCall: WCall, convId: RConvId): Unit
   def rejectCall(wCall: WCall, convId: RConvId): Unit
-  def setVideoSendActive(wCall: WCall, convId: RConvId, active: Boolean): Unit
+  def setVideoSendState(wCall: WCall, convId: RConvId, state: VideoState.Value): Unit
 }
 
 /**
@@ -80,12 +81,12 @@ class AvsImpl() extends Avs {
   }
 
   override def registerAccount(cs: CallingService) = available.flatMap { _ =>
-    verbose(s"Initialising calling for: ${cs.selfUserId} and current client: ${cs.clientId}")
+    verbose(s"Initialising calling for: ${cs.accountId} and current client: ${cs.clientId}")
 
     val callingReady = Promise[Unit]()
 
     val wCall = Calling.wcall_create(
-      cs.selfUserId.str,
+      cs.accountId.str,
       cs.clientId.str,
       new ReadyHandler {
         override def onReady(version: Int, arg: Pointer) = {
@@ -131,7 +132,7 @@ class AvsImpl() extends Avs {
       },
       new VideoReceiveStateHandler {
         override def onVideoReceiveStateChanged(userId: String, state: Int, arg: WCall): Unit =
-          cs.onVideoReceiveStateChanged(VideoReceiveState(state))
+          cs.onVideoStateChanged(userId, VideoState(state))
       },
       null
     )
@@ -164,10 +165,9 @@ class AvsImpl() extends Avs {
 
   override def onNetworkChanged(wCall: WCall) = withAvs(Calling.wcall_network_changed(wCall))
 
+  override def startCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, convType: WCallConvType.Value, cbrEnabled: Boolean) = withAvsReturning(wcall_start(wCall, convId.str, callType.id, convType.id, cbrEnabled), -1)
 
-  override def startCall(wCall: WCall, convId: RConvId, isVideoCall: Boolean, isGroup: Boolean, cbrEnabled: Boolean) = withAvsReturning(wcall_start(wCall, convId.str, isVideoCall, isGroup, cbrEnabled), -1)
-
-  override def answerCall(wCall: WCall, convId: RConvId, cbrEnabled: Boolean) = withAvs(wcall_answer(wCall: WCall, convId.str, cbrEnabled))
+  override def answerCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, cbrEnabled: Boolean) = withAvs(wcall_answer(wCall: WCall, convId.str, callType.id, cbrEnabled))
 
   override def onHttpResponse(wCall: WCall, status: Int, reason: String, arg: Pointer) = withAvs(wcall_resp(wCall, status, reason, arg))
 
@@ -182,7 +182,7 @@ class AvsImpl() extends Avs {
 
   override def rejectCall(wCall: WCall, convId: RConvId) = withAvs(wcall_reject(wCall, convId.str))
 
-  override def setVideoSendActive(wCall: WCall, convId: RConvId, active: Boolean) = withAvs(wcall_set_video_send_active(wCall, convId.str, active))
+  override def setVideoSendState(wCall: WCall, convId: RConvId, state: VideoState.Value) = withAvs(wcall_set_video_send_state(wCall, convId.str, state.id))
 
 }
 
@@ -234,14 +234,34 @@ object Avs {
   }
 
   /**
-    *   WCALL_VIDEO_RECEIVE_STOPPED  0
-    *   WCALL_VIDEO_RECEIVE_STARTED  1
-    *   WCALL_VIDEO_RECEIVE_BAD_CONN 2
-    *   Unknown - internal state     3
+    * WCALL_CALL_TYPE_NORMAL          0
+    * WCALL_CALL_TYPE_VIDEO           1
+    * WCALL_CALL_TYPE_FORCED_AUDIO    2
     */
-  type VideoReceiveState = VideoReceiveState.Value
-  object VideoReceiveState extends Enumeration {
-    val Stopped, Started, BadConnection, Unknown = Value
+  object WCallType extends Enumeration {
+    val Normal, Video, ForcedAudio = Value
+  }
+
+  /**
+    * WCALL_CONV_TYPE_ONEONONE        0
+    * WCALL_CONV_TYPE_GROUP           1
+    * WCALL_CONV_TYPE_CONFERENCE      2
+    */
+  object WCallConvType extends Enumeration {
+    val OneOnOne, Group, Conference = Value
+  }
+
+  /**
+    *   WCALL_VIDEO_STATE_STOPPED           0
+    *   WCALL_VIDEO_STATE_STARTED           1
+    *   WCALL_VIDEO_STATE_BAD_CONN          2
+    *   WCALL_VIDEO_STATE_PAUSED            3
+    *   NoCameraPermission - internal state 4
+    *   Unknown - internal state            5
+    */
+  type VideoState = VideoState.Value
+  object VideoState extends Enumeration {
+    val Stopped, Started, BadConnection, Paused, NoCameraPermission, Unknown = Value
   }
 
   /**

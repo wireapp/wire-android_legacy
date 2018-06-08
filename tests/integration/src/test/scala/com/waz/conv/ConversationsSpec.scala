@@ -21,7 +21,6 @@ import java.lang.Iterable
 
 import akka.pattern.ask
 import com.waz.api.ConversationsList.ConversationCallback
-import com.waz.api.ErrorsList.{ErrorDescription, ErrorListener}
 import com.waz.api.IConversation.Type._
 import com.waz.api._
 import com.waz.model.ErrorData.ErrorDataDao
@@ -134,11 +133,6 @@ class ConversationsSpec extends FeatureSpec with Matchers with OptionValues with
     scenario("Try creating conversation with non-existing user") {
       val users = List(provisionedUserId("auto2"), provisionedUserId("auto3"), UserId()).map(id => api.getUser(id.str))
 
-      var receivedError = None: Option[ErrorDescription]
-      val errors = api.getErrors
-      errors.addErrorListener(new ErrorListener {
-        override def onError(error: ErrorDescription): Unit = receivedError = Some(error)
-      })
       val count = conversations.size()
       var msgs = Seq.empty[MessageData]
       conversations.createGroupConversation(users, new ConversationCallback {
@@ -147,17 +141,13 @@ class ConversationsSpec extends FeatureSpec with Matchers with OptionValues with
       })
 
       withDelay {
-        errors should have size 1
-        receivedError should be('defined)
         withClue(conversations.map(c => (c.getName, c.getType)).mkString(", ")) {
           conversations should have size (count + 1)
         }
         msgs should not be empty
       }
-      // dismiss error
-      receivedError.get.dismiss()
+
       withDelay {
-        errors should be(empty)
         conversations should have size count
         msgs should be(empty)
       }
@@ -207,13 +197,10 @@ class ConversationsSpec extends FeatureSpec with Matchers with OptionValues with
 
     scenario("Try adding not connected user to conversation") {
       val members = conv.getUsers
-      val errors = api.getErrors
-      errors.dismissAll()
 
       withDelay {
         members should have size 2
         listMessages(conv.id) should not be empty
-        errors should be(empty)
       }
 
       awaitUi(1.second)
@@ -222,14 +209,9 @@ class ConversationsSpec extends FeatureSpec with Matchers with OptionValues with
       conv.addMembers(List(api.getUser(provisionedUserId("auto5").str).asInstanceOf[com.waz.api.User]).asJava)
 
       withDelay {
-        errors should have size 1
         members should have size 2
         listMessages(conv.id) should have size count
       }
-      val error = errors.head
-      info(s"got error: ${error.getResponse}")
-      error.getType shouldEqual ErrorType.CANNOT_ADD_UNCONNECTED_USER_TO_CONVERSATION
-      error.dismiss()
 
       withDelay {
         listMessages(conv.id) should have size count

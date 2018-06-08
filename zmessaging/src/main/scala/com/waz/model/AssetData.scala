@@ -19,6 +19,7 @@ package com.waz.model
 
 import android.util.Base64
 import com.waz.model.AssetMetaData.Image.Tag
+import com.waz.model.AssetStatus.UploadCancelled
 import com.waz.service.UserService
 import com.waz.utils.wrappers.DBCursor
 //import com.waz.ZLog.ImplicitTag._
@@ -139,7 +140,7 @@ case class AssetData(id:          AssetId               = AssetId(),
       otrKey    = remoteData.otrKey,
       sha       = remoteData.sha256
     )
-    res.copy(status = res.remoteData.fold(res.status)(_ => UploadDone))
+    res.copy(status = res.remoteData.fold(res.status)(_ => if (res.status != UploadCancelled) UploadDone else res.status))
   }
 }
 

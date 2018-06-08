@@ -66,9 +66,9 @@ object Mime {
     val Tiff    = Mime("image/tiff")
     val Unknown = Mime("image/*")
 
-    def unapply(mime: Mime): Boolean = mime.str.startsWith("image/")
+    def unapply(mime: Mime): Boolean = supported.contains(mime)
 
-    val supported = Set(Gif, Jpg, Png, WebP, Bmp, Tiff)
+    val supported = Set(Gif, Jpg, Png, WebP, Bmp)
   }
 
   object Audio {

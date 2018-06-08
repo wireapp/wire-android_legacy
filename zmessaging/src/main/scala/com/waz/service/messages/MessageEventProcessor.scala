@@ -129,6 +129,9 @@ class MessageEventProcessor(selfUserId:          UserId,
         case (Asset(a, _), _) if a.status == UploadFailed && a.isImage =>
           verbose(s"Received a message about a failed image upload: $id. Dropping")
           Future successful Seq.empty[AssetData]
+        case (Asset(a, _), _) if a.status == UploadCancelled =>
+          verbose(s"Uploader cancelled asset: $id")
+          assets.updateAsset(AssetId(id.str), _.copy(status = UploadCancelled)).map( _.fold(Seq.empty[AssetData])( Seq(_) ))
         case (Asset(a, preview), _ ) =>
           val asset = a.copy(id = AssetId(id.str))
           verbose(s"Received asset without remote data - we will expect another update: $asset")
@@ -244,6 +247,8 @@ class MessageEventProcessor(selfUserId:          UserId,
         content(MessageId(uid.str), msgContent, from, time.instant, sanitized)
       case GenericAssetEvent(_, time, from, proto @ GenericMessage(uid, msgContent), dataId, data) =>
         assetContent(MessageId(uid.str), msgContent, from, time.instant, proto)
+      case _:CallMessageEvent =>
+        MessageData.Empty
       case _ =>
         warn(s"Unexpected event for addMessage: $event")
         MessageData.Empty

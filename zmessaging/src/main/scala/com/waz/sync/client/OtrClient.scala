@@ -98,7 +98,7 @@ class OtrClient(netClient: ZNetClient) {
       o.put("label", client.label)
       o.put("model", client.model)
       o.put("class", client.devType.deviceClass)
-      o.put("cookie", userId.str) //TODO check to see that we don't need to keep track of AccountIds
+      o.put("cookie", userId.str)
       password.map(_.str).foreach(o.put("password", _))
     }
     netClient.withErrorHandling("postClient", Request.Post(clientsPath, data)) {

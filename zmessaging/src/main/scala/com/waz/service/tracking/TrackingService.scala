@@ -20,13 +20,15 @@ package com.waz.service.tracking
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.model._
-import com.waz.service.ZMessaging
+import com.waz.service.call.Avs.AvsClosedReason
 import com.waz.service.call.CallInfo
 import com.waz.service.call.CallInfo.CallState.{OtherCalling, SelfCalling, SelfConnected, SelfJoining}
 import com.waz.service.tracking.ContributionEvent.fromMime
+import com.waz.service.tracking.TrackingService.ZmsProvider
+import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.SerialDispatchQueue
 import com.waz.utils.RichInstant
-import com.waz.utils.events.{EventContext, EventStream}
+import com.waz.utils.events.{EventContext, EventStream, Signal}
 
 import scala.annotation.tailrec
 import scala.concurrent.Future
@@ -35,38 +37,57 @@ import scala.util.Try
 trait TrackingService {
   def events: EventStream[(Option[ZMessaging], TrackingEvent)]
 
-  def track(event: TrackingEvent, userId: Option[UserId] = None): Unit
+  def track(event: TrackingEvent, userId: Option[UserId] = None): Future[Unit]
 
-  def loggedOut(reason: String, userId: UserId): Unit = track(LoggedOutEvent(reason), Some(userId))
+  def loggedOut(reason: String, userId: UserId): Future[Unit] =
+    track(LoggedOutEvent(reason), Some(userId))
 
-  def optIn(): Unit = track(OptInEvent)
-  def optOut(): Unit = track(OptOutEvent)
+  def optIn(): Future[Unit] = track(OptInEvent)
+  def optOut(): Future[Unit] = track(OptOutEvent)
 
-  def contribution(action: ContributionEvent.Action): Unit
-  def assetContribution(assetId: AssetId, userId: UserId): Unit
+  def contribution(action: ContributionEvent.Action): Future[Unit]
+  def assetContribution(assetId: AssetId, userId: UserId): Future[Unit]
 
-  def exception(e: Throwable, description: String, userId: Option[UserId] = None)(implicit tag: LogTag): Unit
-  def crash(e: Throwable): Unit
+  def exception(e: Throwable, description: String, userId: Option[UserId] = None)(implicit tag: LogTag): Future[Unit]
+  def crash(e: Throwable): Future[Unit]
 
-  def integrationAdded(integrationId: IntegrationId, convId: ConvId, method: IntegrationAdded.Method): Unit
-  def integrationRemoved(integrationId: IntegrationId): Unit
-  def historyBackedUp(isSuccess: Boolean): Unit
-  def historyRestored(isSuccess: Boolean): Unit
+  def integrationAdded(integrationId: IntegrationId, convId: ConvId, method: IntegrationAdded.Method): Future[Unit]
+  def integrationRemoved(integrationId: IntegrationId): Future[Unit]
+  def historyBackedUp(isSuccess: Boolean): Future[Unit]
+  def historyRestored(isSuccess: Boolean): Future[Unit]
 
-  def trackCallState(userId: UserId, callInfo: CallInfo): Unit
+  def trackCallState(userId: UserId, callInfo: CallInfo, reason: Option[AvsClosedReason] = None): Future[Unit]
 }
 
-class TrackingServiceImpl(zmsProvider: TrackingService.ZmsProvider = TrackingService.defaultZmsProvider) extends TrackingService {
+object TrackingService {
+
+  type ZmsProvider = Option[UserId] => Future[Option[ZMessaging]]
+
+  implicit val dispatcher = new SerialDispatchQueue(name = "TrackingService")
+  private[waz] implicit val ec: EventContext = EventContext.Global
+
+  def exception(e: Throwable, description: String, userId: Option[UserId] = None)(implicit tag: LogTag): Future[Unit] = {
+    ZMessaging.globalModule.map(_.trackingService.exception(e, description, userId)(tag))
+  }
+
+  def track(event: TrackingEvent, userId: Option[UserId] = None): Future[Unit] =
+    ZMessaging.globalModule.map(_.trackingService.track(event, userId))
+
+  trait NoReporting { self: Throwable => }
+
+}
+
+class TrackingServiceImpl(curAccount: Signal[Option[UserId]], zmsProvider: ZmsProvider) extends TrackingService {
   import TrackingService._
 
   val events = EventStream[(Option[ZMessaging], TrackingEvent)]()
 
-  override def track(event: TrackingEvent, userId: Option[UserId] = None): Unit = (userId match {
-    case Some(id) => zmsProvider(id)
-    case _        => zmsProvider.current
-  }).map { events ! _ -> event }
+  override def track(event: TrackingEvent, userId: Option[UserId] = None): Future[Unit] =
+    zmsProvider(userId).map(events ! _ -> event)
 
-  override def contribution(action: ContributionEvent.Action): Unit = zmsProvider.current.map {
+  private def current = curAccount.head.flatMap(zmsProvider)
+
+  override def contribution(action: ContributionEvent.Action) = current.map {
     case Some(z) =>
       for {
         Some(convId) <- z.convsStats.selectedConversationId.head
@@ -80,12 +101,12 @@ class TrackingServiceImpl(zmsProvider: TrackingService.ZmsProvider = TrackingSer
     case _ => //
   }
 
-  override def exception(e: Throwable, description: String, userId: Option[UserId] = None)(implicit tag: LogTag): Unit = {
+  override def exception(e: Throwable, description: String, userId: Option[UserId] = None)(implicit tag: LogTag) = {
     val cause = rootCause(e)
     track(ExceptionEvent(cause.getClass.getSimpleName, details(cause), description, throwable = Some(e))(tag), userId)
   }
 
-  override def crash(e: Throwable): Unit = {
+  override def crash(e: Throwable) = {
     val cause = rootCause(e)
     track(CrashEvent(cause.getClass.getSimpleName, details(cause), throwable = Some(e)))
   }
@@ -99,7 +120,7 @@ class TrackingServiceImpl(zmsProvider: TrackingService.ZmsProvider = TrackingSer
   private def details(rootCause: Throwable) =
     Try(rootCause.getStackTrace).toOption.filter(_.nonEmpty).map(_(0).toString).getOrElse("")
 
-  override def assetContribution(assetId: AssetId, userId: UserId): Unit = zmsProvider(userId).map {
+  override def assetContribution(assetId: AssetId, userId: UserId) = zmsProvider(Some(userId)).map {
     case Some(z) =>
       for {
         Some(msg)   <- z.messagesStorage.get(MessageId(assetId.str))
@@ -112,7 +133,7 @@ class TrackingServiceImpl(zmsProvider: TrackingService.ZmsProvider = TrackingSer
     case _ => //
   }
 
-  override def integrationAdded(integrationId: IntegrationId, convId: ConvId, method: IntegrationAdded.Method) = zmsProvider.current.map {
+  override def integrationAdded(integrationId: IntegrationId, convId: ConvId, method: IntegrationAdded.Method) = current.map {
     case Some(z) =>
       for {
         userIds <- z.membersStorage.activeMembers(convId).head
@@ -128,10 +149,9 @@ class TrackingServiceImpl(zmsProvider: TrackingService.ZmsProvider = TrackingSer
     track(if (isSuccess) HistoryBackupSucceeded else HistoryBackupFailed)
 
   override def historyRestored(isSuccess: Boolean) =
-    if (isSuccess) track(HistoryRestoreSucceeded)
-    else events ! None -> HistoryRestoreFailed
+    track(if (isSuccess) HistoryRestoreSucceeded else HistoryRestoreFailed)
 
-  override def trackCallState(userId: UserId, callInfo: CallInfo) =
+  override def trackCallState(userId: UserId, callInfo: CallInfo, reason: Option[AvsClosedReason] = None) =
     ((callInfo.prevState, callInfo.state) match {
       case (None, Some(SelfCalling))      => Some("initiated")
       case (None, Some(OtherCalling))     => Some("received")
@@ -141,9 +161,12 @@ class TrackingServiceImpl(zmsProvider: TrackingService.ZmsProvider = TrackingSer
       case _ =>
         warn(s"Unexpected call state change: ${callInfo.prevState} => ${callInfo.state}, not tracking")
         None
-    }).foreach { eventName =>
+    }).fold(Future.successful({})) { eventName =>
+
+      val callEnded = callInfo.state.isEmpty && callInfo.prevState.isDefined
+
       for {
-        Some(z)  <- zmsProvider(userId)
+        Some(z)  <- zmsProvider(Some(userId))
         isGroup  <- z.conversations.isGroupConversation(callInfo.convId)
         memCount <- z.membersStorage.activeMembers(callInfo.convId).map(_.size).head
         withService <- z.conversations.isWithService(callInfo.convId)
@@ -151,46 +174,32 @@ class TrackingServiceImpl(zmsProvider: TrackingService.ZmsProvider = TrackingSer
           if (isGroup)
             z.convsStorage.get(callInfo.convId).collect { case Some(conv) => !conv.isTeamOnly }.map(Some(_))
           else Future.successful(None)
-        uiActive <- ZMessaging.currentGlobal.lifecycle.uiActive.head
-      } yield
-        track(new CallingEvent(
-          eventName,
-          callInfo.isVideoCall,
-          isGroup,
-          memCount,
-          withService,
-          uiActive,
-          callInfo.caller != z.selfUserId,
-          withGuests,
-          Option(callInfo.maxParticipants).filter(_ > 0),
-          callInfo.estabTime.map(est => callInfo.joinedTime.getOrElse(est).until(est)),
-          callInfo.endTime.map(end => callInfo.estabTime.getOrElse(end).until(end)),
-          callInfo.endReason
-        ))
+        _ <-
+          track(new CallingEvent(
+            eventName,
+            callInfo.startedAsVideoCall,
+            isGroup,
+            memCount,
+            withService,
+            callInfo.caller != z.selfUserId,
+            withGuests,
+            Option(callInfo.maxParticipants).filter(_ > 0),
+            callInfo.estabTime.map(est => callInfo.joinedTime.getOrElse(est).until(est)),
+            callInfo.endTime.map(end => callInfo.estabTime.getOrElse(end).until(end)),
+            reason,
+            if (callEnded) Some(callInfo.wasVideoToggled) else None
+          ))
+      } yield {}
     }
 }
 
-object TrackingService {
-  implicit val dispatcher = new SerialDispatchQueue(name = "TrackingService")
-  private[waz] implicit val ec: EventContext = EventContext.Global
+object TrackingServiceImpl {
 
-  trait ZmsProvider {
-    def current: Future[Option[ZMessaging]]
-    def apply(userId: UserId): Future[Option[ZMessaging]]
-  }
+  import com.waz.threading.Threading.Implicits.Background
 
-  val defaultZmsProvider = new ZmsProvider {
-    override def apply(userId: UserId): Future[Option[ZMessaging]] = ZMessaging.accountsService.flatMap(_.getZms(userId))
-    override def current: Future[Option[ZMessaging]] = ZMessaging.accountsService.flatMap(_.activeZms.head)
-  }
-
-  def exception(e: Throwable, description: String, userId: Option[UserId] = None)(implicit tag: LogTag): Unit =
-    ZMessaging.globalModule.map(_.trackingService.exception(e, description, userId)(tag))
-
-  def track(event: TrackingEvent, userId: Option[UserId] = None): Unit =
-    ZMessaging.globalModule.map(_.trackingService.track(event, userId))
-
-  trait NoReporting { self: Throwable => }
-
+  def apply(accountsService: AccountsService): TrackingServiceImpl =
+    new TrackingServiceImpl(
+      accountsService.activeAccountId,
+      (userId: Option[UserId]) => userId.fold(Future.successful(Option.empty[ZMessaging]))(uId => accountsService.zmsInstances.head.map(_.find(_.selfUserId == uId))))
 }
 

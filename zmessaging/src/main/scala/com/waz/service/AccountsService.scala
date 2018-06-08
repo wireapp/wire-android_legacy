@@ -21,8 +21,8 @@ import java.io.File
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.api.impl._
-import com.waz.api.{ErrorResponse => _, _}
+import com.waz.api.impl.ErrorResponse
+import com.waz.api._
 import com.waz.content.GlobalPreferences._
 import com.waz.content.UserPreferences
 import com.waz.model.AccountData.Password
@@ -115,12 +115,12 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
 
   implicit val ec: EventContext = EventContext.Global
 
-  val context       = global.context
-  val prefs         = global.prefs
-  val storageOld    = global.accountsStorageOld
-  val phoneNumbers  = global.phoneNumbers
-  val regClient     = global.regClient
-  val loginClient   = global.loginClient
+  lazy val context       = global.context
+  lazy val prefs         = global.prefs
+  lazy val storageOld    = global.accountsStorageOld
+  lazy val phoneNumbers  = global.phoneNumbers
+  lazy val regClient     = global.regClient
+  lazy val loginClient   = global.loginClient
 
   private val activeAccountPref      = prefs(ActiveAccountPref)
   private val firstTimeWithTeamsPref = prefs(FirstTimeWithTeams)
@@ -334,14 +334,14 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
     zmsInstances.head.map(_.find(_.selfUserId == userId))
   }
 
-  //TODO optional delete history
+  //TODO optional delete history (https://github.com/wireapp/android-project/issues/51)
   def logout(userId: UserId) = {
     verbose(s"logout: $userId")
     for {
       current       <- activeAccountId.head
       otherAccounts <- accountsWithManagers.head.map(_.filter(userId != _))
       _ <- if (current.contains(userId)) setAccount(otherAccounts.headOption) else Future.successful(())
-      _ <- storage.flatMap(_.remove(userId)) //TODO pass Id to some sort of clean up service before removing
+      _ <- storage.flatMap(_.remove(userId)) //TODO pass Id to some sort of clean up service before removing (https://github.com/wireapp/android-project/issues/51)
     } yield {}
   }
 
@@ -385,19 +385,21 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
   override def verifyPhoneNumber(phone: PhoneNumber, code: ConfirmationCode, dryRun: Boolean) = {
     verbose(s"verifyPhoneNumber: $phone, $code, $dryRun")
     phoneNumbers.normalize(phone).flatMap { normalizedPhone =>
-      regClient.verifyRegistrationMethod(Left(normalizedPhone.getOrElse(phone)), code, dryRun).map(_.fold(Left(_), _ => Right({}))) //TODO handle label and cookie!
+      regClient.verifyRegistrationMethod(Left(normalizedPhone.getOrElse(phone)), code, dryRun).map(_.fold(Left(_), _ => Right({})))
+      //TODO handle label and cookie!(https://github.com/wireapp/android-project/issues/51)
     }
   }
 
   override def verifyEmailAddress(email: EmailAddress, code: ConfirmationCode, dryRun: Boolean = true) = {
     verbose(s"verifyEmailAddress: $email, $code, $dryRun")
-    regClient.verifyRegistrationMethod(Right(email), code, dryRun).map(_.fold(Left(_), _ => Right({}))) //TODO handle label and cookie!
+    regClient.verifyRegistrationMethod(Right(email), code, dryRun).map(_.fold(Left(_), _ => Right({})))
+    //TODO handle label and cookie! (https://github.com/wireapp/android-project/issues/51)
   }
 
   override def login(loginCredentials: Credentials) = {
     verbose(s"login: $loginCredentials")
     loginClient.login(loginCredentials).future.flatMap {
-      case Right((token, Some(cookie), _)) => //TODO handle label
+      case Right((token, Some(cookie), _)) => //TODO handle label (https://github.com/wireapp/android-project/issues/51)
         loginClient.getSelfUserInfo(token).flatMap {
           case Right(user) => for {
             _ <- addAccountEntry(user, cookie, Some(token), loginCredentials)

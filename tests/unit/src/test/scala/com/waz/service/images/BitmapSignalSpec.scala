@@ -19,6 +19,7 @@ package com.waz.service.images
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NetworkMode
+import com.waz.log.{InternalLog, SystemLogOutput}
 import com.waz.model._
 import com.waz.service.NetworkModeService
 import com.waz.service.assets.AssetService.BitmapResult.BitmapLoaded

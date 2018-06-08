@@ -31,12 +31,12 @@ import com.waz.service.call._
 import com.waz.service.conversation._
 import com.waz.service.downloads.{AssetLoader, AssetLoaderImpl}
 import com.waz.service.images.{ImageAssetGenerator, ImageLoader, ImageLoaderImpl}
-import com.waz.service.invitations.InvitationServiceImpl
 import com.waz.service.media._
 import com.waz.service.messages._
 import com.waz.service.otr._
 import com.waz.service.push._
 import com.waz.service.teams.{TeamsService, TeamsServiceImpl}
+import com.waz.service.tracking.TrackingService
 import com.waz.sync._
 import com.waz.sync.client._
 import com.waz.sync.handler._
@@ -207,7 +207,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val calling: CallingService                    = wire[CallingService]
   lazy val contacts: ContactsServiceImpl              = wire[ContactsServiceImpl]
   lazy val typing: TypingService                      = wire[TypingService]
-  lazy val invitations                                = wire[InvitationServiceImpl]
   lazy val richmedia                                  = wire[RichMediaService]
   lazy val giphy                                      = wire[GiphyService]
   lazy val youtubeMedia                               = wire[YouTubeMediaService]
@@ -231,7 +230,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val gcmSync                                    = wire[PushTokenSyncHandler]
   lazy val typingSync                                 = wire[TypingSyncHandler]
   lazy val richmediaSync                              = wire[RichMediaSyncHandler]
-  lazy val invitationSync                             = wire[InvitationSyncHandler]
   lazy val messagesSync                               = wire[MessagesSyncHandler]
   lazy val otrSync: OtrSyncHandler                    = wire[OtrSyncHandlerImpl]
   lazy val reactionsSync                              = wire[ReactionsSyncHandler]
@@ -309,6 +307,9 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   }
 }
 
+/**
+  * All vars are there for tests only - do not modify from production code!!
+  */
 object ZMessaging { self =>
 
   def accountTag[A: reflect.Manifest](userId: UserId): LogTag = s"${implicitly[reflect.Manifest[A]].runtimeClass.getSimpleName}#${userId.str.take(8)}"
@@ -329,24 +330,18 @@ object ZMessaging { self =>
   def useStagingBackend(): Unit = useBackend(BackendConfig.StagingBackend)
   def useProdBackend(): Unit = useBackend(BackendConfig.ProdBackend)
 
-  private lazy val _global: GlobalModuleImpl = new GlobalModuleImpl(context, backend)
-  private lazy val _accounts: AccountsServiceImpl = new AccountsServiceImpl(_global)
-  private lazy val ui: UiModule = new UiModule(_accounts)
+  private lazy val _global: GlobalModule = new GlobalModuleImpl(context, backend)
+  private lazy val ui: UiModule = new UiModule(_global)
 
   //Try to avoid using these - map from the futures instead.
-  private [waz] var currentUi: UiModule = _
-  private [waz] var currentGlobal: GlobalModuleImpl = _
-  var currentAccounts: AccountsServiceImpl = _
+  var currentUi:       UiModule = _
+  var currentGlobal:   GlobalModule = _
+  var currentAccounts: AccountsService = _
 
-  def getCurrentGlobal(): GlobalModule = currentGlobal // for Java
+  var globalReady = Promise[GlobalModule]()
 
-  private lazy val globalReady = Promise[GlobalModule]()
-  private lazy val accsReady = Promise[AccountsServiceImpl]()
-
-  lazy val globalModule:    Future[GlobalModule]    = globalReady.future
-  lazy val accountsService: Future[AccountsServiceImpl] = accsReady.future
-
-  def exceptionEvent(e: Throwable, description: String): Future[Unit] = globalModule.map(_.trackingService.exception(e, description))(Threading.Background)
+  def globalModule:    Future[GlobalModule]    = globalReady.future
+  def accountsService: Future[AccountsService] = globalModule.map(_.accountsService)(Threading.Background)
 
   def onCreate(context: Context) = {
     Threading.assertUiThread()
@@ -355,10 +350,9 @@ object ZMessaging { self =>
       this.context = context.getApplicationContext
       currentUi = ui
       currentGlobal = _global
-      currentAccounts = _accounts
+      currentAccounts = currentGlobal.accountsService
 
       globalReady.success(_global)
-      accsReady.success(_accounts)
 
       JobManager.create(context).addJobCreator(new JobCreator {
         override def create(tag: String) =
@@ -375,7 +369,7 @@ object ZMessaging { self =>
     case ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN |
          ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW |
          ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL =>
-      exceptionEvent(new RuntimeException(s"onTrimMemory($level)"), null)
+      TrackingService.exception(new RuntimeException(s"onTrimMemory($level)"), null)
       Threading.Background {
         currentGlobal.cache.deleteExpired()
         currentGlobal.imageCache.clear()

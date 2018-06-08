@@ -22,7 +22,7 @@ import com.evernote.android.job._
 import com.evernote.android.job.util.support.PersistableBundleCompat
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.{error, verbose}
-import com.waz.model.{AccountId, UserId}
+import com.waz.model.UserId
 import com.waz.service.AccountsService.InBackground
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading

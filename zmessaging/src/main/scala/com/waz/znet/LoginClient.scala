@@ -89,7 +89,7 @@ class LoginClientImpl(client: AsyncClient, backend: BackendConfig, tracking: Tra
       request.map {
         case Left(error) =>
           failedAttempts += 1
-          lastResponse = error.getCode
+          lastResponse = error.code
           Left(error)
         case resp =>
           failedAttempts = 0

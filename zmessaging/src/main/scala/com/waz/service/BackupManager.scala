@@ -18,6 +18,8 @@
 package com.waz.service
 
 import java.io._
+import java.text.SimpleDateFormat
+import java.util.Locale
 import java.util.zip.{ZipFile, ZipOutputStream}
 
 import com.waz.ZLog.ImplicitTag._
@@ -63,7 +65,7 @@ object BackupManager {
 
   object BackupMetadata {
 
-    def currentPlatform: String = "Android"
+    def currentPlatform: String = "android"
     def currentDbVersion: Int = ZMessagingDB.DbVersion
 
     implicit def backupMetadataEncoder: JsonEncoder[BackupMetadata] = new JsonEncoder[BackupMetadata] {
@@ -93,7 +95,10 @@ object BackupManager {
     }
   }
 
-  def backupZipFileName(userHandle: String): String = s"Wire-$userHandle-Backup_${Instant.now().toString}.Android_wbu"
+  def backupZipFileName(userHandle: String): String = {
+    val timestamp = new SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Instant.now().getEpochSecond * 1000)
+    s"Wire-$userHandle-Backup_$timestamp.android_wbu"
+  }
   def backupMetadataFileName: String = "export.json"
 
   def getDbFileName(id: UserId): String = id.str

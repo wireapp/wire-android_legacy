@@ -38,8 +38,7 @@ import com.waz.sync.client.UserSearchClient.UserSearchEntry
 import com.waz.sync.client.{CredentialsUpdateClient, UsersClient}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils.events._
-import com.waz.utils.wrappers.AndroidURIUtil
-import com.waz.utils.RichFutureEither
+import com.waz.utils.wrappers.{AndroidURIUtil, URI}
 import com.waz.utils.{RichInstant, _}
 import com.waz.znet.ZNetClient.ErrorOr
 
@@ -54,7 +53,6 @@ trait UserService {
 
   def selfUser: Signal[UserData]
 
-  def getSelfUserId: Future[Option[UserId]]
   def getSelfUser: Future[Option[UserData]]
   def getOrCreateUser(id: UserId): Future[UserData]
   def updateUserData(id: UserId, updater: UserData => UserData): Future[Option[(UserData, UserData)]]
@@ -85,7 +83,12 @@ trait UserService {
   def updateName(name: String): Future[Unit]
   def updateAccentColor(color: AccentColor): Future[Unit]
   def updateAvailability(availability: Availability): Future[Unit]
-  def updateSelfPicture(image: com.waz.api.ImageAsset): Future[Unit] //TODO take URIs or Array[Byte]
+
+  def storeAvailabilities(availabilities: Map[UserId, Availability]): Future[Seq[(UserData, UserData)]]
+  def updateSelfPicture(image: com.waz.api.ImageAsset): Future[Unit]
+  def updateSelfPicture(image: Array[Byte]): Future[Unit]
+  def updateSelfPicture(image: URI): Future[Unit]
+  
   def addUnsplashPicture(): Future[Unit]
 }
 
@@ -182,8 +185,6 @@ class UserServiceImpl(selfUserId:        UserId,
     sync.syncUsers(id)
     UserData(id, None, DefaultUserName, None, None, connection = ConnectionStatus.Unconnected, searchKey = SearchKey(DefaultUserName), handle = None)
   })
-
-  override def getSelfUserId = Future successful Some(selfUserId)
 
   override def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[Date] = None, message: Option[String] = None) =
     usersStorage.update(id, { user => returning(user.updateConnectionStatus(status, time, message))(u => verbose(s"updateConnectionStatus($u)")) }) map {
@@ -337,9 +338,7 @@ class UserServiceImpl(selfUserId:        UserId,
 
   override def updateName(name: String) = {
     verbose(s"updateName: $name")
-    //TODO break this `postSelfUser(UserInfo)` into separate sync jobs for the different properties, or just stop using UserInfo
-    //The ultimate call to /self only takes accentId, name and Seq(assetId)
-    updateAndSync(_.copy(name = name), _ => sync.postSelfUser(UserInfo(selfUserId, Some(name))))
+    updateAndSync(_.copy(name = name), _ => sync.postSelfName(name))
   }
 
   override def updateAccentColor(color: AccentColor) = {
@@ -352,11 +351,31 @@ class UserServiceImpl(selfUserId:        UserId,
     updateAndSync(_.copy(availability = availability), _ => sync.postAvailability(availability)).map(_ => {})
   }
 
-  override def updateSelfPicture(image: com.waz.api.ImageAsset) = {
-    verbose(s"updateSelfPicture($image)")
-    assets.addImageAsset(image, isProfilePic = true) flatMap { asset =>
-      updateAndSync(_.copy(picture = Some(asset.id)), _ => sync.postSelfPicture(Some(asset.id)))
+  override def storeAvailabilities(availabilities: Map[UserId, Availability]) = {
+    verbose(s"storeAvailabilities($availabilities)")
+    usersStorage.updateAll2(availabilities.keySet, u => availabilities.get(u.id).fold(u)(av => u.copy(availability = av)))
+  }
+
+  override def updateSelfPicture(image: com.waz.api.ImageAsset) =
+    updateAndSyncSelfPicture {
+      verbose(s"updateSelfPicture($image)")
+      assets.addImageAsset(image, isProfilePic = true)
     }
+
+  override def updateSelfPicture(bytes: Array[Byte]) =
+    updateAndSyncSelfPicture {
+      verbose(s"updateSelfPicture(byte array of length: ${bytes.length})")
+      assets.createImageFrom(bytes, isProfilePic = true)
+    }
+
+  override def updateSelfPicture(uri: URI) =
+    updateAndSyncSelfPicture {
+      verbose(s"updateSelfPicture($uri)")
+      assets.createImageFrom(uri, isProfilePic = true)
+    }
+
+  private def updateAndSyncSelfPicture(asset: Future[AssetData]) = asset.flatMap { a =>
+    updateAndSync(_.copy(picture = Some(a.id)), _ => sync.postSelfPicture(Some(a.id)))
   }
 
   def addUnsplashPicture() = {

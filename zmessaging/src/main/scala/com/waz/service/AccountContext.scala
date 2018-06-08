@@ -18,7 +18,7 @@
 package com.waz.service
 
 import com.waz.ZLog.{LogTag, verbose}
-import com.waz.model.{AccountId, UserId}
+import com.waz.model.UserId
 import com.waz.service.AccountsService.LoggedOut
 import com.waz.service.ZMessaging.accountTag
 import com.waz.threading.SerialDispatchQueue

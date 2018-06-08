@@ -19,7 +19,7 @@ package com.waz.sync
 
 import android.util.Log
 import com.waz.ZLog._
-import com.waz.api
+import com.waz.api.impl.ErrorResponse
 import com.waz.api.{SyncState, ZmsVersion}
 import com.waz.model.sync._
 import com.waz.model.{ConvId, SyncId, UserId}
@@ -97,7 +97,7 @@ object SyncRequestServiceImpl {
 
   val ProgressUnknown = -1
 
-  case class Data(state: SyncState = SyncState.COMPLETED, progress: Int = 0, errors: Seq[api.ErrorResponse] = Nil)
+  case class Data(state: SyncState = SyncState.COMPLETED, progress: Int = 0, errors: Seq[ErrorResponse] = Nil)
 
   val MaxSyncAttempts = 20
 
