@@ -514,7 +514,7 @@ class CallingService(val accountId:       UserId,
 
 object CallingService {
 
-  val VideoCallMaxMembers: Int = 2
+  val VideoCallMaxMembers: Int = 4
 
   val CallConfigPath = "/calls/config"
 
