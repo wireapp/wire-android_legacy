@@ -186,7 +186,7 @@ class CallingService(val accountId:       UserId,
   def onEstablishedCall(convId: RConvId, userId: UserId) = withConv(convId) { (_, conv) =>
     verbose(s"call established for conv: ${conv.id}, userId: $userId, time: ${clock.instant}")
     updateActiveCall { c =>
-      setVideoSendState(conv.id, if (Started.equals(c.videoSendState)) VideoState.Started else VideoState.Stopped) //will upgrade call videoSendState
+      setVideoSendState(conv.id, c.videoSendState) //will upgrade call videoSendState
       setCallMuted(c.muted) //Need to set muted only after call is established
       //on est. group call, switch from self avatar to other user now in case `onGroupChange` is delayed
       val others = c.others + userId - accountId
@@ -308,7 +308,7 @@ class CallingService(val accountId:       UserId,
       vbr <- userPrefs.preference(UserPreferences.VBREnabled).apply()
     } yield {
       val callType =
-        if (isVideo && mems.size > VideoCallMaxMembers) Avs.WCallType.ForcedAudio
+        if (mems.size > VideoCallMaxMembers) Avs.WCallType.ForcedAudio
         else if (isVideo) Avs.WCallType.Video
         else Avs.WCallType.Normal
 
@@ -320,6 +320,8 @@ class CallingService(val accountId:       UserId,
               verbose(s"Answering call")
               avs.answerCall(w, conv.remoteId, callType, !vbr)
               updateActiveCall(_.updateCallState(SelfJoining))("startCall/OtherCalling")
+              if (forceOption)
+                setVideoSendState(convId, if (isVideo)  Avs.VideoState.Started else Avs.VideoState.Stopped)
             case _ =>
               warn("Tried to join an already joined/connecting call - ignoring")
           }
@@ -414,13 +416,22 @@ class CallingService(val accountId:       UserId,
     }("setCallMuted")
   }
 
+  /**
+    * This method should NOT be called before we have permissions AND while the call is still incoming. Once established,
+    * we do call this call this, to convert NoCameraPermission to state Stopped.
+    */
   def setVideoSendState(convId: ConvId, state: VideoState.Value): Unit = {
     withConv(convId) { (w, conv) =>
-      verbose(s"setVideoSendActive: $convId, $state")
+      val targetSt = state match {
+        case NoCameraPermission => Stopped //NoCameraPermission is only valid for incoming
+        case c => c
+      }
+
+      verbose(s"setVideoSendActive: $convId, providedState: $state, targetState: $targetSt")
       updateCallInfo(convId, { c =>
-        if (state == VideoState.Started) mediaManagerService.setSpeaker(true)
-        avs.setVideoSendState(w, conv.remoteId, state)
-        c.updateVideoState(accountId, state)
+        if (targetSt == VideoState.Started) mediaManagerService.setSpeaker(true)
+        avs.setVideoSendState(w, conv.remoteId, targetSt)
+        c.updateVideoState(accountId, targetSt)
       })("setVideoSendState")
     }
   }
@@ -514,7 +525,7 @@ class CallingService(val accountId:       UserId,
 
 object CallingService {
 
-  val VideoCallMaxMembers: Int = 4
+  val VideoCallMaxMembers: Int = 2
 
   val CallConfigPath = "/calls/config"
 
