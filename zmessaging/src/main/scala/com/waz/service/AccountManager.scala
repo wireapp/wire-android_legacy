@@ -303,11 +303,7 @@ class AccountManager(val userId:   UserId,
     }
   }
 
-  def hasPassword(): CancellableFuture[Option[Boolean]] =
-    credentialsClient.hasPassword().flatMap {
-      case Left(ex) => CancellableFuture(None)
-      case Right(hasPass) => CancellableFuture(Some(hasPass))
-    }
+  def hasPassword(): ErrorOrResponse[Boolean] = credentialsClient.hasPassword()
 
   def hasMarketingConsent: Future[Boolean] = {
     verbose("hasMarketingConsent")
