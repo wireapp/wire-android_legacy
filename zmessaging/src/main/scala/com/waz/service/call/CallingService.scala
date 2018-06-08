@@ -149,7 +149,7 @@ class CallingService(val accountId:       UserId,
         isGroup,
         userId,
         Some(OtherCalling),
-        others = Set(userId),
+        others = Map(userId -> Some(clock.instant())),
         startedAsVideoCall = videoCall,
         videoSendState = (videoCall, granted) match {
           case (true, false) => VideoState.NoCameraPermission
@@ -189,7 +189,7 @@ class CallingService(val accountId:       UserId,
       setVideoSendState(conv.id, c.videoSendState) //will upgrade call videoSendState
       setCallMuted(c.muted) //Need to set muted only after call is established
       //on est. group call, switch from self avatar to other user now in case `onGroupChange` is delayed
-      val others = c.others + userId - accountId
+      val others = c.others + (userId -> Some(clock.instant())) - accountId
       c.updateCallState(SelfConnected).copy(others = others, maxParticipants = others.size + 1)
     }("onEstablishedCall")
   }
@@ -273,7 +273,12 @@ class CallingService(val accountId:       UserId,
   def onGroupChanged(convId: RConvId, members: Set[UserId]) = withConv(convId) { (_, conv) =>
     verbose(s"group members changed, convId: $convId, other members: $members")
     updateCallInfo(conv.id, { call =>
-      call.copy(others = members, maxParticipants = math.max(call.maxParticipants, members.size + 1))
+
+      val updated = members.map { userId =>
+        userId -> call.others.getOrElse(userId, Some(clock.instant()))
+      }.toMap
+
+      call.copy(others = updated, maxParticipants = math.max(call.maxParticipants, members.size + 1))
     })("onGroupChanged")
   }
 
@@ -301,10 +306,11 @@ class CallingService(val accountId:       UserId,
       profile <- callProfile.head
       isGroup <- convsService.isGroupConversation(convId)
       mems <- members.getActiveUsers(conv.id)
-      others <-
+      others <- {
         if (isGroup) Future.successful(Set(accountId)) //TODO: Remove this as we don't use it anymore
         else if (conv.team.isEmpty) Future.successful(Set(UserId(conv.id.str)))
         else Future.successful(mems.filter(_ != accountId).toSet)
+      }.map(_.map(_ -> Some(clock.instant())).toMap)
       vbr <- userPrefs.preference(UserPreferences.VBREnabled).apply()
     } yield {
       val callType =
