@@ -436,7 +436,7 @@ class CallingService(val accountId:       UserId,
 
       verbose(s"setVideoSendActive: $convId, providedState: $state, targetState: $targetSt")
       updateCallInfo(convId, { c =>
-        avs.setVideoSendState(w, conv.remoteId, targetSt)
+        if (state != NoCameraPermission) avs.setVideoSendState(w, conv.remoteId, targetSt)
         c.updateVideoState(accountId, targetSt)
       })("setVideoSendState")
     }
