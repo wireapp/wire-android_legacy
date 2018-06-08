@@ -142,31 +142,32 @@ class CallingService(val accountId:       UserId,
     verbose(s"Incoming call from $userId in conv: $convId (should ring: $shouldRing)")
 
     permissions.allPermissions(Set(CAMERA)).head.foreach { granted =>
+      updateActiveCall(_.copy(videoSendState = (videoCall, granted) match {
+        case (true, false) => VideoState.NoCameraPermission
+        case (true, true)  => VideoState.Started
+        case _             => VideoState.Stopped
+      }))("onIncomingCall-permissionCheck")
+    }
 
-      val newCall = CallInfo(
-        conv.id,
-        accountId,
-        isGroup,
-        userId,
-        Some(OtherCalling),
-        others = Map(userId -> Some(clock.instant())),
-        startedAsVideoCall = videoCall,
-        videoSendState = (videoCall, granted) match {
-          case (true, false) => VideoState.NoCameraPermission
-          case (true, true)  => VideoState.Started
-          case _             => VideoState.Stopped
-        })
+    val newCall = CallInfo(
+      conv.id,
+      accountId,
+      isGroup,
+      userId,
+      Some(OtherCalling),
+      others = Map(userId -> Some(clock.instant())),
+      startedAsVideoCall = videoCall,
+      videoSendState = VideoState.NoCameraPermission)
 
-      callProfile.mutate { p =>
-        val newActive = p.activeId match {
-          case None if shouldRing =>
-            Some(newCall.convId)
-          case _ =>
-            verbose(s"Incoming call from $userId while in a call or call shouldn't ring - ignoring")
-            p.activeId
-        }
-        p.copy(activeId = newActive, availableCalls = p.availableCalls + (newCall.convId -> newCall))
+    callProfile.mutate { p =>
+      val newActive = p.activeId match {
+        case None if shouldRing =>
+          Some(newCall.convId)
+        case _ =>
+          verbose(s"Incoming call from $userId while in a call or call shouldn't ring - ignoring")
+          p.activeId
       }
+      p.copy(activeId = newActive, availableCalls = p.availableCalls + (newCall.convId -> newCall))
     }
   }
 
