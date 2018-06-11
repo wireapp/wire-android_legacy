@@ -33,7 +33,7 @@ class PermissionsService() {
   protected[permissions] val providers      = Signal(Vector.empty[PermissionProvider])
   protected[permissions] val providerSignal = providers.map(_.lastOption)
 
-  def registerProvider(provider: PermissionProvider) = providers.mutate(ps => if (ps.contains(provider)) ps else ps :+ provider)
+  def registerProvider(provider: PermissionProvider) = providers.mutate(ps => ps.filter(_ != provider) :+ provider)
   def unregisterProvider(provider: PermissionProvider) = {
     onPermissionsResult(Set.empty)
     providers.mutate(_.filter(_ != provider))
