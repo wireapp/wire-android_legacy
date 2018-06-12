@@ -270,7 +270,7 @@ class DeviceActor(val deviceName: String,
     case SendGiphy(rConvId, searchQuery) =>
       zmsWithLocalConv(rConvId).flatMap { case (z, convId) =>
         for {
-          res   <- (if (searchQuery.isEmpty) z.giphy.getRandomGiphyImage else z.giphy.searchGiphyImage(searchQuery)).future
+          res   <- (if (searchQuery.isEmpty) z.giphy.trending() else z.giphy.searchGiphyImage(searchQuery)).future
           msg1  <- z.convsUi.sendMessage(convId, "Via giphy.com")
 //              msg2  <- z.convsUi.sendMessage(convId, ) //TODO use asset data directly when we get rid of ImageAsset
         } yield Successful
