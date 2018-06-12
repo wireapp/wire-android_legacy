@@ -142,7 +142,7 @@ class CallingService(val accountId:       UserId,
     verbose(s"Incoming call from $userId in conv: $convId (should ring: $shouldRing)")
 
     permissions.allPermissions(Set(CAMERA)).head.foreach { granted =>
-      updateActiveCall(_.copy(videoSendState = (videoCall, granted) match {
+      updateCallInfo(conv.id, _.copy(videoSendState = (videoCall, granted) match {
         case (true, false) => VideoState.NoCameraPermission
         case (true, true)  => VideoState.Started
         case _             => VideoState.Stopped
