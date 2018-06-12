@@ -323,6 +323,7 @@
     <string name="calling__header__outgoing_video_subtitle">Ringing…</string>
     <string name="calling__header__incoming_subtitle">Calling…</string>
     <string name="calling__header__incoming_subtitle__video">Calling…</string>
+    <string name="calling__header__incoming_subtitle__group">%1$s is calling…</string>
 
     <string name="call_banner_joining">CONNECTING…</string>
     <string name="call_banner_outgoing">RINGING…</string>

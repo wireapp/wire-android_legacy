@@ -334,16 +334,20 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
   val subtitleText: Signal[String] =
     (for {
-      video <- isVideoCall
-      state <- callState
-      dur   <- duration
-    } yield (video, state, dur)).map {
-      case (true,  SelfCalling,  _)  => cxt.getString(R.string.calling__header__outgoing_video_subtitle)
-      case (false, SelfCalling,  _)  => cxt.getString(R.string.calling__header__outgoing_subtitle)
-      case (true,  OtherCalling, _)  => cxt.getString(R.string.calling__header__incoming_subtitle__video)
-      case (false, OtherCalling, _)  => cxt.getString(R.string.calling__header__incoming_subtitle)
-      case (_,     SelfJoining,  _)  => cxt.getString(R.string.calling__header__joining)
-      case (_,     SelfConnected, d) => d
+      video      <- isVideoCall
+      state      <- callState
+      dur        <- duration
+      group      <- isGroupCall
+      callerId   <- callerId
+      callerName <- callingZms.flatMap(_.users.userSignal(callerId).map(_.getDisplayName).map(Option(_))).orElse(Signal.const(None))
+    } yield (video, state, dur, callerName.filter(_ => group))).map {
+      case (true,  SelfCalling,  _, _)  => cxt.getString(R.string.calling__header__outgoing_video_subtitle)
+      case (false, SelfCalling,  _, _)  => cxt.getString(R.string.calling__header__outgoing_subtitle)
+      case (_,     OtherCalling, _, Some(callerName)) => cxt.getString(R.string.calling__header__incoming_subtitle__group, callerName)
+      case (true,  OtherCalling, _, _)  => cxt.getString(R.string.calling__header__incoming_subtitle__video)
+      case (false, OtherCalling, _, _)  => cxt.getString(R.string.calling__header__incoming_subtitle)
+      case (_,     SelfJoining,  _, _)  => cxt.getString(R.string.calling__header__joining)
+      case (_,     SelfConnected, d, _) => d
       case _ => ""
     }
 
