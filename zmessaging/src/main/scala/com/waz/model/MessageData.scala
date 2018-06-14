@@ -23,7 +23,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api
 import com.waz.api.Message.Type._
-import com.waz.api.{EphemeralExpiration, Message, TypeFilter}
+import com.waz.api.{Message, TypeFilter}
 import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.model.ConversationData.ConversationDataDao

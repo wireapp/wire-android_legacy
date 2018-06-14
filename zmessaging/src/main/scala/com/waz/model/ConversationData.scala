@@ -82,6 +82,10 @@ case class ConversationData(id:                    ConvId              = ConvId(
   def updated(d: ConversationData): Option[ConversationData] = {
     val ct = if (ConversationType.isOneToOne(convType) && d.convType != ConversationType.OneToOne) convType else d.convType
 
+    if (ephemeralExpiration.isDefined && ephemeralExpiration.get.isInstanceOf[ConvExpiry] &&
+        d.ephemeralExpiration.isDefined && d.ephemeralExpiration.get.isInstanceOf[MessageExpiry])
+      throw new IllegalArgumentException("Can't set message ephemeral value on conversation with ephemeral setting")
+
     val updated = copy(
       remoteId = d.remoteId,
       name = d.name,
@@ -202,11 +206,6 @@ object ConversationData {
     val Access           = set[Access]('access, JsonEncoder.encodeAccess(_).toString(), v => JsonDecoder.array[Access](new JSONArray(v), (arr: JSONArray, i: Int) => IConversation.Access.valueOf(arr.getString(i).toUpperCase)).toSet)(_.access)
     val AccessRole       = opt(text[IConversation.AccessRole]('access_role, JsonEncoder.encodeAccessRole, v => IConversation.AccessRole.valueOf(v.toUpperCase)))(_.accessRole)
     val Link             = opt(text[Link]('link, _.url, v => ConversationData.Link(v)))(_.link)
-
-    private def isConvExpiry(eph: EphemeralDuration): Boolean = eph match {
-      case ConvExpiry(_) => true
-      case _             => false
-    }
 
     override val idCol = Id
     override val table = Table(
