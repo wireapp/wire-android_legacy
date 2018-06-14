@@ -175,7 +175,7 @@ class SketchCanvasHistory {
 
     class HiddenText extends Text {
         private HiddenText() {
-            super(null, 0, 0, null, "", 1.0f);
+            super(null, 0, 0, new Paint(), "", 1.0f);
         }
         @Override
         public void draw(Canvas canvas) {
@@ -184,7 +184,7 @@ class SketchCanvasHistory {
 
     class ErasedText extends Text {
         ErasedText() {
-            super(null, 0, 0, null, "", 1.0f);
+            super(null, 0, 0, new Paint(), "", 1.0f);
         }
         @Override
         public void draw(Canvas canvas) {

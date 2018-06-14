@@ -41,7 +41,6 @@ public class GlobalLayoutController implements IGlobalLayoutController {
         @Override
         public void onGlobalLayout() {
             keyboardListener.onLayoutChange();
-            globalLayout.getViewTreeObserver().removeOnGlobalLayoutListener(globalLayoutListener);
         }
     };
 

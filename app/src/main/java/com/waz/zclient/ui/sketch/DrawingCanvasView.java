@@ -59,6 +59,7 @@ public class DrawingCanvasView extends View {
 
     private int trimBuffer;
     private final int defaultStrokeWidth = getResources().getDimensionPixelSize(R.dimen.color_picker_small_dot_radius) * 2;
+    private final int textPadding = getResources().getDimensionPixelSize(R.dimen.wire__padding__regular);
     private String emoji;
     private boolean drawEmoji;
 
@@ -310,10 +311,11 @@ public class DrawingCanvasView extends View {
                 left = 0;
                 right = bitmap.getWidth();
                 checkLeftRight = false;
+                float ratio = (float) bitmap.getWidth() / backgroundBitmap.getWidth();
 
-                bitmapTop = bitmap.getHeight() / 2 - backgroundBitmap.getHeight() / 2;
+                bitmapTop = (int) (bitmap.getHeight() / 2 - ratio * backgroundBitmap.getHeight() / 2);
                 top = bitmapTop;
-                bitmapBottom = bitmap.getHeight() / 2 + backgroundBitmap.getHeight() / 2;
+                bitmapBottom = (int) (bitmap.getHeight() / 2 + ratio * backgroundBitmap.getHeight() / 2);
                 bottom = bitmapBottom;
             } else {
                 top = 0;
@@ -360,12 +362,12 @@ public class DrawingCanvasView extends View {
             } else if (historyItem instanceof SketchCanvasHistory.Text) {
                 SketchCanvasHistory.Text text = (SketchCanvasHistory.Text) historyItem;
                 if (checkTopBottom) {
-                    top = Math.min(top, (int) (text.y - text.paint.getTextSize()));
-                    bottom = Math.max(bottom, (int) (text.y));
+                    top = Math.min(top, (int) (text.y));
+                    bottom = Math.max(bottom, (int) (text.y + (text.paint.getTextSize() + 2 * textPadding) * text.scale));
                 }
                 if (checkLeftRight) {
                     left = Math.min(left, (int) text.x);
-                    right = Math.max(right, (int) (text.x + text.paint.getTextSize()));
+                    right = Math.max(right, (int) (text.x + (text.paint.measureText(text.text) + 2 * textPadding) * text.scale));
                 }
             }
         }
