@@ -54,7 +54,7 @@ class NotificationsAndroidService extends FutureService {
             case Some(zms) if ActionQuickReply == intent.getAction =>
               (instantReplyContent, conversation) match {
                 case (Some(content), Some(convId)) =>
-                  zms.convsUi.setEphemeral(convId, EphemeralExpiration.NONE).flatMap { _ =>
+                  zms.convsUi.setEphemeral(convId, None).flatMap { _ =>
                     zms.convsUi.sendMessage(convId, content.toString).map(_ => ())
                   }
                 case _ =>

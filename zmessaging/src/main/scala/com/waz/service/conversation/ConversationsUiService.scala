@@ -82,7 +82,7 @@ trait ConversationsUiService {
   def findGroupConversations(prefix: SearchKey, limit: Int, handleOnly: Boolean): Future[Seq[ConversationData]]
   def knock(id: ConvId): Future[Option[MessageData]]
   def setLastRead(convId: ConvId, msg: MessageData): Future[Option[ConversationData]]
-  def setEphemeral(id: ConvId, expiration: EphemeralExpiration): Future[Option[(ConversationData, ConversationData)]]
+  def setEphemeral(id: ConvId, expiration: Option[FiniteDuration]): Future[Option[(ConversationData, ConversationData)]]
 
   //conversation creation methods
   def getOrCreateOneToOneConversation(toUser: UserId): Future[ConversationData]
@@ -399,8 +399,8 @@ class ConversationsUiServiceImpl(userId:          UserId,
       case _ => None
     }
 
-  override def setEphemeral(id: ConvId, expiration: EphemeralExpiration): Future[Option[(ConversationData, ConversationData)]] =
-    convStorage.update(id, _.copy(ephemeral = expiration))
+  override def setEphemeral(id: ConvId, expiration: Option[FiniteDuration]): Future[Option[(ConversationData, ConversationData)]] =
+      convStorage.update(id, _.copy(ephemeral = expiration.getOrElse(0.millis)))
 
   private def mentionsMap(us: Set[UserId]): Future[Map[UserId, String]] =
     users.getUsers(us.toSeq) map { uss =>

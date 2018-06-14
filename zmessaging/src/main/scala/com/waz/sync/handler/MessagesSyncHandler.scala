@@ -22,7 +22,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.internalError
-import com.waz.api.{EphemeralExpiration, Message}
+import com.waz.api.Message
 import com.waz.cache.CacheService
 import com.waz.content.{GlobalPreferences, MembersStorage, MessagesStorage}
 import com.waz.model.AssetData.{ProcessingTaskKey, UploadTaskKey}
@@ -48,6 +48,7 @@ import com.waz.znet.Response.Status
 import com.waz.znet.ZNetClient.{ErrorOr, ErrorOrResponse}
 import org.threeten.bp.Instant
 
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.Future
 import scala.concurrent.Future.successful
 
@@ -300,11 +301,11 @@ class MessagesSyncHandler(selfUserId: UserId,
     }
   }
 
-  private def postMessage(conv: ConversationData, exp: EphemeralExpiration, msg: GenericMessage) =
+  private def postMessage(conv: ConversationData, exp: Option[FiniteDuration], msg: GenericMessage) =
     recipients(conv, exp) flatMap { otrSync.postOtrMessage(conv.id, conv.remoteId, msg, _) }
 
-  private def recipients(conv: ConversationData, exp: EphemeralExpiration) =
-    if (exp == EphemeralExpiration.NONE) Future successful None
+  private def recipients(conv: ConversationData, exp: Option[FiniteDuration]) =
+    if (exp.isEmpty) Future successful None //TODO: This can be simplified
     else if (conv.convType == ConversationType.Group) {
       // ephemeral msgs should not be sent to self devices,
       // to handle that properly we need special backend parameters to exclude self user devices (don't report missing)
@@ -332,7 +333,7 @@ class MessagesSyncHandler(selfUserId: UserId,
     } yield ()
   }
 
-  def postAssetStatus(cid: ConvId, mid: MessageId, expiration: EphemeralExpiration, status: Syncable): Future[SyncResult] = {
+  def postAssetStatus(cid: ConvId, mid: MessageId, expiration: Option[FiniteDuration], status: Syncable): Future[SyncResult] = {
     def post(conv: ConversationData, asset: AssetData): ErrorOr[Unit] =
       if (asset.status != status) successful(Left(internalError(s"asset $asset should have status $status")))
       else status match {

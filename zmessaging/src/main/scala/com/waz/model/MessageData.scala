@@ -40,27 +40,29 @@ import org.json.JSONObject
 import org.threeten.bp.Instant.now
 import org.threeten.bp.{Duration, Instant}
 
+import java.util.concurrent.TimeUnit
 import scala.collection.breakOut
+import scala.concurrent.duration._
 
-case class MessageData(id:            MessageId           = MessageId(),
-                       convId:        ConvId              = ConvId(),
-                       msgType:       Message.Type        = Message.Type.TEXT,
-                       userId:        UserId              = UserId(),
-                       content:       Seq[MessageContent] = Seq.empty,
-                       protos:        Seq[GenericMessage] = Seq.empty,
-                       firstMessage:  Boolean             = false,
-                       members:       Set[UserId]         = Set.empty[UserId],
-                       recipient:     Option[UserId]      = None,
-                       email:         Option[String]      = None,
-                       name:          Option[String]      = None,
-                       state:         MessageState        = Message.Status.SENT,
-                       time:          Instant             = now(clock),
-                       localTime:     Instant             = MessageData.UnknownInstant,
-                       editTime:      Instant             = MessageData.UnknownInstant,
-                       ephemeral:     EphemeralExpiration = EphemeralExpiration.NONE,
-                       expiryTime:    Option[Instant]     = None, // local expiration time
-                       expired:       Boolean             = false,
-                       duration:      Duration            = Duration.ZERO //for successful calls
+case class MessageData(id:            MessageId              = MessageId(),
+                       convId:        ConvId                 = ConvId(),
+                       msgType:       Message.Type           = Message.Type.TEXT,
+                       userId:        UserId                 = UserId(),
+                       content:       Seq[MessageContent]    = Seq.empty,
+                       protos:        Seq[GenericMessage]    = Seq.empty,
+                       firstMessage:  Boolean                = false,
+                       members:       Set[UserId]            = Set.empty[UserId],
+                       recipient:     Option[UserId]         = None,
+                       email:         Option[String]         = None,
+                       name:          Option[String]         = None,
+                       state:         MessageState           = Message.Status.SENT,
+                       time:          Instant                = now(clock),
+                       localTime:     Instant                = MessageData.UnknownInstant,
+                       editTime:      Instant                = MessageData.UnknownInstant,
+                       ephemeral:     Option[FiniteDuration] = None,
+                       expiryTime:    Option[Instant]        = None, // local expiration time
+                       expired:       Boolean                = false,
+                       duration:      Duration               = Duration.ZERO //for successful calls
                       ) {
 
   override def toString: String =
@@ -133,7 +135,7 @@ case class MessageData(id:            MessageId           = MessageId(),
 
   def isAssetMessage = MessageData.IsAsset(msgType)
 
-  def isEphemeral = ephemeral != EphemeralExpiration.NONE
+  def isEphemeral = ephemeral.isDefined
 
   def hasSameContentType(m: MessageData) = {
     msgType == m.msgType && content.zip(m.content).forall { case (c, c1) => c.tpe == c1.tpe && c.openGraph.isDefined == c1.openGraph.isDefined } // openGraph may affect message type
@@ -223,7 +225,7 @@ object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData
   }
 }
 
-object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[MessageContent], Seq[GenericMessage], Boolean, Set[UserId], Option[UserId], Option[String], Option[String], Message.Status, Instant, Instant, Instant, EphemeralExpiration, Option[Instant], Boolean, Duration) => MessageData) {
+object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[MessageContent], Seq[GenericMessage], Boolean, Set[UserId], Option[UserId], Option[String], Option[String], Message.Status, Instant, Instant, Instant, Option[FiniteDuration], Option[Instant], Boolean, Duration) => MessageData) {
   val Empty = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""))
   val Deleted = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""), state = Message.Status.DELETED)
   val UnknownInstant = Instant.EPOCH
@@ -252,7 +254,7 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
         Instant.ofEpochMilli(decodeLong('time)),
         Instant.ofEpochMilli(decodeLong('localTime)),
         Instant.ofEpochMilli(decodeLong('editTime)),
-        EphemeralExpiration.getForMillis(decodeLong('ephemeral)),
+        decodeOptLong('ephemeral) map { d => FiniteDuration(d, MILLISECONDS) },
         decodeOptLong('expiryTime) map Instant.ofEpochMilli,
         'expired,
         'duration
@@ -276,7 +278,7 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
       o.put("time", v.time.toEpochMilli)
       o.put("localTime", v.localTime.toEpochMilli)
       o.put("editTime", v.localTime.toEpochMilli)
-      o.put("ephemeral", v.ephemeral.milliseconds)
+      o.put("ephemeral", v.ephemeral.map(_.toMillis))
       v.expiryTime foreach { t => o.put("expiryTime", t.toEpochMilli) }
       o.put("expired", v.expired)
       o.put("duration", v.duration.toMillis)
@@ -331,7 +333,7 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     val Time = timestamp('time)(_.time)
     val LocalTime = timestamp('local_time)(_.localTime)
     val EditTime = timestamp('edit_time)(_.editTime)
-    val Ephemeral = long[EphemeralExpiration]('ephemeral, _.milliseconds, EphemeralExpiration.getForMillis)(_.ephemeral)
+    val Ephemeral = opt(finiteDuration('ephemeral))(_.ephemeral)
     val ExpiryTime = opt(timestamp('expiry_time))(_.expiryTime)
     val Expired = bool('expired)(_.expired)
     val Duration = long[org.threeten.bp.Duration]('duration, _.toMillis, org.threeten.bp.Duration.ofMillis)(_.duration)

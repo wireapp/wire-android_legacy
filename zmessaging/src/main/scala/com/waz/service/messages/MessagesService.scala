@@ -330,7 +330,8 @@ class MessagesServiceImpl(selfUserId: UserId,
     }
 
   def messageSent(convId: ConvId, msg: MessageData): Future[Option[MessageData]] = {
-    updater.updateMessage(msg.id) { m => m.copy(state = Message.Status.SENT, expiryTime = m.ephemeral.expiryFromNow()) } andThen {
+    import com.waz.utils.RichFiniteDuration
+    updater.updateMessage(msg.id) { m => m.copy(state = Message.Status.SENT, expiryTime = m.ephemeral.flatMap(_.expiryFromNow())) } andThen {
       case Success(Some(m)) => storage.onMessageSent ! m
     }
   }

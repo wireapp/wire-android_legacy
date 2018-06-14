@@ -21,7 +21,7 @@ import java.lang.Math.max
 
 import com.waz.ZLog.LogTag
 import com.waz.api.{EphemeralExpiration, NetworkMode}
-import com.waz.model.{IntegrationId, Mime}
+import com.waz.model.{IntegrationId, Mime, EphemeralDuration}
 import com.waz.service.call.Avs.AvsClosedReason
 import com.waz.service.call.Avs.AvsClosedReason.reasonString
 import com.waz.service.push.ReceivedPushData
@@ -31,6 +31,7 @@ import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 
 import scala.util.Try
+import scala.concurrent.duration.FiniteDuration
 
 trait TrackingEvent {
   val name: String
@@ -53,7 +54,7 @@ case object OptOutEvent extends OptEvent { override val name = s"settings.opted_
 
 case class ContributionEvent(action:        ContributionEvent.Action,
                              isGroup:       Boolean,
-                             ephExp:        EphemeralExpiration,
+                             ephExp:        Option[FiniteDuration],
                              withService:   Boolean,
                              guestsAllowed: Boolean,
                              fromGuest:     Boolean) extends TrackingEvent {
@@ -63,8 +64,8 @@ case class ContributionEvent(action:        ContributionEvent.Action,
     o.put("action", action.name)
     o.put("conversation_type", if (isGroup) "group" else "one_to_one")
     o.put("with_service", withService)
-    o.put("is_ephemeral", ephExp != EphemeralExpiration.NONE) //TODO is this flag necessary?
-    o.put("ephemeral_expiration", ephExp.duration().toSeconds.toString)
+    o.put("is_ephemeral", ephExp != None) //TODO is this flag necessary?
+    o.put("ephemeral_expiration", ephExp.map(_.toSeconds.toString))
     o.put("is_allow_guests", guestsAllowed)
     o.put("user_type", if (fromGuest) "guest" else "user")
   })

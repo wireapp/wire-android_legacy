@@ -170,6 +170,10 @@ package object utils {
       else if (abs(n) > 1e3d) s"${n.toDouble / 1e3d} µs"
       else s"$n ns"
     }
+    def expiryFromNow(): Option[Instant] = a match {
+      case Duration(0, _) => None
+      case _              => Some(Instant.now() + a)
+    }
   }
 
   private val units = List((1000L, "ns"), (1000L, "µs"), (1000L, "ms"), (60L, "s"), (60L, "m"), (60L, "h"), (24L, "d"))

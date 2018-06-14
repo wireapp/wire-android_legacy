@@ -96,7 +96,7 @@ class TrackingServiceImpl(curAccount: Signal[Option[UserId]], zmsProvider: ZmsPr
         users        <- z.users.getUsers(userIds.toSeq)
         isGroup      <- z.conversations.isGroupConversation(convId)
       } {
-        events ! Option(z) -> ContributionEvent(action, isGroup, conv.ephemeral, users.exists(_.isWireBot), !conv.isTeamOnly, conv.isMemberFromTeamGuest(z.teamId))
+        events ! Option(z) -> ContributionEvent(action, isGroup, conv.ephemeralExpiration.map(_.duration), users.exists(_.isWireBot), !conv.isTeamOnly, conv.isMemberFromTeamGuest(z.teamId))
       }
     case _ => //
   }

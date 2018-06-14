@@ -20,7 +20,6 @@ package com.waz.model
 
 import android.util.Base64
 import com.google.protobuf.nano.MessageNano
-import com.waz.api.EphemeralExpiration
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetMetaData.Loudness
 import com.waz.model.AssetStatus.{DownloadFailed, UploadCancelled, UploadDone, UploadFailed, UploadInProgress, UploadNotStarted}
@@ -31,7 +30,10 @@ import com.waz.utils.wrappers.URI
 import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 
+import java.util.concurrent.TimeUnit.MILLISECONDS
+
 import scala.collection.breakOut
+import scala.concurrent.duration.FiniteDuration
 
 trait GenericContent[-T] {
   def set(msg: GenericMessage): T => GenericMessage
@@ -522,15 +524,19 @@ object GenericContent {
 
   implicit object Ephemeral extends GenericContent[Ephemeral] {
 
+    import scala.concurrent.duration.DurationInt
+
     override def set(msg: GenericMessage): (Ephemeral) => GenericMessage = msg.setEphemeral
 
-    def apply[Content: EphemeralContent](expiry: EphemeralExpiration, content: Content) = returning(new Messages.Ephemeral) { proto =>
-      proto.expireAfterMillis = expiry.milliseconds
+    def apply[Content: EphemeralContent](expiry: Option[FiniteDuration], content: Content) = returning(new Messages.Ephemeral) { proto =>
+      proto.expireAfterMillis = expiry.getOrElse(0.millis).toMillis
       implicitly[EphemeralContent[Content]].set(proto)(content)
     }
 
-    def unapply(proto: Ephemeral): Option[(EphemeralExpiration, Any)] =
-      Some((EphemeralExpiration.getForMillis(proto.expireAfterMillis), content(proto)))
+    def unapply(proto: Ephemeral): Option[(Option[FiniteDuration], Any)] = proto.expireAfterMillis match {
+      case 0 => Some((None, content(proto)))
+      case _ => Some((Some(FiniteDuration(proto.expireAfterMillis, MILLISECONDS)), content(proto)))
+    }
 
     def content(e: Ephemeral) = e.getContentCase match {
       case Messages.Ephemeral.TEXT_FIELD_NUMBER => e.getText
