@@ -82,7 +82,9 @@ trait ConversationsUiService {
   def findGroupConversations(prefix: SearchKey, limit: Int, handleOnly: Boolean): Future[Seq[ConversationData]]
   def knock(id: ConvId): Future[Option[MessageData]]
   def setLastRead(convId: ConvId, msg: MessageData): Future[Option[ConversationData]]
-  def setEphemeral(id: ConvId, expiration: Option[FiniteDuration]): Future[Option[(ConversationData, ConversationData)]]
+
+  def setEphemeral(id: ConvId, expiration: Option[FiniteDuration]): Future[Unit]
+  def setEphemeralGlobal(id: ConvId, expiration: Option[FiniteDuration], isExpirationGlobal: Boolean): Future[Unit]
 
   //conversation creation methods
   def getOrCreateOneToOneConversation(toUser: UserId): Future[ConversationData]
@@ -399,8 +401,14 @@ class ConversationsUiServiceImpl(userId:          UserId,
       case _ => None
     }
 
-  override def setEphemeral(id: ConvId, expiration: Option[FiniteDuration]): Future[Option[(ConversationData, ConversationData)]] =
-      convStorage.update(id, _.copy(ephemeral = expiration.getOrElse(Duration.Zero)))
+  override def setEphemeral(id: ConvId, expiration: Option[FiniteDuration]) = {
+    convStorage.update(id, _.copy(ephemeral = expiration.getOrElse(Duration.Zero))).map(_ => {})
+  }
+
+  override def setEphemeralGlobal(id: ConvId, expiration: Option[FiniteDuration], isExpirationGlobal: Boolean) = {
+    error("######### TODO: set global ephemeral expiration ######### ") //TODO
+    Future.successful({})
+  }
 
   private def mentionsMap(us: Set[UserId]): Future[Map[UserId, String]] =
     users.getUsers(us.toSeq) map { uss =>

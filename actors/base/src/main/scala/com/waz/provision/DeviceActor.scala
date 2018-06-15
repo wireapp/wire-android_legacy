@@ -349,7 +349,7 @@ class DeviceActor(val deviceName: String,
     case SetEphemeral(remoteId, expiration) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>
         z.convsUi.setEphemeral(convId, expiration)
-      }.map(_.fold2(Failed("conversation was not updated successfully"), _ => Successful))
+      }.map(_ => Successful)
 
     case MarkEphemeralRead(convId, messageId) =>
       zms.head.flatMap(_.ephemeral.onMessageRead(messageId))
