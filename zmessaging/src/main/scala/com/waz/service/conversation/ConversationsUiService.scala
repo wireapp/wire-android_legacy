@@ -378,7 +378,7 @@ class ConversationsUiServiceImpl(userId:          UserId,
   private def createAndPostConversation(id: ConvId, name: Option[String], members: Set[UserId], teamOnly: Boolean = false) = {
     val (ac, ar) = getAccessAndRoleForGroupConv(teamOnly, teamId)
     for {
-      conv <- convsContent.createConversationWithMembers(id, generateTempConversationId(userId +: members.toSeq), ConversationType.Group, userId, members, name, access = ac, accessRole = ar)
+      conv <- convsContent.createConversationWithMembers(id, generateTempConversationId(members + userId), ConversationType.Group, userId, members, name, access = ac, accessRole = ar)
       _    = verbose(s"created: $conv")
       _    <- messages.addConversationStartMessage(conv.id, userId, members, name)
       syncId <- sync.postConversation(id, members, conv.name, teamId, ac, ar)

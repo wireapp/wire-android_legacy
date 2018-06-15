@@ -24,6 +24,7 @@ import java.util.{Date, Locale, TimeZone}
 import android.util.Base64
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.model.AssetMetaData.Loudness
+import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.utils.wrappers.URI
@@ -81,7 +82,14 @@ object JsonDecoder {
   def arrayColl[A, B[_]](arr: JSONArray)(implicit dec: JsonDecoder[A], cbf: CanBuild[A, B[A]]): B[A] = {
     val builder = cbf()
     builder.sizeHint(arr.length)
-    (0 until arr.length) foreach (i => builder += dec(arr.getJSONObject(i)))
+    (0 until arr.length).foreach(i => builder += dec(arr.getJSONObject(i)))
+    builder.result
+  }
+
+  def arrayColl[A, B[_]](arr: JSONArray, ex: (JSONArray, Int) => A)(implicit cbf: CanBuild[A, B[A]]): B[A] = {
+    val builder = cbf()
+    builder.sizeHint(arr.length)
+    (0 until arr.length).foreach(i => builder += ex(arr, i))
     builder.result
   }
 
@@ -190,4 +198,9 @@ object JsonDecoder {
   implicit def decodeAccessRole(s: Symbol)(implicit js: JSONObject): AccessRole = AccessRole.valueOf(js.getString(s.name).toUpperCase())
   implicit def decodeOptAccessRole(s: Symbol)(implicit js: JSONObject): Option[AccessRole] = opt(s, js => AccessRole.valueOf(js.getString(s.name).toUpperCase()))
   implicit def decodeAccess(s: Symbol)(implicit js: JSONObject): Set[Access] = array[Access](s)((arr: JSONArray, i: Int) => Access.valueOf(arr.getString(i).toUpperCase())).toSet
+
+  implicit def decodeLink(s: Symbol)(implicit js: JSONObject): ConversationData.Link = ConversationData.Link(js.getString(s.name))
+  implicit def decodeOptLink(s: Symbol)(implicit js: JSONObject): Option[ConversationData.Link] = opt(s, js => ConversationData.Link(js.getString(s.name)))
+
+  implicit def decodeConvType(s: Symbol)(implicit js: JSONObject): ConversationType = ConversationType(js.getInt(s.name))
 }

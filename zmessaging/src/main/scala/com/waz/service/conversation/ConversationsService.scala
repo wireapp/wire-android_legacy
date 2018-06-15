@@ -24,6 +24,7 @@ import com.waz.api.ErrorType
 import com.waz.api.IConversation.Access
 import com.waz.api.impl.ErrorResponse
 import com.waz.content._
+import com.waz.model.ConversationData.ConversationType.isOneToOne
 import com.waz.model.ConversationData.{ConversationType, Link, getAccessAndRoleForGroupConv}
 import com.waz.model._
 import com.waz.service._
@@ -48,7 +49,7 @@ trait ConversationsService {
   def convStateEventProcessingStage: EventScheduler.Stage
   def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0): Future[Any]
   def getSelfConversation: Future[Option[ConversationData]]
-  def updateConversations(conversations: Seq[ConversationResponse]): Future[Seq[ConversationData]]
+  def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse]): Future[Unit]
   def setConversationArchived(id: ConvId, archived: Boolean): Future[Option[ConversationData]]
   def forceNameUpdate(id: ConvId): Future[Option[(ConversationData, ConversationData)]]
   def onMemberAddFailed(conv: ConvId, users: Set[UserId], error: Option[ErrorType], resp: ErrorResponse): Future[Unit]
@@ -123,10 +124,10 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   }
 
   def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0) = ev match {
-    case CreateConversationEvent(rConvId, time, from, data) =>
-      updateConversations(selfUserId, Seq(data)) flatMap { case (_, created) => Future.traverse(created) (created =>
-        messages.addConversationStartMessage(created.id, from, (data.members.map(_.userId).toSet + selfUserId).filter(_ != from), created.name, time = Some(time.instant))
-      )}
+    case CreateConversationEvent(_, time, from, data) =>
+      updateConversations(Seq(data)).flatMap { case (_, created) => Future.traverse(created) { created =>
+        messages.addConversationStartMessage(created.id, from, (data.members + selfUserId).filter(_ != from), created.name, time = Some(time.instant))
+      }}
 
     case ConversationEvent(rConvId, _, _) =>
       content.convByRemoteId(rConvId) flatMap {
@@ -209,70 +210,72 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     }
   }
 
-  def updateConversations(conversations: Seq[ConversationResponse]) = Future.traverse(conversations) { conv =>
-    eventScheduler.post(conv.conversation.remoteId) {
-      updateConversations(selfUserId, Seq(conv)) flatMap { case (all, created) =>
-        messages.addDeviceStartMessages(created, selfUserId) map (_ => all)
-      }
+  def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse]) = Future.traverse(conversations) { conv =>
+    eventScheduler.post(conv.id) {
+      for {
+        (_, created) <- updateConversations(Seq(conv))
+        _            <- messages.addDeviceStartMessages(created, selfUserId)
+      } yield {}
     }
-  }.map { vs =>
-    val cs = vs.flatten
-    verbose(s"updated ${cs.size} conversations: ${cs.take(5)}...")
-    vs.foldLeft(Vector.empty[ConversationData])(_ ++ _)
-  }
+  }.map(_ => {})
 
-  private def updateConversations(selfUserId: UserId, convs: Seq[ConversationResponse]): Future[(Seq[ConversationData], Seq[ConversationData])] = {
+  private def updateConversations(responses: Seq[ConversationResponse]): Future[(Seq[ConversationData], Seq[ConversationData])] = {
 
     def updateConversationData() = {
-      def createOneToOne(conv: ConversationData, members: Seq[ConversationMemberData]) =
-        if (members.size > 1) conv.copy(id = oneToOneLocalId(members, selfUserId)) else conv.copy(hidden = true)
-
-      def oneToOneLocalId(members: Seq[ConversationMemberData], selfUserId: UserId) = members.find(_.userId != selfUserId).fold(ConvId())(m => ConvId(m.userId.str))
-
       def findExistingId = convsStorage { (convById, remoteMap) =>
         def byRemoteId(id: RConvId) = returning(remoteMap.get(id).flatMap(convById.get)) { res => verbose(s"byRemoteId($id) - $res")}
 
-        convs map { case ConversationResponse(conv, members) =>
-          val newId = if (ConversationType.isOneToOne(conv.convType)) oneToOneLocalId(members, selfUserId) else conv.id
+        responses.map { resp =>
+          val newId = if (isOneToOne(resp.convType)) resp.members.find(_ != selfUserId).fold(ConvId())(m => ConvId(m.str)) else ConvId(resp.id.str)
 
-          val matching = byRemoteId(conv.remoteId).orElse {
-            convById.get(newId) orElse {
-              if (ConversationType.isOneToOne(conv.convType)) None
-              else byRemoteId(ConversationsService.generateTempConversationId((members.map(_.userId) :+ selfUserId).distinct))
+          val matching = byRemoteId(resp.id).orElse {
+            convById.get(newId).orElse {
+              if (isOneToOne(resp.convType)) None
+              else byRemoteId(ConversationsService.generateTempConversationId(resp.members + selfUserId))
             }
           }
 
-          (conv.copy(id = matching.fold(newId)(_.id)), members)
+          (matching.fold(newId)(_.id), resp)
         }
       }
 
       var created = new mutable.HashSet[ConversationData]
 
-      def updater(conv: ConversationData, members: Seq[ConversationMemberData]): (Option[ConversationData] => ConversationData) = {
-        case Some(old) => old.updated(conv).getOrElse(old)
-        case None if ConversationType.isOneToOne(conv.convType) => returning(createOneToOne(conv, members))(created += _)
-        case None =>
-          created += conv
-          conv
+      def updateOrCreate(newLocalId: ConvId, resp: ConversationResponse): (Option[ConversationData] => ConversationData) = { prev =>
+        returning(prev.getOrElse(ConversationData(id = newLocalId, hidden = isOneToOne(resp.convType) && resp.members.size <= 1))
+          .copy(
+            remoteId    = resp.id,
+            name        = resp.name.filterNot(_.isEmpty),
+            creator     = resp.creator,
+            convType    = prev.map(_.convType).filter(oldType => isOneToOne(oldType) && resp.convType != ConversationType.OneToOne).getOrElse(resp.convType),
+            team        = resp.team,
+            muted       = resp.muted,
+            muteTime    = resp.mutedTime,
+            archived    = resp.archived,
+            archiveTime = resp.archivedTime,
+            access      = resp.access,
+            accessRole  = resp.accessRole,
+            link        = resp.link
+          ))(c => if (prev.isEmpty) created += c)
       }
 
       for {
         withId <- findExistingId
-        convs  <- convsStorage.updateOrCreateAll(withId.map { case (conv, members) => conv.id -> updater(conv, members) } (breakOut))
+        convs  <- convsStorage.updateOrCreateAll(withId.map { case (localId, resp) => localId -> updateOrCreate(localId, resp) } (breakOut))
       } yield (convs, created.toSeq)
     }
 
-    def updateMembers() = Future.sequence(convs map {
-        case ConversationResponse(conv, members) =>
-          content.convByRemoteId(conv.remoteId) flatMap {
-            case Some(c) => membersStorage.set(c.id, selfUserId +: members.map(_.userId))
-            case _ =>
-              error(s"updateMembers() didn't find conv with given remote id for: $conv")
-              successful(())
-          }
-      })
+    def updateMembers() = Future.sequence(responses.map(c => (c.id, c.members)).map {
+      case (remoteId, members) =>
+        content.convByRemoteId(remoteId) flatMap {
+          case Some(c) => membersStorage.set(c.id, members + selfUserId)
+          case _ =>
+            error(s"updateMembers() didn't find conv with given remote id for: $remoteId")
+            successful(())
+        }
+    })
 
-    def syncUsers() = users.syncNotExistingOrExpired(convs.flatMap { case ConversationResponse(_, members) => members.map(_.userId) })
+    def syncUsers() = users.syncNotExistingOrExpired(responses.flatMap(_.members))
 
     for {
       (convs, created) <- updateConversationData()
@@ -389,6 +392,6 @@ object ConversationsService {
   /**
    * Generate temp ConversationID to identify conversations which don't have a RConvId yet
    */
-  def generateTempConversationId(users: Seq[UserId]) =
-    RConvId(users.map(_.toString).sorted.foldLeft("")(_ + _))
+  def generateTempConversationId(users: Set[UserId]) =
+    RConvId(users.toSeq.map(_.toString).sorted.foldLeft("")(_ + _))
 }

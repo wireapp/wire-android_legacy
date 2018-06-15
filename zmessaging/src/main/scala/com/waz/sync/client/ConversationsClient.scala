@@ -150,62 +150,46 @@ object ConversationsClient {
   def conversationIdsQuery(start: Option[RConvId]): String =
     Request.query(ConversationIdsPath, ("size", ConversationIdsPageSize) :: start.toList.map("start" -> _.str) : _*)
 
-  case class ConversationResponse(conversation: ConversationData, members: Seq[ConversationMemberData])
+  case class ConversationResponse(id:           RConvId,
+                                  name:         Option[String],
+                                  creator:      UserId,
+                                  convType:     ConversationType,
+                                  team:         Option[TeamId],
+                                  muted:        Boolean,
+                                  mutedTime:    Instant,
+                                  archived:     Boolean,
+                                  archivedTime: Instant,
+                                  access:       Set[Access],
+                                  accessRole:   Option[AccessRole],
+                                  link:         Option[Link],
+                                  members:      Set[UserId])
 
   object ConversationResponse {
     import com.waz.utils.JsonDecoder._
 
-    def memberDecoder(convId: ConvId) = new JsonDecoder[Option[ConversationMemberData]] {
-      override def apply(implicit js: JSONObject) = Some(ConversationMemberData('id, convId))
-    }
-
-    def conversationData(js: JSONObject, self: JSONObject) = {
-      val (creator, name, team, id, convType, lastEventTime, access, accessRole, link) = {
-        implicit val jsObj = js
-        (
-          decodeUserId('creator),
-          decodeOptString('name),
-          decodeOptId[TeamId]('team),
-          decodeRConvId('id),
-          ConversationType(decodeInt('type)),
-          decodeISOInstant('last_event_time),
-          decodeAccess('access),
-          decodeOptAccessRole('access_role),
-          decodeOptString('link).map(Link)
-        )
-      }
-      val state = ConversationState.Decoder(self)
-      //TODO Teams: how do we tell if a conversation is managed, currently defaulting to false
-      val isManaged = team.map(_ => false)
-
-      ConversationData(
-        ConvId(id.str),
-        id,
-        name.filterNot(_.isEmpty),
-        creator,
-        convType,
-        team,
-        isManaged,
-        lastEventTime,
-        isActive = true,
-        Instant.EPOCH,
-        state.muted.getOrElse(false),
-        state.muteTime.getOrElse(lastEventTime),
-        state.archived.getOrElse(false),
-        state.archiveTime.getOrElse(lastEventTime),
-        access = access,
-        accessRole = accessRole,
-        link = link
-      )
-    }
-
     implicit lazy val Decoder: JsonDecoder[ConversationResponse] = new JsonDecoder[ConversationResponse] {
       override def apply(implicit js: JSONObject): ConversationResponse = {
         debug(s"decoding response: $js")
+
         val members = js.getJSONObject("members")
-        val self = members.getJSONObject("self")
-        val conversation = conversationData(js, self)
-        ConversationResponse(conversation, array(members.getJSONArray("others"))(memberDecoder(conversation.id)).flatten)
+        val state = ConversationState.Decoder(members.getJSONObject("self"))
+
+        ConversationResponse(
+          'id,
+          'name,
+          'creator,
+          'type,
+          'team,
+          state.muted.getOrElse(false),
+          state.muteTime.getOrElse(Instant.EPOCH),
+          state.archived.getOrElse(false),
+          state.archiveTime.getOrElse(Instant.EPOCH),
+          'access,
+          'access_role,
+          'link,
+          JsonDecoder.arrayColl(members.getJSONArray("others"), { case (arr, i) =>
+            UserId(arr.getJSONObject(i).getString("id"))
+          }))
       }
     }
 

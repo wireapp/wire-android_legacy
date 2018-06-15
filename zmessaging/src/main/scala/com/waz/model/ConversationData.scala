@@ -38,7 +38,6 @@ case class ConversationData(id:                            ConvId              =
                             creator:                       UserId              = UserId(),
                             convType:                      ConversationType    = ConversationType.Group,
                             team:                          Option[TeamId]      = None,
-                            isManaged:                     Option[Boolean]     = None,
                             lastEventTime:                 Instant             = Instant.now(),
                             isActive:                      Boolean             = true,
                             lastRead:                      Instant             = Instant.EPOCH,
@@ -69,6 +68,8 @@ case class ConversationData(id:                            ConvId              =
 
   lazy val completelyCleared = cleared.exists(!_.isBefore(lastEventTime))
 
+  val isManaged = team.map(_ => false) //can be returned to parameter list when we need it.
+
   lazy val ephemeralExpiration: Option[EphemeralDuration] = ephemeral match {
     case Duration(0, _)         => None
     case _ if isEphemeralGlobal => Some(ConvExpiry(ephemeral))
@@ -78,33 +79,6 @@ case class ConversationData(id:                            ConvId              =
   def withLastRead(time: Instant) = copy(lastRead = lastRead max time)
 
   def withCleared(time: Instant) = copy(cleared = Some(cleared.fold(time)(_ max time)))
-
-  def updated(d: ConversationData): Option[ConversationData] = {
-    val ct = if (ConversationType.isOneToOne(convType) && d.convType != ConversationType.OneToOne) convType else d.convType
-
-    if (ephemeralExpiration.isDefined && ephemeralExpiration.get.isInstanceOf[ConvExpiry] &&
-        d.ephemeralExpiration.isDefined && d.ephemeralExpiration.get.isInstanceOf[MessageExpiry])
-      throw new IllegalArgumentException("Can't set message ephemeral value on conversation with ephemeral setting")
-
-    val updated = copy(
-      remoteId = d.remoteId,
-      name = d.name,
-      creator = d.creator,
-      team = d.team,
-      convType = ct,
-      lastEventTime = lastEventTime max d.lastEventTime,
-      isActive = d.isActive,
-      lastRead = lastRead max d.lastRead,
-      muted = d.muted,
-      muteTime = d.muteTime,
-      archived = d.archived,
-      cleared = d.cleared.map(c => cleared.fold(c)(_ max c)),
-      searchKey = d.searchKey,
-      access = d.access,
-      accessRole = d.accessRole)
-
-    if (updated == this) None else Some(updated)
-  }
 
   def isTeamOnly: Boolean = accessRole match {
     case Some(TEAM) if access.contains(Access.INVITE) => true
@@ -248,7 +222,6 @@ object ConversationData {
         Creator,
         ConvType,
         Team,
-        IsManaged,
         LastEventTime,
         IsActive,
         LastRead,

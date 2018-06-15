@@ -170,7 +170,6 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
           generatedName = NameUpdater.generatedName(convType)(user),
           hidden        = hidden,
           team          = teamId,
-          isManaged     = teamId.map(_ => false),
           access        = access,
           accessRole    = Some(accessRole)))
       _ <- membersStorage.add(convId, members + creator)
