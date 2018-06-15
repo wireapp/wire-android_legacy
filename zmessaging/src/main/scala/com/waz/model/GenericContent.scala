@@ -30,10 +30,8 @@ import com.waz.utils.wrappers.URI
 import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 
-import java.util.concurrent.TimeUnit.MILLISECONDS
-
 import scala.collection.breakOut
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 
 trait GenericContent[-T] {
   def set(msg: GenericMessage): T => GenericMessage
@@ -535,7 +533,7 @@ object GenericContent {
 
     def unapply(proto: Ephemeral): Option[(Option[FiniteDuration], Any)] = proto.expireAfterMillis match {
       case 0 => Some((None, content(proto)))
-      case _ => Some((Some(FiniteDuration(proto.expireAfterMillis, MILLISECONDS)), content(proto)))
+      case _ => Some(Some(proto.expireAfterMillis.millis), content(proto))
     }
 
     def content(e: Ephemeral) = e.getContentCase match {

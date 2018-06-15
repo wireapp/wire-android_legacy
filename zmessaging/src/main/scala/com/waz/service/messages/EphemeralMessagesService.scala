@@ -129,12 +129,12 @@ class EphemeralMessagesService(selfUserId: UserId,
   // start expiration timer for ephemeral message
   def onMessageRead(id: MessageId) = storage.update(id, { msg =>
     import com.waz.utils.RichInstant
-    if (shouldStartTimer(msg)) msg.copy(expiryTime = msg.ephemeral.flatMap(_.expiryFromNow()))
+    if (shouldStartTimer(msg)) msg.copy(expiryTime = msg.ephemeral.map(_.fromNow()))
     else msg
   })
 
   private def shouldStartTimer(msg: MessageData) = {
-    if (msg.ephemeral == None || msg.expiryTime.isDefined) false // timer already started
+    if (msg.ephemeral.isEmpty || msg.expiryTime.isDefined) false // timer already started
     else if (msg.userId == selfUserId) false // timer for own messages is started in MessagesService.messageSent
     else msg.msgType match {
       case MessageData.IsAsset() | Message.Type.ASSET =>

@@ -302,17 +302,18 @@ class MessagesSyncHandler(selfUserId: UserId,
   }
 
   private def postMessage(conv: ConversationData, exp: Option[FiniteDuration], msg: GenericMessage) =
-    recipients(conv, exp) flatMap { otrSync.postOtrMessage(conv.id, conv.remoteId, msg, _) }
+    recipients(conv, exp).flatMap(otrSync.postOtrMessage(conv.id, conv.remoteId, msg, _))
 
   private def recipients(conv: ConversationData, exp: Option[FiniteDuration]) =
-    if (exp.isEmpty) Future successful None //TODO: This can be simplified
-    else if (conv.convType == ConversationType.Group) {
-      // ephemeral msgs should not be sent to self devices,
-      // to handle that properly we need special backend parameters to exclude self user devices (don't report missing)
-      // FIXME: for now we just send it to active conv members, this can lead to 'lost' messages in case of races
-      members.getActiveUsers(conv.id).map { ms => Some(ms.toSet - selfUserId) }
-    } else
-      Future successful Some(Set(UserId(conv.id.str))) // send only to other users' devices
+    exp.map { _ =>
+      if (conv.convType == ConversationType.Group) {
+        // ephemeral msgs should not be sent to self devices,
+        // to handle that properly we need special backend parameters to exclude self user devices (don't report missing)
+        // FIXME: for now we just send it to active conv members, this can lead to 'lost' messages in case of races
+        members.getActiveUsers(conv.id).map { ms => Some(ms.toSet - selfUserId) }
+      } else
+        Future.successful(Some(Set(UserId(conv.id.str)))) // send only to other users' devices
+    }.getOrElse(Future.successful(None))
 
   private[waz] def messageSent(convId: ConvId, msg: MessageData, time: Instant) = {
     debug(s"otrMessageSent($convId. $msg, $time)")

@@ -47,7 +47,7 @@ package object model {
     def apply[A: EphemeralContent : GenericContent](id: Uid, expiration: Option[FiniteDuration], content: A): GenericMessage =
       returning(new Messages.GenericMessage()) { msg =>
         msg.messageId = id.str
-        if (expiration == None) {
+        if (expiration.isEmpty) {
           implicitly[GenericContent[A]].set(msg)(content)
         } else {
           Ephemeral.set(msg)(Ephemeral(expiration, content))
