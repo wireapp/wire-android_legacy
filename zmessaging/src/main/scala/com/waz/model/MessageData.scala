@@ -211,16 +211,16 @@ object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData
   }
 
   implicit lazy val ContentTypeCodec: EnumCodec[Message.Part.Type, String] = EnumCodec.injective {
-    case Message.Part.Type.TEXT => "Text"
+    case Message.Part.Type.TEXT            => "Text"
     case Message.Part.Type.TEXT_EMOJI_ONLY => "TextEmojiOnly"
-    case Message.Part.Type.ASSET => "Asset"
-    case Message.Part.Type.ANY_ASSET => "AnyAsset"
-    case Message.Part.Type.YOUTUBE => "YouTube"
-    case Message.Part.Type.SOUNDCLOUD => "SoundCloud"
-    case Message.Part.Type.SPOTIFY => "Spotify"
-    case Message.Part.Type.TWITTER => "Twitter"
-    case Message.Part.Type.WEB_LINK => "WebLink"
-    case Message.Part.Type.GOOGLE_MAPS => "GoogleMaps"
+    case Message.Part.Type.ASSET           => "Asset"
+    case Message.Part.Type.ANY_ASSET       => "AnyAsset"
+    case Message.Part.Type.YOUTUBE         => "YouTube"
+    case Message.Part.Type.SOUNDCLOUD      => "SoundCloud"
+    case Message.Part.Type.SPOTIFY         => "Spotify"
+    case Message.Part.Type.TWITTER         => "Twitter"
+    case Message.Part.Type.WEB_LINK        => "WebLink"
+    case Message.Part.Type.GOOGLE_MAPS     => "GoogleMaps"
   }
 }
 
@@ -235,82 +235,33 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
   type MessageState = Message.Status
   import GenericMessage._
 
-  implicit lazy val Decoder: JsonDecoder[MessageData] = new JsonDecoder[MessageData] {
-    import JsonDecoder._
-    override def apply(implicit js: JSONObject): MessageData =
-      MessageData('id,
-        decodeId[ConvId]('convId),
-        MessageTypeCodec.decode('msgType),
-        'userId,
-        decodeSeq[MessageContent]('content),
-        decodeSeq[GenericMessage]('protos),
-        'firstMessage,
-        JsonDecoder.array('members)((arr, i) => UserId(arr.getString(i))).toSet,
-        decodeOptId[UserId]('recipient),
-        'email,
-        'name,
-        Message.Status.valueOf('state),
-        Instant.ofEpochMilli(decodeLong('time)),
-        Instant.ofEpochMilli(decodeLong('localTime)),
-        Instant.ofEpochMilli(decodeLong('editTime)),
-        'ephemeral,
-        decodeOptLong('expiryTime) map Instant.ofEpochMilli,
-        'expired,
-        'duration
-      )
-  }
-
-  implicit lazy val Encoder: JsonEncoder[MessageData] = new JsonEncoder[MessageData] {
-    override def apply(v: MessageData): JSONObject = JsonEncoder { o =>
-      o.put("id", v.id.str)
-      o.put("convId", v.convId.str)
-      o.put("msgType", MessageTypeCodec.encode(v.msgType))
-      o.put("userId", v.userId.str)
-      o.put("content", JsonEncoder.arr(v.content))
-      o.put("protos", JsonEncoder.arr(v.protos))
-      o.put("firstMessage", v.firstMessage)
-      o.put("members", JsonEncoder.arrString(v.members.toSeq.map(_.str)))
-      v.recipient foreach { r => o.put("recipient", r.str) }
-      v.email foreach { o.put("email", _) }
-      v.name foreach { o.put("name", _) }
-      o.put("state", v.state.name())
-      o.put("time", v.time.toEpochMilli)
-      o.put("localTime", v.localTime.toEpochMilli)
-      o.put("editTime", v.localTime.toEpochMilli)
-      o.put("ephemeral", v.ephemeral.map(_.toMillis))
-      v.expiryTime foreach { t => o.put("expiryTime", t.toEpochMilli) }
-      o.put("expired", v.expired)
-      o.put("duration", v.duration.toMillis)
-    }
-  }
-
   implicit lazy val MessageTypeCodec: EnumCodec[Message.Type, String] = EnumCodec.injective {
-    case Message.Type.TEXT => "Text"
-    case Message.Type.TEXT_EMOJI_ONLY => "TextEmojiOnly"
-    case Message.Type.ASSET => "Asset"
-    case Message.Type.ANY_ASSET => "AnyAsset"
-    case Message.Type.VIDEO_ASSET => "VideoAsset"
-    case Message.Type.AUDIO_ASSET => "AudioAsset"
-    case Message.Type.KNOCK => "Knock"
-    case Message.Type.MEMBER_JOIN => "MemberJoin"
-    case Message.Type.MEMBER_LEAVE => "MemberLeave"
-    case Message.Type.CONNECT_REQUEST => "ConnectRequest"
-    case Message.Type.CONNECT_ACCEPTED => "ConnectAccepted"
-    case Message.Type.RENAME => "Rename"
-    case Message.Type.MISSED_CALL => "MissedCall"
-    case Message.Type.SUCCESSFUL_CALL => "SuccessfulCall"
-    case Message.Type.RICH_MEDIA => "RichMedia"
-    case Message.Type.OTR_ERROR => "OtrFailed"
+    case Message.Type.TEXT                 => "Text"
+    case Message.Type.TEXT_EMOJI_ONLY      => "TextEmojiOnly"
+    case Message.Type.ASSET                => "Asset"
+    case Message.Type.ANY_ASSET            => "AnyAsset"
+    case Message.Type.VIDEO_ASSET          => "VideoAsset"
+    case Message.Type.AUDIO_ASSET          => "AudioAsset"
+    case Message.Type.KNOCK                => "Knock"
+    case Message.Type.MEMBER_JOIN          => "MemberJoin"
+    case Message.Type.MEMBER_LEAVE         => "MemberLeave"
+    case Message.Type.CONNECT_REQUEST      => "ConnectRequest"
+    case Message.Type.CONNECT_ACCEPTED     => "ConnectAccepted"
+    case Message.Type.RENAME               => "Rename"
+    case Message.Type.MISSED_CALL          => "MissedCall"
+    case Message.Type.SUCCESSFUL_CALL      => "SuccessfulCall"
+    case Message.Type.RICH_MEDIA           => "RichMedia"
+    case Message.Type.OTR_ERROR            => "OtrFailed"
     case Message.Type.OTR_IDENTITY_CHANGED => "OtrIdentityChanged"
-    case Message.Type.OTR_VERIFIED => "OtrVerified"
-    case Message.Type.OTR_UNVERIFIED => "OtrUnverified"
-    case Message.Type.OTR_DEVICE_ADDED => "OtrDeviceAdded"
-    case Message.Type.OTR_MEMBER_ADDED => "OtrMemberAdded"
+    case Message.Type.OTR_VERIFIED         => "OtrVerified"
+    case Message.Type.OTR_UNVERIFIED       => "OtrUnverified"
+    case Message.Type.OTR_DEVICE_ADDED     => "OtrDeviceAdded"
+    case Message.Type.OTR_MEMBER_ADDED     => "OtrMemberAdded"
     case Message.Type.STARTED_USING_DEVICE => "StartedUsingDevice"
-    case Message.Type.HISTORY_LOST => "HistoryLost"
-    case Message.Type.LOCATION => "Location"
-    case Message.Type.UNKNOWN => "Unknown"
-    case Message.Type.RECALLED => "Recalled"
+    case Message.Type.HISTORY_LOST         => "HistoryLost"
+    case Message.Type.LOCATION             => "Location"
+    case Message.Type.UNKNOWN              => "Unknown"
+    case Message.Type.RECALLED             => "Recalled"
   }
 
   implicit object MessageDataDao extends Dao[MessageData, MessageId]  {
