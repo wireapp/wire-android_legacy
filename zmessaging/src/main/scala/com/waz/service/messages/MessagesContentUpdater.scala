@@ -63,7 +63,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
 
     def expiration =
       if (MessageData.EphemeralMessageTypes(msg.msgType))
-        convs.get(msg.convId) map { _.fold(Option.empty[EphemeralDuration])(_.ephemeralExpiration) }
+        convs.get(msg.convId).map(_.fold(Option.empty[EphemeralDuration])(_.ephemeralExpiration))
       else Future successful None
 
     for {

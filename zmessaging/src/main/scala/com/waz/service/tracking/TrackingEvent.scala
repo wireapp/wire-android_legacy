@@ -64,7 +64,7 @@ case class ContributionEvent(action:        ContributionEvent.Action,
     o.put("action", action.name)
     o.put("conversation_type", if (isGroup) "group" else "one_to_one")
     o.put("with_service", withService)
-    o.put("is_ephemeral", ephExp != None) //TODO is this flag necessary?
+    o.put("is_ephemeral", ephExp.isDefined)
     o.put("ephemeral_expiration", ephExp.map(_.toSeconds.toString))
     o.put("is_allow_guests", guestsAllowed)
     o.put("user_type", if (fromGuest) "guest" else "user")

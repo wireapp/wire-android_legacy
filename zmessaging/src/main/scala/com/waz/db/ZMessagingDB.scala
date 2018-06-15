@@ -216,7 +216,7 @@ object ZMessagingDB {
       db.execSQL("UPDATE Conversations SET cleared = null WHERE cleared = 0")
     },
     Migration(107, 108) { db =>
-      db.execSQL("ALTER TABLE Conversations ADD COLUMN set_by_conv INTEGER")
+      db.execSQL("ALTER TABLE Conversations ADD COLUMN is_ephemeral_global INTEGER")
     }
   )
 }

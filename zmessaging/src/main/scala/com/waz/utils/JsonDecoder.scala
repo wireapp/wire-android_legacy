@@ -142,6 +142,7 @@ object JsonDecoder {
   implicit def decodeOptUtcDate(s: Symbol)(implicit js: JSONObject): Option[Date] = opt(s, decodeUtcDate(s)(_))
   implicit def decodeOptInstant(s: Symbol)(implicit js: JSONObject): Option[Instant] = opt(s, decodeInstant(s)(_))
   implicit def decodeOptDuration(s: Symbol)(implicit js: JSONObject): Option[Duration] = opt(s, decodeDuration(s)(_))
+  implicit def decodeOptFiniteDuration(s: Symbol)(implicit js: JSONObject): Option[FiniteDuration] = opt(s, decodeFiniteDuration(s)(_))
   implicit def decodeOptLoudness(s: Symbol)(implicit js: JSONObject): Option[Loudness] = opt(s, decodeLoudness(s)(_))
   implicit def decodeUri(s: Symbol)(implicit js: JSONObject): URI = URI.parse(js.getString(s.name))
 

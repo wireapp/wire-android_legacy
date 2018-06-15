@@ -400,7 +400,7 @@ class ConversationsUiServiceImpl(userId:          UserId,
     }
 
   override def setEphemeral(id: ConvId, expiration: Option[FiniteDuration]): Future[Option[(ConversationData, ConversationData)]] =
-      convStorage.update(id, _.copy(ephemeral = expiration.getOrElse(0.millis)))
+      convStorage.update(id, _.copy(ephemeral = expiration.getOrElse(Duration.Zero)))
 
   private def mentionsMap(us: Set[UserId]): Future[Map[UserId, String]] =
     users.getUsers(us.toSeq) map { uss =>

@@ -40,7 +40,6 @@ import org.json.JSONObject
 import org.threeten.bp.Instant.now
 import org.threeten.bp.{Duration, Instant}
 
-import java.util.concurrent.TimeUnit
 import scala.collection.breakOut
 import scala.concurrent.duration._
 
@@ -254,7 +253,7 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
         Instant.ofEpochMilli(decodeLong('time)),
         Instant.ofEpochMilli(decodeLong('localTime)),
         Instant.ofEpochMilli(decodeLong('editTime)),
-        decodeOptLong('ephemeral) map { d => FiniteDuration(d, MILLISECONDS) },
+        'ephemeral,
         decodeOptLong('expiryTime) map Instant.ofEpochMilli,
         'expired,
         'duration
