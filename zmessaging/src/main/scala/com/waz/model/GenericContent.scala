@@ -28,7 +28,7 @@ import com.waz.model.nano.Messages.MessageEdit
 import com.waz.utils._
 import com.waz.utils.wrappers.URI
 import org.json.JSONObject
-import org.threeten.bp.{Duration, Instant}
+import org.threeten.bp.{Duration => Dur, Instant}
 
 import scala.collection.breakOut
 import scala.concurrent.duration._
@@ -99,7 +99,7 @@ object GenericContent {
       }
 
       def unapply(proto: VideoMetaData): Option[AssetMetaData.Video] =
-        Some(AssetMetaData.Video(Dim2(proto.width, proto.height), Duration.ofMillis(proto.durationInMillis)))
+        Some(AssetMetaData.Video(Dim2(proto.width, proto.height), Dur.ofMillis(proto.durationInMillis)))
     }
 
     type AudioMetaData = Messages.Asset.AudioMetaData
@@ -110,7 +110,7 @@ object GenericContent {
       }
 
       def unapply(p: AudioMetaData): Option[AssetMetaData.Audio] =
-        Some(AssetMetaData.Audio(Duration.ofMillis(p.durationInMillis), Some(Loudness(floatify(p.normalizedLoudness)))))
+        Some(AssetMetaData.Audio(Dur.ofMillis(p.durationInMillis), Some(Loudness(floatify(p.normalizedLoudness)))))
 
       def bytify(ls: Iterable[Float]): Array[Byte] = ls.map(l => (l * 255f).toByte)(breakOut)
       def floatify(bs: Array[Byte]): Vector[Float] = bs.map(b => (b & 255) / 255f)(breakOut)
@@ -527,7 +527,7 @@ object GenericContent {
     override def set(msg: GenericMessage): (Ephemeral) => GenericMessage = msg.setEphemeral
 
     def apply[Content: EphemeralContent](expiry: Option[FiniteDuration], content: Content) = returning(new Messages.Ephemeral) { proto =>
-      proto.expireAfterMillis = expiry.getOrElse(0.millis).toMillis
+      proto.expireAfterMillis = expiry.getOrElse(Duration.Zero).toMillis
       implicitly[EphemeralContent[Content]].set(proto)(content)
     }
 

@@ -34,11 +34,9 @@ import com.waz.utils._
 import org.json.JSONObject
 import org.threeten.bp.Instant
 
-import java.util.concurrent.TimeUnit.MILLISECONDS
-
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 
 sealed abstract class SyncRequest {
   val cmd: SyncCommand
@@ -360,7 +358,7 @@ object SyncRequest {
           case Cmd.PostMessage           => PostMessage(convId, messageId, 'time)
           case Cmd.PostDeleted           => PostDeleted(convId, messageId)
           case Cmd.PostRecalled          => PostRecalled(convId, messageId, decodeId[MessageId]('recalled))
-          case Cmd.PostAssetStatus       => PostAssetStatus(convId, messageId, decodeOptLong('ephemeral).map { d => FiniteDuration(d, MILLISECONDS) }, JsonDecoder[AssetStatus.Syncable]('status))
+          case Cmd.PostAssetStatus       => PostAssetStatus(convId, messageId, decodeOptLong('ephemeral).map(_.millis), JsonDecoder[AssetStatus.Syncable]('status))
           case Cmd.PostConvJoin          => PostConvJoin(convId, users)
           case Cmd.PostConvLeave         => PostConvLeave(convId, userId)
           case Cmd.PostConnection        => PostConnection(userId, 'name, 'message)

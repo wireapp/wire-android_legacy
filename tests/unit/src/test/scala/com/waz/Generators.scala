@@ -46,8 +46,6 @@ import org.scalacheck.Gen._
 import org.scalacheck._
 import org.threeten.bp.{Duration, Instant}
 
-import scala.concurrent.duration.FiniteDuration
-
 object Generators {
   import MediaAssets._
 
@@ -242,7 +240,7 @@ object Generators {
   implicit lazy val arbDate: Arbitrary[Date] = Arbitrary(choose(0L, 999999L).map(i => new Date(currentTimeMillis - 1000000000L + i * 1000L)))
   implicit lazy val arbInstant: Arbitrary[Instant] = Arbitrary(posNum[Long] map Instant.ofEpochMilli)
   implicit lazy val arbDuration: Arbitrary[Duration] = Arbitrary(posNum[Long] map Duration.ofMillis)
-  implicit lazy val arbFiniteDuration: Arbitrary[FiniteDuration] = Arbitrary(posNum[Long] map (FiniteDuration(_, TimeUnit.MILLISECONDS)))
+  implicit lazy val arbFiniteDuration: Arbitrary[FiniteDuration] = Arbitrary(posNum[Long] map(_.millis))
 
   implicit lazy val arbLiking: Arbitrary[Liking] = Arbitrary(resultOf(Liking.apply _))
   implicit lazy val arbLikingAction: Arbitrary[Liking.Action] = Arbitrary(oneOf(Liking.Action.values.toSeq))

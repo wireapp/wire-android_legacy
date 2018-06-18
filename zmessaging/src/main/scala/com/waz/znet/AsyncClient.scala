@@ -74,7 +74,7 @@ class AsyncClientImpl(bodyDecoder: ResponseBodyDecoder = DefaultResponseBodyDeco
 
       val ua = request.headers.getOrElse(AsyncClient.UserAgentHeader, userAgent)
       val requestBuilt = requestWorker.processRequest(
-        request.withTimeout(0.millis).withHeaders(Map(AsyncClient.UserAgentHeader -> ua))
+        request.withTimeout(Duration.Zero).withHeaders(Map(AsyncClient.UserAgentHeader -> ua))
       ) // switching off the AsyncHttpClient's timeout - we will use our own
       debug(s"request headers: ${requestBuilt.headers}")
 
