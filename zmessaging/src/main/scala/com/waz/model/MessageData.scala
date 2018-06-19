@@ -61,7 +61,7 @@ case class MessageData(id:            MessageId              = MessageId(),
                        ephemeral:     Option[FiniteDuration] = None,
                        expiryTime:    Option[Instant]        = None, // local expiration time
                        expired:       Boolean                = false,
-                       duration:      Duration               = Duration.ZERO //for successful calls
+                       duration:      Duration               = Duration.ZERO //for successful calls and message_timer changes
                       ) {
 
   override def toString: String =
@@ -262,6 +262,7 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     case Message.Type.LOCATION             => "Location"
     case Message.Type.UNKNOWN              => "Unknown"
     case Message.Type.RECALLED             => "Recalled"
+    case Message.Type.MESSAGE_TIMER        => "MessageTimer"
   }
 
   implicit object MessageDataDao extends Dao[MessageData, MessageId]  {

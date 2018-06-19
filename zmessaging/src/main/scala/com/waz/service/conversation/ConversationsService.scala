@@ -193,10 +193,10 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case ConversationCodeDeleteEvent(_, _, _) =>
       convsStorage.update(conv.id, _.copy(link = None))
 
-    case MessageTimerEvent(_, _, from, duration) =>
+    case MessageTimerEvent(_, time, from, duration) =>
       for {
         _ <- convsStorage.update(conv.id, _.copy(globalEphemeral = duration))
-        //TODO add new message type
+        _ <- messages.addTimerChangedMessage(conv.id, from, time, duration)
       } yield {}
     case _ => successful(())
   }

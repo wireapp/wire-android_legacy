@@ -42,6 +42,7 @@ import org.threeten.bp.{Duration, Instant}
 import scala.collection.breakOut
 import scala.concurrent.Future
 import scala.concurrent.Future.{successful, traverse}
+import scala.concurrent.duration.FiniteDuration
 import scala.util.Success
 
 trait MessagesService {
@@ -59,6 +60,7 @@ trait MessagesService {
   def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false): Future[Option[MessageData]]
   def addMemberLeaveMessage(convId: ConvId, selfUserId: UserId, user: UserId): Future[Any]
   def addRenameConversationMessage(convId: ConvId, selfUserId: UserId, name: String, needsSyncing: Boolean = true): Future[Option[MessageData]]
+  def addTimerChangedMessage(convId: ConvId, from: UserId, duration: FiniteDuration, time: Instant = clock.instant()): Future[Unit]
   def addHistoryLostMessages(cs: Seq[ConversationData], selfUserId: UserId): Future[Set[MessageData]]
 
   def addDeviceStartMessages(convs: Seq[ConversationData], selfUserId: UserId): Future[Set[MessageData]]
@@ -271,6 +273,10 @@ class MessagesServiceImpl(selfUserId: UserId,
       case _ =>
         updateOrCreate(users)
     }
+  }
+
+  override def addTimerChangedMessage(convId: ConvId, from: UserId, time: Instant = clock.instant(), duration: FiniteDuration) = {
+    updater.addLocalSentMessage(MessageData(MessageId(), convId, Message.Type.MESSAGE_TIMER, from, time = time, duration = duration)).map(_ => {})
   }
 
   def removeLocalMemberJoinMessage(convId: ConvId, users: Set[UserId]): Future[Any] = {

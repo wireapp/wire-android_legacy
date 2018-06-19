@@ -96,7 +96,7 @@ trait ConversationsUiService {
   def assetUploadFailed    : EventStream[ErrorResponse]
 }
 
-class ConversationsUiServiceImpl(userId:          UserId,
+class ConversationsUiServiceImpl(selfUserId:      UserId,
                                  teamId:          Option[TeamId],
                                  assets:          AssetService,
                                  users:           UserService,
@@ -201,7 +201,7 @@ class ConversationsUiServiceImpl(userId:          UserId,
   override def updateMessage(convId: ConvId, id: MessageId, text: String): Future[Option[MessageData]] = {
     verbose(s"updateMessage($convId, $id, $text")
     messagesContent.updateMessage(id) {
-      case m if m.convId == convId && m.userId == userId =>
+      case m if m.convId == convId && m.userId == selfUserId =>
         val (tpe, ct) = MessageData.messageContent(text, weblinkEnabled = true)
         verbose(s"updated content: ${(tpe, ct)}")
         m.copy(msgType = tpe, content = ct, protos = Seq(GenericMessage(Uid(), MsgEdit(id, GenericContent.Text(text)))), state = Message.Status.PENDING, editTime = (m.time max m.editTime).plus(1.millis) max Instant.now)
@@ -220,7 +220,7 @@ class ConversationsUiServiceImpl(userId:          UserId,
   } yield ()
 
   override def recallMessage(convId: ConvId, id: MessageId): Future[Option[MessageData]] =
-    messages.recallMessage(convId, id, userId) flatMap {
+    messages.recallMessage(convId, id, selfUserId) flatMap {
       case Some(msg) =>
         sync.postRecalled(convId, msg.id, id) map { _ => Some(msg) }
       case None =>
@@ -243,7 +243,7 @@ class ConversationsUiServiceImpl(userId:          UserId,
     convsContent.updateConversationName(id, name) flatMap {
       case Some((_, conv)) if conv.name.contains(name) =>
         sync.postConversationName(id, conv.name.getOrElse(""))
-        messages.addRenameConversationMessage(id, userId, name) map (_ => Some(conv))
+        messages.addRenameConversationMessage(id, selfUserId, name) map (_ => Some(conv))
       case conv =>
         warn(s"Conversation name could not be changed for: $id, conv: $conv")
         CancellableFuture.successful(None)
@@ -254,7 +254,7 @@ class ConversationsUiServiceImpl(userId:          UserId,
     (for {
       true   <- canModifyMembers(conv)
       added  <- members.add(conv, users) if added.nonEmpty
-      _      <- messages.addMemberJoinMessage(conv, userId, added.map(_.userId))
+      _      <- messages.addMemberJoinMessage(conv, selfUserId, added.map(_.userId))
       syncId <- sync.postConversationMemberJoin(conv, added.map(_.userId).toSeq)
     } yield Option(syncId))
       .recover {
@@ -268,7 +268,7 @@ class ConversationsUiServiceImpl(userId:          UserId,
     (for {
       true    <- canModifyMembers(conv)
       Some(_) <- members.remove(conv, user)
-      _       <- messages.addMemberLeaveMessage(conv, userId, user)
+      _       <- messages.addMemberLeaveMessage(conv, selfUserId, user)
       syncId  <- sync.postConversationMemberLeave(conv, user)
     } yield Some(syncId))
       .recover {
@@ -280,7 +280,7 @@ class ConversationsUiServiceImpl(userId:          UserId,
 
   private def canModifyMembers(conv: ConvId) =
     for {
-      selfActive <- members.isActiveMember(conv, userId)
+      selfActive <- members.isActiveMember(conv, selfUserId)
       isGroup    <- convs.isGroupConversation(conv)
     } yield selfActive && isGroup
 
@@ -288,7 +288,7 @@ class ConversationsUiServiceImpl(userId:          UserId,
     verbose(s"leaveConversation($conv)")
     for {
       updated  <- convsContent.setConvActive(conv, active = false)
-      _        <- removeConversationMember(conv, userId)
+      _        <- removeConversationMember(conv, selfUserId)
       archived <- convsContent.updateConversationArchived(conv, archived = true)
     } yield archived.map(_._2).orElse(updated.map(_._2))
   }
@@ -333,15 +333,15 @@ class ConversationsUiServiceImpl(userId:          UserId,
         case _ => usersStorage.get(other).flatMap {
           case Some(u) if u.connection == ConnectionStatus.Ignored =>
             for {
-              conv <- convsContent.createConversationWithMembers(ConvId(other.str), u.conversation.getOrElse(RConvId()), ConversationType.Incoming, other, Set(userId), hidden = true)
-              _ <- messages.addMemberJoinMessage(conv.id, other, Set(userId), firstMessage = true)
-              _ <- u.connectionMessage.fold(Future.successful(conv))(messages.addConnectRequestMessage(conv.id, other, userId, _, u.name).map(_ => conv))
+              conv <- convsContent.createConversationWithMembers(ConvId(other.str), u.conversation.getOrElse(RConvId()), ConversationType.Incoming, other, Set(selfUserId), hidden = true)
+              _ <- messages.addMemberJoinMessage(conv.id, other, Set(selfUserId), firstMessage = true)
+              _ <- u.connectionMessage.fold(Future.successful(conv))(messages.addConnectRequestMessage(conv.id, other, selfUserId, _, u.name).map(_ => conv))
             } yield conv
           case _ =>
             for {
               _ <- sync.postConversation(ConvId(other.str), Set(other), None, None, Set(Access.PRIVATE), AccessRole.PRIVATE)
-              conv <- convsContent.createConversationWithMembers(ConvId(other.str), RConvId(), ConversationType.OneToOne, userId, Set(other))
-              _ <- messages.addMemberJoinMessage(conv.id, userId, Set(other), firstMessage = true)
+              conv <- convsContent.createConversationWithMembers(ConvId(other.str), RConvId(), ConversationType.OneToOne, selfUserId, Set(other))
+              _ <- messages.addMemberJoinMessage(conv.id, selfUserId, Set(other), firstMessage = true)
             } yield conv
         }
       }
@@ -351,7 +351,7 @@ class ConversationsUiServiceImpl(userId:          UserId,
       (for {
         allConvs <- this.members.getByUsers(Set(other)).map(_.map(_.convId))
         allMembers <- this.members.getByConvs(allConvs.toSet).map(_.map(m => m.convId -> m.userId))
-        onlyUs = allMembers.groupBy { case (c, _) => c }.map { case (cid, us) => cid -> us.map(_._2).toSet }.collect { case (c, us) if us == Set(other, userId) => c }
+        onlyUs = allMembers.groupBy { case (c, _) => c }.map { case (cid, us) => cid -> us.map(_._2).toSet }.collect { case (c, us) if us == Set(other, selfUserId) => c }
         data <- convStorage.getAll(onlyUs).map(_.flatten)
         _ = verbose(s"Found ${data.size} convs with other user: $other")
       } yield data.filter(c => c.team.contains(tId) && c.name.isEmpty)).flatMap { convs =>
@@ -381,18 +381,18 @@ class ConversationsUiServiceImpl(userId:          UserId,
   private def createAndPostConversation(id: ConvId, name: Option[String], members: Set[UserId], teamOnly: Boolean = false) = {
     val (ac, ar) = getAccessAndRoleForGroupConv(teamOnly, teamId)
     for {
-      conv <- convsContent.createConversationWithMembers(id, generateTempConversationId(members + userId), ConversationType.Group, userId, members, name, access = ac, accessRole = ar)
+      conv <- convsContent.createConversationWithMembers(id, generateTempConversationId(members + selfUserId), ConversationType.Group, selfUserId, members, name, access = ac, accessRole = ar)
       _    = verbose(s"created: $conv")
-      _    <- messages.addConversationStartMessage(conv.id, userId, members, name)
+      _    <- messages.addConversationStartMessage(conv.id, selfUserId, members, name)
       syncId <- sync.postConversation(id, members, conv.name, teamId, ac, ar)
     } yield (conv, syncId)
   }
 
   override def findGroupConversations(prefix: SearchKey, limit: Int, handleOnly: Boolean): Future[Seq[ConversationData]] =
-    convStorage.search(prefix, userId, handleOnly).map(_.sortBy(_.displayName)(currentLocaleOrdering).take(limit))
+    convStorage.search(prefix, selfUserId, handleOnly).map(_.sortBy(_.displayName)(currentLocaleOrdering).take(limit))
 
   override def knock(id: ConvId): Future[Option[MessageData]] = for {
-    msg <- messages.addKnockMessage(id, userId)
+    msg <- messages.addKnockMessage(id, selfUserId)
     _   <- sync.postMessage(msg.id, id, msg.editTime)
   } yield Some(msg)
 
@@ -413,6 +413,7 @@ class ConversationsUiServiceImpl(userId:          UserId,
       Some(conv) <- convsContent.convById(id)
       resp       <- client.postMessageTimer(conv.remoteId, expiration.getOrElse(Duration.Zero)).future
       _          <- resp.mapFuture(_ => convStorage.update(id, _.copy(globalEphemeral = expiration.getOrElse(Duration.Zero))))
+      _          <- resp.mapFuture(_ => messages.addTimerChangedMessage(id, selfUserId, expiration.getOrElse(Duration.Zero)))
     } yield resp
 
   private def mentionsMap(us: Set[UserId]): Future[Map[UserId, String]] =
@@ -440,7 +441,7 @@ class ConversationsUiServiceImpl(userId:          UserId,
       data <- assets.addImageAsset(img)
       msg <- messages.addAssetMessage(conv.id, data)
       _ <- updateLastRead(msg)
-      _ <- Future.successful(tracking.assetContribution(data.id, userId))
+      _ <- Future.successful(tracking.assetContribution(data.id, selfUserId))
       _ <- sync.postMessage(msg.id, conv.id, msg.editTime)
     } yield Some(msg)
   }
@@ -452,7 +453,7 @@ class ConversationsUiServiceImpl(userId:          UserId,
       message <- messages.addAssetMessage(conv.id, asset)
       _ <- updateLastRead(message)
       size <- in.sizeInBytes
-      _ <- Future.successful(tracking.assetContribution(asset.id, userId))
+      _ <- Future.successful(tracking.assetContribution(asset.id, selfUserId))
       shouldSend <- checkSize(conv.id, size, mime, message, handler)
       _ <- if (shouldSend) sync.postMessage(message.id, conv.id, message.editTime) else Future.successful(())
     } yield Some(message)
@@ -466,7 +467,7 @@ class ConversationsUiServiceImpl(userId:          UserId,
     if (size < LargeAssetWarningThresholdInBytes) Future successful None
     else for {
       mode         <- network.networkMode.head
-      inForeground <- accounts.accountState(userId).map(_ == InForeground).head
+      inForeground <- accounts.accountState(selfUserId).map(_ == InForeground).head
     } yield {
       (mode, inForeground) match {
         case (OFFLINE | WIFI, _) => None
