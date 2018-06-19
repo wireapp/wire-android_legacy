@@ -19,8 +19,8 @@ package com.waz.sync.handler
 
 import java.util.Date
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.api.ErrorType
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.impl.ErrorResponse
@@ -35,7 +35,6 @@ import com.waz.sync.client.ConversationsClient
 import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.EventContext
-import com.waz.utils._
 
 import scala.concurrent.Future
 import scala.util.control.NonFatal
@@ -115,7 +114,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       conversationsClient.postMemberLeave(conv.remoteId, user).future flatMap {
         case Right(Some(event: MemberLeaveEvent)) =>
           event.localTime = new Date
-          conversationsClient.postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(event.time.instant))).future flatMap {
+          conversationsClient.postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(event.time))).future flatMap {
             case Right(resp) =>
               verbose(s"postConversationState finished: $resp")
               convEvents.handlePostConversationEvent(event).map(_ => SyncResult.Success)

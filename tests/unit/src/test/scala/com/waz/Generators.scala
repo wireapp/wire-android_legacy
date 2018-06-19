@@ -18,7 +18,6 @@
 package com.waz
 
 import java.lang.System.currentTimeMillis
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import java.util.{Date, Locale}
 
@@ -45,6 +44,9 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen._
 import org.scalacheck._
 import org.threeten.bp.{Duration, Instant}
+
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 
 object Generators {
   import MediaAssets._

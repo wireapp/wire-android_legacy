@@ -22,7 +22,6 @@ import com.waz.model.GenericContent._
 import com.waz.model._
 import com.waz.service.conversation.{ConversationOrderEventsService, ConversationsContentUpdaterImpl}
 import com.waz.service.messages.{MessagesContentUpdater, ReactionsService, ReceiptService}
-import com.waz.utils._
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future.traverse
@@ -44,7 +43,7 @@ class GenericMessageService(selfUserId: UserId,
     def lastForConv(items: Seq[(RConvId, Instant)]) = items.groupBy(_._1).map { case (conv, times) => times.maxBy(_._2.toEpochMilli) }
 
     val incomingReactions = events collect {
-      case GenericMessageEvent(_, time, from, GenericMessage(_, Reaction(msg, action))) => Liking(msg, from, time.instant, action)
+      case GenericMessageEvent(_, time, from, GenericMessage(_, Reaction(msg, action))) => Liking(msg, from, time, action)
     }
 
     val lastRead = lastForConv(events collect {

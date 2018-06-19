@@ -44,7 +44,6 @@ import org.threeten.bp.{Duration, Instant}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future, Promise}
-import scala.util.control.NonFatal
 
 /** PushService handles notifications coming from FCM, WebSocket, and fetch.
   * We assume FCM notifications are unreliable, so we use them only as information that we should perform a fetch (syncHistory).

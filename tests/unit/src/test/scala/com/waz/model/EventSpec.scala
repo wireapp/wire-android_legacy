@@ -26,6 +26,7 @@ import com.waz.utils.JsonDecoder
 import org.json.JSONObject
 import org.scalatest._
 import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
+import org.threeten.bp.Instant
 
 class EventSpec extends FeatureSpec with Matchers with BeforeAndAfter with GivenWhenThen with PropertyChecks with GeneratorDrivenPropertyChecks with RobolectricTests {
   import EventSpec._
@@ -61,7 +62,7 @@ class EventSpec extends FeatureSpec with Matchers with BeforeAndAfter with Given
     }
 
     scenario("encode/decode GenericMessageEvent") {
-      val msg = GenericMessageEvent(RConvId(), new Date(), UserId(), new Messages.GenericMessage)
+      val msg = GenericMessageEvent(RConvId(), Instant.now(), UserId(), new Messages.GenericMessage)
       EventDecoder(MessageEventEncoder(msg)) match {
         case ev: GenericMessageEvent =>
           ev.convId shouldEqual msg.convId
@@ -73,7 +74,7 @@ class EventSpec extends FeatureSpec with Matchers with BeforeAndAfter with Given
     }
 
     scenario("encode/decode CallMessageEvent") {
-      val msg = CallMessageEvent(RConvId(), new Date(), UserId(), ClientId(), "")
+      val msg = CallMessageEvent(RConvId(), Instant.now(), UserId(), ClientId(), "")
       EventDecoder(MessageEventEncoder(msg)) match {
         case ev: CallMessageEvent =>
           ev.convId shouldEqual msg.convId
@@ -86,7 +87,7 @@ class EventSpec extends FeatureSpec with Matchers with BeforeAndAfter with Given
     }
 
     scenario("encode/decode OtrErrorEvent(duplicate)") {
-      val msg = OtrErrorEvent(RConvId(), new Date(), UserId(), Duplicate)
+      val msg = OtrErrorEvent(RConvId(), Instant.now(), UserId(), Duplicate)
       EventDecoder(MessageEventEncoder(msg)) match {
         case ev: OtrErrorEvent =>
           ev.convId shouldEqual msg.convId
@@ -98,7 +99,7 @@ class EventSpec extends FeatureSpec with Matchers with BeforeAndAfter with Given
     }
 
     scenario("encode/decode OtrErrorEvent(DecryptionError)") {
-      val msg = OtrErrorEvent(RConvId(), new Date(), UserId(), DecryptionError("error", UserId(), ClientId()))
+      val msg = OtrErrorEvent(RConvId(), Instant.now(), UserId(), DecryptionError("error", UserId(), ClientId()))
       EventDecoder(MessageEventEncoder(msg)) match {
         case ev: OtrErrorEvent =>
           ev.convId shouldEqual msg.convId
@@ -110,7 +111,7 @@ class EventSpec extends FeatureSpec with Matchers with BeforeAndAfter with Given
     }
 
     scenario("encode/decode OtrErrorEvent(IdentityChanged)") {
-      val msg = OtrErrorEvent(RConvId(), new Date(), UserId(), IdentityChangedError(UserId(), ClientId()))
+      val msg = OtrErrorEvent(RConvId(), Instant.now(), UserId(), IdentityChangedError(UserId(), ClientId()))
       EventDecoder(MessageEventEncoder(msg)) match {
         case ev: OtrErrorEvent =>
           ev.convId shouldEqual msg.convId

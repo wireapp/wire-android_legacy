@@ -126,7 +126,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0) = ev match {
     case CreateConversationEvent(_, time, from, data) =>
       updateConversations(Seq(data)).flatMap { case (_, created) => Future.traverse(created) { created =>
-        messages.addConversationStartMessage(created.id, from, (data.members + selfUserId).filter(_ != from), created.name, time = Some(time.instant))
+        messages.addConversationStartMessage(created.id, from, (data.members + selfUserId).filter(_ != from), created.name, time = Some(time))
       }}
 
     case ConversationEvent(rConvId, _, _) =>
@@ -140,7 +140,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
             case MemberJoinEvent(_, time, from, members, _) if from != selfUserId =>
               // this happens when we are added to group conversation
               for {
-                conv <- convsStorage.insert(ConversationData(ConvId(), rConvId, None, from, ConversationType.Group, lastEventTime = time.instant))
+                conv <- convsStorage.insert(ConversationData(ConvId(), rConvId, None, from, ConversationType.Group, lastEventTime = time))
                 ms   <- membersStorage.add(conv.id, from +: members)
                 _    <- messages.addMemberJoinMessage(conv.id, from, members.toSet)
                 _    <- sync.syncConversations(Set(conv.id))
