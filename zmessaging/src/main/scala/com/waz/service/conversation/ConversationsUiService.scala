@@ -405,7 +405,7 @@ class ConversationsUiServiceImpl(userId:          UserId,
     }
 
   override def setEphemeral(id: ConvId, expiration: Option[FiniteDuration]) = {
-    convStorage.update(id, _.copy(ephemeral = expiration.getOrElse(Duration.Zero))).map(_ => {})
+    convStorage.update(id, _.copy(localEphemeral = expiration.getOrElse(Duration.Zero))).map(_ => {})
   }
 
   override def setEphemeralGlobal(id: ConvId, expiration: Option[FiniteDuration]) =

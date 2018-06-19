@@ -17,8 +17,6 @@
  */
 package com.waz.model
 
-import org.threeten.bp.Instant
-
 import scala.concurrent.duration._
 
 sealed trait EphemeralDuration {
