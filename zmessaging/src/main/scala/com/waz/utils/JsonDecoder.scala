@@ -116,7 +116,8 @@ object JsonDecoder {
   def decodeISOInstant(s: Symbol)(implicit js: JSONObject): Instant = withDefault(s, Instant.EPOCH, { js => parseDate(js.getString(s.name)).instant })
   def decodeOptISOInstant(s: Symbol)(implicit js: JSONObject): Option[Instant] = opt(s, decodeISOInstant(s)(_))
 
-  def decodeByteString(str: String): Array[Byte] = Base64.decode(str, Base64.NO_WRAP)
+  implicit def decodeByteString(s: Symbol)(implicit js: JSONObject): Array[Byte] = Base64.decode(decodeString(s), Base64.NO_WRAP)
+  implicit def decodeOptByteString(s: Symbol)(implicit js: JSONObject): Option[Array[Byte]] = opt(s, js => decodeByteString(s)(js))
 
   implicit def decodeObject(s: Symbol)(implicit js: JSONObject): JSONObject = withDefault(s, null.asInstanceOf[JSONObject], _.getJSONObject(s.name))
   implicit def decodeString(s: Symbol)(implicit js: JSONObject): String = withDefault(s, "", _.getString(s.name))
