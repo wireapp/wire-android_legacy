@@ -22,7 +22,7 @@ import com.waz.ZLog._
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.model.ConversationData.{ConversationType, Link}
 import com.waz.model._
-import com.waz.sync.client.ConversationsClient.ConversationResponse.{ConversationIdsResponse, ConversationsResult}
+import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
 import com.waz.threading.Threading
 import com.waz.utils.JsonEncoder.{encodeAccess, encodeAccessRole}
 import com.waz.utils.{Json, JsonDecoder, JsonEncoder, returning}
@@ -31,7 +31,7 @@ import com.waz.znet.Response.{HttpStatus, Status, SuccessHttpStatus}
 import com.waz.znet.ZNetClient._
 import com.waz.znet._
 import org.json
-import org.json.{JSONArray, JSONObject}
+import org.json.JSONObject
 import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
@@ -69,6 +69,11 @@ class ConversationsClient(netClient: ZNetClient) {
   def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Boolean] =
     netClient.withErrorHandling("postConversationState", Request.Put(s"$ConversationsPath/$convId/self", state)(ConversationState.StateContentEncoder)) {
       case Response(SuccessHttpStatus(), _, _) => true
+    }
+
+  def postMessageTimer(convId: RConvId, duration: FiniteDuration): ErrorOrResponse[Unit] =
+    netClient.withErrorHandling("postMessageTimer", Request.Put(s"$ConversationsPath/$convId/message-timer", Json("message-timer" -> duration.toMillis))) {
+      case Response(SuccessHttpStatus(), _, _) => {}
     }
 
   def postMemberJoin(conv: RConvId, members: Set[UserId]): ErrorOrResponse[Option[MemberJoinEvent]] =

@@ -38,11 +38,13 @@ import com.waz.service.conversation.ConversationsService.generateTempConversatio
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
+import com.waz.sync.client.ConversationsClient
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.Locales.currentLocaleOrdering
 import com.waz.utils.events.EventStream
 import com.waz.utils.wrappers.URI
-import com.waz.utils.{RichInstant, _}
+import com.waz.utils._
+import com.waz.znet.ZNetClient.ErrorOr
 import org.threeten.bp.Instant
 
 import scala.collection.breakOut
@@ -84,7 +86,7 @@ trait ConversationsUiService {
   def setLastRead(convId: ConvId, msg: MessageData): Future[Option[ConversationData]]
 
   def setEphemeral(id: ConvId, expiration: Option[FiniteDuration]): Future[Unit]
-  def setEphemeralGlobal(id: ConvId, expiration: Option[FiniteDuration], isExpirationGlobal: Boolean): Future[Unit]
+  def setEphemeralGlobal(id: ConvId, expiration: Option[FiniteDuration]): ErrorOr[Unit]
 
   //conversation creation methods
   def getOrCreateOneToOneConversation(toUser: UserId): Future[ConversationData]
@@ -109,6 +111,7 @@ class ConversationsUiServiceImpl(userId:          UserId,
                                  network:         NetworkModeService,
                                  convs:           ConversationsService,
                                  sync:            SyncServiceHandle,
+                                 client:          ConversationsClient,
                                  accounts:        AccountsService,
                                  tracking:        TrackingService,
                                  errors:          ErrorsService) extends ConversationsUiService {
@@ -405,10 +408,12 @@ class ConversationsUiServiceImpl(userId:          UserId,
     convStorage.update(id, _.copy(ephemeral = expiration.getOrElse(Duration.Zero))).map(_ => {})
   }
 
-  override def setEphemeralGlobal(id: ConvId, expiration: Option[FiniteDuration], isExpirationGlobal: Boolean) = {
-    error("######### TODO: set global ephemeral expiration ######### ") //TODO
-    Future.successful({})
-  }
+  override def setEphemeralGlobal(id: ConvId, expiration: Option[FiniteDuration]) =
+    for {
+      Some(conv) <- convsContent.convById(id)
+      resp       <- client.postMessageTimer(conv.remoteId, expiration.getOrElse(Duration.Zero)).future
+      _          <- resp.mapFuture(_ => convStorage.update(id, _.copy(globalEphemeral = expiration.getOrElse(Duration.Zero))))
+    } yield resp
 
   private def mentionsMap(us: Set[UserId]): Future[Map[UserId, String]] =
     users.getUsers(us.toSeq) map { uss =>

@@ -145,7 +145,6 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                 _    <- messages.addMemberJoinMessage(conv.id, from, members.toSet)
                 _    <- sync.syncConversations(Set(conv.id))
               } yield {}
-
             case _ =>
               warn(s"No conversation data found for event: $ev on try: $retryCount")
               content.processConvWithRemoteId(rConvId, retryAsync = true) { processUpdateEvent(_, ev) }
@@ -194,6 +193,11 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case ConversationCodeDeleteEvent(_, _, _) =>
       convsStorage.update(conv.id, _.copy(link = None))
 
+    case MessageTimerEvent(_, _, from, duration) =>
+      for {
+        _ <- convsStorage.update(conv.id, _.copy(globalEphemeral = duration))
+        //TODO add new message type
+      } yield {}
     case _ => successful(())
   }
 
@@ -244,18 +248,19 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       def updateOrCreate(newLocalId: ConvId, resp: ConversationResponse): (Option[ConversationData] => ConversationData) = { prev =>
         returning(prev.getOrElse(ConversationData(id = newLocalId, hidden = isOneToOne(resp.convType) && resp.members.size <= 1))
           .copy(
-            remoteId    = resp.id,
-            name        = resp.name.filterNot(_.isEmpty),
-            creator     = resp.creator,
-            convType    = prev.map(_.convType).filter(oldType => isOneToOne(oldType) && resp.convType != ConversationType.OneToOne).getOrElse(resp.convType),
-            team        = resp.team,
-            muted       = resp.muted,
-            muteTime    = resp.mutedTime,
-            archived    = resp.archived,
-            archiveTime = resp.archivedTime,
-            access      = resp.access,
-            accessRole  = resp.accessRole,
-            link        = resp.link
+            remoteId        = resp.id,
+            name            = resp.name.filterNot(_.isEmpty),
+            creator         = resp.creator,
+            convType        = prev.map(_.convType).filter(oldType => isOneToOne(oldType) && resp.convType != ConversationType.OneToOne).getOrElse(resp.convType),
+            team            = resp.team,
+            muted           = resp.muted,
+            muteTime        = resp.mutedTime,
+            archived        = resp.archived,
+            archiveTime     = resp.archivedTime,
+            access          = resp.access,
+            accessRole      = resp.accessRole,
+            link            = resp.link,
+            globalEphemeral = resp.messageTimer
           ))(c => if (prev.isEmpty) created += c)
       }
 

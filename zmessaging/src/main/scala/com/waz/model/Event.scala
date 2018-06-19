@@ -37,6 +37,7 @@ import com.waz.znet.ContentEncoder.JsonContentEncoder
 import org.json.{JSONException, JSONObject}
 import org.threeten.bp.Instant
 
+import scala.concurrent.duration.FiniteDuration
 import scala.util.Try
 
 sealed trait Event {
@@ -100,6 +101,8 @@ case class UnknownConvEvent(json: JSONObject) extends ConversationEvent {
 }
 
 case class CreateConversationEvent(convId: RConvId, time: Instant, from: UserId, data: ConversationResponse) extends ConversationStateEvent
+
+case class MessageTimerEvent(convId: RConvId, time: Instant, from: UserId, duration: FiniteDuration) extends ConversationEvent
 
 case class RenameConversationEvent(convId: RConvId, time: Instant, from: UserId, name: String) extends MessageEvent with ConversationStateEvent
 
@@ -245,6 +248,7 @@ object ConversationEvent {
         case "conversation.access-update"        => ConversationAccessEvent('conversation, 'time, 'from, decodeAccess('access)(d.get), decodeAccessRole('access_role)(d.get))
         case "conversation.code-update"          => ConversationCodeUpdateEvent('conversation, 'time, 'from, ConversationData.Link(d.get.getString("uri")))
         case "conversation.code-delete"          => ConversationCodeDeleteEvent('conversation, 'time, 'from)
+        case "conversation.message-timer-update" => MessageTimerEvent('conversation, 'time, 'from, 'message_timer)
 
           //Note, the following events are not from the backend, but are the result of decrypting and re-encoding conversation.otr-message-add events - hence the different name for `convId
         case "conversation.generic-message"      => GenericMessageEvent('convId, 'time, 'from, 'content)

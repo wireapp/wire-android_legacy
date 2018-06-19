@@ -23,6 +23,7 @@ package com.waz.service.conversation
 //import com.waz.RobolectricUtils
 //import com.waz.api.Message
 import com.waz.content.{ConversationStorage, MembersStorage}
+import com.waz.sync.client.ConversationsClient
 //import com.waz.content.GlobalDatabase
 //import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
@@ -284,5 +285,5 @@ class PrivateConversationSpec extends AndroidFreeSpec {
   }
 
   def initService: ConversationsUiService =
-    new ConversationsUiServiceImpl(self, None, null, null, null, messages, null, null, members, null, convsContent, convsStorage, null, null, sync, null, null, null)
+    new ConversationsUiServiceImpl(self, None, null, null, null, messages, null, null, members, null, convsContent, convsStorage, null, null, sync, null, null, null, null)
 }
