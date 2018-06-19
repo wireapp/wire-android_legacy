@@ -39,6 +39,7 @@ import org.threeten.bp.{Duration, Instant}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
 
 trait Preferences {
 
@@ -110,6 +111,13 @@ object Preferences {
 
       implicit lazy val InstantCodec = apply[Instant](d => String.valueOf(d.toEpochMilli), s => Instant.ofEpochMilli(java.lang.Long.parseLong(s)), Instant.EPOCH)
       implicit lazy val DurationCodec = apply[Duration](d => String.valueOf(d.toMillis), s => Duration.ofMillis(java.lang.Long.parseLong(s)), Duration.ZERO)
+
+      private def parseFiniteDurationOpt(s: String): Option[FiniteDuration] = java.lang.Long.parseLong(s) match {
+        case 0 => None
+        case e => Some(e.millis)
+      }
+
+      implicit lazy val FiniteDurationCodec = apply[Option[FiniteDuration]](d => String.valueOf(d.getOrElse(0.millis).toMillis), parseFiniteDurationOpt, None)
 
       implicit lazy val AuthTokenCodec = apply[Option[AccessToken]] (
         { t => optCodec[String].encode(t map AccessToken.Encoder.apply map (_.toString)) },
@@ -361,6 +369,8 @@ object GlobalPreferences {
   lazy val ResetPushToken             = PrefKey[Boolean]("RESET_PUSH_TOKEN", customDefault = true)
   lazy val AnalyticsEnabled           = PrefKey[Boolean]("PREF_KEY_PRIVACY_ANALYTICS_ENABLED", customDefault = true)
   lazy val ShowMarketingConsentDialog = PrefKey[Boolean]("show_marketing_consent_dialog", customDefault = true) //can be set to false by automation
+
+  lazy val LastEphemeralValue      = PrefKey[Option[FiniteDuration]]("last_ephemeral_value", customDefault = None)
 
   //DEPRECATED!!! Use the UserPreferences instead!!
   lazy val _ShareContacts          = PrefKey[Boolean]("PREF_KEY_PRIVACY_CONTACTS")
