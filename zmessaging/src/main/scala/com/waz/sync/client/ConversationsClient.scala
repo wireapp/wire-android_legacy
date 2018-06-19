@@ -41,11 +41,6 @@ class ConversationsClient(netClient: ZNetClient) {
   import Threading.Implicits.Background
   import com.waz.sync.client.ConversationsClient._
 
-  def loadConversationIds(start: Option[RConvId] = None): ErrorOrResponse[ConversationIdsResponse] =
-    netClient.withErrorHandling(s"loadConversationIds(start = $start)", Request.Get(conversationIdsQuery(start))) {
-      case Response(SuccessHttpStatus(), ConversationIdsResponse(ids, hasMore), _) => ConversationIdsResponse(ids, hasMore)
-    }
-
   def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult] =
     netClient.withErrorHandling(s"loadConversations(start = $start)", Request.Get(conversationsQuery(start, limit))) {
       case Response(SuccessHttpStatus(), ConversationsResult(conversations, hasMore), _) => ConversationsResult(conversations, hasMore)
@@ -54,11 +49,6 @@ class ConversationsClient(netClient: ZNetClient) {
   def loadConversations(ids: Seq[RConvId]): ErrorOrResponse[Seq[ConversationResponse]] =
     netClient.withErrorHandling(s"loadConversations(ids = $ids)", Request.Get(conversationsQuery(ids = ids))) {
       case Response(SuccessHttpStatus(), ConversationsResult(conversations, _), _) => conversations
-    }
-
-  def loadConversation(id: RConvId): ErrorOrResponse[ConversationResponse] =
-    netClient.withErrorHandling(s"loadConversation($id)", Request.Get(s"$ConversationsPath/$id")) {
-      case Response(SuccessHttpStatus(), ConversationsResult(Seq(conversation), _), _) => conversation
     }
 
   def postName(convId: RConvId, name: String): ErrorOrResponse[Option[RenameConversationEvent]] =
@@ -167,6 +157,7 @@ object ConversationsClient {
                                   access:       Set[Access],
                                   accessRole:   Option[AccessRole],
                                   link:         Option[Link],
+                                  messageTimer: FiniteDuration,
                                   members:      Set[UserId])
 
   object ConversationResponse {
@@ -192,6 +183,7 @@ object ConversationsClient {
           'access,
           'access_role,
           'link,
+          'message_timer,
           JsonDecoder.arrayColl(members.getJSONArray("others"), { case (arr, i) =>
             UserId(arr.getJSONObject(i).getString("id"))
           }))
@@ -214,25 +206,6 @@ object ConversationsClient {
         case NonFatal(e) =>
           warn(s"couldn't parse conversations response: $response", e)
           warn("json decoding failed", e)
-          None
-      }
-    }
-
-    case class ConversationIdsResponse(ids: Seq[RConvId], hasMore: Boolean)
-
-    object ConversationIdsResponse {
-
-      val idExtractor = { (arr: JSONArray, i: Int) => RConvId(arr.getString(i)) }
-
-      def unapply(response: ResponseContent): Option[(Seq[RConvId], Boolean)] = try {
-        response match {
-          case JsonObjectResponse(js) if js.has("conversations") => Some((array[RConvId](js.getJSONArray("conversations"), idExtractor), decodeBool('has_more)(js)))
-          case JsonArrayResponse(js) => Some((array[RConvId](js, idExtractor), false))
-          case _ => None
-        }
-      } catch {
-        case NonFatal(e) =>
-          warn(s"couldn't parse conversations response: $response", e)
           None
       }
     }
