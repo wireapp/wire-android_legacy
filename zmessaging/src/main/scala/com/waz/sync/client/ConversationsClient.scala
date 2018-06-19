@@ -157,7 +157,7 @@ object ConversationsClient {
                                   access:       Set[Access],
                                   accessRole:   Option[AccessRole],
                                   link:         Option[Link],
-                                  messageTimer: FiniteDuration,
+                                  messageTimer: Option[FiniteDuration],
                                   members:      Set[UserId])
 
   object ConversationResponse {

@@ -216,7 +216,10 @@ object ZMessagingDB {
       db.execSQL("UPDATE Conversations SET cleared = null WHERE cleared = 0")
     },
     Migration(107, 108) { db =>
-      db.execSQL("ALTER TABLE Conversations ADD COLUMN global_ephemeral INTEGER DEFAULT 0")
+      db.execSQL("ALTER TABLE Conversations ADD COLUMN global_ephemeral INTEGER DEFAULT null")
+      db.execSQL("UPDATE Messages SET ephemeral = null WHERE ephemeral = 0")
+      db.execSQL("UPDATE Messages SET duration = null WHERE duration = 0")
+      db.execSQL("UPDATE Conversations SET ephemeral = null WHERE ephemeral = 0")
     }
   )
 }

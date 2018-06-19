@@ -405,15 +405,15 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
     }
 
   override def setEphemeral(id: ConvId, expiration: Option[FiniteDuration]) = {
-    convStorage.update(id, _.copy(localEphemeral = expiration.getOrElse(Duration.Zero))).map(_ => {})
+    convStorage.update(id, _.copy(localEphemeral = expiration)).map(_ => {})
   }
 
   override def setEphemeralGlobal(id: ConvId, expiration: Option[FiniteDuration]) =
     for {
       Some(conv) <- convsContent.convById(id)
       resp       <- client.postMessageTimer(conv.remoteId, expiration.getOrElse(Duration.Zero)).future
-      _          <- resp.mapFuture(_ => convStorage.update(id, _.copy(globalEphemeral = expiration.getOrElse(Duration.Zero))))
-      _          <- resp.mapFuture(_ => messages.addTimerChangedMessage(id, selfUserId, expiration.getOrElse(Duration.Zero)))
+      _          <- resp.mapFuture(_ => convStorage.update(id, _.copy(globalEphemeral = expiration)))
+      _          <- resp.mapFuture(_ => messages.addTimerChangedMessage(id, selfUserId, expiration))
     } yield resp
 
   private def mentionsMap(us: Set[UserId]): Future[Map[UserId, String]] =

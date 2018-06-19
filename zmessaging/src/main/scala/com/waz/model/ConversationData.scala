@@ -32,33 +32,33 @@ import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
 
-case class ConversationData(id:                            ConvId              = ConvId(),
-                            remoteId:                      RConvId             = RConvId(),
-                            name:                          Option[String]      = None,
-                            creator:                       UserId              = UserId(),
-                            convType:                      ConversationType    = ConversationType.Group,
-                            team:                          Option[TeamId]      = None,
-                            lastEventTime:                 Instant             = Instant.now(),
-                            isActive:                      Boolean             = true,
-                            lastRead:                      Instant             = Instant.EPOCH,
-                            muted:                         Boolean             = false,
-                            muteTime:                      Instant             = Instant.EPOCH,
-                            archived:                      Boolean             = false,
-                            archiveTime:                   Instant             = Instant.EPOCH,
-                            cleared:                       Option[Instant]     = None,
-                            generatedName:                 String              = "",
-                            searchKey:                     Option[SearchKey]   = None,
-                            unreadCount:                   UnreadCount         = UnreadCount(0, 0, 0),
-                            failedCount:                   Int                 = 0,
-                            missedCallMessage:             Option[MessageId]   = None,
-                            incomingKnockMessage:          Option[MessageId]   = None,
-                            hidden:                        Boolean             = false,
-                            verified:                      Verification        = Verification.UNKNOWN,
-                            private val localEphemeral:    FiniteDuration      = Duration.Zero,
-                            private val globalEphemeral:   FiniteDuration      = Duration.Zero,
-                            access:                        Set[Access]         = Set.empty,
-                            accessRole:                    Option[AccessRole]  = None,
-                            link:                          Option[Link]        = None) {
+case class ConversationData(id:                            ConvId                 = ConvId(),
+                            remoteId:                      RConvId                = RConvId(),
+                            name:                          Option[String]         = None,
+                            creator:                       UserId                 = UserId(),
+                            convType:                      ConversationType       = ConversationType.Group,
+                            team:                          Option[TeamId]         = None,
+                            lastEventTime:                 Instant                = Instant.now(),
+                            isActive:                      Boolean                = true,
+                            lastRead:                      Instant                = Instant.EPOCH,
+                            muted:                         Boolean                = false,
+                            muteTime:                      Instant                = Instant.EPOCH,
+                            archived:                      Boolean                = false,
+                            archiveTime:                   Instant                = Instant.EPOCH,
+                            cleared:                       Option[Instant]        = None,
+                            generatedName:                 String                 = "",
+                            searchKey:                     Option[SearchKey]      = None,
+                            unreadCount:                   UnreadCount            = UnreadCount(0, 0, 0),
+                            failedCount:                   Int                    = 0,
+                            missedCallMessage:             Option[MessageId]      = None,
+                            incomingKnockMessage:          Option[MessageId]      = None,
+                            hidden:                        Boolean                = false,
+                            verified:                      Verification           = Verification.UNKNOWN,
+                            private val localEphemeral:    Option[FiniteDuration] = None,
+                            private val globalEphemeral:   Option[FiniteDuration] = None,
+                            access:                        Set[Access]            = Set.empty,
+                            accessRole:                    Option[AccessRole]     = None,
+                            link:                          Option[Link]           = None) {
 
   def displayName = if (convType == ConversationType.Group) name.getOrElse(generatedName) else generatedName
 
@@ -71,8 +71,8 @@ case class ConversationData(id:                            ConvId              =
   val isManaged = team.map(_ => false) //can be returned to parameter list when we need it.
 
   lazy val ephemeralExpiration: Option[EphemeralDuration] = (globalEphemeral, localEphemeral) match {
-    case (d, _) if d > Duration.Zero => Some(ConvExpiry(d)) //global ephemeral takes precedence over local
-    case (_, d) if d > Duration.Zero => Some(MessageExpiry(d))
+    case (Some(d), _) => Some(ConvExpiry(d)) //global ephemeral takes precedence over local
+    case (_, Some(d)) => Some(MessageExpiry(d))
     case _ => None
   }
 
@@ -175,8 +175,8 @@ object ConversationData {
     val MissedCall       = opt(id[MessageId]('missed_call))(_.missedCallMessage)
     val IncomingKnock    = opt(id[MessageId]('incoming_knock))(_.incomingKnockMessage)
     val Verified         = text[Verification]('verified, _.name, Verification.valueOf)(_.verified)
-    val LocalEphemeral   = finiteDuration('ephemeral)(_.localEphemeral)
-    val GlobalEphemeral  = finiteDuration('global_ephemeral)(_.globalEphemeral)
+    val LocalEphemeral   = opt(finiteDuration('ephemeral))(_.localEphemeral)
+    val GlobalEphemeral  = opt(finiteDuration('global_ephemeral))(_.globalEphemeral)
     val Access           = set[Access]('access, JsonEncoder.encodeAccess(_).toString(), v => JsonDecoder.array[Access](new JSONArray(v), (arr: JSONArray, i: Int) => IConversation.Access.valueOf(arr.getString(i).toUpperCase)).toSet)(_.access)
     val AccessRole       = opt(text[IConversation.AccessRole]('access_role, JsonEncoder.encodeAccessRole, v => IConversation.AccessRole.valueOf(v.toUpperCase)))(_.accessRole)
     val Link             = opt(text[Link]('link, _.url, v => ConversationData.Link(v)))(_.link)

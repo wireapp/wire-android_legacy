@@ -38,7 +38,7 @@ import com.waz.utils.wrappers.{DB, DBCursor, URI}
 import com.waz.utils.{EnumCodec, JsonDecoder, JsonEncoder, returning}
 import org.json.JSONObject
 import org.threeten.bp.Instant.now
-import org.threeten.bp.{Duration, Instant}
+import org.threeten.bp.Instant
 
 import scala.collection.breakOut
 import scala.concurrent.duration._
@@ -61,7 +61,7 @@ case class MessageData(id:            MessageId              = MessageId(),
                        ephemeral:     Option[FiniteDuration] = None,
                        expiryTime:    Option[Instant]        = None, // local expiration time
                        expired:       Boolean                = false,
-                       duration:      Duration               = Duration.ZERO //for successful calls and message_timer changes
+                       duration:      Option[FiniteDuration] = None //for successful calls and message_timer changes
                       ) {
 
   override def toString: String =
@@ -224,7 +224,7 @@ object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData
   }
 }
 
-object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[MessageContent], Seq[GenericMessage], Boolean, Set[UserId], Option[UserId], Option[String], Option[String], Message.Status, Instant, Instant, Instant, Option[FiniteDuration], Option[Instant], Boolean, Duration) => MessageData) {
+object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[MessageContent], Seq[GenericMessage], Boolean, Set[UserId], Option[UserId], Option[String], Option[String], Message.Status, Instant, Instant, Instant, Option[FiniteDuration], Option[Instant], Boolean, Option[FiniteDuration]) => MessageData) {
   val Empty = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""))
   val Deleted = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""), state = Message.Status.DELETED)
   val UnknownInstant = Instant.EPOCH
@@ -287,7 +287,7 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     val Ephemeral = opt(finiteDuration('ephemeral))(_.ephemeral)
     val ExpiryTime = opt(timestamp('expiry_time))(_.expiryTime)
     val Expired = bool('expired)(_.expired)
-    val Duration = long[org.threeten.bp.Duration]('duration, _.toMillis, org.threeten.bp.Duration.ofMillis)(_.duration)
+    val Duration = opt(finiteDuration('duration))(_.duration)
 
     override val idCol = Id
 

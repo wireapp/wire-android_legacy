@@ -196,7 +196,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case MessageTimerEvent(_, time, from, duration) =>
       for {
         _ <- convsStorage.update(conv.id, _.copy(globalEphemeral = duration))
-        _ <- messages.addTimerChangedMessage(conv.id, from, time, duration)
+        _ <- messages.addTimerChangedMessage(conv.id, from, duration, time)
       } yield {}
     case _ => successful(())
   }
