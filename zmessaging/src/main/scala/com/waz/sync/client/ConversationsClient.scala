@@ -61,8 +61,8 @@ class ConversationsClient(netClient: ZNetClient) {
       case Response(SuccessHttpStatus(), _, _) => true
     }
 
-  def postMessageTimer(convId: RConvId, duration: FiniteDuration): ErrorOrResponse[Unit] =
-    netClient.withErrorHandling("postMessageTimer", Request.Put(s"$ConversationsPath/$convId/message-timer", Json("message-timer" -> duration.toMillis))) {
+  def postMessageTimer(convId: RConvId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit] =
+    netClient.withErrorHandling("postMessageTimer", Request.Put(s"$ConversationsPath/$convId/message-timer", Json("message_timer" -> duration.map(_.toMillis)))) {
       case Response(SuccessHttpStatus(), _, _) => {}
     }
 

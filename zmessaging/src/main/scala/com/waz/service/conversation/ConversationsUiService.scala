@@ -411,7 +411,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
   override def setEphemeralGlobal(id: ConvId, expiration: Option[FiniteDuration]) =
     for {
       Some(conv) <- convsContent.convById(id)
-      resp       <- client.postMessageTimer(conv.remoteId, expiration.getOrElse(Duration.Zero)).future
+      resp       <- client.postMessageTimer(conv.remoteId, expiration).future
       _          <- resp.mapFuture(_ => convStorage.update(id, _.copy(globalEphemeral = expiration)))
       _          <- resp.mapFuture(_ => messages.addTimerChangedMessage(id, selfUserId, expiration))
     } yield resp
