@@ -304,9 +304,9 @@ class ConversationsUiServiceImpl(userId:          UserId,
       convsContent.updateConversationCleared(conv.id, conv.lastEventTime) flatMap {
         case Some((_, c)) =>
           for {
-            _ <- convsContent.updateConversationLastRead(c.id, c.cleared)
+            _ <- convsContent.updateConversationLastRead(c.id, c.cleared.getOrElse(Instant.EPOCH))
             _ <- convsContent.updateConversationArchived(c.id, archived = true)
-            _ <- sync.postCleared(c.id, c.cleared)
+            _ <- c.cleared.fold(Future.successful({}))(sync.postCleared(c.id, _).map(_ => ()))
           } yield Some(c)
         case None =>
           verbose("updateConversationCleared did nothing - already cleared")

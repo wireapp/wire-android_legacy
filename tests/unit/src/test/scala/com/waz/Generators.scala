@@ -84,7 +84,7 @@ object Generators {
     muteTime <- arbitrary[Instant]
     archived <- arbitrary[Boolean]
     archiveTime <- arbitrary[Instant]
-    cleared <- arbitrary[Instant]
+    cleared <- arbitrary[Option[Instant]]
     generatedName <- arbitrary[String]
     searchKey = name map SearchKey
     unreadCount <- arbitrary[UnreadCount]

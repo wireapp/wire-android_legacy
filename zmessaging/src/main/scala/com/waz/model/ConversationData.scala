@@ -44,7 +44,7 @@ case class ConversationData(id:                   ConvId              = ConvId()
                             muteTime:             Instant             = Instant.EPOCH,
                             archived:             Boolean             = false,
                             archiveTime:          Instant             = Instant.EPOCH,
-                            cleared:              Instant             = Instant.EPOCH,
+                            cleared:              Option[Instant]     = None,
                             generatedName:        String              = "",
                             searchKey:            Option[SearchKey]   = None,
                             unreadCount:          UnreadCount         = UnreadCount(0, 0, 0),
@@ -64,11 +64,11 @@ case class ConversationData(id:                   ConvId              = ConvId()
   def savedOrFreshSearchKey = searchKey.orElse(freshSearchKey)
   def freshSearchKey = if (convType == ConversationType.Group) name map SearchKey else None
 
-  lazy val completelyCleared = ! cleared.isBefore(lastEventTime)
+  lazy val completelyCleared = cleared.exists(!_.isBefore(lastEventTime))
 
   def withLastRead(time: Instant) = copy(lastRead = lastRead max time)
 
-  def withCleared(time: Instant) = copy(cleared = cleared max time)
+  def withCleared(time: Instant) = copy(cleared = Some(cleared.fold(time)(_ max time)))
 
   def updated(d: ConversationData): Option[ConversationData] = {
     val ct = if (ConversationType.isOneToOne(convType) && d.convType != ConversationType.OneToOne) convType else d.convType
@@ -85,7 +85,7 @@ case class ConversationData(id:                   ConvId              = ConvId()
       muted = d.muted,
       muteTime = d.muteTime,
       archived = d.archived,
-      cleared = cleared max d.cleared,
+      cleared = d.cleared.map(c => cleared.fold(c)(_ max c)),
       searchKey = d.searchKey,
       access = d.access,
       accessRole = d.accessRole)
@@ -179,7 +179,7 @@ object ConversationData {
       muteTime             = decodeInstant('muteTime),
       archived             = 'archived,
       archiveTime          = decodeInstant('archiveTime),
-      cleared              = decodeInstant('cleared),
+      cleared              = decodeOptInstant('cleared),
       generatedName        = 'generatedName,
       searchKey            = decodeOptString('name) map SearchKey,
       unreadCount          = UnreadCount('unreadCount, 'unreadCallCount, 'unreadPingCount),
@@ -212,7 +212,7 @@ object ConversationData {
       o.put("muteTime", c.muteTime.toEpochMilli)
       o.put("archived", c.archived)
       o.put("archiveTime", c.archiveTime.toEpochMilli)
-      o.put("cleared", c.cleared.toEpochMilli)
+      c.cleared.foreach(cl => o.put("cleared", cl.toEpochMilli))
       o.put("generatedName", c.generatedName)
       o.put("unreadCount", c.unreadCount.normal)
       o.put("unreadCallCount", c.unreadCount.call)
@@ -244,7 +244,7 @@ object ConversationData {
     val MutedTime        = timestamp('mute_time)(_.muteTime)
     val Archived         = bool('archived)(_.archived)
     val ArchivedTime     = timestamp('archive_time)(_.archiveTime)
-    val Cleared          = timestamp('cleared)(_.cleared)
+    val Cleared          = opt(timestamp('cleared))(_.cleared)
     val GeneratedName    = text('generated_name)(_.generatedName)
     val SKey             = opt(text[SearchKey]('search_key, _.asciiRepresentation, SearchKey.unsafeRestore))(_.searchKey)
     val UnreadCount      = int('unread_count)(_.unreadCount.normal)
@@ -353,7 +353,7 @@ object ConversationData {
             | WHERE c.${ConvType.name} = ${ConvType(ConversationType.Group)}
             |   AND c.${Hidden.name} = ${Hidden(false)}
             |   AND u.${U.Id.name} != '${U.Id(self)}'
-            |   AND (c.${Cleared.name} < c.${LastEventTime.name} OR c.${IsActive.name} = ${IsActive(true)})""".stripMargin
+            |   AND (c.${Cleared.name} IS NULL OR c.${Cleared.name} < c.${LastEventTime.name} OR c.${IsActive.name} = ${IsActive(true)})""".stripMargin
       val handleCondition =
         if (handleOnly){
           s"""AND u.${U.Handle.name} LIKE '${prefix.asciiRepresentation}%'""".stripMargin

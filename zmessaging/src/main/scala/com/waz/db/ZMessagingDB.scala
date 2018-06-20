@@ -52,7 +52,7 @@ class ZMessagingDB(context: Context, dbName: String) extends DaoDB(context.getAp
 }
 
 object ZMessagingDB {
-  val DbVersion = 106
+  val DbVersion = 107
 
   lazy val daos = Seq (
     UserDataDao, SearchQueryCacheDao, AssetDataDao, ConversationDataDao,
@@ -211,6 +211,9 @@ object ZMessagingDB {
     },
     Migration(105, 106) { db =>
       db.execSQL("DROP TABLE IF EXISTS InvitedContacts")
+    },
+    Migration(106, 107) { db =>
+      db.execSQL("UPDATE Conversations SET cleared = null WHERE cleared = 0")
     }
   )
 }

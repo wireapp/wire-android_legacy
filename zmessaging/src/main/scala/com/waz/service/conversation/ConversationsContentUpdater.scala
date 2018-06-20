@@ -80,7 +80,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
   storage.convUpdated { case (prev, conv) =>
     if (prev.cleared != conv.cleared) {
       verbose(s"cleared updated will clear messages, prev: $prev, updated: $conv")
-      messagesStorage.clear(conv.id, conv.cleared).recoverWithLog()
+      conv.cleared.foreach(messagesStorage.clear(conv.id, _).recoverWithLog())
     }
   }
 

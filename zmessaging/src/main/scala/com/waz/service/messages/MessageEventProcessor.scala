@@ -62,7 +62,7 @@ class MessageEventProcessor(selfUserId:          UserId,
   private[service] def processEvents(conv: ConversationData, events: Seq[MessageEvent]): Future[Set[MessageData]] = {
     val toProcess = events.filter {
       case GenericMessageEvent(_, _, _, msg) if GenericMessage.isBroadcastMessage(msg) => false
-      case e => conv.cleared.isBefore(e.time.instant)
+      case e => conv.cleared.forall(_.isBefore(e.time.instant))
     }
 
     val recalls = toProcess collect { case GenericMessageEvent(_, time, from, msg @ GenericMessage(_, MsgRecall(_))) => (msg, from, time.instant) }
