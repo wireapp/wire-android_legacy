@@ -12,10 +12,12 @@ val MinorVersion = "7" // hotfix release
 
 version in ThisBuild := {
   val jobName = sys.env.get("JOB_NAME")
+  val isPR = sys.env.get("PR").fold(false)(_.toBoolean)
   val buildNumber = sys.env.get("BUILD_NUMBER")
   val master = jobName.exists(_.endsWith("-master"))
   val buildNumberString = buildNumber.fold("-SNAPSHOT")("." + _)
   if (master) MajorVersion + "." + MinorVersion + buildNumberString
+  else if (isPR) MajorVersion + buildNumber.fold("-PR")("." + _ + "-PR")
   else MajorVersion + buildNumberString
 }
 
@@ -27,7 +29,7 @@ scalaVersion in ThisBuild := "2.11.12"
 javacOptions in ThisBuild ++= Seq("-source", "1.7", "-target", "1.7", "-encoding", "UTF-8")
 scalacOptions in ThisBuild ++= Seq(
   "-feature", "-target:jvm-1.7", "-Xfuture", "-Xfatal-warnings",
-  "-deprecation", "-Yinline-warnings", "-encoding", "UTF-8")
+  "-deprecation", "-Yinline-warnings", "-encoding", "UTF-8", "-Xmax-classfile-name", "128")
 
 platformTarget in ThisBuild := "android-24"
 
