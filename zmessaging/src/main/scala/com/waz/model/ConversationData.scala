@@ -57,7 +57,7 @@ case class ConversationData(id:                            ConvId               
                             private val localEphemeral:    Option[FiniteDuration] = None,
                             private val globalEphemeral:   Option[FiniteDuration] = None,
                             access:                        Set[Access]            = Set.empty,
-                            accessRole:                    Option[AccessRole]     = None,
+                            accessRole:                    Option[AccessRole]     = None, //option for migration purposes only - at some point we do a fetch and from that point it will always be defined
                             link:                          Option[Link]           = None) {
 
   def displayName = if (convType == ConversationType.Group) name.getOrElse(generatedName) else generatedName
