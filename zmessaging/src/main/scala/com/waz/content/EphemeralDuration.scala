@@ -21,6 +21,60 @@ import scala.concurrent.duration._
 
 sealed trait EphemeralDuration {
   val duration: FiniteDuration
+
+  import EphemeralDuration._
+  lazy val display: (Long, TimeUnit) = {
+    import java.util.concurrent.TimeUnit._
+
+    def loop(duration: Duration): (Long, TimeUnit) = {
+
+      val coarse = duration.toCoarsest
+
+      def roundSeconds(divider: Long) =
+        loop(FiniteDuration(math.round(coarse.length / divider.toDouble), SECONDS))
+
+      def roundAndLoopOrThis(divider: Int, unit: TimeUnit) = {
+        val nextUnit = unit match {
+          case Second => MINUTES
+          case Minute => HOURS
+          case _      => DAYS
+        }
+        if (coarse.length >= divider)
+          loop(FiniteDuration(math.round(coarse.length.toDouble / divider.toDouble), nextUnit))
+        else
+          (coarse.length, unit)
+      }
+
+      if (coarse == Duration.Zero)
+        (0, Second)
+      else
+        coarse.unit match {
+          case NANOSECONDS  => roundSeconds(1.second.toNanos)
+          case MICROSECONDS => roundSeconds(1.second.toMicros)
+          case MILLISECONDS => roundSeconds(1.second.toMillis)
+          case SECONDS => roundAndLoopOrThis(60, Second)
+          case MINUTES => roundAndLoopOrThis(60, Minute)
+          case HOURS   => roundAndLoopOrThis(24, Hour)
+          case DAYS =>
+            if (coarse.length >= 7)
+              (math.round(coarse.length.toDouble / 7d), Week)
+            else
+              (coarse.length, Day)
+        }
+    }
+
+    loop(duration)
+  }
+
+}
+
+object EphemeralDuration {
+  sealed trait TimeUnit
+  case object Second  extends TimeUnit
+  case object Minute  extends TimeUnit
+  case object Hour    extends TimeUnit
+  case object Day     extends TimeUnit
+  case object Week    extends TimeUnit
 }
 
 case class ConvExpiry(duration: FiniteDuration) extends EphemeralDuration
