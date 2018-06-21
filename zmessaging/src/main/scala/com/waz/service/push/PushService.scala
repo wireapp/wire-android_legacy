@@ -148,10 +148,9 @@ class PushServiceImpl(userId:               UserId,
 
   private def processDecryptedRows(): Future[Unit] = {
     def decodeRow(event: PushNotificationEvent) =
-      if(event.plain.isDefined) {
+      if(event.plain.isDefined && isOtrEventJson(event.event)) {
         val msg = GenericMessage(event.plain.get)
         val msgEvent = ConversationEvent.ConversationEventDecoder(event.event)
-        //If there is plain text, then the message is an OtrMessageEvent, so this cast is safe
         otrService.parseGenericMessage(msgEvent.asInstanceOf[OtrMessageEvent], msg)
       } else {
         Some(EventDecoder(event.event))
