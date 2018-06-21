@@ -23,7 +23,19 @@ sealed trait EphemeralDuration {
   val duration: FiniteDuration
 
   import EphemeralDuration._
-  lazy val display: (Long, TimeUnit) = {
+  lazy val display: (Long, TimeUnit) = apply(duration)
+
+}
+
+object EphemeralDuration {
+  sealed trait TimeUnit
+  case object Second  extends TimeUnit
+  case object Minute  extends TimeUnit
+  case object Hour    extends TimeUnit
+  case object Day     extends TimeUnit
+  case object Week    extends TimeUnit
+
+  def apply(duration: Duration): (Long, TimeUnit) = {
     import java.util.concurrent.TimeUnit._
 
     def loop(duration: Duration): (Long, TimeUnit) = {
@@ -65,16 +77,6 @@ sealed trait EphemeralDuration {
 
     loop(duration)
   }
-
-}
-
-object EphemeralDuration {
-  sealed trait TimeUnit
-  case object Second  extends TimeUnit
-  case object Minute  extends TimeUnit
-  case object Hour    extends TimeUnit
-  case object Day     extends TimeUnit
-  case object Week    extends TimeUnit
 }
 
 case class ConvExpiry(duration: FiniteDuration) extends EphemeralDuration
