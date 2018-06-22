@@ -102,7 +102,7 @@ case class UnknownConvEvent(json: JSONObject) extends ConversationEvent {
 
 case class CreateConversationEvent(convId: RConvId, time: Instant, from: UserId, data: ConversationResponse) extends ConversationStateEvent
 
-case class MessageTimerEvent(convId: RConvId, time: Instant, from: UserId, duration: Option[FiniteDuration]) extends ConversationEvent
+case class MessageTimerEvent(convId: RConvId, time: Instant, from: UserId, duration: Option[FiniteDuration]) extends ConversationStateEvent
 
 case class RenameConversationEvent(convId: RConvId, time: Instant, from: UserId, name: String) extends MessageEvent with ConversationStateEvent
 
