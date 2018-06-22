@@ -47,6 +47,7 @@ class SyncRequestServiceSpec extends AndroidFreeSpec {
   val reporting = mock[ReportingService]
   val prefs     = new TestUserPreferences {
     result(this.preference(UserPreferences.ShouldSyncInitial) := false)
+    result(this.preference(UserPreferences.ShouldSyncConversations) := false)
   }
 
   val timeouts = new Timeouts
