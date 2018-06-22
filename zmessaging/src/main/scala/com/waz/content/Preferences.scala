@@ -23,7 +23,6 @@ import com.waz.ZLog._
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.content.Preferences.{PrefKey, Preference}
 import com.waz.media.manager.context.IntensityLevel
-import com.waz.model.AccountDataOld.PermissionsMasks
 import com.waz.model.KeyValueData.KeyValueDataDao
 import com.waz.model._
 import com.waz.model.otr.ClientId
@@ -38,8 +37,8 @@ import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 
 trait Preferences {
 
@@ -409,9 +408,6 @@ object UserPreferences {
   lazy val LastSlowSyncTimeKey              = PrefKey[Option[Long]]        ("last_slow_sync_time")
   lazy val SelectedConvId                   = PrefKey[Option[ConvId]]      ("selected_conv_id")
   lazy val SpotifyRefreshToken              = PrefKey[Option[RefreshToken]]("spotify_refresh_token")
-  lazy val ShouldSyncConversations          = PrefKey[Boolean]             ("should_sync_conversations", customDefault = true)
-  lazy val ShouldSyncInitial                = PrefKey[Boolean]             ("should_sync_initial_1", customDefault = true) //increment number to perform slow sync
-  lazy val ShouldSyncUsers                  = PrefKey[Boolean]           ("should_sync_users", customDefault = true)
 
   lazy val OtrLastPrekey                    = PrefKey[Int]        ("otr_last_prekey_id")
   lazy val ClientRegVersion                 = PrefKey[Int]        ("otr_client_reg_version")
@@ -435,5 +431,10 @@ object UserPreferences {
   lazy val VBREnabled                       = PrefKey[Boolean]("variable_bit_rate_enabled", customDefault = true)
   lazy val VibrateEnabled                   = PrefKey[Boolean]("vibrate_enabled")
   lazy val SendButtonEnabled                = PrefKey[Boolean]("send_button_enabled", customDefault = true)
+
+  //increment number to perform slow sync on particular type
+  lazy val ShouldSyncConversations          = PrefKey[Boolean]("should_sync_conversations_1", customDefault = true)
+  lazy val ShouldSyncInitial                = PrefKey[Boolean]("should_sync_initial_1", customDefault = true)
+  lazy val ShouldSyncUsers                  = PrefKey[Boolean]("should_sync_users", customDefault = true)
 
 }

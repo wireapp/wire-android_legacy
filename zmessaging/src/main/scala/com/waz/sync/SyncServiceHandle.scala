@@ -20,11 +20,10 @@ package com.waz.sync
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.impl.AccentColor
 import com.waz.content.UserPreferences
-import com.waz.content.UserPreferences.ShouldSyncInitial
+import com.waz.content.UserPreferences.{ShouldSyncConversations, ShouldSyncInitial}
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.ClientId
 import com.waz.model.sync.SyncJob.Priority
-import com.waz.model.sync.SyncRequest.{DeletePushToken, PostAddressBook, PostClientLabel, PostSelfPicture, SyncConnections, SyncIntegration, SyncSearchQuery}
 import com.waz.model.sync._
 import com.waz.model.{Availability, _}
 import com.waz.service._
@@ -100,12 +99,19 @@ class AndroidSyncServiceHandle(service: SyncRequestService, timeouts: Timeouts, 
   import Threading.Implicits.Background
   import com.waz.model.sync.SyncRequest._
 
-  val shouldSyncPref = userPreferences.preference(ShouldSyncInitial)
+  val shouldSyncAll           = userPreferences(ShouldSyncInitial)
+  val shouldSyncConversations = userPreferences(ShouldSyncConversations)
 
-  shouldSyncPref().flatMap {
-    case true => performFullSync().flatMap(_ => shouldSyncPref := false)
-    case _    => Future.successful({})
-  }
+  for {
+    all   <- shouldSyncAll()
+    convs <- shouldSyncConversations()
+    _     <-
+      if (all) performFullSync()
+      else if (convs) syncConversations()
+      else Future.successful({})
+    _ <- shouldSyncAll := false
+    _ <- shouldSyncConversations := false
+  } yield {}
 
   private def addRequest(req: SyncRequest, priority: Int = Priority.Normal, dependsOn: Seq[SyncId] = Nil, optional: Boolean = false, timeout: Long = 0, forceRetry: Boolean = false, delay: FiniteDuration = Duration.Zero): Future[SyncId] = {
     val timestamp = SyncJob.timestamp
