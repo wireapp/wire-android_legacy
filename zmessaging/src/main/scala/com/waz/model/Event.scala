@@ -236,24 +236,26 @@ object ConversationEvent {
 
       lazy val d = if (js.has("data") && !js.isNull("data")) Try(js.getJSONObject("data")).toOption else None
 
+      val time = decodeISOInstant('time)
+
       decodeString('type) match {
-        case "conversation.create"               => CreateConversationEvent('conversation, 'time, 'from, JsonDecoder[ConversationResponse]('data))
-        case "conversation.rename"               => RenameConversationEvent('conversation, 'time, 'from, decodeString('name)(d.get))
-        case "conversation.member-join"          => MemberJoinEvent('conversation, 'time, 'from, decodeUserIdSeq('user_ids)(d.get), decodeString('id).startsWith("1."))
-        case "conversation.member-leave"         => MemberLeaveEvent('conversation, 'time, 'from, decodeUserIdSeq('user_ids)(d.get))
-        case "conversation.member-update"        => MemberUpdateEvent('conversation, 'time, 'from, ConversationState.Decoder(d.get))
-        case "conversation.connect-request"      => ConnectRequestEvent('conversation, 'time, 'from, decodeString('message)(d.get), decodeUserId('recipient)(d.get), decodeString('name)(d.get), decodeOptString('email)(d.get))
-        case "conversation.typing"               => TypingEvent('conversation, 'time, 'from, isTyping = d.fold(false)(data => decodeString('status)(data) == "started"))
-        case "conversation.otr-message-add"      => OtrMessageEvent('conversation, 'time, 'from, decodeClientId('sender)(d.get), decodeClientId('recipient)(d.get), decodeByteString('text)(d.get), decodeOptByteString('data)(d.get))
-        case "conversation.access-update"        => ConversationAccessEvent('conversation, 'time, 'from, decodeAccess('access)(d.get), decodeAccessRole('access_role)(d.get))
-        case "conversation.code-update"          => ConversationCodeUpdateEvent('conversation, 'time, 'from, ConversationData.Link(d.get.getString("uri")))
-        case "conversation.code-delete"          => ConversationCodeDeleteEvent('conversation, 'time, 'from)
-        case "conversation.message-timer-update" => MessageTimerEvent('conversation, 'time, 'from, decodeOptFiniteDuration('message_timer)(d.get))
+        case "conversation.create"               => CreateConversationEvent('conversation, time, 'from, JsonDecoder[ConversationResponse]('data))
+        case "conversation.rename"               => RenameConversationEvent('conversation, time, 'from, decodeString('name)(d.get))
+        case "conversation.member-join"          => MemberJoinEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get), decodeString('id).startsWith("1."))
+        case "conversation.member-leave"         => MemberLeaveEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get))
+        case "conversation.member-update"        => MemberUpdateEvent('conversation, time, 'from, ConversationState.Decoder(d.get))
+        case "conversation.connect-request"      => ConnectRequestEvent('conversation, time, 'from, decodeString('message)(d.get), decodeUserId('recipient)(d.get), decodeString('name)(d.get), decodeOptString('email)(d.get))
+        case "conversation.typing"               => TypingEvent('conversation, time, 'from, isTyping = d.fold(false)(data => decodeString('status)(data) == "started"))
+        case "conversation.otr-message-add"      => OtrMessageEvent('conversation, time, 'from, decodeClientId('sender)(d.get), decodeClientId('recipient)(d.get), decodeByteString('text)(d.get), decodeOptByteString('data)(d.get))
+        case "conversation.access-update"        => ConversationAccessEvent('conversation, time, 'from, decodeAccess('access)(d.get), decodeAccessRole('access_role)(d.get))
+        case "conversation.code-update"          => ConversationCodeUpdateEvent('conversation, time, 'from, ConversationData.Link(d.get.getString("uri")))
+        case "conversation.code-delete"          => ConversationCodeDeleteEvent('conversation, time, 'from)
+        case "conversation.message-timer-update" => MessageTimerEvent('conversation, time, 'from, decodeOptFiniteDuration('message_timer)(d.get))
 
           //Note, the following events are not from the backend, but are the result of decrypting and re-encoding conversation.otr-message-add events - hence the different name for `convId
-        case "conversation.generic-message"      => GenericMessageEvent('convId, 'time, 'from, 'content)
-        case "conversation.generic-asset"        => GenericAssetEvent('convId, 'time, 'from, 'content, 'dataId, decodeOptByteString('data))
-        case "conversation.otr-error"            => OtrErrorEvent('convId, 'time, 'from, decodeOtrError('error))
+        case "conversation.generic-message"      => GenericMessageEvent('convId, time, 'from, 'content)
+        case "conversation.generic-asset"        => GenericAssetEvent('convId, time, 'from, 'content, 'dataId, decodeOptByteString('data))
+        case "conversation.otr-error"            => OtrErrorEvent('convId, time, 'from, decodeOtrError('error))
         case _ =>
           error(s"unhandled event: $js")
           UnknownConvEvent(js)
