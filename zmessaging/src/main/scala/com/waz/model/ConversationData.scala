@@ -208,6 +208,7 @@ object ConversationData {
       IncomingKnock,
       Verified,
       LocalEphemeral,
+      GlobalEphemeral,
       UnreadCallCount,
       UnreadPingCount,
       Access,
