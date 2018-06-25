@@ -353,7 +353,7 @@ class DeviceActor(val deviceName: String,
 
     case MarkEphemeralRead(convId, messageId) =>
       zms.head.flatMap(_.ephemeral.onMessageRead(messageId))
-        .map(_.fold2(Failed(s"message not found with id: $messageId"), _ => Successful))
+        .map(_ => Successful)
 
     case Typing(remoteId) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>

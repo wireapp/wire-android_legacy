@@ -19,19 +19,22 @@ package com.waz.service.messages
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.api.{EphemeralExpiration, Message}
+import com.waz.api.Message
 import com.waz.content.{MessagesStorage, ZmsDatabase}
 import com.waz.model.AssetStatus.{UploadDone, UploadFailed}
 import com.waz.model.GenericContent._
 import com.waz.model.MessageData.MessageDataDao
 import com.waz.model._
+import com.waz.model.otr.ClientId
 import com.waz.model.sync.ReceiptType
+import com.waz.service.ZMessaging.clock
 import com.waz.service.assets.AssetService
+import com.waz.service.push.PushService
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.CancellableFuture
-import com.waz.utils._
 import com.waz.utils.crypto.ZSecureRandom
 import com.waz.utils.events.Signal
+import com.waz.utils._
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
@@ -39,10 +42,12 @@ import scala.concurrent.duration._
 
 // TODO: obfuscate sent messages when they expire
 class EphemeralMessagesService(selfUserId: UserId,
+                               clientId:   ClientId,
                                messages:   MessagesContentUpdater,
                                storage:    MessagesStorage,
                                db:         ZmsDatabase,
                                sync:       SyncServiceHandle,
+                               push:       PushService,
                                assets:     AssetService) {
   import EphemeralMessagesService._
   import com.waz.threading.Threading.Implicits.Background
@@ -127,15 +132,25 @@ class EphemeralMessagesService(selfUserId: UserId,
   }
 
   // start expiration timer for ephemeral message
-  def onMessageRead(id: MessageId) = storage.update(id, { msg =>
-    import com.waz.utils.RichInstant
-    if (shouldStartTimer(msg)) msg.copy(expiryTime = msg.ephemeral.map(_.fromNow()))
-    else msg
-  })
+  def onMessageRead(id: MessageId) = for {
+    drift <- push.beDrift.head.map(_.asScala)
+    _ <- storage.update(id, { msg =>
+      if (shouldStartTimer(msg)) msg.copy(expiryTime = msg.ephemeral.map { exp =>
+        msg.userId match {
+          case `selfUserId` =>
+            val curWithDrift = clock.instant + drift
+            //subtract send time to try and obfuscate on all clients at roughly the same time
+            //in case the BE drift is inaccurate and the send time is in the future, clamp the time to now
+            curWithDrift + (exp - msg.time.remainingUntil(curWithDrift)) - drift //subtract drift to get back to local time
+          case _ => exp.fromNow()
+        }
+      })
+      else msg
+    })
+  } yield {}
 
   private def shouldStartTimer(msg: MessageData) = {
-    if (msg.ephemeral.isEmpty || msg.expiryTime.isDefined) false // timer already started
-    else if (msg.userId == selfUserId) false // timer for own messages is started in MessagesService.messageSent
+    if (msg.ephemeral.isEmpty || msg.expiryTime.isDefined || msg.state != Message.Status.SENT) false
     else msg.msgType match {
       case MessageData.IsAsset() | Message.Type.ASSET =>
         // check if asset was fully uploaded
