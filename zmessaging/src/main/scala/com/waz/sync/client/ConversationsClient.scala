@@ -183,7 +183,7 @@ object ConversationsClient {
           'access,
           'access_role,
           'link,
-          'message_timer,
+          decodeOptLong('message_timer).map(EphemeralDuration(_)),
           JsonDecoder.arrayColl(members.getJSONArray("others"), { case (arr, i) =>
             UserId(arr.getJSONObject(i).getString("id"))
           }))

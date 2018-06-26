@@ -250,7 +250,7 @@ object ConversationEvent {
         case "conversation.access-update"        => ConversationAccessEvent('conversation, time, 'from, decodeAccess('access)(d.get), decodeAccessRole('access_role)(d.get))
         case "conversation.code-update"          => ConversationCodeUpdateEvent('conversation, time, 'from, ConversationData.Link(d.get.getString("uri")))
         case "conversation.code-delete"          => ConversationCodeDeleteEvent('conversation, time, 'from)
-        case "conversation.message-timer-update" => MessageTimerEvent('conversation, time, 'from, decodeOptFiniteDuration('message_timer)(d.get))
+        case "conversation.message-timer-update" => MessageTimerEvent('conversation, time, 'from, decodeOptLong('message_timer)(d.get).map(EphemeralDuration(_)))
 
           //Note, the following events are not from the backend, but are the result of decrypting and re-encoding conversation.otr-message-add events - hence the different name for `convId
         case "conversation.generic-message"      => GenericMessageEvent('convId, time, 'from, 'content)

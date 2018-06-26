@@ -17,6 +17,8 @@
  */
 package com.waz.model
 
+import java.util.concurrent.TimeUnit.MILLISECONDS
+
 import scala.concurrent.duration._
 
 sealed trait EphemeralDuration {
@@ -35,6 +37,10 @@ object EphemeralDuration {
   case object Day     extends TimeUnit
   case object Week    extends TimeUnit
   case object Year    extends TimeUnit
+
+  val YearMillis = 1000L * 60L * 60L * 24L * 365L
+
+  def apply(l: Long): FiniteDuration = FiniteDuration(if (l > YearMillis) YearMillis else l, MILLISECONDS)
 
   def apply(duration: Duration): (Long, TimeUnit) = {
     import java.util.concurrent.TimeUnit._
