@@ -87,6 +87,27 @@ class EphemeralDurationSpec extends AndroidFreeSpec {
     EphemeralDuration((14.days - 3.hours))       shouldEqual ((2, Week))
     EphemeralDuration((14.days - 3.days))        shouldEqual ((2, Week))
 
+
+    //Years (defined to be 365 days)
+    EphemeralDuration((365.days + 3.seconds))       shouldEqual ((1, Year))
+    EphemeralDuration((365.days + 3.minutes))       shouldEqual ((1, Year))
+    EphemeralDuration((365.days + 3.hours))         shouldEqual ((1, Year))
+    EphemeralDuration((365.days + 3.days))          shouldEqual ((1, Year))
+    EphemeralDuration((365.days + 182.days))        shouldEqual ((1, Year))
+    EphemeralDuration(((365 * 2).days - 3.seconds)) shouldEqual ((2, Year))
+    EphemeralDuration(((365 * 2).days - 3.minutes)) shouldEqual ((2, Year))
+    EphemeralDuration(((365 * 2).days - 3.hours))   shouldEqual ((2, Year))
+    EphemeralDuration(((365 * 2).days - 3.days))    shouldEqual ((2, Year))
+    EphemeralDuration(((365 * 2).days - 182.days))  shouldEqual ((2, Year))
+
+    //Changing granularity
+    EphemeralDuration(1000000000L.nanoseconds)                          shouldEqual ((1, Second))
+    EphemeralDuration((1000000000L * 60).nanoseconds)                   shouldEqual ((1, Minute))
+    EphemeralDuration((1000000000L * 60 * 60).nanoseconds)              shouldEqual ((1, Hour))
+    EphemeralDuration((1000000000L * 60 * 60 * 24).nanoseconds)         shouldEqual ((1, Day))
+    EphemeralDuration((1000000000L * 60 * 60 * 24 * 7).nanoseconds)     shouldEqual ((1, Week))
+    EphemeralDuration((1000000000L * 60 * 60 * 24 * 365).nanoseconds)   shouldEqual ((1, Year))
+
   }
 
 }

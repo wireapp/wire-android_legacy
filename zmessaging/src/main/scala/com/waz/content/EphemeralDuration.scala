@@ -34,6 +34,7 @@ object EphemeralDuration {
   case object Hour    extends TimeUnit
   case object Day     extends TimeUnit
   case object Week    extends TimeUnit
+  case object Year    extends TimeUnit
 
   def apply(duration: Duration): (Long, TimeUnit) = {
     import java.util.concurrent.TimeUnit._
@@ -42,7 +43,7 @@ object EphemeralDuration {
 
       val coarse = duration.toCoarsest
 
-      def roundSeconds(divider: Long) =
+      def roundSecondsAndLoop(divider: Long) =
         loop(FiniteDuration(math.round(coarse.length / divider.toDouble), SECONDS))
 
       def roundAndLoopOrThis(divider: Int, unit: TimeUnit) = {
@@ -57,21 +58,33 @@ object EphemeralDuration {
           (coarse.length, unit)
       }
 
+      //Once we've exceeded days, there's no need to loop any more
+      def roundDays(divider: Int, unit: TimeUnit) = {
+        val nextUnit = unit match {
+          case Day => Week
+          case _   => Year
+        }
+
+        if (coarse.length >= divider)
+          (math.round(coarse.length.toDouble / divider.toDouble), nextUnit)
+        else
+          (coarse.length, unit)
+      }
+
       if (coarse == Duration.Zero)
         (0, Second)
       else
         coarse.unit match {
-          case NANOSECONDS  => roundSeconds(1.second.toNanos)
-          case MICROSECONDS => roundSeconds(1.second.toMicros)
-          case MILLISECONDS => roundSeconds(1.second.toMillis)
+          case NANOSECONDS  => roundSecondsAndLoop(1.second.toNanos)
+          case MICROSECONDS => roundSecondsAndLoop(1.second.toMicros)
+          case MILLISECONDS => roundSecondsAndLoop(1.second.toMillis)
           case SECONDS => roundAndLoopOrThis(60, Second)
           case MINUTES => roundAndLoopOrThis(60, Minute)
           case HOURS   => roundAndLoopOrThis(24, Hour)
+          case DAYS if coarse.length >= 365 =>
+            roundDays(365, Week)
           case DAYS =>
-            if (coarse.length >= 7)
-              (math.round(coarse.length.toDouble / 7d), Week)
-            else
-              (coarse.length, Day)
+            roundDays(7, Day)
         }
     }
 
