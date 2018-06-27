@@ -22,7 +22,7 @@ import com.waz.ZLog._
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.model.ConversationData.{ConversationType, Link}
 import com.waz.model._
-import com.waz.sync.client.ConversationsClient.ConversationResponse.{ConversationIdsResponse, ConversationsResult}
+import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
 import com.waz.threading.Threading
 import com.waz.utils.JsonEncoder.{encodeAccess, encodeAccessRole}
 import com.waz.utils.{Json, JsonDecoder, JsonEncoder, returning}
@@ -31,7 +31,7 @@ import com.waz.znet.Response.{HttpStatus, Status, SuccessHttpStatus}
 import com.waz.znet.ZNetClient._
 import com.waz.znet._
 import org.json
-import org.json.{JSONArray, JSONObject}
+import org.json.JSONObject
 import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
@@ -40,11 +40,6 @@ import scala.util.control.NonFatal
 class ConversationsClient(netClient: ZNetClient) {
   import Threading.Implicits.Background
   import com.waz.sync.client.ConversationsClient._
-
-  def loadConversationIds(start: Option[RConvId] = None): ErrorOrResponse[ConversationIdsResponse] =
-    netClient.withErrorHandling(s"loadConversationIds(start = $start)", Request.Get(conversationIdsQuery(start))) {
-      case Response(SuccessHttpStatus(), ConversationIdsResponse(ids, hasMore), _) => ConversationIdsResponse(ids, hasMore)
-    }
 
   def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult] =
     netClient.withErrorHandling(s"loadConversations(start = $start)", Request.Get(conversationsQuery(start, limit))) {
@@ -56,11 +51,6 @@ class ConversationsClient(netClient: ZNetClient) {
       case Response(SuccessHttpStatus(), ConversationsResult(conversations, _), _) => conversations
     }
 
-  def loadConversation(id: RConvId): ErrorOrResponse[ConversationResponse] =
-    netClient.withErrorHandling(s"loadConversation($id)", Request.Get(s"$ConversationsPath/$id")) {
-      case Response(SuccessHttpStatus(), ConversationsResult(Seq(conversation), _), _) => conversation
-    }
-
   def postName(convId: RConvId, name: String): ErrorOrResponse[Option[RenameConversationEvent]] =
     netClient.withErrorHandling("postName", Request.Put(s"$ConversationsPath/$convId", Json("name" -> name))) {
       case Response(SuccessHttpStatus(), EventsResponse(event: RenameConversationEvent), _) => Some(event)
@@ -69,6 +59,11 @@ class ConversationsClient(netClient: ZNetClient) {
   def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Boolean] =
     netClient.withErrorHandling("postConversationState", Request.Put(s"$ConversationsPath/$convId/self", state)(ConversationState.StateContentEncoder)) {
       case Response(SuccessHttpStatus(), _, _) => true
+    }
+
+  def postMessageTimer(convId: RConvId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit] =
+    netClient.withErrorHandling("postMessageTimer", Request.Put(s"$ConversationsPath/$convId/message-timer", Json("message_timer" -> duration.map(_.toMillis)))) {
+      case Response(SuccessHttpStatus(), _, _) => {}
     }
 
   def postMemberJoin(conv: RConvId, members: Set[UserId]): ErrorOrResponse[Option[MemberJoinEvent]] =
@@ -150,62 +145,48 @@ object ConversationsClient {
   def conversationIdsQuery(start: Option[RConvId]): String =
     Request.query(ConversationIdsPath, ("size", ConversationIdsPageSize) :: start.toList.map("start" -> _.str) : _*)
 
-  case class ConversationResponse(conversation: ConversationData, members: Seq[ConversationMemberData])
+  case class ConversationResponse(id:           RConvId,
+                                  name:         Option[String],
+                                  creator:      UserId,
+                                  convType:     ConversationType,
+                                  team:         Option[TeamId],
+                                  muted:        Boolean,
+                                  mutedTime:    Instant,
+                                  archived:     Boolean,
+                                  archivedTime: Instant,
+                                  access:       Set[Access],
+                                  accessRole:   Option[AccessRole],
+                                  link:         Option[Link],
+                                  messageTimer: Option[FiniteDuration],
+                                  members:      Set[UserId])
 
   object ConversationResponse {
     import com.waz.utils.JsonDecoder._
 
-    def memberDecoder(convId: ConvId) = new JsonDecoder[Option[ConversationMemberData]] {
-      override def apply(implicit js: JSONObject) = Some(ConversationMemberData('id, convId))
-    }
-
-    def conversationData(js: JSONObject, self: JSONObject) = {
-      val (creator, name, team, id, convType, lastEventTime, access, accessRole, link) = {
-        implicit val jsObj = js
-        (
-          decodeUserId('creator),
-          decodeOptString('name),
-          decodeOptId[TeamId]('team),
-          decodeRConvId('id),
-          ConversationType(decodeInt('type)),
-          decodeISOInstant('last_event_time),
-          decodeAccess('access),
-          decodeOptAccessRole('access_role),
-          decodeOptString('link).map(Link)
-        )
-      }
-      val state = ConversationState.Decoder(self)
-      //TODO Teams: how do we tell if a conversation is managed, currently defaulting to false
-      val isManaged = team.map(_ => false)
-
-      ConversationData(
-        ConvId(id.str),
-        id,
-        name.filterNot(_.isEmpty),
-        creator,
-        convType,
-        team,
-        isManaged,
-        lastEventTime,
-        isActive = true,
-        Instant.EPOCH,
-        state.muted.getOrElse(false),
-        state.muteTime.getOrElse(lastEventTime),
-        state.archived.getOrElse(false),
-        state.archiveTime.getOrElse(lastEventTime),
-        access = access,
-        accessRole = accessRole,
-        link = link
-      )
-    }
-
     implicit lazy val Decoder: JsonDecoder[ConversationResponse] = new JsonDecoder[ConversationResponse] {
       override def apply(implicit js: JSONObject): ConversationResponse = {
         debug(s"decoding response: $js")
+
         val members = js.getJSONObject("members")
-        val self = members.getJSONObject("self")
-        val conversation = conversationData(js, self)
-        ConversationResponse(conversation, array(members.getJSONArray("others"))(memberDecoder(conversation.id)).flatten)
+        val state = ConversationState.Decoder(members.getJSONObject("self"))
+
+        ConversationResponse(
+          'id,
+          'name,
+          'creator,
+          'type,
+          'team,
+          state.muted.getOrElse(false),
+          state.muteTime.getOrElse(Instant.EPOCH),
+          state.archived.getOrElse(false),
+          state.archiveTime.getOrElse(Instant.EPOCH),
+          'access,
+          'access_role,
+          'link,
+          decodeOptLong('message_timer).map(EphemeralDuration(_)),
+          JsonDecoder.arrayColl(members.getJSONArray("others"), { case (arr, i) =>
+            UserId(arr.getJSONObject(i).getString("id"))
+          }))
       }
     }
 
@@ -225,25 +206,6 @@ object ConversationsClient {
         case NonFatal(e) =>
           warn(s"couldn't parse conversations response: $response", e)
           warn("json decoding failed", e)
-          None
-      }
-    }
-
-    case class ConversationIdsResponse(ids: Seq[RConvId], hasMore: Boolean)
-
-    object ConversationIdsResponse {
-
-      val idExtractor = { (arr: JSONArray, i: Int) => RConvId(arr.getString(i)) }
-
-      def unapply(response: ResponseContent): Option[(Seq[RConvId], Boolean)] = try {
-        response match {
-          case JsonObjectResponse(js) if js.has("conversations") => Some((array[RConvId](js.getJSONArray("conversations"), idExtractor), decodeBool('has_more)(js)))
-          case JsonArrayResponse(js) => Some((array[RConvId](js, idExtractor), false))
-          case _ => None
-        }
-      } catch {
-        case NonFatal(e) =>
-          warn(s"couldn't parse conversations response: $response", e)
           None
       }
     }

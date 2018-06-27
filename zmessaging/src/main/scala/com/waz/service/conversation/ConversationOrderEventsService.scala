@@ -102,7 +102,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
 
       convs.convByRemoteId(event.convId) flatMap {
         case Some(conv) =>
-          convs.updateConversationLastRead(conv.id, event.time.instant) map { _ => Future.successful(()) }
+          convs.updateConversationLastRead(conv.id, event.time) map { _ => Future.successful(()) }
         case _ => Future.successful(())
       }
     )) map { _ => () }
@@ -114,10 +114,10 @@ class ConversationOrderEventsService(selfUserId: UserId,
       verbose(s"processConversationOrderEvents($conv, $es)")
       val lastTime = es.maxBy(_.time).time
       val fromSelf = es.filter(_.from == selfUserId)
-      val lastRead = if (fromSelf.isEmpty) None else Some(fromSelf.maxBy(_.time).time.instant)
+      val lastRead = if (fromSelf.isEmpty) None else Some(fromSelf.maxBy(_.time).time)
 
       for {
-        _ <- convs.updateLastEvent(conv.id, lastTime.instant)
+        _ <- convs.updateLastEvent(conv.id, lastTime)
         _ <- lastRead match {
           case None => Future successful None
           case Some(time) => convs.updateConversationLastRead(conv.id, time)
@@ -130,7 +130,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
     def unarchiveTime(es: Traversable[ConversationEvent]) = {
       val all = es.filter(shouldUnarchive)
       if (all.isEmpty) None
-      else Some((all.maxBy(_.time).time.instant, all exists unarchiveMuted))
+      else Some((all.maxBy(_.time).time, all exists unarchiveMuted))
     }
 
     val convs = events.groupBy(_.convId).mapValues(unarchiveTime).filter(_._2.isDefined)

@@ -36,6 +36,7 @@ import org.threeten.bp.Instant
 
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
+import scala.concurrent.duration._
 
 sealed abstract class SyncRequest {
   val cmd: SyncCommand
@@ -191,7 +192,7 @@ object SyncRequest {
     override val mergeKey = (cmd, convId, msg, recalledId)
   }
 
-  case class PostAssetStatus(convId: ConvId, messageId: MessageId, exp: EphemeralExpiration, status: AssetStatus.Syncable) extends RequestForConversation(Cmd.PostAssetStatus) with SerialExecutionWithinConversation {
+  case class PostAssetStatus(convId: ConvId, messageId: MessageId, exp: Option[FiniteDuration], status: AssetStatus.Syncable) extends RequestForConversation(Cmd.PostAssetStatus) with SerialExecutionWithinConversation {
     override val mergeKey = (cmd, convId, messageId)
     override def merge(req: SyncRequest) = mergeHelper[PostAssetStatus](req)(Merged(_))
   }
@@ -357,7 +358,7 @@ object SyncRequest {
           case Cmd.PostMessage           => PostMessage(convId, messageId, 'time)
           case Cmd.PostDeleted           => PostDeleted(convId, messageId)
           case Cmd.PostRecalled          => PostRecalled(convId, messageId, decodeId[MessageId]('recalled))
-          case Cmd.PostAssetStatus       => PostAssetStatus(convId, messageId, EphemeralExpiration.getForMillis('ephemeral), JsonDecoder[AssetStatus.Syncable]('status))
+          case Cmd.PostAssetStatus       => PostAssetStatus(convId, messageId, decodeOptLong('ephemeral).map(_.millis), JsonDecoder[AssetStatus.Syncable]('status))
           case Cmd.PostConvJoin          => PostConvJoin(convId, users)
           case Cmd.PostConvLeave         => PostConvLeave(convId, userId)
           case Cmd.PostConnection        => PostConnection(userId, 'name, 'message)
@@ -469,7 +470,7 @@ object SyncRequest {
 
         case PostAssetStatus(_, mid, exp, status) =>
           putId("message", mid)
-          o.put("ephemeral", exp.milliseconds)
+          o.put("ephemeral", exp.map(_.toMillis))
           o.put("status", JsonEncoder.encode(status))
 
         case PostSelf(info) => o.put("user", JsonEncoder.encode(info))

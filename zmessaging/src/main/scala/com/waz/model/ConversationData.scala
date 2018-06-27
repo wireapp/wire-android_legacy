@@ -20,43 +20,45 @@ package com.waz.model
 import com.waz.api.IConversation.Access.{CODE, INVITE}
 import com.waz.api.IConversation.AccessRole._
 import com.waz.api.IConversation.{Access, AccessRole}
-import com.waz.api.{EphemeralExpiration, IConversation, Verification}
+import com.waz.api.{IConversation, Verification}
 import com.waz.db.Col._
 import com.waz.db.{Dao, Dao2}
-import com.waz.model.ConversationData.{Link, ConversationType, UnreadCount}
+import com.waz.model.ConversationData.{ConversationType, Link, UnreadCount}
 import com.waz.service.SearchKey
 import com.waz.utils.wrappers.{DB, DBCursor}
 import com.waz.utils.{JsonDecoder, JsonEncoder, _}
-import org.json.{JSONArray, JSONObject}
+import org.json.JSONArray
 import org.threeten.bp.Instant
 
-case class ConversationData(id:                   ConvId              = ConvId(),
-                            remoteId:             RConvId             = RConvId(),
-                            name:                 Option[String]      = None,
-                            creator:              UserId              = UserId(),
-                            convType:             ConversationType    = ConversationType.Group,
-                            team:                 Option[TeamId]      = None,
-                            isManaged:            Option[Boolean]     = None,
-                            lastEventTime:        Instant             = Instant.now(),
-                            isActive:             Boolean             = true,
-                            lastRead:             Instant             = Instant.EPOCH,
-                            muted:                Boolean             = false,
-                            muteTime:             Instant             = Instant.EPOCH,
-                            archived:             Boolean             = false,
-                            archiveTime:          Instant             = Instant.EPOCH,
-                            cleared:              Option[Instant]     = None,
-                            generatedName:        String              = "",
-                            searchKey:            Option[SearchKey]   = None,
-                            unreadCount:          UnreadCount         = UnreadCount(0, 0, 0),
-                            failedCount:          Int                 = 0,
-                            missedCallMessage:    Option[MessageId]   = None,
-                            incomingKnockMessage: Option[MessageId]   = None,
-                            hidden:               Boolean             = false,
-                            verified:             Verification        = Verification.UNKNOWN,
-                            ephemeral:            EphemeralExpiration = EphemeralExpiration.NONE,
-                            access:               Set[Access]         = Set.empty,
-                            accessRole:           Option[AccessRole]  = None,
-                            link:                 Option[Link]        = None) {
+import scala.concurrent.duration._
+
+case class ConversationData(id:                   ConvId                 = ConvId(),
+                            remoteId:             RConvId                = RConvId(),
+                            name:                 Option[String]         = None,
+                            creator:              UserId                 = UserId(),
+                            convType:             ConversationType       = ConversationType.Group,
+                            team:                 Option[TeamId]         = None,
+                            lastEventTime:        Instant                = Instant.now(),
+                            isActive:             Boolean                = true,
+                            lastRead:             Instant                = Instant.EPOCH,
+                            muted:                Boolean                = false,
+                            muteTime:             Instant                = Instant.EPOCH,
+                            archived:             Boolean                = false,
+                            archiveTime:          Instant                = Instant.EPOCH,
+                            cleared:              Option[Instant]        = None,
+                            generatedName:        String                 = "",
+                            searchKey:            Option[SearchKey]      = None,
+                            unreadCount:          UnreadCount            = UnreadCount(0, 0, 0),
+                            failedCount:          Int                    = 0,
+                            missedCallMessage:    Option[MessageId]      = None,
+                            incomingKnockMessage: Option[MessageId]      = None,
+                            hidden:               Boolean                = false,
+                            verified:             Verification           = Verification.UNKNOWN,
+                            localEphemeral:       Option[FiniteDuration] = None,
+                            globalEphemeral:      Option[FiniteDuration] = None,
+                            access:               Set[Access]            = Set.empty,
+                            accessRole:           Option[AccessRole]     = None, //option for migration purposes only - at some point we do a fetch and from that point it will always be defined
+                            link:                 Option[Link]           = None) {
 
   def displayName = if (convType == ConversationType.Group) name.getOrElse(generatedName) else generatedName
 
@@ -66,32 +68,17 @@ case class ConversationData(id:                   ConvId              = ConvId()
 
   lazy val completelyCleared = cleared.exists(!_.isBefore(lastEventTime))
 
+  val isManaged = team.map(_ => false) //can be returned to parameter list when we need it.
+
+  lazy val ephemeralExpiration: Option[EphemeralDuration] = (globalEphemeral, localEphemeral) match {
+    case (Some(d), _) => Some(ConvExpiry(d)) //global ephemeral takes precedence over local
+    case (_, Some(d)) => Some(MessageExpiry(d))
+    case _ => None
+  }
+
   def withLastRead(time: Instant) = copy(lastRead = lastRead max time)
 
   def withCleared(time: Instant) = copy(cleared = Some(cleared.fold(time)(_ max time)))
-
-  def updated(d: ConversationData): Option[ConversationData] = {
-    val ct = if (ConversationType.isOneToOne(convType) && d.convType != ConversationType.OneToOne) convType else d.convType
-
-    val updated = copy(
-      remoteId = d.remoteId,
-      name = d.name,
-      creator = d.creator,
-      team = d.team,
-      convType = ct,
-      lastEventTime = lastEventTime max d.lastEventTime,
-      isActive = d.isActive,
-      lastRead = lastRead max d.lastRead,
-      muted = d.muted,
-      muteTime = d.muteTime,
-      archived = d.archived,
-      cleared = d.cleared.map(c => cleared.fold(c)(_ max c)),
-      searchKey = d.searchKey,
-      access = d.access,
-      accessRole = d.accessRole)
-
-    if (updated == this) None else Some(updated)
-  }
 
   def isTeamOnly: Boolean = accessRole match {
     case Some(TEAM) if access.contains(Access.INVITE) => true
@@ -162,73 +149,6 @@ object ConversationData {
 
   case class Link(url: String)
 
-  implicit lazy val Decoder: JsonDecoder[ConversationData] = new JsonDecoder[ConversationData] {
-    import JsonDecoder._
-    override def apply(implicit js: JSONObject): ConversationData = ConversationData(
-      id                   = 'id,
-      remoteId             = 'remoteId,
-      name                 = decodeOptString('name),
-      creator              = 'creator,
-      convType             = ConversationType('convType),
-      team                 = decodeOptId[TeamId]('team),
-      isManaged            = decodeOptBoolean('is_managed),
-      lastEventTime        = decodeInstant('lastEventTime),
-      isActive             = decodeBool('is_active),
-      lastRead             = decodeInstant('lastReadTime),
-      muted                = 'muted,
-      muteTime             = decodeInstant('muteTime),
-      archived             = 'archived,
-      archiveTime          = decodeInstant('archiveTime),
-      cleared              = decodeOptInstant('cleared),
-      generatedName        = 'generatedName,
-      searchKey            = decodeOptString('name) map SearchKey,
-      unreadCount          = UnreadCount('unreadCount, 'unreadCallCount, 'unreadPingCount),
-      failedCount          = 'failedCount,
-      missedCallMessage    = decodeOptMessageId('missedCallMessage),
-      incomingKnockMessage = decodeOptMessageId('incomingKnockMessage),
-      hidden               = 'hidden,
-      verified             = decodeOptString('verified).fold(Verification.UNKNOWN)(Verification.valueOf),
-      ephemeral            = EphemeralExpiration.getForMillis(decodeLong('ephemeral)),
-      access               = 'access,
-      accessRole           = 'accessRole,
-      link                 = decodeOptString('link).map(Link)
-    )
-  }
-
-  implicit lazy val Encoder: JsonEncoder[ConversationData] = new JsonEncoder[ConversationData] {
-    import JsonEncoder._
-    override def apply(c: ConversationData): JSONObject = JsonEncoder { o =>
-      o.put("id", c.id.str)
-      o.put("remoteId", c.remoteId.str)
-      c.name foreach (o.put("name", _))
-      o.put("creator", c.creator.str)
-      o.put("convType", c.convType.id)
-      c.team.foreach(v => o.put("team", v.str))
-      c.isManaged.foreach(v => o.put("is_managed", v))
-      o.put("lastEventTime", c.lastEventTime.toEpochMilli)
-      o.put("is_active", c.isActive)
-      o.put("lastReadTime", c.lastRead.toEpochMilli)
-      o.put("muted", c.muted)
-      o.put("muteTime", c.muteTime.toEpochMilli)
-      o.put("archived", c.archived)
-      o.put("archiveTime", c.archiveTime.toEpochMilli)
-      c.cleared.foreach(cl => o.put("cleared", cl.toEpochMilli))
-      o.put("generatedName", c.generatedName)
-      o.put("unreadCount", c.unreadCount.normal)
-      o.put("unreadCallCount", c.unreadCount.call)
-      o.put("unreadPingCount", c.unreadCount.ping)
-      o.put("failedCount", c.failedCount)
-      c.missedCallMessage foreach (id => o.put("missedCallMessage", id.str))
-      c.incomingKnockMessage foreach (id => o.put("incomingKnockMessage", id.str))
-      o.put("hidden", c.hidden)
-      o.put("trusted", c.verified)
-      o.put("ephemeral", c.ephemeral.milliseconds)
-      o.put("access", encodeAccess(c.access))
-      o.put("access_role", encodeAccessRoleOpt(c.accessRole))
-      c.link.foreach(l => o.put("link", l.url))
-    }
-  }
-
   implicit object ConversationDataDao extends Dao[ConversationData, ConvId] {
     val Id               = id[ConvId]('_id, "PRIMARY KEY").apply(_.id)
     val RemoteId         = id[RConvId]('remote_id).apply(_.remoteId)
@@ -255,7 +175,8 @@ object ConversationData {
     val MissedCall       = opt(id[MessageId]('missed_call))(_.missedCallMessage)
     val IncomingKnock    = opt(id[MessageId]('incoming_knock))(_.incomingKnockMessage)
     val Verified         = text[Verification]('verified, _.name, Verification.valueOf)(_.verified)
-    val Ephemeral        = long[EphemeralExpiration]('ephemeral, _.milliseconds, EphemeralExpiration.getForMillis)(_.ephemeral)
+    val LocalEphemeral   = opt(finiteDuration('ephemeral))(_.localEphemeral)
+    val GlobalEphemeral  = opt(finiteDuration('global_ephemeral))(_.globalEphemeral)
     val Access           = set[Access]('access, JsonEncoder.encodeAccess(_).toString(), v => JsonDecoder.array[Access](new JSONArray(v), (arr: JSONArray, i: Int) => IConversation.Access.valueOf(arr.getString(i).toUpperCase)).toSet)(_.access)
     val AccessRole       = opt(text[IConversation.AccessRole]('access_role, JsonEncoder.encodeAccessRole, v => IConversation.AccessRole.valueOf(v.toUpperCase)))(_.accessRole)
     val Link             = opt(text[Link]('link, _.url, v => ConversationData.Link(v)))(_.link)
@@ -286,7 +207,8 @@ object ConversationData {
       MissedCall,
       IncomingKnock,
       Verified,
-      Ephemeral,
+      LocalEphemeral,
+      GlobalEphemeral,
       UnreadCallCount,
       UnreadPingCount,
       Access,
@@ -301,7 +223,6 @@ object ConversationData {
         Creator,
         ConvType,
         Team,
-        IsManaged,
         LastEventTime,
         IsActive,
         LastRead,
@@ -318,7 +239,8 @@ object ConversationData {
         IncomingKnock,
         Hidden,
         Verified,
-        Ephemeral,
+        LocalEphemeral,
+        GlobalEphemeral,
         Access,
         AccessRole,
         Link)

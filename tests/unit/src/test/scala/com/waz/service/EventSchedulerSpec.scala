@@ -17,7 +17,6 @@
  */
 package com.waz.service
 
-import java.util.Date
 import java.util.concurrent.atomic.AtomicReference
 
 import com.waz.model._
@@ -27,6 +26,7 @@ import com.waz.testutils.Matchers._
 import com.waz.threading.Threading
 import com.waz.utils.compareAndSet
 import org.scalatest.{FeatureSpec, Matchers, OptionValues, RobolectricTests}
+import org.threeten.bp.Instant
 
 import scala.annotation.tailrec
 import scala.collection.breakOut
@@ -144,9 +144,9 @@ class EventSchedulerSpec extends FeatureSpec with Matchers with OptionValues wit
   }
 
   feature("Defining event processing stages") {
-    lazy val e1 = RenameConversationEvent(RConvId("R"), new Date, UserId("u1"), "meep 1")
+    lazy val e1 = RenameConversationEvent(RConvId("R"), Instant.now(), UserId("u1"), "meep 1")
     lazy val e2 = UserPropertiesSetEvent("e2", "u1")
-    lazy val e3 = RenameConversationEvent(RConvId("R"), new Date, UserId("u2"), "meep 2")
+    lazy val e3 = RenameConversationEvent(RConvId("R"), Instant.now(), UserId("u2"), "meep 2")
     lazy val e4 = UserPropertiesSetEvent("e4", "u2")
 
     scenario("Eligibility check")(withFixture { env => import env._

@@ -19,8 +19,8 @@ package com.waz.sync.handler
 
 import java.util.Date
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.api.ErrorType
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.impl.ErrorResponse
@@ -35,7 +35,6 @@ import com.waz.sync.client.ConversationsClient
 import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.EventContext
-import com.waz.utils._
 
 import scala.concurrent.Future
 import scala.util.control.NonFatal
@@ -70,7 +69,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       conversationsClient.loadConversations(remoteIds).future flatMap {
         case Right(resps) =>
           debug(s"syncConversations received ${resps.size}")
-          convService.updateConversations(resps).map(_ => SyncResult.Success)
+          convService.updateConversationsWithDeviceStartMessage(resps).map(_ => SyncResult.Success)
         case Left(error) =>
           warn(s"ConversationsClient.syncConversations($ids) failed with error: $error")
           Future.successful(SyncResult(error))
@@ -81,8 +80,8 @@ class ConversationsSyncHandler(selfUserId:          UserId,
     conversationsClient.loadConversations(start).future flatMap {
       case Right(ConversationsResult(convs, hasMore)) =>
         debug(s"syncConversations received ${convs.size}")
-        val future = convService.updateConversations(convs)
-        if (hasMore) syncConversations(convs.lastOption.map(_.conversation.remoteId)) flatMap { res => future.map(_ => res) }
+        val future = convService.updateConversationsWithDeviceStartMessage(convs)
+        if (hasMore) syncConversations(convs.lastOption.map(_.id)).flatMap(res => future.map(_ => res))
         else future.map(_ => SyncResult.Success)
       case Left(error) =>
         warn(s"ConversationsClient.loadConversations($start) failed with error: $error")
@@ -115,7 +114,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       conversationsClient.postMemberLeave(conv.remoteId, user).future flatMap {
         case Right(Some(event: MemberLeaveEvent)) =>
           event.localTime = new Date
-          conversationsClient.postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(event.time.instant))).future flatMap {
+          conversationsClient.postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(event.time))).future flatMap {
             case Right(resp) =>
               verbose(s"postConversationState finished: $resp")
               convEvents.handlePostConversationEvent(event).map(_ => SyncResult.Success)
@@ -140,7 +139,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
     val (toCreate, toAdd) = users.splitAt(PostMembersLimit)
     conversationsClient.postConversation(toCreate, name, team, access, accessRole).future.flatMap {
       case Right(response) =>
-        convService.updateConversations(Seq(response.copy(conversation = response.conversation.copy(id = convId)))) flatMap { _ =>
+        convService.updateConversationsWithDeviceStartMessage(Seq(response)).flatMap { _ =>
           if (toAdd.nonEmpty) postConversationMemberJoin(convId, toAdd)
           else Future.successful(SyncResult.Success)
         }

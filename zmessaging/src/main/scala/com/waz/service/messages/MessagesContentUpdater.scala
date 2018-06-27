@@ -63,13 +63,13 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
 
     def expiration =
       if (MessageData.EphemeralMessageTypes(msg.msgType))
-        convs.get(msg.convId) map { _.fold(EphemeralExpiration.NONE)(_.ephemeral) }
-      else Future successful EphemeralExpiration.NONE
+        convs.get(msg.convId).map(_.fold(Option.empty[EphemeralDuration])(_.ephemeralExpiration))
+      else Future successful None
 
     for {
       time <- nextLocalTime(msg.convId)
       exp  <- expiration
-      m = returning(msg.copy(state = state, time = time, localTime = now(clock), ephemeral = exp)) { m =>
+      m = returning(msg.copy(state = state, time = time, localTime = now(clock), ephemeral = exp.map(_.duration))) { m =>
         verbose(s"addLocalMessage: $m")
       }
       res <- messagesStorage.addMessage(m)

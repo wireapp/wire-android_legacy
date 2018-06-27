@@ -52,7 +52,7 @@ class ConversationMemberLimitSpec extends FeatureSpec with Matchers with OptionV
   lazy val errorListSpy = returning(UpdateSpy())(errors.addUpdateListener)
   lazy val errorSpy = returning(OnErrorSpy())(errors.addErrorListener)
 
-  override val clientDelay: Timeout = 0.millis // FIXME: why is this test failing with bigger delay ?
+  override val clientDelay: Timeout = Duration.Zero // FIXME: why is this test failing with bigger delay ?
 
   override protected def beforeAll(): Unit = {
     ids foreach (id => addConnection(id))

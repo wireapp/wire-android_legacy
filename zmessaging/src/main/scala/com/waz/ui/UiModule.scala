@@ -83,9 +83,9 @@ class UiModule(val global: GlobalModule) extends UiEventContext with ZMessagingR
 
   def imageCache    = global.imageCache
   def bitmapDecoder = global.bitmapDecoder
-  val tracking      = global.trackingService
-  val assetLoader   = global.globalLoader
-  val accounts      = global.accountsService
+  lazy val tracking      = global.trackingService
+  lazy val assetLoader   = global.globalLoader
+  lazy val accounts      = global.accountsService
 
   val currentAccount = accounts.activeAccountManager
   val currentZms = accounts.activeZms

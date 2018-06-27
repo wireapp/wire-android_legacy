@@ -21,7 +21,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api
 import com.waz.api.Message.Status
-import com.waz.api.{EphemeralExpiration, UpdateListener}
+import com.waz.api.UpdateListener
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
@@ -64,7 +64,7 @@ class Message(val id: MessageId, var data: MessageData)(implicit context: UiModu
   }
 
   private def notifyEphemeralRead() =
-    if (data.ephemeral != EphemeralExpiration.NONE && data.expiryTime.isEmpty && getListenersCount > 0)
+    if (data.ephemeral.isDefined && data.expiryTime.isEmpty && getListenersCount > 0)
       context.zms { _.ephemeral.onMessageRead(id) }
 
   private def content = if (data.content.isEmpty) MessageContent.Empty else data.content.head

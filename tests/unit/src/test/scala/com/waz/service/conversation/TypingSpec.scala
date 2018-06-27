@@ -17,17 +17,17 @@
  */
 package com.waz.service.conversation
 
-import java.util.Date
-
 import com.waz._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.{StorageModule, Timeouts, UiLifeCycle, UiLifeCycleImpl}
-import com.waz.testutils.{EmptySyncService, TestGlobalPreferences}
 import com.waz.testutils.Matchers._
+import com.waz.testutils.{EmptySyncService, TestGlobalPreferences}
+import com.waz.utils._
 import com.waz.utils.events.EventContext
-import org.scalatest.matchers.Matcher
 import org.scalatest._
+import org.scalatest.matchers.Matcher
+import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
 
@@ -172,12 +172,12 @@ class TypingSpec extends FeatureSpec with Matchers with BeforeAndAfter with Robo
     }
   }
 
-  def startTyping(user: UserData, time: Date = new Date, notify: Boolean = true): Unit = setTypingState(user, time, isTyping = true, notify)
-  def stopTyping(user: UserData, time: Date = new Date, notify: Boolean = true): Unit = setTypingState(user, time, isTyping = false, notify)
+  def startTyping(user: UserData, time: Instant = Instant.now, notify: Boolean = true): Unit = setTypingState(user, time, isTyping = true, notify)
+  def stopTyping(user: UserData, time: Instant = Instant.now, notify: Boolean = true): Unit = setTypingState(user, time, isTyping = false, notify)
 
-  def setTypingState(user: UserData, time: Date, isTyping: Boolean, notify: Boolean) = {
+  def setTypingState(user: UserData, time: Instant, isTyping: Boolean, notify: Boolean) = {
     val event = TypingEvent(conv.remoteId, time, user.id, isTyping = isTyping)
-    event.localTime = time
+    event.localTime = time.javaDate
     var notified = false
     val sub = service.onTypingChanged { _ => notified = true } (EventContext.Global)
     service.typingEventStage.apply(conv.remoteId, Seq(event))

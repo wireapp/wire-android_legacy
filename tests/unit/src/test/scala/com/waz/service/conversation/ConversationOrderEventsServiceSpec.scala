@@ -17,8 +17,6 @@
  */
 package com.waz.service.conversation
 
-import java.util.Date
-
 import com.waz.ZLog
 import com.waz.content.ConversationStorage
 import com.waz.model.ConversationData.ConversationType
@@ -30,7 +28,6 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.SerialDispatchQueue
 import org.threeten.bp.Instant
-import com.waz.utils.RichDate
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -80,7 +77,7 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec {
 
     val convId = RConvId()
     val events = (1 to 10).map { _ =>
-      RenameConversationEvent(convId, new Date(Instant.now.getEpochSecond), UserId(), "blah")
+      RenameConversationEvent(convId, Instant.now, UserId(), "blah")
     }
 
     result(pipeline.apply(events).map(_ => println(output.toString)))
@@ -117,13 +114,13 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec {
     lazy val service = new ConversationOrderEventsService(selfUserId, convs, storage, messages, users, sync, pipeline)
 
     val events = Seq(
-      MemberJoinEvent(rConvId, new Date(1), UserId(), Seq(selfUserId)),
-      RenameConversationEvent(rConvId, new Date(2), UserId(), "blah"),
-      MemberJoinEvent(rConvId, new Date(3), UserId(), Seq(UserId("user2"))),
-      MemberLeaveEvent(rConvId, new Date(4), UserId(), Seq(UserId("user3"))))
+      MemberJoinEvent(rConvId, Instant.ofEpochMilli(1), UserId(), Seq(selfUserId)),
+      RenameConversationEvent(rConvId, Instant.ofEpochMilli(2), UserId(), "blah"),
+      MemberJoinEvent(rConvId, Instant.ofEpochMilli(3), UserId(), Seq(UserId("user2"))),
+      MemberLeaveEvent(rConvId, Instant.ofEpochMilli(4), UserId(), Seq(UserId("user3"))))
 
     result(pipeline.apply(events))
-    updatedConv.lastEventTime shouldBe new Date(1).instant
+    updatedConv.lastEventTime shouldBe Instant.ofEpochMilli(1)
   }
 
 }

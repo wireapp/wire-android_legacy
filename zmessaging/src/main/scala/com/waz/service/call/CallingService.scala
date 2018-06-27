@@ -43,7 +43,7 @@ import com.waz.sync.otr.OtrSyncHandler
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.events._
 import com.waz.utils.wrappers.Context
-import com.waz.utils.{RichDate, RichInstant, Serialized, returning, returningF}
+import com.waz.utils.{RichThreetenBPDuration, RichInstant, Serialized, returning, returningF}
 import com.waz.zms.CallWakeService
 import com.waz.znet.Response.SuccessHttpStatus
 import com.waz.znet._
@@ -217,7 +217,7 @@ class CallingService(val accountId:       UserId,
               messagesService.addMissedCallMessage(conv.id, call.caller, clock.instant)
             case Some(SelfConnected) =>
               verbose("Had a call, save duration as a message")
-              call.estabTime.foreach(est => messagesService.addSuccessfulCallMessage(conv.id, call.caller, est, est.until(endTime)))
+              call.estabTime.foreach(est => messagesService.addSuccessfulCallMessage(conv.id, call.caller, est, est.until(endTime).asScala))
             case _ =>
               warn(s"unexpected call state: ${call.state}")
           }
@@ -444,7 +444,7 @@ class CallingService(val accountId:       UserId,
 
   val callMessagesStage = EventScheduler.Stage[CallMessageEvent] {
     case (_, events) => Future.successful(events.sortBy(_.time).foreach { e =>
-      receiveCallEvent(e.content, e.time.instant, e.convId, e.from, e.sender)
+      receiveCallEvent(e.content, e.time, e.convId, e.from, e.sender)
     })
   }
 

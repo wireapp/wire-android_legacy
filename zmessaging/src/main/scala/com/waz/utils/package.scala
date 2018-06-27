@@ -19,12 +19,13 @@ package com.waz
 
 import java.security.MessageDigest
 import java.util.Date
-import java.util.concurrent.{TimeUnit, TimeoutException}
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.{TimeUnit, TimeoutException}
 
 import android.util.Base64
 import com.waz.ZLog.LogTag
 import com.waz.api.UpdateListener
+import com.waz.service.ZMessaging.clock
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.wrappers.{URI, URIBuilder}
 import org.json.{JSONArray, JSONObject}
@@ -42,7 +43,6 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.language.{higherKinds, implicitConversions}
 import scala.math.{Ordering, abs}
-import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 import scala.{PartialFunction => =/>}
@@ -170,6 +170,7 @@ package object utils {
       else if (abs(n) > 1e3d) s"${n.toDouble / 1e3d} µs"
       else s"$n ns"
     }
+    def fromNow(): Instant = clock.instant() + a
   }
 
   private val units = List((1000L, "ns"), (1000L, "µs"), (1000L, "ms"), (60L, "s"), (60L, "m"), (60L, "h"), (24L, "d"))

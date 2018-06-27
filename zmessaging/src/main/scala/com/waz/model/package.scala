@@ -19,10 +19,11 @@ package com.waz
 
 import android.util.Base64
 import com.google.protobuf.nano.{CodedInputByteBufferNano, MessageNano}
-import com.waz.api.EphemeralExpiration
 import com.waz.model.nano.Messages
 import com.waz.utils.{JsonDecoder, JsonEncoder, returning}
 import org.json.JSONObject
+
+import scala.concurrent.duration.FiniteDuration
 
 package object model {
 
@@ -43,10 +44,10 @@ package object model {
         implicitly[GenericContent[A]].set(msg)(content)
       }
 
-    def apply[A: EphemeralContent : GenericContent](id: Uid, expiration: EphemeralExpiration, content: A): GenericMessage =
+    def apply[A: EphemeralContent : GenericContent](id: Uid, expiration: Option[FiniteDuration], content: A): GenericMessage =
       returning(new Messages.GenericMessage()) { msg =>
         msg.messageId = id.str
-        if (expiration == EphemeralExpiration.NONE) {
+        if (expiration.isEmpty) {
           implicitly[GenericContent[A]].set(msg)(content)
         } else {
           Ephemeral.set(msg)(Ephemeral(expiration, content))
@@ -88,6 +89,7 @@ package object model {
     }
 
     object TextMessage {
+      import scala.concurrent.duration.DurationInt
 
       def apply(text: String, mentions: Map[UserId, String]): GenericMessage = GenericMessage(Uid(), Text(text, mentions, Nil))
 

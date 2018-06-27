@@ -625,7 +625,7 @@ class AssetMessageSpec extends FeatureSpec with BeforeAndAfter with Matchers wit
     _ => new ByteArrayInputStream(data)
   }
 
-  case class LatchedUpload(size: Long = 100L * (1L << 10), delay: FiniteDuration = 0.millis) {
+  case class LatchedUpload(size: Long = 100L * (1L << 10), delay: FiniteDuration = Duration.Zero) {
     val arrival = new CountDownLatch(1)
     val latch = new CountDownLatch(1)
     @volatile var completelyRead = false

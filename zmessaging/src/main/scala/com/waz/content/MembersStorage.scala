@@ -39,7 +39,7 @@ trait MembersStorage extends CachedStorage[(UserId, ConvId), ConversationMemberD
   def getActiveUsers(conv: ConvId): Future[Seq[UserId]]
   def getActiveConvs(user: UserId): Future[Seq[ConvId]]
   def activeMembers(conv: ConvId): Signal[Set[UserId]]
-  def set(conv: ConvId, users: Seq[UserId]): Future[Unit]
+  def set(conv: ConvId, users: Set[UserId]): Future[Unit]
   def delete(conv: ConvId): Future[Unit]
 }
 
@@ -82,10 +82,9 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase) extends CachedS
   override def remove(conv: ConvId, user: UserId) =
     remove(conv, Set(user)).map(_.headOption)
 
-  def set(conv: ConvId, users: Seq[UserId]): Future[Unit] = getActiveUsers(conv) flatMap { active =>
-    val usersSet = users.toSet
-    val toRemove = active.filterNot(usersSet)
-    val toAdd = usersSet -- toRemove
+  def set(conv: ConvId, users: Set[UserId]): Future[Unit] = getActiveUsers(conv) flatMap { active =>
+    val toRemove = active.filterNot(users)
+    val toAdd = users -- toRemove
 
     remove(conv, toRemove).zip(add(conv, toAdd)).map(_ => ())
   }
