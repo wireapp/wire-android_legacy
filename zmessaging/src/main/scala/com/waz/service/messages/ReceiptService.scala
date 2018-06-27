@@ -45,8 +45,6 @@ class ReceiptService(messages: MessagesStorage, convsStorage: ConversationStorag
         false <- convsService.isGroupConversation(conv.id)
         _ <- sync.postReceipt(msg.convId, msg.id, msg.userId, ReceiptType.Delivery)
       } yield ()
-    }.recover {
-      case NoSuchElementException => //
     }
   }
 
