@@ -101,13 +101,17 @@ class GlobalModuleImpl(val context: AContext, val backend: BackendConfig) extend
 
   val tokenService:             GlobalTokenService               = wire[GlobalTokenService]
 
+  val storage:                  Database                         = new GlobalDatabase(context)
+  val accountsStorageOld:       AccountsStorageOld               = wire[AccountsStorageOldImpl]
+
+
   lazy val accountsService:     AccountsService                  = new AccountsServiceImpl(this)
   lazy val trackingService:     TrackingService                  = TrackingServiceImpl(accountsService)
   lazy val notifications:       GlobalNotificationsService       = wire[GlobalNotificationsServiceImpl]
   lazy val calling:             GlobalCallingService             = new GlobalCallingService
 
   lazy val contextWrapper:      Context                          = Context.wrap(context)
-  lazy val storage:             Database                         = new GlobalDatabase(context)
+
   lazy val metadata:            MetaDataService                  = wire[MetaDataService]
   lazy val cache:               CacheService                     = CacheService(context, storage, trackingService)
   lazy val bitmapDecoder:       BitmapDecoder                    = wire[BitmapDecoder]
@@ -139,7 +143,7 @@ class GlobalModuleImpl(val context: AContext, val backend: BackendConfig) extend
   lazy val cacheCleanup                                          = wire[CacheCleaningService]
 
   lazy val accountsStorage:     AccountStorage                   = wire[AccountStorageImpl]
-  lazy val accountsStorageOld:  AccountsStorageOld               = wire[AccountsStorageOldImpl]
+
   lazy val teamsStorage:        TeamsStorage                     = wire[TeamsStorageImpl]
   lazy val recordingAndPlayback                                  = wire[GlobalRecordAndPlayService]
 

@@ -113,7 +113,7 @@ class DeviceActor(val deviceName: String,
       Await.ready(prefs(GlobalPreferences.DatabasesRenamed) := true, 5.seconds)
     }
 
-    override lazy val storage: Database = new GlobalDatabase(application, Random.nextInt().toHexString)
+    override val storage: Database = new GlobalDatabase(application, Random.nextInt().toHexString)
     override lazy val clientWrapper: Future[ClientWrapper] = wrapper
 
     override lazy val metadata: MetaDataService = new MetaDataService(context) {
