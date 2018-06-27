@@ -115,9 +115,11 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
 
   implicit val ec: EventContext = EventContext.Global
 
+  //needed immediately for migration, don't make lazy or we risk deadlocks
+  val storageOld    = global.accountsStorageOld
+  val prefs         = global.prefs
+
   lazy val context       = global.context
-  lazy val prefs         = global.prefs
-  lazy val storageOld    = global.accountsStorageOld
   lazy val phoneNumbers  = global.phoneNumbers
   lazy val regClient     = global.regClient
   lazy val loginClient   = global.loginClient
