@@ -40,7 +40,7 @@ class UsersClient(netClient: ZNetClient) {
 
   def loadUsers(ids: Seq[UserId]): ErrorOrResponse[IndexedSeq[UserInfo]] =
     if (ids.isEmpty) CancellableFuture.successful(Right(Vector())) else {
-      CancellableFuture.lift(Future.traverse(ids.grouped(IdsCountThreshold).toSeq) { ids => // split up every 45 user ids so that the request uri remains short enough
+      CancellableFuture.lift(Future.traverse(ids.grouped(IdsCountThreshold).toSeq) { ids => // split up every IdsCountThreshold user ids so that the request uri remains short enough (ca. 2400 bytes for 64 ids)
         netClient(Request.Get(usersPath(ids))) map {
           case Response(SuccessHttpStatus(), UserResponseExtractor(users@_*), _) => users
           case Response(status, ErrorResponse(code, msg, label), _) =>
@@ -83,7 +83,7 @@ object UsersClient {
   val SelfPath = "/self"
   val ConnectionsPath = "/self/connections"
   val SearchablePath = "/self/searchable"
-  val IdsCountThreshold = 45
+  val IdsCountThreshold = 64
 
   def usersPath(ids: Seq[UserId]) = Request.query(UsersPath, "ids" -> ids.mkString(","))
 

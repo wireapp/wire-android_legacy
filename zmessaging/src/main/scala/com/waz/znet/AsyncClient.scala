@@ -87,7 +87,7 @@ class AsyncClientImpl(bodyDecoder: ResponseBodyDecoder = DefaultResponseBodyDeco
             p.tryFailure(if (cancelled) CancellableFuture.DefaultCancelException else ex)
           } else {
             val networkActivityCallback = () => lastNetworkActivity = System.currentTimeMillis
-            debug(s"got connection response for request: ${request.absoluteUri}")
+            debug(s"got connection response ${response.message()} for request: ${request.absoluteUri}")
             val future = responseWorker.processResponse(request.absoluteUri, response, request.decoder.getOrElse(bodyDecoder), request.downloadCallback, networkActivityCallback)
             p.tryCompleteWith(future)
 

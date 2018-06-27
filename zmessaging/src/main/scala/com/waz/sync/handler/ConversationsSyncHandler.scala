@@ -40,7 +40,7 @@ import scala.concurrent.Future
 import scala.util.control.NonFatal
 
 object ConversationsSyncHandler {
-  val PostMembersLimit = 64
+  val PostMembersLimit = 256
 }
 
 class ConversationsSyncHandler(selfUserId:          UserId,
