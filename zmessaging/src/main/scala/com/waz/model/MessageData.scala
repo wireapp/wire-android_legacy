@@ -383,7 +383,7 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
       val q = builder.buildUnionQuery(
         types.map(mt =>
           s"SELECT * FROM (" +
-            SQLiteQueryBuilder.buildQueryString(false, table.name, IndexColumns, s"${Conv.name} = '$conv' AND ${Type.name} = '${Type(mt.msgType)}'", null, null, s"${Time.name} DESC", mt.limit.fold[String](null)(_.toString)) +
+            SQLiteQueryBuilder.buildQueryString(false, table.name, IndexColumns, s"${Conv.name} = '$conv' AND ${Type.name} = '${Type(mt.msgType)}' AND ${Expired.name} = 0", null, null, s"${Time.name} DESC", mt.limit.fold[String](null)(_.toString)) +
             s")").toArray,
         null, limit.fold[String](null)(_.toString))
       db.rawQuery(q, null)
