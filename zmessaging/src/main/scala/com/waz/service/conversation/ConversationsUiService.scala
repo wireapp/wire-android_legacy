@@ -79,7 +79,7 @@ trait ConversationsUiService {
   def addConversationMembers(conv: ConvId, users: Set[UserId]): Future[Option[SyncId]]
   def removeConversationMember(conv: ConvId, user: UserId): Future[Option[SyncId]]
 
-  def leaveConversation(conv: ConvId): Future[Option[ConversationData]]
+  def leaveConversation(conv: ConvId): Future[Unit]
   def clearConversation(id: ConvId): Future[Option[ConversationData]]
   def findGroupConversations(prefix: SearchKey, limit: Int, handleOnly: Boolean): Future[Seq[ConversationData]]
   def knock(id: ConvId): Future[Option[MessageData]]
@@ -284,13 +284,13 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
       isGroup    <- convs.isGroupConversation(conv)
     } yield selfActive && isGroup
 
-  override def leaveConversation(conv: ConvId): Future[Option[ConversationData]] = {
+  override def leaveConversation(conv: ConvId) = {
     verbose(s"leaveConversation($conv)")
     for {
-      updated  <- convsContent.setConvActive(conv, active = false)
-      _        <- removeConversationMember(conv, selfUserId)
-      archived <- convsContent.updateConversationArchived(conv, archived = true)
-    } yield archived.map(_._2).orElse(updated.map(_._2))
+      _ <- convsContent.setConvActive(conv, active = false)
+      _ <- removeConversationMember(conv, selfUserId)
+      _ <- convsContent.updateConversationArchived(conv, archived = true)
+    } yield {}
   }
 
   def isAbleToModifyMembers(conv: ConvId, user: UserId): Future[Boolean] = {

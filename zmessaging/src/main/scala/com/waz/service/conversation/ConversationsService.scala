@@ -156,14 +156,12 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case RenameConversationEvent(_, _, _, name) => content.updateConversationName(conv.id, name)
 
     case MemberJoinEvent(_, _, _, userIds, _) =>
-      def joined(updated: ConversationData) = !conv.isActive && updated.isActive && updated.convType == ConversationType.Group
-      def ensureConvActive() = content.setConvActive(conv.id, active = true).map(_.map(_._2).filter(joined))
-
+      if (userIds.contains(selfUserId)) sync.syncConversations(Set(conv.id)) //we were re-added to a group and in the meantime might have missed events
       for {
         syncId <- users.syncNotExistingOrExpired(userIds)
         _ <- syncId.fold(Future.successful(()))(sId => syncReqService.scheduler.await(sId).map(_ => ()))
         _ <- membersStorage.add(conv.id, userIds)
-        _ <- if (userIds.contains(selfUserId)) ensureConvActive() else successful(None)
+        _ <- if (userIds.contains(selfUserId)) content.setConvActive(conv.id, active = true) else successful(None)
       } yield ()
 
     case MemberLeaveEvent(_, _, _, userIds) =>
