@@ -533,7 +533,7 @@ object GenericContent {
 
     def unapply(proto: Ephemeral): Option[(Option[FiniteDuration], Any)] = proto.expireAfterMillis match {
       case 0 => Some((None, content(proto)))
-      case _ => Some(Some(proto.expireAfterMillis.millis), content(proto))
+      case _ => Some(Some(EphemeralDuration(proto.expireAfterMillis)), content(proto))
     }
 
     def content(e: Ephemeral) = e.getContentCase match {
