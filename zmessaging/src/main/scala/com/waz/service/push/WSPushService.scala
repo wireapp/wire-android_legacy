@@ -120,6 +120,7 @@ class WSPushServiceImpl(userId:              UserId,
       verbose("Current websocket subscription will be destroyed.")
       currentWebSocketSubscription.destroy()
       currentWebSocketSubscription = null
+      connected ! false
     }
   }
 
