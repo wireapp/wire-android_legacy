@@ -17,8 +17,8 @@
  */
 package com.waz.model.sync
 
+import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.ZLog.error
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.EphemeralExpiration
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.impl.AccentColor
@@ -26,7 +26,6 @@ import com.waz.model.AddressBook.AddressBookDecoder
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.ClientId
 import com.waz.model.{Availability, SearchQuery, _}
-import com.waz.service.ZMessaging
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.client.{ConversationsClient, UsersClient}
 import com.waz.sync.queue.SyncJobMerger._
@@ -211,12 +210,12 @@ object SyncRequest {
     override val mergeKey = (cmd, user)
 
     override def merge(req: SyncRequest) = mergeHelper[SyncPreKeys](req) { other =>
-      if (other.clients.forall(clients)) Merged(this)
+      if (other.clients.subsetOf(clients)) Merged(this)
       else Merged(SyncPreKeys(user, clients ++ other.clients))
     }
 
     override def isDuplicateOf(req: SyncRequest): Boolean = req match {
-      case SyncPreKeys(u, cs) if u == user && clients.forall(cs) => true
+      case SyncPreKeys(u, cs) => u == user && clients.subsetOf(cs)
       case _ => false
     }
   }
@@ -265,7 +264,7 @@ object SyncRequest {
     override def toString = s"SyncUser(${users.size} users: ${users.take(5)}...)"
 
     override def merge(req: SyncRequest) = mergeHelper[SyncUser](req) { other =>
-      if (other.users.forall(users)) Merged(this)
+      if (other.users.subsetOf(users)) Merged(this)
       else {
         val union = users ++ other.users
         if (union.size <= UsersClient.IdsCountThreshold) Merged(SyncUser(union))
@@ -275,7 +274,7 @@ object SyncRequest {
     }
 
     override def isDuplicateOf(req: SyncRequest): Boolean = req match {
-      case SyncUser(us) if users.forall(us) => true
+      case SyncUser(us) => users.subsetOf(us)
       case _ => false
     }
   }
@@ -283,7 +282,7 @@ object SyncRequest {
   case class SyncConversation(convs: Set[ConvId]) extends BaseRequest(Cmd.SyncConversation) {
 
     override def merge(req: SyncRequest) = mergeHelper[SyncConversation](req) { other =>
-      if (other.convs.forall(convs)) Merged(this)
+      if (other.convs.subsetOf(convs)) Merged(this)
       else {
         val union = convs ++ other.convs
         if (union.size <= ConversationsClient.IdsCountThreshold) Merged(SyncConversation(union))
@@ -293,7 +292,7 @@ object SyncRequest {
     }
 
     override def isDuplicateOf(req: SyncRequest): Boolean = req match {
-      case SyncConversation(cs) if convs.forall(cs) => true
+      case SyncConversation(cs) => convs.subsetOf(cs)
       case _ => false
     }
   }
@@ -302,7 +301,7 @@ object SyncRequest {
     override def merge(req: SyncRequest) = mergeHelper[PostConvJoin](req) { other => Merged(PostConvJoin(convId, users ++ other.users)) }
 
     override def isDuplicateOf(req: SyncRequest): Boolean = req match {
-      case PostConvJoin(`convId`, us) if users.forall(us) => true
+      case PostConvJoin(`convId`, us) => users.subsetOf(us)
       case _ => false
     }
   }
