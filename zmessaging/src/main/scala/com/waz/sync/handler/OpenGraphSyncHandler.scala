@@ -54,7 +54,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
                            imageGenerator:  ImageAssetGenerator,
                            imageLoader:     ImageLoader,
                            messagesService: MessagesService,
-                           assetClient:     AssetClient) {
+                           assetClient:     AssetClient) { //TODO assetClient not used
   import com.waz.threading.Threading.Implicits.Background
 
   def postMessageMeta(convId: ConvId, msgId: MessageId, editTime: Instant): Future[SyncResult] = messages.getMessage(msgId) flatMap {

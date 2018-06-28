@@ -20,7 +20,7 @@ package com.waz.utils
 import com.waz.Generators._
 import com.waz.model.Uid
 import com.waz.content.Preferences.Preference.PrefCodec._
-import com.waz.znet.AuthenticationManager.AccessToken
+import com.waz.sync.client.AuthenticationManager.AccessToken
 import org.scalatest.{FeatureSpec, Ignore, Matchers}
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.threeten.bp.Instant

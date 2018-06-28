@@ -19,15 +19,15 @@ package com.waz.sync.client
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
+import com.waz.api.impl.ErrorResponse
 import com.waz.model.AssetMetaData.Image
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model._
+import com.waz.service.BackendConfig
 import com.waz.sync.client.ConversationsClient.ConversationsPath
-import com.waz.threading.Threading
 import com.waz.utils.{Json, JsonDecoder}
-import com.waz.znet.Response.SuccessHttpStatus
-import com.waz.znet.ZNetClient.ErrorOrResponse
-import com.waz.znet._
+import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
 import org.json.JSONObject
 
 import scala.util.Try
@@ -41,40 +41,60 @@ trait IntegrationsClient {
   def removeBot(rConvId: RConvId, botId: UserId): ErrorOrResponse[ConversationEvent]
 }
 
-class IntegrationsClientImpl(netClient: ZNetClient) extends IntegrationsClient {
+class IntegrationsClientImpl(implicit
+                             backendConfig: BackendConfig,
+                             httpClient: HttpClient,
+                             authRequestInterceptor: AuthRequestInterceptor) extends IntegrationsClient {
+
+  import BackendConfig.backendUrl
+  import HttpClient.dsl._
   import IntegrationsClient._
-  import Threading.Implicits.Background
 
-  def searchIntegrations(startWith: String) =
-    netClient.withErrorHandling("searchIntegrations", Request.Get(integrationsSearchPath(startWith))) {
-      case Response(SuccessHttpStatus(), IntegrationsSearchResponse(data), _) => data
-    }
+  private implicit val integrationSearchDeserializer: RawBodyDeserializer[Map[IntegrationData, Option[AssetData]]] =
+    RawBodyDeserializer[JSONObject].map(json => IntegrationsSearchResponse.unapply(JsonObjectResponse(json)).get)
 
-  def getIntegration(pId: ProviderId, iId: IntegrationId) =
-    netClient.withErrorHandling("getIntegration", Request.Get(integrationPath(pId, iId))) {
-      case Response(SuccessHttpStatus(), IntegrationResponse(data, assetData), _) => (data, assetData)
-    }
+  private implicit val addRemoveBotDeserializer: RawBodyDeserializer[ConversationEvent] =
+    RawBodyDeserializer[JSONObject].map(json => AddRemoveBotResponse.unapply(JsonObjectResponse(json)).get)
 
-  def getProvider(pId: ProviderId) =
-    netClient.withErrorHandling("getProvider", Request.Get(providerPath(pId))) {
-      case Response(SuccessHttpStatus(), ProviderResponse(data), _) => data
-    }
-
-  def addBot(rConvId: RConvId, pId: ProviderId, iId: IntegrationId) = {
-    debug(s"addBot: rConvId: $rConvId, providerId: $pId, integrationId: $iId")
-    netClient.withErrorHandling("addBot", Request.Post(s"$ConversationsPath/${rConvId.str}/bots", Json("provider" -> pId.str, "service" -> iId.str))) {
-      case Response(SuccessHttpStatus(), AddRemoveBotResponse(data), _) => data
-    }
+  def searchIntegrations(startWith: String): ErrorOrResponse[Map[IntegrationData, Option[AssetData]]] = {
+    Request.Get(url = backendUrl(IntegrationsSearchPath), queryParameters = queryParameters("tags" -> DefaultTag, "start" -> startWith))
+      .withResultType[Map[IntegrationData, Option[AssetData]]]
+      .withErrorType[ErrorResponse]
+      .executeSafe
   }
 
-  def removeBot(rConvId: RConvId, botId: UserId) = {
+  def getIntegration(pId: ProviderId, iId: IntegrationId): ErrorOrResponse[(IntegrationData, Option[AssetData])] = {
+    Request.Get(url = backendUrl(integrationPath(pId, iId)))
+      .withResultType[(IntegrationData, Option[AssetData])]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
+
+  def getProvider(pId: ProviderId): ErrorOrResponse[ProviderData] = {
+    Request.Get(url = backendUrl(providerPath(pId)))
+      .withResultType[ProviderData]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
+
+  def addBot(rConvId: RConvId, pId: ProviderId, iId: IntegrationId): ErrorOrResponse[ConversationEvent] = {
+    debug(s"addBot: rConvId: $rConvId, providerId: $pId, integrationId: $iId")
+    Request
+      .Post(
+        url = backendUrl(s"$ConversationsPath/${rConvId.str}/bots"),
+        body = Json("provider" -> pId.str, "service" -> iId.str)
+      )
+      .withResultType[ConversationEvent]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
+
+  def removeBot(rConvId: RConvId, botId: UserId): ErrorOrResponse[ConversationEvent] = {
     debug(s"removeBot: convId: $rConvId, botId: $botId")
-
-    import com.waz.znet.ContentEncoder.RequestContentEncoder
-
-    netClient.withErrorHandling("addBot", Request.Delete(s"$ConversationsPath/${rConvId.str}/bots/$botId")) {
-      case Response(SuccessHttpStatus(), AddRemoveBotResponse(data), _) => data
-    }
+    Request.Delete(url = backendUrl(s"$ConversationsPath/${rConvId.str}/bots/$botId"))
+      .withResultType[ConversationEvent]
+      .withErrorType[ErrorResponse]
+      .executeSafe
   }
 }
 
@@ -82,17 +102,13 @@ object IntegrationsClient {
   import JsonDecoder._
   import com.waz.model.ConversationEvent.ConversationEventDecoder
 
-  def apply(netClient: ZNetClient): IntegrationsClient = new IntegrationsClientImpl(netClient)
-
   val IntegrationsSearchPath = "/services"
   val DefaultTag = "integration"
   val ProvidersPath = "/providers"
   val IntegrationConvPath = "/conversations"
 
-  def integrationsSearchPath(startWith: String): String =
-    Request.query(IntegrationsSearchPath, "tags" -> DefaultTag, "start" -> startWith)
-
-  def integrationPath(providerId: ProviderId, integrationId: IntegrationId): String = s"$ProvidersPath/$providerId/services/$integrationId"
+  def integrationPath(providerId: ProviderId, integrationId: IntegrationId): String =
+    s"$ProvidersPath/$providerId/services/$integrationId"
 
   def providerPath(id: ProviderId): String = s"$ProvidersPath/$id"
 
@@ -100,25 +116,6 @@ object IntegrationsClient {
     def unapply(resp: ResponseContent): Option[Map[IntegrationData, Option[AssetData]]] = resp match {
       case JsonObjectResponse(js) if js.has("services") =>
         Try(decodeSeq('services)(js, IntegrationDecoder).toMap).toOption
-      case response =>
-        warn(s"Unexpected response: $response")
-        None
-    }
-  }
-
-  object IntegrationResponse {
-    def unapply(resp: ResponseContent): Option[(IntegrationData, Option[AssetData])] = resp match {
-      case JsonObjectResponse(js) =>
-        Try(IntegrationDecoder(js)).toOption
-      case response =>
-        warn(s"Unexpected response: $response")
-        None
-    }
-  }
-
-  object ProviderResponse {
-    def unapply(resp: ResponseContent): Option[ProviderData] = resp match {
-      case JsonObjectResponse(js) => Try(ProviderData.Decoder(js)).toOption
       case response =>
         warn(s"Unexpected response: $response")
         None

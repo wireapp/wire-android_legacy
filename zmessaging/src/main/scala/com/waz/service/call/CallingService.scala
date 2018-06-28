@@ -19,7 +19,6 @@ package com.waz.service.call
 
 
 import android.Manifest.permission.CAMERA
-
 import com.sun.jna.Pointer
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
@@ -39,14 +38,13 @@ import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsS
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
 import com.waz.service.tracking.{AVSMetricsEvent, TrackingService}
+import com.waz.sync.client.CallingClient
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.events._
 import com.waz.utils.wrappers.Context
 import com.waz.utils.{RichThreetenBPDuration, RichInstant, Serialized, returning, returningF}
 import com.waz.zms.CallWakeService
-import com.waz.znet.Response.SuccessHttpStatus
-import com.waz.znet._
 import org.threeten.bp.{Duration, Instant}
 
 import scala.concurrent.{Future, Promise}
@@ -68,6 +66,7 @@ class GlobalCallingService() {
 
 class CallingService(val accountId:       UserId,
                      val clientId:        ClientId,
+                     callingClient:       CallingClient,
                      context:             Context,
                      avs:                 Avs,
                      convs:               ConversationsContentUpdater,
@@ -79,7 +78,6 @@ class CallingService(val accountId:       UserId,
                      mediaManagerService: MediaManagerService,
                      pushService:         PushService,
                      network:             NetworkModeService,
-                     netClient:           ZNetClient,
                      errors:              ErrorsService,
                      userPrefs:           UserPreferences,
                      permissions:         PermissionsService,
@@ -247,11 +245,7 @@ class CallingService(val accountId:       UserId,
 
   def onConfigRequest(wcall: WCall): Int = {
     verbose("onConfigRequest")
-    netClient.withErrorHandling("onConfigRequest", Request.Get(CallConfigPath)) {
-      case Response(SuccessHttpStatus(), CallConfigResponse(js), _) =>
-        verbose(s"Received calls/config: $js")
-        js
-    }.map { resp =>
+    callingClient.getConfig.map { resp =>
       avs.onConfigRequest(wcall, resp.fold(err => err.code, _ => 0), resp.fold(_ => "", identity))
     }
     0
@@ -533,8 +527,6 @@ object CallingService {
 
   val VideoCallMaxMembers: Int = 4
 
-  val CallConfigPath = "/calls/config"
-
   /**
     * @param activeId       the id of the active call (that is, the call that should be displayed to the user), if any
     * @param availableCalls the entire list of available calls, including the active one, incoming calls, and any ongoing (group) calls
@@ -559,19 +551,6 @@ object CallingService {
     val Empty = GlobalCallProfile(None, Map.empty)
   }
 
-  object CallConfigResponse {
-
-    def unapply(response: ResponseContent): Option[String] = try {
-      response match {
-        case JsonObjectResponse(js) => Some(js.toString)
-        case _ => throw new Exception("Unexpected response type from /calls/config")
-      }
-    } catch {
-      case NonFatal(e) =>
-        warn(s"couldn't parse /calls/config response: $response", e)
-        None
-    }
-  }
 }
 
 

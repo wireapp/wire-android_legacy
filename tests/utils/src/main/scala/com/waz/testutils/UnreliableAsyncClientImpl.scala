@@ -23,18 +23,18 @@ import com.waz.znet._
 import scala.concurrent.duration._
 import scala.util.matching.Regex
 
-class UnreliableAsyncClientImpl extends AsyncClientImpl(wrapper = TestClientWrapper()) {
-  @volatile var delayInMillis: Long = 200L
-  @volatile var failFor: Option[(Regex, String)] = None
-
-  override def apply(request: Request[_]): CancellableFuture[Response] = {
-    CancellableFuture.delay(delayInMillis.millis) flatMap { _ =>
-      val fail = failFor exists { failFor =>
-        val (uriRegex, failingMethod) = failFor
-        failingMethod == request.httpMethod && uriRegex.pattern.matcher(request.absoluteUri.toString).matches
-      }
-      if (fail) CancellableFuture.successful(Response(Response.HttpStatus(500)))
-      else super.apply(request)
-    }
-  }
-}
+//class UnreliableAsyncClientImpl extends AsyncClientImpl(wrapper = TestClientWrapper()) {
+//  @volatile var delayInMillis: Long = 200L
+//  @volatile var failFor: Option[(Regex, String)] = None
+//
+//  override def apply(request: Request[_]): CancellableFuture[Response] = {
+//    CancellableFuture.delay(delayInMillis.millis) flatMap { _ =>
+//      val fail = failFor exists { failFor =>
+//        val (uriRegex, failingMethod) = failFor
+//        failingMethod == request.httpMethod && uriRegex.pattern.matcher(request.absoluteUri.toString).matches
+//      }
+//      if (fail) CancellableFuture.successful(Response(Response.HttpStatus(500)))
+//      else super.apply(request)
+//    }
+//  }
+//}

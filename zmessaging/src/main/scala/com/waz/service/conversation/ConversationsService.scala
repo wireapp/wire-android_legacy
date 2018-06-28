@@ -37,7 +37,7 @@ import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events.EventContext
-import com.waz.znet.ZNetClient.ErrorOr
+import com.waz.sync.client.ErrorOr
 
 import scala.collection.{breakOut, mutable}
 import scala.concurrent.Future

@@ -17,25 +17,39 @@
  */
 package com.waz.sync.client
 
+import com.waz.api.impl.ErrorResponse
 import com.waz.model.{AddressBook, ContactId, UserId}
-import com.waz.threading.Threading
+import com.waz.service.BackendConfig
+import com.waz.sync.client.AddressBookClient.UserAndContactIds
 import com.waz.utils.JsonDecoder
-import com.waz.znet.Response.SuccessHttpStatus
-import com.waz.znet.ZNetClient._
-import com.waz.znet._
+import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.{Headers, HttpClient, RawBodyDeserializer, Request}
 import org.json.JSONObject
 
-import scala.concurrent.duration._
 import scala.util.Try
 
-class AddressBookClient(netClient: ZNetClient) {
-  import Threading.Implicits.Background
+trait AddressBookClient {
+  def postAddressBook(book: AddressBook): ErrorOrResponse[Seq[UserAndContactIds]]
+}
+
+class AddressBookClientImpl(implicit
+                            backendConfig: BackendConfig,
+                            httpClient: HttpClient,
+                            authRequestInterceptor: AuthRequestInterceptor) extends AddressBookClient {
+
+  import BackendConfig.backendUrl
+  import HttpClient.dsl._
   import com.waz.sync.client.AddressBookClient._
 
-  def postAddressBook(a: AddressBook): ErrorOrResponse[Seq[(UserId, Set[ContactId])]] =
-    netClient.withErrorHandling("postAddressBook", Request.Post(AddressBookPath, a, timeout = 5.minutes)) {
-      case Response(SuccessHttpStatus(), UsersListResponse(users @ _*), _) => users
-    }
+  private implicit val userAndContactIdsDeserializer: RawBodyDeserializer[Seq[UserAndContactIds]] =
+    RawBodyDeserializer[JSONObject].map(json => UsersListResponse.unapplySeq(JsonObjectResponse(json)).get)
+
+  override def postAddressBook(book: AddressBook): ErrorOrResponse[Seq[UserAndContactIds]] = {
+    Request.Post(url = backendUrl(AddressBookPath), headers = Headers("Content-Encoding" -> "gzip"), body = book)
+      .withResultType[Seq[UserAndContactIds]]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
 }
 
 object AddressBookClient {
@@ -43,9 +57,12 @@ object AddressBookClient {
 
   type UserAndContactIds = (UserId, Set[ContactId])
 
+  case class OnBoardingResults()
+
   implicit val Decoder: JsonDecoder[UserAndContactIds] = new JsonDecoder[UserAndContactIds] {
     import com.waz.utils.JsonDecoder._
-    override def apply(implicit js: JSONObject): (UserId, Set[ContactId]) = ('id, array[ContactId]('cards)((arr, i) => ContactId(arr.getString(i))).toSet)
+    override def apply(implicit js: JSONObject): (UserId, Set[ContactId]) =
+      ('id, array[ContactId]('cards)((arr, i) => ContactId(arr.getString(i))).toSet)
   }
 
   object UsersListResponse {
@@ -59,5 +76,4 @@ object AddressBookClient {
     }
   }
 
-  implicit val RequestEncoder: ContentEncoder[AddressBook] = ContentEncoder.gzipJson[AddressBook]
 }

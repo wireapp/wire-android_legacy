@@ -18,41 +18,62 @@
 package com.waz.sync.client
 
 import com.waz.api.UsernameValidationError
+import com.waz.api.impl.ErrorResponse
 import com.waz.model.Handle
-import com.waz.threading.Threading
-import com.waz.utils.{JsonDecoder, JsonEncoder}
-import com.waz.znet.Response.SuccessHttpStatus
-import com.waz.znet.ZNetClient._
-import com.waz.znet._
+import com.waz.service.BackendConfig
+import com.waz.sync.client.HandlesClient.UsernameValidation
+import com.waz.utils.{JsonDecoder, JsonEncoder, _}
+import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http._
+import org.json.JSONArray
 
 import scala.util.Try
 import scala.util.control.NonFatal
 
-object HandlesClient {
-  val checkMultipleAvailabilityPath = "/users/handles"
-  val checkSingleAvailabilityPath = "/users/handles/"
-  val handlesQuery = "handles"
-  val MAX_HANDLES_TO_POST = 50
-
-  case class UsernameValidation(username: String, reason: UsernameValidationError) {
-    def isValid: Boolean = reason == UsernameValidationError.NONE
-  }
+trait HandlesClient {
+  //TODO We do not need an Option here
+  def getHandlesValidation(handles: Seq[Handle]): ErrorOrResponse[Option[Seq[UsernameValidation]]]
+  def isUserHandleAvailable(handle: Handle): ErrorOrResponse[Boolean]
 }
 
-class HandlesClient(netClient: ZNetClient)  {
-  import HandlesClient._
+class HandlesClientImpl(implicit
+                        backendConfig: BackendConfig,
+                        httpClient: HttpClient,
+                        authRequestInterceptor: AuthRequestInterceptor) extends HandlesClient {
 
-  def getHandlesValidation(handles: Seq[Handle]): ErrorOrResponse[Option[Seq[UsernameValidation]]] = {
+  import BackendConfig.backendUrl
+  import HandlesClient._
+  import HttpClient.dsl._
+  import com.waz.threading.Threading.Implicits.Background
+
+  private implicit val stringsDeserializer: RawBodyDeserializer[Seq[String]] =
+    RawBodyDeserializer[JSONArray].map(array => (0 until array.length()).map(array.getString))
+
+  override def getHandlesValidation(handles: Seq[Handle]): ErrorOrResponse[Option[Seq[UsernameValidation]]] = {
     val data = JsonEncoder { o =>
-      o.put("handles", JsonEncoder.arrString(handles.take(HandlesClient.MAX_HANDLES_TO_POST).map(_.toString)))
+      o.put("handles", JsonEncoder.arrString(handles.take(HandlesClient.MaxHandlesToPost).map(_.toString)))
       o.put("return", 10)
     }
-    netClient.withErrorHandling("getHandlesValidation", Request.Post(HandlesClient.checkMultipleAvailabilityPath, data)) {
-      case Response(SuccessHttpStatus(), UsersHandleResponseContent(availableHandles), headers) =>
-        Some(handles
-          .filter(u => availableHandles.contains(u.toString))
-          .map(u => UsernameValidation(u.toString, UsernameValidationError.NONE)))
-    }(Threading.Background)
+
+    Request.Post(url = backendUrl(CheckMultipleAvailabilityPath), body = data)
+      .withResultType[Seq[String]]
+      .withErrorType[ErrorResponse]
+      .executeSafe { availableHandles =>
+        Some(
+          handles
+            .filter(u => availableHandles.contains(u.toString))
+            .map(u => UsernameValidation(u.toString, UsernameValidationError.NONE))
+        )
+      }
+
+  }
+
+  override def isUserHandleAvailable(handle: Handle): ErrorOrResponse[Boolean] = {
+    Request.Head(url = backendUrl(checkSingleAvailabilityPath(handle)))
+      .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
+      .withResultType[Response[Unit]]
+      .withErrorType[ErrorResponse]
+      .executeSafe(_.code == ResponseCode.NotFound)
   }
 }
 
@@ -69,4 +90,14 @@ object UsersHandleResponseContent {
   }
 }
 
+object HandlesClient {
+  val CheckMultipleAvailabilityPath = "/users/handles"
+  val MaxHandlesToPost = 50
+
+  def checkSingleAvailabilityPath(handle: Handle): String = s"/users/handles/${handle.string}"
+
+  case class UsernameValidation(username: String, reason: UsernameValidationError) {
+    def isValid: Boolean = reason == UsernameValidationError.NONE
+  }
+}
 

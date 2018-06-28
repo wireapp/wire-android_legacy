@@ -25,7 +25,7 @@ import com.waz.api.MessageContent.Asset.ErrorHandler
 import com.waz.api.MessageContent.Text
 import com.waz.api.NetworkMode.{OFFLINE, WIFI}
 import com.waz.api.impl._
-import com.waz.api.{EphemeralExpiration, ImageAssetFactory, Message, NetworkMode}
+import com.waz.api.{ImageAssetFactory, Message, NetworkMode}
 import com.waz.content._
 import com.waz.model.ConversationData.{ConversationType, getAccessAndRoleForGroupConv}
 import com.waz.model.GenericContent.{Location, MsgEdit}
@@ -38,13 +38,12 @@ import com.waz.service.conversation.ConversationsService.generateTempConversatio
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
-import com.waz.sync.client.ConversationsClient
+import com.waz.sync.client.{ConversationsClient, ErrorOr}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.Locales.currentLocaleOrdering
+import com.waz.utils._
 import com.waz.utils.events.EventStream
 import com.waz.utils.wrappers.URI
-import com.waz.utils._
-import com.waz.znet.ZNetClient.ErrorOr
 import org.threeten.bp.Instant
 
 import scala.collection.breakOut

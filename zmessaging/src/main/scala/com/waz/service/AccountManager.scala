@@ -33,13 +33,15 @@ import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, Pas
 import com.waz.service.otr.OtrService.sessionId
 import com.waz.service.tracking.LoggedOutEvent
 import com.waz.sync.client.InvitationClient.ConfirmedTeamInvitation
-import com.waz.sync.client.{InvitationClient, OtrClient}
+import com.waz.sync.client.{InvitationClientImpl, OtrClientImpl}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
 import com.waz.utils.events.Signal
 import com.waz.utils.wrappers.Context
-import com.waz.znet.Response.Status
-import com.waz.znet.ZNetClient._
+import com.waz.znet2.http.ResponseCode
+import com.waz.sync.client.ErrorOr
+import com.waz.sync.client.ErrorOrResponse
+import com.waz.znet2.AuthRequestInterceptor
 
 import scala.collection.immutable.ListMap
 import scala.concurrent.Future
@@ -86,9 +88,9 @@ class AccountManager(val userId:   UserId,
 
   val cryptoBox         = global.factory.cryptobox(userId, storage)
   val auth              = global.factory.auth(userId)
-  val netClient         = global.factory.client(auth)
-  val otrClient         = new OtrClient(netClient)
-  val credentialsClient = global.factory.credentialsClient(netClient)
+  val authRequestInterceptor: AuthRequestInterceptor = new AuthRequestInterceptor(auth)
+  val otrClient         = new OtrClientImpl()(global.backend, global.httpClient, authRequestInterceptor)
+  val credentialsClient = global.factory.credentialsClient(global.backend, global.httpClient, authRequestInterceptor)
 
   val timeouts       = global.timeouts
   val network        = global.network
@@ -97,7 +99,7 @@ class AccountManager(val userId:   UserId,
   val tracking       = global.trackingService
   val clientsStorage = storage.otrClientsStorage
 
-  val invitationClient = new InvitationClient(netClient)
+  val invitationClient = new InvitationClientImpl()(global.backend, global.httpClient, authRequestInterceptor)
   val invitedToTeam = Signal(ListMap.empty[TeamInvitation, Option[Either[ErrorResponse, ConfirmedTeamInvitation]]])
 
   private val initSelf = for {
@@ -207,8 +209,8 @@ class AccountManager(val userId:   UserId,
                 _    <- userPrefs(ClientRegVersion) := ZmsVersion.ZMS_MAJOR_VERSION
                 _    <- clientsStorage.updateClients(Map(userId -> Seq(c.copy(id = cl.id).updated(cl))))
               } yield Right(Registered(cl.id))
-            case Left(ErrorResponse(Status.Forbidden, _, "missing-auth"))     => Future.successful(Right(PasswordMissing))
-            case Left(ErrorResponse(Status.Forbidden, _, "too-many-clients")) => Future.successful(Right(LimitReached))
+            case Left(ErrorResponse(ResponseCode.Forbidden, _, "missing-auth"))     => Future.successful(Right(PasswordMissing))
+            case Left(ErrorResponse(ResponseCode.Forbidden, _, "too-many-clients")) => Future.successful(Right(LimitReached))
             case Left(error)                                                  => Future.successful(Left(error))
           }
       }

@@ -695,8 +695,8 @@ class CallingServiceSpec extends AndroidFreeSpec {
 
     (avs.registerAccount _).expects(*).once().returning(Future.successful(wCall))
     val service = new CallingService(
-      account1Id, clientId, context, avs, convs, convsService, members, null,
-      flows, messages, media, null, network, null, null, prefs, permissions, tracking
+      account1Id, clientId, null, context, avs, convs, convsService, members, null,
+      flows, messages, media, null, network, null, prefs, permissions, tracking
     )
     result(service.wCall)
     service

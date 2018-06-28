@@ -39,7 +39,7 @@ import com.waz.testutils.knownMimeTypes
 import com.waz.utils.Locales.bcp47
 import com.waz.utils.sha2
 import com.waz.utils.wrappers.URI
-import com.waz.znet.AuthenticationManager.AccessToken
+import com.waz.sync.client.AuthenticationManager.AccessToken
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen._
 import org.scalacheck._

@@ -26,10 +26,9 @@ import com.waz.service.assets.AssetService
 import com.waz.sync.client.SoundCloudClient
 import com.waz.threading.Threading
 import com.waz.utils.wrappers.URI
-import com.waz.znet.ZNetClient.ErrorOr
+import com.waz.sync.client.ErrorOr
 
 import scala.concurrent.Future
-
 
 class SoundCloudMediaService(client: SoundCloudClient, assets: AssetService) {
 

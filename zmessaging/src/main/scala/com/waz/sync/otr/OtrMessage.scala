@@ -18,24 +18,6 @@
 package com.waz.sync.otr
 
 import com.waz.model.otr.ClientId
-import com.waz.sync.client.OtrClient
 import com.waz.sync.client.OtrClient.EncryptedContent
-import com.waz.znet.ContentEncoder
-import com.waz.znet.ContentEncoder.RequestContent
-import com.wire.messages.nano.Otr
 
 case class OtrMessage(sender: ClientId, recipients: EncryptedContent, blob: Option[Array[Byte]] = None, nativePush: Boolean = true)
-
-object OtrMessage {
-  implicit lazy val OtrMessageEncoder: ContentEncoder[OtrMessage] = new ContentEncoder[OtrMessage] {
-    override def apply(m: OtrMessage): RequestContent = {
-      val msg = new Otr.NewOtrMessage
-      msg.sender = OtrClient.clientId(m.sender)
-      msg.nativePush = m.nativePush
-      msg.recipients = m.recipients.userEntries
-      m.blob foreach { msg.blob = _ }
-
-      ContentEncoder.protobuf(msg)
-    }
-  }
-}

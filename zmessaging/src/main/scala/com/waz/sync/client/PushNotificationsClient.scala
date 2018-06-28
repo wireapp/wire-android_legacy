@@ -17,57 +17,67 @@
  */
 package com.waz.sync.client
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
-import com.waz.model.otr.ClientId
+import com.waz.ZLog._
+import com.waz.api.impl.ErrorResponse
 import com.waz.model._
+import com.waz.model.otr.ClientId
+import com.waz.service.BackendConfig
 import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResponse
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.JsonDecoder
 import com.waz.utils.JsonDecoder.arrayColl
-import com.waz.znet.ZNetClient.ErrorOrResponse
-import com.waz.znet.{JsonObjectResponse, _}
+import com.waz.utils.{JsonDecoder, JsonEncoder}
+import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
 import org.json.{JSONArray, JSONObject}
 import org.threeten.bp.Instant
 
 import scala.util.control.NonFatal
 
+//TODO Think about returning models.
 trait PushNotificationsClient {
   def loadNotifications(since: Option[Uid], client: ClientId): ErrorOrResponse[LoadNotificationsResponse]
   def loadLastNotification(clientId: ClientId): ErrorOrResponse[LoadNotificationsResponse]
 }
 
-class PushNotificationsClientImpl(netClient: ZNetClient, pageSize: Int = PushNotificationsClient.PageSize) extends PushNotificationsClient {
+class PushNotificationsClientImpl(pageSize: Int = PushNotificationsClient.PageSize)
+                                 (implicit
+                                  backendConfig: BackendConfig,
+                                  httpClient: HttpClient,
+                                  authRequestInterceptor: AuthRequestInterceptor) extends PushNotificationsClient {
+
+  import BackendConfig.backendUrl
+  import HttpClient.dsl._
   import PushNotificationsClient._
-  import Threading.Implicits.Background
+  import com.waz.threading.Threading.Implicits.Background
 
-  override def loadNotifications(since: Option[Uid], client: ClientId): ErrorOrResponse[LoadNotificationsResponse] =
-    netClient.chainedWithErrorHandling(NotifsRequestTag, Request.Get(notificationsPath(since, client, pageSize))) {
-      case Response(status, PagedNotificationsResponse((notifications, hasMore, time)), _) if status.isSuccess =>
-        CancellableFuture.successful(Right(LoadNotificationsResponse(notifications, hasMore, time)))
-    }
+  private implicit val loadNotifResponseDeserializer: RawBodyDeserializer[LoadNotificationsResponse] =
+    RawBodyDeserializer[JSONObject].map(json => PagedNotificationsResponse.unapply(JsonObjectResponse(json)).get)
 
-  override def loadLastNotification(clientId: ClientId) = {
-    netClient.chainedWithErrorHandling(LastNotifRequetTag, Request.Get(Request.query(NotificationsLastPath, "client" -> clientId))) {
-      case Response(status, NotificationsResponseEncoded(nots), _) if status.isSuccess =>
-        CancellableFuture.successful(Right(LoadNotificationsResponse(Vector(nots), hasMore = false, None)))
-    }
+  override def loadNotifications(since: Option[Uid], client: ClientId): ErrorOrResponse[LoadNotificationsResponse] = {
+    Request
+      .Get(
+        url = backendUrl(NotificationsPath),
+        queryParameters = queryParameters("since" -> since, "client" -> client, "size" -> pageSize)
+      )
+      .withResultType[LoadNotificationsResponse]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
+
+  override def loadLastNotification(clientId: ClientId): ErrorOrResponse[LoadNotificationsResponse] = {
+    Request
+      .Get(url = backendUrl(NotificationsLastPath), queryParameters = queryParameters("client" -> clientId))
+      .withResultType[PushNotificationEncoded]
+      .withErrorType[ErrorResponse]
+      .executeSafe(notif => LoadNotificationsResponse(Vector(notif), hasMore = false, beTime = None))
   }
 }
 
 object PushNotificationsClient {
 
-  val NotifsRequestTag = "loadNotifications"
-  val LastNotifRequetTag = "loadLastNotifications"
-
   val NotificationsPath = "/notifications"
   val NotificationsLastPath = "/notifications/last"
   val PageSize = 500
-
-  def notificationsPath(since: Option[Uid], client: ClientId, pageSize: Int) = {
-    val args = Seq("since" -> since, "client" -> Some(client), "size" -> Some(pageSize)) collect { case (key, Some(v)) => key -> v }
-    Request.query(NotificationsPath, args: _*)
-  }
 
   case class LoadNotificationsResponse(notifications: Vector[PushNotificationEncoded], hasMore: Boolean, beTime: Option[Instant])
 
@@ -75,10 +85,22 @@ object PushNotificationsClient {
 
     import com.waz.utils.JsonDecoder._
 
-    def unapply(response: ResponseContent): Option[(Vector[PushNotificationEncoded], Boolean, Option[Instant])] = try response match {
+    def unapply(response: ResponseContent): Option[LoadNotificationsResponse] = try response match {
       case JsonObjectResponse(js) if js.has("notifications") =>
-        Some((arrayColl[PushNotificationEncoded, Vector](js.getJSONArray("notifications")), decodeBool('has_more)(js), decodeOptISOInstant('time)(js)))
-      case JsonArrayResponse(js) => Some((arrayColl[PushNotificationEncoded, Vector](js), false, None))
+        Some(
+          LoadNotificationsResponse(
+            arrayColl[PushNotificationEncoded, Vector](js.getJSONArray("notifications")),
+            decodeBool('has_more)(js),
+            decodeOptISOInstant('time)(js)
+          )
+        )
+      case JsonArrayResponse(js) =>
+        Some(
+          LoadNotificationsResponse(
+            arrayColl[PushNotificationEncoded, Vector](js),
+            hasMore = false,
+            None)
+        )
       case _ => None
     } catch {
       case NonFatal(e) =>
@@ -135,5 +157,12 @@ object PushNotificationEncoded {
 
     override def apply(implicit js: JSONObject): PushNotificationEncoded =
       PushNotificationEncoded('id, js.getJSONArray("payload"), 'transient)
+  }
+  implicit lazy val NotificationEncoder: JsonEncoder[PushNotificationEncoded] = new JsonEncoder[PushNotificationEncoded] {
+    override def apply(v: PushNotificationEncoded): JSONObject = JsonEncoder { o =>
+      o.put("id", v.id.str)
+      o.put("payload", v.events)
+      o.put("transient", v.transient)
+    }
   }
 }

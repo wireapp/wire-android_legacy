@@ -28,12 +28,13 @@ import com.waz.content.UserPreferences
 import com.waz.model.AccountData.Password
 import com.waz.model._
 import com.waz.service.tracking.LoggedOutEvent
+import com.waz.sync.client.LoginClient
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.{Serialized, returning}
-import com.waz.znet.AuthenticationManager.{AccessToken, Cookie}
-import com.waz.znet.LoginClient
-import com.waz.znet.ZNetClient._
+import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
+import com.waz.sync.client.LoginClient.LoginResult
+import com.waz.sync.client.{ErrorOr, ErrorOrResponse}
 
 import scala.async.Async.{async, await}
 import scala.concurrent.Future
@@ -400,8 +401,8 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
 
   override def login(loginCredentials: Credentials) = {
     verbose(s"login: $loginCredentials")
-    loginClient.login(loginCredentials).future.flatMap {
-      case Right((token, Some(cookie), _)) => //TODO handle label (https://github.com/wireapp/android-project/issues/51)
+    loginClient.login(loginCredentials).flatMap {
+      case Right(LoginResult(token, Some(cookie), _)) => //TODO handle label (https://github.com/wireapp/android-project/issues/51)
         loginClient.getSelfUserInfo(token).flatMap {
           case Right(user) => for {
             _ <- addAccountEntry(user, cookie, Some(token), loginCredentials)

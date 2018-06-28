@@ -17,41 +17,35 @@
  */
 package com.waz.client
 
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.AccountData.Label
 import com.waz.model._
 import com.waz.service.BackendConfig
-import com.waz.sync.client.UsersClient.UserResponseExtractor
-import com.waz.threading.Threading
+import com.waz.sync.client.AuthenticationManager.Cookie
+import com.waz.sync.client.{ErrorOr, LoginClient}
 import com.waz.utils.JsonEncoder
 import com.waz.utils.Locales._
-import com.waz.znet.AuthenticationManager.Cookie
-import com.waz.znet.ContentEncoder.JsonContentEncoder
-import com.waz.znet.Response.SuccessHttpStatus
-import com.waz.znet.ZNetClient.ErrorOr
-import com.waz.znet._
-
-import scala.concurrent.duration._
+import com.waz.znet2.http.{HttpClient, Request, Response}
 
 trait RegistrationClient {
   def requestPhoneCode(phone: PhoneNumber, login: Boolean, call: Boolean = false): ErrorOr[Unit]
   def requestEmailCode(email: EmailAddress): ErrorOr[Unit] //for now only used for registration
-
   def requestVerificationEmail(email: EmailAddress): ErrorOr[Unit]
-
   def verifyRegistrationMethod(method: Either[PhoneNumber, EmailAddress], code: ConfirmationCode, dryRun: Boolean): ErrorOr[Option[(Cookie, Label)]]
-
   def register(credentials: Credentials, name: String, teamName: Option[String]): ErrorOr[(UserInfo, Option[(Cookie, Label)])]
 }
 
-class RegistrationClientImpl(client: AsyncClient, backend: BackendConfig) extends RegistrationClient {
-  import Threading.Implicits.Background
-  import com.waz.client.RegistrationClientImpl._
+class RegistrationClientImpl(implicit
+                             backendConfig: BackendConfig,
+                             httpClient: HttpClient) extends RegistrationClient {
 
-  def register(credentials: Credentials, name: String, teamName: Option[String]) = {
+  import BackendConfig.backendUrl
+  import HttpClient.dsl._
+  import RegistrationClientImpl._
+  import com.waz.threading.Threading.Implicits.Background
+
+  override def register(credentials: Credentials, name: String, teamName: Option[String]): ErrorOr[(UserInfo, Option[(Cookie, Label)])] = {
     val label = Label()
     val params = JsonEncoder { o =>
       o.put("name", name)
@@ -66,64 +60,48 @@ class RegistrationClientImpl(client: AsyncClient, backend: BackendConfig) extend
       o.put("label", label.str)
     }
 
-    val request = Request.Post(RegisterPath, JsonContentEncoder(params), baseUri = Some(backend.baseUrl), timeout = timeout)
-    client(request).map {
-      case resp @ Response(SuccessHttpStatus(), UserResponseExtractor(user), headers) =>
-        debug(s"registration succeeded: $resp")
-        Right((user, LoginClient.getCookieFromHeaders(headers).map(c => (c, label)))) //cookie (and label) will be optional depending on login method
-      case Response(_, ErrorResponse(code, msg, label), headers) =>
-        info(s"register failed with error: ($code, $msg, $label), headers: $headers")
-        Left(ErrorResponse(code, msg, label))
-      case resp =>
-        error(s"Unexpected response from register: $resp")
-        Left(ErrorResponse(resp.status.status, resp.toString, "unknown"))
-    }.future
+    Request.Post(url = backendUrl(RegisterPath), body = params)
+      .withResultType[Response[UserInfo]]
+      .withErrorType[ErrorResponse]
+      .executeSafe { response =>
+        response.body -> LoginClient.getCookieFromHeaders(response.headers).map(c => (c, label))
+      }
+      .future
   }
 
-  override def requestPhoneCode(phone: PhoneNumber, login: Boolean, call: Boolean) =
+  override def requestPhoneCode(phone: PhoneNumber, login: Boolean, call: Boolean): ErrorOr[Unit] =
     requestCode(Left(phone), login, call)
 
-  override def requestEmailCode(email: EmailAddress) =
+  override def requestEmailCode(email: EmailAddress): ErrorOr[Unit] =
     requestCode(Right(email))
 
   //note, login and call only apply to PhoneNumber and are always false for email addresses
-  private def requestCode(method: Either[PhoneNumber, EmailAddress], login: Boolean = false, call: Boolean = false) = {
+  private def requestCode(method: Either[PhoneNumber, EmailAddress], login: Boolean = false, call: Boolean = false): ErrorOr[Unit] = {
     val params = JsonEncoder { o =>
       method.fold(p => o.put("phone", p.str), e => o.put("email",  e.str))
       if (!login) o.put("locale", bcp47.languageTagOf(currentLocale))
       if (call)   o.put("voice_call", call)
     }
 
-    client(Request.Post(if (login) LoginSendPath else ActivateSendPath, JsonContentEncoder(params), baseUri = Some(backend.baseUrl), timeout = timeout)).map {
-      case resp @ Response(SuccessHttpStatus(), _, _) =>
-        debug(s"confirmation code requested: $resp")
-        Right({})
-      case Response(_, ErrorResponse(code, msg, label), headers) =>
-        warn(s"requestCode: login=$login failed with error: ($code, $msg, $label), headers: $headers")
-        Left(ErrorResponse(code, msg, label))
-      case other =>
-        error(s"Unexpected response from requestCode: login=$login: $other")
-        Left(ErrorResponse(other.status.status, other.toString, "unknown"))
-    }.future
+    Request.Post(url = backendUrl(if (login) LoginSendPath else ActivateSendPath), body = params)
+      .withResultType[Unit]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+      .future
   }
 
-  override def requestVerificationEmail(email: EmailAddress) = {
+  override def requestVerificationEmail(email: EmailAddress): ErrorOr[Unit] = {
     val params = JsonEncoder { o =>
       o.put("email", email.str)
     }
-    val request = Request.Post(ActivateSendPath, JsonContentEncoder(params), baseUri = Some(backend.baseUrl))
-    client(request).map {
-      case Response(SuccessHttpStatus(), _, _) => Right(())
-      case Response(_, ErrorResponse(code, msg, label), _) =>
-        info(s"requestVerificationEmail failed with error: ($code, $msg, $label)")
-        Left(ErrorResponse(code, msg, label))
-      case resp =>
-        error(s"Unexpected response from resendVerificationEmail: $resp")
-        Left(ErrorResponse(400, resp.toString, "unknown"))
-    }.future
+    Request.Post(url = backendUrl(ActivateSendPath), body = params)
+      .withResultType[Unit]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+      .future
   }
 
-  override def verifyRegistrationMethod(method: Either[PhoneNumber, EmailAddress], code: ConfirmationCode, dryRun: Boolean) = {
+  override def verifyRegistrationMethod(method: Either[PhoneNumber, EmailAddress], code: ConfirmationCode, dryRun: Boolean): ErrorOr[Option[(Cookie, Label)]] = {
     val label = Label()
     val params = JsonEncoder { o =>
       method.fold(p => o.put("phone", p.str), e => o.put("email",  e.str))
@@ -132,17 +110,13 @@ class RegistrationClientImpl(client: AsyncClient, backend: BackendConfig) extend
       if (!dryRun) o.put("label", label.str)
     }
 
-    client(Request.Post(ActivatePath, JsonContentEncoder(params), baseUri = Some(backend.baseUrl), timeout = timeout)).map {
-      case resp @ Response(SuccessHttpStatus(), _, headers) =>
-        debug(s"verifyRegistrationMethod: verified: $resp")
-        Right(LoginClient.getCookieFromHeaders(headers).map(c => (c, label))) //cookie (and label) may be returned on dryRun = false
-      case Response(_, ErrorResponse(code, msg, label), headers) =>
-        warn(s"verifyRegistrationMethod: failed with error: ($code, $msg, $label), headers: $headers")
-        Left(ErrorResponse(code, msg, label))
-      case other =>
-        error(s"verifyRegistrationMethod: Unexpected response: $other")
-        Left(ErrorResponse(other.status.status, other.toString, "unknown"))
-    }.future
+    Request.Post(url = backendUrl(ActivatePath), body = params)
+      .withResultType[Response[Unit]]
+      .withErrorType[ErrorResponse]
+      .executeSafe { response =>
+        LoginClient.getCookieFromHeaders(response.headers).map(c => (c, label))
+      }
+      .future
   }
 }
 
@@ -151,6 +125,4 @@ object RegistrationClientImpl {
   val ActivatePath = "/activate"
   val ActivateSendPath = "/activate/send"
   val LoginSendPath = "/login/send"
-
-  val timeout = 15.seconds
 }
