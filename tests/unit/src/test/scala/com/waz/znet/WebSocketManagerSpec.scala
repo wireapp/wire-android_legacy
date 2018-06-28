@@ -260,7 +260,7 @@ import scala.util.Try
 
   class TestServer(port: Int) extends WebSocketServer(new InetSocketAddress(port)) {
 
-    var pongDelay = 0.millis
+    var pongDelay = Duration.Zero
     var pingCount = 0
     var returnPing = true
 

@@ -44,7 +44,6 @@ import org.threeten.bp.{Duration, Instant}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future, Promise}
-import scala.util.control.NonFatal
 
 /** PushService handles notifications coming from FCM, WebSocket, and fetch.
   * We assume FCM notifications are unreliable, so we use them only as information that we should perform a fetch (syncHistory).
@@ -148,10 +147,9 @@ class PushServiceImpl(userId:               UserId,
 
   private def processDecryptedRows(): Future[Unit] = {
     def decodeRow(event: PushNotificationEvent) =
-      if(event.plain.isDefined) {
+      if(event.plain.isDefined && isOtrEventJson(event.event)) {
         val msg = GenericMessage(event.plain.get)
         val msgEvent = ConversationEvent.ConversationEventDecoder(event.event)
-        //If there is plain text, then the message is an OtrMessageEvent, so this cast is safe
         otrService.parseGenericMessage(msgEvent.asInstanceOf[OtrMessageEvent], msg)
       } else {
         Some(EventDecoder(event.event))

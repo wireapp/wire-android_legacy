@@ -53,9 +53,9 @@ class ExponentialBackoff(initialDelay: FiniteDuration, maxDelay: FiniteDuration)
 object ExponentialBackoff {
   def bitsCount(v: Long): Int = if (v >= 2) 1 + bitsCount(v >> 1) else if (v >= 0) 1 else 0
 
-  def zeroBackoff(max: Int) = new ExponentialBackoff(0.millis, 0.millis){
+  def zeroBackoff(max: Int) = new ExponentialBackoff(Duration.Zero, Duration.Zero){
     override val maxRetries = max
-    override def delay(retry: Int, minDelay: FiniteDuration = Duration.Zero): FiniteDuration = 0.millis
+    override def delay(retry: Int, minDelay: FiniteDuration = Duration.Zero): FiniteDuration = Duration.Zero
   }
 
   lazy val minimalBackoff = new ExponentialBackoff(1.millis, 1.millis)

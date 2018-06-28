@@ -17,19 +17,20 @@
  */
 package com.waz.service.conversation
 
-import java.util.Date
-
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
-import com.waz.content.{ConversationStorage, GlobalPreferences}
+import com.waz.ZLog._
 import com.waz.content.GlobalPreferences.BackendDrift
+import com.waz.content.{ConversationStorage, GlobalPreferences}
 import com.waz.model._
 import com.waz.service.AccountsService.InForeground
+import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.RichFuture.processSequential
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream}
+import org.threeten.bp.Instant
+
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -76,7 +77,7 @@ class TypingService(userId:        UserId,
 
   def selfChangedInput(conv: ConvId): Future[Unit] = Future {
     stopTypingTimeout.cancel()
-    selfIsTyping = Some((conv, ZMessaging.clock.millis))
+    selfIsTyping = Some((conv, clock.millis))
     if (refreshIsTyping.isCompleted) postIsTyping(conv)
     stopTypingTimeout = CancellableFuture.delayed(stopTimeout) { stopTyping(conv) }
   }
@@ -111,7 +112,7 @@ class TypingService(userId:        UserId,
 
   def isSelfTyping(conv: ConvId): CancellableFuture[Boolean] = dispatcher { selfIsTyping.exists(_._1 == conv) }
 
-  private def setUserTyping(conv: ConvId, user: UserId, time: Date, isTyping: Boolean): Unit = {
+  private def setUserTyping(conv: ConvId, user: UserId, time: Instant, isTyping: Boolean): Unit = {
     val current = typing(conv)
     current.find(_.id == user).foreach(_.cleanUp.cancel())
 
@@ -119,8 +120,8 @@ class TypingService(userId:        UserId,
       typing += conv -> current.filterNot(user == _.id)
       onTypingChanged ! (conv -> typing(conv))
     } else if (isTyping) {
-      val cleanUp = CancellableFuture.delayed(receiverTimeout - (ZMessaging.clock.millis - time.getTime).millis) {
-        setUserTyping(conv, user, new Date, isTyping = false)
+      val cleanUp = CancellableFuture.delayed(receiverTimeout - (clock.millis - time.toEpochMilli).millis) {
+        setUserTyping(conv, user, clock.instant(), isTyping = false)
       }
       val idx = current.indexWhere(_.id == user)
       if (idx == -1) {
@@ -133,9 +134,9 @@ class TypingService(userId:        UserId,
   }
 
   def isRecent(event: TypingEvent): Future[Boolean] = beDriftPref.apply().map { beDrift =>
-    val now = ZMessaging.clock.instant().plus(beDrift).toEpochMilli
-    now - event.time.getTime < receiverTimeout.toMillis
+    val now = clock.instant().plus(beDrift).toEpochMilli
+    now - event.time.toEpochMilli < receiverTimeout.toMillis
   }
 }
 
-case class TypingUser(id: UserId, time: Date, cleanUp: CancellableFuture[Unit])
+case class TypingUser(id: UserId, time: Instant, cleanUp: CancellableFuture[Unit])

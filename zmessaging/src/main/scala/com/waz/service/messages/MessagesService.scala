@@ -37,11 +37,12 @@ import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal}
 import org.threeten.bp.Instant.now
-import org.threeten.bp.{Duration, Instant}
+import org.threeten.bp.Instant
 
 import scala.collection.breakOut
 import scala.concurrent.Future
 import scala.concurrent.Future.{successful, traverse}
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.util.Success
 
 trait MessagesService {
@@ -52,13 +53,14 @@ trait MessagesService {
 
   def addMissedCallMessage(rConvId: RConvId, from: UserId, time: Instant): Future[Option[MessageData]]
   def addMissedCallMessage(convId: ConvId, from: UserId, time: Instant): Future[Option[MessageData]]
-  def addSuccessfulCallMessage(convId: ConvId, from: UserId, time: Instant, duration: Duration): Future[Option[MessageData]]
+  def addSuccessfulCallMessage(convId: ConvId, from: UserId, time: Instant, duration: FiniteDuration): Future[Option[MessageData]]
 
   def addConnectRequestMessage(convId: ConvId, fromUser: UserId, toUser: UserId, message: String, name: String, fromSync: Boolean = false): Future[MessageData]
   def addConversationStartMessage(convId: ConvId, creator: UserId, users: Set[UserId], name: Option[String], time: Option[Instant] = None): Future[MessageData]
   def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false): Future[Option[MessageData]]
   def addMemberLeaveMessage(convId: ConvId, selfUserId: UserId, user: UserId): Future[Any]
   def addRenameConversationMessage(convId: ConvId, selfUserId: UserId, name: String, needsSyncing: Boolean = true): Future[Option[MessageData]]
+  def addTimerChangedMessage(convId: ConvId, from: UserId, duration: Option[FiniteDuration], time: Instant = clock.instant()): Future[Unit]
   def addHistoryLostMessages(cs: Seq[ConversationData], selfUserId: UserId): Future[Set[MessageData]]
 
   def addDeviceStartMessages(convs: Seq[ConversationData], selfUserId: UserId): Future[Set[MessageData]]
@@ -273,6 +275,10 @@ class MessagesServiceImpl(selfUserId: UserId,
     }
   }
 
+  override def addTimerChangedMessage(convId: ConvId, from: UserId, duration: Option[FiniteDuration], time: Instant = clock.instant()) = {
+    updater.addLocalSentMessage(MessageData(MessageId(), convId, Message.Type.MESSAGE_TIMER, from, time = time, duration = duration)).map(_ => {})
+  }
+
   def removeLocalMemberJoinMessage(convId: ConvId, users: Set[UserId]): Future[Any] = {
     storage.lastLocalMessage(convId, Message.Type.MEMBER_JOIN) flatMap {
       case Some(msg) =>
@@ -330,7 +336,8 @@ class MessagesServiceImpl(selfUserId: UserId,
     }
 
   def messageSent(convId: ConvId, msg: MessageData): Future[Option[MessageData]] = {
-    updater.updateMessage(msg.id) { m => m.copy(state = Message.Status.SENT, expiryTime = m.ephemeral.expiryFromNow()) } andThen {
+    import com.waz.utils.RichFiniteDuration
+    updater.updateMessage(msg.id) { m => m.copy(state = Message.Status.SENT, expiryTime = m.ephemeral.map(_.fromNow())) } andThen {
       case Success(Some(m)) => storage.onMessageSent ! m
     }
   }
@@ -346,8 +353,8 @@ class MessagesServiceImpl(selfUserId: UserId,
   override def addMissedCallMessage(convId: ConvId, from: UserId, time: Instant): Future[Option[MessageData]] =
     updater.addMessage(MessageData(MessageId(), convId, Message.Type.MISSED_CALL, from, time = time))
 
-  override def addSuccessfulCallMessage(convId: ConvId, from: UserId, time: Instant, duration: Duration) =
-    updater.addMessage(MessageData(MessageId(), convId, Message.Type.SUCCESSFUL_CALL, from, time = time, duration = duration))
+  override def addSuccessfulCallMessage(convId: ConvId, from: UserId, time: Instant, duration: FiniteDuration) =
+    updater.addMessage(MessageData(MessageId(), convId, Message.Type.SUCCESSFUL_CALL, from, time = time, duration = Some(duration)))
 
   def messageDeliveryFailed(convId: ConvId, msg: MessageData, error: ErrorResponse): Future[Option[MessageData]] =
     updateMessageState(convId, msg.id, Message.Status.FAILED) andThen {

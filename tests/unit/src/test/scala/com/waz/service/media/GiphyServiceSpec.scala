@@ -42,26 +42,11 @@ import org.scalatest._
   val searchResult = Seq((Some(smallestSearchResult), biggestSearchResult))
 
   lazy val service = new GiphyService(new GiphyClient(new EmptyClient) {
-    override def loadRandom() = CancellableFuture.successful(loadRandomResult)
     override def search(keyword: String, offset: Int, limit: Int) = {
       test.keyword = keyword
       CancellableFuture.successful(loadSearchResult)
     }
   })
-
-  feature("random") {
-    scenario("success") {
-      loadRandomResult = randomResult
-      service.getRandomGiphyImage should eventually(beMatching({
-        case Seq((Some(`smallestRandomResult`), `biggestRandomResult`)) => true
-      }))
-    }
-
-    scenario("failed") {
-      loadRandomResult = (None, AssetData.Empty)
-      service.getRandomGiphyImage should eventually(be(Nil))
-    }
-  }
 
   feature("translate") {
     scenario("success") {

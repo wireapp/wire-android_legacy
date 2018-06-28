@@ -24,6 +24,7 @@ import java.util.{Date, Locale, TimeZone}
 import android.util.Base64
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.model.AssetMetaData.Loudness
+import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.utils.wrappers.URI
@@ -81,7 +82,14 @@ object JsonDecoder {
   def arrayColl[A, B[_]](arr: JSONArray)(implicit dec: JsonDecoder[A], cbf: CanBuild[A, B[A]]): B[A] = {
     val builder = cbf()
     builder.sizeHint(arr.length)
-    (0 until arr.length) foreach (i => builder += dec(arr.getJSONObject(i)))
+    (0 until arr.length).foreach(i => builder += dec(arr.getJSONObject(i)))
+    builder.result
+  }
+
+  def arrayColl[A, B[_]](arr: JSONArray, ex: (JSONArray, Int) => A)(implicit cbf: CanBuild[A, B[A]]): B[A] = {
+    val builder = cbf()
+    builder.sizeHint(arr.length)
+    (0 until arr.length).foreach(i => builder += ex(arr, i))
     builder.result
   }
 
@@ -108,7 +116,8 @@ object JsonDecoder {
   def decodeISOInstant(s: Symbol)(implicit js: JSONObject): Instant = withDefault(s, Instant.EPOCH, { js => parseDate(js.getString(s.name)).instant })
   def decodeOptISOInstant(s: Symbol)(implicit js: JSONObject): Option[Instant] = opt(s, decodeISOInstant(s)(_))
 
-  def decodeByteString(str: String): Array[Byte] = Base64.decode(str, Base64.NO_WRAP)
+  implicit def decodeByteString(s: Symbol)(implicit js: JSONObject): Array[Byte] = Base64.decode(decodeString(s), Base64.NO_WRAP)
+  implicit def decodeOptByteString(s: Symbol)(implicit js: JSONObject): Option[Array[Byte]] = opt(s, js => decodeByteString(s)(js))
 
   implicit def decodeObject(s: Symbol)(implicit js: JSONObject): JSONObject = withDefault(s, null.asInstanceOf[JSONObject], _.getJSONObject(s.name))
   implicit def decodeString(s: Symbol)(implicit js: JSONObject): String = withDefault(s, "", _.getString(s.name))
@@ -142,6 +151,7 @@ object JsonDecoder {
   implicit def decodeOptUtcDate(s: Symbol)(implicit js: JSONObject): Option[Date] = opt(s, decodeUtcDate(s)(_))
   implicit def decodeOptInstant(s: Symbol)(implicit js: JSONObject): Option[Instant] = opt(s, decodeInstant(s)(_))
   implicit def decodeOptDuration(s: Symbol)(implicit js: JSONObject): Option[Duration] = opt(s, decodeDuration(s)(_))
+  implicit def decodeOptFiniteDuration(s: Symbol)(implicit js: JSONObject): Option[FiniteDuration] = opt(s, decodeFiniteDuration(s)(_))
   implicit def decodeOptLoudness(s: Symbol)(implicit js: JSONObject): Option[Loudness] = opt(s, decodeLoudness(s)(_))
   implicit def decodeUri(s: Symbol)(implicit js: JSONObject): URI = URI.parse(js.getString(s.name))
 
@@ -189,4 +199,9 @@ object JsonDecoder {
   implicit def decodeAccessRole(s: Symbol)(implicit js: JSONObject): AccessRole = AccessRole.valueOf(js.getString(s.name).toUpperCase())
   implicit def decodeOptAccessRole(s: Symbol)(implicit js: JSONObject): Option[AccessRole] = opt(s, js => AccessRole.valueOf(js.getString(s.name).toUpperCase()))
   implicit def decodeAccess(s: Symbol)(implicit js: JSONObject): Set[Access] = array[Access](s)((arr: JSONArray, i: Int) => Access.valueOf(arr.getString(i).toUpperCase())).toSet
+
+  implicit def decodeLink(s: Symbol)(implicit js: JSONObject): ConversationData.Link = ConversationData.Link(js.getString(s.name))
+  implicit def decodeOptLink(s: Symbol)(implicit js: JSONObject): Option[ConversationData.Link] = opt(s, js => ConversationData.Link(js.getString(s.name)))
+
+  implicit def decodeConvType(s: Symbol)(implicit js: JSONObject): ConversationType = ConversationType(js.getInt(s.name))
 }

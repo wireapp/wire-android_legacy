@@ -26,13 +26,6 @@ import com.waz.threading.{CancellableFuture, Threading}
 class GiphyService(client: GiphyClient) {
   import Threading.Implicits.Background
 
-  def getRandomGiphyImage: CancellableFuture[Seq[(Option[AssetData], AssetData)]] = {
-    client.loadRandom().map {
-      case (None, data) if data == AssetData.Empty => Nil
-      case (prev, medium) => Seq((prev, medium))
-    }
-  }
-
   def searchGiphyImage(keyword: String, offset: Int = 0, limit: Int = 25): CancellableFuture[Seq[(Option[AssetData], AssetData)]] = {
     client.search(keyword, offset, limit).map {
       case Nil => Nil

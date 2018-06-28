@@ -17,7 +17,6 @@
  */
 package com.waz.utils
 
-import java.util.Date
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.waz.RobolectricUtils
@@ -26,6 +25,7 @@ import com.waz.testutils.DefaultPatienceConfig
 import com.waz.threading.CancellableFuture
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{FeatureSpec, Ignore, Matchers, RobolectricTests}
+import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -43,7 +43,7 @@ import scala.util.Random
       })
 
       val convId = RConvId()
-      val future = queue.enqueue(Seq(TypingEvent(convId, new Date, UserId(), true), TypingEvent(convId, new Date, UserId(), true), TypingEvent(RConvId(), new Date, UserId(), true)))
+      val future = queue.enqueue(Seq(TypingEvent(convId, Instant.now(), UserId(), true), TypingEvent(convId, Instant.now(), UserId(), true), TypingEvent(RConvId(), Instant.now(), UserId(), true)))
 
       val res = Await.result(future, 1.second)
       info(s"res: $res")

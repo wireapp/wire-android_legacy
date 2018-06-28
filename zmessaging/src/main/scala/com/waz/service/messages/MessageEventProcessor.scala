@@ -62,12 +62,12 @@ class MessageEventProcessor(selfUserId:          UserId,
   private[service] def processEvents(conv: ConversationData, events: Seq[MessageEvent]): Future[Set[MessageData]] = {
     val toProcess = events.filter {
       case GenericMessageEvent(_, _, _, msg) if GenericMessage.isBroadcastMessage(msg) => false
-      case e => conv.cleared.isBefore(e.time.instant)
+      case e => conv.cleared.forall(_.isBefore(e.time))
     }
 
-    val recalls = toProcess collect { case GenericMessageEvent(_, time, from, msg @ GenericMessage(_, MsgRecall(_))) => (msg, from, time.instant) }
+    val recalls = toProcess collect { case GenericMessageEvent(_, time, from, msg @ GenericMessage(_, MsgRecall(_))) => (msg, from, time) }
 
-    val edits = toProcess collect { case GenericMessageEvent(_, time, from, msg @ GenericMessage(_, MsgEdit(_, _))) => (msg, from, time.instant) }
+    val edits = toProcess collect { case GenericMessageEvent(_, time, from, msg @ GenericMessage(_, MsgEdit(_, _))) => (msg, from, time) }
 
     for {
       as    <- updateAssets(toProcess)
@@ -231,22 +231,22 @@ class MessageEventProcessor(selfUserId:          UserId,
 
     event match {
       case ConnectRequestEvent(_, time, from, text, recipient, name, email) =>
-        MessageData(id, convId, Message.Type.CONNECT_REQUEST, from, MessageData.textContent(text), recipient = Some(recipient), email = email, name = Some(name), time = time.instant, localTime = event.localTime.instant)
+        MessageData(id, convId, Message.Type.CONNECT_REQUEST, from, MessageData.textContent(text), recipient = Some(recipient), email = email, name = Some(name), time = time, localTime = event.localTime.instant)
       case RenameConversationEvent(_, time, from, name) =>
-        MessageData(id, convId, Message.Type.RENAME, from, name = Some(name), time = time.instant, localTime = event.localTime.instant)
+        MessageData(id, convId, Message.Type.RENAME, from, name = Some(name), time = time, localTime = event.localTime.instant)
       case MemberJoinEvent(_, time, from, userIds, firstEvent) =>
-        MessageData(id, convId, Message.Type.MEMBER_JOIN, from, members = userIds.toSet, time = time.instant, localTime = event.localTime.instant, firstMessage = firstEvent)
+        MessageData(id, convId, Message.Type.MEMBER_JOIN, from, members = userIds.toSet, time = time, localTime = event.localTime.instant, firstMessage = firstEvent)
       case MemberLeaveEvent(_, time, from, userIds) =>
-        MessageData(id, convId, Message.Type.MEMBER_LEAVE, from, members = userIds.toSet, time = time.instant, localTime = event.localTime.instant)
+        MessageData(id, convId, Message.Type.MEMBER_LEAVE, from, members = userIds.toSet, time = time, localTime = event.localTime.instant)
       case OtrErrorEvent(_, time, from, IdentityChangedError(_, _)) =>
-        MessageData (id, conv.id, Message.Type.OTR_IDENTITY_CHANGED, from, time = time.instant, localTime = event.localTime.instant)
+        MessageData (id, conv.id, Message.Type.OTR_IDENTITY_CHANGED, from, time = time, localTime = event.localTime.instant)
       case OtrErrorEvent(_, time, from, otrError) =>
-        MessageData (id, conv.id, Message.Type.OTR_ERROR, from, time = time.instant, localTime = event.localTime.instant)
+        MessageData (id, conv.id, Message.Type.OTR_ERROR, from, time = time, localTime = event.localTime.instant)
       case GenericMessageEvent(_, time, from, proto) =>
         val sanitized @ GenericMessage(uid, msgContent) = sanitize(proto)
-        content(MessageId(uid.str), msgContent, from, time.instant, sanitized)
+        content(MessageId(uid.str), msgContent, from, time, sanitized)
       case GenericAssetEvent(_, time, from, proto @ GenericMessage(uid, msgContent), dataId, data) =>
-        assetContent(MessageId(uid.str), msgContent, from, time.instant, proto)
+        assetContent(MessageId(uid.str), msgContent, from, time, proto)
       case _:CallMessageEvent =>
         MessageData.Empty
       case _ =>

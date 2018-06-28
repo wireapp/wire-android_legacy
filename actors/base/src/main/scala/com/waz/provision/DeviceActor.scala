@@ -113,7 +113,7 @@ class DeviceActor(val deviceName: String,
       Await.ready(prefs(GlobalPreferences.DatabasesRenamed) := true, 5.seconds)
     }
 
-    override lazy val storage: Database = new GlobalDatabase(application, Random.nextInt().toHexString)
+    override val storage: Database = new GlobalDatabase(application, Random.nextInt().toHexString)
     override lazy val clientWrapper: Future[ClientWrapper] = wrapper
 
     override lazy val metadata: MetaDataService = new MetaDataService(context) {
@@ -270,7 +270,7 @@ class DeviceActor(val deviceName: String,
     case SendGiphy(rConvId, searchQuery) =>
       zmsWithLocalConv(rConvId).flatMap { case (z, convId) =>
         for {
-          res   <- (if (searchQuery.isEmpty) z.giphy.getRandomGiphyImage else z.giphy.searchGiphyImage(searchQuery)).future
+          res   <- (if (searchQuery.isEmpty) z.giphy.trending() else z.giphy.searchGiphyImage(searchQuery)).future
           msg1  <- z.convsUi.sendMessage(convId, "Via giphy.com")
 //              msg2  <- z.convsUi.sendMessage(convId, ) //TODO use asset data directly when we get rid of ImageAsset
         } yield Successful
@@ -349,11 +349,11 @@ class DeviceActor(val deviceName: String,
     case SetEphemeral(remoteId, expiration) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>
         z.convsUi.setEphemeral(convId, expiration)
-      }.map(_.fold2(Failed("conversation was not updated successfully"), _ => Successful))
+      }.map(_ => Successful)
 
     case MarkEphemeralRead(convId, messageId) =>
       zms.head.flatMap(_.ephemeral.onMessageRead(messageId))
-        .map(_.fold2(Failed(s"message not found with id: $messageId"), _ => Successful))
+        .map(_ => Successful)
 
     case Typing(remoteId) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>

@@ -20,7 +20,7 @@ package com.waz.sync.client
 import com.waz.model.AssetMetaData.Image
 import com.waz.model.AssetMetaData.Image.Tag.{Medium, Preview}
 import com.waz.model.{AssetData, Dim2, Mime}
-import com.waz.sync.client.GiphyClient.{RandomGiphyResponse, SearchGiphyResponse}
+import com.waz.sync.client.GiphyClient.GiphyResponse
 import com.waz.testutils.Matchers._
 import com.waz.threading.CancellableFuture
 import com.waz.utils.wrappers.URI
@@ -52,29 +52,15 @@ import org.scalatest.{FeatureSpec, Ignore, Matchers, RobolectricTests}
   val searchResult = Seq(sampleGifRespone, sampleGifRespone)
 
   feature("parsing") {
-    scenario("random response") {
-      StringResponse(RandomResponse) should beMatching {
-        case RandomGiphyResponse(resp@(_, _)) if resp == randomSeqResponse => true
-      }
-    }
 
     scenario("search response") {
       new StringResponse(SearchResponse) should beMatching {
-        case SearchGiphyResponse(resp) if resp == searchResult => true
+        case GiphyResponse(resp) if resp == searchResult => true
       }
     }
   }
 
   feature("request loading") {
-    scenario("random") {
-      val successfulClient = mockedClient(Response(Response.HttpStatus(200), StringResponse(RandomResponse)), Response(Response.HttpStatus(200), JsonObjectResponse(new JSONObject(RandomResponse))))
-      val failedClient = mockedClient(notFound)
-
-      successfulClient.loadRandom() should eventually(be(randomSeqResponse))
-      successfulClient.loadRandom() should eventually(be(randomSeqResponse))
-
-      failedClient.loadRandom() should eventually(be(Nil))
-    }
 
     scenario("search") {
       val successfulClient = mockedClient(Response(Response.HttpStatus(200), StringResponse(SearchResponse)), Response(Response.HttpStatus(200), JsonObjectResponse(new JSONObject(SearchResponse))))

@@ -315,7 +315,7 @@ object ConversationDataMigration {
       val VoiceMuted    = bool('voice_muted)
       val Hidden        = bool('hidden)
       val Verified      = text[Verification]('verified, _.name, Verification.valueOf)
-      val Ephemeral     = long[EphemeralExpiration]('ephemeral, _.milliseconds, EphemeralExpiration.getForMillis)
+      val Ephemeral     = long('ephemeral)
 
       val all = Seq(Id, RemoteId, Name, Creator, ConvType, LastEventTime, Status, LastRead, Muted, MutedTime, Archived, ArchivedTime, Cleared, GeneratedName, SKey, UnreadCount, FailedCount, HasVoice, VoiceMuted, Hidden, MissedCall, IncomingKnock, RenameEvent, UnjoinedCall, Verified, Ephemeral)
     }

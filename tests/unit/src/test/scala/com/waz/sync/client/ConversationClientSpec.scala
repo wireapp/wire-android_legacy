@@ -31,6 +31,7 @@ import com.waz.znet._
 import org.json.JSONObject
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest._
+import org.threeten.bp.Instant
 
 @Ignore class ConversationClientSpec extends FeatureSpec with Matchers with ScalaFutures with BeforeAndAfterAll with RobolectricTests {
 
@@ -50,7 +51,7 @@ import org.scalatest._
       val json = readResource("/conv/resp2.json")
 
       val responses = JsonDecoder.array[ConversationResponse](json.getJSONArray("conversations"))
-      responses.count(_.conversation.convType == ConversationType.Self) shouldEqual 1
+      responses.count(_.convType == ConversationType.Self) shouldEqual 1
       //TODO: assert
     }
 
@@ -58,11 +59,10 @@ import org.scalatest._
       val json = readResource("/conv/resp3.json")
 
       val responses = JsonDecoder.array[ConversationResponse](json.getJSONArray("conversations"))
-      responses.count(_.conversation.convType == ConversationType.Self) shouldEqual 1
+      responses.count(_.convType == ConversationType.Self) shouldEqual 1
       responses should have size 108
-      val conv = responses.find(_.conversation.name.contains("Simon Tam"))
+      val conv = responses.find(_.name.contains("Simon Tam"))
       conv should be('defined)
-      conv.get.conversation.lastEventTime.toString.substring(0, 10) shouldEqual "2014-08-19"
     }
 
     scenario("parse events 1") {
@@ -129,12 +129,11 @@ import org.scalatest._
           |  "last_event":"1d.800122000a52f34d"
           |}""".stripMargin
 
-      val res = ConversationResponse.Decoder(new JSONObject(json))
-      val conv = res.conversation
-      conv.archived shouldEqual false
-      conv.archiveTime shouldEqual conv.lastEventTime
-      conv.muted shouldEqual false
-      conv.muteTime shouldEqual conv.lastEventTime
+      val resp = ConversationResponse.Decoder(new JSONObject(json))
+      resp.archived shouldEqual false
+      resp.archivedTime shouldEqual Instant.EPOCH
+      resp.muted shouldEqual false
+      resp.mutedTime shouldEqual Instant.EPOCH
     }
 
     scenario("extract single ConversationResponse") {
@@ -145,17 +144,7 @@ import org.scalatest._
         case _ => fail("conversation response didn't match")
       }
     }
-
-    scenario("extract single ConversationResponse for group conversation") {
-      val json = readResource("/conv/resp2.json")
-
-      JsonObjectResponse(json.getJSONArray("conversations").getJSONObject(0)) match {
-        case ConversationsResult(Seq(conversation), false) => info(s"parsed conversation: $conversation")
-          conversation.conversation.isActive shouldEqual true
-        case _ => fail("conversation response didn't match")
-      }
-    }
-
+    
     scenario("extract conversations list response") {
       val json = readResource("/conv/resp1.json")
 

@@ -52,7 +52,7 @@ object SignalingKey {
 
   implicit lazy val Decoder: JsonDecoder[SignalingKey] = new JsonDecoder[SignalingKey] {
     import JsonDecoder._
-    override def apply(implicit js: JSONObject): SignalingKey = SignalingKey(AESKey('enckey), 'mackey)
+    override def apply(implicit js: JSONObject): SignalingKey = SignalingKey(AESKey('enckey: String), 'mackey)
   }
 
   implicit lazy val Encoder: JsonEncoder[SignalingKey] = new JsonEncoder[SignalingKey] {

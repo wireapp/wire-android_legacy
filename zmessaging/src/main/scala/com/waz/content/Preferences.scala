@@ -23,7 +23,6 @@ import com.waz.ZLog._
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.content.Preferences.{PrefKey, Preference}
 import com.waz.media.manager.context.IntensityLevel
-import com.waz.model.AccountDataOld.PermissionsMasks
 import com.waz.model.KeyValueData.KeyValueDataDao
 import com.waz.model._
 import com.waz.model.otr.ClientId
@@ -38,6 +37,7 @@ import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
 trait Preferences {
@@ -110,6 +110,13 @@ object Preferences {
 
       implicit lazy val InstantCodec = apply[Instant](d => String.valueOf(d.toEpochMilli), s => Instant.ofEpochMilli(java.lang.Long.parseLong(s)), Instant.EPOCH)
       implicit lazy val DurationCodec = apply[Duration](d => String.valueOf(d.toMillis), s => Duration.ofMillis(java.lang.Long.parseLong(s)), Duration.ZERO)
+
+      private def parseFiniteDurationOpt(s: String): Option[FiniteDuration] = java.lang.Long.parseLong(s) match {
+        case 0 => None
+        case e => Some(e.millis)
+      }
+
+      implicit lazy val FiniteDurationCodec = apply[Option[FiniteDuration]](d => String.valueOf(d.getOrElse(0.millis).toMillis), parseFiniteDurationOpt, None)
 
       implicit lazy val AuthTokenCodec = apply[Option[AccessToken]] (
         { t => optCodec[String].encode(t map AccessToken.Encoder.apply map (_.toString)) },
@@ -362,6 +369,8 @@ object GlobalPreferences {
   lazy val AnalyticsEnabled           = PrefKey[Boolean]("PREF_KEY_PRIVACY_ANALYTICS_ENABLED", customDefault = true)
   lazy val ShowMarketingConsentDialog = PrefKey[Boolean]("show_marketing_consent_dialog", customDefault = true) //can be set to false by automation
 
+  lazy val LastEphemeralValue      = PrefKey[Option[FiniteDuration]]("last_ephemeral_value", customDefault = None)
+
   //DEPRECATED!!! Use the UserPreferences instead!!
   lazy val _ShareContacts          = PrefKey[Boolean]("PREF_KEY_PRIVACY_CONTACTS")
   lazy val _DarkTheme              = PrefKey[Boolean]("DarkTheme")
@@ -399,9 +408,6 @@ object UserPreferences {
   lazy val LastSlowSyncTimeKey              = PrefKey[Option[Long]]        ("last_slow_sync_time")
   lazy val SelectedConvId                   = PrefKey[Option[ConvId]]      ("selected_conv_id")
   lazy val SpotifyRefreshToken              = PrefKey[Option[RefreshToken]]("spotify_refresh_token")
-  lazy val ShouldSyncConversations          = PrefKey[Boolean]             ("should_sync_conversations", customDefault = true)
-  lazy val ShouldSyncInitial                = PrefKey[Boolean]             ("should_sync_initial_1", customDefault = true) //increment number to perform slow sync
-  lazy val ShouldSyncUsers                  = PrefKey[Boolean]           ("should_sync_users", customDefault = true)
 
   lazy val OtrLastPrekey                    = PrefKey[Int]        ("otr_last_prekey_id")
   lazy val ClientRegVersion                 = PrefKey[Int]        ("otr_client_reg_version")
@@ -425,5 +431,10 @@ object UserPreferences {
   lazy val VBREnabled                       = PrefKey[Boolean]("variable_bit_rate_enabled", customDefault = true)
   lazy val VibrateEnabled                   = PrefKey[Boolean]("vibrate_enabled")
   lazy val SendButtonEnabled                = PrefKey[Boolean]("send_button_enabled", customDefault = true)
+
+  //increment number to perform slow sync on particular type
+  lazy val ShouldSyncConversations          = PrefKey[Boolean]("should_sync_conversations_1", customDefault = true)
+  lazy val ShouldSyncInitial                = PrefKey[Boolean]("should_sync_initial_1", customDefault = true)
+  lazy val ShouldSyncUsers                  = PrefKey[Boolean]("should_sync_users", customDefault = true)
 
 }

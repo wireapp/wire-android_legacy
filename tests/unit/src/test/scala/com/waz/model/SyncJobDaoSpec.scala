@@ -34,6 +34,7 @@ import org.robolectric.Robolectric
 import org.scalatest.prop.{GeneratorDrivenPropertyChecks, TableDrivenPropertyChecks}
 import org.scalatest._
 import org.threeten.bp.Instant
+import scala.concurrent.duration._
 
 @Ignore class SyncJobDaoSpec extends FeatureSpec with Matchers with TableDrivenPropertyChecks with BeforeAndAfter with GeneratorDrivenPropertyChecks with RobolectricTests {
 
@@ -107,7 +108,7 @@ import org.threeten.bp.Instant
         SyncPreKeys(UserId(), Set(ClientId(), ClientId())),
         PostLastRead(ConvId(), Instant.now),
         PostCleared(ConvId(), Instant.now),
-        PostAssetStatus(ConvId(), MessageId(), EphemeralExpiration.FIVE_SECONDS, AssetStatus.UploadCancelled),
+        PostAssetStatus(ConvId(), MessageId(), Some(5.seconds), AssetStatus.UploadCancelled),
         PostReceipt(ConvId(), MessageId(), UserId(), ReceiptType.Delivery)
       ) map { SyncJob(SyncId(), _) }
 

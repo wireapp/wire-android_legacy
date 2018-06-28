@@ -27,6 +27,7 @@ import com.waz.service.assets.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
+import com.waz.sync.client.ConversationsClient
 import com.waz.threading.Threading
 
 import scala.concurrent.duration._
@@ -54,7 +55,7 @@ class MessageSendingSpec extends AndroidFreeSpec { test =>
   lazy val errors           = mock[ErrorsService]
   
   private def stubService() = new ConversationsUiServiceImpl(account1Id, None, assets, users, usersStorage, messages,
-    messagesStorage, messagesContent, members, assetStorage, convsContent, convStorage, network, convs, sync, accounts, tracking, errors)
+    messagesStorage, messagesContent, members, assetStorage, convsContent, convStorage, network, convs, sync, null, accounts, tracking, errors)
 
   feature("Text messages") {
     scenario("Add text message") {

@@ -45,7 +45,7 @@ trait ConversationsContentUpdater {
   def updateConversationLastRead(id: ConvId, time: Instant): Future[Option[(ConversationData, ConversationData)]]
   def updateConversationMuted(conv: ConvId, muted: Boolean): Future[Option[(ConversationData, ConversationData)]]
   def updateConversationName(id: ConvId, name: String): Future[Option[(ConversationData, ConversationData)]]
-  def setConvActive(id: ConvId, active: Boolean): Future[Option[(ConversationData, ConversationData)]]
+  def setConvActive(id: ConvId, active: Boolean): Future[Unit]
   def updateConversationArchived(id: ConvId, archived: Boolean): Future[Option[(ConversationData, ConversationData)]]
   def updateConversationCleared(id: ConvId, time: Instant): Future[Option[(ConversationData, ConversationData)]]
   def updateLastEvent(id: ConvId, time: Instant): Future[Option[(ConversationData, ConversationData)]]
@@ -80,7 +80,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
   storage.convUpdated { case (prev, conv) =>
     if (prev.cleared != conv.cleared) {
       verbose(s"cleared updated will clear messages, prev: $prev, updated: $conv")
-      messagesStorage.clear(conv.id, conv.cleared).recoverWithLog()
+      conv.cleared.foreach(messagesStorage.clear(conv.id, _).recoverWithLog())
     }
   }
 
@@ -95,7 +95,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
         conv
     })
 
-  override def setConvActive(id: ConvId, active: Boolean) = storage.update(id, { _.copy(isActive = active)})
+  override def setConvActive(id: ConvId, active: Boolean) = storage.update(id, { _.copy(isActive = active)}).map(_ => {})
 
   override def updateConversationArchived(id: ConvId, archived: Boolean) = storage.update(id, { c =>
     c.copy(archived = archived, archiveTime = c.lastEventTime)
@@ -170,7 +170,6 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
           generatedName = NameUpdater.generatedName(convType)(user),
           hidden        = hidden,
           team          = teamId,
-          isManaged     = teamId.map(_ => false),
           access        = access,
           accessRole    = Some(accessRole)))
       _ <- membersStorage.add(convId, members + creator)

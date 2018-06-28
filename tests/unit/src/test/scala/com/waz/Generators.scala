@@ -18,7 +18,6 @@
 package com.waz
 
 import java.lang.System.currentTimeMillis
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import java.util.{Date, Locale}
 
@@ -47,6 +46,7 @@ import org.scalacheck._
 import org.threeten.bp.{Duration, Instant}
 
 import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 
 object Generators {
   import MediaAssets._
@@ -78,13 +78,12 @@ object Generators {
     convType <- arbitrary[ConversationType]
     lastEventTime <- arbitrary[Instant]
     team  <- arbitrary[Option[TeamId]]
-    isManaged <- arbitrary[Option[Boolean]]
     isActive <- arbitrary[Boolean]
     muted <- arbitrary[Boolean]
     muteTime <- arbitrary[Instant]
     archived <- arbitrary[Boolean]
     archiveTime <- arbitrary[Instant]
-    cleared <- arbitrary[Instant]
+    cleared <- arbitrary[Option[Instant]]
     generatedName <- arbitrary[String]
     searchKey = name map SearchKey
     unreadCount <- arbitrary[UnreadCount]
@@ -92,7 +91,7 @@ object Generators {
     missedCall <- arbitrary[Option[MessageId]]
     incomingKnock <- arbitrary[Option[MessageId]]
     hidden <- arbitrary[Boolean]
-  } yield ConversationData(id, remoteId, name, creator, convType, team, isManaged, lastEventTime, isActive, Instant.EPOCH, muted, muteTime, archived, archiveTime, cleared, generatedName, searchKey, unreadCount, failedCount, missedCall, incomingKnock, hidden))
+  } yield ConversationData(id, remoteId, name, creator, convType, team, lastEventTime, isActive, Instant.EPOCH, muted, muteTime, archived, archiveTime, cleared, generatedName, searchKey, unreadCount, failedCount, missedCall, incomingKnock, hidden))
 
   implicit lazy val arbUserData: Arbitrary[UserData] = Arbitrary(for {
     id <- arbitrary[UserId]
@@ -243,7 +242,7 @@ object Generators {
   implicit lazy val arbDate: Arbitrary[Date] = Arbitrary(choose(0L, 999999L).map(i => new Date(currentTimeMillis - 1000000000L + i * 1000L)))
   implicit lazy val arbInstant: Arbitrary[Instant] = Arbitrary(posNum[Long] map Instant.ofEpochMilli)
   implicit lazy val arbDuration: Arbitrary[Duration] = Arbitrary(posNum[Long] map Duration.ofMillis)
-  implicit lazy val arbFiniteDuration: Arbitrary[FiniteDuration] = Arbitrary(posNum[Long] map (FiniteDuration(_, TimeUnit.MILLISECONDS)))
+  implicit lazy val arbFiniteDuration: Arbitrary[FiniteDuration] = Arbitrary(posNum[Long] map(_.millis))
 
   implicit lazy val arbLiking: Arbitrary[Liking] = Arbitrary(resultOf(Liking.apply _))
   implicit lazy val arbLikingAction: Arbitrary[Liking.Action] = Arbitrary(oneOf(Liking.Action.values.toSeq))

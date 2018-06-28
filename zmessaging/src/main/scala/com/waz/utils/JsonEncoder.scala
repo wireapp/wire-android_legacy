@@ -56,7 +56,7 @@ object JsonEncoder {
   def encodeDate(date: Date): String = JsonDecoder.utcDateFormat.get().format(date)
   def encodeInstant(instant: Instant): Long = instant.toEpochMilli
 
-  def encodeISOInstant(time: Instant): String = JsonDecoder.utcDateFormat.get().format(new Date(time.toEpochMilli))
+  def encodeISOInstant(time: Instant): String = encodeDate(new Date(time.toEpochMilli))
 
   def encodeAccess(a: Set[Access]): JSONArray = JsonEncoder.array(a)((arr, e) => arr.put(e.name().toLowerCase()))
   def encodeAccessRoleOpt(a: Option[AccessRole]): String = a.map(encodeAccessRole).getOrElse("")
