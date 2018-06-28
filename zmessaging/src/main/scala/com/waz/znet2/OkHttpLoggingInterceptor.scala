@@ -25,6 +25,8 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.info
 import okhttp3._
 import okio.Buffer
+import com.waz.znet2
+import org.json.JSONObject
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Try}
@@ -63,6 +65,19 @@ final class OkHttpLoggingInterceptor(logBodyTypes: List[String]) extends Interce
   private def shouldLogBody(bodyMediaType: MediaType): Boolean = {
     val mediaTypeStr = bodyMediaType.toString.toLowerCase()
     logBodyTypes.exists(logType => mediaTypeStr.contains(logType.toLowerCase))
+  }
+
+  //TODO This is a hack. Think about more general and flexible solution
+  private def hideSensitiveInfo(body: String, mediaType: Option[MediaType]): String = {
+    val mediaTypeStr = mediaType.map(_.toString).getOrElse("")
+    val isJson = mediaTypeStr.toLowerCase.contains(znet2.http.MediaType.Json.toLowerCase)
+    (if (isJson) Try(new JSONObject(body)).toOption else None)
+      .map { json =>
+        if (json.optString("password").nonEmpty) json.put("password", "*hidden*")
+        else json
+      }
+      .map(_.toString)
+      .getOrElse(body)
   }
 
   @throws[IOException]
@@ -106,7 +121,8 @@ final class OkHttpLoggingInterceptor(logBodyTypes: List[String]) extends Interce
         .method(request.method(), RequestBody.create(body.contentType(), bodyBytes))
         .build()
 
-      logMsgBuilder.append(s"\n${new String(bodyBytes, CharsetUtf8)}\n\n")
+      val bodyString = new String(bodyBytes, CharsetUtf8)
+      logMsgBuilder.append(s"\n${hideSensitiveInfo(bodyString, requestBody.flatMap(b => Option(b.contentType)))}\n\n")
       logMsgBuilder.append("--> END " + request.method + " (" + body.contentLength + "-byte body)\n")
     }
 
@@ -145,7 +161,8 @@ final class OkHttpLoggingInterceptor(logBodyTypes: List[String]) extends Interce
 //        } finally if (gzippedResponseBody != null) gzippedResponseBody.close
 //      }
       val charset = Option(body.contentType()).fold(CharsetUtf8)(_.charset(CharsetUtf8))
-      logMsgBuilder.append(s"\n${buffer.clone.readString(charset)}\n\n")
+      val bodyString = buffer.clone.readString(charset)
+      logMsgBuilder.append(s"\n${hideSensitiveInfo(bodyString, responseBody.flatMap(b => Option(b.contentType)))}\n\n")
       logMsgBuilder.append(s"<-- END HTTP (${buffer.size}-byte body)")
     }
 

@@ -48,6 +48,7 @@ object Method {
 object ResponseCode {
   val Success             = 200
   val Created             = 201
+  val Accepted            = 202
   val NoResponse          = 204
   val MovedPermanently    = 301
   val MovedTemporarily    = 302
@@ -62,7 +63,7 @@ object ResponseCode {
   val PreconditionFailed  = 412
   val InternalServerError = 500
 
-  val SuccessCodes: Set[Int]           = Set(Success, Created, NoResponse)
+  val SuccessCodes: Set[Int]           = Set(Success, Created, Accepted, NoResponse)
   def isSuccessful(code: Int): Boolean = SuccessCodes.contains(code)
   def isFatal(code: Int): Boolean =
     code != Unauthorized && code != RateLimiting && code / 100 == 4

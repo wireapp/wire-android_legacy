@@ -84,12 +84,12 @@ class HttpClientOkHttpImpl(client: OkHttpClient)(implicit protected val ec: Exec
 
 object HttpClientOkHttpImpl {
 
-  def apply(implicit ec: ExecutionContext): HttpClientOkHttpImpl =
+  def apply(enableLogging: Boolean)(implicit ec: ExecutionContext): HttpClientOkHttpImpl =
     new HttpClientOkHttpImpl(
       createOkHttpClient(
         Some(createConnectionSpec),
         Some(createCertificatePinner),
-        Some(createLoggerInterceptor)
+        if (enableLogging) Some(createLoggerInterceptor) else None
       )
     )
 

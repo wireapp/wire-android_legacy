@@ -21,6 +21,7 @@ import java.util.concurrent.Executors
 
 import android.content.{Context => AContext}
 import com.softwaremill.macwire._
+import com.waz.api.ZmsVersion
 import com.waz.bitmap.BitmapDecoder
 import com.waz.bitmap.video.VideoTranscoder
 import com.waz.cache.CacheService
@@ -129,8 +130,8 @@ class GlobalModuleImpl(val context: AContext, val backend: BackendConfig) extend
   lazy val loginClient:         LoginClient                      = new LoginClientImpl(trackingService)(backend, httpClient)
   lazy val regClient:           RegistrationClient               = new RegistrationClientImpl()(backend, httpClient)
 
-  implicit lazy val httpClient: HttpClient                       = HttpClientOkHttpImpl(Threading.BlockingIO)
-  lazy val httpClientForLongRunning: HttpClient                  = HttpClientOkHttpImpl(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
+  implicit lazy val httpClient: HttpClient                       = HttpClientOkHttpImpl(enableLogging = ZmsVersion.DEBUG)(Threading.BlockingIO)
+  lazy val httpClientForLongRunning: HttpClient                  = HttpClientOkHttpImpl(enableLogging = ZmsVersion.DEBUG)(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
 
   implicit lazy val requestInterceptor: RequestInterceptor       = RequestInterceptor.identity
 
