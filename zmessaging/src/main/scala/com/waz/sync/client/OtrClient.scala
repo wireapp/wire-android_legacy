@@ -258,7 +258,8 @@ object OtrClient {
   }
 
   implicit lazy val PreKeyDecoder: JsonDecoder[PreKey] = JsonDecoder.lift { implicit js =>
-    new PreKey('id, Base64.decode('key, Base64.DEFAULT))
+    val keyStr: String = 'key
+    new PreKey('id, Base64.decode(keyStr, Base64.DEFAULT))
   }
 
   implicit lazy val ClientDecoder: JsonDecoder[ClientKey] = JsonDecoder.lift { implicit js =>

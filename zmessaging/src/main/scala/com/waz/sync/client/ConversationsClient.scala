@@ -23,16 +23,14 @@ import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.ConversationData.{ConversationType, Link}
 import com.waz.model._
-import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
-import com.waz.threading.Threading
 import com.waz.service.BackendConfig
-import com.waz.sync.client.ConversationsClient.ConversationResponse.{ConversationIdsResponse, ConversationsResult}
+import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
 import com.waz.utils.JsonEncoder.{encodeAccess, encodeAccessRole}
 import com.waz.utils.{Json, JsonDecoder, JsonEncoder, returning, _}
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http._
 import org.json
-import org.json.{JSONArray, JSONObject}
+import org.json.JSONObject
 import org.threeten.bp.Instant
 
 import scala.concurrent.duration.FiniteDuration
@@ -40,7 +38,7 @@ import scala.util.control.NonFatal
 
 trait ConversationsClient {
   import ConversationsClient._
-  def loadConversationIds(start: Option[RConvId] = None): ErrorOrResponse[ConversationIdsResponse]
+  def loadConversationIds(start: Option[RConvId] = None): ErrorOrResponse[ConversationsResult]
   def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult]
   def loadConversations(ids: Seq[RConvId]): ErrorOrResponse[Seq[ConversationResponse]]
   def loadConversation(id: RConvId): ErrorOrResponse[ConversationResponse]
@@ -67,28 +65,22 @@ class ConversationsClientImpl(implicit
   import HttpClient.dsl._
   import com.waz.threading.Threading.Implicits.Background
 
-  private implicit val ConversationIdsResponseDeserializer: RawBodyDeserializer[ConversationIdsResponse] =
+  private implicit val ConversationIdsResponseDeserializer: RawBodyDeserializer[ConversationsResult] =
     RawBodyDeserializer[JSONObject].map { json =>
-      val (ids, hasMore) = ConversationIdsResponse.unapply(JsonObjectResponse(json)).get
-      ConversationIdsResponse(ids, hasMore)
+      val (ids, hasMore) = ConversationsResult.unapply(JsonObjectResponse(json)).get
+      ConversationsResult(ids, hasMore)
     }
 
-  override def loadConversationIds(start: Option[RConvId] = None): ErrorOrResponse[ConversationIdsResponse] = {
+  override def loadConversationIds(start: Option[RConvId] = None): ErrorOrResponse[ConversationsResult] = {
     Request
       .Get(
         url = backendUrl(ConversationIdsPath),
         queryParameters = queryParameters("size" -> ConversationIdsPageSize, "start" -> start)
       )
-      .withResultType[ConversationIdsResponse]
+      .withResultType[ConversationsResult]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
-
-  private implicit val ConversationsResultDeserializer: RawBodyDeserializer[ConversationsResult] =
-    RawBodyDeserializer[JSONObject].map { json =>
-      val (convs, hasMore) = ConversationsResult.unapply(JsonObjectResponse(json)).get
-      ConversationsResult(convs, hasMore)
-    }
 
   override def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult] = {
     Request
@@ -130,10 +122,16 @@ class ConversationsClientImpl(implicit
       }
   }
 
-  override def postMessageTimer(convId: RConvId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit] =
-    netClient.withErrorHandling("postMessageTimer", Request.Put(s"$ConversationsPath/$convId/message-timer", Json("message_timer" -> duration.map(_.toMillis)))) {
-      case Response(SuccessHttpStatus(), _, _) => {}
-    }
+  override def postMessageTimer(convId: RConvId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit] = {
+    Request
+      .Put(
+        url = backendUrl(s"$ConversationsPath/$convId/message-timer"),
+        body = Json("message_timer" -> duration.map(_.toMillis))
+      )
+      .withResultType[Unit]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
 
   //TODO Why not ErrorOrResponse[Unit] as a result type?
   override def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Boolean] = {
@@ -237,19 +235,6 @@ object ConversationsClient {
   val IdsCountThreshold = 32
 
   def accessUpdatePath(id: RConvId) = s"$ConversationsPath/${id.str}/access"
-
-  case class ConversationResponse(conversation: ConversationData, members: Seq[ConversationMemberData])
-  def conversationsQuery(start: Option[RConvId] = None, limit: Int = ConversationsPageSize, ids: Seq[RConvId] = Nil): String = {
-    val args = (start, ids) match {
-      case (None, Nil) =>   Seq("size" -> limit)
-      case (Some(id), _) => Seq("size" -> limit, "start" -> id.str)
-      case _ =>             Seq("ids" -> ids.mkString(","))
-    }
-    Request.query(ConversationsPath, args: _*)
-  }
-
-  def conversationIdsQuery(start: Option[RConvId]): String =
-    Request.query(ConversationIdsPath, ("size", ConversationIdsPageSize) :: start.toList.map("start" -> _.str) : _*)
 
   case class ConversationResponse(id:           RConvId,
                                   name:         Option[String],
