@@ -185,7 +185,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val convsContent: ConversationsContentUpdaterImpl = wire[ConversationsContentUpdaterImpl]
   lazy val messagesContent: MessagesContentUpdater = wire[MessagesContentUpdater]
 
-  lazy val assetLoader: AssetLoader                   = new AssetLoaderImpl(context, network, assetClient, audioTranscader, videoTranscoder, cache, imageCache, bitmapDecoder, tracking)(backend, authRequestInterceptor)
+  lazy val assetLoader: AssetLoader                   = new AssetLoaderImpl(context, Some(assetsStorage), network, assetClient, audioTranscader, videoTranscoder, cache, imageCache, bitmapDecoder, tracking)(backend, authRequestInterceptor)
   lazy val imageLoader: ImageLoader                   = wire[ImageLoaderImpl]
 
   lazy val push: PushService                          = wire[PushServiceImpl]
