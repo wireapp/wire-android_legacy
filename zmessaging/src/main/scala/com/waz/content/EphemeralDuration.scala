@@ -38,9 +38,14 @@ object EphemeralDuration {
   case object Week    extends TimeUnit
   case object Year    extends TimeUnit
 
-  val YearMillis = 1000L * 60L * 60L * 24L * 365L
+  val YearMillis        = 1000L * 60L * 60L * 24L * 365L
+  val FiveSecondsMillis = 1000L * 5
 
-  def apply(l: Long): FiniteDuration = FiniteDuration(if (l > YearMillis) YearMillis else l, MILLISECONDS)
+  def apply(l: Long): FiniteDuration = FiniteDuration(
+    if (l > YearMillis) YearMillis
+    else if (l < FiveSecondsMillis) FiveSecondsMillis
+    else l, MILLISECONDS
+  )
 
   def apply(duration: Duration): (Long, TimeUnit) = {
     import java.util.concurrent.TimeUnit._
