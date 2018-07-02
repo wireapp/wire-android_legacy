@@ -161,7 +161,7 @@ class TeamsServiceImpl(selfUser:           UserId,
       _ <- selfPermissions.fold(Future.successful({}))(onMemberSynced(selfUser, _))
       oldMembers <- userStorage.getByTeam(Set(team.id))
       _ <- userStorage.removeAll(oldMembers.map(_.id) -- memberIds)
-      _ <- sync.syncUsers(memberIds.toSeq: _* ).flatMap(syncRequestService.scheduler.await)
+      _ <- sync.syncUsers(memberIds).flatMap(syncRequestService.scheduler.await)
       _ <- userStorage.updateAll2(memberIds, _.updated(teamId))
     } yield {}
   }
@@ -188,7 +188,7 @@ class TeamsServiceImpl(selfUser:           UserId,
   private def onMembersJoined(members: Set[UserId]) = {
     verbose(s"onTeamMembersJoined: members: $members")
     for {
-      _ <- sync.syncUsers(members.toSeq: _* ).flatMap(syncRequestService.scheduler.await)
+      _ <- sync.syncUsers(members).flatMap(syncRequestService.scheduler.await)
       _ <- userStorage.updateAll2(members, _.updated(teamId))
     } yield {}
   }

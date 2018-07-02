@@ -45,7 +45,7 @@ case class UserData(id:                    UserId,
                     connectionMessage:     Option[String]        = None, // incoming connection request message
                     conversation:          Option[RConvId]       = None, // remote conversation id with this contact (one-to-one)
                     relation:              Relation              = Relation.Other, //unused - remove in future migration
-                    syncTimestamp:         Long                  = 0,
+                    syncTimestamp:         Option[Instant]       = None,
                     displayName:           String                = "",
                     verified:              Verification          = Verification.UNKNOWN, // user is verified if he has any otr client, and all his clients are verified
                     deleted:               Boolean               = false,
@@ -170,7 +170,7 @@ object UserData {
       trackingId = decodeOptId[TrackingId]('trackingId), picture = decodeOptAssetId('assetId), accent = decodeInt('accent), searchKey = SearchKey('name),
       connection = ConnectionStatus('connection), connectionLastUpdated = new Date(decodeLong('connectionLastUpdated)), connectionMessage = decodeOptString('connectionMessage),
       conversation = decodeOptRConvId('rconvId), relation = Relation.withId('relation),
-      syncTimestamp = decodeLong('syncTimestamp), 'displayName, Verification.valueOf('verified), deleted = 'deleted,
+      syncTimestamp = decodeOptInstant('syncTimestamp), 'displayName, Verification.valueOf('verified), deleted = 'deleted,
       availability = Availability(decodeInt('activityStatus)), handle = decodeOptHandle('handle),
       providerId = decodeOptId[ProviderId]('providerId), integrationId = decodeOptId[IntegrationId]('integrationId),
       expiresAt = decodeOptISOInstant('expires_at)
@@ -192,7 +192,7 @@ object UserData {
       v.connectionMessage foreach (o.put("connectionMessage", _))
       v.conversation foreach (id => o.put("rconvId", id.str))
       o.put("relation", v.relation.id)
-      o.put("syncTimestamp", v.syncTimestamp)
+      v.syncTimestamp.foreach(v => o.put("syncTimestamp", v.toEpochMilli))
       o.put("displayName", v.displayName)
       o.put("verified", v.verified.name)
       o.put("deleted", v.deleted)
@@ -219,7 +219,7 @@ object UserData {
     val ConnMessage = opt(text('conn_msg))(_.connectionMessage)
     val Conversation = opt(id[RConvId]('conversation))(_.conversation)
     val Rel = text[Relation]('relation, _.name, Relation.valueOf)(_.relation)
-    val Timestamp = long('timestamp)(_.syncTimestamp)
+    val Timestamp = opt(timestamp('timestamp))(_.syncTimestamp)
     val DisplayName = text('display_name)(_.displayName)
     val Verified = text[Verification]('verified, _.name, Verification.valueOf)(_.verified)
     val Deleted = bool('deleted)(_.deleted)

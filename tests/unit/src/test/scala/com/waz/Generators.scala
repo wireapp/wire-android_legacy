@@ -108,7 +108,7 @@ object Generators {
     connectionMessage <- arbitrary[Option[String]]
     conversation <- arbitrary[Option[RConvId]]
     relation <- arbitrary[Relation]
-    syncTimestamp <- posNum[Long]
+    syncTimestamp <- arbitrary[Option[Instant]]
     displayName <- arbitrary[String]
     handle <- arbitrary[Option[Handle]]
   } yield UserData(id, teamId, name, email, phone, trackingId, picture, accent, searchKey, connection, connectionLastUpdated, connectionMessage, conversation, relation, syncTimestamp, displayName, handle = handle))

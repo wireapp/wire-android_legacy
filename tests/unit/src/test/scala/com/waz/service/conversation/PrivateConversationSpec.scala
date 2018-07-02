@@ -285,5 +285,5 @@ class PrivateConversationSpec extends AndroidFreeSpec {
   }
 
   def initService: ConversationsUiService =
-    new ConversationsUiServiceImpl(self, None, null, null, null, messages, null, null, members, null, convsContent, convsStorage, null, null, sync, null, null, null, null)
+    new ConversationsUiServiceImpl(self, None, null, null, messages, null, null, members, null, convsContent, convsStorage, null, null, sync, null, null, null, null)
 }

@@ -19,10 +19,10 @@ package com.waz.service.messages
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.api.Message.{Status, Type}
 import com.waz.api.Message
+import com.waz.api.Message.{Status, Type}
 import com.waz.api.impl.ErrorResponse
-import com.waz.content.{EditHistoryStorage, MembersStorage, MessagesStorage}
+import com.waz.content.{EditHistoryStorage, MembersStorage, MessagesStorage, UsersStorage}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GenericContent._
 import com.waz.model.{MessageId, _}
@@ -36,13 +36,13 @@ import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal}
-import org.threeten.bp.Instant.now
 import org.threeten.bp.Instant
+import org.threeten.bp.Instant.now
 
 import scala.collection.breakOut
 import scala.concurrent.Future
 import scala.concurrent.Future.{successful, traverse}
-import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.duration.FiniteDuration
 import scala.util.Success
 
 trait MessagesService {
@@ -80,16 +80,16 @@ trait MessagesService {
   def retentionPolicy(convData: ConversationData): CancellableFuture[Retention]
 }
 
-class MessagesServiceImpl(selfUserId: UserId,
-                          teamId:     Option[TeamId],
-                          storage:    MessagesStorage,
-                          updater:    MessagesContentUpdater,
-                          edits:      EditHistoryStorage,
-                          convs:      ConversationsContentUpdater,
-                          network:    NetworkModeService,
-                          members:    MembersStorage,
-                          users:      UserService,
-                          sync:       SyncServiceHandle) extends MessagesService {
+class MessagesServiceImpl(selfUserId:   UserId,
+                          teamId:       Option[TeamId],
+                          storage:      MessagesStorage,
+                          updater:      MessagesContentUpdater,
+                          edits:        EditHistoryStorage,
+                          convs:        ConversationsContentUpdater,
+                          network:      NetworkModeService,
+                          members:      MembersStorage,
+                          usersStorage: UsersStorage,
+                          sync:         SyncServiceHandle) extends MessagesService {
   import Threading.Implicits.Background
   private implicit val ec = EventContext.Global
 
@@ -376,7 +376,7 @@ class MessagesServiceImpl(selfUserId: UserId,
     def checkConv(convId: ConvId) =
       members
         .activeMembers(convId)
-        .flatMap(p => Signal.sequence(p.map(users.userSignal).toSeq: _*)
+        .flatMap(p => Signal.sequence(p.map(usersStorage.signal).toSeq: _*)
           .map(_.exists(_.teamId.isDefined)))
 
     val result = if (teamId.isDefined || convData.team.isDefined) {
