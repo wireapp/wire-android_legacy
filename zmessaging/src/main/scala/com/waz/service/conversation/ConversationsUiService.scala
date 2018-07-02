@@ -99,7 +99,6 @@ trait ConversationsUiService {
 class ConversationsUiServiceImpl(selfUserId:      UserId,
                                  teamId:          Option[TeamId],
                                  assets:          AssetService,
-                                 users:           UserService,
                                  usersStorage:    UsersStorage,
                                  messages:        MessagesService,
                                  messagesStorage: MessagesStorage,
@@ -417,7 +416,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
     } yield resp
 
   private def mentionsMap(us: Set[UserId]): Future[Map[UserId, String]] =
-    users.getUsers(us.toSeq) map { uss =>
+    usersStorage.listAll(us.toSeq) map { uss =>
       uss.map(u => u.id -> u.getDisplayName)(breakOut)
     }
 

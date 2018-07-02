@@ -65,7 +65,7 @@ trait ConversationsContentUpdater {
 
 class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
                                       teamId:          Option[TeamId],
-                                      users:           UserService,
+                                      usersStorage:    UsersStorage,
                                       membersStorage:  MembersStorage,
                                       messagesStorage: => MessagesStorage,
                                       tracking:        TrackingService) extends ConversationsContentUpdater {
@@ -159,7 +159,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
                                              access:     Set[Access] = Set(Access.PRIVATE),
                                              accessRole: AccessRole = AccessRole.PRIVATE) = {
     for {
-      user <- users.getUsers(members.toSeq)
+      users <- usersStorage.listAll(members.toSeq)
       conv <- storage.insert(
         ConversationData(
           convId,
@@ -167,7 +167,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
           name          = name,
           creator       = creator,
           convType      = convType,
-          generatedName = NameUpdater.generatedName(convType)(user),
+          generatedName = NameUpdater.generatedName(convType)(users),
           hidden        = hidden,
           team          = teamId,
           access        = access,

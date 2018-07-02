@@ -35,11 +35,9 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 trait SyncServiceHandle {
-  def syncUsersIfNotEmpty(ids: Seq[UserId]): Future[Option[SyncId]] = if (ids.nonEmpty) syncUsers(ids: _*).map(Some(_))(Threading.Background) else Future.successful(None)
-
   def syncSearchQuery(query: SearchQuery): Future[SyncId]
   def exactMatchHandle(handle: Handle): Future[SyncId]
-  def syncUsers(ids: UserId*): Future[SyncId]
+  def syncUsers(ids: Set[UserId]): Future[SyncId]
   def syncSelfUser(): Future[SyncId]
   def deleteAccount(): Future[SyncId]
   def syncConversations(ids: Set[ConvId] = Set.empty, dependsOn: Option[SyncId] = None): Future[SyncId]
@@ -120,8 +118,8 @@ class AndroidSyncServiceHandle(service: SyncRequestService, timeouts: Timeouts, 
   }
 
   def syncSearchQuery(query: SearchQuery) = addRequest(SyncSearchQuery(query), priority = Priority.High)
+  def syncUsers(ids: Set[UserId]) = addRequest(SyncUser(ids))
   def exactMatchHandle(handle: Handle) = addRequest(ExactMatchHandle(handle), priority = Priority.High)
-  def syncUsers(ids: UserId*) = addRequest(SyncUser(ids.toSet))
   def syncSelfUser() = addRequest(SyncSelf, priority = Priority.High)
   def deleteAccount() = addRequest(DeleteAccount)
   def syncConversations(ids: Set[ConvId], dependsOn: Option[SyncId]) =
