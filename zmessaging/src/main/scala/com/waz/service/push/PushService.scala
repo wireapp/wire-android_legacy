@@ -34,7 +34,7 @@ import com.waz.service._
 import com.waz.service.otr.OtrService
 import com.waz.service.tracking.{MissedPushEvent, ReceivedPushEvent, TrackingService}
 import com.waz.sync.SyncServiceHandle
-import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResponse
+import com.waz.sync.client.PushNotificationsClient.{LoadNotificationsResponse, LoadNotificationsResult}
 import com.waz.sync.client.{PushNotificationEncoded, PushNotificationsClient}
 import com.waz.threading.CancellableFuture.lift
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
@@ -237,15 +237,20 @@ class PushServiceImpl(userId:               UserId,
         case None => if (firstSync) client.loadLastNotification(clientId) else client.loadNotifications(None, clientId)
         case id   => client.loadNotifications(id, clientId)
       }).flatMap {
-        case Right(LoadNotificationsResponse(nots, false, time)) => futureHistoryResults(nots, time, firstSync = firstSync)
-        case Right(LoadNotificationsResponse(nots, true, time)) =>
-          load(nots.lastOption.map(_.id)).flatMap { results =>
-            futureHistoryResults(nots ++ results.notifications, if (results.time.isDefined) results.time else time, historyLost = results.historyLost)
+        case Right(LoadNotificationsResult(response, historyLost)) if !response.hasMore && !historyLost =>
+          futureHistoryResults(response.notifications, response.beTime, firstSync = firstSync)
+        case Right(LoadNotificationsResult(response, historyLost)) if response.hasMore && !historyLost =>
+          load(response.notifications.lastOption.map(_.id)).flatMap { results =>
+            futureHistoryResults(
+              response.notifications ++ results.notifications,
+              if (results.time.isDefined) results.time else response.beTime,
+              historyLost = results.historyLost
+            )
           }
-        case Left(ErrorResponse(ResponseCode.NotFound, _, _)) if lastId.isDefined =>
+        case Right(LoadNotificationsResult(response, historyLost)) if lastId.isDefined && historyLost =>
           warn(s"/notifications failed with 404, history lost")
-          load(None).flatMap { case Results(nots, time, _, _) => futureHistoryResults(nots, time, historyLost = true) }
-        case Left(e@ErrorResponse(ResponseCode.Unauthorized, _, _)) =>
+          futureHistoryResults(response.notifications, response.beTime, historyLost)
+        case Left(e @ ErrorResponse(ResponseCode.Unauthorized, _, _)) =>
           warn(s"Logged out, failing sync request")
           CancellableFuture.failed(FetchFailedException(e))
         case Left(err) =>

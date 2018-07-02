@@ -23,11 +23,11 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.BackendConfig
-import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResponse
+import com.waz.sync.client.PushNotificationsClient.{LoadNotificationsResponse, LoadNotificationsResult}
 import com.waz.utils.JsonDecoder.arrayColl
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.znet2.AuthRequestInterceptor
-import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
+import com.waz.znet2.http._
 import org.json.{JSONArray, JSONObject}
 import org.threeten.bp.Instant
 
@@ -35,7 +35,7 @@ import scala.util.control.NonFatal
 
 //TODO Think about returning models.
 trait PushNotificationsClient {
-  def loadNotifications(since: Option[Uid], client: ClientId): ErrorOrResponse[LoadNotificationsResponse]
+  def loadNotifications(since: Option[Uid], client: ClientId): ErrorOrResponse[LoadNotificationsResult]
   def loadLastNotification(clientId: ClientId): ErrorOrResponse[LoadNotificationsResponse]
 }
 
@@ -53,15 +53,18 @@ class PushNotificationsClientImpl(pageSize: Int = PushNotificationsClient.PageSi
   private implicit val loadNotifResponseDeserializer: RawBodyDeserializer[LoadNotificationsResponse] =
     RawBodyDeserializer[JSONObject].map(json => PagedNotificationsResponse.unapply(JsonObjectResponse(json)).get)
 
-  override def loadNotifications(since: Option[Uid], client: ClientId): ErrorOrResponse[LoadNotificationsResponse] = {
+  override def loadNotifications(since: Option[Uid], client: ClientId): ErrorOrResponse[LoadNotificationsResult] = {
     Request
       .Get(
         url = backendUrl(NotificationsPath),
         queryParameters = queryParameters("since" -> since, "client" -> client, "size" -> pageSize)
       )
-      .withResultType[LoadNotificationsResponse]
+      .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
+      .withResultType[Response[LoadNotificationsResponse]]
       .withErrorType[ErrorResponse]
-      .executeSafe
+      .executeSafe { response =>
+        LoadNotificationsResult(response.body, historyLost = response.code == ResponseCode.NotFound)
+      }
   }
 
   override def loadLastNotification(clientId: ClientId): ErrorOrResponse[LoadNotificationsResponse] = {
@@ -78,6 +81,8 @@ object PushNotificationsClient {
   val NotificationsPath = "/notifications"
   val NotificationsLastPath = "/notifications/last"
   val PageSize = 500
+
+  case class LoadNotificationsResult(response: LoadNotificationsResponse, historyLost: Boolean)
 
   case class LoadNotificationsResponse(notifications: Vector[PushNotificationEncoded], hasMore: Boolean, beTime: Option[Instant])
 
