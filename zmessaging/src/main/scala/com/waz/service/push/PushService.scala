@@ -273,7 +273,7 @@ class PushServiceImpl(userId:               UserId,
               inBackground <- lifeCycle.uiActive.map(!_).head
             } yield {
               val missed = nots.filter { n =>
-                JsonDecoder.array(n.events, { case (arr, i) =>
+                !n.transient && JsonDecoder.array(n.events, { case (arr, i) =>
                   arr.getJSONObject(i).getString("type")
                 }).exists(TrackingEvents(_))
               }.map(_.id).toSet.diff(pushes.map(_.id).toSet)
@@ -297,7 +297,7 @@ class PushServiceImpl(userId:               UserId,
 object PushService {
 
   //These are the most important event types that generate push notifications
-  val TrackingEvents = Set("conversation.otr-message-add", "conversation.create", "conversation.rename", "user.connection", "conversation.member-join", "conversation.member-leave")
+  val TrackingEvents = Set("conversation.otr-message-add", "conversation.create", "conversation.rename", "user.connection", "conversation.member-join")
 
   val PipelineKey = "pipeline_processing"
 
