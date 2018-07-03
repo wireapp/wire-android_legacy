@@ -371,6 +371,8 @@ object GlobalPreferences {
 
   lazy val LastEphemeralValue      = PrefKey[Option[FiniteDuration]]("last_ephemeral_value", customDefault = None)
 
+  lazy val ShouldCreateFullConversation = PrefKey[Boolean]("should_create_full_conv", customDefault = false)
+
   //DEPRECATED!!! Use the UserPreferences instead!!
   lazy val _ShareContacts          = PrefKey[Boolean]("PREF_KEY_PRIVACY_CONTACTS")
   lazy val _DarkTheme              = PrefKey[Boolean]("DarkTheme")
