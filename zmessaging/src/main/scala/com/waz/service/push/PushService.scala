@@ -292,8 +292,13 @@ class PushServiceImpl(userId:               UserId,
               _ <- beDriftPref.mutate(v => time.map(clock.instant.until(_)).getOrElse(v))
               inBackground <- lifeCycle.uiActive.map(!_).head
             } yield {
-              if (nots.map(_.id).size > pushes.map(_.id).size) //we didn't get pushes for some returned notifications
-                tracking.track(MissedPushEvent(clock.instant + drift, nots.size - pushes.size, inBackground, nw, network.getNetworkOperatorName))
+              val missed = nots.filter { n =>
+                JsonDecoder.array(n.events, { case (arr, i) =>
+                  arr.getJSONObject(i).getString("type")
+                }).exists(TrackingEvents(_))
+              }.map(_.id).toSet.diff(pushes.map(_.id).toSet)
+              if (missed.nonEmpty) //we didn't get pushes for some returned notifications
+                tracking.track(MissedPushEvent(clock.instant + drift, missed.size, inBackground, nw, network.getNetworkOperatorName))
 
               if (pushes.nonEmpty)
                 pushes.map(p => p.copy(toFetch = Some(p.receivedAt.until(clock.instant + drift)))).foreach(p => tracking.track(ReceivedPushEvent(p)))
@@ -310,6 +315,10 @@ class PushServiceImpl(userId:               UserId,
 }
 
 object PushService {
+
+  //These are the most important event types that generate push notifications
+  val TrackingEvents = Set("conversation.otr-message-add", "conversation.create", "conversation.rename", "user.connection", "conversation.member-join", "conversation.member-leave")
+
   val PipelineKey = "pipeline_processing"
 
   case class FetchFailedException(err: ErrorResponse) extends Exception(s"Failed to fetch notifications: ${err.message}")
