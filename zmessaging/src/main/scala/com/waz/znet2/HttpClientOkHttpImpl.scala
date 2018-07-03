@@ -87,7 +87,7 @@ object HttpClientOkHttpImpl {
   def apply(enableLogging: Boolean)(implicit ec: ExecutionContext): HttpClientOkHttpImpl =
     new HttpClientOkHttpImpl(
       createOkHttpClient(
-        Some(createConnectionSpec),
+        Some(createModernConnectionSpec),
         Some(createCertificatePinner),
         if (enableLogging) Some(createLoggerInterceptor) else None
       )
@@ -99,7 +99,7 @@ object HttpClientOkHttpImpl {
       loggerInterceptor: Option[Interceptor] = None
   )(implicit ec: ExecutionContext): OkHttpClient = {
     val builder = new OkHttpClient.Builder()
-    connectionSpec.foreach(spec => builder.connectionSpecs(Collections.singletonList(spec)))
+    connectionSpec.foreach(spec => builder.connectionSpecs(List(spec, ConnectionSpec.COMPATIBLE_TLS).asJava))
     certificatePinner.foreach(pinner => builder.certificatePinner(pinner))
     loggerInterceptor.foreach(interceptor => builder.addInterceptor(interceptor))
 
@@ -115,7 +115,7 @@ object HttpClientOkHttpImpl {
       .build()
   }
 
-  def createConnectionSpec: ConnectionSpec =
+  def createModernConnectionSpec: ConnectionSpec =
     new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
       .tlsVersions(TlsVersion.TLS_1_2)
       .cipherSuites(
