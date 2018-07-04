@@ -18,7 +18,7 @@
 package com.waz.zclient.views
 
 import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE}
-import android.content.{Context, DialogInterface, Intent}
+import android.content.{Context, Intent}
 import android.os.Bundle
 import android.provider.MediaStore
 import android.support.annotation.Nullable
@@ -31,7 +31,6 @@ import android.widget.{AbsListView, FrameLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api._
-import com.waz.api.impl.ContentUriAssetForUpload
 import com.waz.content.GlobalPreferences
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{MessageContent => _, _}
@@ -64,13 +63,13 @@ import com.waz.zclient.messages.{MessagesController, MessagesListView}
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
 import com.waz.zclient.pages.extendedcursor.emoji.EmojiKeyboardLayout
-import com.waz.zclient.pages.extendedcursor.image.{CursorImagesLayout}
+import com.waz.zclient.pages.extendedcursor.image.CursorImagesLayout
 import com.waz.zclient.pages.extendedcursor.voicefilter.VoiceFilterLayout
-import com.waz.zclient.pages.main.{ImagePreviewCallback, ImagePreviewLayout}
 import com.waz.zclient.pages.main.conversation.{AssetIntentsManager, MessageStreamAnimation}
 import com.waz.zclient.pages.main.conversationlist.ConversationListAnimation
 import com.waz.zclient.pages.main.conversationpager.controller.SlidingPaneObserver
 import com.waz.zclient.pages.main.profile.camera.CameraContext
+import com.waz.zclient.pages.main.{ImagePreviewCallback, ImagePreviewLayout}
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.participants.fragments.SingleParticipantFragment
 import com.waz.zclient.ui.animation.interpolators.penner.Expo
@@ -428,67 +427,14 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
       extendedCursorContainer.close(true)
     }
 
-    override def onSendPictureFromPreview(imageAsset: ImageAsset, source: ImagePreviewLayout.Source): Unit = imageAsset match {
-      case a: com.waz.api.impl.ImageAsset => convController.currentConv.head.map { conv =>
-        convController.sendMessage(conv.id, a)
-        extendedCursorContainer.close(true)
-        onCancelPreview()
+    override def onSendPictureFromPreview(imageAsset: ImageAsset, source: ImagePreviewLayout.Source): Unit =
+      imageAsset match {
+        case a: com.waz.api.impl.ImageAsset =>
+          convController.sendMessage(a)
+          extendedCursorContainer.close(true)
+          onCancelPreview()
+        case _ =>
       }
-      case _ =>
-    }
-
-  }
-
-  private def errorHandler = new MessageContent.Asset.ErrorHandler() {
-    override def noWifiAndFileIsLarge(sizeInBytes: Long, net: NetworkMode, answer: MessageContent.Asset.Answer): Unit = answer.ok()
-  }
-
-  private def sendVideo(uri: URI): Unit = {
-    convController.sendMessage(ContentUriAssetForUpload(AssetId(), uri), assetErrorHandlerVideo)
-    getControllerFactory.getNavigationController.setRightPage(Page.MESSAGE_STREAM, TAG)
-    extendedCursorContainer.close(true)
-  }
-
-  private def sendImage(uri: URI): Unit = ImageAssetFactory.getImageAsset(uri) match {
-    case a: com.waz.api.impl.ImageAsset => convController.sendMessage(a)
-    case _ =>
-  }
-
-  private val assetErrorHandler = new MessageContent.Asset.ErrorHandler() {
-    override def noWifiAndFileIsLarge(sizeInBytes: Long, net: NetworkMode, answer: MessageContent.Asset.Answer): Unit = Option(getActivity) match {
-      case None => answer.ok()
-      case Some(activity) =>
-        val dialog = ViewUtils.showAlertDialog(
-          activity,
-          R.string.asset_upload_warning__large_file__title,
-          R.string.asset_upload_warning__large_file__message_default,
-          R.string.asset_upload_warning__large_file__button_accept,
-          R.string.asset_upload_warning__large_file__button_cancel,
-          new DialogInterface.OnClickListener() { override def onClick(dialog: DialogInterface, which: Int): Unit = answer.ok() },
-          new DialogInterface.OnClickListener() { override def onClick(dialog: DialogInterface, which: Int): Unit = answer.cancel() }
-        )
-        dialog.setCancelable(false)
-        if (sizeInBytes > 0)
-          dialog.setMessage(getString(R.string.asset_upload_warning__large_file__message, Formatter.formatFileSize(getContext, sizeInBytes)))
-    }
-  }
-
-  private val assetErrorHandlerVideo = new MessageContent.Asset.ErrorHandler() {
-    override def noWifiAndFileIsLarge(sizeInBytes: Long, net: NetworkMode, answer: MessageContent.Asset.Answer): Unit = Option(getActivity) match {
-      case None => answer.ok()
-      case Some(activity) =>
-        val dialog = ViewUtils.showAlertDialog(
-          activity,
-          R.string.asset_upload_warning__large_file__title,
-          R.string.asset_upload_warning__large_file__message_default,
-          R.string.asset_upload_warning__large_file__button_accept,
-          R.string.asset_upload_warning__large_file__button_cancel,
-          new DialogInterface.OnClickListener() { override def onClick(dialog: DialogInterface, which: Int): Unit = answer.ok() },
-          new DialogInterface.OnClickListener() { override def onClick(dialog: DialogInterface, which: Int): Unit = answer.cancel() }
-      )
-      dialog.setCancelable(false)
-      if (sizeInBytes > 0) dialog.setMessage(getString(R.string.asset_upload_warning__large_file__message__video))
-    }
   }
 
   private val assetIntentsManagerCallback = new AssetIntentsManager.Callback {
@@ -496,7 +442,7 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
       case AssetIntentsManager.IntentType.FILE_SHARING =>
         permissions.requestAllPermissions(Set(READ_EXTERNAL_STORAGE)).map {
           case true =>
-            convController.sendMessage(ContentUriAssetForUpload(AssetId(), uri), assetErrorHandler)
+            convController.sendMessage(uri, getActivity)
           case _ =>
             ViewUtils.showAlertDialog(
               getActivity,
@@ -509,13 +455,10 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
         }
       case AssetIntentsManager.IntentType.GALLERY =>
         showImagePreview { _.setImage(uri, ImagePreviewLayout.Source.DeviceGallery) }
-      case AssetIntentsManager.IntentType.VIDEO =>
-        sendVideo(uri)
-      case AssetIntentsManager.IntentType.CAMERA =>
-        sendImage(uri)
+      case _ =>
+        convController.sendMessage(uri, getActivity)
+        getControllerFactory.getNavigationController.setRightPage(Page.MESSAGE_STREAM, TAG)
         extendedCursorContainer.close(true)
-      case intentType =>
-        warn(s"Unrecognized intent type: $intentType")
     }
 
     override def openIntent(intent: Intent, intentType: AssetIntentsManager.IntentType): Unit = {
@@ -593,11 +536,7 @@ class ConversationFragment extends BaseFragment[ConversationFragment.Container] 
     override def onCancel(): Unit = extendedCursorContainer.close(false)
 
     override def sendRecording(audioAssetForUpload: AudioAssetForUpload, appliedAudioEffect: AudioEffect): Unit = {
-      audioAssetForUpload match {
-        case a: com.waz.api.impl.AudioAssetForUpload => convController.sendMessage(a, errorHandler)
-        case _ =>
-      }
-
+      convController.sendMessage(audioAssetForUpload, getActivity)
       extendedCursorContainer.close(true)
     }
   }

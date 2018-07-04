@@ -274,16 +274,14 @@ class ShareToMultipleAdapter(context: Context, filter: Signal[String])(implicit 
     _ => notifyDataSetChanged()
   }
 
-  val selectedConversations: SourceSignal[Set[ConvId]] = Signal(Set())
+  val selectedConversations: SourceSignal[Seq[ConvId]] = Signal(Seq.empty)
 
   val conversationSelectEvent = EventStream[(ConvId, Boolean)]()
-  conversationSelectEvent.on(Threading.Ui){ event =>
-    if (event._2) {
-      selectedConversations.mutate( _ + event._1)
-    } else {
-      selectedConversations.mutate( _ - event._1)
-    }
-    notifyDataSetChanged()
+
+  conversationSelectEvent.onUi {
+    case (conv, add) =>
+      selectedConversations.mutate(convs => if (add) convs :+ conv else convs.filterNot(_ == conv))
+      notifyDataSetChanged()
   }
 
   private val checkBoxListener = new CompoundButton.OnCheckedChangeListener {

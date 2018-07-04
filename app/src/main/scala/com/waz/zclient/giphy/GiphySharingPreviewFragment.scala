@@ -24,7 +24,6 @@ import android.text.TextUtils
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{EditText, ImageView, TextView}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.api.ImageAssetFactory
 import com.waz.model.AssetData
 import com.waz.service.images.BitmapSignal
 import com.waz.service.tracking.ContributionEvent
@@ -44,9 +43,8 @@ import com.waz.zclient.giphy.GiphyGridViewAdapter.ScrollGifCallback
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.profile.views.{ConfirmationMenu, ConfirmationMenuListener}
 import com.waz.zclient.ui.utils.TextViewUtils
-import com.waz.zclient.utils.{ContextUtils, RichEditText}
+import com.waz.zclient.utils.{ContextUtils, RichEditText, RichView}
 import com.waz.zclient.views.LoadingIndicatorView
-import com.waz.zclient.utils.RichView
 
 class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragment.Container]
   with FragmentHelper
@@ -237,7 +235,7 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
         if (TextUtils.isEmpty(term)) getString(R.string.giphy_preview__message_via_random_trending)
         else getString(R.string.giphy_preview__message_via_search, term)
       _    <- conversationController.sendMessage(msg)
-      _    <- conversationController.sendMessage(ImageAssetFactory.getImageAsset(gif.flatMap(_.source).get))
+      _    <- conversationController.sendMessage(gif.flatMap(_.source).get, getActivity)
     } yield giphyController.close()
   }
 

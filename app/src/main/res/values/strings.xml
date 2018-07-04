@@ -1044,7 +1044,6 @@
     <string name="asset_upload_warning__large_file__title">You\'re not on Wi-Fi</string>
     <string name="asset_upload_warning__large_file__message_default">Are you sure you want to send a large file via the mobile network?</string>
     <string name="asset_upload_warning__large_file__message">Are you sure you want to send %1$s via the mobile network?</string>
-    <string name="asset_upload_warning__large_file__message__video">Are you sure you want to send a video via the mobile network?</string>
     <string name="asset_upload_warning__large_file__button_accept">OK</string>
     <string name="asset_upload_warning__large_file__button_cancel">Cancel</string>
 

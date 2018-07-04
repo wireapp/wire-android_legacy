@@ -19,6 +19,7 @@ package com.waz.zclient.conversation.toolbar
 
 import android.Manifest.permission.RECORD_AUDIO
 import android.animation.{ObjectAnimator, ValueAnimator}
+import android.app.Activity
 import android.content.{Context, DialogInterface}
 import android.graphics.LightingColorFilter
 import android.graphics.drawable.LayerDrawable
@@ -27,7 +28,7 @@ import android.view.View.{GONE, INVISIBLE, VISIBLE}
 import android.view.{LayoutInflater, MotionEvent, View}
 import android.widget.{FrameLayout, SeekBar, TextView}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.api.{AudioAssetForUpload, MessageContent, NetworkMode, PlaybackControls}
+import com.waz.api.{AudioAssetForUpload, PlaybackControls}
 import com.waz.model.AssetId
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
@@ -36,7 +37,6 @@ import com.waz.threading.CancellableFuture.CancelException
 import com.waz.threading.Threading
 import com.waz.utils.events.{ClockSignal, Signal}
 import com.waz.utils.{RichThreetenBPDuration, returning}
-import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.controllers.{SoundController, ThemeController}
 import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
@@ -45,11 +45,11 @@ import com.waz.zclient.core.api.scala.ModelObserver
 import com.waz.zclient.ui.utils.CursorUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, StringUtils, ViewUtils}
+import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.Duration.between
 import org.threeten.bp.Instant.now
 import org.threeten.bp.{Duration, Instant}
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
 
@@ -57,7 +57,6 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
   import AudioMessageRecordingView._
-  import Threading.Implicits.Background
 
   LayoutInflater.from(getContext).inflate(R.layout.audio_quick_record_controls, this, true)
 
@@ -267,17 +266,8 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
       } (Threading.Ui)
   }
 
-  private def sendAudioAsset(asset: AudioAssetForUpload) = {
-    (asset match {
-      case asset: com.waz.api.impl.AudioAssetForUpload =>
-        convController.currentConvId.head.flatMap { convId =>
-          convController.sendMessage(convId, asset, new MessageContent.Asset.ErrorHandler() {
-            override def noWifiAndFileIsLarge(sizeInBytes: Long, net: NetworkMode, answer: MessageContent.Asset.Answer): Unit = answer.ok()
-          })
-        }
-      case _ => Future.successful({})
-    }).map(_ => hide())(Threading.Ui)
-  }
+  private def sendAudioAsset(asset: AudioAssetForUpload) =
+    convController.sendMessage(asset, getContext.asInstanceOf[Activity]).map(_ => hide())(Threading.Ui)
 
   def onMotionEventFromAudioMessageButton(motionEvent: MotionEvent) = {
     motionEvent.getAction match {

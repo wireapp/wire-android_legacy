@@ -26,6 +26,7 @@ import android.provider.Settings
 import android.support.annotation.StyleableRes
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
+import android.text.format.Formatter
 import android.util.{AttributeSet, DisplayMetrics, TypedValue}
 import android.view.WindowManager
 import android.widget.Toast
@@ -190,7 +191,7 @@ object ContextUtils {
                              negativeRes: Int = android.R.string.cancel)
                             (implicit context: Context): Future[Boolean] = {
     val p = Promise[Boolean]()
-    val dialog = new AlertDialog.Builder(context)
+    new AlertDialog.Builder(context)
       .setTitle(title)
       .setMessage(msg)
       .setPositiveButton(positiveRes, new DialogInterface.OnClickListener {
@@ -203,8 +204,18 @@ object ContextUtils {
         override def onCancel(dialog: DialogInterface) = p.tryComplete(Success(false))
       })
       .create
-    dialog.show()
+      .show()
     p.future
+  }
+
+  //TODO Context has to be an Activity - maybe specify this in the type
+  def showWifiWarningDialog(size: Long)(implicit context: Context): Future[Boolean] = {
+    showConfirmationDialog(
+      getString(R.string.asset_upload_warning__large_file__title),
+      if (size > 0)
+        getString(R.string.asset_upload_warning__large_file__message, Formatter.formatFileSize(context, size))
+      else
+        getString(R.string.asset_upload_warning__large_file__message_default))
   }
 
   def showPermissionsErrorDialog(titleRes: Int, msgRes: Int, ackRes: Int = android.R.string.ok)(implicit cxt: Context): Future[Unit] = {
