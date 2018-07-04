@@ -163,8 +163,8 @@ class SetHandleFragment extends BaseFragment[SetHandleFragment.Container] with F
           response match {
             case Left(_) =>
               ContextUtils.showToast(R.string.username__set__toast_error)
-            case Right(r) =>
-              r.foreach(nicks => onValidUsernameGenerated(nicks.head.username))
+            case Right(nicks) =>
+              onValidUsernameGenerated(nicks.head.username)
           }
         case Failure(_) =>
           ContextUtils.showToast(R.string.username__set__toast_error)
