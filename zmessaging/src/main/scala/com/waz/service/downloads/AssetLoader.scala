@@ -138,15 +138,11 @@ class AssetLoaderImpl(context:         Context,
         verbose(s"Downloading wire asset: ${asset.id}: $rId")
         val path = AssetClient.getAssetPath(rId, otrKey, asset.convId)
         val headers = token.fold(Map.empty[String, String])(t => Map("Asset-Token" -> t.str))
-//        val decoder = new AssetBodyDecoder(cache, otrKey, sha)
-//        client.loadAsset(Request.Get(path, decoder = Some(decoder), headers = headers, downloadCallback = Some(callback)))
         val request = http.Request.Get(backendUrl(path), headers = http.Headers(headers))
         client.loadAsset(request, otrKey, sha, callback)
 
       case WithExternalUri(uri) =>
         verbose(s"Downloading external asset: ${asset.id}: $uri")
-//        val decoder = new AssetBodyDecoder(cache)
-//        val resp = client.loadAsset(Request[Unit](baseUri = Some(uri), requiresAuthentication = false, decoder = Some(decoder), downloadCallback = Some(callback)))
         val request = http.Request.Get(new URL(uri.toString))
         val resp = client.loadAsset(request, callback = callback)
         if (uri == UserService.UnsplashUrl)
@@ -163,8 +159,6 @@ class AssetLoaderImpl(context:         Context,
 
       case WithProxy(proxy) =>
         verbose(s"Downloading asset from proxy: ${asset.id}: $proxy")
-//        val decoder = new AssetBodyDecoder(cache)
-//        client.loadAsset(Request.Get(proxy, decoder = Some(decoder), downloadCallback = Some(callback)))
         val request = http.Request.Get(url = backendUrl(proxy))
         client.loadAsset(request, callback = callback)
 
