@@ -309,7 +309,12 @@ class AccountManager(val userId:   UserId,
 
   def hasMarketingConsent: Future[Boolean] = {
     verbose("hasMarketingConsent")
-    credentialsClient.hasMarketingConsent
+    credentialsClient.hasMarketingConsent.map {
+      case Right(result) => result
+      case Left(err) =>
+        verbose(s"Error while getting hasMarketingConsent: $err")
+        false
+    }.future
   }
 
   //receiving = None will set a preference so the app knows to ask again

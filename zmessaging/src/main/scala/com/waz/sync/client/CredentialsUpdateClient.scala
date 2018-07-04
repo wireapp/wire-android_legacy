@@ -43,7 +43,7 @@ trait CredentialsUpdateClient {
 
   def hasPassword(): ErrorOrResponse[Boolean]
 
-  def hasMarketingConsent: Future[Boolean] //TODO Why not CancelableFuture?
+  def hasMarketingConsent: ErrorOrResponse[Boolean]
 
   def setMarketingConsent(receiving: Boolean, majorVersion: String, minorVersion: String): ErrorOrResponse[Unit]
 }
@@ -121,18 +121,16 @@ class CredentialsUpdateClientImpl(implicit
       }
   }
 
-  override def hasMarketingConsent: Future[Boolean] = {
+  override def hasMarketingConsent: ErrorOrResponse[Boolean] = {
     Request.Get(relativePath = ConsentPath)
       .withResultType[JSONObject]
-      .execute
-      .map { json =>
+      .withErrorType[ErrorResponse]
+      .executeSafe { json =>
         val results = JsonDecoder.array(json.getJSONArray("results"), {
           case (arr, i) => (arr.getJSONObject(i).getInt("type"), arr.getJSONObject(i).getInt("value"))
         }).toMap
         results.get(ConsentTypeMarketing).contains(1)
       }
-      .recover { case _ => false }
-      .future
   }
 
   override def setMarketingConsent(receiving: Boolean, majorVersion: String, minorVersion: String): ErrorOrResponse[Unit] = {
