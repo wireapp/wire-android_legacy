@@ -43,7 +43,7 @@ trait ConversationsClient {
   def loadConversations(ids: Seq[RConvId]): ErrorOrResponse[Seq[ConversationResponse]]
   def loadConversation(id: RConvId): ErrorOrResponse[ConversationResponse]
   def postName(convId: RConvId, name: String): ErrorOrResponse[Option[RenameConversationEvent]]
-  def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Boolean]
+  def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Unit]
   def postMessageTimer(convId: RConvId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit]
   def postMemberJoin(conv: RConvId, members: Set[UserId]): ErrorOrResponse[Option[MemberJoinEvent]]
   def postMemberLeave(conv: RConvId, user: UserId): ErrorOrResponse[Option[MemberLeaveEvent]]
@@ -132,12 +132,11 @@ class ConversationsClientImpl(implicit
       .executeSafe
   }
 
-  //TODO Why not ErrorOrResponse[Unit] as a result type?
-  override def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Boolean] = {
+  override def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Unit] = {
     Request.Put(relativePath = s"$ConversationsPath/$convId/self", body = state)
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
-      .executeSafe(_ => true)
+      .executeSafe
   }
 
   override def postMemberJoin(conv: RConvId, members: Set[UserId]): ErrorOrResponse[Option[MemberJoinEvent]] = {

@@ -31,8 +31,7 @@ import scala.util.Try
 import scala.util.control.NonFatal
 
 trait HandlesClient {
-  //TODO We do not need an Option here
-  def getHandlesValidation(handles: Seq[Handle]): ErrorOrResponse[Option[Seq[UsernameValidation]]]
+  def getHandlesValidation(handles: Seq[Handle]): ErrorOrResponse[Seq[UsernameValidation]]
   def isUserHandleAvailable(handle: Handle): ErrorOrResponse[Boolean]
 }
 
@@ -48,7 +47,7 @@ class HandlesClientImpl(implicit
   private implicit val stringsDeserializer: RawBodyDeserializer[Seq[String]] =
     RawBodyDeserializer[JSONArray].map(array => (0 until array.length()).map(array.getString))
 
-  override def getHandlesValidation(handles: Seq[Handle]): ErrorOrResponse[Option[Seq[UsernameValidation]]] = {
+  override def getHandlesValidation(handles: Seq[Handle]): ErrorOrResponse[Seq[UsernameValidation]] = {
     val data = JsonEncoder { o =>
       o.put("handles", JsonEncoder.arrString(handles.take(HandlesClient.MaxHandlesToPost).map(_.toString)))
       o.put("return", 10)
@@ -58,11 +57,9 @@ class HandlesClientImpl(implicit
       .withResultType[Seq[String]]
       .withErrorType[ErrorResponse]
       .executeSafe { availableHandles =>
-        Some(
-          handles
-            .filter(u => availableHandles.contains(u.toString))
-            .map(u => UsernameValidation(u.toString, UsernameValidationError.NONE))
-        )
+        handles
+          .filter(u => availableHandles.contains(u.toString))
+          .map(u => UsernameValidation(u.toString, UsernameValidationError.NONE))
       }
 
   }

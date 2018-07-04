@@ -50,7 +50,7 @@ import com.waz.utils.wrappers.{Context, URI}
 import com.waz.utils.{CancellableStream, returning}
 import com.waz.znet2.http
 import com.waz.znet2.http.Request.UrlCreator
-import com.waz.znet2.http.{Method, Request, RequestInterceptor}
+import com.waz.znet2.http.{Method, Request, RequestInterceptor, ResponseCode}
 
 import scala.concurrent.{Future, Promise}
 import scala.util.control.NonFatal
