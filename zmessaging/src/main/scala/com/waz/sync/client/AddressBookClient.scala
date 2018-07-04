@@ -23,6 +23,7 @@ import com.waz.service.BackendConfig
 import com.waz.sync.client.AddressBookClient.UserAndContactIds
 import com.waz.utils.JsonDecoder
 import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{Headers, HttpClient, RawBodyDeserializer, Request}
 import org.json.JSONObject
 
@@ -33,11 +34,10 @@ trait AddressBookClient {
 }
 
 class AddressBookClientImpl(implicit
-                            backendConfig: BackendConfig,
+                            urlCreator: UrlCreator,
                             httpClient: HttpClient,
                             authRequestInterceptor: AuthRequestInterceptor) extends AddressBookClient {
 
-  import BackendConfig.backendUrl
   import HttpClient.dsl._
   import com.waz.sync.client.AddressBookClient._
 
@@ -45,7 +45,7 @@ class AddressBookClientImpl(implicit
     RawBodyDeserializer[JSONObject].map(json => UsersListResponse.unapplySeq(JsonObjectResponse(json)).get)
 
   override def postAddressBook(book: AddressBook): ErrorOrResponse[Seq[UserAndContactIds]] = {
-    Request.Post(url = backendUrl(AddressBookPath), headers = Headers("Content-Encoding" -> "gzip"), body = book)
+    Request.Post(relativePath = AddressBookPath, headers = Headers("Content-Encoding" -> "gzip"), body = book)
       .withResultType[Seq[UserAndContactIds]]
       .withErrorType[ErrorResponse]
       .executeSafe

@@ -22,13 +22,13 @@ import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
-import com.waz.service.BackendConfig
 import com.waz.sync.client.ConnectionsClient.PageSize
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.JsonDecoder._
 import com.waz.utils.{Json, _}
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.HttpClient.HttpClientError
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
 import org.json.JSONObject
 
@@ -43,11 +43,10 @@ trait ConnectionsClient {
 }
 
 class ConnectionsClientImpl(implicit
-                            backendConfig: BackendConfig,
+                            urlCreator: UrlCreator,
                             httpClient: HttpClient,
                             authRequestInterceptor: AuthRequestInterceptor) extends ConnectionsClient {
 
-  import BackendConfig.backendUrl
   import HttpClient.dsl._
   import Threading.Implicits.Background
   import com.waz.sync.client.ConnectionsClient._
@@ -61,7 +60,7 @@ class ConnectionsClientImpl(implicit
   override def loadConnections(start: Option[UserId] = None, pageSize: Int = PageSize): ErrorOrResponse[Seq[UserConnectionEvent]] = {
     Request
       .Get(
-        url = backendUrl(ConnectionsPath),
+        relativePath = ConnectionsPath,
         queryParameters = ("size" -> pageSize.toString) :: start.fold2(List.empty, s => List("start" -> s.str))
       )
       .withResultType[(Seq[UserConnectionEvent], Boolean)]
@@ -78,7 +77,7 @@ class ConnectionsClientImpl(implicit
   }
 
   override def loadConnection(id: UserId): ErrorOrResponse[UserConnectionEvent] = {
-    Request.Get(url = backendUrl(s"$ConnectionsPath/$id"))
+    Request.Get(relativePath = s"$ConnectionsPath/$id")
       .withResultType[UserConnectionEvent]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -86,7 +85,7 @@ class ConnectionsClientImpl(implicit
 
   override def createConnection(user: UserId, name: String, message: String): ErrorOrResponse[UserConnectionEvent] = {
     val jsonData = Json("user" -> user.toString, "name" -> name, "message" -> message)
-    Request.Post(url = backendUrl(ConnectionsPath), body = jsonData)
+    Request.Post(relativePath = ConnectionsPath, body = jsonData)
       .withResultType[UserConnectionEvent]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -94,7 +93,7 @@ class ConnectionsClientImpl(implicit
 
   override def updateConnection(user: UserId, status: ConnectionStatus): ErrorOrResponse[Option[UserConnectionEvent]] = {
     val jsonData = Json("status" -> status.code)
-    Request.Put(url = backendUrl(s"$ConnectionsPath/${user.str}"), body = jsonData)
+    Request.Put(relativePath = s"$ConnectionsPath/${user.str}", body = jsonData)
       .withResultType[Option[UserConnectionEvent]]
       .withErrorType[ErrorResponse]
       .executeSafe

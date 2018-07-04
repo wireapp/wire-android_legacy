@@ -20,10 +20,10 @@ package com.waz.sync.client
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.PushToken
 import com.waz.model.otr.ClientId
-import com.waz.service.BackendConfig
 import com.waz.sync.client.PushTokenClient.PushTokenRegistration
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, Request}
 import org.json.JSONObject
 
@@ -33,23 +33,22 @@ trait PushTokenClient {
 }
 
 class PushTokenClientImpl(implicit
-                          backendConfig: BackendConfig,
+                          urlCreator: UrlCreator,
                           httpClient: HttpClient,
                           authRequestInterceptor: AuthRequestInterceptor) extends PushTokenClient {
 
-  import BackendConfig.backendUrl
   import HttpClient.dsl._
   import PushTokenClient._
 
   override def postPushToken(token: PushTokenRegistration): ErrorOrResponse[PushTokenRegistration] = {
-    Request.Post(url = backendUrl(PushesPath), body = token)
+    Request.Post(relativePath = PushesPath, body = token)
       .withResultType[PushTokenRegistration]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def deletePushToken(token: String): ErrorOrResponse[Unit] = {
-    Request.Delete(url = backendUrl(s"$PushesPath/$token"))
+    Request.Delete(relativePath = s"$PushesPath/$token")
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe

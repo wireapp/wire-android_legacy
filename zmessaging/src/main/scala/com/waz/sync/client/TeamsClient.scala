@@ -22,9 +22,9 @@ import com.waz.ZLog.warn
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.AccountDataOld.PermissionsMasks
 import com.waz.model._
-import com.waz.service.BackendConfig
 import com.waz.utils.JsonDecoder
 import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
 import org.json.JSONObject
 
@@ -38,11 +38,10 @@ trait TeamsClient {
 }
 
 class TeamsClientImpl(implicit
-                      backendConfig: BackendConfig,
+                      urlCreator: UrlCreator,
                       httpClient: HttpClient,
                       authRequestInterceptor: AuthRequestInterceptor) extends TeamsClient {
 
-  import BackendConfig.backendUrl
   import HttpClient.dsl._
   import TeamsClient._
 
@@ -58,21 +57,21 @@ class TeamsClientImpl(implicit
     RawBodyDeserializer[(UserId, PermissionsMasks)].map(_._2)
 
   override def getTeamMembers(id: TeamId): ErrorOrResponse[Map[UserId, PermissionsMasks]] = {
-    Request.Get(url = backendUrl(teamMembersPath(id)))
+    Request.Get(relativePath = teamMembersPath(id))
       .withResultType[Map[UserId, PermissionsMasks]]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def getTeamData(id: TeamId): ErrorOrResponse[TeamData] = {
-    Request.Get(url = backendUrl(teamPath(id)))
+    Request.Get(relativePath = teamPath(id))
       .withResultType[TeamData]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def getPermissions(teamId: TeamId, userId: UserId): ErrorOrResponse[PermissionsMasks] = {
-    Request.Get(url = backendUrl(memberPath(teamId, userId)))
+    Request.Get(relativePath = memberPath(teamId, userId))
       .withResultType[PermissionsMasks]
       .withErrorType[ErrorResponse]
       .executeSafe

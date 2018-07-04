@@ -41,6 +41,7 @@ import com.waz.ui.MemoryImageCache.{Entry, Key}
 import com.waz.utils.Cache
 import com.waz.utils.wrappers.{Context, GoogleApi, GoogleApiImpl}
 import com.waz.znet2.HttpClientOkHttpImpl
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RequestInterceptor}
 
 import scala.concurrent.ExecutionContext
@@ -68,6 +69,7 @@ trait GlobalModule {
   def reporting:            GlobalReportingService
   def loginClient:          LoginClient
   def regClient:            RegistrationClient
+  def urlCreator:           UrlCreator
   def httpClient:           HttpClient
   def httpClientForLongRunning: HttpClient
   def globalAssetClient:    AssetClient
@@ -127,17 +129,18 @@ class GlobalModuleImpl(val context: AContext, val backend: BackendConfig) extend
 
   lazy val reporting                                             = wire[GlobalReportingService]
 
-  lazy val loginClient:         LoginClient                      = new LoginClientImpl(trackingService)(backend, httpClient)
-  lazy val regClient:           RegistrationClient               = new RegistrationClientImpl()(backend, httpClient)
+  lazy val loginClient:         LoginClient                      = new LoginClientImpl(trackingService)(urlCreator, httpClient)
+  lazy val regClient:           RegistrationClient               = new RegistrationClientImpl()(urlCreator, httpClient)
 
+  lazy val urlCreator:          UrlCreator                       = UrlCreator.simpleAppender(backend.baseUrl.toString)
   implicit lazy val httpClient: HttpClient                       = HttpClientOkHttpImpl(enableLogging = ZmsVersion.DEBUG)(Threading.BlockingIO)
   lazy val httpClientForLongRunning: HttpClient                  = HttpClientOkHttpImpl(enableLogging = ZmsVersion.DEBUG)(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
 
   implicit lazy val requestInterceptor: RequestInterceptor       = RequestInterceptor.identity
 
   //Not to be used in zms instances
-  lazy val globalAssetClient:   AssetClient                      = new AssetClientImpl(cache)(backend, httpClientForLongRunning)
-  lazy val globalLoader:        AssetLoader                      = new AssetLoaderImpl(context, None, network, globalAssetClient, audioTranscoder, videoTranscoder, cache, imageCache, bitmapDecoder, trackingService)(backend, requestInterceptor)
+  lazy val globalAssetClient:   AssetClient                      = new AssetClientImpl(cache)(urlCreator, httpClientForLongRunning)
+  lazy val globalLoader:        AssetLoader                      = new AssetLoaderImpl(context, None, network, globalAssetClient, audioTranscoder, videoTranscoder, cache, imageCache, bitmapDecoder, trackingService)(urlCreator, requestInterceptor)
   //end of warning...
 
   lazy val tempFiles:           TempFileService                  = wire[TempFileService]
@@ -210,7 +213,8 @@ class EmptyGlobalModule extends GlobalModule {
   override def lifecycle:             UiLifeCycle                                         = ???
   override def flowmanager:           FlowManagerService                                  = ???
   override def mediaManager:          MediaManagerService                                 = ???
-  override def httpClient: HttpClient = ???
-  override def httpClientForLongRunning: HttpClient = ???
+  override def urlCreator:            UrlCreator                                          = ???
+  override def httpClient:            HttpClient                                          = ???
+  override def httpClientForLongRunning: HttpClient                                       = ???
 }
 

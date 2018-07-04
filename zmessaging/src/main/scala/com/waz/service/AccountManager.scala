@@ -89,8 +89,8 @@ class AccountManager(val userId:   UserId,
   val cryptoBox         = global.factory.cryptobox(userId, storage)
   val auth              = global.factory.auth(userId)
   val authRequestInterceptor: AuthRequestInterceptor = new AuthRequestInterceptor(auth)
-  val otrClient         = new OtrClientImpl()(global.backend, global.httpClient, authRequestInterceptor)
-  val credentialsClient = global.factory.credentialsClient(global.backend, global.httpClient, authRequestInterceptor)
+  val otrClient         = new OtrClientImpl()(global.urlCreator, global.httpClient, authRequestInterceptor)
+  val credentialsClient = global.factory.credentialsClient(global.urlCreator, global.httpClient, authRequestInterceptor)
 
   val timeouts       = global.timeouts
   val network        = global.network
@@ -99,7 +99,7 @@ class AccountManager(val userId:   UserId,
   val tracking       = global.trackingService
   val clientsStorage = storage.otrClientsStorage
 
-  val invitationClient = new InvitationClientImpl()(global.backend, global.httpClient, authRequestInterceptor)
+  val invitationClient = new InvitationClientImpl()(global.urlCreator, global.httpClient, authRequestInterceptor)
   val invitedToTeam = Signal(ListMap.empty[TeamInvitation, Option[Either[ErrorResponse, ConfirmedTeamInvitation]]])
 
   private val initSelf = for {

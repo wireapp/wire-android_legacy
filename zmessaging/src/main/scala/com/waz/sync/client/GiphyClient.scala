@@ -24,11 +24,11 @@ import com.waz.ZLog._
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetMetaData.Image.Tag.{Medium, Preview}
 import com.waz.model.{AssetData, AssetMetaData, Dim2, Mime}
-import com.waz.service.BackendConfig
 import com.waz.threading.CancellableFuture
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{JsonDecoder, LoggedTry}
 import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
 import org.json.JSONObject
 
@@ -41,11 +41,10 @@ trait GiphyClient {
 }
 
 class GiphyClientImpl(implicit
-                      backendConfig: BackendConfig,
+                      urlCreator: UrlCreator,
                       httpClient: HttpClient,
                       authRequestInterceptor: AuthRequestInterceptor) extends GiphyClient {
 
-  import BackendConfig.backendUrl
   import GiphyClient._
   import HttpClient.dsl._
   import com.waz.threading.Threading.Implicits.Background
@@ -54,7 +53,7 @@ class GiphyClientImpl(implicit
     RawBodyDeserializer[JSONObject].map(json => GiphyResponse.unapply(JsonObjectResponse(json)).get)
 
   override def loadTrending(offset: Int = 0, limit: Int = 25): CancellableFuture[Seq[(Option[AssetData], AssetData)]] = {
-    Request.Get(url = backendUrl(trendingPath(offset, limit)))
+    Request.Get(relativePath = trendingPath(offset, limit))
       .withResultType[Seq[(Option[AssetData], AssetData)]]
       .execute
       .recover { case err =>
@@ -64,7 +63,7 @@ class GiphyClientImpl(implicit
   }
 
   override def search(keyword: String, offset: Int = 0, limit: Int = 25): CancellableFuture[Seq[(Option[AssetData], AssetData)]] = {
-    Request.Get(url = backendUrl(searchPath(keyword, offset, limit)))
+    Request.Get(relativePath = searchPath(keyword, offset, limit))
       .withResultType[Seq[(Option[AssetData], AssetData)]]
       .execute
       .recover { case err =>

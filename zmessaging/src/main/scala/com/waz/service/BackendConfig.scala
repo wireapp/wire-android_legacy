@@ -17,14 +17,12 @@
  */
 package com.waz.service
 
-import java.net.URL
-
 import android.content.Context
 import com.google.firebase.FirebaseApp
+import com.waz.ZLog.ImplicitTag._
 import com.waz.service.BackendConfig.FirebaseOptions
 import com.waz.utils.LoggedTry
 import com.waz.utils.wrappers.URI
-import com.waz.ZLog.ImplicitTag._
 
 case class BackendConfig(baseUrl: URI, websocketUrl: String, firebaseOptions: FirebaseOptions, environment: String) {
   val pushSenderId = firebaseOptions.pushSenderId
@@ -53,7 +51,5 @@ object BackendConfig {
   lazy val byName = Seq(StagingBackend, ProdBackend).map(b => b.environment -> b).toMap
 
   def apply(baseUrl: String): BackendConfig = BackendConfig(URI.parse(baseUrl), "", StagingFirebaseOptions, "") // XXX only use for testing!
-
-  def backendUrl(path: String)(implicit config: BackendConfig): URL = new URL(config.baseUrl.toString + path)
 
 }

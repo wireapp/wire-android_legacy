@@ -23,11 +23,11 @@ import com.google.protobuf.nano.MessageNano
 import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model._
-import com.waz.service.BackendConfig
 import com.waz.sync.client.OtrClient.{ClientMismatch, MessageResponse}
 import com.waz.sync.otr.OtrMessage
 import com.waz.utils._
 import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 import com.wire.messages.nano.Otr
 
@@ -41,11 +41,10 @@ trait MessagesClient {
 }
 
 class MessagesClientImpl(implicit
-                         private val backendConfig: BackendConfig,
-                         private val httpClient: HttpClient,
-                         private val authRequestInterceptor: AuthRequestInterceptor) extends MessagesClient {
+                         urlCreator: UrlCreator,
+                         httpClient: HttpClient,
+                         authRequestInterceptor: AuthRequestInterceptor) extends MessagesClient {
 
-  import BackendConfig.backendUrl
   import HttpClient.dsl._
   import MessagesClient._
   import com.waz.threading.Threading.Implicits.Background
@@ -56,7 +55,7 @@ class MessagesClientImpl(implicit
       ignoreMissing: Boolean,
       receivers: Option[Set[UserId]] = None
   ): ErrorOrResponse[MessageResponse] = {
-    Request.Post(url = backendUrl(convMessagesPath(conv, ignoreMissing, receivers)), body = content)
+    Request.Post(relativePath = convMessagesPath(conv, ignoreMissing, receivers), body = content)
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.PreconditionFailed)
       .withResultType[Response[ClientMismatch]]
       .withErrorType[ErrorResponse]

@@ -49,6 +49,7 @@ import com.waz.utils.Locales
 import com.waz.utils.wrappers.AndroidContext
 import com.waz.zms.FetchJob
 import com.waz.znet._
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RequestInterceptor}
 import com.waz.znet2.{AuthRequestInterceptor, HttpClientOkHttpImpl, OkHttpWebSocketFactory}
 import org.threeten.bp.{Clock, Instant}
@@ -64,8 +65,8 @@ class ZMessagingFactory(global: GlobalModule) {
 
   def auth(userId: UserId) = new AuthenticationManager(userId, global.accountsStorage, global.loginClient, tracking)
 
-  def credentialsClient(backendConfig: BackendConfig, httpClient: HttpClient, authRequestInterceptor: AuthRequestInterceptor) =
-    new CredentialsUpdateClientImpl()(backendConfig, httpClient, authRequestInterceptor)
+  def credentialsClient(urlCreator: UrlCreator, httpClient: HttpClient, authRequestInterceptor: AuthRequestInterceptor) =
+    new CredentialsUpdateClientImpl()(urlCreator, httpClient, authRequestInterceptor)
 
   def cryptobox(userId: UserId, storage: StorageModule) = new CryptoBoxService(global.context, userId, global.metadata, storage.userPrefs)
 
@@ -97,6 +98,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   val selfUserId = account.userId
 
   val auth       = account.auth
+  val urlCreator = global.urlCreator
   implicit val httpClient: HttpClient = account.global.httpClient
   val httpClientForLongRunning: HttpClient = account.global.httpClientForLongRunning
   val lifecycle  = global.lifecycle
@@ -162,30 +164,30 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val eventStorage: PushNotificationEventsStorage = wire[PushNotificationEventsStorageImpl]
   lazy val receivedPushStorage: ReceivedPushStorage = wire[ReceivedPushStorageImpl]
 
-  lazy val youtubeClient      = new YouTubeClientImpl()(backend, httpClient, authRequestInterceptor)
-  lazy val soundCloudClient   = new SoundCloudClientImpl()(backend, httpClient, authRequestInterceptor)
-  lazy val assetClient        = new AssetClientImpl(cache)(backend, httpClientForLongRunning, authRequestInterceptor)
-  lazy val usersClient        = new UsersClientImpl()(backend, httpClient, authRequestInterceptor)
-  lazy val convClient         = new ConversationsClientImpl()(backend, httpClient, authRequestInterceptor)
-  lazy val teamClient         = new TeamsClientImpl()(backend, httpClient, authRequestInterceptor)
-  lazy val pushNotificationsClient: PushNotificationsClient = new PushNotificationsClientImpl()(backend, httpClient, authRequestInterceptor)
-  lazy val abClient           = new AddressBookClientImpl()(backend, httpClient, authRequestInterceptor)
-  lazy val gcmClient          = new PushTokenClientImpl()(backend, httpClient, authRequestInterceptor)
-  lazy val typingClient       = new TypingClientImpl()(backend, httpClient, authRequestInterceptor)
+  lazy val youtubeClient      = new YouTubeClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val soundCloudClient   = new SoundCloudClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val assetClient        = new AssetClientImpl(cache)(urlCreator, httpClientForLongRunning, authRequestInterceptor)
+  lazy val usersClient        = new UsersClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val convClient         = new ConversationsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val teamClient         = new TeamsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val pushNotificationsClient: PushNotificationsClient = new PushNotificationsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val abClient           = new AddressBookClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val gcmClient          = new PushTokenClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val typingClient       = new TypingClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val invitationClient   = account.invitationClient
-  lazy val giphyClient        = new GiphyClientImpl()(backend, httpClient, authRequestInterceptor)
-  lazy val userSearchClient   = new UserSearchClientImpl()(backend, httpClient, authRequestInterceptor)
-  lazy val connectionsClient  = new ConnectionsClientImpl()(backend, httpClient, authRequestInterceptor)
-  lazy val messagesClient     = new MessagesClientImpl()(backend, httpClient, authRequestInterceptor)
+  lazy val giphyClient        = new GiphyClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val userSearchClient   = new UserSearchClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val connectionsClient  = new ConnectionsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val messagesClient     = new MessagesClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val openGraphClient    = wire[OpenGraphClientImpl]
-  lazy val handlesClient      = new HandlesClientImpl()(backend, httpClient, authRequestInterceptor)
-  lazy val integrationsClient = new IntegrationsClientImpl()(backend, httpClient, authRequestInterceptor)
-  lazy val callingClient      = new CallingClientImpl()(backend, httpClient, authRequestInterceptor)
+  lazy val handlesClient      = new HandlesClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val integrationsClient = new IntegrationsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val callingClient      = new CallingClientImpl()(urlCreator, httpClient, authRequestInterceptor)
 
   lazy val convsContent: ConversationsContentUpdaterImpl = wire[ConversationsContentUpdaterImpl]
   lazy val messagesContent: MessagesContentUpdater = wire[MessagesContentUpdater]
 
-  lazy val assetLoader: AssetLoader                   = new AssetLoaderImpl(context, Some(assetsStorage), network, assetClient, audioTranscader, videoTranscoder, cache, imageCache, bitmapDecoder, tracking)(backend, authRequestInterceptor)
+  lazy val assetLoader: AssetLoader                   = new AssetLoaderImpl(context, Some(assetsStorage), network, assetClient, audioTranscader, videoTranscoder, cache, imageCache, bitmapDecoder, tracking)(urlCreator, authRequestInterceptor)
   lazy val imageLoader: ImageLoader                   = wire[ImageLoaderImpl]
 
   lazy val push: PushService                          = wire[PushServiceImpl]

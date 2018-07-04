@@ -24,6 +24,7 @@ import com.waz.sync.client.InvitationClient.ConfirmedTeamInvitation
 import com.waz.utils.Locales.{bcp47, currentLocale}
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, Request}
 import org.json.JSONObject
 import org.threeten.bp.Instant
@@ -33,16 +34,15 @@ trait InvitationClient {
 }
 
 class InvitationClientImpl(implicit
-                           backendConfig: BackendConfig,
+                           urlCreator: UrlCreator,
                            httpClient: HttpClient,
                            authRequestInterceptor: AuthRequestInterceptor) extends InvitationClient {
 
-  import BackendConfig.backendUrl
   import HttpClient.dsl._
   import com.waz.sync.client.InvitationClient._
 
   override def postTeamInvitation(invitation: TeamInvitation): ErrorOrResponse[ConfirmedTeamInvitation] = {
-    Request.Post(url = backendUrl(teamInvitationPath(invitation.teamId)), body = invitation)
+    Request.Post(relativePath = teamInvitationPath(invitation.teamId), body = invitation)
       .withResultType[ConfirmedTeamInvitation]
       .withErrorType[ErrorResponse]
       .executeSafe

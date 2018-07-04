@@ -25,7 +25,6 @@ import com.waz.model.AccountData.Label
 import com.waz.model.{TeamId, UserInfo}
 import com.waz.model2.transport.Team
 import com.waz.model2.transport.responses.TeamsResponse
-import com.waz.service.BackendConfig
 import com.waz.service.ZMessaging.clock
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
@@ -35,6 +34,7 @@ import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.{ExponentialBackoff, JsonEncoder, _}
 import com.waz.znet2.http
 import com.waz.znet2.http.HttpClient.dsl._
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 import org.json.JSONObject
 import org.threeten.bp
@@ -53,10 +53,9 @@ trait LoginClient {
 
 class LoginClientImpl(tracking: TrackingService)
                      (implicit
-                      backend: BackendConfig,
+                      urlCreator: UrlCreator,
                       client: HttpClient) extends LoginClient {
 
-  import BackendConfig.backendUrl
   import LoginClient._
 
   private implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(name = "LoginClient")
@@ -121,7 +120,7 @@ class LoginClientImpl(tracking: TrackingService)
       o.put("label", label.str)
     }
     Request
-      .Post(url = backendUrl(LoginPath), queryParameters = queryParameters("persist" -> true), body = params)
+      .Post(relativePath = LoginPath, queryParameters = queryParameters("persist" -> true), body = params)
       .withResultType[http.Response[AccessToken]]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -131,7 +130,7 @@ class LoginClientImpl(tracking: TrackingService)
 
   def accessNow(cookie: Cookie, token: Option[AccessToken]): ErrorOr[LoginResult] = {
     Request.Post(
-        url = backendUrl(AccessPath),
+        relativePath = AccessPath,
         headers = Headers(token.map(_.headers).getOrElse(Map.empty) ++ cookie.headers),
         body = ""
       )
@@ -142,7 +141,7 @@ class LoginClientImpl(tracking: TrackingService)
   }
 
   override def getSelfUserInfo(token: AccessToken): ErrorOr[UserInfo] = {
-    Request.Get(url = backendUrl(UsersClient.SelfPath), headers = http.Headers(token.headers))
+    Request.Get(relativePath = UsersClient.SelfPath, headers = http.Headers(token.headers))
       .withResultType[UserInfo]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -163,7 +162,7 @@ class LoginClientImpl(tracking: TrackingService)
   override def getTeams(token: AccessToken, start: Option[TeamId]): ErrorOr[TeamsResponse] = {
     Request
       .Get(
-        url = backendUrl(TeamsPath),
+        relativePath = TeamsPath,
         headers = http.Headers(token.headers),
         queryParameters = queryParameters("size" -> TeamsPageSize, "start" -> start)
       )

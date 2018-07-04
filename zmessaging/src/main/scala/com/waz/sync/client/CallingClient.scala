@@ -18,8 +18,8 @@
 package com.waz.sync.client
 
 import com.waz.api.impl.ErrorResponse
-import com.waz.service.BackendConfig
 import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, Request}
 
 trait CallingClient {
@@ -27,16 +27,15 @@ trait CallingClient {
 }
 
 class CallingClientImpl(implicit
-                        backend: BackendConfig,
+                        urlCreator: UrlCreator,
                         client: HttpClient,
                         authRequestInterceptor: AuthRequestInterceptor) extends CallingClient {
 
   import CallingClientImpl._
-  import com.waz.service.BackendConfig.backendUrl
   import com.waz.znet2.http.HttpClient.dsl._
 
   override def getConfig: ErrorOrResponse[String] = {
-    Request.Get(url = backendUrl(CallConfigPath))
+    Request.Get(relativePath = CallConfigPath)
       .withResultType[String]
       .withErrorType[ErrorResponse]
       .executeSafe

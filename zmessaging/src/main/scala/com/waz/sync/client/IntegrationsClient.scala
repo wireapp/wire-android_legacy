@@ -23,10 +23,10 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.model.AssetMetaData.Image
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model._
-import com.waz.service.BackendConfig
 import com.waz.sync.client.ConversationsClient.ConversationsPath
 import com.waz.utils.{Json, JsonDecoder}
 import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
 import org.json.JSONObject
 
@@ -42,11 +42,10 @@ trait IntegrationsClient {
 }
 
 class IntegrationsClientImpl(implicit
-                             backendConfig: BackendConfig,
+                             urlCreator: UrlCreator,
                              httpClient: HttpClient,
                              authRequestInterceptor: AuthRequestInterceptor) extends IntegrationsClient {
 
-  import BackendConfig.backendUrl
   import HttpClient.dsl._
   import IntegrationsClient._
 
@@ -57,21 +56,21 @@ class IntegrationsClientImpl(implicit
     RawBodyDeserializer[JSONObject].map(json => AddRemoveBotResponse.unapply(JsonObjectResponse(json)).get)
 
   def searchIntegrations(startWith: String): ErrorOrResponse[Map[IntegrationData, Option[AssetData]]] = {
-    Request.Get(url = backendUrl(IntegrationsSearchPath), queryParameters = queryParameters("tags" -> DefaultTag, "start" -> startWith))
+    Request.Get(relativePath = IntegrationsSearchPath, queryParameters = queryParameters("tags" -> DefaultTag, "start" -> startWith))
       .withResultType[Map[IntegrationData, Option[AssetData]]]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   def getIntegration(pId: ProviderId, iId: IntegrationId): ErrorOrResponse[(IntegrationData, Option[AssetData])] = {
-    Request.Get(url = backendUrl(integrationPath(pId, iId)))
+    Request.Get(relativePath = integrationPath(pId, iId))
       .withResultType[(IntegrationData, Option[AssetData])]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   def getProvider(pId: ProviderId): ErrorOrResponse[ProviderData] = {
-    Request.Get(url = backendUrl(providerPath(pId)))
+    Request.Get(relativePath = providerPath(pId))
       .withResultType[ProviderData]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -81,7 +80,7 @@ class IntegrationsClientImpl(implicit
     debug(s"addBot: rConvId: $rConvId, providerId: $pId, integrationId: $iId")
     Request
       .Post(
-        url = backendUrl(s"$ConversationsPath/${rConvId.str}/bots"),
+        relativePath = s"$ConversationsPath/${rConvId.str}/bots",
         body = Json("provider" -> pId.str, "service" -> iId.str)
       )
       .withResultType[ConversationEvent]
@@ -91,7 +90,7 @@ class IntegrationsClientImpl(implicit
 
   def removeBot(rConvId: RConvId, botId: UserId): ErrorOrResponse[ConversationEvent] = {
     debug(s"removeBot: convId: $rConvId, botId: $botId")
-    Request.Delete(url = backendUrl(s"$ConversationsPath/${rConvId.str}/bots/$botId"))
+    Request.Delete(relativePath = s"$ConversationsPath/${rConvId.str}/bots/$botId")
       .withResultType[ConversationEvent]
       .withErrorType[ErrorResponse]
       .executeSafe

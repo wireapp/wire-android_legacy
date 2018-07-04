@@ -26,11 +26,11 @@ import com.waz.api.{OtrClientType, Verification}
 import com.waz.model.AccountData.Password
 import com.waz.model.UserId
 import com.waz.model.otr._
-import com.waz.service.BackendConfig
 import com.waz.sync.client.OtrClient.{ClientKey, MessageResponse}
 import com.waz.sync.otr.OtrMessage
 import com.waz.utils._
 import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 import com.wire.cryptobox.PreKey
 import com.wire.messages.nano.Otr
@@ -54,11 +54,10 @@ trait OtrClient {
 }
 
 class OtrClientImpl(implicit
-                    backendConfig: BackendConfig,
+                    urlCreator: UrlCreator,
                     httpClient: HttpClient,
                     authRequestInterceptor: AuthRequestInterceptor) extends OtrClient {
 
-  import BackendConfig.backendUrl
   import HttpClient.dsl._
   import MessagesClient.OtrMessageSerializer
   import OtrClient._
@@ -78,14 +77,14 @@ class OtrClientImpl(implicit
     RawBodyDeserializer[JSONArray].map(json => RemainingPreKeysResponse.unapply(JsonArrayResponse(json)).get)
 
   override def loadPreKeys(user: UserId): ErrorOrResponse[Seq[ClientKey]] = {
-    Request.Get(url = backendUrl(userPreKeysPath(user)))
+    Request.Get(relativePath = userPreKeysPath(user))
       .withResultType[UserPreKeysResponse]
       .withErrorType[ErrorResponse]
       .executeSafe(_.keys)
   }
 
   override def loadClientPreKey(user: UserId, client: ClientId): ErrorOrResponse[ClientKey] = {
-    Request.Get(url = backendUrl(clientPreKeyPath(user, client)))
+    Request.Get(relativePath = clientPreKeyPath(user, client))
       .withResultType[ClientKey]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -99,28 +98,28 @@ class OtrClientImpl(implicit
       }
     }
     verbose(s"loadPreKeys: $users")
-    Request.Post(url = backendUrl(prekeysPath), body = data)
+    Request.Post(relativePath = prekeysPath, body = data)
       .withResultType[PreKeysResponse]
       .withErrorType[ErrorResponse]
       .executeSafe(_.toMap)
   }
 
   override def loadClients(): ErrorOrResponse[Seq[Client]] = {
-    Request.Get(url = backendUrl(clientsPath))
+    Request.Get(relativePath = clientsPath)
       .withResultType[Seq[Client]]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def loadClients(user: UserId): ErrorOrResponse[Seq[Client]] = {
-    Request.Get(url = backendUrl(userClientsPath(user)))
+    Request.Get(relativePath = userClientsPath(user))
       .withResultType[Seq[Client]]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def loadRemainingPreKeys(id: ClientId): ErrorOrResponse[Seq[Int]] = {
-    Request.Get(url = backendUrl(clientKeyIdsPath(id)))
+    Request.Get(relativePath = clientKeyIdsPath(id))
       .withResultType[Seq[Int]]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -128,7 +127,7 @@ class OtrClientImpl(implicit
 
   override def deleteClient(id: ClientId, password: Password): ErrorOrResponse[Unit] = {
     val data = JsonEncoder { o => o.put("password", password.str) }
-    Request.Delete(url = backendUrl(clientPath(id)), body = data)
+    Request.Delete(relativePath = clientPath(id), body = data)
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -146,7 +145,7 @@ class OtrClientImpl(implicit
       o.put("cookie", userId.str)
       password.map(_.str).foreach(o.put("password", _))
     }
-    Request.Post(url = backendUrl(clientsPath), body = data)
+    Request.Post(relativePath = clientsPath, body = data)
       .withResultType[Client]
       .withErrorType[ErrorResponse]
       .executeSafe(_.copy(signalingKey = client.signalingKey, verified = Verification.VERIFIED)) //TODO Maybe we can add description for this?
@@ -157,7 +156,7 @@ class OtrClientImpl(implicit
       o.put("prekeys", new JSONArray)
       o.put("label", label)
     }
-    Request.Put(url = backendUrl(clientPath(id)), body = data)
+    Request.Put(relativePath = clientPath(id), body = data)
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -169,7 +168,7 @@ class OtrClientImpl(implicit
       sigKey.foreach(k => o.put("sigkeys", JsonEncoder.encode(k)))
       prekeys.foreach(ks => o.put("prekeys", JsonEncoder.arr(ks)))
     }
-    Request.Put(url = backendUrl(clientPath(id)), body = data)
+    Request.Put(relativePath = clientPath(id), body = data)
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -178,7 +177,7 @@ class OtrClientImpl(implicit
   override def broadcastMessage(content: OtrMessage, ignoreMissing: Boolean, receivers: Set[UserId] = Set.empty): ErrorOrResponse[MessageResponse] = {
     Request
       .Post(
-        url = backendUrl(BroadcastPath),
+        relativePath = BroadcastPath,
         queryParameters = queryParameters("ignore_missing" -> ignoreMissing, "report_missing" -> receivers.mkString(",")),
         body = content
       )

@@ -25,11 +25,11 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ProgressIndicator.{Callback, ProgressData}
 import com.waz.cache.{CacheEntry, CacheService, Expiration, LocalData}
 import com.waz.model.{Mime, _}
-import com.waz.service.BackendConfig
 import com.waz.utils.{IoUtils, JsonDecoder, JsonEncoder}
 import com.waz.znet2.http.HttpClient.dsl._
 import com.waz.znet2.http.HttpClient.{Progress, ProgressCallback}
 import com.waz.znet2.http.MultipartBodyMixed.Part
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 import org.json.JSONObject
 import org.threeten.bp.Instant
@@ -53,13 +53,12 @@ trait AssetClient {
 
 class AssetClientImpl(cacheService: CacheService)
                      (implicit
-                      backend: BackendConfig,
+                      urlCreator: UrlCreator,
                       client: HttpClient,
                       authRequestInterceptor: RequestInterceptor = RequestInterceptor.identity)
   extends AssetClient {
 
   import AssetClient._
-  import BackendConfig.backendUrl
 
   private def cacheEntryBodyDeserializer(key: Option[AESKey], sha: Option[Sha256]): RawBodyDeserializer[CacheEntry] =
     RawBodyDeserializer.create[CacheEntry] { body =>
@@ -111,7 +110,7 @@ class AssetClientImpl(cacheService: CacheService)
     implicit val rawBodySerializer: RawBodySerializer[LocalData] = localDataRawBodySerializer(mime)
     Request
       .Post(
-        url = backendUrl(AssetClient.AssetsV3Path),
+        relativePath = AssetClient.AssetsV3Path,
         body = MultipartBodyMixed(Part(metadata), Part(data, Headers("Content-MD5" -> md5(data))))
       )
 //      .withUploadCallback(progressCallback)

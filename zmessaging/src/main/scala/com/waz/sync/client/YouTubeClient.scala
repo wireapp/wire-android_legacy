@@ -24,10 +24,10 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.model.AssetData
 import com.waz.model.messages.media.MediaAssetData.{MediaWithImages, Thumbnail}
 import com.waz.model.messages.media._
-import com.waz.service.BackendConfig
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
 import org.json.JSONObject
 
@@ -42,11 +42,10 @@ trait YouTubeClient {
 }
 
 class YouTubeClientImpl(implicit
-                        backendConfig: BackendConfig,
+                        urlCreator: UrlCreator,
                         httpClient: HttpClient,
                         authRequestInterceptor: AuthRequestInterceptor) extends YouTubeClient {
 
-  import BackendConfig.backendUrl
   import HttpClient.dsl._
   import Threading.Implicits.Background
   import YouTubeClient._
@@ -55,7 +54,7 @@ class YouTubeClientImpl(implicit
     RawBodyDeserializer[JSONObject].map(json => TrackResponse.unapply(JsonObjectResponse(json)).get)
 
   override def loadVideo(id: String): ErrorOr[MediaWithImages[TrackData]] = {
-    Request.Get(url = backendUrl(resourceUrl("videos")), queryParameters = List("part" -> "snippet", "id" -> id))
+    Request.Get(relativePath = resourcePath("videos"), queryParameters = List("part" -> "snippet", "id" -> id))
       .withResultType[MediaWithImages[TrackData]]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -71,7 +70,7 @@ class YouTubeClientImpl(implicit
   override def loadPlaylist(id: String): ErrorOr[MediaWithImages[PlaylistData]] = {
     val playlistResponse =
       Request.Get(
-        url = backendUrl(resourceUrl("playlists")),
+        relativePath = resourcePath("playlists"),
         queryParameters = List("part" -> "snippet", "id" -> id)
       )
       .withResultType[MediaWithImages[PlaylistData]]
@@ -81,7 +80,7 @@ class YouTubeClientImpl(implicit
 
     val itemsResponse =
       Request.Get(
-        url = backendUrl(resourceUrl("playlistItems")),
+        relativePath = resourcePath("playlistItems"),
         queryParameters = queryParameters("part" -> "snippet", "playlistId" -> id, "maxResults" -> 50)
       )
       .withResultType[(Vector[TrackData], Set[AssetData])]
@@ -108,7 +107,7 @@ object YouTubeClient {
   val DomainNames = Set("youtube.com", "youtu.be")
   val Base = "/proxy/youtube/v3"
 
-  def resourceUrl(resource: String) = s"$Base/$resource"
+  def resourcePath(resource: String) = s"$Base/$resource"
 
   import JsonDecoder._
 

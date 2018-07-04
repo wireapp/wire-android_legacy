@@ -20,10 +20,10 @@ package com.waz.sync.client
 import com.waz.api.UsernameValidationError
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.Handle
-import com.waz.service.BackendConfig
 import com.waz.sync.client.HandlesClient.UsernameValidation
-import com.waz.utils.{JsonDecoder, JsonEncoder, _}
+import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 import org.json.JSONArray
 
@@ -37,11 +37,10 @@ trait HandlesClient {
 }
 
 class HandlesClientImpl(implicit
-                        backendConfig: BackendConfig,
+                        urlCreator: UrlCreator,
                         httpClient: HttpClient,
                         authRequestInterceptor: AuthRequestInterceptor) extends HandlesClient {
 
-  import BackendConfig.backendUrl
   import HandlesClient._
   import HttpClient.dsl._
   import com.waz.threading.Threading.Implicits.Background
@@ -55,7 +54,7 @@ class HandlesClientImpl(implicit
       o.put("return", 10)
     }
 
-    Request.Post(url = backendUrl(CheckMultipleAvailabilityPath), body = data)
+    Request.Post(relativePath = CheckMultipleAvailabilityPath, body = data)
       .withResultType[Seq[String]]
       .withErrorType[ErrorResponse]
       .executeSafe { availableHandles =>
@@ -69,7 +68,7 @@ class HandlesClientImpl(implicit
   }
 
   override def isUserHandleAvailable(handle: Handle): ErrorOrResponse[Boolean] = {
-    Request.Head(url = backendUrl(checkSingleAvailabilityPath(handle)))
+    Request.Head(relativePath = checkSingleAvailabilityPath(handle))
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
       .withResultType[Response[Unit]]
       .withErrorType[ErrorResponse]

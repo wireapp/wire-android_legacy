@@ -21,11 +21,11 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model._
-import com.waz.service.BackendConfig
 import com.waz.service.tracking.TrackingService.NoReporting
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 import org.json.{JSONArray, JSONObject}
 
@@ -41,11 +41,10 @@ trait UsersClient {
 }
 
 class UsersClientImpl(implicit
-                      backendConfig: BackendConfig,
+                      urlCreator: UrlCreator,
                       httpClient: HttpClient,
                       authRequestInterceptor: AuthRequestInterceptor) extends UsersClient {
 
-  import BackendConfig.backendUrl
   import HttpClient.dsl._
   import Threading.Implicits.Background
   import com.waz.sync.client.UsersClient._
@@ -57,7 +56,7 @@ class UsersClientImpl(implicit
     if (ids.isEmpty) CancellableFuture.successful(Right(Vector()))
     else {
       val result = Future.traverse(ids.grouped(IdsCountThreshold).toSeq) { ids => // split up every IdsCountThreshold user ids so that the request uri remains short enough
-        Request.Get(url = backendUrl(UsersPath), queryParameters = queryParameters("ids" -> ids.mkString(",")))
+        Request.Get(relativePath = UsersPath, queryParameters = queryParameters("ids" -> ids.mkString(",")))
           .withResultType[Seq[UserInfo]]
           .withErrorType[ErrorResponse]
           .execute
@@ -68,7 +67,7 @@ class UsersClientImpl(implicit
   }
 
   override def loadSelf(): ErrorOrResponse[UserInfo] = {
-    Request.Get(url = backendUrl(SelfPath))
+    Request.Get(relativePath = SelfPath)
       .withResultType[UserInfo]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -76,14 +75,14 @@ class UsersClientImpl(implicit
 
   override def updateSelf(info: UserInfo): ErrorOrResponse[Unit] = {
     debug(s"updateSelf: $info, picture: ${info.picture}")
-    Request.Put(url = backendUrl(SelfPath), body = info)
+    Request.Put(relativePath = SelfPath, body = info)
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def deleteAccount(password: Option[String] = None): ErrorOr[Unit] = {
-    Request.Delete(url = backendUrl(SelfPath), body = DeleteAccount(password))
+    Request.Delete(relativePath = SelfPath, body = DeleteAccount(password))
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -91,7 +90,7 @@ class UsersClientImpl(implicit
   }
 
   override def setSearchable(searchable: Boolean): ErrorOrResponse[Unit] = {
-    Request.Put(url = backendUrl(SearchablePath), body = JsonEncoder(_.put("searchable", searchable)))
+    Request.Put(relativePath = SearchablePath, body = JsonEncoder(_.put("searchable", searchable)))
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe

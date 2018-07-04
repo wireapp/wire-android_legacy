@@ -22,7 +22,6 @@ import java.net.URL
 import java.util.Locale
 
 import com.waz.threading.CancellableFuture
-import com.waz.utils.wrappers.URI
 
 import scala.concurrent.ExecutionContext
 
@@ -74,10 +73,10 @@ class Headers private (val headers: Map[String, String]) {
 
   lazy val isEmpty: Boolean = headers.isEmpty
 
-  def get(key: String): Option[String] = headers.get(Headers.toLower(key))
+  def get(key: String): Option[String]              = headers.get(Headers.toLower(key))
   def foreach(key: String)(f: String => Unit): Unit = get(key).foreach(f)
-  def delete(key: String): Headers = new Headers(headers - key)
-  def add(keyValue: (String, String)): Headers = new Headers(headers + keyValue)
+  def delete(key: String): Headers                  = new Headers(headers - key)
+  def add(keyValue: (String, String)): Headers      = new Headers(headers + keyValue)
 
   override def toString: String = s"Headers[$headers]"
 }
@@ -85,7 +84,8 @@ class Headers private (val headers: Map[String, String]) {
 object Headers {
   val empty                                      = Headers(Map.empty[String, String])
   def apply(entries: (String, String)*): Headers = apply(entries.toMap)
-  def apply(headers: Map[String, String]): Headers = new Headers(headers.map { case (key, value) => toLower(key) -> value })
+  def apply(headers: Map[String, String]): Headers =
+    new Headers(headers.map { case (key, value) => toLower(key) -> value })
   private def toLower(key: String) = key.toLowerCase(Locale.US)
 }
 
@@ -106,7 +106,6 @@ object RawMultipartBodyFormData {
   case class Part(body: RawBody, name: String, fileName: Option[String])
 }
 
-
 //TODO Maybe it would be better to move this models into http client dsl
 case class MultipartBodyMixed(parts: List[MultipartBodyMixed.Part[_]])
 object MultipartBodyMixed {
@@ -119,7 +118,9 @@ object MultipartBodyMixed {
 case class MultipartBodyFormData(parts: List[MultipartBodyFormData.Part[_]])
 object MultipartBodyFormData {
   def apply(parts: MultipartBodyFormData.Part[_]*): MultipartBodyFormData = new MultipartBodyFormData(parts.toList)
-  case class Part[T](body: T, name: String, fileName: Option[String] = None)(implicit val serializer: RawBodySerializer[T]) {
+  case class Part[T](body: T, name: String, fileName: Option[String] = None)(
+      implicit val serializer: RawBodySerializer[T]
+  ) {
     def serialize: RawBody = serializer.serialize(body)
   }
 }
@@ -128,64 +129,83 @@ object Request {
 
   type QueryParameter = (String, String)
 
-  def Head[T](
-      url: URL,
-      queryParameters: List[QueryParameter] = List.empty,
-      headers: Headers = Headers.empty,
-      body: T = EmptyBodyImpl: EmptyBody
-  )(implicit interceptor: RequestInterceptor = RequestInterceptor.identity): Request[T] =
-    create(Method.Head, url, queryParameters, headers, body)
+  trait UrlCreator {
+    def create(relativePath: String, queryParameters: List[QueryParameter]): URL
+  }
 
-  def Get(
-      url: URL,
-      queryParameters: List[QueryParameter] = List.empty,
-      headers: Headers = Headers.empty
-  )(implicit interceptor: RequestInterceptor = RequestInterceptor.identity): Request[EmptyBody] =
-    create(Method.Get, url, queryParameters, headers, EmptyBodyImpl)
+  object UrlCreator {
 
-  def Post[T](
-      url: URL,
-      queryParameters: List[QueryParameter] = List.empty,
-      headers: Headers = Headers.empty,
-      body: T = EmptyBodyImpl: EmptyBody
-  )(implicit interceptor: RequestInterceptor = RequestInterceptor.identity): Request[T] =
-    create(Method.Post, url, queryParameters, headers, body)
+    type RelativeUrl = String
 
-  def Put[T](
-      url: URL,
-      queryParameters: List[QueryParameter] = List.empty,
-      headers: Headers = Headers.empty,
-      body: T = EmptyBodyImpl: EmptyBody
-  )(implicit interceptor: RequestInterceptor = RequestInterceptor.identity): Request[T] =
-    create(Method.Put, url, queryParameters, headers, body)
+    def create(f: RelativeUrl => URL): UrlCreator = new UrlCreator {
+      override def create(relativePath: String, queryParameters: List[(String, String)]): URL = {
+        val relativeUrl =
+          if (queryParameters.isEmpty) relativePath
+          else relativePath + queryParameters.map { case (key, value) => s"$key=$value" }.mkString("?", "&", "")
 
-  def Delete[T](
-      url: URL,
-      queryParameters: List[QueryParameter] = List.empty,
-      headers: Headers = Headers.empty,
-      body: T = EmptyBodyImpl: EmptyBody
-  )(implicit interceptor: RequestInterceptor = RequestInterceptor.identity): Request[T] =
-    create(Method.Delete, url, queryParameters, headers, body)
+        f(relativeUrl)
+      }
+    }
 
-  private def create[T](
+    def simpleAppender(prefix: String): UrlCreator = create(relativeUrl => new URL(prefix + relativeUrl))
+  }
+
+  def create[T](
       method: Method,
       url: URL,
-      queryParameters: List[QueryParameter],
-      headers: Headers,
-      body: T
-  )(implicit interceptor: RequestInterceptor = RequestInterceptor.identity): Request[T] = {
-    //TODO Refactor this conversions
-    val urlWithParameters = new URL(
-      queryParameters
-        .foldLeft(URI.parse(url.toString).buildUpon) {
-          case (builder, (key, value)) =>
-            builder.appendQueryParameter(key, value)
-        }
-        .build
-        .toString
-    )
-    new Request(urlWithParameters, method, headers, body, interceptor)
-  }
+      headers: Headers = Headers.empty,
+      body: T = EmptyBodyImpl: EmptyBody
+  )(implicit interceptor: RequestInterceptor = RequestInterceptor.identity): Request[T] =
+    new Request[T](url, method, headers, body, interceptor)
+
+  def Head[T](
+      relativePath: String,
+      queryParameters: List[QueryParameter] = List.empty,
+      headers: Headers = Headers.empty,
+      body: T = EmptyBodyImpl: EmptyBody
+  )(implicit
+    urlCreator: UrlCreator,
+    interceptor: RequestInterceptor = RequestInterceptor.identity): Request[T] =
+    new Request[T](urlCreator.create(relativePath, queryParameters), Method.Head, headers, body, interceptor)
+
+  def Get(
+      relativePath: String,
+      queryParameters: List[QueryParameter] = List.empty,
+      headers: Headers = Headers.empty
+  )(implicit
+    urlCreator: UrlCreator,
+    interceptor: RequestInterceptor = RequestInterceptor.identity): Request[EmptyBody] =
+    new Request(urlCreator.create(relativePath, queryParameters), Method.Get, headers, EmptyBodyImpl, interceptor)
+
+  def Post[T](
+      relativePath: String,
+      queryParameters: List[QueryParameter] = List.empty,
+      headers: Headers = Headers.empty,
+      body: T = EmptyBodyImpl: EmptyBody
+  )(implicit
+    urlCreator: UrlCreator,
+    interceptor: RequestInterceptor = RequestInterceptor.identity): Request[T] =
+    new Request[T](urlCreator.create(relativePath, queryParameters), Method.Post, headers, body, interceptor)
+
+  def Put[T](
+      relativePath: String,
+      queryParameters: List[QueryParameter] = List.empty,
+      headers: Headers = Headers.empty,
+      body: T = EmptyBodyImpl: EmptyBody
+  )(implicit
+    urlCreator: UrlCreator,
+    interceptor: RequestInterceptor = RequestInterceptor.identity): Request[T] =
+    new Request[T](urlCreator.create(relativePath, queryParameters), Method.Put, headers, body, interceptor)
+
+  def Delete[T](
+      relativePath: String,
+      queryParameters: List[QueryParameter] = List.empty,
+      headers: Headers = Headers.empty,
+      body: T = EmptyBodyImpl: EmptyBody
+  )(implicit
+    urlCreator: UrlCreator,
+    interceptor: RequestInterceptor = RequestInterceptor.identity): Request[T] =
+    new Request(urlCreator.create(relativePath, queryParameters), Method.Delete, headers, body, interceptor)
 
 }
 
