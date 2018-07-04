@@ -43,9 +43,9 @@ import scala.concurrent.duration.{FiniteDuration, _}
 import scala.util.Success
 
 trait MessagesService {
-  def addTextMessage(convId: ConvId, content: String, mentions: Map[UserId, String] = Map.empty): Future[MessageData]
+  def addTextMessage(convId: ConvId, content: String, exp: Option[Option[FiniteDuration]] = None): Future[MessageData]
   def addKnockMessage(convId: ConvId, selfUserId: UserId): Future[MessageData]
-  def addAssetMessage(convId: ConvId, asset: AssetData): Future[MessageData]
+  def addAssetMessage(convId: ConvId, asset: AssetData, exp: Option[Option[FiniteDuration]] = None): Future[MessageData]
   def addLocationMessage(convId: ConvId, content: Location): Future[MessageData]
 
   def addMissedCallMessage(rConvId: RConvId, from: UserId, time: RemoteInstant): Future[Option[MessageData]]
@@ -165,12 +165,12 @@ class MessagesServiceImpl(selfUserId:   UserId,
     }
   }
 
-  override def addTextMessage(convId: ConvId, content: String, mentions: Map[UserId, String] = Map.empty) = {
-    verbose(s"addTextMessage($convId, ${content.take(4)}, $mentions)")
-    val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
+  override def addTextMessage(convId: ConvId, content: String, exp: Option[Option[FiniteDuration]] = None) = {
+    verbose(s"addTextMessage($convId, ${content.take(4)}")
+    val (tpe, ct) = MessageData.messageContent(content, weblinkEnabled = true)
     verbose(s"parsed content: $ct")
     val id = MessageId()
-    updater.addLocalMessage(MessageData(id, convId, tpe, selfUserId, ct, protos = Seq(GenericMessage(id.uid, Text(content, mentions, Nil))))) // FIXME: links
+    updater.addLocalMessage(MessageData(id, convId, tpe, selfUserId, ct, protos = Seq(GenericMessage(id.uid, Text(content, Map.empty, Nil)))), exp = exp) // FIXME: links
   }
 
   override def addLocationMessage(convId: ConvId, content: Location) = {
@@ -179,7 +179,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
     updater.addLocalMessage(MessageData(id, convId, Type.LOCATION, selfUserId, protos = Seq(GenericMessage(id.uid, content))))
   }
 
-  override def addAssetMessage(convId: ConvId, asset: AssetData) = {
+  override def addAssetMessage(convId: ConvId, asset: AssetData, exp: Option[Option[FiniteDuration]] = None) = {
     val tpe = asset match {
       case AssetData.IsImage() => Message.Type.ASSET
       case AssetData.IsVideo() => Message.Type.VIDEO_ASSET
@@ -187,7 +187,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
       case _                   => Message.Type.ANY_ASSET
     }
     val mid = MessageId(asset.id.str)
-    updater.addLocalMessage(MessageData(mid, convId, tpe, selfUserId, protos = Seq(GenericMessage(mid.uid, Asset(asset)))))
+    updater.addLocalMessage(MessageData(mid, convId, tpe, selfUserId, protos = Seq(GenericMessage(mid.uid, Asset(asset)))), exp = exp)
   }
 
   override def addRenameConversationMessage(convId: ConvId, from: UserId, name: String) = {

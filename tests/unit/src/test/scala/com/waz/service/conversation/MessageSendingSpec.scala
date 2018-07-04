@@ -66,7 +66,6 @@ class MessageSendingSpec extends AndroidFreeSpec { test =>
 
       (messages.addTextMessage _).expects(conv.id, "test", Map.empty[UserId, String]).once().returning(Future.successful(msgData))
 
-      (convsContent.convById _).expects(conv.id).once().returning(Future.successful(Some(conv)))
       (convsContent.updateConversationLastRead _).expects(conv.id, msgData.time).once().returning(Future.successful(Some((conv, conv))))
 
 

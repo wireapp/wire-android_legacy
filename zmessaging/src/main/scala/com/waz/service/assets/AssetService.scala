@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.content.{ContentResolver, Context}
+import android.media.ExifInterface
 import android.os.Environment
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
@@ -30,6 +31,7 @@ import com.waz.api
 import com.waz.api.ProgressIndicator.State
 import com.waz.api.impl.ProgressIndicator.ProgressData
 import com.waz.api.impl._
+import com.waz.bitmap.BitmapUtils
 import com.waz.cache.{CacheEntry, CacheService, Expiration, LocalData}
 import com.waz.content.WireContentProvider.CacheUri
 import com.waz.content._
@@ -41,9 +43,11 @@ import com.waz.model.ErrorData.AssetError
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service.ErrorsService
+import com.waz.service.assets.AssetService.RawAssetInput
+import com.waz.service.assets.AssetService.RawAssetInput._
 import com.waz.service.assets.GlobalRecordAndPlayService.AssetMediaKey
 import com.waz.service.downloads._
-import com.waz.service.images.ImageAssetGenerator
+import com.waz.service.images.{ImageAssetGenerator, ImageLoader}
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
@@ -52,7 +56,7 @@ import com.waz.utils.events.Signal
 import com.waz.utils.wrappers.{Bitmap, URI}
 
 import scala.collection.breakOut
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.concurrent.Future.successful
 import scala.concurrent.duration._
 
@@ -64,13 +68,17 @@ trait AssetService {
   def cancelUpload(id: AssetId, msg: MessageId): Future[Unit]
   def markUploadFailed(id: AssetId, status: AssetStatus.Syncable): Future[Any] // should be: Future[SyncId]
   def addImageAsset(image: com.waz.api.ImageAsset, isProfilePic: Boolean = false): Future[AssetData]
+
+  def createImageFrom(input: RawAssetInput, isProfilePic: Boolean): Future[Option[AssetData]]
   def createImageFrom(bytes: Array[Byte], isProfilePic: Boolean): Future[AssetData]
   def createImageFrom(uri: URI, isProfilePic: Boolean): Future[AssetData]
+  def createImageFrom(bitmap: Bitmap, isProfilePic: Boolean, orientation: Int = ExifInterface.ORIENTATION_NORMAL): Future[AssetData]
+
   def addImage(image: AssetData, isProfilePic: Boolean = false): Future[AssetData]
   def updateAssets(data: Seq[AssetData]): Future[Set[AssetData]]
   def getLocalData(id: AssetId): CancellableFuture[Option[LocalData]]
   def getAssetData(id: AssetId): Future[Option[AssetData]]
-  def addAsset(a: AssetForUpload, conv: RConvId): Future[AssetData]
+  def addAsset(a: AssetForUpload): Future[AssetData]
   def saveAssetToDownloads(id: AssetId): Future[Option[File]]
   def saveAssetToDownloads(asset: AssetData): Future[Option[File]]
   def updateAsset(id: AssetId, updater: AssetData => AssetData): Future[Option[AssetData]]
@@ -93,6 +101,8 @@ class AssetServiceImpl(storage:         AssetsStorage,
                        sync:            SyncServiceHandle,
                        media:           GlobalRecordAndPlayService,
                        prefs:           GlobalPreferences) extends AssetService {
+
+  import AssetService._
 
   import com.waz.threading.Threading.Implicits.Background
   import com.waz.utils.events.EventContext.Implicits.global
@@ -163,22 +173,52 @@ class AssetServiceImpl(storage:         AssetsStorage,
 
   def addImageAsset(image: com.waz.api.ImageAsset, isProfilePic: Boolean = false): Future[AssetData] = {
     image match {
-        case img: ImageAsset =>
-          val asset = img.data.copy(convId = None)
-          val ref = new AtomicReference(image) // keep a strong reference until asset generation completes
-          addImage(asset, isProfilePic).andThen({ case _ => ref set null })
-        case _ => Future.failed(new IllegalArgumentException(s"Unsupported ImageAsset: $image"))
-      }
+      case img: ImageAsset =>
+        val asset = img.data.copy(convId = None)
+        val ref = new AtomicReference(image) // keep a strong reference until asset generation completes
+        addImage(asset, isProfilePic).andThen({ case _ => ref set null })
+      case _ => Future.failed(new IllegalArgumentException(s"Unsupported ImageAsset: $image"))
+    }
   }
 
-  def createImageFrom(bytes: Array[Byte], isProfilePic: Boolean) = {
+  override def createImageFrom(input: RawAssetInput, isProfilePic: Boolean): Future[Option[AssetData]] = {
+    input match {
+      case ByteInput(bytes)   => createImageFrom(bytes, isProfilePic).map(Some(_))
+      case UriInput(uri)      => createImageFrom(uri, isProfilePic).map(Some(_))
+      case BitmapInput(bm)    => createImageFrom(bm, isProfilePic).map(Some(_))
+      case WireAssetInput(id) => getAssetData(id)
+    }
+  }
+
+  override def createImageFrom(bytes: Array[Byte], isProfilePic: Boolean) = {
     val asset = AssetData.newImageAsset(tag = Medium).copy(sizeInBytes = bytes.length, data = Some(bytes))
     addImage(asset, isProfilePic)
   }
 
-  def createImageFrom(uri: URI, isProfilePic: Boolean) = {
+  override def createImageFrom(uri: URI, isProfilePic: Boolean) = {
     val asset = AssetData.newImageAssetFromUri(tag = Medium, uri = uri)
     addImage(asset, isProfilePic)
+  }
+
+  override def createImageFrom(bitmap: Bitmap, isProfilePic: Boolean, orientation: Int = ExifInterface.ORIENTATION_NORMAL) = {
+    assert(orientation >= 0 && orientation <= 8, "rotation should be ExifInterface.ORIENTATION_* constant (values in range: [0-8])")
+
+    val mime   = Mime(BitmapUtils.getMime(bitmap))
+    val (w, h) = if (ImageLoader.Metadata.shouldSwapDimens(orientation)) (bitmap.getHeight, bitmap.getWidth) else (bitmap.getWidth, bitmap.getHeight)
+
+    val asset = AssetData.newImageAsset(tag = Medium).copy(sizeInBytes = bitmap.getByteCount)
+
+    val imageData = loader.loadFromBitmap(asset.id, bitmap, orientation)
+
+    addImage(asset.copy(
+      mime = mime,
+      metaData = Some(AssetMetaData.Image(Dim2(w, h), Medium)),
+      data = {
+        verbose(s"data requested, compress completed: ${imageData.isCompleted}")
+        // XXX: this is ugly, but will only be accessed from bg thread and very rarely, so we should be fine with that hack
+        LoggedTry(Await.result(imageData, 15.seconds)).toOption
+      }
+    ), isProfilePic)
   }
 
   def addImage(asset: AssetData, isProfilePic: Boolean = false): Future[AssetData] = {
@@ -218,7 +258,7 @@ class AssetServiceImpl(storage:         AssetsStorage,
     case _ => true
   }
 
-  def addAsset(a: AssetForUpload, conv: RConvId): Future[AssetData] = {
+  def addAsset(a: AssetForUpload): Future[AssetData] = {
     val uri = a match {
       case ContentUriAssetForUpload(_, uri) => Some(uri)
       case _ => None
@@ -355,6 +395,15 @@ class AssetServiceImpl(storage:         AssetsStorage,
 }
 
 object AssetService {
+
+  sealed trait RawAssetInput
+
+  object RawAssetInput {
+    case class UriInput(uri: URI) extends RawAssetInput
+    case class ByteInput(bytes: Array[Byte]) extends RawAssetInput
+    case class BitmapInput(bitmap: Bitmap) extends RawAssetInput
+    case class WireAssetInput(id: AssetId) extends RawAssetInput
+  }
 
   lazy val SaveImageDir = {
     val path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + File.separator

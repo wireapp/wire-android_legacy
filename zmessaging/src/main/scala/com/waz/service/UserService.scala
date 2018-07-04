@@ -17,8 +17,6 @@
  */
 package com.waz.service
 
-import java.util.Date
-
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.impl.AccentColor
@@ -29,18 +27,17 @@ import com.waz.model._
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.UserService._
 import com.waz.service.assets.AssetService
+import com.waz.service.assets.AssetService.RawAssetInput
+import com.waz.service.assets.AssetService.RawAssetInput.{ByteInput, UriInput}
 import com.waz.service.conversation.ConversationsListStateService
 import com.waz.service.push.PushService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.UserSearchClient.UserSearchEntry
-import com.waz.sync.client.{CredentialsUpdateClient, UsersClient}
+import com.waz.sync.client.{CredentialsUpdateClient, ErrorOr, UsersClient}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
+import com.waz.utils._
 import com.waz.utils.events._
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
-import com.waz.utils._
-import com.waz.sync.client.ErrorOr
-import com.waz.utils.{RichInstant, _}
-import org.threeten.bp.Instant
 
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -83,6 +80,7 @@ trait UserService {
   def updateAvailability(availability: Availability): Future[Unit]
 
   def storeAvailabilities(availabilities: Map[UserId, Availability]): Future[Seq[(UserData, UserData)]]
+  def updateSelfPicture(input: RawAssetInput): Future[Unit]
   def updateSelfPicture(image: com.waz.api.ImageAsset): Future[Unit]
   def updateSelfPicture(image: Array[Byte]): Future[Unit]
   def updateSelfPicture(image: URI): Future[Unit]
@@ -312,6 +310,15 @@ class UserServiceImpl(selfUserId:        UserId,
     verbose(s"storeAvailabilities($availabilities)")
     usersStorage.updateAll2(availabilities.keySet, u => availabilities.get(u.id).fold(u)(av => u.copy(availability = av)))
   }
+
+  override def updateSelfPicture(input: RawAssetInput) =
+    input match {
+      case ByteInput(bytes) => updateSelfPicture(bytes)
+      case UriInput(uri)    => updateSelfPicture(uri)
+      case _ => //TODO define other cases
+        warn(s"Image input type: $input not supported")
+        Future.successful({})
+    }
 
   override def updateSelfPicture(image: com.waz.api.ImageAsset) =
     updateAndSyncSelfPicture {
