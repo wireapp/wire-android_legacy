@@ -116,6 +116,8 @@ object Preferences {
         case e => Some(e.millis)
       }
 
+      implicit lazy val SetCodec = apply[Set[Int]](s => s.mkString(","), s => s.split(",").map(java.lang.Integer.parseInt).toSet, Set.empty[Int])
+
       implicit lazy val FiniteDurationCodec = apply[Option[FiniteDuration]](d => String.valueOf(d.getOrElse(0.millis).toMillis), parseFiniteDurationOpt, None)
 
       implicit lazy val AuthTokenCodec = apply[Option[AccessToken]] (
@@ -433,6 +435,8 @@ object UserPreferences {
   lazy val VBREnabled                       = PrefKey[Boolean]("variable_bit_rate_enabled", customDefault = true)
   lazy val VibrateEnabled                   = PrefKey[Boolean]("vibrate_enabled")
   lazy val SendButtonEnabled                = PrefKey[Boolean]("send_button_enabled", customDefault = true)
+
+  lazy val CurrentNotifications             = PrefKey[Set[Int]]("current_notifications", customDefault = Set.empty[Int])
 
   //increment number to perform slow sync on particular type
   lazy val ShouldSyncConversations          = PrefKey[Boolean]("should_sync_conversations_1", customDefault = true)
