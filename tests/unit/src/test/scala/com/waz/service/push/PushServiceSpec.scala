@@ -27,6 +27,7 @@ import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.otr.OtrService
 import com.waz.service.push.PushNotificationEventsStorage.EventHandler
+import com.waz.service.push.PushService.FetchFromIdle
 import com.waz.service.{EventPipeline, NetworkModeService, UiLifeCycle}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
@@ -120,7 +121,7 @@ class PushServiceSpec extends AndroidFreeSpec { test =>
         CancellableFuture.successful(Right( LoadNotificationsResponse(Vector(pushNotification), hasMore = false, None) ))
       )
 
-      getService().syncHistory("cloud messaging push")
+      getService().syncHistory(FetchFromIdle(Some(Uid())))
       result(idPref.signal.filter(_.contains(pushNotification.id)).head)
     }
 
@@ -333,7 +334,7 @@ class PushServiceSpec extends AndroidFreeSpec { test =>
       (client.loadNotifications _).expects(Some(pushNotification.id), *).never()
       val service = getService()
 
-      service.syncHistory("cloud message push")
+      service.syncHistory(FetchFromIdle(Some(Uid())))
 
       await(service.waitingForRetry.filter(_ == true).head)
       wsConnected ! true

@@ -22,9 +22,10 @@ import com.evernote.android.job._
 import com.evernote.android.job.util.support.PersistableBundleCompat
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.{error, verbose}
-import com.waz.model.UserId
+import com.waz.model.{Uid, UserId}
 import com.waz.service.AccountsService.InBackground
 import com.waz.service.ZMessaging
+import com.waz.service.push.PushService.FetchFromJob
 import com.waz.threading.Threading
 import com.waz.utils.returning
 
@@ -40,16 +41,17 @@ class FetchJob extends Job {
 
   override def onRunJob(params: Job.Params) = {
     val account = Option(params.getExtras.getString(AccountExtra, null)).map(UserId)
+    val notification = Option(params.getExtras.getString(NotificationExtra, null)).map(Uid(_))
     verbose(s"onStartJob, account: $account")
-    def syncAccount(userId: UserId): Future[Unit] =
+    def syncAccount(userId: UserId, nId: Option[Uid]): Future[Unit] =
       for {
         Some(zms) <- ZMessaging.accountsService.flatMap(_.getZms(userId))
-        _ <- zms.push.syncHistory("fetch job", withRetries = false)
+        _ <- zms.push.syncHistory(FetchFromJob(nId), withRetries = false)
       } yield {}
 
     val result = account.fold(Future.successful({})) { id =>
       ZMessaging.accountsService.flatMap(_.accountState(id).head).flatMap {
-        case InBackground => syncAccount(id)
+        case InBackground => syncAccount(id, notification)
         case _            =>
           verbose("account active, no point in executing fetch job")
           Future.successful({})
@@ -71,11 +73,12 @@ object FetchJob {
 
   val Tag = "FetchJob"
   val AccountExtra = "accounts"
+  val NotificationExtra = "notification"
 
   val MaxExecutionDelay = 30.seconds
   val InitialBackoffDelay = 500.millis
 
-  def apply(userId: UserId): Unit = {
+  def apply(userId: UserId, nId: Option[Uid]): Unit = {
     val tag = s"$Tag#${userId.str}"
 
     val manager = JobManager.instance()
@@ -89,9 +92,14 @@ object FetchJob {
     }.nonEmpty
 
     if (!(hasPendingRequest || currentJob.isDefined)) {
+      val args = returning(new PersistableBundleCompat()) { b =>
+        b.putString(AccountExtra, userId.str)
+        b.putString(NotificationExtra, nId.map(_.str).orNull)
+      }
+
       new JobRequest.Builder(tag)
         .setBackoffCriteria(InitialBackoffDelay.toMillis, JobRequest.BackoffPolicy.EXPONENTIAL)
-        .setExtras(returning(new PersistableBundleCompat())(_.putString(AccountExtra, userId.str)))
+        .setExtras(args)
         .startNow()
         .build()
         .schedule()
