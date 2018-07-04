@@ -89,8 +89,7 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
       content match {
         case TextContent(t) =>
           zms.head.flatMap(z => RichFuture.traverseSequential(convs.toSeq){ convId =>
-            z.convsUi.setEphemeral(convId, expiration).flatMap(_ =>
-              z.convsUi.sendMessage(convId, new MessageContent.Text(t)))
+            z.convsUi.setEphemeral(convId, expiration).flatMap(_ => z.convsUi.sendMessage(convId, t))
           }).map(_ => true)
 
         case uriContent =>
@@ -98,7 +97,7 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
             RichFuture.traverseSequential(uriContent.uris) { uri =>
               zms.head.flatMap(z =>
                 z.convsUi.setEphemeral(conv, expiration).flatMap(_ =>
-                  z.convsUi.sendMessage(conv, new MessageContent.Asset(AssetFactory.fromContentUri(uri), assetErrorHandler(activity)))))
+                  z.convsUi.sendMessage(conv, uri, assetErrorHandler(activity))))
             }
           }.map (_ => true)
       }

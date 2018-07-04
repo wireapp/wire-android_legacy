@@ -195,7 +195,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
       for {
         cId <- conversationController.currentConvId.head
         cs <- zms.head.map(_.convsUi)
-        m <- cs.sendMessage(cId, new MessageContent.Text(msg))
+        m <- cs.sendMessage(cId, msg)
       } {
         m foreach { msg =>
           onMessageSent ! msg
