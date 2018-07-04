@@ -32,6 +32,7 @@ import com.waz.api.impl.ProgressIndicator.Callback
 import com.waz.bitmap.video.VideoTranscoder
 import com.waz.bitmap.{BitmapDecoder, BitmapUtils}
 import com.waz.cache.{CacheEntry, CacheService}
+import com.waz.content.AssetsStorage
 import com.waz.content.UserPreferences.DownloadImagesAlways
 import com.waz.content.WireContentProvider.CacheUri
 import com.waz.model.AssetData.{RemoteData, WithExternalUri, WithProxy, WithRemoteData}
@@ -48,7 +49,7 @@ import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.wrappers.{Context, URI}
 import com.waz.utils.{CancellableStream, returning}
 import com.waz.znet2.http
-import com.waz.znet2.http.RequestInterceptor
+import com.waz.znet2.http.{RequestInterceptor, ResponseCode}
 
 import scala.concurrent.{Future, Promise}
 import scala.util.control.NonFatal
@@ -65,6 +66,7 @@ trait AssetLoader {
 }
 
 class AssetLoaderImpl(context:         Context,
+                      assetStorage:    Option[AssetsStorage],
                       network:         NetworkModeService,
                       client:          AssetClient,
                       audioTranscoder: AudioTranscoder,
@@ -102,7 +104,7 @@ class AssetLoaderImpl(context:         Context,
   override val onDownloadDone     = EventStream[AssetId]()
   override val onDownloadFailed   = EventStream[(AssetId, ErrorResponse)]()
 
-  override def loadAsset(asset: AssetData, callback: Callback, force: Boolean) = {
+  override def loadAsset(asset: AssetData, callback: Callback, force: Boolean): CancellableFuture[CacheEntry] = {
     verbose(s"loadAsset: ${asset.id}, isDownloadable?: ${asset.isDownloadable}, force?: $force, mime: ${asset.mime}")
     returning(asset match {
       case _ if asset.mime == Mime.Audio.PCM => transcodeAudio(asset, callback)
@@ -173,6 +175,10 @@ class AssetLoaderImpl(context:         Context,
     }).flatMap {
       case Right(entry) => finish(asset, entry)
       case Left(err) =>
+        if (err.code == ResponseCode.NotFound) {
+          verbose(s"Asset not found. Removing from local storage $asset")
+          assetStorage.foreach(storage => storage.remove(asset.id))
+        }
         if (err.isFatal) onDownloadFailed ! (asset.id, err)
         CancellableFuture.failed(DownloadFailedException(err))
     }
@@ -234,7 +240,7 @@ class AssetLoaderImpl(context:         Context,
     addStreamToCache(cacheKey, mime, name, openStream(uri))
   }
 
-  override def loadFromBitmap(assetId: AssetId, bitmap: Bitmap, orientation: Int = ExifInterface.ORIENTATION_NORMAL) = Future {
+  override def loadFromBitmap(assetId: AssetId, bitmap: Bitmap, orientation: Int = ExifInterface.ORIENTATION_NORMAL): Future[Array[Byte]] = Future {
     val req = BitmapRequest.Regular(bitmap.getWidth)
     val mime = Mime(BitmapUtils.getMime(bitmap))
 

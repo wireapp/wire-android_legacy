@@ -137,7 +137,7 @@ class GlobalModuleImpl(val context: AContext, val backend: BackendConfig) extend
 
   //Not to be used in zms instances
   lazy val globalAssetClient:   AssetClient                      = new AssetClientImpl(cache)(backend, httpClientForLongRunning)
-  lazy val globalLoader:        AssetLoader                      = new AssetLoaderImpl(context, network, globalAssetClient, audioTranscoder, videoTranscoder, cache, imageCache, bitmapDecoder, trackingService)(backend, requestInterceptor)
+  lazy val globalLoader:        AssetLoader                      = new AssetLoaderImpl(context, None, network, globalAssetClient, audioTranscoder, videoTranscoder, cache, imageCache, bitmapDecoder, trackingService)(backend, requestInterceptor)
   //end of warning...
 
   lazy val tempFiles:           TempFileService                  = wire[TempFileService]
