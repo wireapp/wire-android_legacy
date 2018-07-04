@@ -126,13 +126,19 @@ case class MissedPushEvent(time:            Instant,
                            countMissed:     Int,
                            inBackground:    Boolean, //will help rull out false-positivie - missed pushes in foreground may be legitimate misses!
                            networkMode:     NetworkMode,
-                           networkOperator: String) extends TrackingEvent {
+                           networkOperator: String,
+                           eventTypes:      Map[String, Int],
+                           lastEventId:     String) extends TrackingEvent {
   override val name = "debug.push_missed"
   override val props = Some(returning(new JSONObject()) { o =>
     o.put("time", time.toString)
     o.put("missed_count", countMissed)
     o.put("in_background", inBackground)
     o.put("network_mode", networkMode)
+    eventTypes.foreach { case (e, f) => o.put(s"event.$e", f) }
+
+    //TODO: remove before going into Prod
+    o.put("last_not_id", lastEventId)
   })
 }
 

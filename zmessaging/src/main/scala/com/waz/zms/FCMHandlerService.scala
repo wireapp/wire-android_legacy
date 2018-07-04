@@ -17,26 +17,23 @@
  */
 package com.waz.zms
 
-import android.util.Base64
 import com.google.firebase.messaging.{FirebaseMessagingService, RemoteMessage}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.model._
 import com.waz.service.AccountsService.InForeground
 import com.waz.service.ZMessaging.clock
-import com.waz.service.conversation.ConversationsContentUpdater
-import com.waz.service.otr.OtrService
+import com.waz.service.push.PushService.FetchFromIdle
 import com.waz.service.push.{PushService, ReceivedPushData, ReceivedPushStorage}
 import com.waz.service.tracking.TrackingService.exception
 import com.waz.service.{AccountsService, NetworkModeService, ZMessaging}
-import com.waz.sync.client.PushNotification
 import com.waz.utils.{JsonDecoder, LoggedTry, RichInstant, Serialized}
 import org.json
-import org.json.JSONObject
 import org.threeten.bp.Instant
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
+import scala.util.Random
 
 /**
   * For more information, see: https://firebase.google.com/docs/cloud-messaging/android/receive
@@ -104,30 +101,16 @@ object FCMHandlerService {
   val UserKeyMissingMsg = "Notification did not contain user key - discarding"
 
   class FCMHandler(userId:         UserId,
-                   otrService:     OtrService,
                    accounts:       AccountsService,
                    push:           PushService,
                    network:        NetworkModeService,
                    receivedPushes: ReceivedPushStorage,
-                   convsContent:   ConversationsContentUpdater,
                    sentTime:       Instant) {
 
     import com.waz.threading.Threading.Implicits.Background
 
     def handleMessage(data: Map[String, String]): Future[Unit] = {
       data match {
-        case CipherNotification(content, mac) =>
-          decryptNotification(content, mac) flatMap {
-            case Some(notification) =>
-              addNotificationToProcess(Some(notification.id))
-            case None =>
-              warn(s"gcm decoding failed: triggering notification history sync in case this notification is for us.")
-              addNotificationToProcess(None)
-          }
-
-        case PlainNotification(notification) =>
-          addNotificationToProcess(Some(notification.id))
-
         case NoticeNotification(nId) =>
           addNotificationToProcess(Some(nId))
 
@@ -137,12 +120,6 @@ object FCMHandlerService {
       }
     }
 
-    private def decryptNotification(content: Array[Byte], mac: Array[Byte]) =
-      otrService.decryptCloudMessage(content, mac) map {
-        case Some(DecryptedNotification(notification)) => Some(notification)
-        case _ => None
-      }
-
     private def addNotificationToProcess(nId: Option[Uid]): Future[Unit] =
       for {
         false <- accounts.accountState(userId).map(_ == InForeground).head
@@ -150,15 +127,17 @@ object FCMHandlerService {
         nw    <- network.networkMode.head
         now   = clock.instant + drift
         idle  = network.isDeviceIdleMode
-        _ <- receivedPushes.insert(
-          ReceivedPushData(
-            nId.getOrElse(Uid()),
-            sentTime.until(now),
-            now,
-            nw,
-            network.getNetworkOperatorName,
-            idle
-          ))
+        _ <- nId.fold(Future.successful({})) { nId =>
+          receivedPushes.insert(
+            ReceivedPushData(
+              nId,
+              sentTime.until(now),
+              now,
+              nw,
+              network.getNetworkOperatorName,
+              idle
+            )).map(_ => {})
+        }
 
         /**
           * Warning: Here we want to trigger a direct fetch if we are in doze mode - when we get an FCM in doze mode, it is
@@ -169,36 +148,18 @@ object FCMHandlerService {
           * online at once. For that reason, we start a job which can run for as long as we need to avoid the app from being
           * killed mid-processing messages.
           */
-        _ <- if (idle) push.syncHistory("fetch from device idle") else Serialized.future("fetch")(Future(FetchJob(userId)))
+        _ <- if (idle) push.syncHistory(FetchFromIdle(nId)) else Serialized.future("fetch")(Future(FetchJob(userId, nId)))
       } yield {}
   }
 
   object FCMHandler {
     def apply(zms: ZMessaging, data: Map[String, String], sentTime: Instant): Future[Unit] =
-      new FCMHandler(zms.selfUserId, zms.otrService, zms.accounts, zms.push, zms.network, zms.receivedPushStorage, zms.convsContent, sentTime).handleMessage(data)
+      new FCMHandler(zms.selfUserId, zms.accounts, zms.push, zms.network, zms.receivedPushStorage, sentTime).handleMessage(data)
   }
 
   val DataKey = "data"
   val UserKey = "user"
   val TypeKey = "type"
-  val MacKey  = "mac"
-
-  object CipherNotification {
-    def unapply(data: Map[String, String]): Option[(Array[Byte], Array[Byte])] =
-      (data.get(TypeKey), data.get(DataKey), data.get(MacKey)) match {
-        case (Some("otr" | "cipher"), Some(content), Some(mac)) =>
-          LoggedTry((Base64.decode(content, Base64.NO_WRAP | Base64.NO_CLOSE), Base64.decode(mac, Base64.NO_WRAP | Base64.NO_CLOSE))).toOption
-        case _ => None
-      }
-  }
-
-  object PlainNotification {
-    def unapply(data: Map[String, String]): Option[PushNotification] =
-      (data.get(TypeKey), data.get(DataKey)) match {
-        case (Some("plain"), Some(content)) => LoggedTry(PushNotification.NotificationDecoder(new JSONObject(content))).toOption
-        case _ => None
-      }
-  }
 
   object NoticeNotification {
     def unapply(data: Map[String, String]): Option[Uid] =
@@ -206,9 +167,5 @@ object FCMHandlerService {
         case (Some("notice"), Some(content)) => LoggedTry(JsonDecoder.decodeUid('id)(new json.JSONObject(content))).toOption
         case _ => None
     }
-  }
-
-  object DecryptedNotification {
-    def unapply(js: JSONObject): Option[PushNotification] = LoggedTry(PushNotification.NotificationDecoder(js.getJSONObject("data"))).toOption
   }
 }
