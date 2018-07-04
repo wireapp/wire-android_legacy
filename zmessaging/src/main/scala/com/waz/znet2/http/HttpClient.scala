@@ -50,18 +50,18 @@ object HttpClient {
       * Just convenient method for the case when query parameter is optional
       * This can be refactored after dotty will be released http://dotty.epfl.ch/docs/reference/union-types.html
       */
-    def queryParameters(params: (String, Any)*): List[QueryParameter] = {
-      params.toList.flatMap { case (name, value) =>
-        value match {
-          case optionalValue: Option[Any] =>
-            optionalValue.map(_.toString).map(name -> _).map(List(_)).getOrElse(List.empty)
-          case simpleValue: Any =>
-            List(name -> simpleValue.toString)
-        }
+    def queryParameters(params: (String, Any)*): List[QueryParameter] =
+      params.toList.flatMap {
+        case (name, value) =>
+          value match {
+            case optionalValue: Option[Any] =>
+              optionalValue.map(_.toString).map(name -> _).map(List(_)).getOrElse(List.empty)
+            case simpleValue: Any =>
+              List(name -> simpleValue.toString)
+          }
       }
-    }
 
-    implicit class RichRequest[T: RequestSerializer](request: Request[T]) {
+    implicit class RichRequest[T: RequestSerializer](private[http] val request: Request[T]) {
       def withUploadCallback(callback: ProgressCallback): PreparingRequest[T] =
         new PreparingRequest[T](request, Some(callback), None)
 
@@ -76,10 +76,10 @@ object HttpClient {
     }
 
     class PreparingRequest[T](
-        request: Request[T],
-        uploadCallback: Option[ProgressCallback] = None,
-        downloadCallback: Option[ProgressCallback] = None,
-        resultResponseCodes: Set[Int] = ResponseCode.SuccessCodes
+        private[http] val request: Request[T],
+        private[http] val uploadCallback: Option[ProgressCallback] = None,
+        private[http] val downloadCallback: Option[ProgressCallback] = None,
+        private[http] val resultResponseCodes: Set[Int] = ResponseCode.SuccessCodes
     )(implicit
       requestSerializer: RequestSerializer[T]) {
 
@@ -98,10 +98,10 @@ object HttpClient {
     }
 
     class PreparedRequest[T, R](
-        request: Request[T],
-        uploadCallback: Option[ProgressCallback] = None,
-        downloadCallback: Option[ProgressCallback] = None,
-        resultResponseCodes: Set[Int] = ResponseCode.SuccessCodes
+        private[http] val request: Request[T],
+        private[http] val uploadCallback: Option[ProgressCallback] = None,
+        private[http] val downloadCallback: Option[ProgressCallback] = None,
+        private[http] val resultResponseCodes: Set[Int] = ResponseCode.SuccessCodes
     )(implicit
       rs: RequestSerializer[T],
       rd: ResponseDeserializer[R]) {
@@ -115,10 +115,10 @@ object HttpClient {
     }
 
     class PreparedRequestWithErrorType[T, R, E](
-        request: Request[T],
-        uploadCallback: Option[ProgressCallback] = None,
-        downloadCallback: Option[ProgressCallback] = None,
-        resultResponseCodes: Set[Int]
+        private[http] val request: Request[T],
+        private[http] val uploadCallback: Option[ProgressCallback] = None,
+        private[http] val downloadCallback: Option[ProgressCallback] = None,
+        private[http] val resultResponseCodes: Set[Int]
     )(implicit
       rs: RequestSerializer[T],
       rd: ResponseDeserializer[R],
@@ -127,13 +127,14 @@ object HttpClient {
       def executeSafe(implicit client: HttpClient, c: CustomErrorConstructor[E]): CancellableFuture[Either[E, R]] =
         client.resultWithDecodedErrorSafe[T, E, R](request, uploadCallback, downloadCallback, resultResponseCodes)
 
-      def executeSafe[TR](resultTransformer: R => TR)
-                         (implicit
-                          client: HttpClient,
-                          c: CustomErrorConstructor[E],
-                          ex: ExecutionContext
-                         ): CancellableFuture[Either[E, TR]] =
-        client.resultWithDecodedErrorSafe[T, E, R](request, uploadCallback, downloadCallback, resultResponseCodes)
+      def executeSafe[TR](resultTransformer: R => TR)(
+          implicit
+          client: HttpClient,
+          c: CustomErrorConstructor[E],
+          ex: ExecutionContext
+      ): CancellableFuture[Either[E, TR]] =
+        client
+          .resultWithDecodedErrorSafe[T, E, R](request, uploadCallback, downloadCallback, resultResponseCodes)
           .map(_.right.map(resultTransformer))
 
       def execute(implicit client: HttpClient, ev: E <:< Throwable): CancellableFuture[R] =
