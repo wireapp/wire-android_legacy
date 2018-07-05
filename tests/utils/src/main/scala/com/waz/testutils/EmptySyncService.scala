@@ -43,7 +43,7 @@ trait EmptySyncServiceTrait extends SyncServiceHandle {
   override def syncTeamMember(id: UserId) = sid
   override def syncSelfUser() = sid
   override def deleteAccount() = sid
-  override def syncUsers(ids: UserId*) = sid
+  override def syncUsers(ids: Set[UserId]) = sid
   override def syncConnectedUsers() = sid
   override def syncConnections(dependsOn: Option[SyncId] = None) = sid
   override def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority): Future[SyncId] = sid

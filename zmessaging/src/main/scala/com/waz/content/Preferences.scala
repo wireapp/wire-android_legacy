@@ -409,7 +409,6 @@ object UserPreferences {
   lazy val Sounds                           = PrefKey[IntensityLevel]("sounds")
   lazy val DownloadImagesAlways             = PrefKey[Boolean]       ("download_images_always", customDefault = true)
 
-  lazy val LastSlowSyncTimeKey              = PrefKey[Option[Long]]        ("last_slow_sync_time")
   lazy val SelectedConvId                   = PrefKey[Option[ConvId]]      ("selected_conv_id")
   lazy val SpotifyRefreshToken              = PrefKey[Option[RefreshToken]]("spotify_refresh_token")
 
@@ -442,5 +441,4 @@ object UserPreferences {
   lazy val ShouldSyncConversations          = PrefKey[Boolean]("should_sync_conversations_1", customDefault = true)
   lazy val ShouldSyncInitial                = PrefKey[Boolean]("should_sync_initial_1", customDefault = true)
   lazy val ShouldSyncUsers                  = PrefKey[Boolean]("should_sync_users", customDefault = true)
-
 }

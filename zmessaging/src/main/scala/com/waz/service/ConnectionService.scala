@@ -98,7 +98,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
   }.flatMap { case (users, fromSync) =>
     verbose(s"syncing $users and fromSync: $fromSync")
     val toSync = users filter { case (user, _) => user.connection == ConnectionStatus.Accepted || user.connection == ConnectionStatus.PendingFromOther || user.connection == ConnectionStatus.PendingFromUser }
-    sync.syncUsersIfNotEmpty(toSync.map(_._1.id)(breakOut)) flatMap { _ =>
+    sync.syncUsers(toSync.map(_._1.id)(breakOut)) flatMap { _ =>
       RichFuture.processSequential(users.grouped(16).toSeq) { us =>
         Future.traverse(us){ case (user, time) => updateConversationForConnection(user, selfUserId, fromSync = fromSync(user.id), time) }
       }

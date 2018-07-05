@@ -17,11 +17,11 @@
  */
 package com.waz.service
 
-import com.waz.content.UserPreferences.LastSlowSyncTimeKey
 import com.waz.content._
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.{Availability, _}
 import com.waz.service.assets.AssetService
+import com.waz.service.conversation.ConversationsListStateService
 import com.waz.service.push.PushService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
@@ -41,10 +41,10 @@ class UserServiceSpec extends AndroidFreeSpec {
     UserData("friend user 1"), UserData("friend user 2"), UserData("some other friend")
   )
 
-
   val accountsService = mock[AccountsService]
   val accountsStrg    = mock[AccountStorage]
   val usersStorage    = mock[UsersStorage]
+  val membersStorage  = mock[MembersStorage]
   val pushService     = mock[PushService]
   val assetService    = mock[AssetService]
   val usersClient     = mock[UsersClient]
@@ -52,23 +52,25 @@ class UserServiceSpec extends AndroidFreeSpec {
   val database        = mock[Database]
   val assetsStorage   = mock[AssetsStorage]
   val credentials     = mock[CredentialsUpdateClient]
+  val stats           = mock[ConversationsListStateService]
   val userPrefs       = new TestUserPreferences
 
-  userPrefs.preference(LastSlowSyncTimeKey) := Some(System.currentTimeMillis())
-
-  (usersStorage.optSignal _).expects(*).onCall((id: UserId) => Signal.const(users.find(_.id == id)))
-  (accountsService.accountsWithManagers _).expects().returning(Signal.empty)
-  (pushService.onHistoryLost _).expects().returning(new SourceSignal(Some(Instant.now())) with BgEventSource)
-  (sync.syncUsersIfNotEmpty _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(SyncId())))
+  (usersStorage.optSignal _).expects(*).anyNumberOfTimes().onCall((id: UserId) => Signal.const(users.find(_.id == id)))
+  (accountsService.accountsWithManagers _).expects().anyNumberOfTimes().returning(Signal.empty)
+  (pushService.onHistoryLost _).expects().anyNumberOfTimes().returning(new SourceSignal(Some(Instant.now())) with BgEventSource)
+  (sync.syncUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(SyncId()))
   (assetService.updateAssets _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
   (usersStorage.updateOrCreateAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
+  (stats.selectedConversationId _).expects().anyNumberOfTimes().returning(Signal.const(None))
 
   private def getService = {
 
     result(userPrefs(UserPreferences.ShouldSyncUsers) := false)
 
-    new UserServiceImpl(users.head.id, accountsService, accountsStrg, usersStorage, userPrefs,
-      pushService, assetService, usersClient, sync, assetsStorage, credentials)
+    new UserServiceImpl(
+      users.head.id, None, accountsService, accountsStrg, usersStorage, membersStorage,
+      userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials, stats
+    )
   }
 
   feature("activity status") {
@@ -92,21 +94,6 @@ class UserServiceSpec extends AndroidFreeSpec {
   }
 
   feature("load user") {
-
-    scenario("load user") {
-
-      (sync.syncUsers _).expects(*).returning(Future.successful(SyncId()))
-      (usersStorage.get _).expects(*).anyNumberOfTimes().onCall((id: UserId) => Future.successful(users.find(_.id == id)))
-
-
-      val service = getService
-
-      users foreach { u =>
-        result(service.getUser(u.id)).map(_.copy(displayName = u.displayName)) shouldEqual Some(u)
-      }
-
-      result(service.getUser(UserId())) shouldEqual None
-    }
 
     scenario("update self user") {
 

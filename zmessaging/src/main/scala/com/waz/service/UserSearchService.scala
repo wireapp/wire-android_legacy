@@ -29,6 +29,7 @@ import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.UserSearchClient.UserSearchEntry
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
+import com.waz.service.ZMessaging.clock
 import com.waz.utils.events._
 import org.threeten.bp.Instant
 
@@ -186,14 +187,14 @@ class UserSearchService(selfUserId:           UserId,
   }
 
   def updateSearchResults(query: SearchQuery, results: Seq[UserSearchEntry]) = {
-    def updating(ids: Vector[UserId])(cached: SearchQueryCache) = cached.copy(query, Instant.now, if (ids.nonEmpty || cached.entries.isEmpty) Some(ids) else cached.entries)
+    def updating(ids: Vector[UserId])(cached: SearchQueryCache) = cached.copy(query, clock.instant(), if (ids.nonEmpty || cached.entries.isEmpty) Some(ids) else cached.entries)
 
     for {
       updated <- userService.updateUsers(results)
-      _ <- userService.syncIfNeeded(updated.toSeq: _*)
-      ids = results.map(_.id)(breakOut): Vector[UserId]
-      _ = verbose(s"updateSearchResults($query, ${results.map(_.handle)})")
-      _ <- queryCache.updateOrCreate(query, updating(ids), SearchQueryCache(query, Instant.now, Some(ids)))
+      _       <- userService.syncIfNeeded(updated.map(_.id), Duration.Zero)
+      ids     = results.map(_.id)(breakOut): Vector[UserId]
+      _       = verbose(s"updateSearchResults($query, ${results.map(_.handle)})")
+      _       <- queryCache.updateOrCreate(query, updating(ids), SearchQueryCache(query, clock.instant(), Some(ids)))
     } yield ()
 
     query match {
@@ -208,14 +209,14 @@ class UserSearchService(selfUserId:           UserId,
 
   def updateExactMatch(handle: Handle, userId: UserId) = {
     val query = RecommendedHandle(handle.withSymbol)
-    def updating(id: UserId)(cached: SearchQueryCache) = cached.copy(query, Instant.now, Some(cached.entries.map(_.toSet ++ Set(userId)).getOrElse(Set(userId)).toVector))
+    def updating(id: UserId)(cached: SearchQueryCache) = cached.copy(query, clock.instant(), Some(cached.entries.map(_.toSet ++ Set(userId)).getOrElse(Set(userId)).toVector))
 
     debug(s"update exact match: $handle, $userId")
-    userService.getUser(userId).collect {
+    usersStorage.get(userId).collect {
       case Some(user) =>
         debug(s"received exact match: ${user.handle}")
         exactMatchUser ! Some(user)
-        queryCache.updateOrCreate(query, updating(userId), SearchQueryCache(query, Instant.now, Some(Vector(userId))))
+        queryCache.updateOrCreate(query, updating(userId), SearchQueryCache(query, clock.instant(), Some(Vector(userId))))
     }(Threading.Background)
 
     Future.successful({})
@@ -246,7 +247,7 @@ class UserSearchService(selfUserId:           UserId,
       usersStorage.find[UserData, Vector[UserData]](recommendedHandlePredicate(prefix), db => UserDataDao.recommendedPeople(prefix)(db), identity)
     case _ => Future.successful(Vector.empty[UserData])
   }).flatMap { users =>
-    lazy val fresh = SearchQueryCache(query, Instant.now, Some(users.map(_.id)))
+    lazy val fresh = SearchQueryCache(query, clock.instant(), Some(users.map(_.id)))
 
     def update(q: SearchQueryCache): SearchQueryCache = if ((cacheExpiryTime elapsedSince q.timestamp) || q.entries.isEmpty) fresh else q
 
@@ -254,7 +255,7 @@ class UserSearchService(selfUserId:           UserId,
   }
 
   private def topPeople = {
-    def messageCount(u: UserData) = messages.countLaterThan(ConvId(u.id.str), Instant.now - topPeopleMessageInterval)
+    def messageCount(u: UserData) = messages.countLaterThan(ConvId(u.id.str), clock.instant() - topPeopleMessageInterval)
 
     val loadTopUsers = (for {
       conns         <- usersStorage.find[UserData, Vector[UserData]](topPeoplePredicate, db => UserDataDao.topPeople(db), identity)

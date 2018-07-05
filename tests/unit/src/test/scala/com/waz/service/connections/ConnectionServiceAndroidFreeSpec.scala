@@ -124,7 +124,7 @@ class ConnectionServiceAndroidFreeSpec extends AndroidFreeSpec {
     (messagesService.addDeviceStartMessages _).expects(*, *).anyNumberOfTimes().onCall{ (convs: Seq[ConversationData], selfUserId: UserId) =>
       Future.successful(convs.map(conv => MessageData(MessageId(), conv.id, Message.Type.STARTED_USING_DEVICE, selfUserId)).toSet)
     }
-    (sync.syncUsersIfNotEmpty _).expects(*).anyNumberOfTimes().returns(Future.successful(Some(SyncId())))
+    (sync.syncUsers _).expects(*).anyNumberOfTimes().returns(Future.successful(SyncId()))
     new ConnectionServiceImpl(selfUserId, push, convs, members, messagesService, messagesStorage, users, usersStorage, sync)
   }
 }

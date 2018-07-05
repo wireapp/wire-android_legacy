@@ -213,6 +213,7 @@ package object utils {
     def >=(b: bp.Instant) = !a.isBefore(b)
     def <=(b: bp.Instant) = !a.isAfter(b)
     def remainingUntil(b: bp.Instant): FiniteDuration = if (a isBefore b) FiniteDuration(b.toEpochMilli - a.toEpochMilli, TimeUnit.MILLISECONDS) else Duration.Zero
+    def toFiniteDuration: FiniteDuration = FiniteDuration(a.toEpochMilli, MILLISECONDS)
   }
 
   implicit lazy val InstantIsOrdered: Ordering[Instant] = Ordering.ordered[Instant]

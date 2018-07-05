@@ -41,7 +41,7 @@ class MessagesServiceSpec extends AndroidFreeSpec {
   val sync =          mock[SyncServiceHandle]
   val deletions =     mock[MsgDeletionStorage]
   val members =       mock[MembersStorage]
-  val users =         mock[UserService]
+  val users =         mock[UsersStorage]
 
   scenario("Add local memberJoinEvent with no previous member change events") {
 

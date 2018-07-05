@@ -196,7 +196,7 @@ class DeviceActor(val deviceName: String,
         case Some(uId) =>
           (for {
             z    <- zms.head
-            user <- z.users.userSignal(uId).head
+            user <- z.usersStorage.signal(uId).head
             conv <- z.connection.connectToUser(uId, "meep", user.getDisplayName)
           } yield conv.filter(_.convType == ConversationType.WaitForConnection))
             .map(_.fold2(Failed(s"Failed to send connect request to user $uId"), _ => Successful))

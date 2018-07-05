@@ -54,7 +54,7 @@ class MessageSendingSpec extends AndroidFreeSpec { test =>
   lazy val sync             = mock[SyncServiceHandle]
   lazy val errors           = mock[ErrorsService]
   
-  private def stubService() = new ConversationsUiServiceImpl(account1Id, None, assets, users, usersStorage, messages,
+  private def stubService() = new ConversationsUiServiceImpl(account1Id, None, assets, usersStorage, messages,
     messagesStorage, messagesContent, members, assetStorage, convsContent, convStorage, network, convs, sync, null, accounts, tracking, errors)
 
   feature("Text messages") {
