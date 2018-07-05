@@ -94,7 +94,7 @@ class ConnectionsClientImpl(implicit
 
   override def updateConnection(user: UserId, status: ConnectionStatus): ErrorOrResponse[Option[UserConnectionEvent]] = {
     val jsonData = Json("status" -> status.code)
-    Request.Put(url = backendUrl(ConnectionsPath), body = jsonData)
+    Request.Put(url = backendUrl(s"$ConnectionsPath/${user.str}"), body = jsonData)
       .withResultType[Option[UserConnectionEvent]]
       .withErrorType[ErrorResponse]
       .executeSafe
