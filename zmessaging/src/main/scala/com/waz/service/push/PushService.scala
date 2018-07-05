@@ -32,6 +32,7 @@ import com.waz.service.AccountsService.{InBackground, LoggedOut}
 import com.waz.service.ZMessaging.{accountTag, clock}
 import com.waz.service._
 import com.waz.service.otr.OtrService
+import com.waz.service.push.PushService.SyncSource
 import com.waz.service.tracking.{MissedPushEvent, ReceivedPushEvent, TrackingService}
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.PushNotificationsClient.{LoadNotificationsResponse, LoadNotificationsResult}
@@ -62,7 +63,7 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 trait PushService {
 
   //set withRetries to false if the caller is to handle their own retry logic
-  def syncHistory(reason: String, withRetries: Boolean = true): Future[Unit]
+  def syncHistory(reason: SyncSource, withRetries: Boolean = true): Future[Unit]
 
   def onHistoryLost: SourceSignal[Instant] with BgEventSource
   def processing: Signal[Boolean]
@@ -209,7 +210,7 @@ class PushServiceImpl(userId:               UserId,
       else fetchInProgress.flatMap(_ => storeNotifications(notifications))
   }
 
-  wsPushService.connected().onChanged.map(_ => "web socket connection change").on(dispatcher)(syncHistory(_))
+  wsPushService.connected().onChanged.map(WebSocketChange).on(dispatcher)(syncHistory(_))
 
   private def storeNotifications(notifications: Seq[PushNotificationEncoded]): Future[Unit] =
     Serialized.future(PipelineKey)(notificationStorage.saveAll(notifications).flatMap { _ =>
@@ -230,7 +231,7 @@ class PushServiceImpl(userId:               UserId,
   //expose retry loop to tests
   protected[push] val waitingForRetry: SourceSignal[Boolean] = Signal(false).disableAutowiring()
 
-  override def syncHistory(reason: String, withRetries: Boolean = true): Future[Unit] = {
+  override def syncHistory(source: SyncSource, withRetries: Boolean = true): Future[Unit] = {
 
     def load(lastId: Option[Uid], firstSync: Boolean = false, attempts: Int = 0): CancellableFuture[Results] =
       (lastId match {
@@ -292,22 +293,41 @@ class PushServiceImpl(userId:               UserId,
               _ <- beDriftPref.mutate(v => time.map(clock.instant.until(_)).getOrElse(v))
               inBackground <- lifeCycle.uiActive.map(!_).head
             } yield {
-              val missed = nots.filter { n =>
-                !n.transient && JsonDecoder.array(n.events, { case (arr, i) =>
-                  arr.getJSONObject(i).getString("type")
-                }).exists(TrackingEvents(_))
-              }.map(_.id).toSet.diff(pushes.map(_.id).toSet)
-              if (missed.nonEmpty) //we didn't get pushes for some returned notifications
-                tracking.track(MissedPushEvent(clock.instant + drift, missed.size, inBackground, nw, network.getNetworkOperatorName))
-
-              if (pushes.nonEmpty)
-                pushes.map(p => p.copy(toFetch = Some(p.receivedAt.until(clock.instant + drift)))).foreach(p => tracking.track(ReceivedPushEvent(p)))
-
+              reportMissing(nots, pushes, drift, nw, inBackground)
               nots
             }).flatMap(storeNotifications)
       }
+
+    def reportMissing(nots: Vector[PushNotificationEncoded], pushes: Seq[ReceivedPushData], drift: Duration, nw: NetworkMode, inBackground: Boolean): Unit = {
+
+      val sourcePush = source match {
+        case FetchFromJob(nId) => nId
+        case FetchFromIdle(nId) => nId
+        case _ => None
+      }
+
+      val notsUntilPush = nots.takeWhile(n => !sourcePush.contains(n.id))
+
+      val missedEvents = notsUntilPush.filterNot(_.transient).map { n =>
+        val events = JsonDecoder.array(n.events, { case (arr, i) =>
+          arr.getJSONObject(i).getString("type")
+        }).filter(TrackingEvents(_))
+        (n.id, events)
+      }.filter { case (id, evs) => evs.nonEmpty && !pushes.map(_.id).contains(id) }
+
+      val allEvents = missedEvents.toMap.values.flatten
+
+      val eventFrequency = TrackingEvents.map(e => (e, allEvents.count(_ == e))).toMap
+
+      if (missedEvents.nonEmpty) //we didn't get pushes for some returned notifications
+        tracking.track(MissedPushEvent(clock.instant + drift, missedEvents.size, inBackground, nw, network.getNetworkOperatorName, eventFrequency, missedEvents.last._1.str))
+
+      if (pushes.nonEmpty)
+        pushes.map(p => p.copy(toFetch = Some(p.receivedAt.until(clock.instant + drift)))).foreach(p => tracking.track(ReceivedPushEvent(p)))
+    }
+
     if (fetchInProgress.isCompleted) {
-      verbose(s"Sync history in response to $reason")
+      verbose(s"Sync history in response to $source")
       fetchInProgress = idPref().flatMap(syncHistory)
     }
     fetchInProgress
@@ -324,4 +344,9 @@ object PushService {
   case class FetchFailedException(err: ErrorResponse) extends Exception(s"Failed to fetch notifications: ${err.message}")
 
   var syncHistoryBackoff: Backoff = new ExponentialBackoff(3.second, 15.seconds)
+
+  trait SyncSource
+  case class FetchFromJob(nId: Option[Uid]) extends SyncSource
+  case class FetchFromIdle(nId: Option[Uid]) extends SyncSource
+  case class WebSocketChange(connected: Boolean) extends SyncSource
 }
