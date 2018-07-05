@@ -35,7 +35,7 @@ package object client {
   type ErrorOr[T] = Future[Either[ErrorResponse, T]]
   type ErrorOrResponse[T] = CancellableFuture[Either[ErrorResponse, T]]
 
-  //TODO Get rid of this.
+  //TODO Have to be removed while resolving https://github.com/wireapp/wire-android-sync-engine/issues/376
   sealed trait ResponseContent
   sealed trait JsonResponse extends ResponseContent
   case object EmptyResponse extends ResponseContent

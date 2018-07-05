@@ -47,7 +47,7 @@ trait AssetClient {
       callback: Callback
   ): ErrorOrResponse[CacheEntry]
 
-  //TODO Add callback parameter
+  //TODO Add callback parameter. https://github.com/wireapp/wire-android-sync-engine/issues/378
   def uploadAsset(metadata: Metadata, data: LocalData, mime: Mime): ErrorOrResponse[UploadResponse]
 }
 
@@ -80,7 +80,6 @@ class AssetClientImpl(cacheService: CacheService)
       RawBody(mediaType = Some(mime.str), data.inputStream, dataLength = Some(data.length))
     }
 
-  //TODO Get rid of this conversion
   private def convertProgressData(data: Progress): ProgressData =
     data match {
       case p @ Progress(progress, Some(total)) if p.isCompleted =>
