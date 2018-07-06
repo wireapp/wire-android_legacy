@@ -23,7 +23,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.model._
 import com.waz.service.BackendConfig
 import com.waz.utils.wrappers.URI
-import com.waz.znet2.http.{HttpClient, Request}
+import com.waz.znet2.http.{HttpClient, Method, Request}
 
 trait VersionBlacklistClient {
   def loadVersionBlacklist(): ErrorOrResponse[VersionBlacklist]
@@ -36,7 +36,7 @@ class VersionBlacklistClientImpl(backendConfig: BackendConfig)
   import VersionBlacklistClientImpl._
 
   def loadVersionBlacklist(): ErrorOrResponse[VersionBlacklist] = {
-    Request.Get(url = blacklistsUrl(backendConfig.environment))
+    Request.create(method = Method.Get, url = blacklistsUrl(backendConfig.environment))
       .withResultType[VersionBlacklist]
       .withErrorType[ErrorResponse]
       .executeSafe

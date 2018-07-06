@@ -22,11 +22,11 @@ import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model._
 import com.waz.model.otr.ClientId
-import com.waz.service.BackendConfig
 import com.waz.sync.client.PushNotificationsClient.{LoadNotificationsResponse, LoadNotificationsResult}
 import com.waz.utils.JsonDecoder.arrayColl
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 import org.json.{JSONArray, JSONObject}
 import org.threeten.bp.Instant
@@ -41,11 +41,10 @@ trait PushNotificationsClient {
 
 class PushNotificationsClientImpl(pageSize: Int = PushNotificationsClient.PageSize)
                                  (implicit
-                                  backendConfig: BackendConfig,
+                                  urlCreator: UrlCreator,
                                   httpClient: HttpClient,
                                   authRequestInterceptor: AuthRequestInterceptor) extends PushNotificationsClient {
 
-  import BackendConfig.backendUrl
   import HttpClient.dsl._
   import PushNotificationsClient._
   import com.waz.threading.Threading.Implicits.Background
@@ -56,7 +55,7 @@ class PushNotificationsClientImpl(pageSize: Int = PushNotificationsClient.PageSi
   override def loadNotifications(since: Option[Uid], client: ClientId): ErrorOrResponse[LoadNotificationsResult] = {
     Request
       .Get(
-        url = backendUrl(NotificationsPath),
+        relativePath = NotificationsPath,
         queryParameters = queryParameters("since" -> since, "client" -> client, "size" -> pageSize)
       )
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
@@ -69,7 +68,7 @@ class PushNotificationsClientImpl(pageSize: Int = PushNotificationsClient.PageSi
 
   override def loadLastNotification(clientId: ClientId): ErrorOrResponse[LoadNotificationsResponse] = {
     Request
-      .Get(url = backendUrl(NotificationsLastPath), queryParameters = queryParameters("client" -> clientId))
+      .Get(relativePath = NotificationsLastPath, queryParameters = queryParameters("client" -> clientId))
       .withResultType[PushNotificationEncoded]
       .withErrorType[ErrorResponse]
       .executeSafe(notif => LoadNotificationsResponse(Vector(notif), hasMore = false, beTime = None))

@@ -23,7 +23,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{JsonDecoder, JsonEncoder}
-import com.waz.znet2.http.{Headers, HttpClient, RawBodyDeserializer, Request}
+import com.waz.znet2.http._
 import org.json.JSONObject
 
 import scala.util.matching.Regex
@@ -34,14 +34,13 @@ trait OpenGraphClient {
 
 class OpenGraphClientImpl(implicit httpClient: HttpClient) extends OpenGraphClient {
   import OpenGraphClient._
-  import com.waz.znet2.http
   import com.waz.znet2.http.HttpClient.dsl._
 
   private implicit val OpenGraphDataDeserializer: RawBodyDeserializer[OpenGraphData] =
     RawBodyDeserializer[String].map(bodyStr => OpenGraphDataResponse.unapply(StringResponse(bodyStr)).get)
 
   override def loadMetadata(uri: URI): ErrorOrResponse[Option[OpenGraphData]] = {
-    Request.Get(url = new URL(uri.toString), headers = Headers("User-Agent" -> DesktopUserAgent))
+    Request.create(method = Method.Get, url = new URL(uri.toString), headers = Headers("User-Agent" -> DesktopUserAgent))
       .withResultType[Option[OpenGraphData]]
       .withErrorType[ErrorResponse]
       .executeSafe

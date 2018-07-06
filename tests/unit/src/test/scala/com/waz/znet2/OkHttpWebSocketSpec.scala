@@ -22,7 +22,7 @@ import java.net.URL
 import com.waz.utils.events.EventContext
 import com.waz.znet2
 import com.waz.znet2.WebSocketFactory.SocketEvent
-import com.waz.znet2.http.{Body, Request}
+import com.waz.znet2.http.{Body, Method, Request}
 import io.fabric8.mockwebserver.DefaultMockServer
 import org.scalatest.{BeforeAndAfterEach, Inside, MustMatchers, WordSpec}
 
@@ -36,7 +36,7 @@ class OkHttpWebSocketSpec extends WordSpec with MustMatchers with Inside with Be
 
   private val testPath = "/test"
   private val defaultWaiting = 100
-  private def testWebSocketRequest(url: String): Request[Body] = Request.Get(new URL(url))
+  private def testWebSocketRequest(url: String): Request[Body] = Request.create(method = Method.Get, url = new URL(url))
 
   private var mockServer: DefaultMockServer = _
 

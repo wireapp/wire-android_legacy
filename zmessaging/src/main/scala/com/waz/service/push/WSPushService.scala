@@ -36,6 +36,7 @@ import com.waz.utils.{Backoff, ExponentialBackoff}
 import com.waz.sync.client.AuthenticationManager.AccessToken
 import com.waz.sync.client
 import com.waz.znet2.WebSocketFactory.SocketEvent
+import com.waz.znet2.http.{Body, Method, Request}
 import com.waz.znet2.{WebSocket, WebSocketFactory, http}
 
 import scala.concurrent.duration._
@@ -50,7 +51,7 @@ trait WSPushService {
 
 object WSPushServiceImpl {
 
-  type RequestCreator = AccessToken => http.Request[http.Body]
+  type RequestCreator = AccessToken => Request[Body]
 
   def apply(userId: UserId,
             clientId: ClientId,
@@ -66,7 +67,8 @@ object WSPushServiceImpl {
         "User-Agent" -> client.userAgent()
       )
 
-      http.Request.Get(
+      Request.create(
+        method = Method.Get,
         url = new URL(uri.toString),
         headers = http.Headers(headers)
       ).asInstanceOf[http.Request[http.Body]]

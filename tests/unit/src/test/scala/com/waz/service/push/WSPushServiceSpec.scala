@@ -30,7 +30,7 @@ import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.{Backoff, ExponentialBackoff}
 import com.waz.znet2.WebSocketFactory.SocketEvent
 import com.waz.znet2._
-import com.waz.znet2.http.EmptyBodyImpl
+import com.waz.znet2.http.{Body, EmptyBodyImpl, Method, Request}
 import org.json.{JSONArray, JSONObject}
 import org.scalatest.Ignore
 
@@ -48,7 +48,7 @@ class WSPushServiceSpec extends ZMockSpec {
 
   private val accessTokenSuccess = Future.successful(Right(AccessToken("token", "type")))
   private val accessTokenError = Future.successful(Left(ErrorResponse.InternalError))
-  private val httpRequest = http.Request.Post[http.Body](new URL("http://www.test.com"), body = EmptyBodyImpl)
+  private val httpRequest = Request.create[Body](method = Method.Post, new URL("http://www.test.com"), body = EmptyBodyImpl)
 
   private val fakeWebSocketEvents: SourceStream[SocketEvent] = EventStream()
 

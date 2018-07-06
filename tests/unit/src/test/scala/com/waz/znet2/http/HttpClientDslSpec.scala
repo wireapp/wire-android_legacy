@@ -26,7 +26,7 @@ import com.waz.znet2.http.HttpClient.ProgressCallback
 class HttpClientDslSpec extends ZSpec {
   import http.HttpClient.dsl._
 
-  private val testRequest = Request.Get(url = new URL("http://test.com"))
+  private val testRequest = Request.create(method = Method.Get, url = new URL("http://test.com"))
 
   feature("Http response codes should be passed properly throw all wrappers.") {
     val testCodes = Set(1,2,3)

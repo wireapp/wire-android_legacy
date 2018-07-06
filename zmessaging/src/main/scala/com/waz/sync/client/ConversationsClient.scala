@@ -23,11 +23,11 @@ import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.ConversationData.{ConversationType, Link}
 import com.waz.model._
-import com.waz.service.BackendConfig
 import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
 import com.waz.utils.JsonEncoder.{encodeAccess, encodeAccessRole}
 import com.waz.utils.{Json, JsonDecoder, JsonEncoder, returning, _}
 import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 import org.json
 import org.json.JSONObject
@@ -43,7 +43,7 @@ trait ConversationsClient {
   def loadConversations(ids: Seq[RConvId]): ErrorOrResponse[Seq[ConversationResponse]]
   def loadConversation(id: RConvId): ErrorOrResponse[ConversationResponse]
   def postName(convId: RConvId, name: String): ErrorOrResponse[Option[RenameConversationEvent]]
-  def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Boolean]
+  def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Unit]
   def postMessageTimer(convId: RConvId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit]
   def postMemberJoin(conv: RConvId, members: Set[UserId]): ErrorOrResponse[Option[MemberJoinEvent]]
   def postMemberLeave(conv: RConvId, user: UserId): ErrorOrResponse[Option[MemberLeaveEvent]]
@@ -56,11 +56,10 @@ trait ConversationsClient {
 }
 
 class ConversationsClientImpl(implicit
-                              backendConfig: BackendConfig,
+                              urlCreator: UrlCreator,
                               httpClient: HttpClient,
                               authRequestInterceptor: AuthRequestInterceptor) extends ConversationsClient {
 
-  import BackendConfig.backendUrl
   import ConversationsClient._
   import HttpClient.dsl._
   import com.waz.threading.Threading.Implicits.Background
@@ -74,7 +73,7 @@ class ConversationsClientImpl(implicit
   override def loadConversationIds(start: Option[RConvId] = None): ErrorOrResponse[ConversationsResult] = {
     Request
       .Get(
-        url = backendUrl(ConversationIdsPath),
+        relativePath = ConversationIdsPath,
         queryParameters = queryParameters("size" -> ConversationIdsPageSize, "start" -> start)
       )
       .withResultType[ConversationsResult]
@@ -85,7 +84,7 @@ class ConversationsClientImpl(implicit
   override def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult] = {
     Request
       .Get(
-        url = backendUrl(ConversationsPath),
+        relativePath = ConversationsPath,
         queryParameters = queryParameters("size" -> limit, "start" -> start)
       )
       .withResultType[ConversationsResult]
@@ -95,7 +94,7 @@ class ConversationsClientImpl(implicit
 
   override def loadConversations(ids: Seq[RConvId]): ErrorOrResponse[Seq[ConversationResponse]] = {
     Request
-      .Get(url = backendUrl(ConversationsPath), queryParameters = queryParameters("ids" -> ids.mkString(",")))
+      .Get(relativePath = ConversationsPath, queryParameters = queryParameters("ids" -> ids.mkString(",")))
       .withResultType[ConversationsResult]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -103,7 +102,7 @@ class ConversationsClientImpl(implicit
   }
 
   override def loadConversation(id: RConvId): ErrorOrResponse[ConversationResponse] = {
-    Request.Get(url = backendUrl(s"$ConversationsPath/$id"))
+    Request.Get(relativePath = s"$ConversationsPath/$id")
       .withResultType[ConversationsResult]
       .withErrorType[ErrorResponse]
       .executeSafe(_.conversations.head)
@@ -113,7 +112,7 @@ class ConversationsClientImpl(implicit
     RawBodyDeserializer[JSONObject].map(json => EventsResponse.unapplySeq(JsonObjectResponse(json)).get)
 
   override def postName(convId: RConvId, name: String): ErrorOrResponse[Option[RenameConversationEvent]] = {
-    Request.Put(url = backendUrl(s"$ConversationsPath/$convId"), body = Json("name" -> name))
+    Request.Put(relativePath = s"$ConversationsPath/$convId", body = Json("name" -> name))
       .withResultType[List[ConversationEvent]]
       .withErrorType[ErrorResponse]
       .executeSafe {
@@ -125,7 +124,7 @@ class ConversationsClientImpl(implicit
   override def postMessageTimer(convId: RConvId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit] = {
     Request
       .Put(
-        url = backendUrl(s"$ConversationsPath/$convId/message-timer"),
+        relativePath = s"$ConversationsPath/$convId/message-timer",
         body = Json("message_timer" -> duration.map(_.toMillis))
       )
       .withResultType[Unit]
@@ -133,30 +132,29 @@ class ConversationsClientImpl(implicit
       .executeSafe
   }
 
-  //TODO Why not ErrorOrResponse[Unit] as a result type?
-  override def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Boolean] = {
-    Request.Put(url = backendUrl(s"$ConversationsPath/$convId/self"), body = state)
+  override def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Unit] = {
+    Request.Put(relativePath = s"$ConversationsPath/$convId/self", body = state)
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
-      .executeSafe(_ => true)
+      .executeSafe
   }
 
   override def postMemberJoin(conv: RConvId, members: Set[UserId]): ErrorOrResponse[Option[MemberJoinEvent]] = {
-    Request.Post(url = backendUrl(s"$ConversationsPath/$conv/members"), body = Json("users" -> Json(members)))
+    Request.Post(relativePath = s"$ConversationsPath/$conv/members", body = Json("users" -> Json(members)))
       .withResultType[Option[List[ConversationEvent]]]
       .withErrorType[ErrorResponse]
       .executeSafe(_.collect { case (event: MemberJoinEvent) :: Nil => event })
   }
 
   override def postMemberLeave(conv: RConvId, user: UserId): ErrorOrResponse[Option[MemberLeaveEvent]] = {
-    Request.Delete(url = backendUrl(s"$ConversationsPath/$conv/members/$user"))
+    Request.Delete(relativePath = s"$ConversationsPath/$conv/members/$user")
       .withResultType[Option[List[ConversationEvent]]]
       .withErrorType[ErrorResponse]
       .executeSafe(_.collect { case (event: MemberLeaveEvent) :: Nil => event })
   }
 
   override def createLink(conv: RConvId): ErrorOrResponse[Link] = {
-    Request.Post(url = backendUrl(s"$ConversationsPath/$conv/code"), body = "")
+    Request.Post(relativePath = s"$ConversationsPath/$conv/code", body = "")
       .withResultType[Response[JSONObject]]
       .withErrorType[ErrorResponse]
       .executeSafe { response =>
@@ -172,14 +170,14 @@ class ConversationsClientImpl(implicit
   }
 
   def removeLink(conv: RConvId): ErrorOrResponse[Unit] = {
-    Request.Delete(url = backendUrl(s"$ConversationsPath/$conv/code"))
+    Request.Delete(relativePath = s"$ConversationsPath/$conv/code")
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   def getLink(conv: RConvId): ErrorOrResponse[Option[Link]] = {
-    Request.Get(url = backendUrl(s"$ConversationsPath/$conv/code"))
+    Request.Get(relativePath = s"$ConversationsPath/$conv/code")
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
       .withResultType[Response[JSONObject]]
       .withErrorType[ErrorResponse]
@@ -197,7 +195,7 @@ class ConversationsClientImpl(implicit
   def postAccessUpdate(conv: RConvId, access: Set[Access], accessRole: AccessRole): ErrorOrResponse[Unit] = {
     Request
       .Put(
-        url = backendUrl(accessUpdatePath(conv)),
+        relativePath = accessUpdatePath(conv),
         body = Json(
           "access" -> encodeAccess(access),
           "access_role" -> encodeAccessRole(accessRole)
@@ -220,7 +218,7 @@ class ConversationsClientImpl(implicit
       o.put("access", encodeAccess(access))
       o.put("access_role", encodeAccessRole(accessRole))
     }
-    Request.Post(url = backendUrl(ConversationsPath), body = payload)
+    Request.Post(relativePath = ConversationsPath, body = payload)
       .withResultType[ConversationsResult]
       .withErrorType[ErrorResponse]
       .executeSafe(_.conversations.head)

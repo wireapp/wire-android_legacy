@@ -21,11 +21,11 @@ import com.waz.api._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.AccountData.Label
 import com.waz.model._
-import com.waz.service.BackendConfig
 import com.waz.sync.client.AuthenticationManager.Cookie
 import com.waz.sync.client.{ErrorOr, LoginClient}
 import com.waz.utils.JsonEncoder
 import com.waz.utils.Locales._
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, Request, Response}
 
 trait RegistrationClient {
@@ -37,10 +37,9 @@ trait RegistrationClient {
 }
 
 class RegistrationClientImpl(implicit
-                             backendConfig: BackendConfig,
+                             urlCreator: UrlCreator,
                              httpClient: HttpClient) extends RegistrationClient {
 
-  import BackendConfig.backendUrl
   import HttpClient.dsl._
   import RegistrationClientImpl._
   import com.waz.threading.Threading.Implicits.Background
@@ -60,7 +59,7 @@ class RegistrationClientImpl(implicit
       o.put("label", label.str)
     }
 
-    Request.Post(url = backendUrl(RegisterPath), body = params)
+    Request.Post(relativePath = RegisterPath, body = params)
       .withResultType[Response[UserInfo]]
       .withErrorType[ErrorResponse]
       .executeSafe { response =>
@@ -83,7 +82,7 @@ class RegistrationClientImpl(implicit
       if (call)   o.put("voice_call", call)
     }
 
-    Request.Post(url = backendUrl(if (login) LoginSendPath else ActivateSendPath), body = params)
+    Request.Post(relativePath = if (login) LoginSendPath else ActivateSendPath, body = params)
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -94,7 +93,7 @@ class RegistrationClientImpl(implicit
     val params = JsonEncoder { o =>
       o.put("email", email.str)
     }
-    Request.Post(url = backendUrl(ActivateSendPath), body = params)
+    Request.Post(relativePath = ActivateSendPath, body = params)
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -110,7 +109,7 @@ class RegistrationClientImpl(implicit
       if (!dryRun) o.put("label", label.str)
     }
 
-    Request.Post(url = backendUrl(ActivatePath), body = params)
+    Request.Post(relativePath = ActivatePath, body = params)
       .withResultType[Response[Unit]]
       .withErrorType[ErrorResponse]
       .executeSafe { response =>

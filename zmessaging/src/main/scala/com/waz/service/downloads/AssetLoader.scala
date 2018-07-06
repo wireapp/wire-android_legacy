@@ -39,7 +39,7 @@ import com.waz.model.AssetData.{RemoteData, WithExternalUri, WithProxy, WithRemo
 import com.waz.model._
 import com.waz.service.assets.AudioTranscoder
 import com.waz.service.tracking.TrackingService
-import com.waz.service.{BackendConfig, NetworkModeService, UserService, ZMessaging}
+import com.waz.service.{NetworkModeService, UserService, ZMessaging}
 import com.waz.sync.client.AssetClient
 import com.waz.threading.CancellableFuture.CancelException
 import com.waz.threading.{CancellableFuture, Threading}
@@ -49,7 +49,8 @@ import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.wrappers.{Context, URI}
 import com.waz.utils.{CancellableStream, returning}
 import com.waz.znet2.http
-import com.waz.znet2.http.{RequestInterceptor, ResponseCode}
+import com.waz.znet2.http.Request.UrlCreator
+import com.waz.znet2.http.{Method, Request, RequestInterceptor, ResponseCode}
 
 import scala.concurrent.{Future, Promise}
 import scala.util.control.NonFatal
@@ -76,10 +77,8 @@ class AssetLoaderImpl(context:         Context,
                       bitmapDecoder:   BitmapDecoder,
                       tracking:        TrackingService)
                      (implicit
-                      private val backend: BackendConfig,
-                      private val authInterceptor: RequestInterceptor) extends AssetLoader {
-
-  import BackendConfig.backendUrl
+                      urlCreator: UrlCreator,
+                      authInterceptor: RequestInterceptor) extends AssetLoader {
 
   private lazy val downloadAlways = Option(ZMessaging.currentAccounts).map(_.activeZms).map {
     _.flatMap {
@@ -140,12 +139,12 @@ class AssetLoaderImpl(context:         Context,
         verbose(s"Downloading wire asset: ${asset.id}: $rId")
         val path = AssetClient.getAssetPath(rId, otrKey, asset.convId)
         val headers = token.fold(Map.empty[String, String])(t => Map("Asset-Token" -> t.str))
-        val request = http.Request.Get(backendUrl(path), headers = http.Headers(headers))
+        val request = Request.Get(relativePath = path, headers = http.Headers(headers))
         client.loadAsset(request, otrKey, sha, callback)
 
       case WithExternalUri(uri) =>
         verbose(s"Downloading external asset: ${asset.id}: $uri")
-        val request = http.Request.Get(new URL(uri.toString))
+        val request = Request.create(method = Method.Get, url = new URL(uri.toString))
         val resp = client.loadAsset(request, callback = callback)
         if (uri == UserService.UnsplashUrl)
           resp.flatMap {
@@ -161,7 +160,7 @@ class AssetLoaderImpl(context:         Context,
 
       case WithProxy(proxy) =>
         verbose(s"Downloading asset from proxy: ${asset.id}: $proxy")
-        val request = http.Request.Get(url = backendUrl(proxy))
+        val request = Request.Get(relativePath = proxy)
         client.loadAsset(request, callback = callback)
 
 

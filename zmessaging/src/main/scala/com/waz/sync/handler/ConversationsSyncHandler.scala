@@ -115,8 +115,8 @@ class ConversationsSyncHandler(selfUserId:          UserId,
         case Right(Some(event: MemberLeaveEvent)) =>
           event.localTime = new Date
           conversationsClient.postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(event.time))).future flatMap {
-            case Right(resp) =>
-              verbose(s"postConversationState finished: $resp")
+            case Right(_) =>
+              verbose(s"postConversationState finished")
               convEvents.handlePostConversationEvent(event).map(_ => SyncResult.Success)
             case Left(error) =>
               Future.successful(SyncResult(error))
@@ -131,7 +131,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
     }
 
   def postConversationState(id: ConvId, state: ConversationState): Future[SyncResult] = withConversation(id) { conv =>
-    conversationsClient.postConversationState(conv.remoteId, state).future map (_.fold(SyncResult(_), SyncResult(_)))
+    conversationsClient.postConversationState(conv.remoteId, state).future map (_.fold(SyncResult(_), _ => SyncResult.Success))
   }
 
   def postConversation(convId: ConvId, users: Set[UserId], name: Option[String], team: Option[TeamId], access: Set[Access], accessRole: AccessRole): Future[SyncResult] = {

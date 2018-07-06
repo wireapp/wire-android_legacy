@@ -22,11 +22,11 @@ import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.SearchQuery.{Recommended, RecommendedHandle, TopPeople}
 import com.waz.model._
-import com.waz.service.BackendConfig
 import com.waz.sync.client.UserSearchClient.{DefaultLimit, UserSearchEntry}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.JsonDecoder
 import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 import org.json.JSONObject
 
@@ -38,11 +38,10 @@ trait UserSearchClient {
 }
 
 class UserSearchClientImpl(implicit
-                           backendConfig: BackendConfig,
+                           urlCreator: UrlCreator,
                            httpClient: HttpClient,
                            authRequestInterceptor: AuthRequestInterceptor) extends UserSearchClient {
 
-  import BackendConfig.backendUrl
   import HttpClient.dsl._
   import Threading.Implicits.Background
   import UserSearchClient._
@@ -66,7 +65,7 @@ class UserSearchClientImpl(implicit
 
     Request
       .Get(
-        url = backendUrl(ContactsPath),
+        relativePath = ContactsPath,
         queryParameters = queryParameters("q" -> prefix, "size" -> limit, "l" -> Relation.Third.id, "d" -> 1)
       )
       .withResultType[Seq[UserSearchEntry]]
@@ -78,7 +77,7 @@ class UserSearchClientImpl(implicit
     RawBodyDeserializer[JSONObject].map(json => UserId(json.getString("user")))
 
   override def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserId]] = {
-    Request.Get(url = backendUrl(handlesQuery(handle)))
+    Request.Get(relativePath = handlesQuery(handle))
       .withResultType[UserId]
       .withErrorType[ErrorResponse]
       .executeSafe

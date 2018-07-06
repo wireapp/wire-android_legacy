@@ -26,11 +26,11 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.model.AssetData
 import com.waz.model.messages.media.MediaAssetData.{MediaWithImages, Thumbnail}
 import com.waz.model.messages.media.{ArtistData, MediaAssetData, PlaylistData, TrackData}
-import com.waz.service.BackendConfig
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.wrappers.URI
 import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request, Response}
 import org.json.JSONObject
 import org.threeten.bp.Duration
@@ -41,11 +41,10 @@ trait SoundCloudClient {
 }
 
 class SoundCloudClientImpl(implicit
-                           backendConfig: BackendConfig,
+                           urlCreator: UrlCreator,
                            httpClient: HttpClient,
                            authRequestInterceptor: AuthRequestInterceptor) extends SoundCloudClient {
 
-  import BackendConfig.backendUrl
   import HttpClient.dsl._
   import SoundCloudClient._
   import Threading.Implicits.Background
@@ -55,7 +54,7 @@ class SoundCloudClientImpl(implicit
     RawBodyDeserializer[JSONObject].map(json => SoundCloudResponse.unapply(JsonObjectResponse(json)).get)
 
   override def resolve(soundCloudUrl: String): ErrorOr[MediaWithImages[MediaAssetData]] = {
-    Request.Get(url = backendUrl(proxyPath("resolve", soundCloudUrl)))
+    Request.Get(relativePath = proxyPath("resolve", soundCloudUrl))
       .withResultType[MediaWithImages[MediaAssetData]]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -63,7 +62,7 @@ class SoundCloudClientImpl(implicit
   }
 
   override def streamingLocation(url: String): ErrorOr[URI] = {
-    Request.Head(url = backendUrl(proxyPath("stream", url)))
+    Request.Head(relativePath = proxyPath("stream", url))
       .withResultType[Response[Unit]]
       .withErrorType[ErrorResponse]
       .executeSafe

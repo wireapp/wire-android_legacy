@@ -36,7 +36,8 @@ object HockeyCrashReporter {
   def uploadCrashReport(hockeyId: String, dump: File, log: File): Future[Unit] = {
     implicit val httpClient: HttpClient = ZMessaging.currentGlobal.httpClientForLongRunning
     Request
-      .Post(
+      .create(
+        method = Method.Post,
         url = new URL(s"https://rink.hockeyapp.net/api/2/apps/$hockeyId/crashes/upload"),
         body = MultipartBodyFormData(Part(dump, name = "attachment0"), Part(log, name = "log"))
       )
