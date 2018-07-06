@@ -26,7 +26,6 @@ object CursorMenuItem {
   val Camera        = CursorMenuItem("CAMERA",        R.string.glyph__camera,        R.id.cursor_menu_item_camera,        R.string.tooltip_camera)
   val Sketch        = CursorMenuItem("SKETCH",        R.string.glyph__paint,         R.id.cursor_menu_item_draw,          R.string.tooltip_sketch)
   val File          = CursorMenuItem("FILE",          R.string.glyph__attachment,    R.id.cursor_menu_item_file,          R.string.tooltip_file)
-  val Gif           = CursorMenuItem("GIF",           R.string.glyph__gif,           R.id.cursor_menu_item_gif,           R.string.tooltip_gif)
   val AudioMessage  = CursorMenuItem("AUDIO_MESSAGE", R.string.glyph__microphone_on, R.id.cursor_menu_item_audio_message, R.string.tooltip_audio_message)
   val More          = CursorMenuItem("MORE",          R.string.glyph__more,          R.id.cursor_menu_item_more,          R.string.tooltip_more)
   val Less          = CursorMenuItem("LESS",          R.string.glyph__more,          R.id.cursor_menu_item_less,          R.string.tooltip_more)
