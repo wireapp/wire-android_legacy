@@ -234,6 +234,8 @@ class MessageEventProcessor(selfUserId:          UserId,
         MessageData(id, convId, Message.Type.CONNECT_REQUEST, from, MessageData.textContent(text), recipient = Some(recipient), email = email, name = Some(name), time = time, localTime = event.localTime.instant)
       case RenameConversationEvent(_, time, from, name) =>
         MessageData(id, convId, Message.Type.RENAME, from, name = Some(name), time = time, localTime = event.localTime.instant)
+      case MessageTimerEvent(_, time, from, duration) =>
+        MessageData(id, convId, Message.Type.MESSAGE_TIMER, from, time = time, duration = duration, localTime = event.localTime.instant)
       case MemberJoinEvent(_, time, from, userIds, firstEvent) =>
         MessageData(id, convId, Message.Type.MEMBER_JOIN, from, members = userIds.toSet, time = time, localTime = event.localTime.instant, firstMessage = firstEvent)
       case MemberLeaveEvent(_, time, from, userIds) =>
