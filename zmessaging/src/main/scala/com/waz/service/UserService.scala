@@ -354,7 +354,7 @@ class UserServiceImpl(selfUserId:        UserId,
 object UserService {
   val DefaultUserName: String = ""
 
-  val SyncIfOlderThan = 5.minutes
+  val SyncIfOlderThan = 24.hours
 
   val UnsplashUrl = AndroidURIUtil.parse("https://source.unsplash.com/800x800/?landscape")
 
