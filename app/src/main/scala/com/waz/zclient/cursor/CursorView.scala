@@ -33,12 +33,14 @@ import com.waz.model.{Availability, MessageExpiry}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
+import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
 import com.waz.zclient.cursor.CursorController.KeyboardState
 import com.waz.zclient.messages.MessagesController
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
 import com.waz.zclient.ui.cursor._
 import com.waz.zclient.ui.text.TextTransform
+import com.waz.zclient.ui.views.OnDoubleClickListener
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.views.AvailabilityView
@@ -52,10 +54,10 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   import CursorView._
   import Threading.Implicits.Ui
 
-  val controller = inject[CursorController]
-  val accentColor = inject[Signal[AccentColor]]
+  val controller       = inject[CursorController]
+  val accentColor      = inject[Signal[AccentColor]]
   val layoutController = inject[IGlobalLayoutController]
-  val messages = inject[MessagesController]
+  val messages         = inject[MessagesController]
 
   setOrientation(LinearLayout.VERTICAL)
   inflate(R.layout.cursor_view_content)
@@ -65,16 +67,30 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     f.setPadding(left, 0, left, 0)
   }
 
-  val cursorEditText   = findById[CursorEditText]     (R.id.cet__cursor)
-  val mainToolbar      = findById[CursorToolbar]      (R.id.c__cursor__main)
-  val secondaryToolbar = findById[CursorToolbar]      (R.id.c__cursor__secondary)
-  val topBorder        = findById[View]               (R.id.v__top_bar__cursor)
-  val hintView         = findById[TextView]           (R.id.ttv__cursor_hint)
-  val dividerView      = findById[View]               (R.id.v__cursor__divider)
-  val emojiButton      = findById[CursorIconButton]   (R.id.cib__emoji)
-  val keyboardButton   = findById[CursorIconButton]   (R.id.cib__keyboard)
-  val sendButton       = findById[CursorIconButton]   (R.id.cib__send)
-  val ephemeralButton  = findById[EphemeralIconButton](R.id.cib__ephemeral)
+  val cursorEditText   = findById[CursorEditText]       (R.id.cet__cursor)
+  val mainToolbar      = findById[CursorToolbar]        (R.id.c__cursor__main)
+  val secondaryToolbar = findById[CursorToolbar]        (R.id.c__cursor__secondary)
+  val topBorder        = findById[View]                 (R.id.v__top_bar__cursor)
+  val hintView         = findById[TextView]             (R.id.ttv__cursor_hint)
+  val dividerView      = findById[View]                 (R.id.v__cursor__divider)
+  val emojiButton      = findById[CursorIconButton]     (R.id.cib__emoji)
+  val keyboardButton   = findById[CursorIconButton]     (R.id.cib__keyboard)
+  val sendButton       = findById[CursorIconButton]     (R.id.cib__send)
+
+  val ephemeralButton = returning(findById[EphemeralTimerButton](R.id.cib__ephemeral)) { v =>
+    controller.ephemeralBtnVisible.onUi(v.setVisible)
+
+    controller.ephemeralExp.pipeTo(v.ephemeralExpiration)
+    inject[ThemeController].darkThemeSet.pipeTo(v.darkTheme)
+
+    v.setOnClickListener(new OnDoubleClickListener() {
+      override def onDoubleClick(): Unit =
+        controller.toggleEphemeralMode()
+
+      override def onSingleClick(): Unit =
+        controller.keyboard ! KeyboardState.ExtendedCursor(ExtendedCursorContainer.Type.EPHEMERAL)
+    })
+  }
 
   val defaultHintTextColor = hintView.getTextColors.getDefaultColor
 
@@ -98,6 +114,8 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
   dividerColor.onUi(dividerView.setBackgroundColor)
   bgColor.onUi(setBackgroundColor)
+
+
 
   emojiButton.menuItem ! Some(CursorMenuItem.Emoji)
   keyboardButton.menuItem ! Some(CursorMenuItem.Keyboard)

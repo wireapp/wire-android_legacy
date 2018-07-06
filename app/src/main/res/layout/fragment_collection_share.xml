@@ -85,7 +85,7 @@
             android:textColor="@color/drawing__icon__text_color"
             />
 
-        <com.waz.zclient.common.views.EphemeralCursorButton
+        <com.waz.zclient.cursor.EphemeralTimerButton
             android:id="@+id/ephemeral_toggle"
             android:layout_width="@dimen/wire__margin__24"
             android:layout_height="@dimen/wire__margin__24"

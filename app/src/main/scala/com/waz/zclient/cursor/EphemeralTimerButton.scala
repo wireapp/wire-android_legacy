@@ -15,14 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.common.views
+package com.waz.zclient.cursor
 
 import android.content.Context
 import android.graphics.drawable.Drawable
-import android.util.AttributeSet
+import android.util.{AttributeSet, TypedValue}
 import android.view.Gravity
 import com.waz.api.AccentColor
-import com.waz.model.EphemeralDuration
+import com.waz.model.{ConvExpiry, EphemeralDuration, MessageExpiry}
 import com.waz.utils.events.Signal
 import com.waz.zclient.paintcode.{EphemeralIcon, HourGlassIcon}
 import com.waz.zclient.ui.text.TypefaceTextView
@@ -30,16 +30,19 @@ import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
 
-import scala.concurrent.duration.FiniteDuration
-
-class EphemeralCursorButton(context: Context, attrs: AttributeSet, defStyleAttr: Int) extends TypefaceTextView(context, attrs, defStyleAttr) with ViewHelper {
+class EphemeralTimerButton(context: Context, attrs: AttributeSet, defStyleAttr: Int) extends TypefaceTextView(context, attrs, defStyleAttr) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
-  val accentColor = inject[Signal[AccentColor]]
-  val ephemeralExpiration = Signal[Option[FiniteDuration]](None)
+  setTextSize(TypedValue.COMPLEX_UNIT_PX, getDimenPx(R.dimen.wire__text_size__small))
 
-  val lengthAndUnit = ephemeralExpiration.map(_.map(EphemeralDuration(_)))
+  val accentColor         = inject[Signal[AccentColor]]
+
+  val ephemeralExpiration = Signal[Option[EphemeralDuration]](None)
+  val darkTheme           = Signal(true) //sharing controller is always in "dark" theme
+
+  val lengthAndUnit = ephemeralExpiration.map(_.map(_.display))
+
   val (len, unit) =
     (lengthAndUnit.map(_.map(_._1)), lengthAndUnit.map(_.map(_._2)))
 
@@ -47,8 +50,12 @@ class EphemeralCursorButton(context: Context, attrs: AttributeSet, defStyleAttr:
 
   val color =
     ephemeralExpiration.flatMap {
-      case Some(_) => accentColor.map(_.getColor)
-      case _ => Signal.const(getColor(R.color.text__primary_dark))
+      case Some(MessageExpiry(_)) => accentColor.map(_.getColor)
+      case Some(ConvExpiry(_))    => Signal.const(getColor(R.color.light_graphite))
+      case _ => darkTheme.map {
+        case true  => getColor(R.color.text__primary_dark)
+        case false => getColor(R.color.text__primary_light)
+      }
     }
 
   val iconSize = ephemeralExpiration.map {
@@ -83,9 +90,10 @@ class EphemeralCursorButton(context: Context, attrs: AttributeSet, defStyleAttr:
     drawable.onUi(setBackgroundDrawable)
     contentDescription.onUi(setContentDescription)
 
-    color.onUi(setTextColor)
-    iconSize.onUi { size =>
-      this.setWidthAndHeight(Some(size), Some(size))
+    Signal(color, iconSize).onUi {
+      case (c, s) =>
+        setTextColor(c)
+        this.setWidthAndHeight(Some(s), Some(s))
     }
   }
 }

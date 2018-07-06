@@ -106,14 +106,13 @@
 
             </FrameLayout>
 
-            <com.waz.zclient.cursor.EphemeralIconButton android:id="@+id/cib__ephemeral"
-                                                        android:layout_width="@dimen/wire__margin__24"
-                                                        android:layout_height="@dimen/wire__margin__24"
-                                                        android:layout_gravity="center"
-                                                        android:letterSpacing="-0.1"
-                                                        android:includeFontPadding="false"
-                                                        android:gravity="center_vertical"
-                                                        style="?cursorIconButton"/>
+            <com.waz.zclient.cursor.EphemeralTimerButton android:id="@+id/cib__ephemeral"
+                                                         android:layout_width="@dimen/wire__margin__24"
+                                                         android:layout_height="@dimen/wire__margin__24"
+                                                         android:layout_gravity="center"
+                                                         android:letterSpacing="-0.1"
+                                                         android:includeFontPadding="false"
+                                                         android:gravity="center_vertical"/>
 
             <com.waz.zclient.cursor.SendButton android:id="@+id/cib__send"
                                                android:visibility="gone"
