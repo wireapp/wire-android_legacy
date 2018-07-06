@@ -241,7 +241,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
     convsContent.updateConversationName(id, name) flatMap {
       case Some((_, conv)) if conv.name.contains(name) =>
         sync.postConversationName(id, conv.name.getOrElse(""))
-        messages.addRenameConversationMessage(id, selfUserId, name) map (_ => Some(conv))
+        messages.addRenameConversationMessage(id, selfUserId, name).map(_ => Some(conv))
       case conv =>
         warn(s"Conversation name could not be changed for: $id, conv: $conv")
         CancellableFuture.successful(None)

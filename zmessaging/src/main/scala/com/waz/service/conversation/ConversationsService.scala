@@ -188,10 +188,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       convsStorage.update(conv.id, _.copy(link = None))
 
     case MessageTimerEvent(_, time, from, duration) =>
-      for {
-        _ <- convsStorage.update(conv.id, _.copy(globalEphemeral = duration))
-        _ <- messages.addTimerChangedMessage(conv.id, from, duration, time)
-      } yield {}
+      convsStorage.update(conv.id, _.copy(globalEphemeral = duration))
+
     case _ => successful(())
   }
 

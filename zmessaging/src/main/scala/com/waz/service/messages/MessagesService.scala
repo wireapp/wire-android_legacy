@@ -59,7 +59,7 @@ trait MessagesService {
   def addConversationStartMessage(convId: ConvId, creator: UserId, users: Set[UserId], name: Option[String], time: Option[Instant] = None): Future[MessageData]
   def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false): Future[Option[MessageData]]
   def addMemberLeaveMessage(convId: ConvId, selfUserId: UserId, user: UserId): Future[Any]
-  def addRenameConversationMessage(convId: ConvId, selfUserId: UserId, name: String, needsSyncing: Boolean = true): Future[Option[MessageData]]
+  def addRenameConversationMessage(convId: ConvId, selfUserId: UserId, name: String): Future[Option[MessageData]]
   def addTimerChangedMessage(convId: ConvId, from: UserId, duration: Option[FiniteDuration], time: Instant = clock.instant()): Future[Unit]
   def addHistoryLostMessages(cs: Seq[ConversationData], selfUserId: UserId): Future[Set[MessageData]]
 
@@ -193,12 +193,14 @@ class MessagesServiceImpl(selfUserId:   UserId,
     updater.addLocalMessage(MessageData(mid, convId, tpe, selfUserId, protos = Seq(GenericMessage(mid.uid, Asset(asset)))))
   }
 
-  override def addRenameConversationMessage(convId: ConvId, from: UserId, name: String, needsSyncing: Boolean = true) = {
+  override def addRenameConversationMessage(convId: ConvId, from: UserId, name: String) = {
     def update(msg: MessageData) = msg.copy(name = Some(name))
     def create = MessageData(MessageId(), convId, Message.Type.RENAME, from, name = Some(name))
-    if (needsSyncing) updater.updateOrCreateLocalMessage(convId, Message.Type.RENAME, update, create)
-    else updater.addLocalMessage(create, state = Message.Status.DELIVERED).map(Some(_))
+    updater.updateOrCreateLocalMessage(convId, Message.Type.RENAME, update, create)
   }
+
+  override def addTimerChangedMessage(convId: ConvId, from: UserId, duration: Option[FiniteDuration], time: Instant = clock.instant()) =
+    updater.addLocalMessage(MessageData(MessageId(), convId, Message.Type.MESSAGE_TIMER, from, time = time, duration = duration)).map(_ => {})
 
   override def addConnectRequestMessage(convId: ConvId, fromUser: UserId, toUser: UserId, message: String, name: String, fromSync: Boolean = false) = {
     val msg = MessageData(
@@ -273,10 +275,6 @@ class MessagesServiceImpl(selfUserId:   UserId,
       case _ =>
         updateOrCreate(users)
     }
-  }
-
-  override def addTimerChangedMessage(convId: ConvId, from: UserId, duration: Option[FiniteDuration], time: Instant = clock.instant()) = {
-    updater.addLocalSentMessage(MessageData(MessageId(), convId, Message.Type.MESSAGE_TIMER, from, time = time, duration = duration)).map(_ => {})
   }
 
   def removeLocalMemberJoinMessage(convId: ConvId, users: Set[UserId]): Future[Any] = {
