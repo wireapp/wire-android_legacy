@@ -40,6 +40,7 @@ import com.waz.utils.events._
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
 import com.waz.utils._
 import com.waz.sync.client.ErrorOr
+import com.waz.utils.{RichInstant, _}
 import org.threeten.bp.Instant
 
 import scala.collection.breakOut

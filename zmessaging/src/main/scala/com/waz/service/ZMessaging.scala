@@ -22,7 +22,6 @@ import com.evernote.android.job.{JobCreator, JobManager}
 import com.softwaremill.macwire._
 import com.waz.ZLog._
 import com.waz.api.ContentSearchQuery
-import com.waz.client.RegistrationClientImpl
 import com.waz.content.{MembersStorageImpl, UsersStorageImpl, ZmsDatabase, _}
 import com.waz.model._
 import com.waz.model.otr.ClientId
