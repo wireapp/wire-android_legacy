@@ -19,7 +19,7 @@ package com.waz.zclient.conversation.creation
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
-import com.waz.content.GlobalPreferences.ShouldCreateFullConversation
+import com.waz.content.UserPreferences.ShouldCreateFullConversation
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.ZMessaging
 import com.waz.service.tracking._
