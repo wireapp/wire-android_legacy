@@ -32,7 +32,7 @@ class InternalLogSpec extends AndroidFreeSpec {
   val tempDir = System.getProperty("java.io.tmpdir")+"tmp"+System.nanoTime()
 
   def filesNumberInTempDir = new File(tempDir).listFiles().length
-  def pathsInTempDir = asScalaIterator(new File(tempDir).listFiles().iterator).map(_.getAbsolutePath).toList
+  def pathsInTempDir = asScalaIterator(new File(tempDir).listFiles().iterator).map(_.getAbsolutePath).toList.sorted
 
   def overflow(log: BufferedLogOutput) = {
     var prevSize = -1L

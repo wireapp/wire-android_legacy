@@ -92,8 +92,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case Some(convId) => convsStorage.get(convId).flatMap {
       case Some(conv) if conv.accessRole.isEmpty =>
         for {
-          syncId <- sync.syncConversations(Set(conv.id))
-          _      <- syncReqService.scheduler.await(syncId)
+          syncId        <- sync.syncConversations(Set(conv.id))
+          _             <- syncReqService.scheduler.await(syncId)
           Some(updated) <- content.convById(conv.id)
         } yield if (updated.access.contains(Access.CODE)) sync.syncConvLink(conv.id)
 
@@ -158,7 +158,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case MemberJoinEvent(_, _, _, userIds, _) =>
       if (userIds.contains(selfUserId)) sync.syncConversations(Set(conv.id)) //we were re-added to a group and in the meantime might have missed events
       for {
-        syncId <- users.syncNotExistingOrExpired(userIds)
+        syncId <- users.syncIfNeeded(userIds.toSet)
         _ <- syncId.fold(Future.successful(()))(sId => syncReqService.scheduler.await(sId).map(_ => ()))
         _ <- membersStorage.add(conv.id, userIds)
         _ <- if (userIds.contains(selfUserId)) content.setConvActive(conv.id, active = true) else successful(None)
@@ -175,11 +175,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case ConnectRequestEvent(_, _, from, _, recipient, _, _) =>
       debug(s"ConnectRequestEvent(from = $from, recipient = $recipient")
       membersStorage.add(conv.id, Set(from, recipient)).flatMap { added =>
-        val userIdsAdded = added map (_.userId)
-        usersStorage.listAll(userIdsAdded) map { localUsers =>
-          users.syncIfNeeded(localUsers: _*)
-          sync.syncUsersIfNotEmpty(userIdsAdded.filterNot(id => localUsers exists (_.id == id)).toSeq)
-        }
+        users.syncIfNeeded(added.map(_.userId))
       }
 
     case ConversationAccessEvent(_, _, _, access, accessRole) =>
@@ -192,10 +188,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       convsStorage.update(conv.id, _.copy(link = None))
 
     case MessageTimerEvent(_, time, from, duration) =>
-      for {
-        _ <- convsStorage.update(conv.id, _.copy(globalEphemeral = duration))
-        _ <- messages.addTimerChangedMessage(conv.id, from, duration, time)
-      } yield {}
+      convsStorage.update(conv.id, _.copy(globalEphemeral = duration))
+
     case _ => successful(())
   }
 
@@ -278,7 +272,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         }
     })
 
-    def syncUsers() = users.syncNotExistingOrExpired(responses.flatMap(_.members))
+    def syncUsers() = users.syncIfNeeded(responses.flatMap(_.members).toSet)
 
     for {
       (convs, created) <- updateConversationData()

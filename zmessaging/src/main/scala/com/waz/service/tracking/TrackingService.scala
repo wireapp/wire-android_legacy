@@ -93,7 +93,7 @@ class TrackingServiceImpl(curAccount: Signal[Option[UserId]], zmsProvider: ZmsPr
         Some(convId) <- z.convsStats.selectedConversationId.head
         Some(conv)   <- z.convsStorage.get(convId)
         userIds      <- z.membersStorage.activeMembers(convId).head
-        users        <- z.users.getUsers(userIds.toSeq)
+        users        <- z.usersStorage.listAll(userIds.toSeq)
         isGroup      <- z.conversations.isGroupConversation(convId)
       } {
         events ! Option(z) -> ContributionEvent(action, isGroup, conv.ephemeralExpiration.map(_.duration), users.exists(_.isWireBot), !conv.isTeamOnly, conv.isMemberFromTeamGuest(z.teamId))
@@ -127,7 +127,7 @@ class TrackingServiceImpl(curAccount: Signal[Option[UserId]], zmsProvider: ZmsPr
         Some(conv)  <- z.convsContent.convById(msg.convId)
         Some(asset) <- z.assetsStorage.get(assetId)
         userIds     <- z.membersStorage.activeMembers(conv.id).head
-        users       <- z.users.getUsers(userIds.toSeq)
+        users       <- z.usersStorage.listAll(userIds.toSeq)
         isGroup     <- z.conversations.isGroupConversation(conv.id)
       } yield track(ContributionEvent(fromMime(asset.mime), isGroup, msg.ephemeral, users.exists(_.isWireBot), !conv.isTeamOnly, conv.isMemberFromTeamGuest(z.teamId)), Some(userId))
     case _ => //
@@ -137,7 +137,7 @@ class TrackingServiceImpl(curAccount: Signal[Option[UserId]], zmsProvider: ZmsPr
     case Some(z) =>
       for {
         userIds <- z.membersStorage.activeMembers(convId).head
-        users   <- z.users.getUsers(userIds.toSeq)
+        users   <- z.usersStorage.listAll(userIds.toSeq)
         (bots, people) = users.partition(_.isWireBot)
       } yield track(IntegrationAdded(integrationId, people.size, bots.filterNot(_.integrationId.contains(integrationId)).size + 1, method))
     case None =>

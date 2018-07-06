@@ -116,6 +116,8 @@ object Preferences {
         case e => Some(e.millis)
       }
 
+      implicit lazy val SetCodec = apply[Set[Int]](s => s.mkString(","), s => s.split(",").map(java.lang.Integer.parseInt).toSet, Set.empty[Int])
+
       implicit lazy val FiniteDurationCodec = apply[Option[FiniteDuration]](d => String.valueOf(d.getOrElse(0.millis).toMillis), parseFiniteDurationOpt, None)
 
       implicit lazy val AuthTokenCodec = apply[Option[AccessToken]] (
@@ -371,6 +373,8 @@ object GlobalPreferences {
 
   lazy val LastEphemeralValue      = PrefKey[Option[FiniteDuration]]("last_ephemeral_value", customDefault = None)
 
+  lazy val ShouldCreateFullConversation = PrefKey[Boolean]("should_create_full_conv", customDefault = false)
+
   //DEPRECATED!!! Use the UserPreferences instead!!
   lazy val _ShareContacts          = PrefKey[Boolean]("PREF_KEY_PRIVACY_CONTACTS")
   lazy val _DarkTheme              = PrefKey[Boolean]("DarkTheme")
@@ -405,7 +409,6 @@ object UserPreferences {
   lazy val Sounds                           = PrefKey[IntensityLevel]("sounds")
   lazy val DownloadImagesAlways             = PrefKey[Boolean]       ("download_images_always", customDefault = true)
 
-  lazy val LastSlowSyncTimeKey              = PrefKey[Option[Long]]        ("last_slow_sync_time")
   lazy val SelectedConvId                   = PrefKey[Option[ConvId]]      ("selected_conv_id")
   lazy val SpotifyRefreshToken              = PrefKey[Option[RefreshToken]]("spotify_refresh_token")
 
@@ -432,9 +435,10 @@ object UserPreferences {
   lazy val VibrateEnabled                   = PrefKey[Boolean]("vibrate_enabled")
   lazy val SendButtonEnabled                = PrefKey[Boolean]("send_button_enabled", customDefault = true)
 
+  lazy val CurrentNotifications             = PrefKey[Set[Int]]("current_notifications", customDefault = Set.empty[Int])
+
   //increment number to perform slow sync on particular type
   lazy val ShouldSyncConversations          = PrefKey[Boolean]("should_sync_conversations_1", customDefault = true)
   lazy val ShouldSyncInitial                = PrefKey[Boolean]("should_sync_initial_1", customDefault = true)
   lazy val ShouldSyncUsers                  = PrefKey[Boolean]("should_sync_users", customDefault = true)
-
 }

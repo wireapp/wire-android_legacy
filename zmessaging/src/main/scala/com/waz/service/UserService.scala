@@ -22,7 +22,6 @@ import java.util.Date
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.impl.AccentColor
-import com.waz.content.UserPreferences.{LastSlowSyncTimeKey, ShouldSyncUsers}
 import com.waz.content._
 import com.waz.model.AccountData.Password
 import com.waz.model.UserData.ConnectionStatus
@@ -41,11 +40,13 @@ import com.waz.utils.events._
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
 import com.waz.utils.{RichInstant, _}
 import com.waz.znet.ZNetClient.ErrorOr
+import org.threeten.bp.Instant
 
 import scala.collection.breakOut
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Right
+
 
 trait UserService {
   def userUpdateEventsStage: Stage.Atomic
@@ -53,22 +54,19 @@ trait UserService {
 
   def selfUser: Signal[UserData]
 
+  def currentConvMembers: Signal[Set[UserId]]
+
   def getSelfUser: Future[Option[UserData]]
   def getOrCreateUser(id: UserId): Future[UserData]
   def updateUserData(id: UserId, updater: UserData => UserData): Future[Option[(UserData, UserData)]]
   def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[Date] = None, message: Option[String] = None): Future[Option[UserData]]
-  def getUsers(ids: Seq[UserId]): Future[Seq[UserData]]
-  def getUser(id: UserId): Future[Option[UserData]]
-  def syncIfNeeded(users: UserData*): Future[Option[SyncId]]
+  def syncIfNeeded(userIds: Set[UserId], olderThan: FiniteDuration = SyncIfOlderThan): Future[Option[SyncId]]
   def updateUsers(entries: Seq[UserSearchEntry]): Future[Set[UserData]]
   def acceptedOrBlockedUsers: Signal[Map[UserId, UserData]]
 
-
-  def updateSyncedUsers(users: Seq[UserInfo], timestamp: Long = System.currentTimeMillis()): Future[Set[UserData]]
-  def syncNotExistingOrExpired(users: Seq[UserId]): Future[Option[SyncId]]
+  def updateSyncedUsers(users: Seq[UserInfo], timestamp: Instant = clock.instant()): Future[Set[UserData]]
 
   def deleteAccount(): Future[SyncId]
-  def userSignal(id: UserId): Signal[UserData]
 
   //These self user properties can fail in many ways, so we do not sync them and force the user to respond
   def setEmail(email: EmailAddress, password: Password): ErrorOr[Unit]
@@ -88,47 +86,48 @@ trait UserService {
   def updateSelfPicture(image: com.waz.api.ImageAsset): Future[Unit]
   def updateSelfPicture(image: Array[Byte]): Future[Unit]
   def updateSelfPicture(image: URI): Future[Unit]
-  
+
   def addUnsplashPicture(): Future[Unit]
 }
 
-/**
-  * TODO improve accuracy of sync logic wrt to connected and unconnected users
-  * Currently, we sync all users on full-sync or if, when retrieving them via this class, we detect it's been a while since
-  * their last sync. This is both inefficient and incorrect. An improvement would be:
-  * 1. Since we get update events for all connected/team users, we don't need to bother syncing them outside of a full-sync.
-  * 2. For unconnected && non-team users, we should monitor the current conversation and just sync all unconnected users in
-  *    that conversation (there won't be that many on average, but maybe we'd need a throttle of a few minutes?). We should
-  *    also merge this with the ExpiredUsersService below, since that's what we do with wireless users, except we have a
-  *    timer for them.
-  * 3. Finally, we should listen to the self signals of all other logged in accounts and update our user's storage to reflect those states
-  */
 class UserServiceImpl(selfUserId:        UserId,
+                      teamId:            Option[TeamId],
                       accounts:          AccountsService,
                       accsStorage:       AccountStorage,
                       usersStorage:      UsersStorage,
+                      membersStorage:    MembersStorage,
                       userPrefs:         UserPreferences,
                       push:              PushService,
                       assets:            AssetService,
                       usersClient:       UsersClient,
                       sync:              SyncServiceHandle,
                       assetsStorage:     AssetsStorage,
-                      credentialsClient: CredentialsUpdateClient) extends UserService {
+                      credentialsClient: CredentialsUpdateClient,
+                      stats:             ConversationsListStateService) extends UserService {
 
   import Threading.Implicits.Background
   private implicit val ec = EventContext.Global
-  import userPrefs._
 
-  private val shouldSyncUsers = userPrefs.preference(ShouldSyncUsers)
+  private val shouldSyncUsers = userPrefs.preference(UserPreferences.ShouldSyncUsers)
 
   for {
     shouldSync <- shouldSyncUsers()
   } if (shouldSync) {
     verbose("Syncing user data to get team ids")
     usersStorage.list()
-      .flatMap(users => sync.syncUsers(users.map(_.id).filterNot(_ == selfUserId):_*))
+      .flatMap(users => sync.syncUsers(users.map(_.id).toSet - selfUserId))
       .flatMap(_ => shouldSyncUsers := false)
-  }
+    }
+
+  val currentConvMembers = for {
+    Some(convId) <- stats.selectedConversationId
+    membersIds   <- membersStorage.activeMembers(convId)
+  } yield membersIds
+
+  currentConvMembers(syncIfNeeded(_))
+
+  //Update user data for other accounts
+  accounts.accountsWithManagers.map(_ - selfUserId)(userIds => syncIfNeeded(userIds))
 
   override val selfUser: Signal[UserData] = usersStorage.optSignal(selfUserId) flatMap {
     case Some(data) => Signal.const(data)
@@ -136,8 +135,6 @@ class UserServiceImpl(selfUserId:        UserId,
       sync.syncSelfUser()
       Signal.empty
   }
-
-  lazy val lastSlowSyncTimestamp = preference(LastSlowSyncTimeKey)
 
   override val userUpdateEventsStage: Stage.Atomic = EventScheduler.Stage[UserUpdateEvent] { (_, e) =>
     val (removeEvents, updateEvents) = e.partition(_.removeIdentity)
@@ -163,15 +160,6 @@ class UserServiceImpl(selfUserId:        UserId,
     }
   }
 
-  //Update user data for other accounts
-  //TODO remove this and move the necessary user data up to the account storage
-  accounts.accountsWithManagers.map(_.toSeq.filterNot(_ == selfUserId))(syncNotExistingOrExpired)
-
-  push.onHistoryLost { time =>
-    verbose(s"onSlowSyncNeeded, updating timestamp to: $time")
-    lastSlowSyncTimestamp := Some(time.toEpochMilli)
-  }
-
   override lazy val acceptedOrBlockedUsers: Signal[Map[UserId, UserData]] =
     new AggregatingSignal[Seq[UserData], Map[UserId, UserData]](
       usersStorage.onChanged, usersStorage.listUsersByConnectionStatus(AcceptedOrBlocked),
@@ -182,7 +170,7 @@ class UserServiceImpl(selfUserId:        UserId,
     )
 
   override def getOrCreateUser(id: UserId) = usersStorage.getOrElseUpdate(id, {
-    sync.syncUsers(id)
+    sync.syncUsers(Set(id))
     UserData(id, None, DefaultUserName, None, None, connection = ConnectionStatus.Unconnected, searchKey = SearchKey(DefaultUserName), handle = None)
   })
 
@@ -198,29 +186,6 @@ class UserServiceImpl(selfUserId:        UserId,
     def updateOrAdd(entry: UserSearchEntry) = (_: Option[UserData]).fold(UserData(entry))(_.updated(entry))
     usersStorage.updateOrCreateAll(entries.map(entry => entry.id -> updateOrAdd(entry)).toMap)
   }
-
-  override def getUser(id: UserId) = {
-    debug(s"getUser($id)")
-
-    usersStorage.get(id) map {
-      case Some(data) =>
-        syncIfNeeded(data)
-        Some(data)
-      case _ =>
-        sync.syncUsers(id)
-        None
-    }
-  }
-
-  override def userSignal(id: UserId) =
-    usersStorage.optSignal(id) flatMap {
-      case None =>
-        sync.syncUsers(id)
-        Signal.empty[UserData]
-      case Some(data) =>
-        syncIfNeeded(data)
-        Signal const data
-    }
 
   def syncSelfNow: Future[Option[UserData]] = Serialized.future("syncSelfNow", selfUserId) {
     usersClient.loadSelf().future.flatMap {
@@ -250,36 +215,28 @@ class UserServiceImpl(selfUserId:        UserId,
       case _ => syncSelfNow
     }
 
-  override def getUsers(ids: Seq[UserId]): Future[Seq[UserData]] =
-    usersStorage.listAll(ids) map { users =>
-      syncIfNeeded(users: _*)
-      users
-    }
-
   /**
    * Schedules user data sync if user with given id doesn't exist or has old timestamp.
-   */
-  override def syncNotExistingOrExpired(users: Seq[UserId]): Future[Option[SyncId]] = usersStorage.listAll(users) flatMap { found =>
-    val toSync = (users.toSet -- found.map(_.id)).toSeq
-    if (toSync.nonEmpty) sync.syncUsers(toSync: _*) flatMap (sId => syncIfNeeded(found: _*).map(_.orElse(Some(sId)))) else syncIfNeeded(found: _*)
-  }
+  */
 
-  /**
-    * Schedules user data sync if stored user timestamp is older than last slow sync timestamp.
-   */
-  override def syncIfNeeded(users: UserData*): Future[Option[SyncId]] =
-    lastSlowSyncTimestamp() flatMap {
-      //TODO: Remove empty picture check when not needed anymore
-      case Some(time) => sync.syncUsersIfNotEmpty(users.filter(user => user.syncTimestamp < time || user.picture.isEmpty).map(_.id))
-      case _ => sync.syncUsersIfNotEmpty(users.filter(_.picture.isEmpty).map(_.id))
+  override def syncIfNeeded(userIds: Set[UserId], olderThan: FiniteDuration = SyncIfOlderThan): Future[Option[SyncId]] =
+    usersStorage.listAll(userIds).flatMap { found =>
+      val newIds = userIds -- found.map(_.id)
+      val offset = clock.instant() - olderThan
+      val existing = found.filter(u => !u.isConnected && (u.teamId.isEmpty || u.teamId != teamId) && u.syncTimestamp.forall(_.isBefore(offset)))
+      val toSync = newIds ++ existing.map(_.id)
+      verbose(s"syncIfNeeded for users; new: (${newIds.size}) + existing: (${existing.size}) = all: (${toSync.size})")
+      if (toSync.nonEmpty) sync.syncUsers(toSync).map(Some(_))(Threading.Background) else Future.successful(None)
     }
 
-  override def updateSyncedUsers(users: Seq[UserInfo], timestamp: Long = System.currentTimeMillis()): Future[Set[UserData]] = {
+  override def updateSyncedUsers(users: Seq[UserInfo], syncTime: Instant = clock.instant()): Future[Set[UserData]] = {
     verbose(s"update synced ${users.size} users")
     assets.updateAssets(users.flatMap(_.picture.getOrElse(Seq.empty[AssetData]))).flatMap { _ =>
       def updateOrCreate(info: UserInfo): Option[UserData] => UserData = {
-        case Some(user: UserData) => user.updated(info).copy(syncTimestamp = timestamp, connection = if (selfUserId == info.id) ConnectionStatus.Self else user.connection)
-        case None => UserData(info).copy(syncTimestamp = timestamp, connection = if (selfUserId == info.id) ConnectionStatus.Self else ConnectionStatus.Unconnected)
+        case Some(user: UserData) =>
+          user.updated(info).copy(syncTimestamp = Some(syncTime), connection = if (selfUserId == info.id) ConnectionStatus.Self else user.connection)
+        case None =>
+          UserData(info).copy(syncTimestamp = Some(syncTime), connection = if (selfUserId == info.id) ConnectionStatus.Self else ConnectionStatus.Unconnected)
       }
       usersStorage.updateOrCreateAll(users.map { info => info.id -> updateOrCreate(info) }(breakOut))
     }
@@ -397,6 +354,8 @@ class UserServiceImpl(selfUserId:        UserId,
 object UserService {
   val DefaultUserName: String = ""
 
+  val SyncIfOlderThan = 5.minutes
+
   val UnsplashUrl = AndroidURIUtil.parse("https://source.unsplash.com/800x800/?landscape")
 
   lazy val AcceptedOrBlocked = Set(ConnectionStatus.Accepted, ConnectionStatus.Blocked)
@@ -407,11 +366,12 @@ object UserService {
   * wireless guest user. It then starts a countdown timer for the remaining duration of the life of the user, and at the
   * end of that timer, fires a sync request to trigger a BE check
   */
-class ExpiredUsersService(convState: ConversationsListStateService,
-                          push:      PushService,
-                          members:   MembersStorage,
-                          users:     UsersStorage,
-                          sync:      SyncServiceHandle)(implicit ev: AccountContext) {
+class ExpiredUsersService(convState:    ConversationsListStateService,
+                          push:         PushService,
+                          members:      MembersStorage,
+                          users:        UserService,
+                          usersStorage: UsersStorage,
+                          sync:         SyncServiceHandle)(implicit ev: AccountContext) {
 
   private implicit val ec = new SerialDispatchQueue(name = "ExpiringUsers")
 
@@ -430,11 +390,10 @@ class ExpiredUsersService(convState: ConversationsListStateService,
     }
   })
 
-  for {
-    Some(conv) <- convState.selectedConversationId
-    members    <- members.activeMembers(conv)
-    wireless   <- Signal.sequence(members.map(users.signal).toSeq:_*).map(_.toSet.filter(_.expiresAt.isDefined))
-  } {
+  (for {
+    membersIds <- users.currentConvMembers
+    members    <- Signal.sequence(membersIds.map(usersStorage.signal).toSeq: _*)
+  } yield members.filter(_.expiresAt.isDefined).toSet){ wireless =>
     push.beDrift.head.map { drift =>
       val woTimer = wireless.filter(u => (wireless.map(_.id) -- timers.keySet).contains(u.id))
       woTimer.foreach { u =>
@@ -442,7 +401,7 @@ class ExpiredUsersService(convState: ConversationsListStateService,
         verbose(s"Creating timer to remove user: ${u.id}:${u.name} in $delay")
         timers += u.id -> CancellableFuture.delay(delay).map { _ =>
           verbose(s"Wireless user ${u.id}:${u.name} is expired, informing BE")
-          sync.syncUsers(u.id)
+          sync.syncUsers(Set(u.id))
           timers -= u.id
         }
       }

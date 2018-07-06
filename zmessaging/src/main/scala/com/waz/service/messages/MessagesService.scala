@@ -19,10 +19,10 @@ package com.waz.service.messages
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.api.Message.{Status, Type}
 import com.waz.api.Message
+import com.waz.api.Message.{Status, Type}
 import com.waz.api.impl.ErrorResponse
-import com.waz.content.{EditHistoryStorage, MembersStorage, MessagesStorage}
+import com.waz.content.{EditHistoryStorage, MembersStorage, MessagesStorage, UsersStorage}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GenericContent._
 import com.waz.model.{MessageId, _}
@@ -36,13 +36,13 @@ import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal}
-import org.threeten.bp.Instant.now
 import org.threeten.bp.Instant
+import org.threeten.bp.Instant.now
 
 import scala.collection.breakOut
 import scala.concurrent.Future
 import scala.concurrent.Future.{successful, traverse}
-import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.duration.FiniteDuration
 import scala.util.Success
 
 trait MessagesService {
@@ -59,7 +59,7 @@ trait MessagesService {
   def addConversationStartMessage(convId: ConvId, creator: UserId, users: Set[UserId], name: Option[String], time: Option[Instant] = None): Future[MessageData]
   def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false): Future[Option[MessageData]]
   def addMemberLeaveMessage(convId: ConvId, selfUserId: UserId, user: UserId): Future[Any]
-  def addRenameConversationMessage(convId: ConvId, selfUserId: UserId, name: String, needsSyncing: Boolean = true): Future[Option[MessageData]]
+  def addRenameConversationMessage(convId: ConvId, selfUserId: UserId, name: String): Future[Option[MessageData]]
   def addTimerChangedMessage(convId: ConvId, from: UserId, duration: Option[FiniteDuration], time: Instant = clock.instant()): Future[Unit]
   def addHistoryLostMessages(cs: Seq[ConversationData], selfUserId: UserId): Future[Set[MessageData]]
 
@@ -80,16 +80,16 @@ trait MessagesService {
   def retentionPolicy(convData: ConversationData): CancellableFuture[Retention]
 }
 
-class MessagesServiceImpl(selfUserId: UserId,
-                          teamId:     Option[TeamId],
-                          storage:    MessagesStorage,
-                          updater:    MessagesContentUpdater,
-                          edits:      EditHistoryStorage,
-                          convs:      ConversationsContentUpdater,
-                          network:    NetworkModeService,
-                          members:    MembersStorage,
-                          users:      UserService,
-                          sync:       SyncServiceHandle) extends MessagesService {
+class MessagesServiceImpl(selfUserId:   UserId,
+                          teamId:       Option[TeamId],
+                          storage:      MessagesStorage,
+                          updater:      MessagesContentUpdater,
+                          edits:        EditHistoryStorage,
+                          convs:        ConversationsContentUpdater,
+                          network:      NetworkModeService,
+                          members:      MembersStorage,
+                          usersStorage: UsersStorage,
+                          sync:         SyncServiceHandle) extends MessagesService {
   import Threading.Implicits.Background
   private implicit val ec = EventContext.Global
 
@@ -193,12 +193,14 @@ class MessagesServiceImpl(selfUserId: UserId,
     updater.addLocalMessage(MessageData(mid, convId, tpe, selfUserId, protos = Seq(GenericMessage(mid.uid, Asset(asset)))))
   }
 
-  override def addRenameConversationMessage(convId: ConvId, from: UserId, name: String, needsSyncing: Boolean = true) = {
+  override def addRenameConversationMessage(convId: ConvId, from: UserId, name: String) = {
     def update(msg: MessageData) = msg.copy(name = Some(name))
     def create = MessageData(MessageId(), convId, Message.Type.RENAME, from, name = Some(name))
-    if (needsSyncing) updater.updateOrCreateLocalMessage(convId, Message.Type.RENAME, update, create)
-    else updater.addLocalMessage(create, state = Message.Status.DELIVERED).map(Some(_))
+    updater.updateOrCreateLocalMessage(convId, Message.Type.RENAME, update, create)
   }
+
+  override def addTimerChangedMessage(convId: ConvId, from: UserId, duration: Option[FiniteDuration], time: Instant = clock.instant()) =
+    updater.addLocalMessage(MessageData(MessageId(), convId, Message.Type.MESSAGE_TIMER, from, time = time, duration = duration)).map(_ => {})
 
   override def addConnectRequestMessage(convId: ConvId, fromUser: UserId, toUser: UserId, message: String, name: String, fromSync: Boolean = false) = {
     val msg = MessageData(
@@ -273,10 +275,6 @@ class MessagesServiceImpl(selfUserId: UserId,
       case _ =>
         updateOrCreate(users)
     }
-  }
-
-  override def addTimerChangedMessage(convId: ConvId, from: UserId, duration: Option[FiniteDuration], time: Instant = clock.instant()) = {
-    updater.addLocalSentMessage(MessageData(MessageId(), convId, Message.Type.MESSAGE_TIMER, from, time = time, duration = duration)).map(_ => {})
   }
 
   def removeLocalMemberJoinMessage(convId: ConvId, users: Set[UserId]): Future[Any] = {
@@ -376,7 +374,7 @@ class MessagesServiceImpl(selfUserId: UserId,
     def checkConv(convId: ConvId) =
       members
         .activeMembers(convId)
-        .flatMap(p => Signal.sequence(p.map(users.userSignal).toSeq: _*)
+        .flatMap(p => Signal.sequence(p.map(usersStorage.signal).toSeq: _*)
           .map(_.exists(_.teamId.isDefined)))
 
     val result = if (teamId.isDefined || convData.team.isDefined) {
