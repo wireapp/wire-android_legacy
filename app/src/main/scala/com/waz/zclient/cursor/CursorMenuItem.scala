@@ -36,4 +36,3 @@ object CursorMenuItem {
   val Send          = CursorMenuItem("SEND",          R.string.glyph__send,          R.id.cursor_menu_item_send,          R.string.empty_string)
   val Dummy         = CursorMenuItem("",              R.string.empty_string,         R.id.cursor_menu_item_dummy,         R.string.empty_string)
 }
-
