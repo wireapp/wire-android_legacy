@@ -24,7 +24,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import com.waz.content.GlobalPreferences._
-import com.waz.content.UserPreferences.LastStableNotification
+import com.waz.content.UserPreferences.{ShouldCreateFullConversation, LastStableNotification}
 import com.waz.model.AccountData.Password
 import com.waz.model.Uid
 import com.waz.ZLog.ImplicitTag._
