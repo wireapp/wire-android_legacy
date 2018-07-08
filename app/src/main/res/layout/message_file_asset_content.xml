@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,9 @@
               android:layout_height="match_parent"
               android:baselineAligned="false"
               android:orientation="horizontal"
+              android:layout_marginEnd="@dimen/content__padding_right"
+              android:layout_marginStart="@dimen/content__padding_left"
+              android:paddingEnd="@dimen/wire__padding__12"
     >
 
     <FrameLayout
@@ -74,7 +77,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:ellipsize="middle"
-            app:font="@string/wire__typeface__light"
+            app:w_font="@string/wire__typeface__light"
             android:maxLines="1"
             />
 
@@ -83,7 +86,7 @@
             style="?messageStreamSubtitleNoColor"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:font="@string/wire__typeface__light"
+            app:w_font="@string/wire__typeface__light"
             />
 
     </LinearLayout>

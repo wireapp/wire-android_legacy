@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,10 +32,11 @@ import com.waz.model.{ConvId, Dim2, MessageData}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.zclient.controllers.AssetsController
-import com.waz.zclient.controllers.global.SelectionController
+import com.waz.zclient.common.controllers.AssetsController
+import com.waz.zclient.controllers.navigation.{INavigationController, Page}
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
-import com.waz.zclient.messages.ScrollController.Scroll
+import com.waz.zclient.messages.ScrollController.{BottomScroll, PositionScroll}
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.{Injectable, Injector, ViewHelper}
@@ -47,12 +48,10 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
   import MessagesListView._
 
   val viewDim = Signal[Dim2]()
-  val layoutManager = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false) {
-    setStackFromEnd(true)
-    override def supportsPredictiveItemAnimations(): Boolean = true
-  }
+  val realViewHeight = Signal[Int]()
+  val layoutManager = new MessagesListLayoutManager(context, LinearLayoutManager.VERTICAL, false)
   val adapter = new MessagesListAdapter(viewDim)
-  val scrollController = new ScrollController(adapter, viewDim.map(_.height))
+  val scrollController = new ScrollController(adapter, realViewHeight)
 
   val messagesController = inject[MessagesController]
   val messageActionsController = inject[MessageActionsController]
@@ -91,31 +90,56 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
     }
   }
 
-  scrollController.onScroll.on(Threading.Ui) { case Scroll(pos, smooth) =>
-    val scrollTo = math.min(adapter.getItemCount - 1, pos)
-    val alreadyScrolledToCorrectPosition = layoutManager.findLastCompletelyVisibleItemPosition() == pos
-    verbose(s"Scrolling to pos: $pos, smooth: $smooth scrollTo: $scrollTo correctPos:$alreadyScrolledToCorrectPosition")
-    if (alreadyScrolledToCorrectPosition) {
-      scrollController.shouldScrollToBottom = true
-    }
-    stopScroll()
-    if (smooth) {
-      val current = layoutManager.findFirstVisibleItemPosition()
-      // jump closer to target position before scrolling, don't want to smooth scroll through many messages
-      if (math.abs(current - pos) > MaxSmoothScroll)
-        layoutManager.scrollToPosition(if (pos > current) pos - MaxSmoothScroll else pos + MaxSmoothScroll)
+  scrollController.onScroll.on(Threading.Ui) { scroll =>
 
-      smoothScrollToPosition(pos) //TODO figure out how to provide an offset, we should scroll to top of the message
-    } else {
-      layoutManager.scrollToPosition(scrollTo)
+    def scrollCloseToTarget(target: Int, current: Int) =
+      if (math.abs(current - target) > MaxSmoothScroll)
+        layoutManager.scrollToPosition(if (target > current) target - MaxSmoothScroll else target + MaxSmoothScroll)
+
+    verbose(s"Scrolling to: $scroll")
+
+    scroll match {
+      case BottomScroll(false) =>
+        val target = adapter.getItemCount - 1
+        layoutManager.snapToEnd()
+        layoutManager.scrollToPosition(target)
+        scrollController.onScrolled(target)
+        verbose(s"Scrolling target: $target, item count: ${adapter.getItemCount}")
+
+      case BottomScroll(true) =>
+        val target = Math.max(0, adapter.getItemCount - 1)
+        val current = layoutManager.findFirstVisibleItemPosition()
+        layoutManager.snapToEnd()
+        scrollCloseToTarget(target, current)
+        smoothScrollToPosition(target)
+        verbose(s"Scrolling target: $target, current: $current, item count: ${adapter.getItemCount}")
+
+      case PositionScroll(pos, false) =>
+        val target = Math.min(pos, adapter.getItemCount - 1)
+        layoutManager.snapToStart()
+        layoutManager.scrollToPosition(target)
+        scrollController.onScrolled(target)
+        verbose(s"Scrolling target: $target, item count: ${adapter.getItemCount}")
+
+      case PositionScroll(pos, true) =>
+        val current = layoutManager.findFirstVisibleItemPosition()
+        layoutManager.snapToStart()
+        scrollCloseToTarget(pos, current)
+        smoothScrollToPosition(pos)
+        verbose(s"Scrolling target: $pos, current: $current, item count: ${adapter.getItemCount}")
     }
   }
 
   addOnScrollListener(new OnScrollListener {
     override def onScrollStateChanged(recyclerView: RecyclerView, newState: Int): Unit = newState match {
       case RecyclerView.SCROLL_STATE_IDLE =>
-        scrollController.onScrolled(layoutManager.findLastVisibleItemPosition())
-        messagesController.scrolledToBottom ! (layoutManager.findLastCompletelyVisibleItemPosition() ==  adapter.getItemCount - 1)
+        val page = inject[INavigationController].getCurrentPage
+        if (page == Page.MESSAGE_STREAM) {
+          scrollController.onScrolled(layoutManager.findLastVisibleItemPosition())
+          messagesController.scrolledToBottom ! (layoutManager.findLastCompletelyVisibleItemPosition() == adapter.getItemCount - 1)
+        } else {
+          scrollController.onScrolledInvisible()
+        }
       case RecyclerView.SCROLL_STATE_DRAGGING => {
         scrollController.onDragging()
         messagesController.scrolledToBottom ! false
@@ -130,10 +154,11 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
     //fit in the small space left. So only let the height change if for some reason the new height is bigger (shouldn't happen)
     //i.e., height in viewDim should always represent the height of the screen without the keyboard shown.
     viewDim.mutateOrDefault({ case Dim2(_, h) => Dim2(r - l, math.max(h, b - t)) }, Dim2(r - l, b - t))
+    realViewHeight ! b - t
     super.onLayout(changed, l, t, r, b)
   }
 
-  def scrollToBottom(): Unit = scrollController.onScrollToBottomRequested ! layoutManager.findLastCompletelyVisibleItemPosition()
+  def scrollToBottom(): Unit = scrollController.onScrollToBottomRequested ! true
 }
 
 object MessagesListView {
@@ -143,14 +168,14 @@ object MessagesListView {
   case class UnreadIndex(index: Int) extends AnyVal
 
   abstract class Adapter extends RecyclerView.Adapter[MessageViewHolder] {
-    def getConvId: ConvId
+    def getConvId: Option[ConvId]
     def getUnreadIndex: UnreadIndex
   }
 }
 
 case class MessageViewHolder(view: MessageView, adapter: MessagesListAdapter)(implicit ec: EventContext, inj: Injector) extends RecyclerView.ViewHolder(view) with Injectable {
 
-  private val selection = inject[SelectionController].messages
+  private val selection = inject[ConversationController].messages
   private val msgsController = inject[MessagesController]
   private lazy val assets = inject[AssetsController]
 
@@ -177,28 +202,25 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesListAdapter)(im
   }
 
   // mark message as read if message is bound while list is visible
-  private val messageRead =
-    msgsController.fullyVisibleMessagesList flatMap {
-      case Some(convId) =>
-        message.filter(_.convId == convId) flatMap {
-          case msg if msg.isAssetMessage && msg.state == Message.Status.SENT =>
-            // received asset message is considered read when its asset is available,
-            // this is especially needed for ephemeral messages, only start the counter when message is downloaded
-            assets.assetSignal(msg.assetId) flatMap {
-              case (_, AssetStatus.DOWNLOAD_DONE) if msg.msgType == Message.Type.ASSET =>
-                // image assets are considered read only once fully downloaded
-                Signal const msg
-              case (_, AssetStatus.UPLOAD_DONE | AssetStatus.UPLOAD_CANCELLED | AssetStatus.UPLOAD_FAILED) if msg.msgType != Message.Type.ASSET =>
-                // for other assets it's enough when upload is done, download is user triggered here
-                Signal const msg
-              case _ => Signal.empty[MessageData]
-            }
-          case msg => Signal const msg
-        }
-      case None => Signal.empty[MessageData]
-    }
-
-  messageRead { msgsController.onMessageRead }
+  msgsController.fullyVisibleMessagesList.flatMap {
+    case Some(convId) =>
+      message.filter(_.convId == convId) flatMap {
+        case msg if msg.isAssetMessage && msg.state == Message.Status.SENT =>
+          // received asset message is considered read when its asset is available,
+          // this is especially needed for ephemeral messages, only start the counter when message is downloaded
+          assets.assetSignal(msg.assetId) flatMap {
+            case (_, AssetStatus.DOWNLOAD_DONE) if msg.msgType == Message.Type.ASSET =>
+              // image assets are considered read only once fully downloaded
+              Signal const msg
+            case (_, AssetStatus.UPLOAD_DONE | AssetStatus.UPLOAD_CANCELLED | AssetStatus.UPLOAD_FAILED) if msg.msgType != Message.Type.ASSET =>
+              // for other assets it's enough when upload is done, download is user triggered here
+              Signal const msg
+            case _ => Signal.empty[MessageData]
+          }
+        case msg => Signal const msg
+      }
+    case None => Signal.empty[MessageData]
+  }(msgsController.onMessageRead)
 
   def bind(msg: MessageAndLikes, prev: Option[MessageData], next: Option[MessageData], opts: MsgBindOptions): Unit = {
     view.set(msg, prev, next, opts)

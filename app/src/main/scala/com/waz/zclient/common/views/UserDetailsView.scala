@@ -1,6 +1,6 @@
 /*
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,9 +21,7 @@ package com.waz.zclient.common.views
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
-import com.waz.api.User
 import com.waz.model.UserId
-import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.utils.StringUtils
@@ -33,38 +31,18 @@ class UserDetailsView(val context: Context, val attrs: AttributeSet, val defStyl
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 
-  private lazy val userNameTextView: TextView = findById(R.id.ttv__user_details__user_name)
-  private lazy val userInfoTextView: TextView = findById(R.id.ttv__user_details__user_info)
+  private lazy val userNameTextView: TextView = findById(R.id.user_handle)
   inflate(R.layout.user__details, this, addToParent = true)
 
   val users = inject[UsersController]
-  val userId = Signal[UserId]
-  val handle = userId.flatMap(users.userHandle)
-  val firstContact = userId.flatMap(users.userFirstContact)
-  val displayName = userId.flatMap(users.displayNameString)
+  val userId = Signal[UserId]()
 
-  val handleText = handle.map {
+  userId.flatMap(users.userHandle).map {
     case Some(h) => StringUtils.formatHandle(h.string)
     case None => ""
-  }
+  }.onUi(userNameTextView.setText)
 
-  val contactText = for {
-    c <- firstContact
-    n <- displayName
-  } yield {
-      c match {
-        case Some(cont) if cont.name == n => getContext.getString(R.string.content__message__connect_request__user_info, "")
-        case Some(cont) => getContext.getString(R.string.content__message__connect_request__user_info, c.get.name)
-        case _ => ""
-      }
-  }
-
-  handleText.on(Threading.Ui) { userNameTextView.setText }
-  contactText.on(Threading.Ui) { userInfoTextView.setText }
-
-  def setUserId(id: UserId) =
+  def setUserId(id: UserId): Unit =
     Option(id).fold(throw new IllegalArgumentException("UserId should not be null"))(userId ! _)
-
-  def setUser(user: User) = setUserId(UserId(user.getId))
 
 }

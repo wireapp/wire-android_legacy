@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -117,9 +117,9 @@ public class EmojiKeyboardLayout extends LinearLayout {
 
         tapIndicatorLayout.setShowDivider(false);
         tapIndicatorLayout.setGlyphLabels(Emojis.EMOJI_KEYBOARD_TAB_LABELS);
-        tapIndicatorLayout.setTextColor(ContextCompat.getColorStateList(getContext(), com.waz.zclient.ui.R.color.wire__text_color_dark_selector));
-        tapIndicatorLayout.setPrimaryColor(ContextCompat.getColor(getContext(), com.waz.zclient.ui.R.color.text__primary_dark));
-        tapIndicatorLayout.setLabelHeight(getContext().getResources().getDimensionPixelSize(com.waz.zclient.ui.R.dimen.sketch__emoji__keyboard__tab_label_size));
+        tapIndicatorLayout.setTextColor(ContextCompat.getColorStateList(getContext(), R.color.wire__text_color_dark_selector));
+        tapIndicatorLayout.setPrimaryColor(ContextCompat.getColor(getContext(), R.color.text__primary_dark));
+        tapIndicatorLayout.setLabelHeight(getContext().getResources().getDimensionPixelSize(R.dimen.sketch__emoji__keyboard__tab_label_size));
         tapIndicatorLayout.setCallback(new TabIndicatorLayout.Callback() {
             @Override
             public void onItemSelected(int pos) {
@@ -186,19 +186,19 @@ public class EmojiKeyboardLayout extends LinearLayout {
         int padding;
         switch (currentEmojiSize) {
             case SMALL:
-                padding = getContext().getResources().getDimensionPixelOffset(com.waz.zclient.ui.R.dimen.sketch__emoji__keyboard__item_padding__small);
+                padding = getContext().getResources().getDimensionPixelOffset(R.dimen.sketch__emoji__keyboard__item_padding__small);
                 break;
             case MEDIUM:
-                padding = getContext().getResources().getDimensionPixelOffset(com.waz.zclient.ui.R.dimen.sketch__emoji__keyboard__item_padding__medium);
+                padding = getContext().getResources().getDimensionPixelOffset(R.dimen.sketch__emoji__keyboard__item_padding__medium);
                 break;
             case LARGE:
-                padding = getContext().getResources().getDimensionPixelOffset(com.waz.zclient.ui.R.dimen.sketch__emoji__keyboard__item_padding__large);
+                padding = getContext().getResources().getDimensionPixelOffset(R.dimen.sketch__emoji__keyboard__item_padding__large);
                 break;
             default:
-                padding = getContext().getResources().getDimensionPixelOffset(com.waz.zclient.ui.R.dimen.sketch__emoji__keyboard__item_padding__small);
+                padding = getContext().getResources().getDimensionPixelOffset(R.dimen.sketch__emoji__keyboard__item_padding__small);
                 break;
         }
-        int sidePadding = getContext().getResources().getDimensionPixelSize(com.waz.zclient.ui.R.dimen.sketch__emoji__keyboard__side_padding);
+        int sidePadding = getContext().getResources().getDimensionPixelSize(R.dimen.sketch__emoji__keyboard__side_padding);
         recyclerView.setClipToPadding(false);
         recyclerView.setPadding(sidePadding, padding, sidePadding, padding);
     }

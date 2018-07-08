@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,20 +28,16 @@ import android.text.{Editable, TextWatcher}
 import android.view.View.OnClickListener
 import android.view.animation.AnimationUtils
 import android.view.{LayoutInflater, View, ViewGroup, WindowManager}
+import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.warn
-import com.waz.api.impl.Usernames
 import com.waz.model.Handle
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.zclient.core.controllers.tracking.events.settings.SetUsernameEvent
-import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.zclient.{FragmentHelper, R}
-import com.waz.znet.Response.{HttpStatus, Status, SuccessHttpStatus}
-import com.waz.znet.{Request, Response}
 
 import scala.util.Try
 
@@ -61,8 +57,8 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
   private var cancelEnabled:   Boolean = true
 
   lazy val zms = inject[Signal[ZMessaging]]
-  lazy val tracking = inject[GlobalTrackingController]
-  lazy val currentHandle = zms.flatMap(_.users.selfUser.map(_.handle))
+  lazy val users = zms.map(_.users)
+  lazy val currentHandle = users.flatMap(_.selfUser.map(_.handle))
 
   private val handleTextWatcher = new TextWatcher() {
     private var lastText: String = ""
@@ -89,15 +85,13 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
               z         <- zms.head
               curHandle <- currentHandle.head
               if !curHandle.map(_.string).contains(normalText)
-              _ <- z.zNetClient.withErrorHandling("isUsernameAvailable", Request.Head(Usernames.checkSingleAvailabilityPath + normalText)) {
-                case Response(SuccessHttpStatus(), _, _) =>
-                  setErrorMessage(AlreadyTaken)
-                  okButton.setEnabled(false)
-
-                case Response(HttpStatus(Status.NotFound, _), _, _) =>
+              _ <- z.handlesClient.isUserHandleAvailable(Handle(normalText)).map {
+                case Right(true) =>
                   setErrorMessage("")
                   okButton.setEnabled(editingEnabled)
-
+                case Right(false) =>
+                  setErrorMessage(AlreadyTaken)
+                  okButton.setEnabled(false)
                 case _ =>
                   setErrorMessage(R.string.pref__account_action__dialog__change_username__error_unknown)
                   enableEditing()
@@ -130,9 +124,7 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
               case NoError =>
                 disableEditing()
                 updateHandle(inputHandle).map {
-
                   case Right(_) =>
-                    tracking.tagEvent(new SetUsernameEvent(inputHandle.length))
                     dismiss()
 
                   case Left(err) =>
@@ -163,7 +155,7 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
   private def disableEditing() = {
     editingEnabled = false
     handleEditText.setEnabled(false)
-    handleVerifyingIndicator.show()
+    handleVerifyingIndicator.show(LoadingIndicatorView.Spinner)
     okButton.setEnabled(false)
     backButton.setEnabled(false)
   }
@@ -191,10 +183,7 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
         et.setText(suggestedHandle)
         et.setSelection(suggestedHandle.length)
       }
-      handleVerifyingIndicator = returning(findById[LoadingIndicatorView](layout, R.id.liv__username_verifying_indicator)) { v =>
-        v.setType(LoadingIndicatorView.SPINNER)
-        v.hide()
-      }
+      handleVerifyingIndicator = returning(findById[LoadingIndicatorView](layout, R.id.liv__username_verifying_indicator)) { _.hide() }
 
       okButton   = findById[View](layout, R.id.tv__ok_button)
       backButton = findById[View](layout, R.id.tv__back_button)
@@ -246,12 +235,12 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
     handleEditText.startAnimation(AnimationUtils.loadAnimation(getContext, R.anim.shake_animation))
 
   private def updateHandle(handle: String) =
-    zms.map(_.account).head.flatMap(_.updateHandle(Handle(handle)))
+    users.head.flatMap(_.updateHandle(Handle(handle)))
 }
 
 object ChangeHandleFragment {
 
-  val FragmentTag = "ChangeHandleFragment"
+  val Tag: String = ZLog.ImplicitTag.implicitLogTag
 
   private val ArgCancelEnabled = "ARG_CANCEL_ENABLED"
   private val ArgHandle        = "ARG_HANDLE"

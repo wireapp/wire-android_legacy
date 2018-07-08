@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,62 +17,17 @@
  */
 package com.waz.zclient.pages.main.conversation.controller;
 
-import android.support.annotation.IntDef;
-import android.view.View;
-import com.waz.api.IConversation;
-import com.waz.api.Message;
-import com.waz.api.OtrClient;
-import com.waz.api.User;
+import com.waz.model.ConvId;
+import com.waz.model.UserId;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 
 public interface IConversationScreenController {
-
-
-    @IntDef({CONVERSATION_LIST_SWIPE,
-             CONVERSATION_LIST_LONG_PRESS,
-             CONVERSATION_DETAILS,
-             USER_PROFILE_PARTICIPANTS,
-             USER_PROFILE_SEARCH})
-    @interface ConversationMenuRequester { }
-    int CONVERSATION_LIST_SWIPE = 0;
-    int CONVERSATION_LIST_LONG_PRESS = 1;
-    int CONVERSATION_DETAILS = 2;
-    int USER_PROFILE_PARTICIPANTS = 3;
-    int USER_PROFILE_SEARCH = 4;
 
     void addConversationControllerObservers(ConversationScreenControllerObserver conversationScreenControllerObserver);
 
     void removeConversationControllerObservers(ConversationScreenControllerObserver conversationScreenControllerObserver);
 
-    void showParticipants(View anchorView, boolean showDeviceTabIfSingle);
-
-    void hideParticipants(boolean backOrButtonPressed, boolean hideByConversationChange);
-
-    void editConversationName(boolean b);
-
-    void setShowDevicesTab(User user);
-
-    boolean shouldShowDevicesTab();
-
-    User getRequestedDeviceTabUser();
-
-    boolean isShowingParticipant();
-
-    void resetToMessageStream();
-
-    void setParticipantHeaderHeight(int participantHeaderHeight);
-
-    void onScrollParticipantsList(int verticalOffset, boolean scrolledToBottom);
-
-    boolean isSingleConversation();
-
-    void setSingleConversation(boolean isSingleConversation);
-
-    void setMemberOfConversation(boolean isMemberOfConversation);
-
-    void addPeopleToConversation();
-
-    void showUser(User user);
+    boolean showUser(UserId userId);
 
     void hideUser();
 
@@ -80,21 +35,11 @@ public interface IConversationScreenController {
 
     void tearDown();
 
-    boolean isConversationStreamUiInitialized();
-
-    void setConversationStreamUiReady(boolean ready);
-
     void setPopoverLaunchedMode(DialogLaunchMode launchedMode);
 
-    void showConversationMenu(@ConversationMenuRequester int requester, IConversation conversation, View anchorView);
+    void showConversationMenu(boolean inConvList, ConvId convId);
 
     DialogLaunchMode getPopoverLaunchMode();
 
-    void showOtrClient(OtrClient otrClient, User user);
-
-    void showCurrentOtrClient();
-
     void hideOtrClient();
-
-    void showLikesList(Message message);
 }

@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +31,8 @@ import com.waz.testutils.{MockZMessaging, TestWireContext, ViewTestActivity}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
 import com.waz.zclient._
-import com.waz.zclient.controllers.global.{AccentColorController, SelectionController}
+import com.waz.zclient.common.controllers.global.{AccentColorController}
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{LikesController, UsersController}
 import junit.framework.Assert.assertEquals
@@ -83,7 +84,7 @@ class FooterViewControllerTest extends JUnitSuite {
     bind[Signal[Option[ZMessaging]]] to Signal.const(Some(zMessaging))
     bind[GlobalPreferences] to zMessaging.prefs
     bind[AccentColorController] to new AccentColorController
-    bind[SelectionController] to new SelectionController
+    bind[ConversationController] to new ConversationController
     bind[UsersController] to new UsersController
     bind[LikesController] to new LikesController()
   }
@@ -101,7 +102,7 @@ class FooterViewControllerTest extends JUnitSuite {
     assertEquals(false, Await.result(controller.showTimestamp.head, durationShort))
     assertEquals(true, Await.result(controller.isLiked.head, durationShort))
 
-    assertEquals(true, Await.result(injector.binding[SelectionController].get().zms.map(_ != null).head, durationShort))
+    assertEquals(true, Await.result(injector.binding[ConversationController].get().zms.map(_ != null).head, durationShort))
 
     controller.selection.toggleFocused(likedMsg.id)
     signalTest(controller.showTimestamp)(_ == true){} // show timestamp for focused message
@@ -127,7 +128,7 @@ class FooterViewControllerTest extends JUnitSuite {
 
     assertEquals(false, Await.result(controller.showTimestamp.head, durationShort))
     assertEquals(false, Await.result(controller.isLiked.head, durationShort))
-    assertEquals(true, Await.result(injector.binding[SelectionController].get().zms.map(_ != null).head, durationShort))
+    assertEquals(true, Await.result(injector.binding[ConversationController].get().zms.map(_ != null).head, durationShort))
 
     controller.selection.toggleFocused(likedMsg.id)
     signalTest(controller.showTimestamp)(_ == true){} //show timestamp

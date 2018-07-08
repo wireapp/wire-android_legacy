@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Environment;
 import com.waz.zclient.BuildConfig;
-import com.waz.zclient.R;
 import timber.log.Timber;
 
 import java.io.File;
@@ -56,28 +55,5 @@ public class BuildConfigUtils {
             Timber.e(e, "Something went wrong");
         }
         return false;
-    }
-
-    public static int getLogLevelSE(Context context) {
-        if (BuildConfig.LOG_LEVEL_SE == context.getResources().getInteger(R.integer.log_level_supress)) {
-            return Integer.MAX_VALUE;
-        }
-        if (BuildConfig.LOG_LEVEL_SE == context.getResources().getInteger(R.integer.log_level_verbose)) {
-            return android.util.Log.VERBOSE;
-        }
-        if (BuildConfig.LOG_LEVEL_SE == context.getResources().getInteger(R.integer.log_level_debug)) {
-            return android.util.Log.DEBUG;
-        }
-        if (BuildConfig.LOG_LEVEL_SE == context.getResources().getInteger(R.integer.log_level_info)) {
-            return android.util.Log.INFO;
-        }
-        if (BuildConfig.LOG_LEVEL_SE == context.getResources().getInteger(R.integer.log_level_warn)) {
-            return android.util.Log.WARN;
-        }
-        if (BuildConfig.LOG_LEVEL_SE == context.getResources().getInteger(R.integer.log_level_error)) {
-            return android.util.Log.ERROR;
-        }
-        return android.util.Log.ASSERT;
-
     }
 }

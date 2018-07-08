@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,9 +23,10 @@ import android.view.{View, ViewGroup}
 import com.waz.model.UserId
 import com.waz.service.ZMessaging
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.zclient.adapters.ConversationListAdapter._
+import com.waz.zclient.conversationlist.ConversationListAdapter.Incoming
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{Injectable, Injector}
+import com.waz.ZLog.ImplicitTag._
 
 import scala.util.Try
 

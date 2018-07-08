@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ import com.waz.ZLog.ImplicitTag._
 
 import concurrent.duration._
 
-class TooltipView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends TypefaceTextView(context, attrs, defStyleAttr) with ViewHelper { view =>
+class TooltipView(context: Context, attrs: AttributeSet, defStyleAttr: Int) extends TypefaceTextView(context, attrs, defStyleAttr) with ViewHelper { view =>
   def this(context: Context, attrs: AttributeSet) { this(context, attrs, 0) }
   def this(context: Context) { this(context, null) }
 

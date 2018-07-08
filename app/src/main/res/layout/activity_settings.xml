@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
              android:layout_height="match_parent"
     >
 
-    <com.waz.zclient.views.BackgroundImageView
+    <com.waz.zclient.common.views.BackgroundImageView
         android:id="@+id/settings_background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -35,6 +35,38 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         >
+
+        <LinearLayout
+            android:id="@+id/call_banner"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/network_indicator__expanded_height"
+            android:orientation="horizontal"
+            android:gravity="center|bottom"
+            android:background="@color/accent_green"
+            android:visibility="gone"
+            android:paddingBottom="@dimen/wire__padding__tiny"
+        >
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/call_banner_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="@dimen/wire__text_size__small"
+                app:w_font="@string/wire__typeface__medium"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:paddingStart="@dimen/wire__padding__small"
+                android:id="@+id/call_banner_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="@dimen/wire__text_size__small"
+                app:w_font="@string/wire__typeface__medium"
+            />
+
+        </LinearLayout>
 
         <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar"
@@ -52,7 +84,7 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 >
-                <com.waz.zclient.views.AccountTabsView
+                <com.waz.zclient.common.views.AccountTabsView
                     android:id="@+id/account_tabs"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
@@ -79,5 +111,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         />
+
+    <com.waz.zclient.views.LoadingIndicatorView
+        android:id="@+id/progress_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
 </FrameLayout>

@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,8 +21,6 @@ import com.waz.api.ImageAsset;
 import com.waz.zclient.pages.main.profile.camera.CameraContext;
 
 public interface ICameraController {
-    CameraContext getCameraContext();
-
     void addCameraActionObserver(CameraActionObserver cameraActionObserver);
 
     void removeCameraActionObserver(CameraActionObserver cameraActionObserver);
@@ -31,7 +29,7 @@ public interface ICameraController {
 
     void closeCamera(CameraContext cameraContext);
 
-    void onBitmapSelected(ImageAsset imageAsset, boolean imageFromCamera, CameraContext cameraContext);
+    void onBitmapSelected(ImageAsset imageAsset, CameraContext cameraContext);
 
     void onCameraNotAvailable(CameraContext cameraContext);
 

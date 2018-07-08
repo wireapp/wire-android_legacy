@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
  */
 /**
   * Wire
-  * Copyright (C) 2016 Wire Swiss GmbH
+  * Copyright (C) 2018 Wire Swiss GmbH
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -43,6 +43,7 @@ import com.waz.zclient.ViewHelper
 import com.waz.zclient.R
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
+import com.waz.ZLog.ImplicitTag._
 
 class EditCursorToolbar(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
     extends FrameLayout(context, attrs, defStyleAttr) with ViewHelper {
@@ -60,8 +61,8 @@ class EditCursorToolbar(val context: Context, val attrs: AttributeSet, val defSt
   val approveButton: TextView = findById(R.id.gtv__edit_message__approve)
   val resetButton: TextView   = findById(R.id.gtv__edit_message__reset)
 
-  val enabledTextColor = getColor(R.color.graphite)
-  val disabledTextColor = getColor(R.color.light_graphite)
+  val enabledTextColor = getStyledColor(R.attr.cursorEditButtons)
+  val disabledTextColor = getStyledColor(R.attr.cursorEditButtonsDisabled)
 
   val messageChanged = controller.editingMsg.zip(controller.enteredText) map {
     case (Some(msg), text) => msg.contentString != text
@@ -84,12 +85,7 @@ class EditCursorToolbar(val context: Context, val attrs: AttributeSet, val defSt
   }
 
   closeButton.onClick { controller.editingMsg ! None }
-  resetButton.onClick {
-    controller.editingMsg.head foreach {
-      case Some(msg) => controller.enteredText ! msg.contentString
-      case _ => // ignore
-    }
-  }
+  resetButton.onClick { controller.onEditMessageReset ! (()) }
   approveButton.onClick {
     controller.enteredText.head foreach { controller.submit }
   }

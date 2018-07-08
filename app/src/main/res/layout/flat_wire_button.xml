@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
     >
 
     <com.waz.zclient.ui.text.GlyphTextView
-        android:id="@+id/glyph"
+        android:id="@+id/icon"
         android:layout_width="@dimen/flat_wire_icon_size"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/people_picker__search_result__row__padding_horizontal"
@@ -42,7 +42,7 @@
         android:ellipsize="end"
         android:textColor="@color/text__primary_dark"
         android:textSize="@dimen/wire__text_size__regular"
-        app:font="@string/wire__typeface__light"
+        app:w_font="@string/wire__typeface__light"
         />
 
 </merge>

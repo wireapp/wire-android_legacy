@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,14 +17,7 @@
  */
 package com.waz.zclient.controllers.singleimage;
 
-import com.waz.api.Message;
-import com.waz.api.User;
-
 public interface SingleImageObserver {
-    void onShowSingleImage(Message message);
-
-    void onShowUserImage(User user);
-
+    void onShowSingleImage(String messageId);
     void onHideSingleImage();
-
 }

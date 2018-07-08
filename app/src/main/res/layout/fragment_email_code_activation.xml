@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:app="http://schemas.android.com/apk/res-auto"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+    >
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        >
+
+        <!-- header -->
+        <LinearLayout
+            android:id="@+id/ll__activation_button__back"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="@dimen/first_time__create_account__padding_right"
+            android:layout_marginLeft="@dimen/first_time__create_account__padding_left"
+            android:layout_marginTop="@dimen/wire__padding__big"
+            >
+
+            <com.waz.zclient.ui.text.GlyphTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:w_font="@string/wire__typeface__light"
+                android:textSize="@dimen/wire__text_size__regular"
+                android:text="@string/glyph__previous"
+                android:textColor="@color/text__primary_dark"
+                />
+
+        </LinearLayout>
+
+        <!-- body -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/new_reg__body_left_margin"
+            android:layout_marginRight="@dimen/new_reg__body_right_margin"
+            android:layout_marginBottom="@dimen/wire__padding__16"
+            android:layout_gravity="bottom"
+            android:orientation="vertical"
+            >
+
+            <!-- Info Text -->
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/ttv__info_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/activation_code_info_manual"
+                android:textColor="@color/text__primary_dark"
+                android:textSize="@dimen/wire__text_size__regular"
+                app:w_font="@string/wire__typeface__light"/>
+
+            <!-- phone input field -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/new_reg__input_height"
+                android:layout_marginTop="@dimen/wire__padding__16"
+                android:background="@drawable/shape__edit_layout__background__light"
+                android:orientation="horizontal"
+                >
+
+                <com.waz.zclient.ui.text.TypefaceEditText
+                    android:id="@+id/et__reg__code"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:background="@null"
+                    android:gravity="center"
+                    android:imeOptions="actionDone"
+                    android:inputType="numberSigned"
+                    android:maxLength="6"
+                    android:minWidth="1dp"
+                    android:textColor="@color/text__primary_dark"
+                    android:textColorHint="@color/new_reg__phone_number_text_color_hint"
+                    android:textSize="@dimen/new_reg__phone_number__hint_text_size"
+                    app:w_font="@string/wire__typeface__light"/>
+
+
+                <com.waz.zclient.newreg.views.PhoneConfirmationButton
+                    android:id="@+id/pcb__activate"
+                    android:layout_height="@dimen/new_reg__input_height"
+                    android:layout_width="@dimen/new_reg__input_height"
+                    app:w_font="@string/wire__typeface__light"
+                    android:textSize="@dimen/wire__text_size__regular"
+                    android:layout_gravity="right"
+                    android:gravity="center"
+                    android:textColor="@color/text__primary_light"
+                    />
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/wire__padding__huge"
+                >
+
+                <!-- Resend button -->
+                <com.waz.zclient.ui.text.TypefaceTextView
+                    android:id="@+id/ttv__resend_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="left|bottom"
+                    android:layout_marginTop="@dimen/wire__padding__4"
+                    android:paddingRight="@dimen/wire__padding__regular"
+                    android:gravity="left|bottom"
+                    android:maxLines="1"
+                    android:text="@string/welcome__resend__manual"
+                    android:textColor="@color/first_time__welcome__tos_color"
+                    android:textSize="@dimen/wire__text_size__small"
+                    app:w_font="@string/wire__typeface__medium"
+                    />
+
+                <com.waz.zclient.ui.text.TypefaceTextView
+                    android:id="@+id/ttv__resend_timer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/wire__padding__4"
+                    android:layout_gravity="left|bottom"
+                    android:gravity="left"
+                    android:textColor="@color/first_time__welcome__tos_color"
+                    android:textSize="@dimen/wire__text_size__small"
+                    app:w_font="@string/wire__typeface__regular"
+                    />
+
+            </FrameLayout>
+
+        </LinearLayout>
+
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:id="@+id/gtv__not_now__close"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|right"
+            android:layout_marginRight="@dimen/wire__padding__small"
+            android:layout_marginTop="@dimen/wire__padding__small"
+            android:minHeight="@dimen/touch_target_buttons"
+            android:minWidth="@dimen/touch_target_buttons"
+            android:gravity="center"
+            android:clickable="true"
+            android:textSize="@dimen/wire__text_size__regular"
+            android:textColor="@color/text__primary_dark"
+            android:text="@string/glyph__close"
+            />
+    </FrameLayout>
+
+    <com.waz.zclient.views.feedback.FeedbackCheckmarkView
+        android:id="@+id/fl__confirmation_checkmark"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+
+
+</FrameLayout>

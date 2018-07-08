@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@
                 android:background="@null"
                 android:ellipsize="end"
                 android:maxLines="1"
-                app:font="@string/wire__typeface__regular"
+                app:w_font="@string/wire__typeface__regular"
                 />
 
             <com.waz.zclient.ui.text.TypefaceTextView
@@ -93,7 +93,7 @@
             android:layout_height="wrap_content"
             />
 
-        <com.waz.zclient.views.ImageViewPager
+        <com.waz.zclient.conversation.ImageViewPager
             android:id="@+id/image_view_pager"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -102,7 +102,7 @@
 
     </FrameLayout>
 
-    <com.waz.zclient.views.toolbar.CustomToolbarFrame
+    <com.waz.zclient.conversation.toolbar.CustomToolbarFrame
         android:id="@+id/bottom_toolbar"
         android:layout_width="match_parent"
         android:layout_height="@dimen/new_cursor_height"

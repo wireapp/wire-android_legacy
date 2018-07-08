@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <integer name="circle_icon_button__alpha_fill">255</integer>
+    <integer name="circle_icon_button__alpha_stroke">100</integer>
+    <integer name="animation_delay_short">150</integer>
+    <integer name="animation_delay_very_long">350</integer>
+
+    <!-- Animation durations-->
+    <integer name="animation_duration_short">150</integer>
+    <integer name="animation_duration_medium_rare">200</integer>
+    <integer name="animation_duration_medium">350</integer>
+    <integer name="animation_duration_long">550</integer>
+    <integer name="animation_duration_very_long">700</integer>
+    <integer name="background_accent_color_transition_animation_duration">600</integer>
+
+    <!-- Color picker-->
+    <!-- a value in [1, 100] -->
+    <integer name="color_picker_circle_animation_tension">80</integer>
+    <!-- a value in [1, 30] -->
+    <integer name="color_picker_circle_animation_friction">4</integer>
+    <!-- a value in [1, 100] -->
+    <integer name="color_picker_circle_animation__on_tap_tension">20</integer>
+    <!-- a value in [1, 30] -->
+    <integer name="color_picker_circle_animation__on_tap_friction">6</integer>
+
+    <!-- Calling-->
+    <integer name="calling_animation_duration_medium">350</integer>
+    <integer name="calling_animation_duration_long">550</integer>
+
+    <!-- Cursor-->
+    <integer name="cursor__max_lines">6</integer>
+
+    <!-- Wire Values-->
+    <integer name="wire__animation__duration__short">150</integer>
+    <integer name="wire__animation__duration__regular">350</integer>
+    <integer name="wire__animation__duration__medium">550</integer>
+    <integer name="wire__animation__duration__long">750</integer>
+    <integer name="wire__animation__delay__very_short">50</integer>
+    <integer name="wire__animation__delay__short">100</integer>
+    <integer name="wire__animation__delay__regular">150</integer>
+    <integer name="wire__animation__delay__long">350</integer>
+    <integer name="wire__call_indicator__missed_or_ongoing__outer_opacity">24</integer>
+    <integer name="wire__call_indicator__missed_or_ongoing__middle_opacity">48</integer>
+    <integer name="wire__call_indicator__unjoined__outer_opacity">32</integer>
+    <integer name="wire__call_indicator__unjoined__middle_opacity">64</integer>
+    <integer name="wire__call_indicator__inner_opacity">100</integer>
+
+
+    <integer name="layout__spec">320</integer>
+
+    <!-- From the app module-->
+    <integer name="background__blur_radius">18</integer>
+
+    <integer name="content__burst_time_interval">1800</integer>
+    <integer name="content__progress__time_till_show">3000</integer>
+    <integer name="content__message_timestamp__animation_duration">250</integer>
+    <integer name="content__message_timestamp__click_duration">150</integer>
+    <integer name="content__message__progress_pending_stop">270</integer>
+    <integer name="content__message__progress_duration">1500</integer>
+    <integer name="typing_indicator__pause_random_time">1400</integer>
+    <integer name="typing_indicator__pulse_duration">280</integer>
+    <integer name="content__image__directly_final_duration">200</integer>
+    <integer name="content__image__progress_pending_stop">270</integer>
+    <integer name="content__image__progress_duration">1500</integer>
+
+    <integer name="content__link_preview__title__maxlines">4</integer>
+
+    <integer name="list_unread_animation_duration">300</integer>
+    <integer name="list_hello_indicator_fade_in_out_animation_duration">@integer/framework_animation_duration_medium</integer>
+    <integer name="list_sorting_duration">350</integer>
+    <integer name="list__show_archived_delay">450</integer>
+
+    <integer name="framework__max_characters_of_input">80</integer>
+    <integer name="framework__max_characters_of_password">101</integer>
+    <integer name="framework_animation_duration_short">150</integer>
+    <integer name="framework_animation_duration_medium">350</integer>
+    <integer name="framework_animation_duration_long">550</integer>
+    <integer name="framework_animation_duration_ages">1400</integer>
+    <integer name="framework_animation_delay_short">100</integer>
+    <integer name="framework_animation_delay_medium">150</integer>
+    <integer name="framework_animation_delay_long">300</integer>
+    <integer name="framework_animation__confirmation_menu__show_message_delay">100</integer>
+    <integer name="framework_animation__confirmation_menu__hide_background_delay">300</integer>
+
+    <integer name="participant_column__count">3</integer>
+
+    <integer name="camera__control__ainmation__duration">350</integer>
+    <integer name="camera__control__ainmation__in_delay">350</integer>
+    <integer name="camera__control__ainmation__duration_long">600</integer>
+    <integer name="camera__preview_lens_transition__duration">1000</integer>
+    <integer name="camera__preview_lens_transition__delay">200</integer>
+    <integer name="camera__focus__animation_duration">200</integer>
+
+    <integer name="profile__guidance__animation__duration">400</integer>
+    <integer name="camera__preview__ainmation__duration">600</integer>
+    <integer name="profile__pen_icon__hide_time_out">5000</integer>
+
+    <integer name="signup__photo__selected_photo_display_delay">300</integer>
+
+    <integer name="framework__delay_long">300</integer>
+
+    <integer name="log_level_verbose" tools:ignore="UnusedResources">2</integer>
+    <integer name="log_level_debug" tools:ignore="UnusedResources">3</integer>
+    <integer name="log_level_info" tools:ignore="UnusedResources">4</integer>
+    <integer name="log_level_warn" tools:ignore="UnusedResources">5</integer>
+    <integer name="log_level_error" tools:ignore="UnusedResources">6</integer>
+    <integer name="log_level_supress" tools:ignore="UnusedResources">99</integer>
+
+    <integer name="loading_bar__animation_duration">2100</integer>
+    <integer name="loading_spinner__animation_duration">2000</integer>
+
+    <integer name="mediaplayer__time_refresh_rate_ms">200</integer>
+    <integer name="mediaplayer__seekbar__start_angle">270</integer>
+    <integer name="mediaplayer__seekbar__end_angle">270</integer>
+
+    <integer name="message_notification_chathead__background__animation_duration">400</integer>
+
+    <integer name="network_indicator__animation_duration">400</integer>
+    <integer name="network_indicator__show_expanded__duration">2000</integer>
+
+    <integer name="new_reg__phone_verification_code__min_length">6</integer>
+    <integer name="new_reg__phone_number__start_validation__min_length">2</integer>
+    <integer name="new_reg__phone_number__min_length">5</integer>
+
+    <integer name="notification__timespan_messages_considered_arriving_simultaneously">1000</integer>
+    <integer name="notifications__system__led_off">1000</integer>
+    <integer name="notifications__system__led_on">300</integer>
+
+    <integer name="participants__header__max_length">80</integer>
+
+    <integer name="password_validator__min_password_length">8</integer>
+    <integer name="password_validator__min_password_length_legacy">6</integer>
+
+    <integer name="people_picker__animation_duration">350</integer>
+    <integer name="people_picker__loading_bar__show_delay">2000</integer>
+    <integer name="people_picker__keyboard__show_delay">500</integer>
+
+    <integer name="single_image_message__overlay__fade_duration">299</integer>
+    <integer name="single_image_message__open_animation__duration">350</integer>
+    <integer name="single_image_message__zoom_out_and_rotate_back_on_close_animation__duration">300</integer>
+    <integer name="single_image_message__close_animation_background__delay">100</integer>
+
+    <integer name="open_new_conversation__thread_list_out__animation_duration">150</integer>
+    <integer name="open_new_conversation__top_conversation__animation_duration">300</integer>
+    <integer name="open_close_button__alpha__delay">150</integer>
+    <integer name="open_close_button__alpha__animation_duration">350</integer>
+    <integer name="close_close_button__alpha__delay">150</integer>
+    <integer name="close_close_button__alpha__animation_duration">350</integer>
+    <integer name="open_profile__animation_duration">350</integer>
+    <integer name="open_profile__delay">300</integer>
+    <integer name="close_profile__animation_duration">350</integer>
+    <integer name="close_profile__delay">300</integer>
+    <integer name="reopen_profile_source__animation_duration">350</integer>
+    <integer name="reopen_profile_source__delay">300</integer>
+
+    <integer name="row_conversation__missed_call__animation__delay_factor">80</integer>
+
+    <integer name="share_location__current_location_marker__outer_ring_alpha">41</integer>
+    <integer name="share_location__current_location_marker__mid_ring_alpha">102</integer>
+    <integer name="share_location__current_location_marker__inner_ring_alpha">255</integer>
+
+    <integer name="account_preferences__min_name_length">2</integer>
+
+    <integer name="team_tabs__animation_duration">100</integer>
+    <integer name="slide_transition_fade_duration">250</integer>
+</resources>

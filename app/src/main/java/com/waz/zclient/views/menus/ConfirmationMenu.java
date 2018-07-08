@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.support.annotation.DrawableRes;
 import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
@@ -44,7 +43,6 @@ import com.waz.zclient.ui.text.GlyphTextView;
 import com.waz.zclient.ui.theme.OptionsTheme;
 import com.waz.zclient.ui.utils.ColorUtils;
 import com.waz.zclient.ui.views.ZetaButton;
-import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.CheckBoxView;
 
@@ -74,11 +72,6 @@ public class ConfirmationMenu extends LinearLayout {
     private boolean cancelled;
     private ConfirmationCallback callback;
     private OptionsTheme optionsTheme;
-    private boolean noRoundBackground;
-
-    public void setNoRoundBackground() {
-        noRoundBackground = true;
-    }
 
     private final OnClickListener onClickListener = new OnClickListener() {
 
@@ -364,17 +357,7 @@ public class ConfirmationMenu extends LinearLayout {
     }
 
     public void setBackground(int color) {
-        if (LayoutSpec.isPhone(getContext())) {
-            backgroundView.setBackgroundColor(color);
-        } else {
-            if (!noRoundBackground) {
-                Drawable backgroundDrawable = ViewUtils.getRoundedRect(getContext().getResources().getDimensionPixelSize(R.dimen.background__picture__corner_radius),
-                        color);
-                backgroundView.setBackground(backgroundDrawable);
-            } else {
-                backgroundView.setBackgroundColor(color);
-            }
-        }
+        backgroundView.setBackgroundColor(color);
     }
 
     public void onRequestConfirmation(ConfirmationRequest confirmationRequest) {
@@ -393,13 +376,6 @@ public class ConfirmationMenu extends LinearLayout {
 
     public void setCallback(ConfirmationCallback callback) {
         this.callback = callback;
-    }
-
-    public void adjustLayout() {
-        int topPadding = getResources().getDimensionPixelSize(R.dimen.framework_confirmation_menu_padding_top);
-        int bottomPadding = getResources().getDimensionPixelSize(R.dimen.framework_confirmation_menu_padding_bottom);
-        int horizontalPadding = getResources().getDimensionPixelSize(R.dimen.framework_confirmation_menu_horizontal_padding);
-        messageContainerView.setPadding(horizontalPadding, topPadding, horizontalPadding, bottomPadding);
     }
 
     public void resetFullScreenPadding() {

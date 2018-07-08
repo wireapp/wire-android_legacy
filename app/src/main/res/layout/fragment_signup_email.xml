@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:custom="http://schemas.android.com/apk/res-auto"
+             xmlns:app="http://schemas.android.com/apk/res-auto"
              xmlns:tools="http://schemas.android.com/tools"
              tools:ignore="UselessParent"
              android:layout_width="match_parent"
@@ -55,7 +55,7 @@
             android:lineSpacingExtra="0dp"
             android:textColor="@color/text__primary_dark"
             android:textSize="@dimen/wire__text_size__medium"
-            custom:font="@string/wire__typeface__light"
+            app:w_font="@string/wire__typeface__light"
             />
 
     </LinearLayout>
@@ -78,7 +78,7 @@
             android:gravity="end"
             android:textColor="@color/text__primary_dark"
             android:textSize="@dimen/wire__text_size__regular"
-            custom:font="@string/wire__typeface__light"
+            app:w_font="@string/wire__typeface__light"
             />
 
     </LinearLayout>
@@ -122,7 +122,7 @@
                 android:textAllCaps="true"
                 android:textColor="@color/text__primary_dark"
                 android:textSize="@dimen/wire__text_size__small"
-                custom:font="@string/wire__typeface__medium"
+                app:w_font="@string/wire__typeface__medium"
                 android:background="@drawable/selector__reg__signin"
                 />
 
@@ -138,7 +138,7 @@
                 android:textAllCaps="true"
                 android:textColor="@color/text__primary_dark_40"
                 android:textSize="@dimen/wire__text_size__small"
-                custom:font="@string/wire__typeface__medium"
+                app:w_font="@string/wire__typeface__medium"
                 />
         </LinearLayout>
 
@@ -149,7 +149,7 @@
             android:layout_height="@dimen/new_reg__input_height"
             android:layout_marginTop="@dimen/new_reg__edit_to_header__margin_top"
             android:maxLength="@integer/framework__max_characters_of_input"
-            custom:font="@string/wire__typeface__light"
+            app:w_font="@string/wire__typeface__light"
             android:textSize="@dimen/wire__text_size__regular"
             android:paddingRight="@dimen/wire__padding__small"
             android:paddingLeft="@dimen/wire__padding__small"
@@ -167,7 +167,7 @@
             android:layout_height="@dimen/new_reg__input_height"
             android:layout_marginTop="@dimen/wire__padding__small"
             android:maxLength="@integer/framework__max_characters_of_input"
-            custom:font="@string/wire__typeface__light"
+            app:w_font="@string/wire__typeface__light"
             android:textSize="@dimen/wire__text_size__regular"
             android:paddingRight="@dimen/wire__padding__small"
             android:paddingLeft="@dimen/wire__padding__small"
@@ -190,7 +190,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/new_reg__input_height"
                 android:maxLength="@integer/framework__max_characters_of_password"
-                custom:font="@string/wire__typeface__light"
+                app:w_font="@string/wire__typeface__light"
                 android:textSize="@dimen/wire__text_size__regular"
                 android:paddingRight="@dimen/wire__padding__small"
                 android:paddingLeft="@dimen/wire__padding__small"
@@ -206,7 +206,7 @@
                 android:id="@+id/pcb__signin__email"
                 android:layout_height="@dimen/new_reg__input_height"
                 android:layout_width="@dimen/new_reg__input_height"
-                custom:font="@string/wire__typeface__light"
+                app:w_font="@string/wire__typeface__light"
                 android:textSize="@dimen/wire__text_size__regular"
                 android:layout_gravity="right"
                 android:gravity="center"
@@ -222,7 +222,7 @@
                 android:layout_marginBottom="@dimen/new_reg__edit_to_header__margin_top"
                 android:text="@string/new_reg__password_length"
                 android:textSize="@dimen/wire__text_size__small"
-                custom:font="@string/wire__typeface__light"
+                app:w_font="@string/wire__typeface__light"
                 />
     </LinearLayout>
 

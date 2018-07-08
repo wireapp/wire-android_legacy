@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,12 +23,12 @@ import android.widget.{LinearLayout, TextView}
 import com.waz.model.UserId
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.zclient.controllers.ScreenController
 import com.waz.zclient.messages.parts.ChatheadsRecyclerView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.ZLog.ImplicitTag._
+import com.waz.zclient.common.controllers.ScreenController
 
 class LikeDetailsView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   import LikeDetailsView._
@@ -44,7 +44,6 @@ class LikeDetailsView(context: Context, attrs: AttributeSet, style: Int) extends
   private val gtvMore: TextView = findById(R.id.gtv_more)
 
   def init(controller: FooterViewController): Unit = {
-    val messageId = controller.message.map(_.id)
     val likedBy = controller.messageAndLikes.map(_.likes)
 
     def getDisplayNameString(ids: Seq[UserId]): Signal[String] = {
@@ -57,8 +56,9 @@ class LikeDetailsView(context: Context, attrs: AttributeSet, style: Int) extends
         else names.mkString(", ")
     }
 
-    def showLikers() =
-      messageId.currentValue.foreach(inject[ScreenController].showUsersWhoLike)
+    def showLikers() = controller.message.map(_.id).head.foreach { mId =>
+      inject[ScreenController].showLikesForMessage ! Some(mId)
+    }(Threading.Ui)
 
     likedBy.on(Threading.Ui) { ids =>
       val show = showAvatars(ids)

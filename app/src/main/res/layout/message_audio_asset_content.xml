@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,9 @@
               android:id="@+id/content"
               android:orientation="horizontal"
               android:layout_width="match_parent"
-              android:layout_height="match_parent">
+              android:layout_height="match_parent"
+              android:layout_marginEnd="@dimen/content__padding_right"
+              android:layout_marginStart="@dimen/content__padding_left">
 
     <com.waz.zclient.messages.parts.assets.AssetActionButton
         android:id="@+id/action_button"
@@ -42,7 +44,7 @@
         android:layout_width="@dimen/content__audio_message__duration_width"
         android:layout_height="match_parent"
         android:gravity="center_vertical|start"
-        app:font="@string/wire__typeface__light"
+        app:w_font="@string/wire__typeface__light"
         />
 
     <SeekBar

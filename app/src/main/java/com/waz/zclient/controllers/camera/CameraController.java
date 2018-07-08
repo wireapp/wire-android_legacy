@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,11 +30,6 @@ public class CameraController implements ICameraController {
     private CameraContext cameraContext;
 
     @Override
-    public CameraContext getCameraContext() {
-        return cameraContext;
-    }
-
-    @Override
     public void addCameraActionObserver(CameraActionObserver cameraActionObserver) {
         cameraActionObservers.add(cameraActionObserver);
     }
@@ -60,9 +55,9 @@ public class CameraController implements ICameraController {
     }
 
     @Override
-    public void onBitmapSelected(ImageAsset imageAsset, boolean imageFromCamera, CameraContext cameraContext) {
+    public void onBitmapSelected(ImageAsset imageAsset, CameraContext cameraContext) {
         for (CameraActionObserver cameraActionObserver : cameraActionObservers) {
-            cameraActionObserver.onBitmapSelected(imageAsset, imageFromCamera, cameraContext);
+            cameraActionObserver.onBitmapSelected(imageAsset, cameraContext);
         }
     }
 

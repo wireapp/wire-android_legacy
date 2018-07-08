@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,18 +19,15 @@ package com.waz.zclient.connect
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.View
 import android.widget.{FrameLayout, TextView}
 import com.waz.model.UserId
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.views.{ChatheadView, UserDetailsView}
-import com.waz.zclient.controllers.global.AccentColorController
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.ui.views.ZetaButton
-import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{LayoutSpec, RichView}
 import com.waz.zclient.{R, ViewHelper}
 
 class ConnectRequestRow(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ViewHelper {
@@ -48,8 +45,6 @@ class ConnectRequestRow(context: Context, attrs: AttributeSet, style: Int) exten
   private val displayNameTextView = findById[TextView](R.id.ttv__connect_request__display_name)
   private val userDetailsView     = findById[UserDetailsView](R.id.udv__connect_request__user_details)
   private val chatheadView        = findById[ChatheadView](R.id.chathead)
-
-  if (LayoutSpec.isTablet(getContext)) findById[View](R.id.ll__connect_request__main_container).setWidth(getDimenPx(R.dimen.connect_request__inbox__max_width))
 
   inject[AccentColorController].accentColor.map(_.getColor()).onUi { c =>
     ignoreButton.setIsFilled(false)

@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@
                 android:text="@string/pref__account_action__phone_verification__title"
                 android:textSize="@dimen/prefs__verification__title__text_size"
                 android:layout_marginBottom="@dimen/prefs__verification__margins_between"
-                app:font="@string/wire__typeface__regular"
+                app:w_font="@string/wire__typeface__regular"
                 android:textColor="?android:attr/textColorSecondary"
                 />
 
@@ -59,7 +59,7 @@
                 android:layout_height="wrap_content"
                 android:textSize="@dimen/prefs__verification__text_size"
                 android:layout_marginBottom="@dimen/prefs__verification__margins_between"
-                app:font="@string/wire__typeface__regular"
+                app:w_font="@string/wire__typeface__regular"
                 />
 
             <com.waz.zclient.ui.text.TypefaceTextView
@@ -67,7 +67,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/pref__account_action__phone_verification__code"
                 android:textSize="@dimen/prefs__verification__hint__text_size"
-                app:font="@string/wire__typeface__regular"
+                app:w_font="@string/wire__typeface__regular"
                 android:layout_marginBottom="@dimen/prefs__verification__margins_small"
                 />
 
@@ -182,7 +182,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/pref__account_action__phone_verification__question"
                 android:textSize="@dimen/prefs__verification__actions__text_size"
-                app:font="@string/wire__typeface__regular"
+                app:w_font="@string/wire__typeface__regular"
                 android:layout_marginBottom="@dimen/prefs__verification__margins_small"
                 android:textColor="?android:attr/textColorSecondary"
                 />
@@ -193,7 +193,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/pref__account_action__phone_verification__resend"
                 android:textSize="@dimen/prefs__verification__actions__text_size"
-                app:font="@string/wire__typeface__regular"
+                app:w_font="@string/wire__typeface__regular"
                 android:textColor="?android:attr/textColorSecondary"
                 />
 
@@ -212,7 +212,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/pref__account_action__phone_verification__change"
                 android:textSize="@dimen/prefs__verification__actions__text_size"
-                app:font="@string/wire__typeface__regular"
+                app:w_font="@string/wire__typeface__regular"
                 android:textColor="?android:attr/textColorSecondary"
                 android:layout_marginBottom="@dimen/prefs__verification__margins_between"
                 />
@@ -248,7 +248,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:text="@android:string/cancel"
-                app:font="@string/wire__typeface__medium"
+                app:w_font="@string/wire__typeface__medium"
                 android:textColor="?attr/colorAccent"
                 style="?android:attr/buttonBarButtonStyle"
                 />
@@ -259,7 +259,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:text="@android:string/ok"
-                app:font="@string/wire__typeface__medium"
+                app:w_font="@string/wire__typeface__medium"
                 android:textColor="?attr/colorAccent"
                 style="?android:attr/buttonBarButtonStyle"
                 />

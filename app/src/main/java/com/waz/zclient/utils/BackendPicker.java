@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -80,7 +80,7 @@ public class BackendPicker {
     }
 
     private boolean shouldShowBackendPicker() {
-        if (!BuildConfig.SHOW_BACKEND_PICKER) {
+        if (!BuildConfig.DEVELOPER_FEATURES_ENABLED) {
             return false;
         }
         return !PreferenceManager.getDefaultSharedPreferences(context).contains(CUSTOM_BACKEND_PREFERENCE);
@@ -88,7 +88,7 @@ public class BackendPicker {
 
     @Nullable
     private BackendConfig getBackendConfig() {
-        return BuildConfig.SHOW_BACKEND_PICKER ? getCustomBackend() : BackendConfig.ProdBackend();
+        return BuildConfig.DEVELOPER_FEATURES_ENABLED ? getCustomBackend() : BackendConfig.ProdBackend();
     }
 
     @SuppressLint("CommitPrefEdits") // lint not seeing commit

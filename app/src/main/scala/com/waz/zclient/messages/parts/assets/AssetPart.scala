@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,27 +18,27 @@
 package com.waz.zclient.messages.parts.assets
 
 import android.graphics.drawable.Drawable
-import android.view.View
-import android.widget.TextView
+import android.view.{View, ViewGroup}
+import android.widget.{FrameLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.{AssetData, Dim2, MessageContent}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.zclient.controllers.AssetsController
-import com.waz.zclient.controllers.global.AccentColorController
+import com.waz.zclient.common.controllers.AssetsController
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.messages.ClickableViewPart
 import com.waz.zclient.messages.MessageView.MsgBindOptions
-import com.waz.zclient.messages.parts.ImagePartView
+import com.waz.zclient.messages.parts.{EphemeralIndicatorPartView, EphemeralPartView, ImagePartView}
 import com.waz.zclient.messages.parts.assets.DeliveryState.{Downloading, OtherUploading}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{StringUtils, _}
-import com.waz.zclient.views.ImageAssetDrawable
-import com.waz.zclient.views.ImageController.WireImage
+import com.waz.zclient.common.views.ImageAssetDrawable
+import com.waz.zclient.common.views.ImageController.WireImage
 import com.waz.zclient.{R, ViewHelper}
 
-trait AssetPart extends View with ClickableViewPart with ViewHelper { self =>
+trait AssetPart extends View with ClickableViewPart with ViewHelper with EphemeralPartView { self =>
   val controller = inject[AssetsController]
 
   def layoutList: PartialFunction[AssetPart, Int] = {
@@ -55,24 +55,25 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper { self =>
   val asset = controller.assetSignal(message)
   val deliveryState = DeliveryState(message, asset)
   val completed = deliveryState.map(_ == DeliveryState.Complete)
-  val expired = message map { m => m.isEphemeral && m.expired }
   val accentColorController = inject[AccentColorController]
 
   val assetBackground = new AssetBackground(deliveryState.map(state => state == OtherUploading || state == Downloading), expired, accentColorController.accentColor)
-
-  setBackground(assetBackground)
 
   //toggle content visibility to show only progress dot background if other side is uploading asset
   val hideContent = for {
     exp <- expired
     st <- deliveryState
   } yield exp || st == OtherUploading
+
+  onInflated()
+
+  def onInflated(): Unit
 }
 
 trait ActionableAssetPart extends AssetPart {
   protected val assetActionButton: AssetActionButton = findById(R.id.action_button)
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
     assetActionButton.message.publish(msg.message, Threading.Ui)
   }
@@ -90,14 +91,20 @@ trait PlayableAsset extends ActionableAssetPart {
   formattedDuration.on(Threading.Ui)(durationView.setText)
 }
 
-trait FileLayoutAssetPart extends AssetPart {
-  private lazy val content: View = findById[View](R.id.content)
+trait FileLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
+  private lazy val content: ViewGroup = findById[ViewGroup](R.id.content)
   //For file and audio assets - we can hide the whole content
   //For images and video, we don't want the view to collapse (since they use merge tags), so we let them hide their content separately
-  hideContent.map(!_).on(Threading.Ui)(content.setVisible)
+
+  override def onInflated(): Unit = {
+    content.setBackground(assetBackground)
+    hideContent.map(!_).on(Threading.Ui) { v =>
+      (0 until content.getChildCount).foreach(content.getChildAt(_).setVisible(v))
+    }
+  }
 }
 
-trait ImageLayoutAssetPart extends AssetPart {
+trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
   import ImageLayoutAssetPart._
 
   protected val imageDim = message map { _.imageDimensions.getOrElse(Dim2(1, 1)) }
@@ -114,6 +121,8 @@ trait ImageLayoutAssetPart extends AssetPart {
 
   val imageDrawable = new ImageAssetDrawable(message map { m => WireImage(m.assetId) }, forceDownload = forceDownload)
 
+  private lazy val imageContainer = findById[FrameLayout](R.id.image_container)
+
   hideContent.flatMap {
     case true => Signal.const[Drawable](assetBackground)
     case _ => imageDrawable.state map {
@@ -121,14 +130,14 @@ trait ImageLayoutAssetPart extends AssetPart {
            ImageAssetDrawable.State.Loading(_) => assetBackground
       case _ => imageDrawable
     } orElse Signal.const[Drawable](imageDrawable)
-  }.on(Threading.Ui)(setBackground)
+  }.on(Threading.Ui)(imageContainer.setBackground)
 
   val displaySize = for {
     maxW <- maxWidth
     maxH <- maxHeight
     Dim2(imW, imH) <- imageDim
   } yield {
-    val centered = maxW - contentPaddingStart - contentPaddingEnd
+    val centered = maxW
 
     val heightToWidth = imH.toDouble / imW.toDouble
 
@@ -155,36 +164,22 @@ trait ImageLayoutAssetPart extends AssetPart {
     Dim2(finalWidth.toInt, finalHeight.toInt)
   }
 
-  val padding = for {
-    maxW <- maxWidth
-    Dim2(dW, dH) <- displaySize
-  } yield {
-    if (dW >= maxW) Offset.Empty
-    else {
-      val left = if (getLayoutDirection == View.LAYOUT_DIRECTION_LTR) contentPaddingStart else maxW - contentPaddingStart - dW
-      Offset(left, 0, maxW - dW - left, 0)
-    }
-  }
-
-  padding { p =>
-    imageDrawable.padding ! p
-    assetBackground.padding ! p
-  }
-
   displaySize.map(_.height) { h =>
     setLayoutParams(returning(getLayoutParams)(_.height = h))
   }
 
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
-    maxWidth.mutateOrDefault(identity, opts.listDimensions.width)
-    maxHeight ! opts.listDimensions.height
+    opts.foreach { o =>
+      maxWidth.mutateOrDefault(identity, imageContainer.getWidth)
+      maxHeight ! o.listDimensions.height
+    }
   }
 
   override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {
     super.onLayout(changed, left, top, right, bottom)
-    maxWidth ! (right - left)
+    maxWidth ! imageContainer.getWidth
   }
 }
 

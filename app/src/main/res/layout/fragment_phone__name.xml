@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:custom="http://schemas.android.com/apk/res-auto"
+             xmlns:app="http://schemas.android.com/apk/res-auto"
              android:layout_width="match_parent"
              android:layout_height="match_parent"
     >
@@ -51,7 +51,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/enter_name"
-            custom:font="@string/wire__typeface__medium"
+            app:w_font="@string/wire__typeface__medium"
             android:textSize="@dimen/wire__text_size__regular"
             android:textColor="@color/text__primary_dark"
             />
@@ -83,7 +83,7 @@
                 android:textColorHint="@color/new_reg__phone_number_text_color_hint"
                 android:textColor="@color/text__primary_dark"
                 android:textSize="@dimen/wire__text_size__regular"
-                custom:font="@string/wire__typeface__light"
+                app:w_font="@string/wire__typeface__light"
                 />
 
 
@@ -91,7 +91,7 @@
                 android:id="@+id/pcb__signup"
                 android:layout_height="@dimen/new_reg__input_height"
                 android:layout_width="@dimen/new_reg__input_height"
-                custom:font="@string/wire__typeface__light"
+                app:w_font="@string/wire__typeface__light"
                 android:textSize="@dimen/wire__text_size__regular"
                 android:gravity="center"
                 android:textColor="@color/text__primary_light"

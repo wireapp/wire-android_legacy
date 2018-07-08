@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,7 +53,7 @@ public class AccentColorController implements IAccentColorController {
     @Override
     public void addAccentColorObserver(AccentColorObserver accentColorObserver) {
         accentColorObservers.add(accentColorObserver);
-        accentColorObserver.onAccentColorHasChanged(AccentColorChangeRequester.UPDATE, color);
+        accentColorObserver.onAccentColorHasChanged(color);
     }
 
     @Override
@@ -78,9 +78,9 @@ public class AccentColorController implements IAccentColorController {
     }
 
     @Override
-    public void setColor(AccentColorChangeRequester accentColorChangeRequester, int color) {
+    public void setColor(int color) {
         if (isValidColor(color)) {
-            notifyAccentColorHasChanged(accentColorChangeRequester, color);
+            notifyAccentColorHasChanged(color);
             this.color = color;
         } else if (BuildConfig.DEBUG) {
             throw new RuntimeException("Couldn't find predefined accent color: " + color);
@@ -92,9 +92,9 @@ public class AccentColorController implements IAccentColorController {
         accentColorObservers.clear();
     }
 
-    private void notifyAccentColorHasChanged(AccentColorChangeRequester accentColorChangeRequester, int color) {
+    private void notifyAccentColorHasChanged(int color) {
         for (AccentColorObserver accentColorObserver : accentColorObservers) {
-            accentColorObserver.onAccentColorHasChanged(accentColorChangeRequester, color);
+            accentColorObserver.onAccentColorHasChanged(color);
         }
     }
 

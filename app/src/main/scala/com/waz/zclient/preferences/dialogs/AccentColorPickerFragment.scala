@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,9 +30,8 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient._
-import com.waz.zclient.core.controllers.tracking.events.settings.ChangedAccentColorEvent
-import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.RichView
+import com.waz.ZLog.ImplicitTag._
 
 class AccentColorPickerFragment extends DialogFragment with FragmentHelper {
 
@@ -77,11 +76,9 @@ class AccentColorPickerFragment extends DialogFragment with FragmentHelper {
     import Threading.Implicits.Background
 
     val zms      = inject[Signal[ZMessaging]]
-    val tracking = inject[GlobalTrackingController]
-
     val viewColor = Signal[AccentColor]()
 
-    val selectionView = itemView.findViewById(R.id.gtv__accent_color__selected)
+    val selectionView = itemView.findViewById(R.id.gtv__accent_color__selected).asInstanceOf[View]
 
     (for {
       vC <- viewColor
@@ -93,11 +90,7 @@ class AccentColorPickerFragment extends DialogFragment with FragmentHelper {
     viewColor.onChanged.on(Threading.Ui) { color =>
       itemView.setOnClickListener(new OnClickListener {
         override def onClick(v: View): Unit =
-          for {
-            users <- zms.map(_.users).head
-            _     <- users.updateSelf(accent = Some(color))
-            _     <- tracking.tagEvent(new ChangedAccentColorEvent)
-          } yield dismiss()
+          zms.map(_.users).head.flatMap(_.updateAccentColor(color)).map(_ => dismiss())
       })
     }
   }

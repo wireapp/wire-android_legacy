@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<resources>
+    <dimen name="framework__sidebar_width">320dp</dimen>
+    <dimen name="profile__layout__margin_left">64dp</dimen>
+    <dimen name="profile__layout__margin_right">64dp</dimen>
+    <dimen name="profile__layout__margin_bottom">24dp</dimen>
+    <dimen name="profile__layout__margin_top">24dp</dimen>
+    <dimen name="framework__dialog__marker__radius">28dp</dimen>
+    <dimen name="framework__participants_dialog__display_padding">5dp</dimen>
+    <dimen name="content__divider__padding_left">32dp</dimen>
+    <dimen name="profile__image__width">@dimen/profile__image__width_small</dimen>
+    <dimen name="profile__image__height">@dimen/profile__image__height_small</dimen>
+    <dimen name="otr__inbox__horizontal__padding">80dp</dimen>
+
+    <dimen name="calling__text_container__margin_top">96dp</dimen>
+    <dimen name="calling__incoming_box__height">128dp</dimen>
+    <dimen name="calling__ongoing_box__height">128dp</dimen>
+    <dimen name="calling__bottom_outgoing__margin_top">44dp</dimen>
+
+    <dimen name="connect_request__footer_menu__padding_bottom">40dp</dimen>
+    <dimen name="connect_request__separator__padding_horizontal">@dimen/wire__padding__big</dimen>
+
+    <dimen name="row_conversation__message_media_player_margin_top">16dp</dimen>
+    <dimen name="row_conversation__message_media_player_margin_bottom">16dp</dimen>
+
+    <dimen name="content__location_message__map_height">208dp</dimen>
+
+</resources>
+

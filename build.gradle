@@ -1,21 +1,25 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
+
+    ext.kotlinVersion = '1.2.41'
+
     repositories {
         maven {
             url "https://dl.bintray.com/wire-android/third-party"
         }
         jcenter()
         mavenCentral()
+        google()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.3'
+        classpath 'com.android.tools.build:gradle:3.1.3'
         classpath 'com.jakewharton.hugo:hugo-plugin:1.2.1'
-        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
         classpath 'com.mutualmobile.gradle.plugins:dexinfo:0.1.2'
         classpath 'com.wire:gradle-android-scala-plugin:1.5.0'
-        classpath 'com.google.gms:google-services:3.0.0'
+        classpath 'com.google.gms:google-services:3.2.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
     }
 }
 
@@ -32,6 +36,7 @@ license {
 
 allprojects {
     repositories {
+        google()
         jcenter()
     }
 }
@@ -56,38 +61,38 @@ task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
 licenseFormat.dependsOn licenseFormatAndroid
 
 ext {
-    majorVersion = "2.40."
+    majorVersion = "3.13."
 
-    compileSdkVersion = 24
+    compileSdkVersion = 26
     // When upgrading minimum sdk you might want to search for occurrences of Build.VERSION_CODES.
     // There are some classes with possibility of being simplified.
     minSdkVersion = 17
     targetSdkVersion = 23
-    buildToolsVersion = '24.0.3'
+    buildToolsVersion = '27.0.3'
     scalaMajorVersion = '2.11'
-    scalaVersion = scalaMajorVersion + '.8'
-    sourceCompatibilityVersion = JavaVersion.VERSION_1_7
-    targetCompatibilityVersion = JavaVersion.VERSION_1_7
+    scalaVersion = scalaMajorVersion + '.12'
+    sourceCompatibilityVersion = JavaVersion.VERSION_1_8
+    targetCompatibilityVersion = JavaVersion.VERSION_1_8
     preDexLibs = !project.hasProperty('disablePreDex')
 
     checkstyleVersion = '6.18'
     pmdVersion = '5.4.1'
-    supportLibVersion = '25.4.0'
+    supportLibVersion = '27.0.0'
     playServicesVersion = '11.0.0'
 
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
-    zMessagingDevVersionBase = '107.1681'
+    zMessagingDevVersionBase = '125.2083'
     zMessagingDevVersion = "${zMessagingDevVersionBase}@aar"
     // Release version number must be like this X.0(.Y)
-    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '107.0.394@aar'
+    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '125.0.467@aar'
 
-    avsVersion = '3.4.100@aar'
+    avsVersion = '4.4.147@aar'
     avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
     avsName = 'avs'
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '3.6.17@aar'
+    customAvsVersion = '4.5.2@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
@@ -95,6 +100,8 @@ ext {
     deps = [
             scala               : "org.scala-lang:scala-library:$scalaVersion",
             scalaReflect        : "org.scala-lang:scala-reflect:$scalaVersion",
+
+            kotlin              : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion",
 
             // Lint dependencies
             lintapi              : 'com.android.tools.lint:lint-api:24.5.0',
@@ -113,6 +120,7 @@ ext {
             supportannotations   : "com.android.support:support-annotations:$supportLibVersion",
             preferences          : "com.android.support:preference-v7:$supportLibVersion",
             cardview             : "com.android.support:cardview-v7:$supportLibVersion",
+            gridlayout           : "com.android.support:gridlayout-v7:$supportLibVersion",
 
             // Play services
             psBase               : "com.google.android.gms:play-services-base:$playServicesVersion",
@@ -126,7 +134,7 @@ ext {
             timber               : 'com.jakewharton.timber:timber:4.1.1',
             hockey               : 'net.hockeyapp.android:HockeySDK:4.1.4',
             threetenabp          : 'com.jakewharton.threetenabp:threetenabp:1.0.3',
-            localytics           : 'com.localytics.android:library:3.8.2',
+            mixpanel             : 'com.mixpanel.android:mixpanel-android:5.2.3',
             rebound              : 'com.facebook.rebound:rebound:0.3.8',
             supportpreferences   : 'net.xpece.android:support-preference:0.8.1',
 
@@ -160,7 +168,11 @@ ext {
             gson                : 'com.google.code.gson:gson:2.2.4',
 
             // Java Native Access
-            jna                 : 'net.java.dev.jna:jna:4.4.0@aar'
+            jna                 : 'net.java.dev.jna:jna:4.4.0@aar',
+            guava               : 'com.google.guava:guava:19.0',
+
+            // markdown
+            commonmark          : 'com.atlassian.commonmark:commonmark:0.11.0'
     ]
 }
 
@@ -170,7 +182,6 @@ allprojects {
         maven { url "https://dl.bintray.com/wire-android/releases" }
         maven { url "https://dl.bintray.com/wire-android/snapshots" }
         maven { url "https://dl.bintray.com/wire-android/third-party" }
-        maven { url "http://maven.localytics.com/public" }
         maven { url 'https://maven.google.com' }
         mavenCentral()
     }
@@ -183,14 +194,9 @@ if (project.file('user.gradle').exists()) {
 
 task ci(dependsOn: [
                     ':app:assembleDevDebug',
-
-                    // Different Lint checks
                     ':app:lintDevDebug',
-                    ':wire-core:lintDebug',
-                    ':wire-ui:lintDebug',
-
                     // By default on whole app
-                    ':app:checkstyle',
+                    //':app:checkstyle',
                     ':app:pmd'
                     ]) {
 

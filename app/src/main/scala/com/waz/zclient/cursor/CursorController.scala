@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,44 +17,49 @@
  */
 package com.waz.zclient.cursor
 
+import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, RECORD_AUDIO}
 import android.app.Activity
 import android.content.Context
 import android.text.TextUtils
 import android.view.{MotionEvent, View}
 import android.widget.Toast
 import com.google.android.gms.common.{ConnectionResult, GoogleApiAvailability}
+import com.waz.ZLog.ImplicitTag._
 import com.waz.api._
-import com.waz.content.UserPreferences
-import com.waz.model.{ConversationData, MessageData}
-import com.waz.service.ZMessaging
+import com.waz.content.{GlobalPreferences, UserPreferences}
+import com.waz.model.{ConvExpiry, MessageData}
+import com.waz.permissions.PermissionsService
+import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal}
-import com.waz.zclient.{Injectable, Injector, R}
-import com.waz.zclient.common.controllers.{CameraPermission, PermissionsController, ReadExternalStoragePermission, RecordAudioPermission}
+import com.waz.zclient.calling.controllers.CallController
+import com.waz.zclient.common.controllers._
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.drawing.IDrawingController
 import com.waz.zclient.controllers.giphy.IGiphyController
 import com.waz.zclient.controllers.location.ILocationController
-import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
-import com.waz.zclient.core.stores.network.{DefaultNetworkAction, INetworkStore}
-import com.waz.zclient.media.SoundController
+import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.messages.MessageBottomSheetDialog.MessageAction
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
-import com.waz.zclient.pages.main.profile.camera.CameraContext
-import com.waz.zclient.ui.utils.KeyboardUtils
-import com.waz.zclient.utils.LayoutSpec
 import com.waz.zclient.ui.cursor.{CursorMenuItem => JCursorMenuItem}
-import com.waz.ZLog.ImplicitTag._
+import com.waz.zclient.ui.utils.KeyboardUtils
+import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.{Injectable, Injector, R}
 
-import concurrent.duration._
+import scala.concurrent.duration._
 
 class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) extends Injectable {
   import CursorController._
   import Threading.Implicits.Ui
 
-  val zms = inject[Signal[ZMessaging]]
-  val conv = inject[Signal[ConversationData]]
+  val zms                     = inject[Signal[ZMessaging]]
+  val conversationController  = inject[ConversationController]
+  lazy val convListController = inject[ConversationListController]
+  lazy val callController     = inject[CallController]
+
+  val conv = conversationController.currentConv
 
   val keyboard = Signal[KeyboardState](KeyboardState.Hidden)
   val editingMsg = Signal(Option.empty[MessageData])
@@ -64,6 +69,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
   val cursorWidth = Signal[Int]()
   val editHasFocus = Signal(false)
   var cursorCallback = Option.empty[CursorCallback]
+  val onEditMessageReset = EventStream[Unit]()
 
   val extendedCursor = keyboard map {
     case KeyboardState.ExtendedCursor(tpe) => tpe
@@ -75,29 +81,37 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
     case _ => Option.empty[CursorMenuItem]
   }
   val isEditingMessage = editingMsg.map(_.isDefined)
-  val ephemeralSelected = extendedCursor.map(_ == ExtendedCursorContainer.Type.EPHEMERAL)
+
+  val ephemeralExp = conv.map(_.ephemeralExpiration)
+  val isEphemeral  = ephemeralExp.map(_.isDefined)
+
   val emojiKeyboardVisible = extendedCursor.map(_ == ExtendedCursorContainer.Type.EMOJIS)
-  val convIsEphemeral = conv.map(_.ephemeral != EphemeralExpiration.NONE)
+  val convAvailability = for {
+    convId <- conv.map(_.id)
+    av <- convListController.availability(convId)
+  } yield av
 
   val convIsActive = conv.map(_.isActive)
-  val enteredTextEmpty = enteredText.map(_.isEmpty).orElse(Signal const true)
-  val isEphemeralMode = convIsEphemeral.zip(ephemeralSelected) map { case (ephConv, selected) => ephConv || selected }
 
   val onCursorItemClick = EventStream[CursorMenuItem]()
 
   val onMessageSent = EventStream[MessageData]()
   val onMessageEdited = EventStream[MessageData]()
-  val onEphemeralExpirationSelected = EventStream[ConversationData]()
+  val onEphemeralExpirationSelected = EventStream[Option[FiniteDuration]]()
 
   val sendButtonEnabled: Signal[Boolean] = zms.map(_.userPrefs).flatMap(_.preference(UserPreferences.SendButtonEnabled).signal)
 
+  val enteredTextEmpty = enteredText.map(_.trim.isEmpty).orElse(Signal const true)
   val sendButtonVisible = Signal(emojiKeyboardVisible, enteredTextEmpty, sendButtonEnabled, isEditingMessage) map {
     case (emoji, empty, enabled, editing) => enabled && (emoji || !empty) && !editing
   }
-
-  val ephemeralBtnVisible = Signal(isEditingMessage, convIsActive, enteredTextEmpty, sendButtonVisible) map {
-    case (false, true, true, false) => true
-    case _ => false
+  val ephemeralBtnVisible = Signal(isEditingMessage, convIsActive).flatMap {
+    case (false, true) =>
+      isEphemeral.flatMap {
+        case true => Signal.const(true)
+        case _ => sendButtonVisible.map(!_)
+      }
+    case _ => Signal.const(false)
   }
 
   val onShowTooltip = EventStream[(CursorMenuItem, View)]   // (item, anchor)
@@ -113,22 +127,40 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
   }
 
   // notify SE about typing state
-  enteredText { text =>
-    for {
-      convId <- conv.map(_.id).head
-      typing <- zms.map(_.typing)
-    } {
-      if (text.isEmpty) typing.selfClearedInput(convId)
-      else typing.selfChangedInput(convId)
-    }
+  private var prevEnteredText = ""
+  enteredText {
+    case text if text != prevEnteredText =>
+      for {
+        typing <- zms.map(_.typing).head
+        convId <- conversationController.currentConvId.head
+      } {
+        if (text.nonEmpty) typing.selfChangedInput(convId)
+        else typing.selfClearedInput(convId)
+      }
+      prevEnteredText = text
+    case _ =>
   }
 
   val typingIndicatorVisible = for {
     typing <- zms.map(_.typing)
-    convId <- conv.map(_.id)
+    convId <- conversationController.currentConvId
     users <- typing.typingUsers(convId)
   } yield
     users.nonEmpty
+
+  def notifyKeyboardVisibilityChanged(keyboardIsVisible: Boolean): Unit = {
+    keyboard.mutate {
+      case KeyboardState.Shown if !keyboardIsVisible => KeyboardState.Hidden
+      case _ if keyboardIsVisible => KeyboardState.Shown
+      case state => state
+    }
+
+    if (keyboardIsVisible) editHasFocus.head.foreach { hasFocus =>
+      if (hasFocus) {
+        cursorCallback.foreach(_.onCursorClicked())
+      }
+    }
+  }
 
   keyboard.on(Threading.Ui) {
     case KeyboardState.Shown =>
@@ -140,119 +172,115 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
     case KeyboardState.ExtendedCursor(tpe) =>
       KeyboardUtils.closeKeyboardIfShown(activity)
 
-      if (LayoutSpec.isTablet(ctx) && tpe == ExtendedCursorContainer.Type.IMAGES) {
-        cameraController.openCamera(CameraContext.MESSAGE)
-        keyboard ! KeyboardState.Hidden
-      } else {
-        permissions.withPermissions(keyboardPermissions(tpe): _*) {
-          cursorCallback.foreach(_.openExtendedCursor(tpe))
-        }
-      }
+      permissions.requestAllPermissions(keyboardPermissions(tpe)).map {
+        case true => cursorCallback.foreach(_.openExtendedCursor(tpe))
+        case _ =>
+          //TODO error message?
+          keyboard ! KeyboardState.Hidden
+      } (Threading.Ui)
   }
 
   editHasFocus {
-    case true => cursorCallback.foreach(_.onFocusChange(true))
+    case true => // TODO - reimplement for tablets
     case false => // ignore
   }
 
   def submit(msg: String): Boolean = {
     if (isEditingMessage.currentValue.contains(true)) {
       onApproveEditMessage()
-      return true
+      true
     }
-    if (TextUtils.isEmpty(msg.trim)) return false
-
-    for {
-      c <- conv.head.map(_.id)
-      cs <- zms.head.map(_.convsUi)
-      m <- cs.sendMessage(c, new MessageContent.Text(msg))
-    } {
-      m foreach { msg =>
-        onMessageSent ! msg
-        cursorCallback.foreach(_.onMessageSent(msg))
+    else if (TextUtils.isEmpty(msg.trim)) false
+    else {
+      for {
+        cId <- conversationController.currentConvId.head
+        cs <- zms.head.map(_.convsUi)
+        m <- cs.sendMessage(cId, new MessageContent.Text(msg))
+      } {
+        m foreach { msg =>
+          onMessageSent ! msg
+          cursorCallback.foreach(_.onMessageSent(msg))
+        }
       }
+      true
     }
-
-    true
   }
 
   def onApproveEditMessage(): Unit =
     for {
-      c <- conv.head
+      cId <- conversationController.currentConvId.head
       cs <- zms.head.map(_.convsUi)
       m <- editingMsg.head if m.isDefined
       msg = m.get
       text <- enteredText.head
     } {
       if (text.trim().isEmpty) {
-        cs.recallMessage(c.id, msg.id)
+        cs.recallMessage(cId, msg.id)
         Toast.makeText(ctx, R.string.conversation__message_action__delete__confirmation, Toast.LENGTH_SHORT).show()
       } else {
-        cs.updateMessage(c.id, msg.id, new MessageContent.Text(text))
+        cs.updateMessage(cId, msg.id, new MessageContent.Text(text))
       }
       editingMsg ! None
       keyboard ! KeyboardState.Hidden
     }
 
-  lazy val userPreferences = inject[IUserPreferencesController]
+  private val lastEphemeralValue = inject[GlobalPreferences].preference(GlobalPreferences.LastEphemeralValue).signal
 
-  def toggleEphemeralMode() = {
-    val lastExpiraton = EphemeralExpiration.getForMillis(userPreferences.getLastEphemeralValue)
-    if (lastExpiraton != EphemeralExpiration.NONE) {
-      conv.head foreach { c =>
-        zms.head.flatMap { _.convsUi.setEphemeral(c.id, if (c.ephemeral == EphemeralExpiration.NONE) lastExpiraton else EphemeralExpiration.NONE) } foreach {
-          case Some((prev, current)) if prev.ephemeral == EphemeralExpiration.NONE =>
-            onEphemeralExpirationSelected ! current
-          case _ => // ignore
+  def toggleEphemeralMode(): Unit =
+    for {
+      lastExpiration <- lastEphemeralValue.head
+      c              <- conv.head
+      z              <- zms.head
+      eph            = c.ephemeralExpiration
+    } yield {
+      if (lastExpiration.isDefined && (eph.isEmpty || !eph.get.isInstanceOf[ConvExpiry])) {
+        val current = if (eph.isEmpty) lastExpiration else None
+        z.convsUi.setEphemeral(c.id, current)
+        if (eph != lastExpiration) onEphemeralExpirationSelected ! current
+        keyboard mutate {
+          case KeyboardState.ExtendedCursor(_) => KeyboardState.Hidden
+          case state => state
         }
       }
-      keyboard mutate {
-        case KeyboardState.ExtendedCursor(_) => KeyboardState.Hidden
-        case state => state
-      }
     }
-  }
 
   lazy val drawingController = inject[IDrawingController]
   lazy val giphyController = inject[IGiphyController]
   lazy val cameraController = inject[ICameraController]
   lazy val locationController = inject[ILocationController]
   lazy val soundController = inject[SoundController]
-  lazy val permissions = inject[PermissionsController]
-  lazy val networkStore = inject[INetworkStore]
+  lazy val permissions = inject[PermissionsService]
   lazy val activity = inject[Activity]
 
   import CursorMenuItem._
+
   onCursorItemClick {
     case CursorMenuItem.More => secondaryToolbarVisible ! true
     case CursorMenuItem.Less => secondaryToolbarVisible ! false
     case AudioMessage =>
-        keyboard ! KeyboardState.ExtendedCursor(ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING)
+      checkIfCalling(isVideoMessage = false)(keyboard ! KeyboardState.ExtendedCursor(ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING))
     case Camera =>
         keyboard ! KeyboardState.ExtendedCursor(ExtendedCursorContainer.Type.IMAGES)
     case Ping =>
-      networkStore.doIfHasInternetOrNotifyUser(new DefaultNetworkAction() {
-        override def execute(networkMode: NetworkMode): Unit = for {
-          z <- zms.head
-          c <- conv.head
-          _ <- z.convsUi.knock(c.id)
-        } {
-          soundController.playPingFromMe()
-        }
-      })
+      for {
+        true <- inject[NetworkModeService].networkMode.map(m => m != NetworkMode.OFFLINE && m != NetworkMode.UNKNOWN).head
+        z    <- zms.head
+        cId  <- conversationController.currentConvId.head
+        _    <- z.convsUi.knock(cId)
+      } soundController.playPingFromMe()
     case Sketch =>
       drawingController.showDrawing(null, IDrawingController.DrawingDestination.SKETCH_BUTTON)
     case File =>
       cursorCallback.foreach(_.openFileSharing())
     case VideoMessage =>
-      cursorCallback.foreach(_.captureVideo())
+      checkIfCalling(isVideoMessage = true)(cursorCallback.foreach(_.captureVideo()))
     case Location =>
       val googleAPI = GoogleApiAvailability.getInstance
       if (ConnectionResult.SUCCESS == googleAPI.isGooglePlayServicesAvailable(ctx)) {
         KeyboardUtils.hideKeyboard(activity)
         locationController.showShareLocation()
       }
-      else Toast.makeText(ctx, R.string.location_sharing__missing_play_services, Toast.LENGTH_LONG).show()
+      else showToast(R.string.location_sharing__missing_play_services)
     case Gif =>
       enteredText.head foreach { giphyController.handleInput }
     case Send =>
@@ -260,6 +288,12 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
     case _ =>
       // ignore
   }
+
+  private def checkIfCalling(isVideoMessage: Boolean)(f: => Unit) =
+    callController.isCallActive.head.foreach {
+      case true  => showErrorDialog(R.string.calling_ongoing_call_title, if (isVideoMessage) R.string.calling_ongoing_call_video_message else R.string.calling_ongoing_call_audio_message)
+      case false => f
+    }
 }
 
 object CursorController {
@@ -272,11 +306,11 @@ object CursorController {
   }
 
   val KeyboardPermissions = Map(
-    ExtendedCursorContainer.Type.IMAGES -> Seq(CameraPermission, ReadExternalStoragePermission),
-    ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING -> Seq(RecordAudioPermission)
+    ExtendedCursorContainer.Type.IMAGES -> Seq(CAMERA, READ_EXTERNAL_STORAGE),
+    ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING -> Seq(RECORD_AUDIO)
   )
 
-  def keyboardPermissions(tpe: ExtendedCursorContainer.Type) = KeyboardPermissions.getOrElse(tpe, Seq.empty)
+  def keyboardPermissions(tpe: ExtendedCursorContainer.Type): Set[PermissionsService.PermissionKey] = KeyboardPermissions.getOrElse(tpe, Seq.empty).toSet
 }
 
 // temporary for compatibility with ConversationFragment
@@ -289,6 +323,5 @@ trait CursorCallback {
   def onMessageSent(msg: MessageData): Unit
   def onCursorButtonLongPressed(cursorMenuItem: JCursorMenuItem): Unit
   def onMotionEventFromCursorButton(cursorMenuItem: JCursorMenuItem, motionEvent: MotionEvent): Unit
-  def onFocusChange(hasFocus: Boolean): Unit
   def onCursorClicked(): Unit
 }

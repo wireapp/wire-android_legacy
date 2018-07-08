@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <RelativeLayout android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="?wireBackground"
+                    android:layout_marginTop="@dimen/participants_options_button_margin_top">
+
+        <ImageView
+            android:id="@+id/conversation_verified_shield"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/shield_full"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="@dimen/wire__padding__regular"
+            android:layout_marginStart="@dimen/wire__padding__big"
+            android:visibility="gone"
+            />
+
+        <com.waz.zclient.ui.text.TypefaceEditText
+            android:id="@+id/conversation_name_edit_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="@dimen/wire__padding__regular"
+            android:layout_marginBottom="@dimen/wire__padding__regular"
+            android:paddingStart="@dimen/wire__padding__big"
+            android:paddingEnd="@dimen/conversation_name_row_padding_end"
+            android:layout_toEndOf="@id/conversation_verified_shield"
+            android:imeOptions="actionDone"
+            android:inputType="text"
+            android:maxLines="1"
+            android:textColor="?wirePrimaryTextColor"
+            app:w_font="@string/wire__typeface__light"
+            android:textSize="@dimen/wire__text_size__regular"
+            android:background="@null"
+            android:ellipsize="end"/>
+
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:id="@+id/conversation_name_edit_glyph"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/glyph__edit"
+            android:textColor="?wirePrimaryTextColor"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginEnd="@dimen/wire__padding__regular"
+            android:layout_marginTop="@dimen/wire__padding__regular"/>
+
+    </RelativeLayout>
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/call_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/wire__padding__12"
+        android:textColor="?wireSecondaryTextColor"
+        android:textSize="@dimen/wire__text_size__small"
+        app:w_font="@string/wire__typeface__regular"
+        android:layout_marginStart="@dimen/wire__padding__regular"
+        android:layout_marginEnd="@dimen/wire__padding__regular"
+        />
+
+</LinearLayout>

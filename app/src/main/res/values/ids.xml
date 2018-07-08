@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,5 +29,53 @@
     <drawable name="placeholder4" tools:ignore="UnusedResources">@drawable/ic_launcher_wire_candidate</drawable>
     <drawable name="placeholder5" tools:ignore="UnusedResources">@drawable/ic_launcher_wire_playground</drawable>
     <drawable name="placeholder6" tools:ignore="UnusedResources">@drawable/ic_launcher_wire_qa</drawable>
+
+    <item name="cursor" type="id">666</item>
+    <item name="cursor_menu_item_left_margin" type="id" />
+    <item name="cursor_menu_item_participant" type="id" />
+    <item name="cursor_menu_item_calling" type="id" />
+    <item name="cursor_menu_item_video" type="id" />
+    <item name="cursor_menu_item_camera" type="id" />
+    <item name="cursor_menu_item_draw" type="id" />
+    <item name="cursor_menu_item_ping" type="id" />
+    <item name="cursor_menu_item_location" type="id" />
+    <item name="cursor_menu_item_emoji" type="id" />
+    <item name="cursor_menu_item_keyboard" type="id" />
+    <item name="cursor_menu_item_file" type="id" />
+    <item name="cursor_menu_item_gif" type="id" />
+    <item name="cursor_menu_item_audio_message" type="id" />
+    <item name="cursor_menu_item_more" type="id" />
+    <item name="cursor_menu_item_less" type="id" />
+    <item name="cursor_menu_item_send" type="id" />
+    <item name="cursor_menu_item_dummy" type="id" />
+
+    <item name="message_bottom_menu_item_forward" type="id" />
+    <item name="message_bottom_menu_item_copy" type="id" />
+    <item name="message_bottom_menu_item_delete" type="id" />
+    <item name="message_bottom_menu_item_delete_local" type="id" />
+    <item name="message_bottom_menu_item_delete_global" type="id" />
+    <item name="message_bottom_menu_item_edit" type="id" />
+    <item name="message_bottom_menu_item_like" type="id" />
+    <item name="message_bottom_menu_item_unlike" type="id" />
+    <item name="message_bottom_menu_item_save" type="id" />
+    <item name="message_bottom_menu_item_open_file" type="id" />
+    <item name="message_bottom_menu_item_forward_multiple" type="id" />
+    <item name="message_bottom_menu_item_reveal" type="id" />
+
+    <item name="video_calling_view" type="id" />
+
+    <item name="emoji_keyboard_item" type="id" />
+
+    <item name="content" type="id"/>
+
+    <item name="collection_image_view" type="id"/>
+
+    <item name="participants_section" type="id" />
+    <item name="services_section" type="id" />
+    <item name="guest_options" type="id" />
+    <item name="timed_messages_options" type="id" />
+
+    <item name="create_group_button" type="id"/>
+    <item name="create_guest_room_button" type="id"/>
 
 </resources>

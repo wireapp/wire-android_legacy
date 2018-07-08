@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
-import android.os.Build;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,6 +30,7 @@ import android.widget.TextView;
 import com.waz.zclient.R;
 import com.waz.zclient.ui.theme.OptionsTheme;
 import com.waz.zclient.ui.utils.ColorUtils;
+import com.waz.zclient.utils.ContextUtils;
 import com.waz.zclient.utils.ViewUtils;
 
 public class ConfirmationMenu extends LinearLayout {
@@ -115,20 +115,12 @@ public class ConfirmationMenu extends LinearLayout {
     public void setCancelColor(int textColor, int backgroundColor) {
         int strokeWidth = getResources().getDimensionPixelSize(R.dimen.framework_confirmation_menu_button_stroke_width);
         int cornerRadius = getResources().getDimensionPixelSize(R.dimen.framework_confirmation_menu_button_corner_radius);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            //noinspection deprecation
-            ViewUtils.setBackground(cancelTextView,
-                getButtonBackground(backgroundColor,
-                                    getResources().getColor(R.color.framework_confirmation_menu_background_color),
-                                    strokeWidth,
-                                    cornerRadius));
-        } else {
-            ViewUtils.setBackground(cancelTextView,
-                getButtonBackground(backgroundColor,
-                    getResources().getColor(R.color.framework_confirmation_menu_background_color, getContext().getTheme()),
-                    strokeWidth,
-                    cornerRadius));
-        }
+
+        ViewUtils.setBackground(cancelTextView,
+            getButtonBackground(backgroundColor,
+                ContextUtils.getColorWithTheme(R.color.framework_confirmation_menu_background_color, getContext()),
+                strokeWidth,
+                cornerRadius));
 
         cancelTextView.setTextColor(textColor);
     }

@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@
             android:text="@string/forced_update__header"
             android:textColor="@color/forced_update__header__font_color"
             android:textSize="@dimen/forced_update__header__font_size"
-            app:font="@string/forced_update__header__font"
+            app:w_font="@string/forced_update__header__font"
             />
 
         <com.waz.zclient.ui.text.TypefaceTextView
@@ -54,7 +54,7 @@
             android:text="@string/forced_update__sub_header"
             android:textColor="@color/forced_update__sub_header__font_color"
             android:textSize="@dimen/forced_update__sub_header__font_size"
-            app:font="@string/forced_update__sub_header__font"
+            app:w_font="@string/forced_update__sub_header__font"
             />
 
         <com.waz.zclient.ui.views.ZetaButton
@@ -66,7 +66,7 @@
             android:padding="@dimen/forced_update__general_padding"
             android:text="@string/forced_update__download_button"
             android:textColor="@color/forced_update__button__font_color"
-            app:font="@string/forced_update__button__font"
+            app:w_font="@string/forced_update__button__font"
             />
 
     </LinearLayout>

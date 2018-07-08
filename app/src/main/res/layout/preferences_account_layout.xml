@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2017 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -44,28 +44,28 @@
                 android:paddingEnd="@dimen/wire__padding__16"
                 android:textColor="@color/accent_blue"/>
 
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+            <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preferences_account_name"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 app:subtitle="@string/pref_account_name_title"
                 />
 
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+            <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preferences_account_handle"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 app:subtitle="@string/pref_account_username_title"
                 />
 
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+            <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preferences_account_email"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 app:subtitle="@string/pref_account_email_title"
                 />
 
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+            <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preferences_account_phone"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
@@ -82,7 +82,7 @@
                 android:textColor="@color/accent_blue"
                 />
 
-            <com.waz.zclient.pages.main.profile.preferences.views.PictureTextButton
+            <com.waz.zclient.preferences.views.PictureTextButton
                 android:id="@+id/preferences_account_picture"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
@@ -90,12 +90,46 @@
                 app:iconStart="@drawable/conversation_badge_red"
                 />
 
-            <com.waz.zclient.pages.main.profile.preferences.views.PictureTextButton
+            <com.waz.zclient.preferences.views.PictureTextButton
                 android:id="@+id/preferences_account_accent"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 app:title="@string/pref_account_color_title"
                 app:iconStart="@drawable/conversation_badge_red"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                android:text="@string/pref_account_personal_information_category_title"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/wire__padding__16"
+                android:paddingEnd="@dimen/wire__padding__16"
+                android:textColor="@color/accent_blue"/>
+
+            <com.waz.zclient.preferences.views.TextButton
+                android:id="@+id/preferences_data_usage_permissions"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                app:title="@string/pref_account_data_usage_permissions"
+            />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                android:text="@string/pref_account_conversations_category_title"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/wire__padding__16"
+                android:paddingEnd="@dimen/wire__padding__16"
+                android:textColor="@color/accent_blue"
+                />
+
+
+            <com.waz.zclient.preferences.views.TextButton
+                android:id="@+id/preferences_backup"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                app:title="@string/pref_account_backup_title"
                 />
 
             <com.waz.zclient.ui.text.TypefaceTextView
@@ -109,21 +143,21 @@
                 android:textColor="@color/accent_blue"
                 />
 
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+            <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preferences_account_reset_pw"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 app:title="@string/pref_account_password_title"
                 />
 
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+            <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preferences_account_logout"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 app:title="@string/pref_account_sign_out_title"
                 />
 
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+            <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preferences_account_delete"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"

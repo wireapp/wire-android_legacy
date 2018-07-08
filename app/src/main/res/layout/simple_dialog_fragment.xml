@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@
         android:gravity="left"
         android:textColor="@color/framework_confirmation_menu_text_font_color_disabled"
         android:textSize="@dimen/framework_confirmation_menu_text_font_size"
-        app:font="@string/framework_confirmation_menu_text_font"
+        app:w_font="@string/framework_confirmation_menu_text_font"
         android:layout_height="wrap_content"
         />
 

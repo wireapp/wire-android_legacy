@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -105,7 +105,7 @@
     <issue id="HardcodedText" severity="error" />
     <issue id="IconDuplicates" severity="error" />
     <issue id="GifUsage" severity="error" />
-    <issue id="IconColors" severity="error" />
+    <issue id="IconColors" severity="ignore" />
     <issue id="IconExtension" severity="error" />
     <issue id="IconLauncherShape" severity="error" />
     <issue id="IconMissingDensityFolder" severity="error" />
@@ -202,7 +202,7 @@
     <issue id="ProtectedPermissions" severity="error" />
     <issue id="TextFields" severity="error" />
     <issue id="TextViewEdits" severity="error" />
-    <issue id="SelectableText" severity="error" />
+    <issue id="SelectableText" severity="ignore" />
     <issue id="MenuTitle" severity="error" />
     <issue id="ShowToast" severity="error" />
     <issue id="TooDeepLayout" severity="error" />

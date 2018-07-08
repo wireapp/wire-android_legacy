@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@
                 android:text="@string/pref__account_action__dialog__change_username__title"
                 android:textSize="@dimen/wire__text_size__medium"
                 android:layout_marginBottom="@dimen/prefs__username_change__margins_between"
-                app:font="@string/wire__typeface__regular"
+                app:w_font="@string/wire__typeface__regular"
                 android:layout_margin="@dimen/prefs__dialog__padding"
                 />
 
@@ -105,7 +105,7 @@
                     android:text="@string/pref__account_action__dialog__change_username__rules"
                     android:textSize="@dimen/wire__text_size__regular"
                     android:textColor="?android:attr/textColorSecondary"
-                    app:font="@string/wire__typeface__regular"
+                    app:w_font="@string/wire__typeface__regular"
                     android:layout_marginStart="@dimen/wire__padding__4"
                     android:layout_marginEnd="@dimen/wire__padding__4"
                     android:layout_alignParentBottom="true"
@@ -143,7 +143,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:text="@android:string/cancel"
-                app:font="@string/wire__typeface__medium"
+                app:w_font="@string/wire__typeface__medium"
                 android:textColor="?attr/colorAccent"
                 style="?android:attr/buttonBarButtonStyle"
                 />
@@ -154,7 +154,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:text="@android:string/ok"
-                app:font="@string/wire__typeface__medium"
+                app:w_font="@string/wire__typeface__medium"
                 android:textColor="?attr/colorAccent"
                 style="?android:attr/buttonBarButtonStyle"
                 />

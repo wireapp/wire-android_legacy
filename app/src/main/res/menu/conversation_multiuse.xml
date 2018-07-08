@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-      xmlns:custom="http://schemas.android.com/apk/res-auto"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
       xmlns:tools="http://schemas.android.com/tools"
       tools:ignore="UnusedResources"
     >
@@ -28,7 +28,7 @@
         android:id="@+id/share_giphy"
         android:icon="@drawable/giphy_logo"
         android:title="@string/service_giphy_name"
-        custom:font="@string/cursor__multiuse_button__font_name"
+        app:w_font="@string/cursor__multiuse_button__font_name"
         tools:ignore="UnusedIds"
         />
 

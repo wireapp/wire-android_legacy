@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ public class WireLoggerTree extends Timber.DebugTree {
     private final int minLogLevel;
 
     public WireLoggerTree() {
-        minLogLevel = BuildConfig.LOG_LEVEL_UI;
+        minLogLevel = BuildConfig.DEVELOPER_FEATURES_ENABLED ? 2 : 99;
     }
 
     @Override

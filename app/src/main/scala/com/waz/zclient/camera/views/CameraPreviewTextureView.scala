@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,26 +17,29 @@
  */
 package com.waz.zclient.camera.views
 
-import android.content.Context
+import android.Manifest.permission.CAMERA
+import android.content.{Context, DialogInterface, Intent}
 import android.graphics.{Matrix, Rect, SurfaceTexture}
+import android.net.Uri
+import android.provider.Settings
 import android.util.AttributeSet
 import android.view._
 import com.waz.ZLog
-import com.waz.api.ImageAssetFactory
+import com.waz.permissions.PermissionsService
 import com.waz.threading.CancellableFuture.CancelException
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.camera._
 import com.waz.zclient.camera.controllers.{GlobalCameraController, Orientation, PreviewSize}
-import com.waz.zclient.common.controllers.{CameraPermission, PermissionsController}
-import com.waz.zclient.media.SoundController
+import com.waz.zclient.common.controllers.SoundController
+import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{R, ViewHelper}
 import timber.log.Timber
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success}
 
-class CameraPreviewTextureView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends TextureView(context, attrs, defStyleAttr) with ViewHelper with TextureView.SurfaceTextureListener {
+class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends TextureView(cxt, attrs, defStyleAttr) with ViewHelper with TextureView.SurfaceTextureListener {
 
   implicit val logTag = ZLog.logTagFor[CameraPreviewTextureView]
 
@@ -45,7 +48,7 @@ class CameraPreviewTextureView(val context: Context, val attrs: AttributeSet, va
   def this(context: Context) = this(context, null)
 
   private val controller = inject[GlobalCameraController]
-  private val permissionsController = Option(inject[PermissionsController])
+  private val permissions = inject[PermissionsService]
   private val soundController = inject[SoundController]
 
   private var currentTexture = Option.empty[(SurfaceTexture, Int, Int)]
@@ -53,7 +56,7 @@ class CameraPreviewTextureView(val context: Context, val attrs: AttributeSet, va
   private var observer = Option.empty[CameraPreviewObserver]
 
   val orientationListener = returning {
-    new OrientationEventListener(context) {
+    new OrientationEventListener(cxt) {
       override def onOrientationChanged(orientation: Int) =
         controller.deviceOrientation ! Orientation(orientation)
     }
@@ -69,16 +72,11 @@ class CameraPreviewTextureView(val context: Context, val attrs: AttributeSet, va
     soundController.playCameraShutterSound()
   }.onComplete {
     case Success(data) => observer.foreach {
-      _.onPictureTaken {
-        if (getCameraFacing == CameraFacing.FRONT) ImageAssetFactory.getMirroredImageAsset(data)
-        else ImageAssetFactory.getImageAsset(data)
-      }
+      _.onPictureTaken(data, controller.getCurrentCameraFacing.getOrElse(CameraFacing.BACK) == CameraFacing.FRONT)
     }
     case Failure(_) =>
       observer.foreach(_.onCameraLoadingFailed())
   } (Threading.Ui)
-
-  def getCameraFacing = controller.getCurrentCameraFacing.getOrElse(CameraFacing.BACK)
 
   def getNumberOfCameras = controller.camInfos.size
 
@@ -108,12 +106,29 @@ class CameraPreviewTextureView(val context: Context, val attrs: AttributeSet, va
   }
 
   override def onSurfaceTextureAvailable(texture: SurfaceTexture, width: Int, height: Int) = {
-    permissionsController.foreach {
-      _.requiring(Set(CameraPermission)) {
+    permissions.requestAllPermissions(Set(CAMERA)).map {
+      case true =>
         currentTexture = Some((texture, width, height))
         startLoading(texture, width, height)
-      }(R.string.camera_permissions_denied_title, R.string.camera_permissions_denied_message)
-    }
+      case _ =>
+        ViewUtils.showAlertDialog(
+          cxt,
+          R.string.camera_permissions_denied_title,
+          R.string.camera_permissions_denied_message,
+          R.string.permissions_denied_dialog_acknowledge,
+          R.string.permissions_denied_dialog_settings,
+          new DialogInterface.OnClickListener() {
+            override def onClick(dialog: DialogInterface, which: Int): Unit = ()
+          },
+          new DialogInterface.OnClickListener() {
+            override def onClick(dialog: DialogInterface, which: Int): Unit = {
+              returning(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", cxt.getPackageName, null))) { i =>
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                cxt.startActivity(i)
+              }
+            }
+          })
+    } (Threading.Ui)
   }
 
   override def onSurfaceTextureSizeChanged(surfaceTexture: SurfaceTexture, width: Int, height: Int) = {

@@ -3,10 +3,10 @@ apply plugin: 'java'
 version = '1.0.0'
 
 dependencies {
-    compile deps.lintapi
-    compile deps.lintchecks
+    implementation deps.lintapi
+    implementation deps.lintchecks
 
-    testCompile deps.junit
+    testImplementation deps.junit
 }
 
 jar {

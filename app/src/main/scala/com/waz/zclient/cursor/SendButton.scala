@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,15 +17,16 @@
  */
 package com.waz.zclient.cursor
 
-import android.content.Context
-import android.util.AttributeSet
 import android.animation.{Animator, AnimatorListenerAdapter, ValueAnimator}
-import com.waz.threading.Threading
+import android.content.Context
+import android.content.res.ColorStateList
+import android.util.AttributeSet
+import com.waz.utils.events.Signal
 import com.waz.utils.returning
+import com.waz.zclient.R
 import com.waz.zclient.ui.animation.interpolators.penner.Expo
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
-import com.waz.zclient.R
 
 import scala.concurrent.duration._
 
@@ -50,6 +51,8 @@ class SendButton(context: Context, attrs: AttributeSet, defStyleAttr: Int) exten
     })
   }
 
+  override val buttonColor = Signal.empty[ColorStateList] //send button color is defined in XML
+
   menuItem ! Some(CursorMenuItem.Send)
 
   override def onFinishInflate(): Unit = {
@@ -57,7 +60,7 @@ class SendButton(context: Context, attrs: AttributeSet, defStyleAttr: Int) exten
 
     setTextColor(getColor(R.color.text__primary_dark))
 
-    controller.sendButtonVisible.on(Threading.Ui) {
+    controller.sendButtonVisible.onUi {
       case true =>
         fadeInAnimator.start()
       case false =>

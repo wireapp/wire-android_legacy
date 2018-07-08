@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+           xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Theme.Dark" parent="@style/Theme.Design.NoActionBar">
+        <item name="themeName">dark</item>
+
+        <item name="colorPrimary">@color/dark_theme_primary</item>
+        <item name="colorPrimaryDark">@color/black</item>
+        <item name="colorAccent">@color/accent_default</item>
+        <item name="android:windowBackground">@drawable/window_background</item>
+
+        <item name="alertDialogTheme">@style/Theme.Dark.Dialog.Alert</item>
+        <item name="dialogTheme">@style/Theme.Dark.Dialog</item>
+
+        <item name="android:windowAnimationStyle">@style/AnimFadeInZoomOut.Activity</item>
+        <item name="dropDownListViewStyle">@style/NoItemBorderListview</item>
+        <item name="windowActionModeOverlay">true</item>
+
+        <item name="colorControlHighlight" tools:ignore="PrivateResource">@color/ripple_material_dark</item>
+
+        <!-- Message Stream -->
+        <item name="messageStreamMessage">@style/message_stream__message__dark</item>
+        <item name="messageStreamSeparatorName">@style/message_stream__separator_name__dark</item>
+        <item name="messageStreamSeparatorRecalled">@style/message_stream__separator_recalled__dark</item>
+        <item name="messageStreamTimestamp">@style/message_stream__timestamp__dark</item>
+        <item name="messageStreamTimestampSmall">@style/message_stream__timestamp_small__dark</item>
+        <item name="messageStreamSubtitle">@style/message_stream__subtitle__dark</item>
+        <item name="messageStreamSubtitleNoColor">@style/message_stream__subtitle__no_color__dark</item>
+        <item name="messageStreamSubtitleStrong">@style/message_stream__subtitle_strong__dark</item>
+        <item name="messageStreamNameChanged">@style/message_stream__name_changed__dark</item>
+        <item name="messageStreamHeader">@style/message_stream__header__dark</item>
+        <item name="messageStreamHeaderText">@style/message_stream__header__text__dark</item>
+        <item name="messageStreamHeaderGlyph">@style/message_stream__header__glyph__dark</item>
+        <item name="messageStreamUnsentIndicator">@style/message_stream__unsent_indicator__dark</item>
+        <item name="messageStreamUnsentIndicatorBackground">@color/content__image__progress_circle_background_dark</item>
+        <item name="messageStreamFileDownloadDoneIndicatorBackground">@drawable/oval__white</item>
+        <item name="messageStreamMediaBarActionClose">@drawable/ic_action_close_light</item>
+        <!-- Conversation Toolbar -->
+        <item name="conversationToolbar">@style/conversation_toolbar__dark</item>
+        <item name="conversationToolbarNoDivider">@style/conversation_toolbar_no_divider__dark</item>
+        <item name="conversationToolbarBackground">@drawable/toolbar_background__dark</item>
+        <item name="actionModeStyle">@style/conversation_toolbar_action_mode__dark</item>
+        <item name="actionModeCloseDrawable">@drawable/ic_action_close_light</item>
+        <item name="conversationToolbarCollection">@drawable/search</item>
+        <item name="conversationToolbarCollectionSearching">@drawable/search_return</item>
+        <item name="conversationToolbarIconVideo">@drawable/ic_action_video_light</item>
+        <item name="conversationToolbarIconCall">@drawable/ic_action_call_light</item>
+        <item name="conversationToolbarIconCopy">@drawable/ic_action_copy_light</item>
+        <item name="conversationToolbarIconDelete">@drawable/ic_action_delete_light</item>
+        <item name="conversationToolbarIconFwd">@drawable/ic_action_forward_light</item>
+        <item name="backNavigationIcon">@drawable/action_back_light</item>
+
+        <!-- Start UI Toolbar -->
+        <item name="startUiToolbar">@style/start_ui__toolbar__dark</item>
+
+        <!-- Video Message Preview Toolbar -->
+        <item name="videoMessagePreviewToolbarIconSend">@drawable/ic_action_check_light</item>
+
+        <!-- Cursor -->
+        <item name="cursorMenuButton">@style/cursor__menu_button__dark</item>
+        <item name="cursorIconButton">@style/cursor__icon_button__dark</item>
+        <item name="cursorIconButtonPeople">@style/cursor__icon_button__people__dark</item>
+        <item name="cursorIconButtonCall">@style/cursor__icon_button__call__dark</item>
+        <item name="cursorIconButtonVideo">@style/cursor__icon_button__video__dark</item>
+        <item name="cursorEditText">@style/cursor__edit_text__dark</item>
+        <item name="cursorEditBackground">@color/accent_yellow__8</item>
+        <item name="cursorEditButtons">@color/cursor_edit_buttons_color_dark</item>
+        <item name="cursorEditButtonsDisabled">@color/cursor_edit_buttons_color_disabled_dark</item>
+
+        <!-- User -->
+        <item name="userEditText">@style/user__edit_text__dark</item>
+        <item name="userHeader">@style/user__header__dark</item>
+        <item name="userSubHeader">@style/user__sub_header__dark</item>
+        <item name="userFooterLabel">@style/user__footer_label__dark</item>
+        <item name="userChatHeadLabel">@style/user__chathead_label__dark</item>
+        <item name="userStrongLabel">@style/user__strong_label__dark</item>
+        <item name="userOtrHeader">@style/user__otr_header__dark</item>
+        <item name="userOtrDevice">@style/user__otr_device__dark</item>
+
+        <!-- Common -->
+        <item name="iconButton">@style/common__icon_button__dark</item>
+        <item name="smallIconButton">@style/common__small_icon_button__dark</item>
+        <item name="smallIconButtonDark">@style/common__small_icon_button__dark</item>
+        <item name="circularIconButtonGreen">@style/common__circular_icon_button__green</item>
+        <item name="circularIconButtonRed">@style/common__circular_icon_button__red</item>
+        <item name="wireBackground">@style/wire__background__dark</item>
+        <item name="wireBackgroundColor">@color/background_dark</item>
+        <item name="wireBackgroundAsTextColor">@style/wire__background_as_text_color__dark</item>
+        <item name="strongBackground">@style/common__strong_background__dark</item>
+        <item name="wirePrimaryTextColor">@color/text__primary_dark</item>
+        <item name="wirePrimaryTextColorReverted">@color/text__primary_light</item>
+        <item name="wireSecondaryTextColor">@color/text__secondary_dark</item>
+        <item name="thinDividerColor">@color/white_16</item>
+
+        <!-- Start UI -->
+        <item name="startUiErrorLabel">@style/start_ui__error_label__dark</item>
+        <item name="startUiErrorSubLabel">@style/start_ui__error_sublabel__dark</item>
+        <item name="startUiErrorIcon">@style/start_ui__error_icon__dark</item>
+        <item name="startUiSearchField">@style/start_ui__search_field__dark</item>
+        <item name="startUiCloseButton">@style/start_ui__close_button__dark</item>
+
+        <item name="startUiUserRowLabel">@style/start_ui__user_row__label__dark</item>
+        <item name="startUiUserRowSubLabel">@style/start_ui__user_row__sub_label__dark</item>
+        <item name="startUiHeaderRowLabel">@style/start_ui__header_row__label__dark</item>
+
+        <item name="wireDivider">@style/common__divider__dark</item>
+        <item name="wireDividerColor">@color/separator_dark</item>
+        <item name="wireDividerColorSolid">@color/separator_dark_solid</item>
+        <item name="tabIndicatorLabel">@style/common__tab_indicator_label__dark</item>
+
+        <!-- Media Player -->
+        <item name="mediaPlayerTitle">@style/media_player__title__dark</item>
+        <item name="mediaPlayerSubTitle">@style/media_player__title__dark</item>
+
+        <!-- Pick User -->
+        <item name="pickUserAddButton">@style/pickuser__add_button__dark</item>
+
+        <!-- Calling -->
+        <item name="callingChatheadInitials">@style/calling__chathead_initials__dark</item>
+        <item name="callingChatheadFooter">@style/calling__chathead_footer__dark</item>
+        <item name="callingControlButtonLabel">@style/calling__controls__button_label__dark</item>
+        <item name="callButtonBackground">@drawable/selector__icon_button__background__calling</item>
+        <item name="callIconDisabledColor">@color/white_24</item>
+        <item name="callTextDisabledColor">@color/white_24</item>
+        <item name="callIconDisabledActivatedColor">@color/graphite_40</item>
+
+        <!-- OTR -->
+        <item name="otrClientLink">@style/otr_client__link__dark</item>
+        <item name="otrClientText">@style/otr_client__text__dark</item>
+        <item name="otrClientId">@style/otr_client__id__dark</item>
+
+        <item name="otrSwitch">@style/otr_switch__dark</item>
+        <item name="otrSwitchText">@style/otr_switch_text__dark</item>
+        <item name="otrAddedNewDeviceMessage">@style/otr_added_new_device_message__dark</item>
+
+        <!-- Audio message -->
+        <item name="audioMessageDuration">@style/audio_message_duration__dark</item>
+
+        <!-- Giphy -->
+        <item name="giphyControl">@style/giphy_control_button__dark</item>
+        <item name="giphyKeyword">@style/giphy_keyword__dark</item>
+        <item name="giphyConversation">@style/giphy_conversation__dark</item>
+        <item name="giphyError">@style/giphy_error__dark</item>
+
+        <!-- Typing indicator -->
+        <item name="typingIndicatorBox">@style/typing_indicator_box_dark</item>
+        <item name="typingIndicatorText">@style/typing_indicator_text_dark</item>
+
+        <!-- Start UI Toolbar -->
+        <item name="sketchToolbar">@style/sketch_toolbar</item>
+
+        <!-- Collection -->
+        <item name="wireBackgroundCollection">@color/collection_background_dark</item>
+        <item name="collectionToolbar">@style/collection_toolbar__dark</item>
+        <item name="lowerCollectionToolbar">@drawable/lower_toolbar_collection_background__dark</item>
+        <item name="searchBackgroundDividerDrawable">@drawable/search_bottom_divider_dark</item>
+
+        <!-- Teams -->
+        <item name="roundBackgroundDrawable">@drawable/rounded_corner_background_dark</item>
+
+    </style>
+
+    <style name="Theme.Light" parent="@style/Theme.Design.Light.NoActionBar">
+        <item name="themeName">light</item>
+
+        <item name="colorPrimary">@color/light_theme_primary</item>
+        <item name="colorPrimaryDark">@color/black</item>
+        <item name="colorAccent">@color/accent_default</item>
+        <item name="android:windowBackground">@drawable/window_background</item>
+
+        <item name="alertDialogTheme">@style/Theme.Light.Dialog.Alert</item>
+        <item name="dialogTheme">@style/Theme.Light.Dialog</item>
+
+        <item name="android:windowAnimationStyle">@style/AnimFadeInZoomOut.Activity</item>
+        <item name="dropDownListViewStyle">@style/NoItemBorderListview</item>
+        <item name="windowActionModeOverlay">true</item>
+
+        <item name="colorControlHighlight" tools:ignore="PrivateResource">@color/ripple_material_light</item>
+
+        <!-- Message Stream -->
+        <item name="messageStreamMessage">@style/message_stream__message__light</item>
+        <item name="messageStreamSeparatorName">@style/message_stream__separator_name__light</item>
+        <item name="messageStreamSeparatorRecalled">@style/message_stream__separator_recalled__light</item>
+        <item name="messageStreamTimestamp">@style/message_stream__timestamp__light</item>
+        <item name="messageStreamTimestampSmall">@style/message_stream__timestamp_small__light</item>
+        <item name="messageStreamSubtitle">@style/message_stream__subtitle__light</item>
+        <item name="messageStreamSubtitleNoColor">@style/message_stream__subtitle__no_color__light</item>
+        <item name="messageStreamSubtitleStrong">@style/message_stream__subtitle_strong__light</item>
+        <item name="messageStreamNameChanged">@style/message_stream__name_changed__light</item>
+        <item name="messageStreamHeader">@style/message_stream__header__light</item>
+        <item name="messageStreamHeaderText">@style/message_stream__header__text__light</item>
+        <item name="messageStreamHeaderGlyph">@style/message_stream__header__glyph__light</item>
+        <item name="messageStreamUnsentIndicator">@style/message_stream__unsent_indicator__light</item>
+        <item name="messageStreamUnsentIndicatorBackground">@color/content__image__progress_circle_background_light</item>
+        <item name="messageStreamFileDownloadDoneIndicatorBackground">@drawable/oval__graphite</item>
+        <item name="messageStreamMediaBarActionClose">@drawable/ic_action_close_dark</item>
+
+        <!-- Conversation Toolbar -->
+        <item name="conversationToolbar">@style/conversation_toolbar__light</item>
+        <item name="conversationToolbarNoDivider">@style/conversation_toolbar_no_divider__light</item>
+        <item name="conversationToolbarBackground">@drawable/toolbar_background__light</item>
+        <item name="actionModeStyle">@style/conversation_toolbar_action_mode__light</item>
+        <item name="actionModeCloseDrawable">@drawable/ic_action_close_dark</item>
+        <item name="conversationToolbarCollection">@drawable/search_dark</item>
+        <item name="conversationToolbarCollectionSearching">@drawable/search_return_dark</item>
+        <item name="conversationToolbarIconVideo">@drawable/ic_action_video_dark</item>
+        <item name="conversationToolbarIconCall">@drawable/ic_action_call_dark</item>
+        <item name="conversationToolbarIconCopy">@drawable/ic_action_copy_dark</item>
+        <item name="conversationToolbarIconDelete">@drawable/ic_action_delete_dark</item>
+        <item name="conversationToolbarIconFwd">@drawable/ic_action_forward_dark</item>
+        <item name="backNavigationIcon">@drawable/action_back_dark</item>
+
+        <!-- Start UI Toolbar -->
+        <item name="startUiToolbar">@style/start_ui__toolbar__light</item>
+
+        <!-- Video Message Preview Toolbar -->
+        <item name="videoMessagePreviewToolbarIconSend">@drawable/ic_action_check_dark</item>
+
+        <!-- Cursor -->
+        <item name="cursorMenuButton">@style/cursor__menu_button__light</item>
+        <item name="cursorIconButton">@style/cursor__icon_button__light</item>
+        <item name="cursorIconButtonPeople">@style/cursor__icon_button__people__light</item>
+        <item name="cursorIconButtonCall">@style/cursor__icon_button__call__light</item>
+        <item name="cursorIconButtonVideo">@style/cursor__icon_button__video__light</item>
+        <item name="cursorEditText">@style/cursor__edit_text__light</item>
+        <item name="cursorEditBackground">@color/accent_yellow__16</item>
+        <item name="cursorEditButtons">@color/cursor_edit_buttons_color</item>
+        <item name="cursorEditButtonsDisabled">@color/cursor_edit_buttons_color_disabled</item>
+
+        <!-- User -->
+        <item name="userEditText">@style/user__edit_text__light</item>
+        <item name="userHeader">@style/user__header__light</item>
+        <item name="userSubHeader">@style/user__sub_header__light</item>
+        <item name="userFooterLabel">@style/user__footer_label__light</item>
+        <item name="userChatHeadLabel">@style/user__chathead_label__light</item>
+        <item name="userStrongLabel">@style/user__strong_label__light</item>
+        <item name="userOtrHeader">@style/user__otr_header__light</item>
+        <item name="userOtrDevice">@style/user__otr_device__light</item>
+
+        <!-- Common -->
+        <item name="iconButton">@style/common__icon_button__light</item>
+        <item name="smallIconButton">@style/common__small_icon_button__light</item>
+        <item name="smallIconButtonDark">@style/common__small_icon_button__dark</item>
+        <item name="circularIconButtonGreen">@style/common__circular_icon_button__green</item>
+        <item name="circularIconButtonRed">@style/common__circular_icon_button__red</item>
+        <item name="wireBackground">@style/message_stream__background__light</item>
+        <item name="wireBackgroundColor">@color/background_light</item>
+        <item name="wireBackgroundAsTextColor">@style/wire__background_as_text_color__light</item>
+        <item name="strongBackground">@style/common__strong_background__light</item>
+        <item name="wirePrimaryTextColor">@color/text__primary_light</item>
+        <item name="wirePrimaryTextColorReverted">@color/text__primary_dark</item>
+        <item name="wireSecondaryTextColor">@color/text__secondary_light</item>
+        <item name="thinDividerColor">@color/graphite_8</item>
+
+        <!-- Start UI -->
+        <item name="startUiErrorLabel">@style/start_ui__error_label__light</item>
+        <item name="startUiErrorSubLabel">@style/start_ui__error_sublabel__light</item>
+        <item name="startUiErrorIcon">@style/start_ui__error_icon__light</item>
+        <item name="startUiSearchField">@style/start_ui__search_field__light</item>
+        <item name="startUiCloseButton">@style/start_ui__close_button__light</item>
+
+        <item name="startUiUserRowLabel">@style/start_ui__user_row__label__light</item>
+        <item name="startUiUserRowSubLabel">@style/start_ui__user_row__sub_label__light</item>
+        <item name="startUiHeaderRowLabel">@style/start_ui__header_row__label__light</item>
+
+        <item name="wireDivider">@style/common__divider__light</item>
+        <item name="wireDividerColor">@color/separator_light</item>
+        <item name="wireDividerColorSolid">@color/separator_light_solid</item>
+        <item name="tabIndicatorLabel">@style/common__tab_indicator_label__light</item>
+
+        <!-- Media Player -->
+        <item name="mediaPlayerTitle">@style/media_player__title__light</item>
+        <item name="mediaPlayerSubTitle">@style/media_player__title__light</item>
+
+        <!-- Pick User -->
+        <item name="pickUserAddButton">@style/pickuser__add_button__light</item>
+
+        <!-- Calling -->
+        <item name="callingChatheadInitials">@style/calling__chathead_initials__light</item>
+        <item name="callingChatheadFooter">@style/calling__chathead_footer__light</item>
+        <item name="callingControlButtonLabel">@style/calling__controls__button_label__light</item>
+        <item name="callButtonBackground">@drawable/selector__icon_button__background__calling_light</item>
+        <item name="callIconDisabledColor">@color/graphite_24</item>
+        <item name="callTextDisabledColor">@color/graphite_24</item>
+        <item name="callIconDisabledActivatedColor">@color/graphite_40</item>
+
+        <!-- OTR -->
+        <item name="otrClientLink">@style/otr_client__link__light</item>
+        <item name="otrClientText">@style/otr_client__text__light</item>
+        <item name="otrClientId">@style/otr_client__id__light</item>
+        <item name="otrSwitch">@style/otr_switch__light</item>
+        <item name="otrSwitchText">@style/otr_switch_text__light</item>
+        <item name="otrAddedNewDeviceMessage">@style/otr_added_new_device_message__light</item>
+
+        <!-- Audio message -->
+        <item name="audioMessageDuration">@style/audio_message_duration__light</item>
+
+        <!-- Giphy -->
+        <item name="giphyControl">@style/giphy_control_button__light</item>
+        <item name="giphyKeyword">@style/giphy_keyword__light</item>
+        <item name="giphyConversation">@style/giphy_conversation__light</item>
+        <item name="giphyError">@style/giphy_error__light</item>
+
+        <!-- Typing indicator -->
+        <item name="typingIndicatorBox">@style/typing_indicator_box_light</item>
+        <item name="typingIndicatorText">@style/typing_indicator_text_light</item>
+
+        <!-- Start UI Toolbar -->
+        <item name="sketchToolbar">@style/sketch_toolbar</item>
+
+        <!-- Collection -->
+        <item name="wireBackgroundCollection">@color/collection_background_light</item>
+        <item name="collectionToolbar">@style/collection_toolbar__light</item>
+        <item name="lowerCollectionToolbar">@drawable/lower_toolbar_collection_background__light</item>
+        <item name="searchBackgroundDividerDrawable">@drawable/search_bottom_divider_light</item>
+
+        <!-- Teams -->
+        <item name="roundBackgroundDrawable">@drawable/rounded_corner_background_light</item>
+
+    </style>
+
+    <style name="Theme.Dark.Preferences" parent="@style/Theme.Design.NoActionBar">
+        <item name="themeName">preferences</item>
+
+        <item name="colorPrimary">@color/dark_theme_preferences_primary</item>
+        <item name="colorPrimaryDark">@color/dark_theme_primary_dark</item>
+        <item name="colorAccent">@color/accent_default</item>
+
+        <item name="alertDialogTheme">@style/PreferenceTheme.Dialog.Alert</item>
+        <item name="dialogTheme">@style/PreferenceTheme.Dialog</item>
+
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@color/black</item>
+        <item name="windowActionModeOverlay">true</item>
+
+        <item name="wirePrimaryTextColor">@color/text__primary_dark</item>
+        <item name="wireSecondaryTextColor">@color/text__secondary_dark</item>
+        <item name="thinDividerColor">@color/white_16</item>
+    </style>
+
+    <style name="Theme.Popup" parent="@style/Theme.Design.NoActionBar">
+        <item name="themeName">popup</item>
+
+        <item name="colorPrimary">@color/dark_theme_primary</item>
+        <item name="colorPrimaryDark">@color/dark_theme_primary_dark</item>
+        <item name="colorAccent">@color/accent_default</item>
+
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@color/black_90</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation</item>
+        <item name="windowActionModeOverlay">true</item>
+        <item name="thinDividerColor">@color/white_16</item>
+    </style>
+
+    <style name="Theme.Share" parent="Theme.Dark">
+        <item name="android:windowBackground">@color/background_graphite</item>
+    </style>
+
+    <style name="Theme.Calling" parent="Theme.Dark">
+        <item name="android:windowBackground">@color/background_graphite</item>
+    </style>
+
+</resources>

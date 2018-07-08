@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@ import android.support.v4.app.Fragment;
 import com.waz.zclient.ServiceContainer;
 import com.waz.zclient.ZApplication;
 import com.waz.zclient.controllers.IControllerFactory;
-import com.waz.zclient.core.stores.IStoreFactory;
 
 public class BaseDialogFragment<T> extends DialogFragment implements ServiceContainer {
 
@@ -54,11 +53,6 @@ public class BaseDialogFragment<T> extends DialogFragment implements ServiceCont
 
     public final T getContainer() {
         return container;
-    }
-
-    @Override
-    public final IStoreFactory getStoreFactory() {
-        return getActivity() != null ? ZApplication.from(getActivity()).getStoreFactory() : null;
     }
 
     @Override

@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,37 +18,37 @@
 package com.waz.zclient.preferences
 
 import android.annotation.SuppressLint
-import android.app.Activity
+import android.app.{Activity, FragmentManager, FragmentTransaction}
 import android.content.res.Configuration
 import android.content.{Context, Intent}
 import android.media.RingtoneManager
 import android.net.Uri
-import android.os.Bundle
+import android.os.{Build, Bundle}
 import android.support.annotation.Nullable
-import android.support.v4.app.{Fragment, FragmentManager, FragmentTransaction}
+import android.support.v4.app.Fragment
 import android.support.v7.widget.Toolbar
 import android.view.{MenuItem, View, ViewGroup}
 import android.widget._
+import com.waz.ZLog.ImplicitTag._
 import com.waz.api.ImageAsset
-import com.waz.content.GlobalPreferences.CurrentAccountPref
-import com.waz.content.{GlobalPreferences, UserPreferences}
-import com.waz.service.ZMessaging
+import com.waz.content.UserPreferences
+import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.utils.returning
-import com.waz.zclient.controllers.accentcolor.AccentColorChangeRequester
-import com.waz.zclient.controllers.global.AccentColorController
-import com.waz.zclient.core.controllers.tracking.events.settings.ChangedProfilePictureEvent
-import com.waz.zclient.pages.main.profile.camera.{CameraContext, CameraFragment}
-import com.waz.zclient.pages.main.profile.preferences.pages.{DevicesBackStackKey, OptionsView, ProfileBackStackKey}
-import com.waz.zclient.tracking.GlobalTrackingController
-import com.waz.zclient.utils.{BackStackNavigator, LayoutSpec, RingtoneUtils, ViewUtils}
-import com.waz.zclient.views.AccountTabsView
-import com.waz.zclient.{ActivityHelper, BaseActivity, MainActivity, R}
+import com.waz.zclient.Intents._
+import com.waz.zclient.SpinnerController.{Hide, Show}
+import com.waz.zclient.camera.CameraFragment
+import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.common.views.AccountTabsView
+import com.waz.zclient.controllers.camera.{CameraActionObserver, ICameraController}
+import com.waz.zclient.pages.main.profile.camera.CameraContext
+import com.waz.zclient.preferences.pages.{DevicesBackStackKey, OptionsView, ProfileBackStackKey}
+import com.waz.zclient.utils.{BackStackNavigator, RingtoneUtils, ViewUtils}
+import com.waz.zclient.views.LoadingIndicatorView
+import com.waz.zclient.{BaseActivity, R, _}
 
 class PreferencesActivity extends BaseActivity
-  with ActivityHelper
-  with CameraFragment.Container {
+  with CallingBannerActivity with CameraActionObserver {
 
   import PreferencesActivity._
 
@@ -58,10 +58,11 @@ class PreferencesActivity extends BaseActivity
 
   private lazy val backStackNavigator = inject[BackStackNavigator]
   private lazy val zms = inject[Signal[ZMessaging]]
+  private lazy val spinnerController = inject[SpinnerController]
+  private lazy val cameraController = inject[ICameraController]
 
-
-  lazy val currentAccountPref = inject[GlobalPreferences].preference(CurrentAccountPref)
   lazy val accentColor = inject[AccentColorController].accentColor
+  lazy val accounts = inject[AccountsService]
 
   @SuppressLint(Array("PrivateResource"))
   override def onCreate(@Nullable savedInstanceState: Bundle) = {
@@ -71,18 +72,16 @@ class PreferencesActivity extends BaseActivity
     getSupportActionBar.setDisplayHomeAsUpEnabled(true)
     getSupportActionBar.setDisplayShowHomeEnabled(true)
 
-    if (LayoutSpec.isPhone(this)) ViewUtils.lockScreenOrientation(Configuration.ORIENTATION_PORTRAIT, this)
+    ViewUtils.lockScreenOrientation(Configuration.ORIENTATION_PORTRAIT, this)
     if (savedInstanceState == null) {
       backStackNavigator.setup(findViewById(R.id.content).asInstanceOf[ViewGroup])
 
-      if(Option(getIntent.getExtras).exists(_.getBoolean(ShowOtrDevices, false))) {
-        backStackNavigator.goTo(DevicesBackStackKey())
-      } else {
-        backStackNavigator.goTo(ProfileBackStackKey())
+      getIntent.page match {
+        case Some(Page.Devices) => backStackNavigator.goTo(DevicesBackStackKey())
+        case _                  => backStackNavigator.goTo(ProfileBackStackKey())
       }
 
-
-      Signal(backStackNavigator.currentState, ZMessaging.currentAccounts.loggedInAccounts.map(_.length)).on(Threading.Ui){
+      Signal(backStackNavigator.currentState, ZMessaging.currentAccounts.accountsWithManagers.map(_.toSeq.length)).on(Threading.Ui){
         case (state: ProfileBackStackKey, c) if c > 1 =>
           setTitle(R.string.empty_string)
           accountTabsContainer.setVisibility(View.VISIBLE)
@@ -94,29 +93,36 @@ class PreferencesActivity extends BaseActivity
       backStackNavigator.onRestore(findViewById(R.id.content).asInstanceOf[ViewGroup], savedInstanceState)
     }
 
-    (for {
-      loggedIn <- ZMessaging.currentAccounts.loggedInAccounts
-      active <- ZMessaging.currentAccounts.activeAccount
-    } yield loggedIn.isEmpty || active.isEmpty).onUi{
-      case true =>
-        startActivity(returning(new Intent(this, classOf[MainActivity]))(_.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK)))
-        finish()
-      case _ =>
-    }
-
     accentColor.on(Threading.Ui) { color =>
       getControllerFactory.getUserPreferencesController.setLastAccentColor(color.getColor())
-      getControllerFactory.getAccentColorController.setColor(AccentColorChangeRequester.REMOTE, color.getColor())
+      getControllerFactory.getAccentColorController.setColor(color.getColor())
     }
 
     accountTabs.onTabClick.onUi { account =>
       val intent = new Intent()
-      intent.putExtra(SwitchAccountExtra, account.id.str)
-      setResult(Activity.RESULT_OK, intent)
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        intent.putExtra(SwitchAccountExtra, account.id.str)
+        setResult(Activity.RESULT_OK, intent)
+      } else {
+        ZMessaging.currentAccounts.setAccount(Some(account.id))
+        setResult(Activity.RESULT_CANCELED, intent)
+      }
       finish()
     }
-  }
 
+    accounts.activeAccountId.map(_.isEmpty).onUi {
+      case true => finish()
+      case _ =>
+    }
+
+    val loadingIndicator = findViewById[LoadingIndicatorView](R.id.progress_spinner)
+
+    spinnerController.spinnerShowing.onUi {
+      case Show(animation, forcedTheme) => loadingIndicator.show(animation, darkTheme = forcedTheme.getOrElse(true))
+      case Hide(Some(message)) => loadingIndicator.hideWithMessage(message, 1000)
+      case _ => loadingIndicator.hide()
+    }
+  }
 
   override def onSaveInstanceState(outState: Bundle) = {
     super.onSaveInstanceState(outState)
@@ -125,14 +131,15 @@ class PreferencesActivity extends BaseActivity
 
   override def onStart(): Unit = {
     super.onStart()
-    getControllerFactory.getCameraController.addCameraActionObserver(this)
+
+    cameraController.addCameraActionObserver(this)
   }
 
   override def onStop(): Unit = {
-    super.onStop()
-    getControllerFactory.getCameraController.removeCameraActionObserver(this)
-  }
+    cameraController.removeCameraActionObserver(this)
 
+    super.onStop()
+  }
 
   override def getBaseTheme: Int = R.style.Theme_Dark_Preferences
 
@@ -164,53 +171,46 @@ class PreferencesActivity extends BaseActivity
 
 
   override def onBackPressed() = {
-    Option(getSupportFragmentManager.findFragmentByTag(CameraFragment.TAG).asInstanceOf[CameraFragment]).fold{
-      if (!backStackNavigator.back())
+    Option(getSupportFragmentManager.findFragmentByTag(CameraFragment.Tag).asInstanceOf[CameraFragment]).fold{
+      if (!spinnerController.spinnerShowing.currentValue.exists(_.isInstanceOf[Show]) && !backStackNavigator.back())
         finish()
     }{ _.onBackPressed() }
   }
 
   //TODO do we need to check internet connectivity here?
-  override def onBitmapSelected(imageAsset: ImageAsset, imageFromCamera: Boolean, cameraContext: CameraContext) =
+  override def onBitmapSelected(imageAsset: ImageAsset, cameraContext: CameraContext): Unit =
     if (cameraContext == CameraContext.SETTINGS) {
       inject[Signal[ZMessaging]].head.map { zms =>
         zms.users.updateSelfPicture(imageAsset)
-        inject[GlobalTrackingController].tagEvent(new ChangedProfilePictureEvent)
       } (Threading.Background)
-      getSupportFragmentManager.popBackStack(CameraFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+      getSupportFragmentManager.popBackStack(CameraFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
     }
 
   override def onCameraNotAvailable() =
     Toast.makeText(this, "Camera not available", Toast.LENGTH_SHORT).show()
 
   override def onOpenCamera(cameraContext: CameraContext) = {
-    Option(getSupportFragmentManager.findFragmentByTag(CameraFragment.TAG)) match {
+    Option(getSupportFragmentManager.findFragmentByTag(CameraFragment.Tag)) match {
       case None =>
         getSupportFragmentManager
           .beginTransaction
           .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-          .add(R.id.fl__root__camera, CameraFragment.newInstance(cameraContext), CameraFragment.TAG)
-          .addToBackStack(CameraFragment.TAG)
+          .add(R.id.fl__root__camera, CameraFragment.newInstance(cameraContext), CameraFragment.Tag)
+          .addToBackStack(CameraFragment.Tag)
           .commit
       case Some(_) => //do nothing
     }
   }
 
   def onCloseCamera(cameraContext: CameraContext) =
-    getSupportFragmentManager.popBackStack(CameraFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+    getSupportFragmentManager.popBackStack(CameraFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
 
 }
 
 object PreferencesActivity {
-  val ShowOtrDevices   = "SHOW_OTR_DEVICES"
-  val ShowAccount      = "SHOW_ACCOUNT"
   val SwitchAccountCode = 789
   val SwitchAccountExtra = "SWITCH_ACCOUNT_EXTRA"
 
   def getDefaultIntent(context: Context): Intent =
     new Intent(context, classOf[PreferencesActivity])
-
-  def getOtrDevicesPreferencesIntent(context: Context): Intent =
-    returning(getDefaultIntent(context))(_.putExtra(ShowOtrDevices, true))
-
 }

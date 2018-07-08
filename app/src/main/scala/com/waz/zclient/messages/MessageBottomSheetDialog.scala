@@ -1,6 +1,6 @@
 /**
   * Wire
-  * Copyright (C) 2017 Wire Swiss GmbH
+  * Copyright (C) 2018 Wire Swiss GmbH
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -117,15 +117,15 @@ object MessageBottomSheetDialog {
 
     case object Forward extends MessageAction(R.id.message_bottom_menu_item_forward, R.string.glyph__share, R.string.message_bottom_menu_action_forward) {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params): Signal[Boolean] = {
-        if (msg.isEphemeral) return Signal const false
-        msg.msgType match {
+        if (msg.isEphemeral) Signal.const(false)
+        else msg.msgType match {
           case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | ASSET =>
             // TODO: Once https://wearezeta.atlassian.net/browse/CM-976 is resolved, we should handle image asset like any other asset
-            Signal const true
+            Signal.const(true)
           case ANY_ASSET | AUDIO_ASSET | VIDEO_ASSET =>
             isAssetDataReady(msg.assetId, zms)
           case _ =>
-            Signal const false
+            Signal.const(false)
         }
       }
     }
@@ -133,8 +133,8 @@ object MessageBottomSheetDialog {
     case object Copy extends MessageAction(R.id.message_bottom_menu_item_copy, R.string.glyph__copy, R.string.message_bottom_menu_action_copy) {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params): Signal[Boolean] =
         msg.msgType match {
-          case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA if !msg.isEphemeral => Signal const true
-          case _ => Signal const false
+          case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA if !msg.isEphemeral => Signal.const(true)
+          case _ => Signal.const(false)
         }
     }
 
@@ -142,10 +142,10 @@ object MessageBottomSheetDialog {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params): Signal[Boolean] =
         msg.msgType match {
           case TEXT | ANY_ASSET | ASSET | AUDIO_ASSET | VIDEO_ASSET | KNOCK | LOCATION | RICH_MEDIA | TEXT_EMOJI_ONLY if p.delCollapsed =>
-            if (msg.userId != zms.selfUserId) Signal const true
+            if (msg.userId != zms.selfUserId) Signal.const(true)
             else isMemberOfConversation(msg.convId, zms)
           case _ =>
-            Signal const false
+            Signal.const(false)
         }
     }
 
@@ -194,11 +194,9 @@ object MessageBottomSheetDialog {
     case object Save extends MessageAction(R.id.message_bottom_menu_item_save, R.string.glyph__download, R.string.message_bottom_menu_action_save) {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params): Signal[Boolean] =
         msg.msgType match {
-          case ASSET if !msg.isEphemeral => Signal const true
-          case AUDIO_ASSET | VIDEO_ASSET if !msg.isEphemeral =>
-            isAssetDataReady(msg.assetId, zms)
-          case _ =>
-            Signal const false
+          case ASSET => Signal.const(zms.selfUserId == msg.userId || !msg.isEphemeral)
+          case AUDIO_ASSET | VIDEO_ASSET if zms.selfUserId == msg.userId || !msg.isEphemeral => isAssetDataReady(msg.assetId, zms)
+          case _ => Signal const false
         }
     }
 
@@ -214,7 +212,7 @@ object MessageBottomSheetDialog {
     }
 
     case object Reveal extends MessageAction(R.id.message_bottom_menu_item_reveal, R.string.glyph__view, R.string.message_bottom_menu_action_reveal) {
-      override def enabled(msg: MessageData, zms: ZMessaging, p: Params): Signal[Boolean] = Signal const p.collection
+      override def enabled(msg: MessageData, zms: ZMessaging, p: Params): Signal[Boolean] = Signal const (p.collection && !msg.isEphemeral)
     }
 
     case object Edit extends MessageAction(R.id.message_bottom_menu_item_edit, R.string.glyph__edit, R.string.message_bottom_menu_action_edit) {

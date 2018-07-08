@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,13 +17,12 @@
  */
 package com.waz.zclient.pages.main.conversationpager;
 
-import android.content.Context;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.view.ViewGroup;
-import com.waz.zclient.utils.LayoutSpec;
-import com.waz.zclient.utils.BuildConfigUtils;
+
+import com.waz.zclient.conversationpager.SecondPageFragment;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,17 +30,11 @@ import java.util.Map;
 public class ConversationPagerAdapter extends FragmentPagerAdapter {
 
     private final FragmentManager fragmentManager;
-    private Context context;
-    private LayoutSpec layoutSpec;
-    private float firsElementPercentage;
     private Map<Integer, String> fragmentTags;
 
-    public ConversationPagerAdapter(Context context, FragmentManager fm, LayoutSpec layoutSpec, float firsElementPercentage) {
+    public ConversationPagerAdapter(FragmentManager fm) {
         super(fm);
-        this.context = context;
         this.fragmentManager = fm;
-        this.layoutSpec = layoutSpec;
-        this.firsElementPercentage = firsElementPercentage;
         fragmentTags = new HashMap<>();
     }
 
@@ -73,22 +66,6 @@ public class ConversationPagerAdapter extends FragmentPagerAdapter {
         return obj;
     }
 
-    @Override
-    public float getPageWidth(int position) {
-        if (!isPhone() && position == 0) {
-            return firsElementPercentage;
-        }
-        return super.getPageWidth(position);
-    }
-
-    private boolean isPhone() {
-        // TODO: remove the if block if tablet version is ready
-        if (BuildConfigUtils.isLocalBuild(context)) {
-            return layoutSpec.equals(LayoutSpec.LAYOUT_PHONE);
-        }
-        return true;
-    }
-    
     @Override
     public int getItemPosition(Object object) {
         return POSITION_NONE;

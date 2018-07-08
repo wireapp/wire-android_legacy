@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
         android:padding="@dimen/drawing__button__padding"
         android:gravity="center"
         android:text="@string/glyph__undo"
-        android:textColor="@color/light_graphite"
+        android:textColor="?cursorEditButtons"
         android:textSize="@dimen/wire__text_size__regular"
         style="?attr/iconButton"
         />
@@ -43,7 +43,7 @@
         android:padding="@dimen/drawing__button__padding"
         android:gravity="center"
         android:text="@string/glyph__check"
-        android:textColor="@color/light_graphite"
+        android:textColor="?cursorEditButtons"
         android:textSize="@dimen/wire__text_size__medium"
         style="?attr/iconButton"
         />
@@ -56,7 +56,7 @@
         android:padding="@dimen/drawing__button__padding"
         android:gravity="center"
         android:text="@string/glyph__close"
-        android:textColor="@color/graphite"
+        android:textColor="?cursorEditButtons"
         android:textSize="@dimen/wire__text_size__regular"
         style="?attr/iconButton"
         />

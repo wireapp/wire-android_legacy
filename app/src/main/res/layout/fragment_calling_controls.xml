@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:background="@color/calling_video_overlay"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.waz.zclient.calling.views.CallingHeader
+        android:id="@+id/calling_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="top|center"
+        android:layout_marginTop="@dimen/wire__padding__regular" />
+
+    <com.waz.zclient.calling.views.CallingMiddleLayout
+        android:id="@+id/calling_middle"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="@dimen/wire__padding__32"
+        android:layout_marginBottom="@dimen/wire__padding__32"
+        android:layout_weight="1" />
+
+    <com.waz.zclient.calling.views.ControlsView
+        android:id="@+id/controls_grid"
+        android:layout_width="@dimen/calling__controls__max_width"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center"
+        android:layout_marginBottom="@dimen/wire__padding__32"
+        android:layout_marginStart="@dimen/wire__padding__regular"
+        android:layout_marginEnd="@dimen/wire__padding__regular"/>
+
+</LinearLayout>

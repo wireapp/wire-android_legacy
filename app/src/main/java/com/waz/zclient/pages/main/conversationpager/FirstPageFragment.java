@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,17 +25,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
+import com.waz.zclient.conversationlist.ConversationListManagerFragment;
 import com.waz.zclient.pages.BaseFragment;
-import com.waz.zclient.pages.main.conversationlist.ConversationListManagerFragment;
 import timber.log.Timber;
 
-public class FirstPageFragment extends BaseFragment<FirstPageFragment.Container> implements ConversationListManagerFragment.Container,
-                                                                                            OnBackPressedListener {
+public class FirstPageFragment extends BaseFragment<FirstPageFragment.Container> implements OnBackPressedListener {
 
     public static final String TAG = FirstPageFragment.class.getName();
 
     public enum Page {
-        CONVERSATION_LIST(ConversationListManagerFragment.class, ConversationListManagerFragment.TAG);
+        CONVERSATION_LIST(ConversationListManagerFragment.class, ConversationListManagerFragment.Tag());
 
         Page(Class<? extends Fragment> clazz, String tag) {
             this.clazz = clazz;
@@ -95,12 +94,6 @@ public class FirstPageFragment extends BaseFragment<FirstPageFragment.Container>
         }
     }
 
-    //////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  OnBackPressedListener
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////
-
     @Override
     public boolean onBackPressed() {
         Fragment fragment = getChildFragmentManager().findFragmentById(R.id.fl__first_page_container);
@@ -108,18 +101,6 @@ public class FirstPageFragment extends BaseFragment<FirstPageFragment.Container>
             ((OnBackPressedListener) fragment).onBackPressed();
     }
 
-    //////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  ConversationListManagerFragment.Container
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public void onOpenUrl(String url) {
-        getContainer().onOpenUrl(url);
-    }
-
     public interface Container {
-        void onOpenUrl(String url);
     }
 }

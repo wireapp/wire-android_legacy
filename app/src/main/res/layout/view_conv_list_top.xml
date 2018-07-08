@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2017 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,11 +27,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="@string/conversation_list__header__title"
-        android:textSize="@dimen/wire__text_size__small"
-        app:font="@string/wire__typeface__medium"
+        android:text=""
+        android:textSize="@dimen/wire__text_size__regular"
+        app:w_font="@string/wire__typeface__medium"
         android:textColor="@color/white"
         android:visibility="gone"
+        android:drawablePadding="@dimen/wire__padding__8"
         />
 
     <FrameLayout
@@ -49,7 +50,19 @@
             android:layout_marginStart="@dimen/conversation_list__avatar__outer_margin"
             />
 
-        <com.waz.zclient.views.GlyphButton
+        <com.waz.zclient.common.views.GlyphButton
+            android:id="@+id/conversation_list_back"
+            android:layout_width="@dimen/conversation_list__action_icon__size"
+            android:layout_height="@dimen/conversation_list__action_icon__size"
+            android:layout_gravity="center_vertical|start"
+            android:layout_marginStart="@dimen/conversation_list__avatar__outer_margin"
+            android:text="@string/glyph__previous"
+            android:textSize="@dimen/wire__icon_button__text_size"
+            android:textColor="@color/text__primary_dark"
+            android:visibility="gone"
+            />
+
+        <com.waz.zclient.common.views.GlyphButton
             android:id="@+id/conversation_list_close"
             android:layout_width="@dimen/conversation_list__action_icon__size"
             android:layout_height="@dimen/conversation_list__action_icon__size"
@@ -68,6 +81,29 @@
             android:layout_height="@dimen/conversation_list__new_device_indicator_size"
             android:layout_gravity="top|end"
             android:layout_margin="@dimen/wire__padding__14"
+            android:visibility="gone"
+            />
+
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/button_container_end"
+        android:layout_width="?attr/actionBarSize"
+        android:layout_height="match_parent"
+        android:layout_gravity="end|center_vertical"
+        >
+
+        <com.waz.zclient.common.views.GlyphButton
+            android:id="@+id/conversation_list_close_end"
+            android:layout_width="@dimen/conversation_list__action_icon__size"
+            android:layout_height="@dimen/conversation_list__action_icon__size"
+            android:layout_gravity="center"
+            android:layout_marginStart="@dimen/conversation_list__avatar__outer_margin"
+            android:text="@string/glyph__close"
+            android:textSize="@dimen/wire__icon_button__text_size"
+            android:textColor="@color/text__primary_dark"
+            android:gravity="center"
             android:visibility="gone"
             />
 

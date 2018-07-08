@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,85 +19,58 @@ package com.waz.zclient.calling
 
 import android.content.{Context, Intent}
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
-import android.view.ViewGroup.LayoutParams
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
-import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.threading.Threading
 import com.waz.zclient._
-import com.waz.zclient.calling.controllers.GlobalCallingController
-import com.waz.zclient.calling.views.VideoCallingView
-import com.waz.zclient.common.controllers.PermissionActivity
-import com.waz.zclient.utils.RichView
+import com.waz.zclient.calling.controllers.CallController
+import com.waz.zclient.utils.DeprecationUtils
 
-class CallingActivity extends AppCompatActivity with ActivityHelper with PermissionActivity {
-  import CallingActivity._
+class CallingActivity extends BaseActivity {
 
-  private lazy val controller = inject[GlobalCallingController]
-  import controller._
-
-  lazy val degradedWarningTextView      = findById[TextView](R.id.degraded_warning)
-  lazy val degradedConfirmationTextView = findById[TextView](R.id.degraded_confirmation)
+  lazy val controller = inject[CallController]
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
     verbose("Creating CallingActivity")
-    getWindow.setBackgroundDrawableResource(R.color.calling_background)
 
-    activeCall.on(Threading.Ui) {
-      case false =>
-        verbose("call no longer exists, finishing activity")
-        finish()
-      case _ =>
-    }
-
-    convId.onChanged.on(Threading.Ui)(_ => restartActivity())
-
-    //ensure activity gets killed to allow content to change if the conv degrades (no need to kill activity on audio call)
-    (for {
-      degraded <- convDegraded
-      video    <- videoCall
-    } yield degraded && video).onChanged.filter(_ == true).on(Threading.Ui)(_ => finish())
-
-    //can only set content view once - so do so on first value of `showVideoView`
-    showVideoView.head.map {
-      case true =>
-        verbose("Setting video view")
-        setContentView(new VideoCallingView(this), new LayoutParams(MATCH_PARENT, MATCH_PARENT))
-      case _ =>
-        verbose("Setting audio view")
-        setContentView(R.layout.calling_audio)
-
-        convDegraded.on(Threading.Ui){ degraded =>
-          degradedWarningTextView.setVisible(degraded)
-          degradedConfirmationTextView.setVisible(degraded)
-        }
-        degradationWarningText.on(Threading.Ui)(degradedWarningTextView.setText)
-        degradationConfirmationText.on(Threading.Ui)(degradedConfirmationTextView.setText)
-    }(Threading.Ui)
+    setContentView(R.layout.calling_layout)
+    getSupportFragmentManager
+      .beginTransaction()
+      .replace(R.id.calling_layout, CallingFragment(), CallingFragment.Tag)
+      .commit
   }
-
-  //don't allow user to go back during call - no way to re-enter call
-  override def onBackPressed(): Unit = ()
 
   override def onAttachedToWindow(): Unit = {
     getWindow.addFlags(
         WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
         WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
         WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-        WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+        DeprecationUtils.FLAG_DISMISS_KEYGUARD
     )
   }
 
-  private def restartActivity() = {
-    info("restartActivity")
-    finish()
-    start(this)
-    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+  override def onBackPressed() = {
+    verbose("onBackPressed")
+
+    Option(getSupportFragmentManager.findFragmentById(R.id.calling_layout)).foreach {
+      case f: OnBackPressedListener if f.onBackPressed() => //
+      case _ => super.onBackPressed()
+    }
   }
+
+  override def onResume() = {
+    super.onResume()
+    controller.setVideoPause(pause = false)
+  }
+
+  override def onPause() = {
+    controller.setVideoPause(pause = true)
+    super.onPause()
+  }
+
+  override def getBaseTheme: Int = R.style.Theme_Calling
 }
 
 object CallingActivity extends Injectable {
@@ -110,7 +83,7 @@ object CallingActivity extends Injectable {
 
   def startIfCallIsActive(context: WireContext) = {
     import context.injector
-    inject[GlobalCallingController].activeCall.head.foreach {
+    inject[CallController].isCallActive.head.foreach {
       case true => start(context)
       case false =>
     } (Threading.Ui)

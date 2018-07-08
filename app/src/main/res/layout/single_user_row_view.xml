@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="@dimen/user_row_height"
+    >
+
+    <com.waz.zclient.common.views.ChatheadView
+        android:id="@+id/chathead"
+        android:layout_width="@dimen/search__chathead__size"
+        android:layout_height="@dimen/search__chathead__size"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="@dimen/wire__padding__regular"
+        android:layout_marginEnd="@dimen/wire__padding__regular"
+        app:glyph_size="@dimen/people_picker__chathead__glpyh"
+        app:isSelectable="true"
+        app:show_border="false"
+        />
+
+    <LinearLayout
+        android:id="@+id/aux_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="@dimen/wire__padding__small"
+        android:layout_marginEnd="@dimen/wire__padding__small">
+
+        <ImageView
+            android:id="@+id/verified_shield"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/shield_full"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="@dimen/wire__padding__small"
+            android:layout_marginEnd="@dimen/wire__padding__small"
+            android:visibility="gone"
+            />
+
+        <ImageView
+            android:id="@+id/guest_indicator"
+            android:layout_width="@dimen/user_row_icon_size"
+            android:layout_height="@dimen/user_row_icon_size"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="@dimen/wire__padding__small"
+            android:layout_marginEnd="@dimen/wire__padding__small"
+            android:visibility="gone"
+            />
+
+        <ImageView
+            android:id="@+id/video_indicator"
+            android:layout_width="@dimen/user_row_icon_size"
+            android:layout_height="@dimen/user_row_icon_size"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="@dimen/wire__padding__small"
+            android:layout_marginEnd="@dimen/wire__padding__small"
+            android:visibility="gone"
+            />
+
+        <android.support.v7.widget.AppCompatCheckBox
+            android:id="@+id/checkbox"
+            android:layout_width="@dimen/share_extension__row__checkbox_size"
+            android:layout_height="@dimen/share_extension__row__checkbox_size"
+            android:button="@drawable/checkbox_black"
+            tools:targetApi="lollipop"
+            android:layout_marginStart="@dimen/wire__padding__small"
+            android:layout_marginEnd="@dimen/wire__padding__small"
+            android:visibility="gone"
+        />
+
+        <ImageView
+            android:id="@+id/next_indicator"
+            android:layout_width="@dimen/next_indicator_size"
+            android:layout_height="@dimen/next_indicator_size"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="@dimen/wire__padding__small"
+            android:layout_marginEnd="@dimen/wire__padding__small"
+            android:visibility="gone"
+        />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_centerVertical="true"
+        android:layout_toEndOf="@id/chathead"
+        android:layout_toStartOf="@id/aux_container"
+        >
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/name_text"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:gravity="start|center_vertical"
+            android:maxLines="1"
+            android:drawablePadding="@dimen/wire__padding__6"
+            app:w_font="@string/wire__typeface__light"
+            style="?startUiUserRowLabel"
+            app:themedColor="Primary"
+            />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/username_text"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:gravity="start|top"
+            android:maxLines="1"
+            android:textSize="@dimen/wire__text_size__small"
+            app:w_font="@string/wire__typeface__light"
+            style="?startUiUserRowSubLabel"
+            app:themedColor="Secondary"
+            />
+
+    </LinearLayout>
+
+    <View
+        android:id="@+id/separator"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/wire__divider__height__thin"
+        android:background="?thinDividerColor"
+        android:layout_toEndOf="@id/chathead"
+        android:layout_alignParentBottom="true"
+        />
+
+</merge>

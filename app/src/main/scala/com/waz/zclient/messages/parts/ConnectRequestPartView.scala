@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,8 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
 import com.waz.threading.Threading
+import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views.{ChatheadView, UserDetailsView}
-import com.waz.zclient.controllers.BrowserController
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, UsersController}
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils._

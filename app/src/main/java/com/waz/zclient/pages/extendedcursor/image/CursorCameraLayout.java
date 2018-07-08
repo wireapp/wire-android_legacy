@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,11 +24,11 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import com.waz.api.ImageAsset;
+
 import com.waz.zclient.R;
 import com.waz.zclient.camera.CameraPreviewObserver;
-import com.waz.zclient.camera.views.CameraPreviewTextureView;
 import com.waz.zclient.camera.FlashMode;
+import com.waz.zclient.camera.views.CameraPreviewTextureView;
 import com.waz.zclient.utils.ViewUtils;
 
 import java.util.Set;
@@ -197,9 +197,9 @@ public class CursorCameraLayout extends FrameLayout implements View.OnClickListe
     }
 
     @Override
-    public void onPictureTaken(ImageAsset imageAsset) {
+    public void onPictureTaken(byte[] imageData, boolean isMirrored) {
         if (callback != null) {
-            callback.onPictureTaken(imageAsset);
+            callback.onPictureTaken(imageData, isMirrored);
         }
 
         pendingPhotoTaking = false;
@@ -223,6 +223,6 @@ public class CursorCameraLayout extends FrameLayout implements View.OnClickListe
 
         void onCameraPreviewDetached();
 
-        void onPictureTaken(ImageAsset imageAsset);
+        void onPictureTaken(byte[] imageData, boolean isMirrored);
     }
 }

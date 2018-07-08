@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -52,30 +52,6 @@
         />
 
     <FrameLayout
-        android:id="@+id/fl__conversation_actions__sliding_overlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
-
-        <com.waz.zclient.ui.text.GlyphTextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top|right"
-            android:layout_marginRight="@dimen/participants__header_margin_glyph"
-            android:layout_marginTop="@dimen/participants__header_margin_glyph"
-            android:minHeight="@dimen/touch_target_buttons"
-            android:minWidth="@dimen/touch_target_buttons"
-            android:gravity="center"
-            android:clickable="true"
-            android:textSize="@dimen/participants__glyph_text_size"
-            android:textColor="@color/wire__text_color_secondary_dark_selector"
-            android:text="@string/glyph__close"
-            />
-
-    </FrameLayout>
-
-
-    <FrameLayout
         android:id="@+id/fl__participant__overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -83,12 +59,6 @@
 
     <FrameLayout
         android:id="@+id/fl__participant__settings_box"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
-
-    <com.waz.zclient.views.LoadingIndicatorView
-        android:id="@+id/liv__participants__loading_indicator"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         />

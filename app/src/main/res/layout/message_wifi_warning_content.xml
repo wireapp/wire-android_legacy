@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2017 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@
         android:scrollHorizontally="false"
         android:gravity="start"
         android:text="@string/advanced_image_download_wifi_info"
-        app:font="@string/wire__typeface__light"
+        app:w_font="@string/wire__typeface__light"
         />
 
 

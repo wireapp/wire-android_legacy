@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:orientation="vertical"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content">
+
+    <FrameLayout
+        android:id="@+id/icon_background"
+        android:layout_width="@dimen/calling__controls__button__dimension"
+        android:layout_height="@dimen/calling__controls__button__dimension"
+        android:background="@drawable/selector__icon_button__background__calling">
+
+        <com.waz.zclient.paintcode.GenericStyleKitView
+            android:id="@+id/icon"
+            android:layout_width="@dimen/call_control_icon_size"
+            android:layout_height="@dimen/call_control_icon_size"
+            android:layout_gravity="center"/>
+
+    </FrameLayout>
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/text"
+        android:layout_width="@dimen/calling__controls__button_label__dimension"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:textSize="@dimen/wire__text_size__small"
+        android:layout_marginTop="@dimen/calling__controls__button__label__margin_top"
+        app:w_font="@string/wire__typeface__medium"
+        android:gravity="center"
+        android:textAlignment="center"
+        android:textColor="@color/text__primary_dark"
+        android:maxLines="1"
+        android:ellipsize="end"/>
+
+
+</merge>

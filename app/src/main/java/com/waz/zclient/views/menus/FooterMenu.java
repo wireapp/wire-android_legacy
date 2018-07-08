@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -93,33 +93,62 @@ public class FooterMenu extends FrameLayout {
     }
 
     public void setLeftActionText(String text) {
-        leftActionTextView.setText(text);
+        if (text == null || text.isEmpty()) {
+            leftActionTextView.setText("");
+            leftActionTextView.setVisibility(View.GONE);
+        } else {
+            leftActionTextView.setText(text);
+            leftActionTextView.setVisibility(View.VISIBLE);
+        }
     }
 
     public void setLeftActionLabelText(String text) {
-        leftLabelTextView.setText(text);
+        if (text == null || text.isEmpty()) {
+            leftLabelTextView.setText("");
+            leftLabelTextView.setVisibility(View.GONE);
+        } else {
+            leftLabelTextView.setText(text);
+            leftLabelTextView.setVisibility(View.VISIBLE);
+        }
     }
 
     public void setRightActionLabelText(String text) {
-        rightLabelTextView.setText(text);
+        if (text == null || text.isEmpty()) {
+            rightLabelTextView.setText("");
+            rightLabelTextView.setVisibility(View.GONE);
+        } else {
+            rightLabelTextView.setText(text);
+            rightLabelTextView.setVisibility(View.VISIBLE);
+        }
     }
 
     public void setRightActionText(String text) {
-        rightActionTextView.setText(text);
+        if (text == null || text.isEmpty()) {
+            rightActionTextView.setText("");
+            rightActionTextView.setVisibility(View.GONE);
+        } else {
+            rightActionTextView.setText(text);
+            rightActionTextView.setVisibility(View.VISIBLE);
+        }
     }
 
     public void setCallback(final FooterMenuCallback callback) {
-        leftActionContainerView.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                callback.onLeftActionClicked();
-            }
-        });
-        rightActionContainerView.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                callback.onRightActionClicked();
-            }
-        });
+        if (callback == null) {
+            leftActionContainerView.setOnClickListener(null);
+            rightActionContainerView.setOnClickListener(null);
+        } else {
+            leftActionContainerView.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    callback.onLeftActionClicked();
+                }
+            });
+            rightActionContainerView.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    callback.onRightActionClicked();
+                }
+            });
+        }
     }
 }

@@ -1,6 +1,6 @@
 /**
   * Wire
-  * Copyright (C) 2017 Wire Swiss GmbH
+  * Copyright (C) 2018 Wire Swiss GmbH
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -31,14 +31,14 @@ import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.views.ImageAssetDrawable
-import com.waz.zclient.views.ImageAssetDrawable.State
-import com.waz.zclient.views.ImageController.{ImageSource, WireImage}
+import com.waz.zclient.common.views.ImageAssetDrawable
+import com.waz.zclient.common.views.ImageAssetDrawable.State
+import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
 import com.waz.utils._
 import com.waz.zclient.utils._
-import com.waz.zclient.controllers.BrowserController
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.ZLog.ImplicitTag._
+import com.waz.zclient.common.controllers.BrowserController
 
 class SoundMediaPartView(context: Context, attrs: AttributeSet, style: Int)
   extends CardView(context, attrs, style) with ClickableViewPart with ViewHelper with EphemeralPartView {
@@ -110,7 +110,7 @@ class SoundMediaPartView(context: Context, attrs: AttributeSet, style: Int)
       artistView.setText(artistName)
   }
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
     part foreach { content ! _ }
   }

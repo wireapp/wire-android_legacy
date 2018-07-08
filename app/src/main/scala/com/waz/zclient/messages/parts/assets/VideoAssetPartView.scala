@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ import com.waz.zclient.R
 import com.waz.zclient.messages.MsgPart
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.views.ImageAssetDrawable.State.Loaded
+import com.waz.zclient.common.views.ImageAssetDrawable.State.Loaded
 import com.waz.ZLog.ImplicitTag._
 
 class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with PlayableAsset with ImageLayoutAssetPart {
@@ -44,8 +44,6 @@ class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int) exte
     case _ => getColor(R.color.black)
   }.on(Threading.Ui)(durationView.setTextColor)
 
-  padding.on(Threading.Ui)(offset => controls.setMargin(offset))
-
   asset.disableAutowiring()
 
   assetActionButton.onClicked.filter(_ == DeliveryState.Complete) { _ =>
@@ -53,4 +51,6 @@ class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int) exte
       controller.openFile(a)
     }
   }
+
+  override def onInflated(): Unit = {}
 }

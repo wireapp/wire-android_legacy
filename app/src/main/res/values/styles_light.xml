@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<resources>
+
+
+    <!-- Message Stream -->
+    <style name="message_stream__message__light" parent="@style/message_stream__message__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="message_stream__separator_name__light" parent="message_stream__separator_name__base" />
+
+    <style name="message_stream__separator_recalled__light" parent="message_stream__separator_recalled__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="message_stream__timestamp__light" parent="@style/message_stream__timestamp__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="message_stream__timestamp_small__light" parent="message_stream__timestamp_small__base">
+        <item name="android:textColor">@color/text__secondary_light</item>
+    </style>
+
+    <style name="message_stream__subtitle__light" parent="message_stream__subtitle__base">
+        <item name="android:textColor">@color/text__secondary_light</item>
+    </style>
+
+    <style name="message_stream__subtitle__no_color__light" parent="message_stream__subtitle__no_color__base">
+        <item name="android:textColor">@color/text__secondary_light</item>
+    </style>
+
+    <style name="message_stream__subtitle_strong__light" parent="message_stream__subtitle_strong__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="message_stream__name_changed__light" parent="message_stream__name_changed__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <!-- TODO potentially unused style -->
+    <style name="message_stream__header__light" parent="message_stream__header__base">
+        <item name="android:background">@color/background_light</item>
+    </style>
+
+    <style name="message_stream__header__text__light" parent="message_stream__header__text__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="message_stream__header__glyph__light" parent="message_stream__header__glyph__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="message_stream__unsent_indicator__light" parent="message_stream__unsent_indicator__base">
+        <item name="progressColor">@color/graphite</item>
+        <item name="fullCircleColor">@color/graphite_40</item>
+    </style>
+
+    <!-- Conversation toolbar -->
+    <style name="conversation_toolbar__light" parent="conversation_toolbar__base">
+        <item name="android:background">@drawable/toolbar_selectable_background__light</item>
+        <item name="android:textColor">@color/wire__text_color_primary_light_selector</item>
+        <item name="titleTextColor">@color/wire__text_color_primary_light_selector</item>
+        <item name="navigationIcon">@drawable/action_back_dark</item>
+    </style>
+
+    <style name="conversation_toolbar_no_divider__light" parent="conversation_toolbar__light">
+        <item name="android:background">@null</item>
+    </style>
+
+    <style name="conversation_toolbar_action_mode__light" parent="conversation_toolbar_action_mode__base">
+        <item name="background">@drawable/toolbar_background__light</item>
+        <item name="android:textColor">@color/wire__text_color_primary_dark_selector</item>
+        <item name="titleTextColor">@color/wire__text_color_primary_dark_selector</item>
+    </style>
+
+    <!-- Conversation toolbar -->
+    <style name="start_ui__toolbar__light" parent="start_ui__toolbar__base">
+        <item name="android:textColor">@color/wire__text_color_primary_light_selector</item>
+        <item name="titleTextColor">@color/wire__text_color_primary_light_selector</item>
+        <item name="navigationIcon">@drawable/action_back_dark</item>
+    </style>
+
+    <!-- Cursor -->
+    <style name="cursor__menu_button__light" parent="cursor__menu_button__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+        <item name="android:background">@drawable/background__cursor_menu_button__light</item>
+    </style>
+
+
+    <style name="cursor__icon_button__light" parent="cursor__icon_button__base">
+        <item name="android:textColor">@color/wire__text_color_primary_light_selector</item>
+    </style>
+
+    <style name="cursor__icon_button__people__light" parent="cursor__icon_button__people__base">
+        <item name="android:src">@drawable/people_light</item>
+    </style>
+
+    <style name="cursor__icon_button__call__light" parent="cursor__icon_button__call__base">
+        <item name="android:src">@drawable/call_light</item>
+    </style>
+
+    <style name="cursor__icon_button__video__light" parent="cursor__icon_button__video__base">
+        <item name="android:src">@drawable/video_light</item>
+    </style>
+
+    <style name="cursor__edit_text__light" parent="cursor__edit_text__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <!-- User -->
+    <style name="user__edit_text__light" parent="user__edit_text__base">
+        <item name="android:background">@drawable/background__group_name__edit__light</item>
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="user__header__light" parent="user__header__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="user__sub_header__light" parent="user__sub_header__base">
+        <item name="android:textColor">@color/text__secondary_light</item>
+    </style>
+
+    <style name="user__footer_label__light" parent="user__footer_label__base">
+        <item name="android:textColor">@color/text__secondary_light</item>
+    </style>
+
+    <style name="user__chathead_label__light" parent="user__chathead_label__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="user__strong_label__light" parent="user__strong_label__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="user__otr_header__light" parent="user__otr_header__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="user__otr_device__light" parent="user__otr_device__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <!-- Common -->
+    <style name="common__icon_button__light" parent="common__icon_button__base">
+        <item name="android:textColor">@color/selector__icon_button__text_color__light</item>
+    </style>
+
+    <style name="common__small_icon_button__light" parent="common__small_icon_button__base">
+        <item name="android:textColor">@color/selector__icon_button__text_color__light</item>
+    </style>
+
+    <style name="message_stream__background__light" parent="@style/wire__background__base">
+        <item name="android:background">@color/background_light</item>
+    </style>
+
+    <style name="wire__background_as_text_color__light" parent="@style/wire__background_as_text_color__base">
+        <item name="android:textColor">@color/background_light</item>
+    </style>
+
+    <style name="common__strong_background__light" parent="@style/common__strong_background__base">
+        <item name="android:background">@color/background_light</item>
+    </style>
+
+
+    <!-- Call -->
+    <style name="common__divider__light" parent="common__divider__base">
+        <item name="android:background">@color/text__secondary_light__40</item>
+    </style>
+
+    <style name="common__tab_indicator_label__light" parent="common__tab_indicator_label__base">
+        <item name="android:textColor">@color/wire__text_color_light_selector</item>
+    </style>
+
+    <!-- Start UI-->
+    <style name="start_ui__error_label__light" parent="start_ui__error_label__base">
+        <item name="android:textColor">@color/text__primary_light__40</item>
+    </style>
+
+    <style name="start_ui__error_sublabel__light" parent="start_ui__error_sublabel__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="start_ui__error_icon__light" parent="start_ui__error_icon__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="start_ui__search_field__light" parent="start_ui__search_field__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="start_ui__close_button__light" parent="start_ui__close_button__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="start_ui__user_row__label__light" parent="start_ui__user_row__label__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="start_ui__user_row__sub_label__light" parent="start_ui__user_row__label__base">
+        <item name="android:textColor">@color/text__secondary_light</item>
+    </style>
+
+    <style name="start_ui__header_row__label__light" parent="start_ui__header_row__label__base">
+        <item name="android:textColor">@color/text__secondary_light</item>
+    </style>
+
+    <!-- Media Player -->
+    <style name="media_player__title__light" parent="media_player__title__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="media_player__sub_title__light" parent="media_player__sub_title__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <!-- Calling -->
+    <style name="calling__chathead_initials__light" parent="calling__chathead_initials__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="calling__chathead_footer__light" parent="calling__chathead_footer__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <!-- OTR -->
+    <style name="otr_client__link__light" parent="otr_client__link__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="otr_client__text__light" parent="otr_client__text__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+    </style>
+
+    <style name="otr_client__id__light" parent="otr_client__id__base">
+        <item name="android:textColor">@color/text__primary_light__40</item>
+    </style>
+
+    <style name="otr_switch__light" parent="otr_switch__base">
+        <item name="android:thumb">@drawable/selector_otr_switch__thumb_light</item>
+        <item name="track">@drawable/selector_otr_switch__track_light</item>
+    </style>
+
+    <style name="otr_switch_text__light" parent="otr_switch_text__base">
+        <item name="android:textColor">@color/selector_otr_switch__text_light</item>
+    </style>
+
+    <style name="otr_added_new_device_message__light" parent="otr_added_new_device_message__base">
+        <item name="android:textColor">@color/text__primary_light</item>
+        <item name="android:background">@color/background_light</item>
+    </style>
+
+    <style name="audio_message_duration__light" parent="audio_message_duration__base">
+        <item name="android:textColor">@color/graphite</item>
+    </style>
+
+    <style name="calling__controls__button_label__light" parent="calling__controls__button_label__base" />
+
+    <style name="pickuser__add_button__light" parent="pickuser__add_button__base" />
+
+    <style name="giphy_control_button__light" parent="giphy_control_button__base">
+        <item name="android:textColor">@color/wire__text_color_primary_light_selector</item>
+    </style>
+
+    <style name="giphy_keyword__light" parent="giphy_keyword__base">
+        <item name="android:textColor">@color/graphite</item>
+    </style>
+
+    <style name="giphy_conversation__light" parent="giphy_conversation__base">
+        <item name="android:textColor">@color/graphite</item>
+    </style>
+
+    <style name="giphy_error__light" parent="giphy_error__base">
+        <item name="android:textColor">@color/graphite</item>
+    </style>
+
+    <style name="typing_indicator_box_light" parent="typing_indicator_box_base">
+        <item name="android:background">@drawable/typing_indicator_background_light</item>
+    </style>
+
+    <style name="typing_indicator_text_light" parent="typing_indicator_text_base">
+        <item name="android:textColor">@color/light_graphite</item>
+    </style>
+
+    <style name="collection_toolbar__light" parent="conversation_toolbar__light">
+        <item name="android:background">@drawable/toolbar_collection_background__light</item>
+    </style>
+
+</resources>

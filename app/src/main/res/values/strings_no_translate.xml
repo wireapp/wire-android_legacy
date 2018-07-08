@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<resources>
+    <!-- Typeface Definitions -->
+    <string translatable="false" name="wire__glyphs" >wire_glyphs.otf</string>
+    <string translatable="false" name="wire__typeface__redacted">redacted_script_regular.ttf</string>
+    <string translatable="false" name="wire__typeface__light">Roboto_Light</string>
+    <string translatable="false" name="wire__typeface__thin">Roboto_Thin</string>
+    <string translatable="false" name="wire__typeface__regular">Roboto_Regular</string>
+    <string translatable="false" name="wire__typeface__medium">Roboto_Medium</string>
+    <string translatable="false" name="wire__typeface__bold">Roboto_Bold</string>
+
+    <!-- Typefaces-->
+    <string translatable="false" name="chathead__user_initials__font">@string/wire__typeface__light</string>
+    <string translatable="false" name="content__connect_request__chathead__font">@string/wire__typeface__light</string>
+    <string translatable="false" name="content__youtube__error__font">@string/wire__typeface__bold</string>
+    <string translatable="false" name="cursor__multiuse_button__font_name">@string/wire__typeface__light</string>
+    <string translatable="false" name="conversation__header__font">@string/wire__typeface__light</string>
+    <string translatable="false" name="list__archived_box__font">@string/wire__typeface__bold</string>
+    <string translatable="false" name="nearby__username__font">@string/wire__typeface__bold</string>
+    <string translatable="false" name="framework_confirmation_menu_text_font">@string/wire__typeface__light</string>
+    <string translatable="false" name="framework_confirmation_menu_button_font">@string/wire__typeface__bold</string>
+    <string translatable="false" name="about__version__font">@string/wire__typeface__light</string>
+    <string translatable="false" name="about__tos__font">@string/wire__typeface__light</string>
+    <string translatable="false" name="about__privacy__font">@string/wire__typeface__light</string>
+    <string translatable="false" name="about__website__font">@string/wire__typeface__light</string>
+    <string translatable="false" name="forced_update__header__font">@string/wire__typeface__bold</string>
+    <string translatable="false" name="forced_update__sub_header__font">@string/wire__typeface__regular</string>
+    <string translatable="false" name="forced_update__button__font">@string/wire__typeface__regular</string>
+    <string translatable="false" name="mediaplayer__font">@string/wire__typeface__light</string>
+    <string translatable="false" name="network_indicator__font">@string/wire__typeface__bold</string>
+    <string translatable="false" name="option_menu__font_name">@string/wire__typeface__light</string>
+    <string translatable="false" name="sharing_indicator__font">@string/wire__typeface__bold</string>
+    <string translatable="false" name="single_image_message__name__font">@string/wire__typeface__bold</string>
+    <string translatable="false" name="single_image_message__date__font">@string/wire__typeface__light</string>
+
+    <!-- Prefs and Keys-->
+    <string translatable="false" name="pref_options_sounds_category_key">pref_options_sounds_category_key</string>
+    <string translatable="false" name="pref_options_ringtones_category_key">pref_options_ringtones_category_key</string>
+    <string translatable="false" name="pref_options_ringtones_ringtone_key">pref_alerts_ringtones_ringtone_key</string>
+    <string translatable="false" name="pref_options_ringtones_text_key">pref_alerts_ringtones_text_key</string>
+    <string translatable="false" name="pref_options_ringtones_ping_key">pref_alerts_ringtones_ping_key</string>
+    <string translatable="false" name="pref_devices_screen_key">pref_devices_screen_key</string>
+    <string translatable="false" name="pref_device_details_screen_key">pref_device_details_screen_key</string>
+    <string translatable="false" name="pref_account_screen_key">pref_account_screen_key</string>
+    <string translatable="false" name="pref_developer_screen_key">pref_developer_screen_key</string>
+    <string translatable="false" name="pref_options_screen_key">pref_options_screen_key</string>
+    <string translatable="false" name="pref_support_screen_key">pref_support_screen_key</string>
+    <string translatable="false" name="pref_about_screen_key">pref_about_screen_key</string>
+    <string translatable="false" name="pref_advanced_screen_key">pref_advanced_screen_key</string>
+    <string translatable="false" name="pref_account_name_key">pref_account_name_key</string>
+    <string translatable="false" name="pref_account_details_category_key">pref_account_details_category_key</string>
+    <string translatable="false" name="pref_account_actions_category_key">pref_account_actions_category_key</string>
+    <string translatable="false" name="pref_account_personal_category_key">pref_account_personal_category_key</string>
+    <string translatable="false" name="pref_account_username_key">pref_account_username_key</string>
+    <string translatable="false" name="pref_account_phone_key">pref_account_phone_key</string>
+    <string translatable="false" name="pref_account_email_key">pref_account_email_key</string>
+    <string translatable="false" name="pref_account_sign_out_key">pref_account_sign_out_key</string>
+    <string translatable="false" name="pref_account_delete_key">pref_account_delete_key</string>
+    <string translatable="false" name="pref_account_password_key">PREF_RESET_PASSWORD</string>
+    <string translatable="false" name="pref_account_theme_key">pref_theme_key</string>
+    <string translatable="false" name="pref_options_theme_switch_key">pref_theme_switch_key</string>
+    <string translatable="false" name="pref_options_cursor_send_button_key">pref_cursor_send_button_key</string>
+    <string translatable="false" name="pref_options_vbr_key">pref_options_vbr_key</string>
+    <string translatable="false" name="pref_options_devices_key">pref_privacy_devices_key</string>
+    <string translatable="false" name="pref_devices_current_device_category_key">pref_current_device_category_key</string>
+    <string translatable="false" name="pref_devices_other_devices_category_key">pref_other_devices_category_key</string>
+    <string translatable="false" name="pref_device_details_device_key">pref_device_details_device_key</string>
+    <string translatable="false" name="pref_device_details_fingerprint_key">pref_device_details_fingerprint_key</string>
+    <string translatable="false" name="pref_device_details_fingerprint_category_key">pref_device_details_fingerprint_category_key</string>
+    <string translatable="false" name="pref_device_details_actions_category_key">pref_device_details_actions_category_key</string>
+    <string translatable="false" name="pref_device_details_trust_key">pref_device_details_trust_key</string>
+    <string translatable="false" name="pref_dev_avs_screen_key">pref_dev_avs_screen_key</string>
+    <string translatable="false" name="pref_device_details_reset_session_key">pref_device_details_reset_session_key</string>
+    <string translatable="false" name="pref_device_details_remove_key">pref_device_details_remove_key</string>
+    <string translatable="false" name="pref_account_appearance_category_key">pref_account_appearance_category_key</string>
+    <string translatable="false" name="pref_account_picture_key">pref_account_picture_key</string>
+    <string translatable="false" name="pref_account_color_key">pref_account_color_key</string>
+    <string translatable="false" name="pref_advanced_debug_report_key">PREF_DEBUG_REPORT</string>
+    <string-array translatable="false" name="pref_options_sounds_entries">
+        <item>@string/pref_options_sounds_all</item>
+        <item>@string/pref_options_sounds_new_conversations_and_talks_only</item>
+        <item>@string/pref_options_sounds_none</item>
+    </string-array>
+    <string-array translatable="false" name="pref_options_image_download_entries">
+        <item>@string/pref_options_image_download_always</item>
+        <item>@string/pref_options_image_download_wifi</item>
+    </string-array>
+    <string translatable="false" name="pref_about_website_key">pref_about_website_key</string>
+    <string translatable="false" name="pref_about_tos_key">pref_about_tos_key</string>
+    <string translatable="false" name="pref_about_privacy_policy_key">pref_about_privacy_policy_key</string>
+    <string translatable="false" name="pref_about_licenses_key">pref_about_licenses_key</string>
+    <string translatable="false" name="pref_about_version_key">pref_about_version_key</string>
+    <string translatable="false" name="pref_about_copyright_key">pref_about_copyright_key</string>
+    <string translatable="false" name="pref_options_alerts_category_key">pref_options_alerts_category_key</string>
+    <string translatable="false" name="pref_options_calls_category_key">pref_options_calls_category_key</string>
+    <string translatable="false" name="pref_options_media_category_key">pref_options_media_category_key</string>
+    <string translatable="false" name="pref_options_requested_category_key">pref_options_requested_category_key</string>
+    <string translatable="false" name="pref_support_website_key">pref_support_website_key</string>
+    <string translatable="false" name="pref_support_contact_key">pref_support_contact_key</string>
+    <string translatable="false" name="pref_invite_key">pref_invite_key</string>
+
+    <!-- Other-->
+    <string translatable="false" name="empty_string" />
+    <string translatable="false" name="participants__chathead__name_label__text_transform">upper</string>
+    <string translatable="false" name="content__separator__time_transform">upper</string>
+    <string translatable="false" name="content__youtube__error__text__transform">UPPER</string>
+    <string translatable="false" name="single_image_message__name__font_transform">upper</string>
+    <string translatable="false" name="availability_view__font_transform">upper</string>
+
+    <!-- TODO make these next 3 an 'enum' for the styleable resource -->
+    <string translatable="false" name="wire_theme_dynamic" >dynamic</string>
+    <string translatable="false" name="wire_theme_light">light</string>
+    <string translatable="false" name="wire_theme_dark">dark</string>
+
+    <!-- Developer preferences -->
+    <string translatable="false" name="pref_dev_avs_post_session_id_message">Last call session id: %1$s</string>
+    <string translatable="false" name="pref_dev_avs_last_call_session_id_key">USER_PREFS_LAST_CALL_SESSION_ID</string>
+    <string translatable="false" name="pref_dev_avs_last_call_session_id_not_available">N/A</string>
+    <string translatable="false" name="pref_dev_avs_last_call_session_id_copied_to_clipboard">Session id copied to clipboard</string>
+    <string translatable="false" name="pref_dev_auto_answer_call_title">Auto answer incoming calls</string>
+    <string translatable="false" name="pref_dev_auto_answer_call_summary">App restart needed to enable AVS audio test flag</string>
+    <string translatable="false" name="pref_dev_otr_only_title">E2EE only</string>
+    <string translatable="false" name="pref_dev_otr_only_summary">Send only encrypted messages</string>
+    <string translatable="false" name="pref_dev_version_info_id_key">USER_PREFS_DEV_VERSIONS_ID</string>
+    <string translatable="false" name="pref_dev_version_info_id_title">Versions</string>
+    <string translatable="false" name="pref_dev_register_new_client_title">Register Another Client</string>
+    <string translatable="false" name="pref_dev_register_new_client_summary">Useful for testing too many devices. This button will grey itself out when you reach the limit</string>
+
+    <string translatable="false" name="pref_dev_provide_password">Provide account password</string>
+
+    <!--Notifications preferences-->
+    <string translatable="false" name="pref_dev_category_notifications_key">PREF_NOTIFICATIONS_CATEGORY</string>
+    <string translatable="false" name="pref_dev_category_notifications_title">Notifications</string>
+    <string translatable="false" name="pref_dev_category_net_debug_key">PREF_NET_DEBUG_CATEGORY</string>
+    <string translatable="false" name="pref_dev_category_net_debug_title">Network info</string>
+    <string translatable="false" name="pref_dev_push_enabled_key">@string/zms_push_enabled</string>
+    <string translatable="false" name="pref_dev_push_enabled_summary">Enable to receive notifications through cloud messaging. Disable to rely on WebSockets only.</string>
+    <string translatable="false" name="pref_dev_push_enabled_title">Cloud Messaging Enabled</string>
+    <string translatable="false" name="pref_dev_websocket_ping_interval_key">PREF_WEBSOCKET_PING_INTERVAL</string>
+    <string translatable="false" name="pref_dev_websocket_ping_interval_summary">Change the frequency of checking the connection to the server. Note that increasing the frequency may have a negative impact on battery life.</string>
+    <string translatable="false" name="pref_dev_websocket_ping_interval_title">WebSocket Ping Frequency (ms)</string>
+    <string translatable="false" name="pref_dev_ws_foreground_key">@string/zms_ws_foreground_service_enabled</string>
+    <string translatable="false" name="pref_dev_ws_foreground_summary">Enable to see Web Socket connection status in permanent notification</string>
+    <string translatable="false" name="pref_dev_ws_foreground_title">Web Socket foreground service</string>
+    <string translatable="false" name="pref_dev_random_last_notification_id_title">Generate a random new value for LastStableNotification</string>
+    <string translatable="false" name="pref_dev_random_last_notification_id_summary">Generate a new, random value for the LastStableNotification preference. Use it to test history loss.</string>
+    <string translatable="false" name="pref_dev_random_full_sync_title">Perform full sync</string>
+    <string translatable="false" name="pref_dev_random_full_sync_summary">This performs a full sync without triggering history loss. Useful for internal versions with inconsistent state.</string>
+    <string translatable="false" name="pref_dev_full_conv_key">>PREF_FULL_CONV</string>
+    <string translatable="false" name="pref_dev_full_conv_summary">Instead of an empty conversation, create one populated with all contacts in the list (up to 256)</string>
+    <string translatable="false" name="pref_dev_full_conv_title">Create full conversation</string>
+
+    <!--Account preferences-->
+    <string translatable="false" name="pref_dev_category_sign_in_account_key">PREF_ACCOUNTS_SIGN_IN</string>
+    <string translatable="false" name="pref_dev_category_sign_in_account_title">Sign into account</string>
+    <string translatable="false" name="pref_dev_category_sign_in_account_summary">Sign into another account and switch to that one</string>
+
+    <string translatable="false" name="pref_manage_team_url">https://teams.wire.com/login/?utm_source=client_settings&amp;utm_term=android</string>
+
+    <string translatable="false" name="pick_user_manage_team_url">https://teams.wire.com/login/?utm_source=client_landing&amp;utm_term=android</string>
+
+    <string translatable="false" name="invalid_email_help">https://support.wire.com/hc/en-us/articles/115004082129-My-email-address-is-already-in-use-and-I-cannot-create-an-account-What-can-I-do-</string>
+
+
+    <string translatable="false" name="url_home">https://wire.com</string>
+    <string translatable="false" name="url_terms_of_service_personal">https://wire.com/legal/terms/personal/</string>
+    <string translatable="false" name="url_terms_of_service_teams">https://wire.com/legal/terms/teams/</string>
+    <string translatable="false" name="url_privacy_policy">https://wire.com/legal/privacy/embed/</string>
+    <string translatable="false" name="url__help">https://support.wire.com</string>
+    <string translatable="false" name="url_password_reset">https://account.wire.com/forgot/</string>
+    <string translatable="false" name="url_third_party_licences">https://wire.com/legal/#licenses</string>
+    <string translatable="false" name="url_otr_learn_why">https://wire.com/privacy/why</string>
+    <string translatable="false" name="url_otr_learn_how">https://wire.com/privacy/how</string>
+    <string translatable="false" name="url_otr_decryption_error_1">https://wire.com/privacy/error-1</string>
+    <string translatable="false" name="url_otr_decryption_error_2">https://wire.com/privacy/error-2</string>
+    <string translatable="false" name="url_about_teams">https://wire.com/en/create-team/#features</string>
+
+</resources>
+

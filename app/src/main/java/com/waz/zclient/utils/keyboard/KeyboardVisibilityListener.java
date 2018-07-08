@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,15 +17,14 @@
  */
 package com.waz.zclient.utils.keyboard;
 
-import android.graphics.Rect;
-import android.os.Handler;
 import android.view.View;
-import com.waz.zclient.utils.ViewUtils;
+import com.waz.zclient.ui.utils.KeyboardUtils;
+import com.waz.zclient.utils.ContextUtils;
+import timber.log.Timber;
 
 public class KeyboardVisibilityListener {
     private final View contentView;
     private final int statusAndNavigationBarHeight;
-    private int lastKeyboardHeight;
     private int keyboardHeight;
 
     public interface Callback {
@@ -34,23 +33,13 @@ public class KeyboardVisibilityListener {
     }
     private Callback callback;
 
-    private Handler keyboardHeightHandler;
-    private Runnable keyboardHeightRunnable = new Runnable() {
-        public void run() {
-        if (callback != null) {
-            callback.onKeyboardHeightChanged(keyboardHeight);
-        }
-        }
-    };
-
     public KeyboardVisibilityListener(View contentView) {
         this.contentView = contentView;
-        this.keyboardHeightHandler = new Handler();
         if (contentView == null) {
             this.statusAndNavigationBarHeight = 0;
             return;
         }
-        this.statusAndNavigationBarHeight = ViewUtils.getNavigationBarHeight(contentView.getContext()) + ViewUtils.getStatusBarHeight(contentView.getContext());
+        this.statusAndNavigationBarHeight = ContextUtils.getNavigationBarHeight(contentView.getContext()) + ContextUtils.getStatusBarHeight(contentView.getContext());
     }
 
     public void setCallback(Callback keyboardCallback) {
@@ -61,29 +50,21 @@ public class KeyboardVisibilityListener {
         return keyboardHeight;
     }
 
-    public void onLayoutChange() {
-        Rect r = new Rect();
-        contentView.getWindowVisibleDisplayFrame(r);
-        int screenHeight = contentView.getRootView().getHeight();
-        keyboardHeight = screenHeight - r.bottom - statusAndNavigationBarHeight;
+    public synchronized void onLayoutChange() {
+        int newKeyboardHeight = Math.max(0, KeyboardUtils.getKeyboardHeight(contentView) - statusAndNavigationBarHeight);
 
-        if (keyboardHeight == lastKeyboardHeight) {
-            return;
+        if (newKeyboardHeight != keyboardHeight) {
+            Timber.i("keyboard height changes from %s to %s", keyboardHeight, newKeyboardHeight);
+            boolean visibilityChanged = keyboardHeight == 0 || newKeyboardHeight == 0;
+            keyboardHeight = newKeyboardHeight;
+
+            if (callback != null) {
+                callback.onKeyboardHeightChanged(newKeyboardHeight);
+                if (visibilityChanged) {
+                    callback.onKeyboardChanged(newKeyboardHeight > 0, newKeyboardHeight);
+                }
+            }
         }
 
-        // Use delay to filter out intermediate height values
-        keyboardHeightHandler.removeCallbacks(keyboardHeightRunnable);
-        keyboardHeightHandler.postDelayed(keyboardHeightRunnable, 200);
-
-        if (lastKeyboardHeight > 0 && keyboardHeight > 0) {
-            lastKeyboardHeight = keyboardHeight;
-            return;
-        }
-
-        lastKeyboardHeight = keyboardHeight;
-
-        if (callback != null) {
-            callback.onKeyboardChanged(keyboardHeight > 0, keyboardHeight);
-        }
-    }
+    };
 }

@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,31 +24,29 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:orientation="vertical"
+              android:background="@android:color/transparent"
               style="?wireBackground"
     >
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/t__pending_connect__toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:clickable="true"
-        app:contentInsetStart="@dimen/content__padding_left"
-        style="?conversationToolbar"
-        >
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/user_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:textColor="?wirePrimaryTextColor"
+        android:textSize="@dimen/wire__text_size__big"
+        app:w_font="@string/wire__typeface__regular"
+        />
 
-            <com.waz.zclient.ui.text.TypefaceTextView
-                android:id="@+id/tv__pending_connect_toolbar__title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="@dimen/wire__padding__regular"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:background="@null"
-                style="?conversationToolbar"
-                />
-
-
-    </android.support.v7.widget.Toolbar>
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/user_handle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="@dimen/wire__padding__small"
+        android:textColor="?wireSecondaryTextColor"
+        android:textSize="@dimen/wire__text_size__regular"
+        app:w_font="@string/wire__typeface__regular"/>
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -56,16 +54,8 @@
         android:layout_weight="1"
         >
 
-        <com.waz.zclient.common.views.UserDetailsView
-            android:id="@+id/udv__pending_connect__user_details"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/wire__padding__small"
-            android:layout_gravity="center_horizontal|top"
-            />
-
-        <com.waz.zclient.views.images.ImageAssetImageView
-            android:id="@+id/iaiv__pending_connect"
+        <ImageView
+            android:id="@+id/pending_connect"
             android:layout_width="@dimen/profile__image__width"
             android:layout_height="@dimen/profile__image__height"
             android:layout_marginBottom="@dimen/wire__padding__regular"
@@ -81,36 +71,12 @@
         android:layout_height="@dimen/connect_request__footer_menu__height"
         >
 
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:layout_marginBottom="@dimen/connect_request__footer_menu__padding_bottom"
-            android:paddingStart="@dimen/wire__padding__big"
-            android:paddingEnd="@dimen/wire__padding__big"
-            >
-
-            <!-- Unblock button for blocked users -->
-            <com.waz.zclient.ui.views.ZetaButton
-                android:id="@+id/zb__connect_request__unblock_button"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/framework_confirmation_menu_button_height"
-                android:layout_gravity="bottom"
-                android:gravity="center"
-                android:text="@string/connect_request__unblock__button__text"
-                android:textAllCaps="true"
-                android:textSize="@dimen/wire__text_size__small"
-                android:textColor="@color/text__primary_light"
-                app:font="@string/wire__typeface__light"
-                />
-
-        </FrameLayout>
-
         <!-- Footer with left & right actions -->
         <com.waz.zclient.views.menus.FooterMenu
             android:id="@+id/fm__footer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:visibility="gone"
             app:leftActionText="@string/glyph__undo"
             app:rightActionText="@string/glyph__block"
             app:leftActionLabelText="@string/connect_request__cancel_request__label"

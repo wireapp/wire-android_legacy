@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Wire
+  ~ Copyright (C) 2018 Wire Swiss GmbH
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program. If not, see http://www.gnu.org/licenses/.
+  -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:paddingStart="@dimen/wire__padding__regular"
+              android:paddingEnd="@dimen/wire__padding__regular"
+              android:paddingTop="@dimen/wire__padding__small"
+              android:paddingBottom="@dimen/wire__padding__small"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/profile_menu_create"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/profile__settings__menu__height">
+
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:layout_width="@dimen/message__bottom_menu__icon_view_size"
+            android:layout_height="@dimen/message__bottom_menu__icon_view_size"
+            android:layout_gravity="center_vertical"
+            android:textSize="@dimen/wire__text_size__regular"
+            android:textColor="@color/graphite"
+            android:text="@string/glyph__add_team"
+            android:gravity="center"
+            />
+
+        <TextView
+            android:paddingStart="@dimen/wire__padding__32"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="start|center_vertical"
+            android:textSize="@dimen/wire__text_size__regular"
+            android:textColor="@color/graphite"
+            android:text="@string/preferences_profile_create_team"
+            />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/profile_menu_add"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/profile__settings__menu__height">
+
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:layout_width="@dimen/message__bottom_menu__icon_view_size"
+            android:layout_height="@dimen/message__bottom_menu__icon_view_size"
+            android:layout_gravity="center_vertical"
+            android:textSize="@dimen/wire__text_size__regular"
+            android:textColor="@color/graphite"
+            android:text="@string/glyph__add_people"
+            android:gravity="center"
+                        />
+
+        <TextView
+            android:paddingStart="@dimen/wire__padding__32"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="start|center_vertical"
+            android:textSize="@dimen/wire__text_size__regular"
+            android:textColor="@color/graphite"
+            android:text="@string/preferences_profile_add_account"
+            />
+
+    </LinearLayout>
+
+
+</LinearLayout>

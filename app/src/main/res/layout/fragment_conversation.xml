@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@
                 android:orientation="horizontal"
                 >
 
-                <com.waz.zclient.ui.views.e2ee.ShieldView
+                <com.waz.zclient.views.e2ee.ShieldView
                     android:id="@+id/sv__conversation_toolbar__verified_shield"
                     android:layout_width="wrap_content"
                     android:layout_height="@dimen/wire__otr__shield__small_width"
@@ -104,12 +104,33 @@
                 android:clipToPadding="false"
                 />
 
-            <com.waz.zclient.pages.main.conversation.views.TypingIndicatorView
+            <com.waz.zclient.conversation.TypingIndicatorView
                 android:id="@+id/tiv_typing_indicator_view"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/typing_indicator_layout_height"
                 android:layout_gravity="bottom"
                 />
+
+            <FrameLayout
+                android:id="@+id/guests_banner"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/guests_toolbar_height"
+                android:background="@color/banner_grey"
+                android:layout_gravity="top"
+                android:visibility="visible">
+
+                <com.waz.zclient.ui.text.TypefaceTextView
+                    android:id="@+id/guests_banner_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/wire__text_size__smaller"
+                    app:w_font="@string/wire__typeface__medium"
+                    android:text="@string/guests_are_present"/>
+
+            </FrameLayout>
 
         </FrameLayout>
 
@@ -128,11 +149,12 @@
 
     </LinearLayout>
 
-    <com.waz.zclient.ui.audiomessage.AudioMessageRecordingView
+    <com.waz.zclient.conversation.toolbar.AudioMessageRecordingView
         android:id="@+id/amrv_audio_message_recording"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
+        android:visibility="invisible"
         />
 
 
@@ -147,6 +169,7 @@
         android:id="@+id/lbv__conversation__loading_indicator"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="gone"
         />
 
 </FrameLayout>

@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,8 @@
 package com.waz.zclient;
 
 import com.waz.zclient.controllers.IControllerFactory;
-import com.waz.zclient.core.stores.IStoreFactory;
 
 
 public interface ServiceContainer {
-    IStoreFactory getStoreFactory();
-
     IControllerFactory getControllerFactory();
 }

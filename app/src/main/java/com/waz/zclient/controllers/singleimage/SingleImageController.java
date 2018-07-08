@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +18,6 @@
 package com.waz.zclient.controllers.singleimage;
 
 import android.view.View;
-import com.waz.api.Message;
-import com.waz.api.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +26,6 @@ public class SingleImageController implements ISingleImageController {
 
     private List<SingleImageObserver> observerList;
     private View imageContainer;
-    private Message message;
 
     public SingleImageController() {
         observerList = new ArrayList<>();
@@ -52,23 +49,9 @@ public class SingleImageController implements ISingleImageController {
     }
 
     @Override
-    public Message getMessage() {
-        return message;
-    }
-
-    @Override
-    public void showSingleImage(Message message) {
-        this.message = message;
+    public void showSingleImage(String messageId) {
         for (SingleImageObserver observer : observerList) {
-            observer.onShowSingleImage(message);
-        }
-    }
-
-    @Override
-    public void showSingleImage(User user) {
-        this.message = null;
-        for (SingleImageObserver observer : observerList) {
-            observer.onShowUserImage(user);
+            observer.onShowSingleImage(messageId);
         }
     }
 
@@ -91,7 +74,6 @@ public class SingleImageController implements ISingleImageController {
 
     @Override
     public void clearReferences() {
-        message = null;
         imageContainer = null;
     }
 }

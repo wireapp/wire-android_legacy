@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ public class DrawingController implements IDrawingController {
     }
 
     @Override
-    public void showDrawing(ImageAsset image, DrawingDestination drawingDestination) {
+    public void showDrawing(ImageAsset image, IDrawingController.DrawingDestination drawingDestination) {
         for (DrawingObserver observer : observers) {
             observer.onShowDrawing(image, drawingDestination, DrawingMethod.DRAW);
         }
@@ -45,7 +45,7 @@ public class DrawingController implements IDrawingController {
 
     @Override
     public void showDrawing(ImageAsset image,
-                            DrawingDestination drawingDestination,
+                            IDrawingController.DrawingDestination drawingDestination,
                             DrawingMethod method) {
         for (DrawingObserver observer : observers) {
             observer.onShowDrawing(image, drawingDestination, method);
@@ -53,7 +53,7 @@ public class DrawingController implements IDrawingController {
     }
 
     @Override
-    public void hideDrawing(DrawingController.DrawingDestination drawingDestination, boolean imageSent) {
+    public void hideDrawing(IDrawingController.DrawingDestination drawingDestination, boolean imageSent) {
         for (DrawingObserver observer : observers) {
             observer.onHideDrawing(drawingDestination, imageSent);
         }

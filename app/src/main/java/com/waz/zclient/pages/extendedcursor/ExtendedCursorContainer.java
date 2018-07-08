@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,26 +21,28 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.os.Build;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
-import com.waz.api.EphemeralExpiration;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.globallayout.KeyboardHeightObserver;
 import com.waz.zclient.controllers.globallayout.KeyboardVisibilityObserver;
+import com.waz.zclient.cursor.EphemeralLayout;
 import com.waz.zclient.pages.extendedcursor.emoji.EmojiKeyboardLayout;
-import com.waz.zclient.pages.extendedcursor.ephemeral.EphemeralLayout;
 import com.waz.zclient.pages.extendedcursor.image.CursorImagesLayout;
 import com.waz.zclient.pages.extendedcursor.voicefilter.VoiceFilterLayout;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
 import com.waz.zclient.ui.utils.KeyboardUtils;
+import com.waz.zclient.utils.ContextUtils;
 import com.waz.zclient.utils.ViewUtils;
 
 import java.util.List;
 import java.util.Set;
+
+import scala.Option;
+import scala.concurrent.duration.FiniteDuration;
 
 public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeightObserver,
                                                                     KeyboardVisibilityObserver {
@@ -83,12 +85,7 @@ public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeig
     public ExtendedCursorContainer(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         sharedPreferences = getContext().getSharedPreferences(PREF__NAME, Context.MODE_PRIVATE);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            //noinspection deprecation
-            accentColor = getResources().getColor(R.color.accent_blue);
-        } else {
-            accentColor = getResources().getColor(R.color.accent_blue, context.getTheme());
-        }
+        accentColor = ContextUtils.getColorWithTheme(R.color.accent_blue, context);
         isExpanded = false;
         type = Type.NONE;
         initKeyboardHeight();
@@ -134,7 +131,7 @@ public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeig
         emojiKeyboardLayout.setEmojis(recent, unsupported);
     }
 
-    public void openEphemeral(EphemeralLayout.Callback callback, EphemeralExpiration expiration) {
+    public void openEphemeral(EphemeralLayout.Callback callback, Option<FiniteDuration> expiration) {
         openWithType(Type.EPHEMERAL);
         ephemeralLayout.setSelectedExpiration(expiration);
         ephemeralLayout.setCallback(callback);

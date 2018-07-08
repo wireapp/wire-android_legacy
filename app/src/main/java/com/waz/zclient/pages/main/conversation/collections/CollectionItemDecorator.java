@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,9 +21,9 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import com.waz.zclient.conversation.CollectionAdapter;
-import com.waz.zclient.conversation.Header;
-import com.waz.zclient.conversation.HeaderId;
+import com.waz.zclient.collection.adapters.CollectionAdapter;
+import com.waz.zclient.collection.adapters.Header;
+import com.waz.zclient.collection.adapters.HeaderId;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -4,6 +4,6 @@ sourceCompatibility = rootProject.ext.sourceCompatibilityVersion
 targetCompatibility = rootProject.ext.targetCompatibilityVersion
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile deps.checkstyleapi
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation deps.checkstyleapi
 }

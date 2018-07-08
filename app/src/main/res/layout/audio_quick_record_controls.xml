@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="horizontal"
+              android:clickable="true"
+              android:baselineAligned="false"
+              style="?wireBackground"
+    >
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        style="?wireBackground"
+        >
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/new_cursor_height"
+            >
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/controls_hint"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical|right"
+                android:gravity="center_vertical"
+                android:text="@string/audio_message__recording__slide_control__slide_hint"
+                android:textColor="@color/light_graphite"
+                android:textSize="@dimen/wire__text_size__small"
+                app:w_font="@string/wire__typeface__light"
+                />
+
+        </FrameLayout>
+
+        <View
+            style="?wireDivider"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/wire__divider__height__thin"
+            android:layout_marginLeft="@dimen/wire__padding__regular"
+            />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/new_cursor_height"
+            android:layout_marginLeft="@dimen/wire__padding__regular"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            >
+
+            <FrameLayout
+                android:id="@+id/recording_indicator_container"
+                android:layout_width="@dimen/new_cursor_menu_button_width"
+                android:layout_height="@dimen/new_cursor_menu_button_width"
+                android:layout_marginLeft="@dimen/cursor_toolbar_padding_horizontal_edge"
+                >
+
+                <FrameLayout
+                    android:id="@+id/recording_indicator_dot"
+                    android:layout_width="@dimen/audio_message_recording__indicator_dot__radius"
+                    android:layout_height="@dimen/audio_message_recording__indicator_dot__radius"
+                    android:layout_gravity="center"
+                    android:background="@drawable/audio_message__recording__indicator_dot"
+                    />
+
+            </FrameLayout>
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/recording__duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="@dimen/wire__text_size__small"
+                app:w_font="@string/wire__typeface__light"
+                style="?attr/wirePrimaryTextColor"
+                />
+
+            <SeekBar
+                android:id="@+id/recording__seekbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/slide_control_container"
+        android:layout_width="@dimen/new_cursor_menu_button_width"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="@dimen/wire__padding__8"
+        style="?attr/wireBackground"
+        >
+
+        <FrameLayout
+            android:id="@+id/slide_control"
+            android:layout_width="@dimen/audio_message_recording__slide_control__width"
+            android:layout_height="@dimen/audio_message_recording__slide_control__height"
+            android:layout_gravity="bottom|center_horizontal"
+            android:background="@drawable/audio_message__slide_control__background"
+            tools:ignore="UselessParent"
+            >
+
+            <!-- Send button -->
+            <FrameLayout
+                android:id="@+id/send_button_container"
+                android:layout_width="@dimen/audio_message_recording__slide_control__width"
+                android:layout_height="@dimen/audio_message_recording__slide_control__width"
+                android:layout_gravity="top"
+                >
+
+                <com.waz.zclient.ui.text.GlyphTextView
+                    android:id="@+id/send_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/glyph__check"
+                    android:textColor="@color/accent_green"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    style="?attr/smallIconButton"
+                    />
+
+            </FrameLayout>
+
+            <!-- Play / pause button -->
+            <FrameLayout
+                android:id="@+id/bottom_button_container"
+                android:layout_width="@dimen/audio_message_recording__slide_control__width"
+                android:layout_height="@dimen/audio_message_recording__slide_control__width"
+                android:layout_gravity="bottom"
+                >
+
+                <com.waz.zclient.ui.text.GlyphTextView
+                    android:id="@+id/bottom_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/glyph__microphone_on"
+                    android:gravity="center"
+                    style="?attr/smallIconButton"
+                    />
+
+            </FrameLayout>
+
+
+        </FrameLayout>
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/close_button_container"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        >
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            tools:ignore="UselessLeaf"
+           />
+
+        <View
+            style="?wireDivider"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/wire__divider__height__thin"
+            android:layout_marginRight="@dimen/wire__padding__regular"
+            />
+
+        <FrameLayout
+            android:id="@+id/cancel_button_container"
+            android:layout_width="@dimen/new_cursor_menu_button_width"
+            android:layout_height="@dimen/new_cursor_menu_button_width"
+            android:layout_marginRight="@dimen/cursor_toolbar_padding_horizontal_edge"
+            >
+
+            <com.waz.zclient.ui.text.GlyphTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="@string/glyph__close"
+                android:gravity="center"
+                style="?attr/smallIconButton"
+                />
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+
+</LinearLayout>

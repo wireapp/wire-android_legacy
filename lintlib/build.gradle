@@ -25,7 +25,7 @@ android {
 project.afterEvaluate {
     def compileLintTask = project.tasks.find {it.name == 'compileLint'}
     compileLintTask.dependsOn ':lintrules:jar'
-    compileLintTask << {
+    compileLintTask.doLast {
         copy {
             from '../lintrules/build/libs'
             into 'build/intermediates/lint'

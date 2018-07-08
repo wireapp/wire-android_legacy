@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<resources>
+    <!-- Cursor-->
+    <dimen name="cursor_desired_width">@dimen/content__width</dimen>
+    <dimen name="cursor_menu_button_width">88dp</dimen>
+    <dimen name="cursor_button_width">32dp</dimen>
+    <dimen name="cursor_button_height">56dp</dimen>
+    <dimen name="cursor_button_horizontal_margin">26dp</dimen>
+    <dimen name="cursor_menu_button__margin_left">0dp</dimen>
+    <dimen name="cursor_button_offset">160dp</dimen>
+    <dimen name="cursor_anchor1">8dp</dimen>
+    <dimen name="cursor_anchor2">88dp</dimen>
+    <dimen name="cursor_anchor3">88dp</dimen>
+
+    <dimen name="signup_content__margin_top">160dp</dimen>
+    <dimen name="signup_content__margin_bottom">160dp</dimen>
+    <dimen name="signup_content__width">448dp</dimen>
+    <dimen name="framework__participants_dialog__pos_x">4dp</dimen>
+    <dimen name="otr__inbox__horizontal__padding">128dp</dimen>
+    <dimen name="framework_confirmation_menu_horizontal_padding">128dp</dimen>
+    <dimen name="framework_confirmation_menu_padding_bottom">32dp</dimen>
+
+    <dimen name="new_reg__body_left_margin">128dp</dimen>
+    <dimen name="new_reg__body_right_margin">128dp</dimen>
+
+    <dimen name="content__width">424dp</dimen>
+    <dimen name="content__padding_left">72dp</dimen>
+    <dimen name="content__separator__avatar_container__width">0dp</dimen>
+    <dimen name="content__separator__label_container__width">@dimen/content__width</dimen>
+
+    <dimen name="audio_message_recording__slide_control__margin_right">36dp</dimen>
+    <dimen name="audio_message_recording__recorder__margin_right">92dp</dimen>
+</resources>

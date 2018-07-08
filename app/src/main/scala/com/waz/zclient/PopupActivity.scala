@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,10 +24,8 @@ import android.view.View
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.{error, verbose}
 import com.waz.utils.returning
-import com.waz.zclient.core.controllers.tracking.events.notifications.OpenedQuickReplyEvent
-import com.waz.zclient.notifications.controllers.MessageNotificationsController.NotificationIntent
+import com.waz.zclient.Intents._
 import com.waz.zclient.quickreply.QuickReplyFragment
-import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.{ContextUtils, ViewUtils}
 
@@ -73,9 +71,4 @@ class PopupActivity extends BaseActivity with ActivityHelper { self =>
   }
 
   override def getBaseTheme: Int = R.style.Theme_Popup
-
-  override def onStart() = {
-    super.onStart()
-    inject[GlobalTrackingController].tagEvent(new OpenedQuickReplyEvent)
-  }
 }

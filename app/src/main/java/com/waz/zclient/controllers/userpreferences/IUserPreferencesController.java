@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,24 +43,6 @@ public interface IUserPreferencesController {
 
     boolean showContactsDialog();
 
-    void setReferralToken(String token);
-
-    String getReferralToken();
-
-    void setGenericInvitationToken(String token);
-
-    String getGenericInvitationToken();
-
-    void setPersonalInvitationToken(String token);
-
-    String getPersonalInvitationToken();
-
-    String getLastCallSessionId();
-
-    void setPostSessionIdToConversation(boolean postSessionIdToConversation);
-
-    boolean isPostSessionIdToConversation();
-
     String getDeviceId();
 
     void setVerificationCode(String code);
@@ -71,24 +53,9 @@ public interface IUserPreferencesController {
 
     boolean hasVerificationCode();
 
-    void setCrashException(String exception, String details);
-
-    String getCrashException();
-
-    String getCrashDetails();
-
-    boolean hasUserLoggedIn(String userId);
-
-    void userLoggedIn(String userId);
-
     void setPerformedAction(@Action int action);
 
     boolean hasPerformedAction(@Action int action);
-
-    /**
-     * We return a group number between 1 and 6. Always the same.
-     */
-    int getABTestingGroup();
 
     void addRecentEmoji(String emoji);
 
@@ -99,13 +66,4 @@ public interface IUserPreferencesController {
     Set<String> getUnsupportedEmojis();
 
     boolean hasCheckedForUnsupportedEmojis(int version);
-
-    long getLastEphemeralValue();
-
-    void setLastEphemeralValue(long value);
-
-    boolean isVariableBitRateEnabled();
-
-    boolean swapForceVerboseLogging();
-
 }

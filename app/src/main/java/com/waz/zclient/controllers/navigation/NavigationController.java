@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@ package com.waz.zclient.controllers.navigation;
 
 import android.content.Context;
 import android.os.Bundle;
-import com.waz.zclient.utils.LayoutSpec;
 import timber.log.Timber;
 
 import java.util.HashSet;
@@ -46,7 +45,6 @@ public class NavigationController implements INavigationController {
 
     private boolean isPagerEnabled;
     private boolean isInLandscape;
-    private boolean isPhone;
 
     @Override
     public void addNavigationControllerObserver(NavigationControllerObserver navigationControllerObserver) {
@@ -70,8 +68,6 @@ public class NavigationController implements INavigationController {
     }
 
     public NavigationController(Context context) {
-        isPhone = LayoutSpec.isPhone(context);
-
         navigationControllerObservers = new HashSet<>();
         pagerControllerObservers = new HashSet<>();
 
@@ -91,6 +87,7 @@ public class NavigationController implements INavigationController {
 
         currentPage = page;
 
+        setPagerSettingForPage(page);
         for (NavigationControllerObserver navigationControllerObserver : navigationControllerObservers) {
             navigationControllerObserver.onPageVisible(page);
         }
@@ -123,30 +120,18 @@ public class NavigationController implements INavigationController {
     @Override
     public void setLeftPage(Page leftPage, String sender) {
         lastPageLeft = leftPage;
-
-        if (isPhone) {
-            if (currentPagerPos == FIRST_PAGE) {
-                setVisiblePage(leftPage, sender);
-            }
-        } else {
-            if (currentPagerPos == FIRST_PAGE || isInLandscape) {
-                setVisiblePage(leftPage, sender);
-            }
-        }
+        setPage(leftPage, sender, FIRST_PAGE);
     }
 
     @Override
     public void setRightPage(Page rightPage, String sender) {
         lastPageRight = rightPage;
+        setPage(rightPage, sender, SECOND_PAGE);
+    }
 
-        if (isPhone) {
-            if (currentPagerPos == SECOND_PAGE) {
-                setVisiblePage(rightPage, sender);
-            }
-        } else {
-            if (currentPagerPos == SECOND_PAGE || isInLandscape) {
-                setVisiblePage(rightPage, sender);
-            }
+    private void setPage(Page page, String sender, int pageIndex) {
+        if (currentPagerPos == pageIndex) {
+            setVisiblePage(page, sender);
         }
     }
 
@@ -201,12 +186,8 @@ public class NavigationController implements INavigationController {
     public void setPagerSettingForPage(Page page) {
         switch (page) {
             case CONVERSATION_LIST:
-                if (isPhone) {
-                    // Handled in ConversationListManagerFragment
-                    return;
-                }
-                setPagerEnabled(true);
-                break;
+                setPagerEnabled(false);
+                return;
             case SELF_PROFILE_OVERLAY:
             case CAMERA:
             case CONFIRMATION_DIALOG:
@@ -226,9 +207,8 @@ public class NavigationController implements INavigationController {
             case PENDING_CONNECT_REQUEST:
             case BLOCK_USER:
             case PICK_USER_ADD_TO_CONVERSATION:
-                if (isPhone) {
-                    setPagerEnabled(false);
-                }
+            case INTEGRATION_DETAILS:
+                setPagerEnabled(false);
                 break;
             default:
                 setPagerEnabled(true);

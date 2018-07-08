@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.messages.controllers
 
+import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.app.{Activity, ProgressDialog}
 import android.content.DialogInterface.OnDismissListener
 import android.content._
@@ -26,13 +27,14 @@ import android.widget.Toast
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
 import com.waz.model._
+import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
+import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
-import com.waz.zclient.common.controllers.{PermissionsController, WriteExternalStoragePermission}
-import com.waz.zclient.controllers.global.KeyboardController
+import com.waz.zclient.common.controllers.global.KeyboardController
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
 import com.waz.zclient.messages.MessageBottomSheetDialog
 import com.waz.zclient.messages.MessageBottomSheetDialog.{MessageAction, Params}
@@ -40,16 +42,19 @@ import com.waz.zclient.notifications.controllers.ImageNotificationsController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R}
 
+import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.util.Success
 
 class MessageActionsController(implicit injector: Injector, ctx: Context, ec: EventContext) extends Injectable {
+  import MessageActionsController._
   import com.waz.threading.Threading.Implicits.Ui
 
   private val context                   = inject[Activity]
   private lazy val keyboardController   = inject[KeyboardController]
   private lazy val userPrefsController  = inject[IUserPreferencesController]
   private lazy val clipboardManager     = inject[ClipboardManager]
-  private lazy val permissions          = inject[PermissionsController]
+  private lazy val permissions          = inject[PermissionsService]
   private lazy val imageNotifications   = inject[ImageNotificationsController]
 
   private val zms = inject[Signal[ZMessaging]]
@@ -86,7 +91,7 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
 
   def showDialog(data: MessageAndLikes, fromCollection: Boolean = false): Boolean = {
     // TODO: keyboard should be handled in more generic way
-    keyboardController.hideKeyboardIfVisible().map { _ =>
+    if (keyboardController.hideKeyboardIfVisible()) CancellableFuture.delayed(HideDelay){}.future else Future.successful({}).map { _ =>
       dialog.foreach(_.dismiss())
       dialog = Some(
         returning(new MessageBottomSheetDialog(context, R.style.message__bottom_sheet__base, data.message, Params(collection = fromCollection))) { d =>
@@ -107,7 +112,7 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
   }
 
   private def copyMessage(message: MessageData) =
-    zms.head.flatMap(_.users.getUser(message.userId)) foreach {
+    zms.head.flatMap(_.usersStorage.get(message.userId)) foreach {
       case Some(user) =>
         val clip = ClipData.newPlainText(getString(R.string.conversation__action_mode__copy__description, user.getDisplayName), message.contentString)
         clipboardManager.setPrimaryClip(clip)
@@ -169,7 +174,15 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
       getAsset(message.assetId) foreach {
         case (Some(data), Some(uri)) =>
           dialog.dismiss()
-          intentBuilder.setType(if (data.mime.str.equals("text/plain")) "text/*" else data.mime.str)
+          val mime =
+            if (data.mime.str.equals("text/plain"))
+              "text/*"
+            else if (data.mime == Mime.Unknown)
+              //TODO: should be fixed on file receiver side
+              Mime.Default.str
+            else
+              data.mime.str
+          intentBuilder.setType(mime)
           intentBuilder.addStream(AndroidURIUtil.unwrap(uri))
           intentBuilder.startChooser()
         case _ =>
@@ -184,39 +197,41 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
   }
 
   private def saveMessage(message: MessageData) =
-    permissions.withPermissions(WriteExternalStoragePermission) {  // TODO: provide explanation dialog - use requiring with message str
-      if (message.msgType == Message.Type.ASSET) { // TODO: simplify once SE asset v3 is merged, we should be able to handle that without special conditions
+    permissions.requestAllPermissions(Set(WRITE_EXTERNAL_STORAGE)).map {  // TODO: provide explanation dialog - use requiring with message str
+      case true =>
+        if (message.msgType == Message.Type.ASSET) { // TODO: simplify once SE asset v3 is merged, we should be able to handle that without special conditions
 
-        val saveFuture = for {
-          z <- zms.head
-          asset <- z.assets.getAssetData(message.assetId) if asset.isDefined
-          uri <- z.imageLoader.saveImageToGallery(asset.get)
-        } yield uri
+          val saveFuture = for {
+            z <- zms.head
+            asset <- z.assets.getAssetData(message.assetId) if asset.isDefined
+            uri <- z.imageLoader.saveImageToGallery(asset.get)
+          } yield uri
 
-        saveFuture onComplete {
-          case Success(Some(uri)) =>
-            imageNotifications.showImageSavedNotification(message.assetId, uri)
-            Toast.makeText(context, R.string.message_bottom_menu_action_save_ok, Toast.LENGTH_SHORT).show()
-          case _ =>
-            Toast.makeText(context, com.waz.zclient.ui.R.string.content__file__action__save_error, Toast.LENGTH_SHORT).show()
+          saveFuture onComplete {
+            case Success(Some(uri)) =>
+              imageNotifications.showImageSavedNotification(message.assetId, uri)
+              Toast.makeText(context, R.string.message_bottom_menu_action_save_ok, Toast.LENGTH_SHORT).show()
+            case _ =>
+              Toast.makeText(context, R.string.content__file__action__save_error, Toast.LENGTH_SHORT).show()
+          }
+        } else {
+          val dialog = ProgressDialog.show(context, getString(R.string.conversation__action_mode__fwd__dialog__title), getString(R.string.conversation__action_mode__fwd__dialog__message), true, true, null)
+          zms.head.flatMap(_.assets.saveAssetToDownloads(message.assetId)) foreach {
+            case Some(file) =>
+              zms.head.flatMap(_.assets.getAssetData(message.assetId)) foreach {
+                case Some(data) => onAssetSaved ! data
+                case None => // should never happen
+              }
+              Toast.makeText(context, R.string.content__file__action__save_completed, Toast.LENGTH_SHORT).show()
+              context.sendBroadcast(returning(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE))(_.setData(AndroidURIUtil.unwrap(URI.fromFile(file)))))
+              dialog.dismiss()
+            case None =>
+              Toast.makeText(context, R.string.content__file__action__save_error, Toast.LENGTH_SHORT).show()
+              dialog.dismiss()
+          }
         }
-      } else {
-        val dialog = ProgressDialog.show(context, getString(R.string.conversation__action_mode__fwd__dialog__title), getString(R.string.conversation__action_mode__fwd__dialog__message), true, true, null)
-        zms.head.flatMap(_.assets.saveAssetToDownloads(message.assetId)) foreach {
-          case Some(file) =>
-            zms.head.flatMap(_.assets.getAssetData(message.assetId)) foreach {
-              case Some(data) => onAssetSaved ! data
-              case None => // should never happen
-            }
-            Toast.makeText(context, com.waz.zclient.ui.R.string.content__file__action__save_completed, Toast.LENGTH_SHORT).show()
-            context.sendBroadcast(returning(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE))(_.setData(AndroidURIUtil.unwrap(URI.fromFile(file)))))
-            dialog.dismiss()
-          case None =>
-            Toast.makeText(context, com.waz.zclient.ui.R.string.content__file__action__save_error, Toast.LENGTH_SHORT).show()
-            dialog.dismiss()
-        }
-      }
-    }
+      case false =>
+    } (Threading.Ui)
 
   private def revealMessageInConversation(message: MessageData) = {
     zms.head.flatMap(z => z.messagesStorage.get(message.id)).onComplete{
@@ -224,4 +239,8 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
       case _ =>
     }
   }
+}
+
+object MessageActionsController {
+  private val HideDelay = 200.millis
 }

@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
              xmlns:app="http://schemas.android.com/apk/res-auto"
     >
 
-    <com.waz.zclient.views.conversationlist.NormalTopToolbar
+    <com.waz.zclient.conversationlist.views.NormalTopToolbar
         android:id="@+id/conversation_list_top_toolbar"
         android:layout_gravity="top"
         android:layout_width="match_parent"
@@ -49,7 +49,7 @@
             android:textSize="@dimen/wire__text_size__small"
             android:gravity="center"
             android:layout_gravity="center_horizontal"
-            app:font="@string/wire__typeface__medium"
+            app:w_font="@string/wire__typeface__medium"
             android:visibility="gone"/>
 
         <com.waz.zclient.ui.text.TypefaceTextView
@@ -63,7 +63,7 @@
             android:layout_gravity="center_horizontal"
             android:textColor="@color/text__primary_dark"
             android:textSize="@dimen/wire__text_size__small"
-            app:font="@string/wire__typeface__light"
+            app:w_font="@string/wire__typeface__light"
             android:visibility="gone"/>
     </LinearLayout>
 
@@ -104,5 +104,35 @@
         android:layout_marginBottom="@dimen/conversation_list__action_view__height"
         android:layout_marginTop="?attr/actionBarSize"
         />
+
+    <LinearLayout
+        android:id="@+id/empty_list_message"
+        android:layout_width="@dimen/empty_list_onboarding_width"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="@dimen/conversation_list__action_view__height"
+        android:visibility="gone"
+        >
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="@dimen/wire__text_size__medium"
+            android:text="@string/no_conversation_in_list__message"
+            android:textColor="@color/white"
+            app:w_font="@string/wire__typeface__light"
+            />
+
+        <ImageView
+            android:id="@+id/empty_list_arrow"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/empty_list_onboarding_arrow_height"
+            android:layout_marginTop="@dimen/wire__padding__big"
+            android:layout_marginBottom="@dimen/wire__padding__big"
+            android:layout_gravity="center_horizontal"/>
+
+    </LinearLayout>
 
 </FrameLayout>

@@ -1,6 +1,6 @@
 /**
   * Wire
-  * Copyright (C) 2017 Wire Swiss GmbH
+  * Copyright (C) 2018 Wire Swiss GmbH
   *
   * This program is free software: you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published by
@@ -32,9 +32,8 @@ import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.zclient.common.views.ChatheadView
-import com.waz.zclient.controllers.global.AccentColorController
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
-import com.waz.zclient.messages.parts.EphemeralDotsDrawable
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.ui.utils.ColorUtils
@@ -44,16 +43,19 @@ import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.{Instant, LocalDateTime, ZoneId}
 
-
 trait MessageViewPart extends View {
   val tpe: MsgPart
   protected val messageAndLikes = Signal[MessageAndLikes]()
   protected val message = messageAndLikes.map(_.message)
   message.disableAutowiring() //important to ensure the signal keeps updating itself in the absence of any listeners
 
-  def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  final def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit =
+    set(msg, part, Some(opts))
+
+  //super must be called!!
+  def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions] = None): Unit =
     messageAndLikes.publish(msg, Threading.Ui)
-  }
+
 
   //By default disable clicks for all view types. There are fewer that need click functionality than those that don't
   this.onClick {}
@@ -107,10 +109,10 @@ trait TimeSeparator extends MessageViewPart with ViewHelper {
 
   text.on(Threading.Ui)(timeText.setTransformedText)
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
     this.time ! msg.message.time
-    unreadDot.show ! opts.isFirstUnread
+    opts.foreach(unreadDot.show ! _.isFirstUnread)
   }
 }
 
@@ -163,6 +165,7 @@ class UserPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
   private val chathead: ChatheadView = findById(R.id.chathead)
   private val tvName: TypefaceTextView = findById(R.id.tvName)
+  private val isBot: TypefaceTextView = findById(R.id.is_bot)
   private val tvStateGlyph: GlyphTextView = findById(R.id.gtvStateGlyph)
 
   private val zms = inject[Signal[ZMessaging]]
@@ -181,6 +184,7 @@ class UserPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
   userId(chathead.setUserId)
 
   user.map(_.getDisplayName).on(Threading.Ui)(tvName.setTransformedText)
+  user.map(_.isWireBot).on(Threading.Ui) { isBot.setVisible }
 
   user.map(_.accent).on(Threading.Ui) { a =>
     tvName.setTextColor(getNameColor(a))
@@ -190,7 +194,7 @@ class UserPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
   stateGlyph.collect { case Some(glyph) => glyph } { tvStateGlyph.setText }
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
     userId ! msg.message.userId
   }
@@ -229,12 +233,8 @@ class EphemeralDotsView(context: Context, attrs: AttributeSet, style: Int) exten
   def this(context: Context) = this(context, null, 0)
 
   override val tpe = MsgPart.EphemeralDots
-  val background = new EphemeralDotsDrawable()
 
-  setBackground(background)
-
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
-    background.setMessage(msg.message.id)
   }
 }

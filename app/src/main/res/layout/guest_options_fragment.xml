@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?wireBackgroundCollection">
+
+    <LinearLayout android:orientation="vertical"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/menu_item_height"
+            android:paddingStart="@dimen/wire__padding__regular"
+            android:paddingEnd="@dimen/wire__padding__regular"
+            android:layout_marginTop="@dimen/participants_options_button_margin_top"
+            style="?wireBackground">
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/guest_toggle_title"
+                android:text="@string/allow_guests"
+                android:layout_gravity="start|center_vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/wire__text_size__regular"
+                app:w_font="@string/wire__typeface__light"
+                android:textColor="?wirePrimaryTextColor"/>
+
+            <android.support.v7.widget.SwitchCompat
+                android:id="@+id/guest_toggle"
+                android:layout_gravity="end|center_vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        </FrameLayout>
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/guest_toggle_description"
+            android:text="@string/open_this_conversation_to_people_outside_your_team"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/wire__padding__regular"
+            android:paddingStart="@dimen/wire__padding__regular"
+            android:paddingEnd="@dimen/wire__padding__regular"
+            android:textColor="?wireSecondaryTextColor"
+            app:w_font="@string/wire__typeface__regular"
+            android:textSize="@dimen/wire__text_size__small"
+            />
+
+        <LinearLayout
+            android:id="@+id/guest_link_options"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_marginTop="@dimen/wire__padding__small">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/wire__divider__height__thin"
+                android:background="?thinDividerColor"
+                android:layout_margin="@dimen/wire__padding__regular"/>
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/wire__padding__regular"
+                android:layout_marginEnd="@dimen/wire__padding__regular"
+                android:layout_marginTop="@dimen/wire__padding__small"
+                android:textAlignment="textStart"
+                android:gravity="center_vertical|start"
+                android:textSize="@dimen/wire__text_size__smaller"
+                android:textColor="?wireSecondaryTextColor"
+                app:w_font="@string/wire__typeface__medium"
+                android:text="@string/invitation_link_title"/>
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/link_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__small"
+                android:layout_marginStart="@dimen/wire__padding__regular"
+                android:layout_marginEnd="@dimen/wire__padding__regular"
+                android:textAlignment="textStart"
+                android:gravity="center_vertical|start"
+                android:textSize="@dimen/wire__text_size__small"
+                android:textColor="?wireSecondaryTextColor"
+                app:w_font="@string/wire__typeface__regular"
+                android:text="@string/invitation_link_description"
+                android:lineSpacingMultiplier="1.1"/>
+
+            <FrameLayout
+                android:id="@+id/link_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__24"
+                android:minHeight="@dimen/menu_item_height"
+                style="?wireBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <com.waz.zclient.ui.text.TypefaceTextView
+                    android:id="@+id/link_button_link_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?wirePrimaryTextColor"
+                    app:w_font="@string/wire__typeface__light"
+                    android:textSize="@dimen/wire__text_size__regular"
+                    android:padding="@dimen/wire__padding__regular"
+                    android:layout_gravity="center"
+                    android:lineSpacingMultiplier="1.1"
+                    android:visibility="gone"/>
+
+                <com.waz.zclient.common.views.MenuRowButton
+                    android:id="@+id/link_button_create_link"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/menu_item_height"
+                    app:buttonTextColor="@color/accent_blue"
+                    app:buttonText="@string/create_link_button"
+                    app:buttonIcon="@string/glyph__link"
+                    />
+
+            </FrameLayout>
+
+            <com.waz.zclient.common.views.MenuRowButton
+                android:id="@+id/copy_link_button"
+                android:layout_marginTop="@dimen/wire__padding__24"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/menu_item_height"
+                app:buttonTextColor="?wirePrimaryTextColor"
+                app:buttonText="@string/copy_link_button"
+                app:buttonIcon="@string/glyph__copy"/>
+
+            <com.waz.zclient.common.views.MenuRowButton
+                android:id="@+id/share_link"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/menu_item_height"
+                app:buttonTextColor="?wirePrimaryTextColor"
+                app:buttonText="@string/share_link_button"
+                app:buttonIcon="@string/glyph__share"/>
+
+            <com.waz.zclient.common.views.MenuRowButton
+                android:id="@+id/revoke_link_button"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/menu_item_height"
+                app:buttonTextColor="@color/accent_red"
+                app:buttonText="@string/revoke_link_button"
+                app:buttonIcon="@string/glyph__close"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>

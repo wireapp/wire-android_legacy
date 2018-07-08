@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,9 +28,8 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import com.waz.api.ImageAsset;
 import com.waz.zclient.R;
-import com.waz.zclient.views.images.ImageAssetView;
+import com.waz.zclient.messages.parts.*;
 
 class CursorImagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -38,6 +37,7 @@ class CursorImagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private static final int VIEW_TYPE_GALLERY = 1;
 
     private Cursor cursor;
+    private int columnIndex;
     private CursorImagesLayout.Callback callback;
     private AdapterCallback adapterCallback;
     private CameraViewHolder cameraViewHolder;
@@ -67,9 +67,9 @@ class CursorImagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         }
 
         @Override
-        public void onPictureTaken(ImageAsset imageAsset) {
+        public void onPictureTaken(byte[] imageData, boolean isMirrored) {
             if (callback != null) {
-                callback.onPictureTaken(imageAsset);
+                callback.onPictureTaken(imageData, isMirrored);
             }
         }
     };
@@ -93,28 +93,44 @@ class CursorImagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         resolver.registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, false, observer);
     }
 
-    private void load() {
-        new AsyncTask<Void, Void, Cursor>() {
-            @Override
-            protected Cursor doInBackground(Void... params) {
-                Cursor c = resolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null, null, null, null);
-                c.moveToLast(); // force cursor loading and move to last, as we are displaying images in reverse order
-                return c;
-            }
 
-            @Override
-            protected void onPostExecute(Cursor c) {
-                if (closed) {
-                    c.close();
-                } else {
-                    if (cursor != null) {
-                        cursor.close();
-                    }
-                    cursor = c;
-                    notifyDataSetChanged();
-                }
+    private static class LoadTask extends AsyncTask<Void, Void, Cursor> {
+        private final CursorImagesAdapter adapter;
+
+        LoadTask(CursorImagesAdapter adapter) {
+            this.adapter = adapter;
+        }
+
+        @Override
+        protected Cursor doInBackground(Void... params) {
+            Cursor c = adapter.resolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null, null, null, null);
+            if (c != null) {
+                c.moveToLast(); // force cursor loading and move to last, as we are displaying images in reverse order
             }
-        } .execute();
+            return c;
+        }
+
+        @Override
+        protected void onPostExecute(Cursor c) {
+            if (adapter.closed) {
+                c.close();
+            } else {
+                if (adapter.cursor != null) {
+                    adapter.cursor.close();
+                }
+                adapter.setCursor(c);
+            }
+        }
+    }
+
+    private void setCursor(Cursor c) {
+        cursor = c;
+        columnIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATA);
+        notifyDataSetChanged();
+    }
+
+    private void load() {
+        new LoadTask(this).execute();
     }
 
     @Override
@@ -126,7 +142,8 @@ class CursorImagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             cameraViewHolder.getLayout().setCallback(cameraCallback);
             return cameraViewHolder;
         } else {
-            return new GalleryItemViewHolder((ImageAssetView) inflater.inflate(R.layout.item_cursor_gallery, parent, false));
+            CursorGalleryItem item = (CursorGalleryItem)inflater.inflate(R.layout.item_cursor_gallery, parent, false);
+            return new GalleryItemViewHolder(item);
         }
     }
 
@@ -134,8 +151,10 @@ class CursorImagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         if (getItemViewType(position) == VIEW_TYPE_GALLERY) {
             cursor.moveToPosition(cursor.getCount() - position);
-            ((GalleryItemViewHolder) holder).setPath(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA)));
-            ((GalleryItemViewHolder) holder).setCallback(callback);
+            ((GalleryItemViewHolder) holder).bind(
+                cursor.getString(columnIndex),
+                callback
+            );
         }
     }
 
@@ -178,7 +197,6 @@ class CursorImagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     public void setCallback(CursorImagesLayout.Callback callback) {
         this.callback = callback;
     }
-
 
     interface AdapterCallback {
         void onCameraPreviewDetached();

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+    <com.waz.zclient.ui.text.GlyphTextView
+        android:id="@+id/icon"
+        android:layout_width="@dimen/user_row_icon_size"
+        android:layout_height="@dimen/user_row_icon_size"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="@dimen/wire__padding__regular"/>
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/wire__padding__regular"
+        android:layout_centerVertical="true"
+        android:layout_toEndOf="@id/icon"
+        app:w_font="@string/wire__typeface__regular"
+        android:textSize="@dimen/wire__text_size__regular"
+        />
+
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="@dimen/progress_spinner_size"
+        android:layout_height="@dimen/progress_spinner_size"
+        android:layout_marginEnd="@dimen/wire__padding__regular"
+        android:layout_marginStart="@dimen/wire__padding__regular"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:visibility="gone"/>
+
+    <View
+        android:id="@+id/divider"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/wire__divider__height__thin"
+        android:layout_alignParentBottom="true"
+        android:layout_toEndOf="@id/icon"
+        android:background="?thinDividerColor"/>
+
+</merge>

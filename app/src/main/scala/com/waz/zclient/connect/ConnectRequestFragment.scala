@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,37 +55,30 @@ class ConnectRequestFragment extends BaseFragment[Container] with FragmentHelper
     (for {
       Some(u) <- scrollToOnOpen
       req     <- adapter.incomingRequests
-    } yield if (req.contains(u)) Some(u) else None).onUi {
-      case Some(u) =>
-        adapter.findPosition(u).foreach { p =>
-          recyclerView.scrollToPosition(p)
-          scrollToOnOpen ! None
-        }
-      case _ => //
+    } yield (u, req)).collect { case (u, req) if req.contains(u) => u } .onUi { u =>
+      adapter.findPosition(u).foreach { p =>
+        recyclerView.scrollToPosition(p)
+        scrollToOnOpen ! None
+      }
     }
 
     scrollToOnOpen ! Try(getArguments.getString(SelectedUser)).toOption.map(UserId)
 
     rootView
   }
-
-  //FIXME - sometimes this is not called by the SecondPageFragment, so the position setting is lost.
-  def setVisibleConnectRequest(userId: UserId) =
-    scrollToOnOpen ! Some(userId)
 }
 
 object ConnectRequestFragment {
-
-  val FragmentTag = classOf[ConnectRequestFragment].getName
+  val Tag = classOf[ConnectRequestFragment].getName
   val SelectedUser = "ARG_SELECTED_USER"
 
   trait Container {
     def dismissInboxFragment(): Unit
   }
 
-  def newInstance(userId: String) = {
+  def newInstance(userId: UserId) = {
     returning(new ConnectRequestFragment) { f =>
-      f.setArguments(returning(new Bundle)(_.putString(SelectedUser, userId)))
+      f.setArguments(returning(new Bundle)(_.putString(SelectedUser, userId.str)))
     }
   }
 

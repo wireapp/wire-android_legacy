@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rounded_corner_background_white_small"
+        android:orientation="horizontal">
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/start_text"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:paddingLeft="@dimen/wire__padding__14"
+            android:paddingRight="@dimen/wire__padding__2"
+            android:textSize="@dimen/wire__text_size__smaller"
+            app:w_font="@string/wire__typeface__light"
+            android:gravity="center"
+            android:visibility="visible"
+            tools:ignore="RtlHardcoded"/>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/hint_text"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/teams_input_box_height"
+                android:gravity="start|center_vertical"
+                android:paddingStart="@dimen/app_entry_input_hint_padding"
+                android:paddingEnd="@dimen/app_entry_input_hint_padding"
+                android:textColor="@color/teams_placeholder_text"
+                android:textSize="@dimen/wire__text_size__smaller"
+                app:w_font="@string/wire__typeface__regular"
+                android:clickable="false"
+                android:focusable="false"
+                />
+
+            <com.waz.zclient.ui.cursor.CursorEditText
+                android:id="@+id/edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/teams_input_box_height"
+                android:background="@null"
+                android:paddingRight="@dimen/wire__padding__regular"
+                android:textColor="@color/teams_headline_text"
+                android:textSize="@dimen/wire__text_size__regular_small"
+                app:w_font="@string/wire__typeface__regular"
+                android:maxLines="1"
+                android:inputType="text"
+                android:textCursorDrawable="@null"
+                android:cursorVisible="true"
+                tools:ignore="RtlHardcoded,RtlSymmetry"/>
+
+            <com.waz.zclient.common.views.GlyphButton
+                android:id="@+id/confirmation_button"
+                android:layout_width="@dimen/app_entry_input_confirm_size"
+                android:layout_height="@dimen/app_entry_input_confirm_size"
+                android:layout_gravity="end|center_vertical"
+                android:text="@string/glyph__next"
+                android:textSize="@dimen/app_entry_input_confirm_glyph_size"
+                android:textColor="@color/white"
+                android:gravity="center"
+                android:layout_marginEnd="@dimen/wire__padding__regular"
+                />
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/error_layout"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/app_entry_input_box_aux_height">
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_marginTop="@dimen/wire__padding__8"
+            android:layout_width="@dimen/progress_spinner_size"
+            android:layout_height="@dimen/progress_spinner_size"
+            android:layout_gravity="center_horizontal|top"/>
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/empty_search_message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/wire__text_size__small"
+            android:textColor="@color/teams_error_red"
+            android:gravity="center"
+            android:layout_gravity="center"
+            app:w_font="@string/wire__typeface__regular"/>
+
+    </FrameLayout>
+
+</LinearLayout>

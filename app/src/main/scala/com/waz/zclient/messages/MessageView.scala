@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,12 +22,11 @@ import android.util.AttributeSet
 import android.view.{HapticFeedbackConstants, ViewGroup}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
-import com.waz.model.ConversationData.ConversationType
-import com.waz.model.{Dim2, MessageData, MessageId}
+import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.RichOption
-import com.waz.zclient.controllers.AssetsController
-import com.waz.zclient.controllers.global.SelectionController
+import com.waz.zclient.common.controllers.AssetsController
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.MessageViewLayout.PartDesc
 import com.waz.zclient.messages.MsgPart._
 import com.waz.zclient.messages.controllers.MessageActionsController
@@ -47,7 +46,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
   def this(context: Context) = this(context, null, 0)
 
   protected val factory = inject[MessageViewFactory]
-  private val selection = inject[SelectionController].messages
+  private val selection = inject[ConversationController].messages
   private lazy val messageActions = inject[MessageActionsController]
   private lazy val assetsController = inject[AssetsController]
 
@@ -79,10 +78,16 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
     msg = mAndL.message
     msgId = msg.id
 
-    val isOneToOne = ConversationType.isOneToOne(opts.convType)
+    import opts._
+    val isOneToOne = !isGroup
 
     val contentParts = {
-      if (msg.msgType == Message.Type.RICH_MEDIA){
+      if (msg.msgType == Message.Type.MEMBER_JOIN && msg.firstMessage) {
+        (if (msg.name.nonEmpty) Seq(PartDesc(ConversationStart)) else Seq.empty) ++
+          (if (msg.members.nonEmpty) Seq(PartDesc(MemberChange)) else Seq.empty) ++
+          (if (canHaveLink) Seq(PartDesc(WirelessLink)) else Seq.empty)
+      }
+      else if (msg.msgType == Message.Type.RICH_MEDIA){
         if (msg.content.size > 1){
           Seq(PartDesc(MsgPart(Message.Type.TEXT, isOneToOne))) ++ (msg.content map { content => PartDesc(MsgPart(content.tpe), Some(content)) }).filter(_.tpe == WebLink)
         } else {
@@ -98,19 +103,16 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
       else {
         val builder = Seq.newBuilder[PartDesc]
 
-        getSeparatorType(msg, prev, opts.isFirstUnread).foreach(sep => builder += PartDesc(sep))
+        getSeparatorType(msg, prev, isFirstUnread).foreach(sep => builder += PartDesc(sep))
 
         if (shouldShowChathead(msg, prev))
           builder += PartDesc(MsgPart.User)
 
-        if (shouldShowInviteBanner(msg, opts)) {
-          builder += PartDesc(MsgPart.InviteBanner)
-        }
         builder ++= contentParts
 
-        if (msg.isEphemeral) {
-          builder += PartDesc(MsgPart.EphemeralDots)
-        }
+//        if (msg.isEphemeral) {
+//          builder += PartDesc(MsgPart.EphemeralDots)
+//        }
 
         if (msg.msgType == Message.Type.ASSET && !areDownloadsAlwaysEnabled)
           builder += PartDesc(MsgPart.WifiWarning)
@@ -154,7 +156,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
   private def systemMessage(m: MessageData) = {
     import Message.Type._
     m.isSystemMessage || (m.msgType match {
-      case OTR_DEVICE_ADDED | OTR_UNVERIFIED | OTR_VERIFIED | STARTED_USING_DEVICE | OTR_MEMBER_ADDED => true
+      case OTR_DEVICE_ADDED | OTR_UNVERIFIED | OTR_VERIFIED | STARTED_USING_DEVICE | OTR_MEMBER_ADDED | MESSAGE_TIMER=> true
       case _ => false
     })
   }
@@ -168,13 +170,10 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
     !knock && !systemMessage(msg) && (recalled || edited || userChanged)
   }
 
-  private def shouldShowInviteBanner(msg: MessageData, opts: MsgBindOptions) =
-    opts.position == 0 && msg.msgType == Message.Type.MEMBER_JOIN && opts.convType == ConversationType.Group
-
   private def shouldShowFooter(mAndL: MessageAndLikes, opts: MsgBindOptions): Boolean = {
     mAndL.likes.nonEmpty ||
       selection.isFocused(mAndL.message.id) ||
-      (opts.isLastSelf && opts.convType != ConversationType.Group) ||
+      (opts.isLastSelf && !opts.isGroup) ||
       mAndL.message.state == Message.Status.FAILED || mAndL.message.state == Message.Status.FAILED_READ
   }
 
@@ -238,9 +237,12 @@ object MessageView {
              Location |
              SoundMedia => FileLike
         case Image | VideoAsset => ImageLike
-        case MsgPart.MemberChange |
-             MsgPart.OtrMessage |
-             MsgPart.Rename => SystemLike
+        case MemberChange |
+             OtrMessage |
+             Rename |
+             WirelessLink |
+             ConversationStart |
+             MessageTimer => SystemLike
         case MsgPart.MissedCall => MissedCall
         case _ => Other
       }
@@ -274,7 +276,7 @@ object MessageView {
     val bottom =
       if (nextTpe.isEmpty)
         MarginRule(bottomPart) match {
-          case SystemLike => 24
+          case SystemLike => 8
           case _ => 0
         }
       else 0
@@ -284,15 +286,15 @@ object MessageView {
 
   // Message properties calculated while binding, may not be directly related to message state,
   // should not be cached in message view as those can be valid only while set method is called
-  case class MsgBindOptions(
-                             position: Int,
-                             isSelf: Boolean,
-                             isLast: Boolean,
-                             isLastSelf: Boolean, // last self message in conv
-                             isFirstUnread: Boolean,
-                             listDimensions: Dim2,
-                             convType: ConversationType
-                       )
+  case class MsgBindOptions(position: Int,
+                            isSelf: Boolean,
+                            isLast: Boolean,
+                            isLastSelf: Boolean, // last self message in conv
+                            isFirstUnread: Boolean,
+                            listDimensions: Dim2,
+                            isGroup: Boolean,
+                            teamId: Option[TeamId],
+                            canHaveLink: Boolean)
 }
 
 

@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,13 +21,13 @@ import com.waz.api.ImageAsset;
 
 public interface IDrawingController {
 
-    enum DrawingDestination {
+    public enum DrawingDestination {
         SINGLE_IMAGE_VIEW,
         CAMERA_PREVIEW_VIEW,
         SKETCH_BUTTON
     }
 
-    enum DrawingMethod {
+    public enum DrawingMethod {
         DRAW,
         EMOJI,
         TEXT
@@ -37,11 +37,11 @@ public interface IDrawingController {
 
     void removeDrawingObserver(DrawingObserver drawingObserver);
 
-    void showDrawing(ImageAsset image, DrawingController.DrawingDestination drawingDestination);
+    void showDrawing(ImageAsset image, IDrawingController.DrawingDestination drawingDestination);
 
-    void showDrawing(ImageAsset image, DrawingController.DrawingDestination drawingDestination, DrawingMethod method);
+    void showDrawing(ImageAsset image, IDrawingController.DrawingDestination drawingDestination, DrawingMethod method);
 
-    void hideDrawing(DrawingController.DrawingDestination drawingDestination, boolean imageSent);
+    void hideDrawing(IDrawingController.DrawingDestination drawingDestination, boolean imageSent);
 
     void tearDown();
 }

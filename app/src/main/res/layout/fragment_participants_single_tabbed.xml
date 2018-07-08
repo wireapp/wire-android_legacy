@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,16 +19,37 @@
 
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:orientation="vertical"
-              android:layout_marginTop="@dimen/participants__otr_device__padding_top"
+              android:gravity="center_horizontal"
     >
+
+    <TextView
+        android:id="@+id/user_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/wire__text_size__medium"
+        android:textColor="?wirePrimaryTextColor"
+        android:visibility="gone"
+        />
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/user_handle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/wire__padding__small"
+        android:textColor="?wireSecondaryTextColor"
+        android:textSize="@dimen/wire__text_size__small"
+        app:w_font="@string/wire__typeface__light"
+        />
 
     <com.waz.zclient.ui.views.tab.TabIndicatorLayout
         android:id="@+id/til_single_participant_tabs"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/wire__padding__regular"
         />
 
     <android.support.v4.view.ViewPager

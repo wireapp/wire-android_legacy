@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,6 @@ case class Singleton[T](fn: () => T) extends (() => T) {
 }
 
 trait Injector { self =>
-
   def binding[T: reflect.Manifest]: Option[() => T]
 
   private[zclient] val head = self

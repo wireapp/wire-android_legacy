@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,42 +19,85 @@
 
 -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
-       xmlns:tools="http://schemas.android.com/tools">
+       xmlns:tools="http://schemas.android.com/tools"
+       xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:gravity="center"
+        android:orientation="vertical"
         tools:ignore="UselessParent">
 
-        <FrameLayout
+        <com.waz.zclient.common.views.ChatheadView
+            android:id="@+id/chathead"
             android:layout_width="@dimen/profile__image__width"
             android:layout_height="@dimen/profile__image__height"
-            >
-
-        <com.waz.zclient.views.images.ImageAssetImageView
-            android:id="@+id/iaiv__single_participant"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="@dimen/wire__padding__tiny"
+            app:show_border="false"
+            app:allow_icon="false"
+            app:is_round="true"
+            app:isSelectable="false"
+            app:show_waiting="false"
+            app:gray_on_unconnected="false"
+            app:initials_font_size="@dimen/participant_initials_text_size"
             />
 
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/participant_guest_indicator"
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/wire__padding__24"/>
+
+        <LinearLayout
+            android:id="@+id/guest_indicator"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:orientation="horizontal"
             android:layout_gravity="bottom|center_horizontal"
-            android:paddingStart="@dimen/wire__padding__small"
-            android:paddingEnd="@dimen/wire__padding__small"
-            android:background="?roundBackgroundDrawable"
-            android:textColor="?wirePrimaryTextColor"
+            android:layout_marginTop="@dimen/wire__padding__8"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/participant_guest_indicator_icon"
+                android:layout_width="@dimen/guest_badge_size"
+                android:layout_height="@dimen/guest_badge_size"
+                android:layout_gravity="center_vertical"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:paddingStart="@dimen/wire__padding__small"
+                android:paddingEnd="@dimen/wire__padding__small"
+                android:textColor="?wirePrimaryTextColor"
+                android:textSize="@dimen/wire__text_size__regular"
+                android:text="@string/participant_tab_guest_indicator_label"
+                app:w_font="@string/wire__typeface__light"/>
+
+        </LinearLayout>
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/expiration_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/wire__padding__small"
+            android:textColor="?wireSecondaryTextColor"
             android:textSize="@dimen/wire__text_size__small"
+            app:w_font="@string/wire__typeface__medium"
+            android:layout_gravity="center_horizontal"
+            />
+
+        <com.waz.zclient.views.ShowAvailabilityView
+            android:id="@+id/participant_availability"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="@dimen/wire__padding__8"
             android:visibility="gone"/>
 
-        </FrameLayout>
+    </LinearLayout>
 
-    </RelativeLayout>
+
 
     <!-- Footer with left & right actions -->
     <com.waz.zclient.views.menus.FooterMenu

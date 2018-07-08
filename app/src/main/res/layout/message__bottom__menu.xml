@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,8 +20,6 @@
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="vertical"
-              android:paddingStart="@dimen/wire__padding__regular"
-              android:paddingEnd="@dimen/wire__padding__regular"
               android:paddingTop="@dimen/wire__padding__small"
               android:paddingBottom="@dimen/wire__padding__small"
               android:layout_width="match_parent"

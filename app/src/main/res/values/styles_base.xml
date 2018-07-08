@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<resources>
+
+    <style name="Toolbar.Button.Navigation.Popup" parent="@style/Widget.AppCompat.Toolbar.Button.Navigation">
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingLeft">@dimen/framework__general__left_padding</item>
+    </style>
+
+    <style name="AnimFadeInZoomOut.Activity" parent="@android:style/Animation.Activity">
+        <item name="android:windowEnterAnimation">@null</item>
+        <item name="android:windowExitAnimation">@null</item>
+    </style>
+
+    <style name="NoItemBorderListview" parent="android:Widget.ListView.DropDown">
+        <item name="android:divider">#000000</item>
+        <item name="android:dividerHeight">0dp</item>
+        <item name="android:paddingLeft">10dp</item>
+        <item name="android:layout_margin">0dp</item>
+        <item name="android:background">#D8000000</item>
+    </style>
+
+    <style name="Widget.Styled.ActionBar" parent="android:Widget.Holo.ActionBar">
+        <item name="android:displayOptions">disableHome</item>
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
+
+    <!-- Dialogs -->
+
+    <style name="message__bottom_sheet__base" parent="Theme.Design.Light.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/message__bottom_sheet__modal__base</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="colorPrimaryDark">@color/transparent</item>
+    </style>
+
+    <style name="message__bottom_sheet__modal__base" parent="Widget.Design.BottomSheet.Modal">
+        <item name="behavior_peekHeight">@dimen/message__bottom__menu__peek_height</item>
+    </style>
+
+    <!-- messageStream -->
+    <style name="message_stream__message__base">
+        <item name="android:textSize">@dimen/wire__text_size__regular</item>
+        <item name="android:lineSpacingExtra">@dimen/content__line_spacing_extra</item>
+    </style>
+
+    <style name="message_stream__separator_name__base">
+        <item name="android:textSize">12sp</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:textColor">@color/text__primary_light</item>
+        <item name="font">@string/wire__typeface__medium</item>
+    </style>
+
+    <style name="message_stream__separator_recalled__base">
+        <item name="android:textSize">@dimen/wire__text_size__tiny</item>
+        <item name="android:paddingStart">@dimen/wire__padding__8</item>
+    </style>
+
+    <style name="message_stream__timestamp__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <style name="message_stream__timestamp_small__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+    </style>
+
+    <style name="message_stream__subtitle__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+    </style>
+
+    <style name="message_stream__subtitle__no_color__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+    </style>
+
+    <style name="message_stream__subtitle_strong__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <style name="message_stream__name_changed__base">
+        <item name="android:textSize">@dimen/wire__text_size__huge</item>
+    </style>
+
+    <style name="message_stream__header__base">
+        <item name="android:layout_height">32dp</item>
+    </style>
+
+    <style name="message_stream__header__text__base">
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="message_stream__header__glyph__base">
+        <item name="android:padding">16dp</item>
+        <item name="android:textSize">16dp</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="message_stream__unsent_indicator__base">
+
+    </style>
+
+    <!-- Conversation toolbar -->
+    <style name="conversation_toolbar__base" parent="@style/Widget.AppCompat.ActionBar">
+        <item name="android:textSize">@dimen/wire__text_size__regular</item>
+        <item name="font">@string/wire__typeface__regular</item>
+    </style>
+
+    <style name="conversation_toolbar_action_mode__base" parent="@style/Widget.AppCompat.ActionMode">
+        <item name="android:textSize">@dimen/wire__text_size__regular</item>
+        <item name="font">@string/wire__typeface__regular</item>
+    </style>
+
+    <!-- Start UI Toolbar -->
+    <style name="start_ui__toolbar__base">
+        <item name="android:textSize">@dimen/wire__text_size__regular</item>
+        <item name="font">@string/wire__typeface__regular</item>
+    </style>
+
+    <!-- Cursor -->
+    <style name="cursor__menu_button__base">
+        <item name="android:textSize">@dimen/cursor_button_text_size</item>
+    </style>
+
+    <style name="cursor__icon_button__base">
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">@dimen/wire__icon_button__text_size</item>
+    </style>
+
+    <style name="cursor__icon_button__people__base" parent="cursor__icon_button__base" />
+
+    <style name="cursor__icon_button__call__base" parent="cursor__icon_button__base" />
+
+    <style name="cursor__icon_button__video__base" parent="cursor__icon_button__base" />
+
+
+    <style name="cursor__edit_text__base">
+        <item name="android:textSize">@dimen/wire__text_size__regular</item>
+    </style>
+
+    <!-- User -->
+    <style name="user__edit_text__base">
+        <item name="android:textSize">@dimen/wire__text_size__regular</item>
+    </style>
+
+    <style name="user__header__base">
+        <item name="android:textSize">@dimen/wire__text_size__regular</item>
+    </style>
+
+    <style name="user__sub_header__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+    </style>
+
+    <style name="user__footer_label__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <style name="user__chathead_label__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:singleLine">true</item>
+    </style>
+
+    <style name="user__strong_label__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:singleLine">true</item>
+    </style>
+
+    <style name="user__otr_header__base">
+        <item name="android:textSize">@dimen/wire__text_size__regular</item>
+        <item name="android:lineSpacingExtra">@dimen/wire__text_spacing__medium</item>
+    </style>
+
+    <style name="user__otr_device__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:lineSpacingExtra">@dimen/wire__text_spacing__medium</item>
+    </style>
+
+    <!-- Common -->
+    <style name="common__icon_button__base">
+        <item name="android:textSize">@dimen/wire__text_size__regular</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="common__small_icon_button__base">
+        <item name="android:textSize">@dimen/wire__icon_button__text_size</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="wire__background__base" />
+    <style name="wire__background_as_text_color__base" />
+
+    <style name="common__strong_background__base" />
+
+    <style name="common__circular_icon_button__green" parent="common__small_icon_button__base">
+        <item name="android:textColor">@color/selector__icon_button__text_color__dark</item>
+        <item name="android:background">@drawable/selector__icon_button__background__green</item>
+    </style>
+
+    <style name="common__circular_icon_button__red" parent="common__small_icon_button__base">
+        <item name="android:textColor">@color/selector__icon_button__text_color__dark</item>
+        <item name="android:background">@drawable/selector__icon_button__background__red</item>
+    </style>
+
+    <!-- Call -->
+    <style name="call__divider__base" />
+
+    <!-- Start UI-->
+    <style name="start_ui__error_label__base">
+        <item name="android:textSize">@dimen/wire__text_size__regular</item>
+    </style>
+
+    <style name="start_ui__error_sublabel__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <style name="start_ui__error_icon__base">
+        <item name="android:textSize">@dimen/wire__icon_button__text_size</item>
+    </style>
+
+    <style name="start_ui__search_field__base">
+        <item name="android:textSize">@dimen/wire__text_size__regular</item>
+    </style>
+
+    <style name="start_ui__close_button__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+    </style>
+
+    <style name="start_ui__user_row__label__base">
+        <item name="android:textSize">@dimen/wire__text_size__regular</item>
+    </style>
+
+    <style name="start_ui__header_row__label__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <style name="common__divider__base" />
+
+    <style name="common__tab_indicator_label__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <!-- Media Player -->
+    <style name="media_player__title__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:singleLine">true</item>
+    </style>
+
+    <style name="media_player__sub_title__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:singleLine">true</item>
+    </style>
+
+    <!-- Pick User -->
+    <style name="pickuser__add_button__base">
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/text__primary_dark</item>
+    </style>
+
+
+    <!-- Calling -->
+    <style name="calling__chathead_initials__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="calling__chathead_footer__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="calling__controls__button_label__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:textColor">@color/text__primary_dark</item>
+    </style>
+
+    <!-- OTR -->
+    <style name="otr_client__link__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="otr_client__text__base">
+        <item name="android:textSize">@dimen/wire__text_size__regular</item>
+    </style>
+
+    <style name="otr_client__id__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+    </style>
+
+    <style name="otr_switch__base">
+    </style>
+    <style name="otr_switch_text__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:layout_marginLeft">@dimen/wire__padding__regular</item>
+        <item name="font">@string/wire__typeface__medium</item>
+        <item name="android:layout_gravity">center_vertical</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <style name="otr_added_new_device_message__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+    </style>
+
+    <style name="audio_message_duration__base">
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+    </style>
+
+    <!-- Giphy -->
+    <style name="giphy_control_button__base">
+        <item name="android:textSize">@dimen/giphy_preview__header_icons_size</item>
+        <item name="android:padding">@dimen/giphy_preview__header_icons_padding</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="giphy_text__base">
+        <item name="android:layout_gravity">center</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">@dimen/sharing__image_preview__title__fontsize</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <style name="giphy_conversation__base" parent="giphy_text__base">
+        <item name="font">@string/wire__typeface__medium</item>
+    </style>
+
+    <style name="giphy_keyword__base" parent="giphy_text__base">
+        <item name="font">@string/wire__typeface__light</item>
+    </style>
+
+    <style name="giphy_error__base">
+        <item name="android:layout_gravity">center</item>
+        <item name="android:layout_marginLeft">@dimen/framework__general__left_padding</item>
+        <item name="android:layout_marginRight">@dimen/framework__general__left_padding</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">@dimen/framework_confirmation_menu_button_font_size</item>
+        <item name="font">@string/wire__typeface__light</item>
+    </style>
+
+    <style name="typing_indicator_box_base">
+        <item name="android:layoutDirection">ltr</item>
+    </style>
+
+    <style name="typing_indicator_text_base">
+        <item name="android:ellipsize">end</item>
+        <item name="android:textSize">@dimen/wire__text_size__small</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <style name="sketch_toolbar" parent="@style/Widget.AppCompat.ActionBar">
+        <item name="android:textSize">@dimen/wire__text_size__regular</item>
+        <item name="font">@string/wire__typeface__regular</item>
+        <item name="android:background">@drawable/toolbar_selectable_background__light</item>
+        <item name="android:textColor">@color/wire__text_color_primary_light_selector</item>
+        <item name="titleTextColor">@color/wire__text_color_primary_light_selector</item>
+    </style>
+
+    <style name="Theme.Dark.Dialog" parent="Theme.AppCompat.Dialog">
+        <item name="colorPrimary">@color/dark_theme_primary</item>
+        <item name="colorPrimaryDark">@color/dark_theme_primary_dark</item>
+        <item name="colorAccent">@color/light_theme_primary</item>
+    </style>
+
+    <style name="Theme.Dark.Dialog.Alert" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="colorPrimary">@color/dark_theme_primary</item>
+        <item name="colorPrimaryDark">@color/dark_theme_primary_dark</item>
+        <item name="colorAccent">@color/light_theme_primary</item>
+    </style>
+
+    <style name="Theme.Light.Dialog" parent="Theme.AppCompat.Light.Dialog">
+        <item name="colorPrimary">@color/light_theme_primary</item>
+        <item name="colorPrimaryDark">@color/light_theme_primary_dark</item>
+        <item name="colorAccent">@color/graphite</item>
+    </style>
+
+    <style name="Theme.Light.Dialog.Alert" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="colorPrimary">@color/light_theme_primary</item>
+        <item name="colorPrimaryDark">@color/light_theme_primary_dark</item>
+        <item name="colorAccent">@color/graphite</item>
+    </style>
+
+    <style name="Theme.Light.Dialog.Alert.Destructive" parent="Theme.Light.Dialog.Alert">
+        <item name="colorPrimary">@color/light_theme_primary</item>
+        <item name="colorPrimaryDark">@color/light_theme_primary_dark</item>
+        <item name="colorAccent">@color/accent_red</item>
+    </style>
+
+    <style name="PreferenceTheme.Dialog" parent="Theme.Dark.Dialog">
+        <item name="colorPrimary">@color/dark_theme_preferences_primary</item>
+    </style>
+
+    <style name="PreferenceTheme.Dialog.Alert" parent="Theme.Dark.Dialog.Alert">
+        <item name="colorPrimary">@color/dark_theme_preferences_primary</item>
+    </style>
+
+    <style name="NumberPickerText">
+        <item name="android:textSize">@dimen/wire__text_size__medium</item>
+        <item name="android:textColorPrimary">@color/text__primary_dark</item>
+    </style>
+
+</resources>

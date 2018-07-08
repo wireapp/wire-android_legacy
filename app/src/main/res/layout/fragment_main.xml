@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,11 +24,6 @@
         android:layout_height="match_parent"
 
     >
-    <com.waz.zclient.views.BackgroundImageView
-        android:id="@+id/bl__background"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
     <!--
         the main container holding
         pager and conversation detail views

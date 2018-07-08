@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,12 +20,8 @@
 -->
 <com.waz.zclient.messages.parts.LocationPartView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/message_location"
     android:layout_width="@dimen/content__width"
     android:layout_height="wrap_content"
     android:layout_gravity="center"
-    android:layout_marginStart="@dimen/content__padding_left"
-    app:cardCornerRadius="@dimen/content__card__corner_radius"
-    app:cardElevation="0dp"
     />

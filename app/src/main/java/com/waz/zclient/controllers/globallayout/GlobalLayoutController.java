@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +37,13 @@ public class GlobalLayoutController implements IGlobalLayoutController {
     private View globalLayout;
     private Activity activity;
 
-    private ViewTreeObserver.OnGlobalLayoutListener globalLayoutListener;
+    private final ViewTreeObserver.OnGlobalLayoutListener globalLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
+        @Override
+        public void onGlobalLayout() {
+            keyboardListener.onLayoutChange();
+        }
+    };
+
     private KeyboardVisibilityListener keyboardListener;
 
     private KeyboardVisibilityListener.Callback keyboardCallback = new KeyboardVisibilityListener.Callback() {
@@ -53,12 +59,6 @@ public class GlobalLayoutController implements IGlobalLayoutController {
     };
 
     public GlobalLayoutController() {
-        globalLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                keyboardListener.onLayoutChange();
-            }
-        };
     }
 
     @Override
@@ -74,10 +74,11 @@ public class GlobalLayoutController implements IGlobalLayoutController {
             keyboardListener = null;
         }
         globalLayout = view;
+        globalLayout.getViewTreeObserver().addOnGlobalLayoutListener(globalLayoutListener);
+
         // Listen to layout changes to determine when keyboard becomes visible / hidden
         keyboardListener = new KeyboardVisibilityListener(view);
         keyboardListener.setCallback(keyboardCallback);
-        globalLayout.getViewTreeObserver().addOnGlobalLayoutListener(globalLayoutListener);
     }
 
     @Override
@@ -152,7 +153,7 @@ public class GlobalLayoutController implements IGlobalLayoutController {
                 break;
             case ARCHIVE:
             case CONVERSATION_LIST:
-                softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN;
+                softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
                 break;
             case PARTICIPANT:
                 softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN;

@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,10 +39,13 @@ public class ShareSavedImageActivity extends BaseActivity {
             return;
         }
 
-        URI sharedImageUri = new AndroidURI((Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM));
-        if (sharedImageUri == null) {
+        URI sharedImageUri;
+        Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+        if (uri == null) {
             finish();
             return;
+        } else {
+            sharedImageUri = new AndroidURI(uri);
         }
 
         injectJava(ImageNotificationsController.class).dismissImageSavedNotification();

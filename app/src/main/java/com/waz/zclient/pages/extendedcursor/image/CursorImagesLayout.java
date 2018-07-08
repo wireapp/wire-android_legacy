@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,8 @@ import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.FrameLayout;
-import com.waz.api.ImageAsset;
+
+import com.waz.utils.wrappers.URI;
 import com.waz.zclient.R;
 import com.waz.zclient.ui.animation.interpolators.penner.Quint;
 import com.waz.zclient.utils.ViewUtils;
@@ -159,10 +160,10 @@ public class CursorImagesLayout extends FrameLayout implements View.OnClickListe
 
         void openVideo();
 
-        void onGalleryPictureSelected(ImageAsset asset);
+        void onGalleryPictureSelected(URI uri);
 
         void openGallery();
 
-        void onPictureTaken(ImageAsset imageAsset);
+        void onPictureTaken(byte[] imageData, boolean isMirrored);
     }
 }

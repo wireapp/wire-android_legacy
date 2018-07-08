@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -122,7 +122,7 @@ public class ConfirmationFragment extends BaseFragment<ConfirmationFragment.Cont
     }
 
     @Override
-    public void onAccentColorHasChanged(Object sender, int color) {
+    public void onAccentColorHasChanged(int color) {
         confirmationMenu.setButtonColor(color);
     }
 

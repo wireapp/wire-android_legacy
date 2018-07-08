@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2017 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
             android:orientation="vertical"
             >
 
-            <com.waz.zclient.pages.main.profile.preferences.views.SwitchPreference
+            <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_contacts"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -52,7 +52,7 @@
                 android:paddingEnd="@dimen/wire__padding__16"
                 android:textColor="@color/accent_blue"/>
 
-            <com.waz.zclient.pages.main.profile.preferences.views.SwitchPreference
+            <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_vbr"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -69,14 +69,14 @@
                 android:paddingEnd="@dimen/wire__padding__16"
                 android:textColor="@color/accent_blue"/>
 
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+            <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preferences_sounds"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 app:title="@string/pref_options_sounds_title"
                 />
 
-            <com.waz.zclient.pages.main.profile.preferences.views.SwitchPreference
+            <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_vibration"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
@@ -92,21 +92,21 @@
                 android:paddingEnd="@dimen/wire__padding__16"
                 android:textColor="@color/accent_blue"/>
 
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+            <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preference_sounds_ringtone"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 app:title="@string/pref_options_ringtones_ringtone_title"
                 />
 
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+            <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preference_sounds_text"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 app:title="@string/pref_options_ringtones_text_title"
                 />
 
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+            <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preference_sounds_ping"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
@@ -122,14 +122,14 @@
                 android:text="@string/pref_options_requested_category_title"
                 android:textColor="@color/accent_blue"/>
 
-            <com.waz.zclient.pages.main.profile.preferences.views.SwitchPreference
+            <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_dark_theme"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 app:title="@string/pref_options_dark_theme_title"
                 />
 
-            <com.waz.zclient.pages.main.profile.preferences.views.SwitchPreference
+            <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_send_button"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
@@ -146,7 +146,7 @@
                 android:text="@string/pref_options_media_category_title"
                 android:textColor="@color/accent_blue"/>
 
-            <com.waz.zclient.pages.main.profile.preferences.views.SwitchPreference
+            <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_options_image_download"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"

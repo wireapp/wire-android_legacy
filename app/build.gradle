@@ -1,6 +1,6 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
 apply plugin: 'jp.leafytree.android-scala'
-apply plugin: 'android-apt'
 apply plugin: 'hugo'
 apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
 apply from: 'config/quality.gradle'
@@ -92,133 +92,76 @@ android {
         }
     }
 
+    flavorDimensions "default"
+
     productFlavors {
         dev {
-            minSdkVersion 21
             applicationId "com.waz.zclient.dev"
             versionName majorVersion + android.defaultConfig.versionCode + "-dev"
             manifestPlaceholders = [applicationLabel       : "Wire Dev",
-                                    allowBackup            : "true",
                                     applicationIcon        : "@drawable/ic_launcher_wire_dev",
                                     sharedUserId           : "",
-                                    use_audio_link         : "false",
                                     internal_features      : "true",
-                                    localyticsAppKey       : getApiKey("localyticsAppKey"),
                                     hockeyAppKey           : getApiKey("hockeyAppKey")]
 
-            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE', 'true'
-            buildConfigField 'boolean', 'SHOW_GRIDOVERLAY', 'true'
-            buildConfigField 'boolean', 'SHOW_DEVELOPER_OPTIONS', 'true'
-            buildConfigField 'boolean', 'IS_LOADTIME_LOGGER_ENABLED', 'true'
-            buildConfigField 'boolean', 'SHOW_TEST_COUNTRY_CODE', 'true'
-            buildConfigField 'boolean', 'IS_TEST_GALLERY_ALLOWED', 'true'
-            buildConfigField 'boolean', 'SHOW_BACKEND_PICKER', 'true'
-            buildConfigField 'boolean', 'DISABLE_TRACKING_KEEP_LOGGING', 'true'
-            buildConfigField 'int', 'LOG_LEVEL_UI', logLevelWarn()
-            buildConfigField 'int', 'LOG_LEVEL_SE', logLevelSupress()
-            buildConfigField 'int', 'LOG_LEVEL_AVS', logLevelVerbose()
+            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE',             'true'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
+            buildConfigField 'String',  'MIXPANEL_APP_TOKEN',            "\"${getApiKey("mixpanelAppTokenInternal")}\""
         }
 
         candidate {
             applicationId "com.wire.candidate"
             versionName majorVersion + android.defaultConfig.versionCode + "-candidate"
             manifestPlaceholders = [applicationLabel       : "Wire Candidate",
-                                    allowBackup            : "true",
                                     applicationIcon        : "@drawable/ic_launcher_wire_candidate",
                                     sharedUserId           : "",
-                                    use_audio_link         : "false",
                                     internal_features      : "false",
-                                    localyticsAppKey       : getApiKey("localyticsAppKey"),
                                     hockeyAppKey           : getApiKey("hockeyAppKeyCand")]
 
-            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE', 'true'
-            buildConfigField 'boolean', 'SHOW_GRIDOVERLAY', 'true'
-            buildConfigField 'boolean', 'SHOW_DEVELOPER_OPTIONS', 'true'
-            buildConfigField 'boolean', 'IS_LOADTIME_LOGGER_ENABLED', 'true'
-            buildConfigField 'boolean', 'SHOW_TEST_COUNTRY_CODE', 'true'
-            buildConfigField 'boolean', 'SHOW_ADDRESS_BOOK_INVITATIONS', 'false'
-            buildConfigField 'boolean', 'IS_TEST_GALLERY_ALLOWED', 'true'
-            buildConfigField 'boolean', 'SHOW_BACKEND_PICKER', 'true'
-            buildConfigField 'boolean', 'DISABLE_TRACKING_KEEP_LOGGING', 'true'
-            buildConfigField 'int', 'LOG_LEVEL_UI', logLevelVerbose()
-            buildConfigField 'int', 'LOG_LEVEL_SE', logLevelVerbose()
-            buildConfigField 'int', 'LOG_LEVEL_AVS', logLevelVerbose()
+            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE',             'true'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
+            buildConfigField 'String',  'MIXPANEL_APP_TOKEN',            "\"${getApiKey("mixpanelAppTokenInternal")}\""
         }
 
         prod {
             applicationId "com.wire"
             manifestPlaceholders = [applicationLabel       : "@string/app_name",
-                                    allowBackup            : "false",
                                     applicationIcon        : "@drawable/ic_launcher_wire",
                                     sharedUserId           : "com.waz.userid",
                                     internal_features      : "false",
-                                    use_audio_link         : "false",
-                                    localyticsAppKey       : getApiKey("localyticsAppKeyProd"),
                                     hockeyAppKey           : getApiKey("hockeyAppKeyProd")]
 
-            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE', 'false'
-            buildConfigField 'boolean', 'SHOW_GRIDOVERLAY', 'false'
-            buildConfigField 'boolean', 'SHOW_DEVELOPER_OPTIONS', 'false'
-            buildConfigField 'boolean', 'IS_LOADTIME_LOGGER_ENABLED', 'false'
-            buildConfigField 'boolean', 'SHOW_TEST_COUNTRY_CODE', 'false'
-            buildConfigField 'boolean', 'IS_TEST_GALLERY_ALLOWED', 'false'
-            buildConfigField 'boolean', 'SHOW_BACKEND_PICKER', 'false'
-            buildConfigField 'boolean', 'DISABLE_TRACKING_KEEP_LOGGING', 'false'
-            buildConfigField 'int', 'LOG_LEVEL_UI', logLevelSupress()
-            buildConfigField 'int', 'LOG_LEVEL_SE', logLevelSupress()
-            buildConfigField 'int', 'LOG_LEVEL_AVS', logLevelSupress()
+            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE',             'false'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'false'
+            buildConfigField 'String',  'MIXPANEL_APP_TOKEN',            "\"${getApiKey("mixpanelAppTokenProd")}\""
         }
 
         internal {
             applicationId "com.wire.internal"
             versionName majorVersion + android.defaultConfig.versionCode + "-internal"
             manifestPlaceholders = [applicationLabel : "Wire Internal",
-                                    allowBackup      : "false",
                                     applicationIcon  : "@drawable/ic_launcher_wire_internal",
                                     sharedUserId     : "",
-                                    use_audio_link   : "false",
-                                    gcm_enabled      : "false",
                                     internal_features: "true",
-                                    localyticsAppKey : getApiKey("localyticsAppKey"),
                                     hockeyAppKey     : getApiKey("hockeyAppKeyInternal")]
 
-            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE', 'false'
-            buildConfigField 'boolean', 'SHOW_GRIDOVERLAY', 'false'
-            buildConfigField 'boolean', 'SHOW_DEVELOPER_OPTIONS', 'true'
-            buildConfigField 'boolean', 'IS_LOADTIME_LOGGER_ENABLED', 'false'
-            buildConfigField 'boolean', 'SHOW_TEST_COUNTRY_CODE', 'true'
-            buildConfigField 'boolean', 'SHOW_ADDRESS_BOOK_INVITATIONS', 'false'
-            buildConfigField 'boolean', 'IS_TEST_GALLERY_ALLOWED', 'true'
-            buildConfigField 'boolean', 'SHOW_BACKEND_PICKER', 'true'
-            buildConfigField 'boolean', 'DISABLE_TRACKING_KEEP_LOGGING', 'false'
-            buildConfigField 'int', 'LOG_LEVEL_UI', logLevelVerbose()
-            buildConfigField 'int', 'LOG_LEVEL_SE', logLevelVerbose()
-            buildConfigField 'int', 'LOG_LEVEL_AVS', logLevelVerbose()
+            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE',             'false'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
+            buildConfigField 'String',  'MIXPANEL_APP_TOKEN',            "\"${getApiKey("mixpanelAppTokenInternal")}\""
         }
 
         avs {
             applicationId "com.wire.avs"
             versionName majorVersion + android.defaultConfig.versionCode + "-avs"
             manifestPlaceholders = [applicationLabel       : "Wire AVS",
-                                    allowBackup            : "true",
                                     applicationIcon        : "@drawable/ic_launcher_wire_playground",
                                     sharedUserId           : "",
-                                    use_audio_link         : "false",
                                     internal_features      : "true",
-                                    localyticsAppKey       : getApiKey("localyticsAppKey"),
                                     hockeyAppKey           : getApiKey("hockeyAppKeyAvs")]
 
-            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE', 'true'
-            buildConfigField 'boolean', 'SHOW_GRIDOVERLAY', 'true'
-            buildConfigField 'boolean', 'SHOW_DEVELOPER_OPTIONS', 'true'
-            buildConfigField 'boolean', 'IS_LOADTIME_LOGGER_ENABLED', 'false'
-            buildConfigField 'boolean', 'SHOW_TEST_COUNTRY_CODE', 'false'
-            buildConfigField 'boolean', 'IS_TEST_GALLERY_ALLOWED', 'false'
-            buildConfigField 'boolean', 'SHOW_BACKEND_PICKER', 'true'
-            buildConfigField 'boolean', 'DISABLE_TRACKING_KEEP_LOGGING', 'false'
-            buildConfigField 'int', 'LOG_LEVEL_UI', logLevelSupress()
-            buildConfigField 'int', 'LOG_LEVEL_SE', logLevelVerbose()
-            buildConfigField 'int', 'LOG_LEVEL_AVS', logLevelVerbose()
+            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE',             'true'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
+            buildConfigField 'String',  'MIXPANEL_APP_TOKEN',            'null'
         }
 
         qa {
@@ -226,51 +169,28 @@ android {
             applicationId "com.wire.qa"
             versionName majorVersion + android.defaultConfig.versionCode + "-qa"
             manifestPlaceholders = [applicationLabel       : "Wire QA",
-                                    allowBackup            : "true",
                                     applicationIcon        : "@drawable/ic_launcher_wire_qa",
                                     sharedUserId           : "",
-                                    use_audio_link         : "false",
                                     internal_features      : "true",
-                                    localyticsAppKey       : getApiKey("localyticsAppKey"),
                                     hockeyAppKey           : getApiKey("hockeyAppKeyQa")]
 
-            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE', 'true'
-            buildConfigField 'boolean', 'SHOW_GRIDOVERLAY', 'true'
-            buildConfigField 'boolean', 'SHOW_DEVELOPER_OPTIONS', 'true'
-            buildConfigField 'boolean', 'IS_LOADTIME_LOGGER_ENABLED', 'false'
-            buildConfigField 'boolean', 'SHOW_TEST_COUNTRY_CODE', 'true'
-            buildConfigField 'boolean', 'SHOW_ADDRESS_BOOK_INVITATIONS', 'false'
-            buildConfigField 'boolean', 'IS_TEST_GALLERY_ALLOWED', 'true'
-            buildConfigField 'boolean', 'SHOW_BACKEND_PICKER', 'true'
-            buildConfigField 'boolean', 'DISABLE_TRACKING_KEEP_LOGGING', 'true'
-            buildConfigField 'int', 'LOG_LEVEL_UI', logLevelVerbose()
-            buildConfigField 'int', 'LOG_LEVEL_SE', logLevelVerbose()
-            buildConfigField 'int', 'LOG_LEVEL_AVS', logLevelVerbose()
+            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE',             'true'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
+            buildConfigField 'String',  'MIXPANEL_APP_TOKEN',            "\"${getApiKey("mixpanelAppTokenInternal")}\""
         }
 
         experimental {
             applicationId "com.wire.x"
             versionName majorVersion + android.defaultConfig.versionCode + "-exp"
             manifestPlaceholders = [applicationLabel       : "Wire Exp",
-                                    allowBackup            : "true",
                                     applicationIcon        : "@drawable/ic_launcher_wire_playground",
                                     sharedUserId           : "",
-                                    use_audio_link         : "false",
                                     internal_features      : "true",
-                                    localyticsAppKey       : getApiKey("localyticsAppKey"),
                                     hockeyAppKey           : getApiKey("hockeyAppKeyExperimental")]
 
-            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE', 'true'
-            buildConfigField 'boolean', 'SHOW_GRIDOVERLAY', 'true'
-            buildConfigField 'boolean', 'SHOW_DEVELOPER_OPTIONS', 'true'
-            buildConfigField 'boolean', 'IS_LOADTIME_LOGGER_ENABLED', 'true'
-            buildConfigField 'boolean', 'SHOW_TEST_COUNTRY_CODE', 'true'
-            buildConfigField 'boolean', 'IS_TEST_GALLERY_ALLOWED', 'true'
-            buildConfigField 'boolean', 'SHOW_BACKEND_PICKER', 'true'
-            buildConfigField 'boolean', 'DISABLE_TRACKING_KEEP_LOGGING', 'false'
-            buildConfigField 'int', 'LOG_LEVEL_UI', logLevelVerbose()
-            buildConfigField 'int', 'LOG_LEVEL_SE', logLevelVerbose()
-            buildConfigField 'int', 'LOG_LEVEL_AVS', logLevelVerbose()
+            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE',             'true'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
+            buildConfigField 'String',  'MIXPANEL_APP_TOKEN',            'null'
         }
     }
 
@@ -278,6 +198,7 @@ android {
     sourceSets {
         androidTest {
             java.srcDirs += ['build/generated/source/apt/androidTest/dev/debug']
+            java.srcDirs += ['src/androidTest/kotlin']
         }
 
         test {
@@ -303,84 +224,109 @@ dexinfo {
 }
 
 dependencies {
-    compile project(':wire-core')
-    compile project(':wire-ui')
-    compile project(':lintlib')
-    compile project(':macrosupport')
-
-//    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile deps.scala
-    provided deps.scalaReflect
-    compile deps.multidex
-    compile deps.supportv4
-    compile deps.supportv13
-    compile deps.supportdesign
-    compile deps.appcompatv7
-    compile deps.supportannotations
-    compile deps.recyclerview
-    compile deps.threetenabp
-    compile deps.hockey
-    compile deps.audioNotifications
-    compile deps.localytics
-    compile deps.rebound
-
+    implementation project(':lintlib')
+    //    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation deps.scala
+    compileOnly deps.scalaReflect
+    implementation deps.kotlin
+    implementation deps.multidex
+    implementation deps.timber
+    implementation deps.supportv4
+    implementation deps.supportv13
+    implementation deps.supportdesign
+    implementation deps.appcompatv7
+    implementation deps.supportannotations
+    implementation deps.recyclerview
+    implementation deps.threetenabp
+    implementation deps.hockey
+    implementation deps.audioNotifications
+    implementation deps.mixpanel
+    implementation deps.rebound
+    implementation deps.preferences
+    implementation deps.commonmark
+    implementation(deps.supportpreferences) {
+        exclude group: 'com.android.support', module: 'appcompat-v7'
+    }
+    implementation deps.gridlayout
     //noinspection GradleDynamicVersion
-    compile deps.psBase
-    compile deps.fcm
-    compile deps.psMaps
-    compile deps.psLocation
-    compile deps.cardview
-
-    devCompile deps.stetho
-    experimentalCompile deps.stetho
-    qaCompile deps.stetho
-
-    // For using local files in app/libs
-    //compile (name:'avs', ext:'aar')
-    //compile (name:'audio-notifications', ext:'aar')
-    //compile (name:'zmessaging-android', ext:'aar')
-
+    implementation deps.psBase
+    implementation deps.fcm
+    implementation deps.psMaps
+    implementation deps.psLocation
+    implementation deps.cardview
+    //Be careful not to include in production!!
+    devImplementation deps.stetho
+    experimentalImplementation deps.stetho
+    qaImplementation deps.stetho
+    internalImplementation deps.stetho
     // Test dependencies
-    testCompile deps.junit
-    testCompile(deps.testutils) {
+    testImplementation deps.junit
+    testImplementation(deps.testutils) {
         exclude module: 'aspectjrt'
         exclude module: 'isoparser'
         exclude module: 'zmessaging-android'
     }
-    testCompile(deps.scalatest) {
+    testImplementation(deps.scalatest) {
         exclude module: 'scala-library'
     }
-    testCompile deps.espressoIntents
-    testCompile deps.hamcrestCore
-    testCompile deps.hamcrestLib
-    testCompile deps.hamcrestIntegration
-    testCompile deps.mockitoCore
-    testCompile deps.espresso
-    testCompile deps.supportannotations
-
+    testImplementation deps.espressoIntents
+    testImplementation deps.hamcrestCore
+    testImplementation deps.hamcrestLib
+    testImplementation deps.hamcrestIntegration
+    testImplementation deps.mockitoCore
+    testImplementation deps.espresso
+    testImplementation deps.supportannotations
     //AndroidTest dependencies
-    androidTestCompile fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestCompile deps.junit
-    androidTestCompile deps.espressoIntents
-    androidTestCompile deps.testRunner
-    androidTestCompile deps.testRules
-    androidTestCompile deps.espresso
-    androidTestCompile deps.supportannotations
-    androidTestCompile deps.mockitoCore
-    androidTestCompile deps.dexmaker
-    androidTestCompile deps.dexmakerDx
-    androidTestCompile deps.dexmakerMockito
-
+    androidTestImplementation fileTree(include: ['*.jar'], dir: 'libs')
+    androidTestImplementation deps.junit
+    androidTestImplementation deps.espressoIntents
+    androidTestImplementation deps.testRunner
+    androidTestImplementation deps.testRules
+    androidTestImplementation deps.espresso
+    androidTestImplementation deps.supportannotations
+    androidTestImplementation deps.mockitoCore
+    androidTestImplementation deps.dexmaker
+    androidTestImplementation deps.dexmakerDx
+    androidTestImplementation deps.dexmakerMockito
     //Translations
-    compile deps.translations
-    compile deps.jna
+    implementation deps.translations
+    implementation deps.jna
+    // TODO  Nasty hack to be able to build add only one wire-core flavor to the build
+    // TODO  (I know, it sucks, will think of a better way to do this, and we need this
+    // TODO   when there are different SE APIs in dev vs internal/prod)
+    boolean internal = true
+    for (String taskName : gradle.startParameter.taskNames) {
+        if (taskName.contains("Prod") || taskName.contains("Candidate")) {
+            internal = false;
+            break;
+        }
+    }
+    // For using local files in app/libs
+    //implementation (name:'avs', ext:'aar')
+    //implementation (name:'audio-notifications', ext:'aar')
+    //implementation (name:'zmessaging-android', ext:'aar')
+    implementation "$avsGroup:$avsName:${internal ? avsInternalVersion : avsVersion}"
+    implementation("com.wire:zmessaging-android:${internal ? zMessagingDevVersion : zMessagingReleaseVersion}") {
+        transitive = true
+    }
+    ScalaCompileOptions.metaClass.daemonServer = true
+    ScalaCompileOptions.metaClass.fork = true
+    ScalaCompileOptions.metaClass.useAnt = false
+    ScalaCompileOptions.metaClass.useCompileDaemon = false
 }
 
 tasks.withType(ScalaCompile) {
-    scalaCompileOptions.additionalParameters = ["-feature", "-target:jvm-1.7", "-Xfuture", "-deprecation", "-Yinline-warnings", "-Ywarn-unused-import", "-encoding", "UTF-8"]
+    scalaCompileOptions.additionalParameters = [
+        "-feature",
+        "-Xfuture",
+        "-Xfatal-warnings",
+        "-deprecation",
+        "-Ywarn-unused-import",
+        "-encoding",
+        "UTF-8"]
 }
 
-def getDate() {
+static def getDate() {
     def date = new Date()
     def formattedDate = date.format('MM/dd HH:mm:ss')
     return formattedDate
@@ -391,26 +337,12 @@ def getApiKey(String property) {
         Properties properties = new Properties()
         properties.load(new FileInputStream("$projectDir/api-keys.properties"))
         return properties.getProperty(property)
-    } else if (property.startsWith("localytics")) {
-        return "00000000000000000000000-00000000-0000-0000-0000-000000000000"
+    } else if (property.startsWith("mixpanel")) {
+        return ""
     } else {
-        return java.util.UUID.randomUUID().toString().replaceAll("-", "")
+        return UUID.randomUUID().toString().replaceAll("-", "")
     }
 }
-
-// Same values as in log_levels.xml
-// (workaround for R not being available in BuildConfig for test flavor)
-def logLevelVerbose() { return '2' }
-
-def logLevelDebug() { return '3' }
-
-def logLevelInfo() { return '4' }
-
-def logLevelWarn() { return '5' }
-
-def logLevelError() { return '6' }
-
-def logLevelSupress() { return '99' }
 
 //add pretty naming to apk filename
 android.applicationVariants.all { variant ->
@@ -425,6 +357,7 @@ android.applicationVariants.all { variant ->
     variant.outputs.each { output ->
         def newApkName
         newApkName = "${appName}-${output.baseName}-${rootProject.ext.majorVersion}${android.defaultConfig.versionCode}.apk"
-        output.outputFile = new File(output.outputFile.parent, newApkName)
+
+        output.outputFileName = new File("../..", newApkName)
     }
 }

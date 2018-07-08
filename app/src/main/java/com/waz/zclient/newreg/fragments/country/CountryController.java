@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -124,7 +124,7 @@ public class CountryController {
     public List<Country> getSortedCountries() {
         ArrayList<Country> countries = new ArrayList<>(abbreviationToCountryMap.values());
         Collections.sort(countries);
-        if (BuildConfig.SHOW_TEST_COUNTRY_CODE) {
+        if (BuildConfig.DEVELOPER_FEATURES_ENABLED) {
             Country qaShortcut = new Country();
             qaShortcut.setAbbreviation("QA-code");
             qaShortcut.setName("QA-Shortcut");

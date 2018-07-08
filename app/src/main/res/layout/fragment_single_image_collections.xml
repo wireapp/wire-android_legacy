@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@
         android:layout_weight="1"
         />
 
-    <com.waz.zclient.views.SingleImageViewToolbar
+    <com.waz.zclient.collection.views.SingleImageViewToolbar
         android:layout_width="match_parent"
         android:layout_height="@dimen/collections__header_height"
         android:orientation="horizontal"

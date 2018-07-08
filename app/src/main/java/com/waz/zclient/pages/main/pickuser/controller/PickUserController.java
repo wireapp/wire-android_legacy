@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,41 +17,24 @@
  */
 package com.waz.zclient.pages.main.pickuser.controller;
 
-import android.content.Context;
-import android.text.TextUtils;
-import android.view.View;
-import com.waz.api.User;
-import com.waz.zclient.pages.main.profile.validator.EmailValidator;
-import com.waz.zclient.utils.LayoutSpec;
+import com.waz.model.UserId;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class PickUserController implements IPickUserController {
 
     private Set<PickUserControllerScreenObserver> pickUserControllerScreenObservers;
-    private Set<PickUserControllerSearchObserver> pickUserControllerSearchObservers;
-    private Set<Destination> visibleDestinations;
+    private boolean isUserVisible;
 
     private boolean isShowingUserProfile;
     private boolean hideWithoutAnimations;
 
-    private final EmailValidator emailValidator;
-    private String searchFilter;
-    private Context context;
-    private List<User> selectedUsers;
-
-    public PickUserController(Context context) {
-        this.context = context;
-        this.emailValidator = EmailValidator.newInstance();
+    public PickUserController() {
 
         pickUserControllerScreenObservers = new HashSet<>();
-        pickUserControllerSearchObservers = new HashSet<>();
-        visibleDestinations = new HashSet<>();
-        selectedUsers = new ArrayList<>();
 
+        isUserVisible = false;
         isShowingUserProfile = false;
         hideWithoutAnimations = false;
     }
@@ -74,26 +57,25 @@ public class PickUserController implements IPickUserController {
 
     // Showing people picker
     @Override
-    public void showPickUser(Destination destination, View anchorView) {
-        if (isShowingPickUser(destination)) {
+    public void showPickUser() {
+        if (isShowingPickUser()) {
             return;
         }
-        visibleDestinations.add(destination);
+        isUserVisible = true;
         for (PickUserControllerScreenObserver pickUserControllerScreenObserver : pickUserControllerScreenObservers) {
-            pickUserControllerScreenObserver.onShowPickUser(destination, anchorView);
+            pickUserControllerScreenObserver.onShowPickUser();
         }
     }
 
     @Override
-    public boolean hidePickUser(Destination destination, boolean closeWithoutSelectingPeople) {
-        if (!isShowingPickUser(destination)) {
+    public boolean hidePickUser() {
+        if (!isShowingPickUser()) {
             return false;
         }
         for (PickUserControllerScreenObserver pickUserControllerScreenObserver : pickUserControllerScreenObservers) {
-            pickUserControllerScreenObserver.onHidePickUser(destination, closeWithoutSelectingPeople);
+            pickUserControllerScreenObserver.onHidePickUser();
         }
-        visibleDestinations.remove(destination);
-        selectedUsers.clear();
+        isUserVisible = false;
         return true;
     }
 
@@ -103,26 +85,21 @@ public class PickUserController implements IPickUserController {
     }
 
     @Override
-    public void hidePickUserWithoutAnimations(Destination destination) {
+    public void hidePickUserWithoutAnimations() {
         hideWithoutAnimations = true;
-        hidePickUser(destination, false);
+        hidePickUser();
         hideWithoutAnimations = false;
     }
 
     @Override
-    public boolean isShowingPickUser(Destination destination) {
-        return visibleDestinations.contains(destination);
+    public boolean isShowingPickUser() {
+        return isUserVisible;
     }
 
     @Override
-    public void resetShowingPickUser(Destination destination) {
-        visibleDestinations.remove(destination);
-    }
-
-    @Override
-    public void showUserProfile(User user, View anchorView) {
+    public void showUserProfile(UserId userId) {
         for (PickUserControllerScreenObserver pickUserControllerScreenObserver : pickUserControllerScreenObservers) {
-            pickUserControllerScreenObserver.onShowUserProfile(user, anchorView);
+            pickUserControllerScreenObserver.onShowUserProfile(userId);
         }
         isShowingUserProfile = true;
     }
@@ -139,118 +116,14 @@ public class PickUserController implements IPickUserController {
     public boolean isShowingUserProfile() {
         // The PickUser fragment is only showing user profile for phone,
         // for tablet the user profile is shown in a dialog and this should always return false
-        return isShowingUserProfile && LayoutSpec.isPhone(context);
-    }
-
-    //////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  PickUserControllerSearchObserver - Search Actions
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public void addPickUserSearchControllerObserver(PickUserControllerSearchObserver observer) {
-        pickUserControllerSearchObservers.add(observer);
-    }
-
-    @Override
-    public void removePickUserSearchControllerObserver(PickUserControllerSearchObserver observer) {
-        pickUserControllerSearchObservers.remove(observer);
-    }
-
-    @Override
-    public void notifySearchBoxHasNewSearchFilter(String filter) {
-        for (PickUserControllerSearchObserver pickUserControllerSearchObserver : pickUserControllerSearchObservers) {
-            pickUserControllerSearchObserver.onSearchBoxHasNewSearchFilter(filter);
-        }
-    }
-
-    @Override
-    public void notifyKeyboardDoneAction() {
-        // Protect against ConcurrentModificationException - an observer might unsubscribe while notification is in progress
-        Set<PickUserControllerSearchObserver> observers = new HashSet<>(pickUserControllerSearchObservers.size());
-        observers.addAll(pickUserControllerSearchObservers);
-
-        for (PickUserControllerSearchObserver observer : observers) {
-            observer.onKeyboardDoneAction();
-        }
-    }
-
-    @Override
-    public void addUser(User user) {
-        if (!selectedUsers.contains(user)) {
-            selectedUsers.add(user);
-        }
-        for (PickUserControllerSearchObserver pickUserControllerSearchObserver : pickUserControllerSearchObservers) {
-            pickUserControllerSearchObserver.onSelectedUserAdded(selectedUsers, user);
-        }
-    }
-
-    @Override
-    public void removeUser(User user) {
-        selectedUsers.remove(user);
-        final boolean isEmpty = selectedUsers.size() == 0;
-        for (PickUserControllerSearchObserver pickUserControllerSearchObserver : pickUserControllerSearchObservers) {
-            pickUserControllerSearchObserver.onSelectedUserRemoved(selectedUsers, user);
-            if (isEmpty) {
-                pickUserControllerSearchObserver.onSearchBoxIsEmpty();
-            }
-        }
-    }
-
-    @Override
-    public String getSearchFilter() {
-        return searchFilter;
-    }
-
-    @Override
-    public List<User> getSelectedUsers() {
-        return new ArrayList<>(selectedUsers);
-    }
-
-    @Override
-    public boolean hasSelectedUsers() {
-        return getSelectedUsers().size() > 0;
-    }
-
-    @Override
-    public boolean searchInputIsInvalidEmail() {
-        if (TextUtils.isEmpty(searchFilter)) {
-            return false;
-        }
-        return !emailValidator.validate(searchFilter);
-    }
-
-    @Override
-    public void setSearchFilter(String newSearchFilter) {
-        if (newSearchFilter.equalsIgnoreCase(searchFilter)) {
-            return;
-        }
-        searchFilter = newSearchFilter;
-        if (TextUtils.isEmpty(searchFilter)) {
-            for (PickUserControllerSearchObserver pickUserControllerSearchObserver : pickUserControllerSearchObservers) {
-                pickUserControllerSearchObserver.onSearchBoxIsEmpty();
-            }
-        } else {
-            notifySearchBoxHasNewSearchFilter(searchFilter);
-        }
+        return isShowingUserProfile;
     }
 
     @Override
     public void tearDown() {
-        context = null;
         if (pickUserControllerScreenObservers != null) {
             pickUserControllerScreenObservers.clear();
             pickUserControllerScreenObservers = null;
         }
-        if (pickUserControllerSearchObservers != null) {
-            pickUserControllerSearchObservers.clear();
-            pickUserControllerSearchObservers = null;
-        }
-        selectedUsers = null;
-    }
-
-    private boolean hasOnlyTextContent() {
-        return !hasSelectedUsers() && !TextUtils.isEmpty(searchFilter);
     }
 }

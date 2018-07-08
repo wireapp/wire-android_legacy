@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,10 +18,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<com.waz.zclient.views.pickuser.SearchResultConversationRowView
+<com.waz.zclient.usersearch.views.SearchResultConversationRowView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/srcrv_startui_conversation"
     android:layout_width="match_parent"
     android:layout_height="@dimen/conversation_list__row__height"
-    android:layout_marginStart="@dimen/wire__padding__12"
     />

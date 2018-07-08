@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@
             android:textAllCaps="true"
             android:textColor="@color/light_graphite"
             android:textSize="@dimen/wire__text_size__small"
-            app:font="@string/wire__typeface__light"
+            app:w_font="@string/wire__typeface__light"
             />
 
         <LinearLayout
@@ -58,7 +58,7 @@
                 android:textAllCaps="true"
                 android:textColor="@color/light_graphite"
                 android:textSize="@dimen/wire__text_size__small"
-                app:font="@string/wire__typeface__light"
+                app:w_font="@string/wire__typeface__light"
                 />
 
             <com.waz.zclient.ui.text.GlyphTextView
@@ -79,7 +79,7 @@
                 android:textAllCaps="true"
                 android:textColor="@color/light_graphite"
                 android:textSize="@dimen/wire__text_size__small"
-                app:font="@string/wire__typeface__light"
+                app:w_font="@string/wire__typeface__light"
                 />
 
         </LinearLayout>

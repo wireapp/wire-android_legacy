@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 package com.waz.zclient.ui.optionsmenu;
 
 
-import com.waz.zclient.ui.R;
+import com.waz.zclient.R;
 
 public enum OptionsMenuItem {
 
@@ -29,29 +29,23 @@ public enum OptionsMenuItem {
     /**
      * OptionsMenuItems for conversation
      */
-    ARCHIVE(R.string.conversation__action__archive, R.string.glyph__archive),
-    UNARCHIVE(R.string.conversation__action__unarchive, R.string.glyph__archive),
-    LEAVE(R.string.conversation__action__leave, R.string.glyph__minus),
-    BLOCK(R.string.confirmation_menu__confirm_block, R.string.glyph__block),
-    UNBLOCK(R.string.connect_request__unblock__button__text, R.string.glyph__block),
-    DELETE(R.string.conversation__action__delete, R.string.glyph__trash),
-    SILENCE(R.string.conversation__action__silence, R.string.glyph__silence),
-    UNSILENCE(R.string.conversation__action__unsilence, R.string.glyph__silence),
-    RENAME(R.string.conversation__action__rename, R.string.glyph__edit),
     PICTURE(R.string.conversation__action__picture, R.string.glyph__camera),
     CALL(R.string.conversation__action__call, R.string.glyph__call),
+    SILENCE(R.string.conversation__action__silence, R.string.glyph__silence),
+    UNSILENCE(R.string.conversation__action__unsilence, R.string.glyph__notify),
+    ARCHIVE(R.string.conversation__action__archive, R.string.glyph__archive),
+    UNARCHIVE(R.string.conversation__action__unarchive, R.string.glyph__archive),
+    DELETE(R.string.conversation__action__delete, R.string.glyph__delete_me),
+    LEAVE(R.string.conversation__action__leave, R.string.glyph__leave),
+    BLOCK(R.string.confirmation_menu__confirm_block, R.string.glyph__block),
+    UNBLOCK(R.string.connect_request__unblock__button__text, R.string.glyph__block),
+    LEAVE_ONLY(R.string.conversation__action__leave, R.string.empty_string),
+    LEAVE_AND_DELETE(R.string.conversation__action__leave, R.string.empty_string),
+    DELETE_ONLY(R.string.conversation__action__delete, R.string.empty_string),
+    DELETE_AND_LEAVE(R.string.conversation__action__delete, R.string.empty_string);
 
-    /**
-     * OptionsMenuItems for settings
-     */
-    HELP(R.string.menu_help, R.string.glyph__info),
-    SETTINGS(R.string.menu_settings, R.string.glyph__settings),
-    AVS_SETTINGS(R.string.menu_avs_settings, R.string.glyph__settings),
-    ABOUT(R.string.menu_about, R.string.glyph__wire);
-
-
-    final int resTextId;
-    final int resGlyphId;
+    public final int resTextId;
+    public final int resGlyphId;
 
     OptionsMenuItem(int resTextId, int resGlyphId) {
         this.resTextId = resTextId;

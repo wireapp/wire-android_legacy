@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<resources>
+    <array name="selectable_accents_color">
+        <item>@color/accent_blue</item>
+        <item>@color/accent_green</item>
+        <item>@color/accent_red</item>
+        <item>@color/accent_orange</item>
+        <item>@color/accent_pink</item>
+        <item>@color/accent_magenta</item>
+    </array>
+
+    <array name="original_accents_color">
+        <item>@color/accent_blue</item>
+        <item>@color/accent_green</item>
+        <item>@color/accent_yellow</item>
+        <item>@color/accent_red</item>
+        <item>@color/accent_orange</item>
+        <item>@color/accent_pink</item>
+        <item>@color/accent_magenta</item>
+    </array>
+
+    <array name="draw_color">
+        <item>@color/draw_white</item>
+        <item>@color/draw_black</item>
+        <item>@color/accent_blue</item>
+        <item>@color/accent_green</item>
+        <item>@color/accent_yellow</item>
+        <item>@color/accent_red</item>
+        <item>@color/accent_orange</item>
+        <item>@color/accent_pink</item>
+        <item>@color/accent_magenta</item>
+        <item>@color/draw_mocha</item>
+        <item>@color/draw_brown</item>
+        <item>@color/draw_mustard</item>
+        <item>@color/draw_strawberry</item>
+        <item>@color/draw_maroon</item>
+        <item>@color/draw_sky</item>
+        <item>@color/draw_olive</item>
+        <item>@color/draw_grey</item>
+    </array>
+
+    <array name="list_unread_indicator_radiuses">
+        <item type="float">2.0dp</item>
+        <item type="float">4.0dp</item>
+        <item type="float">6.0dp</item>
+        <item type="float">6.0dp</item>
+    </array>
+
+    <array name="list__voice_indicator_pulser_circle_0">
+        <item type="float">1</item>
+        <item type="float">1.6</item>
+        <item type="float">0.16</item>
+        <item type="float">0.24</item>
+        <item type="float">0.24</item>
+        <item type="float">0.16</item>
+        <item type="float">0.32</item>
+        <item type="float">0.416</item>
+        <item type="float">0.384</item>
+        <item type="float">0.32</item>
+    </array>
+
+    <integer-array name="list_unread_indicator_radiuses_limits">
+        <item type="integer">1</item>
+        <item type="integer">2</item>
+        <item type="integer">10</item>
+        <item type="integer">25</item>
+    </integer-array>
+
+    <integer-array name="ringing_from_them">
+        <item>0</item>
+        <item>1700</item>
+        <item>631</item>
+        <item>1700</item>
+        <item>631</item>
+        <item>1700</item>
+        <item>3538</item>
+    </integer-array>
+    <integer-array name="ready_to_talk">
+        <item>0</item>
+        <item>10</item>
+        <item>100</item>
+        <item>10</item>
+        <item>125</item>
+        <item>20</item>
+    </integer-array>
+    <integer-array name="pull_voice">
+        <item>310</item>
+        <item>15</item>
+        <item>200</item>
+        <item>10</item>
+        <item>75</item>
+        <item>100</item>
+    </integer-array>
+    <integer-array name="talk_later">
+        <item>175</item>
+        <item>60</item>
+        <item>300</item>
+        <item>30</item>
+    </integer-array>
+    <integer-array name="call_dropped">
+        <item>175</item>
+        <item>60</item>
+        <item>300</item>
+        <item>30</item>
+        <item>300</item>
+        <item>30</item>
+    </integer-array>
+    <integer-array name="new_message">
+        <item>170</item>
+        <item>25</item>
+    </integer-array>
+    <!-- same as config_defaultNotificationVibePattern -->
+    <integer-array name="new_message_gcm">
+        <item>0</item>
+        <item>250</item>
+        <item>250</item>
+        <item>250</item>
+    </integer-array>
+    <integer-array name="ping_from_them">
+        <item>175</item>
+        <item>11</item>
+        <item>138</item>
+        <item>11</item>
+        <item>79</item>
+        <item>11</item>
+        <item>60</item>
+        <item>11</item>
+        <item>135</item>
+        <item>11</item>
+    </integer-array>
+    <integer-array name="camera">
+        <item>0</item>
+        <item>10</item>
+        <item>211</item>
+        <item>10</item>
+    </integer-array>
+    <integer-array name="alert">
+        <item>0</item>
+        <item>113</item>
+    </integer-array>
+    <integer-array name="call_control_enter">
+        <item>0</item>
+        <item>113</item>
+    </integer-array>
+</resources>
+

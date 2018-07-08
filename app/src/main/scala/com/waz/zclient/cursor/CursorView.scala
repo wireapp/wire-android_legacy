@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,28 +20,29 @@ package com.waz.zclient.cursor
 import android.content.Context
 import android.graphics._
 import android.graphics.drawable.ColorDrawable
-import android.support.v4.content.res.ResourcesCompat
 import android.text.{Editable, TextUtils, TextWatcher}
 import android.util.AttributeSet
+import android.view.View.OnClickListener
 import android.view._
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{LinearLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api._
+import com.waz.model.{Availability, MessageExpiry}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.zclient.ViewHelper
+import com.waz.utils.returning
 import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
 import com.waz.zclient.cursor.CursorController.KeyboardState
-import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
-import com.waz.zclient.R
 import com.waz.zclient.messages.MessagesController
+import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
 import com.waz.zclient.ui.cursor._
-import com.waz.zclient.ui.theme.ThemeUtils
-import com.waz.zclient.ui.utils.CursorUtils
+import com.waz.zclient.ui.text.TextTransform
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
+import com.waz.zclient.views.AvailabilityView
+import com.waz.zclient.{R, ViewHelper}
 
 class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
     extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
@@ -59,44 +60,32 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   setOrientation(LinearLayout.VERTICAL)
   inflate(R.layout.cursor_view_content)
 
-  val cursorToolbarFrame: CursorToolbarContainer = findById(R.id.cal__cursor)
-  val cursorEditText: CursorEditText             = findById(R.id.cet__cursor)
-  val mainToolbar: CursorToolbar                 = findById(R.id.c__cursor__main)
-  val secondaryToolbar: CursorToolbar            = findById(R.id.c__cursor__secondary)
-  val topBorder: View                            = findById(R.id.v__top_bar__cursor)
-  val hintView: TextView                         = findById(R.id.ttv__cursor_hint)
-  val dividerView: View                          = findById(R.id.v__cursor__divider)
-  val emojiButton: CursorIconButton              = findById(R.id.cib__emoji)
-  val keyboardButton: CursorIconButton           = findById(R.id.cib__keyboard)
-  val sendButton: CursorIconButton               = findById(R.id.cib__send)
-  val ephemeralButton: CursorIconButton          = findById(R.id.cib__ephemeral)
+  val cursorToolbarFrame = returning(findById[CursorToolbarContainer](R.id.cal__cursor)) { f =>
+    val left = getDimenPx(R.dimen.cursor_toolbar_padding_horizontal_edge)
+    f.setPadding(left, 0, left, 0)
+  }
 
-  val defaultTextColor = cursorEditText.getCurrentTextColor
-  val defaultDividerColor =  dividerView.getBackground.asInstanceOf[ColorDrawable].getColor
+  val cursorEditText   = findById[CursorEditText]     (R.id.cet__cursor)
+  val mainToolbar      = findById[CursorToolbar]      (R.id.c__cursor__main)
+  val secondaryToolbar = findById[CursorToolbar]      (R.id.c__cursor__secondary)
+  val topBorder        = findById[View]               (R.id.v__top_bar__cursor)
+  val hintView         = findById[TextView]           (R.id.ttv__cursor_hint)
+  val dividerView      = findById[View]               (R.id.v__cursor__divider)
+  val emojiButton      = findById[CursorIconButton]   (R.id.cib__emoji)
+  val keyboardButton   = findById[CursorIconButton]   (R.id.cib__keyboard)
+  val sendButton       = findById[CursorIconButton]   (R.id.cib__send)
+  val ephemeralButton  = findById[EphemeralIconButton](R.id.cib__ephemeral)
+
   val defaultHintTextColor = hintView.getTextColors.getDefaultColor
 
-  val dividerColor = Signal(controller.isEditingMessage, controller.isEphemeralMode, accentColor) map {
-    case (true, _, _)      => getColor(R.color.separator_light)
-    case (_, true, accent) => accent.getColor
-    case _                 => defaultDividerColor
+  val dividerColor = controller.isEditingMessage.map{
+    case true => getColor(R.color.separator_light)
+    case _    => dividerView.getBackground.asInstanceOf[ColorDrawable].getColor
   }
 
   val bgColor = controller.isEditingMessage map {
-    case true => getColor(R.color.accent_yellow__16)
+    case true => getStyledColor(R.attr.cursorEditBackground)
     case false => Color.TRANSPARENT
-  }
-
-  val textColor = controller.isEditingMessage map {
-    case true => getColor(R.color.text__primary_light)
-    case false => defaultTextColor
-  }
-
-  val cursorBtnColor = controller.isEditingMessage map {
-    case true => ResourcesCompat.getColorStateList(getResources, R.color.wire__text_color_primary_light_selector, null)
-    case false if ThemeUtils.isDarkTheme(getContext) =>
-      ResourcesCompat.getColorStateList(getResources, R.color.wire__text_color_primary_dark_selector, null)
-    case false =>
-      ResourcesCompat.getColorStateList(getResources, R.color.wire__text_color_primary_light_selector, null)
   }
 
   val lineCount = Signal(0)
@@ -107,18 +96,15 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   } yield
     !typing && (multiline || !scrolledToBottom)
 
-  dividerColor.on(Threading.Ui) { dividerView.setBackgroundColor }
-  bgColor.on(Threading.Ui) { setBackgroundColor }
-  textColor.on(Threading.Ui) { cursorEditText.setTextColor }
-  cursorBtnColor.on(Threading.Ui) { c =>
-    emojiButton.setTextColor(c)
-    keyboardButton.setTextColor(c)
-  }
+  lineCount.onUi(cursorEditText.setLines(_))
+
+  dividerColor.onUi(dividerView.setBackgroundColor)
+  bgColor.onUi(setBackgroundColor)
 
   emojiButton.menuItem ! Some(CursorMenuItem.Emoji)
   keyboardButton.menuItem ! Some(CursorMenuItem.Keyboard)
 
-  controller.emojiKeyboardVisible.on(Threading.Ui) { emojiVisible =>
+  controller.emojiKeyboardVisible.onUi { emojiVisible =>
     emojiButton.setVisible(!emojiVisible)
     keyboardButton.setVisible(emojiVisible)
   }
@@ -126,8 +112,9 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   emojiButton.onClick {
     controller.keyboard ! KeyboardState.ExtendedCursor(ExtendedCursorContainer.Type.EMOJIS)
   }
+
   keyboardButton.onClick {
-    controller.keyboard ! KeyboardState.Shown
+    controller.notifyKeyboardVisibilityChanged(true)
   }
 
   val cursorHeight = getDimenPx(R.dimen.new_cursor_height)
@@ -136,22 +123,23 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   secondaryToolbar.cursorItems ! SecondaryCursorItems
 
   cursorEditText.addTextChangedListener(new TextWatcher() {
-    private var text = Option.empty[String]
+    private var text = ""
 
     override def onTextChanged(charSequence: CharSequence, start: Int, before: Int, count: Int): Unit = {
-      text = Option(charSequence.toString)
+      text = charSequence.toString
     }
 
-    override def afterTextChanged(editable: Editable): Unit = text match {
-      case Some(txt) =>
-        controller.enteredText ! txt
-        lineCount ! cursorEditText.getLineCount
-        text = None
-      case None =>
-        controller.enteredText ! ""
+    override def afterTextChanged(editable: Editable): Unit = {
+      controller.enteredText ! text
+      if (text.trim.nonEmpty) lineCount ! cursorEditText.getLineCount
+      text = ""
     }
 
     override def beforeTextChanged(charSequence: CharSequence, start: Int, count: Int, after: Int): Unit = ()
+  })
+
+  cursorEditText.setOnClickListener(new OnClickListener {
+    override def onClick(v: View): Unit = controller.notifyKeyboardVisibilityChanged(true)
   })
 
   cursorEditText.setOnEditorActionListener(new OnEditorActionListener {
@@ -171,61 +159,50 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   })
   cursorEditText.setFocusableInTouchMode(true)
 
-  controller.sendButtonEnabled.on(Threading.Ui) { enabled =>
+  controller.sendButtonEnabled.onUi { enabled =>
     cursorEditText.setImeOptions(if (enabled) EditorInfo.IME_ACTION_NONE else EditorInfo.IME_ACTION_SEND)
   }
-  accentColor.on(Threading.Ui) { accent =>
-    cursorEditText.setAccentColor(accent.getColor)
+
+  accentColor.map(_.getColor).onUi(cursorEditText.setAccentColor)
+
+  private lazy val transformer = TextTransform.get(ContextUtils.getString(R.string.single_image_message__name__font_transform))
+
+  (for {
+    eph <- controller.isEphemeral
+    av <- controller.convAvailability
+    name <- controller.conv.map(_.displayName)
+  } yield (eph, av, name)).onUi {
+    case (true, av, _) =>
+      hintView.setText(getString(R.string.cursor__ephemeral_message))
+      AvailabilityView.displayLeftOfText(hintView, av, defaultHintTextColor)
+    case (false, av, name) if av != Availability.None =>
+      val transformedName = transformer.transform(name.split(' ')(0)).toString
+      hintView.setText(getString(AvailabilityView.viewData(av).textId, transformedName))
+      AvailabilityView.displayLeftOfText(hintView, av, defaultHintTextColor)
+    case _ =>
+      hintView.setText(getString(R.string.cursor__type_a_message))
+      AvailabilityView.hideAvailabilityIcon(hintView)
   }
 
-  val menuLeftMargin = controller.cursorWidth map { w =>
-    if ((LayoutSpec.get(getContext) eq LayoutSpec.LAYOUT_PHONE) || (LayoutSpec.get(getContext) eq LayoutSpec.LAYOUT_KINDLE)) {
-      getDimenPx(R.dimen.cursor_toolbar_padding_horizontal_edge)
-    } else {
-      CursorUtils.getCursorMenuLeftMargin(getContext, w)
-    }
-  }
-  menuLeftMargin { left =>
-    cursorToolbarFrame.setPadding(left, 0, left, 0)
-  }
+  (for {
+    Some(MessageExpiry(_)) <- controller.ephemeralExp
+    Availability.None      <- controller.convAvailability
+    ac                     <- accentColor
+  } yield ac.getColor)
+    .orElse(Signal.const(defaultHintTextColor))
+    .onUi(hintView.setTextColor)
 
-  val anchorPositionPx2 = controller.cursorWidth map { w =>
-    if ((LayoutSpec.get(getContext) eq LayoutSpec.LAYOUT_PHONE) || (LayoutSpec.get(getContext) eq LayoutSpec.LAYOUT_KINDLE)) {
-      0
-    } else {
-      CursorUtils.getCursorEditTextAnchorPosition(getContext, w)
-    }
-  }
-  anchorPositionPx2 { pos =>
-    hintView.setTranslationX(pos)
-  }
+  (controller.isEditingMessage.zip(controller.enteredText) map {
+    case (editing, text) => !editing && text.isEmpty
+  }).onUi { hintView.setVisible }
 
+  controller.convIsActive.onUi(this.setVisible)
 
-  val hintText = controller.isEphemeralMode map {
-    case true => R.string.cursor__ephemeral_message
-    case false => R.string.cursor__type_a_message
-  }
+  topBarVisible.onUi(topBorder.setVisible)
 
-  val hintColor = controller.isEphemeralMode.zip(accentColor) map {
-    case (true, accent) => accent.getColor
-    case (false, _) => defaultHintTextColor
-  }
+  controller.onMessageSent.onUi(_ => setText(""))
 
-  val hintVisible = controller.isEditingMessage.zip(controller.enteredTextEmpty) map {
-    case (editing, empty) => !editing && empty
-  }
-
-  controller.convIsActive.on(Threading.Ui) { this.setVisible }
-
-  hintText.on(Threading.Ui) { hintView.setText }
-  hintColor.on(Threading.Ui) { hintView.setTextColor }
-  hintVisible.on(Threading.Ui) { hintView.setVisible }
-
-  topBarVisible.on(Threading.Ui) { topBorder.setVisible }
-
-  controller.onMessageSent.on(Threading.Ui) { _ => setText("") }
-
-  controller.isEditingMessage.onChanged.on(Threading.Ui) {
+  controller.isEditingMessage.onChanged.onUi {
     case false => setText("")
     case true =>
       controller.editingMsg.head foreach {
@@ -234,13 +211,19 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
       }
   }
 
+  controller.onEditMessageReset.onUi { _ =>
+    controller.editingMsg.head.map {
+      case Some(msg) =>  setText(msg.contentString)
+      case _ =>
+    } (Threading.Ui)
+  }
+
   def enableMessageWriting(): Unit = cursorEditText.requestFocus
 
   def setCallback(callback: CursorCallback) = controller.cursorCallback = Option(callback)
 
   def setText(text: String): Unit = {
-    if (text.nonEmpty) cursorEditText.setText(text)
-    else cursorEditText.getText.clear()
+    cursorEditText.setText(text)
     cursorEditText.setSelection(text.length)
   }
 
@@ -248,22 +231,11 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     cursorEditText.getText.insert(cursorEditText.getSelectionStart, text)
   }
 
-  def notifyKeyboardVisibilityChanged(keyboardIsVisible: Boolean, currentFocus: View): Unit = {
-    controller.keyboard.mutate {
-      case KeyboardState.Shown if !keyboardIsVisible => KeyboardState.Hidden
-      case _ if keyboardIsVisible => KeyboardState.Shown
-      case state => state
-    }
-
-    if (keyboardIsVisible && cursorEditText.hasFocus)
-      controller.cursorCallback.foreach(_.onCursorClicked())
-  }
-
   def hasText: Boolean = !TextUtils.isEmpty(cursorEditText.getText.toString)
 
   def getText: String = cursorEditText.getText.toString
 
-  def setConversation(conversation: IConversation): Unit = {
+  def setConversation(): Unit = {
     enableMessageWriting()
     controller.editingMsg ! None
     controller.secondaryToolbarVisible ! false
@@ -281,7 +253,6 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
   override def onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int): Unit = {
     super.onLayout(changed, l, t, r, b)
-
     controller.cursorWidth ! (r - l)
   }
 }

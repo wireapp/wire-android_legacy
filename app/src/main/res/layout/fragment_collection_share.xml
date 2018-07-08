@@ -1,7 +1,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,10 +24,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.waz.zclient.conversation.ShareToMultipleFragment"
+    tools:context="com.waz.zclient.sharing.ShareToMultipleFragment"
     android:background="@null"
     android:clickable="true"
     >
+
+    <com.waz.zclient.common.views.AccountTabsView
+        android:id="@+id/account_tabs"
+        android:layout_width="wrap_content"
+        android:layout_height="?attr/actionBarSize"
+        android:orientation="horizontal"
+        android:layout_gravity="center"
+        android:paddingStart="@dimen/wire__padding__12"
+        android:paddingEnd="@dimen/wire__padding__12"
+        />
 
     <RelativeLayout
         android:id="@+id/content_container"
@@ -35,7 +45,7 @@
         android:layout_height="@dimen/collections__multi_share__image_preview__height">
     </RelativeLayout>
 
-    <com.waz.zclient.views.SearchEditText
+    <com.waz.zclient.usersearch.views.SearchEditText
         android:id="@+id/multi_share_search_box"
         android:layout_width="match_parent"
         android:layout_height="@dimen/collections__multi_share_search_height"
@@ -75,22 +85,21 @@
             android:textColor="@color/drawing__icon__text_color"
             />
 
-        <com.waz.zclient.views.EphemeralCursorButton
+        <com.waz.zclient.common.views.EphemeralCursorButton
             android:id="@+id/ephemeral_toggle"
-            android:layout_width="@dimen/cursor__menu_button__diameter"
-            android:layout_height="@dimen/cursor__menu_button__diameter"
+            android:layout_width="@dimen/wire__margin__24"
+            android:layout_height="@dimen/wire__margin__24"
+            android:letterSpacing="-0.1"
             android:layout_alignParentEnd="true"
-            android:layout_alignParentBottom="true"
             android:layout_marginEnd="@dimen/wire__padding__16"
             android:layout_marginBottom="@dimen/wire__padding__16"
-            android:gravity="center"
-            android:text="@string/glyph__hourglass"
+            android:layout_centerVertical="true"
             android:textColor="@color/white"
             />
 
     </RelativeLayout>
 
-    <com.waz.zclient.views.AnimatedBottomContainer
+    <com.waz.zclient.common.views.AnimatedBottomContainer
         android:id="@+id/ephemeral_container"
         android:layout_width="match_parent"
         android:layout_height="@dimen/extend_container_height"

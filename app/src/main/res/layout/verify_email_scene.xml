@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:layout_gravity="top"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content">
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="@string/teams_verify_email_title"
+        app:w_font="@string/wire__typeface__light"
+        android:textSize="@dimen/wire__text_size__even_huger"
+        android:textColor="@color/black"
+        />
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text=""
+        app:w_font="@string/wire__typeface__regular"
+        android:textSize="@dimen/wire__text_size__regular"
+        android:textColor="@color/teams_description_text"
+        android:layout_marginTop="@dimen/wire__padding__8"
+        android:paddingStart="@dimen/wire__padding__regular"
+        android:paddingEnd="@dimen/wire__padding__regular"
+        />
+
+    <com.waz.zclient.common.views.NumberCodeInput
+        android:id="@+id/input_field"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:layout_marginTop="@dimen/teams_input_box_height"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:baselineAligned="false">
+
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/resend_email"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_gravity="center"
+                android:text="@string/teams_verify_email_resend"
+                app:w_font="@string/wire__typeface__medium"
+                android:textSize="@dimen/wire__text_size__smaller"
+                android:textColor="@drawable/app_entry_text_button"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="@dimen/wire__padding__small"
+                />
+
+        </FrameLayout>
+
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/change_email"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_gravity="center"
+                android:text="@string/teams_verify_email_change"
+                app:w_font="@string/wire__typeface__medium"
+                android:textSize="@dimen/wire__text_size__smaller"
+                android:textColor="@drawable/app_entry_text_button"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="@dimen/wire__padding__small"
+                />
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,22 +32,19 @@ import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.zclient.{Injectable, Injector}
 import org.threeten.bp.Instant
 
+import scala.concurrent.Future
+
 class RecyclerCursor(val conv: ConvId, zms: ZMessaging, val adapter: RecyclerNotifier, val messageFilter: Option[MessageFilter] = None)(implicit inj: Injector, ev: EventContext) extends Injectable { self =>
 
-  import com.waz.threading.Threading.Implicits.Ui
+  import Threading.Implicits.Ui
 
   verbose(s"RecyclerCursor created for conv: $conv")
 
-  val storage = zms.messagesStorage
-  val likes = zms.reactionsStorage
-
-  val index = messageFilter.fold(storage.msgsIndex(conv))(f => storage.msgsFilteredIndex(conv, f))
-  val lastReadTime = Signal.future(index).flatMap(_.signals.lastReadTime)
   val countSignal = Signal[Int]()
   val cursorLoaded = Signal[Boolean](false)
 
   private val window = new IndexWindow(this, adapter)
-  private var closed = false
+  private val closed = Signal(false)
   private val cursor = Signal(Option.empty[MessagesCursor])
   private var subs = Seq.empty[Subscription]
   private var onChangedSub = Option.empty[Subscription]
@@ -57,23 +54,22 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, val adapter: RecyclerNot
   // without that we could miss some updates due to race conditions
   private var history = Seq.empty[ConvMessagesIndex.Updated]
 
-  index onSuccess { case idx =>
-    verbose(s"index: $idx, closed?: $closed")
-    if (!closed) {
-      subs = Seq(
-        idx.signals.messagesCursor.on(Threading.Ui) { setCursor },
-        idx.signals.indexChanged.on(Threading.Ui) {
-          case u: Updated => history = history :+ u
-          case _ => // ignore other changes
-        }
-      )
-    }
+  for {
+    idx <- messageFilter.fold(zms.messagesStorage.msgsIndex(conv))(f => zms.messagesStorage.msgsFilteredIndex(conv, f))
+    cl <- closed.head
+  } yield if (!cl) {
+    subs = Seq(
+      idx.signals.messagesCursor.on(Threading.Ui) { setCursor },
+      idx.signals.indexChanged.on(Threading.Ui) {
+        case u: Updated => history = history :+ u
+        case _ => // ignore other changes
+      }
+    )
   }
 
   def close() = {
-    verbose(s"close")
     Threading.assertUiThread()
-    closed = true
+    closed ! true
     cursor ! None
     subs.foreach(_.destroy())
     onChangedSub.foreach(_.destroy())
@@ -83,32 +79,26 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, val adapter: RecyclerNot
     countSignal ! 0
   }
 
-  private def setCursor(c: MessagesCursor) = {
+  private def setCursor(c: MessagesCursor): Unit = {
     verbose(s"setCursor: c: $c, count: ${c.size}")
-    if (!closed) {
-      self.cursor ! Some(c)
-      cursorLoaded ! true
-      window.cursorChanged(c)
-      notifyFromHistory(c.createTime)
-      countSignal ! c.size
-      onChangedSub.foreach(_.destroy())
-      onChangedSub = Some(c.onUpdate.on(Threading.Ui) { case (prev, current) => onUpdated(prev, current) })
-    }
+    self.cursor ! Some(c)
+    cursorLoaded ! true
+    window.cursorChanged(c)
+    notifyFromHistory(c.createTime)
+    countSignal ! c.size
+    onChangedSub.foreach(_.destroy())
+    onChangedSub = Some(c.onUpdate.on(Threading.Ui) { case (prev, current) => onUpdated(prev, current) })
   }
 
-  private def notifyFromHistory(time: Instant) = {
+  private def notifyFromHistory(time: Instant): Unit = {
     verbose(s"notifyFromHistory($time)")
 
-    history foreach { change =>
-      change.updates foreach { case (prev, current) => window.onUpdated(prev, current) }
-    }
-
+    history.foreach { _.updates foreach { case (prev, current) => window.onUpdated(prev, current) } }
     history = history.filter(_.time.isAfter(time)) // leave only updates which happened after current cursor was loaded
   }
 
-  private def onUpdated(prev: MessageAndLikes, current: MessageAndLikes) = {
+  private def onUpdated(prev: MessageAndLikes, current: MessageAndLikes): Unit =
     window.onUpdated(prev.message, current.message)
-  }
 
   def count: Int = cursor.currentValue.flatMap(_.map(_.size)).getOrElse(0)
 
@@ -121,9 +111,9 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, val adapter: RecyclerNot
     c(position)
   })
 
-  def lastReadIndex() = cursor.currentValue.flatMap(_.map(_.lastReadIndex)).getOrElse(-1)
+  def lastReadIndex: Int = cursor.currentValue.flatMap(_.map(_.lastReadIndex)).getOrElse(-1)
 
-  def positionForMessage(messageData: MessageData) =
+  def positionForMessage(messageData: MessageData): Future[Int] =
     cursor.collect { case Some(c) => c } .head.flatMap(_.asyncIndexOf(messageData.time, binarySearch = true))
 }
 

@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
              android:layout_height="match_parent"
     >
 
-    <com.waz.zclient.views.conversationlist.ArchiveTopToolbar
+    <com.waz.zclient.conversationlist.views.ArchiveTopToolbar
         android:id="@+id/conversation_list_top_toolbar"
         android:layout_gravity="top"
         android:layout_width="match_parent"

@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,8 @@
 package com.waz.zclient.pages.main.conversationlist.views;
 
 import android.view.View;
-import com.waz.api.IConversation;
 
 public interface ConversationCallback {
 
-    void onConversationListRowSwiped(IConversation conversation, View conversationListRowView);
-
-    void onConversationListRowLongClicked(IConversation conversation, View conversationListRowView);
+    void onConversationListRowSwiped(String convId, View conversationListRowView);
 }

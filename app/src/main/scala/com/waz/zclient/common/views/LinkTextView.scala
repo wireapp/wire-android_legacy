@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ import com.waz.zclient.ui.utils.TextViewUtils
   *
   * Warning: This view does not support text selection and regular click listeners.
   */
-class LinkTextView(val context: Context, val attrs: AttributeSet, val defStyle: Int) extends TypefaceTextView(context, attrs, defStyle) {
+class LinkTextView(context: Context, attrs: AttributeSet, defStyle: Int) extends TypefaceTextView(context, attrs, defStyle) {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 

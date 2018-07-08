@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -66,11 +66,13 @@ class MissedCallPartView(context: Context, attrs: AttributeSet, style: Int) exte
     TextViewUtils.boldText(tvMessage)
   }
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
     userId ! msg.message.userId
 
-    gtvIcon.setText(if (opts.isSelf) R.string.glyph__call else R.string.glyph__end_call)
-    gtvIcon.setTextColor(getColor(if (opts.isSelf) R.color.accent_green else R.color.accent_red))
+    opts.foreach { o =>
+      gtvIcon.setText(if (o.isSelf) R.string.glyph__call else R.string.glyph__end_call)
+      gtvIcon.setTextColor(if (o.isSelf) getColor(R.color.accent_green) else getStyledColor(R.attr.wirePrimaryTextColor))
+    }
   }
 }

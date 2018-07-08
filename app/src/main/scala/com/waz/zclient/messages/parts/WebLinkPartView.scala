@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,13 +31,14 @@ import com.waz.service.messages.MessageAndLikes
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.zclient.controllers.BrowserController
+import com.waz.zclient.common.controllers.BrowserController
+import com.waz.zclient.common.views.ProgressDotsDrawable
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.utils._
-import com.waz.zclient.views.ImageAssetDrawable.{RequestBuilder, ScaleType, State}
-import com.waz.zclient.views.ImageController.{DataImage, ImageUri}
-import com.waz.zclient.views.{ImageAssetDrawable, ProgressDotsDrawable}
+import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType, State}
+import com.waz.zclient.common.views.ImageController.{DataImage, ImageUri}
+import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.{R, ViewHelper}
 
 class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends CardView(context, attrs, style) with ClickableViewPart with ViewHelper with EphemeralPartView {
@@ -118,7 +119,7 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
     }
   }
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
     verbose(s"set $part")
     part foreach { content ! _ }

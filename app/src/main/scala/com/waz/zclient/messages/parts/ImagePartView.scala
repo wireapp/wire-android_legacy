@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,14 +26,14 @@ import com.waz.model.MessageContent
 import com.waz.service.downloads.AssetLoader.DownloadOnWifiOnlyException
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.waz.zclient.controllers.AssetsController
+import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.controllers.drawing.IDrawingController.DrawingMethod
-import com.waz.zclient.controllers.global.SelectionController
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.parts.assets.ImageLayoutAssetPart
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.views.ImageAssetDrawable.State.Failed
+import com.waz.zclient.common.views.ImageAssetDrawable.State.Failed
 import com.waz.zclient.{R, ViewHelper}
 
 class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ImageLayoutAssetPart {
@@ -42,13 +42,11 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends F
 
   override val tpe: MsgPart = MsgPart.Image
 
-  private val selection = inject[SelectionController].messages
+  private val selection = inject[ConversationController].messages
 
   private lazy val assets = inject[AssetsController]
 
   private val imageIcon = findById[View](R.id.image_icon)
-
-  padding.on(Threading.Ui)(m => imageIcon.setMargin(m))
 
   val noWifi = imageDrawable.state.map {
     case Failed(_, Some(DownloadOnWifiOnlyException)) => true
@@ -64,6 +62,8 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends F
     message.currentValue foreach (assets.openDrawingFragment(_, drawingMethod))
 
   onClicked { _ => message.head.map(assets.showSingleImage(_, this))(Threading.Ui) }
+
+  override def onInflated(): Unit = {}
 }
 
 class WifiWarningPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
@@ -83,7 +83,7 @@ class WifiWarningPartView(context: Context, attrs: AttributeSet, style: Int) ext
     }
   }
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
     this.setVisible(false) //setVisible(true) is called for all view parts shortly before setting...
   }

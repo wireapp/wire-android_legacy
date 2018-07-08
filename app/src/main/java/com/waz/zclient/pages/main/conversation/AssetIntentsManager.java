@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,22 +17,20 @@
  */
 package com.waz.zclient.pages.main.conversation;
 
-import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.v4.app.ActivityCompat;
 import com.waz.utils.wrappers.AndroidURI;
 import com.waz.utils.wrappers.AndroidURIUtil;
 import com.waz.utils.wrappers.URI;
 import com.waz.zclient.BuildConfig;
-import com.waz.zclient.utils.PermissionUtils;
 import timber.log.Timber;
 
 import java.io.File;
@@ -40,9 +38,7 @@ import java.text.SimpleDateFormat;
 import java.util.Locale;
 
 public class AssetIntentsManager {
-    private static final String SAVED_STATE_PENDING_URI = "SAVED_STATE_PENDING_URI";
-
-    private static final String[] CAMERA_PERMISSIONS = new String[] {Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+    public static final String SAVED_STATE_PENDING_URI = "SAVED_STATE_PENDING_URI";
 
     private static final String INTENT_GALLERY_TYPE = "image/*";
     private final PackageManager pm;
@@ -67,12 +63,18 @@ public class AssetIntentsManager {
         pm = activity.getPackageManager();
     }
 
+    public AssetIntentsManager(Activity activity, Callback callback, URI pendingFileUri) {
+        setCallback(callback);
+        this.pendingFileUri = pendingFileUri;
+        pm = activity.getPackageManager();
+    }
+
     public void setCallback(Callback callback) {
         this.callback = callback;
     }
 
-    private void openDocument(String mimeType, IntentType tpe) {
-        if (BuildConfig.IS_TEST_GALLERY_ALLOWED) {
+    private void openDocument(String mimeType, IntentType tpe, boolean allowMultiple) {
+        if (BuildConfig.DEVELOPER_FEATURES_ENABLED) {
             // trying to load file from testing gallery,
             // this is needed because we are not able to override DocumentsUI on some android versions.
             Intent intent = new Intent("com.wire.testing.GET_DOCUMENT").setType(mimeType);
@@ -82,44 +84,37 @@ public class AssetIntentsManager {
             }
             Timber.i("Did not resolve testing gallery for intent: %s", intent.toString());
         }
-        callback.openIntent(new Intent(openDocumentAction()).setType(mimeType).addCategory(Intent.CATEGORY_OPENABLE), tpe);
+        Intent documentIntent = new Intent(openDocumentAction()).setType(mimeType).addCategory(Intent.CATEGORY_OPENABLE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && allowMultiple) {
+            documentIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        }
+        callback.openIntent(documentIntent, tpe);
     }
 
     public void openFileSharing() {
-        openDocument("*/*", IntentType.FILE_SHARING);
+        openDocument("*/*", IntentType.FILE_SHARING, true);
     }
 
-    private void captureImage() {
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        pendingFileUri = getOutputMediaFileUri(IntentType.CAMERA);
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, AndroidURIUtil.unwrap(pendingFileUri));
-        callback.openIntent(intent, IntentType.CAMERA);
+    public void openBackupImport() {
+        openDocument("*/*", IntentType.BACKUP_IMPORT, false);
     }
 
-    public void maybeCaptureVideo(Activity activity, IntentType type) {
-        if (PermissionUtils.hasSelfPermissions(activity, CAMERA_PERMISSIONS)) {
-            captureVideo(type);
-        } else {
-            ActivityCompat.requestPermissions(activity, CAMERA_PERMISSIONS, type.permissionCode);
-        }
-    }
-
-    private void captureVideo(IntentType type) {
+    public void captureVideo(Context context) {
         Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
-        pendingFileUri = getOutputMediaFileUri(IntentType.VIDEO);
+        pendingFileUri = getOutputMediaFileUri(context, IntentType.VIDEO);
         intent.putExtra(MediaStore.EXTRA_OUTPUT, AndroidURIUtil.unwrap(pendingFileUri));
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 0);
         }
-        callback.openIntent(intent, type);
+        callback.openIntent(intent, IntentType.VIDEO);
     }
 
     public void openGallery() {
-        openDocument(INTENT_GALLERY_TYPE, IntentType.GALLERY);
+        openDocument(INTENT_GALLERY_TYPE, IntentType.GALLERY, false);
     }
 
     public void openGalleryForSketch() {
-        openDocument(INTENT_GALLERY_TYPE, IntentType.SKETCH_FROM_GALLERY);
+        openDocument(INTENT_GALLERY_TYPE, IntentType.SKETCH_FROM_GALLERY, false);
     }
 
     public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -130,7 +125,7 @@ public class AssetIntentsManager {
 
         IntentType type = IntentType.get(requestCode);
 
-        if (type == IntentType.UNKOWN) {
+        if (type == IntentType.UNKNOWN) {
             return false;
         }
 
@@ -148,23 +143,24 @@ public class AssetIntentsManager {
         if (pendingFileUri != null) {
             possibleFile = new File(pendingFileUri.getPath());
         }
-        if ((type == IntentType.CAMERA || type == IntentType.VIDEO || type == IntentType.VIDEO_CURSOR_BUTTON) &&
+        if ((type == IntentType.CAMERA || type == IntentType.VIDEO) &&
             possibleFile != null &&
             possibleFile.exists() &&
             possibleFile.length() > 0) {
                 callback.onDataReceived(type, pendingFileUri);
             pendingFileUri = null;
         } else if (data != null) {
-            URI uri;
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
-                uri = AndroidURIUtil.parse(data.getDataString());
+                callback.onDataReceived(type, AndroidURIUtil.parse(data.getDataString()));
+            } else if(data.getClipData() != null) {
+                ClipData clipData = data.getClipData();
+                for (int i = 0; i < clipData.getItemCount(); i++) {
+                    callback.onDataReceived(type, new AndroidURI(clipData.getItemAt(i).getUri()));
+                }
+            } else if (data.getData() != null) {
+                callback.onDataReceived(type, new AndroidURI(data.getData()));
             } else {
-                uri = new AndroidURI(data.getData());
-            }
-            if (uri == null) {
                 callback.onFailed(type);
-            } else {
-                callback.onDataReceived(type, uri);
             }
         } else {
             callback.onFailed(type);
@@ -178,8 +174,8 @@ public class AssetIntentsManager {
      *
      * @param type
      */
-    private static URI getOutputMediaFileUri(IntentType type) {
-        File file = getOutputMediaFile(type);
+    private static URI getOutputMediaFileUri(Context context, IntentType type) {
+        File file = getOutputMediaFile(context, type);
         return file != null ? AndroidURIUtil.fromFile(file) : null;
     }
 
@@ -188,9 +184,9 @@ public class AssetIntentsManager {
      *
      * @param type
      */
-    private static File getOutputMediaFile(IntentType type) {
-        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "WIRE_MEDIA");
-        if (!mediaStorageDir.exists() && !mediaStorageDir.mkdirs()) {
+    private static File getOutputMediaFile(Context context, IntentType type) {
+        File mediaStorageDir = context.getExternalCacheDir();
+        if (mediaStorageDir == null || !mediaStorageDir.exists()) {
             return null;
         }
 
@@ -198,7 +194,6 @@ public class AssetIntentsManager {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(date.getTime());
 
         switch (type) {
-            case VIDEO_CURSOR_BUTTON:
             case VIDEO:
                 return new File(mediaStorageDir.getPath() + File.separator + "VID_" + timeStamp + ".mp4");
             case CAMERA:
@@ -207,49 +202,19 @@ public class AssetIntentsManager {
         return null;
     }
 
-    public boolean onRequestPermissionsResult(int requestCode, int[] grantResults) {
-        IntentType type = IntentType.getByPermissionCode(requestCode);
-
-        if (type == IntentType.UNKOWN) {
-            return false;
-        }
-
-        if (!PermissionUtils.verifyPermissions(grantResults)) {
-            callback.onPermissionFailed(type);
-            return true;
-        }
-
-        switch (type) {
-            case GALLERY:
-                return true;
-            case VIDEO_CURSOR_BUTTON:
-            case VIDEO:
-                captureVideo(type);
-                return true;
-            case CAMERA:
-                captureImage();
-                return true;
-            default:
-                return false;
-        }
-    }
-
-
     public enum IntentType {
-        UNKOWN(-1, -1),
-        GALLERY(9411, 8411),
-        SKETCH_FROM_GALLERY(9416, 8416),
-        VIDEO(9412, 8412),
-        VIDEO_CURSOR_BUTTON(9415, 8415),
-        CAMERA(9413, 8413),
-        FILE_SHARING(9414, 8414);
+        UNKNOWN(-1),
+        GALLERY(9411),
+        SKETCH_FROM_GALLERY(9416),
+        VIDEO(9412),
+        CAMERA(9413),
+        FILE_SHARING(9414),
+        BACKUP_IMPORT(9415);
 
         public int requestCode;
-        private int permissionCode;
 
-        IntentType(int requestCode, int permissionCode) {
+        IntentType(int requestCode) {
             this.requestCode = requestCode;
-            this.permissionCode = permissionCode;
         }
 
         public static IntentType get(int requestCode) {
@@ -270,41 +235,15 @@ public class AssetIntentsManager {
                 return VIDEO;
             }
 
-            if (requestCode == VIDEO_CURSOR_BUTTON.requestCode) {
-                return VIDEO_CURSOR_BUTTON;
-            }
-
             if (requestCode == FILE_SHARING.requestCode) {
                 return FILE_SHARING;
             }
 
-            return UNKOWN;
-        }
-
-
-        public static IntentType getByPermissionCode(int permissionCode) {
-
-            if (permissionCode == GALLERY.permissionCode) {
-                return GALLERY;
+            if (requestCode == BACKUP_IMPORT.requestCode) {
+                return BACKUP_IMPORT;
             }
 
-            if (permissionCode == CAMERA.permissionCode) {
-                return CAMERA;
-            }
-
-            if (permissionCode == VIDEO.permissionCode) {
-                return VIDEO;
-            }
-
-            if (permissionCode == VIDEO_CURSOR_BUTTON.permissionCode) {
-                return VIDEO_CURSOR_BUTTON;
-            }
-
-            if (permissionCode == FILE_SHARING.permissionCode) {
-                return FILE_SHARING;
-            }
-
-            return UNKOWN;
+            return UNKNOWN;
         }
     }
 
@@ -322,7 +261,5 @@ public class AssetIntentsManager {
         void onFailed(IntentType type);
 
         void openIntent(Intent intent, AssetIntentsManager.IntentType intentType);
-
-        void onPermissionFailed(IntentType type);
     }
 }

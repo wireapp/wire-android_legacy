@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/launchscreen"
+    />
+
+
+    <com.waz.zclient.ui.text.GlyphTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/wire__padding__32"
+        android:text="@string/glyph__envelope"
+        android:textColor="@color/text__primary_dark"
+        android:textSize="@dimen/wire__text_size__huge"
+        android:layout_marginLeft="@dimen/wire__padding__16"
+        android:layout_above="@+id/ttv__sign_up__check_email"
+    />
+
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/ttv__sign_up__check_email"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/profile__email__verify__instructions"
+        android:textColor="@color/text__primary_dark"
+        android:textSize="@dimen/wire__text_size__regular"
+        app:w_font="@string/wire__typeface__light"
+        android:layout_marginLeft="@dimen/wire__padding__16"
+        android:layout_centerVertical="true"
+    />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/wire__padding__16"
+        android:layout_marginRight="@dimen/wire__padding__16"
+        android:layout_marginTop="@dimen/wire__padding__32"
+        android:orientation="vertical"
+        android:layout_below="@+id/ttv__sign_up__check_email"
+    >
+
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/ttv__sign_up__didnt_get"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/profile__email__verify__didnt_get"
+            android:textColor="@color/text__primary_dark"
+            android:textSize="@dimen/wire__text_size__regular"
+            app:w_font="@string/wire__typeface__light"
+        />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/ttv__pending_email__resend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/wire__padding__8"
+            android:text="@string/profile__email__verify__resend"
+            android:textAllCaps="true"
+            android:textSize="@dimen/wire__text_size__small"
+            app:w_font="@string/wire__typeface__light"
+            android:textColor="@color/text__primary_dark"
+        />
+    </LinearLayout>
+
+    <!-- Back button -->
+    <LinearLayout
+        android:id="@+id/ll__activation_button__back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|left"
+        android:layout_marginLeft="@dimen/wire__padding__regular"
+        android:layout_marginTop="@dimen/first_time__logo__padding_top"
+    >
+
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/glyph__previous"
+            android:textColor="@color/text__primary_dark"
+            android:textSize="@dimen/wire__text_size__regular"
+            app:w_font="@string/wire__typeface__light"
+        />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="@dimen/wire__padding__small"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:text="@string/edit_email"
+            android:textColor="@color/text__primary_dark"
+            android:textAllCaps="true"
+            android:textSize="@dimen/wire__text_size__small"
+            app:w_font="@string/wire__typeface__light"
+        />
+    </LinearLayout>
+
+    <com.waz.zclient.views.feedback.FeedbackCheckmarkView
+        android:id="@+id/fl__confirmation_checkmark"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentTop="true"
+        android:visibility="gone"
+        android:layout_alignParentStart="true"/>
+
+</RelativeLayout>

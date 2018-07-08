@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,16 +18,17 @@
 package com.waz.zclient.messages.parts.footer
 
 import android.content.Context
+import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
 import com.waz.api.Message.Status
-import com.waz.model.ConversationData.ConversationType
 import com.waz.model.MessageData
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.CancellableFuture
 import com.waz.utils._
 import com.waz.utils.events.{ClockSignal, EventContext, Signal}
-import com.waz.zclient.controllers.global.{AccentColorController, SelectionController}
+import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{LikesController, UsersController}
 import com.waz.zclient.utils.ContextUtils._
@@ -43,19 +44,26 @@ import scala.concurrent.duration._
 class FooterViewController(implicit inj: Injector, context: Context, ec: EventContext) extends Injectable {
   import com.waz.threading.Threading.Implicits.Ui
 
-  val zms = inject[Signal[ZMessaging]]
-  val accents = inject[AccentColorController]
-  val selection = inject[SelectionController].messages
-  val signals = inject[UsersController]
-  val likesController = inject[LikesController]
+  val zms                    = inject[Signal[ZMessaging]]
+  val accents                = inject[AccentColorController]
+  val selection              = inject[ConversationController].messages
+  val signals                = inject[UsersController]
+  val likesController        = inject[LikesController]
+  val conversationController = inject[ConversationController]
 
-  val opts = Signal[MsgBindOptions]()
+  val opts            = Signal[MsgBindOptions]()
   val messageAndLikes = Signal[MessageAndLikes]()
-  val isSelfMessage = opts.map(_.isSelf)
-  val message = messageAndLikes.map(_.message)
-  val isLiked = messageAndLikes.map(_.likes.nonEmpty)
+  val isSelfMessage   = opts.map(_.isSelf)
+
+  val message =
+    for {
+      id  <- messageAndLikes.map(_.message.id)
+      msg <- zms.flatMap(_.messagesStorage.signal(id))
+    } yield msg
+
+  val isLiked     = messageAndLikes.map(_.likes.nonEmpty)
   val likedBySelf = messageAndLikes.map(_.likedBySelf)
-  val expiring = message.map { msg => msg.isEphemeral && !msg.expired && msg.expiryTime.isDefined }
+  val expiring    = message.map { msg => msg.isEphemeral && !msg.expired && msg.expiryTime.isDefined }
 
   //if the user likes OR dislikes something, we want to allow the timestamp/footer to disappear immediately
   val likedBySelfTime = Signal(Instant.EPOCH)
@@ -93,14 +101,15 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
 
   val timestampText = for {
     selfUserId  <- signals.selfUserId
-    convType    <- conv.map(_.convType)
+    convId      <- conv.map(_.id)
+    isGroup     <- Signal.future(conversationController.isGroup(convId))
     msg         <- message
     timeout     <- ephemeralTimeout
   } yield {
     val timestamp = ZTimeFormatter.getSingleMessageTime(context, DateTimeUtils.toDate(msg.time))
     timeout match {
       case Some(t)                          => ephemeralTimeoutString(timestamp, t)
-      case None if selfUserId == msg.userId => statusString(timestamp, msg, convType)
+      case None if selfUserId == msg.userId => statusString(timestamp, msg, isGroup)
       case None                             => timestamp
     }
   }
@@ -120,34 +129,41 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
 
   def onLikeClicked() = messageAndLikes.head.map { likesController.onLikeButtonClicked ! _ }
 
-  private def statusString(timestamp: String, m: MessageData, convType: ConversationType) =
+  private def statusString(timestamp: String, m: MessageData, isGroup: Boolean) =
     m.state match {
-      case Status.PENDING => getString(R.string.message_footer__status__sending)
-      case Status.SENT => getString(R.string.message_footer__status__sent, timestamp)
-      case Status.DELIVERED if convType == ConversationType.Group => getString(R.string.message_footer__status__sent, timestamp)
-      case Status.DELIVERED => getString(R.string.message_footer__status__delivered, timestamp)
-      case Status.DELETED => getString(R.string.message_footer__status__deleted, timestamp)
+      case Status.PENDING              => getString(R.string.message_footer__status__sending)
+      case Status.SENT                 => getString(R.string.message_footer__status__sent, timestamp)
+      case Status.DELIVERED if isGroup => getString(R.string.message_footer__status__sent, timestamp)
+      case Status.DELIVERED            => getString(R.string.message_footer__status__delivered, timestamp)
+      case Status.DELETED              => getString(R.string.message_footer__status__deleted, timestamp)
       case Status.FAILED |
-           Status.FAILED_READ => getString(R.string.message_footer__status__failed)
-      case _ => timestamp
+           Status.FAILED_READ          => getString(R.string.message_footer__status__failed)
+      case _                           => timestamp
     }
 
   private def ephemeralTimeoutString(timestamp: String, remaining: FiniteDuration) = {
-    val stringBuilder = new StringBuilder
-    if (remaining > 1.day) {
-      val days = remaining.toDays.toInt
-      stringBuilder.append(getQuantityString(R.plurals.message_footer__expire__days, days, Integer.valueOf(days))).append(", ")
-    }
-    if (remaining > 1.hour) {
-      val hours = remaining.toHours.toInt % 24
-      stringBuilder.append(getQuantityString(R.plurals.message_footer__expire__hours, hours, Integer.valueOf(hours))).append(", ")
-    }
-    if (remaining > 1.minute) {
-      val minutes = remaining.toMinutes.toInt % 60
-      stringBuilder.append(getQuantityString(R.plurals.message_footer__expire__minutes, minutes, Integer.valueOf(minutes))).append(", ")
-    }
-    val seconds = remaining.toSeconds.toInt % 60
-    stringBuilder.append(getQuantityString(R.plurals.message_footer__expire__seconds, seconds, Integer.valueOf(seconds)))
-    getString(R.string.message_footer__status__ephemeral_summary, timestamp, stringBuilder.toString)
+
+    def unitString(resId: Int, quantity: Long) =
+      getQuantityString(resId, quantity.toInt, quantity.toString)
+
+    lazy val years    = unitString(R.plurals.unit_years, remaining.toDays / 365)
+    lazy val weeks    = unitString(R.plurals.unit_weeks,  (remaining.toDays % 365) / 7)
+    lazy val days     = unitString(R.plurals.unit_days,  remaining.toDays % 7)
+    lazy val hours    = f"${remaining.toHours % 24}:${remaining.toMinutes % 60}%02d"
+    lazy val minutes  = unitString(R.plurals.unit_minutes, remaining.toMinutes % 60)
+    lazy val seconds  = unitString(R.plurals.unit_seconds, remaining.toSeconds % 60)
+
+    lazy val weeksNotZero    = Option((remaining.toDays % 365) / 7).filter(_ > 0).map(unitString(R.plurals.unit_weeks,  _))
+    lazy val daysNotZero     = Option(remaining.toDays % 7).filter(_ > 0).map(unitString(R.plurals.unit_days,  _))
+
+    val remainingTimeStamp =
+      if (remaining > 365.days)      weeksNotZero.fold(getString(R.string.ephemeral_message_footer_single_unit, years))(getString(R.string.ephemeral_message_footer_multiple_units, years, _))
+      else if (remaining > 7.days)   daysNotZero.fold(getString(R.string.ephemeral_message_footer_single_unit, weeks))(getString(R.string.ephemeral_message_footer_multiple_units, weeks, _))
+      else if (remaining > 1.day)    getString(R.string.ephemeral_message_footer_multiple_units, days, hours)
+      else if (remaining > 1.hour)   getString(R.string.ephemeral_message_footer_single_unit, hours)
+      else if (remaining > 1.minute) getString(R.string.ephemeral_message_footer_single_unit, minutes)
+      else                           getString(R.string.ephemeral_message_footer_single_unit, seconds)
+
+    s"$timestamp \u30FB $remainingTimeStamp"
   }
 }

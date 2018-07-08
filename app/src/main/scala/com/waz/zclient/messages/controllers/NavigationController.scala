@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,18 +17,22 @@
  */
 package com.waz.zclient.messages.controllers
 
-import com.waz.utils.events.Signal
-import com.waz.zclient.controllers.navigation.{Page, NavigationControllerObserver, INavigationController}
-import com.waz.zclient.{Injector, Injectable}
+import com.waz.utils.events.{Signal, SourceSignal}
+import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page}
+import com.waz.zclient.{Injectable, Injector}
 
 class NavigationController(implicit injector: Injector) extends Injectable {
 
   val navController = inject[INavigationController]
 
-  val messageStreamOpen = Signal[Boolean](false)
+  val visiblePage = Signal[Page]()
+
+  val messageStreamOpen = visiblePage.map(_ == Page.MESSAGE_STREAM)
+
+  val mainActivityActive: SourceSignal[Int] = Signal(0)
 
   navController.addNavigationControllerObserver(new NavigationControllerObserver {
-    override def onPageVisible(page: Page): Unit = messageStreamOpen ! (page == Page.MESSAGE_STREAM)
+    override def onPageVisible(page: Page): Unit = visiblePage ! page
   })
 
 }

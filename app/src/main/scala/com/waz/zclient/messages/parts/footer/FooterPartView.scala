@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -153,7 +153,10 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
     height ! (bottom - top)
   }
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
+    if (!controller.messageAndLikes.currentValue.map(_.message.id).contains(msg.message.id)) {
+      timeStampAndStatus.setText("")
+    }
     super.set(msg, part, opts)
     hideAnim.cancel()
     contentAnim.cancel()
@@ -161,7 +164,7 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
     hideAnim.size ! 1f
     closing ! false
 
-    controller.opts.publish(opts, Threading.Ui)
+    opts.foreach(controller.opts.publish(_, Threading.Ui))
     controller.messageAndLikes.publish(msg, Threading.Ui)
   }
 

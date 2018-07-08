@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,10 +46,10 @@ class RenamePartView(context: Context, attrs: AttributeSet, style: Int) extends 
 
   val renamerName = message.map(_.userId).flatMap(users.displayName)
 
-  val text = renamerName map {
+  val text = renamerName.map {
     case Me           => getString(R.string.content__system__you_renamed_conv)
     case Other(name)  => getString(R.string.content__system__other_renamed_conv, name)
-  }
+  }.map(_.toUpperCase)
 
   text.on(Threading.Ui) { messageView.setText }
 

@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,16 +19,20 @@ package com.waz.zclient.messages.parts
 
 import android.content.res.ColorStateList
 import android.graphics.drawable.{ColorDrawable, Drawable}
+import android.graphics.{Canvas, Paint, RectF}
 import android.view.View
 import android.widget.{ImageView, TextView}
+import com.waz.ZLog.ImplicitTag._
 import com.waz.api.AccentColor
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
-import com.waz.zclient.ViewHelper
-import com.waz.zclient.controllers.global.AccentColorController
+import com.waz.utils.events.{ClockSignal, Signal}
+import com.waz.utils.returning
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.messages.MessageViewPart
 import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.ui.utils.{ColorUtils, TypefaceUtils}
+import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.{R, ViewHelper}
 
 trait EphemeralPartView extends MessageViewPart { self: ViewHelper =>
 
@@ -67,4 +71,47 @@ trait EphemeralPartView extends MessageViewPart { self: ViewHelper =>
 
   def registerEphemeral(imageView: ImageView, imageDrawable: Drawable): Unit =
     ephemeralDrawable(imageDrawable).on(Threading.Ui) { imageView.setImageDrawable }
+}
+
+trait EphemeralIndicatorPartView extends MessageViewPart with ViewHelper {
+
+  private val paint = returning(new Paint(Paint.ANTI_ALIAS_FLAG))(_.setColor(getColor(R.color.white_80)))
+  private val bgPaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG))(_.setColor(getColor(R.color.light_graphite)))
+  private val circleSize = getDimenPx(R.dimen.ephemeral__animating_dots__width)
+  private val paddingStart = (getDimenPx(R.dimen.content__padding_left) - circleSize) / 2
+  private val paddingTop = getDimenPx(R.dimen.wire__padding__6)
+  private val borderPadding = getDimenPx(R.dimen.wire__padding__1)
+
+  private val timerAngle = messageAndLikes
+    .map { m => (m.message.ephemeral, m.message.expired, m.message.expiryTime) }  // optimisation to ignore unrelated changes
+    .flatMap {
+    case (ephemeral, expired, expiryTime) =>
+      if (expired) Signal const 360
+      else expiryTime.fold(Signal const 0) { time =>
+        val interval = ephemeral.get / 360
+        ClockSignal(interval) map { now =>
+          val remaining = time.toEpochMilli - now.toEpochMilli
+          360 - ((remaining * 360f / ephemeral.get.toMillis).toInt max 0 min 360)
+        }
+      }
+  }
+
+  private val state = for {
+    ephemeral <- messageAndLikes.map(_.message.isEphemeral)
+    angle <- timerAngle
+  } yield (ephemeral, angle)
+
+  state.on(Threading.Ui) { _ => invalidate() }
+  setWillNotDraw(false)
+
+  override def onDraw(canvas: Canvas): Unit = state.currentValue match {
+    case Some((true, angle)) if canvas != null && canvas.getHeight > 0 =>
+      val top = Math.min(paddingTop, (canvas.getHeight - circleSize) / 2)
+      val circleRect = new RectF(paddingStart, top, paddingStart + circleSize, top + circleSize)
+      val innerRect = returning(new RectF(circleRect))(_.inset(borderPadding, borderPadding))
+
+      canvas.drawArc(circleRect, 0, 360, true, bgPaint)
+      canvas.drawArc(innerRect, -90, angle, true, paint)
+    case _ => // nothing to draw, not ephemeral or not loaded
+  }
 }

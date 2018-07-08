@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -99,7 +99,7 @@
             android:gravity="center"
             tools:ignore="UnusedAttribute"
             >
-            
+
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="@dimen/share_location__selected_bubble_height"
@@ -127,7 +127,7 @@
                     android:ellipsize="end"
                     android:textColor="@color/graphite"
                     android:maxLines="1"
-                    app:font="@string/wire__typeface__thin"
+                    app:w_font="@string/wire__typeface__thin"
                     android:textSize="@dimen/wire__text_size__regular"
                     />
 

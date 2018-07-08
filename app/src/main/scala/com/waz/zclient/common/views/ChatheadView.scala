@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,11 +25,11 @@ import android.view.View
 import android.view.View.MeasureSpec
 import android.view.View.MeasureSpec.{EXACTLY, makeMeasureSpec}
 import com.waz.ZLog.ImplicitTag._
+import com.waz.api.User
 import com.waz.api.User.ConnectionStatus
 import com.waz.api.User.ConnectionStatus._
 import com.waz.api.impl.AccentColor
-import com.waz.api.{ContactDetails, User}
-import com.waz.model.{AssetData, UserData, UserId}
+import com.waz.model.{AssetData, UserData, UserId, _}
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapResult
 import com.waz.service.assets.AssetService.BitmapResult.BitmapLoaded
@@ -38,11 +38,10 @@ import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache.BitmapRequest.{Round, Single}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.{NameParts, returning}
-import com.waz.zclient.controllers.UserAccountsController
+import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
-
 
 class ChatheadView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends View(context, attrs, defStyleAttr) with ViewHelper {
 
@@ -96,6 +95,10 @@ class ChatheadView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   private val grayScaleColorMatrix = new ColorMatrix()
 
+  private lazy val matrix = new Matrix()
+  private lazy val bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG)
+  private lazy val integrationDrawHelper = IntegrationSquareDrawHelper()
+
   ctrl.invalidate.on(Threading.Ui)(_ => invalidate())
 
   ctrl.drawColors.on(Threading.Ui) { case (grayScale, accentColor) =>
@@ -119,19 +122,18 @@ class ChatheadView(val context: Context, val attrs: AttributeSet, val defStyleAt
     invalidate()
   }
 
-  def clearUser() = ctrl.assignInfo ! None
+  def clearUser(): Unit = ctrl.clearUser()
 
-  def setUser(user: User) = Option(user).fold(throw new IllegalArgumentException("User should not be null"))(u => setUserId(UserId(u.getId)))
+  def setUserId(userId: UserId, zms: Option[ZMessaging]): Unit = ctrl.setUserId(userId, zms)
+  def setUserId(userId: UserId): Unit = setUserId(userId, None): Unit
 
-  def setUserId(userId: UserId) = Option(userId).fold(throw new IllegalArgumentException("UserId should not be null"))(u => ctrl.assignInfo ! Some(Left(u)))
-
-  def setContactDetails(contactDetails: ContactDetails) = Option(contactDetails).fold(throw new IllegalArgumentException("ContactDetails should not be null"))(c => ctrl.assignInfo ! Some(Right(c)))
+  def setIntegration(integration: IntegrationData): Unit = ctrl.setIntegration(integration)
 
   override def isSelected = {
     ctrl.selected.currentValue.getOrElse(false)
   }
 
-  override def setSelected(selected: Boolean) = {
+  def requestSelected(selected: Boolean) = {
     ctrl.requestSelected ! selected
   }
 
@@ -158,48 +160,56 @@ class ChatheadView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   override def onDraw(canvas: Canvas): Unit = {
     val size: Float = Math.min(getWidth, getHeight)
-    // This is just to prevent a really small image. Instead we want to draw just nothing
-    if (size <= 1) {
-      return
-    }
+    if (size > 1) { // This is just to prevent a really small image. Instead we want to draw just nothing
+      val borderWidth = ctrl.borderWidth.currentValue.getOrElse(0)
+      val selected = ctrl.selected.currentValue.getOrElse(false)
+      val connectionStatus = ctrl.connectionStatus.currentValue.getOrElse(UNCONNECTED)
+      val glyph = getGlyphText(selected, connectionStatus, ctrl.showWaitingForConnection)
+      val bitmap = ctrl.bitmap.currentValue.getOrElse(Option.empty[Bitmap])
 
-    val borderWidth = ctrl.borderWidth.currentValue.getOrElse(0)
-    val selected = ctrl.selected.currentValue.getOrElse(false)
-    val connectionStatus = ctrl.connectionStatus.currentValue.getOrElse(UNCONNECTED)
-    val hasBeenInvited = ctrl.hasBeenInvited.currentValue.getOrElse(false)
-    val glyph = getGlyphText(selected, hasBeenInvited, connectionStatus, ctrl.showWaitingForConnection)
-    val bitmap = ctrl.bitmap.currentValue.getOrElse(Option.empty[Bitmap])
+      val radius: Float = size / 2f
+      val x = (getWidth - size) / 2
+      val y = (getHeight - size) / 2
 
-    val radius: Float = size / 2f
-    val x = (getWidth - size) / 2
-    val y = (getHeight - size) / 2
-
-    bitmap.fold {
-      if (backgroundPaint.getColor != Color.TRANSPARENT) {
-        drawBackgroundAndBorder(canvas, x, y, radius, borderWidth)
-      }
-      ctrl.initials.currentValue.foreach { initials =>
-        var fontSize: Float = initialsFontSize
-        if (initialsFontSize == defaultInitialFontSize) {
-          fontSize = 3f * radius / 4f
+      bitmap.fold {
+        if (backgroundPaint.getColor != Color.TRANSPARENT) {
+          drawBackgroundAndBorder(canvas, x, y, radius, borderWidth, new RectF(x, y, x + size, y + size))
         }
-        initialsTextPaint.setTextSize(fontSize)
-        canvas.drawText(initials, radius, getVerticalTextCenter(initialsTextPaint, radius), initialsTextPaint)
+        ctrl.initials.currentValue.foreach { initials =>
+          var fontSize: Float = initialsFontSize
+          if (initialsFontSize == defaultInitialFontSize) {
+            fontSize = 3f * radius / 4f
+          }
+          initialsTextPaint.setTextSize(fontSize)
+          canvas.drawText(initials, radius, getVerticalTextCenter(initialsTextPaint, radius), initialsTextPaint)
+        }
+      } { bitmap =>
+
+        if (ctrl.chatheadInfo.currentValue.flatten.exists(_.isBot)) {
+          val bounds = new Rect(0, 0, getWidth, getHeight)
+          ImageAssetDrawable.ScaleType.CenterInside(matrix, bitmap.getWidth, bitmap.getHeight, Dim2(bounds.width(), bounds.height()))
+          matrix.postTranslate(bounds.left, bounds.top)
+          integrationDrawHelper.draw(canvas, bitmap, bounds, matrix, bitmapPaint)
+
+        } else {
+          canvas.drawBitmap(bitmap, null, new RectF(x, y, x + size, y + size), backgroundPaint)
+        }
       }
-    } { bitmap =>
 
-      canvas.drawBitmap(bitmap, null, new RectF(x, y, x + size, y + size), backgroundPaint)
-    }
-
-    // Cut out
-    if (selected || !TextUtils.isEmpty(glyph)) {
-      canvas.drawCircle(radius + x, radius + y, radius - borderWidth, glyphOverlayPaint)
-      canvas.drawText(glyph, radius + x, (radius + iconTextPaint.getTextSize / 2) + y, iconTextPaint)
+      // Cut out
+      if (selected || !TextUtils.isEmpty(glyph)) {
+        canvas.drawCircle(radius + x, radius + y, radius - borderWidth, glyphOverlayPaint)
+        canvas.drawText(glyph, radius + x, (radius + iconTextPaint.getTextSize / 2) + y, iconTextPaint)
+      }
     }
   }
 
-  private def drawBackgroundAndBorder(canvas: Canvas, xOffset: Float, yOffset: Float, radius: Float, borderWidthPx: Int) = {
-    if (swapBackgroundAndInitialsColors) {
+  private def drawBackgroundAndBorder(canvas: Canvas, xOffset: Float, yOffset: Float, radius: Float, borderWidthPx: Int, rect: RectF) = {
+    if (ctrl.isBot.currentValue.getOrElse(false)) {
+      val radius = integrationDrawHelper.cornerRadius(rect.width())
+      canvas.drawRoundRect(rect, radius, radius, backgroundPaint)
+    }
+    else if (swapBackgroundAndInitialsColors) {
       if (ctrl.isRound) {
         canvas.drawCircle(radius + xOffset, radius + yOffset, radius, initialsTextPaint)
         canvas.drawCircle(radius + xOffset, radius + yOffset, radius - borderWidthPx, backgroundPaint)
@@ -220,12 +230,9 @@ class ChatheadView(val context: Context, val attrs: AttributeSet, val defStyleAt
     cy - ((textPaint.descent + textPaint.ascent) / 2f)
   }
 
-  private def getGlyphText(selected: Boolean, contactHasBeenInvited: Boolean, connectionStatus: ConnectionStatus, showWaiting: Boolean): String = {
-    if (selected) {
-      getResources.getString(selectedUserGlyphId)
-    } else if (contactHasBeenInvited) {
-      getResources.getString(pendingAddressBookContactGlyphId)
-    } else {
+  private def getGlyphText(selected: Boolean, connectionStatus: ConnectionStatus, showWaiting: Boolean): String = {
+    if (selected) getResources.getString(selectedUserGlyphId)
+    else {
       connectionStatus match {
         case PENDING_FROM_OTHER | PENDING_FROM_USER | IGNORED if showWaiting => getResources.getString(pendingUserGlyphId)
         case BLOCKED => getResources.getString(blockedUserGlyphId)
@@ -239,7 +246,6 @@ object ChatheadView {
 
   private val selectedUserGlyphId: Int = R.string.glyph__check
   private val pendingUserGlyphId: Int = R.string.glyph__clock
-  private val pendingAddressBookContactGlyphId: Int = R.string.glyph__redo
   private val blockedUserGlyphId: Int = R.string.glyph__block
   private val chatheadBottomMarginRatio: Float = 12.75f
   private val defaultInitialFontSize = -1
@@ -256,65 +262,64 @@ protected class ChatheadController(val setSelectable:            Boolean        
                                   (implicit inj: Injector, eventContext: EventContext) extends Injectable {
 
   val zMessaging = inject[Signal[ZMessaging]]
+
   val teamsAndUserController = inject[UserAccountsController]
 
-  val assignInfo = Signal[Option[Either[UserId, ContactDetails]]]
+  val assignInfo = Signal[Option[AssignDetails]]()
 
-  val chatheadInfo: Signal[Option[Either[UserData, ContactDetails]]] = zMessaging.zip(assignInfo).flatMap {
-    case (zms, Some(Left(userId))) => zms.usersStorage.signal(userId).map(ud => Some(Left(ud)))
-    case (_, Some(Right(contactDetails))) => Signal.const(Some(Right(contactDetails)))
-    case (_, None) => Signal.const(None)
+  def clearUser(): Unit = assignInfo ! None
+
+  def setUserId(userId: UserId, zms: Option[ZMessaging] = None): Unit =
+    Option(userId).fold(throw new IllegalArgumentException("UserId should not be null"))(u => assignInfo ! Some(AssignDetails(u, zms)))
+
+  def setIntegration(integration: IntegrationData): Unit =
+    Option(integration).fold(throw new IllegalArgumentException("IntegrationDetails should not be null"))(i => assignInfo ! Some(AssignDetails(i)))
+
+  val chatheadInfo: Signal[Option[ChatheadDetails]] = assignInfo.flatMap {
+    case Some(AssignDetails(_, Some(integration), _)) =>
+      Signal.const(Some(ChatheadDetails(integration)))
+    case Some(AssignDetails(Some(userId), _, zms)) =>
+      for {
+        z  <- zms.fold(zMessaging)(Signal.const)
+        ud <- z.usersStorage.signal(userId)
+      } yield Some(ChatheadDetails(ud, z.teamId.isDefined && z.teamId == ud.teamId, zms = Some(z)))
+    case _ =>
+      Signal.const(None)
   }
 
   val accentColor = chatheadInfo.map {
-    case Some(Left(user)) => ColorVal(AccentColor(user.accent).getColor())
-    case Some(Right(contactDetails)) => contactBackgroundColor
+    case Some(details) => details.accentColor
     case _ => defaultBackgroundColor
   }
 
   val connectionStatus = chatheadInfo.map {
-    case Some(Left(user)) => user.connection
-    case Some(Right(contactDetails)) => UNCONNECTED
+    case Some(details) => details.connectionStatus
     case _ => UNCONNECTED
   }
 
-  val teamMember = for {
-    zms <- zMessaging
-    uId <- assignInfo.map {
-      case Some(Left(userId)) => Some(userId)
-      case _ => None
-    }
-    isTeam <- uId.map(id => Signal(teamsAndUserController.isTeamMember(id))).getOrElse(Signal.const(false))
-  } yield isTeam
-
-  val hasBeenInvited = chatheadInfo.map {
-    case Some(Left(user)) => false
-    case Some(Right(contactDetails)) => contactDetails.hasBeenInvited
+  val teamMember = chatheadInfo.map {
+    case Some(details) => details.teamMember
     case _ => false
   }
 
   val initials = chatheadInfo.map {
-    case Some(Left(user)) => NameParts.parseFrom(user.name).initials
-    case Some(Right(contactDetails)) => contactDetails.getInitials
+    case Some(details) => details.initials
     case _ => ""
   }
 
   val knownUser = chatheadInfo.map {
-    case Some(Left(user)) => user.isConnected || user.isSelf
-    case Some(Right(contactDetails)) => false
+    case Some(details) => details.knownUser
     case _ => false
   }
 
-  val grayScale = chatheadInfo.zip(teamMember).map {
-    case (Some(Left(user)), isTeamMember) => !(user.isConnected || user.isSelf || isTeamMember)
-    case (Some(Right(contactDetails)), _) => false
+  val grayScale = chatheadInfo.map {
+    case Some(details) => details.grayScale
     case _ => false
   }.map(_ && grayscaleOnUnconnected)
 
-  val assetId = chatheadInfo.map {
-    case Some(Left(user)) => user.picture
-    case Some(Right(contactDetails)) => None
-    case _ => None
+  val assetIdAndZms = chatheadInfo.map {
+    case Some(details) => (details.assetId, details.zms)
+    case _ => (None, None)
   }
 
   val selectable = knownUser.zip(teamMember).map {
@@ -330,16 +335,29 @@ protected class ChatheadController(val setSelectable:            Boolean        
   val viewWidth = Signal(0)
 
   val borderWidth = viewWidth.zip(knownUser).map {
-    case (viewWidth, isKnownUser) => if (showBorder && isKnownUser) border.fold(0)(_.getWidth(viewWidth)) else 0
+    case (width, isKnownUser) if showBorder && isKnownUser => border.fold(0)(_.getWidth(width))
+    case _ => 0
   }
 
-  val bitmapResult = Signal(zMessaging, assetId, viewWidth, borderWidth, accentColor).flatMap[BitmapResult] {
-    case (zms, Some(id), width, bWidth, bColor) if width > 0 => zms.assetsStorage.signal(id).flatMap {
-      case data@AssetData.IsImage() if isRound => BitmapSignal(zms, data, Round(width, bWidth, bColor.value))
+  val isBot = chatheadInfo.map {
+    case Some(info) => info.isBot
+    case _          => false
+  }
+
+  val bitmapResult = (for {
+    (assetId, zmsOpt) <- assetIdAndZms
+    zMessaging        <- zmsOpt.fold(zMessaging)(Signal.const)
+    viewWidth         <- viewWidth
+    borderWidth       <- borderWidth
+    accentColor       <- accentColor
+    isBot             <- isBot
+  } yield (zMessaging, assetId, viewWidth, borderWidth, accentColor, isBot)).flatMap[BitmapResult] {
+    case (zms, Some(id), width, bWidth, bColor, bot) if width > 0 => zms.assetsStorage.signal(id).flatMap {
+      case data@AssetData.IsImage() if isRound && !bot => BitmapSignal(zms, data, Round(width, bWidth, bColor.value))
       case data@AssetData.IsImage() => BitmapSignal(zms, data, Single(width))
       case _ => Signal.empty[BitmapResult]
     }
-    case _ => Signal.const(BitmapResult.Empty)
+    case (_, aid, width, _, _, _) => Signal.const(BitmapResult.Empty)
   }
 
   val bitmap = bitmapResult.flatMap[Option[Bitmap]] {
@@ -350,7 +368,55 @@ protected class ChatheadController(val setSelectable:            Boolean        
   val drawColors = grayScale.zip(accentColor)
 
   //Everything else that requires a redraw
-  val invalidate = Signal(bitmap, selected, borderWidth).zip(Signal(initials, hasBeenInvited, connectionStatus)).onChanged
+  val invalidate = Signal(bitmap, selected, borderWidth).zip(Signal(initials, connectionStatus)).onChanged
+
+  case class AssignDetails(userId: Option[UserId], integration: Option[IntegrationData], zms: Option[ZMessaging]){
+    assert(userId.nonEmpty || integration.nonEmpty)
+  }
+
+  object AssignDetails {
+    def apply(userId: UserId, zms: Option[ZMessaging]): AssignDetails = AssignDetails(Some(userId), None, zms)
+    def apply(integration: IntegrationData): AssignDetails = AssignDetails(None, Some(integration), None)
+  }
+
+  case class ChatheadDetails(accentColor: ColorVal = contactBackgroundColor,
+                             connectionStatus: User.ConnectionStatus = UNCONNECTED,
+                             teamMember: Boolean = false,
+                             hasBeenInvited: Boolean = false,
+                             initials: String,
+                             knownUser: Boolean = false,
+                             grayScale: Boolean = false,
+                             assetId: Option[AssetId] = None,
+                             selectable: Boolean = false,
+                             isBot: Boolean = false,
+                             zms: Option[ZMessaging] = None
+                            )
+
+  object ChatheadDetails {
+    def apply(user: UserData, isTeamMember: Boolean): ChatheadDetails = apply(user, isTeamMember, None)
+
+    def apply(user: UserData, isTeamMember: Boolean, zms: Option[ZMessaging]): ChatheadDetails = {
+      val knownUser = user.isConnected || user.isSelf
+
+      ChatheadDetails(
+        accentColor = ColorVal(AccentColor(user.accent).getColor()),
+        connectionStatus = user.connection,
+        initials = NameParts.parseFrom(user.name).initials,
+        knownUser = knownUser,
+        grayScale = !(user.isConnected || user.isSelf || isTeamMember),
+        assetId = user.picture,
+        selectable = knownUser || isTeamMember,
+        isBot = user.isWireBot,
+        zms = zms
+      )
+    }
+
+    def apply(integration: IntegrationData): ChatheadDetails =
+      ChatheadDetails(
+        initials = NameParts.parseFrom(integration.name).initials,
+        isBot = true
+      )
+  }
 }
 
 case class Border(minSizeForLargeBorderWidth: Int, smallBorderWidth: Int, largeBorderWidth: Int) {
@@ -360,3 +426,4 @@ case class Border(minSizeForLargeBorderWidth: Int, smallBorderWidth: Int, largeB
 }
 
 case class ColorVal(value: Int)
+

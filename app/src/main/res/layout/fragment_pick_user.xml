@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,163 +25,144 @@
               android:orientation="vertical"
     >
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/t_pickuser_toolbar"
+    <LinearLayout
+        android:id="@+id/top_background_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/toolbar__padding__right"
-        android:clickable="false"
-        app:contentInsetStart="@dimen/content__padding_left"
-        style="?startUiToolbar"
-        android:visibility="gone"
-        >
-
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/ttv__pickuser__add_header"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="start|center_vertical"
-            android:layout_marginEnd="@dimen/wire__padding__regular"
-            android:maxLines="1"
-            android:ellipsize="end"
-            style="?startUiToolbar"
-            />
-    </android.support.v7.widget.Toolbar>
-
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/pickuser_toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/transparent"
-        android:clickable="false"
-        app:contentInsetStart="0dp"
-        android:visibility="gone">
-
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/pickuser_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginEnd="@dimen/wire__padding__regular"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:textColor="@color/white"
-            />
-
-    </android.support.v7.widget.Toolbar>
-
-    <View
-        android:id="@+id/v__pickuser__divider"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/wire__divider__height__thin"
-        style="?wireDivider"
-        />
-
-    <com.waz.zclient.views.SearchEditText
-        android:id="@+id/sbv__search_box"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/collections__multi_share_search_height"
-        android:layout_margin="@dimen/wire__padding__8"
-        app:hintText="@string/pick_user_search_hint"
-        />
-
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/rv__pickuser__header_list_view"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"/>
-
-    <!-- Error messages -->
-    <LinearLayout
-        android:id="@+id/fl_pickuser__error_message_container"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:clickable="true"
         android:orientation="vertical"
-        android:gravity="center"
-        android:paddingStart="@dimen/framework__general__left_padding"
-        android:paddingEnd="@dimen/framework__general__right_padding"
-        >
+        android:background="@color/light_graphite_8">
 
-        <!-- Error message -->
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/ttv_pickuser__error_header"
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/pickuser_toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            app:font="@string/wire__typeface__medium"
-            style="?startUiErrorLabel"
-            />
-
-        <!-- Error message -->
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/ttv_pickuser__error_body"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            app:font="@string/wire__typeface__light"
-            style="?startUiErrorLabel"
-            />
-
-        <!-- send invite -->
-        <LinearLayout
-            android:id="@+id/ll_pickuser__error_invite"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:padding="@dimen/people_picker__error_icon__padding"
-            >
-
-            <FrameLayout
-                android:layout_width="@dimen/people_picker__chathead__width"
-                android:layout_height="@dimen/people_picker__chathead__width"
-                android:background="@drawable/member_counter__background"
-                >
-
-                <com.waz.zclient.ui.text.GlyphTextView
-                    android:id="@+id/gtv_pickuser__error_icon"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="@string/glyph__envelope"
-                    style="?startUiErrorIcon"
-                    />
-            </FrameLayout>
+            android:layout_height="?attr/actionBarSize"
+            android:clickable="false"
+            app:contentInsetStart="0dp"
+            android:visibility="gone">
 
             <com.waz.zclient.ui.text.TypefaceTextView
-                android:id="@+id/ttv_pickuser__error_sublabel"
+                android:id="@+id/pickuser_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:paddingTop="@dimen/people_picker__error_icon_text__top_padding"
-                android:text="@string/people_picker__error_message__no_results__send_invite"
-                app:font="@string/wire__typeface__light"
-                style="?startUiErrorSubLabel"
+                android:layout_gravity="center"
+                android:layout_marginEnd="@dimen/wire__padding__regular"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="@color/white"
                 />
-        </LinearLayout>
+
+        </android.support.v7.widget.Toolbar>
+
+        <com.waz.zclient.usersearch.views.SearchEditText
+            android:id="@+id/sbv__search_box"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/collections__multi_share_search_height"
+            android:layout_margin="@dimen/wire__padding__8"
+            app:hintText="@string/pick_user_search_hint"
+            />
+
+        <android.support.design.widget.TabLayout
+            android:id="@+id/pick_user_tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/wire__padding__regular"
+            android:layout_marginEnd="@dimen/wire__padding__regular"
+            app:tabIndicatorColor="@color/white_72"
+            app:tabTextColor="@color/white_32"
+            app:tabMode="fixed"
+            app:tabSelectedTextColor="@color/white"
+            app:tabIndicatorHeight="@dimen/wire__divider__height"
+            >
+
+            <android.support.design.widget.TabItem
+                android:text="@string/people_picker__search_people"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout="@layout/tab_layout"/>
+
+            <android.support.design.widget.TabItem
+                android:text="@string/people_picker__search_services"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout="@layout/tab_layout"/>
+
+        </android.support.design.widget.TabLayout>
 
     </LinearLayout>
 
-    <com.waz.zclient.ui.startui.ConversationQuickMenu
-        android:id="@+id/cqm__pickuser__quick_menu"
+    <RelativeLayout
+        android:id="@+id/empty_list_button"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/conversation_quick_menu__height"
-        android:layout_gravity="bottom"
-        />
+        android:layout_height="@dimen/conversation_list__row__height"
+        android:background="@drawable/selector__transparent_button"
+        android:clickable="true"
+        android:focusable="true">
 
-    <com.waz.zclient.views.FlatWireButton
-        android:id="@+id/confirmation_button"
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:id="@+id/icon"
+            android:layout_width="@dimen/search__chathead__size"
+            android:layout_height="@dimen/search__chathead__size"
+            android:padding="@dimen/wire__padding__4"
+            android:layout_marginStart="@dimen/wire__padding__regular"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:text="@string/glyph__envelope"
+            android:textColor="@color/white"
+            android:textSize="@dimen/wire__text_size__regular"/>
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_gravity="center_vertical"
+            android:layout_toEndOf="@+id/icon"
+            android:paddingEnd="@dimen/wire__padding__regular"
+            android:paddingStart="@dimen/wire__padding__regular"
+            android:text="@string/pick_user_teams_invite"
+            android:textSize="@dimen/wire__text_size__regular"
+            android:textColor="@color/white"
+            app:w_font="@string/wire__typeface__regular"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/wire__divider__height__thin"
+            android:layout_alignParentBottom="true"
+            android:layout_toEndOf="@+id/icon"
+            android:layout_marginStart="@dimen/wire__padding__regular"
+            android:background="@color/light_graphite_40"/>
+
+    </RelativeLayout>
+
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="@dimen/flat_wire_button_height"
-        />
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-    <com.waz.zclient.views.FlatWireButton
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/rv__pickuser__header_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/pickuser__error_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            app:w_font="@string/wire__typeface__medium"
+            android:text="@string/no_matches_found"
+            android:textColor="@color/white"
+            android:textSize="@dimen/wire__text_size__regular"
+            android:visibility="gone"
+            />
+
+    </FrameLayout>
+
+    <com.waz.zclient.common.views.FlatWireButton
         android:id="@+id/invite_button"
         android:layout_width="match_parent"
         android:layout_height="@dimen/flat_wire_button_height"
         />
+
 
 </LinearLayout>

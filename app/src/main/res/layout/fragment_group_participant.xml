@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,55 +22,27 @@
                 xmlns:app="http://schemas.android.com/apk/res-auto"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:background="?wireBackgroundCollection"
     >
 
-    <com.waz.zclient.pages.main.participants.views.ParticipantsGridView
+    <android.support.v7.widget.RecyclerView
         android:id="@+id/pgv__participants"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/ll__participants__footer_wrapper"
+        android:layout_above="@+id/fm__participants__footer"
         />
 
-    <LinearLayout
-        android:id="@+id/ll__participants__footer_wrapper"
+    <!-- Footer with left & right actions -->
+    <com.waz.zclient.views.menus.FooterMenu
+        android:id="@+id/fm__participants__footer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        app:leftActionText="@string/glyph__add_people"
+        app:rightActionText="@string/glyph__more"
+        app:leftActionLabelText="@string/conversation__action__add_people"
         android:layout_alignParentBottom="true"
-        android:orientation="vertical"
-        >
-
-        <View
-            android:id="@+id/v_participants__footer__top_border"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/wire__divider__height__thin"
-            android:background="@color/text__secondary_light__40"
-            />
-
-        <!-- Footer with left & right actions -->
-        <com.waz.zclient.views.menus.FooterMenu
-            android:id="@+id/fm__participants__footer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:leftActionText="@string/glyph__add_people"
-            app:rightActionText="@string/glyph__more"
-            app:leftActionLabelText="@string/conversation__action__add_people"
-            />
-
-    </LinearLayout>
-
-
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
-        <com.waz.zclient.views.images.ImageAssetImageView
-            android:id="@+id/iaiv__participant_body"
-            android:layout_width="@dimen/profile__image__width"
-            android:layout_height="@dimen/profile__image__height"
-            android:layout_gravity="center"
-            android:layout_marginTop="@dimen/participant__image_shift"
-            />
-    </FrameLayout>
+        style="?wireBackground"
+        />
 
     <!-- Unblock button for blocked users -->
     <com.waz.zclient.ui.views.ZetaButton
@@ -81,11 +53,11 @@
         android:gravity="center"
         android:layout_margin="@dimen/framework__general__top_padding"
         android:text="@string/connect_request__unblock__button__text"
-        app:font="@string/wire__typeface__bold"
+        app:w_font="@string/wire__typeface__bold"
         android:textAllCaps="true"
         android:textSize="@dimen/wire__text_size__small"
         android:textColor="@color/text__primary_light"
+        android:visibility="gone"
         />
-
 
 </RelativeLayout>

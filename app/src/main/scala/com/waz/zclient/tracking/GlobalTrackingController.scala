@@ -1,437 +1,228 @@
 /**
- * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+  * Wire
+  * Copyright (C) 2018 Wire Swiss GmbH
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
 package com.waz.zclient.tracking
 
-import java.util
-
-import android.content.{Context, Intent}
-import android.net.ConnectivityManager
-import android.os.Bundle
-import android.telephony.TelephonyManager
-import com.localytics.android.Localytics
-import com.waz.HockeyApp
+import android.content.Context
+import android.renderscript.RSRuntimeException
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.api.Message.Type._
 import com.waz.api.impl.ErrorResponse
-import com.waz.api.{EphemeralExpiration, NetworkMode, Verification}
-import com.waz.content.UserPreferences.AnalyticsEnabled
-import com.waz.content.UsersStorage
+import com.waz.content.Preferences.PrefKey
+import com.waz.content.{GlobalPreferences, UsersStorage}
 import com.waz.model.ConversationData.ConversationType
-import com.waz.model.UserData.ConnectionStatus.Blocked
 import com.waz.model.{UserId, _}
-import com.waz.service.{NetworkModeService, ZMessaging}
-import com.waz.threading.Threading
+import com.waz.service.tracking.TrackingService.{NoReporting, track}
+import com.waz.service.tracking._
+import com.waz.service.{UiLifeCycle, ZMessaging}
+import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.utils.{RichJSON, returning, _}
+import com.waz.utils.{RichThreetenBPDuration, _}
 import com.waz.zclient._
-import com.waz.zclient.controllers.tracking.events.launch.AppLaunch
-import com.waz.zclient.controllers.tracking.events.otr.VerifiedConversationEvent
-import com.waz.zclient.controllers.tracking.screens.{ApplicationScreen, RegistrationScreen}
-import com.waz.zclient.controllers.userpreferences.UserPreferencesController
-import com.waz.zclient.core.controllers.tracking
-import com.waz.zclient.core.controllers.tracking.attributes.{Attribute, RangedAttribute}
-import com.waz.zclient.core.controllers.tracking.events.media.CompletedMediaActionEvent
-import com.waz.zclient.core.controllers.tracking.events.onboarding.GeneratedUsernameEvent
-import com.waz.zclient.preferences.PreferencesController
+import com.waz.zclient.appentry.fragments.SignInFragment
+import com.waz.zclient.appentry.fragments.SignInFragment.{InputType, SignInMethod}
+import com.waz.zclient.utils.DeprecationUtils
+import net.hockeyapp.android.CrashManagerListener
 import org.json.JSONObject
-import org.threeten.bp.{Duration, Instant}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.Future._
-import scala.language.{implicitConversions, postfixOps}
-import scala.util.control.NonFatal
+import scala.concurrent.duration._
+import scala.util.Try
 
 class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext) extends Injectable {
+
   import GlobalTrackingController._
-  import Threading.Implicits.Background
 
-  val zmsOpt     = inject[Signal[Option[ZMessaging]]]
+  private implicit val dispatcher = new SerialDispatchQueue(name = "Tracking")
+
+  private val superProps = Signal(new JSONObject())
+
+  //Create mixpanel object and set persistant super property values
+  private val mixpanelGuard = returning(new MixpanelGuard(cxt)) { g =>
+    g.open()
+    g.withApi { m =>
+      m.registerSuperPropertiesMap(Map(
+        "app"     -> "android",
+        "$city"   -> null.asInstanceOf[AnyRef],
+        "$region" -> null.asInstanceOf[AnyRef]
+      ).asJava)
+    }
+  }
+
+  //For automation tests
+  def getId = mixpanelGuard.withApi(_.getDistinctId).getOrElse("")
+
+  val zmsOpt = inject[Signal[Option[ZMessaging]]]
   val zMessaging = inject[Signal[ZMessaging]]
+  val currentConv = inject[Signal[ConversationData]]
 
-  private var registeredZmsInstances = Set.empty[ZMessaging]
-  private var appLaunchedTracked = false
-  private var sentEvents = Set.empty[String]
+  private def trackingEnabled = ZMessaging.globalModule.flatMap(_.prefs.preference(analyticsPrefKey).apply())
+
+  inject[UiLifeCycle].uiActive.onChanged {
+    case false =>
+      mixpanelGuard.withApi { m =>
+        verbose("flushing mixpanel events")
+        m.flush()
+      }
+    case _ =>
+  }
 
   /**
-    * WARNING: since we have to first listen to the zms signal in order to find the event streams that we care about for tracking,
-    * whenever this signal changes, we will define a new signal subscription, in the closure of which we will generate new subscriptions
-    * for all the event streams in that signal. This means that if zms changes and then changes back (switching accounts) or the signal fires
-    * twice, we'll have two listeners to each event stream, and we'll end up tagging each event twice.
-    *
-    * Therefore, we keep a set of registered zms instances, and only register the listeners once.
+    * Access tracking events when they become available and start processing
+    * Sets super properties and actually performs the tracking of an event. Super properties are user scoped, so for that
+    * reason, we need to ensure they're correctly set based on whatever account (zms) they were fired within.
     */
-  zmsOpt {
-    case Some(zms) if !registeredZmsInstances(zms) =>
-      registeredZmsInstances += zms
-      registerTrackingEventListeners(zms)
-    case _ => //already registered to this zms, do nothing.
-  }
-
-  zMessaging.flatMap(_.userPrefs.preference(AnalyticsEnabled).signal) { enabled =>
-    verbose(s"Analytics enabled?: $enabled")
-    Localytics.setOptedOut(!enabled)
-  }
-
-  def tagEvent(event: tracking.events.Event) = {
-    verbose(s"Tag event=[name='${event.getName}',\nattributes='${event.getAttributes}',\nrangedAttributes='${event.getRangedAttributes}']")("TrackingController")
-    setCustomDims() map { _ =>
-      val eventAttributes = new util.HashMap[String, String]
-      import scala.collection.JavaConversions._
-      for (attribute <- event.getRangedAttributes.keySet) {
-        val eventCount = event.getRangedAttributes.get(attribute)
-        eventAttributes.put(attribute.name, createRangedAttribute(eventCount, attribute.rangeSteps))
-        eventAttributes.put(attribute.actualValueName, Integer.toString(eventCount))
-      }
-
-      for (attribute <- event.getAttributes.keySet) {
-        eventAttributes.put(attribute.name, event.getAttributes.get(attribute))
-        //TODO eventually remove - this is a hack since we can't dynamically generate event attributes due to type constraints
-        if (attribute == Attribute.AVS_METRICS_FULL) {
-          try {
-            val metrics = new JSONObject(event.getAttributes.get(attribute)).topLevelStringMap
-            metrics.foreach { case (key, value) =>
-              eventAttributes.put(key, value)
-            }
-          } catch {
-            case NonFatal(e) =>
-              e.printStackTrace()
-              HockeyApp.saveException(e, "Failed to extract values from AVS metrics string")
+  ZMessaging.globalModule.map(_.trackingService.events).foreach {
+    _ { case (zms, event) =>
+      def send(zmsArg: Option[ZMessaging], eventArg: TrackingEvent) = {
+        for {
+          sProps <- superProps.head
+          teamSize <- zmsArg match {
+            case Some(z) => z.teamId.fold(Future.successful(0))(_ => z.teams.searchTeamMembers().head.map(_.size))
+            case _ => Future.successful(0)
           }
+        } yield {
+          mixpanelGuard.withApi { m =>
+            //clear account-based super properties
+            m.unregisterSuperProperty(TeamInTeamSuperProperty)
+            m.unregisterSuperProperty(TeamSizeSuperProperty)
+
+            //set account-based super properties based on supplied zms
+            sProps.put(TeamInTeamSuperProperty, zmsArg.flatMap(_.teamId).isDefined)
+            sProps.put(TeamSizeSuperProperty, teamSize)
+
+            //register the super properties, and track
+            m.registerSuperProperties(sProps)
+            verbose(s"tracking ${eventArg.name}")
+            m.track(eventArg.name, eventArg.props.orNull)
+          }
+          verbose(
+            s"""
+               |trackEvent: ${eventArg.name}
+               |properties: ${eventArg.props.map(_.toString(2))}
+               |superProps: ${mixpanelGuard.withApi(_.getSuperProperties).getOrElse(sProps).toString(2)}
+          """.stripMargin)
         }
       }
 
-      if (isTrackingEnabled) Localytics.tagEvent(event.getName, eventAttributes)
-    }
-  }
-
-  def appLaunched(intent: Intent): Unit = {
-    if (!appLaunchedTracked) {
-      val event: AppLaunch = new AppLaunch(intent)
-      tagEvent(event)
-      appLaunchedTracked = true
-    }
-  }
-
-  def loadFromSavedInstance(savedInstanceState: Bundle) =
-    Option(savedInstanceState).flatMap(st => Option(st.getStringArray(SAVED_STATE_SENT_TAGS))).foreach { tags =>
-      sentEvents = tags.toSet
-    }
-
-  def saveToSavedInstance(outState: Bundle) = {
-    outState.putStringArray(SAVED_STATE_SENT_TAGS, sentEvents.toArray)
-  }
-
-  def onRegistrationScreen(screen: RegistrationScreen) = {
-    verbose(s"Tag registration screen=[name='${Option(screen)}']")
-    Option(screen).map(_.toString).filter(!sentEvents.contains(_) && isTrackingEnabled).foreach { sc =>
-      sentEvents += sc
-      Localytics.tagScreen(sc)
-    }
-  }
-
-  def onApplicationScreen(screen: ApplicationScreen) = {
-    verbose(s"Tag application screen=[\nname='${Option(screen)}']")
-    Option(screen).map(_.toString).filter(_ => isTrackingEnabled).foreach(Localytics.tagScreen)
-  }
-
-  private def isTrackingEnabled =
-    inject[PreferencesController].isAnalyticsEnabled && !BuildConfig.DISABLE_TRACKING_KEEP_LOGGING
-
-  /**
-    * Register tracking event listeners on SE services in this method. We need a method here, since whenever the signal
-    * zms fires, we want to discard the previous reference to the subscriber. Not doing so will cause this class to keep
-    * reference to old instances of the services under zms (?)
-    */
-  def registerTrackingEventListeners(zms: ZMessaging) = {
-    zms.handlesSync.responseSignal.onChanged { data =>
-      tagEvent(new GeneratedUsernameEvent(data.exists(_.nonEmpty)))
-    }
-
-    import AssetEvent._
-    def mediaType(mime: Mime) = {
-      import com.waz.zclient.core.controllers.tracking.attributes.CompletedMediaType._
-      mime match {
-        case Mime.Image() => PHOTO
-        case Mime.Audio() => AUDIO
-        case Mime.Video() => VIDEO
-        case _            => FILE
+      event match {
+        case _: OpenedTeamRegistration =>
+          trackingEnabled.map {
+            case true => ZMessaging.currentAccounts.accountManagers.head.map {
+              _.size match {
+                case 0 =>
+                  send(zms, event)
+                case _ =>
+                  send(zms, OpenedTeamRegistrationFromProfile())
+              }
+            }
+            case _ =>
+          }
+        case e: LoggedOutEvent if e.reason == LoggedOutEvent.InvalidCredentials =>
+          //This event type is trigged a lot, so disable for now
+        case _: MissedPushEvent if !BuildConfig.FLAVOR.equals("internal") =>
+          //This event is high volume, so we limit it to only internal clients
+        case e: ReceivedPushEvent if e.p.toFetch.forall(_.asScala < 10.seconds) =>
+        //don't track - there are a lot of these events! We want to keep the event count lower
+        case OptInEvent =>
+          mixpanelGuard.open()
+          mixpanelGuard.withApi { m =>
+            verbose("Opted in to analytics, re-registering")
+            m.unregisterSuperProperty(MixpanelIgnoreProperty)
+          }
+          send(zms, event).map { _ => mixpanelGuard.flush() }
+        case OptOutEvent =>
+          send(zms, event).map { _ =>
+            mixpanelGuard.withApi { m =>
+              verbose("Opted out of analytics, flushing and de-registering")
+              m.registerSuperProperties(returning(new JSONObject()) { _.put(MixpanelIgnoreProperty, true) })
+            }
+            mixpanelGuard.close()
+          }
+        case e@ExceptionEvent(_, _, description, Some(throwable)) =>
+          error(description, throwable)(e.tag)
+          trackingEnabled.map {
+            case true =>
+              throwable match {
+                case _: NoReporting =>
+                case _ => saveException(throwable, description)(e.tag)
+              }
+            case _ => //no action
+          }
+        case _ =>
+          trackingEnabled.map {
+            case true => send(zms, event)
+            case _ => //no action
+          }
       }
     }
-
-    val loader      = zms.assetLoader
-    val messages    = zms.messagesStorage
-    val assets      = zms.assetsStorage
-    val convsUI     = zms.convsUi
-    val handlesSync = zms.handlesSync
-    val connStats   = zms.websocket.connectionStats
-
-    convsUI.assetUploadStarted.map(_.id) { assetTrackingData(_).map {
-      case AssetTrackingData(convType, withOtto, isEphemeral, exp, assetSize, m) =>
-        tagEvent(new CompletedMediaActionEvent(mediaType(m), convType.toString, withOtto, isEphemeral, expToString(isEphemeral, exp)))
-        tagEvent(initiatedFileUploadEvent(m, assetSize, convType, isEphemeral, exp))
-    }}
-
-    messages.onMessageSent {
-      case msg if msg.isAssetMessage => assetTrackingData(msg.assetId).map {
-        case AssetTrackingData(convType, withOtto, isEphemeral, exp, assetSize, mime) =>
-          val duration = Duration.between(msg.localTime, Instant.now)
-          tagEvent(successfullyUploadedFileEvent(mime, assetSize, duration))
-      }
-      case _ =>
-    }
-
-    convsUI.assetUploadCancelled { mime => tagEvent(cancelledFileUploadEvent(mime))}
-
-    assets.onUploadFailed.filter(_.status == AssetStatus.UploadCancelled).map(_.mime)(m => tagEvent(cancelledFileUploadEvent(m)))
-
-    loader.onDownloadStarting { id => assetTrackingData(id).map {
-      case AssetTrackingData(convType, withOtto, isEphemeral, exp, assetSize, mime) =>
-        tagEvent(initiatedFileDownloadEvent(mime, assetSize))
-      }
-    }
-
-    loader.onDownloadDone { id => assetTrackingData(id).map {
-        case AssetTrackingData(convType, withOtto, isEphemeral, exp, assetSize, mime) =>
-          tagEvent(successfullyDownloadedFileEvent(mime, assetSize))
-      }
-    }
-
-    loader.onDownloadFailed { case (id, err) if err.code != ErrorResponse.CancelledCode => assetTrackingData(id).map {
-      case AssetTrackingData(convType, withOtto, isEphemeral, exp, assetSize, mime) =>
-        tagEvent(failedFileDownloadEvent(mime))
-    }}
-
-    convsUI.assetUploadFailed { error =>
-      tagEvent(FailedFileUploadEvent(error))
-    }
-
-    messages.onMessageFailed {
-      case (msg, error) if msg.isAssetMessage =>
-        tagEvent(FailedFileUploadEvent(error))
-      case _ =>
-    }
-
-    connStats.flatMap { stats => Signal.wrap(stats.lostOnPingDuration) } { duration =>
-      tagEvent(WebSocketConnectionEvent.lostOnPingEvent(duration))
-    }
-
-    connStats.flatMap { stats => Signal.wrap(stats.aliveDuration) } { duration =>
-      tagEvent(WebSocketConnectionEvent.closedEvent(duration))
-    }
-
-    zms.convsStorage.onUpdated.map {
-      _.filter { case (prev, conv) => prev.verified == Verification.UNVERIFIED && conv.verified == Verification.VERIFIED }
-    }.filter(_.nonEmpty) { _ =>
-      tagEvent(new VerifiedConversationEvent())
-    }
-
-    zms.calling.onMetricsAvailable(metrics => tagEvent(AvsMetricsEvent(metrics)))
   }
 
-  //-1 is the default value for non-logged in users (when zms is not defined)
-  private def setCustomDims(): Future[Unit] = {
-    import ConversationType._
+  def onEnteredCredentials(response: Either[ErrorResponse, _], method: SignInMethod): Unit =
+    track(EnteredCredentialsEvent(method, responseToErrorPair(response)), None)
+
+  def onEnterCode(response: Either[ErrorResponse, Unit], method: SignInMethod): Unit =
+    track(EnteredCodeEvent(method, responseToErrorPair(response)))
+
+  def onRequestResendCode(response: Either[ErrorResponse, Unit], method: SignInMethod, isCall: Boolean): Unit =
+    track(ResendVerificationEvent(method, isCall, responseToErrorPair(response)))
+
+  def onAddNameOnRegistration(response: Either[ErrorResponse, Unit], inputType: InputType): Unit =
     for {
-      zms    <- zmsOpt.head
-      self   =  zms.fold(UserId.Zero)(_.selfUserId)
-      convs  <- zms.fold(Future.successful(Seq.empty[ConversationData]))(_.convsStorage.list)
-      users  <- zms.fold(Future.successful(Seq.empty[UserData]))(_.usersStorage.list)
-      voice  <- zms.fold(Future.successful(-1))(_.callLog.numberOfEstablishedVoiceCalls)
-      video  <- zms.fold(Future.successful(-1))(_.callLog.numberOfEstablishedVideoCalls)
-      texts  <- zms.fold(Future.successful(-1))(_.messagesStorage.countSentByType(self, TEXT))
-      rich   <- zms.fold(Future.successful(-1))(_.messagesStorage.countSentByType(self, RICH_MEDIA))
-      images <- zms.fold(Future.successful(-1))(_.messagesStorage.countSentByType(self, ASSET))
+    //Should wait until a ZMS instance exists before firing the event
+      _   <- ZMessaging.currentAccounts.activeZms.collect { case Some(z) => z }.head
+      acc <- ZMessaging.currentAccounts.activeAccount.collect { case Some(acc) => acc }.head
     } yield {
-
-      val (groups, archived, muted) = if (self == UserId.Zero) (-1, -1, -1)
-      else {
-        convs.iterator.map { c =>
-          ((c.convType == Group)?, c.archived?, c.muted?)
-        }.foldLeft((0, 0, 0)) { case ((accG, accA, accM), (g, a, m)) =>
-          (accG + g, accA + a, accM + m)
-        }
-      }
-
-      val (contacts, autoConnected, blocked) = if (self == UserId.Zero) (-1, -1, -1)
-      else {
-        users.filter(u => !u.isWireBot && !u.isSelf).iterator.map { u =>
-          ((u.isConnected && u.connection != Blocked)?, u.isAutoConnect?, (u.connection == Blocked)?)
-        }.foldLeft((0, 0, 0)) { case ((accC, accA, accB), (c, a, b)) =>
-          (accC + c, accA + a, accB + b)
-        }
-      }
-
-      val dims = CustomDimensions(groups, archived, muted, contacts, blocked, autoConnected, voice, video, (texts + rich) max -1, images)
-
-      if (isTrackingEnabled) dims.prepareList(cxt).zipWithIndex.foreach { case (value, i) => Localytics.setCustomDimension(i, value) }
+      track(EnteredNameOnRegistrationEvent(inputType, responseToErrorPair(response)), Some(acc.id))
+      track(RegistrationSuccessfulEvent(SignInFragment.Phone), Some(acc.id))
     }
-  }.logFailure(reportHockey = true)
 
-  private def assetTrackingData(id: AssetId): Future[AssetTrackingData] = {
-    for {
-      zms         <- zMessaging.head
-      Some(msg)   <- zms.messagesStorage.get(MessageId(id.str))
-      Some(conv)  <- zms.convsContent.convById(msg.convId)
-      Some(asset) <- zms.assetsStorage.get(id)
-      withOtto    <- isOtto(conv, zms.usersStorage)
-    } yield AssetTrackingData(conv.convType, withOtto, msg.isEphemeral, msg.ephemeral, asset.size, asset.mime)
-  }
-
+  def flushEvents(): Unit = mixpanelGuard.flush()
 }
 
 object GlobalTrackingController {
 
-  val SAVED_STATE_SENT_TAGS = "SAVED_STATE_SENT_TAGS"
-
-  private implicit class RichBoolean(val b: Boolean) extends AnyVal {
-    def ? : Int = if (b) 1 else 0
-  }
-
-  //implicit converter from Scala tracking event to Java tracking event for compatibility with older tracking code
-  implicit def toJava(event: Event): com.waz.zclient.core.controllers.tracking.events.Event = new com.waz.zclient.core.controllers.tracking.events.Event {
-    override def getName: String = event.name
-
-    override def getRangedAttributes: util.Map[RangedAttribute, Integer] = {
-      returning(new util.HashMap[RangedAttribute, Integer]()) { attrs =>
-        event.rangedAttributes.foreach { case (ra, int) =>
-          attrs.put(ra, Integer.valueOf(int))
-        }
-      }
+  private def saveException(t: Throwable, description: String)(implicit tag: LogTag) = {
+    t match {
+      case _: RSRuntimeException => //
+      case _ =>
+        DeprecationUtils.saveException(t, new CrashManagerListener {
+          override def shouldAutoUploadCrashes: Boolean = true
+          override def getUserID: String = Try(ZMessaging.context.getSharedPreferences("zprefs", Context.MODE_PRIVATE).getString("com.waz.device.id", "???")).getOrElse("????")
+          override def getDescription: String = s"zmessaging - $tag - $description"
+        })
     }
-
-    override def getAttributes: util.Map[Attribute, String] = event.attributes.asJava
   }
 
-  def isOtto(conv: ConversationData, users: UsersStorage): Future[Boolean] =
+  private lazy val MixpanelIgnoreProperty = "$ignore"
+  private lazy val TeamInTeamSuperProperty = "team.in_team"
+  private lazy val TeamSizeSuperProperty = "team.size"
+
+  val analyticsPrefKey = BuildConfig.APPLICATION_ID match {
+    case "com.wire" | "com.wire.internal" => GlobalPreferences.AnalyticsEnabled
+    case _ => PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED")
+  }
+
+  def isBot(conv: ConversationData, users: UsersStorage): Future[Boolean] =
     if (conv.convType == ConversationType.OneToOne) users.get(UserId(conv.id.str)).map(_.exists(_.isWireBot))(Threading.Background)
     else successful(false)
 
-  case class AssetTrackingData(conversationType: ConversationType, withOtto: Boolean, isEphemeral: Boolean, expiration: EphemeralExpiration, assetSize: Long, mime:Mime)
+  def responseToErrorPair(response: Either[ErrorResponse, _]) = response.fold({ e => Option((e.code, e.label))}, _ => Option.empty[(Int, String)])
 
-  case class CustomDimensions(groups:        Int,
-                              archived:      Int,
-                              muted:         Int,
-                              contacts:      Int,
-                              blocked:       Int,
-                              autoConnected: Int,
-                              voiceCalls:    Int,
-                              videoCalls:    Int,
-                              textsSent:     Int,
-                              imagesSent:    Int) {
-    override def toString =
-      s"""CustomDimensions:
-        |groups:        $groups
-        |archived:      $archived
-        |muted:         $muted
-        |contacts:      $contacts
-        |blocked:       $blocked
-        |autoConnected: $autoConnected
-        |voiceCalls:    $voiceCalls
-        |videoCalls:    $videoCalls
-        |textsSent:     $textsSent
-        |imagesSent:    $imagesSent
-      """.stripMargin
-
-    def prepareList(context: Context): List[String] = {
-
-      import RangedAttribute._
-
-      val preferences = context.getSharedPreferences(UserPreferencesController.USER_PREFS_TAG, Context.MODE_PRIVATE)
-
-      val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE).asInstanceOf[ConnectivityManager]
-      val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE).asInstanceOf[TelephonyManager]
-      val networkInfo = connectivityManager.getActiveNetworkInfo
-
-      val networkMode = if (networkInfo == null || telephonyManager == null) "unknown" else NetworkModeService.computeMode(networkInfo, telephonyManager) match {
-        case NetworkMode._2G  => "2G"
-        case NetworkMode.EDGE => "EDGE"
-        case NetworkMode._3G  => "3G"
-        case NetworkMode._4G  => "4G"
-        case NetworkMode.WIFI => "WIFI"
-        case _ => "unknown"
-      }
-
-      List(
-        (-1).toString, //Placeholder for outdated custom dimension ("interactions with bot")
-        createRangedAttribute(autoConnected, NUMBER_OF_CONTACTS.rangeSteps),
-        contacts.toString,
-        createRangedAttribute(groups,        NUMBER_OF_GROUP_CONVERSATIONS.rangeSteps),
-        createRangedAttribute(voiceCalls,    NUMBER_OF_VOICE_CALLS.rangeSteps),
-        createRangedAttribute(videoCalls,    NUMBER_OF_VIDEO_CALLS.rangeSteps),
-        createRangedAttribute(textsSent,     TEXT_MESSAGES_SENT.rangeSteps),
-        createRangedAttribute(imagesSent,    IMAGES_SENT.rangeSteps),
-        Integer.toString(preferences.getInt(UserPreferencesController.USER_PERFS_AB_TESTING_GROUP, 0)),
-        networkMode
-      )
-    }
-  }
-
-  /**
-    * This part (the method createRangedAttribute) of the Wire software uses source code from the beats2 project.
-    * (https://code.google.com/p/beats2/source/browse/trunk/beats/src/com/localytics/android/LocalyticsSession.java#810)
-    *
-    * Copyright (c) 2009, Char Software, Inc. d/b/a Localytics
-    * All rights reserved.
-    *
-    * Redistribution and use in source and binary forms, with or without
-    * modification, are permitted provided that the following conditions are met:
-    * - Redistributions of source code must retain the above copyright
-    * notice, this list of conditions and the following disclaimer.
-    * - Neither the name of Char Software, Inc., Localytics nor the names of its
-    * contributors may be used to endorse or promote products derived from this
-    * software without specific prior written permission.
-    *
-    * THIS SOFTWARE IS PROVIDED BY CHAR SOFTWARE, INC. D/B/A LOCALYTICS ''AS IS'' AND
-    * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-    * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-    * DISCLAIMED. IN NO EVENT SHALL CHAR SOFTWARE, INC. D/B/A LOCALYTICS BE LIABLE
-    * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-    * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-    * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-    * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-    * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-    * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-    *
-    * Sorts an int value into a predefined, pre-sorted set of intervals, returning a string representing the new expected value.
-    * The array must be sorted in ascending order, with the first element representing the inclusive lower bound and the last
-    * element representing the exclusive upper bound. For instance, the array [0,1,3,10] will provide the following buckets: less
-    * than 0, 0, 1-2, 3-9, 10 or greater.
-    *
-    * @param actualValue The int value to be bucketed.
-    * @param steps       The sorted int array representing the bucketing intervals.
-    * @return String representation of { @code actualValue} that has been bucketed into the range provided by { @code steps}.
-    */
-  def createRangedAttribute(actualValue: Int, steps: Array[Int]): String = {
-    if (actualValue < steps(0)) "less than " + steps(0)
-    else if (actualValue >= steps(steps.length - 1)) steps(steps.length - 1) + " and above"
-    else {
-      var bucketIndex = util.Arrays.binarySearch(steps, actualValue)
-      if (bucketIndex < 0) {
-        bucketIndex = (-bucketIndex) - 2
-      }
-      if (steps(bucketIndex) == (steps(bucketIndex + 1) - 1)) {
-        Integer.toString(steps(bucketIndex))
-      }
-      else {
-        steps(bucketIndex) + "-" + (steps(bucketIndex + 1) - 1)
-      }
-    }
-  }
 }

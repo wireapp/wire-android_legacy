@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,9 +27,8 @@ import com.waz.api.impl.ProgressIndicator.ProgressData
 import com.waz.model.MessageData
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventStream, EventContext, Signal}
-import com.waz.zclient.controllers.AssetsController
-import com.waz.zclient.controllers.global.AccentColorController
+import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.waz.zclient.common.controllers.global.AccentColorController
 import DeliveryState._
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
@@ -37,6 +36,7 @@ import com.waz.zclient.utils.RichView
 import com.waz.zclient.views.GlyphProgressView
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.ZLog.ImplicitTag._
+import com.waz.zclient.common.controllers.AssetsController
 
 class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) extends GlyphProgressView(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)

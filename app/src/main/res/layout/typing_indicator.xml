@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -92,7 +92,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/typing_indicator_name_top_margin"
             android:paddingStart="@dimen/wire__padding__tiny"
-            app:font="@string/wire__typeface__light"
+            app:w_font="@string/wire__typeface__light"
             style="?typingIndicatorText"
             />
 

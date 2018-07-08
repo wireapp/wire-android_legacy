@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 package com.waz.zclient.conversation
 
 import com.waz.model.ConvId
-import com.waz.zclient.views.conversationlist.ConversationAvatarView
+import com.waz.zclient.conversationlist.views.ConversationAvatarView
 import org.junit.Test
 import org.scalatest.junit.JUnitSuite
 

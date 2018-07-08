@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,19 +19,13 @@
 
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:custom="http://schemas.android.com/apk/res-auto"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:orientation="vertical"
               android:clickable="true"
               style="?wireBackground"
     >
-
-    <com.waz.zclient.views.LoadingIndicatorView
-        android:id="@+id/liv__giphy_preview__loading"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/giphy_preview__loading_indicator__height"
-        />
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/t__giphy__toolbar"
@@ -59,7 +53,7 @@
                 android:hint="@string/giphy_preview__search_hint"
                 android:imeOptions="actionSend"
                 android:inputType="textCapSentences"
-                custom:font="@string/wire__typeface__light"
+                app:w_font="@string/wire__typeface__light"
                 style="?cursorEditText"
                 />
 
@@ -102,8 +96,8 @@
         android:layout_weight="1"
         >
 
-        <com.waz.zclient.views.images.ImageAssetView
-            android:id="@+id/iv__giphy_preview__preview"
+        <ImageView
+            android:id="@+id/giphy_preview"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center"

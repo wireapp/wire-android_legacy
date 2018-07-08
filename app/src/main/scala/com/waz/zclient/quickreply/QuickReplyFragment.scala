@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2017 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,15 +27,15 @@ import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
 import com.waz.api.MessageContent
-import com.waz.api.impl.Conversation
-import com.waz.model.{AccountId, ConvId}
-import com.waz.service.ZMessaging
+import com.waz.model.{ConvId, UserId}
+import com.waz.service.tracking.ContributionEvent
+import com.waz.service.tracking.ContributionEvent.Action
+import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.zclient.controllers.global.AccentColorController
-import com.waz.zclient.core.controllers.tracking.events.notifications.{OpenedAppFromQuickReplyEvent, SwitchedMessageInQuickReplyEvent}
+import com.waz.zclient.common.controllers.SharingController
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.pages.main.popup.ViewPagerLikeLayoutManager
-import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.ui.text.{TypefaceEditText, TypefaceTextView}
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils._
@@ -45,7 +45,7 @@ object QuickReplyFragment {
   private val ConvIdExtra = "EXTRA_CONVERSATION_ID"
   private val AccountIdExtra = "EXTRA_ACCOUNT_ID"
 
-  def newInstance(accountId: AccountId, convId: ConvId): Fragment = {
+  def newInstance(accountId: UserId, convId: ConvId): Fragment = {
     returning(new QuickReplyFragment) {
       _.setArguments(returning(new Bundle) { args =>
         args.putString(ConvIdExtra, convId.str)
@@ -60,16 +60,17 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
   import com.waz.threading.Threading.Implicits.Ui
 
   lazy val convId = ConvId(getArguments.getString(ConvIdExtra))
-  lazy val accountId = AccountId(getArguments.getString(AccountIdExtra))
+  lazy val accountId = UserId(getArguments.getString(AccountIdExtra))
+  lazy val accounts = inject[AccountsService]
 
   //TODO make an accounts/zms controller or something
-  lazy val zms = ZMessaging.currentAccounts.zmsInstances.map(_.find(_.accountId == accountId)).collect { case Some(z) => z }
+  lazy val zms = accounts.zmsInstances.map(_.find(_.selfUserId == accountId)).collect { case Some(z) => z }
 
-  lazy val tracking = inject[GlobalTrackingController]
+  lazy val sharing  = inject[SharingController]
 
   lazy val accentColor = for {
-    z      <- zms
-    accent <- inject[AccentColorController].accentColor(z)
+    z <- zms
+    accent  <- inject[AccentColorController].accentColor(z)
   } yield accent
 
   lazy val message = findById[TypefaceEditText](R.id.tet__quick_reply__message)
@@ -109,47 +110,54 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
     contentContainer.setAdapter(adapter)
 
     counter onClick {
-      tracking.tagEvent(new SwitchedMessageInQuickReplyEvent)
       contentContainer.smoothScrollToPosition((layoutManager.findFirstVisibleItemPosition + 1) % adapter.getItemCount)
     }
+
     contentContainer.addOnScrollListener(new RecyclerView.OnScrollListener() {
       override def onScrollStateChanged(recyclerView: RecyclerView, newState: Int): Unit = {
         if (newState == RecyclerView.SCROLL_STATE_IDLE) {
           firstVisibleItemPosition ! layoutManager.findFirstVisibleItemPosition
-          tracking.tagEvent(new SwitchedMessageInQuickReplyEvent)
         }
       }
     })
+
     message.setOnEditorActionListener(new TextView.OnEditorActionListener {
       override def onEditorAction(textView: TextView, actionId: Int, event: KeyEvent): Boolean = {
         if (actionId == EditorInfo.IME_ACTION_SEND || (event != null && event.getKeyCode == KeyEvent.KEYCODE_ENTER && event.getAction == KeyEvent.ACTION_DOWN)) {
           val sendText = textView.getText.toString
-          if (TextUtils.isEmpty(sendText)) return false
-
-          textView.setEnabled(false)
-          for {
-            zs <- zms.head
-            c <- conv.head
-            isOtto <- Conversation.isOtto(c, zs.usersStorage)
-            msg <- zs.convsUi.sendMessage(c.id, new MessageContent.Text(sendText))
-          } {
-            textView.setEnabled(true)
-            if (msg.isDefined) {
-              TrackingUtils.onSentTextMessage(tracking, c, isOtto)
-              getActivity.finish()
+          if (TextUtils.isEmpty(sendText)) false
+          else {
+            textView.setEnabled(false)
+            for {
+              z           <- zms.head
+              c           <- conv.head
+              withService <- z.conversations.isWithService(c.id)
+              isGroup     <- z.conversations.isGroupConversation(c.id)
+              _           <- z.convsUi.setEphemeral(c.id, None)
+              msg         <- z.convsUi.sendMessage(c.id, new MessageContent.Text(sendText))
+            } {
+              textView.setEnabled(true)
+              if (msg.isDefined) {
+                ZMessaging.globalModule.map(_.trackingService.track(
+                  ContributionEvent(Action.Text, isGroup, c.ephemeralExpiration.map(_.duration), withService, !c.isTeamOnly, c.isMemberFromTeamGuest(z.teamId)),
+                  Some(z.selfUserId)
+                ))
+                getActivity.finish()
+              }
             }
+            true
           }
-
-          return true
-        }
-        false
+        } else false
       }
     })
+
     openWire onClick {
-      Option(getActivity) foreach { activity =>
-        tracking.tagEvent(new OpenedAppFromQuickReplyEvent)
-        startActivity(IntentUtils.getAppLaunchIntent(getContext, convId.str, message.getText.toString))
-        activity.finish()
+      ZMessaging.currentAccounts.setAccount(Some(accountId)).onComplete { _ =>
+        Option(getActivity) foreach { activity =>
+          sharing.publishTextContent(message.getText.toString)
+          sharing.onContentShared(activity, Set(convId))
+          activity.finish()
+        }
       }
     }
 

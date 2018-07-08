@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,37 +20,28 @@ package com.waz.zclient.pages.main.conversationpager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import com.waz.api.ConversationsList;
-import com.waz.api.IConversation;
-import com.waz.api.SyncState;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
+import com.waz.zclient.collection.controllers.CollectionController;
 import com.waz.zclient.controllers.navigation.NavigationController;
 import com.waz.zclient.controllers.navigation.NavigationControllerObserver;
 import com.waz.zclient.controllers.navigation.Page;
 import com.waz.zclient.controllers.navigation.PagerControllerObserver;
-import com.waz.zclient.conversation.CollectionController;
-import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
-import com.waz.zclient.core.stores.conversation.ConversationStoreObserver;
+import com.waz.zclient.conversation.ConversationController;
+import com.waz.zclient.cursor.CursorController;
 import com.waz.zclient.pages.BaseFragment;
-import com.waz.zclient.ui.utils.KeyboardUtils;
-import com.waz.zclient.ui.utils.ResourceUtils;
-import com.waz.zclient.utils.LayoutSpec;
+import com.waz.zclient.utils.Callback;
 
-public class ConversationPagerFragment extends BaseFragment<ConversationPagerFragment.Container> implements ConversationStoreObserver,
-                                                                                                            OnBackPressedListener,
+public class ConversationPagerFragment extends BaseFragment<ConversationPagerFragment.Container> implements OnBackPressedListener,
                                                                                                             PagerControllerObserver,
                                                                                                             NavigationControllerObserver,
-                                                                                                            FirstPageFragment.Container,
-                                                                                                            SecondPageFragment.Container {
+                                                                                                            FirstPageFragment.Container {
     public static final String TAG = ConversationPagerFragment.class.getName();
     private static final int PAGER_DELAY = 150;
 
@@ -82,11 +73,7 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
         conversationPager.setOffscreenPageLimit(OFFSCREEN_PAGE_LIMIT);
         conversationPager.setOverScrollMode(View.OVER_SCROLL_NEVER);
         conversationPager.setPageTransformer(false, new CustomPagerTransformer(CustomPagerTransformer.SLIDE_IN));
-        conversationPagerAdapter = new ConversationPagerAdapter(getActivity(),
-                                                                getChildFragmentManager(),
-                                                                LayoutSpec.get(getActivity()),
-                                                                ResourceUtils.getResourceFloat(getResources(),
-                                                                                               R.dimen.framework__first_page__percentage));
+        conversationPagerAdapter = new ConversationPagerAdapter(getChildFragmentManager());
         conversationPager.setAdapter(conversationPagerAdapter);
 
         if (this.getControllerFactory().getUserPreferencesController().showContactsDialog()) {
@@ -96,25 +83,33 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
         return conversationPager;
     }
 
+    private final Callback callback = new Callback<ConversationController.ConversationChange>() {
+        @Override
+        public void callback(ConversationController.ConversationChange change) {
+            onCurrentConversationHasChanged(change);
+        }
+    };
+
     @Override
     public void onStart() {
         super.onStart();
 
-        getStoreFactory().conversationStore().addConversationStoreObserver(this);
         conversationPager.setOnPageChangeListener(getControllerFactory().getNavigationController());
 
         conversationPager.setEnabled(getControllerFactory().getNavigationController().isPagerEnabled());
 
         getControllerFactory().getNavigationController().addPagerControllerObserver(this);
         getControllerFactory().getNavigationController().addNavigationControllerObserver(this);
+
+        inject(ConversationController.class).addConvChangedCallback(callback);
     }
 
     @Override
     public void onStop() {
         getControllerFactory().getNavigationController().removePagerControllerObserver(this);
         getControllerFactory().getNavigationController().removeNavigationControllerObserver(this);
-        getStoreFactory().conversationStore().removeConversationStoreObserver(this);
         conversationPager.setOnPageChangeListener(null);
+        inject(ConversationController.class).removeConvChangedCallback(callback);
         super.onStop();
     }
 
@@ -133,16 +128,8 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
         }
     }
 
-    @Override
-    public void onConversationListUpdated(@NonNull ConversationsList conversationsList) {
-
-    }
-
-    @Override
-    public void onCurrentConversationHasChanged(IConversation fromConversation,
-                                                final IConversation toConversation,
-                                                ConversationChangeRequester conversationChangeRequester) {
-        switch (conversationChangeRequester) {
+    private void onCurrentConversationHasChanged(ConversationController.ConversationChange change) {
+        switch (change.requester()) {
             case ARCHIVED_RESULT:
             case FIRST_LOAD:
                 break;
@@ -164,6 +151,7 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
                     @Override
                     public void run() {
                         conversationPager.setCurrentItem(NavigationController.FIRST_PAGE, false);
+
                     }
                 }, PAGER_DELAY);
                 break;
@@ -197,8 +185,7 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
             case ONGOING_CALL:
             case TRANSFER_CALL:
             case INCOMING_CALL:
-            case SHARING:
-            case NOTIFICATION:
+            case INTENT:
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -207,16 +194,6 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
                 }, PAGER_DELAY);
                 break;
         }
-    }
-
-    @Override
-    public void onConversationSyncingStateHasChanged(SyncState syncState) {
-
-    }
-
-    @Override
-    public void onMenuConversationHasChanged(IConversation fromConversation) {
-
     }
 
     @Override
@@ -248,16 +225,7 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
     //////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onOpenUrl(String url) {
-        getContainer().onOpenUrl(url);
-    }
-
-    @Override
-    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-        if (position == 1) {
-            getControllerFactory().getLoadTimeLoggerController().conversationPageVisible();
-        }
-    }
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) { }
 
     @Override
     public void onPageSelected(int position) {
@@ -269,7 +237,7 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
     public void onPageScrollStateChanged(int state) {
         if (state == ViewPager.SCROLL_STATE_DRAGGING &&
             getControllerFactory().getGlobalLayoutController().isKeyboardVisible()) {
-            KeyboardUtils.hideKeyboard(getActivity());
+            getCursorController().notifyKeyboardVisibilityChanged(false);
         }
     }
 
@@ -282,16 +250,21 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
     public void onPageVisible(Page page) {
         if (page == Page.CONVERSATION_LIST) {
             getCollectionController().clearSearch();
-        }
-        if (page == Page.CONVERSATION_LIST &&
-            getControllerFactory().getNavigationController()
-                                  .getPagerPosition() == NavigationController.SECOND_PAGE) {
-            conversationPager.setCurrentItem(NavigationController.FIRST_PAGE);
+            getCursorController().notifyKeyboardVisibilityChanged(false);
+
+            if (getControllerFactory().getNavigationController()
+                    .getPagerPosition() == NavigationController.SECOND_PAGE) {
+                conversationPager.setCurrentItem(NavigationController.FIRST_PAGE);
+            }
         }
     }
 
     private CollectionController getCollectionController() {
         return ((BaseActivity) getActivity()).injectJava(CollectionController.class);
+    }
+
+    private CursorController getCursorController() {
+        return ((BaseActivity) getActivity()).injectJava(CursorController.class);
     }
 
     public interface Container {

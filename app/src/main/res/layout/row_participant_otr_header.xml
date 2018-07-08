@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_height="wrap_content"
     android:layout_width="match_parent"
     android:paddingLeft="@dimen/framework__general__left_padding"
@@ -35,7 +35,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:lineSpacingExtra="@dimen/content__line_spacing_extra"
-        custom:font="@string/wire__typeface__light"
+        app:w_font="@string/wire__typeface__light"
         style="?userOtrHeader"
         />
 
@@ -43,7 +43,7 @@
         android:id="@+id/ttv__row__otr_details_link"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        custom:font="@string/wire__typeface__light"
+        app:w_font="@string/wire__typeface__light"
         style="?userOtrHeader"
         />
 

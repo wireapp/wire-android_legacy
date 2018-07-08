@@ -1,7 +1,7 @@
 # copy this to a file named "api-keys.properties" in the same directory and put in the real keys
 
-localyticsAppKey = your-key-here
-localyticsAppKeyProd = your-key-here
+mixpanelAppTokenInternal = your-key-here
+mixpanelAppTokenProd = your-key-here
 
 hockeyAppKey = your-key-here
 hockeyAppKeyCand = your-key-here

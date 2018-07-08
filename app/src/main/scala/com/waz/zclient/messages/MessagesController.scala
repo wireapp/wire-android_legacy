@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,26 +17,26 @@
  */
 package com.waz.zclient.messages
 
-import android.content.Context
 import android.view.View
-import com.waz.model.{ConvId, MessageData, MessageId}
-import com.waz.service.ZMessaging
-import com.waz.utils.events.{EventContext, EventStream, Signal}
-import com.waz.zclient.controllers.global.SelectionController
-import com.waz.zclient.controllers.navigation._
-import com.waz.zclient.pages.main.conversationpager.controller.{ISlidingPaneController, SlidingPaneObserver}
-import com.waz.zclient.utils.ViewUtils
-import com.waz.zclient.{Injectable, Injector}
-import org.threeten.bp.Instant
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
+import com.waz.model.{ConvId, MessageData, MessageId, SyncId}
+import com.waz.service.ZMessaging
+import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.waz.zclient.controllers.navigation._
+import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.pages.main.conversationpager.controller.{ISlidingPaneController, SlidingPaneObserver}
+import com.waz.zclient.utils.ContextUtils
+import com.waz.zclient.{Injectable, Injector, WireContext}
+import org.threeten.bp.Instant
 
-class MessagesController()(implicit injector: Injector, ev: EventContext) extends Injectable {
-  import com.waz.threading.Threading.Implicits.Background
+class MessagesController()(implicit injector: Injector, cxt: WireContext, ev: EventContext) extends Injectable {
+import com.waz.threading.Threading.Implicits.Background
+
+import scala.concurrent.Future
 
   val zms = inject[Signal[ZMessaging]]
-  val context = inject[Context]
-  val selectedConversation = inject[SelectionController].selectedConv
+  val currentConvId = inject[ConversationController].currentConvId
   val navigationController = inject[INavigationController]
   val slidingPaneController = inject[ISlidingPaneController]
 
@@ -45,7 +45,7 @@ class MessagesController()(implicit injector: Injector, ev: EventContext) extend
 
   val currentConvIndex = for {
     z       <- zms
-    convId  <- selectedConversation
+    convId  <- currentConvId
     index   <- Signal.future(z.messagesStorage.msgsIndex(convId))
   } yield
     index
@@ -65,7 +65,7 @@ class MessagesController()(implicit injector: Injector, ev: EventContext) extend
     // XXX: This is a bit fragile. We are deducing signal state from loosely related events, and we rely on their order.
     navigationController.addNavigationControllerObserver(new NavigationControllerObserver {
       override def onPageVisible(page: Page) =
-        pageVisible ! (page == Page.MESSAGE_STREAM || ViewUtils.isInLandscape(context.getResources.getConfiguration))
+        pageVisible ! (page == Page.MESSAGE_STREAM || ContextUtils.isInLandscape)
     })
 
     slidingPaneController.addObserver(new SlidingPaneObserver {
@@ -76,14 +76,12 @@ class MessagesController()(implicit injector: Injector, ev: EventContext) extend
       }
     })
 
-    uiActive flatMap {
-      case false => Signal const Option.empty[ConvId]
-      case true =>
-        pageVisible flatMap {
-          case true => selectedConversation.map(Some(_))
-          case false => Signal const Option.empty[ConvId]
-        }
-    }
+    (for {
+      true <- inject[com.waz.zclient.messages.controllers.NavigationController].mainActivityActive.map(_ > 0)
+      true <- uiActive
+      true <- pageVisible
+      conv <- currentConvId.map(Option(_))
+    } yield conv).orElse(Signal.const(Option.empty[ConvId]))
   }
 
   @volatile
@@ -95,21 +93,26 @@ class MessagesController()(implicit injector: Injector, ev: EventContext) extend
 
   def isLastSelf(id: MessageId) = lastSelfMessage.currentValue.exists(_.id == id)
 
-  def onMessageRead(msg: MessageData) = fullyVisibleMessagesList.currentValue foreach {
-    case Some(convId) if msg.convId == convId =>
-      if (msg.isEphemeral && !msg.expired)
-        zms.head foreach  { _.ephemeral.onMessageRead(msg.id) }
+  def onMessageRead(msg: MessageData) = {
+    if (msg.isEphemeral && !msg.expired)
+        zms.head.foreach(_.ephemeral.onMessageRead(msg.id))
 
-      if (msg.time isAfter lastReadTime)
-        zms.head.foreach { _.convsUi.setLastRead(msg.convId, msg) }
+    if (msg.time isAfter lastReadTime)
+      zms.head.foreach(_.convsUi.setLastRead(msg.convId, msg))
 
-      if (msg.state == Message.Status.FAILED)
-        zms.head.foreach { _.messages.markMessageRead(convId, msg.id) }
-    case _ =>
-      // messages list is not visible, or not current conv, ignoring
+    if (msg.state == Message.Status.FAILED)
+      zms.head.foreach(_.messages.markMessageRead(msg.convId, msg.id))
   }
 
   def getMessage(messageId: MessageId): Signal[Option[MessageData]] = {
     zms.flatMap(z => Signal.future(z.messagesStorage.get(messageId)))
   }
+
+  def retryMessageSending(ids: Seq[MessageId]): Future[Seq[SyncId]] =
+    for {
+      zms <- zms.head
+      messages <- zms.messagesStorage.getAll(ids).map(_.flatten)
+      res <- Future.traverse(messages)(msg => zms.messages.retryMessageSending(msg.convId, msg.id))
+    } yield res.flatten
+
 }

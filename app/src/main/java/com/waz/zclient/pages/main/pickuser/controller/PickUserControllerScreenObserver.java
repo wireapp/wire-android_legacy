@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,17 +17,15 @@
  */
 package com.waz.zclient.pages.main.pickuser.controller;
 
-import android.view.View;
-import com.waz.api.User;
+import com.waz.model.UserId;
 
 public interface PickUserControllerScreenObserver {
 
-    void onShowPickUser(IPickUserController.Destination destination, View anchorView);
+    void onShowPickUser();
 
-    void onHidePickUser(IPickUserController.Destination destination,
-                        boolean closeWithoutSelectingPeople);
+    void onHidePickUser();
 
-    void onShowUserProfile(User user, View anchorView);
+    void onShowUserProfile(UserId userId);
 
     void onHideUserProfile();
 }

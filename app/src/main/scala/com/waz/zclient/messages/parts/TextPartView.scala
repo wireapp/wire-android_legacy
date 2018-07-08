@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,20 +22,23 @@ import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.content.Context
 import android.graphics.Color
 import android.util.{AttributeSet, TypedValue}
+import android.view.View
+import android.widget.LinearLayout
 import com.waz.api.{ContentSearchQuery, Message}
 import com.waz.model.{MessageContent, MessageData}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.zclient.controllers.global.AccentColorController
-import com.waz.zclient.conversation.{CollectionController, CollectionUtils}
+import com.waz.zclient.collection.controllers.{CollectionController, CollectionUtils}
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.ui.text.LinkTextView
 import com.waz.zclient.ui.utils.ColorUtils
+import com.waz.zclient.ui.views.OnDoubleClickListener
 import com.waz.zclient.{R, ViewHelper}
 
-class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends LinkTextView(context, attrs, style) with ViewHelper with ClickableViewPart with EphemeralPartView {
+class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper with ClickableViewPart with EphemeralPartView with EphemeralIndicatorPartView {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -47,7 +50,22 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
   val textSizeRegular = context.getResources.getDimensionPixelSize(R.dimen.wire__text_size__regular)
   val textSizeEmoji = context.getResources.getDimensionPixelSize(R.dimen.wire__text_size__emoji)
 
-  registerEphemeral(this)
+  setOrientation(LinearLayout.HORIZONTAL)
+  inflate(R.layout.message_text_content)
+
+  private val textView = findById[LinkTextView](R.id.text)
+
+  registerEphemeral(textView)
+
+  textView.setOnClickListener(new OnDoubleClickListener {
+    override def onSingleClick(): Unit = TextPartView.this.onSingleClick()
+    override def onDoubleClick(): Unit = TextPartView.this.onDoubleClick()
+  })
+
+  textView.setOnLongClickListener(new View.OnLongClickListener {
+    override def onLongClick(v: View): Boolean =
+      TextPartView.this.getParent.asInstanceOf[View].performLongClick()
+  })
 
   var messagePart = Signal[Option[MessageContent]]()
 
@@ -80,7 +98,7 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
   } yield
     CollectionUtils.getHighlightedSpannableString(content, ContentSearchQuery.transliterated(content), query.elements, ColorUtils.injectAlpha(0.5f, color.getColor()))._1
 
-  searchResultText.on(Threading.Ui) { setText }
+  searchResultText.on(Threading.Ui) { textView.setText }
 
   bgColor.on(Threading.Ui) { setBackgroundColor }
 
@@ -89,11 +107,11 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
     case false => animator.end()
   }
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     animator.end()
     super.set(msg, part, opts)
-    setTextSize(TypedValue.COMPLEX_UNIT_PX, if (isEmojiOnly(msg.message, part)) textSizeEmoji else textSizeRegular)
-    setTextLink(part.fold(msg.message.contentString)(_.content))
+    textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, if (isEmojiOnly(msg.message, part)) textSizeEmoji else textSizeRegular)
+    textView.setTextLink(part.fold(msg.message.contentString)(_.content))
     messagePart ! part
   }
 

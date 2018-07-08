@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,11 +19,18 @@
 
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
               android:orientation="horizontal"
               android:layout_width="match_parent"
-              android:layout_height="match_parent">
+              android:layout_height="match_parent"
+              android:paddingStart="@dimen/wire__padding__regular"
+              android:paddingEnd="@dimen/wire__padding__regular"
+              android:background="?selectableItemBackground"
+              android:clickable="true"
+              android:focusable="true">
 
     <com.waz.zclient.ui.text.GlyphTextView
+        android:id="@+id/icon"
         android:layout_width="@dimen/message__bottom_menu__icon_view_size"
         android:layout_height="@dimen/message__bottom_menu__icon_view_size"
         android:layout_gravity="center_vertical"
@@ -32,13 +39,16 @@
         android:gravity="center"
         />
 
-    <TextView
-        android:paddingStart="@dimen/wire__padding__32"
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/text"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
+        android:layout_marginStart="@dimen/wire__padding__regular"
         android:gravity="start|center_vertical"
+        android:textAlignment="textStart"
         android:textSize="@dimen/wire__text_size__regular"
         android:textColor="@color/graphite"
+        app:w_font="@string/wire__typeface__regular"
         />
 
 </LinearLayout>

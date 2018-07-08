@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,20 +18,13 @@
 package com.waz.zclient;
 
 import android.app.Activity;
-import android.content.Context;
 import android.graphics.Typeface;
 import android.support.annotation.Nullable;
 import com.jakewharton.threetenabp.AndroidThreeTen;
-import com.localytics.android.Localytics;
-import com.localytics.android.LocalyticsActivityLifecycleCallbacks;
-import com.waz.api.impl.LogLevel;
 import com.waz.api.impl.AccentColors;
 import com.waz.zclient.controllers.IControllerFactory;
-import com.waz.zclient.controllers.userpreferences.UserPreferencesController;
-import com.waz.zclient.core.stores.IStoreFactory;
 import com.waz.zclient.ui.text.TypefaceFactory;
 import com.waz.zclient.ui.text.TypefaceLoader;
-import com.waz.zclient.utils.BuildConfigUtils;
 import com.waz.zclient.utils.WireLoggerTree;
 import timber.log.Timber;
 
@@ -100,36 +93,21 @@ public class ZApplication extends WireApplication implements ServiceContainer {
     public void onCreate() {
         super.onCreate();
 
-        setLogLevels(this);
+        setLogLevels();
         AndroidThreeTen.init(this);
         TypefaceFactory.getInstance().init(typefaceloader);
 
-        Thread.setDefaultUncaughtExceptionHandler(new WireUncaughtExceptionHandler(getControllerFactory(),
-                                                                                   Thread.getDefaultUncaughtExceptionHandler()));
         // refresh
         AccentColors.setColors(AccentColors.loadArray(getApplicationContext(), R.array.original_accents_color));
-
-        // Register LocalyticsActivityLifecycleCallbacks
-        registerActivityLifecycleCallbacks(new LocalyticsActivityLifecycleCallbacks(this));
-        Localytics.setPushDisabled(false);
     }
 
-    public static void setLogLevels(Context context) {
+    public static void setLogLevels() {
         Timber.uprootAll();
-        boolean forceVerbose =  context.getSharedPreferences(UserPreferencesController.USER_PREFS_TAG, Context.MODE_PRIVATE)
-                                       .getBoolean(context.getString(R.string.pref_force_verbose_key), false);
-        if (com.waz.zclient.BuildConfig.DEBUG || forceVerbose) {
+        if (BuildConfig.DEVELOPER_FEATURES_ENABLED) {
             Timber.plant(new Timber.DebugTree());
-            LogLevel.setMinimumLogLevel(android.util.Log.VERBOSE);
         } else {
             Timber.plant(new WireLoggerTree());
-            LogLevel.setMinimumLogLevel(BuildConfigUtils.getLogLevelSE(context));
         }
-    }
-
-    @Override
-    public IStoreFactory getStoreFactory() {
-        return storeFactory();
     }
 
     @Override

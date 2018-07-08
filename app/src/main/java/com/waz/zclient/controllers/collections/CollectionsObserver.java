@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,19 +17,9 @@
  */
 package com.waz.zclient.controllers.collections;
 
-import com.waz.model.MessageData;
-
 public interface CollectionsObserver {
 
     void openCollection();
 
     void closeCollection();
-
-    void shareCollectionItem(MessageData messageData);
-
-    void closeCollectionShare();
-
-    void nextItemRequested();
-
-    void previousItemRequested();
 }

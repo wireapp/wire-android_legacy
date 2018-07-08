@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,109 +31,53 @@
         android:id="@+id/t__participants__toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:clickable="true"
         android:gravity="center"
         app:contentInsetStart="@dimen/content__padding_left"
         style="?conversationToolbarNoDivider"
         >
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/participants__header"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:gravity="start|center_vertical"
-            >
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/participants_details_header_title"
+            android:textSize="@dimen/wire__text_size__smaller"
+            android:textColor="?wirePrimaryTextColor"
+            app:w_font="@string/wire__typeface__medium"
+            />
 
-            <com.waz.zclient.ui.views.e2ee.ShieldView
-                android:id="@+id/sv__otr__verified_shield"
-                android:layout_width="@dimen/wire__icon_button__diameter"
-                android:layout_height="@dimen/wire__icon_button__diameter"
-                android:layout_marginEnd="@dimen/wire__padding__8"
-                app:shieldVerified="true"
-                />
+        <FrameLayout android:layout_width="wrap_content"
+                     android:layout_height="wrap_content"
+                     android:layout_gravity="end|center_vertical">
 
-            <FrameLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_gravity="center_vertical"
-                >
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/confirmation_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/done_button"
+                android:textColor="@drawable/app_entry_text_button"
+                android:textSize="@dimen/wire__text_size__small"
+                app:w_font="@string/wire__typeface__medium"
+                android:visibility="gone"
+            />
 
-                <com.waz.zclient.ui.text.TypefaceTextView
-                    android:id="@+id/ttv__participants__header"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:gravity="start|center_vertical"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    style="?conversationToolbarNoDivider"
-                    />
-
-                <com.waz.zclient.ui.text.TypefaceActionEditText
-                    android:id="@+id/taet__participants__header__editable"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:alpha="@dimen/participants__header__input_field__alpha"
-                    android:freezesText="true"
-                    android:layout_gravity="center_vertical"
-                    android:gravity="start|center_vertical"
-                    android:hint="@string/group_name"
-                    android:imeOptions="actionDone"
-                    android:inputType="textFilter|textMultiLine|textNoSuggestions"
-                    android:maxLength="@integer/participants__header__max_length"
-                    android:maxLines="3"
-                    android:padding="@dimen/participants__header__input_field__padding"
-                    android:textColorHint="@color/text__secondary_light"
-                    app:font="@string/wire__typeface__medium"
-                    style="?userEditText"
-                    />
-
-            </FrameLayout>
-
-            <!-- Pen icon-->
             <com.waz.zclient.ui.text.GlyphTextView
-                android:id="@+id/gtv__participants_header__pen_icon"
+                android:id="@+id/close_button"
                 android:layout_width="@dimen/wire__icon_button__diameter"
                 android:layout_height="@dimen/wire__icon_button__diameter"
-                android:clickable="true"
-                android:text="@string/glyph__edit"
+                android:text="@string/glyph__close"
                 android:gravity="center"
                 style="?iconButton"
-                />
+            />
 
-        </LinearLayout>
+        </FrameLayout>
+
 
     </android.support.v7.widget.Toolbar>
-
-    <com.waz.zclient.common.views.UserDetailsView
-        android:id="@+id/udv__participants__user_details"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/wire__padding__small"
-        />
-
-    <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/ttv__participants__sub_header"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/wire__padding__small"
-        android:layout_marginBottom="@dimen/wire__padding__regular"
-        android:layout_marginLeft="@dimen/wire__padding__big"
-        android:layout_marginRight="@dimen/wire__padding__big"
-        android:gravity="center"
-        android:ellipsize="end"
-        android:maxLines="1"
-        app:font="@string/wire__typeface__light"
-        style="?userSubHeader"
-        />
-
-    <View
-        android:id="@+id/v_participants__header__bottom_border"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/wire__divider__height__thin"
-        android:layout_gravity="bottom"
-        android:background="@color/text__secondary_light__40"
-        />
 
 </LinearLayout>

@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,19 +17,14 @@
  */
 package com.waz.zclient.pages.main.drawing;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.Rect;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.media.ExifInterface;
-import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
@@ -39,25 +34,23 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
-import android.widget.HorizontalScrollView;
 import android.widget.TextView;
 import com.waz.api.BitmapCallback;
 import com.waz.api.ImageAsset;
 import com.waz.api.ImageAssetFactory;
 import com.waz.api.LoadHandle;
 import com.waz.api.MemoryImageCache;
+import com.waz.permissions.PermissionsService;
 import com.waz.utils.wrappers.URI;
-import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.drawing.DrawingController;
 import com.waz.zclient.controllers.drawing.IDrawingController;
 import com.waz.zclient.controllers.globallayout.KeyboardVisibilityObserver;
-import com.waz.zclient.controllers.permission.RequestPermissionsObserver;
+import com.waz.zclient.conversation.ConversationController;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.pages.main.conversation.AssetIntentsManager;
-import com.waz.zclient.tracking.GlobalTrackingController;
 import com.waz.zclient.ui.colorpicker.ColorPickerLayout;
 import com.waz.zclient.ui.colorpicker.EmojiBottomSheetDialog;
 import com.waz.zclient.ui.colorpicker.EmojiSize;
@@ -69,13 +62,14 @@ import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.ui.utils.MathUtils;
 import com.waz.zclient.ui.views.CursorIconButton;
 import com.waz.zclient.ui.views.SketchEditText;
-import com.waz.zclient.utils.LayoutSpec;
-import com.waz.zclient.utils.PermissionUtils;
-import com.waz.zclient.utils.TrackingUtils;
+import com.waz.zclient.utils.Callback;
+import com.waz.zclient.utils.ContextUtils;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.utils.debug.ShakeEventListener;
 
 import java.util.Locale;
+
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 
 public class DrawingFragment extends BaseFragment<DrawingFragment.Container> implements OnBackPressedListener,
                                                                                         ColorPickerLayout.OnColorSelectedListener,
@@ -83,7 +77,6 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
                                                                                         ViewTreeObserver.OnScrollChangedListener,
                                                                                         AccentColorObserver,
                                                                                         AssetIntentsManager.Callback,
-                                                                                        RequestPermissionsObserver,
                                                                                         ColorPickerLayout.OnWidthChangedListener,
                                                                                         KeyboardVisibilityObserver {
 
@@ -93,22 +86,16 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
     private static final String ARGUMENT_DRAWING_DESTINATION = "ARGUMENT_DRAWING_DESTINATION";
     private static final String ARGUMENT_DRAWING_METHOD = "ARGUMENT_DRAWING_METHOD";
 
-    private static final String[] SKETCH_FROM_GALLERY_PERMISSION = new String[] {Manifest.permission.READ_EXTERNAL_STORAGE};
-    private static final int OPEN_SKETCH_FROM_GALLERY = 8864;
-
     private static final float TEXT_ALPHA_INVISIBLE = 0F;
     private static final float TEXT_ALPHA_MOVE = 0.2F;
     private static final float TEXT_ALPHA_VISIBLE = 1F;
     private static final int SEND_BUTTON_DISABLED_ALPHA = 102;
-    private static final int DEFAULT_TEXT_COLOR = Color.WHITE;
-    private static final int EDIT_BOX_POS_MARGIN = 10;
 
     private ShakeEventListener shakeEventListener;
     private SensorManager sensorManager;
     private AssetIntentsManager assetIntentsManager;
     private DrawingCanvasView drawingCanvasView;
     private ColorPickerLayout colorLayout;
-    private HorizontalScrollView colorPickerScrollContainer;
     private Toolbar toolbar;
 
     // TODO uncomment once AN-4649 is fixed
@@ -204,11 +191,11 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
         }
     };
 
-    public static DrawingFragment newInstance(ImageAsset backgroundAsset, DrawingController.DrawingDestination drawingDestination) {
+    public static DrawingFragment newInstance(ImageAsset backgroundAsset, IDrawingController.DrawingDestination drawingDestination) {
         return DrawingFragment.newInstance(backgroundAsset, drawingDestination, IDrawingController.DrawingMethod.DRAW);
     }
 
-    public static DrawingFragment newInstance(ImageAsset backgroundAsset, DrawingController.DrawingDestination drawingDestination, DrawingController.DrawingMethod method) {
+    public static DrawingFragment newInstance(ImageAsset backgroundAsset, IDrawingController.DrawingDestination drawingDestination, IDrawingController.DrawingMethod method) {
         DrawingFragment fragment = new DrawingFragment();
         Bundle bundle = new Bundle();
         bundle.putParcelable(ARGUMENT_BACKGROUND_IMAGE, backgroundAsset);
@@ -238,8 +225,6 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
         drawingCanvasView.setDrawingColor(getControllerFactory().getAccentColorController().getColor());
         drawingCanvasView.setOnTouchListener(drawingCanvasViewOnTouchListener);
 
-        colorPickerScrollContainer = ViewUtils.getView(rootView, R.id.hsv_color_picker_scroll_view);
-
         colorLayout = ViewUtils.getView(rootView, R.id.cpdl__color_layout);
         colorLayout.setOnColorSelectedListener(this);
         int[] colors = getResources().getIntArray(R.array.draw_color);
@@ -250,8 +235,14 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
 //        colorPickerScrollBar = ViewUtils.getView(rootView, R.id.cpsb__color_picker_scrollbar);
 //        colorPickerScrollBar.setScrollBarColor(getControllerFactory().getAccentColorController().getColor());
 
-        TypefaceTextView conversationTitle = ViewUtils.getView(rootView, R.id.tv__drawing_toolbar__title);
-        conversationTitle.setText(getStoreFactory().conversationStore().getCurrentConversation().getName().toUpperCase(Locale.getDefault()));
+        final TypefaceTextView conversationTitle = ViewUtils.getView(rootView, R.id.tv__drawing_toolbar__title);
+        inject(ConversationController.class).withCurrentConvName(new Callback<String>() {
+            @Override
+            public void callback(String convName) {
+                conversationTitle.setText(convName.toUpperCase(Locale.getDefault()));
+            }
+        });
+
         toolbar = ViewUtils.getView(rootView, R.id.t_drawing_toolbar);
         toolbar.inflateMenu(R.menu.toolbar_sketch);
         toolbar.setOnMenuItemClickListener(toolbarOnMenuItemClickListener);
@@ -285,13 +276,20 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
         galleryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (PermissionUtils.hasSelfPermissions(getContext(), SKETCH_FROM_GALLERY_PERMISSION)) {
+
+                PermissionsService pService = inject(PermissionsService.class);
+                if (pService.checkPermission(READ_EXTERNAL_STORAGE)) {
                     sketchEditTextView.destroyDrawingCache();
                     assetIntentsManager.openGalleryForSketch();
                 } else {
-                    ActivityCompat.requestPermissions(getActivity(),
-                                                      SKETCH_FROM_GALLERY_PERMISSION,
-                                                      OPEN_SKETCH_FROM_GALLERY);
+                    pService.requestPermission(READ_EXTERNAL_STORAGE, new PermissionsService.PermissionsCallback() {
+                        @Override
+                        public void onPermissionResult(boolean granted) {
+                            if (granted) {
+                                assetIntentsManager.openGalleryForSketch();
+                            }
+                        }
+                    });
                 }
             }
         });
@@ -358,14 +356,10 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
         } else {
             hideTip();
         }
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            //noinspection deprecation
-            drawingViewTip.setTextColor(getResources().getColor(R.color.drawing__tip__font__color_image));
-        } else {
-            drawingViewTip.setTextColor(getResources().getColor(R.color.drawing__tip__font__color_image, getContext().getTheme()));
-        }
+        drawingViewTip.setTextColor(ContextUtils.getColorWithTheme(R.color.drawing__tip__font__color_image, getContext()));
+
         cancelLoadHandle();
-        bitmapLoadHandle = backgroundImage.getSingleBitmap(ViewUtils.getOrientationDependentDisplayWidth(getActivity()), new BitmapCallback() {
+        bitmapLoadHandle = backgroundImage.getSingleBitmap(ContextUtils.getOrientationDependentDisplayWidth(getActivity()), new BitmapCallback() {
             @Override
             public void onBitmapLoaded(Bitmap bitmap) {
                 if (getActivity() == null || drawingCanvasView == null) {
@@ -411,22 +405,12 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
                 SensorManager.SENSOR_DELAY_NORMAL);
         getControllerFactory().getGlobalLayoutController().addKeyboardVisibilityObserver(this);
         getControllerFactory().getAccentColorController().addAccentColorObserver(this);
-        getControllerFactory().getRequestPermissionsController().addObserver(this);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (LayoutSpec.isTablet(getActivity())) {
-            ViewUtils.lockScreenOrientation(Configuration.ORIENTATION_PORTRAIT, getActivity());
-        }
     }
 
     @Override
     public void onStop() {
         getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
         getControllerFactory().getGlobalLayoutController().removeKeyboardVisibilityObserver(this);
-        getControllerFactory().getRequestPermissionsController().removeObserver(this);
         sensorManager.unregisterListener(shakeEventListener);
         super.onStop();
     }
@@ -480,26 +464,6 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
         getActivity().overridePendingTransition(R.anim.camera_in, R.anim.camera_out);
     }
 
-    @Override
-    public void onPermissionFailed(AssetIntentsManager.IntentType type) {
-
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, int[] grantResults) {
-        if (assetIntentsManager.onRequestPermissionsResult(requestCode, grantResults)) {
-            return;
-        }
-
-
-        switch (requestCode) {
-            case OPEN_SKETCH_FROM_GALLERY:
-                if (PermissionUtils.verifyPermissions(grantResults)) {
-                    assetIntentsManager.openGalleryForSketch();
-                }
-        }
-    }
-
     public void cancelLoadHandle() {
         if (bitmapLoadHandle != null) {
             bitmapLoadHandle.cancel();
@@ -539,11 +503,7 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
             switch (v.getId()) {
                 case R.id.tv__send_button:
                     if (!drawingCanvasView.isEmpty()) {
-                        getStoreFactory().conversationStore().sendMessage(getFinalSketchImage());
-                        TrackingUtils.onSentSketchMessage(((BaseActivity) getActivity()).injectJava(GlobalTrackingController.class),
-                                                          getStoreFactory().conversationStore().getCurrentConversation(),
-                                                          drawingDestination);
-
+                        inject(ConversationController.class).sendMessage(getFinalSketchImage());
                         getControllerFactory().getDrawingController().hideDrawing(drawingDestination, true);
                     }
                     break;
@@ -576,7 +536,7 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
     }
 
     @Override
-    public void onAccentColorHasChanged(Object sender, int color) {
+    public void onAccentColorHasChanged(int color) {
         // TODO uncomment once AN-4649 is fixed
         //colorPickerScrollBar.setBackgroundColor(color);
         if (drawingCanvasView.isEmpty()) {
@@ -659,6 +619,7 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
                 sketchEditTextView.setBackground(ColorUtils.getTransparentDrawable());
             }
             sketchEditTextView.setVisibility(View.VISIBLE);
+            changeEditTextVisibility();
             showKeyboard();
             hideTip();
         }
@@ -727,6 +688,10 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
         if (!keyboardIsVisible) {
             closeKeyboard();
         }
+        changeEditTextVisibility(keyboardHeight);
+    }
+
+    private void changeEditTextVisibility(int keyboardHeight) {
         if (shouldOpenEditText) {
             shouldOpenEditText = false;
             FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) sketchEditTextView.getLayoutParams();
@@ -746,7 +711,13 @@ public class DrawingFragment extends BaseFragment<DrawingFragment.Container> imp
         } else {
             sketchEditTextView.setAlpha(TEXT_ALPHA_VISIBLE);
         }
+    }
 
+    private void changeEditTextVisibility() {
+        View view = ViewUtils.getContentView(getActivity().getWindow());
+        if (view != null) {
+            changeEditTextVisibility(KeyboardUtils.getKeyboardHeight(view));
+        }
     }
 
     private void drawSketchEditText() {

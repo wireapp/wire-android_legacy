@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+    >
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/conversation_quick_menu__border_line__height"
+        android:layout_gravity="top"
+        android:background="@color/separator_light"/>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/conversation_quick_menu__height"
+        android:layout_marginStart="@dimen/wire__padding__big"
+        android:layout_marginEnd="@dimen/wire__padding__big"
+        android:orientation="horizontal"
+        android:gravity="center"
+        >
+
+        <com.waz.zclient.ui.views.ZetaButton
+            android:id="@+id/zb__conversation_quick_menu__conversation_button"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/button__height"
+            android:paddingStart="@dimen/button__horizontal_padding"
+            android:paddingEnd="@dimen/button__horizontal_padding"
+            android:gravity="center"
+            android:textSize="@dimen/wire__text_size__small"
+            android:textAllCaps="true"
+            android:text="@string/conversation_quick_menu__conversation_button__single_label"
+            android:textColor="@color/text__primary_dark"
+            app:w_font="@string/wire__typeface__light"
+            />
+
+        <!-- Dummy view -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            />
+
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:id="@+id/gtv__conversation_quick_menu__video_call_button"
+            android:layout_width="@dimen/wire__icon_button__diameter"
+            android:layout_height="@dimen/wire__icon_button__diameter"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="@dimen/wire__padding__big"
+            android:gravity="center"
+            android:text="@string/glyph__video"
+            android:textSize="@dimen/wire__icon_button__text_size"
+            android:textColor="@color/text__primary_dark"
+            />
+
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:id="@+id/gtv__conversation_quick_menu__call_button"
+            android:layout_width="@dimen/wire__icon_button__diameter"
+            android:layout_height="@dimen/wire__icon_button__diameter"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="@dimen/wire__padding__big"
+            android:gravity="center"
+            android:text="@string/glyph__call"
+            android:textSize="@dimen/wire__icon_button__text_size"
+            android:textColor="@color/text__primary_dark"
+            />
+
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:id="@+id/gtv__conversation_quick_menu__camera_button"
+            android:layout_width="@dimen/wire__icon_button__diameter"
+            android:layout_height="@dimen/wire__icon_button__diameter"
+            android:layout_gravity="center_vertical"
+            android:gravity="center"
+            android:text="@string/glyph__camera"
+            android:textSize="@dimen/wire__icon_button__text_size"
+            android:textColor="@color/text__primary_dark"
+            />
+
+    </LinearLayout>
+
+</FrameLayout>

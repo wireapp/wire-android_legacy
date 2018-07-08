@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2016 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,12 +18,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<merge xmlns:android="http://schemas.android.com/apk/res/android"
+<merge xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
        android:layout_width="match_parent"
        android:layout_height="match_parent"
-    >
+>
 
-    <com.waz.zclient.views.BackgroundImageView
+    <com.waz.zclient.common.views.BackgroundImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         />
@@ -67,15 +67,6 @@
         />
 
     <!--
-        the container holding the grid
-     -->
-    <FrameLayout
-        android:id="@+id/fl_main_grid"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
-
-    <!--
         Dialog for when user is not logged when trying to share content to Wire
     -->
     <com.waz.zclient.views.menus.ConfirmationMenu
@@ -84,6 +75,9 @@
         android:layout_height="match_parent"
         android:layout_gravity="bottom"
         android:visibility="gone"
+        app:header="@string/sharing__user_not_logged_in__dialog__title"
+        app:text="@string/sharing__user_not_logged_in__dialog__message"
+        app:positive="@string/sharing__user_not_logged_in__dialog__confirm"
         />
 
 </merge>

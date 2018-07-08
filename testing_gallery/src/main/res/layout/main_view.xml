@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
+    android:layout_alignParentBottom="true">
+
+
+    <TableLayout
+        android:id="@+id/check_table"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:stretchColumns="1">
+
+        <TableRow style="@style/tableRow">
+
+            <TextView
+                style="@style/checkTitle"
+                android:text="@string/testing_gallery_checks_title" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+
+            <TextView
+                android:id="@+id/permissionsLabel"
+                style="@style/checkLabel"
+                android:text="@string/permissions_check" />
+
+            <TextView
+                android:id="@+id/permissionsValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/permissionsFix"
+                style="@style/fixButton"
+                android:text="@string/fix_button" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+
+            <TextView
+                android:id="@+id/directoryLabel"
+                style="@style/checkLabel"
+                android:tag="label"
+                android:text="@string/test_directory_check" />
+
+            <TextView
+                android:id="@+id/directoryValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/directoryFix"
+                style="@style/fixButton"
+                android:text="@string/fix_button" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+
+            <TextView
+                android:id="@+id/getDocumentResolverLabel"
+                style="@style/checkLabel"
+                android:text="@string/document_resolver_check" />
+
+            <TextView
+                android:id="@+id/getDocumentResolverValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/getDocumentResolverFix"
+                style="@style/fixButton"
+                android:text="@string/fix_button" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+
+            <TextView
+                android:id="@+id/lockScreenLabel"
+                style="@style/checkLabel"
+                android:baselineAligned="false"
+                android:text="@string/lock_screen_check" />
+
+            <TextView
+                android:id="@+id/lockScreenValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/lockScreenFix"
+                style="@style/fixButton"
+                android:text="@string/fix_button" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+
+            <TextView
+                android:id="@+id/notificationAccessLabel"
+                style="@style/checkLabel"
+                android:text="@string/notification_access_check" />
+
+            <TextView
+                android:id="@+id/notificationAccessValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/notificationAccessFix"
+                style="@style/fixButton"
+                android:text="@string/fix_button" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+
+            <TextView
+                android:id="@+id/brightnessLabel"
+                style="@style/checkLabel"
+                android:text="@string/brightness_check" />
+
+            <TextView
+                android:id="@+id/brightnessValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/brightnessFix"
+                style="@style/fixButton"
+                android:text="@string/fix_button" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+
+            <TextView
+                android:id="@+id/stayAwakeLabel"
+                style="@style/checkLabel"
+                android:text="@string/stay_awake_check" />
+
+            <TextView
+                android:id="@+id/stayAwakeValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/stayAwakeFix"
+                style="@style/fixButton"
+                android:text="@string/fix_button" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+            <TextView
+                android:id="@+id/defaultVideoRecorderLabel"
+                style="@style/checkLabel"
+                android:text="@string/default_video_recorder" />
+
+            <TextView
+                android:id="@+id/defaultVideoRecorderValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/defaultVideoRecorderFix"
+                style="@style/fixButton"
+                android:text="@string/fix_button" />
+        </TableRow>
+
+        <TableRow style="@style/tableRow">
+            <TextView
+                android:id="@+id/defaultDocumentReceiverLabel"
+                style="@style/checkLabel"
+                android:text="@string/default_document_receiver" />
+
+            <TextView
+                android:id="@+id/defaultDocumentReceiverValue"
+                style="@style/checkUnknown" />
+
+            <Button
+                android:id="@+id/defaultDocumentReceiverFix"
+                style="@style/fixButton"
+                android:text="@string/fix_button" />
+        </TableRow>
+
+    </TableLayout>
+
+    <TextView
+        android:id="@+id/version_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/version"
+        android:layout_alignParentBottom="true"
+        android:layout_toLeftOf="@+id/version_value"
+        />
+
+    <TextView
+        android:id="@+id/version_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:text="0"
+        />
+
+</RelativeLayout>

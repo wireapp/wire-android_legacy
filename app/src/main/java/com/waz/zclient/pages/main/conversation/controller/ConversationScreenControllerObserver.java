@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,39 +17,13 @@
  */
 package com.waz.zclient.pages.main.conversation.controller;
 
-import android.view.View;
-import com.waz.api.IConversation;
-import com.waz.api.Message;
-import com.waz.api.OtrClient;
-import com.waz.api.User;
+import com.waz.model.ConvId;
 
 public interface ConversationScreenControllerObserver {
 
-    void onShowParticipants(View anchorView, boolean isSingleConversation, boolean isMemberOfConversation, boolean showDeviceTabIfSingle);
-
-    void onHideParticipants(boolean backOrButtonPressed, boolean hideByConversationChange, boolean isSingleConversation);
-
-    void onShowEditConversationName(boolean show);
-
-    void onHeaderViewMeasured(int participantHeaderHeight);
-
-    void onScrollParticipantsList(int verticalOffset, boolean scrolledToBottom);
-
-    void onConversationLoaded();
-
-    void onShowUser(User user);
-
     void onHideUser();
 
-    void onAddPeopleToConversation();
-
-    void onShowConversationMenu(@IConversationScreenController.ConversationMenuRequester int requester, IConversation conversation, View anchorView);
-
-    void onShowOtrClient(OtrClient otrClient, User user);
-
-    void onShowCurrentOtrClient();
+    void onShowConversationMenu(boolean inConvList, ConvId convId);
 
     void onHideOtrClient();
-
-    void onShowLikesList(Message message);
 }

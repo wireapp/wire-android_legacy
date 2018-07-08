@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2017 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,32 +35,15 @@
             android:orientation="vertical"
             >
 
-            <com.waz.zclient.pages.main.profile.preferences.views.SwitchPreference
-                android:id="@+id/preferences_dev_post_session_id"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/preference_button_height"
-                app:title="@string/pref_dev_avs_post_session_id_title"
-                app:subtitle="@string/pref_dev_avs_post_session_id_summary"
-                app:key="@string/pref_dev_avs_post_session_id_key"
-                />
-
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
-                android:id="@+id/preferences_dev_last_session_id"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/preference_button_height"
-                app:title="@string/pref_dev_avs_last_call_session_id_title"
-                />
-
-            <com.waz.zclient.pages.main.profile.preferences.views.SwitchPreference
+            <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_dev_auto_answer"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 app:title="@string/pref_dev_auto_answer_call_title"
                 app:subtitle="@string/pref_dev_auto_answer_call_summary"
-                app:key="@string/pref_dev_auto_answer_call_key"
                 />
 
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+            <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preferences_dev_versions"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
@@ -77,7 +60,7 @@
                 android:textColor="@color/accent_blue"
                 />
 
-            <com.waz.zclient.pages.main.profile.preferences.views.SwitchPreference
+            <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_dev_gcm"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -86,21 +69,59 @@
                 app:key="@string/pref_dev_push_enabled_key"
                 />
 
-            <com.waz.zclient.pages.main.profile.preferences.views.TextButton
+            <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preferences_dev_websocket_freq"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
                 app:title="@string/pref_dev_websocket_ping_interval_title"
                 app:subtitle="@string/pref_dev_websocket_ping_interval_summary"
                 />
 
-            <com.waz.zclient.pages.main.profile.preferences.views.SwitchPreference
+            <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_dev_websocket_service"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
                 app:subtitle="@string/pref_dev_ws_foreground_summary"
                 app:title="@string/pref_dev_ws_foreground_title"
                 app:key="@string/pref_dev_ws_foreground_key"
+                />
+
+            <com.waz.zclient.preferences.views.TextButton
+                android:id="@+id/preferences_dev_slow_sync"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:title="@string/pref_dev_random_full_sync_title"
+                app:subtitle="@string/pref_dev_random_full_sync_summary"
+            />
+
+            <com.waz.zclient.preferences.views.TextButton
+                android:id="@+id/preferences_dev_generate_random_lastid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
+                app:title="@string/pref_dev_random_last_notification_id_title"
+                app:subtitle="@string/pref_dev_random_last_notification_id_summary"
+            />
+
+            <com.waz.zclient.preferences.views.TextButton
+                android:id="@+id/register_another_client"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
+                app:title="@string/pref_dev_register_new_client_title"
+                app:subtitle="@string/pref_dev_register_new_client_summary"
+            />
+
+            <com.waz.zclient.preferences.views.SwitchPreference
+                android:id="@+id/preferences_dev_full_conv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
+                app:subtitle="@string/pref_dev_full_conv_summary"
+                app:title="@string/pref_dev_full_conv_title"
+                app:key="@string/pref_dev_full_conv_key"
                 />
 
         </LinearLayout>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<resources>
+    <item name="text_alpha_normal" format="float" type="dimen">1</item>
+    <item name="text_alpha_pressed" format="float" type="dimen">0.16</item>
+    <item name="background__vignette_radius_factor" format="float" type="dimen">0.64</item>
+    <item name="button__pressed_state__alpha" format="float" type="dimen">0.4</item>
+    <item name="button__disabled_state__alpha" format="float" type="dimen">0.4</item>
+    <item name="calling__proximity_overlay__alpha" type="dimen" format="float">0.8</item>
+
+    <item name="background_solid_black_overlay_opacity" format="float" type="dimen">0.48</item>
+    <item name="background_solid_black_overlay_opacity__noimage" format="float" type="dimen">0.96</item>
+
+    <item name="content__progress__touch_scaling" type="dimen" format="float">2</item>
+    <item name="content__system_message__user_name__alpha" format="float" type="dimen">0.64</item>
+    <item name="content__youtube__alpha_overlay" type="dimen" format="float">0.48</item>
+    <item name="content__message_being_edited__opacitu" format="float" type="dimen">0.48</item>
+
+    <item name="list__swipe_max_alpha" format="float" type="dimen">0.4</item>
+
+    <item name="framework__first_page__percentage" format="float" type="dimen">0.55</item>
+    <item type="dimen" format="float" name="framework__zero__alpha">0</item>
+
+    <item name="new_reg__resend_faded_alpha" format="float" type="dimen">0.4</item>
+
+    <item type="dimen" format="float" name="mediaplayer__font_hint_darken_overlay">0.64</item>
+    <item name="mediaplayer__text__artist__alpha" format="float" type="dimen">0.7</item>
+
+    <item name="notifications__incoming_call__chathead__font_proportion" format="float" type="dimen">0.33</item>
+
+    <item type="dimen" format="float" name="participants__header__input_field__alpha">0</item>
+    <item type="dimen" format="float" name="row_conversation__missed_call__animation__overshoot">4</item>
+
+    <item type="dimen" format="float" name="selection__alpha_dark">0.16</item>
+    <item type="dimen" format="float" name="selection__alpha_light">0.12</item>
+
+    <item type="dimen" format="float" name="ephemeral__accent__primary_alpha">0.16</item>
+    <item type="dimen" format="float" name="ephemeral__accent__primary_alpha__dark_theme">0.32</item>
+    <item type="dimen" format="float" name="ephemeral__accent__secondary_alpha">0.08</item>
+    <item type="dimen" format="float" name="ephemeral__accent__timer_alpha">0.24</item>
+
+    <item name="conversation_avatar_alpha_active" format="float" type="dimen">1</item>
+    <item name="conversation_avatar_alpha_inactive" format="float" type="dimen">0.25</item>
+</resources>
+

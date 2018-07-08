@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2017 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,14 +20,14 @@
 -->
 <android.support.v7.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_margin="@dimen/wire__padding__16"
-    card_view:cardElevation="@dimen/share_extension__preview__card_elevation"
-    card_view:cardBackgroundColor="@color/white"
-    card_view:cardCornerRadius="@dimen/share_extension__preview__card_radius"
+    app:cardElevation="@dimen/share_extension__preview__card_elevation"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="@dimen/share_extension__preview__card_radius"
     >
 
     <com.waz.zclient.ui.text.TypefaceTextView

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<set xmlns:android="http://schemas.android.com/apk/res/android" >
+    <alpha
+           android:duration="@integer/close_profile__animation_duration"
+           android:interpolator="@anim/ease_in_interpolator"
+           android:startOffset="@integer/close_profile__delay"
+           android:fromAlpha="1.0"
+           android:toAlpha="0" />
+    <scale
+            android:duration="@integer/close_profile__animation_duration"
+            android:interpolator="@anim/ease_in_interpolator"
+            android:startOffset="@integer/close_profile__delay"
+            android:fromXScale="100%"
+            android:fromYScale="100%"
+            android:toXScale="50%"
+            android:toYScale="50%"
+            android:pivotX="50%"
+            android:pivotY="50%"
+            />
+
+</set>
