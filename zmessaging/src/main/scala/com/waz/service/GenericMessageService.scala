@@ -40,7 +40,7 @@ class GenericMessageService(selfUserId: UserId,
   val eventProcessingStage = EventScheduler.Stage[GenericMessageEvent] { (_, events) =>
     verbose(s"got events: ${events.map(_.from)}")
 
-    def lastForConv(items: Seq[(RConvId, Instant)]) = items.groupBy(_._1).map { case (conv, times) => times.maxBy(_._2.toEpochMilli) }
+    def lastForConv(items: Seq[(RConvId, RemoteInstant)]) = items.groupBy(_._1).map { case (conv, times) => times.maxBy(_._2.toEpochMilli) }
 
     val incomingReactions = events collect {
       case GenericMessageEvent(_, time, from, GenericMessage(_, Reaction(msg, action))) => Liking(msg, from, time, action)

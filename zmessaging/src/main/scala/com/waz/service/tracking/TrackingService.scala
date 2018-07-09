@@ -27,7 +27,7 @@ import com.waz.service.tracking.ContributionEvent.fromMime
 import com.waz.service.tracking.TrackingService.ZmsProvider
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.SerialDispatchQueue
-import com.waz.utils.RichInstant
+import com.waz.utils.RichWireInstant
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 
 import scala.annotation.tailrec

@@ -88,6 +88,18 @@ object DbTranslator {
     override def bind(value: Instant, index: Int, stmt: DBProgram): Unit = stmt.bindLong(index, value.toEpochMilli)
     override def literal(value: Instant): String = value.toEpochMilli.toString
   }
+  implicit object RemoteInstantTranslator extends DbTranslator[RemoteInstant] {
+    override def load(cursor: DBCursor, index: Int): RemoteInstant = RemoteInstant.ofEpochMilli(cursor.getLong(index))
+    override def save(value: RemoteInstant, name: String, values: DBContentValues): Unit = values.put(name, java.lang.Long.valueOf(value.toEpochMilli))
+    override def bind(value: RemoteInstant, index: Int, stmt: DBProgram): Unit = stmt.bindLong(index, value.toEpochMilli)
+    override def literal(value: RemoteInstant): String = value.toEpochMilli.toString
+  }
+  implicit object LocalInstantTranslator extends DbTranslator[LocalInstant] {
+    override def load(cursor: DBCursor, index: Int): LocalInstant = LocalInstant.ofEpochMilli(cursor.getLong(index))
+    override def save(value: LocalInstant, name: String, values: DBContentValues): Unit = values.put(name, java.lang.Long.valueOf(value.toEpochMilli))
+    override def bind(value: LocalInstant, index: Int, stmt: DBProgram): Unit = stmt.bindLong(index, value.toEpochMilli)
+    override def literal(value: LocalInstant): String = value.toEpochMilli.toString
+  }
   implicit object FiniteDurationTranslator extends DbTranslator[FiniteDuration] {
     override def load(cursor: DBCursor, index: Int): FiniteDuration = FiniteDuration(cursor.getLong(index), TimeUnit.MILLISECONDS)
     override def save(value: FiniteDuration, name: String, values: DBContentValues): Unit = values.put(name, java.lang.Long.valueOf(value.toMillis))

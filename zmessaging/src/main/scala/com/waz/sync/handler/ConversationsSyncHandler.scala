@@ -113,7 +113,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
     else withConversation(id) { conv =>
       conversationsClient.postMemberLeave(conv.remoteId, user).future flatMap {
         case Right(Some(event: MemberLeaveEvent)) =>
-          event.localTime = new Date
+          event.localTime = LocalInstant.Now
           conversationsClient.postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(event.time))).future flatMap {
             case Right(_) =>
               verbose(s"postConversationState finished")
@@ -173,7 +173,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
 
   private val postConvRespHandler: (Either[ErrorResponse, Option[ConversationEvent]] => Future[SyncResult]) = {
     case Right(Some(event)) =>
-      event.localTime = new Date
+      event.localTime = LocalInstant.Now
       convEvents.handlePostConversationEvent(event) map { _ => SyncResult.Success }
     case Right(None) =>
       debug(s"postConv got success response, but no event")

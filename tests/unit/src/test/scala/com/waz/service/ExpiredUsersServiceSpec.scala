@@ -18,7 +18,7 @@
 package com.waz.service
 
 import com.waz.content.{MembersStorage, UsersStorage}
-import com.waz.model.{ConvId, SyncId, UserData, UserId}
+import com.waz.model._
 import com.waz.service.conversation.ConversationsListStateService
 import com.waz.service.push.PushService
 import com.waz.specs.AndroidFreeSpec
@@ -29,7 +29,6 @@ import org.threeten.bp.Duration
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import com.waz.utils.RichInstant
 
 class ExpiredUsersServiceSpec extends AndroidFreeSpec {
 
@@ -57,7 +56,7 @@ class ExpiredUsersServiceSpec extends AndroidFreeSpec {
     val convUsers = Set(
       UserData("user1").copy(id = UserId("user1")),
       UserData("user2").copy(id = UserId("user2")),
-      UserData("wireless").copy(id = wirelessId, expiresAt = Some(clock.instant() - 10.seconds + 200.millis))
+      UserData("wireless").copy(id = wirelessId, expiresAt = Some(RemoteInstant(clock.instant()) - 10.seconds + 200.millis))
     )
 
     val convSignals = convUsers.map(u => u.id -> Signal.const(u)).toMap
@@ -88,7 +87,7 @@ class ExpiredUsersServiceSpec extends AndroidFreeSpec {
     val convUsers = Set(
       UserData("user1").copy(id = UserId("user1")),
       UserData("user2").copy(id = UserId("user2")),
-      UserData("wireless").copy(id = wirelessId, expiresAt = Some(clock.instant() - 10.seconds + 200.millis))
+      UserData("wireless").copy(id = wirelessId, expiresAt = Some(RemoteInstant(clock.instant()) - 10.seconds + 200.millis))
     )
 
     val currentConvMembers = Signal[Set[UserId]]()
@@ -118,7 +117,7 @@ class ExpiredUsersServiceSpec extends AndroidFreeSpec {
 
     currentConv ! Some(conv)
 
-    val wirelessUser = UserData("wireless").copy(id = UserId("wirelessUser"), expiresAt = Some(clock.instant() - 10.seconds + 200.millis))
+    val wirelessUser = UserData("wireless").copy(id = UserId("wirelessUser"), expiresAt = Some(RemoteInstant(clock.instant()) - 10.seconds + 200.millis))
 
     val convUsers = Set(
       UserData("user1").copy(id = UserId("user1")),

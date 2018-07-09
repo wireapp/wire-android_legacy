@@ -255,7 +255,7 @@ class UserSearchService(selfUserId:           UserId,
   }
 
   private def topPeople = {
-    def messageCount(u: UserData) = messages.countLaterThan(ConvId(u.id.str), clock.instant() - topPeopleMessageInterval)
+    def messageCount(u: UserData) = messages.countLaterThan(ConvId(u.id.str), LocalInstant.Now.toRemote(Duration.Zero) - topPeopleMessageInterval)
 
     val loadTopUsers = (for {
       conns         <- usersStorage.find[UserData, Vector[UserData]](topPeoplePredicate, db => UserDataDao.topPeople(db), identity)

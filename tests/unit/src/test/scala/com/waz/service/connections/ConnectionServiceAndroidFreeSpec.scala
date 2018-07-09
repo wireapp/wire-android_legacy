@@ -58,15 +58,15 @@ class ConnectionServiceAndroidFreeSpec extends AndroidFreeSpec {
 
     scenario("Handle connection events updates the last event time of the conversation") {
       val service = initConnectionService()
-      val event = UserConnectionEvent(rConvId, selfUserId, otherUserId, None, Accepted, new Date(1))
+      val event = UserConnectionEvent(rConvId, selfUserId, otherUserId, None, Accepted, RemoteInstant.ofEpochMilli(1))
       val updatedConv = getUpdatedConversation(service, event)
 
-      updatedConv.lastEventTime should be(Instant.ofEpochMilli(event.lastUpdated.getTime))
+      updatedConv.lastEventTime should be(event.lastUpdated)
     }
 
     scenario("Handling an accepted connection event should return a one to one conversation") {
       val service = initConnectionService()
-      val event = UserConnectionEvent(rConvId, selfUserId, otherUserId, None, Accepted, new Date(1))
+      val event = UserConnectionEvent(rConvId, selfUserId, otherUserId, None, Accepted, RemoteInstant.ofEpochMilli(1))
       val updatedConv = getUpdatedConversation(service, event)
 
       updatedConv.convType should be(ConversationType.OneToOne)
@@ -74,7 +74,7 @@ class ConnectionServiceAndroidFreeSpec extends AndroidFreeSpec {
 
     scenario("Handling a pending from other connection event should return a wait for connection conversation") {
       val service = initConnectionService()
-      val event = UserConnectionEvent(rConvId, selfUserId, otherUserId, None, PendingFromOther, new Date(1))
+      val event = UserConnectionEvent(rConvId, selfUserId, otherUserId, None, PendingFromOther, RemoteInstant.ofEpochMilli(1))
 
       (messagesService.addConnectRequestMessage _).expects(*, *, *, *, *, *).once().returns(Future.successful(MessageData.Empty))
 
@@ -85,7 +85,7 @@ class ConnectionServiceAndroidFreeSpec extends AndroidFreeSpec {
 
     scenario("Handling a pending from user connection event should return a incoming conversation") {
       val service = initConnectionService()
-      val event = UserConnectionEvent(rConvId, selfUserId, otherUserId, None, PendingFromUser, new Date(1))
+      val event = UserConnectionEvent(rConvId, selfUserId, otherUserId, None, PendingFromUser, RemoteInstant.ofEpochMilli(1))
       val updatedConv = getUpdatedConversation(service, event)
 
       updatedConv.convType should be(ConversationType.WaitForConnection)
@@ -96,7 +96,7 @@ class ConnectionServiceAndroidFreeSpec extends AndroidFreeSpec {
     var updatedConversation = ConversationData.Empty
 
     (convsStorage.update _).expects(*,*).once().onCall { (convId, updater) =>
-      val old = ConversationData(convId, RConvId(convId.str), None, selfUserId, ConversationType.Unknown, lastEventTime = Instant.EPOCH)
+      val old = ConversationData(convId, RConvId(convId.str), None, selfUserId, ConversationType.Unknown, lastEventTime = RemoteInstant.Epoch)
       updatedConversation = updater(old)
       Future.successful(Some(old, updatedConversation))
     }

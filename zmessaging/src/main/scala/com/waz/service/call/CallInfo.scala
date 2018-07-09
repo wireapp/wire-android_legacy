@@ -19,8 +19,7 @@ package com.waz.service.call
 
 import com.sun.jna.Pointer
 import com.waz.ZLog
-import com.waz.model.{ConvId, GenericMessage, UserId}
-import com.waz.service.ZMessaging.clock
+import com.waz.model.{ConvId, GenericMessage, LocalInstant, UserId}
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.CallInfo.CallState
@@ -37,7 +36,7 @@ case class CallInfo(convId:             ConvId,
                     caller:             UserId,
                     state:              Option[CallState]                 = None,
                     prevState:          Option[CallState]                 = None,
-                    others:             Map[UserId, Option[Instant]]      = Map.empty,
+                    others:             Map[UserId, Option[LocalInstant]] = Map.empty,
                     maxParticipants:    Int                               = 0, //maintains the largest number of users that were ever in the call (for tracking)
                     muted:              Boolean                           = false,
                     isCbrEnabled:       Boolean                           = false,
@@ -45,10 +44,10 @@ case class CallInfo(convId:             ConvId,
                     videoSendState:     VideoState                        = VideoState.Stopped,
                     videoReceiveStates: Map[UserId, VideoState]           = Map.empty,
                     wasVideoToggled:    Boolean                           = false, //for tracking
-                    startTime:          Instant                           = clock.instant(), //the time we start/receive a call - always the time at which the call info object was created
-                    joinedTime:         Option[Instant]                   = None, //the time the call was joined, if any
-                    estabTime:          Option[Instant]                   = None, //the time that a joined call was established, if any
-                    endTime:            Option[Instant]                   = None,
+                    startTime:          LocalInstant                      = LocalInstant.Now, //the time we start/receive a call - always the time at which the call info object was created
+                    joinedTime:         Option[LocalInstant]              = None, //the time the call was joined, if any
+                    estabTime:          Option[LocalInstant]              = None, //the time that a joined call was established, if any
+                    endTime:            Option[LocalInstant]              = None,
                     outstandingMsg:     Option[(GenericMessage, Pointer)] = None) { //Any messages we were unable to send due to conv degradation
 
   override def toString: String =
@@ -76,7 +75,7 @@ case class CallInfo(convId:             ConvId,
     """.stripMargin
 
   val duration = estabTime match {
-    case Some(est) => ClockSignal(1.second).map(_ => Option(between(est, clock.instant())))
+    case Some(est) => ClockSignal(1.second).map(_ => Option(between(est.instant, LocalInstant.Now.instant)))
     case None      => Signal.const(Option.empty[Duration])
   }
 
@@ -107,8 +106,8 @@ case class CallInfo(convId:             ConvId,
   def updateCallState(callState: CallState): CallInfo = {
     val withState = copy(state = Some(callState), prevState = this.state)
     callState match {
-      case SelfJoining => withState.copy(joinedTime = Some(clock.instant()))
-      case SelfConnected => withState.copy(estabTime = Some(clock.instant()))
+      case SelfJoining => withState.copy(joinedTime = Some(LocalInstant.Now))
+      case SelfConnected => withState.copy(estabTime = Some(LocalInstant.Now))
       case _ => withState
     }
   }

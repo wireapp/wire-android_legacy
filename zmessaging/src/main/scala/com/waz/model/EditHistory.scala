@@ -23,14 +23,14 @@ import com.waz.utils.wrappers.{DB, DBCursor}
 import org.threeten.bp.Instant
 
 
-case class EditHistory(originalId: MessageId, updatedId: MessageId, time: Instant)
+case class EditHistory(originalId: MessageId, updatedId: MessageId, time: RemoteInstant)
 
 object EditHistory {
 
   implicit object EditHistoryDao extends Dao[EditHistory, MessageId] {
     val Original = id[MessageId]('original_id).apply(_.originalId)
     val Updated = id[MessageId]('updated_id).apply(_.updatedId)
-    val Timestamp = timestamp('timestamp)(_.time)
+    val Timestamp = remoteTimestamp('timestamp)(_.time)
 
     override val idCol = Original
     override val table = Table("EditHistory", Original, Updated, Timestamp)

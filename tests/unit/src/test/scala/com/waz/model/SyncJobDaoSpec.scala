@@ -65,11 +65,11 @@ import scala.concurrent.duration._
     scenario("PostSelf requests") { PostSelf(UserInfo(UserId(), Some("name"), Some(1), Some(EmailAddress("email")), Some(PhoneNumber("phone")), None, Some(TrackingId()))) should beUnchangedByEncodingAndDecoding }
     scenario("PostConv requests") { PostConv(ConvId(), Set(UserId(), UserId()), Some("name"), Some(TeamId()), Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED) should beUnchangedByEncodingAndDecoding }
     scenario("PostConvName requests") { PostConvName(ConvId(), "name") should beUnchangedByEncodingAndDecoding }
-    scenario("PostConvState requests") { PostConvState(ConvId(), ConversationState(Some(false), Some(Instant.now), Some(true), Some(Instant.EPOCH))) should beUnchangedByEncodingAndDecoding }
+    scenario("PostConvState requests") { PostConvState(ConvId(), ConversationState(Some(false), Some(RemoteInstant(Instant.now)), Some(true), Some(RemoteInstant.Epoch))) should beUnchangedByEncodingAndDecoding }
     scenario("PostTypingState requests") { PostTypingState(ConvId(), isTyping = true) should beUnchangedByEncodingAndDecoding }
     scenario("DeletePushToken requests") { DeletePushToken(PushToken()) should beUnchangedByEncodingAndDecoding }
     scenario("SyncSearchQuery requests") { SyncSearchQuery(SearchQuery.Recommended("meep moop")) should beUnchangedByEncodingAndDecoding }
-    scenario("PostMessage requests") { PostMessage(ConvId(), MessageId(), Instant.now()) should beUnchangedByEncodingAndDecoding }
+    scenario("PostMessage requests") { PostMessage(ConvId(), MessageId(), RemoteInstant(Instant.now())) should beUnchangedByEncodingAndDecoding }
     scenario("PostConvJoin requests") { PostConvJoin(ConvId(), Set(UserId(), UserId())) should beUnchangedByEncodingAndDecoding }
     scenario("PostConvLeave requests") { PostConvLeave(ConvId(), UserId()) should beUnchangedByEncodingAndDecoding }
     scenario("PostConnection requests") { PostConnection(UserId(), "name", "message") should beUnchangedByEncodingAndDecoding }
@@ -97,17 +97,17 @@ import scala.concurrent.duration._
         PostConv(ConvId(), Set(UserId()), None, Some(TeamId()), Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED),
         DeletePushToken(PushToken()),
         PostSelf(UserInfo(UserId(), Some("name"), Some(1), Some(EmailAddress("email")), Some(PhoneNumber("phone")), None, None)),
-        PostConvState(ConvId(), ConversationState(Some(false), Some(Instant.now), Some(true), Some(Instant.EPOCH))),
+        PostConvState(ConvId(), ConversationState(Some(false), Some(RemoteInstant(Instant.now)), Some(true), Some(RemoteInstant.Epoch))),
         SyncSearchQuery(SearchQuery.Recommended("meep moop")),
         PostSelfPicture(Some(AssetId())),
-        PostMessage(ConvId(), MessageId(), Instant.now()),
+        PostMessage(ConvId(), MessageId(), RemoteInstant(Instant.now)),
         PostConvJoin(ConvId(), Set(UserId(), UserId())),
         PostConnection(UserId(), "name", "message"),
         PostConnectionStatus(UserId(), Some(ConnectionStatus.Ignored)),
         SyncRichMedia(MessageId()),
         SyncPreKeys(UserId(), Set(ClientId(), ClientId())),
-        PostLastRead(ConvId(), Instant.now),
-        PostCleared(ConvId(), Instant.now),
+        PostLastRead(ConvId(), RemoteInstant(Instant.now)),
+        PostCleared(ConvId(), RemoteInstant(Instant.now)),
         PostAssetStatus(ConvId(), MessageId(), Some(5.seconds), AssetStatus.UploadCancelled),
         PostReceipt(ConvId(), MessageId(), UserId(), ReceiptType.Delivery)
       ) map { SyncJob(SyncId(), _) }
@@ -127,7 +127,7 @@ import scala.concurrent.duration._
     }
 
     scenario("Load ConversationState without 'archived'") {
-      val original = ConversationState(Some(false), Some(Instant.now), Some(true), Some(Instant.EPOCH))
+      val original = ConversationState(Some(false), Some(RemoteInstant(Instant.now)), Some(true), Some(RemoteInstant.Epoch))
       val json = encode[ConversationState](original)
       json.remove("otr_archived")
       json.remove("otr_archived_ref")

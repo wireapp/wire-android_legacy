@@ -74,7 +74,7 @@ class NotificationsServiceSpec2 extends AndroidFreeSpec {
 
     scenario("Display notifications that arrive after account becomes inactive that have not been read elsewhere") {
       val user = UserData(UserId("user"), "testUser1")
-      val conv = ConversationData(ConvId("conv"), RConvId(), Some("conv"), user.id, ConversationType.OneToOne, lastRead = Instant.EPOCH)
+      val conv = ConversationData(ConvId("conv"), RConvId(), Some("conv"), user.id, ConversationType.OneToOne, lastRead = RemoteInstant.Epoch)
       fillMembers(conv, Seq(user.id))
       allConvs ! IndexedSeq(conv)
 
@@ -96,7 +96,7 @@ class NotificationsServiceSpec2 extends AndroidFreeSpec {
 
     scenario("Showing the conversation list should clear the current account notifications") {
       val user = UserData(UserId("user"), "testUser1")
-      val conv = ConversationData(ConvId("conv"), RConvId(), Some("conv"), user.id, ConversationType.OneToOne, lastRead = Instant.EPOCH)
+      val conv = ConversationData(ConvId("conv"), RConvId(), Some("conv"), user.id, ConversationType.OneToOne, lastRead = RemoteInstant.Epoch)
       fillMembers(conv, Seq(user.id))
       allConvs ! IndexedSeq(conv)
 
@@ -125,7 +125,7 @@ class NotificationsServiceSpec2 extends AndroidFreeSpec {
     scenario("Receiving notifications after app is put to background should take BE drift into account") {
 
       val user = UserData(UserId("user"), "testUser1")
-      val conv = ConversationData(ConvId("conv"), RConvId(), Some("conv"), user.id, ConversationType.OneToOne, lastRead = Instant.EPOCH)
+      val conv = ConversationData(ConvId("conv"), RConvId(), Some("conv"), user.id, ConversationType.OneToOne, lastRead = RemoteInstant.Epoch)
       fillMembers(conv, Seq(user.id))
       allConvs ! IndexedSeq(conv)
 
@@ -140,8 +140,8 @@ class NotificationsServiceSpec2 extends AndroidFreeSpec {
       inForeground ! false
 
       clock + 10.seconds //messages arrive at some point later but within drift time
-      val msg1 = MessageData(MessageId("msg1"), conv.id, Message.Type.TEXT, user.id, time = clock.instant + drift)
-      val msg2 = MessageData(MessageId("msg2"), conv.id, Message.Type.TEXT, user.id, time = clock.instant + drift)
+      val msg1 = MessageData(MessageId("msg1"), conv.id, Message.Type.TEXT, user.id, time = LocalInstant.Now.toRemote(drift))
+      val msg2 = MessageData(MessageId("msg2"), conv.id, Message.Type.TEXT, user.id, time = LocalInstant.Now.toRemote(drift))
 
       (users.get _).expects(user.id).twice.returning(Future.successful(Some(user)))
       (convs.get _).expects(conv.id).twice.returning(Future.successful(Some(conv)))
@@ -154,8 +154,8 @@ class NotificationsServiceSpec2 extends AndroidFreeSpec {
 
   scenario("Notifications for the current displaying conversation shouldn't be created") {
     val user = UserData(UserId("user"), "testUser1")
-    val conv = ConversationData(ConvId("conv"), RConvId(), Some("conv"), user.id, ConversationType.OneToOne, lastRead = Instant.EPOCH)
-    val conv2 = ConversationData(ConvId("conv2"), RConvId(), Some("conv2"), user.id, ConversationType.OneToOne, lastRead = Instant.EPOCH)
+    val conv = ConversationData(ConvId("conv"), RConvId(), Some("conv"), user.id, ConversationType.OneToOne, lastRead = RemoteInstant.Epoch)
+    val conv2 = ConversationData(ConvId("conv2"), RConvId(), Some("conv2"), user.id, ConversationType.OneToOne, lastRead = RemoteInstant.Epoch)
     fillMembers(conv, Seq(user.id))
     fillMembers(conv2, Seq(user.id))
     allConvs ! IndexedSeq(conv)
@@ -207,6 +207,8 @@ class NotificationsServiceSpec2 extends AndroidFreeSpec {
 
     (reactions.onChanged _).expects().returning(reactionsChanged)
     (reactions.onDeleted _).expects().returning(reactionsDeleted)
+
+    (push.beDrift _).expects().anyNumberOfTimes().returning(Signal.const(Duration.ZERO))
 
     new NotificationService(null, self, messages, lifeCycle, storage, users, convs, members, reactions, userPrefs, push, convsStats, globalNots)
   }

@@ -45,6 +45,7 @@ import com.waz.utils._
 import com.waz.utils.events.EventStream
 import com.waz.utils.wrappers.URI
 import org.threeten.bp.Instant
+import com.waz.service.ZMessaging.currentBeDrift
 
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -202,7 +203,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
       case m if m.convId == convId && m.userId == selfUserId =>
         val (tpe, ct) = MessageData.messageContent(text, weblinkEnabled = true)
         verbose(s"updated content: ${(tpe, ct)}")
-        m.copy(msgType = tpe, content = ct, protos = Seq(GenericMessage(Uid(), MsgEdit(id, GenericContent.Text(text)))), state = Message.Status.PENDING, editTime = (m.time max m.editTime).plus(1.millis) max Instant.now)
+        m.copy(msgType = tpe, content = ct, protos = Seq(GenericMessage(Uid(), MsgEdit(id, GenericContent.Text(text)))), state = Message.Status.PENDING, editTime = (m.time max m.editTime) + 1.millis max LocalInstant.Now.toRemote(currentBeDrift))
       case m =>
         warn(s"Can not update msg: $m")
         m
@@ -218,7 +219,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
   } yield ()
 
   override def recallMessage(convId: ConvId, id: MessageId): Future[Option[MessageData]] =
-    messages.recallMessage(convId, id, selfUserId) flatMap {
+    messages.recallMessage(convId, id, selfUserId, time = LocalInstant.Now.toRemote(currentBeDrift)) flatMap {
       case Some(msg) =>
         sync.postRecalled(convId, msg.id, id) map { _ => Some(msg) }
       case None =>
@@ -307,7 +308,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
       convsContent.updateConversationCleared(conv.id, conv.lastEventTime) flatMap {
         case Some((_, c)) =>
           for {
-            _ <- convsContent.updateConversationLastRead(c.id, c.cleared.getOrElse(Instant.EPOCH))
+            _ <- convsContent.updateConversationLastRead(c.id, c.cleared.getOrElse(RemoteInstant.Epoch))
             _ <- convsContent.updateConversationArchived(c.id, archived = true)
             _ <- c.cleared.fold(Future.successful({}))(sync.postCleared(c.id, _).map(_ => ()))
           } yield Some(c)
@@ -411,7 +412,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
       Some(conv) <- convsContent.convById(id) if conv.globalEphemeral != expiration
       resp       <- client.postMessageTimer(conv.remoteId, expiration).future
       _          <- resp.mapFuture(_ => convStorage.update(id, _.copy(globalEphemeral = expiration)))
-      _          <- resp.mapFuture(_ => messages.addTimerChangedMessage(id, selfUserId, expiration))
+      _          <- resp.mapFuture(_ => messages.addTimerChangedMessage(id, selfUserId, expiration, LocalInstant.Now.toRemote(currentBeDrift)))
     } yield resp
 
   private def mentionsMap(us: Set[UserId]): Future[Map[UserId, String]] =

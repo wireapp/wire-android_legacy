@@ -38,17 +38,17 @@ import scala.util.Success
 trait MsgCursor {
   def size: Int
   def lastReadIndex: Int
-  def lastReadTime: Instant
+  def lastReadTime: RemoteInstant
   def apply(index: Int): MessageAndLikes
-  def indexOf(time: Instant): Int
+  def indexOf(time: RemoteInstant): Int
   def close(): Unit
 }
 
 class MessagesCursor(cursor: DBCursor,
                      override val lastReadIndex: Int,
-                     val lastReadTime: Instant,
+                     val lastReadTime: RemoteInstant,
                      loader: MessageAndLikesStorage,
-                     tracking: TrackingService)(implicit ordering: Ordering[Instant]) extends MsgCursor { self =>
+                     tracking: TrackingService)(implicit ordering: Ordering[RemoteInstant]) extends MsgCursor { self =>
   import MessagesCursor._
   import com.waz.utils.events.EventContext.Implicits.global
 
@@ -59,7 +59,7 @@ class MessagesCursor(cursor: DBCursor,
   private val messages = new LruCache[MessageId, MessageAndLikes](WindowSize * 2)
   private val windowLoader = new WindowLoader(cursor)
 
-  val createTime = Instant.now() //used in UI
+  val createTime = LocalInstant.Now //used in UI
 
   override def size = cursor.getCount
 
@@ -97,12 +97,12 @@ class MessagesCursor(cursor: DBCursor,
   }
 
   /** will block if message is outside of prefetched window */
-  override def indexOf(time: Instant): Int =
+  override def indexOf(time: RemoteInstant): Int =
     returning(LoggedTry(Await.result(asyncIndexOf(time), 10.seconds)).getOrElse(lastReadIndex)) { index =>
       verbose(s"indexOf($time) = $index, lastReadTime: $lastReadTime")
     }
 
-  def asyncIndexOf(time: Instant, binarySearch: Boolean = false): Future[Int] = {
+  def asyncIndexOf(time: RemoteInstant, binarySearch: Boolean = false): Future[Int] = {
     def cursorSearch(from: Int, to: Int) = Future {
       logTime(s"time: $time not found in pre-fetched window, had to go through cursor, binarySearch: $binarySearch") {
         val index = if (binarySearch) cursorBinarySearch(time, from, to) else cursorLinearSearch(time, from, to)
@@ -193,7 +193,7 @@ class MessagesCursor(cursor: DBCursor,
     window.msgs.slice(offset - window.offset, end - window.offset)
   }
 
-  private def cursorLinearSearch(time: Instant, from: Int = 0, to: Int = cursor.getCount - 1): Int =
+  private def cursorLinearSearch(time: RemoteInstant, from: Int = 0, to: Int = cursor.getCount - 1): Int =
     if (from == 0) {
       new CursorIterator(cursor)(Entry.EntryReader).indexWhere(e => ordering.compare(e.time, time) >= 0)
     } else {
@@ -201,7 +201,7 @@ class MessagesCursor(cursor: DBCursor,
       if (indexFromEnd < 0) -1 else cursor.getCount - indexFromEnd - 1
     }
 
-  private def cursorBinarySearch(time: Instant, from: Int = 0, to: Int = cursor.getCount - 1): Int = {
+  private def cursorBinarySearch(time: RemoteInstant, from: Int = 0, to: Int = cursor.getCount - 1): Int = {
     val idx = from + (to - from - 1) / 2
     cursor.moveToPosition(idx)
     ordering.compare(Entry(cursor).time, time) match {
@@ -218,24 +218,24 @@ object MessagesCursor {
   val WindowMargin = WindowSize / 4
   val futureUnit = Future.successful(())
 
-  val Ascending = implicitly[Ordering[Instant]]
+  val Ascending = implicitly[Ordering[RemoteInstant]]
   val Descending = Ascending.reverse
 
   val Empty: MsgCursor = new MsgCursor {
     override val size: Int = 0
     override val lastReadIndex: Int = 0
-    override def lastReadTime: Instant = Instant.EPOCH
-    override def indexOf(time: Instant): Int = -1
+    override def lastReadTime: RemoteInstant = RemoteInstant.Epoch
+    override def indexOf(time: RemoteInstant): Int = -1
     override def apply(index: Int): MessageAndLikes = throw new IndexOutOfBoundsException(s"invalid index $index in empty message cursor")
     override def close(): Unit = ()
   }
 
-  case class Entry(id: MessageId, time: Instant) {
+  case class Entry(id: MessageId, time: RemoteInstant) {
     def <(e: Entry) = Entry.Order.compare(this, e) < 0
   }
 
   object Entry {
-    val Empty = new Entry(MessageId(""), Instant.EPOCH)
+    val Empty = new Entry(MessageId(""), RemoteInstant.Epoch)
 
     implicit object Order extends Ordering[Entry] {
       override def compare(x: Entry, y: Entry): Int = {
@@ -246,7 +246,7 @@ object MessagesCursor {
 
     implicit object EntryReader extends Reader[Entry] {
       override def apply(implicit c: DBCursor): Entry =
-        Entry(MessageId(c.getString(0)), Instant.ofEpochMilli(c.getLong(1)))
+        Entry(MessageId(c.getString(0)), RemoteInstant.ofEpochMilli(c.getLong(1)))
     }
 
     def apply(c: DBCursor): Entry = EntryReader(c)
@@ -315,7 +315,7 @@ case class IndexWindow(offset: Int, msgs: IndexedSeq[Entry]) {
 
   def apply(pos: Int) = msgs(pos - offset)
 
-  def indexOf(time: Instant)(implicit ord: Ordering[Instant]) = msgs.binarySearch(time, _.time)(ord) match {
+  def indexOf(time: RemoteInstant)(implicit ord: Ordering[RemoteInstant]) = msgs.binarySearch(time, _.time)(ord) match {
     case Found(n) => n + offset
     case InsertionPoint(n) => if (n == 0 || n == msgs.size) -1 else n + offset
   }

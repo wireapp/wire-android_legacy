@@ -27,7 +27,6 @@ import com.waz.model.MessageData.MessageDataDao
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.model.sync.ReceiptType
-import com.waz.service.ZMessaging.clock
 import com.waz.service.assets.AssetService
 import com.waz.service.push.PushService
 import com.waz.sync.SyncServiceHandle
@@ -53,13 +52,13 @@ class EphemeralMessagesService(selfUserId: UserId,
   import com.waz.threading.Threading.Implicits.Background
   import com.waz.utils.events.EventContext.Implicits.global
   
-  private val nextExpiryTime = Signal[Instant](Instant.MAX)
+  private val nextExpiryTime = Signal[LocalInstant](LocalInstant.Max)
 
   val init = removeExpired()
 
   nextExpiryTime {
-    case Instant.MAX => // nothing to expire
-    case time => CancellableFuture.delayed((time.toEpochMilli - Instant.now.toEpochMilli).millis) { removeExpired() }
+    case LocalInstant.Max => // nothing to expire
+    case time => CancellableFuture.delayed((time.toEpochMilli - LocalInstant.Now.toEpochMilli).millis) { removeExpired() }
   }
 
   storage.onAdded { msgs =>
@@ -70,16 +69,16 @@ class EphemeralMessagesService(selfUserId: UserId,
     updateNextExpiryTime(updates.flatMap(_._2.expiryTime))
   }
 
-  private def updateNextExpiryTime(times: Seq[Instant]) = if (times.nonEmpty) {
+  private def updateNextExpiryTime(times: Seq[LocalInstant]) = if (times.nonEmpty) {
     val time = times.min
     nextExpiryTime.mutate(_ min time)
   }
 
   private def removeExpired() = Serialized.future(this, "removeExpired") {
     verbose(s"removeExpired")
-    nextExpiryTime ! Instant.MAX
+    nextExpiryTime ! LocalInstant.Max
     db.read { implicit db =>
-      val time = Instant.now
+      val time = LocalInstant.Now
       MessageDataDao.findExpiring() acquire { msgs =>
         val (expired, rest) = msgs.toStream.span(_.expiryTime.exists(_ <= time))
         rest.headOption.flatMap(_.expiryTime) foreach { time =>
@@ -138,10 +137,10 @@ class EphemeralMessagesService(selfUserId: UserId,
       if (shouldStartTimer(msg)) msg.copy(expiryTime = msg.ephemeral.map { exp =>
         msg.userId match {
           case `selfUserId` =>
-            val curWithDrift = clock.instant + drift
+            val curWithDrift = LocalInstant.Now.toRemote(drift)
             //subtract send time to try and obfuscate on all clients at roughly the same time
             //in case the BE drift is inaccurate and the send time is in the future, clamp the time to now
-            curWithDrift + (exp - msg.time.remainingUntil(curWithDrift)) - drift //subtract drift to get back to local time
+            (curWithDrift + (exp - msg.time.remainingUntil(curWithDrift))).toLocal(drift) //subtract drift to get back to local time
           case _ => exp.fromNow()
         }
       })

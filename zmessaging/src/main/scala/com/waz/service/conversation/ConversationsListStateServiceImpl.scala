@@ -21,7 +21,7 @@ import com.waz.ZLog._
 import com.waz.content.UserPreferences.SelectedConvId
 import com.waz.content.{ConversationStorage, Preferences, UserPreferences}
 import com.waz.model.ConversationData.ConversationType
-import com.waz.model.{ConvId, ConversationData}
+import com.waz.model.{ConvId, ConversationData, RemoteInstant}
 import com.waz.threading.SerialDispatchQueue
 import com.waz.utils._
 import com.waz.utils.events.Signal
@@ -49,7 +49,7 @@ class ConversationsListStateServiceImpl(convs: ConversationStorage, userPrefs: U
   val selectedConvIdPref: Preferences.Preference[Option[ConvId]] = userPrefs.preference(SelectedConvId)
   private[conversation] val listStats = Signal[ConversationListStats](ConversationListStats())
 
-  private[conversation] var lastEventTime = Instant.EPOCH
+  private[conversation] var lastEventTime = RemoteInstant.Epoch
 
   def selectedConversationId: Signal[Option[ConvId]] = selectedConvIdPref.signal
 

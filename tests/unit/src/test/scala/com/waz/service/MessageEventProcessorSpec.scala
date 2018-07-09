@@ -29,6 +29,7 @@ import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.messages.{MessageEventProcessor, MessagesContentUpdater, MessagesService}
 import com.waz.service.otr.OtrService
 import com.waz.specs.AndroidFreeSpec
+import com.waz.testutils.TestGlobalPreferences
 import com.waz.utils._
 import com.waz.utils.events.EventStream
 import org.scalatest.Inside
@@ -51,6 +52,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
   val msgsService       = mock[MessagesService]
   val convs             = mock[ConversationsContentUpdater]
   val otr               = mock[OtrService]
+  val prefs             = new TestGlobalPreferences()
 
 
   feature("Push events processing") {
@@ -61,7 +63,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
       val conv = ConversationData(ConvId("conv"), RConvId("r_conv"), None, UserId("creator"), ConversationType.OneToOne)
 
       clock.advance(5.seconds)
-      val event = GenericMessageEvent(conv.remoteId, clock.instant(), sender, GenericMessage(Uid("uid"), Text(text)))
+      val event = GenericMessageEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, GenericMessage(Uid("uid"), Text(text)))
 
       (storage.updateOrCreateAll _).expects(*).onCall { updaters: Map[MessageId, (Option[MessageData]) => MessageData] =>
         Future.successful(updaters.values.map(_.apply(None)).toSet)
@@ -75,7 +77,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
           m.userId        shouldEqual sender
           m.content       shouldEqual MessageData.textContent(text)
           m.time          shouldEqual event.time
-          m.localTime     shouldEqual event.localTime.instant
+          m.localTime     shouldEqual event.localTime
           m.state         shouldEqual Status.SENT
           m.protos        shouldEqual Seq(event.asInstanceOf[GenericMessageEvent].content)
       }
@@ -91,7 +93,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
       )
 
       clock.advance(5.seconds)
-      val event = MemberJoinEvent(conv.remoteId, clock.instant(), sender, membersAdded.toSeq)
+      val event = MemberJoinEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded.toSeq)
 
       (storage.getMessages _).expects(*).returning(Future.successful(Seq.empty))
       (storage.hasSystemMessage _).expects(conv.id, event.time, MEMBER_JOIN, sender).returning(Future.successful(false))
@@ -105,7 +107,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
           m.convId        shouldEqual conv.id
           m.userId        shouldEqual sender
           m.time          shouldEqual event.time
-          m.localTime     shouldEqual event.localTime.instant
+          m.localTime     shouldEqual event.localTime
           m.state         shouldEqual Status.SENT
           m.members       shouldEqual membersAdded
       }
@@ -130,11 +132,11 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
         result(processor.processEvents(conv, Seq(event))) shouldEqual Set.empty
 
       clock.advance(1.second) //conv will have time EPOCH, needs to be later than that
-      testRound(MemberJoinEvent(conv.remoteId, clock.instant(), sender, membersAdded.toSeq))
+      testRound(MemberJoinEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded.toSeq))
       clock.advance(1.second)
-      testRound(MemberLeaveEvent(conv.remoteId, clock.instant(), sender, membersAdded.toSeq))
+      testRound(MemberLeaveEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded.toSeq))
       clock.advance(1.second)
-      testRound(RenameConversationEvent(conv.remoteId, clock.instant(), sender, "new name"))
+      testRound(RenameConversationEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, "new name"))
     }
 
     scenario("System message events are overridden if only local version is present") {
@@ -145,17 +147,17 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
       )
 
       clock.advance(1.second) //here, we create a local message
-      val localMsg = MessageData(MessageId(), conv.id, RENAME, selfUserId, time = clock.instant(), localTime = clock.instant(), state = Status.PENDING)
+      val localMsg = MessageData(MessageId(), conv.id, RENAME, selfUserId, time = RemoteInstant(clock.instant()), localTime = LocalInstant(clock.instant()), state = Status.PENDING)
 
       clock.advance(1.second) //some time later, we get the response from the backend
-      val event = RenameConversationEvent(conv.remoteId, clock.instant(), selfUserId, "new name")
+      val event = RenameConversationEvent(conv.remoteId, RemoteInstant(clock.instant()), selfUserId, "new name")
 
       (storage.getMessages _).expects(*).returning(Future.successful(Seq.empty))
       (storage.hasSystemMessage _).expects(conv.id, event.time, RENAME, selfUserId).returning(Future.successful(false))
       (storage.lastLocalMessage _).expects(conv.id, RENAME).returning(Future.successful(Some(localMsg)))
       (storage.remove (_: MessageId)).expects(localMsg.id).returning(Future.successful({}))
       (storage.addMessage _).expects(*).onCall { msg : MessageData => Future.successful(msg)}
-      (convs.updateConversationLastRead _).expects(conv.id, event.time).onCall { (convId: ConvId, instant: Instant) =>
+      (convs.updateConversationLastRead _).expects(conv.id, event.time).onCall { (convId: ConvId, instant: RemoteInstant) =>
         Future.successful(Some((conv, conv.copy(lastRead = instant))))
       }
 
@@ -312,7 +314,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
 
 
   def getProcessor = {
-    val content = new MessagesContentUpdater(storage, convsStorage, deletions)
+    val content = new MessagesContentUpdater(storage, convsStorage, deletions, prefs)
 
     //TODO make VerificationStateUpdater mockable
     (otrClientsStorage.onAdded _).expects().anyNumberOfTimes().returning(EventStream[Seq[UserClients]]())

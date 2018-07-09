@@ -416,16 +416,16 @@ object GenericContent {
   implicit object Cleared extends GenericContent[Cleared] {
     override def set(msg: GenericMessage) = msg.setCleared
 
-    def apply(conv: RConvId, time: Instant) = returning(new Messages.Cleared) { c =>
+    def apply(conv: RConvId, time: RemoteInstant) = returning(new Messages.Cleared) { c =>
       c.conversationId = conv.str
       c.clearedTimestamp = time.toEpochMilli
     }
 
-    def unapply(arg: Cleared): Option[(RConvId, Instant)] =
+    def unapply(arg: Cleared): Option[(RConvId, RemoteInstant)] =
       for {
         conv <- Option(arg.conversationId)
         time <- Option(arg.clearedTimestamp)
-      } yield (RConvId(conv), Instant.ofEpochMilli(time))
+      } yield (RConvId(conv), RemoteInstant.ofEpochMilli(time))
   }
 
   type LastRead = Messages.LastRead
@@ -433,13 +433,13 @@ object GenericContent {
   implicit object LastRead extends GenericContent[LastRead] {
     override def set(msg: GenericMessage) = msg.setLastRead
 
-    def apply(conv: RConvId, time: Instant) = returning(new Messages.LastRead) { l =>
+    def apply(conv: RConvId, time: RemoteInstant) = returning(new Messages.LastRead) { l =>
       l.conversationId = conv.str
       l.lastReadTimestamp = time.toEpochMilli
     }
 
-    def unapply(arg: LastRead): Option[(RConvId, Instant)] =
-      Some((RConvId(arg.conversationId), Instant.ofEpochMilli(arg.lastReadTimestamp)))
+    def unapply(arg: LastRead): Option[(RConvId, RemoteInstant)] =
+      Some((RConvId(arg.conversationId), RemoteInstant.ofEpochMilli(arg.lastReadTimestamp)))
   }
 
   type MsgDeleted = Messages.MessageHide

@@ -77,7 +77,7 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec {
 
     val convId = RConvId()
     val events = (1 to 10).map { _ =>
-      RenameConversationEvent(convId, Instant.now, UserId(), "blah")
+      RenameConversationEvent(convId, RemoteInstant(clock.instant()), UserId(), "blah")
     }
 
     result(pipeline.apply(events).map(_ => println(output.toString)))
@@ -94,7 +94,7 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec {
     val selfUserId = UserId("user1")
     val convId = ConvId()
     val rConvId = RConvId()
-    val conv = ConversationData(ConvId(), rConvId, Some("name"), UserId(), ConversationType.Group, lastEventTime = Instant.MIN)
+    val conv = ConversationData(ConvId(), rConvId, Some("name"), UserId(), ConversationType.Group, lastEventTime = RemoteInstant.Epoch)
     var updatedConv = conv.copy()
 
     (storage.getByRemoteIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(convId)))
@@ -104,7 +104,7 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec {
         p.productElement(3).asInstanceOf[ConversationData => Future[Unit]].apply(conv)
     }
 
-    (convs.updateLastEvent _).expects(*, *).once().onCall { (_: ConvId, i: Instant) =>
+    (convs.updateLastEvent _).expects(*, *).once().onCall { (_: ConvId, i: RemoteInstant) =>
       updatedConv = conv.copy(lastEventTime = i)
       Future.successful(Some(conv, updatedConv))
     }
@@ -114,13 +114,13 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec {
     lazy val service = new ConversationOrderEventsService(selfUserId, convs, storage, messages, users, sync, pipeline)
 
     val events = Seq(
-      MemberJoinEvent(rConvId, Instant.ofEpochMilli(1), UserId(), Seq(selfUserId)),
-      RenameConversationEvent(rConvId, Instant.ofEpochMilli(2), UserId(), "blah"),
-      MemberJoinEvent(rConvId, Instant.ofEpochMilli(3), UserId(), Seq(UserId("user2"))),
-      MemberLeaveEvent(rConvId, Instant.ofEpochMilli(4), UserId(), Seq(UserId("user3"))))
+      MemberJoinEvent(rConvId, RemoteInstant.ofEpochMilli(1), UserId(), Seq(selfUserId)),
+      RenameConversationEvent(rConvId, RemoteInstant.ofEpochMilli(2), UserId(), "blah"),
+      MemberJoinEvent(rConvId, RemoteInstant.ofEpochMilli(3), UserId(), Seq(UserId("user2"))),
+      MemberLeaveEvent(rConvId, RemoteInstant.ofEpochMilli(4), UserId(), Seq(UserId("user3"))))
 
     result(pipeline.apply(events))
-    updatedConv.lastEventTime shouldBe Instant.ofEpochMilli(1)
+    updatedConv.lastEventTime shouldBe RemoteInstant.ofEpochMilli(1)
   }
 
 }

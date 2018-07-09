@@ -21,7 +21,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.model.sync.SyncJob
 import com.waz.model.sync.SyncJob.Priority
 import com.waz.model.sync.SyncRequest.PostOpenGraphMeta
-import com.waz.model.{ConvId, MessageId, SyncId}
+import com.waz.model.{ConvId, MessageId, RemoteInstant, SyncId}
 import com.waz.service.NetworkModeService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.queue.{SyncContentUpdater, SyncExecutor, SyncScheduler}
@@ -37,7 +37,7 @@ class SyncExecutorSpec extends AndroidFreeSpec {
 
 
   scenario("Loading a deleted sync job returns failure") {
-    val job = SyncJob(SyncId(), PostOpenGraphMeta(ConvId(), MessageId(), clock.instant()), priority = Priority.Low)
+    val job = SyncJob(SyncId(), PostOpenGraphMeta(ConvId(), MessageId(), RemoteInstant(clock.instant())), priority = Priority.Low)
     (content.getSyncJob _).expects(job.id).returning(Future.successful(None))
     result(getExecutor(job)) shouldEqual SyncResult(ErrorResponse.internalError(s"No sync job found with id: ${job.id}"))
   }

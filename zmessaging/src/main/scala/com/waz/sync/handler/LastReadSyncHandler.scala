@@ -17,8 +17,8 @@
  */
 package com.waz.sync.handler
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.ConversationStorage
 import com.waz.model.GenericContent.LastRead
@@ -26,14 +26,14 @@ import com.waz.model._
 import com.waz.service.MetaDataService
 import com.waz.sync.SyncResult
 import com.waz.sync.otr.OtrSyncHandler
-import org.threeten.bp.Instant
+import com.waz.utils.RichWireInstant
 
 import scala.concurrent.Future
 
 class LastReadSyncHandler(selfUserId: UserId, convs: ConversationStorage, metadata: MetaDataService, convSync: ConversationsSyncHandler, msgsSync: MessagesSyncHandler, otrSync: OtrSyncHandler) {
   import com.waz.threading.Threading.Implicits.Background
 
-  def postLastRead(convId: ConvId, time: Instant): Future[SyncResult] = {
+  def postLastRead(convId: ConvId, time: RemoteInstant): Future[SyncResult] = {
     verbose(s"postLastRead($convId, $time)")
 
     convs.get(convId) flatMap {

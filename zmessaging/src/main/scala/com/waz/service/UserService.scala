@@ -28,7 +28,6 @@ import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.UserService._
-import com.waz.service.ZMessaging.clock
 import com.waz.service.assets.AssetService
 import com.waz.service.conversation.ConversationsListStateService
 import com.waz.service.push.PushService
@@ -60,12 +59,12 @@ trait UserService {
   def getSelfUser: Future[Option[UserData]]
   def getOrCreateUser(id: UserId): Future[UserData]
   def updateUserData(id: UserId, updater: UserData => UserData): Future[Option[(UserData, UserData)]]
-  def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[Date] = None, message: Option[String] = None): Future[Option[UserData]]
   def syncIfNeeded(userIds: Set[UserId], olderThan: FiniteDuration = SyncIfOlderThan): Future[Option[SyncId]]
+  def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[RemoteInstant] = None, message: Option[String] = None): Future[Option[UserData]]
   def updateUsers(entries: Seq[UserSearchEntry]): Future[Set[UserData]]
   def acceptedOrBlockedUsers: Signal[Map[UserId, UserData]]
 
-  def updateSyncedUsers(users: Seq[UserInfo], timestamp: Instant = clock.instant()): Future[Set[UserData]]
+  def updateSyncedUsers(users: Seq[UserInfo], timestamp: LocalInstant = LocalInstant.Now): Future[Set[UserData]]
 
   def deleteAccount(): Future[SyncId]
 
@@ -175,7 +174,7 @@ class UserServiceImpl(selfUserId:        UserId,
     UserData(id, None, DefaultUserName, None, None, connection = ConnectionStatus.Unconnected, searchKey = SearchKey(DefaultUserName), handle = None)
   })
 
-  override def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[Date] = None, message: Option[String] = None) =
+  override def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[RemoteInstant] = None, message: Option[String] = None) =
     usersStorage.update(id, { user => returning(user.updateConnectionStatus(status, time, message))(u => verbose(s"updateConnectionStatus($u)")) }) map {
       case Some((prev, updated)) if prev != updated => Some(updated)
       case _ => None
@@ -223,14 +222,14 @@ class UserServiceImpl(selfUserId:        UserId,
   override def syncIfNeeded(userIds: Set[UserId], olderThan: FiniteDuration = SyncIfOlderThan): Future[Option[SyncId]] =
     usersStorage.listAll(userIds).flatMap { found =>
       val newIds = userIds -- found.map(_.id)
-      val offset = clock.instant() - olderThan
+      val offset = LocalInstant.Now - olderThan
       val existing = found.filter(u => !u.isConnected && (u.teamId.isEmpty || u.teamId != teamId) && u.syncTimestamp.forall(_.isBefore(offset)))
       val toSync = newIds ++ existing.map(_.id)
       verbose(s"syncIfNeeded for users; new: (${newIds.size}) + existing: (${existing.size}) = all: (${toSync.size})")
       if (toSync.nonEmpty) sync.syncUsers(toSync).map(Some(_))(Threading.Background) else Future.successful(None)
     }
 
-  override def updateSyncedUsers(users: Seq[UserInfo], syncTime: Instant = clock.instant()): Future[Set[UserData]] = {
+  override def updateSyncedUsers(users: Seq[UserInfo], syncTime: LocalInstant = LocalInstant.Now): Future[Set[UserData]] = {
     verbose(s"update synced ${users.size} users")
     assets.updateAssets(users.flatMap(_.picture.getOrElse(Seq.empty[AssetData]))).flatMap { _ =>
       def updateOrCreate(info: UserInfo): Option[UserData] => UserData = {
@@ -398,7 +397,7 @@ class ExpiredUsersService(convState:    ConversationsListStateService,
     push.beDrift.head.map { drift =>
       val woTimer = wireless.filter(u => (wireless.map(_.id) -- timers.keySet).contains(u.id))
       woTimer.foreach { u =>
-        val delay = (clock.instant() + drift).remainingUntil(u.expiresAt.get + 10.seconds)
+        val delay = LocalInstant.Now.toRemote(drift).remainingUntil(u.expiresAt.get + 10.seconds)
         verbose(s"Creating timer to remove user: ${u.id}:${u.name} in $delay")
         timers += u.id -> CancellableFuture.delay(delay).map { _ =>
           verbose(s"Wireless user ${u.id}:${u.name} is expired, informing BE")

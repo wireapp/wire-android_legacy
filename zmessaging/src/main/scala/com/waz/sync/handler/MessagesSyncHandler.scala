@@ -92,7 +92,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         otrSync.postOtrMessage(conv.id, conv.remoteId, msg) flatMap {
           case Left(e) => successful(SyncResult(e))
           case Right(time) =>
-            msgContent.updateMessage(msgId)(_.copy(editTime = time.instant, state = Message.Status.SENT)) map { _ => SyncResult.Success }
+            msgContent.updateMessage(msgId)(_.copy(editTime = time, state = Message.Status.SENT)) map { _ => SyncResult.Success }
         }
       case None =>
         successful(SyncResult(internalError("conversation not found")))
@@ -114,9 +114,9 @@ class MessagesSyncHandler(selfUserId: UserId,
         successful(SyncResult(internalError("conversation not found")))
     }
 
-  def postMessage(convId: ConvId, id: MessageId, editTime: Instant)(implicit convLock: ConvLock): Future[SyncResult] = {
+  def postMessage(convId: ConvId, id: MessageId, editTime: RemoteInstant)(implicit convLock: ConvLock): Future[SyncResult] = {
 
-    def shouldGiveUpSending(msg: MessageData) = !network.isOnlineMode || timeouts.messages.sendingTimeout.elapsedSince(msg.time)
+    def shouldGiveUpSending(msg: MessageData) = !network.isOnlineMode || timeouts.messages.sendingTimeout.elapsedSince(msg.time.instant)
 
     storage.getMessage(id) flatMap { message =>
       message.fold(successful(None: Option[ConversationData]))(msg => convs.convById(msg.convId)) map { conv =>
@@ -155,33 +155,33 @@ class MessagesSyncHandler(selfUserId: UserId,
     }
   }
 
-  private def postMessage(conv: ConversationData, msg: MessageData, reqEditTime: Instant)(implicit convLock: ConvLock): Future[SyncResult] = {
+  private def postMessage(conv: ConversationData, msg: MessageData, reqEditTime: RemoteInstant)(implicit convLock: ConvLock): Future[SyncResult] = {
 
     def postTextMessage() = {
       val (gm, isEdit) =
         msg.protos.lastOption match {
-          case Some(m@GenericMessage(id, MsgEdit(ref, text))) if reqEditTime != Instant.EPOCH => (m, true) // will send edit only if original message was already sent (reqEditTime > EPOCH)
+          case Some(m@GenericMessage(id, MsgEdit(ref, text))) if !reqEditTime.isEpoch => (m, true) // will send edit only if original message was already sent (reqEditTime > EPOCH)
           case _ => (GenericMessage.TextMessage(msg), false)
         }
 
       otrSync.postOtrMessage(conv, gm).flatMap {
         case Right(time) if isEdit =>
           // delete original message and create new message with edited content
-          service.applyMessageEdit(conv.id, msg.userId, time.instant, gm) map {
+          service.applyMessageEdit(conv.id, msg.userId, RemoteInstant(time.instant), gm) map {
             case Some(m) => Right(m)
-            case _ => Right(msg.copy(time = time.instant))
+            case _ => Right(msg.copy(time = RemoteInstant(time.instant)))
           }
 
-        case Right(time) => successful(Right(msg.copy(time = time.instant)))
+        case Right(time) => successful(Right(msg.copy(time = time)))
         case Left(err) => successful(Left(err))
       }
     }
 
     import Message.Type._
 
-    def post: ErrorOr[Instant] = msg.msgType match {
+    def post: ErrorOr[RemoteInstant] = msg.msgType match {
       case MessageData.IsAsset() => Cancellable(UploadTaskKey(msg.assetId))(uploadAsset(conv, msg)).future
-      case KNOCK => otrSync.postOtrMessage(conv, GenericMessage(msg.id.uid, msg.ephemeral, Proto.Knock())).map(_.map(_.instant))
+      case KNOCK => otrSync.postOtrMessage(conv, GenericMessage(msg.id.uid, msg.ephemeral, Proto.Knock()))
       case TEXT | TEXT_EMOJI_ONLY => postTextMessage().map(_.map(_.time))
       case RICH_MEDIA =>
         postTextMessage().flatMap {
@@ -191,9 +191,9 @@ class MessagesSyncHandler(selfUserId: UserId,
       case LOCATION =>
         msg.protos.headOption match {
           case Some(GenericMessage(id, loc: Location)) if msg.isEphemeral =>
-            otrSync.postOtrMessage(conv, GenericMessage(id, Ephemeral(msg.ephemeral, loc))).map(_.map(_.instant))
+            otrSync.postOtrMessage(conv, GenericMessage(id, Ephemeral(msg.ephemeral, loc)))
           case Some(proto) =>
-            otrSync.postOtrMessage(conv, proto).map(_.map(_.instant))
+            otrSync.postOtrMessage(conv, proto)
           case None =>
             successful(Left(internalError(s"Unexpected location message content: $msg")))
         }
@@ -201,7 +201,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         msg.protos.headOption match {
           case Some(proto) if !msg.isEphemeral =>
             verbose(s"sending generic message: $proto")
-            otrSync.postOtrMessage(conv, proto).map(_.map(_.instant))
+            otrSync.postOtrMessage(conv, proto)
           case Some(proto) =>
             successful(Left(internalError(s"Can not send generic ephemeral message: $msg")))
           case None =>
@@ -229,15 +229,15 @@ class MessagesSyncHandler(selfUserId: UserId,
     }
   }
 
-  private def uploadAsset(conv: ConversationData, msg: MessageData)(implicit convLock: ConvLock): ErrorOrResponse[Instant] = {
+  private def uploadAsset(conv: ConversationData, msg: MessageData)(implicit convLock: ConvLock): ErrorOrResponse[RemoteInstant] = {
     verbose(s"uploadAsset($conv, $msg)")
 
-    def postAssetMessage(asset: AssetData, preview: Option[AssetData]): ErrorOrResponse[Instant] = {
+    def postAssetMessage(asset: AssetData, preview: Option[AssetData]): ErrorOrResponse[RemoteInstant] = {
       val proto = GenericMessage(msg.id.uid, msg.ephemeral, Proto.Asset(asset, preview))
       CancellableFuture.lift(otrSync.postOtrMessage(conv, proto) flatMap {
         case Right(time) =>
           verbose(s"posted asset message for: $asset")
-          msgContent.updateMessage(msg.id)(_.copy(protos = Seq(proto), time = time.instant)) map { _ => Right(time.instant) }
+          msgContent.updateMessage(msg.id)(_.copy(protos = Seq(proto), time = time)) map { _ => Right(time) }
         case Left(err) =>
           warn(s"posting asset message failed: $err")
           Future successful Left(err)
@@ -245,7 +245,7 @@ class MessagesSyncHandler(selfUserId: UserId,
     }
 
     //TODO Dean: Update asset status to UploadInProgress after posting original - what about images...?
-    def postOriginal(asset: AssetData): ErrorOrResponse[Instant] =
+    def postOriginal(asset: AssetData): ErrorOrResponse[RemoteInstant] =
       if (asset.status != AssetStatus.UploadNotStarted) CancellableFuture successful Right(msg.time)
       else asset.mime match {
         case Mime.Image() => CancellableFuture.successful(Right(msg.time))
@@ -277,7 +277,7 @@ class MessagesSyncHandler(selfUserId: UserId,
               service.retentionPolicy(conv).flatMap { retention =>
                 assetSync.uploadAssetData(asset.id, retention = retention).flatMap {
                   case Right(Some(updated)) => postAssetMessage(updated, prev).map(_.fold(Left(_), _ => Right(origTime)))
-                  case Right(None) => CancellableFuture successful Right(Instant.EPOCH) //TODO Dean: what's a good default
+                  case Right(None) => CancellableFuture successful Right(RemoteInstant.Epoch) //TODO Dean: what's a good default
                   case Left(err) if err.message.contains(AssetSyncHandler.AssetTooLarge) =>
                     CancellableFuture.lift(errors.addAssetTooLargeError(conv.id, msg.id).map { _ => Left(err) })
                   case Left(err) => CancellableFuture successful Left(err)
@@ -300,10 +300,10 @@ class MessagesSyncHandler(selfUserId: UserId,
     }
   }
 
-  private[waz] def messageSent(convId: ConvId, msg: MessageData, time: Instant) = {
+  private[waz] def messageSent(convId: ConvId, msg: MessageData, time: RemoteInstant) = {
     debug(s"otrMessageSent($convId. $msg, $time)")
 
-    def updateLocalTimes(conv: ConvId, prevTime: Instant, time: Instant) =
+    def updateLocalTimes(conv: ConvId, prevTime: RemoteInstant, time: RemoteInstant) =
       msgContent.updateLocalMessageTimes(conv, prevTime, time) flatMap { updated =>
         val prevLastTime = updated.lastOption.fold(prevTime)(_._1.time)
         val lastTime = updated.lastOption.fold(time)(_._2.time)

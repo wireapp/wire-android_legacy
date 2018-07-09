@@ -52,7 +52,7 @@ class ConvMessagesIndex(conv: ConvId, messages: MessagesStorageImpl, selfUserId:
     val incomingKnock = Signal(Option.empty[MessageData])
     val lastMessage = Signal(Option.empty[MessageData])
     val lastSentMessage = Signal(Option.empty[MessageData])
-    val lastReadTime = returning(Signal[Instant]())(_.disableAutowiring())
+    val lastReadTime = returning(Signal[RemoteInstant]())(_.disableAutowiring())
     val lastMessageFromSelf = Signal(Option.empty[MessageData])
     val lastMessageFromOther = Signal(Option.empty[MessageData])
   }
@@ -60,7 +60,7 @@ class ConvMessagesIndex(conv: ConvId, messages: MessagesStorageImpl, selfUserId:
   object signals {
     val indexChanged: EventStream[Change] = self.indexChanged
 
-    val lastReadTime: Signal[Instant] = sources.lastReadTime
+    val lastReadTime: Signal[RemoteInstant] = sources.lastReadTime
     val failedCount: Signal[Int] = sources.failedCount
     val lastMissedCall: Signal[Option[MessageId]] = Signal(sources.lastReadTime, sources.missedCall).map { case (time, msg) => msg.filter(_.time.isAfter(time)).map(_.id) }
     val incomingKnock: Signal[Option[MessageId]] = Signal(sources.lastReadTime, sources.incomingKnock).map { case (time, msg) => msg.filter(_.time.isAfter(time)).map(_.id) }
@@ -75,7 +75,7 @@ class ConvMessagesIndex(conv: ConvId, messages: MessagesStorageImpl, selfUserId:
 
     val unreadCount = for {
       time <- sources.lastReadTime
-      _ <- Signal.wrap(Instant.now, indexChanged.map(_.time)).throttle(500.millis)
+      _ <- Signal.wrap(RemoteInstant.Epoch, indexChanged.map(_.time)).throttle(500.millis)
       unread <- Signal.future(messages.countUnread(conv, time))
     } yield unread
 
@@ -120,7 +120,7 @@ class ConvMessagesIndex(conv: ConvId, messages: MessagesStorageImpl, selfUserId:
         case Some(MessageFilter(Some(types), _, limit)) => (MessageDataDao.msgIndexCursorFiltered(conv, types, limit), MessagesCursor.Descending)
         case _ => (MessageDataDao.msgIndexCursor(conv), MessagesCursor.Ascending)
       }
-      val time = lastReadTime.currentValue.getOrElse(Instant.EPOCH)
+      val time = lastReadTime.currentValue.getOrElse(RemoteInstant.Epoch)
       val readMessagesCount = MessageDataDao.countAtLeastAsOld(conv, time).toInt
       verbose(s"index of $time = $readMessagesCount")
       (cursor, order, time, math.max(0, readMessagesCount - 1))
@@ -148,7 +148,7 @@ class ConvMessagesIndex(conv: ConvId, messages: MessagesStorageImpl, selfUserId:
     indexChanged ! Removed(msg)
   }
 
-  private[content] def delete(upTo: Instant = Instant.MAX): Future[Unit] = init map { _ =>
+  private[content] def delete(upTo: RemoteInstant = RemoteInstant.Max): Future[Unit] = init map { _ =>
     failedCount ! 0 // XXX: this might be wrong, hopefully not too often
 
     lastLocalMessageByType.filter { case (_, index) => !index.time.isAfter(upTo) } foreach { case (k, _) => lastLocalMessageByType.remove(k) }
@@ -249,12 +249,12 @@ class ConvMessagesIndex(conv: ConvId, messages: MessagesStorageImpl, selfUserId:
 object ConvMessagesIndex {
 
   sealed trait Change {
-    val time: Instant = Instant.now
+    val time: RemoteInstant = RemoteInstant.Epoch //TODO: epoch? it was now before...
     val orderChanged = true
   }
   case class Added(msgs: Seq[MessageData]) extends Change
   case class Removed(msg: MessageData) extends Change
-  case class RemovedOlder(clearTimestamp: Instant) extends Change
+  case class RemovedOlder(clearTimestamp: RemoteInstant) extends Change
   case class Updated(updates: Seq[(MessageData, MessageData)]) extends Change {
     override val orderChanged = updates exists { case (prev, up) => prev.time != up.time || !prev.hasSameContentType(up) }
   }

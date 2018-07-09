@@ -76,14 +76,14 @@ object Generators {
     name <- arbitrary[Option[String]]
     creator <- arbitrary[UserId]
     convType <- arbitrary[ConversationType]
-    lastEventTime <- arbitrary[Instant]
+    lastEventTime <- arbitrary[RemoteInstant]
     team  <- arbitrary[Option[TeamId]]
     isActive <- arbitrary[Boolean]
     muted <- arbitrary[Boolean]
-    muteTime <- arbitrary[Instant]
+    muteTime <- arbitrary[RemoteInstant]
     archived <- arbitrary[Boolean]
-    archiveTime <- arbitrary[Instant]
-    cleared <- arbitrary[Option[Instant]]
+    archiveTime <- arbitrary[RemoteInstant]
+    cleared <- arbitrary[Option[RemoteInstant]]
     generatedName <- arbitrary[String]
     searchKey = name map SearchKey
     unreadCount <- arbitrary[UnreadCount]
@@ -91,7 +91,7 @@ object Generators {
     missedCall <- arbitrary[Option[MessageId]]
     incomingKnock <- arbitrary[Option[MessageId]]
     hidden <- arbitrary[Boolean]
-  } yield ConversationData(id, remoteId, name, creator, convType, team, lastEventTime, isActive, Instant.EPOCH, muted, muteTime, archived, archiveTime, cleared, generatedName, searchKey, unreadCount, failedCount, missedCall, incomingKnock, hidden))
+  } yield ConversationData(id, remoteId, name, creator, convType, team, lastEventTime, isActive, RemoteInstant.Epoch, muted, muteTime, archived, archiveTime, cleared, generatedName, searchKey, unreadCount, failedCount, missedCall, incomingKnock, hidden))
 
   implicit lazy val arbUserData: Arbitrary[UserData] = Arbitrary(for {
     id <- arbitrary[UserId]
@@ -104,11 +104,11 @@ object Generators {
     accent <- arbitrary[Int]
     searchKey = SearchKey(name)
     connection <- arbitrary[ConnectionStatus]
-    connectionLastUpdated <- arbitrary[Date]
+    connectionLastUpdated <- arbitrary[RemoteInstant]
     connectionMessage <- arbitrary[Option[String]]
     conversation <- arbitrary[Option[RConvId]]
     relation <- arbitrary[Relation]
-    syncTimestamp <- arbitrary[Option[Instant]]
+    syncTimestamp <- arbitrary[Option[LocalInstant]]
     displayName <- arbitrary[String]
     handle <- arbitrary[Option[Handle]]
   } yield UserData(id, teamId, name, email, phone, trackingId, picture, accent, searchKey, connection, connectionLastUpdated, connectionMessage, conversation, relation, syncTimestamp, displayName, handle = handle))
@@ -241,6 +241,8 @@ object Generators {
 
   implicit lazy val arbDate: Arbitrary[Date] = Arbitrary(choose(0L, 999999L).map(i => new Date(currentTimeMillis - 1000000000L + i * 1000L)))
   implicit lazy val arbInstant: Arbitrary[Instant] = Arbitrary(posNum[Long] map Instant.ofEpochMilli)
+  implicit lazy val arbRemoteInstant: Arbitrary[RemoteInstant] = Arbitrary(posNum[Long] map RemoteInstant.ofEpochMilli)
+  implicit lazy val arbLocalInstant: Arbitrary[LocalInstant] = Arbitrary(posNum[Long] map LocalInstant.ofEpochMilli)
   implicit lazy val arbDuration: Arbitrary[Duration] = Arbitrary(posNum[Long] map Duration.ofMillis)
   implicit lazy val arbFiniteDuration: Arbitrary[FiniteDuration] = Arbitrary(posNum[Long] map(_.millis))
 
@@ -285,7 +287,7 @@ object Generators {
   } yield AddressBook.ContactHashes(ContactId(id), hashes))
 
   implicit lazy val arbConvState: Arbitrary[ConversationState] = Arbitrary(resultOf(
-    ConversationState(_: Option[Boolean], _: Option[Instant], _: Option[Boolean], _: Option[Instant])))
+    ConversationState(_: Option[Boolean], _: Option[RemoteInstant], _: Option[Boolean], _: Option[RemoteInstant])))
 
   lazy val serialCounter: AtomicLong = new AtomicLong()
 

@@ -51,7 +51,7 @@ import com.waz.znet._
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RequestInterceptor}
 import com.waz.znet2.{AuthRequestInterceptor, HttpClientOkHttpImpl, OkHttpWebSocketFactory}
-import org.threeten.bp.{Clock, Instant}
+import org.threeten.bp.{Clock, Duration, Instant}
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
@@ -348,6 +348,9 @@ object ZMessaging { self =>
 
   def globalModule:    Future[GlobalModule]    = globalReady.future
   def accountsService: Future[AccountsService] = globalModule.map(_.accountsService)(Threading.Background)
+
+  lazy val beDrift = _global.prefs.preference(GlobalPreferences.BackendDrift).signal
+  def currentBeDrift = beDrift.currentValue.getOrElse(Duration.ZERO)
 
   def onCreate(context: Context) = {
     Threading.assertUiThread()

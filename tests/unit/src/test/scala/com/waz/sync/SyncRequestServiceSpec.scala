@@ -67,7 +67,7 @@ class SyncRequestServiceSpec extends AndroidFreeSpec {
 
     result(for {
       id   <- handle.syncSelfUser()
-      id2  <- handle.postMessage(MessageId(), ConvId(), clock.instant())
+      id2  <- handle.postMessage(MessageId(), ConvId(), RemoteInstant(clock.instant()))
       res  <- service.scheduler.await(id)
       res2 <- service.scheduler.await(id2)
     } yield (res, res2))

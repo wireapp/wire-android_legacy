@@ -57,7 +57,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
                            assetClient:     AssetClient) { //TODO assetClient not used
   import com.waz.threading.Threading.Implicits.Background
 
-  def postMessageMeta(convId: ConvId, msgId: MessageId, editTime: Instant): Future[SyncResult] = messages.getMessage(msgId) flatMap {
+  def postMessageMeta(convId: ConvId, msgId: MessageId, editTime: RemoteInstant): Future[SyncResult] = messages.getMessage(msgId) flatMap {
     case None => Future successful SyncResult(internalError(s"No message found with id: $msgId"))
     case Some(msg) if msg.msgType != Message.Type.RICH_MEDIA =>
       debug(s"postMessageMeta, message is not RICH_MEDIA: $msg")

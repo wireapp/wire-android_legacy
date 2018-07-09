@@ -28,6 +28,7 @@ import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
+import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request, ResponseCode}
 import org.json.{JSONArray, JSONObject}
 import org.threeten.bp.Instant
 

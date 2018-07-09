@@ -38,14 +38,14 @@ case class ConversationData(id:                   ConvId                 = ConvI
                             creator:              UserId                 = UserId(),
                             convType:             ConversationType       = ConversationType.Group,
                             team:                 Option[TeamId]         = None,
-                            lastEventTime:        Instant                = Instant.now(),
+                            lastEventTime:        RemoteInstant          = RemoteInstant.Epoch,
                             isActive:             Boolean                = true,
-                            lastRead:             Instant                = Instant.EPOCH,
+                            lastRead:             RemoteInstant          = RemoteInstant.Epoch,
                             muted:                Boolean                = false,
-                            muteTime:             Instant                = Instant.EPOCH,
+                            muteTime:             RemoteInstant          = RemoteInstant.Epoch,
                             archived:             Boolean                = false,
-                            archiveTime:          Instant                = Instant.EPOCH,
-                            cleared:              Option[Instant]        = None,
+                            archiveTime:          RemoteInstant          = RemoteInstant.Epoch,
+                            cleared:              Option[RemoteInstant]  = None,
                             generatedName:        String                 = "",
                             searchKey:            Option[SearchKey]      = None,
                             unreadCount:          UnreadCount            = UnreadCount(0, 0, 0),
@@ -76,9 +76,9 @@ case class ConversationData(id:                   ConvId                 = ConvI
     case _ => None
   }
 
-  def withLastRead(time: Instant) = copy(lastRead = lastRead max time)
+  def withLastRead(time: RemoteInstant) = copy(lastRead = lastRead max time)
 
-  def withCleared(time: Instant) = copy(cleared = Some(cleared.fold(time)(_ max time)))
+  def withCleared(time: RemoteInstant) = copy(cleared = Some(cleared.fold(time)(_ max time)))
 
   def isTeamOnly: Boolean = accessRole match {
     case Some(TEAM) if access.contains(Access.INVITE) => true
@@ -157,14 +157,14 @@ object ConversationData {
     val ConvType         = int[ConversationType]('conv_type, _.id, ConversationType(_))(_.convType)
     val Team             = opt(id[TeamId]('team))(_.team)
     val IsManaged        = opt(bool('is_managed))(_.isManaged)
-    val LastEventTime    = timestamp('last_event_time)(_.lastEventTime)
+    val LastEventTime    = remoteTimestamp('last_event_time)(_.lastEventTime)
     val IsActive         = bool('is_active)(_.isActive)
-    val LastRead         = timestamp('last_read)(_.lastRead)
+    val LastRead         = remoteTimestamp('last_read)(_.lastRead)
     val Muted            = bool('muted)(_.muted)
-    val MutedTime        = timestamp('mute_time)(_.muteTime)
+    val MutedTime        = remoteTimestamp('mute_time)(_.muteTime)
     val Archived         = bool('archived)(_.archived)
-    val ArchivedTime     = timestamp('archive_time)(_.archiveTime)
-    val Cleared          = opt(timestamp('cleared))(_.cleared)
+    val ArchivedTime     = remoteTimestamp('archive_time)(_.archiveTime)
+    val Cleared          = opt(remoteTimestamp('cleared))(_.cleared)
     val GeneratedName    = text('generated_name)(_.generatedName)
     val SKey             = opt(text[SearchKey]('search_key, _.asciiRepresentation, SearchKey.unsafeRestore))(_.searchKey)
     val UnreadCount      = int('unread_count)(_.unreadCount.normal)

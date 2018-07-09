@@ -29,7 +29,7 @@ import com.waz.sync.client.UserSearchClient.UserSearchEntry
 import com.waz.utils._
 import com.waz.utils.wrappers.{DB, DBCursor}
 import org.json.JSONObject
-import org.threeten.bp.Instant
+import scala.concurrent.duration._
 
 case class UserData(id:                    UserId,
                     teamId:                Option[TeamId]        = None,
@@ -41,11 +41,11 @@ case class UserData(id:                    UserId,
                     accent:                Int                   = 0, // accent color id
                     searchKey:             SearchKey,
                     connection:            ConnectionStatus      = ConnectionStatus.Unconnected,
-                    connectionLastUpdated: Date                  = new Date(0), // server side timestamp of last connection update
+                    connectionLastUpdated: RemoteInstant         = RemoteInstant.Epoch, // server side timestamp of last connection update
                     connectionMessage:     Option[String]        = None, // incoming connection request message
                     conversation:          Option[RConvId]       = None, // remote conversation id with this contact (one-to-one)
                     relation:              Relation              = Relation.Other, //unused - remove in future migration
-                    syncTimestamp:         Option[Instant]       = None,
+                    syncTimestamp:         Option[LocalInstant]  = None,
                     displayName:           String                = "",
                     verified:              Verification          = Verification.UNKNOWN, // user is verified if he has any otr client, and all his clients are verified
                     deleted:               Boolean               = false,
@@ -53,7 +53,7 @@ case class UserData(id:                    UserId,
                     handle:                Option[Handle]        = None,
                     providerId:            Option[ProviderId]    = None,
                     integrationId:         Option[IntegrationId] = None,
-                    expiresAt:             Option[Instant]       = None) {
+                    expiresAt:             Option[RemoteInstant] = None) {
 
   def isConnected = ConnectionStatus.isConnected(connection)
   def hasEmailOrPhone = email.isDefined || phone.isDefined
@@ -94,8 +94,8 @@ case class UserData(id:                    UserId,
 
   def updated(teamId: Option[TeamId]): UserData = copy(teamId = teamId)
 
-  def updateConnectionStatus(status: UserData.ConnectionStatus, time: Option[Date] = None, message: Option[String] = None): UserData = {
-    if (time.exists(_.before(this.connectionLastUpdated))) this
+  def updateConnectionStatus(status: UserData.ConnectionStatus, time: Option[RemoteInstant] = None, message: Option[String] = None): UserData = {
+    if (time.exists(_.isBefore(this.connectionLastUpdated))) this
     else if (this.connection == status) time.fold(this) { time => this.copy(connectionLastUpdated = time) }
     else {
       val relation = (this.relation, status) match {
@@ -107,7 +107,7 @@ case class UserData(id:                    UserId,
       this.copy(
         connection = status,
         relation = relation,
-        connectionLastUpdated = time.getOrElse(new Date(this.connectionLastUpdated.getTime + 1)),
+        connectionLastUpdated = time.getOrElse(this.connectionLastUpdated + 1.millis),
         connectionMessage = message.orElse(this.connectionMessage))
     }
   }
@@ -168,12 +168,12 @@ object UserData {
     override def apply(implicit js: JSONObject): UserData = UserData(
       id = 'id, teamId = decodeOptTeamId('teamId), name = 'name, email = decodeOptEmailAddress('email), phone = decodeOptPhoneNumber('phone),
       trackingId = decodeOptId[TrackingId]('trackingId), picture = decodeOptAssetId('assetId), accent = decodeInt('accent), searchKey = SearchKey('name),
-      connection = ConnectionStatus('connection), connectionLastUpdated = new Date(decodeLong('connectionLastUpdated)), connectionMessage = decodeOptString('connectionMessage),
+      connection = ConnectionStatus('connection), connectionLastUpdated = RemoteInstant.ofEpochMilli(decodeLong('connectionLastUpdated)), connectionMessage = decodeOptString('connectionMessage),
       conversation = decodeOptRConvId('rconvId), relation = Relation.withId('relation),
-      syncTimestamp = decodeOptInstant('syncTimestamp), 'displayName, Verification.valueOf('verified), deleted = 'deleted,
+      syncTimestamp = decodeOptLocalInstant('syncTimestamp), 'displayName, Verification.valueOf('verified), deleted = 'deleted,
       availability = Availability(decodeInt('activityStatus)), handle = decodeOptHandle('handle),
       providerId = decodeOptId[ProviderId]('providerId), integrationId = decodeOptId[IntegrationId]('integrationId),
-      expiresAt = decodeOptISOInstant('expires_at)
+      expiresAt = decodeOptISOInstant('expires_at).map(RemoteInstant(_))
     )
   }
 
@@ -188,7 +188,7 @@ object UserData {
       v.picture foreach (id => o.put("assetId", id.str))
       o.put("accent", v.accent)
       o.put("connection", v.connection.code)
-      o.put("connectionLastUpdated", v.connectionLastUpdated.getTime)
+      o.put("connectionLastUpdated", v.connectionLastUpdated.toEpochMilli)
       v.connectionMessage foreach (o.put("connectionMessage", _))
       v.conversation foreach (id => o.put("rconvId", id.str))
       o.put("relation", v.relation.id)
@@ -215,11 +215,11 @@ object UserData {
     val Accent = int('accent)(_.accent)
     val SKey = text[SearchKey]('skey, _.asciiRepresentation, SearchKey.unsafeRestore)(_.searchKey)
     val Conn = text[ConnectionStatus]('connection, _.code, ConnectionStatus(_))(_.connection)
-    val ConnTime = date('conn_timestamp)(_.connectionLastUpdated)
+    val ConnTime = date('conn_timestamp)(_.connectionLastUpdated.javaDate) //TODO: Migrate instead?
     val ConnMessage = opt(text('conn_msg))(_.connectionMessage)
     val Conversation = opt(id[RConvId]('conversation))(_.conversation)
     val Rel = text[Relation]('relation, _.name, Relation.valueOf)(_.relation)
-    val Timestamp = opt(timestamp('timestamp))(_.syncTimestamp)
+    val Timestamp = opt(localTimestamp('timestamp))(_.syncTimestamp)
     val DisplayName = text('display_name)(_.displayName)
     val Verified = text[Verification]('verified, _.name, Verification.valueOf)(_.verified)
     val Deleted = bool('deleted)(_.deleted)
@@ -227,7 +227,7 @@ object UserData {
     val Handle = opt(handle('handle))(_.handle)
     val ProviderId = opt(id[ProviderId]('provider_id))(_.providerId)
     val IntegrationId = opt(id[IntegrationId]('integration_id))(_.integrationId)
-    val ExpiresAt = opt(timestamp('expires_at))(_.expiresAt)
+    val ExpiresAt = opt(remoteTimestamp('expires_at))(_.expiresAt)
 
     override val idCol = Id
     override val table = Table(
@@ -236,7 +236,7 @@ object UserData {
     )
 
     override def apply(implicit cursor: DBCursor): UserData = new UserData(
-      Id, TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn, ConnTime, ConnMessage,
+      Id, TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn, RemoteInstant.ofEpochMilli(ConnTime.getTime), ConnMessage,
       Conversation, Rel, Timestamp, DisplayName, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId, ExpiresAt
     )
 

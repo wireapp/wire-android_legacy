@@ -17,8 +17,6 @@
  */
 package com.waz.sync.client
 
-import java.util.Date
-
 import android.util.Base64
 import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
@@ -26,7 +24,10 @@ import com.waz.api.{OtrClientType, Verification}
 import com.waz.model.AccountData.Password
 import com.waz.model.UserId
 import com.waz.model.otr._
+import com.waz.service.BackendConfig
 import com.waz.sync.client.OtrClient.{ClientKey, MessageResponse}
+import com.waz.model.otr._
+import com.waz.model.{RemoteInstant, UserId}
 import com.waz.sync.otr.OtrMessage
 import com.waz.utils._
 import com.waz.znet2.AuthRequestInterceptor
@@ -317,10 +318,10 @@ object OtrClient {
     case class Failure(mismatch: ClientMismatch) extends MessageResponse
   }
 
-  case class ClientMismatch(redundant: Map[UserId, Seq[ClientId]], missing: Map[UserId, Seq[ClientId]], deleted: Map[UserId, Seq[ClientId]], time: Date)
+  case class ClientMismatch(redundant: Map[UserId, Seq[ClientId]], missing: Map[UserId, Seq[ClientId]], deleted: Map[UserId, Seq[ClientId]], time: RemoteInstant)
 
   object ClientMismatch {
-    def apply(time: Date) = new ClientMismatch(Map.empty, Map.empty, Map.empty, time)
+    def apply(time: RemoteInstant) = new ClientMismatch(Map.empty, Map.empty, Map.empty, time)
 
     implicit lazy val Decoder: JsonDecoder[ClientMismatch] = new JsonDecoder[ClientMismatch] {
       import JsonDecoder._
@@ -338,7 +339,11 @@ object OtrClient {
 
       }
 
-      override def apply(implicit js: JSONObject): ClientMismatch = ClientMismatch(decodeMap('redundant), decodeMap('missing), decodeMap('deleted), decodeOptUtcDate('time).getOrElse(new Date))
+      override def apply(implicit js: JSONObject): ClientMismatch =
+        ClientMismatch(decodeMap('redundant),
+          decodeMap('missing),
+          decodeMap('deleted),
+          decodeOptUtcDate('time).map(t => RemoteInstant.ofEpochMilli(t.getTime)).getOrElse(RemoteInstant.Epoch))
     }
   }
 

@@ -55,11 +55,11 @@ case class MessageData(id:            MessageId              = MessageId(),
                        email:         Option[String]         = None,
                        name:          Option[String]         = None,
                        state:         MessageState           = Message.Status.SENT,
-                       time:          Instant                = now(clock),
-                       localTime:     Instant                = MessageData.UnknownInstant,
-                       editTime:      Instant                = MessageData.UnknownInstant,
+                       time:          RemoteInstant          = RemoteInstant(now(clock)), //TODO: now is local...
+                       localTime:     LocalInstant           = LocalInstant.Epoch,
+                       editTime:      RemoteInstant          = RemoteInstant.Epoch,
                        ephemeral:     Option[FiniteDuration] = None,
-                       expiryTime:    Option[Instant]        = None, // local expiration time
+                       expiryTime:    Option[LocalInstant]   = None, // local expiration time
                        expired:       Boolean                = false,
                        duration:      Option[FiniteDuration] = None //for successful calls and message_timer changes
                       ) {
@@ -224,7 +224,7 @@ object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData
   }
 }
 
-object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[MessageContent], Seq[GenericMessage], Boolean, Set[UserId], Option[UserId], Option[String], Option[String], Message.Status, Instant, Instant, Instant, Option[FiniteDuration], Option[Instant], Boolean, Option[FiniteDuration]) => MessageData) {
+object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[MessageContent], Seq[GenericMessage], Boolean, Set[UserId], Option[UserId], Option[String], Option[String], Message.Status, RemoteInstant, LocalInstant, RemoteInstant, Option[FiniteDuration], Option[LocalInstant], Boolean, Option[FiniteDuration]) => MessageData) {
   val Empty = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""))
   val Deleted = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""), state = Message.Status.DELETED)
   val UnknownInstant = Instant.EPOCH
@@ -281,11 +281,11 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     val Email = opt(text('email))(_.email)
     val Name = opt(text('name))(_.name)
     val State = text[MessageState]('msg_state, _.name, Message.Status.valueOf)(_.state)
-    val Time = timestamp('time)(_.time)
-    val LocalTime = timestamp('local_time)(_.localTime)
-    val EditTime = timestamp('edit_time)(_.editTime)
+    val Time = remoteTimestamp('time)(_.time)
+    val LocalTime = localTimestamp('local_time)(_.localTime)
+    val EditTime = remoteTimestamp('edit_time)(_.editTime)
     val Ephemeral = opt(finiteDuration('ephemeral))(_.ephemeral)
-    val ExpiryTime = opt(timestamp('expiry_time))(_.expiryTime)
+    val ExpiryTime = opt(localTimestamp('expiry_time))(_.expiryTime)
     val Expired = bool('expired)(_.expired)
     val Duration = opt(finiteDuration('duration))(_.duration)
 
@@ -303,7 +303,7 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
 
     def deleteForConv(id: ConvId)(implicit db: DB) = delete(Conv, id)
 
-    def deleteUpTo(id: ConvId, upTo: Instant)(implicit db: DB) = db.delete(table.name, s"${Conv.name} = '${id.str}' AND ${Time.name} <= ${Time(upTo)}", null)
+    def deleteUpTo(id: ConvId, upTo: RemoteInstant)(implicit db: DB) = db.delete(table.name, s"${Conv.name} = '${id.str}' AND ${Time.name} <= ${Time(upTo)}", null)
 
     def first(conv: ConvId)(implicit db: DB) = single(db.query(table.name, null, s"${Conv.name} = '$conv'", null, null, null, s"${Time.name} ASC", "1"))
 
@@ -333,25 +333,26 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     def countMessages(convId: ConvId, p: MessageEntry => Boolean)(implicit db: DB): Int =
       iteratingWithReader(MessageEntryReader)(db.query(table.name, MessageEntryColumns, s"${Conv.name} = ?", Array(convId.toString), null, null, null)).acquire(_ count p)
 
-    def countNewer(convId: ConvId, time: Instant)(implicit db: DB) =
+    def countNewer(convId: ConvId, time: RemoteInstant)(implicit db: DB) =
       queryNumEntries(db, table.name, s"${Conv.name} = '${convId.str}' AND ${Time.name} > ${time.toEpochMilli}")
 
     def countFailed(convId: ConvId)(implicit db: DB) = queryNumEntries(db, table.name, s"${Conv.name} = '${convId.str}' AND ${State.name} = '${Message.Status.FAILED}'")
 
     def listLocalMessages(convId: ConvId)(implicit db: DB) = list(db.query(table.name, null, s"${Conv.name} = '$convId' AND ${State.name} in ('${Message.Status.DEFAULT}', '${Message.Status.PENDING}', '${Message.Status.FAILED}')", null, null, null, s"${Time.name} ASC"))
 
-    def findLocalFrom(convId: ConvId, time: Instant)(implicit db: DB) =
+    //TODO: use local instant?
+    def findLocalFrom(convId: ConvId, time: RemoteInstant)(implicit db: DB) =
       iterating(db.query(table.name, null, s"${Conv.name} = '$convId' AND ${State.name} in ('${Message.Status.DEFAULT}', '${Message.Status.PENDING}', '${Message.Status.FAILED}') AND ${Time.name} >= ${time.toEpochMilli}", null, null, null, s"${Time.name} ASC"))
 
-    def findLatestUpTo(convId: ConvId, time: Instant)(implicit db: DB) =
+    def findLatestUpTo(convId: ConvId, time: RemoteInstant)(implicit db: DB) =
       single(db.query(table.name, null, s"${Conv.name} = '$convId' AND ${Time.name} < ${time.toEpochMilli}", null, null, null, s"${Time.name} DESC", "1"))
 
     def findMessages(conv: ConvId)(implicit db: DB) = db.query(table.name, null, s"${Conv.name} = '$conv'", null, null, null, s"${Time.name} ASC")
 
-    def findMessagesFrom(conv: ConvId, time: Instant)(implicit db: DB) =
+    def findMessagesFrom(conv: ConvId, time: RemoteInstant)(implicit db: DB) =
       iterating(db.query(table.name, null, s"${Conv.name} = '$conv' and ${Time.name} >= ${time.toEpochMilli}", null, null, null, s"${Time.name} ASC"))
 
-    def findExpired(time: Instant = now(clock))(implicit db: DB) =
+    def findExpired(time: LocalInstant = LocalInstant.Now)(implicit db: DB) =
       iterating(db.query(table.name, null, s"${ExpiryTime.name} IS NOT NULL and ${ExpiryTime.name} <= ${time.toEpochMilli}", null, null, null, s"${ExpiryTime.name} ASC"))
 
     def findExpiring()(implicit db: DB) =
@@ -360,16 +361,16 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     def findEphemeral(conv: ConvId)(implicit db: DB) =
       iterating(db.query(table.name, null, s"${Conv.name} = '${conv.str}' and ${Ephemeral.name} IS NOT NULL and ${ExpiryTime.name} IS NULL", null, null, null, s"${Time.name} ASC"))
 
-    def findSystemMessage(conv: ConvId, serverTime: Instant, tpe: Message.Type, sender: UserId)(implicit db: DB) =
+    def findSystemMessage(conv: ConvId, serverTime: RemoteInstant, tpe: Message.Type, sender: UserId)(implicit db: DB) =
       iterating(db.query(table.name, null, s"${Conv.name} = '${conv.str}' and ${Time.name} = ${Time(serverTime)} and ${Type.name} = '${Type(tpe)}' and ${User.name} = '${User(sender)}'", null, null, null, s"${Time.name} DESC"))
 
     private val IndexColumns = Array(Id.name, Time.name)
     def msgIndexCursor(conv: ConvId)(implicit db: DB) = db.query(table.name, IndexColumns, s"${Conv.name} = '$conv'", null, null, null, s"${Time.name} ASC")
 
-    def countAtLeastAsOld(conv: ConvId, time: Instant)(implicit db: DB) =
+    def countAtLeastAsOld(conv: ConvId, time: RemoteInstant)(implicit db: DB) =
       queryNumEntries(db, table.name, s"""${Conv.name} = '${Conv(conv)}' AND ${Time.name} <= ${Time(time)}""")
 
-    def countLaterThan(conv: ConvId, time: Instant)(implicit db: DB) =
+    def countLaterThan(conv: ConvId, time: RemoteInstant)(implicit db: DB) =
       queryNumEntries(db, table.name, s"""${Conv.name} = '${Conv(conv)}' AND ${Time.name} > ${Time(time)}""")
 
     def countSentByType(selfUserId: UserId, tpe: Message.Type)(implicit db: DB) = queryNumEntries(db, table.name, s"${User.name} = '${User(selfUserId)}' AND ${Type.name} = '${Type(tpe)}'")

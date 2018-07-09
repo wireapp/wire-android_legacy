@@ -39,6 +39,7 @@ import com.waz.utils.{RichInstant, _}
 import com.waz.zms.NotificationsAndroidService
 import com.waz.zms.NotificationsAndroidService.{checkNotificationsIntent, checkNotificationsTimeout}
 import org.threeten.bp.Instant
+import org.threeten.bp
 
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -155,9 +156,9 @@ class NotificationService(context:         Context,
   val notificationEventsStage = EventScheduler.Stage[Event]({ (c, events) =>
     add(events collect {
       case ev @ UserConnectionEvent(_, _, userId, msg, ConnectionStatus.PendingFromOther, time, name) =>
-        NotificationData(NotId(CONNECT_REQUEST, userId), msg.getOrElse(""), ConvId(userId.str), userId, CONNECT_REQUEST, time.instant, userName = name)
+        NotificationData(NotId(CONNECT_REQUEST, userId), msg.getOrElse(""), ConvId(userId.str), userId, CONNECT_REQUEST, time, userName = name)
       case ev @ UserConnectionEvent(_, _, userId, _, ConnectionStatus.Accepted, time, name) =>
-        NotificationData(NotId(CONNECT_ACCEPTED, userId), "", ConvId(userId.str), userId, CONNECT_ACCEPTED, time = time.instant, userName = name)
+        NotificationData(NotId(CONNECT_ACCEPTED, userId), "", ConvId(userId.str), userId, CONNECT_ACCEPTED, time = time, userName = name)
       case ContactJoinEvent(userId, _) =>
         verbose("ContactJoinEvent")
         NotificationData(NotId(CONTACT_JOIN, userId), "", ConvId(userId.str), userId, CONTACT_JOIN)
@@ -170,7 +171,7 @@ class NotificationService(context:         Context,
     * we don't want to show notifications for muted conversations.
     */
   private val lastReadMap = {
-    def convLastRead(c: ConversationData) = if (c.muted) Instant.MAX else c.lastRead
+    def convLastRead(c: ConversationData) = if (c.muted) RemoteInstant.Max else c.lastRead
 
     val timeUpdates = EventStream.union(
       convs.onAdded,
@@ -179,7 +180,7 @@ class NotificationService(context:         Context,
 
     def loadAll() = convs.getAllConvs.map(_.map(c => c.id -> convLastRead(c)).toMap)
 
-    def update(times: Map[ConvId, Instant], updates: Seq[ConversationData]) =
+    def update(times: Map[ConvId, RemoteInstant], updates: Seq[ConversationData]) =
       times ++ updates.map(c => c.id -> convLastRead(c))(breakOut)
 
     new AggregatingSignal(timeUpdates, loadAll(), update)
@@ -187,14 +188,14 @@ class NotificationService(context:         Context,
 
   lastReadMap.throttle(ClearThrottling) { lrMap =>
     removeNotifications { n =>
-      val lastRead = lrMap.getOrElse(n.conv, Instant.EPOCH)
+      val lastRead = lrMap.getOrElse(n.conv, RemoteInstant.Epoch)
       val removeIf = !lastRead.isBefore(n.time)
       verbose(s"Removing notif(${n.id}) if lastRead: $lastRead is not before n.time: ${n.time}?: $removeIf")
       removeIf
     }
   }
 
-  messages.onAdded { msgs => add(msgs.flatMap(notification)) }
+  messages.onAdded { msgs => add(msgs.flatMap(m => notification(m, pushService.beDrift.currentValue.getOrElse(Duration.Zero)))) }
 
   messages.onUpdated { updates =>
     // add notification when message sending fails
@@ -209,7 +210,7 @@ class NotificationService(context:         Context,
     val updatedAssets = updates collect {
       case (prev, msg) if msg.state == Message.Status.SENT && msg.msgType == Message.Type.ANY_ASSET => msg
     }
-    if (updatedAssets.nonEmpty) add(updatedAssets.flatMap(notification))
+    if (updatedAssets.nonEmpty) add(updatedAssets.flatMap(m => notification(m, pushService.beDrift.currentValue.getOrElse(Duration.Zero))))
   }
 
   messages.onDeleted { ids =>
@@ -323,7 +324,7 @@ object NotificationService {
 
   case class NotificationInfo(id: NotId,
                               tpe: NotificationType,
-                              time: Instant,
+                              time: RemoteInstant,
                               message: String,
                               convId: ConvId,
                               convName: Option[String] = None,
@@ -356,9 +357,9 @@ object NotificationService {
     }
   }
 
-  def notification(msg: MessageData): Option[NotificationData] = {
-    mapMessageType(msg.msgType, msg.protos, msg.members, msg.userId).map {
-      tp => NotificationData(NotId(msg.id), if (msg.isEphemeral) "" else msg.contentString, msg.convId, msg.userId, tp, if (msg.time == Instant.EPOCH) msg.localTime else msg.time, ephemeral = msg.isEphemeral, mentions = msg.mentions.keys.toSeq)
+  def notification(msg: MessageData, drift: bp.Duration = Duration.Zero): Option[NotificationData] = {
+    mapMessageType(msg.msgType, msg.protos, msg.members, msg.userId).map { tp =>
+      NotificationData(NotId(msg.id), if (msg.isEphemeral) "" else msg.contentString, msg.convId, msg.userId, tp, if (msg.time == RemoteInstant.Epoch) msg.localTime.toRemote(drift) else msg.time, ephemeral = msg.isEphemeral, mentions = msg.mentions.keys.toSeq)
     }
   }
 }

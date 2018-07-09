@@ -29,7 +29,6 @@ import com.waz.model.{Availability, _}
 import com.waz.service._
 import com.waz.sync.queue.ConvLock
 import com.waz.threading.Threading
-import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -58,7 +57,7 @@ trait SyncServiceHandle {
   def postSelfName(name: String): Future[SyncId]
   def postSelfAccentColor(color: AccentColor): Future[SyncId]
   def postAvailability(status: Availability): Future[SyncId]
-  def postMessage(id: MessageId, conv: ConvId, editTime: Instant): Future[SyncId]
+  def postMessage(id: MessageId, conv: ConvId, editTime: RemoteInstant): Future[SyncId]
   def postDeleted(conv: ConvId, msg: MessageId): Future[SyncId]
   def postRecalled(conv: ConvId, currentMsgId: MessageId, recalledMsgId: MessageId): Future[SyncId]
   def postAssetStatus(id: MessageId, conv: ConvId, exp: Option[FiniteDuration], status: AssetStatus.Syncable): Future[SyncId]
@@ -70,11 +69,11 @@ trait SyncServiceHandle {
   def postConversationMemberLeave(id: ConvId, member: UserId): Future[SyncId]
   def postConversationState(id: ConvId, state: ConversationState): Future[SyncId]
   def postConversation(id: ConvId, users: Set[UserId], name: Option[String], team: Option[TeamId], access: Set[Access], accessRole: AccessRole): Future[SyncId]
-  def postLastRead(id: ConvId, time: Instant): Future[SyncId]
-  def postCleared(id: ConvId, time: Instant): Future[SyncId]
+  def postLastRead(id: ConvId, time: RemoteInstant): Future[SyncId]
+  def postCleared(id: ConvId, time: RemoteInstant): Future[SyncId]
   def postAddressBook(ab: AddressBook): Future[SyncId]
   def postTypingState(id: ConvId, typing: Boolean): Future[SyncId]
-  def postOpenGraphData(conv: ConvId, msg: MessageId, editTime: Instant): Future[SyncId]
+  def postOpenGraphData(conv: ConvId, msg: MessageId, editTime: RemoteInstant): Future[SyncId]
   def postReceipt(conv: ConvId, message: MessageId, user: UserId, tpe: ReceiptType): Future[SyncId]
 
   def registerPush(token: PushToken): Future[SyncId]
@@ -141,7 +140,7 @@ class AndroidSyncServiceHandle(service: SyncRequestService, timeouts: Timeouts, 
   def postSelfName(name: String) = addRequest(PostSelfName(name))
   def postSelfAccentColor(color: AccentColor) = addRequest(PostSelfAccentColor(color))
   def postAvailability(status: Availability) = addRequest(PostAvailability(status))
-  def postMessage(id: MessageId, conv: ConvId, time: Instant) = addRequest(PostMessage(conv, id, time), timeout = System.currentTimeMillis() + timeouts.messages.sendingTimeout.toMillis, forceRetry = true)
+  def postMessage(id: MessageId, conv: ConvId, time: RemoteInstant) = addRequest(PostMessage(conv, id, time), timeout = System.currentTimeMillis() + timeouts.messages.sendingTimeout.toMillis, forceRetry = true)
   def postDeleted(conv: ConvId, msg: MessageId) = addRequest(PostDeleted(conv, msg))
   def postRecalled(conv: ConvId, msg: MessageId, recalled: MessageId) = addRequest(PostRecalled(conv, msg, recalled))
   def postAssetStatus(id: MessageId, conv: ConvId, exp: Option[FiniteDuration], status: AssetStatus.Syncable) = addRequest(PostAssetStatus(conv, id, exp, status))
@@ -155,9 +154,9 @@ class AndroidSyncServiceHandle(service: SyncRequestService, timeouts: Timeouts, 
   def postConversationMemberLeave(id: ConvId, member: UserId) = addRequest(PostConvLeave(id, member))
   def postConversation(id: ConvId, users: Set[UserId], name: Option[String], team: Option[TeamId], access: Set[Access], accessRole: AccessRole) = addRequest(PostConv(id, users, name, team, access, accessRole))
   def postLiking(id: ConvId, liking: Liking): Future[SyncId] = addRequest(PostLiking(id, liking))
-  def postLastRead(id: ConvId, time: Instant) = addRequest(PostLastRead(id, time), priority = Priority.Low, delay = timeouts.messages.lastReadPostDelay)
-  def postCleared(id: ConvId, time: Instant) = addRequest(PostCleared(id, time))
-  def postOpenGraphData(conv: ConvId, msg: MessageId, time: Instant) = addRequest(PostOpenGraphMeta(conv, msg, time), priority = Priority.Low)
+  def postLastRead(id: ConvId, time: RemoteInstant) = addRequest(PostLastRead(id, time), priority = Priority.Low, delay = timeouts.messages.lastReadPostDelay)
+  def postCleared(id: ConvId, time: RemoteInstant) = addRequest(PostCleared(id, time))
+  def postOpenGraphData(conv: ConvId, msg: MessageId, time: RemoteInstant) = addRequest(PostOpenGraphMeta(conv, msg, time), priority = Priority.Low)
   def postReceipt(conv: ConvId, message: MessageId, user: UserId, tpe: ReceiptType): Future[SyncId] = addRequest(PostReceipt(conv, message, user, tpe), priority = Priority.Optional)
   def postAddBot(cId: ConvId, pId: ProviderId, iId: IntegrationId) = addRequest(PostAddBot(cId, pId, iId))
   def postRemoveBot(cId: ConvId, botId: UserId) = addRequest(PostRemoveBot(cId, botId))
