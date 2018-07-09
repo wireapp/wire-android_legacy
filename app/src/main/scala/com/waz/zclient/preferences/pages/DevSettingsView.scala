@@ -81,7 +81,7 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int) ext
   }
 
   val createFullConversationSwitch = returning(findById[SwitchPreference](R.id.preferences_dev_full_conv)) { v =>
-    v.setPreference(ShouldCreateFullConversation)
+    v.setPreference(ShouldCreateFullConversation, global = true)
   }
 
   private def registerClient(v: View, password: Option[Password] = None): Future[Unit] = {

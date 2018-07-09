@@ -19,6 +19,7 @@ package com.waz.zclient.conversation.creation
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
+import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences.ShouldCreateFullConversation
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.ZMessaging
@@ -78,7 +79,7 @@ class CreateConversationController(implicit inj: Injector, ev: EventContext) ext
       z                   <- zms.head
       name                <- name.head
       userIds             <- users.head
-      shouldFullConv      <- z.userPrefs.preference(ShouldCreateFullConversation).apply()
+      shouldFullConv      <- inject[GlobalPreferences].preference(ShouldCreateFullConversation).apply()
       _ = verbose(s"creating conv with ${userIds.size} users and shouldFullConv == $shouldFullConv")
       userIds             <-
         if (userIds.isEmpty && shouldFullConv) {
