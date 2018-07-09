@@ -36,8 +36,8 @@ class OpenGraphClientImpl(implicit httpClient: HttpClient) extends OpenGraphClie
   import OpenGraphClient._
   import com.waz.znet2.http.HttpClient.dsl._
 
-  private implicit val OpenGraphDataDeserializer: RawBodyDeserializer[OpenGraphData] =
-    RawBodyDeserializer[String].map(bodyStr => OpenGraphDataResponse.unapply(StringResponse(bodyStr)).get)
+  private implicit val OpenGraphDataDeserializer: RawBodyDeserializer[Option[OpenGraphData]] =
+    RawBodyDeserializer[String].map(bodyStr => OpenGraphDataResponse.unapply(StringResponse(bodyStr)))
 
   override def loadMetadata(uri: URI): ErrorOrResponse[Option[OpenGraphData]] = {
     Request.create(method = Method.Get, url = new URL(uri.toString), headers = Headers("User-Agent" -> DesktopUserAgent))
@@ -93,7 +93,6 @@ object OpenGraphClient {
     val AcceptedTypes = BaseTypes ++ KnownSpecificTypes // will ignore other types for now
 
     def unapply(body: StringResponse): Option[OpenGraphData] = {
-
       def htmlTitle = TitlePattern.findFirstMatchIn(body.value).map(_.group(1))
 
       val ogMeta = MetaTag.findAllIn(body.value) .flatMap { meta =>
