@@ -33,12 +33,13 @@ object HttpClient {
     val isCompleted: Boolean = total.forall(_ == progress)
   }
 
-  sealed trait HttpClientError                                       extends Throwable
-  case class EncodingError(err: Throwable)                           extends HttpClientError
-  case class DecodingError(err: Throwable, response: Response[Body]) extends HttpClientError
-  case class ConnectionError(err: Throwable)                         extends HttpClientError
-  case class ErrorResponse(response: Response[Body])                 extends HttpClientError
-  case class UnknownError(err: Throwable)                            extends HttpClientError
+  case class ErrorResponse(response: Response[Body]) extends Throwable
+
+  sealed trait HttpClientError                                            extends Throwable
+  case class EncodingError(err: Throwable)                                extends HttpClientError
+  case class DecodingError(err: Throwable, response: Response[EmptyBody]) extends HttpClientError
+  case class ConnectionError(err: Throwable)                              extends HttpClientError
+  case class UnknownError(err: Throwable)                                 extends HttpClientError
 
   trait CustomErrorConstructor[E] {
     def constructFrom(error: HttpClientError): E
@@ -171,7 +172,8 @@ trait HttpClient {
     CancellableFuture(rd.deserialize(response)).recoverWith {
       case err =>
         error("Error while deserializing response.", err)
-        CancellableFuture.failed(DecodingError(err, response))
+        //we already have tried to deserialize response body, so it may be broken.
+        CancellableFuture.failed(DecodingError(err, response.copy(body = EmptyBodyImpl)))
     }
 
   def result[T: RequestSerializer, R: ResponseDeserializer](

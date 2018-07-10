@@ -65,19 +65,15 @@ object ErrorResponse {
     }
   }
 
-  //TODO Add proper construction function
   implicit val errorResponseConstructor: CustomErrorConstructor[ErrorResponse] =
     new CustomErrorConstructor[ErrorResponse] {
       override def constructFrom(error: HttpClient.HttpClientError): ErrorResponse = error match {
         case HttpClient.EncodingError(err) =>
           ErrorResponse.InternalError.copy(message = s"Encoding error: $err")
         case HttpClient.DecodingError(err, response) =>
-          val bodyStr = BodyDeserializer[String].deserialize(response.body)
-          ErrorResponse.InternalError.copy(message = s"Decoding body error: $err \nBody string: $bodyStr")
+          ErrorResponse(response.code, label = "Decoding error", message = s"Decoding body error: $err")
         case HttpClient.ConnectionError(err) =>
           ErrorResponse(ErrorResponse.ConnectionErrorCode, message = s"connection error: $err", label = "")
-        case HttpClient.ErrorResponse(response) =>
-          ErrorResponse(response.code, message = "error response", label = "")
         case HttpClient.UnknownError(err) =>
           ErrorResponse.InternalError.copy(message = s"Unknown error: $err")
       }
