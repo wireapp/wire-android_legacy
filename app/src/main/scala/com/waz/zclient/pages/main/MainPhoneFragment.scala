@@ -119,6 +119,7 @@ class MainPhoneFragment extends FragmentHelper
             for {
               _ <- zms.userPrefs(CrashesAndAnalyticsRequestShown) := true
               _ <- zms.prefs(analyticsPrefKey) := resp //we override whatever the global value is on asking the user again
+              _ <- if (resp) zms.global.trackingService.optIn() else Future.successful(())
             } yield {}
           }
         }

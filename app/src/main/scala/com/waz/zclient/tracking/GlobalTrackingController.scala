@@ -53,17 +53,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
 
   private val superProps = Signal(new JSONObject())
 
-  //Create mixpanel object and set persistant super property values
-  private val mixpanelGuard = returning(new MixpanelGuard(cxt)) { g =>
-    g.open()
-    g.withApi { m =>
-      m.registerSuperPropertiesMap(Map(
-        "app"     -> "android",
-        "$city"   -> null.asInstanceOf[AnyRef],
-        "$region" -> null.asInstanceOf[AnyRef]
-      ).asJava)
-    }
-  }
+  private val mixpanelGuard = new MixpanelGuard(cxt)
 
   //For automation tests
   def getId = mixpanelGuard.withApi(_.getDistinctId).getOrElse("")
@@ -76,9 +66,13 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
 
   inject[UiLifeCycle].uiActive.onChanged {
     case false =>
-      mixpanelGuard.withApi { m =>
-        verbose("flushing mixpanel events")
-        m.flush()
+      trackingEnabled.map {
+        case true =>
+          mixpanelGuard.withApi { m =>
+            verbose("flushing mixpanel events")
+            m.flush()
+          }
+        case _ =>
       }
     case _ =>
   }
@@ -145,6 +139,11 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
           mixpanelGuard.withApi { m =>
             verbose("Opted in to analytics, re-registering")
             m.unregisterSuperProperty(MixpanelIgnoreProperty)
+            m.registerSuperPropertiesMap(Map(
+              "app"     -> "android",
+              "$city"   -> null.asInstanceOf[AnyRef],
+              "$region" -> null.asInstanceOf[AnyRef]
+            ).asJava)
           }
           send(zms, event).map { _ => mixpanelGuard.flush() }
         case OptOutEvent =>
