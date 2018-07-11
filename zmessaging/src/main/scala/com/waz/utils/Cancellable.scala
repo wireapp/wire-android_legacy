@@ -40,7 +40,10 @@ object Cancellable {
   } .flatten
 
   def cancel(key: Any*)(implicit tag: LogTag) = Future {
-    tasks.remove(key).foreach(_.cancel())
+    tasks.remove(key).foreach { task =>
+      verbose(s"canceling task: $task")
+      task.cancel()
+    }
   }
 }
 
@@ -64,6 +67,9 @@ object AssetProcessing {
   }.flatten
 
   def cancel(key: ProcessingTaskKey)(implicit tag: LogTag) = Future {
-    tasks.remove(key).foreach(_.cancel())
+    tasks.remove(key).foreach { task =>
+      verbose(s"canceling asset processing task: $task")
+      task.cancel()
+    }
   }
 }

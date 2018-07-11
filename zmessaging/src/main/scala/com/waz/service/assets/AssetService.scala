@@ -22,7 +22,7 @@ import java.io._
 import java.util.concurrent.atomic.AtomicReference
 
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-import android.content.Context
+import android.content.{ContentResolver, Context}
 import android.os.Environment
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
@@ -150,8 +150,7 @@ class AssetServiceImpl(storage:         AssetsStorage,
 
   def markUploadFailed(id: AssetId, status: AssetStatus.Syncable) =
     storage.updateAsset(id, { a => if (a.status > UploadInProgress) a else a.copy(status = status) }) flatMap {
-      case Some(updated) =>
-        storage.onUploadFailed ! updated
+      case Some(_) =>
         messages.get(MessageId(id.str)) flatMap {
           case Some(m) => sync.postAssetStatus(m.id, m.convId, m.ephemeral, status)
           case None =>
@@ -211,8 +210,13 @@ class AssetServiceImpl(storage:         AssetsStorage,
 
   def removeSource(id: AssetId): Future[Unit] = storage.get(id)
     .collect { case Some(asset) if asset.isVideo || asset.isAudio => asset.source }
-    .collect { case Some(source) => new File(source.getPath) }
+    .collect { case Some(source) if shouldDelete(source) => new File(source.getPath) }
     .collect { case file if file.exists() => file.delete() }
+
+  private def shouldDelete(uri: URI) = uri.getScheme match {
+    case ContentResolver.SCHEME_FILE | ContentResolver.SCHEME_ANDROID_RESOURCE => false
+    case _ => true
+  }
 
   def addAsset(a: AssetForUpload, conv: RConvId): Future[AssetData] = {
     val uri = a match {
