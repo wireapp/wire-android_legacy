@@ -23,11 +23,9 @@ import android.view.View
 import android.view.View.OnClickListener
 import android.widget.FrameLayout
 import com.waz.utils.events.EventStream
-import com.waz.zclient.conversationlist.views.ConversationBadge._
-import com.waz.zclient.conversationlist.views.ConversationBadge.Status
+import com.waz.zclient.conversationlist.views.ConversationBadge.{Status, _}
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{R, ViewHelper}
 
 object ConversationBadge {
@@ -49,8 +47,8 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
 
   inflate(R.layout.conv_badge)
 
-  val textView = ViewUtils.getView(this, R.id.status_pill_text).asInstanceOf[TypefaceTextView]
-  val glyphView = ViewUtils.getView(this, R.id.status_pill_glyph).asInstanceOf[GlyphTextView]
+  val textView = findById[TypefaceTextView](R.id.status_pill_text)
+  val glyphView = findById[GlyphTextView](R.id.status_pill_glyph)
 
   val onClickEvent = EventStream[Status]()
 

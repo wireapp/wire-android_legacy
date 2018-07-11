@@ -20,25 +20,22 @@ package com.waz.zclient.messages.parts
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
-import android.view.ViewGroup.MarginLayoutParams
-import android.widget.{GridLayout, LinearLayout}
+import android.widget.LinearLayout
+import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.Message
-import com.waz.model.{MessageContent, UserId}
+import com.waz.model.MessageContent
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
-import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.utils.returning
-import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.messages._
 import com.waz.zclient.paintcode.ConversationIcon
+import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.utils.RichView
+import com.waz.zclient.{R, ViewHelper}
 
 class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -50,11 +47,11 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) ex
 
   inflate(R.layout.message_member_change_content)
 
-  val zMessaging = inject[Signal[ZMessaging]]
-  val users      = inject[UsersController]
+  private lazy val zMessaging = inject[Signal[ZMessaging]]
+  private lazy val users      = inject[UsersController]
+  private lazy val participantsController = inject[ParticipantsController]
 
   val messageView: SystemMessageView  = findById(R.id.smv_header)
-  val gridView: MembersGridView       = findById(R.id.people_changed_grid)
   val position = Signal[Int]()
 
   val iconGlyph: Signal[Either[Int, Drawable]] = message map { msg =>
@@ -72,35 +69,48 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) ex
 
   }
 
-  val memberNames = users.memberDisplayNames(message, boldNames = true)
-
   val senderName = message.map(_.userId).flatMap(users.displayName)
 
-  val linkText = for {
+  private val linkText = for {
     zms         <- zMessaging
     msg         <- message
     displayName <- senderName
-    members     <- memberNames
+    names <- users.getMemberNamesSplit(msg.members, zms.selfUserId)
+    namesListString = users.membersNamesString(names.main, separateLast = names.others.isEmpty && !names.andYou, boldNames = true)
   } yield {
     import Message.Type._
     val me = zms.selfUserId
     val userId = msg.userId
+    val shorten = names.others.nonEmpty
+    val othersCount = names.others.size
 
     (msg.msgType, displayName, msg.members.toSeq) match {
-      case (MEMBER_JOIN, Me|Other(_), _)         if msg.firstMessage && msg.name.isDefined => getString(R.string.content__system__with_participant, members)
-      case (MEMBER_JOIN, Me, _)                  if msg.firstMessage                       => getString(R.string.content__system__you_started_participant, "", members)
-      case (MEMBER_JOIN, Other(name), Seq(`me`)) if msg.firstMessage                       => getString(R.string.content__system__other_started_you, name)
-      case (MEMBER_JOIN, Other(name), _)         if msg.firstMessage                       => getString(R.string.content__system__other_started_participant, name, members)
+        //Create Conv
+      case (MEMBER_JOIN, Me, _)       if msg.firstMessage && msg.name.isDefined && shorten => getQuantityString(R.plurals.content__system__with_others_only, othersCount, namesListString, othersCount.toString)
+      case (MEMBER_JOIN, Me, _)       if msg.firstMessage && msg.name.isDefined            => getString(R.string.content__system__with_list_only, namesListString)
+      case (MEMBER_JOIN, Other(_), Seq(`me`)) if msg.firstMessage && msg.name.isDefined    => getString(R.string.content__system__with_you_only)
+      case (MEMBER_JOIN, Other(_), _) if msg.firstMessage && msg.name.isDefined && shorten => getQuantityString(R.plurals.content__system__with_others_and_you, othersCount, namesListString, othersCount.toString)
+      case (MEMBER_JOIN, Other(_), _) if msg.firstMessage && msg.name.isDefined            => getString(R.string.content__system__with_list_and_you, namesListString)
+
+      //Add
       case (MEMBER_JOIN, Me, Seq(`me`)) if userId == me                                    => getString(R.string.content__system__you_joined).toUpperCase
-      case (MEMBER_JOIN, Me, _)                                                            => getString(R.string.content__system__you_added_participant, "", members).toUpperCase
-      case (MEMBER_JOIN, Other(name), Seq(`me`))                                           => getString(R.string.content__system__other_added_you, name).toUpperCase
-      case (MEMBER_JOIN, Other(name), Seq(`userId`))                                       => getString(R.string.content__system__other_joined, name).toUpperCase
-      case (MEMBER_JOIN, Other(name), _)                                                   => getString(R.string.content__system__other_added_participant, name, members).toUpperCase
-      case (MEMBER_LEAVE, Me, Seq(`me`))                                                   => getString(R.string.content__system__you_left).toUpperCase
-      case (MEMBER_LEAVE, Me, _)                                                           => getString(R.string.content__system__you_removed_other, "", members).toUpperCase
-      case (MEMBER_LEAVE, Other(name), Seq(`me`))                                          => getString(R.string.content__system__other_removed_you, name).toUpperCase
-      case (MEMBER_LEAVE, Other(name), Seq(`userId`))                                      => getString(R.string.content__system__other_left, name).toUpperCase
-      case (MEMBER_LEAVE, Other(name), _)                                                  => getString(R.string.content__system__other_removed_other, name, members).toUpperCase
+      case (MEMBER_JOIN, Me, _) if shorten                                                 => getQuantityString(R.plurals.content__system__you_added_people_with_others, othersCount, namesListString, othersCount.toString)
+      case (MEMBER_JOIN, Me, _)                                                            => getString(R.string.content__system__you_added_people, namesListString)
+      case (MEMBER_JOIN, Other(name), Seq(`me`))                                           => getString(R.string.content__system__someone_added_you, name)
+      case (MEMBER_JOIN, Other(name), _) if shorten && msg.members.contains(me)            => getQuantityString(R.plurals.content__system__someone_added_people_and_you_with_others, othersCount, name, namesListString, othersCount.toString)
+      case (MEMBER_JOIN, Other(name), _) if shorten                                        => getQuantityString(R.plurals.content__system__someone_added_people_with_others, othersCount, name, namesListString, othersCount.toString)
+      case (MEMBER_JOIN, Other(name), _)                                                   => getString(R.string.content__system__someone_added_people, name, namesListString)
+
+        //Remove
+      case (MEMBER_LEAVE, Me, Seq(`me`))                                                   => getString(R.string.content__system__you_left)
+      case (MEMBER_LEAVE, Me, _)                                                           => getString(R.string.content__system__you_removed_other, namesListString)
+      case (MEMBER_LEAVE, Other(name), Seq(`me`))                                          => getString(R.string.content__system__other_removed_you, name)
+      case (MEMBER_LEAVE, Other(name), Seq(`userId`))                                      => getString(R.string.content__system__other_left, name)
+      case (MEMBER_LEAVE, Other(name), _)                                                  => getString(R.string.content__system__other_removed_other, name, namesListString)
+
+      case _ =>
+        ZLog.verbose(s"Unexpected system message format: (${msg.msgType} from $displayName with ${msg.members.toSeq})")
+        ""
     }
   }
 
@@ -113,64 +123,10 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) ex
     case Right(d) => messageView.setIcon(d)
   }
 
-  linkText.on(Threading.Ui) { messageView.setText }
-
-  message.map(_.members.toSeq.sortBy(_.str)) { gridView.users ! _ }
-
-}
-
-class MembersGridView(context: Context, attrs: AttributeSet, style: Int) extends GridLayout(context, attrs, style) with ViewHelper {
-  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
-  def this(context: Context) = this(context, null, 0)
-
-  val cache = inject[MessageViewFactory]
-  val chatHeadResId = R.layout.message_member_chathead
-
-  val users = Signal[Seq[UserId]]()
-
-  val columnSpacing = getDimenPx(R.dimen.wire__padding__small)
-  val columnWidth = getDimenPx(R.dimen.content__separator__chathead__size)
-
-  val columns = Signal[Int]() //once set, we expect this won't change, even across recycling
-
-  (for {
-    cols <- columns
-    ids <- users
-  } yield (ids, cols)).on(Threading.Ui) {
-    case (ids, cols) =>
-      val rows = math.ceil(ids.size.toFloat / cols.toFloat).toInt
-      verbose(s"Cols or Users changed: users: ${ids.length}, cols: $cols, rows: $rows")
-
-      //recycle and remove all the views - there might be more than the current number of users
-      (0 until getChildCount).map(getChildAt).foreach(cache.recycle(_, chatHeadResId))
-      removeAllViews()
-
-      setColumnCount(cols)
-      setRowCount(rows)
-
-      ids.foreach { id =>
-        returning(cache.get[ChatheadView](chatHeadResId, this)) { v =>
-
-          /**
-            * We need to reset the GridLayout#LayoutParams, as the GridLayout assigns each view a specific row x column
-            * coordinate. If the number of rows/columns shrinks, then any view with coordinates that lie outside the
-            * new bounds will cause the view to crash. However, we need to maintain the size and margin info specified
-            * in the xml, which should always be instances of MarginLayoutParams, and this does the trick!
-            */
-          addView(v, new GridLayout.LayoutParams(v.getLayoutParams.asInstanceOf[MarginLayoutParams]))
-          v.setUserId(id)
-        }
-      }
+  linkText.onUi { text =>
+    messageView.setTextWithLink(text, getColor(R.color.accent_blue)) {
+      participantsController.onShowParticipants ! None
+    }
   }
 
-
-  override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {
-    super.onLayout(changed, left, top, right, bottom)
-
-    val width = getMeasuredWidth + columnSpacing
-    val itemWidth = columnWidth + columnSpacing
-
-    val res = math.max(1, width / itemWidth)
-    columns ! res
-  }
 }

@@ -26,7 +26,7 @@ import com.waz.service.ZMessaging
 import com.waz.service.tracking.TrackingService
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.zclient.messages.UsersController.DisplayName
+import com.waz.zclient.messages.UsersController._
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.tracking.AvailabilityChanged
 import com.waz.zclient.utils.ContextUtils._
@@ -39,8 +39,9 @@ class UsersController(implicit injector: Injector, context: Context) extends Inj
   private val zMessaging = inject[Signal[ZMessaging]]
   private val tracking   = inject[TrackingService]
 
-  lazy val itemSeparator = getString(R.string.content__system__item_separator)
-  lazy val lastSeparator = getString(R.string.content__system__last_item_separator)
+  private lazy val itemSeparator = getString(R.string.content__system__item_separator)
+  private lazy val lastSeparator = getString(R.string.content__system__last_item_separator)
+  private def otherMembersText(count: Int) = getQuantityString(R.plurals.content__system__other_members, count, count.toString)
 
   lazy val selfUserId = zMessaging map { _.selfUserId }
 
@@ -95,23 +96,26 @@ class UsersController(implicit injector: Injector, context: Context) extends Inj
     } yield msg.members.size == 1 && msg.members.contains(zms.selfUserId)
   }
 
-  def memberDisplayNames(message: Signal[MessageData], boldNames: Boolean = false) =
+  def getMemberNames(members: Set[UserId]): Signal[Seq[DisplayName]] = Signal.sequence(members.toSeq.sortBy(_.str).map(displayName): _*)
+
+  def getMemberNamesSplit(members: Set[UserId], self: UserId): Signal[MemberNamesSplit] =
     for {
-      zms <- zMessaging
-      msg <- message
-      names <- Signal.sequence(msg.members.toSeq.sortBy(_.str).map(displayName): _*)
-        .map(_.map {
-          case Me          => getString(R.string.content__system__you)
-          case Other(name) => name
-        }.map(name => if (boldNames) s"[[$name]]" else name))
-    } yield
-      names match {
-        case Seq() => ""
-        case Seq(name) => name
-        case _ =>
-          val n = names.length
-          s"${names.take(n - 1).mkString(itemSeparator + " ")} $lastSeparator ${names.last}"
-      }
+      names <- getMemberNames(members).map(_.collect { case o @ Other(_) => o })
+      shorten = names.size > MaxStringMembers
+      main = if (shorten) names.take(MaxStringMembers - 2) else names
+      others = names.diff(main)
+    } yield MemberNamesSplit(main, others, members.contains(self))
+
+  def membersNamesString(membersNames: Seq[DisplayName], separateLast: Boolean = true, boldNames: Boolean = false): String = {
+    val strings = membersNames.map {
+      case Other(name) => if (boldNames) s"[[$name]]" else name
+      case Me => if (boldNames) s"[[${getString(R.string.content__system__you)}]]" else getString(R.string.content__system__you)
+    }
+    if (separateLast && strings.size > 1)
+      s"${strings.take(strings.size - 1).mkString(itemSeparator + " ")} $lastSeparator ${strings.last}"
+    else
+      strings.mkString(itemSeparator + " ")
+  }
 
   def userHandle(id: UserId): Signal[Option[Handle]] = user(id).map(_.handle)
 
@@ -139,6 +143,11 @@ class UsersController(implicit injector: Injector, context: Context) extends Inj
 }
 
 object UsersController {
+  val MaxStringMembers: Int = 17
+
+  case class MemberNamesSplit(main: Seq[Other], others: Seq[Other], andYou: Boolean) {
+    val shorten: Boolean = others.nonEmpty
+  }
 
   sealed trait DisplayName
   object DisplayName {

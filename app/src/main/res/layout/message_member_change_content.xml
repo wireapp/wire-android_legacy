@@ -32,12 +32,4 @@
         android:orientation="horizontal"
         android:layout_marginBottom="@dimen/wire__padding__small" />
 
-    <com.waz.zclient.messages.parts.MembersGridView
-        android:id="@+id/people_changed_grid"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/content__padding_left"
-        android:layout_marginEnd="@dimen/wire__padding__32"
-        />
-
 </merge>

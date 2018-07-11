@@ -194,28 +194,56 @@
     <string name="conversation_quick_menu__conversation_button__group_label">CREATE GROUP</string>
 
     <!-- Conversation: System messages -->
-    <string name="content__system__you_started_conversation">You started the conversation</string>
-    <string name="content__system__other_started_conversation">%1$s started the conversation</string>
-    <string name="content__system__with_participant">with %1$s</string>
-    <string name="content__system__you_started_participant">[[You]] started a conversation with %2$s</string>
-    <string name="content__system__other_started_you">[[%1$s]] started a conversation with you</string>
-    <string name="content__system__other_started_participant">[[%1$s]] started a conversation with %2$s</string>
-    <string name="content__system__other_added_participant">[[%1$s]] added %2$s</string>
-    <string name="content__system__other_added_you">[[%1$s]] added you</string>
-    <string name="content__system__you_added_participant">[[You]] added %2$s</string>
     <string name="content__system__other_joined">[[%1$s]] joined</string>
-    <string name="content__system__other_left">[[%1$s]] left</string>
     <string name="content__system__you_joined">[[You]] joined</string>
-    <string name="content__system__you_left">[[You]] left</string>
-    <string name="content__system__other_removed_other">[[%1$s]] removed %2$s</string>
-    <string name="content__system__other_removed_you">[[%1$s]] removed you</string>
-    <string name="content__system__you_removed_other">[[You]] removed %2$s</string>
     <string name="content__system__other_renamed_conv">[[%1$s]] renamed the conversation</string>
     <string name="content__system__you_renamed_conv">[[You]] renamed the conversation</string>
     <string name="content__system__message_deleted">This message has been removed</string>
     <string name="content_system_message_timestamp_failure">Unsent message.</string>
     <string name="content_system_message_timestamp_pending">Sending\u2026</string>
     <string name="content_system_message_timestamp_deleted">Deleted on %1$s</string>
+
+    <!-- Add people -->
+    <string name="content__system__someone_added_people">[[%1$s]] added %2$s to the conversation</string>
+    <plurals name="content__system__someone_added_people_with_others">
+        <item quantity="one">[[%1$s]] added %2$s and _%3$s other to the conversation_</item>
+        <item quantity="other">[[%1$s]] added %2$s and _%3$s others to the conversation_</item>
+    </plurals>
+    <string name="content__system__someone_added_you">[[%1$s]] added you to the conversation</string>
+    <string name="content__system__someone_added_people_and_you">[[%1$s]] added %2$s and you to the conversation</string>
+    <plurals name="content__system__someone_added_people_and_you_with_others">
+        <item quantity="one">[[%1$s]] added %2$s, you and _%3$s other to the conversation_</item>
+        <item quantity="other">[[%1$s]] added %2$s, you and _%3$s others to the conversation_</item>
+    </plurals>
+    <string name="content__system__you_added_people">You added %1$s to the conversation</string>
+    <plurals name="content__system__you_added_people_with_others">
+        <item quantity="one">You added %1$s and _%2$s other to the conversation_</item>
+        <item quantity="other">You added %1$s and _%2$s others to the conversation_</item>
+    </plurals>
+
+    <!-- Remove people -->
+    <string name="content__system__other_removed_other">[[%1$s]] removed %2$s</string>
+    <string name="content__system__other_removed_you">[[%1$s]] removed you</string>
+    <string name="content__system__you_removed_other">You removed %1$s</string>
+    <string name="content__system__you_left">[[You]] left</string>
+    <string name="content__system__other_left">[[%1$s]] left</string>
+
+    <!-- Create conversation -->
+    <string name="content__system__you_started_conversation">You started the conversation</string>
+    <string name="content__system__other_started_conversation">%1$s started the conversation</string>
+    <string name="content__system__you_started_one">[[You]] started a conversation with %2$s</string>
+    <string name="content__system__other_started_one">[[%1$s]] started a conversation with you</string>
+    <string name="content__system__with_you_only">with you</string>
+    <string name="content__system__with_list_only">with %1$s</string>
+    <plurals name="content__system__with_others_only">
+        <item quantity="one">with %1$s and _%2$s other_</item>
+        <item quantity="other">with %1$s and _%2$s others_</item>
+    </plurals>
+    <string name="content__system__with_list_and_you">with %1$s and you</string>
+    <plurals name="content__system__with_others_and_you">
+        <item quantity="one">with %1$s, you and _%2$s other_</item>
+        <item quantity="other">with %1$s, you and _%2$s others_</item>
+    </plurals>
 
     <!-- Conversation: missed call -->
     <string name="content__missed_call__you_called">[[YOU]] CALLED</string>
@@ -231,7 +259,12 @@
     <string name="content__otr__message_error_you">A MESSAGE FROM YOU WAS NOT RECEIVED. _WHY?_</string>
     <string name="content__otr__identity_changed_error">[[%1$s]]\'S DEVICE IDENTITY CHANGED. UNDELIVERED MESSAGE. _LEARN MORE_</string>
     <string name="content__otr__identity_changed_error_you">YOUR DEVICE IDENTITY CHANGED. UNDELIVERED MESSAGE. _LEARN MORE_</string>
-    <string name="content__otr__added_new_device__message">[[%1$s]] STARTED USING A _NEW DEVICE_</string>
+
+    <string name="content__otr__someone_added_new_device__message">%1$s started using a _new device_</string>
+    <string name="content__otr__someone_and_you_added_new_device__message">%1$s and you started using a _new device_</string>
+    <string name="content__otr__someone_and_others_added_new_device__message">%1$s and %2$s others started using a _new device_</string>
+    <string name="content__otr__someone_others_and_you_added_new_device__message">%1$s, %2$s others and you started using a _new device_</string>
+
     <string name="content__otr__start_this_device__message">[[YOU]] STARTED USING _THIS DEVICE_</string>
     <string name="content__otr__all_fingerprints_verified">ALL FINGERPRINTS ARE VERIFIED</string>
     <string name="content__otr__lost_history">YOU HAVEN\'T USED THIS DEVICE FOR A WHILE. SOME MESSAGES MAY NOT APPEAR HERE.</string>
@@ -767,6 +800,10 @@
     <string name="content__system__item_separator">,</string>
     <string name="content__system__last_item_separator">and</string>
     <string name="content__system__you">you</string>
+    <plurals name="content__system__other_members">
+        <item quantity="one">%1$s other</item>
+        <item quantity="other">%1$s others</item>
+    </plurals>
 
     <!-- System notifications -->
     <string name="system_notification__group_call_title">%1$s in %2$s</string>
