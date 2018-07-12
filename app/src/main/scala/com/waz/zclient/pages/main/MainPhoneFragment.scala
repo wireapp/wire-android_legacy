@@ -82,6 +82,39 @@ class MainPhoneFragment extends FragmentHelper
     accentColorController.accentColor.onUi(color => vh.foreach(_.setButtonColor(color.getColor)))
   }
 
+  lazy val consentDialogFuture = for {
+    true <- inject[GlobalModule].prefs(GlobalPreferences.ShowMarketingConsentDialog).apply()
+    am   <- am.head
+    analyticsShown <- am.userPrefs(CrashesAndAnalyticsRequestShown).apply()
+    _ <- if (analyticsShown) Future.successful({}) else
+      showConfirmationDialog(
+        getString(R.string.crashes_and_analytics_request_title),
+        getString(R.string.crashes_and_analytics_request_body),
+        R.string.app_entry_dialog_accept,
+        R.string.app_entry_dialog_not_now
+      ).flatMap { resp =>
+        zms.head.flatMap { zms =>
+          for {
+            _ <- zms.userPrefs(CrashesAndAnalyticsRequestShown) := true
+            _ <- zms.prefs(analyticsPrefKey) := resp //we override whatever the global value is on asking the user again
+            _ <- if (resp) zms.global.trackingService.optIn() else Future.successful(())
+          } yield {}
+        }
+      }
+    askMarketingConsentAgain <- am.userPrefs(UserPreferences.AskMarketingConsentAgain).apply()
+    _ <- if (!askMarketingConsentAgain) Future.successful({}) else
+      showConfirmationDialogWithNeutralButton(
+        R.string.receive_news_and_offers_request_title,
+        R.string.receive_news_and_offers_request_body,
+        R.string.app_entry_dialog_privacy_policy,
+        R.string.app_entry_dialog_accept,
+        R.string.app_entry_dialog_not_now
+      ).map { confirmed =>
+        am.setMarketingConsent(confirmed)
+        if (confirmed.isEmpty) inject[BrowserController].openUrl(getString(R.string.url_privacy_policy))
+      }
+  } yield {}
+
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
     if (savedInstanceState == null)
       getChildFragmentManager
@@ -104,38 +137,7 @@ class MainPhoneFragment extends FragmentHelper
     confirmationController.addConfirmationObserver(this)
     collectionController.addObserver(this)
 
-    for {
-      true <- inject[GlobalModule].prefs(GlobalPreferences.ShowMarketingConsentDialog).apply()
-      am   <- am.head
-      analyticsShown <- am.userPrefs(CrashesAndAnalyticsRequestShown).apply()
-      _ <- if (analyticsShown) Future.successful({}) else
-        showConfirmationDialog(
-          getString(R.string.crashes_and_analytics_request_title),
-          getString(R.string.crashes_and_analytics_request_body),
-          R.string.app_entry_dialog_accept,
-          R.string.app_entry_dialog_not_now
-        ).flatMap { resp =>
-          zms.head.flatMap { zms =>
-            for {
-              _ <- zms.userPrefs(CrashesAndAnalyticsRequestShown) := true
-              _ <- zms.prefs(analyticsPrefKey) := resp //we override whatever the global value is on asking the user again
-              _ <- if (resp) zms.global.trackingService.optIn() else Future.successful(())
-            } yield {}
-          }
-        }
-      askMarketingConsentAgain <- am.userPrefs(UserPreferences.AskMarketingConsentAgain).apply()
-      _ <- if (!askMarketingConsentAgain) Future.successful({}) else
-        showConfirmationDialogWithNeutralButton(
-          R.string.receive_news_and_offers_request_title,
-          R.string.receive_news_and_offers_request_body,
-          R.string.app_entry_dialog_privacy_policy,
-          R.string.app_entry_dialog_accept,
-          R.string.app_entry_dialog_not_now
-        ).map { confirmed =>
-          am.setMarketingConsent(confirmed)
-          if (confirmed.isEmpty) inject[BrowserController].openUrl(getString(R.string.url_privacy_policy))
-        }
-    } yield {}
+    consentDialogFuture
   }
 
   override def onStop(): Unit = {
