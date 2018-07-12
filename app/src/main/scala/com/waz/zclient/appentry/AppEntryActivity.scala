@@ -28,6 +28,7 @@ import com.waz.ZLog._
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.service.AccountManager.ClientRegistrationState
 import com.waz.service.{AccountsService, ZMessaging}
+import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.SpinnerController.{Hide, Show}
@@ -150,15 +151,11 @@ class AppEntryActivity extends BaseActivity {
   override protected def onResume(): Unit = {
     super.onResume()
 
-    val trackingEnabled: Boolean = injectJava(classOf[PreferencesController]).isAnalyticsEnabled
-    if (trackingEnabled) {
-      //TODO move to new preferences
-      CrashController.checkForCrashes(getApplicationContext, getControllerFactory.getUserPreferencesController.getDeviceId)
-    }
-    else {
-      CrashController.deleteCrashReports(getApplicationContext)
-      NativeCrashManager.deleteDumpFiles(getApplicationContext)
-    }
+    //TODO move to new preferences
+    injectJava(classOf[PreferencesController]).analyticsEnabled.head.foreach {
+      case true => CrashController.checkForCrashes(getApplicationContext, getControllerFactory.getUserPreferencesController.getDeviceId)
+      case false => NativeCrashManager.deleteDumpFiles(getApplicationContext)
+    } (Threading.Ui)
   }
 
   override def onAttachFragment(fragment: Fragment): Unit = {

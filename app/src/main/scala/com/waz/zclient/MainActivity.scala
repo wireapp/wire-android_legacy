@@ -110,8 +110,10 @@ class MainActivity extends BaseActivity
       fragmentTransaction.commit
     } else getControllerFactory.getNavigationController.onActivityCreated(savedInstanceState)
 
-    if (BuildConfigUtils.isHockeyUpdateEnabled && !BuildConfigUtils.isLocalBuild(this))
-      CrashController.checkForUpdates(this)
+    inject[PreferencesController].analyticsEnabled.head.foreach { enabled =>
+      if (enabled && BuildConfigUtils.isHockeyUpdateEnabled && !BuildConfigUtils.isLocalBuild(this))
+        CrashController.checkForUpdates(this)
+    }
 
     accentColorController.accentColor.map(_.getColor) { color =>
       getControllerFactory.getUserPreferencesController.setLastAccentColor(color)
@@ -184,12 +186,10 @@ class MainActivity extends BaseActivity
 
     Option(ZMessaging.currentGlobal).foreach(_.googleApi.checkGooglePlayServicesAvailable(this))
 
-    if (inject[PreferencesController].isAnalyticsEnabled)
-      CrashController.checkForCrashes(getApplicationContext, getControllerFactory.getUserPreferencesController.getDeviceId)
-    else {
-      CrashController.deleteCrashReports(getApplicationContext)
-      NativeCrashManager.deleteDumpFiles(getApplicationContext)
-    }
+    inject[PreferencesController].analyticsEnabled.head.foreach {
+      case true => CrashController.checkForCrashes(getApplicationContext, getControllerFactory.getUserPreferencesController.getDeviceId)
+      case false => NativeCrashManager.deleteDumpFiles(getApplicationContext)
+    } (Threading.Ui)
   }
 
   def startFirstFragment(): Unit = {
