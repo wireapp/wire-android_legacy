@@ -20,6 +20,7 @@ package com.waz.zclient.participants.fragments
 import android.content.Context
 import android.os.Bundle
 import android.support.annotation.Nullable
+import android.support.v4.app.Fragment
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.ZLog.ImplicitTag._
@@ -37,10 +38,12 @@ import com.waz.zclient.integrations.IntegrationDetailsFragment
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
 import com.waz.zclient.participants.ConversationOptionsMenuController.Mode
-import com.waz.zclient.participants.{ConversationOptionsMenuController, OptionsMenu, ParticipantsController}
+import com.waz.zclient.participants.{ConversationOptionsMenuController, OptionsMenu, ParticipantsController, UserRequester}
+import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.DefaultPageTransitionAnimation
 import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
+import com.waz.api.User.ConnectionStatus._
 
 import scala.concurrent.Future
 
@@ -65,6 +68,7 @@ class ParticipantFragment extends ManagerFragment
   private lazy val screenController       = inject[IConversationScreenController]
   private lazy val singleImageController  = inject[ISingleImageController]
   private lazy val userAccountsController = inject[UserAccountsController]
+  private lazy val convScreenController   = inject[IConversationScreenController]
 
   private lazy val headerFragment = ParticipantHeaderFragment.newInstance
 
@@ -110,6 +114,11 @@ class ParticipantFragment extends ManagerFragment
 
     bodyContainer
     participantsContainerView
+
+    participantsController.onShowUser {
+      case Some(userId) => showUser(userId)
+      case _ =>
+    }
   }
 
   override def onStart(): Unit = {
@@ -201,6 +210,48 @@ class ParticipantFragment extends ManagerFragment
       )
       .addToBackStack(IntegrationDetailsFragment.Tag)
       .commit
+  }
+
+  private def showUser(userId: UserId): Unit = {
+    verbose(s"onShowUser($userId)")
+    convScreenController.showUser(userId)
+    participantsController.selectParticipant(userId)
+
+    def openUserProfileFragment(fragment: Fragment, tag: String) = {
+      getChildFragmentManager.beginTransaction
+        .setCustomAnimations(
+          R.anim.fragment_animation_second_page_slide_in_from_right,
+          R.anim.fragment_animation_second_page_slide_out_to_left,
+          R.anim.fragment_animation_second_page_slide_in_from_left,
+          R.anim.fragment_animation_second_page_slide_out_to_right)
+        .replace(R.id.fl__participant__container, fragment, tag)
+        .addToBackStack(tag)
+        .commit
+    }
+
+    KeyboardUtils.hideKeyboard(getActivity)
+
+    for {
+      userOpt      <- participantsController.getUser(userId)
+      isTeamMember <- userAccountsController.isTeamMember(userId).head
+    } userOpt match {
+      case Some(user) if user.connection == ACCEPTED || user.expiresAt.isDefined || isTeamMember =>
+        participantsController.selectParticipant(userId)
+        openUserProfileFragment(SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
+
+      case Some(user) if user.connection == PENDING_FROM_OTHER || user.connection == PENDING_FROM_USER || user.connection == IGNORED =>
+        import com.waz.zclient.connect.PendingConnectRequestFragment._
+        openUserProfileFragment(newInstance(userId, UserRequester.PARTICIPANTS), Tag)
+
+      case Some(user) if user.connection == BLOCKED =>
+        import BlockedUserProfileFragment._
+        openUserProfileFragment(newInstance(userId.str, UserRequester.PARTICIPANTS), Tag)
+
+      case Some(user) if user.connection == CANCELLED || user.connection == UNCONNECTED =>
+        import com.waz.zclient.connect.SendConnectRequestFragment._
+        openUserProfileFragment(newInstance(userId.str, UserRequester.PARTICIPANTS), Tag)
+      case _ =>
+    }
   }
 
   override def onHideUser(): Unit = if (screenController.isShowingUser) {

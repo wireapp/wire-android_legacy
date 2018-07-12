@@ -25,9 +25,7 @@ import android.support.v4.app.Fragment
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.api.NetworkMode
-import com.waz.api.User.ConnectionStatus._
 import com.waz.model.{UserData, UserId}
 import com.waz.service.NetworkModeService
 import com.waz.threading.Threading
@@ -37,11 +35,8 @@ import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.{AddParticipantsFragment, CreateConversationController}
 import com.waz.zclient.integrations.IntegrationDetailsController
-import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
-import com.waz.zclient.participants.{ParticipantsAdapter, ParticipantsController, UserRequester}
-import com.waz.zclient.ui.utils.KeyboardUtils
-import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.participants.{ParticipantsAdapter, ParticipantsController}
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.zclient.{FragmentHelper, R}
@@ -82,7 +77,7 @@ class GroupParticipantsFragment extends FragmentHelper {
     shouldEnableAddPeople.onUi(e => fm.foreach(_.setLeftActionEnabled(e)))
   }
 
-  private lazy val participantsAdapter = returning(new ParticipantsAdapter(getInt(R.integer.participant_column__count))) { adapter =>
+  private lazy val participantsAdapter = returning(new ParticipantsAdapter(Some(7))) { adapter =>
     new FutureEventStream[UserId, Option[UserData]](adapter.onClick, participantsController.getUser).onUi {
       case Some(user) => (user.providerId, user.integrationId) match {
         case (Some(pId), Some(iId)) =>
@@ -95,7 +90,7 @@ class GroupParticipantsFragment extends FragmentHelper {
             }
 
           }
-        case _ => showUser(user.id)
+        case _ => participantsController.onShowUser ! Some(user.id)
       }
       case _ =>
     }
@@ -118,47 +113,9 @@ class GroupParticipantsFragment extends FragmentHelper {
     adapter.onEphemeralOptionsClick.onUi { _ =>
       slideFragmentInFromRight(new EphemeralOptionsFragment(), EphemeralOptionsFragment.Tag)
     }
-  }
 
-  private def showUser(userId: UserId): Unit = {
-    verbose(s"onShowUser($userId)")
-    convScreenController.showUser(userId)
-    participantsController.selectParticipant(userId)
-
-    def openUserProfileFragment(fragment: Fragment, tag: String) = {
-      getFragmentManager.beginTransaction
-        .setCustomAnimations(
-          R.anim.fragment_animation_second_page_slide_in_from_right,
-          R.anim.fragment_animation_second_page_slide_out_to_left,
-          R.anim.fragment_animation_second_page_slide_in_from_left,
-          R.anim.fragment_animation_second_page_slide_out_to_right)
-        .replace(R.id.fl__participant__container, fragment, tag)
-        .addToBackStack(tag)
-        .commit
-    }
-
-    KeyboardUtils.hideKeyboard(getActivity)
-
-    for {
-      userOpt      <- participantsController.getUser(userId)
-      isTeamMember <- userAccountsController.isTeamMember(userId).head
-    } userOpt match {
-      case Some(user) if user.connection == ACCEPTED || user.expiresAt.isDefined || isTeamMember =>
-        participantsController.selectParticipant(userId)
-        openUserProfileFragment(SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
-
-      case Some(user) if user.connection == PENDING_FROM_OTHER || user.connection == PENDING_FROM_USER || user.connection == IGNORED =>
-        import com.waz.zclient.connect.PendingConnectRequestFragment._
-        openUserProfileFragment(newInstance(userId, UserRequester.PARTICIPANTS), Tag)
-
-      case Some(user) if user.connection == BLOCKED =>
-        import BlockedUserProfileFragment._
-        openUserProfileFragment(newInstance(userId.str, UserRequester.PARTICIPANTS), Tag)
-
-      case Some(user) if user.connection == CANCELLED || user.connection == UNCONNECTED =>
-        import com.waz.zclient.connect.SendConnectRequestFragment._
-        openUserProfileFragment(newInstance(userId.str, UserRequester.PARTICIPANTS), Tag)
-      case _ =>
+    adapter.onShowAllParticipantsClick.onUi { _ =>
+      slideFragmentInFromRight(new AllGroupParticipantsFragment(), AllGroupParticipantsFragment.Tag)
     }
   }
 

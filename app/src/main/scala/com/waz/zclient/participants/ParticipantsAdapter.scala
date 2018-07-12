@@ -29,7 +29,7 @@ import android.widget.{ImageView, TextView}
 import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.api.Verification
 import com.waz.model._
-import com.waz.service.ZMessaging
+import com.waz.service.{SearchKey, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events._
 import com.waz.utils.returning
@@ -40,14 +40,15 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.ConversationController.getEphemeralDisplayString
 import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIconWithColor, HourGlassIcon}
 import com.waz.zclient.ui.text.TypefaceEditText.OnSelectionChangedListener
-import com.waz.zclient.ui.text.{GlyphTextView, TypefaceEditText}
+import com.waz.zclient.ui.text.{GlyphTextView, TypefaceEditText, TypefaceTextView}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.duration._
 
-class ParticipantsAdapter(numOfColumns: Int)(implicit context: Context, injector: Injector, eventContext: EventContext)
+//TODO: Good target for refactoring. The adapter and its data should be separated.
+class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: Boolean = false)(implicit context: Context, injector: Injector, eventContext: EventContext)
   extends RecyclerView.Adapter[ViewHolder] with Injectable {
   import ParticipantsAdapter._
 
@@ -61,18 +62,24 @@ class ParticipantsAdapter(numOfColumns: Int)(implicit context: Context, injector
   private var convId       = Option.empty[ConvId]
   private var convName     = Option.empty[String]
   private var convVerified = false
+  private var peopleCount  = 0
 
   private var convNameViewHolder = Option.empty[ConversationNameViewHolder]
 
   val onClick             = EventStream[UserId]()
   val onGuestOptionsClick = EventStream[Unit]()
   val onEphemeralOptionsClick = EventStream[Unit]()
+  val onShowAllParticipantsClick = EventStream[Unit]()
+  val filter = Signal("")
 
   lazy val users = for {
     z       <- zms
     userIds <- participantsController.otherParticipants.map(_.toSeq)
     users   <- Signal.sequence(userIds.filterNot(_ == z.selfUserId).map(z.usersStorage.signal): _*)
-  } yield users.map(u => ParticipantData(u, u.isGuest(z.teamId) && !u.isWireBot)).sortBy(_.userData.getDisplayName)
+    searchKey <- filter.map(SearchKey(_))
+    //TODO: this filtering logic should be extracted
+    filteredUsers = users.filter(u => searchKey.isAtTheStartOfAnyWordIn(u.searchKey) || u.handle.exists(_.startsWithQuery(searchKey.asciiRepresentation)))
+  } yield filteredUsers.map(u => ParticipantData(u, u.isGuest(z.teamId) && !u.isWireBot)).sortBy(_.userData.getDisplayName)
 
   private val shouldShowGuestButton = inject[ConversationController].currentConv.map(_.accessRole.isDefined)
 
@@ -85,19 +92,31 @@ class ParticipantsAdapter(numOfColumns: Int)(implicit context: Context, injector
   } yield {
     val (bots, people) = users.toList.partition(_.userData.isWireBot)
 
-    List(Right(ConversationName)) :::
-    (if (convActive && isTeam && guestButton) List(Right(GuestOptions))
+    peopleCount = people.size
+
+    val filteredPeople = maxParticipants.filter(_ < peopleCount).fold {
+      people
+    } { mp =>
+      people.take(mp - 2)
+    }
+
+    (if (!showPeopleOnly) List(Right(ConversationName)) else Nil) :::
+    (if (convActive && isTeam && guestButton && !showPeopleOnly) List(Right(GuestOptions))
       else Nil
       ) :::
-    (if (convActive && !areWeAGuest) List(Right(EphemeralOptions))
+    (if (convActive && !areWeAGuest && !showPeopleOnly) List(Right(EphemeralOptions))
       else Nil
         ) :::
-    (if (people.nonEmpty) List(Right(PeopleSeparator))
+    (if (people.nonEmpty && !showPeopleOnly) List(Right(PeopleSeparator))
       else Nil
-      ) ::: people.map(data => Left(data)) :::
-    (if (bots.nonEmpty) List(Right(BotsSeparator))
+      ) :::
+    filteredPeople.map(data => Left(data)) :::
+    (if (maxParticipants.exists(peopleCount > _)) List(Right(AllParticipants))
+      else Nil) :::
+    (if (bots.nonEmpty && !showPeopleOnly) List(Right(BotsSeparator))
       else Nil
-        ) ::: bots.map(data => Left(data))
+        ) :::
+     (if (showPeopleOnly) Nil else bots.map(data => Left(data)))
   }
 
   positions.onUi { list =>
@@ -146,11 +165,16 @@ class ParticipantsAdapter(numOfColumns: Int)(implicit context: Context, injector
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.list_options_button_with_value_label, parent, false)
       view.onClick(onEphemeralOptionsClick ! {})
       EphemeralOptionsButtonViewHolder(view, convController)
+    case AllParticipants =>
+      val view = LayoutInflater.from(parent.getContext).inflate(R.layout.list_options_button, parent, false)
+      view.onClick(onShowAllParticipantsClick ! {})
+      ShowAllParticipantsViewHolder(view)
     case _ => SeparatorViewHolder(getSeparatorView(parent))
   }
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = (items(position), holder) match {
-    case (Left(userData), h: ParticipantRowViewHolder)            => h.bind(userData, teamId, items.lift(position + 1).forall(_.isRight))
+    case (Right(AllParticipants), h: ShowAllParticipantsViewHolder) => h.bind(peopleCount)
+    case (Left(userData), h: ParticipantRowViewHolder)            => h.bind(userData, teamId, maxParticipants.forall(peopleCount <= _) && items.lift(position + 1).forall(_.isRight))
     case (Right(ConversationName), h: ConversationNameViewHolder) => for (id <- convId; name <- convName) h.bind(id, name, convVerified, teamId.isDefined)
     case (Right(sepType), h: SeparatorViewHolder) if Set(PeopleSeparator, BotsSeparator).contains(sepType) =>
       val count = items.count {
@@ -163,11 +187,6 @@ class ParticipantsAdapter(numOfColumns: Int)(implicit context: Context, injector
       h.setId(if (sepType == PeopleSeparator) R.id.participants_section else R.id.services_section)
 
     case _ =>
-  }
-
-  def getSpanSize(position: Int): Int = getItemViewType(position) match {
-    case PeopleSeparator | BotsSeparator => numOfColumns
-    case _                               => 1
   }
 
   override def getItemCount: Int = items.size
@@ -196,6 +215,7 @@ object ParticipantsAdapter {
   val GuestOptions     = 3
   val ConversationName = 4
   val EphemeralOptions = 5
+  val AllParticipants  = 6
 
   case class ParticipantData(userData: UserData, isGuest: Boolean)
 
@@ -304,6 +324,20 @@ object ParticipantsAdapter {
         stopEditing()
         true
       } else false
+  }
+
+  case class ShowAllParticipantsViewHolder(view: View) extends ViewHolder(view) {
+    private implicit val ctx: Context = view.getContext
+    view.findViewById[ImageView](R.id.icon).setImageDrawable(GuestIconWithColor(getStyledColor(R.attr.wirePrimaryTextColor)))
+    view.findViewById[ImageView](R.id.next_indicator).setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40))
+    view.setClickable(true)
+    view.setFocusable(true)
+    view.setMarginTop(0)
+    private lazy val nameView = view.findViewById[TypefaceTextView](R.id.name_text)
+
+    def bind(numOfParticipants: Int): Unit = {
+      nameView.setText(getString(R.string.show_all_participants, numOfParticipants.toString))
+    }
   }
 
 }
