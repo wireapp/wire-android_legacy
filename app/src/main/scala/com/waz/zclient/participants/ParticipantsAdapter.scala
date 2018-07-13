@@ -29,7 +29,7 @@ import android.widget.{ImageView, TextView}
 import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.api.Verification
 import com.waz.model._
-import com.waz.service.{SearchKey, ZMessaging}
+import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events._
 import com.waz.utils.returning
@@ -76,9 +76,8 @@ class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: B
     z       <- zms
     userIds <- participantsController.otherParticipants.map(_.toSeq)
     users   <- Signal.sequence(userIds.filterNot(_ == z.selfUserId).map(z.usersStorage.signal): _*)
-    searchKey <- filter.map(SearchKey(_))
-    //TODO: this filtering logic should be extracted
-    filteredUsers = users.filter(u => searchKey.isAtTheStartOfAnyWordIn(u.searchKey) || u.handle.exists(_.startsWithQuery(searchKey.asciiRepresentation)))
+    f       <- filter
+    filteredUsers = users.filter(_.matchesFilter(f))
   } yield filteredUsers.map(u => ParticipantData(u, u.isGuest(z.teamId) && !u.isWireBot)).sortBy(_.userData.getDisplayName)
 
   private val shouldShowGuestButton = inject[ConversationController].currentConv.map(_.accessRole.isDefined)
