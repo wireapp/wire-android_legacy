@@ -776,7 +776,7 @@
     <string name="system_notification__outgoing">Calling</string>
     <string name="system_notification__outgoing_video">Video calling</string>
     <string name="system_notification__incoming">Is calling</string>
-    <string name="system_notification__incoming_video">Is video calling</string>
+    <string name="system_notification__incoming_video">Is calling with video</string>
     <string name="system_notification__ongoing">On a call</string>
     <string name="number_of_conversations_string">ARCHIVE</string>
     <string name="system_notification__calling_one">Calling…</string>
