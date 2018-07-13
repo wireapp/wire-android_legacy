@@ -115,6 +115,15 @@ case class UserData(id:                    UserId,
   def isGuest(ourTeamId: TeamId): Boolean = isGuest(Some(ourTeamId))
 
   def isGuest(ourTeamId: Option[TeamId]): Boolean = ourTeamId.isDefined && teamId != ourTeamId
+
+  def matchesFilter(filter: String): Boolean = {
+    val isHandleSearch = Handle.isHandle(filter)
+    matchesFilter(filter, isHandleSearch)
+  }
+
+  def matchesFilter(filter: String, handleOnly: Boolean): Boolean =
+    handle.exists(_.startsWithQuery(filter)) ||
+      (!handleOnly && (SearchKey(filter).isAtTheStartOfAnyWordIn(searchKey) || email.exists(e => filter.trim.equalsIgnoreCase(e.str))))
 }
 
 object UserData {
