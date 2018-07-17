@@ -63,6 +63,7 @@ class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: B
   private var convName     = Option.empty[String]
   private var convVerified = false
   private var peopleCount  = 0
+  private var botCount     = 0
 
   private var convNameViewHolder = Option.empty[ConversationNameViewHolder]
 
@@ -92,6 +93,7 @@ class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: B
     val (bots, people) = users.toList.partition(_.userData.isWireBot)
 
     peopleCount = people.size
+    botCount = bots.size
 
     val filteredPeople = maxParticipants.filter(_ < peopleCount).fold {
       people
@@ -176,13 +178,8 @@ class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: B
     case (Left(userData), h: ParticipantRowViewHolder)            => h.bind(userData, teamId, maxParticipants.forall(peopleCount <= _) && items.lift(position + 1).forall(_.isRight))
     case (Right(ConversationName), h: ConversationNameViewHolder) => for (id <- convId; name <- convName) h.bind(id, name, convVerified, teamId.isDefined)
     case (Right(sepType), h: SeparatorViewHolder) if Set(PeopleSeparator, BotsSeparator).contains(sepType) =>
-      val count = items.count {
-        case Left(a)
-          if sepType == PeopleSeparator && !a.userData.isWireBot ||
-             sepType == BotsSeparator && a.userData.isWireBot => true
-        case _ => false
-      }.toString
-      h.setTitle(getString(if (sepType == PeopleSeparator) R.string.participants_divider_people else R.string.participants_divider_services, count))
+      val count = if (sepType == PeopleSeparator) peopleCount else botCount
+      h.setTitle(getString(if (sepType == PeopleSeparator) R.string.participants_divider_people else R.string.participants_divider_services, count.toString))
       h.setId(if (sepType == PeopleSeparator) R.id.participants_section else R.id.services_section)
 
     case _ =>

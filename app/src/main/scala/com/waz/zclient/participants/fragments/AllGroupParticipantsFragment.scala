@@ -22,6 +22,7 @@ import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.returning
+import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.views.PickableElement
 import com.waz.zclient.participants.{ParticipantsAdapter, ParticipantsController}
 import com.waz.zclient.usersearch.views.{PickerSpannableEditText, SearchEditText}
@@ -45,8 +46,9 @@ class AllGroupParticipantsFragment extends FragmentHelper {
     val recyclerView = findById[RecyclerView](R.id.recycler_view)
     recyclerView.setLayoutManager(new LinearLayoutManager(getContext))
     recyclerView.setAdapter(participantsAdapter)
-    searchBox.foreach {
-      _.setCallback(new PickerSpannableEditText.Callback{
+    searchBox.foreach { sb =>
+      sb.applyDarkTheme(inject[ThemeController].isDarkTheme)
+      sb.setCallback(new PickerSpannableEditText.Callback{
         override def onRemovedTokenSpan(element: PickableElement): Unit = {}
         override def afterTextChanged(s: String): Unit = {
           participantsAdapter.filter ! s
