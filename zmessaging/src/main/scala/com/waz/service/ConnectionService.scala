@@ -86,7 +86,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
       }
 
     val lastEvents = events.groupBy(_.to).map { case (_, es) => es.maxBy(_.lastUpdated) }
-    val fromSync: Set[UserId] = lastEvents.filter(_.localTime == Event.UnknownDateTime).map(_.to)(breakOut)
+    val fromSync: Set[UserId] = lastEvents.filter(_.localTime == LocalInstant.Epoch).map(_.to)(breakOut)
 
     verbose(s"lastEvents: $lastEvents, fromSync: $fromSync")
 

@@ -27,13 +27,11 @@ import com.waz.model.ConversationEvent.ConversationEventDecoder
 import com.waz.model.Event.EventDecoder
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.{Client, ClientId}
-import com.waz.service.ZMessaging.clock
 import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.sync.client.OtrClient
 import com.waz.utils.JsonDecoder._
 import com.waz.utils.{JsonDecoder, JsonEncoder, _}
 import org.json.{JSONException, JSONObject}
-import org.threeten.bp.Instant
 
 import scala.concurrent.duration.FiniteDuration
 import scala.util.Try
@@ -178,8 +176,6 @@ object ConversationState {
 }
 
 object Event {
-
-  val UnknownDateTime: Date = MessageData.UnknownInstant.javaDate
 
   implicit object EventDecoder extends JsonDecoder[Event] {
 

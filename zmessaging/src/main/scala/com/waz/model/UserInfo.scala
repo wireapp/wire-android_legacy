@@ -28,7 +28,6 @@ import org.json.{JSONArray, JSONObject}
 
 import scala.util.Try
 import com.waz.model.UserInfo.Service
-import org.threeten.bp.Instant
 
 case class UserInfo(id:           UserId,
                     name:         Option[String]          = None,

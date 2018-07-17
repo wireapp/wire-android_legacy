@@ -27,7 +27,6 @@ import com.waz.service.tracking.TrackingService
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
 import com.waz.utils.events.{EventStream, RefreshingSignal, Signal, SourceSignal}
-import org.threeten.bp.Instant
 
 import scala.collection.mutable
 import scala.concurrent.Future
@@ -75,7 +74,7 @@ class ConvMessagesIndex(conv: ConvId, messages: MessagesStorageImpl, selfUserId:
 
     val unreadCount = for {
       time <- sources.lastReadTime
-      _ <- Signal.wrap(RemoteInstant.Epoch, indexChanged.map(_.time)).throttle(500.millis)
+      _ <- Signal.wrap(LocalInstant.Epoch, indexChanged.map(_.time)).throttle(500.millis)
       unread <- Signal.future(messages.countUnread(conv, time))
     } yield unread
 
@@ -249,7 +248,7 @@ class ConvMessagesIndex(conv: ConvId, messages: MessagesStorageImpl, selfUserId:
 object ConvMessagesIndex {
 
   sealed trait Change {
-    val time: RemoteInstant = RemoteInstant.Epoch //TODO: epoch? it was now before...
+    val time: LocalInstant = LocalInstant.Now
     val orderChanged = true
   }
   case class Added(msgs: Seq[MessageData]) extends Change

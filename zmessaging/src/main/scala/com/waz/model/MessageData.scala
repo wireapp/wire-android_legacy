@@ -38,7 +38,6 @@ import com.waz.utils.wrappers.{DB, DBCursor, URI}
 import com.waz.utils.{EnumCodec, JsonDecoder, JsonEncoder, returning}
 import org.json.JSONObject
 import org.threeten.bp.Instant.now
-import org.threeten.bp.Instant
 
 import scala.collection.breakOut
 import scala.concurrent.duration._
@@ -227,7 +226,6 @@ object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData
 object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[MessageContent], Seq[GenericMessage], Boolean, Set[UserId], Option[UserId], Option[String], Option[String], Message.Status, RemoteInstant, LocalInstant, RemoteInstant, Option[FiniteDuration], Option[LocalInstant], Boolean, Option[FiniteDuration]) => MessageData) {
   val Empty = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""))
   val Deleted = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""), state = Message.Status.DELETED)
-  val UnknownInstant = Instant.EPOCH
   val isUserContent = Set(TEXT, TEXT_EMOJI_ONLY, ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, RICH_MEDIA, LOCATION)
 
   val EphemeralMessageTypes = Set(TEXT, TEXT_EMOJI_ONLY, KNOCK, ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, RICH_MEDIA, LOCATION)

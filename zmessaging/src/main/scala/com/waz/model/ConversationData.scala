@@ -28,7 +28,6 @@ import com.waz.service.SearchKey
 import com.waz.utils.wrappers.{DB, DBCursor}
 import com.waz.utils.{JsonDecoder, JsonEncoder, _}
 import org.json.JSONArray
-import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
 

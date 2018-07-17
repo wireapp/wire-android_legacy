@@ -20,11 +20,9 @@ package com.waz.model
 import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.db.Col._
 import com.waz.db.Dao
-import com.waz.service.ZMessaging.clock
 import com.waz.utils.wrappers.DBCursor
 import com.waz.utils.{EnumCodec, JsonDecoder, JsonEncoder}
 import org.json.JSONObject
-import org.threeten.bp.Instant
 
 case class NotificationData(id:                NotId             = NotId(),
                             msg:               String            = "",
