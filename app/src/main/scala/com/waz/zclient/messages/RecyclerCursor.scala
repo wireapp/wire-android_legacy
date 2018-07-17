@@ -94,7 +94,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, val adapter: RecyclerNot
     verbose(s"notifyFromHistory($time)")
 
     history.foreach { _.updates foreach { case (prev, current) => window.onUpdated(prev, current) } }
-    history = history.filter(_.time.isAfter(time.toRemote(ZMessaging.currentBeDrift))) // leave only updates which happened after current cursor was loaded
+    history = history.filter(_.time.isAfter(time)) // leave only updates which happened after current cursor was loaded
   }
 
   private def onUpdated(prev: MessageAndLikes, current: MessageAndLikes): Unit =
@@ -102,7 +102,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, val adapter: RecyclerNot
 
   def count: Int = cursor.currentValue.flatMap(_.map(_.size)).getOrElse(0)
 
-  def apply(position: Int): MessageAndLikes = cursor.currentValue.getOrElse(None).fold2(null, { c =>
+  def apply(position: Int): MessageAndLikes = cursor.currentValue.flatten.fold2(null, { c =>
     if (window.shouldReload(position)) {
       verbose(s"reloading window at position: $position")
       window.reload(c, position)
