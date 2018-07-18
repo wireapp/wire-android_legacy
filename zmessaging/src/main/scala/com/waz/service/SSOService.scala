@@ -17,6 +17,9 @@
  */
 package com.waz.service
 
+import java.util.UUID
+
+import scala.util.Try
 import scala.util.matching.Regex
 
 object SSOService {
@@ -31,5 +34,9 @@ class SSOService {
   import SSOService._
 
   def extractToken(string: String): Option[String] = TokenRegex.findFirstIn(string)
+
+  def isTokenValid(token: String): Boolean = TokenRegex.pattern.matcher(token).matches()
+
+  def extractUUID(token: String): Option[UUID] = Try{ UUID.fromString(token.drop(Prefix.length)) }.toOption
 
 }
