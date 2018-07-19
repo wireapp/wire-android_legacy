@@ -88,7 +88,7 @@ class AccountManager(val userId:   UserId,
 
   val cryptoBox         = global.factory.cryptobox(userId, storage)
   val auth              = global.factory.auth(userId)
-  val authRequestInterceptor: AuthRequestInterceptor = new AuthRequestInterceptor(auth)
+  val authRequestInterceptor: AuthRequestInterceptor = new AuthRequestInterceptor(auth, global.httpClient)
   val otrClient         = new OtrClientImpl()(global.urlCreator, global.httpClient, authRequestInterceptor)
   val credentialsClient = global.factory.credentialsClient(global.urlCreator, global.httpClient, authRequestInterceptor)
 

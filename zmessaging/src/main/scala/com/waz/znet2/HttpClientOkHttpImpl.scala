@@ -56,15 +56,13 @@ class HttpClientOkHttpImpl(client: OkHttpClient)(implicit protected val ec: Exec
   import HttpClient._
   import HttpClientOkHttpImpl._
 
-  protected def execute(
+  protected def executeIgnoreInterceptor(
       request: Request[Body],
       uploadCallback: Option[ProgressCallback] = None,
       downloadCallback: Option[ProgressCallback] = None
   ): CancellableFuture[Response[Body]] =
-    request.interceptor
-      .intercept(request)
-      .flatMap { authRequest =>
-        val okCall = client.newCall(convertHttpRequest(authRequest, uploadCallback))
+    CancellableFuture { client.newCall(convertHttpRequest(request, uploadCallback)) }
+      .flatMap { okCall =>
         CancellableFuture.lift(
           future = Future { okCall.execute() }
             .recoverWith {
@@ -79,7 +77,6 @@ class HttpClientOkHttpImpl(client: OkHttpClient)(implicit protected val ec: Exec
           }
         )
       }
-
 }
 
 object HttpClientOkHttpImpl {
@@ -178,7 +175,7 @@ object HttpClientOkHttpImpl {
           val dataLength = if (body.contentLength() == -1) None else Some(body.contentLength())
           http.RawBody(
             mediaType = Option(body.contentType()).map(_.toString),
-            data = callback.map(createProgressInputStream(_, data, dataLength)).getOrElse(data),
+            data = () => callback.map(createProgressInputStream(_, data, dataLength)).getOrElse(data),
             dataLength = dataLength
           )
         }
@@ -189,8 +186,8 @@ object HttpClientOkHttpImpl {
     headers.get("Content-Encoding") match {
       case None => body
       case Some(encType) if encType.equalsIgnoreCase("gzip") =>
-        val zipped = IoUtils.gzip(IoUtils.toByteArray(body.data))
-        body.copy(data = new ByteArrayInputStream(zipped), dataLength = Some(zipped.length))
+        val zipped = IoUtils.gzip(IoUtils.toByteArray(body.data()))
+        body.copy(data = () => new ByteArrayInputStream(zipped), dataLength = Some(zipped.length))
       case _ =>
         throw new IllegalArgumentException("Unsupported content encoding.")
     }
@@ -203,8 +200,8 @@ object HttpClientOkHttpImpl {
 
       def writeTo(sink: BufferedSink): Unit = IoUtils.copy(
         in = callback
-          .map(createProgressInputStream(_, encodedBody.data, encodedBody.dataLength))
-          .getOrElse(encodedBody.data),
+          .map(createProgressInputStream(_, encodedBody.data(), encodedBody.dataLength))
+          .getOrElse(encodedBody.data()),
         out = sink.outputStream()
       )
     }
@@ -265,7 +262,7 @@ object HttpClientOkHttpImpl {
           override val contentLength: Long      = body.dataLength.getOrElse(-1)
 
           def writeTo(sink: BufferedSink): Unit = {
-            val dataInputStream = totalProgressListener.fold(body.data)(new ProgressInputStream(body.data, _))
+            val dataInputStream = totalProgressListener.fold(body.data())(new ProgressInputStream(body.data(), _))
             IoUtils.withResource(dataInputStream) { in =>
               IoUtils.write(in, sink.outputStream())
             }

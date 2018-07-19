@@ -59,7 +59,7 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
   private def token  = withAccount(_.accessToken)
   private def cookie = withAccount(_.cookie)
 
-  private def withAccount[A](f: (AccountData) => A): Future[A] = {
+  private def withAccount[A](f: AccountData => A): Future[A] = {
     accStorage.get(id).map {
       case Some(acc) => f(acc)
       case _         => throw LoggedOutException
@@ -72,14 +72,14 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
     accStorage.update(id, acc => acc.copy(accessToken = if (token.isDefined) token else acc.accessToken, cookie = cookie.getOrElse(acc.cookie)))
   }
 
-  private def wipeCredentials() = {
+  private def wipeCredentials(): Future[Unit] = {
     verbose("wipe credentials")
     accStorage.remove(id)
   }
 
-  def invalidateToken() = token.map(_.foreach(t => updateCredentials(Some(t.copy(expiresAt = Instant.EPOCH)))))
+  def invalidateToken(): Future[Unit] = token.map(_.foreach(t => updateCredentials(Some(t.copy(expiresAt = Instant.EPOCH)))))
 
-  def isExpired(token: AccessToken) = (token.expiresAt - ExpireThreshold) isBefore clock.instant()
+  def isExpired(token: AccessToken): Boolean = (token.expiresAt - ExpireThreshold) isBefore clock.instant()
 
   /**
    * Returns current token if not expired or performs access request. Failing that, the user gets logged out

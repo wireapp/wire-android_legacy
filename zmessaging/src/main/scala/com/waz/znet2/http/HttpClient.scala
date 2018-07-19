@@ -151,11 +151,21 @@ trait HttpClient {
 
   protected implicit val ec: ExecutionContext
 
-  protected def execute(
+  protected def executeIgnoreInterceptor(
       request: Request[Body],
       uploadCallback: Option[ProgressCallback],
       downloadCallback: Option[ProgressCallback]
   ): CancellableFuture[Response[Body]]
+
+  def execute(
+      request: Request[Body],
+      uploadCallback: Option[ProgressCallback],
+      downloadCallback: Option[ProgressCallback]
+  ): CancellableFuture[Response[Body]] = {
+    request.interceptor.intercept(request)
+      .flatMap(executeIgnoreInterceptor(_, uploadCallback, downloadCallback))
+      .flatMap(request.interceptor.intercept(request, uploadCallback, downloadCallback, _))
+  }
 
   private def serializeRequest[T](
       request: Request[T]

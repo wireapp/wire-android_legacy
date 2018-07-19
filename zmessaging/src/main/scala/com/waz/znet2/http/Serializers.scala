@@ -92,19 +92,19 @@ object RawBodySerializer {
   implicit val StringBodySerializer: RawBodySerializer[String] =
     create(str => {
       val bytes = str.getBytes("utf-8")
-      RawBody(Some(MediaType.PlainText), new ByteArrayInputStream(bytes), Some(bytes.length))
+      RawBody(Some(MediaType.PlainText), () => new ByteArrayInputStream(bytes), Some(bytes.length))
     })
 
   implicit val BytesBodySerializer: RawBodySerializer[Array[Byte]] =
-    create(bytes => RawBody(Some(MediaType.Bytes), new ByteArrayInputStream(bytes), Some(bytes.length)))
+    create(bytes => RawBody(Some(MediaType.Bytes), () => new ByteArrayInputStream(bytes), Some(bytes.length)))
 
   implicit val FileBodySerializer: RawBodySerializer[File] =
-    create(file => RawBody(None, new FileInputStream(file), Some(file.length())))
+    create(file => RawBody(None, () => new FileInputStream(file), Some(file.length())))
 
   implicit val JsonBodySerializer: RawBodySerializer[JSONObject] =
     create(json => {
       val bytes = json.toString.getBytes("utf8")
-      RawBody(Some(MediaType.Json), new ByteArrayInputStream(bytes), Some(bytes.length))
+      RawBody(Some(MediaType.Json), () => new ByteArrayInputStream(bytes), Some(bytes.length))
     })
 
   implicit def objectToJsonBodySerializer[T](implicit e: JsonEncoder[T]): RawBodySerializer[T] =

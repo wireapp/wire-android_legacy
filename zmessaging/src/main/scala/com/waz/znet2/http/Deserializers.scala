@@ -32,7 +32,7 @@ object ResponseDeserializer {
 
   def apply[T](implicit rd: ResponseDeserializer[T]): ResponseDeserializer[T] = rd
 
-  def create[T](f: (Response[Body]) => T): ResponseDeserializer[T] = new ResponseDeserializer[T] {
+  def create[T](f: Response[Body] => T): ResponseDeserializer[T] = new ResponseDeserializer[T] {
     override def deserialize(response: Response[Body]): T = f(response)
   }
 
@@ -98,7 +98,7 @@ object RawBodyDeserializer {
   implicit val identity: RawBodyDeserializer[RawBody] = create(body => body)
 
   implicit val BytesRawBodyDeserializer: RawBodyDeserializer[Array[Byte]] =
-    create(body => IoUtils.toByteArray(body.data))
+    create(body => IoUtils.toByteArray(body.data()))
 
   implicit val StringRawBodyDeserializer: RawBodyDeserializer[String] =
     BytesRawBodyDeserializer.map(new String(_))
@@ -115,7 +115,7 @@ object RawBodyDeserializer {
   def createFileRawBodyDeserializer(targetFile: => File): RawBodyDeserializer[File] =
     create { body =>
       returning(targetFile) { file =>
-        IoUtils.copy(body.data, new FileOutputStream(file))
+        IoUtils.copy(body.data(), new FileOutputStream(file))
       }
     }
 }

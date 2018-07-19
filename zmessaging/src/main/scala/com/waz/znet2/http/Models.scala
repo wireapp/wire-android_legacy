@@ -22,6 +22,7 @@ import java.net.URL
 import java.util.Locale
 
 import com.waz.threading.CancellableFuture
+import com.waz.znet2.http.HttpClient.ProgressCallback
 
 import scala.concurrent.ExecutionContext
 
@@ -94,7 +95,10 @@ sealed trait Body
 sealed trait EmptyBody extends Body
 object EmptyBodyImpl   extends EmptyBody
 
-case class RawBody(mediaType: Option[String], data: InputStream, dataLength: Option[Long] = None) extends Body
+/**
+  * @param data Is lazy for cases when we want to execute the same request again.
+  */
+case class RawBody(mediaType: Option[String], data: () => InputStream, dataLength: Option[Long] = None) extends Body
 
 case class RawMultipartBodyMixed(parts: Seq[RawMultipartBodyMixed.Part]) extends Body
 object RawMultipartBodyMixed {
@@ -211,6 +215,12 @@ object Request {
 
 trait RequestInterceptor { self =>
   def intercept(request: Request[Body]): CancellableFuture[Request[Body]]
+  def intercept(
+      request: Request[Body],
+      uploadCallback: Option[ProgressCallback],
+      downloadCallback: Option[ProgressCallback],
+      response: Response[Body]
+  ): CancellableFuture[Response[Body]]
   def andThen(that: RequestInterceptor)(implicit ec: ExecutionContext): RequestInterceptor =
     RequestInterceptor.compose(this, that)
 }
@@ -220,12 +230,28 @@ object RequestInterceptor {
   val identity: RequestInterceptor = new RequestInterceptor {
     override def intercept(request: Request[Body]): CancellableFuture[Request[Body]] =
       CancellableFuture.successful(request)
+
+    override def intercept(
+        request: Request[Body],
+        uploadCallback: Option[ProgressCallback],
+        downloadCallback: Option[ProgressCallback],
+        response: Response[Body]
+    ): CancellableFuture[Response[Body]] = CancellableFuture.successful(response)
   }
 
   def compose(a: RequestInterceptor, b: RequestInterceptor)(implicit ec: ExecutionContext): RequestInterceptor =
     new RequestInterceptor {
       override def intercept(request: Request[Body]): CancellableFuture[Request[Body]] =
         a.intercept(request).flatMap(b.intercept)
+
+      override def intercept(
+          request: Request[Body],
+          uploadCallback: Option[ProgressCallback],
+          downloadCallback: Option[ProgressCallback],
+          response: Response[Body]
+      ): CancellableFuture[Response[Body]] =
+        a.intercept(request, uploadCallback, downloadCallback, response)
+          .flatMap(b.intercept(request, uploadCallback, downloadCallback, _))
     }
 
 }

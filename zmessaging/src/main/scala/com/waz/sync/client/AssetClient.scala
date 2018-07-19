@@ -65,7 +65,7 @@ class AssetClientImpl(cacheService: CacheService)
       val entry = cacheService.createManagedFile(key)
       val out = new DigestOutputStream(new BufferedOutputStream(new FileOutputStream(entry.cacheFile)),
                                        MessageDigest.getInstance("SHA-256"))
-      IoUtils.copy(body.data, out)
+      IoUtils.copy(body.data(), out)
       if (sha.exists(_ != Sha256(out.getMessageDigest.digest()))) {
         throw new IllegalArgumentException(
           s"SHA256 not match. \nExpected: $sha \nCurrent: ${Sha256(out.getMessageDigest.digest())}"
@@ -77,7 +77,7 @@ class AssetClientImpl(cacheService: CacheService)
 
   private def localDataRawBodySerializer(mime: Mime): RawBodySerializer[LocalData] =
     RawBodySerializer.create { data =>
-      RawBody(mediaType = Some(mime.str), data.inputStream, dataLength = Some(data.length))
+      RawBody(mediaType = Some(mime.str), () => data.inputStream, dataLength = Some(data.length))
     }
 
   private def convertProgressData(data: Progress): ProgressData =

@@ -83,7 +83,7 @@ object MessagesClient {
     m.blob foreach { msg.blob = _ }
 
     val bytes = MessageNano.toByteArray(msg)
-    RawBody(mediaType = Some(MediaType.Protobuf), new ByteArrayInputStream(bytes), dataLength = Some(bytes.length))
+    RawBody(mediaType = Some(MediaType.Protobuf), () => new ByteArrayInputStream(bytes), dataLength = Some(bytes.length))
   }
 
 }
