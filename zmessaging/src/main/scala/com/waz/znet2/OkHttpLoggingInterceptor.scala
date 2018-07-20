@@ -58,9 +58,10 @@ import scala.util.{Failure, Try}
   *
   * <-- END HTTP
   */
-final class OkHttpLoggingInterceptor(logBodyTypes: List[String]) extends Interceptor {
+final class OkHttpLoggingInterceptor(logBodyTypes: List[String], maxBodyStringLength: Int = 1000) extends Interceptor {
 
   private val CharsetUtf8: Charset = Charset.forName("UTF-8")
+  private val truncatedBodySuffix: String = "...TRUNCATED"
 
   private def shouldLogBody(bodyMediaType: MediaType): Boolean = {
     val mediaTypeStr = bodyMediaType.toString.toLowerCase()
@@ -78,6 +79,12 @@ final class OkHttpLoggingInterceptor(logBodyTypes: List[String]) extends Interce
       }
       .map(_.toString)
       .getOrElse(body)
+  }
+
+  private def prepareBodyForLogging(body: Array[Byte], mediaType: Option[MediaType]): String = {
+    val bodyStrSafe = hideSensitiveInfo(new String(body, CharsetUtf8), mediaType)
+    if (bodyStrSafe.length <= maxBodyStringLength) bodyStrSafe
+    else bodyStrSafe.subSequence(0, (maxBodyStringLength - truncatedBodySuffix.length) max 1) + truncatedBodySuffix
   }
 
   @throws[IOException]
@@ -121,8 +128,8 @@ final class OkHttpLoggingInterceptor(logBodyTypes: List[String]) extends Interce
         .method(request.method(), RequestBody.create(body.contentType(), bodyBytes))
         .build()
 
-      val bodyString = new String(bodyBytes, CharsetUtf8)
-      logMsgBuilder.append(s"\n${hideSensitiveInfo(bodyString, requestBody.flatMap(b => Option(b.contentType)))}\n\n")
+      val bodyStr = prepareBodyForLogging(bodyBytes, Option(body.contentType))
+      logMsgBuilder.append(s"\n$bodyStr\n\n")
       logMsgBuilder.append("--> END " + request.method + " (" + body.contentLength + "-byte body)\n")
     }
 
@@ -160,9 +167,8 @@ final class OkHttpLoggingInterceptor(logBodyTypes: List[String]) extends Interce
 //          buffer.writeAll(gzippedResponseBody)
 //        } finally if (gzippedResponseBody != null) gzippedResponseBody.close
 //      }
-      val charset = Option(body.contentType()).fold(CharsetUtf8)(_.charset(CharsetUtf8))
-      val bodyString = buffer.clone.readString(charset)
-      logMsgBuilder.append(s"\n${hideSensitiveInfo(bodyString, responseBody.flatMap(b => Option(b.contentType)))}\n\n")
+      val bodyStr = prepareBodyForLogging(buffer.clone.readByteArray(), Option(body.contentType))
+      logMsgBuilder.append(s"\n$bodyStr\n\n")
       logMsgBuilder.append(s"<-- END HTTP (${buffer.size}-byte body)")
     }
 
