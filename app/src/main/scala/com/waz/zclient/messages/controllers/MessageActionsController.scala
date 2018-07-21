@@ -125,7 +125,7 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
   private def quoteMessage(message: MessageData) =
     zms.head.flatMap(_.usersStorage.get(message.userId)) foreach {
       case Some(user) =>
-        val clip = ClipData.newPlainText(getString(R.string.conversation__action_mode__copy__description, user.getDisplayName), "> " + user.getDisplayName + ": \n" + message.contentString + " \n \n")
+        val clip = ClipData.newPlainText(getString(R.string.conversation__action_mode__copy__description, user.getDisplayName), ">" + message.contentString + " \n \n")
         clipboard.setPrimaryClip(clip)
         Toast.makeText(context, R.string.conversation__action_mode__copy__toast, Toast.LENGTH_SHORT).show()
       case None =>
