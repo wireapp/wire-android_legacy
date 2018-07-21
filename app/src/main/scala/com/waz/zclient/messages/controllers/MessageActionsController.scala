@@ -70,6 +70,7 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
 
   onMessageAction {
     case (MessageAction.Copy, message)             => copyMessage(message)
+    case (MessageAction.Quoting, message)          => quoteMessage(message)
     case (MessageAction.DeleteGlobal, message)     => recallMessage(message)
     case (MessageAction.DeleteLocal, message)      => deleteMessage(message)
     case (MessageAction.Forward, message)          => forwardMessage(message)
@@ -119,6 +120,16 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
         Toast.makeText(context, R.string.conversation__action_mode__copy__toast, Toast.LENGTH_SHORT).show()
       case None =>
         // invalid message, ignoring
+    }
+
+  private def quoteMessage(message: MessageData) =
+    zms.head.flatMap(_.usersStorage.get(message.userId)) foreach {
+      case Some(user) =>
+        val clip = ClipData.newPlainText(getString(R.string.conversation__action_mode__copy__description, user.getDisplayName), ">" + message.contentString + " \n \n")
+        clipboard.setPrimaryClip(clip)
+        Toast.makeText(context, R.string.conversation__action_mode__copy__toast, Toast.LENGTH_SHORT).show()
+      case None =>
+      // invalid message, ignoring
     }
 
   private def deleteMessage(message: MessageData) =

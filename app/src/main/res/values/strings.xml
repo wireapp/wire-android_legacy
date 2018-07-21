@@ -1114,6 +1114,7 @@
 
     <string name="message_bottom_menu_action_forward">Share</string>
     <string name="message_bottom_menu_action_copy">Copy</string>
+    <string name="message_bottom_menu_action_quoting">Quote</string>
     <string name="message_bottom_menu_action_edit">Edit</string>
     <string name="message_bottom_menu_action_like">Like</string>
     <string name="message_bottom_menu_action_unlike">Unlike</string>

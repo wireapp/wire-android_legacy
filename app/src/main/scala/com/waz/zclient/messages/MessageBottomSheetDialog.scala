@@ -88,7 +88,7 @@ object MessageBottomSheetDialog {
   // all possible actions
   val Actions = {
     import MessageAction._
-    Seq(Copy, OpenFile, Edit, Like, Unlike, Save, Forward, Delete, DeleteLocal, DeleteGlobal, Reveal)
+    Seq(Copy, Quoting, OpenFile, Edit, Like, Unlike, Save, Forward, Delete, DeleteLocal, DeleteGlobal, Reveal)
   }
 
   case class Params(collection: Boolean = false, delCollapsed: Boolean = true)
@@ -131,6 +131,14 @@ object MessageBottomSheetDialog {
     }
 
     case object Copy extends MessageAction(R.id.message_bottom_menu_item_copy, R.string.glyph__copy, R.string.message_bottom_menu_action_copy) {
+      override def enabled(msg: MessageData, zms: ZMessaging, p: Params): Signal[Boolean] =
+        msg.msgType match {
+          case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA if !msg.isEphemeral => Signal.const(true)
+          case _ => Signal.const(false)
+        }
+    }
+
+    case object Quoting extends MessageAction(R.id.message_bottom_menu_item_copy, R.string.glyph__copy, R.string.message_bottom_menu_action_quoting) {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params): Signal[Boolean] =
         msg.msgType match {
           case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA if !msg.isEphemeral => Signal.const(true)
