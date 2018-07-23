@@ -409,7 +409,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
       case Right(LoginResult(token, Some(cookie), _)) => //TODO handle label (https://github.com/wireapp/android-project/issues/51)
         loginClient.getSelfUserInfo(token).flatMap {
           case Right(user) => for {
-            _ <- addAccountEntry(user, cookie, Some(token), loginCredentials)
+            _ <- addAccountEntry(user, cookie, Some(token), Some(loginCredentials))
             _ <- prefs(LoggingInUser) := Some(user)
           } yield Right(user.id)
           case Left(err)   => Future.successful(Left(err))
@@ -428,7 +428,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
     regClient.register(registerCredentials, name, teamName).flatMap {
       case Right((user, Some((cookie, _)))) =>
         for {
-          _  <- addAccountEntry(user, cookie, None, registerCredentials)
+          _  <- addAccountEntry(user, cookie, None, Some(registerCredentials))
           am <- createAccountManager(user.id, None, Some(false), Some(user))
           _  <- am.fold(Future.successful({}))(_.getOrRegisterClient().map(_ => ()))
           _  <- setAccount(Some(user.id))
@@ -442,10 +442,10 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
     }
   }
 
-  private def addAccountEntry(user: UserInfo, cookie: Cookie, token: Option[AccessToken], credentials: Credentials): Future[Unit] = {
+  private def addAccountEntry(user: UserInfo, cookie: Cookie, token: Option[AccessToken], credentials: Option[Credentials]): Future[Unit] = {
     verbose(s"addAccountEntry: $user, $cookie, $token, $credentials")
     storage
-      .flatMap(_.updateOrCreate(user.id, _.copy(cookie = cookie, accessToken = token, password = credentials.maybePassword), AccountData(user.id, user.teamId, cookie, token, password = credentials.maybePassword)))
+      .flatMap(_.updateOrCreate(user.id, _.copy(cookie = cookie, accessToken = token, password = credentials.flatMap(_.maybePassword)), AccountData(user.id, user.teamId, cookie, token, password = credentials.flatMap(_.maybePassword))))
       .map(_ => {})
   }
 
@@ -455,7 +455,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
         loginClient.getSelfUserInfo(loginResult.accessToken).flatMap {
           case Right(userInfo) =>
             for {
-              _  <- addAccountEntryNoCredentials(userId, cookie, Some(loginResult.accessToken))
+              _  <- addAccountEntry(userInfo, cookie, Some(loginResult.accessToken), None)
               am <- createAccountManager(userId, None, isLogin = Some(true), initialUser = Some(userInfo))
               r  <- am.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.getOrRegisterClient())
               _  <- setAccount(Some(userId))
@@ -464,13 +464,6 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
         }
       case Left(error) => Future.successful(Left(error))
     }
-  }
-
-  private def addAccountEntryNoCredentials(userId: UserId, cookie: Cookie, token: Option[AccessToken]): Future[Unit] = {
-    verbose(s"addAccountEntry: $userId, $cookie")
-    //TODO: Check if team id is needed
-    storage.flatMap(_.updateOrCreate(userId, _.copy(cookie = cookie, accessToken = token), AccountData(userId, None, cookie, token)))
-      .map(_ => {})
   }
 }
 
