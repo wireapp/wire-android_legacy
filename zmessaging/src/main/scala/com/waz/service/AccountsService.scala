@@ -27,6 +27,7 @@ import com.waz.content.GlobalPreferences._
 import com.waz.content.UserPreferences
 import com.waz.model.AccountData.Password
 import com.waz.model._
+import com.waz.service.AccountManager.ClientRegistrationState
 import com.waz.service.tracking.LoggedOutEvent
 import com.waz.sync.client.LoginClient
 import com.waz.threading.Threading
@@ -34,7 +35,8 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.{Serialized, returning}
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.sync.client.LoginClient.LoginResult
-import com.waz.sync.client.{ErrorOr, ErrorOrResponse}
+import com.waz.sync.client.ErrorOr
+import com.waz.utils._
 
 import scala.async.Async.{async, await}
 import scala.concurrent.Future
@@ -95,6 +97,8 @@ trait AccountsService {
   def activeZms:            Signal[Option[ZMessaging]]
 
   def loginClient: LoginClient
+
+  def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, ClientRegistrationState]]
 }
 
 object AccountsService {
@@ -445,5 +449,28 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
       .map(_ => {})
   }
 
+  override def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, ClientRegistrationState]] = {
+    loginClient.access(cookie, None).flatMap {
+      case Right(loginResult) =>
+        loginClient.getSelfUserInfo(loginResult.accessToken).flatMap {
+          case Right(userInfo) =>
+            for {
+              _  <- addAccountEntryNoCredentials(userId, cookie, Some(loginResult.accessToken))
+              am <- createAccountManager(userId, None, isLogin = Some(true), initialUser = Some(userInfo))
+              r  <- am.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.getOrRegisterClient())
+              _  <- setAccount(Some(userId))
+            } yield r
+          case Left(error) => Future.successful(Left(error))
+        }
+      case Left(error) => Future.successful(Left(error))
+    }
+  }
+
+  private def addAccountEntryNoCredentials(userId: UserId, cookie: Cookie, token: Option[AccessToken]): Future[Unit] = {
+    verbose(s"addAccountEntry: $userId, $cookie")
+    //TODO: Check if team id is needed
+    storage.flatMap(_.updateOrCreate(userId, _.copy(cookie = cookie, accessToken = token), AccountData(userId, None, cookie, token)))
+      .map(_ => {})
+  }
 }
 
