@@ -82,21 +82,16 @@ object OpenGraphClient {
     val Url = "url"
     val Description = "description"
 
-    val PropertyPrefix = """^(og|twitter):(.+)""".r
-    val MetaTag = """<\s*meta\s+[^>]+>""".r
-    val Attribute = """(\w+)\s*=\s*("|')([^"']+)("|')""".r
-
-    val TitlePattern = """<title[^>]*>(.*)</title>""".r
-
-    val BaseTypes = Seq("", "article", "website", "product", "video.movie", "video.tv_show")
-    val KnownSpecificTypes = Seq("instapp:photo", "ebay-objects:item", "tumblr-feed:tumblelog")
-    val AcceptedTypes = BaseTypes ++ KnownSpecificTypes // will ignore other types for now
+    val PropertyPrefix: Regex = """^(og|twitter):(.+)""".r
+    val MetaTag: Regex = """<\s*meta\s+[^>]+>""".r
+    val Attribute: Regex = """(\w+)\s*=\s*("|')([^"']+)("|')""".r
+    val TitlePattern: Regex = """<title[^>]*>(.*)</title>""".r
 
     def unapply(body: StringResponse): Option[OpenGraphData] = {
-      def htmlTitle = TitlePattern.findFirstMatchIn(body.value).map(_.group(1))
+      def htmlTitle: Option[String] = TitlePattern.findFirstMatchIn(body.value).map(_.group(1))
 
-      val ogMeta = MetaTag.findAllIn(body.value) .flatMap { meta =>
-        val attrs = Attribute.findAllMatchIn(meta) .map { m => m.group(1).toLowerCase -> m.group(3) } .toMap
+      val ogMeta = MetaTag.findAllIn(body.value).flatMap { meta =>
+        val attrs = Attribute.findAllMatchIn(meta).map { m => m.group(1).toLowerCase -> m.group(3) } .toMap
         val name = attrs.get("property").orElse(attrs.get("name"))
         val iter = PropertyPrefix.findAllMatchIn(name.getOrElse("")).map(a => a.group(2).toLowerCase -> attrs.getOrElse("content",""))
         if (iter.hasNext)
@@ -105,8 +100,16 @@ object OpenGraphClient {
           None
       } .toMap
 
-      if ((ogMeta.contains(Title) || ogMeta.contains(Image)) && ogMeta.get(Type).forall { tpe => AcceptedTypes.contains(tpe.toLowerCase) }) {
-        Some(OpenGraphData(ogMeta.get(Title).orElse(htmlTitle).getOrElse(""), ogMeta.getOrElse(Description, ""), ogMeta.get(Image).map(URI.parse), ogMeta.getOrElse(Type, ""), ogMeta.get(Url).map(URI.parse)))
+      if (ogMeta.contains(Title) || ogMeta.contains(Image)) {
+        Some(
+          OpenGraphData(
+            ogMeta.get(Title).orElse(htmlTitle).getOrElse(""),
+            ogMeta.getOrElse(Description, ""),
+            ogMeta.get(Image).map(URI.parse),
+            ogMeta.getOrElse(Type, ""),
+            ogMeta.get(Url).map(URI.parse)
+          )
+        )
       } else None
     }
   }
