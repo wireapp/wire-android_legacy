@@ -450,6 +450,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
   }
 
   override def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, ClientRegistrationState]] = {
+    verbose(s"SSO login: $userId $cookie")
     loginClient.access(cookie, None).flatMap {
       case Right(loginResult) =>
         loginClient.getSelfUserInfo(loginResult.accessToken).flatMap {
@@ -460,9 +461,13 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
               r  <- am.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.getOrRegisterClient())
               _  <- setAccount(Some(userId))
             } yield r
-          case Left(error) => Future.successful(Left(error))
+          case Left(error) =>
+            verbose(s"SSO login - Get self error: $error")
+            Future.successful(Left(error))
         }
-      case Left(error) => Future.successful(Left(error))
+      case Left(error) =>
+        verbose(s"SSO login - access error: $error")
+        Future.successful(Left(error))
     }
   }
 }
