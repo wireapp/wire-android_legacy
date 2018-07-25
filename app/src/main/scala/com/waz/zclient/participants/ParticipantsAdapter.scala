@@ -324,7 +324,6 @@ object ParticipantsAdapter {
 
   case class ShowAllParticipantsViewHolder(view: View) extends ViewHolder(view) {
     private implicit val ctx: Context = view.getContext
-    view.findViewById[ImageView](R.id.icon).setImageDrawable(GuestIconWithColor(getStyledColor(R.attr.wirePrimaryTextColor)))
     view.findViewById[ImageView](R.id.next_indicator).setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40))
     view.setClickable(true)
     view.setFocusable(true)

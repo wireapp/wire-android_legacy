@@ -27,7 +27,7 @@
               android:layout_marginTop="@dimen/wire__padding__8"
     >
 
-    <ImageView
+    <com.waz.zclient.ui.text.GlyphTextView
         android:id="@+id/icon"
         android:layout_width="@dimen/guest_options_icon_size"
         android:layout_height="@dimen/guest_options_icon_size"
@@ -35,7 +35,8 @@
         android:layout_centerVertical="true"
         android:layout_marginStart="@dimen/wire__padding__big"
         android:layout_marginEnd="@dimen/wire__padding__big"
-        android:scaleType="centerInside"
+        android:text="@string/glyph__people"
+        android:textColor="?wirePrimaryTextColor"
         />
 
     <ImageView
