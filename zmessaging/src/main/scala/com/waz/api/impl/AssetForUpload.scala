@@ -17,16 +17,15 @@
  */
 package com.waz.api.impl
 
-import java.io.{File, InputStream}
+import java.io.File
 
-import android.content.Context
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.api
 import com.waz.api.Asset.LoadCallback
 import com.waz.api.AudioEffect
 import com.waz.cache.CacheEntry
-import com.waz.model.{AssetId, CacheKey, Mime}
+import com.waz.model.{AssetId, Mime}
 import com.waz.service.ZMessaging
 import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, PCMContent}
 import com.waz.threading.Threading
@@ -44,26 +43,6 @@ abstract class AssetForUpload(val id: AssetId) extends api.AssetForUpload {
   def name: Future[Option[String]]
   def mimeType: Future[Mime]
   def sizeInBytes: Future[Option[Long]]
-
-  def cacheKey = CacheKey(id.str)
-  //TODO: Dean remove unused functions
-  def openDataStream(context: Context): InputStream
-}
-object AssetForUpload {
-
-  def apply(i: AssetId, n: Option[String], m: Mime, s: Option[Long])(f: Context => InputStream): AssetForUpload = new AssetForUpload(i) {
-    override val name = successful(n)
-    override val mimeType = successful(m)
-    override val sizeInBytes = successful(s)
-    override def openDataStream(context: Context) = f(context)
-  }
-}
-
-case class TranscodedVideoAsset(fileName: Option[String], data: CacheEntry) extends AssetForUpload(AssetId()) {
-  override def name         = successful(fileName)
-  override def sizeInBytes  = successful(Some(data.length))
-  override def mimeType     = successful(data.data.mimeType)
-  override def openDataStream(context: Context) = data.inputStream
 }
 
 case class ContentUriAssetForUpload(override val id: AssetId, uri: URI) extends AssetForUpload(id) {
@@ -73,15 +52,12 @@ case class ContentUriAssetForUpload(override val id: AssetId, uri: URI) extends 
   override lazy val name = info.map(_.name)
   override lazy val mimeType = info.map(_.mime)
   override lazy val sizeInBytes = info.map(_.size)
-
-  override def openDataStream(context: Context): InputStream = context.getContentResolver.openInputStream(URI.unwrap(uri))
 }
 
 case class AudioAssetForUpload(override val id: AssetId, data: CacheEntry, duration: bp.Duration, fx: (AudioEffect, File) => Future[AudioAssetForUpload]) extends AssetForUpload(id) with api.AudioAssetForUpload {
   override def name         = successful(Some("recording.m4a"))
   override def sizeInBytes  = successful(Some(data.length))
   override def mimeType     = successful(Mime.Audio.PCM)
-  override def openDataStream(context: Context) = data.inputStream
 
   override def getPlaybackControls: api.PlaybackControls = new PlaybackControls(AssetMediaKey(id), PCMContent(data.cacheFile), _ => Signal.const(duration))(ZMessaging.currentUi)
   override def getDuration: bp.Duration = duration
@@ -105,8 +81,4 @@ case class AudioAssetForUpload(override val id: AssetId, data: CacheEntry, durat
 
 object DoNothingAndProceed extends api.MessageContent.Asset.ErrorHandler {
   override def noWifiAndFileIsLarge(sizeInBytes: Long, net: api.NetworkMode, a: api.MessageContent.Asset.Answer): Unit = a.ok()
-}
-
-object CancelOnWarning extends api.MessageContent.Asset.ErrorHandler {
-  override def noWifiAndFileIsLarge(sizeInBytes: Long, net: api.NetworkMode, a: api.MessageContent.Asset.Answer): Unit = a.cancel()
 }

@@ -76,12 +76,4 @@ object UiSignal {
   def apply[A](s: ZMessaging => Signal[A])(implicit ui: UiModule): UiSignal[A] = new UiSignal[A]() {
     addLoader(s) { set }
   }
-
-  def mapped[A, B](s: ZMessaging => Signal[B], f: B => A)(implicit ui: UiModule): UiSignal[A] = new UiSignal[A]() {
-    addLoader(s) { v => set(f(v)) }
-  }
-
-  def accountMapped[A, B](s: AccountManager => Signal[B], f: B => A)(implicit ui: UiModule): UiSignal[A] = new UiSignal[A]() {
-    accountLoader(s) { v => set(f(v)) }
-  }
 }

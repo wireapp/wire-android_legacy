@@ -224,15 +224,14 @@ class AssetServiceImpl(storage:         AssetsStorage,
       case _ => None
     }
 
-    def loadData(asset: AssetData) = (a match {
-      case TranscodedVideoAsset(_, data) => CancellableFuture lift cache.move(a.cacheKey, data, Mime.Video.MP4, if (asset.mime == Mime.Video.MP4) asset.name else asset.name.map(_ + ".mp4"), cacheLocation = Some(cache.cacheDir)) map { Some(_) }
-      case _                             => loaderService.load(asset, force = true)(loader) //will ensure that PCM audio files get encoded
-    }).flatMap {
-      case Some(entry) => CancellableFuture.successful(entry)
-      case None        =>
-        errors.addAssetFileNotFoundError(a.id)
-        CancellableFuture.failed(new NoSuchElementException("no data available after download"))
-    }
+    def loadData(asset: AssetData) =
+      loaderService.load(asset, force = true)(loader) //will ensure that PCM audio files get encoded
+        .flatMap {
+        case Some(entry) => CancellableFuture.successful(entry)
+        case None =>
+          errors.addAssetFileNotFoundError(a.id)
+          CancellableFuture.failed(new NoSuchElementException("no data available after download"))
+      }
 
     for {
       m        <- a.mimeType
