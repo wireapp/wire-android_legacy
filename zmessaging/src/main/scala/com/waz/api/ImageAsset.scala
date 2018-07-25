@@ -30,12 +30,6 @@ object ImageAsset {
 }
 
 trait ImageAsset extends UiObservable with Parcelable {
-  def getId: String
-
-  def isEmpty: Boolean
-
-  def getBitmap(width: Int, callback: BitmapCallback): LoadHandle
-
   /**
    * This Returns bitmap in one go,
    */
