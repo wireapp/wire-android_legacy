@@ -55,7 +55,6 @@ package object testutils {
 
   object Implicits {
     implicit def iconv_to_conv(conv: IConversation): Conversation = conv.asInstanceOf[Conversation]
-    implicit def apimsg_to_msg(msg: com.waz.api.Message): Message = msg.asInstanceOf[Message]
     implicit def apiim_to_im(im: com.waz.api.ImageAsset): ImageAsset = im.asInstanceOf[ImageAsset]
 
     implicit lazy val CursorEmptiness: Emptiness[Cursor] = new Emptiness[Cursor] {

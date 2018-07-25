@@ -50,6 +50,4 @@ public interface Message extends UiObservable {
             TEXT, TEXT_EMOJI_ONLY, ASSET, ANY_ASSET, YOUTUBE, SOUNDCLOUD, TWITTER, SPOTIFY, WEB_LINK, GOOGLE_MAPS
         }
     }
-
-    void retry();
 }
