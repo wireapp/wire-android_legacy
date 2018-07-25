@@ -54,7 +54,6 @@ package object testutils {
   private implicit lazy val ec = Threading.Background
 
   object Implicits {
-    implicit def iconv_to_conv(conv: IConversation): Conversation = conv.asInstanceOf[Conversation]
     implicit def apiim_to_im(im: com.waz.api.ImageAsset): ImageAsset = im.asInstanceOf[ImageAsset]
 
     implicit lazy val CursorEmptiness: Emptiness[Cursor] = new Emptiness[Cursor] {

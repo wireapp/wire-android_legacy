@@ -64,13 +64,4 @@ public interface IConversation extends UiObservable {
         NON_ACTIVATED, //"wireless" users may join the conversation
         PRIVATE        //for 1:1 conversations
     }
-
-    /*
-        For now me is retrieved by another core lib function and
-        if this is empty there is another function constructing
-        a friendly name via the id
-    */
-    String getName();
-
-    String getId();
 }
