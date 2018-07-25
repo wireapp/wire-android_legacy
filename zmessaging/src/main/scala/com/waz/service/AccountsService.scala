@@ -60,6 +60,8 @@ import scala.util.control.NonFatal
   *
   */
 trait AccountsService {
+  type HasOtherClients = Boolean
+
   import AccountsService._
 
   def requestVerificationEmail(email: EmailAddress): ErrorOr[Unit]
@@ -98,7 +100,7 @@ trait AccountsService {
 
   def loginClient: LoginClient
 
-  def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, ClientRegistrationState]]
+  def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, HasOtherClients]]
 }
 
 object AccountsService {
@@ -449,7 +451,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
       .map(_ => {})
   }
 
-  override def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, ClientRegistrationState]] = {
+  override def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, HasOtherClients]] = {
     verbose(s"SSO login: $userId $cookie")
     loginClient.access(cookie, None).flatMap {
       case Right(loginResult) =>
@@ -458,8 +460,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
             for {
               _  <- addAccountEntry(userInfo, cookie, Some(loginResult.accessToken), None)
               am <- createAccountManager(userId, None, isLogin = Some(true), initialUser = Some(userInfo))
-              r  <- am.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.getOrRegisterClient())
-              _  <- setAccount(Some(userId))
+              r  <- am.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.otrClient.loadClients().future.mapRight(_.nonEmpty))
             } yield r
           case Left(error) =>
             verbose(s"SSO login - Get self error: $error")
