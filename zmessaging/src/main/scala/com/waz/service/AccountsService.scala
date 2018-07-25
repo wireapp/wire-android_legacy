@@ -461,6 +461,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
               _  <- addAccountEntry(userInfo, cookie, Some(loginResult.accessToken), None)
               am <- createAccountManager(userId, None, isLogin = Some(true), initialUser = Some(userInfo))
               r  <- am.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.otrClient.loadClients().future.mapRight(_.nonEmpty))
+              _  = r.fold(_ => (), hasClients => if (!hasClients) am.foreach(_.addUnsplashPicture()))
             } yield r
           case Left(error) =>
             verbose(s"SSO login - Get self error: $error")
