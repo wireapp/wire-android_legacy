@@ -17,8 +17,12 @@
  */
 package com.waz.model
 
-import com.waz.utils.crypto.AESUtils
+import java.security.MessageDigest
 
+import com.waz.utils.crypto.AESUtils
+import javax.crypto.KeyGenerator
+
+//TODO Do we have any reasons to store key as String? Why not just an Array[Byte]?
 case class AESKey(str: String) {
   lazy val bytes = AESUtils.base64(str)
 
@@ -29,6 +33,13 @@ object AESKey extends (String => AESKey) {
   val Empty = AESKey("")
 
   def apply(): AESKey = AESUtils.randomKey()
+  //TODO Why not this variant for random key generation?
+  def random: AESKey = {
+    val keyGen = KeyGenerator.getInstance("AES")
+    keyGen.init(256)
+    val secretKey = keyGen.generateKey
+    AESKey(secretKey.getEncoded)
+  }
   def apply(bytes: Array[Byte]): AESKey = new AESKey(AESUtils.base64(bytes))
 }
 
@@ -41,4 +52,8 @@ object Sha256 {
   val Empty = Sha256("")
 
   def apply(bytes: Array[Byte]) = new Sha256(AESUtils.base64(bytes))
+  def calculate(bytes: Array[Byte]): Sha256 = {
+    val digest = MessageDigest.getInstance("SHA-256")
+    Sha256(digest.digest(bytes))
+  }
 }

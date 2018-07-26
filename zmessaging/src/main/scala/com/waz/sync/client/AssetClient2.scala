@@ -22,13 +22,15 @@ import java.security.{DigestOutputStream, MessageDigest}
 
 import android.util.Base64
 import com.waz.api.impl.ErrorResponse
-import com.waz.api.impl.ProgressIndicator.{Callback, ProgressData}
-import com.waz.cache.{CacheEntry, CacheService, Expiration, LocalData}
-import com.waz.model.{Mime, _}
+import com.waz.cache.{Expiration, LocalData}
+import com.waz.cache2.CacheService.NoEncryption
+import com.waz.model._
+import com.waz.service.assets2.Asset
+import com.waz.service.assets2.Asset.General
 import com.waz.utils.{IoUtils, JsonDecoder, JsonEncoder}
 import com.waz.znet2.http.HttpClient.AutoDerivation._
+import com.waz.znet2.http.HttpClient.ProgressCallback
 import com.waz.znet2.http.HttpClient.dsl._
-import com.waz.znet2.http.HttpClient.{Progress, ProgressCallback}
 import com.waz.znet2.http.MultipartBodyMixed.Part
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
@@ -37,30 +39,22 @@ import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
 
-trait AssetClient {
-  import com.waz.sync.client.AssetClient._
+trait AssetClient2 {
+  import com.waz.sync.client.AssetClient2._
 
-  //TODO Request should be constructed inside "*Client" classes
-  def loadAsset[T: RequestSerializer](
-      req: Request[T],
-      key: Option[AESKey] = None,
-      sha: Option[Sha256] = None,
-      callback: Callback
-  ): ErrorOrResponse[CacheEntry]
-
-  //TODO Add callback parameter. https://github.com/wireapp/wire-android-sync-engine/issues/378
-  def uploadAsset(metadata: Metadata, data: LocalData, mime: Mime): ErrorOrResponse[UploadResponse]
-
+  def loadAssetContent(asset: Asset[General], callback: Option[ProgressCallback]): ErrorOrResponse[FileWithSha]
+  def uploadAsset(metadata: Metadata, asset: AssetContent, callback: Option[ProgressCallback]): ErrorOrResponse[UploadResponse]
+  def deleteAsset(assetId: AssetId): ErrorOrResponse[Boolean]
 }
 
-class AssetClientImpl(cacheService: CacheService)
-                     (implicit
-                      urlCreator: UrlCreator,
-                      client: HttpClient,
-                      authRequestInterceptor: RequestInterceptor = RequestInterceptor.identity)
-  extends AssetClient {
+class AssetClient2Impl(implicit
+                       urlCreator: UrlCreator,
+                       client: HttpClient,
+                       authRequestInterceptor: RequestInterceptor = RequestInterceptor.identity)
+  extends AssetClient2 {
 
-  import AssetClient._
+  import AssetClient2._
+  import com.waz.threading.Threading.Implicits.Background
 
   private implicit def fileWithShaBodyDeserializer: RawBodyDeserializer[FileWithSha] =
     RawBodyDeserializer.create { body =>
@@ -71,75 +65,55 @@ class AssetClientImpl(cacheService: CacheService)
       FileWithSha(tempFile, Sha256(out.getMessageDigest.digest()))
     }
 
-  private def cacheEntryBodyDeserializer(key: Option[AESKey], sha: Option[Sha256]): RawBodyDeserializer[CacheEntry] =
-    RawBodyDeserializer.create { body =>
-      val entry = cacheService.createManagedFile(key)
-      val out = new DigestOutputStream(new BufferedOutputStream(new FileOutputStream(entry.cacheFile)),
-                                       MessageDigest.getInstance("SHA-256"))
-      IoUtils.copy(body.data(), out)
-      if (sha.exists(_ != Sha256(out.getMessageDigest.digest()))) {
-        throw new IllegalArgumentException(
-          s"SHA256 not match. \nExpected: $sha \nCurrent: ${Sha256(out.getMessageDigest.digest())}"
-        )
-      }
-
-      entry
+  override def loadAssetContent(asset: Asset[General], callback: Option[ProgressCallback]): ErrorOrResponse[FileWithSha] = {
+    val assetPath = (asset.convId, asset.encryption) match {
+      case (None, _)                     => s"/assets/v3/${asset.id.str}"
+      case (Some(convId), NoEncryption)  => s"/conversations/${convId.str}/assets/${asset.id.str}"
+      case (Some(convId), _)             => s"/conversations/${convId.str}/otr/assets/${asset.id.str}"
     }
 
-  private def localDataRawBodySerializer(mime: Mime): RawBodySerializer[LocalData] =
-    RawBodySerializer.create { data =>
-      RawBody(mediaType = Some(mime.str), () => data.inputStream, dataLength = Some(data.length))
-    }
-
-  private def convertProgressData(data: Progress): ProgressData =
-    data match {
-      case p @ Progress(progress, Some(total)) if p.isCompleted =>
-        ProgressData(progress, total, com.waz.api.ProgressIndicator.State.COMPLETED)
-      case Progress(progress, Some(total)) =>
-        ProgressData(progress, total, com.waz.api.ProgressIndicator.State.RUNNING)
-      case Progress(_, None) =>
-        ProgressData.Indefinite
-    }
-
-  override def loadAsset[T: RequestSerializer](request: Request[T],
-                                               key: Option[AESKey] = None,
-                                               sha: Option[Sha256] = None,
-                                               callback: Callback): ErrorOrResponse[CacheEntry] = {
-    val progressCallback: ProgressCallback                         = progress => callback(convertProgressData(progress))
-    implicit val bodyDeserializer: RawBodyDeserializer[CacheEntry] = cacheEntryBodyDeserializer(key, sha)
-
-    request
-      .withDownloadCallback(progressCallback)
-      .withResultType[CacheEntry]
+    Request
+      .Get(
+        relativePath = assetPath,
+        headers = asset.token.fold(Headers.empty)(token => Headers("Asset-Token" -> token.str))
+      )
+      .withDownloadCallback(callback)
+      .withResultType[FileWithSha]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
-  override def uploadAsset(metadata: Metadata, data: LocalData, mime: Mime): ErrorOrResponse[UploadResponse] = {
-    implicit val rawBodySerializer: RawBodySerializer[LocalData] = localDataRawBodySerializer(mime)
+  private implicit def RawAssetRawBodySerializer: RawBodySerializer[AssetContent] =
+    RawBodySerializer.create { asset =>
+      RawBody(mediaType = Some(asset.mime.str), asset.data, dataLength = asset.dataLength)
+    }
+
+  override def uploadAsset(metadata: Metadata, content: AssetContent, callback: Option[ProgressCallback]): ErrorOrResponse[UploadResponse] = {
     Request
       .Post(
         relativePath = AssetsV3Path,
-        body = MultipartBodyMixed(Part(metadata), Part(data, Headers("Content-MD5" -> md5(data))))
+        body = MultipartBodyMixed(Part(metadata), Part(content, Headers("Content-MD5" -> md5(content.data()))))
       )
+      .withUploadCallback(callback)
       .withResultType[UploadResponse]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
-  private implicit def RawAssetRawBodySerializer: RawBodySerializer[RawAsset] =
-    RawBodySerializer.create { asset =>
-      RawBody(mediaType = Some(asset.mime.str), asset.data, dataLength = asset.dataLength)
-    }
+  override def deleteAsset(assetId: AssetId): ErrorOrResponse[Boolean] = {
+    Request.Delete(relativePath = s"$AssetsV3Path/${assetId.str}")
+      .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
+      .withResultType[Response[Unit]]
+      .withErrorType[ErrorResponse]
+      .executeSafe(_.code != ResponseCode.NotFound)
+  }
 }
 
-object AssetClient {
+object AssetClient2 {
 
   case class FileWithSha(file: File, sha256: Sha256)
 
-  case class RawAsset(mime: Mime, data: () => InputStream, dataLength: Option[Long])
-
-  case class UploadResponse2(key: RAssetId, expires: Option[Instant], token: Option[AssetToken])
+  case class AssetContent(mime: Mime, data: () => InputStream, dataLength: Option[Long])
 
   implicit val DefaultExpiryTime: Expiration = 1.hour
 

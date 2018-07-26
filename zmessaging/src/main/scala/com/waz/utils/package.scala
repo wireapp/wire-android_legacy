@@ -131,6 +131,15 @@ package object utils {
     }
   }
 
+  implicit class RichSeq[A](val seq: Seq[A]) extends AnyVal {
+    def distinctBy[B](extractor: A => B): Seq[A] =
+      seq.foldLeft((Seq.empty[A], Set.empty[B])) { case ((acc, set), item) =>
+        val key = extractor(item)
+        if (set.contains(key)) (acc, set)
+        else (acc :+ item, set + key)
+      }._1
+  }
+
   implicit class RichOption[A](val opt: Option[A]) extends AnyVal {
     @inline final def fold2[B](ifEmpty: => B, f: A => B): B = if (opt.isEmpty) ifEmpty else f(opt.get) // option's catamorphism with better type inference properties than the one provided by the std lib
     def mapFuture[B](f: A => Future[B])(implicit ec: ExecutionContext): Future[Option[B]] = flatMapFuture(f(_).map(Some(_)))

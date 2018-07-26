@@ -17,7 +17,7 @@
  */
 package com.waz.znet2
 
-import com.waz.sync.client.AuthenticationManager
+import com.waz.sync.client.{AuthenticationManager, AuthenticationManager2}
 import com.waz.threading.CancellableFuture
 import com.waz.znet2.http.HttpClient.ProgressCallback
 import com.waz.znet2.http._
@@ -47,6 +47,38 @@ class AuthRequestInterceptor(authManager: AuthenticationManager, httpClient: Htt
       CancellableFuture.lift(authManager.invalidateToken()).flatMap { _ =>
         httpClient.execute(
           request.copy(interceptor = new AuthRequestInterceptor(authManager, httpClient, attеmptsIfAuthFailed - 1)),
+          uploadCallback,
+          downloadCallback
+        )
+      }
+    } else CancellableFuture.successful(response)
+  }
+
+}
+
+class AuthRequestInterceptor2(authManager: AuthenticationManager2, httpClient: HttpClient, attеmptsIfAuthFailed: Int = 1)
+  extends RequestInterceptor {
+  import com.waz.threading.Threading.Implicits.Background
+
+  override def intercept(request: Request[Body]): CancellableFuture[Request[Body]] =
+    CancellableFuture.lift(authManager.currentToken()).map {
+      case Right(token) =>
+        request.copy(headers = Headers(request.headers.headers ++ token.headers))
+      case Left(err) =>
+        throw new IllegalArgumentException(err.toString)
+    }
+
+  override def intercept(
+                          request: Request[Body],
+                          uploadCallback: Option[ProgressCallback],
+                          downloadCallback: Option[ProgressCallback],
+                          response: Response[Body]
+                        ): CancellableFuture[Response[Body]] = {
+    if (response.code == ResponseCode.Unauthorized && attеmptsIfAuthFailed > 0) {
+      verbose(s"Got 'Unauthorized' error. Retrying... Attempts left: ${attеmptsIfAuthFailed - 1}")
+      CancellableFuture.lift(authManager.invalidateToken()).flatMap { _ =>
+        httpClient.execute(
+          request.copy(interceptor = new AuthRequestInterceptor2(authManager, httpClient, attеmptsIfAuthFailed - 1)),
           uploadCallback,
           downloadCallback
         )

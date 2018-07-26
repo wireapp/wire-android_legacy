@@ -156,11 +156,6 @@ class GlobalModuleImpl(val context:   AContext,
   lazy val teamsStorage:        TeamsStorage                     = wire[TeamsStorageImpl]
   lazy val recordingAndPlayback                                  = wire[GlobalRecordAndPlayService]
 
-//  lazy val clientWrapper:       Future[ClientWrapper]            = ClientWrapper()
-//  lazy val client:              AsyncClientImpl                  = new AsyncClientImpl(decoder, AsyncClient.userAgent(metadata.appVersion.toString, ZmsVersion.ZMS_VERSION), clientWrapper)
-//
-//  lazy val globalClient:        ZNetClient                       = new ZNetClientImpl(None, client, URI.parse(""))
-
   lazy val imageLoader:         ImageLoader                      = new ImageLoaderImpl(context, cache, imageCache, bitmapDecoder, permissions, loaderService, globalLoader) { override def tag = "Global" }
 
   lazy val blacklistClient                                       = new VersionBlacklistClientImpl(backend)(httpClient)

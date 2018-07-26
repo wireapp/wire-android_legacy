@@ -21,6 +21,7 @@ object SharedSettings {
   val RobolectricVersion = "5.0.0_r2-robolectric-1"
   val supportLibVersion = "26.0.1"
   val cryptoboxVersion = "1.0.0"
+  val circeVersion = "0.9.3"
 
   object Deps {
     lazy val avs = "com.wire" % "avs" % avsVersion
@@ -31,6 +32,9 @@ object SharedSettings {
     lazy val supportV4 = "com.android.support" % "support-v4" % supportLibVersion
     lazy val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.12.5" % Test
     lazy val wireMock = "com.github.tomakehurst" % "wiremock" % "1.53" % Test // current versions requires Java 8...
+    lazy val circeCore = "io.circe" %% "circe-core" % circeVersion
+    lazy val circeGeneric = "io.circe" %% "circe-generic" % circeVersion
+    lazy val circeParser = "io.circe" %% "circe-parser" % circeVersion
   }
 
   lazy val RegressionTest = config("regression") extend Test

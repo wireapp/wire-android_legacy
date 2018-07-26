@@ -64,10 +64,16 @@ object HttpClient {
 
     implicit class RichRequest[T: RequestSerializer](private[http] val request: Request[T]) {
       def withUploadCallback(callback: ProgressCallback): PreparingRequest[T] =
-        new PreparingRequest[T](request, Some(callback), None)
+        withUploadCallback(Some(callback))
+
+      def withUploadCallback(callback: Option[ProgressCallback]): PreparingRequest[T] =
+        new PreparingRequest[T](request, callback, None)
 
       def withDownloadCallback(callback: ProgressCallback): PreparingRequest[T] =
-        new PreparingRequest[T](request, None, Some(callback))
+        withDownloadCallback(Some(callback))
+
+      def withDownloadCallback(callback: Option[ProgressCallback]): PreparingRequest[T] =
+        new PreparingRequest[T](request, None, callback)
 
       def withResultHttpCodes(codes: Set[Int]): PreparingRequest[T] =
         new PreparingRequest[T](request, None, None, codes)
@@ -87,8 +93,14 @@ object HttpClient {
       def withUploadCallback(callback: ProgressCallback): PreparingRequest[T] =
         new PreparingRequest[T](request, Some(callback), downloadCallback)
 
+      def withUploadCallback(callback: Option[ProgressCallback]): PreparingRequest[T] =
+        callback.fold(this)(c => new PreparingRequest[T](request, Some(c), downloadCallback))
+
       def withDownloadCallback(callback: ProgressCallback): PreparingRequest[T] =
         new PreparingRequest[T](request, uploadCallback, Some(callback))
+
+      def withDownloadCallback(callback: Option[ProgressCallback]): PreparingRequest[T] =
+        callback.fold(this)(c => new PreparingRequest[T](request, uploadCallback, Some(c)))
 
       def withResultHttpCodes(codes: Set[Int]): PreparingRequest[T] =
         new PreparingRequest[T](request, uploadCallback, downloadCallback, codes)

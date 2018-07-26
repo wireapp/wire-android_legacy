@@ -28,7 +28,7 @@ scalaVersion in ThisBuild := "2.11.12"
 
 javacOptions in ThisBuild ++= Seq("-source", "1.7", "-target", "1.7", "-encoding", "UTF-8")
 scalacOptions in ThisBuild ++= Seq(
-  "-feature", "-target:jvm-1.7", "-Xfuture", "-Xfatal-warnings",
+  "-feature", "-target:jvm-1.7", "-Xfuture", //"-Xfatal-warnings",
   "-deprecation", "-Yinline-warnings", "-encoding", "UTF-8", "-Xmax-classfile-name", "128")
 
 platformTarget in ThisBuild := "android-24"
@@ -51,18 +51,18 @@ resolvers in ThisBuild ++= Seq(
 lazy val licenseHeaders = HeaderPlugin.autoImport.headers := Set("scala", "java", "rs") .map { _ -> GPLv3("2016", "Wire Swiss GmbH") } (collection.breakOut)
 
 lazy val root = Project("zmessaging-android", file("."))
-  .aggregate(macrosupport, zmessaging, actors, testutils, unit /*mocked, integration, actors, actors_app actors_android, testapp*/)
+  .aggregate(macrosupport, zmessaging) //actors, testutils, unit /*mocked, integration, actors, actors_app actors_android, testapp*/)
   .settings(
     aggregate := false,
     aggregate in clean := true,
     aggregate in (Compile, compile) := true,
 
-    test := {
-//      (ndkBuild in zmessaging).value
-      (test in unit in Test).value
-    },
-    addCommandAlias("testQuick", ";unit/testQuick"),
-    addCommandAlias("testOnly", ";unit/testOnly"),
+//    test := {
+////      (ndkBuild in zmessaging).value
+//      (test in unit in Test).value
+//    },
+    //addCommandAlias("testQuick", ";unit/testQuick"),
+    //addCommandAlias("testOnly", ";unit/testOnly"),
 
 //    test in IntegrationTest := {
 //      (ndkBuild in zmessaging).value
@@ -73,14 +73,14 @@ lazy val root = Project("zmessaging-android", file("."))
 
     publish := {
       (publish in zmessaging).value
-      (publish in actors).value
-      (publish in testutils).value
+//      (publish in actors).value
+//      (publish in testutils).value
     },
     publishLocal := { (publishLocal in zmessaging).value },
     publishM2 := {
       (publishM2 in zmessaging).value
-      (publishM2 in actors).value
-      (publishM2 in testutils).value
+//      (publishM2 in actors).value
+//      (publishM2 in testutils).value
     },
     libraryDependencies ++= Seq(
       compilerPlugin("com.github.ghik" %% "silencer-plugin" % "0.6"),
@@ -125,25 +125,31 @@ lazy val zmessaging = project
       Deps.cryptobox,
       Deps.genericMessage,
       Deps.backendApi,
+      Deps.circeCore,
+      Deps.circeGeneric,
+      Deps.circeParser,
       "com.wire" % "icu4j-shrunk" % "57.1",
       "org.threeten" % "threetenbp" % "1.3.+" % Provided,
       "com.googlecode.mp4parser" % "isoparser" % "1.1.7",
       "net.java.dev.jna" % "jna" % "4.4.0" % Provided,
       "org.robolectric" % "android-all" % RobolectricVersion % Provided,
       compilerPlugin("com.github.ghik" %% "silencer-plugin" % "0.6"),
-      "com.github.ghik" %% "silencer-lib" % "0.6"
+      "com.github.ghik" %% "silencer-lib" % "0.6",
+
+      "org.scalatest" %% "scalatest" % "3.0.5" % Test,
+      "org.scalamock" %% "scalamock" % "4.1.0" % Test
     )
   )
 
-lazy val unit = project.in(file("tests") / "unit")
-  .enablePlugins(AutomateHeaderPlugin).settings(licenseHeaders)
-  .enablePlugins(AndroidApp).dependsOn(zmessaging)
-  .dependsOn(testutils % Test)
-  .settings(testSettings: _*)
-  .settings(
-    parallelExecution in Test := false,
-    concurrentRestrictions in Global ++= Seq(Tags.limit(Tags.ForkedTestGroup, getRuntime.availableProcessors))
-  )
+//lazy val unit = project.in(file("tests") / "unit")
+//  .enablePlugins(AutomateHeaderPlugin).settings(licenseHeaders)
+//  .enablePlugins(AndroidApp).dependsOn(zmessaging)
+//  .dependsOn(testutils % Test)
+//  .settings(testSettings: _*)
+//  .settings(
+//    parallelExecution in Test := false,
+//    concurrentRestrictions in Global ++= Seq(Tags.limit(Tags.ForkedTestGroup, getRuntime.availableProcessors))
+//  )
 
 //lazy val integration = project.in(file("tests") / "integration")
 //  .enablePlugins(AutomateHeaderPlugin).settings(licenseHeaders)
@@ -168,47 +174,47 @@ lazy val unit = project.in(file("tests") / "unit")
 //    parallelExecution in Test := false
 //  )
 
-lazy val actors: Project = project.in(file("actors") / "base")
-  .enablePlugins(AutomateHeaderPlugin).settings(licenseHeaders)
-  .dependsOn(zmessaging)
-  .settings(publishSettings: _*)
-  .settings(
-    name := "actors-core",
-    exportJars := true,
-    libraryDependencies ++= Seq(
-      "org.robolectric" % "android-all" % RobolectricVersion % Provided,
-      "org.threeten" % "threetenbp" % "1.3",
-      "com.typesafe.akka" %% "akka-actor" % "2.3.14",
-      "com.typesafe.akka" %% "akka-remote" % "2.3.14"
-    )
-  )
+//lazy val actors: Project = project.in(file("actors") / "base")
+//  .enablePlugins(AutomateHeaderPlugin).settings(licenseHeaders)
+//  .dependsOn(zmessaging)
+//  .settings(publishSettings: _*)
+//  .settings(
+//    name := "actors-core",
+//    exportJars := true,
+//    libraryDependencies ++= Seq(
+//      "org.robolectric" % "android-all" % RobolectricVersion % Provided,
+//      "org.threeten" % "threetenbp" % "1.3",
+//      "com.typesafe.akka" %% "akka-actor" % "2.3.14",
+//      "com.typesafe.akka" %% "akka-remote" % "2.3.14"
+//    )
+//  )
 
-lazy val testutils = project.in(file("tests") / "utils")
-  .enablePlugins(AutomateHeaderPlugin).settings(licenseHeaders)
-  .dependsOn(actors)
-  .settings(publishSettings: _*)
-  .settings(
-    name := "testutils",
-    crossPaths := false,
-    exportJars := false,
-    libraryDependencies ++= Seq(
-      //Replacements for Android Dependencies
-      "org.apache.httpcomponents" % "httpclient" % "4.5.3",
-      "org.apache.httpcomponents" % "fluent-hc" % "4.5.3",
-      Deps.scalaCheck,
-      "org.scalatest" %% "scalatest" % "2.2.6",
-      "org.scalamock" %% "scalamock-scalatest-support" % "3.2.2",
-      "org.scalamock" %% "scalamock-core" % "3.2.2",
-      "com.wire" %% "robotest" % "0.7" exclude("org.scalatest", "scalatest"),
-      "com.drewnoakes" % "metadata-extractor" % "2.8.1",
-      "org.robolectric" % "android-all" % RobolectricVersion,
-      "net.java.dev.jna" % "jna" % "4.4.0",
-      "org.java-websocket" % "Java-WebSocket" % "1.3.0",
-      "com.googlecode.mp4parser" % "isoparser" % "1.1.7",
-      "io.fabric8" % "mockwebserver" % "0.1.0"
-    ),
-    dependencyOverrides += "junit" % "junit" % "4.12"
-  )
+//lazy val testutils = project.in(file("tests") / "utils")
+//  .enablePlugins(AutomateHeaderPlugin).settings(licenseHeaders)
+//  .dependsOn(actors)
+//  .settings(publishSettings: _*)
+//  .settings(
+//    name := "testutils",
+//    crossPaths := false,
+//    exportJars := false,
+//    libraryDependencies ++= Seq(
+//      //Replacements for Android Dependencies
+//      "org.apache.httpcomponents" % "httpclient" % "4.5.3",
+//      "org.apache.httpcomponents" % "fluent-hc" % "4.5.3",
+//      Deps.scalaCheck,
+//      "org.scalatest" %% "scalatest" % "2.2.6",
+//      "org.scalamock" %% "scalamock-scalatest-support" % "3.2.2",
+//      "org.scalamock" %% "scalamock-core" % "3.2.2",
+//      "com.wire" %% "robotest" % "0.7" exclude("org.scalatest", "scalatest"),
+//      "com.drewnoakes" % "metadata-extractor" % "2.8.1",
+//      "org.robolectric" % "android-all" % RobolectricVersion,
+//      "net.java.dev.jna" % "jna" % "4.4.0",
+//      "org.java-websocket" % "Java-WebSocket" % "1.3.0",
+//      "com.googlecode.mp4parser" % "isoparser" % "1.1.7",
+//      "io.fabric8" % "mockwebserver" % "0.1.0"
+//    ),
+//    dependencyOverrides += "junit" % "junit" % "4.12"
+//  )
 
 //lazy val testapp = project.in(file("tests") / "app")
 //  .enablePlugins(AutomateHeaderPlugin).settings(licenseHeaders)
@@ -416,7 +422,7 @@ generateDebugMode in macrosupport := {
 lazy val fullCoverage = taskKey[Unit]("Runs all tests and generates coverage report of zmessaging")
 
 fullCoverage := {
-  (test in unit in Test).value
+//  (test in unit in Test).value
 //  (test in mocked in Test).value
 //  (test in integration in Test).value
   (coverageReport in zmessaging).value

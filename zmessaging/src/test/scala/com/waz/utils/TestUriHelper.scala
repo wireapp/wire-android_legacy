@@ -15,28 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.model
+package com.waz.utils
 
-import com.waz.utils.{JsonDecoder, JsonEncoder}
-import org.json.JSONObject
+import java.io.InputStream
+import java.net.URI
 
-case class Dim2(width: Int, height: Int) {
-  def swap: Dim2 = Dim2(width = height, height = width)
-}
+import com.waz.service.assets2.UriHelper
 
-object Dim2 extends ((Int, Int) => Dim2) {
-  import JsonDecoder._
+import scala.util.Try
 
-  val Empty = Dim2(0, 0)
-
-  implicit lazy val Dim2Encoder: JsonEncoder[Dim2] = new JsonEncoder[Dim2] {
-    override def apply(data: Dim2): JSONObject = JsonEncoder { o =>
-      o.put("width", data.width)
-      o.put("height", data.height)
-    }
-  }
-
-  implicit lazy val Dim2Decoder: JsonDecoder[Dim2] = new JsonDecoder[Dim2] {
-    override def apply(implicit js: JSONObject): Dim2 = Dim2('width, 'height)
-  }
+class TestUriHelper extends UriHelper {
+  override def openInputStream(uri: URI): Try[InputStream] = Try { uri.toURL.openStream() }
 }

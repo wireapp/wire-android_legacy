@@ -15,28 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.model
+package com.waz
 
-import com.waz.utils.{JsonDecoder, JsonEncoder}
-import org.json.JSONObject
+import java.io.File
 
-case class Dim2(width: Int, height: Int) {
-  def swap: Dim2 = Dim2(width = height, height = width)
-}
+object FilesystemUtils {
 
-object Dim2 extends ((Int, Int) => Dim2) {
-  import JsonDecoder._
+  lazy val globalDirectoryForTests = new File(System.getProperty("java.io.tmpdir"))
 
-  val Empty = Dim2(0, 0)
-
-  implicit lazy val Dim2Encoder: JsonEncoder[Dim2] = new JsonEncoder[Dim2] {
-    override def apply(data: Dim2): JSONObject = JsonEncoder { o =>
-      o.put("width", data.width)
-      o.put("height", data.height)
-    }
+  def createDirectoryForTest(directoryName: String = s"directory_for_test_${System.currentTimeMillis()}"): File = {
+    val directory = new File(globalDirectoryForTests, directoryName)
+    directory.mkdir()
+    directory
   }
 
-  implicit lazy val Dim2Decoder: JsonDecoder[Dim2] = new JsonDecoder[Dim2] {
-    override def apply(implicit js: JSONObject): Dim2 = Dim2('width, 'height)
-  }
 }

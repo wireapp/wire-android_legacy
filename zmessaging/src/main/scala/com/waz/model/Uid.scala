@@ -117,6 +117,7 @@ case class AssetId(str: String) {
 object AssetId extends (String => AssetId) {
   def apply(): AssetId = Id.random()
 
+  //TODO Why implicit?
   implicit object Id extends Id[AssetId] {
     override def random() = AssetId(Uid().toString)
     override def decode(str: String) = AssetId(str)

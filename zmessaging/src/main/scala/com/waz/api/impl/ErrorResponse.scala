@@ -30,10 +30,10 @@ case class ErrorResponse(code: Int, message: String, label: String) extends Thro
     * Returns true if retrying the request will always fail.
     * Non-fatal errors are temporary and retrying the request with the same parameters could eventually succeed.
     */
-  def isFatal = ResponseCode.isFatal(code)
+  def isFatal: Boolean = ResponseCode.isFatal(code)
 
   // if this error should be reported to hockey
-  def shouldReportError = isFatal && code != ErrorResponse.CancelledCode && code != ErrorResponse.UnverifiedCode
+  def shouldReportError: Boolean = isFatal && code != ErrorResponse.CancelledCode && code != ErrorResponse.UnverifiedCode
 }
 
 object ErrorResponse {

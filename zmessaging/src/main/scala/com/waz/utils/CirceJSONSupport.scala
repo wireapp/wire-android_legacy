@@ -15,28 +15,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.model
+package com.waz.utils
+import java.net.URL
 
-import com.waz.utils.{JsonDecoder, JsonEncoder}
-import org.json.JSONObject
+import com.waz.model.RAssetId
+import io.circe.generic.AutoDerivation
+import io.circe.{Decoder, Encoder}
+import org.threeten.bp.Duration
 
-case class Dim2(width: Int, height: Int) {
-  def swap: Dim2 = Dim2(width = height, height = width)
-}
+trait CirceJSONSupport extends AutoDerivation {
 
-object Dim2 extends ((Int, Int) => Dim2) {
-  import JsonDecoder._
+  implicit def UrlDecoder: Decoder[URL] = Decoder[String].map(new URL(_))
+  implicit def UrlEncoder: Encoder[URL] = Encoder[String].contramap(_.toString)
 
-  val Empty = Dim2(0, 0)
+  implicit def DurationDecoder: Decoder[Duration] = Decoder[Long].map(Duration.ofMillis)
+  implicit def DurationEncoder: Encoder[Duration] = Encoder[Long].contramap(_.toMillis)
 
-  implicit lazy val Dim2Encoder: JsonEncoder[Dim2] = new JsonEncoder[Dim2] {
-    override def apply(data: Dim2): JSONObject = JsonEncoder { o =>
-      o.put("width", data.width)
-      o.put("height", data.height)
-    }
-  }
+  implicit def RAssetIdDecoder: Decoder[RAssetId] = Decoder[String].map(RAssetId.apply)
 
-  implicit lazy val Dim2Decoder: JsonDecoder[Dim2] = new JsonDecoder[Dim2] {
-    override def apply(implicit js: JSONObject): Dim2 = Dim2('width, 'height)
-  }
 }
