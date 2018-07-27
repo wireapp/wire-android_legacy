@@ -34,7 +34,6 @@ import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils._
 import com.waz.utils.events.{EventStream, Signal, SourceStream}
-import org.threeten.bp.Instant
 
 import scala.collection._
 import scala.concurrent.Future
@@ -60,19 +59,19 @@ trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
   def msgsIndex(conv: ConvId): Future[ConvMessagesIndex]
   def msgsFilteredIndex(conv: ConvId, messageFilter: MessageFilter): Future[ConvMessagesIndex]
 
-  def findLocalFrom(conv: ConvId, time: Instant): Future[IndexedSeq[MessageData]]
+  def findLocalFrom(conv: ConvId, time: RemoteInstant): Future[IndexedSeq[MessageData]]
 
   //System message events no longer have IDs, so we need to search by type, timestamp and sender
-  def hasSystemMessage(conv: ConvId, serverTime: Instant, tpe: Message.Type, sender: UserId): Future[Boolean]
+  def hasSystemMessage(conv: ConvId, serverTime: RemoteInstant, tpe: Message.Type, sender: UserId): Future[Boolean]
 
   def getLastMessage(conv: ConvId): Future[Option[MessageData]]
   def getLastSentMessage(conv: ConvId): Future[Option[MessageData]]
   def lastLocalMessage(conv: ConvId, tpe: Message.Type): Future[Option[MessageData]]
-  def countLaterThan(conv: ConvId, time: Instant): Future[Long]
+  def countLaterThan(conv: ConvId, time: RemoteInstant): Future[Long]
 
-  def findMessagesFrom(conv: ConvId, time: Instant): Future[IndexedSeq[MessageData]]
+  def findMessagesFrom(conv: ConvId, time: RemoteInstant): Future[IndexedSeq[MessageData]]
 
-  def clear(convId: ConvId, clearTime: Instant): Future[Unit]
+  def clear(convId: ConvId, clearTime: RemoteInstant): Future[Unit]
 
   def lastMessageFromSelfAndFromOther(conv: ConvId): Signal[(Option[MessageData], Option[MessageData])]
 }
@@ -156,7 +155,7 @@ class MessagesStorageImpl(context: Context,
 
   override def addMessage(msg: MessageData) = put(msg.id, msg)
 
-  def countUnread(conv: ConvId, lastReadTime: Instant): Future[UnreadCount] = {
+  def countUnread(conv: ConvId, lastReadTime: RemoteInstant): Future[UnreadCount] = {
     storage { MessageDataDao.findMessagesFrom(conv, lastReadTime)(_) }.future.map { msgs =>
       msgs.acquire { msgs =>
         val unread = msgs.filter { m => !m.isLocal && m.convId == conv && m.time.isAfter(lastReadTime) && !m.isDeleted && m.userId != userId && m.msgType != Message.Type.UNKNOWN } .toVector
@@ -173,7 +172,7 @@ class MessagesStorageImpl(context: Context,
 
   def countMessages(conv: ConvId, p: MessageEntry => Boolean): Future[Int] = storage(MessageDataDao.countMessages(conv, p)(_))
 
-  def countLaterThan(conv: ConvId, time: Instant): Future[Long] = storage(MessageDataDao.countLaterThan(conv, time)(_))
+  def countLaterThan(conv: ConvId, time: RemoteInstant): Future[Long] = storage(MessageDataDao.countLaterThan(conv, time)(_))
 
   override def getMessage(id: MessageId) = get(id)
 
@@ -199,10 +198,11 @@ class MessagesStorageImpl(context: Context,
       case _ => CancellableFuture.successful(None)
     }
 
-  override def findLocalFrom(conv: ConvId, time: Instant) =
+  //TODO: use local instant?
+  override def findLocalFrom(conv: ConvId, time: RemoteInstant) =
     find(m => m.convId == conv && m.isLocal && !m.time.isBefore(time), MessageDataDao.findLocalFrom(conv, time)(_), identity)
 
-  def findMessagesFrom(conv: ConvId, time: Instant) =
+  def findMessagesFrom(conv: ConvId, time: RemoteInstant) =
     find(m => m.convId == conv && !m.time.isBefore(time), MessageDataDao.findMessagesFrom(conv, time)(_), identity)
 
   override def delete(msg: MessageData) =
@@ -234,7 +234,7 @@ class MessagesStorageImpl(context: Context,
       _ <- storage.flushWALToDatabase()
     } yield ()
 
-  def clear(conv: ConvId, upTo: Instant): Future[Unit] = {
+  def clear(conv: ConvId, upTo: RemoteInstant): Future[Unit] = {
     verbose(s"clear($conv, $upTo)")
     for {
       _ <- storage { MessageDataDao.deleteUpTo(conv, upTo)(_) } .future
@@ -258,7 +258,7 @@ class MessagesStorageImpl(context: Context,
     } yield ()
   }
 
-  override def hasSystemMessage(conv: ConvId, serverTime: Instant, tpe: Message.Type, sender: UserId) = {
+  override def hasSystemMessage(conv: ConvId, serverTime: RemoteInstant, tpe: Message.Type, sender: UserId) = {
     def matches(msg: MessageData) = msg.convId == conv && msg.time == serverTime && msg.msgType == tpe && msg.userId == sender
     find(matches, MessageDataDao.findSystemMessage(conv, serverTime, tpe, sender)(_), identity).map(_.size).map {
       case 0 => false

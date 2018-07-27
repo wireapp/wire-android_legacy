@@ -44,7 +44,7 @@ class ReactionsSyncHandler(client:    MessagesClient,
       case Some(conv) =>
         otrSync.postOtrMessage(conv, GenericMessage(Uid(), Reaction(liking.message, liking.action))) flatMap {
           case Right(time) =>
-            service.updateLocalReaction(liking, time.instant).map(_ => SyncResult.Success)
+            service.updateLocalReaction(liking, time).map(_ => SyncResult.Success)
           case Left(error) =>
             Future.successful(SyncResult(error))
         }

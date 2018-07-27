@@ -19,41 +19,59 @@ package com.waz.sync.client
 
 import java.net.URLEncoder
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetMetaData.Image.Tag.{Medium, Preview}
 import com.waz.model.{AssetData, AssetMetaData, Dim2, Mime}
 import com.waz.threading.CancellableFuture
-import com.waz.utils.{JsonDecoder, LoggedTry}
-import com.waz.znet.Response.SuccessHttpStatus
-import com.waz.znet._
 import com.waz.utils.wrappers.URI
-
+import com.waz.utils.{JsonDecoder, LoggedTry}
+import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
+import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
 import org.json.JSONObject
 
 import scala.util.Try
 import scala.util.control.NonFatal
 
-class GiphyClient(netClient: ZNetClient) {
+trait GiphyClient {
+  def loadTrending(offset: Int = 0, limit: Int = 25): CancellableFuture[Seq[(Option[AssetData], AssetData)]]
+  def search(keyword: String, offset: Int = 0, limit: Int = 25): CancellableFuture[Seq[(Option[AssetData], AssetData)]]
+}
+
+class GiphyClientImpl(implicit
+                      urlCreator: UrlCreator,
+                      httpClient: HttpClient,
+                      authRequestInterceptor: AuthRequestInterceptor) extends GiphyClient {
+
   import GiphyClient._
+  import HttpClient.dsl._
   import com.waz.threading.Threading.Implicits.Background
 
-  def loadTrending(offset: Int = 0, limit: Int = 25): CancellableFuture[Seq[(Option[AssetData], AssetData)]] =
-    netClient(Request.Get(path = trendingPath(offset, limit))) map {
-      case Response(SuccessHttpStatus(), GiphyResponse(images), _) => images
-      case resp =>
-        warn(s"unexpected response for trending: $resp")
-        Nil
-    }
+  private implicit val giphySeqDeserializer: RawBodyDeserializer[Seq[(Option[AssetData], AssetData)]] =
+    RawBodyDeserializer[JSONObject].map(json => GiphyResponse.unapply(JsonObjectResponse(json)).get)
 
-  def search(keyword: String, offset: Int = 0, limit: Int = 25): CancellableFuture[Seq[(Option[AssetData], AssetData)]] =
-    netClient(Request.Get(path = searchPath(keyword, offset, limit))) map {
-      case Response(SuccessHttpStatus(), GiphyResponse(images), _) => images
-      case resp =>
-        warn(s"unexpected response for search keyword '$keyword': $resp")
+  override def loadTrending(offset: Int = 0, limit: Int = 25): CancellableFuture[Seq[(Option[AssetData], AssetData)]] = {
+    Request.Get(relativePath = trendingPath(offset, limit))
+      .withResultType[Seq[(Option[AssetData], AssetData)]]
+      .execute
+      .recover { case err =>
+        warn(s"unexpected response for trending: $err")
         Nil
-    }
+      }
+  }
+
+  override def search(keyword: String, offset: Int = 0, limit: Int = 25): CancellableFuture[Seq[(Option[AssetData], AssetData)]] = {
+    Request.Get(relativePath = searchPath(keyword, offset, limit))
+      .withResultType[Seq[(Option[AssetData], AssetData)]]
+      .execute
+      .recover { case err =>
+        warn(s"unexpected response for search keyword '$keyword': $err")
+        Nil
+      }
+  }
+
 }
 
 object GiphyClient {

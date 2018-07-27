@@ -17,68 +17,75 @@
  */
 package com.waz.sync.client
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.SearchQuery.{Recommended, RecommendedHandle, TopPeople}
 import com.waz.model._
+import com.waz.sync.client.UserSearchClient.{DefaultLimit, UserSearchEntry}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.JsonDecoder
-import com.waz.znet.Response.Status.NotFound
-import com.waz.znet.Response.{Status, SuccessHttpStatus}
-import com.waz.znet.ZNetClient.ErrorOrResponse
-import com.waz.znet.{JsonObjectResponse, _}
+import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
+import com.waz.znet2.http._
 import org.json.JSONObject
 
 import scala.util.control.NonFatal
 
-class UserSearchClient(netClient: ZNetClient) {
+trait UserSearchClient {
+  def getContacts(query: SearchQuery, limit: Int = DefaultLimit): ErrorOrResponse[Seq[UserSearchEntry]]
+  def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserId]]
+}
+
+class UserSearchClientImpl(implicit
+                           urlCreator: UrlCreator,
+                           httpClient: HttpClient,
+                           authRequestInterceptor: AuthRequestInterceptor) extends UserSearchClient {
+
+  import HttpClient.dsl._
   import Threading.Implicits.Background
   import UserSearchClient._
 
-  def getContacts(query: SearchQuery, limit: Int = DefaultLimit): ErrorOrResponse[Seq[UserSearchEntry]] = {
+  private implicit val UsersSearchDeserializer: RawBodyDeserializer[Seq[UserSearchEntry]] =
+    RawBodyDeserializer[JSONObject].map(json => UserSearchResponse.unapply(JsonObjectResponse(json)).get)
+
+  override def getContacts(query: SearchQuery, limit: Int = DefaultLimit): ErrorOrResponse[Seq[UserSearchEntry]] = {
     debug(s"graphSearch('$query', $limit)")
 
-    query match {
-      case Recommended(prefix)       => extractUsers(s"Recommended($prefix)", Request.Get(contactsQuery(prefix, limit, Relation.Third.id, useDirectory = true)))
-      case RecommendedHandle(prefix) => extractUsers(s"RecommendedHandle($prefix)", Request.Get(contactsQuery(prefix, limit, Relation.Third.id, useDirectory = true)))
-      case TopPeople                 =>
-        warn("A request to /search/top was made - this is now only handled locally")
-        CancellableFuture.successful(Right(Seq.empty))
+    //TODO Get rid of this
+    if (query.isInstanceOf[TopPeople.type]) {
+      warn("A request to /search/top was made - this is now only handled locally")
+      CancellableFuture.successful(Right(Seq.empty))
     }
 
+    val prefix = (query: @unchecked) match {
+      case Recommended(p)        => p
+      case RecommendedHandle(p)  => p
+    }
+
+    Request
+      .Get(
+        relativePath = ContactsPath,
+        queryParameters = queryParameters("q" -> prefix, "size" -> limit, "l" -> Relation.Third.id, "d" -> 1)
+      )
+      .withResultType[Seq[UserSearchEntry]]
+      .withErrorType[ErrorResponse]
+      .executeSafe
   }
 
-  def contactsQuery(query: String, limit: Int, level: Int, useDirectory: Boolean): String =
-    Request.query(ContactsPath, "q" -> query, "size" -> limit, "l" -> level, "d" -> (if (useDirectory) 1 else 0))
+  private implicit val UserIdDeserializer: RawBodyDeserializer[UserId] =
+    RawBodyDeserializer[JSONObject].map(json => UserId(json.getString("user")))
 
-  private def extractUsers(name: String, req: Request[Unit]): ErrorOrResponse[Seq[UserSearchEntry]] = {
-    val handling404s: PartialFunction[Response, Either[ErrorResponse, Seq[UserSearchEntry]]] = {
-      case Response(SuccessHttpStatus(), UserSearchResponse(users), _) =>
-        debug(s"user search received: $users")
-        Right(users)
-      case Response(status, _, _) if status.status == NotFound =>
-        warn(s"search service doesn't know about us yet")
-        Left(ErrorResponse(Status.RateLimiting, "user not found", "internal-error")) // convert to rate limited so that it will be retried...
-    }
-
-    netClient(req) map (handling404s orElse ZNetClient.errorHandling(name))
-  }
-
-  def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserId]] = {
-    val handling404s: PartialFunction[Response, Either[ErrorResponse, Option[UserId]]] = {
-      case Response(SuccessHttpStatus(), ExactMatchHandleResponseContent(userId), _) =>
-        debug(s"user id received: $userId, for the handle: $handle")
-        Right(Some(userId))
-      case Response(status, _, _) if status.status == NotFound =>
-        debug(s"exact handle match not found for $handle")
-        Right(None)
-      case other =>
-        warn(s"error while matching handle $handle : $other")
-        Left(ErrorResponse.InternalError)
-    }
-
-    netClient(Request.Get(UserSearchClient.HandlesPath + "/" + Handle.stripSymbol(handle.string))) map (handling404s orElse ZNetClient.errorHandling("exactMatchHandle"))
+  override def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserId]] = {
+    Request.Get(relativePath = handlesQuery(handle))
+      .withResultType[UserId]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+      .map {
+        case Right(userId) => Right(Some(userId))
+        case Left(response) if response.code == ResponseCode.NotFound => Right(None)
+        case Left(response) => Left(response)
+      }
   }
 }
 
@@ -87,6 +94,9 @@ object UserSearchClient {
   val HandlesPath = "/users/handles"
 
   val DefaultLimit = 10
+
+  def handlesQuery(handle: Handle): String =
+    UserSearchClient.HandlesPath + "/" + Handle.stripSymbol(handle.string)
 
   case class UserSearchEntry(id: UserId, name: String, colorId: Option[Int], handle: Handle)
 

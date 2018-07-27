@@ -20,11 +20,11 @@ package com.waz.testutils
 import com.waz.threading.CancellableFuture
 import com.waz.znet._
 
-class FeigningAsyncClientImpl extends AsyncClientImpl(wrapper = TestClientWrapper()) {
-  @volatile var simulateNetworkFailure = false
-
-  override def apply(request: Request[_]): CancellableFuture[Response] =
-    if (simulateNetworkFailure) CancellableFuture.successful(Response(Response.ConnectionError("somebody set up us the bomb")))
-    else super.apply(request)
-
-}
+//class FeigningAsyncClientImpl extends AsyncClientImpl(wrapper = TestClientWrapper()) {
+//  @volatile var simulateNetworkFailure = false
+//
+//  override def apply(request: Request[_]): CancellableFuture[Response] =
+//    if (simulateNetworkFailure) CancellableFuture.successful(Response(Response.ConnectionError("somebody set up us the bomb")))
+//    else super.apply(request)
+//
+//}

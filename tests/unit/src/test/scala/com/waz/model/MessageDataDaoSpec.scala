@@ -38,14 +38,14 @@ import org.threeten.bp.Instant
   val knockUser = UserId()
 
   val events = List(
-    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = Instant.ofEpochMilli(1)),
-    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = Instant.ofEpochMilli(2)),
-    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = Instant.ofEpochMilli(3)),
-    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = Instant.ofEpochMilli(4)),
-    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = Instant.ofEpochMilli(5)),
-    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = Instant.ofEpochMilli(5)),
-    MessageData(MessageId(), convId, Message.Type.KNOCK, knockUser, time = Instant.ofEpochMilli(6)),
-    MessageData(MessageId(), ConvId(), Message.Type.TEXT, UserId(), time = Instant.ofEpochMilli(7))
+    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = RemoteInstant.ofEpochMilli(1)),
+    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = RemoteInstant.ofEpochMilli(2)),
+    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = RemoteInstant.ofEpochMilli(3)),
+    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = RemoteInstant.ofEpochMilli(4)),
+    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = RemoteInstant.ofEpochMilli(5)),
+    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = RemoteInstant.ofEpochMilli(5)),
+    MessageData(MessageId(), convId, Message.Type.KNOCK, knockUser, time = RemoteInstant.ofEpochMilli(6)),
+    MessageData(MessageId(), ConvId(), Message.Type.TEXT, UserId(), time = RemoteInstant.ofEpochMilli(7))
   )
 
   after {

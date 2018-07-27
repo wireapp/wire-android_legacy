@@ -23,10 +23,10 @@ import com.waz.db.{Dao2, Reader, iteratingWithReader}
 import com.waz.utils.JsonEncoder.encodeInstant
 import com.waz.utils.wrappers.{DB, DBCursor}
 import com.waz.utils.{JsonDecoder, JsonEncoder}
+import com.waz.utils.RichWireInstant
 import org.json.JSONObject
-import org.threeten.bp.Instant
 
-case class Liking(message: MessageId, user: UserId, timestamp: Instant, action: Liking.Action) {
+case class Liking(message: MessageId, user: UserId, timestamp: RemoteInstant, action: Liking.Action) {
   lazy val id: Liking.Id = (message, user)
 
   def max(other: Liking) =
@@ -53,12 +53,12 @@ object Liking {
     val values = Set(Like, Unlike)
   }
 
-  type Aggregate = (MessageId, Map[UserId, (Action, Instant)])
+  type Aggregate = (MessageId, Map[UserId, (Action, RemoteInstant)])
 
   implicit object LikingDao extends Dao2[Liking, MessageId, UserId] {
     val Message = id[MessageId]('message_id).apply(_.message)
     val User = id[UserId]('user_id).apply(_.user)
-    val Timestamp = timestamp('timestamp)(_.timestamp)
+    val Timestamp = remoteTimestamp('timestamp)(_.timestamp)
     val ActionCol = int[Action]('action, _.serial, Liking.Action.decode)(_.action)
 
     override val idCol = (Message, User)
@@ -75,10 +75,10 @@ object Liking {
 
     def findMaxTime(implicit db: DB) =
       iteratingWithReader(InstantReader)(db.rawQuery(s"SELECT MAX(${Timestamp.name}) FROM ${table.name}", null))
-        .acquire(t => if (t.hasNext) t.next else Instant.EPOCH)
+        .acquire(t => if (t.hasNext) t.next else RemoteInstant.Epoch)
 
-    object InstantReader extends Reader[Instant] {
-      override def apply(implicit c: DBCursor): Instant = Timestamp.load(c, 0)
+    object InstantReader extends Reader[RemoteInstant] {
+      override def apply(implicit c: DBCursor): RemoteInstant = Timestamp.load(c, 0)
     }
   }
 
@@ -86,7 +86,7 @@ object Liking {
     override def apply(liking: Liking): JSONObject = JsonEncoder { o =>
       o.put("message", liking.message.str)
       o.put("user", liking.user.str)
-      o.put("timestamp", encodeInstant(liking.timestamp))
+      o.put("timestamp", encodeInstant(liking.timestamp.instant))
       o.put("action", liking.action.serial)
     }
   }
@@ -97,7 +97,7 @@ object Liking {
     override def apply(implicit js: JSONObject): Liking = Liking(
       decodeId[MessageId]('message),
       decodeId[UserId]('user),
-      decodeInstant('timestamp),
+      decodeRemoteInstant('timestamp),
       Action.decode(decodeInt('action)))
   }
 }

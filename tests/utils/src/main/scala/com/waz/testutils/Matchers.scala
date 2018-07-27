@@ -107,24 +107,6 @@ object Matchers {
     )
   }
 
-  implicit class ImageAssetSyntax(val im: ImageAsset) extends AnyVal {
-    def shouldBeAnAnimatedGif: Bitmap = {
-      (im.data.previewId should not be empty).soon
-      val promisedMoreThanTwoUpdates = Promise[Bitmap]
-
-      @volatile var count = 0
-      val handle = im.getBitmap(500, new BitmapCallback {
-        override def onBitmapLoadingFailed(): Unit = promisedMoreThanTwoUpdates.tryFailure(new AssertionError(s"GIF loading failed"))
-        override def onBitmapLoaded(b: Bitmap): Unit = {
-          count += 1
-          if (count > 2) promisedMoreThanTwoUpdates.trySuccess(b)
-        }
-      })
-
-      returning(promisedMoreThanTwoUpdates.future.await(s"GIF should get more than 2 updates from loader but got only $count update(s)")(patience(20.seconds)))(_ => handle.cancel())
-    }
-  }
-
   def patience(timeout: FiniteDuration = 5.seconds, interval: FiniteDuration = 20.millis) = DefaultPatience.PatienceConfig(scaled(Span(timeout.toNanos, Nanoseconds)), scaled(Span(interval.toNanos, Nanoseconds)))
 
   implicit class FiniteDurationSyntax(val t: FiniteDuration) extends AnyVal {

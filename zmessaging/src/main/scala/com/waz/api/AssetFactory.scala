@@ -17,18 +17,11 @@
  */
 package com.waz.api
 
-import com.waz.ZLog._
-import com.waz.ZLog.ImplicitTag._
-import com.waz.api.impl.ProgressIndicator.ProgressData
-import com.waz.api.impl.{ContentUriAssetForUpload, RecordingLevels, TranscodedVideoAsset}
-import com.waz.bitmap.video.VideoTranscoder
-import com.waz.model.{AssetData, AssetId, Mime}
+import com.waz.api.impl.{ContentUriAssetForUpload, RecordingLevels}
+import com.waz.model.{AssetData, AssetId}
 import com.waz.service.ZMessaging
 import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, RecordingCancelled, RecordingSuccessful}
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.ui.SignalLoading
-import com.waz.utils.events.Signal
-import com.waz.utils.ContentURIs
+import com.waz.threading.Threading
 import com.waz.utils.wrappers.URI
 import org.threeten.bp.Instant
 
@@ -37,11 +30,6 @@ import scala.util.{Failure, Success}
 
 object AssetFactory {
 
-  trait LoadCallback {
-    def onLoaded(asset: AssetForUpload): Unit
-    def onFailed(): Unit
-  }
-
   def getMaxAllowedAssetSizeInBytes = AssetData.MaxAllowedBackendAssetSizeInBytes
 
   /**
@@ -49,34 +37,6 @@ object AssetFactory {
     */
   def fromContentUri(uri: URI): AssetForUpload = {
     ContentUriAssetForUpload(AssetId(), uri)
-  }
-
-  def videoAsset(uri: URI, callback: LoadCallback): ProgressIndicator = {
-    import Threading.Implicits.Background
-
-    val progress = Signal[ProgressData]()
-
-    val context = ZMessaging.context
-    val cache = ZMessaging.currentGlobal.cache
-    val future = for {
-      ContentURIs.MetaData(mime, name, _) <- CancellableFuture lift ContentURIs.queryContentUriMetaData(context, uri)
-      entry <- CancellableFuture lift cache.createForFile(mime = Mime.Video.MP4, name = name)
-      _ <- VideoTranscoder(context).apply(uri, entry.cacheFile, progress ! _)
-    } yield {
-      TranscodedVideoAsset(if (mime == Mime.Video.MP4) name else name.map(_ + ".mp4"), entry)
-    }
-
-    future .onComplete {
-      case Success(asset) => callback.onLoaded(asset)
-      case Failure(ex) =>
-        warn(s"Video transcoding failed", ex)
-        callback.onFailed()
-    } (Threading.Ui)
-
-    new impl.ProgressIndicator with SignalLoading {
-      addLoader(_ => progress)(set)(ZMessaging.currentUi)
-      override def cancel(): Unit = future.cancel()("progress_indicator")
-    }
   }
 
   def recordAudioAsset(react: RecordingCallback): RecordingControls = {

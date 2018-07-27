@@ -17,18 +17,18 @@
  */
 package com.waz.sync.client
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.api.MediaProvider
-import com.waz.model.messages.media.MediaAssetData.{MediaWithImages, Thumbnail}
+import com.waz.api.impl.ErrorResponse
 import com.waz.model.AssetData
+import com.waz.model.messages.media.MediaAssetData.{MediaWithImages, Thumbnail}
 import com.waz.model.messages.media._
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.znet.Response.SuccessHttpStatus
-import com.waz.znet.ZNetClient.ErrorOr
-import com.waz.znet._
-
+import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
+import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
 import org.json.JSONObject
 
 import scala.collection.JavaConverters._
@@ -36,35 +36,78 @@ import scala.util.control.NonFatal
 
 // TODO at some point, we probably should support paging of long playlists (> 50 items), too, but for now, let's just work on supporting playlists at all
 
-class YouTubeClient(netClient: ZNetClient) {
+trait YouTubeClient {
+  def loadVideo(id: String): ErrorOr[MediaWithImages[TrackData]]
+  def loadPlaylist(id: String): ErrorOr[MediaWithImages[PlaylistData]]
+}
+
+class YouTubeClientImpl(implicit
+                        urlCreator: UrlCreator,
+                        httpClient: HttpClient,
+                        authRequestInterceptor: AuthRequestInterceptor) extends YouTubeClient {
+
+  import HttpClient.dsl._
   import Threading.Implicits.Background
   import YouTubeClient._
 
-  def loadVideo(id: String): ErrorOr[MediaWithImages[TrackData]] =
-    netClient.withFutureErrorHandling("loadVideo", requestById("videos", id)) {
-      case Response(SuccessHttpStatus(), TrackResponse(track), _) => track
-    }
+  private implicit val trackDataDeserializer: RawBodyDeserializer[MediaWithImages[TrackData]] =
+    RawBodyDeserializer[JSONObject].map(json => TrackResponse.unapply(JsonObjectResponse(json)).get)
 
-  def loadPlaylist(id: String): ErrorOr[MediaWithImages[PlaylistData]] =
-    netClient.chainedFutureWithErrorHandling("loadPlaylist", requestById("playlists", id)) {
-      case Response(SuccessHttpStatus(), PlaylistResponse(pl), _) => loadPlaylistItems(id).mapRight { case (tracks, images)  =>
-        pl.copy(media = pl.media.copy(tracks = tracks), images = pl.images ++ images) }
-    }
+  override def loadVideo(id: String): ErrorOr[MediaWithImages[TrackData]] = {
+    Request.Get(relativePath = resourcePath("videos"), queryParameters = List("part" -> "snippet", "id" -> id))
+      .withResultType[MediaWithImages[TrackData]]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+      .future
+  }
 
-  private def loadPlaylistItems(id: String): ErrorOr[(Vector[TrackData], Set[AssetData])] =
-    netClient.withFutureErrorHandling("loadPlaylistItems", requestById("playlistItems", id, idName = "playlistId", limit = Some(50))) {
-      case Response(SuccessHttpStatus(), PlaylistItemsResponse((tracks, images)), _) => (tracks, images)
-    }
+  private implicit val playlistDataDeserializer: RawBodyDeserializer[MediaWithImages[PlaylistData]] =
+    RawBodyDeserializer[JSONObject].map(json => PlaylistResponse.unapply(JsonObjectResponse(json)).get)
+
+  private implicit val playlistItemsDeserializer: RawBodyDeserializer[(Vector[TrackData], Set[AssetData])] =
+    RawBodyDeserializer[JSONObject].map(json => PlaylistItemsResponse.unapply(JsonObjectResponse(json)).get)
+
+  override def loadPlaylist(id: String): ErrorOr[MediaWithImages[PlaylistData]] = {
+    val playlistResponse =
+      Request.Get(
+        relativePath = resourcePath("playlists"),
+        queryParameters = List("part" -> "snippet", "id" -> id)
+      )
+      .withResultType[MediaWithImages[PlaylistData]]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+      .future
+
+    val itemsResponse =
+      Request.Get(
+        relativePath = resourcePath("playlistItems"),
+        queryParameters = queryParameters("part" -> "snippet", "playlistId" -> id, "maxResults" -> 50)
+      )
+      .withResultType[(Vector[TrackData], Set[AssetData])]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+      .future
+
+    for {
+      playlistOrError <- playlistResponse
+      itemsOrError <- itemsResponse
+    } yield for {
+      playlist <- playlistOrError
+      tracksWithImages <- itemsOrError
+    } yield playlist.copy(
+      media = playlist.media.copy(tracks = tracksWithImages._1),
+      images = playlist.images ++ tracksWithImages._2
+    )
+  }
+
 }
 
 object YouTubeClient {
 
-  val domainNames = Set("youtube.com", "youtu.be")
-
+  val DomainNames = Set("youtube.com", "youtu.be")
   val Base = "/proxy/youtube/v3"
 
-  def requestById(resource: String, id: String, idName: String = "id", limit: Option[Int] = None) =
-    Request.Get(s"$Base/$resource?part=snippet&$idName=$id${limit.fold("")("&maxResults=" + _)}")
+  def resourcePath(resource: String) = s"$Base/$resource"
 
   import JsonDecoder._
 
@@ -83,7 +126,9 @@ object YouTubeClient {
   }
 
   object TrackResponse {
-    def unapply(response: ResponseContent): Option[MediaWithImages[TrackData]] = parse[TrackData](response, "youtube#videoListResponse")(TrackDecoder) .flatMap { case (media, assets) => media.headOption map (t => MediaWithImages(t, assets)) }
+    def unapply(response: ResponseContent): Option[MediaWithImages[TrackData]] =
+      parse[TrackData](response, "youtube#videoListResponse")(TrackDecoder)
+        .flatMap { case (media, assets) => media.headOption map (t => MediaWithImages(t, assets)) }
 
     lazy val TrackDecoder: JsonDecoder[MediaWithImages[TrackData]] = new JsonDecoder[MediaWithImages[TrackData]] {
       override def apply(implicit js: JSONObject): MediaWithImages[TrackData] = {

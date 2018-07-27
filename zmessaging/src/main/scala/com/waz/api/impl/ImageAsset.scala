@@ -32,7 +32,7 @@ import com.waz.service.assets.AssetService.BitmapResult
 import com.waz.service.assets.AssetService.BitmapResult.{BitmapLoaded, LoadingFailed}
 import com.waz.service.images.{BitmapSignal, ImageLoader}
 import com.waz.ui.MemoryImageCache.BitmapRequest
-import com.waz.ui.MemoryImageCache.BitmapRequest.{Regular, Single}
+import com.waz.ui.MemoryImageCache.BitmapRequest.Single
 import com.waz.ui._
 import com.waz.utils._
 import com.waz.utils.events.Signal
@@ -55,12 +55,8 @@ class ImageAsset(val id: AssetId)(implicit ui: UiModule) extends com.waz.api.Ima
     }
   }
 
-  override def getId: String = id.str
-
   protected def getBitmap(req: BitmapRequest, callback: BitmapCallback): LoadHandle =
     BitmapLoadHandle({ BitmapSignal(_, data, req) }, callback)
-
-  override def isEmpty: Boolean = false
 
   override def equals(other: Any): Boolean = other match {
     case other: ImageAsset => id == other.id
@@ -155,9 +151,6 @@ object ImageAsset {
   }
 
   object Empty extends com.waz.api.ImageAsset with UiFlags with UiObservable {
-    override def getId: String = AssetData.Empty.id.str
-    override def isEmpty = true
-    override def getBitmap(width: Int, callback: BitmapCallback): LoadHandle = EmptyLoadHandle
     override def getSingleBitmap(width: Int, callback: BitmapCallback): LoadHandle = EmptyLoadHandle
     override def writeToParcel(dest: Parcel, flags: Int): Unit = dest.writeInt(Parcelable.FlagEmpty)
   }
@@ -178,12 +171,6 @@ object ImageAsset {
       case BitmapResult.Empty =>
         verbose(s"ignoring empty bitmap")
     })
-
-
-    override def getProgressIndicator: ProgressIndicator = {
-      //TODO: implement progress indicator
-      ProgressIndicator.Empty
-    }
 
     override def cancel(): Unit = {
       loader.foreach(_.destroy())
@@ -209,8 +196,6 @@ trait BitmapLoading {
   self: com.waz.api.ImageAsset with UiFlags =>
 
   protected def getBitmap(req: BitmapRequest, callback: BitmapCallback): LoadHandle
-
-  override def getBitmap(width: Int, callback: BitmapCallback): LoadHandle = getBitmap(Regular(width, mirror = this.mirrored), callback)
 
   override def getSingleBitmap(width: Int, callback: BitmapCallback): LoadHandle = getBitmap(Single(width, mirror = this.mirrored), callback)
 }

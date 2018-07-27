@@ -32,7 +32,7 @@ class EventStreamWithAuxSignal[A, B](source: EventStream[A], aux: Signal[B]) ext
     aux.subscribe(auxListener)
   }
 
-  override protected def onUnwire(): Unit = {
+  override protected[events] def onUnwire(): Unit = {
     source.unsubscribe(listener)
     aux.unsubscribe(auxListener)
   }

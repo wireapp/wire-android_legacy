@@ -7,8 +7,8 @@ import sbt._
 import sbtassembly.MappingSet
 import SharedSettings._
 
-val MajorVersion = "125"
-val MinorVersion = "1" // hotfix release
+val MajorVersion = "126"
+val MinorVersion = "0" // hotfix release
 
 version in ThisBuild := {
   val jobName = sys.env.get("JOB_NAME")
@@ -118,7 +118,7 @@ lazy val zmessaging = project
       Deps.supportV4 % Provided,
       "org.scala-lang.modules" %% "scala-async" % "0.9.7",
       "com.evernote" % "android-job" % "1.2.0",
-      "com.koushikdutta.async" % "androidasync" % "2.2.1",
+      "com.squareup.okhttp3" % "okhttp" % "3.9.0",
       "com.googlecode.libphonenumber" % "libphonenumber" % "7.1.1", // 7.2.x breaks protobuf
       "com.softwaremill.macwire" %% "macros" % "2.2.2" % Provided,
       "com.google.android.gms" % "play-services-base" % "11.0.0" % Provided exclude("com.android.support", "support-v4"),
@@ -206,7 +206,8 @@ lazy val testutils = project.in(file("tests") / "utils")
       "org.robolectric" % "android-all" % RobolectricVersion,
       "net.java.dev.jna" % "jna" % "4.4.0",
       "org.java-websocket" % "Java-WebSocket" % "1.3.0",
-      "com.googlecode.mp4parser" % "isoparser" % "1.1.7"
+      "com.googlecode.mp4parser" % "isoparser" % "1.1.7",
+      "io.fabric8" % "mockwebserver" % "0.1.0"
     ),
     dependencyOverrides += "junit" % "junit" % "4.12"
   )

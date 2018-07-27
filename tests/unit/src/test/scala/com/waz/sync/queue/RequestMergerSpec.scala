@@ -194,11 +194,11 @@ import scala.concurrent.Future
     scenario("Merge post last read requests") {
       val convId = ConvId()
       val merger = new SyncJobMerger((SyncCommand.PostConvState, convId), new SyncStorage(storage, Nil))
-      merger.merge(SyncJob(SyncId(), PostLastRead(convId, Instant.ofEpochMilli(1))))
-      merger.merge(SyncJob(SyncId(), PostLastRead(convId, Instant.ofEpochMilli(2))))
-      merger.merge(SyncJob(SyncId(), PostLastRead(convId, Instant.ofEpochMilli(3))))
+      merger.merge(SyncJob(SyncId(), PostLastRead(convId, RemoteInstant.ofEpochMilli(1))))
+      merger.merge(SyncJob(SyncId(), PostLastRead(convId, RemoteInstant.ofEpochMilli(2))))
+      merger.merge(SyncJob(SyncId(), PostLastRead(convId, RemoteInstant.ofEpochMilli(3))))
       merger.jobs should have size 1
-      merger.jobs.map(_._2.request) shouldEqual Seq(PostLastRead(convId, Instant.ofEpochMilli(3)))
+      merger.jobs.map(_._2.request) shouldEqual Seq(PostLastRead(convId, RemoteInstant.ofEpochMilli(3)))
     }
 
     scenario("Adding a new Users requests will not add users that are already handled by previous Users requests") {

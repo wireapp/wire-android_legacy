@@ -26,7 +26,6 @@ import com.waz.content.{EditHistoryStorage, MembersStorage, MessagesStorage, Use
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GenericContent._
 import com.waz.model.{MessageId, _}
-import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.otr.VerificationStateUpdater.{ClientUnverified, MemberAdded, VerificationChange}
@@ -36,13 +35,11 @@ import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal}
-import org.threeten.bp.Instant
-import org.threeten.bp.Instant.now
 
 import scala.collection.breakOut
 import scala.concurrent.Future
 import scala.concurrent.Future.{successful, traverse}
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{FiniteDuration, _}
 import scala.util.Success
 
 trait MessagesService {
@@ -51,16 +48,16 @@ trait MessagesService {
   def addAssetMessage(convId: ConvId, asset: AssetData): Future[MessageData]
   def addLocationMessage(convId: ConvId, content: Location): Future[MessageData]
 
-  def addMissedCallMessage(rConvId: RConvId, from: UserId, time: Instant): Future[Option[MessageData]]
-  def addMissedCallMessage(convId: ConvId, from: UserId, time: Instant): Future[Option[MessageData]]
-  def addSuccessfulCallMessage(convId: ConvId, from: UserId, time: Instant, duration: FiniteDuration): Future[Option[MessageData]]
+  def addMissedCallMessage(rConvId: RConvId, from: UserId, time: RemoteInstant): Future[Option[MessageData]]
+  def addMissedCallMessage(convId: ConvId, from: UserId, time: RemoteInstant): Future[Option[MessageData]]
+  def addSuccessfulCallMessage(convId: ConvId, from: UserId, time: RemoteInstant, duration: FiniteDuration): Future[Option[MessageData]]
 
   def addConnectRequestMessage(convId: ConvId, fromUser: UserId, toUser: UserId, message: String, name: String, fromSync: Boolean = false): Future[MessageData]
-  def addConversationStartMessage(convId: ConvId, creator: UserId, users: Set[UserId], name: Option[String], time: Option[Instant] = None): Future[MessageData]
+  def addConversationStartMessage(convId: ConvId, creator: UserId, users: Set[UserId], name: Option[String], time: Option[RemoteInstant] = None): Future[MessageData]
   def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false): Future[Option[MessageData]]
   def addMemberLeaveMessage(convId: ConvId, selfUserId: UserId, user: UserId): Future[Any]
   def addRenameConversationMessage(convId: ConvId, selfUserId: UserId, name: String): Future[Option[MessageData]]
-  def addTimerChangedMessage(convId: ConvId, from: UserId, duration: Option[FiniteDuration], time: Instant = clock.instant()): Future[Unit]
+  def addTimerChangedMessage(convId: ConvId, from: UserId, duration: Option[FiniteDuration], time: RemoteInstant): Future[Unit]
   def addHistoryLostMessages(cs: Seq[ConversationData], selfUserId: UserId): Future[Set[MessageData]]
 
   def addDeviceStartMessages(convs: Seq[ConversationData], selfUserId: UserId): Future[Set[MessageData]]
@@ -70,8 +67,8 @@ trait MessagesService {
   def retryMessageSending(conv: ConvId, msgId: MessageId): Future[Option[SyncId]]
   def updateMessageState(convId: ConvId, messageId: MessageId, state: Message.Status): Future[Option[MessageData]]
 
-  def recallMessage(convId: ConvId, msgId: MessageId, userId: UserId, systemMsgId: MessageId = MessageId(), time: Instant = now(clock), state: Message.Status = Message.Status.PENDING): Future[Option[MessageData]]
-  def applyMessageEdit(convId: ConvId, userId: UserId, time: Instant, gm: GenericMessage): Future[Option[MessageData]]
+  def recallMessage(convId: ConvId, msgId: MessageId, userId: UserId, systemMsgId: MessageId = MessageId(), time: RemoteInstant, state: Message.Status = Message.Status.PENDING): Future[Option[MessageData]]
+  def applyMessageEdit(convId: ConvId, userId: UserId, time: RemoteInstant, gm: GenericMessage): Future[Option[MessageData]]
 
   def removeLocalMemberJoinMessage(convId: ConvId, users: Set[UserId]): Future[Any]
 
@@ -93,7 +90,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
   import Threading.Implicits.Background
   private implicit val ec = EventContext.Global
 
-  override def recallMessage(convId: ConvId, msgId: MessageId, userId: UserId, systemMsgId: MessageId = MessageId(), time: Instant = now(clock), state: Message.Status = Message.Status.PENDING) =
+  override def recallMessage(convId: ConvId, msgId: MessageId, userId: UserId, systemMsgId: MessageId = MessageId(), time: RemoteInstant, state: Message.Status = Message.Status.PENDING) =
     updater.getMessage(msgId) flatMap {
       case Some(msg) if msg.convId != convId =>
         error(s"can not recall message belonging to other conversation: $msg, requested by $userId")
@@ -112,7 +109,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
         Future successful None
     }
 
-  override def applyMessageEdit(convId: ConvId, userId: UserId, time: Instant, gm: GenericMessage) = Serialized.future("applyMessageEdit", convId) {
+  override def applyMessageEdit(convId: ConvId, userId: UserId, time: RemoteInstant, gm: GenericMessage) = Serialized.future("applyMessageEdit", convId) {
 
     def findLatestUpdate(id: MessageId): Future[Option[MessageData]] =
       updater.getMessage(id) flatMap {
@@ -199,13 +196,14 @@ class MessagesServiceImpl(selfUserId:   UserId,
     updater.updateOrCreateLocalMessage(convId, Message.Type.RENAME, update, create)
   }
 
-  override def addTimerChangedMessage(convId: ConvId, from: UserId, duration: Option[FiniteDuration], time: Instant = clock.instant()) =
+  override def addTimerChangedMessage(convId: ConvId, from: UserId, duration: Option[FiniteDuration], time: RemoteInstant) =
     updater.addLocalMessage(MessageData(MessageId(), convId, Message.Type.MESSAGE_TIMER, from, time = time, duration = duration)).map(_ => {})
 
   override def addConnectRequestMessage(convId: ConvId, fromUser: UserId, toUser: UserId, message: String, name: String, fromSync: Boolean = false) = {
     val msg = MessageData(
       MessageId(), convId, Message.Type.CONNECT_REQUEST, fromUser, content = MessageData.textContent(message), name = Some(name), recipient = Some(toUser),
-      time = if (fromSync) MessageData.UnknownInstant else now(clock))
+      //time = if (fromSync) RemoteInstant.Epoch else now(clock))
+      time = RemoteInstant.Epoch )
 
     if (fromSync) storage.insert(msg) else updater.addLocalMessage(msg)
   }
@@ -218,7 +216,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
   override def addDeviceStartMessages(convs: Seq[ConversationData], selfUserId: UserId): Future[Set[MessageData]] =
     Serialized.future('addDeviceStartMessages)(traverse(convs filter isGroupOrOneToOne) { conv =>
       storage.getLastMessage(conv.id) map {
-        case None =>    Some(MessageData(MessageId(), conv.id, Message.Type.STARTED_USING_DEVICE, selfUserId, time = Instant.EPOCH))
+        case None =>    Some(MessageData(MessageId(), conv.id, Message.Type.STARTED_USING_DEVICE, selfUserId, time = RemoteInstant.Epoch))
         case Some(_) => None
       }
     } flatMap { msgs =>
@@ -232,7 +230,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
     traverseSequential(cs) { conv =>
       storage.getLastMessage(conv.id) map {
         case Some(msg) if msg.msgType != Message.Type.STARTED_USING_DEVICE =>
-          Some(MessageData(MessageId(), conv.id, Message.Type.HISTORY_LOST, selfUserId, time = msg.time.plusMillis(1)))
+          Some(MessageData(MessageId(), conv.id, Message.Type.HISTORY_LOST, selfUserId, time = msg.time + 1.millis))
         case _ =>
           // conversation has no messages or has STARTED_USING_DEVICE msg,
           // it means that conv was just created and we don't need to add history lost msg
@@ -241,7 +239,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
     } flatMap { msgs =>
       storage.insertAll(msgs.flatten) flatMap { added =>
         // mark messages read if there is no other unread messages
-        val times: Map[ConvId, Instant] = added.map(m => m.convId -> m.time) (breakOut)
+        val times: Map[ConvId, RemoteInstant] = added.map(m => m.convId -> m.time) (breakOut)
         convs.storage.updateAll2(times.keys, { c =>
           val t = times(c.id)
           if (c.lastRead.toEpochMilli == t.toEpochMilli - 1) c.copy(lastRead = t) else c
@@ -250,7 +248,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
     }
   }
 
-  def addConversationStartMessage(convId: ConvId, creator: UserId, users: Set[UserId], name: Option[String], time: Option[Instant]) = {
+  def addConversationStartMessage(convId: ConvId, creator: UserId, users: Set[UserId], name: Option[String], time: Option[RemoteInstant]) = {
     updater.addLocalSentMessage(MessageData(MessageId(), convId, Message.Type.MEMBER_JOIN, creator, name = name, members = users, firstMessage = true), time)
   }
 
@@ -340,7 +338,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
     }
   }
 
-  override def addMissedCallMessage(rConvId: RConvId, from: UserId, time: Instant): Future[Option[MessageData]] =
+  override def addMissedCallMessage(rConvId: RConvId, from: UserId, time: RemoteInstant): Future[Option[MessageData]] =
     convs.convByRemoteId(rConvId).flatMap {
       case Some(conv) => addMissedCallMessage(conv.id, from, time)
       case None =>
@@ -348,10 +346,10 @@ class MessagesServiceImpl(selfUserId:   UserId,
         Future.successful(None)
     }
 
-  override def addMissedCallMessage(convId: ConvId, from: UserId, time: Instant): Future[Option[MessageData]] =
+  override def addMissedCallMessage(convId: ConvId, from: UserId, time: RemoteInstant): Future[Option[MessageData]] =
     updater.addMessage(MessageData(MessageId(), convId, Message.Type.MISSED_CALL, from, time = time))
 
-  override def addSuccessfulCallMessage(convId: ConvId, from: UserId, time: Instant, duration: FiniteDuration) =
+  override def addSuccessfulCallMessage(convId: ConvId, from: UserId, time: RemoteInstant, duration: FiniteDuration) =
     updater.addMessage(MessageData(MessageId(), convId, Message.Type.SUCCESSFUL_CALL, from, time = time, duration = Some(duration)))
 
   def messageDeliveryFailed(convId: ConvId, msg: MessageData, error: ErrorResponse): Future[Option[MessageData]] =

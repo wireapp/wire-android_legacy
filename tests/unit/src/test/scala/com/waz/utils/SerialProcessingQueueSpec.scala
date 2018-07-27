@@ -43,7 +43,7 @@ import scala.util.Random
       })
 
       val convId = RConvId()
-      val future = queue.enqueue(Seq(TypingEvent(convId, Instant.now(), UserId(), true), TypingEvent(convId, Instant.now(), UserId(), true), TypingEvent(RConvId(), Instant.now(), UserId(), true)))
+      val future = queue.enqueue(Seq(TypingEvent(convId, RemoteInstant(Instant.now()), UserId(), true), TypingEvent(convId, RemoteInstant(Instant.now()), UserId(), true), TypingEvent(RConvId(), RemoteInstant(Instant.now()), UserId(), true)))
 
       val res = Await.result(future, 1.second)
       info(s"res: $res")

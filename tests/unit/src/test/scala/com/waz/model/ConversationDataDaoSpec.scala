@@ -34,7 +34,7 @@ import scala.util.Random
   lazy val convId = ConvId()
 
   def conv(name: String, ct: ConversationType = ConversationType.Group, archived: Boolean = false) =
-    ConversationData(ConvId(), RConvId(), Some(name), UserId(), ct, archived = archived, lastEventTime = Instant.ofEpochMilli(Random.nextInt(10000)))
+    ConversationData(ConvId(), RConvId(), Some(name), UserId(), ct, archived = archived, lastEventTime = RemoteInstant.ofEpochMilli(Random.nextInt(10000)))
 
   lazy val conversations = List(
     conv("self", ConversationType.Self),

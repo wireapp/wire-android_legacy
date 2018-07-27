@@ -17,8 +17,6 @@
  */
 package com.waz.sync.otr
 
-import java.util.Date
-
 import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Verification
@@ -36,22 +34,22 @@ import com.waz.service.otr.{OtrClientsService, OtrService}
 import com.waz.service.push.PushService
 import com.waz.service.{ErrorsService, UserService}
 import com.waz.sync.SyncResult
-import com.waz.sync.client.AssetClient.{Retention, UploadResponse}
+import com.waz.sync.client.AssetClient.{Metadata, Retention, UploadResponse}
 import com.waz.sync.client.OtrClient.{ClientMismatch, EncryptedContent, MessageResponse}
 import com.waz.sync.client.{AssetClient, MessagesClient, OtrClient, UsersClient}
 import com.waz.threading.CancellableFuture
 import com.waz.utils.crypto.AESUtils
-import com.waz.znet.ZNetClient.ErrorOrResponse
+import com.waz.sync.client.ErrorOrResponse
 
 import scala.concurrent.Future
 import scala.concurrent.Future.successful
 
 trait OtrSyncHandler {
-  def postOtrMessage(conv: ConversationData, message: GenericMessage): Future[Either[ErrorResponse, Date]]
-  def postOtrMessage(convId: ConvId, remoteId: RConvId, message: GenericMessage, recipients: Option[Set[UserId]] = None, nativePush: Boolean = true): Future[Either[ErrorResponse, Date]]
+  def postOtrMessage(conv: ConversationData, message: GenericMessage): Future[Either[ErrorResponse, RemoteInstant]]
+  def postOtrMessage(convId: ConvId, remoteId: RConvId, message: GenericMessage, recipients: Option[Set[UserId]] = None, nativePush: Boolean = true): Future[Either[ErrorResponse, RemoteInstant]]
   def uploadAssetDataV3(data: LocalData, key: Option[AESKey], mime: Mime = Mime.Default, retention: Retention): CancellableFuture[Either[ErrorResponse, RemoteData]]
   def postSessionReset(convId: ConvId, user: UserId, client: ClientId): Future[SyncResult]
-  def broadcastMessage(message: GenericMessage, retry: Int = 0, previous: EncryptedContent = EncryptedContent.Empty): Future[Either[ErrorResponse, Date]]
+  def broadcastMessage(message: GenericMessage, retry: Int = 0, previous: EncryptedContent = EncryptedContent.Empty): Future[Either[ErrorResponse, RemoteInstant]]
 }
 
 class OtrSyncHandlerImpl(teamId:             Option[TeamId],
@@ -97,7 +95,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
   // when it fails we will try sending empty messages to contacts for which we can not encrypt the message
   // in last try we will use 'ignore_missing' flag
   private def encryptMessageForClients(convId: ConvId, message: GenericMessage, retry: Int = 0, previous: EncryptedContent = EncryptedContent.Empty, recipients: Option[Set[UserId]] = None)
-                                      (f: (EncryptedContent, Int) => ErrorOrResponse[MessageResponse]): Future[Either[ErrorResponse, Date]] = convStorage.get(convId) flatMap {
+                                      (f: (EncryptedContent, Int) => ErrorOrResponse[MessageResponse]): Future[Either[ErrorResponse, RemoteInstant]] = convStorage.get(convId) flatMap {
     case Some(conv) if conv.verified == Verification.UNVERIFIED && message.hasCalling =>
       successful(Left(ErrorResponse.Unverified))
     case Some(conv) if conv.verified == Verification.UNVERIFIED =>
@@ -110,7 +108,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       }
   }
 
-  private def loopIfMissingClients(arg: Either[ErrorResponse, MessageResponse], retry: Int, fn: () => Future[Either[ErrorResponse, Date]]): Future[Either[ErrorResponse, Date]] = arg match {
+  private def loopIfMissingClients(arg: Either[ErrorResponse, MessageResponse], retry: Int, fn: () => Future[Either[ErrorResponse, RemoteInstant]]): Future[Either[ErrorResponse, RemoteInstant]] = arg match {
     case Right(MessageResponse.Success(ClientMismatch(_, _, deleted, time))) =>
       // XXX: we are ignoring redundant clients, we rely on members list to encrypt messages, so if user left the conv then we won't use his clients on next message
       service.deleteClients(deleted) map { _ => Right(time) }
@@ -148,7 +146,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
     }
   }
 
-  def broadcastMessage(message: GenericMessage, retry: Int = 0, previous: EncryptedContent = EncryptedContent.Empty): Future[Either[ErrorResponse, Date]] = push.afterProcessing {
+  def broadcastMessage(message: GenericMessage, retry: Int = 0, previous: EncryptedContent = EncryptedContent.Empty): Future[Either[ErrorResponse, RemoteInstant]] = push.afterProcessing {
     def broadcastRecipients = for {
       acceptedOrBlocked <- users.acceptedOrBlockedUsers.head
       myTeam <- teamId.fold(Future.successful(Set.empty[UserData]))(id => usersStorage.getByTeam(Set(id)))
@@ -171,12 +169,12 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
     case Some(_) =>
       key match {
         case Some(k) => CancellableFuture.lift(service.encryptAssetData(k, data)) flatMap {
-          case (sha, encrypted, encryptionAlg) => assetClient.uploadAsset(encrypted, Mime.Default, retention = retention).map { //encrypted data => Default mime
+          case (sha, encrypted, encryptionAlg) => assetClient.uploadAsset(Metadata(retention = retention), encrypted, Mime.Default).map { //encrypted data => Default mime
             case Right(UploadResponse(rId, _, token)) => Right(RemoteData(Some(rId), token, key, Some(sha), Some(encryptionAlg)))
             case Left(err) => Left(err)
           }
         }
-        case _ => assetClient.uploadAsset(data, mime, public = true).map {
+        case _ => assetClient.uploadAsset(Metadata(public = true), data, mime).map {
           case Right(UploadResponse(rId, _, _)) => Right(RemoteData(Some(rId)))
           case Left(err) => Left(err)
         }

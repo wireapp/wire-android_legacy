@@ -47,7 +47,7 @@ class ClearedSyncHandler(selfUserId:   UserId,
   // Clear may have been scheduled before some messages were sent,
   // in that case we want to use event and time of the last such message
   // (but we need to first send them to get that info).
-  private[sync] def getActualClearInfo(convId: ConvId, time: Instant) =
+  private[sync] def getActualClearInfo(convId: ConvId, time: RemoteInstant) =
     msgs.findMessagesFrom(convId, time) map { ms =>
       verbose(s"getActualClearInfo, messages from clear time: $ms")
 
@@ -59,10 +59,10 @@ class ClearedSyncHandler(selfUserId:   UserId,
       (t, archive)
     }
 
-  def postCleared(convId: ConvId, time: Instant): Future[SyncResult] = {
+  def postCleared(convId: ConvId, time: RemoteInstant): Future[SyncResult] = {
     verbose(s"postCleared($convId, $time)")
 
-    def postTime(time: Instant, archive: Boolean) =
+    def postTime(time: RemoteInstant, archive: Boolean) =
       convs.get(convId) flatMap {
         case None =>
           Future successful SyncResult(ErrorResponse.internalError(s"No conversation found for id: $convId"))

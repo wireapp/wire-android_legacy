@@ -40,8 +40,8 @@ class ReactionsStorageImpl(context: Context, storage: Database) extends CachedSt
 
   private implicit val dispatcher = new SerialDispatchQueue()
 
-  private val likesCache = new TrimmingLruCache[MessageId, Map[UserId, Instant]](context, Fixed(1024))
-  private val maxTime = returning(new AggregatingSignal[Instant, Instant](onChanged.map(_.maxBy(_.timestamp).timestamp), storage.read(LikingDao.findMaxTime(_)), _ max _))(_.disableAutowiring())
+  private val likesCache = new TrimmingLruCache[MessageId, Map[UserId, RemoteInstant]](context, Fixed(1024))
+  private val maxTime = returning(new AggregatingSignal[RemoteInstant, RemoteInstant](onChanged.map(_.maxBy(_.timestamp).timestamp), storage.read(LikingDao.findMaxTime(_)), _ max _))(_.disableAutowiring())
 
   onChanged.on(dispatcher) { likes =>
     likes.groupBy(_.message) foreach { case (msg, ls) =>
@@ -53,7 +53,7 @@ class ReactionsStorageImpl(context: Context, storage: Database) extends CachedSt
   }
 
   private def updateCache(msg: MessageId, likings: Iterable[Liking]) = {
-    val users: Map[UserId, Instant] = likings.collect { case l if l.action == Action.Like => l.user -> l.timestamp } (breakOut)
+    val users: Map[UserId, RemoteInstant] = likings.collect { case l if l.action == Action.Like => l.user -> l.timestamp } (breakOut)
     likesCache.put(msg, users)
     Likes(msg, users)
   }
@@ -75,7 +75,7 @@ class ReactionsStorageImpl(context: Context, storage: Database) extends CachedSt
   }
 
   def addOrUpdate(liking: Liking): Future[Likes] = {
-    if (liking.timestamp == EPOCH) updateOrCreate(liking.id, l => l.copy(timestamp = maxTime.currentValue.getOrElse(l.timestamp) + 1.milli, action = liking.action), liking) // local update
+    if (liking.timestamp.isEpoch) updateOrCreate(liking.id, l => l.copy(timestamp = maxTime.currentValue.getOrElse(l.timestamp) + 1.milli, action = liking.action), liking) // local update
     else updateOrCreate(liking.id, _ max liking, liking)
   }.flatMap(_ => getLikes(liking.message))
 
@@ -97,8 +97,8 @@ class ReactionsStorageImpl(context: Context, storage: Database) extends CachedSt
 object ReactionsStorageImpl {
   private implicit val logTag: LogTag = logTagFor[ReactionsStorageImpl]
 
-  private def likers(likings: Seq[Liking]): Map[UserId, Instant] =
+  private def likers(likings: Seq[Liking]): Map[UserId, RemoteInstant] =
     likings.collect { case l if l.action == Action.Like => l.user -> l.timestamp } (breakOut)
 }
 
-case class Likes(message: MessageId, likers: Map[UserId, Instant])
+case class Likes(message: MessageId, likers: Map[UserId, RemoteInstant])

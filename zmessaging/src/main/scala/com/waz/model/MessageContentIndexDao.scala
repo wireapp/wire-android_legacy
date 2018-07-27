@@ -22,9 +22,8 @@ import com.waz.api.{ContentSearchQuery, Message}
 import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.utils.wrappers.{DB, DBCursor}
-import org.threeten.bp.Instant
 
-case class MessageContentIndexEntry(messageId: MessageId, convId: ConvId, content: String, time: Instant)
+case class MessageContentIndexEntry(messageId: MessageId, convId: ConvId, content: String, time: RemoteInstant)
 
 object MessageContentIndexDao extends Dao[MessageContentIndexEntry, MessageId] {
   import MessageContentIndex._
@@ -33,7 +32,7 @@ object MessageContentIndexDao extends Dao[MessageContentIndexEntry, MessageId] {
   val MessageId = id[MessageId]('message_id).apply(_.messageId)
   val Conv = id[ConvId]('conv_id).apply(_.convId)
   val Content = text('content)(_.content)
-  val Time = timestamp('time)(_.time)
+  val Time = remoteTimestamp('time)(_.time)
 
   override def onCreate(db: DB) = {
     db.execSQL(table.createFtsSql)
@@ -56,7 +55,7 @@ object MessageContentIndexDao extends Dao[MessageContentIndexEntry, MessageId] {
 
   def deleteForConv(id: ConvId)(implicit db: DB) = delete(Conv, id)
 
-  def deleteUpTo(id: ConvId, upTo: Instant)(implicit db: DB) = db.delete(table.name, s"${Conv.name} = '${id.str}' AND ${Time.name} <= ${Time(upTo)}", null)
+  def deleteUpTo(id: ConvId, upTo: RemoteInstant)(implicit db: DB) = db.delete(table.name, s"${Conv.name} = '${id.str}' AND ${Time.name} <= ${Time(upTo)}", null)
 
   def findContentFts(queryText: String, convId: Option[ConvId])(implicit db: DB): DBCursor ={
     convId match {

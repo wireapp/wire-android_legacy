@@ -37,7 +37,7 @@ object RichMediaContentParser {
 
   def findMatches(content: String, weblinkEnabled: Boolean = false) = {
 
-    val knownDomains = (YouTubeClient.domainNames.map(_ -> YOUTUBE) ++
+    val knownDomains = (YouTubeClient.DomainNames.map(_ -> YOUTUBE) ++
       SoundCloudClient.domainNames.map(_ -> SOUNDCLOUD)
       ).toMap
 

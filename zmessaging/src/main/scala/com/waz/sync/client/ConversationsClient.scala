@@ -20,91 +20,191 @@ package com.waz.sync.client
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.IConversation.{Access, AccessRole}
+import com.waz.api.impl.ErrorResponse
 import com.waz.model.ConversationData.{ConversationType, Link}
 import com.waz.model._
 import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
-import com.waz.threading.Threading
 import com.waz.utils.JsonEncoder.{encodeAccess, encodeAccessRole}
-import com.waz.utils.{Json, JsonDecoder, JsonEncoder, returning}
-import com.waz.znet.ContentEncoder.JsonContentEncoder
-import com.waz.znet.Response.{HttpStatus, Status, SuccessHttpStatus}
-import com.waz.znet.ZNetClient._
-import com.waz.znet._
+import com.waz.utils.{Json, JsonDecoder, JsonEncoder, returning, _}
+import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
+import com.waz.znet2.http._
 import org.json
 import org.json.JSONObject
 import org.threeten.bp.Instant
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.FiniteDuration
 import scala.util.control.NonFatal
 
-class ConversationsClient(netClient: ZNetClient) {
-  import Threading.Implicits.Background
-  import com.waz.sync.client.ConversationsClient._
+trait ConversationsClient {
+  import ConversationsClient._
+  def loadConversationIds(start: Option[RConvId] = None): ErrorOrResponse[ConversationsResult]
+  def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult]
+  def loadConversations(ids: Seq[RConvId]): ErrorOrResponse[Seq[ConversationResponse]]
+  def loadConversation(id: RConvId): ErrorOrResponse[ConversationResponse]
+  def postName(convId: RConvId, name: String): ErrorOrResponse[Option[RenameConversationEvent]]
+  def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Unit]
+  def postMessageTimer(convId: RConvId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit]
+  def postMemberJoin(conv: RConvId, members: Set[UserId]): ErrorOrResponse[Option[MemberJoinEvent]]
+  def postMemberLeave(conv: RConvId, user: UserId): ErrorOrResponse[Option[MemberLeaveEvent]]
+  def createLink(conv: RConvId): ErrorOrResponse[Link]
+  def removeLink(conv: RConvId): ErrorOrResponse[Unit]
+  def getLink(conv: RConvId): ErrorOrResponse[Option[Link]]
+  def postAccessUpdate(conv: RConvId, access: Set[Access], accessRole: AccessRole): ErrorOrResponse[Unit]
+  //TODO Use case class instead of this parameters list
+  def postConversation(users: Set[UserId], name: Option[String] = None, team: Option[TeamId], access: Set[Access], accessRole: AccessRole): ErrorOrResponse[ConversationResponse]
+}
 
-  def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult] =
-    netClient.withErrorHandling(s"loadConversations(start = $start)", Request.Get(conversationsQuery(start, limit))) {
-      case Response(SuccessHttpStatus(), ConversationsResult(conversations, hasMore), _) => ConversationsResult(conversations, hasMore)
+class ConversationsClientImpl(implicit
+                              urlCreator: UrlCreator,
+                              httpClient: HttpClient,
+                              authRequestInterceptor: AuthRequestInterceptor) extends ConversationsClient {
+
+  import ConversationsClient._
+  import HttpClient.dsl._
+  import com.waz.threading.Threading.Implicits.Background
+
+  private implicit val ConversationIdsResponseDeserializer: RawBodyDeserializer[ConversationsResult] =
+    RawBodyDeserializer[JSONObject].map { json =>
+      val (ids, hasMore) = ConversationsResult.unapply(JsonObjectResponse(json)).get
+      ConversationsResult(ids, hasMore)
     }
 
-  def loadConversations(ids: Seq[RConvId]): ErrorOrResponse[Seq[ConversationResponse]] =
-    netClient.withErrorHandling(s"loadConversations(ids = $ids)", Request.Get(conversationsQuery(ids = ids))) {
-      case Response(SuccessHttpStatus(), ConversationsResult(conversations, _), _) => conversations
-    }
+  override def loadConversationIds(start: Option[RConvId] = None): ErrorOrResponse[ConversationsResult] = {
+    Request
+      .Get(
+        relativePath = ConversationIdsPath,
+        queryParameters = queryParameters("size" -> ConversationIdsPageSize, "start" -> start)
+      )
+      .withResultType[ConversationsResult]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
 
-  def postName(convId: RConvId, name: String): ErrorOrResponse[Option[RenameConversationEvent]] =
-    netClient.withErrorHandling("postName", Request.Put(s"$ConversationsPath/$convId", Json("name" -> name))) {
-      case Response(SuccessHttpStatus(), EventsResponse(event: RenameConversationEvent), _) => Some(event)
-    }
+  override def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult] = {
+    Request
+      .Get(
+        relativePath = ConversationsPath,
+        queryParameters = queryParameters("size" -> limit, "start" -> start)
+      )
+      .withResultType[ConversationsResult]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
 
-  def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Boolean] =
-    netClient.withErrorHandling("postConversationState", Request.Put(s"$ConversationsPath/$convId/self", state)(ConversationState.StateContentEncoder)) {
-      case Response(SuccessHttpStatus(), _, _) => true
-    }
+  override def loadConversations(ids: Seq[RConvId]): ErrorOrResponse[Seq[ConversationResponse]] = {
+    Request
+      .Get(relativePath = ConversationsPath, queryParameters = queryParameters("ids" -> ids.mkString(",")))
+      .withResultType[ConversationsResult]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+      .map(_.map(_.conversations))
+  }
 
-  def postMessageTimer(convId: RConvId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit] =
-    netClient.withErrorHandling("postMessageTimer", Request.Put(s"$ConversationsPath/$convId/message-timer", Json("message_timer" -> duration.map(_.toMillis)))) {
-      case Response(SuccessHttpStatus(), _, _) => {}
-    }
+  override def loadConversation(id: RConvId): ErrorOrResponse[ConversationResponse] = {
+    Request.Get(relativePath = s"$ConversationsPath/$id")
+      .withResultType[ConversationsResult]
+      .withErrorType[ErrorResponse]
+      .executeSafe(_.conversations.head)
+  }
 
-  def postMemberJoin(conv: RConvId, members: Set[UserId]): ErrorOrResponse[Option[MemberJoinEvent]] =
-    netClient.withErrorHandling("postMemberJoin", Request.Post(s"$ConversationsPath/$conv/members", Json("users" -> Json(members)))) {
-      case Response(SuccessHttpStatus(), EventsResponse(event: MemberJoinEvent), _) => Some(event)
-      case Response(HttpStatus(Status.NoResponse, _), EmptyResponse, _) => None
-    }
+  private implicit val EventsResponseDeserializer: RawBodyDeserializer[List[ConversationEvent]] =
+    RawBodyDeserializer[JSONObject].map(json => EventsResponse.unapplySeq(JsonObjectResponse(json)).get)
 
-  def postMemberLeave(conv: RConvId, user: UserId): ErrorOrResponse[Option[MemberLeaveEvent]] =
-    netClient.withErrorHandling("postMemberLeave", Request.Delete(s"$ConversationsPath/$conv/members/$user")) {
-      case Response(SuccessHttpStatus(), EventsResponse(event: MemberLeaveEvent), _) => Some(event)
-      case Response(HttpStatus(Status.NoResponse, _), EmptyResponse, _) => None
-    }
+  override def postName(convId: RConvId, name: String): ErrorOrResponse[Option[RenameConversationEvent]] = {
+    Request.Put(relativePath = s"$ConversationsPath/$convId", body = Json("name" -> name))
+      .withResultType[List[ConversationEvent]]
+      .withErrorType[ErrorResponse]
+      .executeSafe {
+        case (event: RenameConversationEvent) :: Nil => Some(event)
+        case _ => None
+      }
+  }
 
-  def createLink(conv: RConvId): ErrorOrResponse[Link] =
-    netClient.withErrorHandling("createLink", Request.Post(s"$ConversationsPath/$conv/code", {}, timeout = 3.seconds)) {
-      case Response(HttpStatus(Status.Success, _), JsonObjectResponse(js), _) if js.has("uri") => Link(js.getString("uri"))
-      case Response(HttpStatus(Status.Created, _), JsonObjectResponse(js), _) if js.getJSONObject("data").has("uri") => Link(js.getJSONObject("data").getString("uri"))
-    }
+  override def postMessageTimer(convId: RConvId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit] = {
+    Request
+      .Put(
+        relativePath = s"$ConversationsPath/$convId/message-timer",
+        body = Json("message_timer" -> duration.map(_.toMillis))
+      )
+      .withResultType[Unit]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
 
-  def removeLink(conv: RConvId): ErrorOrResponse[Unit] =
-    netClient.withErrorHandling("removeLink", Request.Delete(s"$ConversationsPath/$conv/code", timeout = 3.seconds)) {
-      case Response(SuccessHttpStatus(), _, _) => // nothing to return
-    }
+  override def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Unit] = {
+    Request.Put(relativePath = s"$ConversationsPath/$convId/self", body = state)
+      .withResultType[Unit]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
 
-  def getLink(conv: RConvId): ErrorOrResponse[Option[Link]] =
-    netClient.withErrorHandling("getLink", Request.Get(s"$ConversationsPath/$conv/code")) {
-      case Response(SuccessHttpStatus(), JsonObjectResponse(js), _) if js.has("uri") => Option(Link(js.getString("uri")))
-      case Response(HttpStatus(Status.NotFound, "no-conversation-code"), _, _) => None
-    }
+  override def postMemberJoin(conv: RConvId, members: Set[UserId]): ErrorOrResponse[Option[MemberJoinEvent]] = {
+    Request.Post(relativePath = s"$ConversationsPath/$conv/members", body = Json("users" -> Json(members)))
+      .withResultType[Option[List[ConversationEvent]]]
+      .withErrorType[ErrorResponse]
+      .executeSafe(_.collect { case (event: MemberJoinEvent) :: Nil => event })
+  }
 
-  def postAccessUpdate(conv: RConvId, access: Set[Access], accessRole: AccessRole): ErrorOrResponse[Unit] =
-    netClient.withErrorHandling("postAccessUpdate",
-      Request.Put(
-        accessUpdatePath(conv),
-        Json(
+  override def postMemberLeave(conv: RConvId, user: UserId): ErrorOrResponse[Option[MemberLeaveEvent]] = {
+    Request.Delete(relativePath = s"$ConversationsPath/$conv/members/$user")
+      .withResultType[Option[List[ConversationEvent]]]
+      .withErrorType[ErrorResponse]
+      .executeSafe(_.collect { case (event: MemberLeaveEvent) :: Nil => event })
+  }
+
+  override def createLink(conv: RConvId): ErrorOrResponse[Link] = {
+    Request.Post(relativePath = s"$ConversationsPath/$conv/code", body = "")
+      .withResultType[Response[JSONObject]]
+      .withErrorType[ErrorResponse]
+      .executeSafe { response =>
+        val js = response.body
+        if (response.code == ResponseCode.Success && js.has("uri"))
+          Link(js.getString("uri"))
+        else if (response.code == ResponseCode.Created && js.getJSONObject("data").has("uri"))
+          Link(js.getJSONObject("data").getString("uri"))
+        else
+          throw new IllegalArgumentException(s"Can not extract link from json: $js")
+      }
+
+  }
+
+  def removeLink(conv: RConvId): ErrorOrResponse[Unit] = {
+    Request.Delete(relativePath = s"$ConversationsPath/$conv/code")
+      .withResultType[Unit]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
+
+  def getLink(conv: RConvId): ErrorOrResponse[Option[Link]] = {
+    Request.Get(relativePath = s"$ConversationsPath/$conv/code")
+      .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
+      .withResultType[Response[JSONObject]]
+      .withErrorType[ErrorResponse]
+      .executeSafe { response =>
+        val js = response.body
+        if (ResponseCode.isSuccessful(response.code) && js.has("uri"))
+          Some(Link(js.getString("uri")))
+        else if (response.code == ResponseCode.NotFound)
+          None
+        else
+          throw new IllegalArgumentException(s"Can not extract link from json: $js")
+      }
+  }
+
+  def postAccessUpdate(conv: RConvId, access: Set[Access], accessRole: AccessRole): ErrorOrResponse[Unit] = {
+    Request
+      .Put(
+        relativePath = accessUpdatePath(conv),
+        body = Json(
           "access" -> encodeAccess(access),
-          "access_role" -> encodeAccessRole(accessRole)),
-        timeout = 3.seconds)) {
-      case Response(SuccessHttpStatus(), _, _) | Response(HttpStatus(Status.NoResponse, _), _, _) => //no op
-    }
+          "access_role" -> encodeAccessRole(accessRole)
+        )
+      )
+      .withResultType[Unit]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
 
   def postConversation(users: Set[UserId], name: Option[String] = None, team: Option[TeamId], access: Set[Access], accessRole: AccessRole): ErrorOrResponse[ConversationResponse] = {
     debug(s"postConversation($users, $name)")
@@ -118,9 +218,10 @@ class ConversationsClient(netClient: ZNetClient) {
       o.put("access", encodeAccess(access))
       o.put("access_role", encodeAccessRole(accessRole))
     }
-    netClient.withErrorHandling("postConversation", Request.Post(ConversationsPath, payload)) {
-      case Response(SuccessHttpStatus(), ConversationsResult(Seq(conv), _), _) => conv
-    }
+    Request.Post(relativePath = ConversationsPath, body = payload)
+      .withResultType[ConversationsResult]
+      .withErrorType[ErrorResponse]
+      .executeSafe(_.conversations.head)
   }
 }
 
@@ -133,27 +234,15 @@ object ConversationsClient {
 
   def accessUpdatePath(id: RConvId) = s"$ConversationsPath/${id.str}/access"
 
-  def conversationsQuery(start: Option[RConvId] = None, limit: Int = ConversationsPageSize, ids: Seq[RConvId] = Nil): String = {
-    val args = (start, ids) match {
-      case (None, Nil) =>   Seq("size" -> limit)
-      case (Some(id), _) => Seq("size" -> limit, "start" -> id.str)
-      case _ =>             Seq("ids" -> ids.mkString(","))
-    }
-    Request.query(ConversationsPath, args: _*)
-  }
-
-  def conversationIdsQuery(start: Option[RConvId]): String =
-    Request.query(ConversationIdsPath, ("size", ConversationIdsPageSize) :: start.toList.map("start" -> _.str) : _*)
-
   case class ConversationResponse(id:           RConvId,
                                   name:         Option[String],
                                   creator:      UserId,
                                   convType:     ConversationType,
                                   team:         Option[TeamId],
                                   muted:        Boolean,
-                                  mutedTime:    Instant,
+                                  mutedTime:    RemoteInstant,
                                   archived:     Boolean,
-                                  archivedTime: Instant,
+                                  archivedTime: RemoteInstant,
                                   access:       Set[Access],
                                   accessRole:   Option[AccessRole],
                                   link:         Option[Link],
@@ -177,9 +266,9 @@ object ConversationsClient {
           'type,
           'team,
           state.muted.getOrElse(false),
-          state.muteTime.getOrElse(Instant.EPOCH),
+          state.muteTime.getOrElse(RemoteInstant.Epoch),
           state.archived.getOrElse(false),
-          state.archiveTime.getOrElse(Instant.EPOCH),
+          state.archiveTime.getOrElse(RemoteInstant.Epoch),
           'access,
           'access_role,
           'link,

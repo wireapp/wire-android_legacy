@@ -20,11 +20,6 @@ package com.waz.api;
 public interface LoadHandle {
 
     /**
-     * Returns a progress indicator.
-     */
-    ProgressIndicator getProgressIndicator();
-
-    /**
      * Cancels load request, callback will not be called for cancelled requests.
      * Note: This method has to be run on UI thread
      */

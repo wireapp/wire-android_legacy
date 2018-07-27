@@ -19,8 +19,8 @@ package com.waz.sync.client
 
 import java.net.URLEncoder
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.api.MediaProvider
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.AssetData
@@ -29,32 +29,54 @@ import com.waz.model.messages.media.{ArtistData, MediaAssetData, PlaylistData, T
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.wrappers.URI
-import com.waz.znet.Response.{ResponseBodyDecoder, SuccessHttpStatus}
-import com.waz.znet.ResponseConsumer.JsonConsumer
-import com.waz.znet.ZNetClient.ErrorOr
-import com.waz.znet._
+import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
+import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request, Response}
 import org.json.JSONObject
 import org.threeten.bp.Duration
 
-class SoundCloudClient(netClient: ZNetClient) {
+trait SoundCloudClient {
+  def resolve(soundCloudUrl: String): ErrorOr[MediaWithImages[MediaAssetData]]
+  def streamingLocation(url: String): ErrorOr[URI]
+}
+
+class SoundCloudClientImpl(implicit
+                           urlCreator: UrlCreator,
+                           httpClient: HttpClient,
+                           authRequestInterceptor: AuthRequestInterceptor) extends SoundCloudClient {
+
+  import HttpClient.dsl._
   import SoundCloudClient._
   import Threading.Implicits.Background
 
-  def resolve(soundCloudUrl: String): ErrorOr[MediaWithImages[MediaAssetData]] =
-    netClient.withFutureErrorHandling("SoundCloud resolve", get(proxyPath("resolve", soundCloudUrl))) {
-      case Response(SuccessHttpStatus(), SoundCloudResponse(audioAsset), _) => audioAsset
-    }
 
-  private def get(path: String) = Request[Unit](Request.GetMethod, Some(path), decoder = Some(new ResponseBodyDecoder {
-    // XXX we have to explicitly ignore the content type here because often, SoundCloud tells us that it returns application/xml when it really returns application/json...
-    def apply(contentType: String, contentLength: Long): ResponseConsumer[_ <: ResponseContent] = new JsonConsumer(contentLength)
-  }), followRedirect = false)
+  private implicit val soundCloudResponseDeserializer: RawBodyDeserializer[MediaWithImages[MediaAssetData]] =
+    RawBodyDeserializer[JSONObject].map(json => SoundCloudResponse.unapply(JsonObjectResponse(json)).get)
 
-  def streamingLocation(url: String): ErrorOr[URI] =
-    netClient(Request[Unit](Request.GetMethod, Some(proxyPath("stream", url)), followRedirect = false)).future map {
-      case Response(Response.HttpStatus(Response.Status.MovedTemporarily, _), _, headers) => headers("Location").fold2(Left(ErrorResponse.internalError("no location header available")), { loc => Right(URI.parse(loc)) })
-      case other => Left(ErrorResponse(other.status.status, s"Unexpected response when retrieving streaming uri for $url: $other", "unexpected-soundcloud-response"))
-    }
+  override def resolve(soundCloudUrl: String): ErrorOr[MediaWithImages[MediaAssetData]] = {
+    Request.Get(relativePath = proxyPath("resolve", soundCloudUrl))
+      .withResultType[MediaWithImages[MediaAssetData]]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+      .future
+  }
+
+  override def streamingLocation(url: String): ErrorOr[URI] = {
+    Request.Head(relativePath = proxyPath("stream", url))
+      .withResultType[Response[Unit]]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+      .map(
+        _.right.flatMap { response =>
+          response.headers.get("Location").fold2(
+            Left(ErrorResponse.internalError("no location header available")),
+            location => Right(URI.parse(location))
+          )
+        }
+      )
+      .future
+  }
+
 }
 
 object SoundCloudClient {

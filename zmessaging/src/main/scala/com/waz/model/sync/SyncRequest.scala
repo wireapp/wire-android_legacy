@@ -17,10 +17,9 @@
  */
 package com.waz.model.sync
 
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.ZLog.error
-import com.waz.api.EphemeralExpiration
 import com.waz.api.IConversation.{Access, AccessRole}
+import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.AccentColor
 import com.waz.model.AddressBook.AddressBookDecoder
 import com.waz.model.UserData.ConnectionStatus
@@ -31,11 +30,10 @@ import com.waz.sync.client.{ConversationsClient, UsersClient}
 import com.waz.sync.queue.SyncJobMerger._
 import com.waz.utils._
 import org.json.JSONObject
-import org.threeten.bp.Instant
 
+import scala.concurrent.duration._
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
-import scala.concurrent.duration._
 
 sealed abstract class SyncRequest {
   val cmd: SyncCommand
@@ -147,12 +145,12 @@ object SyncRequest {
     override def merge(req: SyncRequest) = mergeHelper[PostConvState](req)(other => Merged(copy(state = mergeConvState(state, other.state))))
   }
 
-  case class PostLastRead(convId: ConvId, time: Instant) extends RequestForConversation(Cmd.PostLastRead) {
+  case class PostLastRead(convId: ConvId, time: RemoteInstant) extends RequestForConversation(Cmd.PostLastRead) {
     override val mergeKey: Any = (cmd, convId)
     override def merge(req: SyncRequest) = mergeHelper[PostLastRead](req)(Merged(_))
   }
 
-  case class PostCleared(convId: ConvId, time: Instant) extends RequestForConversation(Cmd.PostCleared) with SerialExecutionWithinConversation {
+  case class PostCleared(convId: ConvId, time: RemoteInstant) extends RequestForConversation(Cmd.PostCleared) with SerialExecutionWithinConversation {
     override val mergeKey: Any = (cmd, convId)
     override def merge(req: SyncRequest) = mergeHelper[PostCleared](req) { other =>
       Merged(PostCleared(convId, time max other.time))
@@ -163,18 +161,18 @@ object SyncRequest {
     override def merge(req: SyncRequest) = mergeHelper[PostTypingState](req)(Merged(_))
   }
 
-  case class PostMessage(convId: ConvId, messageId: MessageId, editTime: Instant) extends RequestForConversation(Cmd.PostMessage) with SerialExecutionWithinConversation {
+  case class PostMessage(convId: ConvId, messageId: MessageId, editTime: RemoteInstant) extends RequestForConversation(Cmd.PostMessage) with SerialExecutionWithinConversation {
     override val mergeKey = (cmd, convId, messageId)
     override def merge(req: SyncRequest) = mergeHelper[PostMessage](req) { r =>
       // those requests are merged if message was edited multiple times (or unsent message was edited before sync is finished)
       // editTime == Instant.EPOCH is a special value, it marks initial message sync, we need to preserve that info
       // sync handler will check editTime and will just upload regular message (with current content) instead of an edit if it's EPOCH
-      val time = if (editTime == Instant.EPOCH) Instant.EPOCH else editTime max r.editTime
+      val time = if (editTime.isEpoch) RemoteInstant.Epoch else editTime max r.editTime
       Merged(PostMessage(convId, messageId, time))
     }
   }
 
-  case class PostOpenGraphMeta(convId: ConvId, messageId: MessageId, editTime: Instant) extends RequestForConversation(Cmd.PostOpenGraphMeta) {
+  case class PostOpenGraphMeta(convId: ConvId, messageId: MessageId, editTime: RemoteInstant) extends RequestForConversation(Cmd.PostOpenGraphMeta) {
     override val mergeKey = (cmd, convId, messageId)
     override def merge(req: SyncRequest) = mergeHelper[PostOpenGraphMeta](req)(r => Merged(PostOpenGraphMeta(convId, messageId, editTime max r.editTime)))
   }

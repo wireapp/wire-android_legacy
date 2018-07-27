@@ -17,21 +17,31 @@
  */
 package com.waz.sync.client
 
-import com.waz.ZLog._
+import com.waz.api.impl.ErrorResponse
 import com.waz.model.RConvId
-import com.waz.threading.Threading
 import com.waz.utils.JsonEncoder
-import com.waz.znet.ZNetClient.ErrorOrResponse
-import com.waz.znet.{Request, ZNetClient}
+import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
+import com.waz.znet2.http.{HttpClient, Request}
 
-class TypingClient(netClient: ZNetClient) {
-  import Threading.Implicits.Background
+trait TypingClient {
+  def updateTypingState(id: RConvId, isTyping: Boolean): ErrorOrResponse[Unit]
+}
+
+class TypingClientImpl(implicit
+                       urlCreator: UrlCreator,
+                       httpClient: HttpClient,
+                       authRequestInterceptor: AuthRequestInterceptor) extends TypingClient {
+
+  import HttpClient.dsl._
   import TypingClient._
-  private implicit val logTag: LogTag = logTagFor[TypingClient]
 
   def updateTypingState(id: RConvId, isTyping: Boolean): ErrorOrResponse[Unit] = {
     val payload = JsonEncoder { _.put("status", if (isTyping) "started" else "stopped") }
-    netClient.updateWithErrorHandling("updateTypingStatus", Request.Post(typingPath(id), payload))
+    Request.Post(relativePath = typingPath(id), body = payload)
+      .withResultType[Unit]
+      .withErrorType[ErrorResponse]
+      .executeSafe
   }
 }
 

@@ -22,7 +22,7 @@ import com.waz.content.Database
 import com.waz.model.sync.SyncJob
 import com.waz.model.sync.SyncJob.Priority
 import com.waz.model.sync.SyncRequest.PostOpenGraphMeta
-import com.waz.model.{ConvId, MessageId, SyncId}
+import com.waz.model.{ConvId, MessageId, RemoteInstant, SyncId}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.queue.SyncContentUpdater.StaleJobTimeout
 import com.waz.sync.queue.SyncContentUpdaterImpl
@@ -34,8 +34,8 @@ class SyncContentUpdaterSpec extends AndroidFreeSpec {
 
   scenario("Returning stale sync jobs") {
 
-    val staleJob = SyncJob(SyncId(), PostOpenGraphMeta(ConvId(), MessageId(), clock.instant()), priority = Priority.Low, timestamp = System.currentTimeMillis() - (StaleJobTimeout.toMillis + 100L))
-    val nonStaleJob = SyncJob(SyncId(), PostOpenGraphMeta(ConvId(), MessageId(), clock.instant()), priority = Priority.Low, timestamp = System.currentTimeMillis() - (StaleJobTimeout.toMillis - 100L))
+    val staleJob = SyncJob(SyncId(), PostOpenGraphMeta(ConvId(), MessageId(), RemoteInstant(clock.instant())), priority = Priority.Low, timestamp = System.currentTimeMillis() - (StaleJobTimeout.toMillis + 100L))
+    val nonStaleJob = SyncJob(SyncId(), PostOpenGraphMeta(ConvId(), MessageId(), RemoteInstant(clock.instant())), priority = Priority.Low, timestamp = System.currentTimeMillis() - (StaleJobTimeout.toMillis - 100L))
 
     val savedJobs = Vector(
       staleJob,

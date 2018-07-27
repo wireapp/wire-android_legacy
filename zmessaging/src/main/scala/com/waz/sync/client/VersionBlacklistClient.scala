@@ -17,42 +17,34 @@
  */
 package com.waz.sync.client
 
-import com.waz.ZLog._
+import java.net.URL
+
+import com.waz.api.impl.ErrorResponse
 import com.waz.model._
 import com.waz.service.BackendConfig
-import com.waz.threading.Threading
 import com.waz.utils.wrappers.URI
-import com.waz.znet.ContentEncoder.EmptyContentEncoder
-import com.waz.znet.Response.{ResponseBodyDecoder, SuccessHttpStatus}
-import com.waz.znet.ResponseConsumer.JsonConsumer
-import com.waz.znet.ZNetClient.ErrorOrResponse
-import com.waz.znet._
+import com.waz.znet2.http.{HttpClient, Method, Request}
 
-import scala.util.Try
-
-class VersionBlacklistClient(netClient: ZNetClient, backendConfig: BackendConfig) {
-  import Threading.Implicits.Background
-  import VersionBlacklistClient._
-  private implicit val tag: LogTag = logTagFor[VersionBlacklistClient]
-
-  def loadVersionBlacklist(): ErrorOrResponse[VersionBlacklist] = {
-    netClient.withErrorHandling("loadVersionBlacklist", Request(baseUri = Some(blacklistsUrl(backendConfig.environment)), requiresAuthentication = false, decoder = Some(decoder))(EmptyContentEncoder)) {
-      case Response(SuccessHttpStatus(), VersionBlacklistExtractor(blacklist), _) => blacklist
-    }
-  }
-
-  def blacklistsUrl(env: String) = URI.parse(s"https://clientblacklist.wire.com/${Option(env) filterNot (_.isEmpty) getOrElse "prod"}/android")
+trait VersionBlacklistClient {
+  def loadVersionBlacklist(): ErrorOrResponse[VersionBlacklist]
 }
 
-object VersionBlacklistClient {
-  val decoder = new ResponseBodyDecoder {
-    override def apply(contentType: String, contentLength: Long): ResponseConsumer[_ <: ResponseContent] = new JsonConsumer(contentLength)
-  }
+class VersionBlacklistClientImpl(backendConfig: BackendConfig)
+                                (implicit httpClient: HttpClient) extends VersionBlacklistClient {
 
-  object VersionBlacklistExtractor {
-    def unapply(resp: ResponseContent): Option[VersionBlacklist] = resp match {
-      case JsonObjectResponse(js) => Try(VersionBlacklist.Decoder(js)).toOption
-      case _ => None
-    }
+  import HttpClient.dsl._
+  import VersionBlacklistClientImpl._
+
+  def loadVersionBlacklist(): ErrorOrResponse[VersionBlacklist] = {
+    Request.create(method = Method.Get, url = blacklistsUrl(backendConfig.environment))
+      .withResultType[VersionBlacklist]
+      .withErrorType[ErrorResponse]
+      .executeSafe
   }
+}
+
+object VersionBlacklistClientImpl {
+  def blacklistsUrl(env: String): URL = new URL(
+    URI.parse(s"https://clientblacklist.wire.com/${Option(env) filterNot (_.isEmpty) getOrElse "prod"}/android").toString
+  )
 }

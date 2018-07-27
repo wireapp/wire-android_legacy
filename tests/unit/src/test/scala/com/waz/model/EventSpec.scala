@@ -45,7 +45,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
       event.asInstanceOf[UserConnectionEvent].convId should be(RConvId("f660330f-f0e3-4511-8d15-71251f44ce32"))
       event.asInstanceOf[UserConnectionEvent].to should be(otherUser.id)
       event.asInstanceOf[UserConnectionEvent].from should be(selfUser.id)
-      event.asInstanceOf[UserConnectionEvent].lastUpdated should be(JsonDecoder.parseDate("2014-06-12T10:04:02.047Z"))
+      event.asInstanceOf[UserConnectionEvent].lastUpdated should be(RemoteInstant.ofEpochMilli(JsonDecoder.parseDate("2014-06-12T10:04:02.047Z").getTime))
       event.asInstanceOf[UserConnectionEvent].message should be(Some("Hello Test"))
     }
 
@@ -61,7 +61,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
 
     //TODO Base64.decode doesn't work on JVM - fix..
     ignore("encode/decode GenericMessageEvent") {
-      val msg = GenericMessageEvent(RConvId(), Instant.now(), UserId(), new Messages.GenericMessage)
+      val msg = GenericMessageEvent(RConvId(), RemoteInstant(Instant.now()), UserId(), new Messages.GenericMessage)
       EventDecoder(MessageEventEncoder(msg)) match {
         case ev: GenericMessageEvent =>
           ev.convId shouldEqual msg.convId
@@ -74,7 +74,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
 
     //TODO Base64.decode doesn't work on JVM - fix..
     ignore("encode/decode CallMessageEvent") {
-      val msg = CallMessageEvent(RConvId(), Instant.now(), UserId(), ClientId(), "")
+      val msg = CallMessageEvent(RConvId(), RemoteInstant(Instant.now()), UserId(), ClientId(), "")
       EventDecoder(MessageEventEncoder(msg)) match {
         case ev: CallMessageEvent =>
           ev.convId shouldEqual msg.convId
@@ -87,7 +87,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
     }
 
     scenario("encode/decode OtrErrorEvent(duplicate)") {
-      val msg = OtrErrorEvent(RConvId(), Instant.now(), UserId(), Duplicate)
+      val msg = OtrErrorEvent(RConvId(), RemoteInstant(Instant.now()), UserId(), Duplicate)
       EventDecoder(MessageEventEncoder(msg)) match {
         case ev: OtrErrorEvent =>
           ev.convId shouldEqual msg.convId
@@ -99,7 +99,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
     }
 
     scenario("encode/decode OtrErrorEvent(DecryptionError)") {
-      val msg = OtrErrorEvent(RConvId(), Instant.now(), UserId(), DecryptionError("error", UserId(), ClientId()))
+      val msg = OtrErrorEvent(RConvId(), RemoteInstant(Instant.now()), UserId(), DecryptionError("error", UserId(), ClientId()))
       EventDecoder(MessageEventEncoder(msg)) match {
         case ev: OtrErrorEvent =>
           ev.convId shouldEqual msg.convId
@@ -111,7 +111,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
     }
 
     scenario("encode/decode OtrErrorEvent(IdentityChanged)") {
-      val msg = OtrErrorEvent(RConvId(), Instant.now(), UserId(), IdentityChangedError(UserId(), ClientId()))
+      val msg = OtrErrorEvent(RConvId(), RemoteInstant(Instant.now()), UserId(), IdentityChangedError(UserId(), ClientId()))
       EventDecoder(MessageEventEncoder(msg)) match {
         case ev: OtrErrorEvent =>
           ev.convId shouldEqual msg.convId

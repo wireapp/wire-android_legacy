@@ -54,7 +54,7 @@ trait EmptySyncServiceTrait extends SyncServiceHandle {
   override def postConnection(user: UserId, name: String, message: String) = sid
   override def postConnectionStatus(userId: UserId, status: ConnectionStatus) = sid
   override def postSelfUser(u: UserInfo) = sid
-  override def postMessage(id: MessageId, conv: ConvId, time: Instant) = sid
+  override def postMessage(id: MessageId, conv: ConvId, time: RemoteInstant) = sid
   override def postAssetStatus(id: MessageId, conv: ConvId, exp: Option[FiniteDuration], status: AssetStatus.Syncable) = sid
   override def postDeleted(conv: ConvId, msg: MessageId): Future[SyncId] = sid
   override def postRecalled(conv: ConvId, msg: MessageId, recalled: MessageId): Future[SyncId] = sid
@@ -67,11 +67,11 @@ trait EmptySyncServiceTrait extends SyncServiceHandle {
   override def postConversationMemberLeave(id: ConvId, member: UserId) = sid
   override def postConversationState(id: ConvId, s: ConversationState) = sid
   override def postConversation(id: ConvId, users: Set[UserId], name: Option[String], team: Option[TeamId], access: Set[Access], accessRole: AccessRole) = sid
-  override def postLastRead(id: ConvId, time: Instant) = sid
-  override def postCleared(id: ConvId, time: Instant): Future[SyncId] = sid
+  override def postLastRead(id: ConvId, time: RemoteInstant) = sid
+  override def postCleared(id: ConvId, time: RemoteInstant): Future[SyncId] = sid
   override def postAddressBook(ab: AddressBook) = sid
   override def postTypingState(id: ConvId, t: Boolean) = sid
-  override def postOpenGraphData(conv: ConvId, msg: MessageId, time: Instant) = sid
+  override def postOpenGraphData(conv: ConvId, msg: MessageId, time: RemoteInstant) = sid
   override def postReceipt(conv: ConvId, message: MessageId, user: UserId, tpe: ReceiptType) = sid
   override def postAddBot(cId: ConvId, pId: ProviderId, iId: IntegrationId) = sid
   override def postRemoveBot(cId: ConvId, botId: UserId) = sid

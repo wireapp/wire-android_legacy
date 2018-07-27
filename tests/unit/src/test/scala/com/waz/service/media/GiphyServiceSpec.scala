@@ -26,7 +26,6 @@ import com.waz.service.images.ImageAssetGenerator
 import com.waz.sync.client.GiphyClient
 import com.waz.testutils.Matchers._
 import com.waz.threading.CancellableFuture
-import com.waz.znet.ZNetClient.EmptyClient
 import org.scalatest._
 
 @Ignore class GiphyServiceSpec extends FeatureSpec with Matchers with BeforeAndAfter with RobolectricTests with RobolectricUtils { test =>
@@ -41,11 +40,12 @@ import org.scalatest._
   val smallestSearchResult = AssetData(metaData = Some(Image(Dim2(100, 120), Preview)), mime = Mime.Image.Gif, source =  Some(URI.parse("http://s3.amazonaws.com/giphygifs/media/Ggjwvmqktuvf2/200_d.gif")))
   val searchResult = Seq((Some(smallestSearchResult), biggestSearchResult))
 
-  lazy val service = new GiphyService(new GiphyClient(new EmptyClient) {
+  lazy val service = new GiphyService(new GiphyClient {
     override def search(keyword: String, offset: Int, limit: Int) = {
       test.keyword = keyword
       CancellableFuture.successful(loadSearchResult)
     }
+    override def loadTrending(offset: Int, limit: Int): CancellableFuture[Seq[(Option[AssetData], AssetData)]] = ???
   })
 
   feature("translate") {

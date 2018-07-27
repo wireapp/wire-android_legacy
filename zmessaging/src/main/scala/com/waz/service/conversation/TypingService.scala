@@ -29,10 +29,10 @@ import com.waz.sync.SyncServiceHandle
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.RichFuture.processSequential
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream}
-import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import org.threeten.bp
 
 class TypingService(userId:        UserId,
                     conversations: ConversationStorage,
@@ -64,15 +64,16 @@ class TypingService(userId:        UserId,
 
   def typingUsers(conv: ConvId) = new AggregatingSignal[IndexedSeq[TypingUser], IndexedSeq[UserId]](onTypingChanged.filter(_._1 == conv).map(_._2), Future { typing(conv).map(_.id) }, { (_, updated) => updated.map(_.id) })
 
-  def handleTypingEvent(e: TypingEvent): Future[Unit] =
-    isRecent(e).flatMap {
-      case true =>
-        conversations.getByRemoteId(e.convId) map {
-          case Some(conv) => setUserTyping(conv.id, e.from, e.time, e.isTyping)
-          case None => warn(s"Conversation ${e.convId} not found, ignoring.")
-        }
-      case _ => Future.successful(())
+  def handleTypingEvent(e: TypingEvent): Future[Unit] = beDriftPref.apply().map { beDrift =>
+    if (isRecent(e, beDrift)) {
+      conversations.getByRemoteId(e.convId) map {
+        case Some(conv) => setUserTyping(conv.id, e.from, e.time.toLocal(beDrift), e.isTyping)
+        case None => warn(s"Conversation ${e.convId} not found, ignoring.")
+      }
+    } else {
+      Future.successful(())
     }
+  }
 
 
   def selfChangedInput(conv: ConvId): Future[Unit] = Future {
@@ -112,7 +113,7 @@ class TypingService(userId:        UserId,
 
   def isSelfTyping(conv: ConvId): CancellableFuture[Boolean] = dispatcher { selfIsTyping.exists(_._1 == conv) }
 
-  private def setUserTyping(conv: ConvId, user: UserId, time: Instant, isTyping: Boolean): Unit = {
+  private def setUserTyping(conv: ConvId, user: UserId, time: LocalInstant, isTyping: Boolean): Unit = {
     val current = typing(conv)
     current.find(_.id == user).foreach(_.cleanUp.cancel())
 
@@ -121,7 +122,7 @@ class TypingService(userId:        UserId,
       onTypingChanged ! (conv -> typing(conv))
     } else if (isTyping) {
       val cleanUp = CancellableFuture.delayed(receiverTimeout - (clock.millis - time.toEpochMilli).millis) {
-        setUserTyping(conv, user, clock.instant(), isTyping = false)
+        setUserTyping(conv, user, LocalInstant.Now, isTyping = false)
       }
       val idx = current.indexWhere(_.id == user)
       if (idx == -1) {
@@ -133,10 +134,10 @@ class TypingService(userId:        UserId,
     }
   }
 
-  def isRecent(event: TypingEvent): Future[Boolean] = beDriftPref.apply().map { beDrift =>
-    val now = clock.instant().plus(beDrift).toEpochMilli
+  def isRecent(event: TypingEvent, beDrift: bp.Duration): Boolean = {
+    val now = LocalInstant.Now.toRemote(beDrift).toEpochMilli
     now - event.time.toEpochMilli < receiverTimeout.toMillis
   }
 }
 
-case class TypingUser(id: UserId, time: Instant, cleanUp: CancellableFuture[Unit])
+case class TypingUser(id: UserId, time: LocalInstant, cleanUp: CancellableFuture[Unit])

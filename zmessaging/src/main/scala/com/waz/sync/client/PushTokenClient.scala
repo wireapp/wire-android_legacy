@@ -17,28 +17,43 @@
  */
 package com.waz.sync.client
 
+import com.waz.api.impl.ErrorResponse
 import com.waz.model.PushToken
 import com.waz.model.otr.ClientId
-import com.waz.threading.Threading
+import com.waz.sync.client.PushTokenClient.PushTokenRegistration
 import com.waz.utils.{JsonDecoder, JsonEncoder}
-import com.waz.znet.Response.SuccessHttpStatus
-import com.waz.znet.ZNetClient.ErrorOrResponse
-import com.waz.znet._
+import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
+import com.waz.znet2.http.{HttpClient, Request}
 import org.json.JSONObject
 
-import scala.util.Try
+trait PushTokenClient {
+  def postPushToken(token: PushTokenRegistration): ErrorOrResponse[PushTokenRegistration]
+  def deletePushToken(token: String): ErrorOrResponse[Unit]
+}
 
-class PushTokenClient(netClient: ZNetClient) {
-  import Threading.Implicits.Background
-  import com.waz.sync.client.PushTokenClient._
+class PushTokenClientImpl(implicit
+                          urlCreator: UrlCreator,
+                          httpClient: HttpClient,
+                          authRequestInterceptor: AuthRequestInterceptor) extends PushTokenClient {
 
-  def postPushToken(token: PushTokenRegistration): ErrorOrResponse[PushTokenRegistration] =
-    netClient.withErrorHandling("postPushToken", Request.Post(PushesPath, token)) {
-      case Response(SuccessHttpStatus(), GcmResponseExtractor(res), _) => res
-    }
+  import HttpClient.dsl._
+  import PushTokenClient._
 
-  def deletePushToken(token: String): ErrorOrResponse[Unit] =
-    netClient.updateWithErrorHandling("deletePushToken", Request.Delete[Unit](s"$PushesPath/$token"))
+  override def postPushToken(token: PushTokenRegistration): ErrorOrResponse[PushTokenRegistration] = {
+    Request.Post(relativePath = PushesPath, body = token)
+      .withResultType[PushTokenRegistration]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
+
+  override def deletePushToken(token: String): ErrorOrResponse[Unit] = {
+    Request.Delete(relativePath = s"$PushesPath/$token")
+      .withResultType[Unit]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
+
 }
 
 object PushTokenClient {
@@ -49,7 +64,8 @@ object PushTokenClient {
 
     implicit lazy val Decoder: JsonDecoder[PushTokenRegistration] = new JsonDecoder[PushTokenRegistration] {
       import com.waz.utils.JsonDecoder._
-      override def apply(implicit js: JSONObject): PushTokenRegistration = PushTokenRegistration('token, 'app, decodeId[ClientId]('client), 'transport)
+      override def apply(implicit js: JSONObject): PushTokenRegistration =
+        PushTokenRegistration('token, 'app, decodeId[ClientId]('client), 'transport)
     }
 
     implicit lazy val Encoder: JsonEncoder[PushTokenRegistration] = new JsonEncoder[PushTokenRegistration] {
@@ -61,14 +77,7 @@ object PushTokenClient {
       }
     }
 
-    implicit val TokenContentEncoder: ContentEncoder[PushTokenRegistration] = ContentEncoder.json[PushTokenRegistration]
-  }
-
-  object GcmResponseExtractor {
-    def unapplySeq(resp: ResponseContent): Option[Seq[PushTokenRegistration]] = resp match {
-      case JsonArrayResponse(js) => Try(JsonDecoder.array[PushTokenRegistration](js)).toOption
-      case JsonObjectResponse(js) => Try(Seq(PushTokenRegistration.Decoder(js))).toOption
-      case _ => None
-    }
+//    implicit val TokenContentEncoder: ContentEncoder[PushTokenRegistration] =
+//      ContentEncoder.json[PushTokenRegistration]
   }
 }

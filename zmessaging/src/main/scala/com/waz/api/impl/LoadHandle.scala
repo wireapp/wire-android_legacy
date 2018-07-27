@@ -18,40 +18,8 @@
 package com.waz.api.impl
 
 import com.waz.api
-import com.waz.api.LoadHandle
-import com.waz.api.ProgressIndicator.State
-import com.waz.threading.{Threading, CancellableFuture}
-
-import scala.util.Success
 
 
 object EmptyLoadHandle extends api.LoadHandle {
-  override def getProgressIndicator: api.ProgressIndicator = ProgressIndicator.Empty
   override def cancel(): Unit = {}
-}
-
-case class FutureLoadHandle[A](var future: CancellableFuture[A])(onComplete: A => Unit) extends LoadHandle {
-  private val progressIndicator = new ProgressIndicator
-
-  var cancelled = false
-
-  future.onComplete {
-    case _ if cancelled => progressIndicator.setState(State.CANCELLED)
-    case Success(result) =>
-      future = null
-      progressIndicator.setState(State.COMPLETED)
-      onComplete(result)
-    case _ =>
-      future = null
-      progressIndicator.setState(State.FAILED)
-  } (Threading.Ui)
-
-  override def getProgressIndicator: api.ProgressIndicator =  progressIndicator
-
-  override def cancel(): Unit = {
-    Threading.assertUiThread()
-    cancelled = true
-    if (future != null) future.cancel()("LoadHandle.cancel")
-    future = null
-  }
 }

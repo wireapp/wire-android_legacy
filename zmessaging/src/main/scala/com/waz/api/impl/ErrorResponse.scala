@@ -17,19 +17,20 @@
  */
 package com.waz.api.impl
 
-import com.waz.utils.{JsonEncoder, JsonDecoder}
-import com.waz.znet.Response.Status
-import com.waz.znet.{JsonObjectResponse, ResponseContent}
+import com.waz.sync.client.{JsonObjectResponse, ResponseContent}
+import com.waz.utils.{JsonDecoder, JsonEncoder}
+import com.waz.znet2.http.HttpClient.CustomErrorConstructor
+import com.waz.znet2.http.{BodyDeserializer, HttpClient, ResponseCode}
 import org.json.JSONObject
 
 import scala.util.Try
 
-case class ErrorResponse(code: Int, message: String, label: String) {
+case class ErrorResponse(code: Int, message: String, label: String) extends Throwable {
   /**
     * Returns true if retrying the request will always fail.
     * Non-fatal errors are temporary and retrying the request with the same parameters could eventually succeed.
     */
-  def isFatal = Status.isFatal(code)
+  def isFatal = ResponseCode.isFatal(code)
 
   // if this error should be reported to hockey
   def shouldReportError = isFatal && code != ErrorResponse.CancelledCode && code != ErrorResponse.UnverifiedCode
@@ -63,6 +64,20 @@ object ErrorResponse {
       o.put("label", v.label)
     }
   }
+
+  implicit val errorResponseConstructor: CustomErrorConstructor[ErrorResponse] =
+    new CustomErrorConstructor[ErrorResponse] {
+      override def constructFrom(error: HttpClient.HttpClientError): ErrorResponse = error match {
+        case HttpClient.EncodingError(err) =>
+          ErrorResponse.InternalError.copy(message = s"Encoding error: $err")
+        case HttpClient.DecodingError(err, response) =>
+          ErrorResponse(response.code, label = "Decoding error", message = s"Decoding body error: $err")
+        case HttpClient.ConnectionError(err) =>
+          ErrorResponse(ErrorResponse.ConnectionErrorCode, message = s"connection error: $err", label = "")
+        case HttpClient.UnknownError(err) =>
+          ErrorResponse.InternalError.copy(message = s"Unknown error: $err")
+      }
+    }
 
   def unapply(resp: ResponseContent): Option[(Int, String, String)] = resp match {
     case JsonObjectResponse(js) => Try((js.getInt("code"), js.getString("message"), js.getString("label"))).toOption

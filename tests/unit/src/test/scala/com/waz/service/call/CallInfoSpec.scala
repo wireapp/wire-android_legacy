@@ -17,7 +17,7 @@
  */
 package com.waz.service.call
 
-import com.waz.model.{ConvId, UserId}
+import com.waz.model.{ConvId, LocalInstant, UserId}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.specs.AndroidFreeSpec
 
@@ -52,7 +52,7 @@ class CallInfoSpec extends AndroidFreeSpec {
     account1Id,
     isGroup = false,
     UserId("callerId"),
-    estabTime = Some(clock.instant())
+    estabTime = Some(LocalInstant.Now(clock))
   )
 
 }

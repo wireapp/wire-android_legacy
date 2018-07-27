@@ -19,7 +19,6 @@ package com.waz.service.call
 
 
 import android.Manifest.permission.CAMERA
-
 import com.sun.jna.Pointer
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
@@ -39,15 +38,14 @@ import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsS
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
 import com.waz.service.tracking.{AVSMetricsEvent, TrackingService}
+import com.waz.sync.client.CallingClient
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.events._
 import com.waz.utils.wrappers.Context
-import com.waz.utils.{RichThreetenBPDuration, RichInstant, Serialized, returning, returningF}
+import com.waz.utils.{RichInstant, RichWireInstant, Serialized, returning, returningF}
 import com.waz.zms.CallWakeService
-import com.waz.znet.Response.SuccessHttpStatus
-import com.waz.znet._
-import org.threeten.bp.{Duration, Instant}
+import org.threeten.bp.Duration
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Success
@@ -68,6 +66,7 @@ class GlobalCallingService() {
 
 class CallingService(val accountId:       UserId,
                      val clientId:        ClientId,
+                     callingClient:       CallingClient,
                      context:             Context,
                      avs:                 Avs,
                      convs:               ConversationsContentUpdater,
@@ -79,7 +78,6 @@ class CallingService(val accountId:       UserId,
                      mediaManagerService: MediaManagerService,
                      pushService:         PushService,
                      network:             NetworkModeService,
-                     netClient:           ZNetClient,
                      errors:              ErrorsService,
                      userPrefs:           UserPreferences,
                      permissions:         PermissionsService,
@@ -155,7 +153,7 @@ class CallingService(val accountId:       UserId,
       isGroup,
       userId,
       Some(OtherCalling),
-      others = Map(userId -> Some(clock.instant())),
+      others = Map(userId -> Some(LocalInstant.Now)),
       startedAsVideoCall = videoCall,
       videoSendState = VideoState.NoCameraPermission)
 
@@ -179,7 +177,7 @@ class CallingService(val accountId:       UserId,
     }("onOtherSideAnsweredCall")
   }
 
-  def onMissedCall(convId: RConvId, time: Instant, userId: UserId, videoCall: Boolean) = {
+  def onMissedCall(convId: RConvId, time: RemoteInstant, userId: UserId, videoCall: Boolean) = {
     verbose(s"Missed call for conversation: $convId at $time from user $userId. Video: $videoCall")
     messagesService.addMissedCallMessage(convId, userId, time)
   }
@@ -190,34 +188,36 @@ class CallingService(val accountId:       UserId,
       setVideoSendState(conv.id, c.videoSendState) //will upgrade call videoSendState
       setCallMuted(c.muted) //Need to set muted only after call is established
       //on est. group call, switch from self avatar to other user now in case `onGroupChange` is delayed
-      val others = c.others + (userId -> Some(clock.instant())) - accountId
+      val others = c.others + (userId -> Some(LocalInstant.Now)) - accountId
       c.updateCallState(SelfConnected).copy(others = others, maxParticipants = others.size + 1)
     }("onEstablishedCall")
   }
 
-  def onClosedCall(reason: AvsClosedReason, rConvId: RConvId, time: Instant, userId: UserId) = withConv(rConvId) { (_, conv) =>
+  def onClosedCall(reason: AvsClosedReason, rConvId: RConvId, time: RemoteInstant, userId: UserId) = withConv(rConvId) { (_, conv) =>
     verbose(s"call closed for reason: ${reasonString(reason)}, conv: ${conv.id} at $time, userId: $userId")
     callProfile.mutate { p =>
+      val drift = pushService.beDrift.currentValue.getOrElse(Duration.ZERO)
+      val nowTime = LocalInstant.Now.toRemote(drift)
 
       //also handles call messages based on the state the call is in directly before being closed
       val newActive = p.activeCall match {
         case Some(call) if call.convId == conv.id =>
 
-          val endTime = clock.instant()
+          val endTime = LocalInstant.Now
           import AvsClosedReason._
 
           if (reason != AnsweredElsewhere) call.state match {
             case Some(SelfCalling) =>
               //TODO do we want a small timeout before placing a "You called" message, in case of accidental calls? maybe 5 secs
               verbose("Call timed out out the other didn't answer - add a \"you called\" message")
-              messagesService.addMissedCallMessage(conv.id, accountId, clock.instant)
+              messagesService.addMissedCallMessage(conv.id, accountId, nowTime)
             case Some(OtherCalling) | Some(SelfJoining) if reason == StillOngoing => // do nothing - call is still ongoing in the background
             case Some(OtherCalling) | Some(SelfJoining) | Some(Ongoing) =>
               verbose("Call timed out out and we didn't answer - mark as missed call")
-              messagesService.addMissedCallMessage(conv.id, call.caller, clock.instant)
+              messagesService.addMissedCallMessage(conv.id, call.caller, nowTime)
             case Some(SelfConnected) =>
               verbose("Had a call, save duration as a message")
-              call.estabTime.foreach(est => messagesService.addSuccessfulCallMessage(conv.id, call.caller, est, est.until(endTime).asScala))
+              call.estabTime.foreach(est => messagesService.addSuccessfulCallMessage(conv.id, call.caller, est.toRemote(drift), est.remainingUntil(endTime)))
             case _ =>
               warn(s"unexpected call state: ${call.state}")
           }
@@ -227,7 +227,7 @@ class CallingService(val accountId:       UserId,
           p.nonActiveCalls.filter(_.state.contains(OtherCalling)).sortBy(_.startTime).headOption.map(_.convId)
         case Some(call) =>
           verbose("A call other than the current one was closed - likely missed another incoming call.")
-          messagesService.addMissedCallMessage(conv.id, userId, clock.instant)
+          messagesService.addMissedCallMessage(conv.id, userId, nowTime)
           //don't change the active call, since the close callback was for a different conv/call
           Some(call.convId)
         case None =>
@@ -247,11 +247,7 @@ class CallingService(val accountId:       UserId,
 
   def onConfigRequest(wcall: WCall): Int = {
     verbose("onConfigRequest")
-    netClient.withErrorHandling("onConfigRequest", Request.Get(CallConfigPath)) {
-      case Response(SuccessHttpStatus(), CallConfigResponse(js), _) =>
-        verbose(s"Received calls/config: $js")
-        js
-    }.map { resp =>
+    callingClient.getConfig.map { resp =>
       avs.onConfigRequest(wcall, resp.fold(err => err.code, _ => 0), resp.fold(_ => "", identity))
     }
     0
@@ -276,7 +272,7 @@ class CallingService(val accountId:       UserId,
     updateCallInfo(conv.id, { call =>
 
       val updated = members.map { userId =>
-        userId -> call.others.getOrElse(userId, Some(clock.instant()))
+        userId -> call.others.getOrElse(userId, Some(LocalInstant.Now))
       }.toMap
 
       call.copy(others = updated, maxParticipants = math.max(call.maxParticipants, members.size + 1))
@@ -311,7 +307,7 @@ class CallingService(val accountId:       UserId,
         if (isGroup) Future.successful(Set(accountId)) //TODO: Remove this as we don't use it anymore
         else if (conv.team.isEmpty) Future.successful(Set(UserId(conv.id.str)))
         else Future.successful(mems.filter(_ != accountId).toSet)
-      }.map(_.map(_ -> Some(clock.instant())).toMap)
+      }.map(_.map(_ -> Some(LocalInstant.Now)).toMap)
       vbr <- userPrefs.preference(UserPreferences.VBREnabled).apply()
     } yield {
       val callType =
@@ -448,10 +444,10 @@ class CallingService(val accountId:       UserId,
     })
   }
 
-  private def receiveCallEvent(msg: String, msgTime: Instant, convId: RConvId, from: UserId, sender: ClientId): Unit =
+  private def receiveCallEvent(msg: String, msgTime: RemoteInstant, convId: RConvId, from: UserId, sender: ClientId): Unit =
     wCall.map { w =>
       val drift = pushService.beDrift.currentValue.getOrElse(Duration.ZERO)
-      val curTime = clock.instant + drift
+      val curTime = LocalInstant(clock.instant + drift)
       verbose(s"Received msg for avs: localTime: ${clock.instant} curTime: $curTime, drift: $drift, msgTime: $msgTime, msg: $msg")
       avs.onReceiveMessage(w, msg, curTime, msgTime, convId, from, sender)
     }
@@ -533,8 +529,6 @@ object CallingService {
 
   val VideoCallMaxMembers: Int = 4
 
-  val CallConfigPath = "/calls/config"
-
   /**
     * @param activeId       the id of the active call (that is, the call that should be displayed to the user), if any
     * @param availableCalls the entire list of available calls, including the active one, incoming calls, and any ongoing (group) calls
@@ -559,19 +553,6 @@ object CallingService {
     val Empty = GlobalCallProfile(None, Map.empty)
   }
 
-  object CallConfigResponse {
-
-    def unapply(response: ResponseContent): Option[String] = try {
-      response match {
-        case JsonObjectResponse(js) => Some(js.toString)
-        case _ => throw new Exception("Unexpected response type from /calls/config")
-      }
-    } catch {
-      case NonFatal(e) =>
-        warn(s"couldn't parse /calls/config response: $response", e)
-        None
-    }
-  }
 }
 
 

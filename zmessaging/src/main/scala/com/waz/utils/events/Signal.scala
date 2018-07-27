@@ -131,7 +131,7 @@ class Signal[A](@volatile protected[events] var value: Option[A] = None) extends
     }
 
     override protected def onWire(): Unit = self.subscribe(this)
-    override protected def onUnwire(): Unit = self.unsubscribe(this)
+    override protected[events] def onUnwire(): Unit = self.unsubscribe(this)
   }
 
   def head(implicit logTag: LogTag): Future[A] = currentValue match {
@@ -151,6 +151,8 @@ class Signal[A](@volatile protected[events] var value: Option[A] = None) extends
   def map[B](f: A => B): Signal[B] = new MapSignal[A, B](this, f)
   def filter(f: A => Boolean): Signal[A] = new FilterSignal(this, f)
   def withFilter(f: A => Boolean): Signal[A] = new FilterSignal(this, f)
+  def ifTrue(implicit ev: A =:= Boolean): Signal[Unit] = collect { case true => () }
+  def ifFalse(implicit ev: A =:= Boolean): Signal[Unit] = collect { case false => () }
   def collect[B](pf: PartialFunction[A, B]): Signal[B] = new ProxySignal[B](this) {
     override protected def computeValue(current: Option[B]): Option[B] = self.value flatMap { v =>
       pf.andThen(Some(_)).applyOrElse(v, { _: A => None })

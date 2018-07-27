@@ -18,32 +18,7 @@
 package com.waz.api;
 
 public interface ProgressIndicator extends UiObservable {
-    public enum State {
+    enum State {
         UNKNOWN, RUNNING, COMPLETED, FAILED, CANCELLED;
     }
-
-    /**
-     * Returns current download progress (in bytes already downloaded).
-     */
-    long getProgress();
-
-    /**
-     * Returns the total download size in bytes.
-     */
-    long getTotalSize();
-
-    /**
-     * Whether the indicator knows about progress or just about done or not done.
-     */
-    boolean isIndefinite();
-
-    /**
-     * Cancel the observed process if possible.
-     */
-    void cancel();
-
-    /**
-     * Whether the respective action is currently running or already done.
-     */
-    State getState();
 }

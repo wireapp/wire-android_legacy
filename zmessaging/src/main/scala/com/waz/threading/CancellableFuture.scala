@@ -239,6 +239,54 @@ object CancellableFuture {
     }
   }
 
+  def timeout(duration: Duration,
+              interrupter: Option[CancellableFuture[_]] = None,
+              shouldLoop: () => Boolean = () => false)
+             (implicit tag: LogTag, ec: ExecutionContext): CancellableFuture[Unit] = {
+    if (duration <= Duration.Zero || !interrupter.flatMap(_.future.value).forall(_.isSuccess)) {
+      successful(())
+    } else {
+      val promise = Promise[Unit]()
+      new CancellableFuture(promise) {
+        interrupter.foreach(_.onComplete {
+          case Success(_) =>
+            doCleanup()
+            promise.success(())
+          case _ => //treat it like we should not interrupt
+        })
+
+        @volatile
+        private var currentTask: TimerTask = _
+        startNewTimeoutLoop()
+
+        private def startNewTimeoutLoop(): Unit = {
+          currentTask = createTask
+          Threading.Timer.schedule(currentTask, duration.toMillis)
+        }
+
+        private def createTask: TimerTask = new TimerTask {
+          override def run(): Unit = {
+            if (shouldLoop()) startNewTimeoutLoop()
+            else {
+              doCleanup()
+              promise.success(())
+            }
+          }
+        }
+
+        private def doCleanup(): Unit = {
+          interrupter.foreach(_.cancel()) //do not forget to cancel interrupter
+          if (currentTask != null) currentTask.cancel() //do not forget to to cancel scheduled task
+        }
+
+        override def cancel()(implicit tag: LogTag): Boolean = {
+          doCleanup()
+          super.cancel()(tag)
+        }
+      }
+    }
+  }
+
   def delayed[A](d: FiniteDuration)(body: => A)(implicit executor: ExecutionContext) =
     if (d <= Duration.Zero) CancellableFuture(body)
     else delay(d) map { _ => body }

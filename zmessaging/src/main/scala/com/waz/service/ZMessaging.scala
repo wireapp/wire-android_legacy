@@ -48,7 +48,10 @@ import com.waz.utils.Locales
 import com.waz.utils.wrappers.AndroidContext
 import com.waz.zms.FetchJob
 import com.waz.znet._
-import org.threeten.bp.{Clock, Instant}
+import com.waz.znet2.http.Request.UrlCreator
+import com.waz.znet2.http.{HttpClient, RequestInterceptor}
+import com.waz.znet2.{AuthRequestInterceptor, HttpClientOkHttpImpl, OkHttpWebSocketFactory}
+import org.threeten.bp.{Clock, Duration, Instant}
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
@@ -61,9 +64,8 @@ class ZMessagingFactory(global: GlobalModule) {
 
   def auth(userId: UserId) = new AuthenticationManager(userId, global.accountsStorage, global.loginClient, tracking)
 
-  def client(auth: AuthenticationManager): ZNetClient = new ZNetClientImpl(Some(auth), global.client, global.backend.baseUrl)
-
-  def credentialsClient(netClient: ZNetClient) = new CredentialsUpdateClientImpl(netClient)
+  def credentialsClient(urlCreator: UrlCreator, httpClient: HttpClient, authRequestInterceptor: AuthRequestInterceptor) =
+    new CredentialsUpdateClientImpl()(urlCreator, httpClient, authRequestInterceptor)
 
   def cryptobox(userId: UserId, storage: StorageModule) = new CryptoBoxService(global.context, userId, global.metadata, storage.userPrefs)
 
@@ -95,7 +97,9 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   val selfUserId = account.userId
 
   val auth       = account.auth
-  val zNetClient = account.netClient
+  val urlCreator = global.urlCreator
+  implicit val httpClient: HttpClient = account.global.httpClient
+  val httpClientForLongRunning: HttpClient = account.global.httpClientForLongRunning
   val lifecycle  = global.lifecycle
 
   lazy val accounts           = ZMessaging.currentAccounts
@@ -107,7 +111,9 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val syncContent:       SyncContentUpdater      = wire[SyncContentUpdaterImpl]
   lazy val syncRequests:      SyncRequestService      = wire[SyncRequestServiceImpl]
   lazy val otrClientsSync:    OtrClientsSyncHandler   = wire[OtrClientsSyncHandlerImpl]
+  lazy val otrClient:         OtrClientImpl           = account.otrClient
   lazy val credentialsClient: CredentialsUpdateClientImpl = account.credentialsClient
+  implicit lazy val authRequestInterceptor: AuthRequestInterceptor = account.authRequestInterceptor
 
   def context           = global.context
   def accountStorage    = global.accountsStorage
@@ -157,38 +163,38 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val eventStorage: PushNotificationEventsStorage = wire[PushNotificationEventsStorageImpl]
   lazy val receivedPushStorage: ReceivedPushStorage = wire[ReceivedPushStorageImpl]
 
-  lazy val youtubeClient      = wire[YouTubeClient]
-  lazy val soundCloudClient   = wire[SoundCloudClient]
-  lazy val assetClient: AssetClient = wire[AssetClient]
-  lazy val usersClient        = wire[UsersClient]
-  lazy val convClient         = wire[ConversationsClient]
-  lazy val teamClient         = wire[TeamsClient]
-  lazy val pushNotificationsClient: PushNotificationsClient = new PushNotificationsClientImpl(zNetClient)
-  lazy val abClient           = wire[AddressBookClient]
-  lazy val gcmClient          = wire[PushTokenClient]
-  lazy val typingClient       = wire[TypingClient]
+  lazy val youtubeClient      = new YouTubeClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val soundCloudClient   = new SoundCloudClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val assetClient        = new AssetClientImpl(cache)(urlCreator, httpClientForLongRunning, authRequestInterceptor)
+  lazy val usersClient        = new UsersClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val convClient         = new ConversationsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val teamClient         = new TeamsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val pushNotificationsClient: PushNotificationsClient = new PushNotificationsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val abClient           = new AddressBookClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val gcmClient          = new PushTokenClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val typingClient       = new TypingClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val invitationClient   = account.invitationClient
-  lazy val giphyClient        = wire[GiphyClient]
-  lazy val userSearchClient   = wire[UserSearchClient]
-  lazy val connectionsClient  = wire[ConnectionsClient]
-  lazy val messagesClient     = wire[MessagesClient]
-  lazy val openGraphClient    = wire[OpenGraphClient]
-  lazy val otrClient          = wire[com.waz.sync.client.OtrClient]
-  lazy val handlesClient      = wire[HandlesClient]
-  lazy val integrationsClient = wire[IntegrationsClient]
+  lazy val giphyClient        = new GiphyClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val userSearchClient   = new UserSearchClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val connectionsClient  = new ConnectionsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val messagesClient     = new MessagesClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val openGraphClient    = wire[OpenGraphClientImpl]
+  lazy val handlesClient      = new HandlesClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val integrationsClient = new IntegrationsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val callingClient      = new CallingClientImpl()(urlCreator, httpClient, authRequestInterceptor)
 
   lazy val convsContent: ConversationsContentUpdaterImpl = wire[ConversationsContentUpdaterImpl]
   lazy val messagesContent: MessagesContentUpdater = wire[MessagesContentUpdater]
 
-  lazy val assetLoader: AssetLoader                   = new AssetLoaderImpl(context, Some(assetsStorage), network, assetClient, audioTranscader, videoTranscoder, cache, imageCache, bitmapDecoder, tracking)
+  lazy val assetLoader: AssetLoader                   = new AssetLoaderImpl(context, Some(assetsStorage), network, assetClient, audioTranscader, videoTranscoder, cache, imageCache, bitmapDecoder, tracking)(urlCreator, authRequestInterceptor)
   lazy val imageLoader: ImageLoader                   = wire[ImageLoaderImpl]
 
   lazy val push: PushService                          = wire[PushServiceImpl]
   lazy val pushToken: PushTokenService                = wire[PushTokenService]
   lazy val errors                                     = wire[ErrorsServiceImpl]
   lazy val reporting                                  = new ZmsReportingService(selfUserId, global.reporting)
-  lazy val pingInterval: PingIntervalService          = wire[PingIntervalService]
-  lazy val websocket: WebSocketClientService          = wire[WebSocketClientServiceImpl]
+  lazy val wsFactory                                  = OkHttpWebSocketFactory
+  lazy val wsPushService                              = wireWith(WSPushServiceImpl.apply _)
   lazy val userSearch                                 = wire[UserSearchService]
   lazy val assetGenerator                             = wire[ImageAssetGenerator]
   lazy val assetMetaData                              = wire[com.waz.service.assets.MetaDataService]
@@ -342,6 +348,9 @@ object ZMessaging { self =>
 
   def globalModule:    Future[GlobalModule]    = globalReady.future
   def accountsService: Future[AccountsService] = globalModule.map(_.accountsService)(Threading.Background)
+
+  lazy val beDrift = _global.prefs.preference(GlobalPreferences.BackendDrift).signal
+  def currentBeDrift = beDrift.currentValue.getOrElse(Duration.ZERO)
 
   def onCreate(context: Context) = {
     Threading.assertUiThread()

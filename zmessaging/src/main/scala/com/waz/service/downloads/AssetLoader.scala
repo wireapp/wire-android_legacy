@@ -18,7 +18,7 @@
 package com.waz.service.downloads
 
 import java.io._
-import java.security.{DigestOutputStream, MessageDigest}
+import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean
 
 import android.graphics.Bitmap
@@ -45,15 +45,14 @@ import com.waz.threading.CancellableFuture.CancelException
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.ui.MemoryImageCache
 import com.waz.ui.MemoryImageCache.BitmapRequest
-import com.waz.utils.{CancellableStream, returning}
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.wrappers.{Context, URI}
-import com.waz.znet.Response.{DefaultResponseBodyDecoder, ResponseBodyDecoder}
-import com.waz.znet.ResponseConsumer.{FileConsumer, JsonConsumer}
-import com.waz.znet.{FileResponse, Request, Response}
+import com.waz.utils.{CancellableStream, returning}
+import com.waz.znet2.http
+import com.waz.znet2.http.Request.UrlCreator
+import com.waz.znet2.http.{Method, Request, RequestInterceptor, ResponseCode}
 
 import scala.concurrent.{Future, Promise}
-import scala.util.Try
 import scala.util.control.NonFatal
 
 trait AssetLoader {
@@ -76,7 +75,10 @@ class AssetLoaderImpl(context:         Context,
                       cache:           CacheService,
                       imgCache:        MemoryImageCache,
                       bitmapDecoder:   BitmapDecoder,
-                      tracking:        TrackingService) extends AssetLoader {
+                      tracking:        TrackingService)
+                     (implicit
+                      urlCreator: UrlCreator,
+                      authInterceptor: RequestInterceptor) extends AssetLoader {
 
   private lazy val downloadAlways = Option(ZMessaging.currentAccounts).map(_.activeZms).map {
     _.flatMap {
@@ -131,18 +133,19 @@ class AssetLoaderImpl(context:         Context,
       })
     }
 
+    //TODO Strange situation, only in one case we need request without authorization. Maybe we can get rid of this special case
     (asset match {
       case WithRemoteData(RemoteData(Some(rId), token, otrKey, sha, _)) =>
         verbose(s"Downloading wire asset: ${asset.id}: $rId")
         val path = AssetClient.getAssetPath(rId, otrKey, asset.convId)
         val headers = token.fold(Map.empty[String, String])(t => Map("Asset-Token" -> t.str))
-        val decoder = new AssetBodyDecoder(cache, otrKey, sha)
-        client.loadAsset(Request.Get(path, decoder = Some(decoder), headers = headers, downloadCallback = Some(callback)))
+        val request = Request.Get(relativePath = path, headers = http.Headers(headers))
+        client.loadAsset(request, otrKey, sha, callback)
 
       case WithExternalUri(uri) =>
         verbose(s"Downloading external asset: ${asset.id}: $uri")
-        val decoder = new AssetBodyDecoder(cache)
-        val resp = client.loadAsset(Request[Unit](baseUri = Some(uri), requiresAuthentication = false, decoder = Some(decoder), downloadCallback = Some(callback)))
+        val request = Request.create(method = Method.Get, url = new URL(uri.toString))
+        val resp = client.loadAsset(request, callback = callback)
         if (uri == UserService.UnsplashUrl)
           resp.flatMap {
             case Right(entry) => CancellableFuture.successful(Right(entry))
@@ -157,14 +160,15 @@ class AssetLoaderImpl(context:         Context,
 
       case WithProxy(proxy) =>
         verbose(s"Downloading asset from proxy: ${asset.id}: $proxy")
-        val decoder = new AssetBodyDecoder(cache)
-        client.loadAsset(Request.Get(proxy, decoder = Some(decoder), downloadCallback = Some(callback)))
+        val request = Request.Get(relativePath = proxy)
+        client.loadAsset(request, callback = callback)
+
 
       case _ => CancellableFuture.successful(Left(internalError(s"Tried to download asset ${asset.id} without enough information to complete download")))
     }).flatMap {
       case Right(entry) => finish(asset, entry)
       case Left(err) =>
-        if (err.code == Response.Status.NotFound) {
+        if (err.code == ResponseCode.NotFound) {
           verbose(s"Asset not found. Removing from local storage $asset")
           assetStorage.foreach(storage => storage.remove(asset.id))
         }
@@ -265,33 +269,10 @@ object AssetLoader {
     override def getMessage = "Attempted to download image when not on Wifi and DownloadImagesAlways is set to false"
   }
 
-  class AssetBodyDecoder(cache: CacheService, key: Option[AESKey] = None, sha: Option[Sha256] = None) extends ResponseBodyDecoder {
-    override def apply(contentType: String, contentLength: Long) = contentType match {
-      case DefaultResponseBodyDecoder.JsonContent() => new JsonConsumer(contentLength)
-      case _ => new AssetDataConsumer(contentType, cache, key, sha)
-    }
-  }
-
   def openStream(context: Context, uri: URI) = {
     val cr = context.getContentResolver
     Option(cr.openInputStream(URI.unwrap(uri)))
       .orElse(Option(cr.openFileDescriptor(URI.unwrap(uri), "r")).map(file => new FileInputStream(file.getFileDescriptor)))
       .getOrElse(throw new FileNotFoundException(s"Can not load image from: $uri"))
-  }
-
-  /**
-    * Consumes data for downloaded assets. Will always write directly to cache file.
-    * Encrypted assets are not decrypted, key is passed to cache entry and will be used later when asset is loaded from cache.
-    * Sha is computed on the fly and download fails if it doesn't match.
-    */
-  class AssetDataConsumer(mime: String, cache: CacheService, key: Option[AESKey], sha: Option[Sha256]) extends FileConsumer(mime)(cache) {
-    override lazy val entry: CacheEntry = cache.createManagedFile(key)
-    val shaStream = new DigestOutputStream(new BufferedOutputStream(new FileOutputStream(entry.cacheFile)), MessageDigest.getInstance("SHA-256"))
-    override lazy val out = shaStream
-
-    override def result: Try[FileResponse] =
-      super.result filter { _ =>
-        sha.forall(_ == Sha256(shaStream.getMessageDigest.digest()))
-      }
   }
 }

@@ -28,7 +28,6 @@ import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.{CredentialsUpdateClient, UsersClient}
 import com.waz.testutils.TestUserPreferences
 import com.waz.utils.events.{BgEventSource, Signal, SourceSignal}
-import com.waz.znet.ZNetClient
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
@@ -48,8 +47,7 @@ class UserServiceSpec extends AndroidFreeSpec {
   val membersStorage  = mock[MembersStorage]
   val pushService     = mock[PushService]
   val assetService    = mock[AssetService]
-  val znet            = mock[ZNetClient]
-  val usersClient     = new UsersClient(znet)
+  val usersClient     = mock[UsersClient]
   val sync            = mock[SyncServiceHandle]
   val database        = mock[Database]
   val assetsStorage   = mock[AssetsStorage]

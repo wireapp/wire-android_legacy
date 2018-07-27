@@ -18,7 +18,6 @@
 package com.waz.provision
 
 import java.io._
-import java.util.concurrent.atomic.AtomicBoolean
 
 import akka.actor.SupervisorStrategy._
 import akka.actor._
@@ -46,7 +45,7 @@ import com.waz.ui.UiModule
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.events.Signal
-import com.waz.znet.ClientWrapper
+import com.waz.utils.wrappers.URI
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future.successful
@@ -63,15 +62,13 @@ object DeviceActor {
 
   def props(deviceName: String,
             application: Context,
-            backend: BackendConfig = BackendConfig.StagingBackend,
-            wrapper: Future[ClientWrapper]) =
-  Props(new DeviceActor(deviceName, application, backend, wrapper)).withDispatcher("ui-dispatcher")
+            backend: BackendConfig = BackendConfig.StagingBackend) =
+  Props(new DeviceActor(deviceName, application, backend)).withDispatcher("ui-dispatcher")
 }
 
 class DeviceActor(val deviceName: String,
                   val application: Context,
-                  backend: BackendConfig = BackendConfig.StagingBackend,
-                  wrapper: Future[ClientWrapper]) extends Actor with ActorLogging {
+                  backend: BackendConfig = BackendConfig.StagingBackend) extends Actor with ActorLogging {
 
   import ActorMessage._
 
@@ -101,8 +98,6 @@ class DeviceActor(val deviceName: String,
         Stop
     }
 
-  val delayNextAssetPosting = new AtomicBoolean(false)
-
   val globalModule = new GlobalModuleImpl(application, backend) { global =>
     ZMessaging.currentGlobal = this
     lifecycle.acquireUi()
@@ -114,7 +109,6 @@ class DeviceActor(val deviceName: String,
     }
 
     override val storage: Database = new GlobalDatabase(application, Random.nextInt().toHexString)
-    override lazy val clientWrapper: Future[ClientWrapper] = wrapper
 
     override lazy val metadata: MetaDataService = new MetaDataService(context) {
       override val cryptoBoxDirName: String = "otr_" + Random.nextInt().toHexString
@@ -225,7 +219,7 @@ class DeviceActor(val deviceName: String,
       } yield {
         ConvMessages(Array.tabulate(cursor.size) { i =>
           val m = cursor(i)
-          MessageInfo(m.message.id, m.message.msgType, m.message.time)
+          MessageInfo(m.message.id, m.message.msgType, m.message.time.instant)
         })
       }
 
@@ -303,13 +297,13 @@ class DeviceActor(val deviceName: String,
         z.convsUi.sendMessage(convId, ui.images.createImageAssetFrom(bytes))
       }.map(_.fold2(Failed("no message sent"), m => Successful(m.id.str)))
 
-    case SendAsset(remoteId, bytes, mime, name, delay) =>
+    case SendAsset(remoteId, bytes, mime, name, _) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>
-        delayNextAssetPosting.set(delay)
-        val asset = impl.AssetForUpload(AssetId(), Some(name), Mime(mime), Some(bytes.length.toLong)){
-          _ => new ByteArrayInputStream(bytes)
-        }
-        z.convsUi.sendMessage(convId, asset, DoNothingAndProceed)
+        //TODO for now this assumes image only - need to handle bytes for other asset types too
+//        val asset = impl.AssetForUpload(AssetId(), Some(name), Mime(mime), Some(bytes.length.toLong)){
+//          _ => new ByteArrayInputStream(bytes)
+//        }
+        z.convsUi.sendMessage(convId, bytes)
       }.map(_.fold2(Failed("no message sent"), m => Successful(m.id.str)))
 
     case SendLocation(remoteId, lon, lat, name, zoom) =>
@@ -319,22 +313,8 @@ class DeviceActor(val deviceName: String,
 
     case SendFile(remoteId, path, mime) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>
-        val file = new File(path)
-        val assetId = AssetId()
-        z.cache.addStream(CacheKey(assetId.str), new FileInputStream(file), Mime(mime)).map { cacheEntry =>
-          Mime(mime) match {
-            case Mime.Image() =>
-              z.convsUi.sendMessage(convId, ui.images.createImageAssetFrom(IoUtils.toByteArray(cacheEntry.inputStream)))
-              Successful
-            case _ =>
-              val asset = impl.AssetForUpload(assetId, Some(file.getName), Mime(mime), Some(file.length())) {
-                _ => new FileInputStream(file)
-              }
-              z.convsUi.sendMessage(convId, asset, DoNothingAndProceed)
-              Successful
-          }
-        }
-      }
+        z.convsUi.sendMessage(convId, URI.parse(path), DoNothingAndProceed)
+      }.map(_.fold2(Failed("no message sent"), m => Successful(m.id.str)))
 
     case AddMembers(remoteId, users@_*) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>

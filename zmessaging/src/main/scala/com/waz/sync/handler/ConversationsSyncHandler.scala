@@ -113,10 +113,10 @@ class ConversationsSyncHandler(selfUserId:          UserId,
     else withConversation(id) { conv =>
       conversationsClient.postMemberLeave(conv.remoteId, user).future flatMap {
         case Right(Some(event: MemberLeaveEvent)) =>
-          event.localTime = new Date
+          event.localTime = LocalInstant.Now
           conversationsClient.postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(event.time))).future flatMap {
-            case Right(resp) =>
-              verbose(s"postConversationState finished: $resp")
+            case Right(_) =>
+              verbose(s"postConversationState finished")
               convEvents.handlePostConversationEvent(event).map(_ => SyncResult.Success)
             case Left(error) =>
               Future.successful(SyncResult(error))
@@ -131,7 +131,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
     }
 
   def postConversationState(id: ConvId, state: ConversationState): Future[SyncResult] = withConversation(id) { conv =>
-    conversationsClient.postConversationState(conv.remoteId, state).future map (_.fold(SyncResult(_), SyncResult(_)))
+    conversationsClient.postConversationState(conv.remoteId, state).future map (_.fold(SyncResult(_), _ => SyncResult.Success))
   }
 
   def postConversation(convId: ConvId, users: Set[UserId], name: Option[String], team: Option[TeamId], access: Set[Access], accessRole: AccessRole): Future[SyncResult] = {
@@ -173,7 +173,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
 
   private val postConvRespHandler: (Either[ErrorResponse, Option[ConversationEvent]] => Future[SyncResult]) = {
     case Right(Some(event)) =>
-      event.localTime = new Date
+      event.localTime = LocalInstant.Now
       convEvents.handlePostConversationEvent(event) map { _ => SyncResult.Success }
     case Right(None) =>
       debug(s"postConv got success response, but no event")

@@ -95,8 +95,6 @@ class UiModule(val global: GlobalModule) extends UiEventContext with ZMessagingR
   def getCurrent = accounts.activeZms.head
 
   lazy val images: Images = new Images(global.context, bitmapDecoder, tracking)
-  lazy val messages: Messages = new Messages
-  lazy val users: Users = new Users
 
   lazy val globalImageLoader = global.imageLoader
   lazy val network = global.network

@@ -106,6 +106,8 @@ object Col {
   def date(name: Symbol, modifiers: String = "") = Col[Date](name.name, "INTEGER", modifiers)
   def finiteDuration(name: Symbol, modifiers: String = "") = Col[FiniteDuration](name.name, "INTEGER", modifiers)
   def timestamp(name: Symbol, modifiers: String = "") = Col[Instant](name.name, "INTEGER", modifiers)
+  def remoteTimestamp(name: Symbol, modifiers: String = "") = Col[RemoteInstant](name.name, "INTEGER", modifiers)
+  def localTimestamp(name: Symbol, modifiers: String = "") = Col[LocalInstant](name.name, "INTEGER", modifiers)
   def long(name: Symbol, modifiers: String = "") = Col[Long](name.name, "INTEGER", modifiers)
   def long[A](name: Symbol, enc: A => Long, dec: Long => A) = Col[A](name.name, "INTEGER")(new DbTranslator[A] {
     override def save(value: A, name: String, values: DBContentValues): Unit = values.put(name, java.lang.Long.valueOf(enc(value)))

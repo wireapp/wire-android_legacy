@@ -41,7 +41,7 @@ trait Avs {
   def answerCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, cbrEnabled: Boolean): Unit
   def onHttpResponse(wCall: WCall, status: Int, reason: String, arg: Pointer): Future[Unit]
   def onConfigRequest(wCall: WCall, error: Int, json: String): Future[Unit]
-  def onReceiveMessage(wCall: WCall, msg: String, currTime: Instant, msgTime: Instant, convId: RConvId, userId: UserId, clientId: ClientId): Unit
+  def onReceiveMessage(wCall: WCall, msg: String, currTime: LocalInstant, msgTime: RemoteInstant, convId: RConvId, userId: UserId, clientId: ClientId): Unit
   def endCall(wCall: WCall, convId: RConvId): Unit
   def rejectCall(wCall: WCall, convId: RConvId): Unit
   def setVideoSendState(wCall: WCall, convId: RConvId, state: VideoState.Value): Unit
@@ -105,7 +105,7 @@ class AvsImpl() extends Avs {
       },
       new MissedCallHandler {
         override def onMissedCall(convId: String, msg_time: Uint32_t, userId: String, video_call: Boolean, arg: Pointer): Unit =
-          cs.onMissedCall(RConvId(convId), instant(msg_time), UserId(userId), video_call)
+          cs.onMissedCall(RConvId(convId), remoteInstant(msg_time), UserId(userId), video_call)
       },
       new AnsweredCallHandler {
         override def onAnsweredCall(convId: String, arg: Pointer) = cs.onOtherSideAnsweredCall(RConvId(convId))
@@ -116,7 +116,7 @@ class AvsImpl() extends Avs {
       },
       new CloseCallHandler {
         override def onClosedCall(reasonCode: Int, convId: String, msg_time: Uint32_t, userId: String, arg: Pointer) =
-          cs.onClosedCall(reasonCode, RConvId(convId), instant(msg_time), UserId(userId))
+          cs.onClosedCall(reasonCode, RConvId(convId), remoteInstant(msg_time), UserId(userId))
       },
       new MetricsHandler {
         override def onMetricsReady(convId: String, metricsJson: String, arg: Pointer) =
@@ -171,9 +171,9 @@ class AvsImpl() extends Avs {
 
   override def onHttpResponse(wCall: WCall, status: Int, reason: String, arg: Pointer) = withAvs(wcall_resp(wCall, status, reason, arg))
 
-  override def onReceiveMessage(wCall: WCall, msg: String, currTime: Instant, msgTime: Instant, convId: RConvId, from: UserId, sender: ClientId) = {
+  override def onReceiveMessage(wCall: WCall, msg: String, currTime: LocalInstant, msgTime: RemoteInstant, convId: RConvId, from: UserId, sender: ClientId) = {
     val bytes = msg.getBytes("UTF-8")
-    withAvs(wcall_recv_msg(wCall, bytes, bytes.length, uint32_tTime(currTime), uint32_tTime(msgTime), convId.str, from.str, sender.str))
+    withAvs(wcall_recv_msg(wCall, bytes, bytes.length, uint32_tTime(currTime.instant), uint32_tTime(msgTime.instant), convId.str, from.str, sender.str))
   }
 
   override def onConfigRequest(wCall: WCall, error: Int, json: String): Future[Unit] = withAvs(wcall_config_update(wCall, error, json))
@@ -192,7 +192,7 @@ object Avs {
 
   type WCall = Pointer
 
-  def instant(uint32_t: Uint32_t) = Instant.ofEpochMilli(uint32_t.value.toLong * 1000)
+  def remoteInstant(uint32_t: Uint32_t) = RemoteInstant.ofEpochMilli(uint32_t.value.toLong * 1000)
 
   def uint32_tTime(instant: Instant) =
     returning(Uint32_t((instant.toEpochMilli / 1000).toInt))(t => verbose(s"uint32_tTime for $instant = ${t.value}"))

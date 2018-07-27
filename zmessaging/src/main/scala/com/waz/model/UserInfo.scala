@@ -23,14 +23,11 @@ import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetMetaData.Image.Tag.{Medium, Preview}
 import com.waz.model.AssetStatus.UploadDone
 import com.waz.utils.{JsonDecoder, JsonEncoder}
-import com.waz.znet.ContentEncoder
-import com.waz.znet.ContentEncoder.JsonContentEncoder
 import org.json
 import org.json.{JSONArray, JSONObject}
 
 import scala.util.Try
 import com.waz.model.UserInfo.Service
-import org.threeten.bp.Instant
 
 case class UserInfo(id:           UserId,
                     name:         Option[String]          = None,
@@ -44,7 +41,7 @@ case class UserInfo(id:           UserId,
                     privateMode:  Option[Boolean]         = None,
                     service:      Option[Service]         = None,
                     teamId:       Option[TeamId]          = None,
-                    expiresAt:    Option[Instant]         = None
+                    expiresAt:    Option[RemoteInstant]   = None
                    ) {
   //TODO Dean - this will actually prevent deleting profile pictures, since the empty seq will be mapped to a None,
   //And so in UserData, the current picture will be used instead...
@@ -117,7 +114,7 @@ object UserInfo {
       UserInfo(
         id, 'name, accentId, 'email, 'phone, Some(pic), decodeOptString('tracking_id) map (TrackingId(_)),
         deleted = 'deleted, handle = 'handle, privateMode = privateMode, service = decodeOptService('service),
-        'team, decodeOptISOInstant('expires_at))
+        'team, decodeOptISORemoteInstant('expires_at))
     }
   }
 
@@ -157,11 +154,11 @@ object UserInfo {
     }
   }
 
-  implicit lazy val ContentEncoder: ContentEncoder[UserInfo] = JsonContentEncoder.map { (info: UserInfo) =>
-    JsonEncoder { o =>
-      info.name.foreach(o.put("name", _))
-      info.accentId.foreach(o.put("accent_id", _))
-      info.picture.foreach(ps => o.put("assets", encodeAsset(ps)))
-    }
-  }
+//  implicit lazy val ContentEncoder: ContentEncoder[UserInfo] = JsonContentEncoder.map { (info: UserInfo) =>
+//    JsonEncoder { o =>
+//      info.name.foreach(o.put("name", _))
+//      info.accentId.foreach(o.put("accent_id", _))
+//      info.picture.foreach(ps => o.put("assets", encodeAsset(ps)))
+//    }
+//  }
 }

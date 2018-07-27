@@ -114,7 +114,9 @@ object JsonDecoder {
     Option(js.optJSONObject(s.name)).map(dec(_))
 
   def decodeISOInstant(s: Symbol)(implicit js: JSONObject): Instant = withDefault(s, Instant.EPOCH, { js => parseDate(js.getString(s.name)).instant })
+  def decodeISORemoteInstant(s: Symbol)(implicit js: JSONObject): RemoteInstant = withDefault(s, RemoteInstant.Epoch, { js => RemoteInstant(parseDate(js.getString(s.name)).instant) })
   def decodeOptISOInstant(s: Symbol)(implicit js: JSONObject): Option[Instant] = opt(s, decodeISOInstant(s)(_))
+  def decodeOptISORemoteInstant(s: Symbol)(implicit js: JSONObject): Option[RemoteInstant] = opt(s, decodeISOInstant(s)(_)).map(RemoteInstant(_))
 
   implicit def decodeByteString(s: Symbol)(implicit js: JSONObject): Array[Byte] = Base64.decode(decodeString(s), Base64.NO_WRAP)
   implicit def decodeOptByteString(s: Symbol)(implicit js: JSONObject): Option[Array[Byte]] = opt(s, js => decodeByteString(s)(js))
@@ -129,6 +131,8 @@ object JsonDecoder {
   implicit def decodeDouble(s: Symbol)(implicit js: JSONObject): Double = withDefault(s, 0d, _.getDouble(s.name))
   implicit def decodeUtcDate(s: Symbol)(implicit js: JSONObject): Date = parseDate(js.getString(s.name))
   implicit def decodeInstant(s: Symbol)(implicit js: JSONObject): Instant = withDefault(s, Instant.EPOCH, { js => Instant.ofEpochMilli(js.getLong(s.name)) })
+  implicit def decodeRemoteInstant(s: Symbol)(implicit js: JSONObject): RemoteInstant = withDefault(s, RemoteInstant.Epoch, { js => RemoteInstant.ofEpochMilli(js.getLong(s.name)) })
+  implicit def decodeLocalInstant(s: Symbol)(implicit js: JSONObject): LocalInstant = withDefault(s, LocalInstant.Epoch, { js => LocalInstant.ofEpochMilli(js.getLong(s.name)) })
   implicit def decodeDuration(s: Symbol)(implicit js: JSONObject): Duration = Duration.ofMillis(js.getLong(s.name))
   implicit def decodeFiniteDuration(s: Symbol)(implicit js: JSONObject): FiniteDuration = FiniteDuration(withDefault(s, 0L, _.getLong(s.name)), TimeUnit.MILLISECONDS)
   implicit def decodeLocale(s: Symbol)(implicit js: JSONObject): Option[Locale] = withDefault(s, None, o => Locales.bcp47.localeFor(o.getString(s.name)))
@@ -150,6 +154,7 @@ object JsonDecoder {
   implicit def decodeOptMessageId(s: Symbol)(implicit js: JSONObject): Option[MessageId] = opt(s, js => MessageId(js.getString(s.name)))
   implicit def decodeOptUtcDate(s: Symbol)(implicit js: JSONObject): Option[Date] = opt(s, decodeUtcDate(s)(_))
   implicit def decodeOptInstant(s: Symbol)(implicit js: JSONObject): Option[Instant] = opt(s, decodeInstant(s)(_))
+  implicit def decodeOptLocalInstant(s: Symbol)(implicit js: JSONObject): Option[LocalInstant] = opt(s, decodeLocalInstant(s)(_))
   implicit def decodeOptDuration(s: Symbol)(implicit js: JSONObject): Option[Duration] = opt(s, decodeDuration(s)(_))
   implicit def decodeOptFiniteDuration(s: Symbol)(implicit js: JSONObject): Option[FiniteDuration] = opt(s, decodeFiniteDuration(s)(_))
   implicit def decodeOptLoudness(s: Symbol)(implicit js: JSONObject): Option[Loudness] = opt(s, decodeLoudness(s)(_))

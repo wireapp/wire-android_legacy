@@ -30,7 +30,6 @@ import com.waz.utils.{CachedStorageImpl, TrimmingLruCache, _}
 import scala.concurrent.Future
 
 trait AssetsStorage extends CachedStorage[AssetId, AssetData] {
-  def onUploadFailed: SourceStream[AssetData]
   def updateAsset(id: AssetId, updater: AssetData => AssetData): Future[Option[AssetData]]
   def mergeOrCreateAsset(newData: AssetData): Future[Option[AssetData]]
   def mergeOrCreateAsset(newData: Option[AssetData]): Future[Option[AssetData]]
@@ -38,8 +37,6 @@ trait AssetsStorage extends CachedStorage[AssetId, AssetData] {
 
 class AssetsStorageImpl(context: Context, storage: Database) extends CachedStorageImpl[AssetId, AssetData](new TrimmingLruCache(context, Fixed(100)), storage)(AssetDataDao, "AssetsStorage") with AssetsStorage {
   private implicit val dispatcher = new SerialDispatchQueue(name = "AssetsStorage")
-
-  override val onUploadFailed = EventStream[AssetData]()
 
   //allows overwriting of asset data
   override def updateAsset(id: AssetId, updater: AssetData => AssetData): Future[Option[AssetData]] = update(id, updater).mapOpt {

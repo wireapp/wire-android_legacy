@@ -17,38 +17,42 @@
  */
 package com.waz.sync.client
 
+import com.waz.api.impl.ErrorResponse
 import com.waz.model._
-import com.waz.threading.CancellableFuture.successful
-import com.waz.threading.Threading
-import com.waz.utils.JsonEncoder
+import com.waz.service.BackendConfig
+import com.waz.sync.client.InvitationClient.ConfirmedTeamInvitation
 import com.waz.utils.Locales.{bcp47, currentLocale}
-import com.waz.znet.ContentEncoder.json
-import com.waz.znet.Response.HttpStatus
-import com.waz.znet.Response.Status.Created
-import com.waz.znet.ZNetClient.ErrorOrResponse
-import com.waz.znet._
+import com.waz.utils.{JsonDecoder, JsonEncoder}
+import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
+import com.waz.znet2.http.{HttpClient, Request}
 import org.json.JSONObject
 import org.threeten.bp.Instant
 
-import scala.util.Try
+trait InvitationClient {
+  def postTeamInvitation(invitation: TeamInvitation): ErrorOrResponse[ConfirmedTeamInvitation]
+}
 
-class InvitationClient(netClient: ZNetClient) {
-  import Threading.Implicits.Background
+class InvitationClientImpl(implicit
+                           urlCreator: UrlCreator,
+                           httpClient: HttpClient,
+                           authRequestInterceptor: AuthRequestInterceptor) extends InvitationClient {
+
+  import HttpClient.dsl._
   import com.waz.sync.client.InvitationClient._
 
-  def postTeamInvitation(invitation: TeamInvitation): ErrorOrResponse[ConfirmedTeamInvitation] =
-    netClient.chainedWithErrorHandling("postTeamInvitation", Request.Post(teamInvitationPath(invitation.teamId), invitation)(json(EncodeTeamInvite))) {
-      case Response(HttpStatus(Created, _), ConfirmedTeamInvitation(inv), _) =>
-        successful(Right(inv))
-    }
+  override def postTeamInvitation(invitation: TeamInvitation): ErrorOrResponse[ConfirmedTeamInvitation] = {
+    Request.Post(relativePath = teamInvitationPath(invitation.teamId), body = invitation)
+      .withResultType[ConfirmedTeamInvitation]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
 }
 
 object InvitationClient {
   def teamInvitationPath(teamId: TeamId) = s"teams/$teamId/invitations"
 
-  val RedirectToUser = "(?:/self)?/connections/([^/]+)".r
-
-  implicit lazy val EncodeTeamInvite: JsonEncoder[TeamInvitation] = new JsonEncoder[TeamInvitation] {
+  implicit lazy val TeamInviteEncoder: JsonEncoder[TeamInvitation] = new JsonEncoder[TeamInvitation] {
     def apply(i: TeamInvitation): JSONObject = JsonEncoder { js =>
       js.put("email", i.emailAddress)
       js.put("inviter_name", i.inviterName)
@@ -57,13 +61,10 @@ object InvitationClient {
   }
 
   case class ConfirmedTeamInvitation(id: InvitationId, emailAddress: EmailAddress, createdAt: Instant, teamId:TeamId)
-  object ConfirmedTeamInvitation {
-    import com.waz.utils.JsonDecoder._
-    def unapply(resp: ResponseContent): Option[ConfirmedTeamInvitation] = resp match {
-      case JsonObjectResponse(js) =>
-        implicit val jObject: JSONObject = js
-        Try(ConfirmedTeamInvitation('id, 'email, Instant.parse(js.getString("created_at")), 'team)).toOption
-      case _ => None
-    }
+
+  implicit lazy val TeamInviteDecoder: JsonDecoder[ConfirmedTeamInvitation] = JsonDecoder.lift { implicit js =>
+    import JsonDecoder._
+    ConfirmedTeamInvitation('id, 'email, Instant.parse(js.getString("created_at")), 'team)
   }
+
 }

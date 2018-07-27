@@ -25,6 +25,7 @@ import java.util.concurrent.{TimeUnit, TimeoutException}
 import android.util.Base64
 import com.waz.ZLog.LogTag
 import com.waz.api.UpdateListener
+import com.waz.model.{LocalInstant, WireInstant}
 import com.waz.service.ZMessaging.clock
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.wrappers.{URI, URIBuilder}
@@ -136,6 +137,17 @@ package object utils {
     def flatMapFuture[B](f: A => Future[Option[B]]): Future[Option[B]] = fold2(Future.successful(None), f(_))
   }
 
+  object RichOption {
+    def sequence[A](opts: Iterable[Option[A]]): Option[List[A]] = traverse(opts)(identity)
+    def traverse[A,B](opts: Iterable[A])(f: A => Option[B]): Option[List[B]] =
+      opts.foldRight(Option(List.empty[B])) { (value, acc) =>
+        for {
+          a <- acc
+          v <- f(value)
+        } yield v :: a
+      }
+  }
+
   implicit class RichEither[L, R](val sum: Either[L, R]) extends AnyVal {
     def map[S](f: R => S): Either[L, S] = sum.right.map(f)
     def flatMap[M >: L, S](f: R => Either[M, S]): Either[M, S] = sum.right.flatMap(f)
@@ -150,6 +162,7 @@ package object utils {
       case Success(s) => Right(s)
       case Failure(t) => Left(f(t))
     }
+    def toEither: Either[Throwable, A] = toRight(identity)
     def mapFailure(f: Throwable => Throwable): Try[A] = t.recoverWith { case err => Failure(err) }
     def mapFailureIfNot[T: ClassTag](f: Throwable => Throwable): Try[A] = t.recoverWith {
       case err: T => Failure(err)
@@ -170,7 +183,7 @@ package object utils {
       else if (abs(n) > 1e3d) s"${n.toDouble / 1e3d} µs"
       else s"$n ns"
     }
-    def fromNow(): Instant = clock.instant() + a
+    def fromNow(): LocalInstant = LocalInstant.Now + a
   }
 
   private val units = List((1000L, "ns"), (1000L, "µs"), (1000L, "ms"), (60L, "s"), (60L, "m"), (60L, "h"), (24L, "d"))
@@ -202,6 +215,18 @@ package object utils {
     def <=(b: bp.Instant) = !a.isAfter(b)
     def remainingUntil(b: bp.Instant): FiniteDuration = if (a isBefore b) FiniteDuration(b.toEpochMilli - a.toEpochMilli, TimeUnit.MILLISECONDS) else Duration.Zero
     def toFiniteDuration: FiniteDuration = FiniteDuration(a.toEpochMilli, MILLISECONDS)
+  }
+
+  implicit class RichWireInstant[T <: WireInstant](val a: T) extends AnyVal {
+    def until(b: T): bp.Duration = bp.Duration.ofMillis(b.instant.toEpochMilli - a.instant.toEpochMilli)
+    def max(b: T) = if (a.instant isBefore b.instant) b else a
+    def min(b: T) = if (a.instant isBefore b.instant) a else b
+    def >=(b: T) = !a.instant.isBefore(b.instant)
+    def <=(b: T) = !a.instant.isAfter(b.instant)
+    def remainingUntil(b: T): FiniteDuration = if (a.instant isBefore b.instant) FiniteDuration(b.instant.toEpochMilli - a.instant.toEpochMilli, TimeUnit.MILLISECONDS) else Duration.Zero
+    def isBefore(other: T): Boolean = a.instant.isBefore(other.instant)
+    def isAfter(other: T): Boolean = a.instant.isAfter(other.instant)
+    def compareTo(other: T) = a.instant.compareTo(other.instant)
   }
 
   implicit lazy val InstantIsOrdered: Ordering[Instant] = Ordering.ordered[Instant]

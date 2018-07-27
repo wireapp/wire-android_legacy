@@ -56,35 +56,35 @@ class WebSocketService extends FutureService with ServiceEventContext {
 
   val zmessaging = Signal.future(ZMessaging.accountsService).flatMap(_.activeZms)
 
-  val restartIntervals = for {
-    Some(zms) <- zmessaging
-    true      <- zms.websocket.useWebSocketFallback
-    interval  <- zms.pingInterval.interval
-  } yield Option(interval)
+//  val restartIntervals = for {
+//    Some(zms) <- zmessaging
+//    false <- zms.pushToken.pushActive
+//    interval  <- zms.pingInterval.interval
+//  } yield Option(interval)
 
   val notificationsState = for {
     Some(zms) <- zmessaging
-    true <- zms.websocket.useWebSocketFallback
+    false <- zms.pushToken.pushActive
     true <- zms.prefs.preference(WsForegroundKey).signal // only when foreground service is enabled
     offline <- zms.network.networkMode.map(_ == NetworkMode.OFFLINE)
-    connected <- zms.websocket.connected
-    error <- zms.websocket.connectionError
+    connected <- zms.wsPushService.connected
+//    error <- zms.websocket.connectionError
   } yield Option(
     if (offline) R.string.zms_websocket_connection_offline
     else if (connected) R.string.zms_websocket_connected
-    else if (error) R.string.zms_websocket_connection_failed
+//    else if (error) R.string.zms_websocket_connection_failed
     else R.string.zms_websocket_connecting
   )
 
-  restartIntervals.orElse(Signal const None).onUi {
-    case Some(interval) =>
-      // schedule service restart every couple minutes to send ping on web socket (needed to keep connection alive)
-      verbose(s"scheduling restarts with interval: $interval")
-      alarmService.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval.toMillis, interval.toMillis, restartIntent)
-    case None =>
-      verbose("cancel restarts")
-      alarmService.cancel(restartIntent)
-  }
+//  restartIntervals.orElse(Signal const None).onUi {
+//    case Some(interval) =>
+//      // schedule service restart every couple minutes to send ping on web socket (needed to keep connection alive)
+//      verbose(s"scheduling restarts with interval: $interval")
+//      alarmService.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval.toMillis, interval.toMillis, restartIntent)
+//    case None =>
+//      verbose("cancel restarts")
+//      alarmService.cancel(restartIntent)
+//  }
 
   notificationsState.orElse(Signal const None).onUi {
     case None =>
@@ -121,7 +121,7 @@ class WebSocketService extends FutureService with ServiceEventContext {
 
       case Some(zms) =>
         // wait as long as web socket fallback is used, this keeps the wakeLock and service running
-        zms.websocket.useWebSocketFallback.filter(_ == false).head
+        zms.pushToken.pushActive.filter(identity).head
     }
   }
 

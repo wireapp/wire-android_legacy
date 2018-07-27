@@ -37,7 +37,7 @@ object TeamData {
     }
   }
 
-  lazy val TeamBindingDecoder: JsonDecoder[(TeamData, Boolean)] = new JsonDecoder[(TeamData, Boolean)] {
+  implicit lazy val TeamBindingDecoder: JsonDecoder[(TeamData, Boolean)] = new JsonDecoder[(TeamData, Boolean)] {
     override def apply(implicit js: JSONObject): (TeamData, Boolean) = {
       import JsonDecoder._
       (TeamData('id, 'name, 'creator, 'icon, decodeOptString('icon_key).map(AESKey)), decodeOptBoolean('binding).getOrElse(false))

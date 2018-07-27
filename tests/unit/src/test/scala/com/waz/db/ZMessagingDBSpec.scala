@@ -129,7 +129,7 @@ import org.threeten.bp.Instant
       convs foreach { conv =>
         conv.missedCallMessage shouldEqual None
         conv.incomingKnockMessage shouldEqual None
-        conv.lastRead should be >= Instant.EPOCH
+        conv.lastRead should be >= RemoteInstant.Epoch
       }
     }
 

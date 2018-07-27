@@ -25,8 +25,6 @@ import com.waz.service.UserService
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
 import com.waz.utils._
-import org.threeten.bp.Instant
-import org.threeten.bp.Instant.EPOCH
 
 import scala.concurrent.Future
 
@@ -39,14 +37,14 @@ class ReactionsService(storage: ReactionsStorageImpl, messages: MessagesContentU
 
   private def addReaction(conv: ConvId, msg: MessageId, action: Liking.Action): Future[Likes] = {
     verbose(s"addLiking: $conv $msg, $action")
-    val reaction = Liking(msg, selfUserId, EPOCH, action) // EPOCH is used to signal "local" in-band
+    val reaction = Liking(msg, selfUserId, RemoteInstant.Epoch, action) // EPOCH is used to signal "local" in-band
     for {
       likes  <- storage.addOrUpdate(reaction)
       _      <- sync.postLiking(conv, reaction)
     } yield likes
   }
 
-  def updateLocalReaction(local: Liking, backendTime: Instant) = storage.update(local.id, { stored =>
+  def updateLocalReaction(local: Liking, backendTime: RemoteInstant) = storage.update(local.id, { stored =>
     if (stored.timestamp <= local.timestamp) stored.copy(action = local.action, timestamp = backendTime)
     else stored
   })

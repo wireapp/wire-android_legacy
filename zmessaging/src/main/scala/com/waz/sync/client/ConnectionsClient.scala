@@ -17,55 +17,87 @@
  */
 package com.waz.sync.client
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
+import com.waz.sync.client.ConnectionsClient.PageSize
 import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.Json
 import com.waz.utils.JsonDecoder._
-import com.waz.znet.Response.{HttpStatus, Status, SuccessHttpStatus}
-import com.waz.znet.ZNetClient._
-import com.waz.znet._
+import com.waz.utils.{Json, _}
+import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.HttpClient.HttpClientError
+import com.waz.znet2.http.Request.UrlCreator
+import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
+import org.json.JSONObject
 
 import scala.util.Try
 import scala.util.control.NonFatal
 
-class ConnectionsClient(netClient: ZNetClient) {
+trait ConnectionsClient {
+  def loadConnections(start: Option[UserId] = None, pageSize: Int = PageSize): ErrorOrResponse[Seq[UserConnectionEvent]]
+  def loadConnection(id: UserId): ErrorOrResponse[UserConnectionEvent]
+  def createConnection(user: UserId, name: String, message: String): ErrorOrResponse[UserConnectionEvent]
+  def updateConnection(user: UserId, status: ConnectionStatus): ErrorOrResponse[Option[UserConnectionEvent]]
+}
+
+class ConnectionsClientImpl(implicit
+                            urlCreator: UrlCreator,
+                            httpClient: HttpClient,
+                            authRequestInterceptor: AuthRequestInterceptor) extends ConnectionsClient {
+
+  import HttpClient.dsl._
   import Threading.Implicits.Background
   import com.waz.sync.client.ConnectionsClient._
 
-  def loadConnections(start: Option[UserId] = None, pageSize: Int = PageSize): ErrorOrResponse[Seq[UserConnectionEvent]] =
-    netClient.chainedWithErrorHandling("loadConnections", Request.Get(Request.query(ConnectionsPath, start.map { start => Seq("start" -> start.str) }.getOrElse(Seq.empty) :+ ("size" -> pageSize.toString) :_*))) {
-      case Response(SuccessHttpStatus(), ConnectionsResponseExtractor(connections, hasMore), _) =>
-        if (!hasMore) CancellableFuture.successful(Right(connections): Either[ErrorResponse, Seq[UserConnectionEvent]])
-        else loadConnections(Some(connections.last.to), pageSize) map { _.right.map(connections ++ _) }
-    }
+  private implicit val UserConnectionEventDeserializer: RawBodyDeserializer[UserConnectionEvent] =
+    RawBodyDeserializer[JSONObject].map(json => ConnectionResponseExtractor.unapply(JsonObjectResponse(json)).get)
 
-  def loadConnection(id: UserId): ErrorOrResponse[UserConnectionEvent] =
-    netClient.withErrorHandling(s"loadConnection($id)", Request.Get(s"$ConnectionsPath/$id")) {
-      case Response(SuccessHttpStatus(), ConnectionResponseExtractor(evt), _) => evt
-    }
+  private implicit val UserConnectionsEventDeserializer: RawBodyDeserializer[(Seq[UserConnectionEvent], Boolean)] =
+    RawBodyDeserializer[JSONObject].map(json => ConnectionsResponseExtractor.unapply(JsonObjectResponse(json)).get)
 
-  def createConnection(user: UserId, name: String, message: String): ErrorOrResponse[UserConnectionEvent] = {
-    val jsonData = Json("user" -> user.toString, "name" -> name, "message" -> message)
-    netClient.withErrorHandling("createConnection", Request.Post(ConnectionsPath, jsonData)) {
-      case Response(SuccessHttpStatus(), ConnectionResponseExtractor(event), _) =>
-        verbose(s"createConnection response: $event")
-        event
-    }
+  override def loadConnections(start: Option[UserId] = None, pageSize: Int = PageSize): ErrorOrResponse[Seq[UserConnectionEvent]] = {
+    Request
+      .Get(
+        relativePath = ConnectionsPath,
+        queryParameters = ("size" -> pageSize.toString) :: start.fold2(List.empty, s => List("start" -> s.str))
+      )
+      .withResultType[(Seq[UserConnectionEvent], Boolean)]
+      .withErrorType[ErrorResponse]
+      .execute
+      .flatMap { case (events, hasMore) =>
+        if (hasMore) loadConnections(Some(events.last.to), pageSize).map { _.right.map(events ++ _) }
+        else CancellableFuture.successful(Right(events))
+      }
+      .recover {
+        case err: ErrorResponse => Left(err)
+        case err: HttpClientError => Left(ErrorResponse.errorResponseConstructor.constructFrom(err))
+      }
   }
 
-  def updateConnection(user: UserId, status: ConnectionStatus): ErrorOrResponse[Option[UserConnectionEvent]] =
-    netClient.withErrorHandling("updateConnection", Request.Put(s"$ConnectionsPath/$user", Json("status" -> status.code))) {
-      case Response(SuccessHttpStatus(), ConnectionResponseExtractor(event), _) =>
-        verbose(s"updateConnection response: $event")
-        Some(event)
-      case Response(HttpStatus(Status.NoResponse, _), _, _) =>
-        warn(s"updateConnection request successful, but returned empty response")
-        None
-    }
+  override def loadConnection(id: UserId): ErrorOrResponse[UserConnectionEvent] = {
+    Request.Get(relativePath = s"$ConnectionsPath/$id")
+      .withResultType[UserConnectionEvent]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
+
+  override def createConnection(user: UserId, name: String, message: String): ErrorOrResponse[UserConnectionEvent] = {
+    val jsonData = Json("user" -> user.toString, "name" -> name, "message" -> message)
+    Request.Post(relativePath = ConnectionsPath, body = jsonData)
+      .withResultType[UserConnectionEvent]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
+
+  override def updateConnection(user: UserId, status: ConnectionStatus): ErrorOrResponse[Option[UserConnectionEvent]] = {
+    val jsonData = Json("status" -> status.code)
+    Request.Put(relativePath = s"$ConnectionsPath/${user.str}", body = jsonData)
+      .withResultType[Option[UserConnectionEvent]]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
 }
 
 object ConnectionsClient {

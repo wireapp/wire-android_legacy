@@ -19,22 +19,24 @@ package com.waz.service.messages
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
+import com.waz.api.Message
 import com.waz.api.Message.Status
-import com.waz.api.{EphemeralExpiration, Message}
+import com.waz.content.GlobalPreferences.BackendDrift
 import com.waz.content._
 import com.waz.model._
 import com.waz.service.ZMessaging.clock
 import com.waz.threading.Threading
 import com.waz.utils._
-import org.threeten.bp.Instant
 import org.threeten.bp.Instant.now
 
 import scala.collection.breakOut
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 class MessagesContentUpdater(messagesStorage: MessagesStorage,
                              convs:           ConversationStorage,
-                             deletions:       MsgDeletionStorage) {
+                             deletions:       MsgDeletionStorage,
+                             prefs:           GlobalPreferences) {
 
   import Threading.Implicits.Background
 
@@ -67,35 +69,35 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
       else Future successful None
 
     for {
-      time <- nextLocalTime(msg.convId)
+      time <- remoteTimeAfterLast(msg.convId) //TODO: can we find a way to save this only on the localTime of the message?
       exp  <- expiration
-      m = returning(msg.copy(state = state, time = time, localTime = now(clock), ephemeral = exp.map(_.duration))) { m =>
+      m = returning(msg.copy(state = state, time = time, localTime = LocalInstant.Now, ephemeral = exp.map(_.duration))) { m =>
         verbose(s"addLocalMessage: $m")
       }
       res <- messagesStorage.addMessage(m)
     } yield res
   }
 
-  def addLocalSentMessage(msg: MessageData, time: Option[Instant] = None) = Serialized.future("add local message", msg.convId) {
+  def addLocalSentMessage(msg: MessageData, time: Option[RemoteInstant] = None) = Serialized.future("add local message", msg.convId) {
     verbose(s"addLocalSentMessage: $msg")
     time.fold(lastSentEventTime(msg.convId))(Future.successful).flatMap { t =>
       verbose(s"adding local sent message to storage, $t")
-      messagesStorage.addMessage(msg.copy(state = Status.SENT, time = t.plusMillis(1), localTime = now(clock)))
+      messagesStorage.addMessage(msg.copy(state = Status.SENT, time = t + 1.millis, localTime = LocalInstant.Now))
     }
   }
 
-  private def nextLocalTime(convId: ConvId) =
-    messagesStorage.getLastMessage(convId) flatMap {
+  private def remoteTimeAfterLast(convId: ConvId) =
+    messagesStorage.getLastMessage(convId).flatMap {
       case Some(msg) => Future successful msg.time
-      case _ => convs.get(convId).map(_.fold(MessageData.UnknownInstant)(_.lastEventTime))
-    } map { time =>
-      now(clock).max(time.plusMillis(1))
+      case _ => convs.get(convId).map(_.fold(RemoteInstant.Epoch)(_.lastEventTime))
+    }.flatMap { time =>
+      prefs.preference(BackendDrift).apply().map(drift => (time + 1.millis) max LocalInstant.Now.toRemote(drift))
     }
 
   private def lastSentEventTime(convId: ConvId) =
     messagesStorage.getLastSentMessage(convId) flatMap {
       case Some(msg) => Future successful msg.time
-      case _ => convs.get(convId).map(_.fold(MessageData.UnknownInstant)(_.lastEventTime))
+      case _ => convs.get(convId).map(_.fold(RemoteInstant.Epoch)(_.lastEventTime))
     }
 
   /**
@@ -209,12 +211,12 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
   private[service] def addMessage(msg: MessageData): Future[Option[MessageData]] = addMessages(msg.convId, Seq(msg)).map(_.headOption)
 
   // updates server timestamp for local messages, this should make sure that local messages are ordered correctly after one of them is sent
-  def updateLocalMessageTimes(conv: ConvId, prevTime: Instant, time: Instant) =
+  def updateLocalMessageTimes(conv: ConvId, prevTime: RemoteInstant, time: RemoteInstant) =
     messagesStorage.findLocalFrom(conv, prevTime) flatMap { local =>
       verbose(s"local messages from $prevTime: $local")
       messagesStorage updateAll2(local.map(_.id), { m =>
         verbose(s"try updating local message time, msg: $m, time: $time")
-        if (m.isLocal) m.copy(time = time.plusMillis(m.time.toEpochMilli - prevTime.toEpochMilli)) else m
+        if (m.isLocal) m.copy(time = time + (m.time.toEpochMilli - prevTime.toEpochMilli).millis) else m
       })
     }
 }

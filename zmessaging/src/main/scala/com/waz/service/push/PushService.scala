@@ -28,19 +28,20 @@ import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.Event.EventDecoder
 import com.waz.model._
 import com.waz.model.otr.ClientId
+import com.waz.service.AccountsService.{InBackground, LoggedOut}
 import com.waz.service.ZMessaging.{accountTag, clock}
 import com.waz.service._
 import com.waz.service.otr.OtrService
 import com.waz.service.push.PushService.SyncSource
 import com.waz.service.tracking.{MissedPushEvent, ReceivedPushEvent, TrackingService}
 import com.waz.sync.SyncServiceHandle
-import com.waz.sync.client.PushNotificationsClient.{LoadNotificationsResponse, NotificationsResponseEncoded}
+import com.waz.sync.client.PushNotificationsClient.{LoadNotificationsResponse, LoadNotificationsResult}
 import com.waz.sync.client.{PushNotificationEncoded, PushNotificationsClient}
 import com.waz.threading.CancellableFuture.lift
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
-import com.waz.utils.events._
+import com.waz.utils.events.{Signal, _}
 import com.waz.utils.{RichInstant, _}
-import com.waz.znet.Response.Status.{NotFound, Unauthorized}
+import com.waz.znet2.http.ResponseCode
 import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 
@@ -86,11 +87,15 @@ class PushServiceImpl(userId:               UserId,
                       clientId:             ClientId,
                       pipeline:             EventPipeline,
                       otrService:           OtrService,
-                      webSocket:            WebSocketClientService,
+                      wsPushService:        WSPushService,
+                      accounts:             AccountsService,
+                      pushTokenService:     PushTokenService,
                       network:              NetworkModeService,
                       lifeCycle:            UiLifeCycle,
                       tracking:             TrackingService,
-                      sync:                 SyncServiceHandle)(implicit ev: AccountContext) extends PushService { self =>
+                      sync:                 SyncServiceHandle,
+                      timeouts:             Timeouts)
+                     (implicit ev: AccountContext) extends PushService { self =>
   import PushService._
 
   implicit val logTag: LogTag = accountTag[PushServiceImpl](userId)
@@ -169,34 +174,43 @@ class PushServiceImpl(userId:               UserId,
     }
   }
 
-  webSocket.client.on(dispatcher) {
-    case None =>
-      subs.foreach(_.destroy())
-      subs = Nil
+  private val accountState = accounts.accountState(userId)
 
-    case Some(ws) =>
-      subs.foreach(_.destroy())
-      subs = Seq(
-        ws.onMessage.on(dispatcher) { content =>
-          verbose(s"got websocket message: $content")
-          content match {
-            case NotificationsResponseEncoded(notifications@_*) =>
-              verbose(s"got notifications from data: $content")
-              fetchInProgress = if (fetchInProgress.isCompleted)
-                storeNotifications(notifications)
-              else
-                fetchInProgress.flatMap(_ => storeNotifications(notifications))
-            case resp =>
-              error(s"unexpected push response: $resp")
-          }
-        },
-        ws.onError.on(dispatcher) { _ =>
-          syncHistory(WebSocketChange(false))
-        }
-      )
+  // true if web socket should be active,
+  private val wsActive = network.networkMode.flatMap {
+    case NetworkMode.OFFLINE => Signal const false
+    case _ => accountState.flatMap {
+      case LoggedOut => Signal const false
+      case _ => pushTokenService.pushActive.flatMap {
+        case false => Signal.const(true)
+        case true  =>
+          // throttles inactivity notifications to avoid disconnecting on short UI pauses (like activity change)
+          verbose(s"lifecycle no longer active, should stop the client")
+          Signal.future(CancellableFuture.delayed(timeouts.webSocket.inactivityTimeout)(false)).orElse(Signal const true)
+      }
+    }
   }
 
-  webSocket.connected.onChanged.map(WebSocketChange).on(dispatcher)(syncHistory(_))
+  wsActive {
+    case true =>
+      debug(s"Active, client: $clientId")
+      wsPushService.activate()
+      if (accountState.currentValue.forall(_ == InBackground)) {
+        // start android service to keep the app running while we need to be connected.
+        com.waz.zms.WebSocketService(context)
+      }
+    case _ =>
+      debug(s"onInactive")
+      wsPushService.deactivate()
+  }
+
+  wsPushService.notifications() { notifications =>
+    fetchInProgress =
+      if (fetchInProgress.isCompleted) storeNotifications(notifications)
+      else fetchInProgress.flatMap(_ => storeNotifications(notifications))
+  }
+
+  wsPushService.connected().onChanged.map(WebSocketChange).on(dispatcher)(syncHistory(_))
 
   private def storeNotifications(notifications: Seq[PushNotificationEncoded]): Future[Unit] =
     Serialized.future(PipelineKey)(notificationStorage.saveAll(notifications).flatMap { _ =>
@@ -224,15 +238,20 @@ class PushServiceImpl(userId:               UserId,
         case None => if (firstSync) client.loadLastNotification(clientId) else client.loadNotifications(None, clientId)
         case id   => client.loadNotifications(id, clientId)
       }).flatMap {
-        case Right(LoadNotificationsResponse(nots, false, time)) => futureHistoryResults(nots, time, firstSync = firstSync)
-        case Right(LoadNotificationsResponse(nots, true, time)) =>
-          load(nots.lastOption.map(_.id)).flatMap { results =>
-            futureHistoryResults(nots ++ results.notifications, if (results.time.isDefined) results.time else time, historyLost = results.historyLost)
+        case Right(LoadNotificationsResult(response, historyLost)) if !response.hasMore && !historyLost =>
+          futureHistoryResults(response.notifications, response.beTime, firstSync = firstSync)
+        case Right(LoadNotificationsResult(response, historyLost)) if response.hasMore && !historyLost =>
+          load(response.notifications.lastOption.map(_.id)).flatMap { results =>
+            futureHistoryResults(
+              response.notifications ++ results.notifications,
+              if (results.time.isDefined) results.time else response.beTime,
+              historyLost = results.historyLost
+            )
           }
-        case Left(ErrorResponse(NotFound, _, _)) if lastId.isDefined =>
+        case Right(LoadNotificationsResult(response, historyLost)) if lastId.isDefined && historyLost =>
           warn(s"/notifications failed with 404, history lost")
-          load(None).flatMap { case Results(nots, time, _, _) => futureHistoryResults(nots, time, historyLost = true) }
-        case Left(e@ErrorResponse(Unauthorized, _, _)) =>
+          futureHistoryResults(response.notifications, response.beTime, historyLost)
+        case Left(e @ ErrorResponse(ResponseCode.Unauthorized, _, _)) =>
           warn(s"Logged out, failing sync request")
           CancellableFuture.failed(FetchFailedException(e))
         case Left(err) =>
@@ -245,7 +264,7 @@ class PushServiceImpl(userId:               UserId,
             val retry = Promise[Unit]()
 
             network.networkMode.onChanged.filter(!Set(UNKNOWN, OFFLINE).contains(_)).next.map(_ => retry.trySuccess({}))
-            webSocket.connected.onChanged.next.map(_ => retry.trySuccess({}))
+            wsPushService.connected().onChanged.next.map(_ => retry.trySuccess({}))
 
             for {
               _ <- CancellableFuture.delay(syncHistoryBackoff.delay(attempts))
