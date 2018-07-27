@@ -78,7 +78,3 @@ case class AudioAssetForUpload(override val id: AssetId, data: CacheEntry, durat
     }(Threading.Ui)
   }
 }
-
-object DoNothingAndProceed extends api.MessageContent.Asset.ErrorHandler {
-  override def noWifiAndFileIsLarge(sizeInBytes: Long, net: api.NetworkMode, a: api.MessageContent.Asset.Answer): Unit = a.ok()
-}

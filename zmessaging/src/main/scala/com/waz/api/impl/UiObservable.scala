@@ -17,10 +17,10 @@
  */
 package com.waz.api.impl
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.api.{Subscriber, Subscription, UpdateListener}
-import com.waz.service.{AccountManager, ZMessaging}
+import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.ui.{SignalLoading, UiModule}
 import com.waz.utils.events.Signal

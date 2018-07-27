@@ -17,11 +17,11 @@
  */
 package com.waz.ui
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
-import com.waz.service.{AccountManager, ZMessaging}
+import com.waz.ZLog._
+import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.waz.ui.SignalLoader.{AccountLoaderHandle, LoaderHandle, LoadingReference, ZmsLoaderHandle}
+import com.waz.ui.SignalLoader.{LoaderHandle, LoadingReference, ZmsLoaderHandle}
 import com.waz.utils.events.Signal
 
 import scala.ref.{ReferenceQueue, WeakReference}
@@ -30,13 +30,6 @@ trait SignalLoading {
   // set keeping track of all active loader handles to avoid early GC
   // it relies on LoaderHandle being regular class (equals should compare identity)
   private[ui] var loaderHandles = Set.empty[LoaderHandle[_]]
-
-  def addLoader[A, B <: A](signal: ZMessaging => Signal[B], defaultValue: A)(onLoaded: A => Unit)(implicit ui: UiModule): LoaderSubscription = {
-    addLoaderOpt({
-      case Some(zms) => signal(zms).map(_.asInstanceOf[A])
-      case None => Signal.const(defaultValue)
-    })(onLoaded)
-  }
 
   def addLoader[A](signal: ZMessaging => Signal[A])(onLoaded: A => Unit)(implicit ui: UiModule): LoaderSubscription = {
     addLoaderOpt({
@@ -50,39 +43,10 @@ trait SignalLoading {
     loaderHandles += handle
     SignalLoader(handle)
   }
-
-  def accountLoader[A](signal: AccountManager => Signal[A])(onLoaded: A => Unit)(implicit ui: UiModule): LoaderSubscription = {
-    accountLoaderOpt({
-      case Some(acc) => signal(acc)
-      case None => Signal.empty[A]
-    })(onLoaded)
-  }
-
-  def accountLoaderOpt[A, B <: A](signal: Option[AccountManager] => Signal[B])(onLoaded: A => Unit)(implicit ui: UiModule): LoaderSubscription = {
-    val handle = new AccountLoaderHandle(this, signal, onLoaded)
-    loaderHandles += handle
-    SignalLoader(handle)
-  }
-}
-
-trait DisableSignalLoading { self: SignalLoading =>
-  override def addLoader[A](signal: (ZMessaging) => Signal[A])(onLoaded: (A) => Unit)(implicit ui: UiModule) = LoaderSubscription.Empty
-  override def addLoaderOpt[A, B <: A](signal: (Option[ZMessaging]) => Signal[B])(onLoaded: (A) => Unit)(implicit ui: UiModule) = LoaderSubscription.Empty
-  override def addLoader[A, B <: A](signal: (ZMessaging) => Signal[B], defaultValue: A)(onLoaded: (A) => Unit)(implicit ui: UiModule) = LoaderSubscription.Empty
-}
-
-object SignalLoading {
-  type ZmsSignal = Signal[Option[ZMessaging]]
 }
 
 trait LoaderSubscription {
   def destroy(): Unit
-}
-
-object LoaderSubscription {
-  val Empty = new LoaderSubscription() {
-    override def destroy(): Unit = ()
-  }
 }
 
 abstract class SignalLoader[A](handle: LoaderHandle[A])(implicit ui: UiModule) extends LoaderSubscription {
@@ -117,10 +81,6 @@ class ZmsSignalLoader[A](handle: ZmsLoaderHandle[A])(implicit ui: UiModule) exte
   override def signal = ui.currentZms flatMap { zms => verbose(s"currentZms: $zms"); withHandle { _.asInstanceOf[ZmsLoaderHandle[A]].signal(zms) } }
 }
 
-class AccountSignalLoader[A](handle: AccountLoaderHandle[A])(implicit ui: UiModule) extends SignalLoader[A](handle)(ui) {
-  override def signal = ui.currentAccount flatMap { acc => verbose(s"currentAccount: $acc"); withHandle { _.asInstanceOf[AccountLoaderHandle[A]].signal(acc) } }
-}
-
 object SignalLoader {
 
   private val queue = new ReferenceQueue[LoaderHandle[_]]
@@ -135,13 +95,10 @@ object SignalLoader {
     case None => // done
   }
 
-  def apply[A](handle: LoaderHandle[A])(implicit ui: UiModule) = {
+  def apply[A](handle: ZmsLoaderHandle[A])(implicit ui: UiModule) = {
     Threading.assertUiThread()
     dropQueue()
-    handle match {
-      case h: ZmsLoaderHandle[A] => new ZmsSignalLoader[A](h)
-      case h: AccountLoaderHandle[A] => new AccountSignalLoader[A](h)
-    }
+    new ZmsSignalLoader[A](handle)
   }
 
   sealed trait LoaderHandle[A] {
@@ -150,8 +107,6 @@ object SignalLoader {
   }
 
   class ZmsLoaderHandle[A](val loading: SignalLoading, val signal: Option[ZMessaging] => Signal[A], val callback: A => Unit) extends LoaderHandle[A]
-
-  class AccountLoaderHandle[A](val loading: SignalLoading, val signal: Option[AccountManager] => Signal[A], val callback: A => Unit) extends LoaderHandle[A]
 
   class LoadingReference[A](val loader: SignalLoader[A], handle: LoaderHandle[A]) extends WeakReference(handle, queue)
 }
