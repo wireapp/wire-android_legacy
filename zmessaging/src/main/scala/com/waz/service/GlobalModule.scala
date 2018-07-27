@@ -103,7 +103,7 @@ class GlobalModuleImpl(val context: AContext, val backend: BackendConfig) extend
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
   val network:                  DefaultNetworkModeService        = wire[DefaultNetworkModeService]
 
-  val ssoService:               SSOService                       = wire[SSOService]
+  lazy val ssoService:          SSOService                       = new SSOService(this)
 
   val tokenService:             GlobalTokenService               = wire[GlobalTokenService]
 

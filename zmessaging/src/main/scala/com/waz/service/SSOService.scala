@@ -19,6 +19,7 @@ package com.waz.service
 
 import java.util.UUID
 
+import com.waz.sync.client.ErrorOr
 import scala.util.Try
 import scala.util.matching.Regex
 
@@ -30,13 +31,17 @@ object SSOService {
 
 }
 
-class SSOService {
+class SSOService(val global: GlobalModule) {
   import SSOService._
+
+  lazy val loginClient   = global.loginClient
 
   def extractToken(string: String): Option[String] = TokenRegex.findFirstIn(string)
 
   def isTokenValid(token: String): Boolean = TokenRegex.pattern.matcher(token).matches()
 
   def extractUUID(token: String): Option[UUID] = Try{ UUID.fromString(token.drop(Prefix.length)) }.toOption
+
+  def verifyToken(token: UUID): ErrorOr[Boolean] = loginClient.verifySSOToken(token)
 
 }

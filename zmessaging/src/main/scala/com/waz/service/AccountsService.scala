@@ -27,7 +27,6 @@ import com.waz.content.GlobalPreferences._
 import com.waz.content.UserPreferences
 import com.waz.model.AccountData.Password
 import com.waz.model._
-import com.waz.service.AccountManager.ClientRegistrationState
 import com.waz.service.tracking.LoggedOutEvent
 import com.waz.sync.client.LoginClient
 import com.waz.threading.Threading
