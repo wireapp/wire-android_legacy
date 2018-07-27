@@ -21,7 +21,7 @@ import com.waz.specs.ZSpec
 
 class SSOServiceSpec extends ZSpec {
 
-  val service = new SSOService()
+  val service = new SSOService(null)
 
   feature("Extracting token") {
 
