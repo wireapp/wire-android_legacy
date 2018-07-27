@@ -38,7 +38,7 @@ import scala.concurrent.Future
 import scala.concurrent.Future.successful
 import scala.util.{Failure, Success}
 
-abstract class AssetForUpload(val id: AssetId) extends api.AssetForUpload {
+sealed abstract class AssetForUpload(val id: AssetId) extends api.AssetForUpload {
   def getId = id.str
   def name: Future[Option[String]]
   def mimeType: Future[Mime]

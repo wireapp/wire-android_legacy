@@ -28,7 +28,6 @@ import com.waz.service.EventScheduler.Stage
 import com.waz.service.UserService._
 import com.waz.service.assets.AssetService
 import com.waz.service.assets.AssetService.RawAssetInput
-import com.waz.service.assets.AssetService.RawAssetInput.{ByteInput, UriInput}
 import com.waz.service.conversation.ConversationsListStateService
 import com.waz.service.push.PushService
 import com.waz.sync.SyncServiceHandle
@@ -37,7 +36,7 @@ import com.waz.sync.client.{CredentialsUpdateClient, ErrorOr, UsersClient}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils._
 import com.waz.utils.events._
-import com.waz.utils.wrappers.{AndroidURIUtil, URI}
+import com.waz.utils.wrappers.AndroidURIUtil
 
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -81,11 +80,6 @@ trait UserService {
 
   def storeAvailabilities(availabilities: Map[UserId, Availability]): Future[Seq[(UserData, UserData)]]
   def updateSelfPicture(input: RawAssetInput): Future[Unit]
-  def updateSelfPicture(image: com.waz.api.ImageAsset): Future[Unit]
-  def updateSelfPicture(image: Array[Byte]): Future[Unit]
-  def updateSelfPicture(image: URI): Future[Unit]
-
-  def addUnsplashPicture(): Future[Unit]
 }
 
 class UserServiceImpl(selfUserId:        UserId,
@@ -312,43 +306,10 @@ class UserServiceImpl(selfUserId:        UserId,
   }
 
   override def updateSelfPicture(input: RawAssetInput) =
-    input match {
-      case ByteInput(bytes) => updateSelfPicture(bytes)
-      case UriInput(uri)    => updateSelfPicture(uri)
-      case _ => //TODO define other cases
-        warn(s"Image input type: $input not supported")
-        Future.successful({})
+    assets.addAsset(input, isProfilePic = true).flatMap {
+      case Some(a) => updateAndSync(_.copy(picture = Some(a.id)), _ => sync.postSelfPicture(Some(a.id)))
+      case _ => Future.successful({})
     }
-
-  override def updateSelfPicture(image: com.waz.api.ImageAsset) =
-    updateAndSyncSelfPicture {
-      verbose(s"updateSelfPicture($image)")
-      assets.addImageAsset(image, isProfilePic = true)
-    }
-
-  override def updateSelfPicture(bytes: Array[Byte]) =
-    updateAndSyncSelfPicture {
-      verbose(s"updateSelfPicture(byte array of length: ${bytes.length})")
-      assets.createImageFrom(bytes, isProfilePic = true)
-    }
-
-  override def updateSelfPicture(uri: URI) =
-    updateAndSyncSelfPicture {
-      verbose(s"updateSelfPicture($uri)")
-      assets.createImageFrom(uri, isProfilePic = true)
-    }
-
-  private def updateAndSyncSelfPicture(asset: Future[AssetData]) = asset.flatMap { a =>
-    updateAndSync(_.copy(picture = Some(a.id)), _ => sync.postSelfPicture(Some(a.id)))
-  }
-
-  def addUnsplashPicture() = {
-    verbose(s"addUnsplashPicture")
-    val asset = AssetData.newImageAssetFromUri(uri = UnsplashUrl)
-    assets.addImage(asset, isProfilePic = true) flatMap { asset =>
-      updateAndSync(_.copy(picture = Some(asset.id)), _ => sync.postSelfPicture(Some(asset.id)))
-    }
-  }
 
   private def updateAndSync(updater: UserData => UserData, sync: UserData => Future[_]) =
     updateUserData(selfUserId, updater).flatMap({

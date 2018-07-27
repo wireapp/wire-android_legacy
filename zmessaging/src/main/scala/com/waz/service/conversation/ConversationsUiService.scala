@@ -17,13 +17,11 @@
  */
 package com.waz.service.conversation
 
-import android.graphics.Bitmap
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.Message
-import com.waz.api.MessageContent.Text
 import com.waz.api.NetworkMode.{OFFLINE, WIFI}
 import com.waz.api.impl._
 import com.waz.content._
@@ -46,7 +44,6 @@ import com.waz.utils.Locales.currentLocaleOrdering
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.events.EventStream
-import com.waz.utils.wrappers.URI
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -59,21 +56,13 @@ trait ConversationsUiService {
   def sendTextMessage(convId: ConvId, text: String, exp: Option[Option[FiniteDuration]] = None): Future[Some[MessageData]]
   def sendTextMessages(convs: Seq[ConvId], text: String, exp: Option[FiniteDuration]): Future[Unit]
 
-  def sendUriMessage(convId: ConvId, uri: URI, confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]]
-  def sendUriMessages(convs: Seq[ConvId], uris: Seq[URI], confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[FiniteDuration] = None): Future[Unit]
-
-  def sendImageMessage(convId: ConvId, rawInput: RawAssetInput, confirmation: WifiWarningConfirmation = DefaultConfirmation): Future[Option[MessageData]]
-  def sendMessage(convId: ConvId, audioAsset: AssetForUpload, confirmation: WifiWarningConfirmation = DefaultConfirmation): Future[Option[MessageData]]
-  def sendMessage(convId: ConvId, jpegData: Array[Byte]): Future[Option[MessageData]]
-  def sendMessage(convId: ConvId, bitmap: Bitmap): Future[Option[MessageData]]
-  def sendMessage(convId: ConvId, imageAsset: ImageAsset): Future[Option[MessageData]] //TODO remove use of ImageAsset
-
-  def sendAssetMessage(convId: ConvId, asset: AssetData, confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]]
-
-  def sendLocationMessage(convId: ConvId, l: api.MessageContent.Location): Future[Some[MessageData]] //TODO remove use of MessageContent.Location
+  def sendAssetMessage(convId: ConvId, rawInput: RawAssetInput, confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]]
+  def sendAssetMessages(convs: Seq[ConvId], assets: Seq[RawAssetInput], confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[FiniteDuration] = None): Future[Unit]
 
   @Deprecated
-  def updateMessage(convId: ConvId, id: MessageId, text: Text): Future[Option[MessageData]]
+  def sendMessage(convId: ConvId, audioAsset: AssetForUpload, confirmation: WifiWarningConfirmation = DefaultConfirmation): Future[Option[MessageData]]
+
+  def sendLocationMessage(convId: ConvId, l: api.MessageContent.Location): Future[Some[MessageData]] //TODO remove use of MessageContent.Location
 
   def updateMessage(convId: ConvId, id: MessageId, text: String): Future[Option[MessageData]]
 
@@ -145,41 +134,23 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
   override def sendTextMessages(convs: Seq[ConvId], text: String, exp: Option[FiniteDuration]) =
     Future.sequence(convs.map(id => sendTextMessage(id, text, Some(exp)))).map(_ => {})
 
-  override def sendUriMessage(convId: ConvId, uri: URI, confirmation: WifiWarningConfirmation, exp: Option[Option[FiniteDuration]] = None) = {
-    val asset = ContentUriAssetForUpload(AssetId(), uri)
-    for {
-      mime  <- asset.mimeType
-      asset <- mime match {
-        case Mime.Image() => assets.createImageFrom(uri, isProfilePic = false)
-        case _            => assets.addAsset(asset)
-      }
-      msg   <- sendAssetMessage(convId, asset, confirmation, exp)
-    } yield msg
-  }
+  override def sendAssetMessage(convId: ConvId, rawInput: RawAssetInput, confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[Option[FiniteDuration]] = None) =
+    assets.addAsset(rawInput).flatMap {
+      case Some(asset) => postAssetMessage(convId, asset, confirmation, exp)
+      case _ => Future.successful(Option.empty[MessageData])
+    }
 
-  override def sendUriMessages(convs: Seq[ConvId], uris: Seq[URI], confirmation: WifiWarningConfirmation, exp: Option[FiniteDuration] = None) =
-    traverseSequential(convs)(conv => traverseSequential(uris)(sendUriMessage(conv, _, confirmation, Some(exp)))).map(_ => {})
+  override def sendAssetMessages(convs: Seq[ConvId], uris: Seq[RawAssetInput], confirmation: WifiWarningConfirmation, exp: Option[FiniteDuration] = None) =
+    traverseSequential(convs)(conv => traverseSequential(uris)(sendAssetMessage(conv, _, confirmation, Some(exp)))).map(_ => {})
 
-  override def sendImageMessage(convId: ConvId, rawInput: RawAssetInput, confirmation: WifiWarningConfirmation = DefaultConfirmation) =
-    assets.createImageFrom(rawInput, isProfilePic = false).flatMap {
-      case Some(asset) => sendAssetMessage(convId, asset, confirmation)
+  override def sendMessage(convId: ConvId, audioAsset: AssetForUpload, confirmation: WifiWarningConfirmation = DefaultConfirmation) =
+    assets.addAssetForUpload(audioAsset).flatMap {
+      case Some(asset) => postAssetMessage(convId, asset, confirmation)
       case _ => Future.successful(None)
     }
 
-  override def sendMessage(convId: ConvId, audioAsset: AssetForUpload, confirmation: WifiWarningConfirmation = DefaultConfirmation) =
-    assets.addAsset(audioAsset).flatMap(sendAssetMessage(convId, _, confirmation))
-
-  override def sendMessage(convId: ConvId, jpegData: Array[Byte]) =
-    assets.createImageFrom(jpegData, isProfilePic = false).flatMap(sendAssetMessage(convId, _, DefaultConfirmation))
-
-  override def sendMessage(convId: ConvId, bitmap: Bitmap) =
-    assets.createImageFrom(bitmap, isProfilePic = false).flatMap(sendAssetMessage(convId, _, DefaultConfirmation))
-
-  override def sendMessage(convId: ConvId, imageAsset: ImageAsset) =
-    assets.addImageAsset(imageAsset).flatMap(sendAssetMessage(convId, _, DefaultConfirmation))
-
-  override def sendAssetMessage(convId: ConvId, asset: AssetData, confirmation: WifiWarningConfirmation, exp: Option[Option[FiniteDuration]] = None) = {
-    verbose(s"sendAssetMessage: $convId, $asset")
+  private def postAssetMessage(convId: ConvId, asset: AssetData, confirmation: WifiWarningConfirmation, exp: Option[Option[FiniteDuration]] = None) = {
+    verbose(s"postAssetMessage: $convId, $asset")
     for {
       message    <- messages.addAssetMessage(convId, asset, exp)
       _          <- updateLastRead(message)
@@ -197,9 +168,6 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
       _   <- sync.postMessage(msg.id, convId, msg.editTime)
     } yield Some(msg)
   }
-
-  @Deprecated
-  override def updateMessage(convId: ConvId, id: MessageId, text: Text): Future[Option[MessageData]] = updateMessage(convId, id, text.getContent)
 
   override def updateMessage(convId: ConvId, id: MessageId, text: String): Future[Option[MessageData]] = {
     verbose(s"updateMessage($convId, $id, $text")

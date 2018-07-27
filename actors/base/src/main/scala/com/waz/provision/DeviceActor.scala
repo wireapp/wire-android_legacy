@@ -37,6 +37,7 @@ import com.waz.model.{ConvId, Liking, RConvId, MessageContent => _, _}
 import com.waz.provision.DeviceActor.responseTimeout
 import com.waz.service.AccountManager.ClientRegistrationState.Registered
 import com.waz.service._
+import com.waz.service.assets.AssetService.RawAssetInput.{ByteInput, UriInput}
 import com.waz.service.call.FlowManagerService
 import com.waz.service.conversation.ConversationsUiService
 import com.waz.testutils.Implicits._
@@ -289,21 +290,18 @@ class DeviceActor(val deviceName: String,
 
     case SendImage(remoteId, path) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>
-        z.convsUi.sendMessage(convId, ui.images.createImageAssetFrom(IoUtils.toByteArray(new FileInputStream(path))))
+        z.convsUi.sendAssetMessage(convId, ByteInput(IoUtils.toByteArray(new FileInputStream(path))))
       }.map(_.fold2(Failed("no message sent"), m => Successful(m.id.str)))
 
     case SendImageData(remoteId, bytes) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>
-        z.convsUi.sendMessage(convId, ui.images.createImageAssetFrom(bytes))
+        z.convsUi.sendAssetMessage(convId, ByteInput(bytes))
       }.map(_.fold2(Failed("no message sent"), m => Successful(m.id.str)))
 
     case SendAsset(remoteId, bytes, mime, name, _) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>
         //TODO for now this assumes image only - need to handle bytes for other asset types too
-//        val asset = impl.AssetForUpload(AssetId(), Some(name), Mime(mime), Some(bytes.length.toLong)){
-//          _ => new ByteArrayInputStream(bytes)
-//        }
-        z.convsUi.sendMessage(convId, bytes)
+        z.convsUi.sendAssetMessage(convId, ByteInput(bytes))
       }.map(_.fold2(Failed("no message sent"), m => Successful(m.id.str)))
 
     case SendLocation(remoteId, lon, lat, name, zoom) =>
@@ -313,7 +311,7 @@ class DeviceActor(val deviceName: String,
 
     case SendFile(remoteId, path, mime) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>
-        z.convsUi.sendUriMessage(convId, URI.parse(path), ConversationsUiService.DefaultConfirmation)
+        z.convsUi.sendAssetMessage(convId, UriInput(URI.parse(path)))
       }.map(_.fold2(Failed("no message sent"), m => Successful(m.id.str)))
 
     case AddMembers(remoteId, users@_*) =>
@@ -366,7 +364,7 @@ class DeviceActor(val deviceName: String,
       }.map(_ => Successful)
 
     case UpdateProfileImage(path) =>
-      zms.head.flatMap(_.users.updateSelfPicture(ui.images.createImageAssetFrom(IoUtils.toByteArray(getClass.getResourceAsStream(path)))))
+      zms.head.flatMap(_.users.updateSelfPicture(ByteInput(IoUtils.toByteArray(getClass.getResourceAsStream(path)))))
         .map(_ => Successful)
 
     case UpdateProfileName(name) =>
