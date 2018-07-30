@@ -60,6 +60,7 @@ import scala.util.control.NonFatal
   */
 trait AccountsService {
   type HasOtherClients = Boolean
+  type HadDB = Boolean
 
   import AccountsService._
 
@@ -99,7 +100,7 @@ trait AccountsService {
 
   def loginClient: LoginClient
 
-  def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, HasOtherClients]]
+  def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, (HasOtherClients, HadDB)]]
 }
 
 object AccountsService {
@@ -450,7 +451,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
       .map(_ => {})
   }
 
-  override def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, HasOtherClients]] = {
+  override def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, (HasOtherClients, HadDB)]] = {
     verbose(s"SSO login: $userId $cookie")
     loginClient.access(cookie, None).flatMap {
       case Right(loginResult) =>
@@ -458,9 +459,10 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
           case Right(userInfo) =>
             for {
               _  <- addAccountEntry(userInfo, cookie, Some(loginResult.accessToken), None)
+              hadDb = context.getDatabasePath(userId.str).exists()
               am <- createAccountManager(userId, None, isLogin = Some(true), initialUser = Some(userInfo))
-              r  <- am.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.otrClient.loadClients().future.mapRight(_.nonEmpty))
-              _  = r.fold(_ => (), hasClients => if (!hasClients) am.foreach(_.addUnsplashPicture()))
+              r  <- am.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.otrClient.loadClients().future.mapRight(cs => (cs.nonEmpty, hadDb)))
+              _  = r.fold(_ => (), res => if (!res._1) am.foreach(_.addUnsplashPicture()))
             } yield r
           case Left(error) =>
             verbose(s"SSO login - Get self error: $error")
