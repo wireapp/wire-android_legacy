@@ -116,7 +116,7 @@ object Preferences {
         case e => Some(e.millis)
       }
 
-      implicit lazy val SetCodec = apply[Set[Int]](s => s.mkString(","), s => s.split(",").map(java.lang.Integer.parseInt).toSet, Set.empty[Int])
+      implicit lazy val SetCodec = apply[Set[Int]](s => s.mkString(","), s => if (s.isEmpty) Set.empty[Int] else s.split(",").map(java.lang.Integer.parseInt).toSet, Set.empty[Int])
 
       implicit lazy val FiniteDurationCodec = apply[Option[FiniteDuration]](d => String.valueOf(d.getOrElse(0.millis).toMillis), parseFiniteDurationOpt, None)
 
