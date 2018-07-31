@@ -78,16 +78,10 @@ class SoundController(implicit inj: Injector, cxt: Context) extends Injectable {
     currentZmsVibrationEnabled.currentValue.getOrElse(false)
 
   def isVibrationEnabled(userId: UserId): Boolean = {
-    val isEnabled = (for {
-      Some(zms) <- accountsService.getZms(userId)
-      isEnabled <- zms.userPrefs.preference(UserPreferences.VibrateEnabled).signal.head
-    } yield isEnabled).recover {
-      case err =>
-        verbose(s"Error while getting vibration setting: $err")
-        false
-    }
-
-    Await.result(isEnabled, 1.second)
+    (for {
+      zms <- Signal.future(accountsService.getZms(userId)).collect { case Some(v) => v }
+      isEnabled <- zms.userPrefs.preference(UserPreferences.VibrateEnabled).signal
+    } yield isEnabled).currentValue.getOrElse(false)
   }
 
   def soundIntensityNone = soundIntensity.currentValue.contains(IntensityLevel.NONE)
