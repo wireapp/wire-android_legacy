@@ -7,7 +7,7 @@ import sbt._
 import sbtassembly.MappingSet
 import SharedSettings._
 
-val MajorVersion = "126"
+val MajorVersion = "127"
 val MinorVersion = "0" // hotfix release
 
 version in ThisBuild := {
