@@ -250,10 +250,12 @@ object AssetData {
     def unapply(asset: AssetData): Option[URI] = asset.source
   }
 
-  val MaxAllowedBackendAssetSizeInBytes = 100L * 1024 * 1024
+  private val MaxTeamAssetSizeInBytes   = 100L * 1024 * 1024
+  private val MaxNoTeamAssetSizeInBytes = 25L  * 1024 * 1024
 
-  val MaxAllowedAssetSizeInBytes = MaxAllowedBackendAssetSizeInBytes - 32 + 15
-  // 100MB - 32 + 15 (first 16 bytes are AES IV, last 1 (!) to 16 bytes are padding)
+  def maxAssetSizeInBytes(isTeam: Boolean): Long =
+    if (isTeam) MaxTeamAssetSizeInBytes
+    else MaxNoTeamAssetSizeInBytes
 
   case class ProcessingTaskKey(id: AssetId)
 
