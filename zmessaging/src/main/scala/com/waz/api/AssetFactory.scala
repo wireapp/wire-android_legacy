@@ -30,8 +30,6 @@ import scala.util.{Failure, Success}
 
 object AssetFactory {
 
-  def getMaxAllowedAssetSizeInBytes = AssetData.MaxAllowedBackendAssetSizeInBytes
-
   /**
     * Gets an asset from a URI. Only the "content" scheme is supported
     */
