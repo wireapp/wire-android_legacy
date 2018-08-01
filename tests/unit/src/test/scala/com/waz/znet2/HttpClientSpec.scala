@@ -99,6 +99,7 @@ class HttpClientSpec extends ZSpec {
       mockServer.enqueue(
         new MockResponse()
           .setResponseCode(testResponseCode)
+          .setHeader("Content-Type", "text/plain")
           .setBody(testBodyStr)
       )
 
@@ -123,6 +124,7 @@ class HttpClientSpec extends ZSpec {
     mockServer.enqueue(
       new MockResponse()
         .setResponseCode(testResponseCode)
+        .setHeader("Content-Type", "application/json")
         .setBody(testResponseBodyStr)
     )
 
@@ -146,6 +148,7 @@ class HttpClientSpec extends ZSpec {
     mockServer.enqueue(
       new MockResponse()
         .setResponseCode(testResponseCode)
+        .setHeader("Content-Type", "application/json")
         .setBody(testResponseBodyStr)
     )
 
@@ -171,6 +174,7 @@ class HttpClientSpec extends ZSpec {
     mockServer.enqueue(
       new MockResponse()
         .setResponseCode(testResponseCode)
+        .setHeader("Content-Type", "application/json")
         .setBody(testResponseBodyStr)
     )
 
@@ -194,6 +198,7 @@ class HttpClientSpec extends ZSpec {
     mockServer.enqueue(
       new MockResponse()
         .setResponseCode(testResponseCode)
+        .setHeader("Content-Type", "application/json")
         .setBody(testResponseBodyStr)
     )
 
@@ -213,7 +218,12 @@ class HttpClientSpec extends ZSpec {
     val testResponseCode = 201
     val testRequestBody = Array.fill[Byte](100000)(1)
 
-    mockServer.enqueue(new MockResponse().setResponseCode(testResponseCode).setBody("we do not care"))
+    mockServer.enqueue(
+      new MockResponse()
+        .setResponseCode(testResponseCode)
+        .setHeader("Content-Type", "application/octet-stream")
+        .setBody("we do not care")
+    )
 
     val client = createClient()
     val request = Request.Post("/test", body = testRequestBody)
@@ -235,7 +245,12 @@ class HttpClientSpec extends ZSpec {
     val buffer = new Buffer()
     buffer.writeAll(Okio.source(new ByteArrayInputStream(testResponseBody)))
 
-    mockServer.enqueue(new MockResponse().setResponseCode(testResponseCode).setBody(buffer))
+    mockServer.enqueue(
+      new MockResponse()
+        .setResponseCode(testResponseCode)
+        .setHeader("Content-Type", "application/octet-stream")
+        .setBody(buffer)
+    )
 
     val client = createClient()
     val request = Request.Get("/test")

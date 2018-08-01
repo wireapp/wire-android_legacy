@@ -49,6 +49,7 @@ import scala.concurrent.ExecutionContext
 trait GlobalModule {
   def context:              AContext
   def backend:              BackendConfig
+  def ssoService:           SSOService
   def tokenService:         GlobalTokenService
   def notifications:        GlobalNotificationsService
   def accountsService:      AccountsService
@@ -101,6 +102,8 @@ class GlobalModuleImpl(val context: AContext, val backend: BackendConfig) extend
   val googleApi:                GoogleApi                        = new GoogleApiImpl(context, backend, prefs)
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
   val network:                  DefaultNetworkModeService        = wire[DefaultNetworkModeService]
+
+  lazy val ssoService:          SSOService                       = wire[SSOService]
 
   val tokenService:             GlobalTokenService               = wire[GlobalTokenService]
 
@@ -176,6 +179,7 @@ class EmptyGlobalModule extends GlobalModule {
   override def trackingService:       TrackingService                                     = ???
   override def context:               AContext                                            = ???
   override def backend:               BackendConfig                                       = ???
+  override def ssoService:            SSOService                                          = ???
   override def tokenService:          GlobalTokenService                                  = ???
   override def notifications:         GlobalNotificationsService                          = ???
   override def calling:               GlobalCallingService                                = ???

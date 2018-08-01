@@ -51,6 +51,13 @@ import okio.BufferedSink
 import scala.collection.JavaConverters._
 import scala.concurrent.{ ExecutionContext, Future }
 
+/**
+  * According to OkHttp response body parsing logic, we get an OkHttp Body object with empty content in case,
+  * when we receive http response without body.
+  * We would like to do not have response body in this case.
+  * For achieving this, we always check response Content-Type header, and, if it is not present,
+  * we ignore the parsed OkHttp response body. This is done in HttpClientOkHttpImpl.convertOkHttpResponse
+  */
 class HttpClientOkHttpImpl(client: OkHttpClient)(implicit protected val ec: ExecutionContext) extends HttpClient {
 
   import HttpClient._
@@ -170,6 +177,7 @@ object HttpClientOkHttpImpl {
       code = response.code(),
       headers = convertHeaders(response.headers()),
       body = Option(response.body())
+        .filterNot(_ => response.header("Content-Type") == null) // should be treated as empty body
         .map { body =>
           val data       = body.byteStream()
           val dataLength = if (body.contentLength() == -1) None else Some(body.contentLength())

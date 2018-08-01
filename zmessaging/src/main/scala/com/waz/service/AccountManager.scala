@@ -123,9 +123,7 @@ class AccountManager(val userId:   UserId,
     }
   }
 
-  if (isLogin.contains(false)) {
-    zmessaging.flatMap(_.users.addUnsplashPicture())
-  }
+  if (isLogin.contains(false)) addUnsplashPicture()
 
   if (startedJustAfterBackup) {
     zmessaging.foreach(_.tracking.historyRestored(true))
@@ -150,6 +148,8 @@ class AccountManager(val userId:   UserId,
     }
     hasClient = exists
   }
+
+  def addUnsplashPicture(): Future[Unit] = zmessaging.flatMap(_.users.addUnsplashPicture())
 
   def fingerprintSignal(uId: UserId, cId: ClientId): Signal[Option[Array[Byte]]] =
     for {

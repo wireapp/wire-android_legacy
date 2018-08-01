@@ -34,7 +34,8 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.{Serialized, returning}
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.sync.client.LoginClient.LoginResult
-import com.waz.sync.client.{ErrorOr, ErrorOrResponse}
+import com.waz.sync.client.ErrorOr
+import com.waz.utils._
 
 import scala.async.Async.{async, await}
 import scala.concurrent.Future
@@ -58,6 +59,9 @@ import scala.util.control.NonFatal
   *
   */
 trait AccountsService {
+  type HasOtherClients = Boolean
+  type HadDB = Boolean
+
   import AccountsService._
 
   def requestVerificationEmail(email: EmailAddress): ErrorOr[Unit]
@@ -95,6 +99,8 @@ trait AccountsService {
   def activeZms:            Signal[Option[ZMessaging]]
 
   def loginClient: LoginClient
+
+  def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, (HasOtherClients, HadDB)]]
 }
 
 object AccountsService {
@@ -405,7 +411,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
       case Right(LoginResult(token, Some(cookie), _)) => //TODO handle label (https://github.com/wireapp/android-project/issues/51)
         loginClient.getSelfUserInfo(token).flatMap {
           case Right(user) => for {
-            _ <- addAccountEntry(user, cookie, Some(token), loginCredentials)
+            _ <- addAccountEntry(user, cookie, Some(token), Some(loginCredentials))
             _ <- prefs(LoggingInUser) := Some(user)
           } yield Right(user.id)
           case Left(err)   => Future.successful(Left(err))
@@ -424,7 +430,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
     regClient.register(registerCredentials, name, teamName).flatMap {
       case Right((user, Some((cookie, _)))) =>
         for {
-          _  <- addAccountEntry(user, cookie, None, registerCredentials)
+          _  <- addAccountEntry(user, cookie, None, Some(registerCredentials))
           am <- createAccountManager(user.id, None, Some(false), Some(user))
           _  <- am.fold(Future.successful({}))(_.getOrRegisterClient().map(_ => ()))
           _  <- setAccount(Some(user.id))
@@ -438,12 +444,34 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
     }
   }
 
-  private def addAccountEntry(user: UserInfo, cookie: Cookie, token: Option[AccessToken], credentials: Credentials): Future[Unit] = {
+  private def addAccountEntry(user: UserInfo, cookie: Cookie, token: Option[AccessToken], credentials: Option[Credentials]): Future[Unit] = {
     verbose(s"addAccountEntry: $user, $cookie, $token, $credentials")
     storage
-      .flatMap(_.updateOrCreate(user.id, _.copy(cookie = cookie, accessToken = token, password = credentials.maybePassword), AccountData(user.id, user.teamId, cookie, token, password = credentials.maybePassword)))
+      .flatMap(_.updateOrCreate(user.id, _.copy(cookie = cookie, accessToken = token, password = credentials.flatMap(_.maybePassword)), AccountData(user.id, user.teamId, cookie, token, password = credentials.flatMap(_.maybePassword))))
       .map(_ => {})
   }
 
+  override def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, (HasOtherClients, HadDB)]] = {
+    verbose(s"SSO login: $userId $cookie")
+    loginClient.access(cookie, None).flatMap {
+      case Right(loginResult) =>
+        loginClient.getSelfUserInfo(loginResult.accessToken).flatMap {
+          case Right(userInfo) =>
+            for {
+              _  <- addAccountEntry(userInfo, cookie, Some(loginResult.accessToken), None)
+              hadDb = context.getDatabasePath(userId.str).exists()
+              am <- createAccountManager(userId, None, isLogin = Some(true), initialUser = Some(userInfo))
+              r  <- am.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.otrClient.loadClients().future.mapRight(cs => (cs.nonEmpty, hadDb)))
+              _  = r.fold(_ => (), res => if (!res._1) am.foreach(_.addUnsplashPicture()))
+            } yield r
+          case Left(error) =>
+            verbose(s"SSO login - Get self error: $error")
+            Future.successful(Left(error))
+        }
+      case Left(error) =>
+        verbose(s"SSO login - access error: $error")
+        Future.successful(Left(error))
+    }
+  }
 }
 
