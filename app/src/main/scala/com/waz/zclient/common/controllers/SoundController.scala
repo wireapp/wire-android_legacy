@@ -36,9 +36,6 @@ import com.waz.zclient.utils.RingtoneUtils.{getUriForRawId, isDefaultValue}
 import com.waz.zclient.utils.{DeprecationUtils, RingtoneUtils}
 import com.waz.zclient.{R, _}
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
-
 //TODO Dean - would be nice to change these unit methods to listeners on signals from the classes that could trigger sounds.
 //For that, however, we would need more signals in the app, and hence more scala classes...
 class SoundController(implicit inj: Injector, cxt: Context) extends Injectable {
