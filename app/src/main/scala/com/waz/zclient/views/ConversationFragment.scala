@@ -24,14 +24,13 @@ import android.provider.MediaStore
 import android.support.annotation.Nullable
 import android.support.v7.widget.{ActionMenuView, Toolbar}
 import android.text.TextUtils
-import android.text.format.Formatter
 import android.view._
 import android.view.animation.Animation
 import android.widget.{AbsListView, FrameLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.model.AccentColor
-import com.waz.api.{AssetFactory, AudioAssetForUpload, AudioEffect, ErrorType}
+import com.waz.api.{AudioAssetForUpload, AudioEffect, ErrorType}
 import com.waz.content.GlobalPreferences
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{MessageContent => _, _}
@@ -671,8 +670,7 @@ class ConversationFragment extends FragmentHelper {
       )
       errorsController.dismissSyncError(err.id)
     case ErrorType.CANNOT_SEND_ASSET_TOO_LARGE =>
-      val maxAllowedSizeInBytes = AssetFactory.getMaxAllowedAssetSizeInBytes
-      if (maxAllowedSizeInBytes > 0) {
+      accountsController.isTeam.head.foreach { isTeam =>
         val dialog = ViewUtils.showAlertDialog(
           getActivity,
           R.string.asset_upload_error__file_too_large__title,
@@ -681,9 +679,9 @@ class ConversationFragment extends FragmentHelper {
           null,
           true
         )
-        dialog.setMessage(getString(R.string.asset_upload_error__file_too_large__message, Formatter.formatShortFileSize(getContext, maxAllowedSizeInBytes)))
+        dialog.setMessage(getString(R.string.asset_upload_error__file_too_large__message, s"${AssetData.maxAssetSizeInBytes(isTeam) / (1024 * 1024)}MB"))
+        errorsController.dismissSyncError(err.id)
       }
-      errorsController.dismissSyncError(err.id)
     case ErrorType.RECORDING_FAILURE =>
       ViewUtils.showAlertDialog(
         getActivity,
