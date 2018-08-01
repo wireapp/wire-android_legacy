@@ -44,5 +44,5 @@ class CallingClientImpl(implicit
 }
 
 object CallingClientImpl {
-  val CallConfigPath = "/calls/config/v2"
+  val CallConfigPath = "/calls/config"
 }
