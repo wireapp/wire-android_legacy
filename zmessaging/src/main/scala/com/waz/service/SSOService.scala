@@ -19,7 +19,8 @@ package com.waz.service
 
 import java.util.UUID
 
-import com.waz.sync.client.ErrorOr
+import com.waz.sync.client.{ErrorOr, LoginClient}
+
 import scala.util.Try
 import scala.util.matching.Regex
 
@@ -31,10 +32,8 @@ object SSOService {
 
 }
 
-class SSOService(val global: GlobalModule) {
+class SSOService(val loginClient: LoginClient) {
   import SSOService._
-
-  lazy val loginClient   = global.loginClient
 
   def extractToken(string: String): Option[String] = TokenRegex.findFirstIn(string)
 
