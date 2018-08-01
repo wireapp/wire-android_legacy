@@ -17,6 +17,8 @@
  */
 package com.waz.sync.client
 
+import java.util.UUID
+
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.Credentials
@@ -49,6 +51,7 @@ trait LoginClient {
 
   def findSelfTeam(accessToken: AccessToken, start: Option[TeamId] = None): ErrorOr[Option[Team]]
   def getTeams(accessToken: AccessToken, start: Option[TeamId]): ErrorOr[TeamsResponse]
+  def verifySSOToken(token: UUID): ErrorOr[Boolean]
 }
 
 class LoginClientImpl(tracking: TrackingService)
@@ -172,6 +175,14 @@ class LoginClientImpl(tracking: TrackingService)
       .future
   }
 
+  override def verifySSOToken(token: UUID): ErrorOr[Boolean] = {
+    Request.Head(relativePath = InitiateSSOLoginPath(token.toString))
+      .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
+      .withResultType[Response[Unit]]
+      .withErrorType[ErrorResponse]
+      .executeSafe(r => ResponseCode.SuccessCodes.contains(r.code))
+      .future
+  }
 }
 
 object LoginClient {
@@ -193,6 +204,8 @@ object LoginClient {
   val ActivateSendPath = "/activate/send"
 
   val Throttling = new ExponentialBackoff(1000.millis, 10.seconds)
+
+  def InitiateSSOLoginPath(code: String) = s"/sso/initiate-login/$code"
 
   def getCookieFromHeaders(headers: Headers): Option[Cookie] = headers.get(SetCookie) flatMap {
     case header @ CookieHeader(cookie) =>
