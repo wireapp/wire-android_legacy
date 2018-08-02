@@ -30,6 +30,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/fm__participants__footer"
+        android:clipToPadding="false"
+        android:paddingBottom="@dimen/wire__padding__24"
         />
 
     <!-- Footer with left & right actions -->

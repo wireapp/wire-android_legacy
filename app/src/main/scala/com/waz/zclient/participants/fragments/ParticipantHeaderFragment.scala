@@ -111,6 +111,8 @@ class ParticipantHeaderFragment extends FragmentHelper {
         case x => getString(R.string.add_people_count_header, x.toString)
       }
 
+      case Some(AllGroupParticipantsFragment.Tag) => Signal.const(getString(R.string.participant_search_title))
+
       case _ => Signal.const(getString(R.string.empty_string))
     }.onUi(t => vh.foreach(_.setText(t)))
   }
