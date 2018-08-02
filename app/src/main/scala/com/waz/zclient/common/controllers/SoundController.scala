@@ -84,9 +84,9 @@ class SoundController(implicit inj: Injector, cxt: Context) extends Injectable {
   def soundIntensityNone = soundIntensity.currentValue.contains(IntensityLevel.NONE)
   def soundIntensityFull = soundIntensity.currentValue.isEmpty || soundIntensity.currentValue.contains(IntensityLevel.FULL)
 
-  def setIncomingRingTonePlaying(play: Boolean) = {
+  def setIncomingRingTonePlaying(userId: UserId, play: Boolean) = {
     if (!soundIntensityNone) setMediaPlaying(R.raw.ringing_from_them, play)
-    setVibrating(R.array.ringing_from_them, play, loop = true)
+    setVibrating(R.array.ringing_from_them, play, loop = true, userId = Some(userId))
   }
 
   //no vibration needed here
@@ -101,14 +101,14 @@ class SoundController(implicit inj: Injector, cxt: Context) extends Injectable {
       setMediaPlaying(R.raw.ringing_from_me, play = false)
     }
 
-  def playCallEstablishedSound() = {
+  def playCallEstablishedSound(userId: UserId) = {
     if (soundIntensityFull) setMediaPlaying(R.raw.ready_to_talk)
-    setVibrating(R.array.ready_to_talk)
+    setVibrating(R.array.ready_to_talk, userId = Some(userId))
   }
 
-  def playCallEndedSound() = {
+  def playCallEndedSound(userId: UserId) = {
     if (soundIntensityFull) setMediaPlaying(R.raw.talk_later)
-    setVibrating(R.array.talk_later)
+    setVibrating(R.array.talk_later, userId = Some(userId))
   }
 
   def playCallDroppedSound() = {
@@ -149,9 +149,11 @@ class SoundController(implicit inj: Injector, cxt: Context) extends Injectable {
   /**
     * @param play For looping patterns, this parameter will tell to stop vibrating if they have previously been started
     */
-  private def setVibrating(patternId: Int, play: Boolean = true, loop: Boolean = false): Unit = {
+  private def setVibrating(patternId: Int, play: Boolean = true, loop: Boolean = false, userId: Option[UserId] = None): Unit = {
     (audioManager, vibrator) match {
-      case (Some(am), Some(vib)) if play && am.getRingerMode != AudioManager.RINGER_MODE_SILENT && isVibrationEnabledInCurrentZms =>
+      case (Some(am), Some(vib)) if play &&
+                                    am.getRingerMode != AudioManager.RINGER_MODE_SILENT &&
+                                    userId.fold(isVibrationEnabledInCurrentZms)(isVibrationEnabled) =>
         vib.cancel() // cancel any current vibrations
         DeprecationUtils.vibrate(vib, getIntArray(patternId).map(_.toLong), if (loop) 0 else -1)
       case (_, Some(vib)) => vib.cancel()

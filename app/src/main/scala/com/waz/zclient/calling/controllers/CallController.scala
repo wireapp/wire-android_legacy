@@ -92,6 +92,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val isCallIncoming    = callStateOpt.map(_.contains(OtherCalling))
 
   val callConvId            = currentCall.map(_.convId)
+  val userId                = currentCall.map(_.account)
   val isMuted               = currentCall.map(_.muted)
   val callerId              = currentCall.map(_.caller)
   val startedAsVideo        = currentCall.map(_.startedAsVideoCall)
@@ -252,11 +253,11 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   }(EventContext.Global)
 
   isCallEstablished.onChanged.filter(_ == true) { _ =>
-    soundController.playCallEstablishedSound()
+    userId.foreach(soundController.playCallEstablishedSound)
   }
 
   isCallActive.onChanged.filter(_ == false) { _ =>
-    soundController.playCallEndedSound()
+    userId.foreach(soundController.playCallEndedSound)
   }
 
   isCallActive.onChanged.filter(_ == false).on(Threading.Ui) { _ =>
@@ -280,8 +281,9 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   (for {
     m <- isMuted.orElse(Signal.const(false))
     i <- isCallIncoming
-  } yield (m, i)) { case (m, i) =>
-    soundController.setIncomingRingTonePlaying(!m && i)
+    uid <- userId
+  } yield (uid, m, i)) { case (uid, m, i) =>
+    soundController.setIncomingRingTonePlaying(uid, play = !m && i)
   }
 
   val convDegraded = conversation.map(_.verified == Verification.UNVERIFIED)
