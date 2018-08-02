@@ -250,10 +250,11 @@ object AssetData {
     def unapply(asset: AssetData): Option[URI] = asset.source
   }
 
-  val MaxAllowedBackendAssetSizeInBytes = 100L * 1024 * 1024
+  val MaxAllowedAssetSizeInBytes = 26214383L
+  // 25MiB - 32 + 15 (first 16 bytes are AES IV, last 1 (!) to 16 bytes are padding)
+  val MaxAllowedBackendAssetSizeInBytes = 26214400L
 
-  val MaxAllowedAssetSizeInBytes = MaxAllowedBackendAssetSizeInBytes - 32 + 15
-  // 100MB - 32 + 15 (first 16 bytes are AES IV, last 1 (!) to 16 bytes are padding)
+  // 25MiB
 
   case class ProcessingTaskKey(id: AssetId)
 
