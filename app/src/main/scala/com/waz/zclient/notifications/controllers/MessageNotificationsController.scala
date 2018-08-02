@@ -302,7 +302,7 @@ class MessageNotificationsController(implicit inj: Injector, cxt: Context, event
 
     notificationColor(userId).foreach(builder.setColor)
 
-    if (!silent && soundController.isVibrationEnabled)
+    if (!silent && soundController.isVibrationEnabled(userId))
       builder.setVibrate(getIntArray(R.array.new_message_gcm).map(_.toLong))
     else
       builder.setVibrate(Array(0,0))
