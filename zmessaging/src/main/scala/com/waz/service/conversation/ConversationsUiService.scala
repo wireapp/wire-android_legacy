@@ -459,7 +459,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
 
   def isFileTooLarge(size: Long, mime: Mime) = mime match {
     case Mime.Video() => false
-    case _ => size > AssetData.maxAssetSizeInBytes(teamId.isDefined)
+    case _ => size > AssetData.MaxAllowedAssetSizeInBytes
   }
 
   private def shouldWarnAboutFileSize(size: Long) =
