@@ -104,7 +104,7 @@ class UsersSyncHandler(assetSync: AssetSyncHandler,
         assetSync.uploadAssetData(assetId, public = true, retention = Retention.Eternal).future flatMap {
           case Right(uploaded) => for {
             _     <- assets.getAssetData(assetId)
-            res   <- updatedSelfToSyncResult(usersClient.updateSelf(UserInfo(id, picture = Some(Seq(uploadedPreview, uploaded).flatten))))
+            res   <- updatedSelfToSyncResult(usersClient.updateSelf(UserInfo(id, picture = Some(Seq(uploadedPreview, uploaded)))))
           } yield res
 
           case Left(err) =>
