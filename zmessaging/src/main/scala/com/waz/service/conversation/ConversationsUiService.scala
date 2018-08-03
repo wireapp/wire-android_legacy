@@ -21,19 +21,19 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api
 import com.waz.api.IConversation.{Access, AccessRole}
-import com.waz.api.MessageContent.Asset.ErrorHandler
-import com.waz.api.MessageContent.Text
+import com.waz.api.Message
 import com.waz.api.NetworkMode.{OFFLINE, WIFI}
 import com.waz.api.impl._
-import com.waz.api.{ImageAssetFactory, Message, NetworkMode}
 import com.waz.content._
 import com.waz.model.ConversationData.{ConversationType, getAccessAndRoleForGroupConv}
 import com.waz.model.GenericContent.{Location, MsgEdit}
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.service.AccountsService.InForeground
+import com.waz.service.ZMessaging.currentBeDrift
 import com.waz.service._
 import com.waz.service.assets.AssetService
+import com.waz.service.assets.AssetService.RawAssetInput
 import com.waz.service.conversation.ConversationsService.generateTempConversationId
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.tracking.TrackingService
@@ -41,32 +41,28 @@ import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.{ConversationsClient, ErrorOr}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.Locales.currentLocaleOrdering
+import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.events.EventStream
-import com.waz.utils.wrappers.URI
-import org.threeten.bp.Instant
-import com.waz.service.ZMessaging.currentBeDrift
 
-import scala.collection.breakOut
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
 
 trait ConversationsUiService {
-  @Deprecated
-  def sendMessage(convId: ConvId, content: api.MessageContent): Future[Option[MessageData]] // TODO: remove when all calls are migrated to respective specialized methods
+  import ConversationsUiService._
 
-  def sendMessage(convId: ConvId, uri: URI, errorHandler: ErrorHandler): Future[Option[MessageData]]
-  def sendMessage(convId: ConvId, audioAsset: AssetForUpload, errorHandler: ErrorHandler): Future[Option[MessageData]]
-  def sendMessage(convId: ConvId, text: String): Future[Option[MessageData]]
-  def sendMessage(convId: ConvId, text: String, mentions: Set[UserId]): Future[Option[MessageData]]
-  def sendMessage(convId: ConvId, jpegData: Array[Byte]): Future[Option[MessageData]]
-  def sendMessage(convId: ConvId, imageAsset: ImageAsset): Future[Option[MessageData]]
-  def sendMessage(convId: ConvId, location: api.MessageContent.Location): Future[Option[MessageData]]
+  def sendTextMessage(convId: ConvId, text: String, exp: Option[Option[FiniteDuration]] = None): Future[Some[MessageData]]
+  def sendTextMessages(convs: Seq[ConvId], text: String, exp: Option[FiniteDuration]): Future[Unit]
+
+  def sendAssetMessage(convId: ConvId, rawInput: RawAssetInput, confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]]
+  def sendAssetMessages(convs: Seq[ConvId], assets: Seq[RawAssetInput], confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[FiniteDuration] = None): Future[Unit]
 
   @Deprecated
-  def updateMessage(convId: ConvId, id: MessageId, text: Text): Future[Option[MessageData]]
+  def sendMessage(convId: ConvId, audioAsset: AssetForUpload, confirmation: WifiWarningConfirmation = DefaultConfirmation): Future[Option[MessageData]]
+
+  def sendLocationMessage(convId: ConvId, l: api.MessageContent.Location): Future[Some[MessageData]] //TODO remove use of MessageContent.Location
 
   def updateMessage(convId: ConvId, id: MessageId, text: String): Future[Option[MessageData]]
 
@@ -96,6 +92,14 @@ trait ConversationsUiService {
   def assetUploadFailed    : EventStream[ErrorResponse]
 }
 
+
+object ConversationsUiService {
+  type WifiWarningConfirmation = Long => Future[Boolean]
+  val DefaultConfirmation = (_: Long) => Future.successful(true)
+
+  val LargeAssetWarningThresholdInBytes = 3145728L // 3MiB
+}
+
 class ConversationsUiServiceImpl(selfUserId:      UserId,
                                  teamId:          Option[TeamId],
                                  assets:          AssetService,
@@ -120,82 +124,50 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
   override val assetUploadCancelled = EventStream[Mime]() //size, mime
   override val assetUploadFailed    = EventStream[ErrorResponse]()
 
-  @Deprecated
-  override def sendMessage(convId: ConvId, content: api.MessageContent): Future[Option[MessageData]] = content match {
-    case m: api.MessageContent.Text =>
-      debug(s"send text message ${m.getContent.take(4)}...")
-      sendTextMessage(convId, m.getContent)
+  override def sendTextMessage(convId: ConvId, text: String, exp: Option[Option[FiniteDuration]] = None) =
+    for {
+      msg <- messages.addTextMessage(convId, text, exp)
+      _   <- updateLastRead(msg)
+      _   <- sync.postMessage(msg.id, convId, msg.editTime)
+    } yield Some(msg)
 
-    case m: api.MessageContent.Location =>
-      sendLocationMessage(convId, Location(m.getLongitude, m.getLatitude, m.getName, m.getZoom))
+  override def sendTextMessages(convs: Seq[ConvId], text: String, exp: Option[FiniteDuration]) =
+    Future.sequence(convs.map(id => sendTextMessage(id, text, Some(exp)))).map(_ => {})
 
-    case m: api.MessageContent.Image =>
-      convsContent.convById(convId) flatMap {
-        case Some(conv) => sendImageMessage(m.getContent, conv)
-        case None => Future.failed(new IllegalArgumentException(s"No conversation found for $convId"))
-      }
+  override def sendAssetMessage(convId: ConvId, rawInput: RawAssetInput, confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[Option[FiniteDuration]] = None) =
+    assets.addAsset(rawInput).flatMap {
+      case Some(asset) => postAssetMessage(convId, asset, confirmation, exp)
+      case _ => Future.successful(Option.empty[MessageData])
+    }
 
-    case m: api.MessageContent.Asset =>
-      convsContent.convById(convId) flatMap {
-        case Some(conv) =>
-          debug(s"send asset message ${m.getContent}")
-          m.getContent match {
-            case a@ContentUriAssetForUpload(_, uri) =>
-              a.mimeType.flatMap {
-                case m@Mime.Image() =>
-                  sendImageMessage(ImageAssetFactory.getImageAsset(uri), conv) // XXX: this has to run on UI thread, so we can't make if part of the for-expression
-                case _ =>
-                  sendAssetMessage(a, conv, m.getErrorHandler)
-              }(Threading.Ui)
-            case a: AssetForUpload => sendAssetMessage(a, conv, m.getErrorHandler)
-          }
-        case None =>
-          Future.failed(new IllegalArgumentException(s"No conversation found for $convId"))
-      }
+  override def sendAssetMessages(convs: Seq[ConvId], uris: Seq[RawAssetInput], confirmation: WifiWarningConfirmation, exp: Option[FiniteDuration] = None) =
+    traverseSequential(convs)(conv => traverseSequential(uris)(sendAssetMessage(conv, _, confirmation, Some(exp)))).map(_ => {})
 
-    case _ =>
-      error(s"sendMessage($content) not supported yet")
-      Future.failed(new IllegalArgumentException(s"MessageContent: $content is not supported yet"))
+  override def sendMessage(convId: ConvId, audioAsset: AssetForUpload, confirmation: WifiWarningConfirmation = DefaultConfirmation) =
+    assets.addAssetForUpload(audioAsset).flatMap {
+      case Some(asset) => postAssetMessage(convId, asset, confirmation)
+      case _ => Future.successful(None)
+    }
+
+  private def postAssetMessage(convId: ConvId, asset: AssetData, confirmation: WifiWarningConfirmation, exp: Option[Option[FiniteDuration]] = None) = {
+    verbose(s"postAssetMessage: $convId, $asset")
+    for {
+      message    <- messages.addAssetMessage(convId, asset, exp)
+      _          <- updateLastRead(message)
+      _          <- Future.successful(tracking.assetContribution(asset.id, selfUserId))
+      shouldSend <- checkSize(convId, Some(asset.size), asset.mime, message, confirmation)
+      _ <- if (shouldSend) sync.postMessage(message.id, convId, message.editTime) else Future.successful(())
+    } yield Some(message)
   }
 
-  override def sendMessage(convId: ConvId, uri: URI, errorHandler: ErrorHandler): Future[Option[MessageData]] = withConv(convId) { conv =>
-    val asset = ContentUriAssetForUpload(AssetId(), uri)
-    asset.mimeType.flatMap {
-      case Mime.Image() => sendImageMessage(ImageAssetFactory.getImageAsset(uri), conv)
-      case _ => sendAssetMessage(asset, conv, errorHandler)
-    }(Threading.Ui)
+  override def sendLocationMessage(convId: ConvId, l: api.MessageContent.Location): Future[Some[MessageData]] = {
+    val loc = Location(l.getLongitude, l.getLatitude, l.getName, l.getZoom)
+    for {
+      msg <- messages.addLocationMessage(convId, loc)
+      _   <- updateLastRead(msg)
+      _   <- sync.postMessage(msg.id, convId, msg.editTime)
+    } yield Some(msg)
   }
-
-  override def sendMessage(convId: ConvId, audioAsset: AssetForUpload, errorHandler: ErrorHandler): Future[Option[MessageData]] =
-    withConv(convId){ conv => sendAssetMessage(audioAsset, conv, errorHandler) } // audio and video assets
-
-  override def sendMessage(convId: ConvId, text: String): Future[Option[MessageData]] = withConv(convId){ _ => sendTextMessage(convId, text) }
-
-  override def sendMessage(convId: ConvId, text: String, mentions: Set[UserId]): Future[Option[MessageData]] = withConv(convId){ _ =>
-    mentionsMap(mentions) flatMap { ms => sendTextMessage(convId, text, ms) }
-  }
-
-  override def sendMessage(convId: ConvId, jpegData: Array[Byte]): Future[Option[MessageData]] = withConv(convId) { conv =>
-    sendImageMessage(ImageAssetFactory.getImageAsset(jpegData), conv)
-  }
-
-  override def sendMessage(convId: ConvId, imageAsset: ImageAsset): Future[Option[MessageData]] = withConv(convId) { conv =>
-    sendImageMessage(imageAsset, conv)
-  }
-
-  override def sendMessage(convId: ConvId, location: api.MessageContent.Location): Future[Option[MessageData]] = withConv(convId) { _ =>
-    sendLocationMessage(convId, location) // TODO: maybe simply use GenericContent.Location
-  }
-
-  private def withConv(convId: ConvId)(use: (ConversationData) => Future[Option[MessageData]]) = convsContent.convById(convId).flatMap {
-    case Some(conv) => use(conv)
-    case None => Future.failed(new IllegalArgumentException(s"No conversation found for $convId"))
-  }
-
-  implicit private def toLocation(l: api.MessageContent.Location): GenericContent.Location = Location(l.getLongitude, l.getLatitude, l.getName, l.getZoom)
-
-  @Deprecated
-  override def updateMessage(convId: ConvId, id: MessageId, text: Text): Future[Option[MessageData]] = updateMessage(convId, id, text.getContent)
 
   override def updateMessage(convId: ConvId, id: MessageId, text: String): Future[Option[MessageData]] = {
     verbose(s"updateMessage($convId, $id, $text")
@@ -415,101 +387,40 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
       _          <- resp.mapFuture(_ => messages.addTimerChangedMessage(id, selfUserId, expiration, LocalInstant.Now.toRemote(currentBeDrift)))
     } yield resp
 
-  private def mentionsMap(us: Set[UserId]): Future[Map[UserId, String]] =
-    usersStorage.listAll(us.toSeq) map { uss =>
-      uss.map(u => u.id -> u.getDisplayName)(breakOut)
+  private def checkSize(convId: ConvId, size: Option[Long], mime: Mime, message: MessageData, confirmation: WifiWarningConfirmation) = {
+    def isFileTooLarge(size: Long, mime: Mime) = mime match {
+      case Mime.Video() => false
+      case _ => size > AssetData.MaxAllowedAssetSizeInBytes
     }
 
-  private def sendTextMessage(convId: ConvId, m: String, mentions: Map[UserId, String] = Map.empty) =
-    for {
-      msg <- messages.addTextMessage(convId, m, mentions)
-      _ <- updateLastRead(msg)
-      _ <- sync.postMessage(msg.id, convId, msg.editTime)
-    } yield Some(msg)
+    size match {
+      case None => Future successful true
+      case Some(s) if isFileTooLarge(s, mime) =>
+        for {
+          _ <- messages.updateMessageState(convId, message.id, Message.Status.FAILED)
+          _ <- errors.addAssetTooLargeError(convId, message.id)
+          _ <- Future.successful(assetUploadFailed ! ErrorResponse.internalError("asset too large"))
+        } yield false
 
-  private def sendLocationMessage(convId: ConvId, loc: Location) =
-    for {
-      msg <- messages.addLocationMessage(convId, loc)
-      _ <- updateLastRead(msg)
-      _ <- sync.postMessage(msg.id, convId, msg.editTime)
-    } yield Some(msg)
-
-  private def sendImageMessage(img: api.ImageAsset, conv: ConversationData) = {
-    verbose(s"sendImageMessage($img, $conv)")
-    for {
-      data <- assets.addImageAsset(img)
-      msg <- messages.addAssetMessage(conv.id, data)
-      _ <- updateLastRead(msg)
-      _ <- Future.successful(tracking.assetContribution(data.id, selfUserId))
-      _ <- sync.postMessage(msg.id, conv.id, msg.editTime)
-    } yield Some(msg)
-  }
-
-  private def sendAssetMessage(in: AssetForUpload, conv: ConversationData, handler: ErrorHandler): Future[Option[MessageData]] =
-    for {
-      mime <- in.mimeType
-      asset <- assets.addAsset(in, conv.remoteId)
-      message <- messages.addAssetMessage(conv.id, asset)
-      _ <- updateLastRead(message)
-      size <- in.sizeInBytes
-      _ <- Future.successful(tracking.assetContribution(asset.id, selfUserId))
-      shouldSend <- checkSize(conv.id, size, mime, message, handler)
-      _ <- if (shouldSend) sync.postMessage(message.id, conv.id, message.editTime) else Future.successful(())
-    } yield Some(message)
-
-  def isFileTooLarge(size: Long, mime: Mime) = mime match {
-    case Mime.Video() => false
-    case _ => size > AssetData.MaxAllowedAssetSizeInBytes
-  }
-
-  private def shouldWarnAboutFileSize(size: Long) =
-    if (size < LargeAssetWarningThresholdInBytes) Future successful None
-    else for {
-      mode         <- network.networkMode.head
-      inForeground <- accounts.accountState(selfUserId).map(_ == InForeground).head
-    } yield {
-      (mode, inForeground) match {
-        case (OFFLINE | WIFI, _) => None
-        case (net, true) => Some(net)
-        case _ => None
-      }
-    }
-
-  private def showLargeFileWarning(convId: ConvId, size: Long, mime: Mime, net: NetworkMode, message: MessageData, handler: ErrorHandler) = {
-    Threading.assertUiThread()
-
-    handler.noWifiAndFileIsLarge(size, net, new api.MessageContent.Asset.Answer {
-      override def ok(): Unit = messages.retryMessageSending(convId, message.id)
-
-      override def cancel(): Unit = messagesContent.deleteMessage(message).map(_ => assetUploadCancelled ! mime)
-    })
-  }
-
-  private def checkSize(convId: ConvId, size: Option[Long], mime: Mime, message: MessageData, handler: ErrorHandler) = size match {
-    case None => Future successful true
-    case Some(s) if isFileTooLarge(s, mime) =>
-      for {
-        _ <- messages.updateMessageState(convId, message.id, Message.Status.FAILED)
-        _ <- errors.addAssetTooLargeError(convId, message.id)
-        _ <- Future.successful(assetUploadFailed ! ErrorResponse.internalError("asset too large"))
-      } yield false
-    case Some(s) =>
-      shouldWarnAboutFileSize(s) flatMap {
-        case Some(net) =>
+      case Some(s) if s > LargeAssetWarningThresholdInBytes =>
+        for {
+          mode         <- network.networkMode.head
+          inForeground <- accounts.accountState(selfUserId).map(_ == InForeground).head
+          res <- if (!Set(OFFLINE, WIFI).contains(mode) && inForeground)
           // will mark message as failed and ask user if it should really be sent
           // marking as failed ensures that user has a way to retry even if he doesn't respond to this warning
           // this is possible if app is paused or killed in meantime, we don't want to be left with message in state PENDING without a sync request
-          messages.updateMessageState(convId, message.id, Message.Status.FAILED).map { _ =>
-            showLargeFileWarning(convId, s, mime, net, message, handler)
-            false
-          }(Threading.Ui)
-        case _ =>
-          Future successful true
-      }
+            messages.updateMessageState(convId, message.id, Message.Status.FAILED).map { _ =>
+              confirmation(s).foreach {
+                case true  => messages.retryMessageSending(convId, message.id)
+                case false => messagesContent.deleteMessage(message).map(_ => assetUploadCancelled ! mime)
+              }
+              false
+            }(Threading.Ui)
+          else Future.successful(true)
+        } yield res
+
+      case Some(_) => Future.successful(true)
+    }
   }
-
-}
-
-object ConversationsUiService {
-  val LargeAssetWarningThresholdInBytes = 3145728L // 3MiB
 }

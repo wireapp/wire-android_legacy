@@ -180,7 +180,7 @@ class AssetLoaderImpl(context:         Context,
   private def transcodeAudio(asset: AssetData, callback: Callback) = {
     verbose(s"transcodeAudio: asset: ${asset.id}, cachekey: ${asset.cacheKey}, mime: ${asset.mime}, uri: ${asset.source}")
     val entry = cache.createManagedFile()
-    val uri = CacheUri(asset.cacheKey, context)
+    val uri = asset.source.getOrElse(CacheUri(asset.cacheKey, context))
 
     audioTranscoder(uri, entry.cacheFile, callback).flatMap { _ =>
       verbose(s"loaded audio from ${asset.cacheKey}, resulting file size: ${entry.length}")

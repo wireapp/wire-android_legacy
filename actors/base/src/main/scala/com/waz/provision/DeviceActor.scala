@@ -25,7 +25,6 @@ import android.content.Context
 import android.view.View
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.LogTag
-import com.waz.api.impl.DoNothingAndProceed
 import com.waz.api.{impl, _}
 import com.waz.content.{Database, GlobalDatabase, GlobalPreferences}
 import com.waz.log.{InternalLog, LogOutput}
@@ -38,7 +37,9 @@ import com.waz.model.{ConvId, Liking, RConvId, MessageContent => _, _}
 import com.waz.provision.DeviceActor.responseTimeout
 import com.waz.service.AccountManager.ClientRegistrationState.Registered
 import com.waz.service._
+import com.waz.service.assets.AssetService.RawAssetInput.{ByteInput, UriInput}
 import com.waz.service.call.FlowManagerService
+import com.waz.service.conversation.ConversationsUiService
 import com.waz.testutils.Implicits._
 import com.waz.threading.{DispatchQueueStats, _}
 import com.waz.ui.UiModule
@@ -233,7 +234,7 @@ class DeviceActor(val deviceName: String,
 
     case SendText(remoteId, msg) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, cId) =>
-        z.convsUi.sendMessage(cId, msg)
+        z.convsUi.sendTextMessage(cId, msg)
       }.map(_.fold2(Failed(s"Unable to create message: $msg in conv: $remoteId"), r => Successful))
 
     case UpdateText(msgId, text) =>
@@ -265,7 +266,7 @@ class DeviceActor(val deviceName: String,
       zmsWithLocalConv(rConvId).flatMap { case (z, convId) =>
         for {
           res   <- (if (searchQuery.isEmpty) z.giphy.trending() else z.giphy.searchGiphyImage(searchQuery)).future
-          msg1  <- z.convsUi.sendMessage(convId, "Via giphy.com")
+          msg1  <- z.convsUi.sendTextMessage(convId, "Via giphy.com")
 //              msg2  <- z.convsUi.sendMessage(convId, ) //TODO use asset data directly when we get rid of ImageAsset
         } yield Successful
       }
@@ -289,31 +290,28 @@ class DeviceActor(val deviceName: String,
 
     case SendImage(remoteId, path) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>
-        z.convsUi.sendMessage(convId, ui.images.createImageAssetFrom(IoUtils.toByteArray(new FileInputStream(path))))
+        z.convsUi.sendAssetMessage(convId, ByteInput(IoUtils.toByteArray(new FileInputStream(path))))
       }.map(_.fold2(Failed("no message sent"), m => Successful(m.id.str)))
 
     case SendImageData(remoteId, bytes) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>
-        z.convsUi.sendMessage(convId, ui.images.createImageAssetFrom(bytes))
+        z.convsUi.sendAssetMessage(convId, ByteInput(bytes))
       }.map(_.fold2(Failed("no message sent"), m => Successful(m.id.str)))
 
     case SendAsset(remoteId, bytes, mime, name, _) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>
         //TODO for now this assumes image only - need to handle bytes for other asset types too
-//        val asset = impl.AssetForUpload(AssetId(), Some(name), Mime(mime), Some(bytes.length.toLong)){
-//          _ => new ByteArrayInputStream(bytes)
-//        }
-        z.convsUi.sendMessage(convId, bytes)
+        z.convsUi.sendAssetMessage(convId, ByteInput(bytes))
       }.map(_.fold2(Failed("no message sent"), m => Successful(m.id.str)))
 
     case SendLocation(remoteId, lon, lat, name, zoom) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>
-        z.convsUi.sendMessage(convId, new MessageContent.Location(lon, lat, name, zoom))
+        z.convsUi.sendLocationMessage(convId, new MessageContent.Location(lon, lat, name, zoom))
       }.map(_.fold2(Failed("no message sent"), m => Successful(m.id.str)))
 
     case SendFile(remoteId, path, mime) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>
-        z.convsUi.sendMessage(convId, URI.parse(path), DoNothingAndProceed)
+        z.convsUi.sendAssetMessage(convId, UriInput(URI.parse(path)))
       }.map(_.fold2(Failed("no message sent"), m => Successful(m.id.str)))
 
     case AddMembers(remoteId, users@_*) =>
@@ -366,7 +364,7 @@ class DeviceActor(val deviceName: String,
       }.map(_ => Successful)
 
     case UpdateProfileImage(path) =>
-      zms.head.flatMap(_.users.updateSelfPicture(ui.images.createImageAssetFrom(IoUtils.toByteArray(getClass.getResourceAsStream(path)))))
+      zms.head.flatMap(_.users.updateSelfPicture(ByteInput(IoUtils.toByteArray(getClass.getResourceAsStream(path)))))
         .map(_ => Successful)
 
     case UpdateProfileName(name) =>
