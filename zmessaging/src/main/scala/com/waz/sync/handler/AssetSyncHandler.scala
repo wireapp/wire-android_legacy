@@ -21,52 +21,46 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse._
 import com.waz.cache.CacheService
-import com.waz.model.AssetStatus.{UploadCancelled, UploadInProgress, UploadNotStarted}
+import com.waz.model.AssetStatus.{UploadCancelled, UploadFailed, UploadInProgress, UploadNotStarted}
 import com.waz.model._
 import com.waz.service.assets.AssetService
-import com.waz.sync.client.AssetClient
 import com.waz.sync.client.AssetClient.Retention
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.sync.client.ErrorOrResponse
 
 class AssetSyncHandler(cache:   CacheService,
-                       client:  AssetClient, //TODO assetClient not used
                        assets:  AssetService,
                        otrSync: OtrSyncHandler) {
 
   import Threading.Implicits.Background
 
-  def uploadAssetData(assetId: AssetId, public: Boolean = false, retention: Retention): ErrorOrResponse[Option[AssetData]] =
+  def uploadAssetData(assetId: AssetId, public: Boolean = false, retention: Retention): ErrorOrResponse[AssetData] =
     CancellableFuture.lift(assets.updateAsset(assetId, asset => asset.copy(status = if (asset.status == UploadNotStarted) UploadInProgress else asset.status )).zip(assets.getLocalData(assetId))) flatMap {
       case (Some(asset), Some(data)) if data.length > AssetData.MaxAllowedAssetSizeInBytes =>
         debug(s"Local data too big. Data length: ${data.length}, max size: ${AssetData.MaxAllowedAssetSizeInBytes}, local data: $data, asset: $asset")
         CancellableFuture successful Left(internalError(AssetSyncHandler.AssetTooLarge))
+
       case (Some(asset), _) if asset.remoteId.isDefined =>
         warn(s"asset has already been uploaded, skipping: $asset")
-        CancellableFuture.successful(Right(None))
-      case (Some(asset), Some(data)) if asset.status == UploadInProgress =>
+        CancellableFuture.successful(Left(internalError("asset has already been uploaded, skipping")))
+
+      case (Some(asset), Some(data)) if Set[AssetStatus](UploadInProgress, UploadFailed).contains(asset.status) =>
         otrSync.uploadAssetDataV3(data, if (public) None else Some(AESKey()), asset.mime, retention).flatMap {
           case Right(remoteData) => CancellableFuture.lift(assets.updateAsset(asset.id, _.copyWithRemoteData(remoteData)).map {
-            Right(_)
+            case Some(updated) => Right(updated)
+            case None          => Left(internalError("asset update failed"))
           })
           case Left(err) => CancellableFuture successful Left(err)
         }
+
       case (Some(asset), Some(_)) if asset.status == UploadCancelled =>
         debug(s"Upload for asset was cancelled")
-        CancellableFuture successful Right(None)
-      case (Some(asset), None) =>
-        debug(s"An asset found, but its remote id is not defined, and local data is missing. Asset: $asset")
-        CancellableFuture successful Right(None)
-      case (None, Some(data)) =>
-        debug(s"No asset data found, got local data: $data")
-        CancellableFuture successful Right(None)
-      case (None, None) =>
-        debug(s"No asset data found, no local data found")
-        CancellableFuture successful Right(None)
-      case _ =>
-        debug(s"Unexpected error")
-        CancellableFuture successful Right(None)
+        CancellableFuture successful Left(internalError("Upload for asset was cancelled"))
+
+      case (asset, local) =>
+        debug(s"Unable to handle asset upload with asset: $asset, and local data: $local")
+        CancellableFuture successful Left(internalError(s"Unable to handle asset upload with asset: $asset, and local data: $local"))
     }
 }
 

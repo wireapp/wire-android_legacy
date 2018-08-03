@@ -174,7 +174,10 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
           Some(asset) <- imageGenerator.generateWireAsset(AssetData.newImageAsset(assetId, Medium).copy(source = Some(uri)), profilePicture = false).map(Some(_)).recover { case _: Throwable => None }.future
           _           <- assetsStorage.mergeOrCreateAsset(asset) //must be in storage for assetsync
           resp        <- assetSync.uploadAssetData(asset.id, retention = retention).future
-        } yield resp
+        } yield resp match {
+          case Right(uploaded)  => Right(Option(uploaded))
+          case Left(err)        => Left(err)
+        }
     }
     if (prev.hasArticle) Future successful Right(prev)
     else

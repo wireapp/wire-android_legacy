@@ -262,12 +262,11 @@ class MessagesSyncHandler(selfUserId: UserId,
             case Some(prev) =>
               service.retentionPolicy(conv).flatMap { retention =>
                 assetSync.uploadAssetData(prev.id, retention = retention).flatMap {
-                  case Right(Some(updated)) =>
+                  case Right(updated) =>
                     postAssetMessage(asset, Some(updated)).map {
                       case (Right(_)) => Right(Some(updated))
                       case (Left(err)) => Left(err)
                     }
-                  case Right(None) => CancellableFuture successful Right(None)
                   case Left(err) => CancellableFuture successful Left(err)
                 }
               }
@@ -276,8 +275,7 @@ class MessagesSyncHandler(selfUserId: UserId,
             case Right(prev) =>
               service.retentionPolicy(conv).flatMap { retention =>
                 assetSync.uploadAssetData(asset.id, retention = retention).flatMap {
-                  case Right(Some(updated)) => postAssetMessage(updated, prev).map(_.fold(Left(_), _ => Right(origTime)))
-                  case Right(None) => CancellableFuture successful Right(RemoteInstant.Epoch) //TODO Dean: what's a good default
+                  case Right(updated) => postAssetMessage(updated, prev).map(_.fold(Left(_), _ => Right(origTime)))
                   case Left(err) if err.message.contains(AssetSyncHandler.AssetTooLarge) =>
                     CancellableFuture.lift(errors.addAssetTooLargeError(conv.id, msg.id).map { _ => Left(err) })
                   case Left(err) => CancellableFuture successful Left(err)
