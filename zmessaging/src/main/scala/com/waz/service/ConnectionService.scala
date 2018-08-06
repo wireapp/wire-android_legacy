@@ -86,14 +86,13 @@ class ConnectionServiceImpl(selfUserId:      UserId,
         _.copy(conversation = Some(event.convId)).updateConnectionStatus(event.status, Some(event.lastUpdated), event.message)
       }
 
-    val lastEvents = events.groupBy(_.to).map { case (_, es) => es.maxBy(_.lastUpdated) }
-    val lastEvents2 = events.groupBy(_.to).map { case (to, es) => to -> es.maxBy(_.lastUpdated) }
-    val fromSync: Set[UserId] = lastEvents.filter(_.localTime == LocalInstant.Epoch).map(_.to)(breakOut)
+    val lastEvents = events.groupBy(_.to).map { case (to, es) => to -> es.maxBy(_.lastUpdated) }
+    val fromSync: Set[UserId] = lastEvents.filter(_._2.localTime == LocalInstant.Epoch).map(_._2.to)(breakOut)
 
     verbose(s"lastEvents: $lastEvents, fromSync: $fromSync")
 
-    usersStorage.updateOrCreateAll2(lastEvents.map(_.to), { case (uId, user) => updateOrCreate(lastEvents2(uId))(user) })
-      .map { users => (users.map(u => (u, lastEvents2(u.id).lastUpdated)), fromSync) }
+    usersStorage.updateOrCreateAll2(lastEvents.map(_._2.to), { case (uId, user) => updateOrCreate(lastEvents(uId))(user) })
+      .map { users => (users.map(u => (u, lastEvents(u.id).lastUpdated)), fromSync) }
   }.flatMap { case (users, fromSync) =>
     verbose(s"syncing $users and fromSync: $fromSync")
     val toSync = users filter { case (user, _) => user.connection == ConnectionStatus.Accepted || user.connection == ConnectionStatus.PendingFromOther || user.connection == ConnectionStatus.PendingFromUser }
