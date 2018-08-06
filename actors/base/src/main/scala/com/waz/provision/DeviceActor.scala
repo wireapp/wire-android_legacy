@@ -21,6 +21,7 @@ import java.io._
 
 import akka.actor.SupervisorStrategy._
 import akka.actor._
+import android.app.Activity
 import android.content.Context
 import android.view.View
 import com.waz.ZLog.ImplicitTag._
@@ -46,7 +47,7 @@ import com.waz.ui.UiModule
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.events.Signal
-import com.waz.utils.wrappers.URI
+import com.waz.utils.wrappers.{GoogleApi, URI}
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future.successful
@@ -99,7 +100,15 @@ class DeviceActor(val deviceName: String,
         Stop
     }
 
-  val globalModule = new GlobalModuleImpl(application, backend) { global =>
+  val google = new GoogleApi {
+    override def checkGooglePlayServicesAvailable(activity: Activity): Unit = {}
+    override def onActivityResult(requestCode: Int, resultCode: Int): Unit = {}
+    override def isGooglePlayServicesAvailable = Signal(false)
+    override def deleteAllPushTokens(): Unit = {}
+    override def getPushToken = ???
+  }
+
+  val globalModule = new GlobalModuleImpl(application, backend, GlobalPreferences(application), google) { global =>
     ZMessaging.currentGlobal = this
     lifecycle.acquireUi()
 
