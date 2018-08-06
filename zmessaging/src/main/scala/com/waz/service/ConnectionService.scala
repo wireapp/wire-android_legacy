@@ -26,6 +26,7 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.service.conversation.ConversationsContentUpdater
+import com.waz.service.conversation.ConversationsContentUpdater.OneToOneConvData
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
 import com.waz.sync.SyncServiceHandle
@@ -86,22 +87,67 @@ class ConnectionServiceImpl(selfUserId:      UserId,
       }
 
     val lastEvents = events.groupBy(_.to).map { case (_, es) => es.maxBy(_.lastUpdated) }
+    val lastEvents2 = events.groupBy(_.to).map { case (to, es) => to -> es.maxBy(_.lastUpdated) }
     val fromSync: Set[UserId] = lastEvents.filter(_.localTime == LocalInstant.Epoch).map(_.to)(breakOut)
 
     verbose(s"lastEvents: $lastEvents, fromSync: $fromSync")
 
-    Future.sequence(lastEvents.map { ev =>
-      verbose(s"Updating users based on last events: $ev")
-      usersStorage.updateOrCreate(ev.to, prev => updateOrCreate(ev)(Some(prev)), updateOrCreate(ev)(None)).map((_, ev.lastUpdated))
-    }).map(users => (users.toSet, fromSync))
+    usersStorage.updateOrCreateAll2(lastEvents.map(_.to), { case (uId, user) => updateOrCreate(lastEvents2(uId))(user) })
+      .map { users => (users.map(u => (u, lastEvents2(u.id).lastUpdated)), fromSync) }
   }.flatMap { case (users, fromSync) =>
     verbose(s"syncing $users and fromSync: $fromSync")
     val toSync = users filter { case (user, _) => user.connection == ConnectionStatus.Accepted || user.connection == ConnectionStatus.PendingFromOther || user.connection == ConnectionStatus.PendingFromUser }
     sync.syncUsers(toSync.map(_._1.id)(breakOut)) flatMap { _ =>
-      RichFuture.processSequential(users.grouped(16).toSeq) { us =>
-        Future.traverse(us){ case (user, time) => updateConversationForConnection(user, selfUserId, fromSync = fromSync(user.id), time) }
-      }
+      updateConversationsForConnections(users.map(u => ConnectionEventInfo(u._1, fromSync(u._1.id), u._2)), selfUserId).map(_ => ())
     }
+  }
+
+  private case class ConnectionEventInfo(user: UserData, fromSync: Boolean, lastEventTime: RemoteInstant)
+
+  def updateConversationsForConnections(users: Set[ConnectionEventInfo], selfUserId: UserId): Future[Seq[ConversationData]] = {
+    verbose(s"updateConversationForConnections: ${users.size}")
+
+    val oneToOneConvData = users.map { case ConnectionEventInfo(user , _ , _) =>
+      val convType = user.connection match {
+        case ConnectionStatus.PendingFromUser | ConnectionStatus.Cancelled => ConversationType.WaitForConnection
+        case ConnectionStatus.PendingFromOther | ConnectionStatus.Ignored => ConversationType.Incoming
+        case _ => ConversationType.OneToOne
+      }
+      OneToOneConvData(user.id, user.conversation, convType)
+    }
+
+    val eventMap = users.map(eventInfo => eventInfo.user.id -> eventInfo).toMap
+
+    //TODO: check whether members.add is needed
+    for {
+      otoConvs <- convs.getOneToOneConversations(selfUserId, oneToOneConvData.toSeq)
+      convToUser = eventMap.flatMap(e => otoConvs.get(e._1).map(c => c.id -> e._1))
+      updatedConvs <- convStorage.updateAll2(convToUser.keys, { conv =>
+        val userId = convToUser(conv.id)
+        val user = eventMap(userId).user
+        val hidden = user.connection == ConnectionStatus.Ignored || user.connection == ConnectionStatus.Blocked || user.connection == ConnectionStatus.Cancelled
+
+        conv.copy(convType = otoConvs(userId).convType, hidden = hidden, lastEventTime = conv.lastEventTime max eventMap(userId).lastEventTime)
+      })
+      result <- Future.sequence(updatedConvs.map { case (_, conv) =>
+        messagesStorage.getLastMessage(conv.id) flatMap {
+          case None if conv.convType == ConversationType.Incoming =>
+            val userId = convToUser(conv.id)
+            val user = eventMap(userId).user
+            addConnectRequestMessage(conv.id, user.id, selfUserId, user.connectionMessage.getOrElse(""), user.getDisplayName, fromSync = eventMap(userId).fromSync)
+          case None if conv.convType == ConversationType.OneToOne =>
+            messages.addDeviceStartMessages(Seq(conv), selfUserId)
+          case _ =>
+            Future.successful(())
+        } map { _ =>
+          val userId = convToUser(conv.id)
+          val user = eventMap(userId).user
+          val hidden = user.connection == ConnectionStatus.Ignored || user.connection == ConnectionStatus.Blocked || user.connection == ConnectionStatus.Cancelled
+          if (conv.hidden && !hidden) sync.syncConversations(Set(conv.id))
+          conv
+        }
+      })
+    } yield result
   }
 
   def updateConversationForConnection(user: UserData, selfUserId: UserId, fromSync: Boolean, lastEventTime: RemoteInstant) = {

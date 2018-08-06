@@ -47,6 +47,7 @@ trait ConversationStorage extends CachedStorage[ConvId, ConversationData] {
   def findByTeams(teams: Set[TeamId]): Future[Set[ConversationData]]
   def getByRemoteIds(remoteId: Traversable[RConvId]): Future[Seq[ConvId]]
   def getByRemoteId(remoteId: RConvId): Future[Option[ConversationData]]
+  def getByRemoteIds2(remoteIds: Traversable[RConvId]): Future[Map[RConvId, ConversationData]]
 
   def getAllConvs: Future[IndexedSeq[ConversationData]]
   def updateLocalId(oldId: ConvId, newId: ConvId): Future[Option[ConversationData]]
@@ -140,6 +141,12 @@ class ConversationStorageImpl(storage: ZmsDatabase) extends CachedStorageImpl[Co
 
   override def getByRemoteIds(remoteId: Traversable[RConvId]): Future[Seq[ConvId]] = init map { _ =>
     remoteId.flatMap(remoteMap.get).toVector
+  }
+
+  override def getByRemoteIds2(remoteIds: Traversable[RConvId]): Future[Map[RConvId, ConversationData]] = init map { _ =>
+    remoteIds.map(rId => rId -> remoteMap.get(rId).flatMap(conversationsById.get)).toMap.collect {
+      case (rId, Some(conversationData)) => rId -> conversationData
+    }
   }
 
   override def getAllConvs = init map { _ => conversations }
