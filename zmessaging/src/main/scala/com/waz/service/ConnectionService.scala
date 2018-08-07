@@ -117,7 +117,6 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     for {
       otoConvs <- convs.getOneToOneConversations(selfUserId, oneToOneConvData.toSeq)
       convToUser = eventMap.flatMap(e => otoConvs.get(e._1).map(c => c.id -> e._1))
-      _ <- members.setAll(otoConvs.map{ case (userId, conv) => conv.id -> Set(userId, selfUserId)})
       updatedConvs <- convStorage.updateAll2(convToUser.keys, { conv =>
         val userId = convToUser(conv.id)
         val user = eventMap(userId).user
