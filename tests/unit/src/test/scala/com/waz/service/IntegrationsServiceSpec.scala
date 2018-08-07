@@ -54,7 +54,7 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
   (assets.updateAssets _).expects(*).anyNumberOfTimes().onCall((as: Seq[AssetData]) => Future.successful(as.toSet))
 
   val service: IntegrationsService = new IntegrationsServiceImpl(Some(TeamId()), sync, srs, convsUi, convs)
-  val handler = new IntegrationsSyncHandlerImpl(UserId(), convs, assets, client, service, pipeline)
+  val handler = new IntegrationsSyncHandlerImpl(UserId(), Some(TeamId()), convs, assets, client, service, pipeline)
 
   (sync.syncProvider _).expects(*).anyNumberOfTimes().onCall((id: ProviderId) => Future {
     val sid = SyncId()
@@ -63,7 +63,7 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
     sid
   })
 
-  (sync.syncIntegrations _).expects(*).anyNumberOfTimes().onCall((startWith: String) => Future {
+  (sync.syncIntegrations _).expects(*).anyNumberOfTimes().onCall((startWith: Option[String]) => Future {
     handler.syncIntegrations(startWith)
     SyncId()
   })
@@ -73,19 +73,19 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
     case None       => CancellableFuture.failed(new Exception(s"no provider with id $id"))
   })
 
-  (client.searchIntegrations _).expects(*).anyNumberOfTimes().onCall { (startWith: String) =>
-    val integs = integrations.values.filter(_.name.startsWith(startWith)).map(_ -> Option.empty[AssetData]).toMap
+  (client.searchTeamIntegrations _).expects(*, *).anyNumberOfTimes().onCall { (startWith: Option[String], teamId: TeamId) =>
+    val integs = integrations.values.filter(_.name.startsWith(startWith.getOrElse(""))).map(_ -> Option.empty[AssetData]).toMap
     CancellableFuture.successful(Right(integs))
   }
 
   feature("integrations") {
     scenario("get all integrations") {
-      val integrations = service.searchIntegrations("")
+      val integrations = service.searchIntegrations()
       result(integrations.head).size shouldEqual 3
     }
 
     scenario("get all integrations starting with 'Ech'") {
-      val integrations = service.searchIntegrations("Ech")
+      val integrations = service.searchIntegrations(Some("Ech"))
       result(integrations.head).size shouldEqual 2
     }
   }

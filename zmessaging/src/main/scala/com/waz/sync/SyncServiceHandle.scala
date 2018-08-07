@@ -45,7 +45,7 @@ trait SyncServiceHandle {
   def syncConnectedUsers(): Future[SyncId]
   def syncConnections(dependsOn: Option[SyncId] = None): Future[SyncId]
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority): Future[SyncId]
-  def syncIntegrations(startWith: String): Future[SyncId]
+  def syncIntegrations(startWith: Option[String]): Future[SyncId]
   def syncIntegration(id: ProviderId, iId: IntegrationId): Future[SyncId]
   def syncProvider(id: ProviderId): Future[SyncId]
   def postAddBot(cId: ConvId, pId: ProviderId, iId: IntegrationId): Future[SyncId]
@@ -130,7 +130,7 @@ class AndroidSyncServiceHandle(service: SyncRequestService, timeouts: Timeouts, 
   def syncConnectedUsers() = addRequest(SyncConnectedUsers)
   def syncConnections(dependsOn: Option[SyncId]) = addRequest(SyncConnections, dependsOn = dependsOn.toSeq)
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority) = addRequest(SyncRichMedia(id), priority = priority)
-  def syncIntegrations(startWith: String) = addRequest(SyncIntegrations(startWith))
+  def syncIntegrations(startWith: Option[String]) = addRequest(SyncIntegrations(startWith))
   def syncIntegration(pId: ProviderId, iId: IntegrationId) = addRequest(SyncIntegration(pId, iId))
   def syncProvider(pId: ProviderId) = addRequest(SyncProvider(pId))
 

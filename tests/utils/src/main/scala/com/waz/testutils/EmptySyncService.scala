@@ -19,12 +19,11 @@ package com.waz.testutils
 
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.model.UserData.ConnectionStatus
-import com.waz.model.{AccentColor, Availability, _}
 import com.waz.model.otr.ClientId
 import com.waz.model.sync.ReceiptType
 import com.waz.model.sync.SyncJob.Priority
+import com.waz.model.{AccentColor, Availability, _}
 import com.waz.sync._
-import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
@@ -46,7 +45,7 @@ trait EmptySyncServiceTrait extends SyncServiceHandle {
   override def syncConnectedUsers() = sid
   override def syncConnections(dependsOn: Option[SyncId] = None) = sid
   override def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority): Future[SyncId] = sid
-  override def syncIntegrations(startWith: String) = sid
+  override def syncIntegrations(startWith: Option[String]) = sid
   override def syncIntegration(id: ProviderId, iId: IntegrationId) = sid
   override def syncProvider(id: ProviderId) = sid
 

@@ -32,7 +32,7 @@ import scala.concurrent.Future
 
 trait IntegrationsSyncHandler {
   def syncProvider(pId: ProviderId): Future[SyncResult]
-  def syncIntegrations(name: String): Future[SyncResult]
+  def syncIntegrations(name: Option[String]): Future[SyncResult]
   def syncIntegration(pId: ProviderId, iId: IntegrationId): Future[SyncResult]
 
   def addBot(cId: ConvId, pId: ProviderId, iId: IntegrationId): Future[SyncResult]
@@ -40,6 +40,7 @@ trait IntegrationsSyncHandler {
 }
 
 class IntegrationsSyncHandlerImpl(selfUserId: UserId,
+                                  teamId:     Option[TeamId],
                                   convs:      ConversationsContentUpdater,
                                   assets:     AssetService,
                                   client:     IntegrationsClient,
@@ -68,16 +69,23 @@ class IntegrationsSyncHandlerImpl(selfUserId: UserId,
         Future.successful(SyncResult(error))
     }
 
-  override def syncIntegrations(name: String) =
-    client.searchIntegrations(name).future.flatMap {
-      case Right(integs) =>
-        verbose(s"querying for integrations with name $name returned $integs")
-        assets.updateAssets(integs.values.flatten.toSeq)
-        service.onIntegrationsSynced(name, integs.keys.toSeq).map(_ => SyncResult.Success)
-      case Left(error) =>
-        verbose(s"querying for integrations with name $name returned $error")
-        Future.successful(SyncResult(error))
-    }
+  override def syncIntegrations(name: Option[String]) = teamId match {
+    case Some(tId) =>
+      client.searchTeamIntegrations(name, tId).future.flatMap {
+        case Right(integs) =>
+          verbose(s"querying for integrations with name $name returned $integs")
+          assets.updateAssets(integs.values.flatten.toSeq)
+          service.onIntegrationsSynced(name, integs.keys.toSeq).map(_ => SyncResult.Success)
+        case Left(error) =>
+          verbose(s"querying for integrations with name $name returned $error")
+          Future.successful(SyncResult(error))
+      }
+
+    case _ =>
+      Future.successful(SyncResult.Failure(Some(ErrorResponse.internalError("Services are not available on personal accounts")), shouldRetry = false))
+
+  }
+
 
   override def addBot(cId: ConvId, pId: ProviderId, iId: IntegrationId): Future[SyncResult] =
     convs.convById(cId).collect { case Some(c) => c.remoteId }.flatMap { rId =>

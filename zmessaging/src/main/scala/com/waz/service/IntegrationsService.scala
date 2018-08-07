@@ -29,11 +29,11 @@ import com.waz.utils.returning
 import scala.concurrent.Future
 
 trait IntegrationsService {
-  def searchIntegrations(startWith: String): Signal[Seq[IntegrationData]]
+  def searchIntegrations(startWith: Option[String] = None): Signal[Seq[IntegrationData]]
   def getIntegration(pId: ProviderId, iId: IntegrationId): Future[IntegrationData]
   def getProvider(id: ProviderId): Future[ProviderData]
 
-  def onIntegrationsSynced(name: String, data: Seq[IntegrationData]): Future[Unit]
+  def onIntegrationsSynced(name: Option[String], data: Seq[IntegrationData]): Future[Unit]
   def onProviderSynced(pId: ProviderId, data: ProviderData): Future[Unit]
   def onIntegrationSynced(pId: ProviderId, iId: IntegrationId, data: IntegrationData): Future[Unit]
 
@@ -48,11 +48,11 @@ class IntegrationsServiceImpl(teamId:       Option[TeamId],
                               convs:        ConversationsContentUpdater) extends IntegrationsService {
   implicit val ctx = Threading.Background
 
-  private var integrationSearch = Map.empty[String, SourceSignal[Seq[IntegrationData]]]
+  private var integrationSearch = Map.empty[Option[String], SourceSignal[Seq[IntegrationData]]]
   private var providers         = Map.empty[ProviderId, ProviderData]
   private var integrations      = Map.empty[IntegrationId, IntegrationData]
 
-  override def searchIntegrations(startWith: String) =
+  override def searchIntegrations(startWith: Option[String] = None) =
     integrationSearch.getOrElse(startWith, returning(Signal[Seq[IntegrationData]]()) { sig =>
       integrationSearch += (startWith -> sig)
       sync.syncIntegrations(startWith)
@@ -66,10 +66,10 @@ class IntegrationsServiceImpl(teamId:       Option[TeamId],
     if (providers.contains(pId)) Future.successful(providers(pId))
     else sync.syncProvider(pId).flatMap(syncRequests.scheduler.await).map(_ => providers(pId))
 
-  override def onIntegrationsSynced(name: String, data: Seq[IntegrationData]) =
-    integrationSearch.get(name) match {
+  override def onIntegrationsSynced(searchPrefix: Option[String], data: Seq[IntegrationData]) =
+    integrationSearch.get(searchPrefix) match {
       case Some(signal) => Future.successful(signal ! data)
-      case None         => Future.failed(new Exception(s"received sync data for unknown integrations name: $name"))
+      case None         => Future.failed(new Exception(s"received sync data for unknown integrations search prefix: $searchPrefix"))
     }
 
   override def onIntegrationSynced(pId: ProviderId, iId: IntegrationId, data: IntegrationData) =
