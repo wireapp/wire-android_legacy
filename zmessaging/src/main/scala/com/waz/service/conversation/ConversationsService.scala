@@ -206,14 +206,11 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     }
   }
 
-  def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse]) = Future.traverse(conversations) { conv =>
-    eventScheduler.post(conv.id) {
-      for {
-        (_, created) <- updateConversations(Seq(conv))
-        _            <- messages.addDeviceStartMessages(created, selfUserId)
-      } yield {}
-    }
-  }.map(_ => {})
+  def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse]) =
+    for {
+      (_, created) <- updateConversations(conversations)
+      _            <- messages.addDeviceStartMessages(created, selfUserId)
+    } yield {}
 
   private def updateConversations(responses: Seq[ConversationResponse]): Future[(Seq[ConversationData], Seq[ConversationData])] = {
 
