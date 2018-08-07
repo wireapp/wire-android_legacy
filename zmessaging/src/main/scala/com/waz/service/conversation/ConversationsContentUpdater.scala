@@ -214,13 +214,11 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
         }.toMap
 
         remotes <- storage.getByRemoteIds2(convsInfo.flatMap(_.remoteId))
-        _ <- Future.sequence(convsInfo.map {
-          case OneToOneConvData(toUser, Some(remoteId), _) =>
-            remotes.get(remoteId).fold(Future.successful(())){ conv =>
-              storage.updateLocalId(conv.id, convIdForUser(toUser)).map(_ => ())
-            }
-          case _ =>  Future.successful(())
-        })
+
+        _ <- storage.updateLocalIds(convsInfo.collect {
+          case OneToOneConvData(toUser, Some(remoteId), _) if remotes.contains(remoteId) =>
+            remotes(remoteId).id -> convIdForUser(toUser)
+        }.toMap)
 
         result <- storage.updateOrCreateAll2(convs.keys, {
           case (cId, Some(conv)) =>

@@ -51,6 +51,7 @@ trait ConversationStorage extends CachedStorage[ConvId, ConversationData] {
 
   def getAllConvs: Future[IndexedSeq[ConversationData]]
   def updateLocalId(oldId: ConvId, newId: ConvId): Future[Option[ConversationData]]
+  def updateLocalIds(update: Map[ConvId, ConvId]): Future[Set[ConversationData]]
 
   def apply[A](f: (GenMap[ConvId, ConversationData], GenMap[RConvId, ConvId]) => A): Future[A]
 }
@@ -154,13 +155,15 @@ class ConversationStorageImpl(storage: ZmsDatabase) extends CachedStorageImpl[Co
   override def list: Future[Vector[ConversationData]] = init map { _ => conversationsById.values.toVector }
 
   def updateLocalId(oldId: ConvId, newId: ConvId) =
+    updateLocalIds(Map(oldId -> newId)).map(_.headOption)
+
+  def updateLocalIds(update: Map[ConvId, ConvId]) =
     for {
-      _    <- remove(newId)
-      conv <- get(oldId)
-      res  <- conv.fold(Future.successful(Option.empty[ConversationData])) { c =>
-        remove(oldId) flatMap { _ => insert(c.copy(id = newId)).map { Some(_) } }
-      }
-    } yield res
+      _    <- removeAll(update.values)
+      convs <- getAll(update.keys)
+      result <- insertAll(convs.flatten.map(c => c.copy(id = update(c.id))))
+      _ <- removeAll(update.keys)
+    } yield result
 
   override def search(prefix: SearchKey, self: UserId, handleOnly: Boolean, teamId: Option[TeamId] = None) = storage(ConversationDataDao.search(prefix, self, handleOnly, teamId)(_))
 
