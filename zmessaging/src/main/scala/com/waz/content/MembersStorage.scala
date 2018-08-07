@@ -101,7 +101,7 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase) extends CachedS
       case (convId, users) => convId -> active.get(convId).map(_.filterNot(users)).getOrElse(Set())
     }
     val toAdd = members.map {
-      case (convId, users) => convId -> toRemove.get(convId).map(users -- _).getOrElse(Set())
+      case (convId, users) => convId -> (users -- toRemove.getOrElse(convId, Set()))
     }
 
     val removeList = toRemove.toSeq.flatMap {
