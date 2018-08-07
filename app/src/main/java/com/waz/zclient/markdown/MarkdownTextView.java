@@ -81,15 +81,15 @@ public class MarkdownTextView extends TypefaceTextView implements ViewHelper {
         mStyleSheet.setQuoteStripeColor(ContextUtils.getStyledColor(R.attr.quoteStripeColor, context()));
         mStyleSheet.setListPrefixColor(ContextUtils.getStyledColor(R.attr.listPrefixColor, context()));
 
-        // update the link color whenever the accent color changes
-        ((BaseActivity) getContext()).injectJava(AccentColorController.class).accentColorForJava(new AccentColorCallback() {
-            @Override
-            public void color(AccentColor color) {
-                mStyleSheet.setLinkColor(color.getColor());
-                setLinkTextColor(color.getColor());
-                refreshLinks();
-            }
-        }, eventContext());
+//        // update the link color whenever the accent color changes
+//        ((BaseActivity) getContext()).injectJava(AccentColorController.class).accentColorForJava(new AccentColorCallback() {
+//            @Override
+//            public void color(AccentColor color) {
+//                mStyleSheet.setLinkColor(color.getColor());
+//                setLinkTextColor(color.getColor());
+//                refreshLinks();
+//            }
+//        }, eventContext());
 
         // to make links clickable
         mStyleSheet.configureLinkHandler(context());
