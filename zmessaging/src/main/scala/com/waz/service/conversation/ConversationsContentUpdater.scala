@@ -187,27 +187,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
    * TODO: improve - it looks too complicated and duplicates some code
    */
   override def getOneToOneConversation(toUser: UserId, selfUserId: UserId, remoteId: Option[RConvId] = None, convType: ConversationType = ConversationType.OneToOne) =
-    Serialized.future(('getOneToOneConversation, toUser)) {
-      verbose(s"getOneToOneConversation($toUser, self: $selfUserId, remote: $remoteId, convType: $convType")
-      val convId = ConvId(toUser.str)
-
-      def createConversation() = createConversationWithMembers(convId, remoteId.getOrElse(RConvId(toUser.str)), convType, selfUserId, Set(toUser))
-
-      storage.get(convId) flatMap { localConv =>
-        if (remoteId.forall(r => localConv.exists(_.remoteId == r)))
-          localConv.fold(createConversation())(Future.successful)
-        else // update remote id or merge conversations
-          storage.getByRemoteId(remoteId.get) flatMap { remoteConv =>
-            (localConv, remoteConv) match {
-              case (_, Some(remote)) =>
-                if (remote.id == convId) Future.successful(remote) // means conv was created between get(convId) and getByRemoteId(remoteId.get)
-                else storage.updateLocalId(remote.id, convId) map (_.get) // XXX: should we update messages and members here ?
-              case (Some(_), None) => storage.update(convId, _.copy(remoteId = remoteId.get)) map (_.get._2)
-              case _ => createConversation()
-            }
-          }
-      }
-    }
+    getOneToOneConversations(selfUserId, Seq(OneToOneConvData(toUser, remoteId, convType))).map(_.values.head)
 
   override def getOneToOneConversations(selfUserId: UserId, convsInfo: Seq[OneToOneConvData]): Future[Map[UserId, ConversationData]] =
     Serialized.future('getOneToOneConversations) {

@@ -17,8 +17,6 @@
  */
 package com.waz.service
 
-import java.util.Date
-
 import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.content._
@@ -33,6 +31,7 @@ import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
 import com.waz.utils.{RichFuture, RichWireInstant}
 import com.waz.utils.events.EventContext
+import ConnectionService._
 
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -97,13 +96,11 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     verbose(s"syncing $users and fromSync: $fromSync")
     val toSync = users filter { case (user, _) => user.connection == ConnectionStatus.Accepted || user.connection == ConnectionStatus.PendingFromOther || user.connection == ConnectionStatus.PendingFromUser }
     sync.syncUsers(toSync.map(_._1.id)(breakOut)) flatMap { _ =>
-      updateConversationsForConnections(users.map(u => ConnectionEventInfo(u._1, fromSync(u._1.id), u._2)), selfUserId).map(_ => ())
+      updateConversationsForConnections(users.map(u => ConnectionEventInfo(u._1, fromSync(u._1.id), u._2))).map(_ => ())
     }
   }
 
-  private case class ConnectionEventInfo(user: UserData, fromSync: Boolean, lastEventTime: RemoteInstant)
-
-  def updateConversationsForConnections(users: Set[ConnectionEventInfo], selfUserId: UserId): Future[Seq[ConversationData]] = {
+  def updateConversationsForConnections(users: Set[ConnectionEventInfo]): Future[Seq[ConversationData]] = {
     verbose(s"updateConversationForConnections: ${users.size}")
 
     val oneToOneConvData = users.map { case ConnectionEventInfo(user , _ , _) =>
@@ -147,33 +144,6 @@ class ConnectionServiceImpl(selfUserId:      UserId,
         }
       })
     } yield result
-  }
-
-  def updateConversationForConnection(user: UserData, selfUserId: UserId, fromSync: Boolean, lastEventTime: RemoteInstant) = {
-    verbose(s"updateConversationForConnection: $user")
-    val convType = user.connection match {
-      case ConnectionStatus.PendingFromUser | ConnectionStatus.Cancelled => ConversationType.WaitForConnection
-      case ConnectionStatus.PendingFromOther | ConnectionStatus.Ignored => ConversationType.Incoming
-      case _ => ConversationType.OneToOne
-    }
-    val hidden = user.connection == ConnectionStatus.Ignored || user.connection == ConnectionStatus.Blocked || user.connection == ConnectionStatus.Cancelled
-    convs.getOneToOneConversation(user.id, selfUserId, user.conversation, convType) flatMap { conv =>
-      members.add(conv.id, Set(selfUserId, user.id)).flatMap { _ =>
-        convStorage.update(conv.id, c => c.copy(convType = convType, hidden = hidden, lastEventTime = c.lastEventTime max lastEventTime)) flatMap { updated =>
-          messagesStorage.getLastMessage(conv.id) flatMap {
-            case None if convType == ConversationType.Incoming =>
-              addConnectRequestMessage(conv.id, user.id, selfUserId, user.connectionMessage.getOrElse(""), user.getDisplayName, fromSync = fromSync)
-            case None if convType == ConversationType.OneToOne =>
-              messages.addDeviceStartMessages(Seq(conv), selfUserId)
-            case _ =>
-              Future.successful(())
-          } map { _ =>
-            if (conv.hidden && !hidden) sync.syncConversations(Set(conv.id))
-            updated.fold(conv)(_._2)
-          }
-        }
-      }
-    }
   }
 
   /**
@@ -268,4 +238,8 @@ class ConnectionServiceImpl(selfUserId:      UserId,
       case None => Future successful None
     }
   }
+}
+
+object ConnectionService {
+  case class ConnectionEventInfo(user: UserData, fromSync: Boolean, lastEventTime: RemoteInstant)
 }

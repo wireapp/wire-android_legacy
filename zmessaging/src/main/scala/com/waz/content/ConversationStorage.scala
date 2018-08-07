@@ -143,7 +143,7 @@ class ConversationStorageImpl(storage: ZmsDatabase) extends CachedStorageImpl[Co
     remoteId.flatMap(remoteMap.get).toVector
   }
 
-  override def getByRemoteIds2(remoteIds: Traversable[RConvId]): Future[Map[RConvId, ConversationData]] = init map { _ =>
+  override def getByRemoteIds2(remoteIds: Traversable[RConvId]): Future[Map[RConvId, ConversationData]] = init.map { _ =>
     remoteIds.map(rId => rId -> remoteMap.get(rId).flatMap(conversationsById.get)).toMap.collect {
       case (rId, Some(conversationData)) => rId -> conversationData
     }
