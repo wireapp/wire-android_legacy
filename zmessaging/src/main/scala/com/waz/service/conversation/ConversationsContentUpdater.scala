@@ -35,6 +35,7 @@ import scala.util.control.NoStackTrace
 trait ConversationsContentUpdater {
   def convById(id: ConvId): Future[Option[ConversationData]]
   def convByRemoteId(id: RConvId): Future[Option[ConversationData]]
+  def convsByRemoteId(ids: Traversable[RConvId]): Future[Map[RConvId, ConversationData]]
   def storage: ConversationStorage
   def getOneToOneConversation(toUser: UserId, selfUserId: UserId, remoteId: Option[RConvId] = None, convType: ConversationType = ConversationType.OneToOne): Future[ConversationData]
   def getOneToOneConversations(selfUserId: UserId, convsInfo: Seq[OneToOneConvData]): Future[Map[UserId, ConversationData]]
@@ -87,6 +88,8 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
   override def convById(id: ConvId): Future[Option[ConversationData]] = storage.get(id)
 
   override def convByRemoteId(id: RConvId): Future[Option[ConversationData]] = storage.getByRemoteId(id)
+
+  override def convsByRemoteId(ids: Traversable[RConvId]): Future[Map[RConvId, ConversationData]] = storage.getByRemoteIds2(ids)
 
   override def updateConversationName(id: ConvId, name: String) = storage.update(id, { conv =>
       if (conv.convType == ConversationType.Group)

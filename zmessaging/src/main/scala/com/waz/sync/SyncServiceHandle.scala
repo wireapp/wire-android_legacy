@@ -175,7 +175,7 @@ class AndroidSyncServiceHandle(service: SyncRequestService, timeouts: Timeouts, 
 
   override def performFullSync(): Future[Unit] = for {
     id1 <- syncSelfUser()
-    id6 <- syncConnections(Some(id1))
+    id6 <- syncConnections()
     id2 <- syncSelfClients()
     id3 <- syncSelfPermissions()
     id4 <- syncTeam()
