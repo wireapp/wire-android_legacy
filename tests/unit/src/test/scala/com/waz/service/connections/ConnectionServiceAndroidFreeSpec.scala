@@ -26,6 +26,7 @@ import com.waz.model.UserData.ConnectionStatus._
 import com.waz.model._
 import com.waz.service._
 import com.waz.service.conversation.ConversationsContentUpdater
+import com.waz.service.conversation.ConversationsContentUpdater.OneToOneConvData
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
 import com.waz.specs.AndroidFreeSpec
@@ -95,10 +96,10 @@ class ConnectionServiceAndroidFreeSpec extends AndroidFreeSpec {
   def getUpdatedConversation(service: ConnectionServiceImpl, event: UserConnectionEvent): ConversationData = {
     var updatedConversation = ConversationData.Empty
 
-    (convsStorage.update _).expects(*,*).once().onCall { (convId, updater) =>
-      val old = ConversationData(convId, RConvId(convId.str), None, selfUserId, ConversationType.Unknown, lastEventTime = RemoteInstant.Epoch)
+    (convsStorage.updateAll2 _).expects(*,*).once().onCall { (convIds, updater) =>
+      val old = ConversationData(convIds.head, RConvId(convIds.head.str), None, selfUserId, ConversationType.Unknown, lastEventTime = RemoteInstant.Epoch)
       updatedConversation = updater(old)
-      Future.successful(Some(old, updatedConversation))
+      Future.successful(Seq((old, updatedConversation)))
     }
 
     result(service.handleUserConnectionEvents(Seq(event)))
@@ -110,11 +111,21 @@ class ConnectionServiceAndroidFreeSpec extends AndroidFreeSpec {
     (usersStorage.updateOrCreate _).expects(*,*,*).anyNumberOfTimes().onCall{ (_, _, creator) =>
         Future.successful(creator)
     }
+    (usersStorage.updateOrCreateAll2 _).expects(*,*).anyNumberOfTimes().onCall{ (uIds, creator) =>
+        Future.successful(uIds.map(creator(_, None)).toSet)
+    }
     (usersStorage.get _).expects(*).anyNumberOfTimes().onCall{uId: UserId => Future.successful(Some(UserData(uId, "")))}
     (convs.getOneToOneConversation _).expects(*, *, *, *).anyNumberOfTimes().onCall{(toUser, selfUserId, remoteId, tpe) =>
       val rId = remoteId.getOrElse(RConvId(toUser.str))
       val convId = ConvId(rId.str)
       Future.successful(ConversationData(convId, rId, None, selfUserId, tpe))
+    }
+    (convs.getOneToOneConversations _).expects(*, *).anyNumberOfTimes().onCall{ (selfUserId, events) =>
+      Future.successful(events.map { case OneToOneConvData(toUser, remoteId, convType) =>
+        val rId = remoteId.getOrElse(RConvId(toUser.str))
+        val convId = ConvId(rId.str)
+        toUser -> ConversationData(convId, rId, None, selfUserId, convType)
+      }.toMap)
     }
     (members.add (_:ConvId, _:Iterable[UserId])).expects(*, *).anyNumberOfTimes().onCall { (conv: ConvId, users: Iterable[UserId]) =>
       Future.successful(users.map(uId => ConversationMemberData(uId, conv)).toSet)

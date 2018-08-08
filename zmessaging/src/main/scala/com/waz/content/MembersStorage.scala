@@ -37,9 +37,11 @@ trait MembersStorage extends CachedStorage[(UserId, ConvId), ConversationMemberD
   def remove(conv: ConvId, user: UserId): Future[Option[ConversationMemberData]]
   def getByUsers(users: Set[UserId]): Future[IndexedSeq[ConversationMemberData]]
   def getActiveUsers(conv: ConvId): Future[Seq[UserId]]
+  def getActiveUsers2(conv: Set[ConvId]): Future[Map[ConvId, Set[UserId]]]
   def getActiveConvs(user: UserId): Future[Seq[ConvId]]
   def activeMembers(conv: ConvId): Signal[Set[UserId]]
   def set(conv: ConvId, users: Set[UserId]): Future[Unit]
+  def setAll(members: Map[ConvId, Set[UserId]]): Future[Unit]
   def delete(conv: ConvId): Future[Unit]
 }
 
@@ -64,6 +66,11 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase) extends CachedS
 
   override def getActiveConvs(user: UserId) = getByUser(user) map { _.map(_.convId) }
 
+  override def getActiveUsers2(convs: Set[ConvId]): Future[Map[ConvId, Set[UserId]]] =
+    getByConvs(convs).map(_.groupBy(_.convId).map {
+      case (cId, members) => cId -> members.map(_.userId).toSet
+    })
+
   def add(conv: ConvId, users: Iterable[UserId]) =
     updateOrCreateAll2(users.map((_, conv)), { (k, v) =>
       v match {
@@ -87,6 +94,24 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase) extends CachedS
     val toAdd = users -- toRemove
 
     remove(conv, toRemove).zip(add(conv, toAdd)).map(_ => ())
+  }
+
+  def setAll(members: Map[ConvId, Set[UserId]]): Future[Unit] = getActiveUsers2(members.keys.toSet).flatMap { active =>
+    val toRemove = active.map {
+      case (convId, users) => convId -> active.get(convId).map(_.filterNot(users)).getOrElse(Set())
+    }
+    val toAdd = members.map {
+      case (convId, users) => convId -> (users -- toRemove.getOrElse(convId, Set()))
+    }
+
+    val removeList = toRemove.toSeq.flatMap {
+      case (convId, users) => users.map((_, convId))
+    }
+    val addList = toAdd.flatMap {
+      case (convId, users) => users.map(ConversationMemberData(_, convId))
+    }
+
+    removeAll(removeList).zip(insertAll(addList)).map(_ => ())
   }
 
   override def isActiveMember(conv: ConvId, user: UserId) = get(user -> conv).map(_.nonEmpty)

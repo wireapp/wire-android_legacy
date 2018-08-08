@@ -23,12 +23,11 @@ import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
-import com.waz.service.UserService
 import com.waz.service.tracking.TrackingService
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
 import com.waz.utils.events.Signal
-import org.threeten.bp.Instant
+import ConversationsContentUpdater._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NoStackTrace
@@ -36,8 +35,10 @@ import scala.util.control.NoStackTrace
 trait ConversationsContentUpdater {
   def convById(id: ConvId): Future[Option[ConversationData]]
   def convByRemoteId(id: RConvId): Future[Option[ConversationData]]
+  def convsByRemoteId(ids: Traversable[RConvId]): Future[Map[RConvId, ConversationData]]
   def storage: ConversationStorage
   def getOneToOneConversation(toUser: UserId, selfUserId: UserId, remoteId: Option[RConvId] = None, convType: ConversationType = ConversationType.OneToOne): Future[ConversationData]
+  def getOneToOneConversations(selfUserId: UserId, convsInfo: Seq[OneToOneConvData]): Future[Map[UserId, ConversationData]]
   def updateConversation(id: ConvId, convType: Option[ConversationType] = None, hidden: Option[Boolean] = None): Future[Option[(ConversationData, ConversationData)]]
   def hideIncomingConversation(user: UserId): Future[Option[(ConversationData, ConversationData)]]
   def setConversationHidden(id: ConvId, hidden: Boolean): Future[Option[(ConversationData, ConversationData)]]
@@ -87,6 +88,8 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
   override def convById(id: ConvId): Future[Option[ConversationData]] = storage.get(id)
 
   override def convByRemoteId(id: RConvId): Future[Option[ConversationData]] = storage.getByRemoteId(id)
+
+  override def convsByRemoteId(ids: Traversable[RConvId]): Future[Map[RConvId, ConversationData]] = storage.getByRemoteIds2(ids)
 
   override def updateConversationName(id: ConvId, name: String) = storage.update(id, { conv =>
       if (conv.convType == ConversationType.Group)
@@ -184,26 +187,46 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
    * TODO: improve - it looks too complicated and duplicates some code
    */
   override def getOneToOneConversation(toUser: UserId, selfUserId: UserId, remoteId: Option[RConvId] = None, convType: ConversationType = ConversationType.OneToOne) =
-    Serialized.future(('getOneToOneConversation, toUser)) {
-      verbose(s"getOneToOneConversation($toUser, self: $selfUserId, remote: $remoteId, convType: $convType")
-      val convId = ConvId(toUser.str)
+    getOneToOneConversations(selfUserId, Seq(OneToOneConvData(toUser, remoteId, convType))).map(_.values.head)
 
-      def createConversation() = createConversationWithMembers(convId, remoteId.getOrElse(RConvId(toUser.str)), convType, selfUserId, Set(toUser))
+  override def getOneToOneConversations(selfUserId: UserId, convsInfo: Seq[OneToOneConvData]): Future[Map[UserId, ConversationData]] =
+    Serialized.future('getOneToOneConversations) {
+      verbose(s"getOneToOneConversation(self: $selfUserId, convs:${convsInfo.size})")
 
-      storage.get(convId) flatMap { localConv =>
-        if (remoteId.forall(r => localConv.exists(_.remoteId == r)))
-          localConv.fold(createConversation())(Future.successful)
-        else // update remote id or merge conversations
-          storage.getByRemoteId(remoteId.get) flatMap { remoteConv =>
-            (localConv, remoteConv) match {
-              case (_, Some(remote)) =>
-                if (remote.id == convId) Future.successful(remote) // means conv was created between get(convId) and getByRemoteId(remoteId.get)
-                else storage.updateLocalId(remote.id, convId) map (_.get) // XXX: should we update messages and members here ?
-              case (Some(_), None) => storage.update(convId, _.copy(remoteId = remoteId.get)) map (_.get._2)
-              case _ => createConversation()
-            }
-          }
-      }
+      def convIdForUser(userId: UserId) = ConvId(userId.str)
+      def userIdForConv(convId: ConvId) = UserId(convId.str)
+
+      for {
+        allUsers <- usersStorage.listAll(convsInfo.map(_.toUser))
+        userMap = allUsers.map(u => u.id -> Vector(u)).toMap
+        convs = convsInfo.map { case OneToOneConvData(toUser, remoteId, convType) =>
+          val convId = convIdForUser(toUser)
+          convId -> (ConversationData(
+            convId,
+            remoteId.getOrElse(RConvId(toUser.str)),
+            name          = None,
+            creator       = selfUserId,
+            convType      = convType,
+            generatedName = NameUpdater.generatedName(convType)(userMap(toUser)),
+            team          = teamId,
+            access        = Set(Access.PRIVATE),
+            accessRole    = Some(AccessRole.PRIVATE)), remoteId)
+        }.toMap
+
+        remotes <- storage.getByRemoteIds2(convsInfo.flatMap(_.remoteId))
+
+        _ <- storage.updateLocalIds(convsInfo.collect {
+          case OneToOneConvData(toUser, Some(remoteId), _) if remotes.contains(remoteId) =>
+            remotes(remoteId).id -> convIdForUser(toUser)
+        }.toMap)
+
+        result <- storage.updateOrCreateAll2(convs.keys, {
+          case (cId, Some(conv)) =>
+            convs(cId)._2.fold(conv)(remotes.getOrElse(_, conv))
+          case (cId, _) =>
+            convs(cId)._1
+        })
+      } yield result.map(conv => userIdForConv(conv.id) -> conv).toMap
     }
 
   override def hideIncomingConversation(user: UserId) = storage.update(ConvId(user.str), { conv =>
@@ -241,4 +264,8 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
 
   override def updateAccessMode(id: ConvId, access: Set[Access], accessRole: Option[AccessRole], link: Option[ConversationData.Link] = None) =
     storage.update(id, conv => conv.copy(access = access, accessRole = accessRole, link = if (!access.contains(Access.CODE)) None else link.orElse(conv.link)))
+}
+
+object ConversationsContentUpdater {
+  case class OneToOneConvData(toUser: UserId, remoteId: Option[RConvId] = None, convType: ConversationType = ConversationType.OneToOne)
 }

@@ -207,14 +207,11 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     }
   }
 
-  def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse]) = Future.traverse(conversations) { conv =>
-    eventScheduler.post(conv.id) {
-      for {
-        (_, created) <- updateConversations(Seq(conv))
-        _            <- messages.addDeviceStartMessages(created, selfUserId)
-      } yield {}
-    }
-  }.map(_ => {})
+  def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse]) =
+    for {
+      (_, created) <- updateConversations(conversations)
+      _            <- messages.addDeviceStartMessages(created, selfUserId)
+    } yield {}
 
   private def updateConversations(responses: Seq[ConversationResponse]): Future[(Seq[ConversationData], Seq[ConversationData])] = {
 
@@ -263,15 +260,13 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       } yield (convs, created.toSeq)
     }
 
-    def updateMembers() = Future.sequence(responses.map(c => (c.id, c.members)).map {
-      case (remoteId, members) =>
-        content.convByRemoteId(remoteId) flatMap {
-          case Some(c) => membersStorage.set(c.id, members + selfUserId)
-          case _ =>
-            error(s"updateMembers() didn't find conv with given remote id for: $remoteId")
-            successful(())
-        }
-    })
+    def updateMembers() =
+      content.convsByRemoteId(responses.map(_.id)).flatMap { convs =>
+        val toUpdate = responses.map(c => (c.id, c.members)).flatMap {
+          case (remoteId, members) => convs.get(remoteId).map(_.id -> members)
+        }.toMap
+        membersStorage.setAll(toUpdate)
+      }
 
     def syncUsers() = users.syncIfNeeded(responses.flatMap(_.members).toSet)
 
