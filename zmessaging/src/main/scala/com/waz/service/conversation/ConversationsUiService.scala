@@ -249,11 +249,12 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
       }
   }
 
-  private def canModifyMembers(conv: ConvId) =
+  private def canModifyMembers(convId: ConvId) =
     for {
-      selfActive <- members.isActiveMember(conv, selfUserId)
-      isGroup    <- convs.isGroupConversation(conv)
-    } yield selfActive && isGroup
+      selfActive    <- members.isActiveMember(convId, selfUserId)
+      isGroup       <- convs.isGroupConversation(convId)
+      isWithService <- convs.isWithService(convId)
+    } yield selfActive && (isGroup || isWithService)
 
   override def leaveConversation(conv: ConvId) = {
     verbose(s"leaveConversation($conv)")
@@ -263,16 +264,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
       _ <- convsContent.updateConversationArchived(conv, archived = true)
     } yield {}
   }
-
-  def isAbleToModifyMembers(conv: ConvId, user: UserId): Future[Boolean] = {
-    val isGroup = convs.isGroupConversation(conv)
-    val isActiveMember = members.isActiveMember(conv, user)
-    for {
-      p1 <- isGroup
-      p2 <- isActiveMember
-    } yield p1 && p2
-  }
-
+  
   override def clearConversation(id: ConvId): Future[Option[ConversationData]] = convsContent.convById(id) flatMap {
     case Some(conv) if conv.convType == ConversationType.Group || conv.convType == ConversationType.OneToOne =>
       verbose(s"clearConversation($conv)")
