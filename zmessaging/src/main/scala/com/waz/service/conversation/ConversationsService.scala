@@ -36,7 +36,7 @@ import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.{EventContext, Signal}
+import com.waz.utils.events.EventContext
 import com.waz.sync.client.ErrorOr
 
 import scala.collection.{breakOut, mutable}
@@ -53,7 +53,6 @@ trait ConversationsService {
   def setConversationArchived(id: ConvId, archived: Boolean): Future[Option[ConversationData]]
   def forceNameUpdate(id: ConvId): Future[Option[(ConversationData, ConversationData)]]
   def onMemberAddFailed(conv: ConvId, users: Set[UserId], error: Option[ErrorType], resp: ErrorResponse): Future[Unit]
-  def groupConversation(convId: ConvId): Signal[Boolean]
   def isGroupConversation(convId: ConvId): Future[Boolean]
   def isWithService(convId: ConvId): Future[Boolean]
 
@@ -307,14 +306,14 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     _ <- messages.removeLocalMemberJoinMessage(conv, users)
   } yield ()
 
-  def groupConversation(convId: ConvId) =
-    convsStorage.signal(convId).flatMap { conv =>
-      if (conv.convType != ConversationType.Group) Signal.const(false)
-      else if (conv.name.isDefined || conv.team.isEmpty) Signal.const(true)
-      else membersStorage.activeMembers(convId).map(ms => !(ms.contains(selfUserId) && ms.size <= 2))
-    }
-
-  def isGroupConversation(convId: ConvId) = groupConversation(convId).head
+  def isGroupConversation(convId: ConvId) =
+    for {
+      Some(conv) <- convsStorage.get(convId)
+      res <-
+        if (conv.convType != ConversationType.Group) Future.successful(false)
+        else if (conv.name.isDefined || conv.team.isEmpty) Future.successful(true)
+        else membersStorage.getActiveUsers(convId).map(ms => !(ms.contains(selfUserId) && ms.size == 2))
+    } yield res
 
   def isWithService(convId: ConvId) =
     membersStorage.getActiveUsers(convId)
