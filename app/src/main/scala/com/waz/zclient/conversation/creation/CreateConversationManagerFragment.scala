@@ -58,9 +58,10 @@ class CreateConversationManagerFragment extends FragmentHelper {
   lazy val confButtonText = for {
     currentPage <- currentPage
     users       <- ctrl.users
+    integrations <- ctrl.integrations
   } yield currentPage match {
     case SettingsPage                 => R.string.next_button
-    case PickerPage if users.nonEmpty => R.string.done_button
+    case PickerPage if users.nonEmpty || integrations.nonEmpty => R.string.done_button
     case PickerPage                   => R.string.skip_button
   }
 
@@ -68,9 +69,10 @@ class CreateConversationManagerFragment extends FragmentHelper {
     currentPage <- currentPage
     name        <- ctrl.name
     memberCount <- ctrl.users.map(_.size)
+    integrationsCount <- ctrl.integrations.map(_.size)
   } yield currentPage match {
     case SettingsPage if name.trim.isEmpty  => false
-    case _ if memberCount >= ConversationController.MaxParticipants => false
+    case _ if memberCount + integrationsCount >= ConversationController.MaxParticipants => false
     case _ => true
   }
 
@@ -82,10 +84,11 @@ class CreateConversationManagerFragment extends FragmentHelper {
   private lazy val headerText = for {
     currentPage <- currentPage
     userCount   <- ctrl.users.map(_.size)
+    integrationsCount <- ctrl.integrations.map(_.size)
   } yield currentPage match {
     case SettingsPage                 => getString(R.string.new_group_header)
-    case PickerPage if userCount == 0 => getString(R.string.add_people_empty_header)
-    case PickerPage                   => getString(R.string.add_people_count_header, userCount.toString)
+    case PickerPage if userCount == 0 && integrationsCount == 0 => getString(R.string.add_people_empty_header)
+    case PickerPage                   => getString(R.string.add_people_count_header, (userCount + integrationsCount).toString)
   }
 
   private lazy val toolbar = returning(view[Toolbar](R.id.toolbar)) { vh =>
@@ -141,7 +144,7 @@ class CreateConversationManagerFragment extends FragmentHelper {
       case _ =>
     }
 
-    ctrl.users.map(_.size >= ConversationController.MaxParticipants).onUi{
+    ctrl.users.zip(ctrl.integrations).map { case (users, integrations) => users.size + integrations.size >= ConversationController.MaxParticipants }.onUi{
       case true =>
         ViewUtils.showAlertDialog(getContext,
           R.string.max_participants_alert_title,

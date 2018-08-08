@@ -71,13 +71,18 @@ class ParticipantHeaderFragment extends FragmentHelper {
       }
   }
 
-  private lazy val potentialMemberCount = Signal(newConvController.users, participantsController.otherParticipants).map {
-    case (newUsers, currentUsers) => newUsers.union(currentUsers).size + 1
-  }
+  private lazy val potentialMemberCount =
+    for {
+      members         <- participantsController.otherParticipants
+      newUsers        <- newConvController.users
+      newIntegrations <- newConvController.integrations
+    } yield (members ++ newUsers).size + newIntegrations.size + 1
+
+
   private lazy val confButton = returning(view[TextView](R.id.confirmation_button)) { vh =>
 
-    val confButtonEnabled = Signal(newConvController.users.map(_.size), potentialMemberCount).map {
-      case (newUsers, potential) => newUsers > 0 && potential <= ConversationController.MaxParticipants
+    val confButtonEnabled = Signal(newConvController.users.map(_.size), newConvController.integrations.map(_.size), potentialMemberCount).map {
+      case (newUsers, newIntegrations, potential) => (newUsers > 0 || newIntegrations > 0) && potential <= ConversationController.MaxParticipants
     }
     confButtonEnabled.onUi(e => vh.foreach(_.setEnabled(e)))
 
@@ -106,9 +111,9 @@ class ParticipantHeaderFragment extends FragmentHelper {
 
       case Some(EphemeralOptionsFragment.Tag) => Signal.const(getString(R.string.ephemeral_message__options_header))
 
-      case Some(AddParticipantsFragment.Tag) => newConvController.users.map(_.size).map {
-        case 0 => getString(R.string.add_people_empty_header)
-        case x => getString(R.string.add_people_count_header, x.toString)
+      case Some(AddParticipantsFragment.Tag) => Signal(newConvController.users, newConvController.integrations).map {
+        case (u, i) if u.isEmpty && i.isEmpty => getString(R.string.add_people_empty_header)
+        case (u, i) => getString(R.string.add_people_count_header, (u.size + i.size).toString)
       }
 
       case Some(AllGroupParticipantsFragment.Tag) => Signal.const(getString(R.string.participant_search_title))
