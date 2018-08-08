@@ -19,7 +19,7 @@ package com.waz.sync.handler
 
 import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
-import com.waz.api.impl.{AccentColor, ErrorResponse}
+import com.waz.api.impl.ErrorResponse
 import com.waz.content.UsersStorage
 import com.waz.model._
 import com.waz.service.UserService

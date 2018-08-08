@@ -17,7 +17,6 @@
  */
 package com.waz.model
 
-import com.waz.api.impl.AccentColor
 import com.waz.model.AssetMetaData.Image
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetMetaData.Image.Tag.{Medium, Preview}

@@ -19,8 +19,7 @@ package com.waz.provision
 
 import akka.actor.ActorRef
 import com.waz.api.Message
-import com.waz.api.impl.AccentColor
-import com.waz.model._
+import com.waz.model.{AccentColor, _}
 import com.waz.threading.QueueReport
 import org.threeten.bp.Instant
 

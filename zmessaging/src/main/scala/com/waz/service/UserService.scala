@@ -19,11 +19,10 @@ package com.waz.service
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.api.impl.AccentColor
 import com.waz.content._
 import com.waz.model.AccountData.Password
 import com.waz.model.UserData.ConnectionStatus
-import com.waz.model._
+import com.waz.model.{AccentColor, _}
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.UserService._
 import com.waz.service.assets.AssetService

@@ -20,11 +20,10 @@ package com.waz.model.sync
 import com.waz.ZLog.error
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.api.impl.AccentColor
 import com.waz.model.AddressBook.AddressBookDecoder
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.ClientId
-import com.waz.model.{Availability, SearchQuery, _}
+import com.waz.model.{AccentColor, Availability, SearchQuery, _}
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.client.{ConversationsClient, UsersClient}
 import com.waz.sync.queue.SyncJobMerger._

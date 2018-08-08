@@ -18,14 +18,13 @@
 package com.waz.sync
 
 import com.waz.api.IConversation.{Access, AccessRole}
-import com.waz.api.impl.AccentColor
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.{ShouldSyncConversations, ShouldSyncInitial}
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.ClientId
 import com.waz.model.sync.SyncJob.Priority
 import com.waz.model.sync._
-import com.waz.model.{Availability, _}
+import com.waz.model.{AccentColor, Availability, _}
 import com.waz.service._
 import com.waz.sync.queue.ConvLock
 import com.waz.threading.Threading

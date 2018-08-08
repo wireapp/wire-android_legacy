@@ -18,9 +18,8 @@
 package com.waz.testutils
 
 import com.waz.api.IConversation.{Access, AccessRole}
-import com.waz.api.impl.AccentColor
 import com.waz.model.UserData.ConnectionStatus
-import com.waz.model.{Availability, _}
+import com.waz.model.{AccentColor, Availability, _}
 import com.waz.model.otr.ClientId
 import com.waz.model.sync.ReceiptType
 import com.waz.model.sync.SyncJob.Priority
