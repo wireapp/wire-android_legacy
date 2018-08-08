@@ -43,35 +43,13 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
 
   val syncScheduler = mock[SyncScheduler]
   val srs           = mock[SyncRequestService]
-  val convsUi       = mock[ConversationsUiService]
-  val convs         = mock[ConversationsContentUpdater]
-  val pipeline      = mock[EventPipeline]
-  val errors        = mock[ErrorsService]
   val assets        = mock[AssetService]
 
   (syncScheduler.await(_: SyncId)).expects(*).anyNumberOfTimes().onCall( (sid: SyncId) => { syncMap(sid).future } )
   (srs.scheduler _).expects().anyNumberOfTimes().returning(syncScheduler)
   (assets.updateAssets _).expects(*).anyNumberOfTimes().onCall((as: Seq[AssetData]) => Future.successful(as.toSet))
 
-  val service: IntegrationsService = new IntegrationsServiceImpl(Some(TeamId()), sync, srs, convsUi, convs)
-  val handler = new IntegrationsSyncHandlerImpl(UserId(), Some(TeamId()), convs, assets, client, service, pipeline)
-
-  (sync.syncProvider _).expects(*).anyNumberOfTimes().onCall((id: ProviderId) => Future {
-    val sid = SyncId()
-    syncMap += (sid -> Promise[SyncResult]())
-    handler.syncProvider(id).map { _ => syncMap(sid).success(SyncResult.Success) }
-    sid
-  })
-
-  (sync.syncIntegrations _).expects(*).anyNumberOfTimes().onCall((startWith: Option[String]) => Future {
-    handler.syncIntegrations(startWith)
-    SyncId()
-  })
-
-  (client.getProvider _).expects(*).anyNumberOfTimes().onCall((id: ProviderId) => providers.get(id) match {
-    case Some(data) => CancellableFuture.successful(Right(data))
-    case None       => CancellableFuture.failed(new Exception(s"no provider with id $id"))
-  })
+  val service: IntegrationsService = new IntegrationsServiceImpl(Some(TeamId()), client, assets, sync, srs)
 
   (client.searchTeamIntegrations _).expects(*, *).anyNumberOfTimes().onCall { (startWith: Option[String], teamId: TeamId) =>
     val integs = integrations.values.filter(_.name.startsWith(startWith.getOrElse(""))).map(_ -> Option.empty[AssetData]).toMap
@@ -81,18 +59,12 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
   feature("integrations") {
     scenario("get all integrations") {
       val integrations = service.searchIntegrations()
-      result(integrations.head).size shouldEqual 3
+      result(integrations).right.get.size shouldEqual 3
     }
 
     scenario("get all integrations starting with 'Ech'") {
       val integrations = service.searchIntegrations(Some("Ech"))
-      result(integrations.head).size shouldEqual 2
-    }
-  }
-
-  feature("providers") {
-    scenario("get Wire provider") {
-      result(service.getProvider(provider0.id)) shouldEqual provider0
+      result(integrations).right.get.size shouldEqual 2
     }
   }
   

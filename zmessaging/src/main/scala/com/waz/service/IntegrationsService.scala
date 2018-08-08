@@ -20,63 +20,46 @@ package com.waz.service
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.internalError
 import com.waz.model._
-import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsUiService}
+import com.waz.service.assets.AssetService
+import com.waz.sync.client.{ErrorOr, IntegrationsClient}
 import com.waz.sync.{SyncRequestService, SyncResult, SyncServiceHandle}
 import com.waz.threading.Threading
-import com.waz.utils.events.{Signal, SourceSignal}
-import com.waz.utils.returning
 
 import scala.concurrent.Future
 
 trait IntegrationsService {
-  def searchIntegrations(startWith: Option[String] = None): Signal[Seq[IntegrationData]]
-  def getIntegration(pId: ProviderId, iId: IntegrationId): Future[IntegrationData]
-  def getProvider(id: ProviderId): Future[ProviderData]
-
-  def onIntegrationsSynced(name: Option[String], data: Seq[IntegrationData]): Future[Unit]
-  def onProviderSynced(pId: ProviderId, data: ProviderData): Future[Unit]
-  def onIntegrationSynced(pId: ProviderId, iId: IntegrationId, data: IntegrationData): Future[Unit]
+  def searchIntegrations(startWith: Option[String] = None): ErrorOr[Seq[IntegrationData]]
+  def getIntegration(pId: ProviderId, iId: IntegrationId): ErrorOr[IntegrationData]
 
   def addBotToConversation(cId: ConvId, pId: ProviderId, iId: IntegrationId): Future[Either[ErrorResponse, Unit]]
   def removeBotFromConversation(cId: ConvId, botId: UserId): Future[Either[ErrorResponse, Unit]]
 }
 
 class IntegrationsServiceImpl(teamId:       Option[TeamId],
+                              client:       IntegrationsClient,
+                              assets:       AssetService,
                               sync:         SyncServiceHandle,
-                              syncRequests: SyncRequestService,
-                              convsUi:      ConversationsUiService,
-                              convs:        ConversationsContentUpdater) extends IntegrationsService {
+                              syncRequests: SyncRequestService) extends IntegrationsService {
   implicit val ctx = Threading.Background
 
-  private var integrationSearch = Map.empty[Option[String], SourceSignal[Seq[IntegrationData]]]
-  private var providers         = Map.empty[ProviderId, ProviderData]
-  private var integrations      = Map.empty[IntegrationId, IntegrationData]
-
   override def searchIntegrations(startWith: Option[String] = None) =
-    integrationSearch.getOrElse(startWith, returning(Signal[Seq[IntegrationData]]()) { sig =>
-      integrationSearch += (startWith -> sig)
-      sync.syncIntegrations(startWith)
-    })
-
-  override def getIntegration(pId: ProviderId, iId: IntegrationId) =
-    if (integrations.contains(iId)) Future.successful(integrations(iId))
-    else sync.syncIntegration(pId, iId).flatMap(syncRequests.scheduler.await).map(_ => integrations(iId))
-
-  override def getProvider(pId: ProviderId) =
-    if (providers.contains(pId)) Future.successful(providers(pId))
-    else sync.syncProvider(pId).flatMap(syncRequests.scheduler.await).map(_ => providers(pId))
-
-  override def onIntegrationsSynced(searchPrefix: Option[String], data: Seq[IntegrationData]) =
-    integrationSearch.get(searchPrefix) match {
-      case Some(signal) => Future.successful(signal ! data)
-      case None         => Future.failed(new Exception(s"received sync data for unknown integrations search prefix: $searchPrefix"))
+    teamId match {
+      case Some(tId) => client.searchTeamIntegrations(startWith, tId).future.flatMap {
+        case Right(integrations) =>
+          assets
+            .updateAssets(integrations.values.flatten.toSeq)
+            .map(_ => Right(integrations.keys.toSeq))
+        case Left(err) => Future.successful(Left(err))
+      }
+      case None => Future.successful(Right(Seq.empty[IntegrationData]))
     }
 
-  override def onIntegrationSynced(pId: ProviderId, iId: IntegrationId, data: IntegrationData) =
-    Future.successful(integrations += iId -> data)
-
-  override def onProviderSynced(id: ProviderId, data: ProviderData) =
-    Future.successful(providers += id -> data)
+  override def getIntegration(pId: ProviderId, iId: IntegrationId) =
+    client.getIntegration(pId, iId).future.flatMap {
+      case Right((integration, asset)) =>
+        assets.updateAssets(asset.toSeq).map(_ => Right(integration))
+      case Left(err) => Future.successful(Left(err))
+    }
 
   // pId here is redundant - we can take it from our 'integrations' map
   override def addBotToConversation(cId: ConvId, pId: ProviderId, iId: IntegrationId) =

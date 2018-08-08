@@ -217,18 +217,6 @@ object SyncRequest {
     }
   }
 
-  case class SyncIntegrations(startWith: Option[String]) extends BaseRequest(Cmd.SyncIntegrations) {
-    override val mergeKey = (cmd, startWith)
-  }
-
-  case class SyncIntegration(pId: ProviderId, iId: IntegrationId) extends BaseRequest(Cmd.SyncIntegration) {
-    override val mergeKey = (cmd, iId)
-  }
-
-  case class SyncProvider(pId: ProviderId) extends BaseRequest(Cmd.SyncProvider) {
-    override val mergeKey = (cmd, pId)
-  }
-
   case class PostAddBot(cId: ConvId, pId: ProviderId, iId: IntegrationId) extends BaseRequest(Cmd.PostAddBot) {
     override val mergeKey = (cmd, cId, iId)
   }
@@ -336,9 +324,6 @@ object SyncRequest {
           case Cmd.SyncConversation      => SyncConversation(decodeConvIdSeq('convs).toSet)
           case Cmd.SyncConvLink          => SyncConvLink('conv)
           case Cmd.SyncSearchQuery       => SyncSearchQuery(SearchQuery.fromCacheKey(decodeString('queryCacheKey)))
-          case Cmd.SyncIntegrations      => SyncIntegrations(decodeOptString('startWith))
-          case Cmd.SyncIntegration       => SyncIntegration(decodeId[ProviderId]('providerId), decodeId[IntegrationId]('integrationId))
-          case Cmd.SyncProvider          => SyncProvider(decodeId[ProviderId]('providerId))
           case Cmd.ExactMatchHandle      => ExactMatchHandle(Handle(decodeString('handle)))
           case Cmd.PostConv              => PostConv(convId, decodeStringSeq('users).map(UserId(_)).toSet, 'name, 'team, 'access, 'access_role)
           case Cmd.PostConvName          => PostConvName(convId, 'name)
@@ -412,11 +397,6 @@ object SyncRequest {
         case SyncConversation(convs)          => o.put("convs", arrString(convs.toSeq map (_.str)))
         case SyncConvLink(conv)               => o.put("conv", conv.str)
         case SyncSearchQuery(queryCacheKey)   => o.put("queryCacheKey", queryCacheKey.cacheKey)
-        case SyncIntegrations(startWith)      => startWith.foreach(o.put("startWith", _))
-        case SyncIntegration(pId, iId)        =>
-          o.put("providerId", pId.str)
-          o.put("integrationId", iId.str)
-        case SyncProvider(providerId)         => o.put("providerId", providerId.str)
         case PostAddBot(cId, pId, iId)        =>
           o.put("convId", cId.str)
           o.put("providerId", pId.str)
