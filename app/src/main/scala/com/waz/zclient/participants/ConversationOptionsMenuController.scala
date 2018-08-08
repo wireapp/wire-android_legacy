@@ -62,7 +62,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
   //returns Signal(None) if the selected convId is a group
   val otherUser: Signal[Option[UserData]] = (for {
     zms          <- zMessaging
-    isGroup      <- Signal.future(zms.conversations.isGroupConversation(convId))
+    isGroup      <- zms.conversations.groupConversation(convId)
     id <- if (isGroup) Signal.const(Option.empty[UserId]) else zms.membersStorage.activeMembers(convId).map(_.filter(_ != zms.selfUserId)).map(_.headOption)
     user <- id.fold(Signal.const(Option.empty[UserData]))(zms.usersStorage.signal(_).map(Some(_)))
   } yield user)

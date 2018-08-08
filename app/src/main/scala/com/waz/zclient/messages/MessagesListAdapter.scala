@@ -45,7 +45,7 @@ class MessagesListAdapter(listDim: Signal[Dim2])(implicit inj: Injector, ec: Eve
   val cursor = (for {
     zs      <- zms
     convId  <- conversationController.currentConvId
-    isGroup <- Signal.future(zs.conversations.isGroupConversation(convId))
+    isGroup <- zs.conversations.groupConversation(convId)
     conv    <- zs.convsStorage.signal(convId)
   } yield (zs, conv.id, isGroup, isGroup && conv.team.isDefined && conv.team == zs.teamId && !conv.isTeamOnly)).map {
     case (zs, convId, group, canHaveLink) => (new RecyclerCursor(convId, zs, notifier), zs.teamId, convId, group, canHaveLink)

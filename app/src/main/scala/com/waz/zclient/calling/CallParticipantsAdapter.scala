@@ -30,9 +30,9 @@ import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.views.SingleUserRowView
-import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIconWithColor}
+import com.waz.zclient.paintcode.ForwardNavigationIcon
 import com.waz.zclient.ui.text.TypefaceTextView
-import com.waz.zclient.utils.ContextUtils.{getColor, getDrawable, getString, getStyledColor}
+import com.waz.zclient.utils.ContextUtils.{getColor, getDrawable, getString}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{Injectable, Injector, R}
 
@@ -115,7 +115,6 @@ case class CallParticipantViewHolder(view: SingleUserRowView) extends ViewHolder
 
 case class ShowAllButtonViewHolder(view: View) extends ViewHolder(view) {
   private implicit val ctx: Context = view.getContext
-  view.findViewById[ImageView](R.id.icon).setImageDrawable(GuestIconWithColor(getStyledColor(R.attr.wirePrimaryTextColor)))
   view.findViewById[ImageView](R.id.next_indicator).setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40))
   view.setMarginTop(0)
   private lazy val nameView = view.findViewById[TypefaceTextView](R.id.name_text)

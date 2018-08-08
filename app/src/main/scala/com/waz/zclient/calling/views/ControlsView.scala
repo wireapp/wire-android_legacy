@@ -76,7 +76,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
     (for {
       zms            <- controller.callingZms
       conv           <- controller.conversation
-      isGroup        <- Signal.future(zms.conversations.isGroupConversation(conv.id))
+      isGroup        <- zms.conversations.groupConversation(conv.id)
       isTeam         =  zms.teamId.isDefined
       established    <- controller.isCallEstablished
       showVideo      <- controller.isVideoCall

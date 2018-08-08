@@ -54,10 +54,10 @@ class GroupParticipantsFragment extends FragmentHelper {
   private lazy val participantsView = view[RecyclerView](R.id.pgv__participants)
 
   lazy val showAddPeople = for {
-    conv    <- participantsController.conv
-    isGroup <- participantsController.isGroup
-    hasPerm <- userAccountsController.hasAddConversationMemberPermission(conv.id)
-  } yield conv.isActive && isGroup && hasPerm
+    conv         <- participantsController.conv
+    isGroupOrBot <- participantsController.isGroupOrBot
+    hasPerm      <- userAccountsController.hasAddConversationMemberPermission(conv.id)
+  } yield conv.isActive && isGroupOrBot && hasPerm
 
   lazy val shouldEnableAddPeople = participantsController.otherParticipants.map(_.size + 1 < ConversationController.MaxParticipants)
 

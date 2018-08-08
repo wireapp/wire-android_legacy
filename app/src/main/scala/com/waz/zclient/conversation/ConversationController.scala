@@ -80,7 +80,13 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   val currentConvType: Signal[ConversationType] = currentConv.map(_.convType).disableAutowiring()
   val currentConvName: Signal[String] = currentConv.map(_.displayName) // the name of the current conversation can be edited (without switching)
   val currentConvIsVerified: Signal[Boolean] = currentConv.map(_.verified == Verification.VERIFIED)
-  val currentConvIsGroup: Signal[Boolean] = currentConvId.flatMap(id => Signal.future(isGroup(id)))
+  val currentConvIsGroup: Signal[Boolean] =
+    for {
+      convs   <- conversations
+      convId  <- currentConvId
+      isGroup <- convs.groupConversation(convId)
+    } yield isGroup
+
   val currentConvIsTeamOnly: Signal[Boolean] = currentConv.map(_.isTeamOnly)
 
   lazy val currentConvMembers = for {
@@ -122,8 +128,8 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def selectConv(id: ConvId, requester: ConversationChangeRequester): Future[Unit] =
     selectConv(Some(id), requester)
 
-  def isGroup(id: ConvId): Future[Boolean] =
-    conversations.head.flatMap(_.isGroupConversation(id))
+  def groupConversation(id: ConvId): Signal[Boolean] =
+    conversations.flatMap(_.groupConversation(id))
 
   def participantsIds(conv: ConvId): Future[Seq[UserId]] =
     membersStorage.head.flatMap(_.getActiveUsers(conv))

@@ -105,7 +105,7 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
   val timestampText = for {
     selfUserId  <- signals.selfUserId
     convId      <- conv.map(_.id)
-    isGroup     <- Signal.future(conversationController.isGroup(convId))
+    isGroup     <- conversationController.groupConversation(convId)
     msg         <- message
     timeout     <- ephemeralTimeout
   } yield {

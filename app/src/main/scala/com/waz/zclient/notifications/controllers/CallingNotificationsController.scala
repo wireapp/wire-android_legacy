@@ -76,7 +76,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
           z => Signal(z.calling.availableCalls.map(_.get(conv)),
             z.usersStorage.optSignal(caller).map(_.map(_.name).getOrElse("")),
             z.convsStorage.optSignal(conv).map(_.map(_.displayName).getOrElse("")),
-            Signal.future(z.conversations.isGroupConversation(conv)))).map(conv -> _)
+            z.conversations.groupConversation(conv))).map(conv -> _)
       }: _*)
       notificationData = notInfo.collect {
         case (convId, (Some(callInfo), title, msg, isGroup)) =>

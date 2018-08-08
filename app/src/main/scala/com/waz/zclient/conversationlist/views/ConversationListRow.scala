@@ -120,7 +120,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     availableCalls <- z.calling.availableCalls
     call           <- z.calling.currentCall
     callDuration   <- call.filter(_.convId == conv.id).fold(Signal.const(""))(_.durationFormatted)
-    isGroupConv    <- Signal.future(z.conversations.isGroupConversation(conv.id))
+    isGroupConv    <- z.conversations.groupConversation(conv.id)
   } yield (conv.id, badgeStatusForConversation(conv, conv.unreadCount.messages, typing, availableCalls, callDuration, isGroupConv))
 
   val subtitleText = for {

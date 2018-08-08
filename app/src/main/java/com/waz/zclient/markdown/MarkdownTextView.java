@@ -18,6 +18,8 @@
 package com.waz.zclient.markdown;
 
 import android.content.Context;
+import android.content.ContextWrapper;
+import android.os.Build;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.util.AttributeSet;
@@ -70,6 +72,21 @@ public class MarkdownTextView extends TypefaceTextView implements ViewHelper {
     }
 
     /**
+     * This function is taken from this Stackoverflow answer:
+     * https://stackoverflow.com/questions/8276634/android-get-hosting-activity-from-a-view/32973351#32973351
+     */
+    private BaseActivity getActivity() {
+        Context context = getContext();
+        while (context instanceof ContextWrapper) {
+            if (context instanceof BaseActivity) {
+                return (BaseActivity)context;
+            }
+            context = ((ContextWrapper)context).getBaseContext();
+        }
+        return null;
+    }
+
+    /**
      * Configures the style sheet used for rendering.
      */
     private void configureStyleSheet() {
@@ -81,15 +98,24 @@ public class MarkdownTextView extends TypefaceTextView implements ViewHelper {
         mStyleSheet.setQuoteStripeColor(ContextUtils.getStyledColor(R.attr.quoteStripeColor, context()));
         mStyleSheet.setListPrefixColor(ContextUtils.getStyledColor(R.attr.listPrefixColor, context()));
 
-        // update the link color whenever the accent color changes
-        ((BaseActivity) getContext()).injectJava(AccentColorController.class).accentColorForJava(new AccentColorCallback() {
-            @Override
-            public void color(AccentColor color) {
-                mStyleSheet.setLinkColor(color.getColor());
-                setLinkTextColor(color.getColor());
-                refreshLinks();
-            }
-        }, eventContext());
+        BaseActivity activity;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            activity = getActivity();
+        } else {
+            activity = (BaseActivity) getContext();
+        }
+        
+        if (activity != null) {
+            // update the link color whenever the accent color changes
+            activity.injectJava(AccentColorController.class).accentColorForJava(new AccentColorCallback() {
+                @Override
+                public void color(AccentColor color) {
+                    mStyleSheet.setLinkColor(color.getColor());
+                    setLinkTextColor(color.getColor());
+                    refreshLinks();
+                }
+            }, eventContext());
+        }
 
         // to make links clickable
         mStyleSheet.configureLinkHandler(context());

@@ -84,7 +84,7 @@ ext {
     zMessagingDevVersionBase = '127.2117'
     zMessagingDevVersion = "${zMessagingDevVersionBase}@aar"
     // Release version number must be like this X.0(.Y)
-    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '127.3.479@aar'
+    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '127.3.480@aar'
 
     avsVersion = '4.4.147@aar'
     avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
@@ -92,7 +92,7 @@ ext {
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '4.5.9@aar'
+    customAvsVersion = '4.6.18@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'

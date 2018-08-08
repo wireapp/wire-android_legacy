@@ -185,7 +185,7 @@ class ConversationFragment extends FragmentHelper {
 
     (for {
       (convId, isConvActive) <- convController.currentConv.map(c => (c.id, c.isActive))
-      isGroup                <- Signal.future(convController.isGroup(convId))
+      isGroup                <- convController.groupConversation(convId)
       participantsNumber     <- Signal.future(convController.participantsIds(convId).map(_.size))
       acc                    <- zms.map(_.selfUserId)
       call                   <- callController.currentCallOpt

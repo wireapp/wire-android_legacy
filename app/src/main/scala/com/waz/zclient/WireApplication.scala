@@ -19,6 +19,7 @@ package com.waz.zclient
 
 import java.io.File
 import java.util.Calendar
+import javax.net.ssl.SSLContext
 
 import android.app.{Activity, ActivityManager, NotificationManager}
 import android.content.{Context, ContextWrapper}
@@ -28,6 +29,7 @@ import android.os.{Build, PowerManager, Vibrator}
 import android.renderscript.RenderScript
 import android.support.multidex.MultiDexApplication
 import android.support.v4.app.{FragmentActivity, FragmentManager}
+import com.google.android.gms.security.ProviderInstaller
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
 import com.waz.api.NetworkMode
@@ -80,6 +82,7 @@ import com.waz.zclient.views.DraftMap
 import net.hockeyapp.android.Constants
 
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 
 object WireApplication {
   var APP_INSTANCE: WireApplication = _
@@ -284,8 +287,23 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
   def contextModule(ctx: WireContext): Injector = controllers(ctx)
 
+  private def enableTLS12OnOldDevices(): Unit = {
+    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
+      try {
+        ProviderInstaller.installIfNeeded(getApplicationContext)
+        val sslContext = SSLContext.getInstance("TLSv1.2")
+        sslContext.init(null, null, null)
+        sslContext.createSSLEngine
+      } catch {
+        case NonFatal(error) =>
+          verbose(s"Error while enabling TLS 1.2 on old device. $error")
+      }
+    }
+  }
+
   override def onCreate(): Unit = {
     super.onCreate()
+    enableTLS12OnOldDevices()
     InternalLog.init(getApplicationContext.getApplicationInfo.dataDir)
 
     verbose("onCreate")

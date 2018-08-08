@@ -115,6 +115,7 @@ class MessageNotificationsControllerTest extends AndroidFreeSpec { this: Suite =
     private val conversations = returning(mock[ConversationsService]) { conversations =>
       (conversations.forceNameUpdate _).expects(convId).anyNumberOfTimes().returning(Future.successful(Option((convData, convData))))
       (conversations.isGroupConversation _).expects(convId).anyNumberOfTimes().returning(Future.successful(false))
+      (conversations.groupConversation _).expects(convId).anyNumberOfTimes().returning(Signal.const(false))
     }
 
     private val imageLoader = mock[ImageLoader]
