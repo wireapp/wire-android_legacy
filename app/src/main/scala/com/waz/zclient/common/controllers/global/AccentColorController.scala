@@ -27,8 +27,8 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.{Injectable, Injector}
 
 class AccentColorController(implicit inj: Injector) extends Injectable {
+  private lazy val accounts     = inject[AccountsService]
   private lazy val selfUserId   = inject[Signal[Option[UserId]]]
-  private lazy val accounts     = inject[Signal[AccountsService]]
   private lazy val usersStorage = inject[Signal[UsersStorage]]
 
   private lazy val randomColor =
@@ -53,9 +53,8 @@ class AccentColorController(implicit inj: Injector) extends Injectable {
     case None    => Signal.const(Map.empty)
     case Some(_) =>
       for {
-        acc      <- accounts
         storage  <- usersStorage
-        users    <- acc.accountsWithManagers
+        users    <- accounts.accountsWithManagers
         userData <- Signal.sequence(users.map(storage.signal).toSeq: _*)
       } yield userData.map(u =>  u.id -> AccentColor(u.accent)).toMap
   }
