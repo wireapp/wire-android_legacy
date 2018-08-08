@@ -55,6 +55,7 @@ object OkHttpWebSocketFactory extends WebSocketFactory {
   }
   import HttpClientOkHttpImpl.convertHttpRequest
 
+  //TODO Should be created somewhere outside
   private lazy val okHttpClient = new OkHttpClient()
 
   override def openWebSocket(request: Request[Body]): EventStream[SocketEvent] = {
