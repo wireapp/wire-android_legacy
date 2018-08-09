@@ -22,6 +22,7 @@ import java.net.URL
 import com.waz.specs.ZSpec
 import com.waz.znet2.http
 import com.waz.znet2.http.HttpClient.ProgressCallback
+import com.waz.znet2.http.HttpClient.AutoDerivation._
 
 class HttpClientDslSpec extends ZSpec {
   import http.HttpClient.dsl._

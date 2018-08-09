@@ -36,12 +36,6 @@ object ResponseDeserializer {
     override def deserialize(response: Response[Body]): T = f(response)
   }
 
-  implicit def responseDeserializerFrom[T](implicit bd: BodyDeserializer[T]): ResponseDeserializer[T] =
-    responseDeserializerFrom2(bd).map(_.body)
-
-  implicit def responseDeserializerFrom2[T](implicit bd: BodyDeserializer[T]): ResponseDeserializer[Response[T]] =
-    create(response => response.copy(body = bd.deserialize(response.body)))
-
 }
 
 trait BodyDeserializer[T] {
@@ -56,27 +50,6 @@ object BodyDeserializer {
 
   def create[T](f: Body => T): BodyDeserializer[T] = new BodyDeserializer[T] {
     override def deserialize(body: Body): T = f(body)
-  }
-
-  implicit val Unit: BodyDeserializer[Unit] = create(_ => ())
-
-  implicit val EmptyBodyDeserializer: BodyDeserializer[EmptyBody] = create {
-    case body: EmptyBody => body
-    case _               => throw new IllegalArgumentException("Body is not empty")
-  }
-
-  implicit def bodyDeserializerFrom[T](implicit d: RawBodyDeserializer[T]): BodyDeserializer[T] = create {
-    case body: RawBody => d.deserialize(body)
-    case _: EmptyBody  => throw new IllegalArgumentException("Body is empty")
-    case obj =>
-      throw new IllegalArgumentException(s"Can not decode ${obj.getClass.getSimpleName}")
-  }
-
-  implicit def optionBodyDeserializerFrom[T](implicit d: RawBodyDeserializer[T]): BodyDeserializer[Option[T]] = create {
-    case body: RawBody => Some(d.deserialize(body))
-    case _: EmptyBody  => None
-    case obj =>
-      throw new IllegalArgumentException(s"Can not decode ${obj.getClass.getSimpleName}")
   }
 
 }
@@ -95,10 +68,20 @@ object RawBodyDeserializer {
     override def deserialize(body: RawBody): T = f(body)
   }
 
-  implicit val identity: RawBodyDeserializer[RawBody] = create(body => body)
+  def createFileRawBodyDeserializer(targetFile: => File): RawBodyDeserializer[File] =
+    RawBodyDeserializer.create { body =>
+      returning(targetFile) { file =>
+        IoUtils.copy(body.data(), new FileOutputStream(file))
+      }
+    }
+}
+
+trait AutoDerivationRulesForDeserializers {
+
+  implicit val identity: RawBodyDeserializer[RawBody] = RawBodyDeserializer.create(body => body)
 
   implicit val BytesRawBodyDeserializer: RawBodyDeserializer[Array[Byte]] =
-    create(body => IoUtils.toByteArray(body.data()))
+    RawBodyDeserializer.create(body => IoUtils.toByteArray(body.data()))
 
   implicit val StringRawBodyDeserializer: RawBodyDeserializer[String] =
     BytesRawBodyDeserializer.map(new String(_))
@@ -112,10 +95,33 @@ object RawBodyDeserializer {
   implicit def objectFromJsonRawBodyDeserializer[T](implicit d: JsonDecoder[T]): RawBodyDeserializer[T] =
     JsonRawBodyDeserializer.map(d(_))
 
-  def createFileRawBodyDeserializer(targetFile: => File): RawBodyDeserializer[File] =
-    create { body =>
-      returning(targetFile) { file =>
-        IoUtils.copy(body.data(), new FileOutputStream(file))
-      }
+  implicit val Unit: BodyDeserializer[Unit] = BodyDeserializer.create(_ => ())
+
+  implicit val EmptyBodyDeserializer: BodyDeserializer[EmptyBody] = BodyDeserializer.create {
+    case body: EmptyBody => body
+    case _               => throw new IllegalArgumentException("Body is not empty")
+  }
+
+  implicit def bodyDeserializerFrom[T](implicit d: RawBodyDeserializer[T]): BodyDeserializer[T] =
+    BodyDeserializer.create {
+      case body: RawBody => d.deserialize(body)
+      case _: EmptyBody  => throw new IllegalArgumentException("Body is empty")
+      case obj =>
+        throw new IllegalArgumentException(s"Can not decode ${obj.getClass.getSimpleName}")
     }
+
+  implicit def optionBodyDeserializerFrom[T](implicit d: RawBodyDeserializer[T]): BodyDeserializer[Option[T]] =
+    BodyDeserializer.create {
+      case body: RawBody => Some(d.deserialize(body))
+      case _: EmptyBody  => None
+      case obj =>
+        throw new IllegalArgumentException(s"Can not decode ${obj.getClass.getSimpleName}")
+    }
+
+  implicit def responseDeserializerFrom[T](implicit bd: BodyDeserializer[T]): ResponseDeserializer[T] =
+    responseDeserializerFrom2(bd).map(_.body)
+
+  implicit def responseDeserializerFrom2[T](implicit bd: BodyDeserializer[T]): ResponseDeserializer[Response[T]] =
+    ResponseDeserializer.create(response => response.copy(body = bd.deserialize(response.body)))
+
 }

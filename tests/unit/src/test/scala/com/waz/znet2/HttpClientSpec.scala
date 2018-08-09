@@ -27,6 +27,7 @@ import com.waz.znet2.http._
 import okhttp3.mockwebserver.{MockResponse, MockWebServer}
 import okio.{Buffer, Okio}
 import org.json.JSONObject
+import com.waz.znet2.http.HttpClient.AutoDerivation._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global

@@ -31,7 +31,8 @@ import scala.concurrent.Future
 
 object HockeyCrashReporter {
   import Threading.Implicits.Background
-  import com.waz.znet2.http.HttpClient.dsl._
+  import HttpClient.dsl._
+  import HttpClient.AutoDerivation._
 
   def uploadCrashReport(hockeyId: String, dump: File, log: File): Future[Unit] = {
     implicit val httpClient: HttpClient = ZMessaging.currentGlobal.httpClientForLongRunning

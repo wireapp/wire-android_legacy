@@ -43,6 +43,7 @@ class UserSearchClientImpl(implicit
                            authRequestInterceptor: AuthRequestInterceptor) extends UserSearchClient {
 
   import HttpClient.dsl._
+  import HttpClient.AutoDerivation._
   import Threading.Implicits.Background
   import UserSearchClient._
 

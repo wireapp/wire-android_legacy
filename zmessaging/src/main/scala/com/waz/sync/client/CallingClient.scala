@@ -32,7 +32,8 @@ class CallingClientImpl(implicit
                         authRequestInterceptor: AuthRequestInterceptor) extends CallingClient {
 
   import CallingClientImpl._
-  import com.waz.znet2.http.HttpClient.dsl._
+  import HttpClient.dsl._
+  import HttpClient.AutoDerivation._
 
   override def getConfig: ErrorOrResponse[String] = {
     Request.Get(relativePath = CallConfigPath)

@@ -36,6 +36,7 @@ import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.{ExponentialBackoff, JsonEncoder, _}
 import com.waz.znet2.http
 import com.waz.znet2.http.HttpClient.dsl._
+import com.waz.znet2.http.HttpClient.AutoDerivation._
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 import org.json.JSONObject

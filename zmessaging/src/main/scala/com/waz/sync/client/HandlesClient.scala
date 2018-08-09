@@ -42,6 +42,7 @@ class HandlesClientImpl(implicit
 
   import HandlesClient._
   import HttpClient.dsl._
+  import HttpClient.AutoDerivation._
   import com.waz.threading.Threading.Implicits.Background
 
   private implicit val stringsDeserializer: RawBodyDeserializer[Seq[String]] =

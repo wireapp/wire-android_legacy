@@ -19,7 +19,6 @@ package com.waz.sync.client
 
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.{AddressBook, ContactId, UserId}
-import com.waz.service.BackendConfig
 import com.waz.sync.client.AddressBookClient.UserAndContactIds
 import com.waz.utils.JsonDecoder
 import com.waz.znet2.AuthRequestInterceptor
@@ -38,6 +37,7 @@ class AddressBookClientImpl(implicit
                             httpClient: HttpClient,
                             authRequestInterceptor: AuthRequestInterceptor) extends AddressBookClient {
 
+  import HttpClient.AutoDerivation._
   import HttpClient.dsl._
   import com.waz.sync.client.AddressBookClient._
 
