@@ -141,6 +141,7 @@ object WireApplication {
     bind [Signal[ConversationsListStateService]] to inject[Signal[ZMessaging]].map(_.convsStats)
     bind [Signal[ConversationsUiService]]        to inject[Signal[ZMessaging]].map(_.convsUi)
     bind [Signal[UserService]]                   to inject[Signal[ZMessaging]].map(_.users)
+    bind [Signal[UserSearchService]]             to inject[Signal[ZMessaging]].map(_.userSearch)
     bind [Signal[ConversationStorage]]           to inject[Signal[ZMessaging]].map(_.convsStorage)
     bind [Signal[NotificationStorage]]           to inject[Signal[ZMessaging]].map(_.notifStorage)
     bind [Signal[UsersStorage]]                  to inject[Signal[ZMessaging]].map(_.usersStorage)
@@ -149,7 +150,7 @@ object WireApplication {
     bind [Signal[AssetsStorage]]                 to inject[Signal[ZMessaging]].map(_.assetsStorage)
     bind [Signal[ImageLoader]]                   to inject[Signal[ZMessaging]].map(_.imageLoader)
     bind [Signal[MessagesService]]               to inject[Signal[ZMessaging]].map(_.messages)
-    bind [Signal[AccountsService]]               to inject[Signal[ZMessaging]].map(_.accounts)
+    bind [Signal[IntegrationsService]]           to inject[Signal[ZMessaging]].map(_.integrations)
 
     // old controllers
     // TODO: remove controller factory, reimplement those controllers

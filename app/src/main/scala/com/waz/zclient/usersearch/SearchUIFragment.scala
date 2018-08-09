@@ -56,6 +56,7 @@ import com.waz.zclient.pages.main.conversation.controller.IConversationScreenCon
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.ui.text.TypefaceTextView
+import com.waz.zclient.usersearch.SearchUIAdapter.{LoadServicesResult, Tab}
 import com.waz.zclient.usersearch.views.SearchEditText
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{IntentUtils, RichView, StringUtils, UiStorage, UserSignal}
@@ -81,7 +82,6 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
   private lazy val accentColor            = inject[AccentColorController].accentColor.map(_.color)
   private lazy val conversationController = inject[ConversationController]
   private lazy val browser                = inject[BrowserController]
-  private lazy val integrationsController = inject[IntegrationsController]
   private lazy val convListController     = inject[ConversationListController]
   private lazy val keyboard               = inject[KeyboardController]
   private lazy val tracking               = inject[TrackingService]
@@ -93,7 +93,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
   private lazy val shareContactsPref      = zms.map(_.userPrefs.preference(UserPreferences.ShareContacts))
   private lazy val showShareContactsPref  = zms.map(_.userPrefs.preference(UserPreferences.ShowShareContacts))
 
-  private lazy val adapter = new SearchUIAdapter(this, integrationsController)
+  private lazy val adapter = new SearchUIAdapter(this, inject[IntegrationsController])
 
   private lazy val searchResultRecyclerView = view[RecyclerView](R.id.rv__pickuser__header_list_view)
   private lazy val startUiToolbar           = view[Toolbar](R.id.pickuser_toolbar)
@@ -118,13 +118,19 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
   }
 
   private lazy val errorMessageView = returning(view[TypefaceTextView](R.id.pickuser__error_text)) { vh =>
-    (for {
-      integrationTab <- adapter.peopleOrServices
-      hasSearch      <- integrationsController.searchQuery.map(_.nonEmpty)
-      hasResults     <- integrationsController.searchIntegrations.map(_.forall(_.nonEmpty))
-    } yield integrationTab && hasSearch && !hasResults).onUi { show =>
-      vh.foreach(_.setVisible(show))
-    }
+    adapter.services.map {
+      case LoadServicesResult.ServicesLoaded(svs) if svs.nonEmpty => false
+      case LoadServicesResult.NoAction => false
+      case _ => true
+    }.onUi(show => vh.foreach(_.setVisible(show)))
+
+    adapter.services.map {
+      case LoadServicesResult.ServicesLoaded(svs) if svs.nonEmpty => R.string.empty_string
+      case LoadServicesResult.NoAction          => R.string.empty_string
+      case LoadServicesResult.ServicesLoaded(_) => R.string.no_matches_found
+      case LoadServicesResult.LoadingServices   => R.string.loading_services
+      case LoadServicesResult.Error(_)          => R.string.generic_error_header //TODO more informative header?
+    }.onUi(txt => vh.foreach(_.setText(txt)))
   }
 
   private lazy val emptyListButton = returning(view[RelativeLayout](R.id.empty_list_button)) { v =>
@@ -148,7 +154,6 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
     override def afterTextChanged(s: String): Unit = searchBox.foreach { v =>
       val filter = v.getSearchFilter
       adapter.filter ! filter
-      integrationsController.searchQuery ! filter
     }
   }
 
@@ -216,13 +221,13 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
     }))
 
     val tabs = findById[TabLayout](rootView, R.id.pick_user_tabs)
-    adapter.peopleOrServices.map(if (_) 1 else 0).head.foreach(tabs.getTabAt(_).select())
+    adapter.tab.map(_ == Tab.People).map(if (_) 0 else 1).head.foreach(tabs.getTabAt(_).select())
 
     tabs.addOnTabSelectedListener(new OnTabSelectedListener {
       override def onTabSelected(tab: TabLayout.Tab): Unit = {
         tab.getPosition match {
-          case 0 => adapter.peopleOrServices ! false
-          case 1 => adapter.peopleOrServices ! true
+          case 0 => adapter.tab ! Tab.People
+          case 1 => adapter.tab ! Tab.Services
         }
         searchBox.foreach(_.removeAllElements())
       }
@@ -235,7 +240,6 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
     zms.map(_.teamId.nonEmpty && internalVersion).head.foreach(tabs.setVisible)(Threading.Ui)
 
     adapter.filter ! ""
-    integrationsController.searchQuery ! ""
 
     containerSub = Some((for {
       kb <- keyboard.isKeyboardVisible
@@ -277,7 +281,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
     super.onPause()
   }
 
-  override def onDestroyView() = {
+  override def onDestroyView(): Unit = {
     containerSub.foreach(_.destroy())
     containerSub = None
     super.onDestroyView()
@@ -354,8 +358,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
   private def closeStartUI(): Unit = {
     keyboard.hideKeyboardIfVisible()
     adapter.filter ! ""
-    integrationsController.searchQuery ! ""
-    adapter.peopleOrServices ! false
+    adapter.tab ! Tab.People
     pickUserController.hidePickUser()
   }
 

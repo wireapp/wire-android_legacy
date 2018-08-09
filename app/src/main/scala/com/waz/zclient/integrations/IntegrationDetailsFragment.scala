@@ -62,9 +62,9 @@ class IntegrationDetailsFragment extends FragmentHelper {
   private lazy val integrationId           = IntegrationId(getArguments.getString(IntegrationDetailsFragment.IntegrationId))
   private lazy val isBackgroundTransparent = getArguments.getBoolean(IntegrationDetailsFragment.IsTransparent)
 
-  private lazy val pictureAssetId               = integrationDetailsController.currentIntegration.map(_.asset)
+  private lazy val pictureAssetId               = integrationDetailsController.currentIntegration.map(_.flatMap(_.asset))
   private lazy val picture: Signal[ImageSource] = pictureAssetId.map(_.map(WireImage).getOrElse(NoImage()))
-  private lazy val name                         = integrationDetailsController.currentIntegration.map(_.name)
+  private lazy val name                         = integrationDetailsController.currentIntegration.map(_.map(_.name).getOrElse(""))
 
   private lazy val drawable = new IntegrationAssetDrawable(
     src          = picture,
@@ -85,7 +85,7 @@ class IntegrationDetailsFragment extends FragmentHelper {
   }
 
   private lazy val summaryView = returning(view[TypefaceTextView](R.id.integration_summary)){ sv =>
-    integrationDetailsController.currentIntegration.map(_.summary).onUi { summary => sv.foreach(_.setText(summary)) }
+    integrationDetailsController.currentIntegration.map(_.map(_.summary).getOrElse("")).onUi { summary => sv.foreach(_.setText(summary)) }
   }
 
   override def onCreate(savedInstanceState: Bundle): Unit = {

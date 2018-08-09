@@ -24,9 +24,9 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
+import com.waz.api.impl.ErrorResponse
 import com.waz.model._
-import com.waz.service.ZMessaging
-import com.waz.threading.Threading
+import com.waz.service.UserSearchService
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
 import com.waz.zclient._
@@ -43,11 +43,9 @@ import com.waz.zclient.utils.{RichView, ViewUtils}
 import scala.concurrent.duration._
 
 class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsController: IntegrationsController)
-                     (implicit injector: Injector) extends RecyclerView.Adapter[RecyclerView.ViewHolder] with Injectable {
+                     (implicit injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[RecyclerView.ViewHolder] with Injectable {
 
   import SearchUIAdapter._
-
-  implicit private val ec = EventContext.Implicits.global
 
   setHasStableIds(true)
 
@@ -66,21 +64,15 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
   private var currentUser = Option.empty[UserData]
 
   val filter = Signal("")
-
-  val searchResults = for {
-    z        <- inject[Signal[ZMessaging]]
-    filter   <- filter
-    res      <- z.userSearch.search(filter)
-  } yield res
-
-  val peopleOrServices = Signal[Boolean](false)
-
-  peopleOrServices.on(Threading.Ui) { _ => updateMergedResults() }
+  val tab = Signal[Tab](Tab.People)
 
   (for {
-    team <- userAccountsController.teamData
-    res  <- searchResults
-  } yield (team, res)).throttle(500.millis).onUi {
+    team       <- userAccountsController.teamData
+    search     <- inject[Signal[UserSearchService]]
+    filter     <- filter.throttle(500.millis)
+    Tab.People <- tab
+    res        <- search.search(filter)
+  } yield (team, res)).onUi {
     case (team, res) =>
       verbose(res.toString)
       this.team        = team
@@ -91,14 +83,27 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
       updateMergedResults()
   }
 
-  integrationsController.searchIntegrations.throttle(500.millis).on(Threading.Ui) {
-    case Some(newIntegrations) =>
-      integrations = newIntegrations
-      updateMergedResults()
-    case _ =>
+  val services: Signal[LoadServicesResult] =
+    (for {
+      startsWith   <- filter.map(Option(_).filterNot(_.isEmpty)).throttle(500.millis)
+      Tab.Services <- tab
+      services <-
+        Signal
+          .future(integrationsController.searchIntegrations(startsWith))
+          .map(_.fold[LoadServicesResult](LoadServicesResult.Error, LoadServicesResult.ServicesLoaded))
+          .orElse(Signal.const(LoadServicesResult.LoadingServices))
+    } yield services)
+      .orElse(Signal.const(LoadServicesResult.NoAction))
+
+  services.onUi { res =>
+    integrations = res match {
+      case LoadServicesResult.ServicesLoaded(svs) => svs.toIndexedSeq.sortBy(_.name)
+      case _ => IndexedSeq.empty
+    }
+    updateMergedResults()
   }
 
-  userAccountsController.currentUser.on(Threading.Ui){ user =>
+  userAccountsController.currentUser.onUi { user =>
     currentUser = user
     updateMergedResults()
   }
@@ -175,7 +180,7 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
       mergedResult = mergedResult ++ Seq(SearchResult(NewGuestRoom, TopUsersSection, 0))
 
     if (team.isDefined) {
-      if (peopleOrServices.currentValue.contains(true)) {
+      if (tab.currentValue.contains(Tab.Services)) {
         addIntegrations()
       } else {
         if (filter.currentValue.forall(_.isEmpty)){
@@ -198,7 +203,8 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
     notifyDataSetChanged()
   }
 
-  override def getItemCount = mergedResult.size
+  override def getItemCount =
+    mergedResult.size
 
   override def onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) = {
     val item = mergedResult(position)
@@ -262,11 +268,14 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
     }
   }
 
-  override def getItemViewType(position: Int) = mergedResult.lift(position).fold(-1)(_.itemType)
+  override def getItemViewType(position: Int) =
+    mergedResult.lift(position).fold(-1)(_.itemType)
 
-  override def getItemId(position: Int) = mergedResult.lift(position).fold(-1L)(_.id)
+  override def getItemId(position: Int) =
+    mergedResult.lift(position).fold(-1L)(_.id)
 
-  def getSectionIndexForPosition(position: Int) = mergedResult.lift(position).fold(-1)(_.index)
+  def getSectionIndexForPosition(position: Int) =
+    mergedResult.lift(position).fold(-1)(_.index)
 
   private def expandContacts() = {
     collapsedContacts = false
@@ -280,6 +289,22 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
 }
 
 object SearchUIAdapter {
+
+  sealed trait LoadServicesResult
+
+  object LoadServicesResult {
+    case object NoAction                                  extends LoadServicesResult
+    case object LoadingServices                           extends LoadServicesResult
+    case class  ServicesLoaded(svs: Seq[IntegrationData]) extends LoadServicesResult
+    case class  Error(err: ErrorResponse)                 extends LoadServicesResult
+  }
+
+  sealed trait Tab
+
+  object Tab {
+    case object People extends Tab
+    case object Services extends Tab
+  }
 
   //Item Types
   val TopUsers: Int = 0

@@ -1377,6 +1377,7 @@
     <string name="integrations_create_conversation">Create a new conversation</string>
 
     <string name="no_matches_found">No matches found</string>
+    <string name="loading_services">Loading services…</string>
 
     <string name="create_group_conversation">Create group</string>
     <string name="create_guest_room_conversation">Create guest room</string>

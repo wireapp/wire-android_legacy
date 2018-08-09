@@ -48,7 +48,7 @@ class IntegrationDetailsSummaryFragment extends Fragment with FragmentHelper {
   private var subs = Set.empty[Subscription]
 
   private lazy val descriptionText = returning(view[TypefaceTextView](R.id.integration_description)) { summaryText =>
-    integrationDetailsViewController.currentIntegration.map(_.description).onUi(d => summaryText.foreach(_.setText(d)))
+    integrationDetailsViewController.currentIntegration.map(_.map(_.description).getOrElse("")).onUi(d => summaryText.foreach(_.setText(d)))
   }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View ={

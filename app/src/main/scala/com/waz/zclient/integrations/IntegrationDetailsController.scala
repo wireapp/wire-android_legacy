@@ -18,7 +18,9 @@
 package com.waz.zclient.integrations
 
 import android.content.Context
-import com.waz.model.{ConvId, IntegrationId, ProviderId, UserId}
+import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.error
+import com.waz.model._
 import com.waz.utils.events.{EventStream, Signal, SourceSignal, SourceStream}
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.zclient.common.controllers.IntegrationsController
@@ -28,8 +30,14 @@ class IntegrationDetailsController(implicit injector: Injector, context: Context
   private lazy val integrationsController = inject[IntegrationsController]
 
   val currentIntegrationId = Signal[(ProviderId, IntegrationId)]()
+
   val currentIntegration = currentIntegrationId.flatMap {
     case (pId, iId) => Signal.future(integrationsController.getIntegration(pId, iId))
+  }.map {
+    case Right(sv) => Option(sv)
+    case Left(err) =>
+      error(s"Failed to download service data: $err")
+      Option.empty[IntegrationData]
   }
 
   var addingToConversation = Option.empty[ConvId]
