@@ -149,6 +149,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
       val filter = v.getSearchFilter
       adapter.filter ! filter
       integrationsController.searchQuery ! filter
+      //TEST
     }
   }
 
