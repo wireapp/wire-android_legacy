@@ -122,12 +122,17 @@ class ChatheadView(val context: Context, val attrs: AttributeSet, val defStyleAt
     invalidate()
   }
 
-  def clearUser(): Unit = ctrl.clearUser()
+  def clearUser(): Unit =
+    ctrl.clearUser()
 
-  def setUserId(userId: UserId, zms: Option[ZMessaging]): Unit = ctrl.setUserId(userId, zms)
-  def setUserId(userId: UserId): Unit = setUserId(userId, None): Unit
+  def setUserId(userId: UserId, zms: Option[ZMessaging]): Unit =
+    ctrl.setUserId(userId, zms)
 
-  def setIntegration(integration: IntegrationData): Unit = ctrl.setIntegration(integration)
+  def setUserId(userId: UserId): Unit =
+    setUserId(userId, None): Unit
+
+  def setIntegration(integration: IntegrationData): Unit =
+    ctrl.setIntegration(integration)
 
   override def isSelected = {
     ctrl.selected.currentValue.getOrElse(false)
@@ -414,6 +419,7 @@ protected class ChatheadController(val setSelectable:            Boolean        
     def apply(integration: IntegrationData): ChatheadDetails =
       ChatheadDetails(
         initials = NameParts.parseFrom(integration.name).initials,
+        assetId = integration.asset,
         isBot = true
       )
   }
