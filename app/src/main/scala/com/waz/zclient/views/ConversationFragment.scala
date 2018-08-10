@@ -139,9 +139,9 @@ class ConversationFragment extends FragmentHelper {
   private var toolbar: Toolbar = _
 
   private lazy val guestsBanner = view[FrameLayout](R.id.guests_banner)
-  private lazy val guestsBannerText = view[TypefaceTextView](R.id.guests_banner_text)
+  private lazy val guestsBannerText = view[TypefaceTextView](R.id.banner_text)
 
-  private var openBanner = false
+  private var isBannerOpen = false
 
   override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation =
     if (nextAnim == 0 || getParentFragment == null)
@@ -236,42 +236,51 @@ class ConversationFragment extends FragmentHelper {
     }
 
     accountsController.isTeam.flatMap {
-      case true  => participantsController.containsGuest
-      case false => Signal.const(false)
+      case true  => participantsController.guestBotGroup
+      case false => Signal.const((false, false, false))
     }.onUi {
-      case true  => openGuestsBanner()
-      case false => hideGuestsBanner()
+      case (hasGuest, hasBot, isGroup) => updateGuestsBanner(hasGuest, hasBot, isGroup)
     }
 
     keyboardController.isKeyboardVisible.onUi(visible => if(visible) collapseGuestsBanner())
   }
 
-  private def openGuestsBanner(): Unit = {
-    if (!openBanner) {
-      openBanner = true
-      guestsBanner.foreach { banner =>
-        banner.setVisibility(View.VISIBLE)
-        banner.setPivotY(0.0f)
-        banner.setScaleY(1.0f)
+  private def updateGuestsBanner(hasGuest: Boolean, hasBot: Boolean, isGroup: Boolean): Unit = {
+    def openGuestsBanner(resId: Int): Unit = {
+      if (!isBannerOpen) {
+        isBannerOpen = true
+        guestsBanner.foreach { banner =>
+          banner.setVisibility(View.VISIBLE)
+          banner.setPivotY(0.0f)
+          banner.setScaleY(1.0f)
+        }
+        guestsBannerText.foreach(_.setAlpha(1.0f))
       }
-      guestsBannerText.foreach(_.setAlpha(1.0f))
+      guestsBannerText.foreach(_.setText(resId))
+    }
+
+    def hideGuestsBanner(): Unit = {
+      isBannerOpen = false
+      guestsBanner.foreach(_.setVisibility(View.GONE))
+    }
+
+    (hasGuest, hasBot, isGroup) match {
+      case (true, true, true)   => openGuestsBanner(R.string.guests_and_services_are_present)
+      case (true, false, true)  => openGuestsBanner(R.string.guests_are_present)
+      case (false, true, true)  => openGuestsBanner(R.string.services_are_present)
+      case _ => hideGuestsBanner()
     }
   }
 
   private def collapseGuestsBanner(): Unit = {
-    if (openBanner) {
-      openBanner = false
+    if (isBannerOpen) {
+      isBannerOpen = false
       guestsBanner.foreach { banner =>
         banner.setPivotY(0.0f)
         banner.animate().scaleY(0.1f).start()
       }
       guestsBannerText.foreach(_.animate().alpha(0.0f).start())
     }
-  }
-
-  private def hideGuestsBanner(): Unit = {
-    openBanner = false
-    guestsBanner.foreach(_.setVisibility(View.GONE))
   }
 
   override def onCreateView(inflater: LayoutInflater, viewGroup: ViewGroup, savedInstanceState: Bundle): View =
@@ -621,11 +630,10 @@ class ConversationFragment extends FragmentHelper {
   private val navigationControllerObserver = new NavigationControllerObserver {
     override def onPageVisible(page: Page): Unit = if (page == Page.MESSAGE_STREAM) {
       accountsController.isTeam.head.flatMap {
-        case true  => participantsController.containsGuest.head
-        case false => Future.successful(false)
+        case true  => participantsController.guestBotGroup.head
+        case false => Future.successful((false, false, false))
       }.foreach {
-        case true  => openGuestsBanner()
-        case false => hideGuestsBanner()
+        case (hasGuest, hasBot, isGroup) => updateGuestsBanner(hasGuest, hasBot, isGroup)
       }
       inflateCollectionIcon()
       cursorView.enableMessageWriting()

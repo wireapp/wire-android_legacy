@@ -65,13 +65,6 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
     user     <- z.usersStorage.signal(id)
   } yield user
 
-  lazy val containsGuest = for {
-    z       <- zms
-    ids     <- otherParticipants
-    isGroup <- isGroup
-    users   <- Signal.sequence(ids.map(z.usersStorage.signal).toSeq:_*)
-  } yield isGroup && users.exists(_.isGuest(z.teamId))
-
   lazy val isWithBot = for {
     z       <- zms
     others  <- otherParticipants
@@ -82,6 +75,15 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
     group      <- isGroup
     groupOrBot <- if (group) Signal.const(true) else isWithBot
   } yield groupOrBot
+
+  lazy val guestBotGroup = for {
+    z        <- zms
+    ids      <- otherParticipants
+    isGroup  <- isGroup
+    users    <- Signal.sequence(ids.map(z.usersStorage.signal).toSeq:_*)
+    hasGuest =  isGroup && users.exists(u => u.isGuest(z.teamId) && !u.isWireBot)
+    hasBot   <- isWithBot
+  } yield (hasGuest, hasBot, isGroup)
 
   // is the current user a guest in the current conversation
   lazy val isCurrentUserGuest: Signal[Boolean] = for {

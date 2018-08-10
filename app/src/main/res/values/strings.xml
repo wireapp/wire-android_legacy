@@ -1410,6 +1410,8 @@
     <string name="allow_guests_warning_body">Current guests will be removed from the conversation. New guests will not be allowed.</string>
     <string name="allow_guests_warning_confirm">Remove Guests</string>
     <string name="guests_are_present">GUESTS ARE PRESENT</string>
+    <string name="services_are_present">SERVICES ARE PRESENT</string>
+    <string name="guests_and_services_are_present">GUESTS AND SERVICES ARE PRESENT</string>
     <string name="participants_details_header_title">DETAILS</string>
     <string name="invitation_link_description">Anyone with the link can join the conversation, even if they don\'t have Wire</string>
     <string name="create_link_button">Create Link</string>
