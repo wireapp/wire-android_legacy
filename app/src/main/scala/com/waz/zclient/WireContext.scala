@@ -138,9 +138,8 @@ trait FragmentHelper extends Fragment with OnBackPressedListener with ViewFinder
 
   @SuppressLint(Array("com.waz.ViewUtils"))
   def findById[V <: View](id: Int) = {
-    val res = getView.findViewById[V](id)
-    if (res != null) res
-    else getActivity.findViewById(id).asInstanceOf[V]
+    Option(getView).flatMap(v => Option(v.findViewById[V](id))).
+      getOrElse(Option(getActivity).map(_.findViewById(id)).orNull.asInstanceOf[V])
   }
 
 
@@ -391,7 +390,7 @@ class ViewHolder[T <: View](id: Int, finder: ViewFinder) {
   private var view = Option.empty[T]
   private var onClickListener = Option.empty[OnClickListener]
 
-  def get: T = view.getOrElse { returning(finder.findById[T](id)) { t => view = Some(t) } }
+  def get: T = view.getOrElse { returning(finder.findById[T](id)) { t => view = Option(t) } }
 
   @inline
   def opt: Option[T] = Option(get)
