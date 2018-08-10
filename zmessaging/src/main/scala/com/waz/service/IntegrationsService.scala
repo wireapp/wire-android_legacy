@@ -17,10 +17,12 @@
  */
 package com.waz.service
 
+import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.verbose
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.internalError
+import com.waz.content.AssetsStorage
 import com.waz.model._
-import com.waz.service.assets.AssetService
 import com.waz.sync.client.{ErrorOr, IntegrationsClient}
 import com.waz.sync.{SyncRequestService, SyncResult, SyncServiceHandle}
 import com.waz.threading.Threading
@@ -37,7 +39,7 @@ trait IntegrationsService {
 
 class IntegrationsServiceImpl(teamId:       Option[TeamId],
                               client:       IntegrationsClient,
-                              assets:       AssetService,
+                              assetStorage: AssetsStorage,
                               sync:         SyncServiceHandle,
                               syncRequests: SyncRequestService) extends IntegrationsService {
   implicit val ctx = Threading.Background
@@ -45,10 +47,7 @@ class IntegrationsServiceImpl(teamId:       Option[TeamId],
   override def searchIntegrations(startWith: Option[String] = None) =
     teamId match {
       case Some(tId) => client.searchTeamIntegrations(startWith, tId).future.flatMap {
-        case Right(integrations) =>
-          assets
-            .updateAssets(integrations.values.flatten.toSeq)
-            .map(_ => Right(integrations.keys.toSeq))
+        case Right(svs) => updateAssets(svs).map(svs => Right(svs))
         case Left(err) => Future.successful(Left(err))
       }
       case None => Future.successful(Right(Seq.empty[IntegrationData]))
@@ -57,9 +56,28 @@ class IntegrationsServiceImpl(teamId:       Option[TeamId],
   override def getIntegration(pId: ProviderId, iId: IntegrationId) =
     client.getIntegration(pId, iId).future.flatMap {
       case Right((integration, asset)) =>
-        assets.updateAssets(asset.toSeq).map(_ => Right(integration))
+        updateAssets(Map(integration -> asset)).map(svs => Right(svs.head))
       case Left(err) => Future.successful(Left(err))
     }
+
+  //Checks to see if the "new" asset we download for a bot isn't already in the database. If it is, we avoid creating a
+  //new AssetData, and replace the AssetId on the IntegrationData with that of the asset previously put in the data base.
+  //This has to be done first by checking the remote ids for any matches
+  private def updateAssets(svs: Map[IntegrationData, Option[AssetData]]): Future[Seq[IntegrationData]] = {
+    verbose(s"updateAssets: $svs")
+    val services = svs.keys.toSet
+    val assets = svs.values.flatten.toSet
+    val remoteIds = assets.flatMap(_.remoteId)
+
+    for {
+      existingAssets <- assetStorage.findByRemoteIds(remoteIds)
+      _              <- assetStorage.insertAll(assets -- assets.filter(_.remoteId.exists(existingAssets.flatMap(_.remoteId).contains)))
+    } yield
+      services.map { service =>
+        val redundantAssetDataRId = svs(service).flatMap(_.remoteId)
+        service.copy(asset = existingAssets.find(a => redundantAssetDataRId == a.remoteId).map(_.id).orElse(service.asset))
+      }.toSeq
+  }
 
   // pId here is redundant - we can take it from our 'integrations' map
   override def addBotToConversation(cId: ConvId, pId: ProviderId, iId: IntegrationId) =
