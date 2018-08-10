@@ -109,6 +109,11 @@ case class CreateGroupIcon(colorRes: Int)(implicit context: Context) extends Wir
   override def draw(canvas: Canvas) = drawGroupIcon(canvas, getDrawingRect, ResizingBehavior.AspectFit, paint.getColor)
 }
 
+case class ManageServicesIcon(colorRes: Int)(implicit context: Context) extends WireDrawable {
+  setColor(getColor(colorRes))
+  override def draw(canvas: Canvas) = drawServiceIcon(canvas, getDrawingRect, ResizingBehavior.AspectFit, paint.getColor)
+}
+
 case class GuestIcon(colorRes: Int)(implicit context: Context) extends WireDrawable {
   setColor(getColor(colorRes))
   override def draw(canvas: Canvas) = drawGuestIcon(canvas, getDrawingRect, ResizingBehavior.AspectFit, paint.getColor)

@@ -151,6 +151,7 @@ object WireApplication {
     bind [Signal[ImageLoader]]                   to inject[Signal[ZMessaging]].map(_.imageLoader)
     bind [Signal[MessagesService]]               to inject[Signal[ZMessaging]].map(_.messages)
     bind [Signal[IntegrationsService]]           to inject[Signal[ZMessaging]].map(_.integrations)
+    bind [Signal[UserPreferences]]               to inject[Signal[ZMessaging]].map(_.userPrefs)
 
     // old controllers
     // TODO: remove controller factory, reimplement those controllers

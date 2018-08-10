@@ -33,7 +33,7 @@ import com.waz.zclient._
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.{IntegrationsController, UserAccountsController}
 import com.waz.zclient.common.views.{SingleUserRowView, TopUserChathead}
-import com.waz.zclient.paintcode.{CreateGroupIcon, GuestIcon}
+import com.waz.zclient.paintcode.{CreateGroupIcon, GuestIcon, ManageServicesIcon}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.usersearch.SearchUIAdapter.TopUsersViewHolder.TopUserAdapter
 import com.waz.zclient.usersearch.views.SearchResultConversationRowView
@@ -62,6 +62,7 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
   private var directoryResults = IndexedSeq.empty[UserData]
   private var integrations = IndexedSeq.empty[IntegrationData]
   private var currentUser = Option.empty[UserData]
+  private var currentUserIsAdmin = false
 
   val filter = Signal("")
   val tab = Signal[Tab](Tab.People)
@@ -83,6 +84,16 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
       updateMergedResults()
   }
 
+  userAccountsController.isAdmin.onUi { isAdmin =>
+    currentUserIsAdmin = isAdmin
+    updateMergedResults()
+  }
+
+  userAccountsController.currentUser.onUi { user =>
+    currentUser = user
+    updateMergedResults()
+  }
+
   val services: Signal[LoadServicesResult] =
     (for {
       startsWith   <- filter.map(Option(_).filterNot(_.isEmpty)).throttle(500.millis)
@@ -100,11 +111,6 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
       case LoadServicesResult.ServicesLoaded(svs) => svs.toIndexedSeq.sortBy(_.name)
       case _ => IndexedSeq.empty
     }
-    updateMergedResults()
-  }
-
-  userAccountsController.currentUser.onUi { user =>
-    currentUser = user
     updateMergedResults()
   }
 
@@ -179,8 +185,12 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
     def addGuestRoomCreationButton(): Unit =
       mergedResult = mergedResult ++ Seq(SearchResult(NewGuestRoom, TopUsersSection, 0))
 
+    def addManageServicesButton(): Unit =
+      mergedResult = mergedResult ++ Seq(SearchResult(ManageServices, TopUsersSection, 0))
+
     if (team.isDefined) {
       if (tab.currentValue.contains(Tab.Services)) {
+        if (currentUserIsAdmin) addManageServicesButton()
         addIntegrations()
       } else {
         if (filter.currentValue.forall(_.isEmpty)){
@@ -251,6 +261,7 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
       case Expand            => R.layout.startui_section_expander
       case NewConversation   => R.layout.startui_button
       case NewGuestRoom      => R.layout.startui_button
+      case ManageServices    => R.layout.startui_button
       case _                 => -1
     }, parent, false)
 
@@ -264,6 +275,7 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
       case Integration       => new IntegrationViewHolder(view.asInstanceOf[SingleUserRowView], adapterCallback)
       case NewConversation   => new CreateConversationButtonViewHolder(view, adapterCallback)
       case NewGuestRoom      => new NewGuestRoomViewHolder(view, adapterCallback)
+      case ManageServices    => new ManageServicesViewHolder(view, adapterCallback)
       case _                 => null
     }
   }
@@ -316,6 +328,7 @@ object SearchUIAdapter {
   val Integration: Int = 6
   val NewConversation: Int = 7
   val NewGuestRoom: Int = 8
+  val ManageServices: Int = 9
 
   //Sections
   val TopUsersSection = 0
@@ -334,6 +347,7 @@ object SearchUIAdapter {
     def onCreateConvClicked(): Unit
     def onCreateGuestRoomClicked(): Unit
     def onConversationClicked(conversation: ConversationData): Unit
+    def onManageServicesClicked(): Unit
   }
 
   case class SearchResult(itemType: Int, section: Int, index: Int, id: Long, name: String)
@@ -360,6 +374,17 @@ object SearchUIAdapter {
     view.findViewById[TypefaceTextView](R.id.title).setText(R.string.create_guest_room_conversation)
     view.onClick(callback.onCreateGuestRoomClicked())
     view.setId(R.id.create_guest_room_button)
+  }
+
+  class ManageServicesViewHolder(view: View, callback: SearchUIAdapter.Callback) extends RecyclerView.ViewHolder(view) {
+    private implicit val ctx = view.getContext
+    private val iconView  = view.findViewById[View](R.id.icon)
+    iconView.setBackground(returning(ManageServicesIcon(R.color.white)) {
+      _.setPadding(new Rect(iconView.getPaddingLeft, iconView.getPaddingTop, iconView.getPaddingRight, iconView.getPaddingBottom))
+    })
+    view.findViewById[TypefaceTextView](R.id.title).setText(R.string.manage_services)
+    view.onClick(callback.onManageServicesClicked())
+    view.setId(R.id.manage_services_button)
   }
 
   class TopUsersViewHolder(view: View, topUserAdapter: TopUserAdapter, context: Context) extends RecyclerView.ViewHolder(view) {

@@ -324,6 +324,9 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
     conversationController.selectConv(Some(conversationData.id), ConversationChangeRequester.START_CONVERSATION)
   }
 
+  override def onManageServicesClicked(): Unit =
+    browser.openUrl(getString(R.string.url_manage_teams))
+
   override def onCreateConvClicked(): Unit = {
     keyboard.hideKeyboardIfVisible()
     inject[CreateConversationController].setCreateConversation(from = GroupConversationEvent.StartUi)

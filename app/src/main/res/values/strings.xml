@@ -1381,6 +1381,7 @@
 
     <string name="create_group_conversation">Create group</string>
     <string name="create_guest_room_conversation">Create guest room</string>
+    <string name="manage_services">Manage Services</string>
     <string name="next_button">NEXT</string>
     <string name="skip_button">SKIP</string>
     <string name="done_button">DONE</string>

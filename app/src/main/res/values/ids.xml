@@ -77,5 +77,6 @@
 
     <item name="create_group_button" type="id"/>
     <item name="create_guest_room_button" type="id"/>
+    <item name="manage_services_button" type="id"/>
 
 </resources>

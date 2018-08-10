@@ -193,6 +193,7 @@
     <string translatable="false" name="url_otr_decryption_error_1">https://wire.com/privacy/error-1</string>
     <string translatable="false" name="url_otr_decryption_error_2">https://wire.com/privacy/error-2</string>
     <string translatable="false" name="url_about_teams">https://wire.com/en/create-team/#features</string>
+    <string translatable="false" name="url_manage_teams">https://teams.wire.com/</string>
 
 </resources>
 
