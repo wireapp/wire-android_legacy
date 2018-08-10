@@ -1490,4 +1490,6 @@
 
     <string name="participant_search_hint">SEARCH FOR NAMES</string>
     <string name="participant_search_title">PEOPLE</string>
+    <string name="generic_service_warning">Services record every message in this conversation</string>
+    <string name="add_service_warning">This service records every message in this conversation</string>
 </resources>

@@ -40,11 +40,23 @@
         android:id="@+id/ttv__system_message__text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
         android:layout_toEndOf="@id/gtv__system_message__icon"
         android:lineSpacingExtra="@dimen/wire__text_spacing__medium"
         android:textColor="?wirePrimaryTextColor"
         android:textSize="@dimen/wire__text_size__small"
         app:w_font="@string/wire__typeface__light"/>
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/service_warning_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/ttv__system_message__text"
+        android:layout_marginTop="@dimen/wire__padding__8"
+        android:layout_alignStart="@id/ttv__system_message__text"
+        android:textColor="@color/accent_red"
+        android:textSize="@dimen/wire__text_size__small"
+        app:w_font="@string/wire__typeface__light"
+        android:visibility="gone"
+        />
 
 </merge>

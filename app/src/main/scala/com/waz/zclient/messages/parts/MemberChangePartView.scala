@@ -20,10 +20,11 @@ package com.waz.zclient.messages.parts
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
-import android.widget.LinearLayout
+import android.widget.{LinearLayout, TextView}
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
+import com.waz.api.Message.Type.MEMBER_JOIN
 import com.waz.model.MessageContent
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
@@ -52,6 +53,7 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) ex
   private lazy val participantsController = inject[ParticipantsController]
 
   val messageView: SystemMessageView  = findById(R.id.smv_header)
+  val warningText: TextView  = findById(R.id.service_warning_text)
   val position = Signal[Int]()
 
   val iconGlyph: Signal[Either[Int, Drawable]] = message map { msg =>
@@ -114,6 +116,22 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) ex
     }
   }
 
+  private val servicesPresentWarning = for {
+    zms <- zMessaging
+    msg <- message
+    members <- users.users(msg.members)
+    convMembersIds <- zms.membersStorage.activeMembers(msg.convId)
+    convMembers <- users.users(convMembersIds)
+  } yield {
+    if (members.exists(_.isWireBot) && msg.msgType == MEMBER_JOIN)
+      Some(R.string.add_service_warning)
+    else if (members.exists(_.id == zms.selfUserId) && convMembers.exists(_.isWireBot) && msg.msgType == MEMBER_JOIN)
+      Some(R.string.generic_service_warning)
+    else
+      None
+  }
+
+
   message.map(m => if (m.firstMessage && m.name.nonEmpty) Some(16) else None)
     .map(_.map(toPx))
     .onUi(_.foreach(this.setMarginTop))
@@ -127,6 +145,11 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) ex
     messageView.setTextWithLink(text, getColor(R.color.accent_blue)) {
       participantsController.onShowParticipants ! None
     }
+  }
+
+  servicesPresentWarning.onUi { text =>
+    warningText.setVisible(text.isDefined)
+    text.foreach(warningText.setText(_))
   }
 
 }
