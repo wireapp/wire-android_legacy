@@ -41,7 +41,7 @@
         android:layout_height="wrap_content"
         app:leftActionText="@string/glyph__add_people"
         app:rightActionText="@string/glyph__more"
-        app:leftActionLabelText="@string/conversation__action__add_people"
+        app:leftActionLabelText="@string/conversation__action__add_participants"
         android:layout_alignParentBottom="true"
         style="?wireBackground"
         />

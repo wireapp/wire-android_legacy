@@ -53,28 +53,28 @@ class GroupParticipantsFragment extends FragmentHelper {
 
   private lazy val participantsView = view[RecyclerView](R.id.pgv__participants)
 
-  lazy val showAddPeople = for {
+  lazy val showAddParticipants = for {
     conv         <- participantsController.conv
     isGroupOrBot <- participantsController.isGroupOrBot
     hasPerm      <- userAccountsController.hasAddConversationMemberPermission(conv.id)
   } yield conv.isActive && isGroupOrBot && hasPerm
 
-  lazy val shouldEnableAddPeople = participantsController.otherParticipants.map(_.size + 1 < ConversationController.MaxParticipants)
+  lazy val shouldEnableAddParticipants = participantsController.otherParticipants.map(_.size + 1 < ConversationController.MaxParticipants)
 
   private lazy val footerMenu = returning(view[FooterMenu](R.id.fm__participants__footer)) { fm =>
-    showAddPeople.map {
+    showAddParticipants.map {
       case true  => R.string.glyph__add_people
       case false => R.string.empty_string
     }.map(getString)
      .onUi(t => fm.foreach(_.setLeftActionText(t)))
 
-    showAddPeople.map {
-      case true  => R.string.conversation__action__add_people
+    showAddParticipants.map {
+      case true  => R.string.conversation__action__add_participants
       case false => R.string.empty_string
     }.map(getString)
      .onUi(t => fm.foreach(_.setLeftActionLabelText(t)))
 
-    shouldEnableAddPeople.onUi(e => fm.foreach(_.setLeftActionEnabled(e)))
+    shouldEnableAddParticipants.onUi(e => fm.foreach(_.setLeftActionEnabled(e)))
   }
 
   private lazy val participantsAdapter = returning(new ParticipantsAdapter(Some(7))) { adapter =>
@@ -138,10 +138,10 @@ class GroupParticipantsFragment extends FragmentHelper {
     super.onResume()
     footerMenu.foreach(_.setCallback(new FooterMenuCallback() {
       override def onLeftActionClicked(): Unit = {
-        showAddPeople.head.map {
+        showAddParticipants.head.map {
           case true =>
             participantsController.conv.head.foreach { conv =>
-              inject[CreateConversationController].setAddToConversation(conv.id)
+              inject[CreateConversationController].setAddToConversation(conv.id, conv.isTeamOnly)
               getFragmentManager.beginTransaction
                 .setCustomAnimations(
                   R.anim.in_from_bottom_enter,

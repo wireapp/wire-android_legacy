@@ -114,7 +114,7 @@ class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: B
     filteredPeople.map(data => Left(data)) :::
     (if (maxParticipants.exists(peopleCount > _)) List(Right(AllParticipants))
       else Nil) :::
-    (if (bots.nonEmpty && !showPeopleOnly) List(Right(BotsSeparator))
+    (if (bots.nonEmpty && !showPeopleOnly) List(Right(ServicesSeparator))
       else Nil
         ) :::
      (if (showPeopleOnly) Nil else bots.map(data => Left(data)))
@@ -177,7 +177,7 @@ class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: B
     case (Right(AllParticipants), h: ShowAllParticipantsViewHolder) => h.bind(peopleCount)
     case (Left(userData), h: ParticipantRowViewHolder)            => h.bind(userData, teamId, maxParticipants.forall(peopleCount <= _) && items.lift(position + 1).forall(_.isRight))
     case (Right(ConversationName), h: ConversationNameViewHolder) => for (id <- convId; name <- convName) h.bind(id, name, convVerified, teamId.isDefined)
-    case (Right(sepType), h: SeparatorViewHolder) if Set(PeopleSeparator, BotsSeparator).contains(sepType) =>
+    case (Right(sepType), h: SeparatorViewHolder) if Set(PeopleSeparator, ServicesSeparator).contains(sepType) =>
       val count = if (sepType == PeopleSeparator) peopleCount else botCount
       h.setTitle(getString(if (sepType == PeopleSeparator) R.string.participants_divider_people else R.string.participants_divider_services, count.toString))
       h.setId(if (sepType == PeopleSeparator) R.id.participants_section else R.id.services_section)
@@ -205,13 +205,13 @@ class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: B
 }
 
 object ParticipantsAdapter {
-  val UserRow          = 0
-  val PeopleSeparator  = 1
-  val BotsSeparator    = 2
-  val GuestOptions     = 3
-  val ConversationName = 4
-  val EphemeralOptions = 5
-  val AllParticipants  = 6
+  val UserRow           = 0
+  val PeopleSeparator   = 1
+  val ServicesSeparator = 2
+  val GuestOptions      = 3
+  val ConversationName  = 4
+  val EphemeralOptions  = 5
+  val AllParticipants   = 6
 
   case class ParticipantData(userData: UserData, isGuest: Boolean)
 

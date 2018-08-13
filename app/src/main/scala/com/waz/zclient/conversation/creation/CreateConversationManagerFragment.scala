@@ -87,8 +87,8 @@ class CreateConversationManagerFragment extends FragmentHelper {
     integrationsCount <- ctrl.integrations.map(_.size)
   } yield currentPage match {
     case SettingsPage                 => getString(R.string.new_group_header)
-    case PickerPage if userCount == 0 && integrationsCount == 0 => getString(R.string.add_people_empty_header)
-    case PickerPage                   => getString(R.string.add_people_count_header, (userCount + integrationsCount).toString)
+    case PickerPage if userCount == 0 && integrationsCount == 0 => getString(R.string.add_participants_empty_header)
+    case PickerPage                   => getString(R.string.add_participants_count_header, (userCount + integrationsCount).toString)
   }
 
   private lazy val toolbar = returning(view[Toolbar](R.id.toolbar)) { vh =>

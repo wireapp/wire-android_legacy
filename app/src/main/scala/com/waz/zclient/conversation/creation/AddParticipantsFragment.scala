@@ -27,6 +27,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.TextView
 import android.widget.TextView.OnEditorActionListener
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.verbose
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.tracking.{OpenSelectParticipants, TrackingService}
@@ -34,10 +35,11 @@ import com.waz.threading.Threading
 import com.waz.utils.events._
 import com.waz.utils.returning
 import com.waz.zclient._
-import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.global.KeyboardController
+import com.waz.zclient.common.controllers.{ThemeController, UserAccountsController}
 import com.waz.zclient.common.views.{PickableElement, SingleUserRowView}
+import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.usersearch.views.{PickerSpannableEditText, SearchEditText}
 import com.waz.zclient.utils.RichView
@@ -91,6 +93,34 @@ class AddParticipantsFragment extends FragmentHelper {
         vh.foreach { v =>
           if (selected) v.addElement(pu) else v.removeElement(pu)
         }
+    }
+  }
+
+  private lazy val tabs = returning(view[TabLayout](R.id.add_users_tabs)) { vh =>
+    vh.foreach { tabs =>
+      tabs.setSelectedTabIndicatorColor(themeController.getThemeDependentOptionsTheme.getTextColorPrimary)
+
+      peopleOrServices.map(if (_) 1 else 0).head.foreach(tabs.getTabAt(_).select())
+
+      tabs.addOnTabSelectedListener(new OnTabSelectedListener {
+        override def onTabSelected(tab: TabLayout.Tab): Unit =
+          tab.getPosition match {
+            case 0 => peopleOrServices ! false
+            case 1 => peopleOrServices ! true
+          }
+
+        override def onTabUnselected(tab: TabLayout.Tab): Unit = {}
+        override def onTabReselected(tab: TabLayout.Tab): Unit = {}
+      })
+
+      (for {
+        isCreateConvFlow   <- newConvController.convId.map(_.isEmpty)
+        isTeamAccount      <- inject[UserAccountsController].isTeam
+        isTeamOnlyConv     <- newConvController.teamOnly
+        isCurrentUserGuest <- inject[ParticipantsController].isCurrentUserGuest
+        _ = verbose(s"should the tabs be visible: (is create conv flow: $isCreateConvFlow, is team account: $isTeamAccount, team only: $isTeamOnlyConv, is guest: $isCurrentUserGuest)")
+      } yield !isCreateConvFlow && isTeamAccount && !isTeamOnlyConv && !isCurrentUserGuest)
+        .onUi(tabs.setVisible)
     }
   }
 
@@ -152,23 +182,8 @@ class AddParticipantsFragment extends FragmentHelper {
         case Right(integration) => searchBox.foreach(_.addElement(Pickable(integration.id.str, integration.name)))
       })(Threading.Ui)
 
-    val tabs = findById[TabLayout](view, R.id.add_users_tabs)
-    tabs.setSelectedTabIndicatorColor(themeController.getThemeDependentOptionsTheme.getTextColorPrimary)
-
-    peopleOrServices.map(if (_) 1 else 0).head.foreach(tabs.getTabAt(_).select())
-
-    tabs.addOnTabSelectedListener(new OnTabSelectedListener {
-      override def onTabSelected(tab: TabLayout.Tab): Unit =
-        tab.getPosition match {
-          case 0 => peopleOrServices ! false
-          case 1 => peopleOrServices ! true
-        }
-
-      override def onTabUnselected(tab: TabLayout.Tab): Unit = {}
-      override def onTabReselected(tab: TabLayout.Tab): Unit = {}
-    })
-
     //lazy init
+    tabs
     errorText
   }
 

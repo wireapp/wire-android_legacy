@@ -71,11 +71,12 @@ class CreateConversationController(implicit inj: Injector, ev: EventContext) ext
     tracking.track(CreateGroupConversation(from))
   }
 
-  def setAddToConversation(conv: ConvId): Unit = {
+  def setAddToConversation(convId: ConvId, teamOnly: Boolean): Unit = {
     name ! ""
     users ! Set.empty
     integrations ! Set.empty
-    convId ! Some(conv)
+    this.convId ! Some(convId)
+    this.teamOnly ! teamOnly
     fromScreen ! GroupConversationEvent.ConversationDetails
   }
 

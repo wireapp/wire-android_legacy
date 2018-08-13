@@ -306,7 +306,7 @@
     <string name="conversation__action__delete">Delete content…</string>
     <string name="conversation__action__archive">Archive</string>
     <string name="conversation__action__unarchive">Unarchive</string>
-    <string name="conversation__action__add_people">ADD PEOPLE</string>
+    <string name="conversation__action__add_participants">ADD PARTICIPANTS</string>
     <string name="conversation__action__create_group">CREATE GROUP</string>
     <string name="conversation__action__silence">Mute</string>
     <string name="conversation__action__unsilence">Unmute</string>
@@ -1386,8 +1386,8 @@
     <string name="skip_button">SKIP</string>
     <string name="done_button">DONE</string>
     <string name="new_group_header">CREATE GROUP</string>
-    <string name="add_people_empty_header">ADD PEOPLE</string>
-    <string name="add_people_count_header">ADD PEOPLE (%1$s)</string>
+    <string name="add_participants_empty_header">ADD PARTICIPANTS</string>
+    <string name="add_participants_count_header">ADD PARTICIPANTS (%1$s)</string>
     <string name="new_conv_no_results">NO RESULTS</string>
     <string name="new_conv_no_contacts">NO CONTACTS</string>
     <string name="create_group_search">SEARCH FOR NAMES</string>
