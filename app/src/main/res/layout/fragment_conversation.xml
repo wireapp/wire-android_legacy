@@ -120,7 +120,7 @@
                 android:visibility="visible">
 
                 <com.waz.zclient.ui.text.TypefaceTextView
-                    android:id="@+id/guests_banner_text"
+                    android:id="@+id/banner_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
