@@ -75,19 +75,26 @@ class AddParticipantsFragment extends FragmentHelper {
   } yield results
 
   private lazy val integrationsResults = for {
-    zms          <- zms
-    filter       <- searchFilter
-    integrations <- zms.integrations.searchIntegrations(filter).map(Option(_)).orElse(Signal.const(None))
-  } yield integrations.getOrElse(Seq.empty)
+    zms     <- zms
+    filter  <- searchFilter
+    results <- Signal.future(zms.integrations.searchIntegrations(if (filter.isEmpty) None else Some(filter)))
+  } yield results match {
+    case Right(services) => services
+    case Left(err)       => Seq.empty
+  }
 
   private lazy val adapter = AddParticipantsAdapter(userResults, newConvController.users, integrationsResults, newConvController.integrations, peopleOrServices)
 
   private lazy val searchBox = returning(view[SearchEditText](R.id.search_box)) { vh =>
     new FutureEventStream[(Either[UserId, (ProviderId, IntegrationId)], Boolean), (Pickable, Boolean)](adapter.onSelectionChanged, {
       case (Left(userId), selected) =>
-        zms.head.flatMap(_.usersStorage.get(userId).collect { case Some(u) => (Pickable(userId.str, u.name), selected) })
+        zms.head.flatMap(_.usersStorage.get(userId).collect {
+          case Some(u) => (Pickable(userId.str, u.name), selected)
+        })
       case (Right((pId, iId)), selected) =>
-        zms.head.flatMap(_.integrations.getIntegration(pId, iId).map { integration => (Pickable(iId.str, integration.name), selected) })
+        zms.head.flatMap(_.integrations.getIntegration(pId, iId).collect {
+          case Right(service) => (Pickable(iId.str, service.name), selected)
+        })
     }).onUi {
       case (pu, selected) =>
         vh.foreach { v =>
@@ -113,11 +120,13 @@ class AddParticipantsFragment extends FragmentHelper {
         override def onTabReselected(tab: TabLayout.Tab): Unit = {}
       })
 
+      tabs.setVisible(false)
+
       (for {
         isCreateConvFlow   <- newConvController.convId.map(_.isEmpty)
         isTeamAccount      <- inject[UserAccountsController].isTeam
         isTeamOnlyConv     <- newConvController.teamOnly
-        isCurrentUserGuest <- inject[ParticipantsController].isCurrentUserGuest
+        isCurrentUserGuest <- if (!isCreateConvFlow) inject[ParticipantsController].isCurrentUserGuest else Signal.const(false)
         _ = verbose(s"should the tabs be visible: (is create conv flow: $isCreateConvFlow, is team account: $isTeamAccount, team only: $isTeamOnlyConv, is guest: $isCurrentUserGuest)")
       } yield !isCreateConvFlow && isTeamAccount && !isTeamOnlyConv && !isCurrentUserGuest)
         .onUi(tabs.setVisible)
@@ -175,11 +184,15 @@ class AddParticipantsFragment extends FragmentHelper {
       selectedUserIds        <- newConvController.users.head
       selectedUsers          <- zms.usersStorage.listAll(selectedUserIds)
       selectedIntegrationIds <- newConvController.integrations.head
-      selectedIntegrations   <- Future.sequence(selectedIntegrationIds.map { case (pId, iId) => zms.integrations.getIntegration(pId, iId)})
+      selectedIntegrations   <- Future.sequence(selectedIntegrationIds.map {
+        case (pId, iId) => zms.integrations.getIntegration(pId, iId).collect {
+          case Right(service) => service
+        }
+      })
     } yield selectedUsers.map(Left(_)) ++ selectedIntegrations.toSeq.map(Right(_)))
       .map(_.foreach {
-        case Left(user)         => searchBox.foreach(_.addElement(Pickable(user.id.str, user.name)))
-        case Right(integration) => searchBox.foreach(_.addElement(Pickable(integration.id.str, integration.name)))
+        case Left(user)     => searchBox.foreach(_.addElement(Pickable(user.id.str, user.name)))
+        case Right(service) => searchBox.foreach(_.addElement(Pickable(service.id.str, service.name)))
       })(Threading.Ui)
 
     //lazy init
