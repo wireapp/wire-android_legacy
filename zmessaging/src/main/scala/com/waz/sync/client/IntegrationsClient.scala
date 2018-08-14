@@ -33,7 +33,8 @@ import org.json.JSONObject
 import scala.util.Try
 
 trait IntegrationsClient {
-  def searchIntegrations(startWith: String): ErrorOrResponse[Map[IntegrationData, Option[AssetData]]]
+  def searchTeamIntegrations(startsWith: Option[String], teamId: TeamId): ErrorOrResponse[Map[IntegrationData, Option[AssetData]]]
+
   def getIntegration(providerId: ProviderId, integrationId: IntegrationId): ErrorOrResponse[(IntegrationData, Option[AssetData])]
 
   def getProvider(id: ProviderId): ErrorOrResponse[ProviderData]
@@ -56,28 +57,28 @@ class IntegrationsClientImpl(implicit
   private implicit val addRemoveBotDeserializer: RawBodyDeserializer[ConversationEvent] =
     RawBodyDeserializer[JSONObject].map(json => AddRemoveBotResponse.unapply(JsonObjectResponse(json)).get)
 
-  def searchIntegrations(startWith: String): ErrorOrResponse[Map[IntegrationData, Option[AssetData]]] = {
-    Request.Get(relativePath = IntegrationsSearchPath, queryParameters = queryParameters("tags" -> DefaultTag, "start" -> startWith))
+  override def searchTeamIntegrations(startsWith: Option[String], teamId: TeamId) = {
+    Request.Get(relativePath = teamIntegrationsSearchPath(teamId), queryParameters = queryParameters("prefix" -> startsWith))
       .withResultType[Map[IntegrationData, Option[AssetData]]]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
-  def getIntegration(pId: ProviderId, iId: IntegrationId): ErrorOrResponse[(IntegrationData, Option[AssetData])] = {
+  override def getIntegration(pId: ProviderId, iId: IntegrationId) = {
     Request.Get(relativePath = integrationPath(pId, iId))
       .withResultType[(IntegrationData, Option[AssetData])]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
-  def getProvider(pId: ProviderId): ErrorOrResponse[ProviderData] = {
+  override def getProvider(pId: ProviderId) = {
     Request.Get(relativePath = providerPath(pId))
       .withResultType[ProviderData]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
-  def addBot(rConvId: RConvId, pId: ProviderId, iId: IntegrationId): ErrorOrResponse[ConversationEvent] = {
+  override def addBot(rConvId: RConvId, pId: ProviderId, iId: IntegrationId) = {
     debug(s"addBot: rConvId: $rConvId, providerId: $pId, integrationId: $iId")
     Request
       .Post(
@@ -89,7 +90,7 @@ class IntegrationsClientImpl(implicit
       .executeSafe
   }
 
-  def removeBot(rConvId: RConvId, botId: UserId): ErrorOrResponse[ConversationEvent] = {
+  override def removeBot(rConvId: RConvId, botId: UserId) = {
     debug(s"removeBot: convId: $rConvId, botId: $botId")
     Request.Delete(relativePath = s"$ConversationsPath/${rConvId.str}/bots/$botId")
       .withResultType[ConversationEvent]
@@ -102,15 +103,14 @@ object IntegrationsClient {
   import JsonDecoder._
   import com.waz.model.ConversationEvent.ConversationEventDecoder
 
-  val IntegrationsSearchPath = "/services"
-  val DefaultTag = "integration"
+  def teamIntegrationsSearchPath(teamId: TeamId) = s"/teams/${teamId.str}/services/whitelisted"
+
   val ProvidersPath = "/providers"
-  val IntegrationConvPath = "/conversations"
 
   def integrationPath(providerId: ProviderId, integrationId: IntegrationId): String =
-    s"$ProvidersPath/$providerId/services/$integrationId"
+    s"${providerPath(providerId)}/services/${integrationId.str}"
 
-  def providerPath(id: ProviderId): String = s"$ProvidersPath/$id"
+  def providerPath(id: ProviderId): String = s"$ProvidersPath/${id.str}"
 
   object IntegrationsSearchResponse {
     def unapply(resp: ResponseContent): Option[Map[IntegrationData, Option[AssetData]]] = resp match {

@@ -24,13 +24,14 @@ import com.waz.model.AssetStatus.UploadDone
 import com.waz.model._
 import com.waz.threading.SerialDispatchQueue
 import com.waz.utils.TrimmingLruCache.Fixed
-import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.{CachedStorageImpl, TrimmingLruCache, _}
 
 import scala.concurrent.Future
 
 trait AssetsStorage extends CachedStorage[AssetId, AssetData] {
   def updateAsset(id: AssetId, updater: AssetData => AssetData): Future[Option[AssetData]]
+  def findByRemoteIds(ids: Iterable[RAssetId]): Future[Set[AssetData]]
+
   def mergeOrCreateAsset(newData: AssetData): Future[Option[AssetData]]
   def mergeOrCreateAsset(newData: Option[AssetData]): Future[Option[AssetData]]
 }
@@ -42,6 +43,13 @@ class AssetsStorageImpl(context: Context, storage: Database) extends CachedStora
   override def updateAsset(id: AssetId, updater: AssetData => AssetData): Future[Option[AssetData]] = update(id, updater).mapOpt {
     case (_, updated) => Some(updated)
   }
+
+  override def findByRemoteIds(ids: Iterable[RAssetId]) =
+    storage.read { db =>
+      val builder = Set.newBuilder[AssetData]
+      AssetDataDao.foreach(asset => asset.remoteId.filter(ids.toSet.contains).foreach(_ => builder += asset))(db)
+      builder.result()
+    }
 
   override def mergeOrCreateAsset(newData: AssetData) = mergeOrCreateAsset(Some(newData))
   override def mergeOrCreateAsset(newData: Option[AssetData]) = newData.map(nd => updateOrCreate(nd.id, cur => merge(cur, nd), nd).map(Some(_))).getOrElse(Future.successful(None))
