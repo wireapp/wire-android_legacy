@@ -303,10 +303,10 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   } yield ()
 
   def groupConversation(convId: ConvId) =
-    convsStorage.signal(convId).flatMap { conv =>
-      if (conv.convType != ConversationType.Group) Signal.const(false)
-      else if (conv.name.isDefined || conv.team.isEmpty) Signal.const(true)
-      else membersStorage.activeMembers(convId).map(ms => !(ms.contains(selfUserId) && ms.size <= 2))
+    convsStorage.signal(convId).map(c => (c.convType, c.name, c.team)).flatMap {
+      case (convType, _, _) if convType != ConversationType.Group => Signal.const(false)
+      case (_, Some(_), _) | (_, _, None) => Signal.const(true)
+      case _ => membersStorage.activeMembers(convId).map(ms => !(ms.contains(selfUserId) && ms.size <= 2))
     }
 
   def isGroupConversation(convId: ConvId) = groupConversation(convId).head
