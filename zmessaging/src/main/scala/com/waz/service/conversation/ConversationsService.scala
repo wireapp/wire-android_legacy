@@ -263,7 +263,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     def updateMembers() =
       content.convsByRemoteId(responses.map(_.id)).flatMap { convs =>
         val toUpdate = responses.map(c => (c.id, c.members)).flatMap {
-          case (remoteId, members) => convs.get(remoteId).map(_.id -> members)
+          case (remoteId, members) => convs.get(remoteId).map(_.id -> (members + selfUserId))
         }.toMap
         membersStorage.setAll(toUpdate)
       }
