@@ -51,7 +51,7 @@ class InvitationClientImpl(implicit
 }
 
 object InvitationClient {
-  def teamInvitationPath(teamId: TeamId) = s"teams/$teamId/invitations"
+  def teamInvitationPath(teamId: TeamId) = s"/teams/$teamId/invitations"
 
   implicit lazy val TeamInviteEncoder: JsonEncoder[TeamInvitation] = new JsonEncoder[TeamInvitation] {
     def apply(i: TeamInvitation): JSONObject = JsonEncoder { js =>
