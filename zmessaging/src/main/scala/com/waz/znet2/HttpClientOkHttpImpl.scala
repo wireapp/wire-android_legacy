@@ -88,7 +88,7 @@ object HttpClientOkHttpImpl {
       loggerInterceptor: Option[Interceptor] = None
   )(implicit ec: ExecutionContext): OkHttpClient = {
     val builder = new OkHttpClient.Builder()
-    connectionSpec.foreach(spec => builder.connectionSpecs(List(spec).asJava))
+    connectionSpec.foreach(spec => builder.connectionSpecs(List(spec, ConnectionSpec.CLEARTEXT).asJava))
     certificatePinner.foreach(pinner => builder.certificatePinner(pinner))
     loggerInterceptor.foreach(interceptor => builder.addInterceptor(interceptor))
 

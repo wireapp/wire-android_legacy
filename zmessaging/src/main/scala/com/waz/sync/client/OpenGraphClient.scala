@@ -21,8 +21,10 @@ import java.net.URL
 
 import com.waz.api.impl.ErrorResponse
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
+import com.waz.threading.Threading
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{JsonDecoder, JsonEncoder}
+import com.waz.znet2.http.HttpClient.{ConnectionError, HttpClientError}
 import com.waz.znet2.http._
 import org.json.JSONObject
 
@@ -36,15 +38,21 @@ class OpenGraphClientImpl(implicit httpClient: HttpClient) extends OpenGraphClie
   import OpenGraphClient._
   import HttpClient.dsl._
   import HttpClient.AutoDerivation._
+  import Threading.Implicits.Background
 
-  private implicit val OpenGraphDataDeserializer: RawBodyDeserializer[Option[OpenGraphData]] =
-    RawBodyDeserializer[String].map(bodyStr => OpenGraphDataResponse.unapply(StringResponse(bodyStr)))
+  implicit val OpenGraphDataDeserializer: RawBodyDeserializer[OpenGraphDataResponse] =
+    RawBodyDeserializer[String].map(bodyStr => OpenGraphDataResponse(StringResponse(bodyStr)))
 
   override def loadMetadata(uri: URI): ErrorOrResponse[Option[OpenGraphData]] = {
     Request.create(method = Method.Get, url = new URL(uri.toString), headers = Headers("User-Agent" -> DesktopUserAgent))
-      .withResultType[Option[OpenGraphData]]
+      .withResultType[OpenGraphDataResponse]
       .withErrorType[ErrorResponse]
-      .executeSafe
+      .execute
+      .map(response => Right(response.data))
+      .recover {
+        case _: ConnectionError => Right(None)
+        case err: HttpClientError => Left(ErrorResponse.errorResponseConstructor.constructFrom(err))
+      }
   }
 
 }
@@ -53,6 +61,8 @@ object OpenGraphClient {
   val MaxHeaderLength: Int = 16 * 1024 // maximum amount of data to load from website
   val DesktopUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"
   val CookiePattern: Regex = """([^=]+)=([^\;]+)""".r
+
+  case class OpenGraphDataResponse(data: Option[OpenGraphData])
 
   case class OpenGraphData(title: String, description: String, image: Option[URI], tpe: String, permanentUrl: Option[URI])
 
@@ -88,7 +98,7 @@ object OpenGraphClient {
     val Attribute: Regex = """(\w+)\s*=\s*("|')([^"']+)("|')""".r
     val TitlePattern: Regex = """<title[^>]*>(.*)</title>""".r
 
-    def unapply(body: StringResponse): Option[OpenGraphData] = {
+    def apply(body: StringResponse): OpenGraphDataResponse = {
       def htmlTitle: Option[String] = TitlePattern.findFirstMatchIn(body.value).map(_.group(1))
 
       val ogMeta = MetaTag.findAllIn(body.value).flatMap { meta =>
@@ -100,18 +110,18 @@ object OpenGraphClient {
         else
           None
       } .toMap
-
-      if (ogMeta.contains(Title) || ogMeta.contains(Image)) {
-        Some(
-          OpenGraphData(
-            ogMeta.get(Title).orElse(htmlTitle).getOrElse(""),
-            ogMeta.getOrElse(Description, ""),
-            ogMeta.get(Image).map(URI.parse),
-            ogMeta.getOrElse(Type, ""),
-            ogMeta.get(Url).map(URI.parse)
+      OpenGraphDataResponse(
+        if (ogMeta.contains(Title) || ogMeta.contains(Image)) {
+          Some(
+            OpenGraphData(
+              ogMeta.get(Title).orElse(htmlTitle).getOrElse(""),
+              ogMeta.getOrElse(Description, ""),
+              ogMeta.get(Image).map(URI.parse),
+              ogMeta.getOrElse(Type, ""),
+              ogMeta.get(Url).map(URI.parse)
+            )
           )
-        )
-      } else None
+        } else None)
     }
   }
 }
