@@ -204,6 +204,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
       val teamNameOpt = if (groupedConvs.keys.size > 1) None else teamName
 
       val notFutures = groupedConvs.map { case (notId, ns) =>
+        playSound(ns, silent)
         getPictureForNotifications(userId, ns).map { pic =>
           val commonProps   = commonNotificationProperties(ns, userId, silent, pic)
           val specificProps =
@@ -326,7 +327,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
       smallIcon     = Some(R.drawable.ic_menu_logo),
       vibrate       = if (!silent && soundController.isVibrationEnabled(userId)) Some(getIntArray(R.array.new_message_gcm).map(_.toLong)) else Some(Array(0l,0l)),
       autoCancel    = Some(true),
-      sound         = getSound(ns, silent),
+      sound         = None,
       onlyAlertOnce = Some(ns.forall(_.hasBeenDisplayed)),
       group         = Some(userId),
       when          = Some(ns.maxBy(_.time.instant).time.instant.toEpochMilli),
@@ -336,16 +337,16 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
     )
   }
 
-  private def getSound(ns: Seq[NotificationInfo], silent: Boolean) = {
-    if (soundController.soundIntensityNone || silent) None
-    else if (!soundController.soundIntensityFull && (ns.size > 1 && ns.lastOption.forall(_.tpe != KNOCK))) None
-    else ns.map(_.tpe).lastOption.fold(Option.empty[Uri]) {
-      case ASSET | ANY_ASSET | VIDEO_ASSET | AUDIO_ASSET |
-           LOCATION | TEXT | CONNECT_ACCEPTED | CONNECT_REQUEST | RENAME |
-           LIKE  => Option(getSelectedSoundUri(soundController.currentTonePrefs._2, R.raw.new_message_gcm))
-      case KNOCK => Option(getSelectedSoundUri(soundController.currentTonePrefs._3, R.raw.ping_from_them))
-      case _     => None
-    }
+  private def playSound(ns: Seq[NotificationInfo], silent: Boolean) = {
+    val disabled = soundController.soundIntensityNone || silent || !inject[NotificationManagerWrapper].areNotificationsEnabled
+    val pingOrFull = soundController.soundIntensityFull || !(ns.size > 1 && ns.lastOption.forall(_.tpe != KNOCK))
+    if (!disabled && pingOrFull) ns.map(_.tpe).lastOption.foreach {
+        case ASSET | ANY_ASSET | VIDEO_ASSET | AUDIO_ASSET |
+             LOCATION | TEXT | CONNECT_ACCEPTED | CONNECT_REQUEST | RENAME |
+             LIKE => soundController.playMessageIncomingSound(false)
+        case KNOCK => soundController.playPingFromThem()
+        case _ =>
+      }
   }
 
   private[notifications] def getMessage(n: NotificationInfo, singleConversationInBatch: Boolean): SpannableWrapper = {

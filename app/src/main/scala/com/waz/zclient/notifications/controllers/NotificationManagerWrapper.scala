@@ -254,6 +254,7 @@ case class NotificationProps(when:                     Option[Long] = None,
 
 trait NotificationManagerWrapper {
   def getActiveNotificationIds: Seq[Int]
+  def areNotificationsEnabled: Boolean
 }
 
 object NotificationManagerWrapper {
@@ -286,6 +287,9 @@ object NotificationManagerWrapper {
 
       notificationManager.notify(id, props.build(ChannelId))
     }
+
+    override def areNotificationsEnabled: Boolean =
+      notificationManager.getCurrentInterruptionFilter == NotificationManager.INTERRUPTION_FILTER_ALL
 
     override def getActiveNotificationIds: Seq[Int] =
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
