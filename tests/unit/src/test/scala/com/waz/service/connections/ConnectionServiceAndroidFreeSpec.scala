@@ -127,9 +127,9 @@ class ConnectionServiceAndroidFreeSpec extends AndroidFreeSpec {
         toUser -> ConversationData(convId, rId, None, selfUserId, convType)
       }.toMap)
     }
-    (members.add (_:ConvId, _:Iterable[UserId])).expects(*, *).anyNumberOfTimes().onCall { (conv: ConvId, users: Iterable[UserId]) =>
-      Future.successful(users.map(uId => ConversationMemberData(uId, conv)).toSet)
-    }
+
+    (members.addAll (_:Map[ConvId, Set[UserId]])).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+
     (messagesStorage.getLastMessage _).expects(*).anyNumberOfTimes().returns(Future.successful(None))
 
     (messagesService.addDeviceStartMessages _).expects(*, *).anyNumberOfTimes().onCall{ (convs: Seq[ConversationData], selfUserId: UserId) =>
