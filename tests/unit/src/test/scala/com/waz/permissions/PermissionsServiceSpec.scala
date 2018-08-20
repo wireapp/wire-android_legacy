@@ -24,14 +24,16 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.ZLog.ImplicitTag._
 
+import scala.collection.immutable.ListSet
+
 class PermissionsServiceSpec extends AndroidFreeSpec {
 
   val service = new PermissionsService()
 
-  val requestInput  = new SourceSignal[Set[Permission]]
+  val requestInput  = new SourceSignal[ListSet[Permission]]
 
   //Some system permission we haven't yet discovered
-  val systemState = Signal(Set(
+  val systemState = Signal(ListSet(
     Permission("WriteExternal"),
     Permission("ReadExternal")
   ))
@@ -42,14 +44,14 @@ class PermissionsServiceSpec extends AndroidFreeSpec {
   var checkCalls = 0
 
   def newProvider = new PermissionProvider {
-    def requestPermissions(ps: Set[PermissionsService.Permission]) = {
+    def requestPermissions(ps: ListSet[PermissionsService.Permission]) = {
       println(s"requestPermissions from Provider: $ps")
       requestInput ! ps
       requestCalls += 1
       systemState.head
     }
 
-    def hasPermissions(ps: Set[PermissionsService.Permission]) = {
+    def hasPermissions(ps: ListSet[PermissionsService.Permission]) = {
       Threading.assertUiThread()
       checkCalls += 1
       getSystemState
@@ -81,7 +83,7 @@ class PermissionsServiceSpec extends AndroidFreeSpec {
 
   scenario("Wait for provider") {
 
-    val signal = service.permissions(Set("WriteExternal", "ReadExternal")).disableAutowiring()
+    val signal = service.permissions(ListSet("WriteExternal", "ReadExternal")).disableAutowiring()
 
     awaitAllTasks
     signal.currentValue("") shouldEqual None
@@ -96,14 +98,14 @@ class PermissionsServiceSpec extends AndroidFreeSpec {
 
   scenario("Direct request call with provider") {
 
-    val expectedPerms = Set(
+    val expectedPerms = ListSet(
       Permission("WriteExternal", granted = true),
       Permission("ReadExternal", granted = true)
     )
 
     service.registerProvider(provider)
 
-    val req = service.requestPermissions(Set("WriteExternal", "ReadExternal"))
+    val req = service.requestPermissions(ListSet("WriteExternal", "ReadExternal"))
 
     userAccepts(expectedPerms)
 
@@ -112,22 +114,22 @@ class PermissionsServiceSpec extends AndroidFreeSpec {
   }
 
   scenario("Unregistering permissions provider with current outstanding request should fail request and not block future requests") {
-    val expectedPerms = Set(
+    val expectedPerms = ListSet(
       Permission("WriteExternal", granted = true),
       Permission("ReadExternal", granted = true)
     )
 
     service.registerProvider(provider)
 
-    val req = service.requestPermissions(Set("WriteExternal", "ReadExternal"))
+    val req = service.requestPermissions(ListSet("WriteExternal", "ReadExternal"))
 
-    await(requestInput.filter(_.map(_.key) == Set("WriteExternal", "ReadExternal")).head) //wait for request to be asked
+    await(requestInput.filter(_.map(_.key) == ListSet("WriteExternal", "ReadExternal")).head) //wait for request to be asked
     service.unregisterProvider(provider) //user minimises app
-    result(req) shouldEqual Set.empty
+    result(req) shouldEqual ListSet.empty
 
     val provider2 = newProvider
     service.registerProvider(provider2)
-    val req2 = service.requestPermissions(Set("WriteExternal", "ReadExternal"))
+    val req2 = service.requestPermissions(ListSet("WriteExternal", "ReadExternal"))
 
     userAccepts(expectedPerms)
     result(req2) shouldEqual expectedPerms
@@ -135,32 +137,32 @@ class PermissionsServiceSpec extends AndroidFreeSpec {
   }
 
   scenario("Direct call without provider should return denied requests") {
-    val perms = Set(
+    val perms = ListSet(
       Permission("WriteExternal", granted = true),
       Permission("ReadExternal",  granted = true)
     )
 
     systemState ! perms
 
-    result(service.requestPermissions(Set("WriteExternal", "ReadExternal"))) shouldEqual perms.map(_.copy(granted = false))
+    result(service.requestPermissions(ListSet("WriteExternal", "ReadExternal"))) shouldEqual perms.map(_.copy(granted = false))
     //call a second time to make sure previous request was cleared
     //TODO should be a separate test...
-    result(service.requestPermissions(Set("WriteExternal", "ReadExternal"))) shouldEqual perms.map(_.copy(granted = false))
+    result(service.requestPermissions(ListSet("WriteExternal", "ReadExternal"))) shouldEqual perms.map(_.copy(granted = false))
     requestCalls shouldEqual 0
   }
 
   scenario("Requesting for permissions eventually updates anywhere waiting on signals of those same permissions") {
-    val expectedPerms = Set(
+    val expectedPerms = ListSet(
       Permission("WriteExternal", granted = true),
       Permission("ReadExternal", granted = true)
     )
 
     service.registerProvider(provider)
 
-    val signal = service.permissions(Set("WriteExternal", "ReadExternal"))
+    val signal = service.permissions(ListSet("WriteExternal", "ReadExternal"))
     result(signal.head) shouldEqual getSystemState
 
-    val req = service.requestPermissions(Set("WriteExternal", "ReadExternal"))
+    val req = service.requestPermissions(ListSet("WriteExternal", "ReadExternal"))
 
     userAccepts(expectedPerms)
 
@@ -175,20 +177,20 @@ class PermissionsServiceSpec extends AndroidFreeSpec {
   }
 
   scenario("Only denied permissions are requested") {
-    val expectedPerms = Set(
+    val expectedPerms = ListSet(
       Permission("WriteExternal", granted = true),
       Permission("ReadExternal",  granted = true)
     )
 
-    systemState ! Set(
+    systemState ! ListSet(
       Permission("WriteExternal"), //we should expect to see only this one requested and returned
       Permission("ReadExternal",  granted = true)
     )
 
     service.registerProvider(provider)
-    val req = service.requestPermissions(Set("WriteExternal", "ReadExternal"))
+    val req = service.requestPermissions(ListSet("WriteExternal", "ReadExternal"))
 
-    userAccepts(Set(Permission("WriteExternal", granted = true)))
+    userAccepts(ListSet(Permission("WriteExternal", granted = true)))
 
     result(req) shouldEqual expectedPerms
     requestCalls shouldEqual 1
@@ -196,24 +198,24 @@ class PermissionsServiceSpec extends AndroidFreeSpec {
 
   scenario("Two requests made simultaneously only call once to the PermissionsProvider at a time") {
 
-    systemState ! Set(
+    systemState ! ListSet(
       Permission("WriteExternal"),
       Permission("ReadExternal"),
       Permission("Location")
     )
 
-    val expectedPerms1 = Set(
+    val expectedPerms1 = ListSet(
       Permission("WriteExternal", granted = true),
       Permission("ReadExternal", granted = true)
     )
 
-    val location = Set(Permission("Location", granted = true))
+    val location = ListSet(Permission("Location", granted = true))
 
     service.registerProvider(provider)
 
-    val req = service.requestPermissions(Set("WriteExternal", "ReadExternal"))
+    val req = service.requestPermissions(ListSet("WriteExternal", "ReadExternal"))
 
-    val req2 = service.requestPermissions(Set("Location"))
+    val req2 = service.requestPermissions(ListSet("Location"))
 
     userAccepts(expectedPerms1)
     requestCalls shouldEqual 1
@@ -227,15 +229,15 @@ class PermissionsServiceSpec extends AndroidFreeSpec {
   //FIXME - currently there are small race conditions in the permissions signal and simultaneous requests
   ignore("Requesting same permissions twice simultaneously should only return once") {
 
-    val expectedPerms = Set(
+    val expectedPerms = ListSet(
       Permission("WriteExternal", granted = true),
       Permission("ReadExternal", granted = true)
     )
 
     service.registerProvider(provider)
 
-    val req = service.requestPermissions(Set("WriteExternal", "ReadExternal"))
-    val req2 = service.requestPermissions(Set("WriteExternal", "ReadExternal"))
+    val req = service.requestPermissions(ListSet("WriteExternal", "ReadExternal"))
+    val req2 = service.requestPermissions(ListSet("WriteExternal", "ReadExternal"))
 
     userAccepts(expectedPerms)
     result(req) shouldEqual expectedPerms
@@ -246,14 +248,14 @@ class PermissionsServiceSpec extends AndroidFreeSpec {
   }
 
   scenario("When all requests are already granted, complete request immediately") {
-    systemState ! Set(
+    systemState ! ListSet(
       Permission("WriteExternal", granted = true),
       Permission("ReadExternal", granted = true)
     )
 
     service.registerProvider(provider)
 
-    val req = service.requestPermissions(Set("WriteExternal", "ReadExternal"))
+    val req = service.requestPermissions(ListSet("WriteExternal", "ReadExternal"))
 
     result(req) shouldEqual getSystemState
     requestCalls shouldEqual 0
@@ -267,8 +269,8 @@ class PermissionsServiceSpec extends AndroidFreeSpec {
 
     service.checkPermission("WriteExternal") shouldEqual false
 
-    val req = service.requestPermissions(Set("WriteExternal"))
-    userAccepts(Set(Permission("WriteExternal", granted = true)))
+    val req = service.requestPermissions(ListSet("WriteExternal"))
+    userAccepts(ListSet(Permission("WriteExternal", granted = true)))
     await(req)
 
     awaitAllTasks
@@ -280,11 +282,11 @@ class PermissionsServiceSpec extends AndroidFreeSpec {
   /**
     * user accepts/denies permissions: updates the "system" state, and then returns a response to our service on the UI thread
     */
-  def userAccepts(toGrant: Set[Permission]) = {
+  def userAccepts(toGrant: ListSet[Permission]) = {
     await(requestInput.filter(_.map(_.key) == toGrant.map(_.key)).head)
     println(s"User will accept: $toGrant")
     systemState.mutate(ps => ps.map(p => toGrant.find(_.key == p.key).getOrElse(p)))
     Threading.Ui(service.onPermissionsResult(toGrant))
-    requestInput ! Set.empty
+    requestInput ! ListSet.empty
   }
 }

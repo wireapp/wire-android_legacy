@@ -41,6 +41,7 @@ import com.waz.utils.IoUtils._
 import com.waz.utils.wrappers._
 import com.waz.utils.{IoUtils, Serialized, returning}
 
+import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 
 trait ImageLoader {
@@ -149,7 +150,7 @@ class ImageLoaderImpl(context:                  Context,
 
   private def saveImageToGallery(data: LocalData, mime: Mime) =
     {
-      permissions.requestAllPermissions(Set(WRITE_EXTERNAL_STORAGE)).flatMap {
+      permissions.requestAllPermissions(ListSet(WRITE_EXTERNAL_STORAGE)).flatMap {
         case true =>
           Future {
             val newFile = AssetService.saveImageFile(mime)

@@ -47,6 +47,7 @@ import com.waz.utils.{RichInstant, RichWireInstant, Serialized, returning, retur
 import com.waz.zms.CallWakeService
 import org.threeten.bp.Duration
 
+import scala.collection.immutable.ListSet
 import scala.concurrent.{Future, Promise}
 import scala.util.Success
 import scala.util.control.NonFatal
@@ -139,7 +140,7 @@ class CallingService(val accountId:       UserId,
   def onIncomingCall(convId: RConvId, userId: UserId, videoCall: Boolean, shouldRing: Boolean) = withConvAndIsGroup(convId) { (_, conv, isGroup) =>
     verbose(s"Incoming call from $userId in conv: $convId (should ring: $shouldRing)")
 
-    permissions.allPermissions(Set(CAMERA)).head.foreach { granted =>
+    permissions.allPermissions(ListSet(CAMERA)).head.foreach { granted =>
       updateCallInfo(conv.id, _.copy(videoSendState = (videoCall, granted) match {
         case (true, false) => VideoState.NoCameraPermission
         case (true, true)  => VideoState.Started

@@ -58,6 +58,7 @@ import com.waz.utils.events.Signal
 import com.waz.utils.wrappers.{Bitmap, URI}
 
 import scala.collection.breakOut
+import scala.collection.immutable.ListSet
 import scala.concurrent.Future.successful
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -400,7 +401,7 @@ class AssetServiceImpl(storage:         AssetsStorage,
 
     val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
     if (dir.isDirectory) {
-      permissions.requestAllPermissions(Set(WRITE_EXTERNAL_STORAGE)).flatMap {
+      permissions.requestAllPermissions(ListSet(WRITE_EXTERNAL_STORAGE)).flatMap {
         case true =>
           getTargetFile(dir).fold(successful(Option.empty[File]))(saveAssetData)
         case _ =>
