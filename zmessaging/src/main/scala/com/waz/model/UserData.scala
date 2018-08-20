@@ -303,8 +303,8 @@ object UserData {
       list(db.rawQuery(select + " " + handleCondition + teamCondition.map(qu => s" $qu").getOrElse(""), null)).toSet
     }
 
-    def findWireBots(implicit db: DB) = iterating(db.query(table.name, null, s"${IntegrationId.name} is not null", null, null, null, null))
-
     def findForTeams(teams: Set[TeamId])(implicit db: DB) = iterating(findInSet(TeamId, teams.map(Option(_))))
+
+    def findService(integrationId: IntegrationId)(implicit db: DB) = iterating(find(IntegrationId, Some(integrationId)))
   }
 }
