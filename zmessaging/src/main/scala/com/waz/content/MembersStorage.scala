@@ -42,6 +42,7 @@ trait MembersStorage extends CachedStorage[(UserId, ConvId), ConversationMemberD
   def activeMembers(conv: ConvId): Signal[Set[UserId]]
   def set(conv: ConvId, users: Set[UserId]): Future[Unit]
   def setAll(members: Map[ConvId, Set[UserId]]): Future[Unit]
+  def addAll(members: Map[ConvId, Set[UserId]]): Future[Unit]
   def delete(conv: ConvId): Future[Unit]
 }
 
@@ -96,10 +97,11 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase) extends CachedS
     remove(conv, toRemove).zip(add(conv, toAdd)).map(_ => ())
   }
 
-  def setAll(members: Map[ConvId, Set[UserId]]): Future[Unit] = getActiveUsers2(members.keys.toSet).flatMap { active =>
+  def setAll(members: Map[ConvId, Set[UserId]]): Future[Unit] = getActiveUsers2(members.keySet).flatMap { active =>
     val toRemove = active.map {
       case (convId, users) => convId -> active.get(convId).map(_.filterNot(users)).getOrElse(Set())
     }
+
     val toAdd = members.map {
       case (convId, users) => convId -> (users -- toRemove.getOrElse(convId, Set()))
     }
@@ -107,11 +109,19 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase) extends CachedS
     val removeList = toRemove.toSeq.flatMap {
       case (convId, users) => users.map((_, convId))
     }
+
     val addList = toAdd.flatMap {
       case (convId, users) => users.map(ConversationMemberData(_, convId))
     }
 
     removeAll(removeList).zip(insertAll(addList)).map(_ => ())
+  }
+
+  def addAll(members: Map[ConvId, Set[UserId]]): Future[Unit] = {
+    val addList =
+      members.flatMap { case (convId, users) => users.map(ConversationMemberData(_, convId)) }
+
+    insertAll(addList).map(_ => ())
   }
 
   override def isActiveMember(conv: ConvId, user: UserId) = get(user -> conv).map(_.nonEmpty)
