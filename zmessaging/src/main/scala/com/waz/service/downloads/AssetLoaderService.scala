@@ -56,7 +56,7 @@ class AssetLoaderService {
   private val onAdded   = EventStream[LoadEntry]()
 
   private def getLoadEntry(id: AssetId): Signal[Option[LoadEntry]] =
-    new AggregatingSignal[LoadEntry, Option[LoadEntry]](onAdded.filter(_.asset == id), Future(requests.get(id)), { (_, added) => Some(added) })
+    new AggregatingSignal[LoadEntry, Option[LoadEntry]](onAdded.filter(_.asset.id == id), Future(requests.get(id)), { (_, added) => Some(added) })
 
   def getLoadProgress(id: AssetId): Signal[ProgressData] = getLoadEntry(id).flatMap {
     case Some(entry) =>
