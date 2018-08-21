@@ -381,7 +381,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
   private def checkSize(convId: ConvId, size: Option[Long], mime: Mime, message: MessageData, confirmation: WifiWarningConfirmation) = {
     def isFileTooLarge(size: Long, mime: Mime) = mime match {
       case Mime.Video() => false
-      case _ => size > AssetData.MaxAllowedAssetSizeInBytes
+      case _ => size > AssetData.maxAssetSizeInBytes(teamId.isDefined)
     }
 
     size match {
