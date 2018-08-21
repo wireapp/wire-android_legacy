@@ -47,7 +47,7 @@ trait ConversationStorage extends CachedStorage[ConvId, ConversationData] {
   def findByTeams(teams: Set[TeamId]): Future[Set[ConversationData]]
   def getByRemoteIds(remoteId: Traversable[RConvId]): Future[Seq[ConvId]]
   def getByRemoteId(remoteId: RConvId): Future[Option[ConversationData]]
-  def getByRemoteIds2(remoteIds: Traversable[RConvId]): Future[Map[RConvId, ConversationData]]
+  def getByRemoteIds2(remoteIds: Set[RConvId]): Future[Map[RConvId, ConversationData]]
 
   def getAllConvs: Future[IndexedSeq[ConversationData]]
   def updateLocalId(oldId: ConvId, newId: ConvId): Future[Option[ConversationData]]
@@ -134,7 +134,7 @@ class ConversationStorageImpl(storage: ZmsDatabase) extends CachedStorageImpl[Co
     if (cs.isEmpty) Future successful Nil
     else updateAll2(cs.map(_.id), _.withFreshSearchKey)
 
-  def apply[A](f: (GenMap[ConvId, ConversationData], GenMap[RConvId, ConvId]) => A): Future[A] = init map { _ => f(conversationsById, remoteMap) }
+  def apply[A](f: (GenMap[ConvId, ConversationData], GenMap[RConvId, ConvId]) => A): Future[A] = init.map(_ => f(conversationsById, remoteMap))
 
   def getByRemoteId(remoteId: RConvId): Future[Option[ConversationData]] = init.map { _ =>
     remoteMap.get(remoteId).flatMap(conversationsById.get)
@@ -144,7 +144,7 @@ class ConversationStorageImpl(storage: ZmsDatabase) extends CachedStorageImpl[Co
     remoteId.flatMap(remoteMap.get).toVector
   }
 
-  override def getByRemoteIds2(remoteIds: Traversable[RConvId]): Future[Map[RConvId, ConversationData]] = init.map { _ =>
+  override def getByRemoteIds2(remoteIds: Set[RConvId]): Future[Map[RConvId, ConversationData]] = init.map { _ =>
     remoteIds.map(rId => rId -> remoteMap.get(rId).flatMap(conversationsById.get)).toMap.collect {
       case (rId, Some(conversationData)) => rId -> conversationData
     }
@@ -159,10 +159,10 @@ class ConversationStorageImpl(storage: ZmsDatabase) extends CachedStorageImpl[Co
 
   def updateLocalIds(update: Map[ConvId, ConvId]) =
     for {
-      _    <- removeAll(update.values)
-      convs <- getAll(update.keys)
+      _      <- removeAll(update.values)
+      convs  <- getAll(update.keys)
       result <- insertAll(convs.flatten.map(c => c.copy(id = update(c.id))))
-      _ <- removeAll(update.keys)
+      _      <- removeAll(update.keys)
     } yield result
 
   override def search(prefix: SearchKey, self: UserId, handleOnly: Boolean, teamId: Option[TeamId] = None) = storage(ConversationDataDao.search(prefix, self, handleOnly, teamId)(_))

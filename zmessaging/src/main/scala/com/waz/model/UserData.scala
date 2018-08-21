@@ -149,7 +149,7 @@ object UserData {
   }
 
   // used for testing only
-  def apply(name: String): UserData = UserData(UserId(), name = name, searchKey = SearchKey.simple(name))
+  def apply(name: String): UserData = UserData(UserId(name), name = name, searchKey = SearchKey.simple(name))
 
   def apply(id: UserId, name: String): UserData = UserData(id, None, name, None, None, searchKey = SearchKey(name), handle = None)
 

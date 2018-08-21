@@ -27,7 +27,6 @@ import com.waz.service.tracking.TrackingService
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
 import com.waz.utils.events.Signal
-import ConversationsContentUpdater._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NoStackTrace
@@ -35,10 +34,8 @@ import scala.util.control.NoStackTrace
 trait ConversationsContentUpdater {
   def convById(id: ConvId): Future[Option[ConversationData]]
   def convByRemoteId(id: RConvId): Future[Option[ConversationData]]
-  def convsByRemoteId(ids: Traversable[RConvId]): Future[Map[RConvId, ConversationData]]
+  def convsByRemoteId(ids: Set[RConvId]): Future[Map[RConvId, ConversationData]]
   def storage: ConversationStorage
-  def getOneToOneConversation(toUser: UserId, selfUserId: UserId, remoteId: Option[RConvId] = None, convType: ConversationType = ConversationType.OneToOne): Future[ConversationData]
-  def getOneToOneConversations(selfUserId: UserId, convsInfo: Seq[OneToOneConvData]): Future[Map[UserId, ConversationData]]
   def updateConversation(id: ConvId, convType: Option[ConversationType] = None, hidden: Option[Boolean] = None): Future[Option[(ConversationData, ConversationData)]]
   def hideIncomingConversation(user: UserId): Future[Option[(ConversationData, ConversationData)]]
   def setConversationHidden(id: ConvId, hidden: Boolean): Future[Option[(ConversationData, ConversationData)]]
@@ -65,6 +62,7 @@ trait ConversationsContentUpdater {
 }
 
 class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
+                                      selfUserId:      UserId,
                                       teamId:          Option[TeamId],
                                       usersStorage:    UsersStorage,
                                       membersStorage:  MembersStorage,
@@ -89,7 +87,8 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
 
   override def convByRemoteId(id: RConvId): Future[Option[ConversationData]] = storage.getByRemoteId(id)
 
-  override def convsByRemoteId(ids: Traversable[RConvId]): Future[Map[RConvId, ConversationData]] = storage.getByRemoteIds2(ids)
+  override def convsByRemoteId(ids: Set[RConvId]): Future[Map[RConvId, ConversationData]] =
+    storage.getByRemoteIds2(ids)
 
   override def updateConversationName(id: ConvId, name: String) = storage.update(id, { conv =>
       if (conv.convType == ConversationType.Group)
@@ -179,56 +178,6 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
     } yield conv
   }
 
-  /**
-   * Finds or creates local one-to-one conversation with given user and/or remoteId.
-   * Updates remoteId if different and merges conversations if two are found for given local and remote id.
-   *
-   * Will not post created conversation to backend.
-   * TODO: improve - it looks too complicated and duplicates some code
-   */
-  override def getOneToOneConversation(toUser: UserId, selfUserId: UserId, remoteId: Option[RConvId] = None, convType: ConversationType = ConversationType.OneToOne) =
-    getOneToOneConversations(selfUserId, Seq(OneToOneConvData(toUser, remoteId, convType))).map(_.values.head)
-
-  override def getOneToOneConversations(selfUserId: UserId, convsInfo: Seq[OneToOneConvData]): Future[Map[UserId, ConversationData]] =
-    Serialized.future('getOneToOneConversations) {
-      verbose(s"getOneToOneConversation(self: $selfUserId, convs:${convsInfo.size})")
-
-      def convIdForUser(userId: UserId) = ConvId(userId.str)
-      def userIdForConv(convId: ConvId) = UserId(convId.str)
-
-      for {
-        allUsers <- usersStorage.listAll(convsInfo.map(_.toUser))
-        userMap = allUsers.map(u => u.id -> Vector(u)).toMap
-        convs = convsInfo.map { case OneToOneConvData(toUser, remoteId, convType) =>
-          val convId = convIdForUser(toUser)
-          convId -> (ConversationData(
-            convId,
-            remoteId.getOrElse(RConvId(toUser.str)),
-            name          = None,
-            creator       = selfUserId,
-            convType      = convType,
-            generatedName = NameUpdater.generatedName(convType)(userMap(toUser)),
-            team          = teamId,
-            access        = Set(Access.PRIVATE),
-            accessRole    = Some(AccessRole.PRIVATE)), remoteId)
-        }.toMap
-
-        remotes <- storage.getByRemoteIds2(convsInfo.flatMap(_.remoteId))
-
-        _ <- storage.updateLocalIds(convsInfo.collect {
-          case OneToOneConvData(toUser, Some(remoteId), _) if remotes.contains(remoteId) =>
-            remotes(remoteId).id -> convIdForUser(toUser)
-        }.toMap)
-
-        result <- storage.updateOrCreateAll2(convs.keys, {
-          case (cId, Some(conv)) =>
-            convs(cId)._2.fold(conv)(remotes.getOrElse(_, conv))
-          case (cId, _) =>
-            convs(cId)._1
-        })
-      } yield result.map(conv => userIdForConv(conv.id) -> conv).toMap
-    }
-
   override def hideIncomingConversation(user: UserId) = storage.update(ConvId(user.str), { conv =>
     if (conv.convType == ConversationType.Incoming) conv.copy(hidden = true) else conv
   })
@@ -264,8 +213,4 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
 
   override def updateAccessMode(id: ConvId, access: Set[Access], accessRole: Option[AccessRole], link: Option[ConversationData.Link] = None) =
     storage.update(id, conv => conv.copy(access = access, accessRole = accessRole, link = if (!access.contains(Access.CODE)) None else link.orElse(conv.link)))
-}
-
-object ConversationsContentUpdater {
-  case class OneToOneConvData(toUser: UserId, remoteId: Option[RConvId] = None, convType: ConversationType = ConversationType.OneToOne)
 }
