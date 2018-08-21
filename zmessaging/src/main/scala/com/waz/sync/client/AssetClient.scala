@@ -27,6 +27,7 @@ import com.waz.cache.{CacheEntry, CacheService, Expiration, LocalData}
 import com.waz.model.{Mime, _}
 import com.waz.utils.{IoUtils, JsonDecoder, JsonEncoder}
 import com.waz.znet2.http.HttpClient.dsl._
+import com.waz.znet2.http.HttpClient.AutoDerivation._
 import com.waz.znet2.http.HttpClient.{Progress, ProgressCallback}
 import com.waz.znet2.http.MultipartBodyMixed.Part
 import com.waz.znet2.http.Request.UrlCreator

@@ -31,7 +31,6 @@ package object testutils {
   private implicit lazy val ec = Threading.Background
 
   object Implicits {
-    implicit def apiim_to_im(im: com.waz.api.ImageAsset): ImageAsset = im.asInstanceOf[ImageAsset]
 
     implicit class MessagesCursorSeq(list: MsgCursor) extends Seq[MessageAndLikes] {
       override def length: Int = list.size

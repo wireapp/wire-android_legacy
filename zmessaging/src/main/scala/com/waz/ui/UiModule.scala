@@ -17,13 +17,11 @@
  */
 package com.waz.ui
 
-import android.net.Uri
 import android.os.{Handler, Looper}
-import com.waz.Control.getOrUpdate
+import com.waz.ZLog.ImplicitTag._
 import com.waz.service._
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events._
-import com.waz.ZLog.ImplicitTag._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -79,13 +77,8 @@ class UiModule(val global: GlobalModule) extends UiEventContext with ZMessagingR
   private implicit val ui: UiModule = this
 
   val zms = new ZMessagingResolver(this)
-  val uiCache = new UiCache[Uri, AnyRef](0)(this)
 
-  def imageCache    = global.imageCache
-  def bitmapDecoder = global.bitmapDecoder
-  lazy val tracking      = global.trackingService
-  lazy val assetLoader   = global.globalLoader
-  lazy val accounts      = global.accountsService
+  lazy val accounts = global.accountsService
 
   val currentAccount = accounts.activeAccountManager
   val currentZms = accounts.activeZms
@@ -93,13 +86,7 @@ class UiModule(val global: GlobalModule) extends UiEventContext with ZMessagingR
   currentZms.onChanged { _ => onReset ! true }
 
   def getCurrent = accounts.activeZms.head
-
-  lazy val images: Images = new Images(global.context, bitmapDecoder, tracking)
-
-  lazy val globalImageLoader = global.imageLoader
-  lazy val network = global.network
-
-  def cached[A <: AnyRef](uri: Uri, default: => A) = getOrUpdate(uiCache)(uri, default).asInstanceOf[A]
+  
 
 }
 

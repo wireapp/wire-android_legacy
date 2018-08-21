@@ -17,10 +17,7 @@
  */
 package com.waz.model
 
-import java.util.Date
-
 import com.waz.api.Verification
-import com.waz.api.impl.AccentColor
 import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.model.UserData.ConnectionStatus
@@ -29,6 +26,7 @@ import com.waz.sync.client.UserSearchClient.UserSearchEntry
 import com.waz.utils._
 import com.waz.utils.wrappers.{DB, DBCursor}
 import org.json.JSONObject
+
 import scala.concurrent.duration._
 
 case class UserData(id:                    UserId,
@@ -151,7 +149,7 @@ object UserData {
   }
 
   // used for testing only
-  def apply(name: String): UserData = UserData(UserId(), name = name, searchKey = SearchKey.simple(name))
+  def apply(name: String): UserData = UserData(UserId(name), name = name, searchKey = SearchKey.simple(name))
 
   def apply(id: UserId, name: String): UserData = UserData(id, None, name, None, None, searchKey = SearchKey(name), handle = None)
 
@@ -169,7 +167,7 @@ object UserData {
 
   def apply(user: UserInfo, withSearchKey: Boolean): UserData =
     UserData(user.id, None, user.name.getOrElse(""), user.email, user.phone, user.trackingId, user.mediumPicture.map(_.id),
-      user.accentId.getOrElse(AccentColor().id), SearchKey(if (withSearchKey) user.name.getOrElse("") else ""), deleted = user.deleted,
+      user.accentId.getOrElse(AccentColor.defaultColor.id), SearchKey(if (withSearchKey) user.name.getOrElse("") else ""), deleted = user.deleted,
       handle = user.handle, providerId = user.service.map(_.provider), integrationId = user.service.map(_.id))
 
   implicit lazy val Decoder: JsonDecoder[UserData] = new JsonDecoder[UserData] {
@@ -305,8 +303,8 @@ object UserData {
       list(db.rawQuery(select + " " + handleCondition + teamCondition.map(qu => s" $qu").getOrElse(""), null)).toSet
     }
 
-    def findWireBots(implicit db: DB) = iterating(db.query(table.name, null, s"${IntegrationId.name} is not null", null, null, null, null))
-
     def findForTeams(teams: Set[TeamId])(implicit db: DB) = iterating(findInSet(TeamId, teams.map(Option(_))))
+
+    def findService(integrationId: IntegrationId)(implicit db: DB) = iterating(find(IntegrationId, Some(integrationId)))
   }
 }

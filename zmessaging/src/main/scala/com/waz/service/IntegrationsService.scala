@@ -17,66 +17,114 @@
  */
 package com.waz.service
 
+import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.verbose
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.internalError
+import com.waz.content.{AssetsStorage, ConversationStorage, MembersStorage, UsersStorage}
 import com.waz.model._
-import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsUiService}
+import com.waz.service.conversation.ConversationsUiService
+import com.waz.service.messages.MessagesService
+import com.waz.sync.client.{ErrorOr, IntegrationsClient}
 import com.waz.sync.{SyncRequestService, SyncResult, SyncServiceHandle}
 import com.waz.threading.Threading
-import com.waz.utils.events.{Signal, SourceSignal}
-import com.waz.utils.returning
 
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 
 trait IntegrationsService {
-  def searchIntegrations(startWith: String): Signal[Seq[IntegrationData]]
-  def getIntegration(pId: ProviderId, iId: IntegrationId): Future[IntegrationData]
-  def getProvider(id: ProviderId): Future[ProviderData]
+  def searchIntegrations(startWith: Option[String] = None): ErrorOr[Seq[IntegrationData]]
+  def getIntegration(pId: ProviderId, iId: IntegrationId): ErrorOr[IntegrationData]
 
-  def onIntegrationsSynced(name: String, data: Seq[IntegrationData]): Future[Unit]
-  def onProviderSynced(pId: ProviderId, data: ProviderData): Future[Unit]
-  def onIntegrationSynced(pId: ProviderId, iId: IntegrationId, data: IntegrationData): Future[Unit]
+  def getOrCreateConvWithService(pId: ProviderId, serviceId: IntegrationId): ErrorOr[ConvId]
 
   def addBotToConversation(cId: ConvId, pId: ProviderId, iId: IntegrationId): Future[Either[ErrorResponse, Unit]]
   def removeBotFromConversation(cId: ConvId, botId: UserId): Future[Either[ErrorResponse, Unit]]
 }
 
-class IntegrationsServiceImpl(teamId:       Option[TeamId],
+class IntegrationsServiceImpl(selfUserId:   UserId,
+                              teamId:       Option[TeamId],
+                              client:       IntegrationsClient,
+                              assetStorage: AssetsStorage,
                               sync:         SyncServiceHandle,
-                              syncRequests: SyncRequestService,
+                              users:        UsersStorage,
+                              members:      MembersStorage,
+                              messages:     MessagesService,
+                              convs:        ConversationStorage,
                               convsUi:      ConversationsUiService,
-                              convs:        ConversationsContentUpdater) extends IntegrationsService {
+                              syncRequests: SyncRequestService) extends IntegrationsService {
   implicit val ctx = Threading.Background
 
-  private var integrationSearch = Map.empty[String, SourceSignal[Seq[IntegrationData]]]
-  private var providers         = Map.empty[ProviderId, ProviderData]
-  private var integrations      = Map.empty[IntegrationId, IntegrationData]
-
-  override def searchIntegrations(startWith: String) =
-    integrationSearch.getOrElse(startWith, returning(Signal[Seq[IntegrationData]]()) { sig =>
-      integrationSearch += (startWith -> sig)
-      sync.syncIntegrations(startWith)
-    })
-
-  override def getIntegration(pId: ProviderId, iId: IntegrationId) =
-    if (integrations.contains(iId)) Future.successful(integrations(iId))
-    else sync.syncIntegration(pId, iId).flatMap(syncRequests.scheduler.await).map(_ => integrations(iId))
-
-  override def getProvider(pId: ProviderId) =
-    if (providers.contains(pId)) Future.successful(providers(pId))
-    else sync.syncProvider(pId).flatMap(syncRequests.scheduler.await).map(_ => providers(pId))
-
-  override def onIntegrationsSynced(name: String, data: Seq[IntegrationData]) =
-    integrationSearch.get(name) match {
-      case Some(signal) => Future.successful(signal ! data)
-      case None         => Future.failed(new Exception(s"received sync data for unknown integrations name: $name"))
+  override def searchIntegrations(startWith: Option[String] = None) =
+    teamId match {
+      case Some(tId) => client.searchTeamIntegrations(startWith, tId).future.flatMap {
+        case Right(svs) => updateAssets(svs).map(svs => Right(svs))
+        case Left(err) => Future.successful(Left(err))
+      }
+      case None => Future.successful(Right(Seq.empty[IntegrationData]))
     }
 
-  override def onIntegrationSynced(pId: ProviderId, iId: IntegrationId, data: IntegrationData) =
-    Future.successful(integrations += iId -> data)
+  override def getIntegration(pId: ProviderId, iId: IntegrationId) =
+    client.getIntegration(pId, iId).future.flatMap {
+      case Right((integration, asset)) =>
+        updateAssets(Map(integration -> asset)).map(svs => Right(svs.head))
+      case Left(err) => Future.successful(Left(err))
+    }
 
-  override def onProviderSynced(id: ProviderId, data: ProviderData) =
-    Future.successful(providers += id -> data)
+  //Checks to see if the "new" asset we download for a bot isn't already in the database. If it is, we avoid creating a
+  //new AssetData, and replace the AssetId on the IntegrationData with that of the asset previously put in the data base.
+  //This has to be done first by checking the remote ids for any matches
+  private def updateAssets(svs: Map[IntegrationData, Option[AssetData]]): Future[Seq[IntegrationData]] = {
+    verbose(s"updateAssets: $svs")
+    val services = svs.keys.toSet
+    val assets = svs.values.flatten.toSet
+    val remoteIds = assets.flatMap(_.remoteId)
+
+    for {
+      existingAssets <- assetStorage.findByRemoteIds(remoteIds)
+      _              <- assetStorage.insertAll(assets -- assets.filter(_.remoteId.exists(existingAssets.flatMap(_.remoteId).contains)))
+    } yield
+      services.map { service =>
+        val redundantAssetDataRId = svs(service).flatMap(_.remoteId)
+        service.copy(asset = existingAssets.find(a => redundantAssetDataRId == a.remoteId).map(_.id).orElse(service.asset))
+      }.toSeq
+  }
+
+  override def getOrCreateConvWithService(pId: ProviderId, serviceId: IntegrationId) = {
+    def createConv =
+      for {
+        (conv, syncId) <- convsUi.createGroupConversation()
+        res <- syncRequests.scheduler.await(syncId).flatMap {
+          case SyncResult.Success =>
+            for {
+              postResult <- addBotToConversation(conv.id, pId, serviceId)
+              service    <- members.getActiveUsers(conv.id)
+              res        <- postResult.fold(Left(_), _ => Right(service.find(_ != selfUserId))) match {
+                case Left(error) => Future.successful(Left(error))
+                case Right(Some(u)) => messages.addConnectRequestMessage(conv.id, selfUserId, u, "", "", fromSync = true).map(_ => Right(conv.id))
+                case Right(_) => Future.successful(Left(ErrorResponse.internalError("No user found for newly added service found - this shouldn't happen")))
+              }
+            } yield res
+          case result =>
+            Future.successful(Left(result.error.getOrElse(ErrorResponse.internalError("Failed to create group conversation for bot"))))
+        }
+      } yield res
+
+    (for {
+      users      <- users.findUsersForService(serviceId).map(_.map(_.id)) //all created users with that service Id
+      allConvs   <- members.getByUsers(users).map(_.map(_.convId)) //all conversations with one of the userIds for that service
+      allMembers <- members.getByConvs(allConvs.toSet).map(_.map(m => m.convId -> m.userId))  //all member data for all of those conversations
+      onlyUs = allMembers //the filtered member data where there are only 2 users, one of them is us, and the other is one of the possible service users
+        .groupBy { case (c, _) => c }.map { case (cid, us) => cid -> us.map(_._2).toSet }
+        .collect { case (c, us) if us.size == 2 && us.filterNot(_ == selfUserId).subsetOf(users) && us.contains(selfUserId) => c }
+      convs   <- this.convs.getAll(onlyUs).map(_.flatten)
+    } yield convs.find(c => teamId.exists(c.team.contains) && c.name.isEmpty).map(_.id)).recover {
+      case NonFatal(_) => Option.empty[ConvId]
+    }.flatMap {
+      case Some(conv) => Future.successful(Right(conv))
+      case _ => createConv
+    }
+  }
 
   // pId here is redundant - we can take it from our 'integrations' map
   override def addBotToConversation(cId: ConvId, pId: ProviderId, iId: IntegrationId) =

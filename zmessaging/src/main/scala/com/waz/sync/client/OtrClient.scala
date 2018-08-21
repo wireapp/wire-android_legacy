@@ -60,6 +60,7 @@ class OtrClientImpl(implicit
                     authRequestInterceptor: AuthRequestInterceptor) extends OtrClient {
 
   import HttpClient.dsl._
+  import HttpClient.AutoDerivation._
   import MessagesClient.OtrMessageSerializer
   import OtrClient._
   import com.waz.ZLog.ImplicitTag._

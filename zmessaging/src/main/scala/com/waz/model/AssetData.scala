@@ -20,8 +20,9 @@ package com.waz.model
 import android.util.Base64
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetStatus.UploadCancelled
+import com.waz.model.MessageData.MessageDataDao.{ExpiryTime, iterating, table}
 import com.waz.service.UserService
-import com.waz.utils.wrappers.DBCursor
+import com.waz.utils.wrappers.{DB, DBCursor}
 //import com.waz.ZLog.ImplicitTag._
 //import com.waz.ZLog.verbose
 import com.waz.content.WireContentProvider

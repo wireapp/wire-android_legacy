@@ -153,7 +153,7 @@ object RichMediaContentParser {
     true
   }
 
-  def parseUriWithScheme(content: String, defaultScheme: String = "http") = {
+  def parseUriWithScheme(content: String, defaultScheme: String = "https") = {
     LoggedTry {
       val cleanContent = cleanInvalidEscapes(content)
 

@@ -20,7 +20,7 @@ package com.waz.content
 import android.content.Context
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.UserData.{ConnectionStatus, UserDataDao}
-import com.waz.model.{TeamId, UserData, UserId}
+import com.waz.model.{IntegrationId, TeamId, UserData, UserId}
 import com.waz.service.SearchKey
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.TrimmingLruCache.Fixed
@@ -40,6 +40,8 @@ trait UsersStorage extends CachedStorage[UserId, UserData] {
   def listAcceptedOrPendingUsers: Future[Map[UserId, UserData]]
   def getOrElseUpdate(id: UserId, default: => UserData): Future[UserData]
   def addOrOverwrite(user: UserData): Future[UserData]
+
+  def findUsersForService(id: IntegrationId): Future[Set[UserData]]
 
   def getContactNameParts: CancellableFuture[Map[UserId, NameParts]]
 }
@@ -154,7 +156,11 @@ class UsersStorageImpl(context: Context, storage: ZmsDatabase) extends CachedSto
     }
   }
 
-  override def getByTeam(teams: Set[TeamId]) = find(data => data.teamId.map(id => teams.contains(id)).getOrElse(false), UserDataDao.findForTeams(teams)(_), identity)
+  override def getByTeam(teams: Set[TeamId]) =
+    find(data => data.teamId.exists(id => teams.contains(id)), UserDataDao.findForTeams(teams)(_), identity)
+
+  override def findUsersForService(id: IntegrationId) =
+    find(_.integrationId.contains(id), UserDataDao.findService(id)(_), identity).map(_.toSet)
 
   override def removeByTeam(teams: Set[TeamId]) = for {
     members <- getByTeam(teams)

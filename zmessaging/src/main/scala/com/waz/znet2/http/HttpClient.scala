@@ -145,6 +145,8 @@ object HttpClient {
 
   }
 
+  object AutoDerivation extends AutoDerivationRulesForDeserializers with AutoDerivationRulesForSerializers
+
 }
 
 trait HttpClient {

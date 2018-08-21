@@ -36,7 +36,7 @@ import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.EventContext
+import com.waz.utils.events.{EventContext, Signal}
 import com.waz.sync.client.ErrorOr
 
 import scala.collection.{breakOut, mutable}
@@ -53,6 +53,7 @@ trait ConversationsService {
   def setConversationArchived(id: ConvId, archived: Boolean): Future[Option[ConversationData]]
   def forceNameUpdate(id: ConvId): Future[Option[(ConversationData, ConversationData)]]
   def onMemberAddFailed(conv: ConvId, users: Set[UserId], error: Option[ErrorType], resp: ErrorResponse): Future[Unit]
+  def groupConversation(convId: ConvId): Signal[Boolean]
   def isGroupConversation(convId: ConvId): Future[Boolean]
   def isWithService(convId: ConvId): Future[Boolean]
 
@@ -206,14 +207,11 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     }
   }
 
-  def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse]) = Future.traverse(conversations) { conv =>
-    eventScheduler.post(conv.id) {
-      for {
-        (_, created) <- updateConversations(Seq(conv))
-        _            <- messages.addDeviceStartMessages(created, selfUserId)
-      } yield {}
-    }
-  }.map(_ => {})
+  def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse]) =
+    for {
+      (_, created) <- updateConversations(conversations)
+      _            <- messages.addDeviceStartMessages(created, selfUserId)
+    } yield {}
 
   private def updateConversations(responses: Seq[ConversationResponse]): Future[(Seq[ConversationData], Seq[ConversationData])] = {
 
@@ -262,15 +260,13 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       } yield (convs, created.toSeq)
     }
 
-    def updateMembers() = Future.sequence(responses.map(c => (c.id, c.members)).map {
-      case (remoteId, members) =>
-        content.convByRemoteId(remoteId) flatMap {
-          case Some(c) => membersStorage.set(c.id, members + selfUserId)
-          case _ =>
-            error(s"updateMembers() didn't find conv with given remote id for: $remoteId")
-            successful(())
-        }
-    })
+    def updateMembers() =
+      content.convsByRemoteId(responses.map(_.id).toSet).flatMap { convs =>
+        val toUpdate = responses.map(c => (c.id, c.members)).flatMap {
+          case (remoteId, members) => convs.get(remoteId).map(_.id -> (members + selfUserId))
+        }.toMap
+        membersStorage.setAll(toUpdate)
+      }
 
     def syncUsers() = users.syncIfNeeded(responses.flatMap(_.members).toSet)
 
@@ -306,14 +302,14 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     _ <- messages.removeLocalMemberJoinMessage(conv, users)
   } yield ()
 
-  def isGroupConversation(convId: ConvId) =
-    for {
-      Some(conv) <- convsStorage.get(convId)
-      res <-
-        if (conv.convType != ConversationType.Group) Future.successful(false)
-        else if (conv.name.isDefined || conv.team.isEmpty) Future.successful(true)
-        else membersStorage.getActiveUsers(convId).map(ms => !(ms.contains(selfUserId) && ms.size == 2))
-    } yield res
+  def groupConversation(convId: ConvId) =
+    convsStorage.signal(convId).map(c => (c.convType, c.name, c.team)).flatMap {
+      case (convType, _, _) if convType != ConversationType.Group => Signal.const(false)
+      case (_, Some(_), _) | (_, _, None) => Signal.const(true)
+      case _ => membersStorage.activeMembers(convId).map(ms => !(ms.contains(selfUserId) && ms.size <= 2))
+    }
+
+  def isGroupConversation(convId: ConvId) = groupConversation(convId).head
 
   def isWithService(convId: ConvId) =
     membersStorage.getActiveUsers(convId)

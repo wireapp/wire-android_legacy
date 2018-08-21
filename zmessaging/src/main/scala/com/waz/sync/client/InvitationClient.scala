@@ -39,6 +39,7 @@ class InvitationClientImpl(implicit
                            authRequestInterceptor: AuthRequestInterceptor) extends InvitationClient {
 
   import HttpClient.dsl._
+  import HttpClient.AutoDerivation._
   import com.waz.sync.client.InvitationClient._
 
   override def postTeamInvitation(invitation: TeamInvitation): ErrorOrResponse[ConfirmedTeamInvitation] = {
@@ -50,7 +51,7 @@ class InvitationClientImpl(implicit
 }
 
 object InvitationClient {
-  def teamInvitationPath(teamId: TeamId) = s"teams/$teamId/invitations"
+  def teamInvitationPath(teamId: TeamId) = s"/teams/$teamId/invitations"
 
   implicit lazy val TeamInviteEncoder: JsonEncoder[TeamInvitation] = new JsonEncoder[TeamInvitation] {
     def apply(i: TeamInvitation): JSONObject = JsonEncoder { js =>
