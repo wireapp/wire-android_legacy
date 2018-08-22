@@ -47,6 +47,7 @@ import com.waz.utils.events._
 import org.threeten.bp.Instant
 import org.threeten.bp.Instant.now
 
+import scala.collection.immutable.ListSet
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.{GenMap, GenSet, breakOut, mutable => mut}
 import scala.concurrent.Future
@@ -151,7 +152,7 @@ class ContactsServiceImpl(userId:         UserId,
     else readContactsPermission.orElse(Signal.const(false)).head
   }
 
-  private lazy val readContactsPermission = permissions.allPermissions(Set(READ_CONTACTS))
+  private lazy val readContactsPermission = permissions.allPermissions(ListSet(READ_CONTACTS))
 
   private lazy val contactsObserver = readContactsPermission.flatMap {
     case true => new ContentObserverSignal(Contacts)(context)
