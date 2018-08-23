@@ -273,7 +273,7 @@ class CallingEvent(partName:              String,
     guestsAllowed.foreach(v => o.put("is_allow_guests", v))
     callParticipantsCount.foreach(v => o.put("conversation_participants_in_call_max", v))
     callDuration.foreach(v => o.put("duration", v.getSeconds))
-    setupTime.foreach(v => o.put("setup_time", v))
+    setupTime.foreach(v => o.put("setup_time", v.getSeconds))
     endReason.foreach(v => o.put("reason", reasonString(v)))
     videoAudioToggled.foreach(v => o.put("AV_switch_toggled", v))
   })
