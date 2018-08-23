@@ -20,8 +20,8 @@ package com.waz.service.tracking
 import java.lang.Math.max
 
 import com.waz.ZLog.LogTag
-import com.waz.api.{EphemeralExpiration, NetworkMode}
-import com.waz.model.{IntegrationId, Mime, EphemeralDuration}
+import com.waz.api.NetworkMode
+import com.waz.model.{IntegrationId, Mime}
 import com.waz.service.call.Avs.AvsClosedReason
 import com.waz.service.call.Avs.AvsClosedReason.reasonString
 import com.waz.service.push.ReceivedPushData
@@ -30,8 +30,8 @@ import org.json
 import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 
-import scala.util.Try
 import scala.concurrent.duration.FiniteDuration
+import scala.util.Try
 
 trait TrackingEvent {
   val name: String
