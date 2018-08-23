@@ -30,10 +30,8 @@ import com.waz.service.messages.{MessageEventProcessor, MessagesContentUpdater, 
 import com.waz.service.otr.OtrService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.testutils.TestGlobalPreferences
-import com.waz.utils._
 import com.waz.utils.events.EventStream
 import org.scalatest.Inside
-import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -52,6 +50,8 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
   val msgsService       = mock[MessagesService]
   val convs             = mock[ConversationsContentUpdater]
   val otr               = mock[OtrService]
+  val users             = mock[UserService]
+  val members           = mock[MembersStorage]
   val prefs             = new TestGlobalPreferences()
 
 
@@ -321,11 +321,13 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
     (otrClientsStorage.onUpdated _).expects().anyNumberOfTimes().returning(EventStream[Seq[(UserClients, UserClients)]]())
     (membersStorage.onAdded _).expects().anyNumberOfTimes().returning(EventStream[Seq[ConversationMemberData]]())
     (membersStorage.onDeleted _).expects().anyNumberOfTimes().returning(EventStream[Seq[(UserId, ConvId)]]())
+    (users.syncIfNeeded _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Some(SyncId())))
+    (members.add (_: ConvId, _: Iterable[UserId])).expects(*, *).anyNumberOfTimes().returning(Future.successful(Set.empty))
 
     //often repeated mocks
     (deletions.getAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
 
-    new MessageEventProcessor(selfUserId, storage, content, assets, msgsService, convs, otr)
+    new MessageEventProcessor(selfUserId, storage, content, assets, msgsService, users, members, convs, otr)
   }
 
 }

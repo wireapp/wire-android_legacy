@@ -21,20 +21,19 @@ package com.waz.service.messages
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.{error, verbose, warn}
 import com.waz.api.{Message, Verification}
-import com.waz.content.MessagesStorage
+import com.waz.content.{MembersStorage, MessagesStorage}
 import com.waz.model.AssetMetaData.Image.Tag.{Medium, Preview}
 import com.waz.model.AssetStatus.{UploadCancelled, UploadFailed}
 import com.waz.model.GenericContent.{Asset, Calling, Cleared, Ephemeral, ImageAsset, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Receipt, Text}
 import com.waz.model._
-import com.waz.service.EventScheduler
 import com.waz.service.assets.AssetService
 import com.waz.service.conversation.ConversationsContentUpdater
-import com.waz.service.otr.VerificationStateUpdater.{ClientAdded, ClientUnverified, MemberAdded, VerificationChange}
 import com.waz.service.otr.OtrService
+import com.waz.service.otr.VerificationStateUpdater.{ClientAdded, ClientUnverified, MemberAdded, VerificationChange}
+import com.waz.service.{EventScheduler, UserService}
 import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
 import com.waz.utils.{RichFuture, _}
-import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 
@@ -43,6 +42,8 @@ class MessageEventProcessor(selfUserId:          UserId,
                             content:             MessagesContentUpdater,
                             assets:              AssetService,
                             msgsService:         MessagesService,
+                            users:               UserService,
+                            members:             MembersStorage,
                             convs:               ConversationsContentUpdater,
                             otr:                 OtrService) {
 
@@ -58,7 +59,6 @@ class MessageEventProcessor(selfUserId:          UserId,
     }
   }
 
-
   private[service] def processEvents(conv: ConversationData, events: Seq[MessageEvent]): Future[Set[MessageData]] = {
     val toProcess = events.filter {
       case GenericMessageEvent(_, _, _, msg) if GenericMessage.isBroadcastMessage(msg) => false
@@ -73,6 +73,8 @@ class MessageEventProcessor(selfUserId:          UserId,
       as    <- updateAssets(toProcess)
       msgs  = toProcess map { createMessage(conv, _) } filter (_ != MessageData.Empty)
       _     = verbose(s"messages from events: ${msgs.map(m => m.id -> m.msgType)}")
+      _     <- users.syncIfNeeded(events.map(_.from).toSet)
+      _     <- members.add(conv.id, events.map(_.from).toSet)
       res   <- content.addMessages(conv.id, msgs)
       _     <- updateLastReadFromOwnMessages(conv.id, msgs)
       _     <- deleteCancelled(as)
