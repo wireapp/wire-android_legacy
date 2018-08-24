@@ -25,7 +25,7 @@ import com.waz.model.GenericContent.Text
 import com.waz.model._
 import com.waz.model.otr.UserClients
 import com.waz.service.assets.AssetService
-import com.waz.service.conversation.ConversationsContentUpdater
+import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.{MessageEventProcessor, MessagesContentUpdater, MessagesService}
 import com.waz.service.otr.OtrService
 import com.waz.specs.AndroidFreeSpec
@@ -42,16 +42,13 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
   val selfUserId        = UserId("self")
   val storage           = mock[MessagesStorage]
   val convsStorage      = mock[ConversationStorage]
-  val usersStorage      = mock[UsersStorage]
-  val membersStorage    = mock[MembersStorage]
   val otrClientsStorage = mock[OtrClientsStorage]
   val deletions         = mock[MsgDeletionStorage]
   val assets            = mock[AssetService]
   val msgsService       = mock[MessagesService]
   val convs             = mock[ConversationsContentUpdater]
   val otr               = mock[OtrService]
-  val users             = mock[UserService]
-  val members           = mock[MembersStorage]
+  val convsService      = mock[ConversationsService]
   val prefs             = new TestGlobalPreferences()
 
 
@@ -319,15 +316,12 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
     //TODO make VerificationStateUpdater mockable
     (otrClientsStorage.onAdded _).expects().anyNumberOfTimes().returning(EventStream[Seq[UserClients]]())
     (otrClientsStorage.onUpdated _).expects().anyNumberOfTimes().returning(EventStream[Seq[(UserClients, UserClients)]]())
-    (membersStorage.onAdded _).expects().anyNumberOfTimes().returning(EventStream[Seq[ConversationMemberData]]())
-    (membersStorage.onDeleted _).expects().anyNumberOfTimes().returning(EventStream[Seq[(UserId, ConvId)]]())
-    (users.syncIfNeeded _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Some(SyncId())))
-    (members.add (_: ConvId, _: Iterable[UserId])).expects(*, *).anyNumberOfTimes().returning(Future.successful(Set.empty))
+    (convsService.addUnexpectedUsersMemberToConv _).expects(*, *).anyNumberOfTimes().returning(Future.successful({}))
 
     //often repeated mocks
     (deletions.getAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
 
-    new MessageEventProcessor(selfUserId, storage, content, assets, msgsService, users, members, convs, otr)
+    new MessageEventProcessor(selfUserId, storage, content, assets, msgsService, convsService, convs, otr)
   }
 
 }

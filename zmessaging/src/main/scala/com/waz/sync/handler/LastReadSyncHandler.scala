@@ -41,7 +41,7 @@ class LastReadSyncHandler(selfUserId: UserId, convs: ConversationStorage, metada
         Future successful SyncResult.Success
       case Some(conv) =>
         val msg = GenericMessage(Uid(), LastRead(conv.remoteId, time))
-        otrSync.postOtrMessage(ConvId(selfUserId.str), RConvId(selfUserId.str), msg) map (_.fold(SyncResult(_), { _ => SyncResult.Success }))
+        otrSync.postOtrMessage(ConvId(selfUserId.str), msg).map(_.fold(SyncResult(_), { _ => SyncResult.Success }))
       case None =>
         Future successful SyncResult(ErrorResponse.internalError(s"No conversation found for id: $convId"))
     }

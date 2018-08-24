@@ -46,7 +46,7 @@ import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{Future, Promise}
 
 /** PushService handles notifications coming from FCM, WebSocket, and fetch.
   * We assume FCM notifications are unreliable, so we use them only as information that we should perform a fetch (syncHistory).
@@ -67,7 +67,7 @@ trait PushService {
 
   def onHistoryLost: SourceSignal[Instant] with BgEventSource
   def processing: Signal[Boolean]
-  def afterProcessing[T](f : => Future[T])(implicit ec: ExecutionContext): Future[T]
+  def waitProcessing: Future[Unit]
 
   /**
     * Drift to the BE time at the moment we fetch notifications
@@ -103,8 +103,9 @@ class PushServiceImpl(userId:               UserId,
 
   override val onHistoryLost = new SourceSignal[Instant] with BgEventSource
   override val processing = Signal(false)
-  override def afterProcessing[T](f : => Future[T])(implicit ec: ExecutionContext): Future[T] =
-    processing.filter(_ == false).head.flatMap(_ => f)
+
+  override def waitProcessing =
+    processing.filter(_ == false).head.map(_ => {})
 
   private val beDriftPref = prefs.preference(BackendDrift)
   override val beDrift = beDriftPref.signal.disableAutowiring()
