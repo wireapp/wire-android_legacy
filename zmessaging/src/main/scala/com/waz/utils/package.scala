@@ -311,18 +311,6 @@ package object utils {
   }
 
   implicit class RichJSON(val json: JSONObject) extends AnyVal {
-    //returns a map of the top-level names to the string representation of their objects - used for calling metrics
-    def topLevelStringMap = try {
-      val names = json.names()
-      (0 until names.length()).map(names.getString).map { name =>
-        name -> json.get(name).toString
-      }.toMap
-    } catch {
-      case NonFatal(e) =>
-        e.printStackTrace()
-        Map.empty[String, String]
-    }
-
     def setType(eventType: String): JSONObject = json.put("type", eventType)
   }
 

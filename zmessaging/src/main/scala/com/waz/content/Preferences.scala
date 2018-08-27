@@ -355,6 +355,7 @@ object GlobalPreferences {
   lazy val AutoAnswerCallPrefKey   = PrefKey[Boolean]("PREF_KEY_AUTO_ANSWER_ENABLED")
   lazy val V31AssetsEnabledKey     = PrefKey[Boolean]("PREF_V31_ASSETS_ENABLED")
   lazy val WsForegroundKey         = PrefKey[Boolean]("PREF_KEY_WS_FOREGROUND_SERVICE_ENABLED")
+  lazy val SkipTerminatingState    = PrefKey[Boolean]("skip_terminating_state") //for calling
 
   lazy val PushEnabledKey          = PrefKey[Boolean]("PUSH_ENABLED", customDefault = true)
   lazy val PushToken               = PrefKey[Option[PushToken]]("PUSH_TOKEN")

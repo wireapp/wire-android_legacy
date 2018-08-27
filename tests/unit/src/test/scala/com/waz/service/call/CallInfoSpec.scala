@@ -19,6 +19,7 @@ package com.waz.service.call
 
 import com.waz.model.{ConvId, LocalInstant, UserId}
 import com.waz.ZLog.ImplicitTag._
+import com.waz.service.call.CallInfo.CallState.{Ended, SelfConnected}
 import com.waz.specs.AndroidFreeSpec
 
 import scala.concurrent.duration._
@@ -47,11 +48,20 @@ class CallInfoSpec extends AndroidFreeSpec {
     result(call.durationFormatted.head) shouldEqual "60:35"
   }
 
+  scenario("Updating state with the same value twice should not override previous state") {
+    callInfo()
+      .updateCallState(Ended)
+      .updateCallState(Ended).prevState shouldEqual Some(SelfConnected)
+
+
+  }
+
   def callInfo() = CallInfo(
     ConvId("conversation"),
     account1Id,
     isGroup = false,
     UserId("callerId"),
+    CallInfo.CallState.SelfConnected,
     estabTime = Some(LocalInstant.Now(clock))
   )
 

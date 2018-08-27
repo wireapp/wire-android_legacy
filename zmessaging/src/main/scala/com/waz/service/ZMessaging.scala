@@ -207,7 +207,8 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val verificationUpdater                        = wire[VerificationStateUpdater]
   lazy val msgEvents: MessageEventProcessor           = wire[MessageEventProcessor]
   lazy val connection: ConnectionServiceImpl          = wire[ConnectionServiceImpl]
-  lazy val calling: CallingService                    = wire[CallingService]
+  lazy val calling: CallingServiceImpl                    = wire[CallingServiceImpl]
+  lazy val callLogging: CallLoggingService            = wire[CallLoggingService]
   lazy val contacts: ContactsServiceImpl              = wire[ContactsServiceImpl]
   lazy val typing: TypingService                      = wire[TypingService]
   lazy val richmedia                                  = wire[RichMediaService]
@@ -277,6 +278,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
     conversations
     users
     expiringUsers
+    callLogging
 
     push // connect on start
 

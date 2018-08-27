@@ -134,6 +134,22 @@ class Signal[A](@volatile protected[events] var value: Option[A] = None) extends
     override protected[events] def onUnwire(): Unit = self.unsubscribe(this)
   }
 
+  lazy val onChangedWithPrevious: EventStream[(Option[A], A)] = new EventStream[(Option[A], A)] with SignalListener { stream =>
+    private var prev = self.value
+
+    override def changed(ec: Option[ExecutionContext]): Unit = stream.synchronized {
+      self.value foreach { current =>
+        if (!prev.contains(current)) {
+          dispatch((prev, current), ec)
+          prev = Some(current)
+        }
+      }
+    }
+
+    override protected def onWire(): Unit = self.subscribe(this)
+    override protected[events] def onUnwire(): Unit = self.unsubscribe(this)
+  }
+
   def head(implicit logTag: LogTag): Future[A] = currentValue match {
     case Some(v) => CancellableFuture successful v
     case None =>
