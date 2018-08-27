@@ -39,7 +39,7 @@ import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache
 import com.waz.ui.MemoryImageCache.{Entry, Key}
 import com.waz.utils.Cache
-import com.waz.utils.wrappers.{Context, GoogleApi, GoogleApiImpl}
+import com.waz.utils.wrappers.{Context, GoogleApi}
 import com.waz.znet2.HttpClientOkHttpImpl
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RequestInterceptor}
@@ -96,10 +96,11 @@ trait GlobalModule {
   def trackingService:      TrackingService
 }
 
-class GlobalModuleImpl(val context: AContext, val backend: BackendConfig) extends GlobalModule { global =>
-  val prefs:                    GlobalPreferences                = GlobalPreferences(context)
+class GlobalModuleImpl(val context:   AContext,
+                       val backend:   BackendConfig,
+                       val prefs:     GlobalPreferences,
+                       val googleApi: GoogleApi) extends GlobalModule { global =>
   //trigger initialization of Firebase in onCreate - should prevent problems with Firebase setup
-  val googleApi:                GoogleApi                        = new GoogleApiImpl(context, backend, prefs)
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
   val network:                  DefaultNetworkModeService        = wire[DefaultNetworkModeService]
 

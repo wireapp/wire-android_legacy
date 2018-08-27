@@ -63,11 +63,6 @@ trait ZMessagingService extends Service {
   import Threading.Implicits.Background
   import ZMessagingService._
 
-  final abstract override def onCreate(): Unit = {
-    super.onCreate()
-    ZMessaging.onCreate(getApplicationContext)
-  }
-
   private def accounts = ZMessaging.currentAccounts
 
   def onZmsIntent[Result](intent: Intent)(execute: ZMessaging => Future[Result]): Future[Result] =

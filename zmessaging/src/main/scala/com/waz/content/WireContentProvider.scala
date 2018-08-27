@@ -128,13 +128,13 @@ object WireContentProvider {
 
   object CacheUri {
 
-    def builder(context: Context) = URI.parse(ContentResolver.SCHEME_CONTENT + "://" + context.getPackageName).buildUpon
+    private def builder(context: Context) = URI.parse(ContentResolver.SCHEME_CONTENT + "://" + context.getPackageName).buildUpon
 
     def apply(key: CacheKey, context: Context): URI = builder(context).appendEncodedPath(Cache).appendPath(key.str).build
 
     def apply(entry: CacheEntryData, context: Context): URI = {
       val b = builder(context).appendEncodedPath(Cache).appendPath(entry.key.str)
-      entry.fileName foreach b.appendPath
+      entry.fileName.foreach(b.appendPath)
       b.build
     }
 
