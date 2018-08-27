@@ -44,7 +44,6 @@ import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.events._
 import com.waz.utils.wrappers.Context
 import com.waz.utils.{RichInstant, RichWireInstant, Serialized, returning, returningF}
-import com.waz.zms.CallWakeService
 import org.threeten.bp.Duration
 
 import scala.collection.immutable.ListSet
@@ -120,11 +119,6 @@ class CallingService(val accountId:       UserId,
       case true =>
     }(EventContext.Global)
   )
-
-  callProfile.onChanged { p =>
-    verbose(s"Call profile changed. active call: ${p.activeCall}, non active calls: ${p.nonActiveCalls}")
-    p.activeCall.foreach(i => if (i.state.contains(SelfCalling)) CallWakeService(context, accountId, i.convId))
-  }
 
   def onSend(ctx: Pointer, convId: RConvId, userId: UserId, clientId: ClientId, msg: String) = {
     withConv(convId) { (_, conv) =>

@@ -16,8 +16,6 @@
         <service android:name="com.waz.zms.SyncService" />
         <service android:name="com.waz.zms.NotificationsAndroidService" />
         <service android:name="com.waz.zms.WebSocketService" />
-        <service android:name="com.waz.zms.CallWakeService" android:exported="true" />
-
 
         <receiver android:name="com.waz.zms.WebSocketBroadcastReceiver">
             <intent-filter>
