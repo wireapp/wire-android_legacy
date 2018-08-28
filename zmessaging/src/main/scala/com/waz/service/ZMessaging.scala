@@ -221,7 +221,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val recordAndPlay                              = wire[RecordAndPlayService]
   lazy val receipts                                   = wire[ReceiptService]
   lazy val ephemeral                                  = wire[EphemeralMessagesService]
-  lazy val gsmService                                 = wire[GsmInterruptService]
 
   lazy val assetSync                                  = wire[AssetSyncHandler]
   lazy val usersearchSync                             = wire[UserSearchSyncHandler]
@@ -278,7 +277,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
     conversations
     users
     expiringUsers
-    gsmService
 
     push // connect on start
 

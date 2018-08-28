@@ -53,6 +53,8 @@ import scala.util.control.NonFatal
 
 class GlobalCallingService() {
 
+  import com.waz.threading.Threading.Implicits.Background
+
   lazy val globalCallProfile: Signal[GlobalCallProfile] = ZMessaging.currentAccounts.zmsInstances.flatMap(zs => Signal.sequence(zs.map(_.calling.callProfile).toSeq: _*)).map { profiles =>
     val allCalls = profiles.flatMap(_.availableCalls.map(c => (c._2.account, c._2.convId) -> c._2)).sortBy(_._2.startTime)
     GlobalCallProfile(allCalls.headOption.map(_._1), allCalls.toMap)
@@ -62,6 +64,9 @@ class GlobalCallingService() {
 
   //If there is an active call in one or more of the logged in accounts, returns the account id for the one with the oldest call
   lazy val activeAccount: Signal[Option[UserId]] = globalCallProfile.map(_.activeCall.map(_.account))
+
+  //can be used to drop all active calls in case of GCM
+  def dropActiveCalls(): Unit = services.head.map(_.map(_._2)).map(_.foreach(_.onInterrupted()))
 }
 
 class CallingService(val accountId:       UserId,
