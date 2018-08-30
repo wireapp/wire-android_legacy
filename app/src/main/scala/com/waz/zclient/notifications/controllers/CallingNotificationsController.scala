@@ -42,7 +42,7 @@ import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.views.ImageController
 import com.waz.zclient.utils.ContextUtils.{getString, _}
-import com.waz.zclient.utils.RingtoneUtils
+import com.waz.zclient.utils.{DeprecationUtils, RingtoneUtils}
 import com.waz.zms.CallWakeService
 
 import scala.concurrent.Future
@@ -213,7 +213,8 @@ object CallingNotificationsController {
       case (false, false) => getString(R.string.system_notification__calling_one)
     }
 
-    val builder = new NotificationCompat.Builder(cxt, NotificationManagerWrapper.ChannelId)
+    //TODO Make sure that notifications behavior will still the same, before switching to NotificationCompat.Builder
+    val builder = DeprecationUtils.getBuilder(cxt)
       .setSmallIcon(R.drawable.call_notification_icon)
       .setLargeIcon(not.bitmap.orNull)
       .setContentTitle(title)
