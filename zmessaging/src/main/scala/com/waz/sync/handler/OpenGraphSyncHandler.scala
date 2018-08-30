@@ -17,8 +17,8 @@
  */
 package com.waz.sync.handler
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.api.Message
 import com.waz.api.Message.Part
 import com.waz.api.impl.ErrorResponse
@@ -39,7 +39,6 @@ import com.waz.sync.client.{AssetClient, OpenGraphClient}
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.utils.RichFuture
 import com.waz.utils.wrappers.URI
-import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 
@@ -83,7 +82,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
                     Future successful SyncResult.Success
                   case Right(proto) =>
                     verbose(s"updated link previews: $proto")
-                    otrSync.postOtrMessage(conv, proto) map {
+                    otrSync.postOtrMessage(conv.id, proto) map {
                       case Left(err) => SyncResult(err)
                       case Right(_) => SyncResult.Success
                     }

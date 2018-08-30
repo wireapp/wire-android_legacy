@@ -31,7 +31,6 @@ import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 import org.json
 import org.json.JSONObject
-import org.threeten.bp.Instant
 
 import scala.concurrent.duration.FiniteDuration
 import scala.util.control.NonFatal
@@ -61,8 +60,8 @@ class ConversationsClientImpl(implicit
                               authRequestInterceptor: AuthRequestInterceptor) extends ConversationsClient {
 
   import ConversationsClient._
-  import HttpClient.dsl._
   import HttpClient.AutoDerivation._
+  import HttpClient.dsl._
   import com.waz.threading.Threading.Implicits.Background
 
   private implicit val ConversationIdsResponseDeserializer: RawBodyDeserializer[ConversationsResult] =

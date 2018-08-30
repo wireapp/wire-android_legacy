@@ -387,9 +387,9 @@ class CallingService(val accountId:       UserId,
     case None => warn("Tried to continue degraded call without a current active call")
   }
 
-  private def sendCallMessage(convId: ConvId, msg: GenericMessage, ctx: Pointer): Unit = withConv(convId) { (w, conv) =>
+  private def sendCallMessage(convId: ConvId, msg: GenericMessage, ctx: Pointer): Unit = withConv(convId) { (w, _) =>
     verbose(s"Sending msg on behalf of avs: convId: $convId, msg: $msg")
-    otrSyncHandler.postOtrMessage(conv, msg).map {
+    otrSyncHandler.postOtrMessage(convId, msg).map {
       case Right(_) =>
         updateActiveCall(_.copy(outstandingMsg = None))("sendCallMessage/verified")
         avs.onHttpResponse(w, 200, "", ctx)

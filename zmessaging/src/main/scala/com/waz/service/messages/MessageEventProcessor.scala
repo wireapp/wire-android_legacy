@@ -28,13 +28,12 @@ import com.waz.model.GenericContent.{Asset, Calling, Cleared, Ephemeral, ImageAs
 import com.waz.model._
 import com.waz.service.EventScheduler
 import com.waz.service.assets.AssetService
-import com.waz.service.conversation.ConversationsContentUpdater
-import com.waz.service.otr.VerificationStateUpdater.{ClientAdded, ClientUnverified, MemberAdded, VerificationChange}
+import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.otr.OtrService
+import com.waz.service.otr.VerificationStateUpdater.{ClientAdded, ClientUnverified, MemberAdded, VerificationChange}
 import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
 import com.waz.utils.{RichFuture, _}
-import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 
@@ -43,6 +42,7 @@ class MessageEventProcessor(selfUserId:          UserId,
                             content:             MessagesContentUpdater,
                             assets:              AssetService,
                             msgsService:         MessagesService,
+                            convsService:        ConversationsService,
                             convs:               ConversationsContentUpdater,
                             otr:                 OtrService) {
 
@@ -58,7 +58,6 @@ class MessageEventProcessor(selfUserId:          UserId,
     }
   }
 
-
   private[service] def processEvents(conv: ConversationData, events: Seq[MessageEvent]): Future[Set[MessageData]] = {
     val toProcess = events.filter {
       case GenericMessageEvent(_, _, _, msg) if GenericMessage.isBroadcastMessage(msg) => false
@@ -73,6 +72,7 @@ class MessageEventProcessor(selfUserId:          UserId,
       as    <- updateAssets(toProcess)
       msgs  = toProcess map { createMessage(conv, _) } filter (_ != MessageData.Empty)
       _     = verbose(s"messages from events: ${msgs.map(m => m.id -> m.msgType)}")
+      _     <- convsService.addUnexpectedUsersMemberToConv(conv.id, events.map(_.from).toSet)
       res   <- content.addMessages(conv.id, msgs)
       _     <- updateLastReadFromOwnMessages(conv.id, msgs)
       _     <- deleteCancelled(as)

@@ -24,7 +24,7 @@ import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model._
 import com.waz.sync.client.OtrClient.{ClientMismatch, MessageResponse}
-import com.waz.sync.otr.OtrMessage
+import com.waz.sync.otr.OtrSyncHandler.OtrMessage
 import com.waz.utils._
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
@@ -81,7 +81,7 @@ object MessagesClient {
     msg.sender = OtrClient.clientId(m.sender)
     msg.nativePush = m.nativePush
     msg.recipients = m.recipients.userEntries
-    m.blob foreach { msg.blob = _ }
+    m.external foreach { msg.blob = _ }
 
     val bytes = MessageNano.toByteArray(msg)
     RawBody(mediaType = Some(MediaType.Protobuf), () => new ByteArrayInputStream(bytes), dataLength = Some(bytes.length))
