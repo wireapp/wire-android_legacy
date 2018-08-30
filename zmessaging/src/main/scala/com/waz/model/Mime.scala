@@ -24,9 +24,8 @@ import scala.PartialFunction.cond
 
 case class Mime(str: String) {
 
-  def extension = Option(MimeTypeMap.getSingleton.getExtensionFromMimeType(str)).getOrElse(str.drop(str.indexOf('/') + 1))
-
-  def isEmpty = str.isEmpty
+  lazy val extension = Mime.extensionsMap.getOrElse(this, str.drop(str.indexOf('/') + 1))
+  lazy val isEmpty = str.isEmpty
 
   def orElse(default: => Mime) = if (isEmpty) default else this
   def orDefault = if (isEmpty) Mime.Default else this
@@ -73,7 +72,10 @@ object Mime {
 
   object Audio {
     val MP3 = Mime("audio/mp3")
+    val MPEG3 = Mime("audio/mpeg3")
+    val MPEG = Mime("audio/mpeg")
     val MP4 = Mime("audio/mp4")
+    val M4A = Mime("audio/x-m4a")
     val AAC = Mime("audio/aac")
     val `3GPP` = Mime("audio/3gpp")
     val AMR_NB = Mime("audio/amr-nb")
@@ -85,7 +87,31 @@ object Mime {
 
     def unapply(mime: Mime): Boolean = mime.str.startsWith("audio/")//supported(mime)
 
-    val supported = Set(MP3, Mime("audio/mpeg3"), Mime("audio/mpeg"), MP4, Mime("audio/x-m4a"), AAC, `3GPP`, AMR_NB, AMR_WB, Ogg, FLAC, WAV)
+    val supported = Set(MP3, MPEG3, MPEG, MP4, M4A, AAC, `3GPP`, AMR_NB, AMR_WB, Ogg, FLAC, WAV)
   }
 
+  val extensionsMap = Map(
+    Video.MP4    -> "mp4",
+    Video.`3GPP` -> "3gpp",
+    Video.WebM   -> "webm",
+    Image.Gif    -> "gif",
+    Image.Jpg    -> "jpg",
+    Image.Png    -> "png",
+    Image.WebP   -> "webp",
+    Image.Bmp    -> "bmp",
+    Image.Tiff   -> "tiff",
+    Audio.MP3    -> "mp3",
+    Audio.MPEG3  -> "mpeg3",
+    Audio.MPEG   -> "mpeg",
+    Audio.MP4    -> "mp4",
+    Audio.M4A    -> "m4a",
+    Audio.AAC    -> "aac",
+    Audio.`3GPP` -> "3gpp",
+    Audio.AMR_NB -> "amr",
+    Audio.AMR_WB -> "amr",
+    Audio.Ogg    -> "ogg",
+    Audio.FLAC   -> "flac",
+    Audio.WAV    -> "wav",
+    Audio.PCM    -> "m4a"
+  )
 }

@@ -238,7 +238,10 @@ class AssetServiceImpl(storage:         AssetsStorage,
             id          = overrideId.getOrElse(AssetId()),
             mime        = info.mime,
             sizeInBytes = info.size.getOrElse(0),
-            name        = info.name,
+            name        = info.name.map {
+              case name if info.mime.extension.nonEmpty => name + "." + info.mime.extension
+              case name                                 => name
+            },
             source      = Some(uri),
             metaData = info.mime match {
               case Image() => AssetMetaData.Image(context, uri, Tag.Medium)
@@ -321,7 +324,7 @@ class AssetServiceImpl(storage:         AssetsStorage,
   private def updateMetaData(oldAsset: AssetData, entry: LocalData): CancellableFuture[Option[AssetData]] = {
     val (mime, nm) = entry match {
       case e: CacheEntry => (e.data.mimeType, e.data.fileName.orElse(oldAsset.name))
-      case _ => (oldAsset.mime, oldAsset.name)
+      case _             => (oldAsset.mime, oldAsset.name)
     }
     val asset = oldAsset.copy(mime = mime, name = nm)
     for {
@@ -344,7 +347,6 @@ class AssetServiceImpl(storage:         AssetsStorage,
   override def getContentUri(id: AssetId) =
     CancellableFuture.lift(storage.get(id)).flatMap {
       case Some(a: AssetData) =>
-        verbose(s"getContentUri for: $id")
         loaderService.load(a, force = true)(loader) flatMap {
           case Some(entry: CacheEntry) =>
             CancellableFuture successful {
