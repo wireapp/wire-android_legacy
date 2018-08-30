@@ -44,7 +44,7 @@ class GoogleApiImpl(context: Context, beConfig: BackendConfig, prefs: GlobalPref
 
   private val api = GoogleApiAvailability.getInstance()
 
-  private val firebaseApp = initFirebase(context, beConfig.firebaseOptions)
+  private lazy val firebaseApp = initFirebase(context, beConfig.firebaseOptions)
 
   private def isGPSAvailable = Try(api.isGooglePlayServicesAvailable(context) == SUCCESS).toOption.contains(true)
 

@@ -79,6 +79,7 @@ object FetchJob {
   val InitialBackoffDelay = 500.millis
 
   def apply(userId: UserId, nId: Option[Uid]): Unit = {
+    verbose(s"FetchJob.apply($userId, $nId)")
     val tag = s"$Tag#${userId.str}"
 
     val manager = JobManager.instance()
@@ -87,9 +88,13 @@ object FetchJob {
       verbose(s"currentJob: $j")
     }
 
+    verbose(s"is current job defined: ${currentJob.isDefined}")
+
     val hasPendingRequest = returning(JobManager.instance().getAllJobRequestsForTag(tag).asScala.toSet) { v =>
       if (v.size > 1) error(s"Shouldn't be more than one fetch job for account: $userId")
     }.nonEmpty
+
+    verbose(s"hasPendingRequest: $hasPendingRequest")
 
     if (!(hasPendingRequest || currentJob.isDefined)) {
       val args = returning(new PersistableBundleCompat()) { b =>
@@ -99,6 +104,7 @@ object FetchJob {
 
       new JobRequest.Builder(tag)
         .setBackoffCriteria(InitialBackoffDelay.toMillis, JobRequest.BackoffPolicy.EXPONENTIAL)
+        .setExecutionWindow(0L, MaxExecutionDelay.toMillis)
         .setExtras(args)
         .startNow()
         .build()

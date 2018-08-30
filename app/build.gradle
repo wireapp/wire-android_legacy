@@ -228,6 +228,7 @@ dexinfo {
 }
 
 dependencies {
+
     implementation project(':lintlib')
 
     //    implementation fileTree(dir: 'libs', include: ['*.jar'])
@@ -238,7 +239,6 @@ dependencies {
     //wire libraries:
     implementation "com.wire:audio-notifications:$audioVersion"
     implementation 'com.wire:wiretranslations:1.+'
-
     // TODO  Nasty hack to be able to build add only one wire-core flavor to the build
 
     // TODO  (I know, it sucks, will think of a better way to do this, and we need this
@@ -281,10 +281,12 @@ dependencies {
     implementation "com.google.android.gms:play-services-base:$playServicesVersion"
     implementation "com.google.android.gms:play-services-maps:$playServicesVersion"
     implementation "com.google.android.gms:play-services-location:$playServicesVersion"
-    implementation 'com.google.firebase:firebase-messaging:17.1.0'
+    implementation "com.google.android.gms:play-services-gcm:$playServicesVersion"
+    implementation 'com.google.firebase:firebase-messaging:17.3.0'
 
     //third party libraries
-    implementation 'com.evernote:android-job:1.2.0'
+    implementation 'com.evernote:android-job:1.3.0-alpha06'
+    implementation 'android.arch.work:work-runtime:1.0.0-alpha07'
     implementation 'com.jakewharton.timber:timber:4.7.0'
     implementation 'net.hockeyapp.android:HockeySDK:4.1.4'
     implementation 'com.jakewharton.threetenabp:threetenabp:1.0.3'

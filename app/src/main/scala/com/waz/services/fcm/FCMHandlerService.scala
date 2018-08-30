@@ -42,7 +42,6 @@ import scala.concurrent.Future
 class FCMHandlerService extends FirebaseMessagingService with ZMessagingService {
   import com.waz.threading.Threading.Implicits.Background
 
-  lazy val pushSenderId = ZMessaging.currentGlobal.backend.pushSenderId
   lazy val accounts = ZMessaging.currentAccounts
 
   override def onNewToken(s: String): Unit = {
@@ -64,11 +63,14 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
       verbose(s"onMessageReceived with data: $data")
       Option(ZMessaging.currentGlobal) match {
         case Some(glob) if glob.backend.pushSenderId == remoteMessage.getFrom =>
+          verbose(s"GlobalModule and pushSenderId ok")
           data.get(UserKey).map(UserId) match {
             case Some(target) =>
+              verbose(s"target: $target")
               accounts.accountsWithManagers.head.flatMap { accs =>
                 accs.find(_ == target) match {
                   case Some(acc) =>
+                    verbose(s"FCC acoount found")
                     accounts.getZms(acc).flatMap {
                       case Some(zms) => FCMHandler(zms, data, Instant.ofEpochMilli(remoteMessage.getSentTime))
                       case _ =>
@@ -81,7 +83,7 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
                 }
               }
             case _ =>
-              warn(UserKeyMissingMsg)
+              warn(s"$UserKeyMissingMsg")
               exception(new Exception(UserKeyMissingMsg), UserKeyMissingMsg)
               Future.successful({})
           }
@@ -120,6 +122,7 @@ object FCMHandlerService {
     def handleMessage(data: Map[String, String]): Future[Unit] = {
       data match {
         case NoticeNotification(nId) =>
+          verbose(s"this is a notice notification $nId")
           addNotificationToProcess(Some(nId))
 
         case _ =>
@@ -135,7 +138,9 @@ object FCMHandlerService {
         nw    <- network.networkMode.head
         now   = clock.instant + drift
         idle  = network.isDeviceIdleMode
+        _ = verbose(s"are we in the idle mode: $idle")
         _ <- nId.fold(Future.successful({})) { nId =>
+          verbose(s"receivedPushes.insert for $nId")
           receivedPushes.insert(
             ReceivedPushData(
               nId,
@@ -161,8 +166,10 @@ object FCMHandlerService {
   }
 
   object FCMHandler {
-    def apply(zms: ZMessaging, data: Map[String, String], sentTime: Instant): Future[Unit] =
+    def apply(zms: ZMessaging, data: Map[String, String], sentTime: Instant): Future[Unit] = {
+      verbose(s"FCMHandler.apply called for $data, sentTime: $sentTime")
       new FCMHandler(zms.selfUserId, zms.accounts, zms.push, zms.network, zms.receivedPushStorage, sentTime).handleMessage(data)
+    }
   }
 
   val DataKey = "data"
