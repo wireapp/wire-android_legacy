@@ -77,7 +77,7 @@ trait PushService {
   def beDrift: Signal[Duration]
 }
 
-class PushServiceImpl(userId:               UserId,
+class PushServiceImpl(selfUserId:           UserId,
                       context:              Context,
                       userPrefs:            UserPreferences,
                       prefs:                GlobalPreferences,
@@ -98,7 +98,7 @@ class PushServiceImpl(userId:               UserId,
                      (implicit ev: AccountContext) extends PushService { self =>
   import PushService._
 
-  implicit val logTag: LogTag = accountTag[PushServiceImpl](userId)
+  implicit val logTag: LogTag = accountTag[PushServiceImpl](selfUserId)
   private implicit val dispatcher = new SerialDispatchQueue(name = "PushService")
 
   override val onHistoryLost = new SourceSignal[Instant] with BgEventSource
@@ -175,7 +175,7 @@ class PushServiceImpl(userId:               UserId,
     }
   }
 
-  private val accountState = accounts.accountState(userId)
+  private val accountState = accounts.accountState(selfUserId)
 
   // true if web socket should be active,
   private val wsActive = network.networkMode.flatMap {
@@ -313,8 +313,11 @@ class PushServiceImpl(userId:               UserId,
 
         val missedEvents = notsUntilPush.filterNot(_.transient).map { n =>
           val events = JsonDecoder.array(n.events, { case (arr, i) =>
-            arr.getJSONObject(i).getString("type")
-          }).filter(TrackingEvents(_))
+            val ev = arr.getJSONObject(i)
+            (ev.getString("type"), ev.getString("from"))
+          }).filter { case (tpe, from) =>
+            TrackingEvents(tpe) && UserId(from) != selfUserId
+          }.map(_._1)
           (n.id, events)
         }.filter { case (id, evs) => evs.nonEmpty && !pushes.map(_.id).contains(id) }
 
