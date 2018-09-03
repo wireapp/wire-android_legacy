@@ -58,7 +58,7 @@ trait SoundController {
   def playCallDroppedSound(): Unit
   def playAlert(): Unit
   def shortVibrate(): Unit
-  def playMessageIncomingSound(firstMessage: Boolean): Unit
+  def playMessageIncomingSound(): Unit
   def playPingFromThem(): Unit
   def playPingFromMe(): Unit
   def playCameraShutterSound(): Unit
@@ -162,14 +162,15 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context) extends SoundCon
   def shortVibrate(): Unit =
     setVibrating(R.array.alert)
 
-  def playMessageIncomingSound(firstMessage: Boolean): Unit = {
-    if (firstMessage && !soundIntensityNone) setMediaPlaying(R.raw.first_message)
-    else if (soundIntensityFull) setMediaPlaying(R.raw.new_message)
-    setVibrating(R.array.new_message)
+  def playMessageIncomingSound(): Unit = {
+    verbose(s"playMessageIncomingSound")
+    if (soundIntensityFull) setMediaPlaying(R.raw.new_message_gcm)
+    setVibrating(R.array.new_message_gcm)
   }
 
   def playPingFromThem(): Unit = {
-    if (!soundIntensityNone) setMediaPlaying(R.raw.ping_from_them)
+    verbose(s"playPingFromThem")
+    if (!soundIntensityNone) setMediaPlaying(R.raw.ping_from_me)
     setVibrating(R.array.ping_from_them)
   }
 

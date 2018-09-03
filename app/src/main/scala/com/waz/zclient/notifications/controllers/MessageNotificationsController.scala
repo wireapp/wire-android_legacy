@@ -20,11 +20,8 @@ package com.waz.zclient.notifications.controllers
 import android.annotation.TargetApi
 import android.content.Context
 import android.graphics._
-import android.net.Uri
 import android.os.Build
-import android.support.annotation.RawRes
 import android.support.v4.app.NotificationCompat
-import android.text.TextUtils
 import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.ZLog.verbose
 import com.waz.api.NotificationsHandler.NotificationType._
@@ -48,7 +45,7 @@ import com.waz.zclient.controllers.navigation.Page
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{ResString, RingtoneUtils}
+import com.waz.zclient.utils.ResString
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -169,6 +166,8 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
 
   private def createSummaryNotificationProps(userId: UserId, silent: Boolean, nots: Seq[NotificationInfo], teamName: Option[String]) =
     NotificationProps (
+      tpe                      = nots.map(_.tpe).lastOption,
+      silent                   = Some(true),
       when                     = Some(nots.minBy(_.time.instant).time.instant.toEpochMilli),
       showWhen                 = Some(true),
       category                 = Some(NotificationCompat.CATEGORY_MESSAGE),
@@ -179,7 +178,8 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
       openAccountIntent        = Some(userId),
       clearNotificationsIntent = Some((userId, None)),
       contentInfo              = teamName,
-      color                    = notificationColor(userId)
+      color                    = notificationColor(userId),
+      size                     = Some(nots.size)
     )
 
   private def createConvNotifications(userId: UserId, silent: Boolean, nots: Seq[NotificationInfo], teamName: Option[String]): Unit = {
@@ -204,7 +204,6 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
       val teamNameOpt = if (groupedConvs.keys.size > 1) None else teamName
 
       val notFutures = groupedConvs.map { case (notId, ns) =>
-        playSound(ns, silent)
         getPictureForNotifications(userId, ns).map { pic =>
           val commonProps   = commonNotificationProperties(ns, userId, silent, pic)
           val specificProps =
@@ -226,6 +225,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
         verbose(s"notifications marked as displayed: $ids")
         notificationsService.markAsDisplayed(userId, ids)
       } (Threading.Ui)
+
     }
 
   private def singleNotificationProperties(props: NotificationProps, userId: UserId, n: NotificationInfo, teamName: Option[String]): NotificationProps = {
@@ -310,43 +310,25 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
       )
   }
 
-  private def getSelectedSoundUri(value: String, @RawRes defaultResId: Int): Uri =
-    getSelectedSoundUri(value, defaultResId, defaultResId)
-
-  private def getSelectedSoundUri(value: String, @RawRes preferenceDefault: Int, @RawRes returnDefault: Int): Uri = {
-    if (!TextUtils.isEmpty(value) && !RingtoneUtils.isDefaultValue(cxt, value, preferenceDefault)) Uri.parse(value)
-    else RingtoneUtils.getUriForRawId(cxt, returnDefault)
-  }
-
   private def commonNotificationProperties(ns: Seq[NotificationInfo], userId: UserId, silent: Boolean, pic: Option[Bitmap]) = {
     val color = notificationColor(userId)
     NotificationProps(
+      tpe           = ns.map(_.tpe).lastOption,
+      silent        = Some(silent),
       showWhen      = Some(true),
       category      = Some(NotificationCompat.CATEGORY_MESSAGE),
       priority      = Some(NotificationCompat.PRIORITY_HIGH),
       smallIcon     = Some(R.drawable.ic_menu_logo),
       vibrate       = if (!silent && soundController.isVibrationEnabled(userId)) Some(getIntArray(R.array.new_message_gcm).map(_.toLong)) else Some(Array(0l,0l)),
       autoCancel    = Some(true),
-      sound         = None,
       onlyAlertOnce = Some(ns.forall(_.hasBeenDisplayed)),
       group         = Some(userId),
       when          = Some(ns.maxBy(_.time.instant).time.instant.toEpochMilli),
       largeIcon     = pic,
       lights        = color.map(c => (c, getInt(R.integer.notifications__system__led_on), getInt(R.integer.notifications__system__led_off))),
-      color         = color
+      color         = color,
+      size          = Some(ns.size)
     )
-  }
-
-  private def playSound(ns: Seq[NotificationInfo], silent: Boolean) = {
-    val disabled = soundController.soundIntensityNone || silent || !inject[NotificationManagerWrapper].areNotificationsEnabled
-    val pingOrFull = soundController.soundIntensityFull || !(ns.size > 1 && ns.lastOption.forall(_.tpe != KNOCK))
-    if (!disabled && pingOrFull) ns.map(_.tpe).lastOption.foreach {
-        case ASSET | ANY_ASSET | VIDEO_ASSET | AUDIO_ASSET |
-             LOCATION | TEXT | CONNECT_ACCEPTED | CONNECT_REQUEST | RENAME |
-             LIKE => soundController.playMessageIncomingSound(false)
-        case KNOCK => soundController.playPingFromThem()
-        case _ =>
-      }
   }
 
   private[notifications] def getMessage(n: NotificationInfo, singleConversationInBatch: Boolean): SpannableWrapper = {
