@@ -52,8 +52,13 @@ class CallInfoSpec extends AndroidFreeSpec {
     callInfo()
       .updateCallState(Ended)
       .updateCallState(Ended).prevState shouldEqual Some(SelfConnected)
+  }
 
-
+  scenario("Updating established calls with the same state shouldn't restart established time") {
+    val estTime = clock.instant()
+    val call = callInfo().updateCallState(SelfConnected)
+    clock + 1.seconds
+    call.updateCallState(SelfConnected).estabTime shouldEqual Some(LocalInstant(estTime))
   }
 
   def callInfo() = CallInfo(

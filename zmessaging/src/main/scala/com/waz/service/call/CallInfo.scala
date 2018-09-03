@@ -108,18 +108,20 @@ case class CallInfo(convId:             ConvId,
   }
 
   def updateCallState(newState: CallState): CallInfo = {
+    val changedState = newState != this.state
+
     val withState = copy(
       state     = newState,
-      prevState = if (newState == this.state) this.prevState else Some(this.state)
+      prevState = if (!changedState) this.prevState else Some(this.state)
     )
 
     newState match {
-      case SelfJoining         => withState.copy(joinedTime = Some(LocalInstant.Now))
-      case SelfConnected       => withState.copy(estabTime  = Some(LocalInstant.Now))
+      case SelfJoining                   => withState.copy(joinedTime = Some(LocalInstant.Now))
+      case SelfConnected if changedState => withState.copy(estabTime  = Some(LocalInstant.Now))
       case Terminating |
            Ended if Set(SelfConnected, SelfJoining).exists(prevState.contains) =>
         withState.copy(endTime = endTime.orElse(Some(LocalInstant.Now))) //we may call Terminating/Ended multiple times - always take the first
-      case _                   => withState
+      case _                             => withState
     }
   }
 
