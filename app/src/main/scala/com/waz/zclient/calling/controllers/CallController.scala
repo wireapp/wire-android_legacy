@@ -336,15 +336,22 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
       data <- users.signal(userId)
     } yield data.getDisplayName.toUpperCase(getLocale) + " "
 
-  val callBannerText = Signal(callState, isGroupCall, callingUsername, conversationName, duration).map {
-    case (SelfCalling, false, caller, _, _)        => getString(R.string.call_banner_outgoing, caller)
-    case (SelfCalling, true, _, convName, _)       => getString(R.string.call_banner_outgoing, convName)
-    case (OtherCalling, true, caller, convName, _) => getString(R.string.call_banner_incoming_group, convName, caller)
-    case (OtherCalling, false, caller, _, _)       => getString(R.string.call_banner_incoming, caller)
-    case (SelfJoining, _, _, _, _)                 => getString(R.string.call_banner_joining)
-    case (SelfConnected, _, _, _, d)               => getString(R.string.call_banner_tap_to_return_to_call, d)
-    case _                                         => getString(R.string.empty_string)
-  }.map(_.toUpperCase(getLocale))
+  val callBannerText: Signal[String] =
+    (for {
+      state <- callState
+      isGroupCall <- isGroupCall
+      userName <- callingUsername
+      convName <- conversationName
+      duration <- duration
+    } yield (state, isGroupCall, userName, convName, duration)).map {
+      case (SelfCalling, false, caller, _, _)        => getString(R.string.call_banner_outgoing, caller)
+      case (SelfCalling, true, _, convName, _)       => getString(R.string.call_banner_outgoing, convName)
+      case (OtherCalling, true, caller, convName, _) => getString(R.string.call_banner_incoming_group, convName, caller)
+      case (OtherCalling, false, caller, _, _)       => getString(R.string.call_banner_incoming, caller)
+      case (SelfJoining, _, _, _, _)                 => getString(R.string.call_banner_joining)
+      case (SelfConnected, _, _, _, d)               => getString(R.string.call_banner_tap_to_return_to_call, d)
+      case _                                         => getString(R.string.empty_string)
+    }.map(_.toUpperCase(getLocale))
 
   val subtitleText: Signal[String] =
     (for {

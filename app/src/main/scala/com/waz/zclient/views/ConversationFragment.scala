@@ -124,13 +124,13 @@ class ConversationFragment extends FragmentHelper {
   }
 
   private var containerPreview: ViewGroup = _
-  private var cursorView: CursorView = _
+  private lazy val cursorView = view[CursorView](R.id.cv__cursor)
   private var audioMessageRecordingView: AudioMessageRecordingView = _
   private lazy val extendedCursorContainer = returning(view[ExtendedCursorContainer](R.id.ecc__conversation)) { vh =>
     inject[Signal[AccentColor]].map(_.color).onUi(c => vh.foreach(_.setAccentColor(c)))
   }
   private var toolbarTitle: TextView = _
-  private var listView: MessagesListView = _
+  private lazy val listView = view[MessagesListView](R.id.messages_list_view)
 
   private var leftMenu: ActionMenuView = _
   private var toolbar: Toolbar = _
@@ -207,23 +207,25 @@ class ConversationFragment extends FragmentHelper {
         CancellableFuture.delay(getInt(R.integer.framework_animation_duration_short).millis).map { _ =>
           convController.getConversation(to).map {
             case Some(toConv) =>
-              from.foreach{ id => draftMap.set(id, cursorView.getText.trim) }
-              if (toConv.convType != ConversationType.WaitForConnection) {
-                keyboardController.hideKeyboardIfVisible()
-                loadingIndicatorView.foreach(_.hide())
-                cursorView.enableMessageWriting()
+              cursorView.foreach { view =>
+                from.foreach{ id => draftMap.set(id, view.getText.trim) }
+                if (toConv.convType != ConversationType.WaitForConnection) {
+                  keyboardController.hideKeyboardIfVisible()
+                  loadingIndicatorView.foreach(_.hide())
+                  view.enableMessageWriting()
 
-                from.filter(_ != toConv.id).foreach { id =>
+                  from.filter(_ != toConv.id).foreach { id =>
 
-                  cursorView.setVisible(toConv.isActive)
-                  draftMap.get(toConv.id).map { draftText =>
-                    cursorView.setText(draftText)
-                    cursorView.setConversation()
+                    view.setVisible(toConv.isActive)
+                    draftMap.get(toConv.id).map { draftText =>
+                      view.setText(draftText)
+                      view.setConversation()
+                    }
+                    audioMessageRecordingView.hide()
                   }
-                  audioMessageRecordingView.hide()
+                  // TODO: ConversationScreenController should listen to this signal and do it itself
+                  extendedCursorContainer.foreach(_.close(true))
                 }
-                // TODO: ConversationScreenController should listen to this signal and do it itself
-                extendedCursorContainer.foreach(_.close(true))
               }
             case None =>
           }
@@ -291,9 +293,6 @@ class ConversationFragment extends FragmentHelper {
     findById(R.id.tiv_typing_indicator_view)
 
     containerPreview = findById(R.id.fl__conversation_overlay)
-    cursorView = findById(R.id.cv__cursor)
-
-    listView = findById(R.id.messages_list_view)
 
     returningF( findById(R.id.sv__conversation_toolbar__verified_shield) ){ view: ShieldView =>
       view.setVisible(false)
@@ -328,7 +327,7 @@ class ConversationFragment extends FragmentHelper {
         item.getItemId match {
           case R.id.action_audio_call | R.id.action_video_call =>
             callStartController.startCallInCurrentConv(withVideo = item.getItemId == R.id.action_video_call, forceOption = true)
-            cursorView.closeEditMessage(false)
+            cursorView.foreach(_.closeEditMessage(false))
             true
           case _ => false
       }
@@ -336,7 +335,7 @@ class ConversationFragment extends FragmentHelper {
 
     toolbar.setNavigationOnClickListener(new View.OnClickListener() {
       override def onClick(v: View): Unit = {
-        cursorView.closeEditMessage(false)
+        cursorView.foreach(_.closeEditMessage(false))
         getActivity.onBackPressed()
         keyboardController.hideKeyboardIfVisible()
       }
@@ -351,7 +350,7 @@ class ConversationFragment extends FragmentHelper {
       }
     })
 
-    cursorView.setCallback(cursorCallback)
+    cursorView.foreach(_.setCallback(cursorCallback))
 
     extendedCursorContainer.foreach(globalLayoutController.addKeyboardHeightObserver)
     extendedCursorContainer.foreach(globalLayoutController.addKeyboardVisibilityObserver)
@@ -362,7 +361,9 @@ class ConversationFragment extends FragmentHelper {
     globalLayoutController.addKeyboardVisibilityObserver(keyboardVisibilityObserver)
     slidingPaneController.addObserver(slidingPaneObserver)
 
-    draftMap.withCurrentDraft { draftText => if (!TextUtils.isEmpty(draftText)) cursorView.setText(draftText) }
+    draftMap.withCurrentDraft { draftText => if (!TextUtils.isEmpty(draftText)) cursorView.foreach(_.setText(draftText)) }
+
+    listView
   }
 
   private def updateTitle(text: String): Unit = if (toolbarTitle != null) toolbarTitle.setText(text)
@@ -382,7 +383,7 @@ class ConversationFragment extends FragmentHelper {
   override def onStop(): Unit = {
     extendedCursorContainer.foreach(_.close(true))
     extendedCursorContainer.foreach(_.setCallback(null))
-    cursorView.setCallback(null)
+    cursorView.foreach(_.setCallback(null))
 
     toolbar.setOnClickListener(null)
     toolbar.setOnMenuItemClickListener(null)
@@ -397,7 +398,9 @@ class ConversationFragment extends FragmentHelper {
     navigationController.removePagerControllerObserver(pagerControllerObserver)
     navigationController.removeNavigationControllerObserver(navigationControllerObserver)
 
-    if (!cursorView.isEditingMessage) draftMap.setCurrent(cursorView.getText.trim)
+    cursorView.foreach { view =>
+      if (!view.isEditingMessage) draftMap.setCurrent(view.getText.trim)
+    }
     super.onStop()
   }
 
@@ -487,7 +490,7 @@ class ConversationFragment extends FragmentHelper {
 
   private val extendedCursorContainerCallback = new ExtendedCursorContainer.Callback {
     override def onExtendedCursorClosed(lastType: ExtendedCursorContainer.Type): Unit = {
-      cursorView.onExtendedCursorClosed()
+      cursorView.foreach(_.onExtendedCursorClosed())
 
       if (lastType == ExtendedCursorContainer.Type.EPHEMERAL)
         convController.currentConv.head.map {
@@ -509,7 +512,7 @@ class ConversationFragment extends FragmentHelper {
       case ExtendedCursorContainer.Type.EMOJIS =>
         extendedCursorContainer.foreach(_.openEmojis(userPreferencesController.getRecentEmojis, userPreferencesController.getUnsupportedEmojis, new EmojiKeyboardLayout.Callback {
           override def onEmojiSelected(emoji: LogTag) = {
-            cursorView.insertText(emoji)
+            cursorView.foreach(_.insertText(emoji))
             userPreferencesController.addRecentEmoji(emoji)
           }
         }))
@@ -583,11 +586,15 @@ class ConversationFragment extends FragmentHelper {
       case _ =>
     }
 
-    override def onMessageSent(msg: MessageData): Unit = listView.scrollToBottom()
+    override def onMessageSent(msg: MessageData): Unit = listView.foreach(_.scrollToBottom())
 
     override def openExtendedCursor(tpe: ExtendedCursorContainer.Type): Unit = ConversationFragment.this.openExtendedCursor(tpe)
 
-    override def onCursorClicked(): Unit = if (!cursorView.isEditingMessage && listView.scrollController.targetPosition.isEmpty) listView.scrollToBottom()
+    override def onCursorClicked(): Unit = cursorView.foreach { cView =>
+      listView.foreach { lView =>
+        if (!cView.isEditingMessage && lView.scrollController.targetPosition.isEmpty) lView.scrollToBottom()
+      }
+    }
 
     override def openFileSharing(): Unit = assetIntentsManager.foreach { _.openFileSharing() }
 
@@ -613,7 +620,7 @@ class ConversationFragment extends FragmentHelper {
         case (hasGuest, hasBot, isGroup) => updateGuestsBanner(hasGuest, hasBot, isGroup)
       }
       inflateCollectionIcon()
-      cursorView.enableMessageWriting()
+      cursorView.foreach(_.enableMessageWriting())
     }
   }
 
