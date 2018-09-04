@@ -20,19 +20,21 @@ package com.waz.zclient.notifications.controllers
 import android.app.{Notification, NotificationChannel, NotificationManager}
 import android.content.Context
 import android.graphics.{Color, Typeface}
-import android.net.Uri
 import android.os.Build
 import android.support.v4.app.NotificationCompat.Style
 import android.support.v4.app.{NotificationCompat, RemoteInput}
 import android.text.style.{ForegroundColorSpan, StyleSpan}
 import android.text.{SpannableString, Spanned}
 import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.ZLog.{verbose, warn}
+import com.waz.ZLog.verbose
+import com.waz.api.NotificationsHandler.NotificationType
+import com.waz.api.NotificationsHandler.NotificationType._
 import com.waz.model.{ConvId, UserId}
 import com.waz.utils.events.EventContext
 import com.waz.utils.returning
 import com.waz.utils.wrappers.Bitmap
 import com.waz.zclient.Intents.{CallIntent, QuickReplyIntent}
+import com.waz.zclient.common.controllers.SoundController
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.utils.{ResString, format}
 import com.waz.zclient.{Injectable, Injector, Intents, R}
@@ -141,7 +143,10 @@ object StyleBuilder {
   val Inbox   = 2
 }
 
-case class NotificationProps(when:                     Option[Long] = None,
+case class NotificationProps(tpe:                      Option[NotificationType] = None,
+                             silent:                   Option[Boolean] = None,
+                             size:                     Option[Int] = None,
+                             when:                     Option[Long] = None,
                              showWhen:                 Option[Boolean] = None,
                              category:                 Option[String] = None,
                              priority:                 Option[Int] = None,
@@ -158,7 +163,6 @@ case class NotificationProps(when:                     Option[Long] = None,
                              color:                    Option[Int] = None,
                              vibrate:                  Option[Array[Long]] = None,
                              autoCancel:               Option[Boolean] = None,
-                             sound:                    Option[Uri] = None,
                              onlyAlertOnce:            Option[Boolean] = None,
                              lights:                   Option[(Int, Int, Int)] = None,
                              largeIcon:                Option[Bitmap] = None,
@@ -167,6 +171,9 @@ case class NotificationProps(when:                     Option[Long] = None,
                             ) {
   override def toString: String =
     format(className = "NotificationProps", oneLiner = false,
+      "tpe"                      -> tpe,
+      "silent"                   -> silent,
+      "size"                     -> size,
       "when"                     -> when,
       "showWhen"                 -> showWhen,
       "category"                 -> category,
@@ -182,7 +189,6 @@ case class NotificationProps(when:                     Option[Long] = None,
       "contentInfo"              -> contentInfo,
       "vibrate"                  -> vibrate,
       "autoCancel"               -> autoCancel,
-      "sound"                    -> sound,
       "onlyAlertOnce"            -> onlyAlertOnce,
       "lights"                   -> lights,
       "largeIcon"                -> largeIcon,
@@ -221,7 +227,6 @@ case class NotificationProps(when:                     Option[Long] = None,
     color.foreach(builder.setColor)
     vibrate.foreach(builder.setVibrate)
     autoCancel.foreach(builder.setAutoCancel)
-    sound.foreach(builder.setSound)
     onlyAlertOnce.foreach(builder.setOnlyAlertOnce)
     lights.foreach { case (c, on, off) => builder.setLights(c, on, off) }
     largeIcon.foreach(bmp => builder.setLargeIcon(bmp))
@@ -254,6 +259,7 @@ case class NotificationProps(when:                     Option[Long] = None,
 
 trait NotificationManagerWrapper {
   def getActiveNotificationIds: Seq[Int]
+  def areNotificationsEnabled: Boolean
 }
 
 object NotificationManagerWrapper {
@@ -285,15 +291,32 @@ object NotificationManagerWrapper {
       }
 
       notificationManager.notify(id, props.build(ChannelId))
+
+      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O && !props.silent.forall(_ == true)) playSound(props)
     }
 
+    override def areNotificationsEnabled: Boolean =
+      Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
+      notificationManager.getCurrentInterruptionFilter == NotificationManager.INTERRUPTION_FILTER_ALL
+
     override def getActiveNotificationIds: Seq[Int] =
+
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
         notificationManager.getActiveNotifications.toSeq.map(_.getId)
-      else {
-        warn(s"Tried to access method getActiveNotifications from api level: ${Build.VERSION.SDK_INT}")
-        Seq.empty
+      else Seq.empty
+
+    private def playSound(props: NotificationProps) = {
+      val soundController = inject[SoundController]
+      val disabled = soundController.soundIntensityNone || !areNotificationsEnabled
+      val pingOrFull = soundController.soundIntensityFull || !(props.size.forall(_ > 1) && props.tpe.forall(_ == KNOCK))
+      if (!disabled && pingOrFull) props.tpe.foreach {
+        case ASSET | ANY_ASSET | VIDEO_ASSET | AUDIO_ASSET |
+             LOCATION | TEXT | CONNECT_ACCEPTED | CONNECT_REQUEST | RENAME |
+             LIKE => soundController.playMessageIncomingSound()
+        case KNOCK => soundController.playPingFromThem()
+        case _ =>
       }
+    }
   }
 }
 
