@@ -162,7 +162,7 @@ object HttpClientOkHttpImpl {
       code = response.code(),
       headers = convertHeaders(response.headers()),
       body = Option(response.body())
-        .filterNot(_ => response.header("Content-Type") == null) // should be treated as empty body
+        .filterNot(_ => response.header("Content-Type") == null || response.code() == ResponseCode.NoResponse) // should be treated as empty body
         .map { body =>
           val data       = body.byteStream()
           val dataLength = if (body.contentLength() == -1) None else Some(body.contentLength())
