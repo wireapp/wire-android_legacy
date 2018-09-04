@@ -24,6 +24,7 @@ import android.content.ContentResolver
 import android.graphics.BitmapFactory
 import android.media.ExifInterface
 import android.media.ExifInterface._
+import android.support.v4.content.FileProvider
 import com.waz.ZLog._
 import com.waz.bitmap.gif.{Gif, GifReader}
 import com.waz.bitmap.{BitmapDecoder, BitmapUtils}
@@ -148,14 +149,14 @@ class ImageLoaderImpl(context:                  Context,
       Metadata(data).withOrientation(if (mirror) Metadata.mirrored(o) else o)
     }
 
-  private def saveImageToGallery(data: LocalData, mime: Mime) =
+  private def saveImageToGallery(data: LocalData, mime: Mime): Future[Option[URI]] =
     {
       permissions.requestAllPermissions(ListSet(WRITE_EXTERNAL_STORAGE)).flatMap {
         case true =>
           Future {
             val newFile = AssetService.saveImageFile(mime)
             IoUtils.copy(data.inputStream, new FileOutputStream(newFile))
-            val uri = URI.fromFile(newFile)
+            val uri = new AndroidURI(FileProvider.getUriForFile(context, context.getApplicationContext.getPackageName + ".fileprovider", newFile))
             context.sendBroadcast(Intent.scanFileIntent(uri))
             Some(uri)
           }(Threading.IO)
