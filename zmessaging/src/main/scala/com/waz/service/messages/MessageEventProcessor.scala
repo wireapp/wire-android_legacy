@@ -68,11 +68,16 @@ class MessageEventProcessor(selfUserId:          UserId,
 
     val edits = toProcess collect { case GenericMessageEvent(_, time, from, msg @ GenericMessage(_, MsgEdit(_, _))) => (msg, from, time) }
 
+    val potentiallyUnexpectedMembers = events.filter {
+      case e: MemberLeaveEvent if e.userIds.contains(e.from) => false
+      case _ => true
+    }.map(_.from).toSet
+
     for {
       as    <- updateAssets(toProcess)
       msgs  = toProcess map { createMessage(conv, _) } filter (_ != MessageData.Empty)
       _     = verbose(s"messages from events: ${msgs.map(m => m.id -> m.msgType)}")
-      _     <- convsService.addUnexpectedUsersMemberToConv(conv.id, events.map(_.from).toSet)
+      _     <- convsService.addUnexpectedMembersToConv(conv.id, potentiallyUnexpectedMembers)
       res   <- content.addMessages(conv.id, msgs)
       _     <- updateLastReadFromOwnMessages(conv.id, msgs)
       _     <- deleteCancelled(as)

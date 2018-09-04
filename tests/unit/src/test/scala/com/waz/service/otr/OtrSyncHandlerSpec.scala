@@ -83,7 +83,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
       .expects(Map.empty[UserId, Seq[ClientId]])
       .returning(Future.successful({}))
 
-    (convsService.addUnexpectedUsersMemberToConv _)
+    (convsService.addUnexpectedMembersToConv _)
       .expects(conv.id, Set.empty[UserId])
       .returning(Future.successful({}))
 
@@ -193,7 +193,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
       .returning(Future.successful({}))
 
     var callsToAddUnexpectedMembers = 0
-    (convsService.addUnexpectedUsersMemberToConv _)
+    (convsService.addUnexpectedMembersToConv _)
       .expects(conv.id, *)
       .twice()
       .onCall { (_, us) =>

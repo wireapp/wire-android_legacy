@@ -316,7 +316,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
     //TODO make VerificationStateUpdater mockable
     (otrClientsStorage.onAdded _).expects().anyNumberOfTimes().returning(EventStream[Seq[UserClients]]())
     (otrClientsStorage.onUpdated _).expects().anyNumberOfTimes().returning(EventStream[Seq[(UserClients, UserClients)]]())
-    (convsService.addUnexpectedUsersMemberToConv _).expects(*, *).anyNumberOfTimes().returning(Future.successful({}))
+    (convsService.addUnexpectedMembersToConv _).expects(*, *).anyNumberOfTimes().returning(Future.successful({}))
 
     //often repeated mocks
     (deletions.getAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))

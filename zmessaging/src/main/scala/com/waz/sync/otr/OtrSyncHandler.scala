@@ -88,7 +88,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
             encryptAndSend(newMessage, Some(data)) //abandon retries and previous EncryptedContent
           }
         _ <- resp.map(_.deleted).mapFuture(service.deleteClients)
-        _ <- resp.map(_.missing.keySet).mapFuture(convsService.addUnexpectedUsersMemberToConv(conv.id, _))
+        _ <- resp.map(_.missing.keySet).mapFuture(convsService.addUnexpectedMembersToConv(conv.id, _))
         retry <- resp.flatMapFuture {
           case MessageResponse.Failure(ClientMismatch(_, missing, _, _)) if retries < 3 =>
             clientsSyncHandler.syncSessions(missing).flatMap { err =>
