@@ -18,6 +18,7 @@
 package com.waz.service.call
 
 import com.sun.jna.Pointer
+import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
 import com.waz.model.{ConvId, GenericMessage, LocalInstant, UserId}
 import com.waz.service.call.Avs.AvsClosedReason.reasonString
@@ -131,7 +132,7 @@ case class CallInfo(convId:             ConvId,
       if (userId == account) this.copy(videoSendState = videoState)
       else this.copy(videoReceiveStates = this.videoReceiveStates + (userId -> videoState))
 
-    verbose(s"updateVideoSendState: $userId, $videoState, newCall: $newCall")("CallInfo")
+    verbose(s"updateVideoSendState: $userId, $videoState, newCall: $newCall")
 
     val wasVideoToggled = newCall.wasVideoToggled || (newCall.isVideoCall != this.isVideoCall)
     newCall.copy(wasVideoToggled = wasVideoToggled)

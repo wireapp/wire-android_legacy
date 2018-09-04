@@ -17,16 +17,21 @@
  */
 package com.waz.service.call
 
-import com.waz.model.{ConvId, UserId}
+import com.waz.model.{ConvId, RemoteInstant, UserId}
 import com.waz.ZLog.ImplicitTag._
+import com.waz.service.call.Avs.AvsClosedReason
+import com.waz.service.call.CallInfo.CallState
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
+import org.threeten.bp.{Duration, Instant}
+import com.waz.utils.RichInstant
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 class CallLoggingServiceSpec extends AndroidFreeSpec {
 
@@ -40,23 +45,64 @@ class CallLoggingServiceSpec extends AndroidFreeSpec {
 
   val calls = Signal(Map.empty[ConvId, CallInfo]).disableAutowiring()
 
-  scenario("Outgoing call is tracked") {
+  scenario("Outgoing call is tracked through all state changes") {
 
     val convId = ConvId("conv")
-    val outgoingCall = CallInfo(convId, selfUserId, isGroup = false, selfUserId, SelfCalling)
 
-    val trackingCalled = Signal(false)
-    (tracking.trackCallState _).expects(selfUserId, outgoingCall).onCall { (_, _) =>
-      Future(trackingCalled ! true)
+    lazy val outgoingCall        = CallInfo(convId, selfUserId, isGroup = false, selfUserId, SelfCalling)
+    lazy val joiningCall         = outgoingCall   .updateCallState(SelfJoining)
+    lazy val establishedCall     = joiningCall    .updateCallState(SelfConnected)
+    lazy val endedCall           = establishedCall.updateCallState(Ended)
+    lazy val endedCallWithReason = endedCall      .updateCallState(Ended).copy(endReason = Some(AvsClosedReason.Normal))
+
+    val trackingCalledHistory = Signal(Seq.empty[(CallState, Option[AvsClosedReason])])
+    (tracking.trackCallState _).expects(selfUserId, *).repeat(4 to 4).onCall { (_, call) =>
+      Future(trackingCalledHistory.mutate(_ :+ (call.state, call.endReason)))
     }
+
+    (messages.addSuccessfulCallMessage _).expects(convId, selfUserId, RemoteInstant.apply(Instant.EPOCH + 35.seconds), 60.seconds).returning(Future.successful(None)) //return not important
 
     initService()
 
-    calls.mutate {
-      _ + (convId -> outgoingCall)
-    }
+    calls.mutate(_ + (convId -> outgoingCall))
 
-    await(trackingCalled.filter(identity).head)
+    await(trackingCalledHistory.filter {
+      case Seq((SelfCalling, None)) => true
+      case _ => false
+    }.head)
+
+    clock + 30.seconds //rings for 30 seconds
+    calls.mutate(_ + (convId -> joiningCall))
+
+    await(trackingCalledHistory.filter {
+      case Seq((SelfCalling, None), (SelfJoining, None)) => true
+      case _ => false
+    }.head)
+
+    clock + 5.seconds //joins for 5 seconds
+    calls.mutate(_ + (convId -> establishedCall))
+
+    await(trackingCalledHistory.filter {
+      case Seq((SelfCalling, None), (SelfJoining, None), (SelfConnected, None)) => true
+      case _ => false
+    }.head)
+
+    clock + 60.seconds //established for a minute
+    calls.mutate(_ + (convId -> endedCall))
+
+    awaitAllTasks
+    await(trackingCalledHistory.filter {
+      case Seq((SelfCalling, None), (SelfJoining, None), (SelfConnected, None)) => true
+      case _ => false
+    }.head)
+
+    clock + 5.seconds //takes 5 seconds for the callback to trigger
+    calls.mutate(_ + (convId -> endedCallWithReason))
+
+    await(trackingCalledHistory.filter {
+      case Seq((SelfCalling, None), (SelfJoining, None), (SelfConnected, None), (Ended, Some(AvsClosedReason.Normal))) => true
+      case _ => false
+    }.head)
   }
 
   scenario("Two incoming calls in different conversations are tracked") {
@@ -83,31 +129,24 @@ class CallLoggingServiceSpec extends AndroidFreeSpec {
 
     initService()
 
-    calls.mutate {
-      _ + (convId1 -> incomingCall1)
-    }
+    calls.mutate(_ + (convId1 -> incomingCall1))
 
     await(trackingCalledConv1.filter(_ == 1).head)
 
-    calls.mutate {
-      _ + (convId2 -> incomingCall2)
-    }
+    calls.mutate(_ + (convId2 -> incomingCall2))
 
     await(trackingCalledConv2.filter(_ == 1).head)
 
     //User answers call 1
-    calls.mutate {
-      _ + (convId1 -> incomingCall1.updateCallState(SelfJoining))
-    }
+    calls.mutate(_ + (convId1 -> incomingCall1.updateCallState(SelfJoining)))
 
     await(trackingCalledConv1.filter(_ == 2).head)
-
   }
-
 
   def initService() = {
 
     (calling.calls _).expects().anyNumberOfTimes().returning(calls)
+    (push.beDrift _).expects().anyNumberOfTimes().returning(Signal.const(Duration.ZERO))
 
     new CallLoggingService(selfUserId, calling, messages, push, tracking)
   }

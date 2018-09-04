@@ -134,22 +134,6 @@ class Signal[A](@volatile protected[events] var value: Option[A] = None) extends
     override protected[events] def onUnwire(): Unit = self.unsubscribe(this)
   }
 
-  lazy val onChangedWithPrevious: EventStream[(Option[A], A)] = new EventStream[(Option[A], A)] with SignalListener { stream =>
-    private var prev = self.value
-
-    override def changed(ec: Option[ExecutionContext]): Unit = stream.synchronized {
-      self.value foreach { current =>
-        if (!prev.contains(current)) {
-          dispatch((prev, current), ec)
-          prev = Some(current)
-        }
-      }
-    }
-
-    override protected def onWire(): Unit = self.subscribe(this)
-    override protected[events] def onUnwire(): Unit = self.unsubscribe(this)
-  }
-
   def head(implicit logTag: LogTag): Future[A] = currentValue match {
     case Some(v) => CancellableFuture successful v
     case None =>
@@ -187,6 +171,8 @@ class Signal[A](@volatile protected[events] var value: Option[A] = None) extends
   }
   def either[B](right: Signal[B]): Signal[Either[A, B]] = map(Left(_): Either[A, B]).orElse(right.map(Right.apply))
   def pipeTo(sourceSignal: SourceSignal[A])(implicit ec: EventContext): Unit = foreach(sourceSignal ! _)
+
+  def onPartialUpdate[B](select: A => B): Signal[A] = new PartialUpdateSignal[A, B](this)(select)
 
   /** If this signal is computed from sources that change their value via a side effect (such as signals) and is not
     * informed of those changes while unwired (e.g. because this signal removes itself from the sources' children
@@ -384,6 +370,26 @@ class RefreshingSignal[A, B](loader: => CancellableFuture[A], refreshEvent: Even
     }(queue)
   }
 }
+
+class PartialUpdateSignal[A, B](source: Signal[A])(select: A => B) extends ProxySignal[A](source) {
+
+  private object updateMonitor
+
+  override protected[events] def update(f: Option[A] => Option[A], currentContext: Option[ExecutionContext]) = {
+    val changed = updateMonitor.synchronized {
+      val next = f(value)
+      if (value.map(select) != next.map(select)) {
+        value = next; true
+      }
+      else false
+    }
+    if (changed) notifyListeners(currentContext)
+    changed
+  }
+
+  override protected def computeValue(current: Option[A]) = source.value
+}
+
 
 object RefreshingSignal {
   private implicit val tag: LogTag = "RefreshingSignal"

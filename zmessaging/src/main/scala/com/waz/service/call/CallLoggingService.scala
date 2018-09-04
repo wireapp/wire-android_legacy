@@ -17,17 +17,16 @@
  */
 package com.waz.service.call
 
-import com.waz.ZLog.{verbose, warn}
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.{verbose, warn}
 import com.waz.model.{ConvId, LocalInstant, UserId}
 import com.waz.service.call.Avs.AvsClosedReason._
-import com.waz.service.call.CallInfo.CallState
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
 import com.waz.service.tracking.TrackingService
-import com.waz.utils.{RichWireInstant, returning}
-import com.waz.utils.events.{EventContext, EventStreamWithAuxSignal, Subscription}
+import com.waz.utils.RichWireInstant
+import com.waz.utils.events.EventContext
 import org.threeten.bp.Duration
 
 class CallLoggingService(selfUserId:  UserId,
@@ -36,43 +35,39 @@ class CallLoggingService(selfUserId:  UserId,
                          pushService: PushService,
                          tracking:    TrackingService)(implicit eventContext: EventContext) {
 
-  verbose("initialised")
-
-  private var subs = Map.empty[ConvId, Subscription]
+  private var subscribedConvs = Set.empty[ConvId]
 
   /**
     * Here, we listen to the changes of the set of conversation ids which have a defined CallInfo. Whenever this set
     * changes (note, we only ever add or change CallInfos, we never remove them from the Map of available calls), we then
     * subscribe to the state changes of each one, passing in the current value for each call to decide how we might react.
     */
-  (new EventStreamWithAuxSignal(calling.calls.map(_.keySet).onChangedWithPrevious, calling.calls)) {
-    case ((prevIds, ids), Some(calls)) =>
-      verbose(s"Listening to calls: $ids")
-      val toCreate  = ids -- prevIds.getOrElse(Set.empty)
+  calling.calls.onPartialUpdate(_.keySet) { calls =>
+    val ids = calls.keySet
+    verbose(s"Listening to calls: $ids")
 
-      def onStateChange(st: CallState, call: CallInfo) = {
-        verbose(s"call: ${call.convId} changed to state: $st")
+    val prevIds = subscribedConvs
+    val toCreate = ids -- prevIds
 
-        if (st != Terminating && (st != Ended || call.endReason.isDefined)) //We don't want to track the Terminating state, or the Ended state if we don't yet have the end reason
+
+    toCreate.foreach { id =>
+      val callSignal = calling.calls.map(_.get(id))
+
+      callSignal.onPartialUpdate(_.map(_.state)) {
+        case Some(call) if call.state == Ended => onCallFinished(call)
+        case _ =>
+      }
+
+      callSignal.onPartialUpdate(_.map(c => (c.state, c.endReason))) {
+        //We don't want to track the Terminating state, or the Ended state if we don't yet have the end reason
+        case Some(call) if call.state != Terminating && (call.state != Ended || call.endReason.isDefined) =>
           tracking.trackCallState(selfUserId, call)
-
-        if (st == Ended)
-          onCallFinished(call)
+        case _ =>
       }
+    }
 
-      subs ++= toCreate.map { id =>
-        id -> {
-          val callSignal = calling.calls.map(_.get(id))
-
-          returning((new EventStreamWithAuxSignal(callSignal.map(_.map(_.state)).onChanged, callSignal)) {
-            case (Some(st), Some(Some(call))) => onStateChange(st, call)
-            case _ =>
-            //We will miss the first event since the creation of a call triggers the creation of the subscription, so we need to call onStateChange once at the start
-          })(_ => calls.get(id).foreach(call => onStateChange(call.state, call)))
-        }
-      }
-
-    case _ =>
+    //keep track of which conversations we're already listening to to avoid multiple subscriptions
+    subscribedConvs ++= toCreate
   }
 
   private def onCallFinished(call: CallInfo) = {
@@ -86,8 +81,9 @@ class CallLoggingService(selfUserId:  UserId,
           verbose("Call was never successfully established - mark as missed call")
           messages.addMissedCallMessage(call.convId, call.caller, nowTime)
         case (_, Some(est)) =>
-          verbose("Had a call, save duration as a message")
-          messages.addSuccessfulCallMessage(call.convId, call.caller, est.toRemote(drift), est.remainingUntil(endTime))
+          val duration = est.remainingUntil(endTime)
+          verbose(s"Had a call of duration: ${duration.toSeconds} seconds, save duration as a message")
+          messages.addSuccessfulCallMessage(call.convId, call.caller, est.toRemote(drift), duration)
         case _ =>
           warn(s"unexpected call state: ${call.state}")
       }
