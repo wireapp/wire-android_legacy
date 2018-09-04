@@ -20,9 +20,8 @@ package com.waz.service.tracking
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.model._
-import com.waz.service.call.Avs.AvsClosedReason
 import com.waz.service.call.CallInfo
-import com.waz.service.call.CallInfo.CallState.{OtherCalling, SelfCalling, SelfConnected, SelfJoining}
+import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.tracking.ContributionEvent.fromMime
 import com.waz.service.tracking.TrackingService.ZmsProvider
 import com.waz.service.{AccountsService, ZMessaging}
@@ -56,7 +55,7 @@ trait TrackingService {
   def historyBackedUp(isSuccess: Boolean): Future[Unit]
   def historyRestored(isSuccess: Boolean): Future[Unit]
 
-  def trackCallState(userId: UserId, callInfo: CallInfo, reason: Option[AvsClosedReason] = None): Future[Unit]
+  def trackCallState(userId: UserId, callInfo: CallInfo): Future[Unit]
 }
 
 object TrackingService {
@@ -151,43 +150,41 @@ class TrackingServiceImpl(curAccount: Signal[Option[UserId]], zmsProvider: ZmsPr
   override def historyRestored(isSuccess: Boolean) =
     track(if (isSuccess) HistoryRestoreSucceeded else HistoryRestoreFailed)
 
-  override def trackCallState(userId: UserId, callInfo: CallInfo, reason: Option[AvsClosedReason] = None) =
-    ((callInfo.prevState, callInfo.state) match {
-      case (None, Some(SelfCalling))      => Some("initiated")
-      case (None, Some(OtherCalling))     => Some("received")
-      case (Some(_), Some(SelfJoining))   => Some("joined")
-      case (Some(_), Some(SelfConnected)) => Some("established")
-      case (Some(_), None)                => Some("ended")
+  override def trackCallState(userId: UserId, info: CallInfo) =
+    ((info.prevState, info.state) match {
+      case (None,    SelfCalling)      => Some("initiated")
+      case (None,    OtherCalling)     => Some("received")
+      case (Some(_), SelfJoining)      => Some("joined")
+      case (Some(_), SelfConnected)    => Some("established")
+      case (Some(_), Ended)            => Some("ended")
       case _ =>
-        warn(s"Unexpected call state change: ${callInfo.prevState} => ${callInfo.state}, not tracking")
+        warn(s"Unexpected call state change: ${info.prevState} => ${info.state}, not tracking")
         None
     }).fold(Future.successful({})) { eventName =>
 
-      val callEnded = callInfo.state.isEmpty && callInfo.prevState.isDefined
-
       for {
         Some(z)  <- zmsProvider(Some(userId))
-        isGroup  <- z.conversations.isGroupConversation(callInfo.convId)
-        memCount <- z.membersStorage.activeMembers(callInfo.convId).map(_.size).head
-        withService <- z.conversations.isWithService(callInfo.convId)
+        isGroup  <- z.conversations.isGroupConversation(info.convId)
+        memCount <- z.membersStorage.activeMembers(info.convId).map(_.size).head
+        withService <- z.conversations.isWithService(info.convId)
         withGuests  <-
           if (isGroup)
-            z.convsStorage.get(callInfo.convId).collect { case Some(conv) => !conv.isTeamOnly }.map(Some(_))
+            z.convsStorage.get(info.convId).collect { case Some(conv) => !conv.isTeamOnly }.map(Some(_))
           else Future.successful(None)
         _ <-
           track(new CallingEvent(
             eventName,
-            callInfo.startedAsVideoCall,
+            info.startedAsVideoCall,
             isGroup,
             memCount,
             withService,
-            callInfo.caller != z.selfUserId,
+            info.caller != z.selfUserId,
             withGuests,
-            Option(callInfo.maxParticipants).filter(_ > 0),
-            callInfo.estabTime.map(est => callInfo.joinedTime.getOrElse(est).until(est)),
-            callInfo.endTime.map(end => callInfo.estabTime.getOrElse(end).until(end)),
-            reason,
-            if (callEnded) Some(callInfo.wasVideoToggled) else None
+            Option(info.maxParticipants).filter(_ > 0),
+            info.estabTime.map(est => info.joinedTime.getOrElse(est).until(est)),
+            info.endTime.map(end => info.estabTime.getOrElse(end).until(end)),
+            info.endReason,
+            if (info.state == Ended) Some(info.wasVideoToggled) else None
           ))
       } yield {}
     }

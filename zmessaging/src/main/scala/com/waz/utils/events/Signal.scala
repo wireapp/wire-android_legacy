@@ -172,6 +172,8 @@ class Signal[A](@volatile protected[events] var value: Option[A] = None) extends
   def either[B](right: Signal[B]): Signal[Either[A, B]] = map(Left(_): Either[A, B]).orElse(right.map(Right.apply))
   def pipeTo(sourceSignal: SourceSignal[A])(implicit ec: EventContext): Unit = foreach(sourceSignal ! _)
 
+  def onPartialUpdate[B](select: A => B): Signal[A] = new PartialUpdateSignal[A, B](this)(select)
+
   /** If this signal is computed from sources that change their value via a side effect (such as signals) and is not
     * informed of those changes while unwired (e.g. because this signal removes itself from the sources' children
     * lists in #onUnwire), it is mandatory to update/recompute this signal's value from the sources in #onWire, since
@@ -368,6 +370,26 @@ class RefreshingSignal[A, B](loader: => CancellableFuture[A], refreshEvent: Even
     }(queue)
   }
 }
+
+class PartialUpdateSignal[A, B](source: Signal[A])(select: A => B) extends ProxySignal[A](source) {
+
+  private object updateMonitor
+
+  override protected[events] def update(f: Option[A] => Option[A], currentContext: Option[ExecutionContext]) = {
+    val changed = updateMonitor.synchronized {
+      val next = f(value)
+      if (value.map(select) != next.map(select)) {
+        value = next; true
+      }
+      else false
+    }
+    if (changed) notifyListeners(currentContext)
+    changed
+  }
+
+  override protected def computeValue(current: Option[A]) = source.value
+}
+
 
 object RefreshingSignal {
   private implicit val tag: LogTag = "RefreshingSignal"
