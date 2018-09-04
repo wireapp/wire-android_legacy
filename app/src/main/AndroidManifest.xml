@@ -240,6 +240,13 @@
             </intent-filter>
         </service>
 
+        <receiver android:name="com.waz.services.websocket.WebSocketBroadcastReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
         <!--For Evernote Background jobs-->
         <service
             android:name="com.evernote.android.job.gcm.PlatformGcmService"
