@@ -388,7 +388,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         for {
           _ <- users.syncIfNeeded(unexpected)
           _ <- membersStorage.add(convId, unexpected)
-          _ <- Future.traverse(unexpected)(u => messages.addMemberJoinMessage(convId, u, Set(u))) //add a member join message for each user discovered
+          _ <- Future.traverse(unexpected)(u => messages.addMemberJoinMessage(convId, u, Set(u), forceCreate = true)) //add a member join message for each user discovered
         } yield {}
       case _ => Future.successful({})
     }
