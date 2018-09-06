@@ -42,9 +42,6 @@ class NameUpdater(selfUserId:     UserId,
   private implicit val ev = EventContext.Global
   private implicit val dispatcher = new SerialDispatchQueue(name = "NameUpdaterQueue")
 
-  // TODO: Move to UI
-  //private lazy val emptyConversationName = Try(context.getResources.getString(R.string.zms_empty_conversation_name)).getOrElse("Empty conversation")
-
   // unnamed group conversations with active members
   // we are keeping that in memory, it should be fine,
   // ppl usually don't have many unnamed group conversations (especially with many users)
