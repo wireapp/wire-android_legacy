@@ -1266,10 +1266,6 @@
         <item quantity="one">%1$s new message</item>
         <item quantity="other">%1$s new messages</item>
     </plurals>
-    <plurals name="conversation_list__missed_calls_count">
-        <item quantity="one">%1$s missed call</item>
-        <item quantity="other">%1$s missed calls</item>
-    </plurals>
     <plurals name="conversation_list__pings_count">
         <item quantity="one">%1$s ping</item>
         <item quantity="other">%1$s pings</item>
@@ -1277,6 +1273,9 @@
     <plurals name="conversation_list__new_likes_count">
         <item quantity="other">%1$s ♥</item>
     </plurals>
+    <string name="conversation_list__missed_calls_plural">%1$s missed calls</string>
+    <string name="conversation_list__missed_calls_count">Missed call</string>
+    <string name="conversation_list__missed_calls_count_group">Missed call from %1$s</string>
     <string name="conversation_list__unsent_message_long">⚠ Unsent message</string>
     <string name="conversation_list__unsent_message_short">⚠</string>
 

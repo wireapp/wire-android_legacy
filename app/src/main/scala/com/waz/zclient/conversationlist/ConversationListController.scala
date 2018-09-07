@@ -20,7 +20,7 @@ package com.waz.zclient.conversationlist
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.ZMessaging
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
+import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils._
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
@@ -30,9 +30,10 @@ import com.waz.zclient.conversationlist.views.ConversationAvatarView
 import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.ZLog.ImplicitTag._
+import com.waz.api.Message
 
 import scala.collection.mutable
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class ConversationListController(implicit inj: Injector, ec: EventContext) extends Injectable {
 
@@ -124,25 +125,65 @@ object ConversationListController {
     def apply(conv: ConvId) : Signal[Seq[UserId]] = members.map(_.getOrElse(conv, Seq.empty[UserId]))
   }
 
+  case class LastMsgs(lastMsg: Option[MessageData], lastMissedCall: Option[MessageData])
 
-  // Keeps last message for each conversation, this is needed because MessagesStorage is not
+  // Keeps last message and missed call for each conversation, this is needed because MessagesStorage is not
   // supposed to be used for multiple conversations at the same time, as it loads an index of all conv messages.
   // Using MessagesStorage with multiple/all conversations forces it to reload full msgs index on every conv switch.
   class LastMessageCache(zms: ZMessaging)(implicit inj: Injector, ec: EventContext) extends Injectable {
 
+    private implicit val executionContext: ExecutionContext = Threading.Background
+
     private val cache = new mutable.HashMap[ConvId, Signal[Option[MessageData]]]
 
-    private val changeEvents = zms.messagesStorage.onChanged map { msgs => msgs.groupBy(_.convId).mapValues(_.maxBy(_.time)) }
+    private val lastReadCache = new mutable.HashMap[ConvId, Signal[Option[RemoteInstant]]]
 
-    private def updateEvents(conv: ConvId) = changeEvents.map(_.get(conv)).collect { case Some(m) => m }
+    private val changeEvents = zms.messagesStorage.onChanged.map(_.groupBy(_.convId).mapValues(_.maxBy(_.time)))
 
-    private def getLastMessage(conv: ConvId) = CancellableFuture.lift(zms.storage.db.read { MessageData.MessageDataDao.last(conv)(_) })
+    private val convLastReadChangeEvents = zms.convsStorage.onChanged.map(_.groupBy(_.id).mapValues(_.map(_.lastRead).head))
 
-    def apply(conv: ConvId): Signal[Option[MessageData]] = cache.getOrElseUpdate(conv,
-      new AggregatingSignal[MessageData, Option[MessageData]](updateEvents(conv), getLastMessage(conv), {
+    private val missedCallEvents = zms.messagesStorage.onChanged.map(_.filter(_.msgType == Message.Type.MISSED_CALL).groupBy(_.convId).mapValues(_.maxBy(_.time)))
+
+    private def messageUpdateEvents(conv: ConvId) = changeEvents.map(_.get(conv)).collect { case Some(m) => m }
+
+    private def lastReadUpdateEvents(conv: ConvId) = convLastReadChangeEvents.map(_.get(conv)).collect { case Some(m) => m }
+
+    private def missedCallUpdateEvents(conv: ConvId) = missedCallEvents.map(_.get(conv)).collect { case Some(m) => m }
+
+    private def lastMessage(conv: ConvId) = zms.storage.db.read(MessageData.MessageDataDao.last(conv)(_))
+
+    private def lastRead(conv: ConvId) = zms.storage.db.read(ConversationData.ConversationDataDao.getById(conv)(_).map(_.lastRead))
+
+    private def lastUnreadMissedCall(conv: ConvId): Future[Option[MessageData]] =
+      for {
+        lastRead <- lastReadSignal(conv).head
+        missed <-
+          zms.storage.db.read { MessageData.MessageDataDao.findByType(conv, Message.Type.MISSED_CALL)(_).acquire { msgs =>
+              lastRead.flatMap(i => msgs.toSeq.find(_.time.isAfter(i)))
+            }
+          }
+      } yield missed
+
+    def apply(conv: ConvId): Signal[LastMsgs] =
+      Signal(lastMessageSignal(conv), lastMissedCallSignal(conv)).map(LastMsgs.tupled)
+
+    private def lastMessageSignal(conv: ConvId): Signal[Option[MessageData]] = cache.getOrElseUpdate(conv,
+      new AggregatingSignal[MessageData, Option[MessageData]](messageUpdateEvents(conv), lastMessage(conv), {
         case (res @ Some(last), update) if last.time.isAfter(update.time) => res
         case (_, update) => Some(update)
       }))
+
+    private def lastReadSignal(conv: ConvId): Signal[Option[RemoteInstant]] = lastReadCache.getOrElseUpdate(conv,
+      new AggregatingSignal[RemoteInstant, Option[RemoteInstant]](lastReadUpdateEvents(conv), lastRead(conv), {
+        case (res @ Some(last), update) if last.isAfter(update) => res
+        case (_, update) => Some(update)
+      }))
+
+    private def lastMissedCallSignal(conv: ConvId): Signal[Option[MessageData]] =
+      new AggregatingSignal[MessageData, Option[MessageData]](missedCallUpdateEvents(conv), lastUnreadMissedCall(conv), {
+        case (res @ Some(last), update) if last.time.isAfter(update.time) => res
+        case (_, update) => Some(update)
+      })
   }
 
 }

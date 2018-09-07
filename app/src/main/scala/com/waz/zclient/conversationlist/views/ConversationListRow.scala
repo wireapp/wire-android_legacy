@@ -127,14 +127,17 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   val subtitleText = for {
     z <- zms
     conv <- conversation
-    lastMessage <- controller.lastMessage(conv.id)
+    lastMessage <- controller.lastMessage(conv.id).map(_.lastMsg)
     lastUnreadMessage = lastMessage.filter(_.userId != z.selfUserId).filter(_ => conv.unreadCount.total > 0)
     lastUnreadMessageUser <- lastUnreadMessage.fold2(Signal.const(Option.empty[UserData]), message => UserSignal(message.userId).map(Some(_)))
     lastUnreadMessageMembers <- lastUnreadMessage.fold2(Signal.const(Vector[UserData]()), message => UserSetSignal(message.members).map(_.toVector))
     typingUser <- userTyping
     ms <- members
     otherUser <- userData(ms.headOption)
-  } yield (conv.id, subtitleStringForLastMessages(conv, otherUser, ms.toSet, lastMessage, lastUnreadMessage, lastUnreadMessageUser, lastUnreadMessageMembers, typingUser, z.selfUserId))
+    isGroupConv <- z.conversations.groupConversation(conv.id)
+    missedCallerId <- controller.lastMessage(conv.id).map(_.lastMissedCall.map(_.userId))
+    user <- missedCallerId.fold2(Signal.const(Option.empty[String]), u => z.usersStorage.signal(u).map(d => Some(d.getDisplayName)))
+  } yield (conv.id, subtitleStringForLastMessages(conv, otherUser, ms.toSet, lastMessage, lastUnreadMessage, lastUnreadMessageUser, lastUnreadMessageMembers, typingUser, z.selfUserId, isGroupConv, user))
 
   private def userData(id: Option[UserId]) = id.fold2(Signal.const(Option.empty[UserData]), uid => UserSignal(uid).map(Option(_)))
 
@@ -430,7 +433,9 @@ object ConversationListRow {
                                     lastUnreadMessageUser:    Option[UserData],
                                     lastUnreadMessageMembers: Vector[UserData],
                                     typingUser:               Option[UserData],
-                                    selfId:                   UserId)
+                                    selfId:                   UserId,
+                                    isGroupConv:              Boolean,
+                                    user:                     Option[String])
                                    (implicit context: Context): String = {
 
     if (conv.convType == ConversationType.WaitForConnection || (lastMessage.exists(_.msgType == Message.Type.MEMBER_JOIN) && conv.convType == ConversationType.OneToOne)) {
@@ -457,8 +462,19 @@ object ConversationListRow {
       val strings = Seq(
         if (normalMessageCount > 0)
           context.getResources.getQuantityString(R.plurals.conversation_list__new_message_count, normalMessageCount, normalMessageCount.toString) else "",
-        if (missedCallCount > 0)
-          context.getResources.getQuantityString(R.plurals.conversation_list__missed_calls_count, missedCallCount, missedCallCount.toString) else "",
+        if (missedCallCount > 0) {
+          if (isGroupConv) {
+            if (missedCallCount > 1)
+              getString(R.string.conversation_list__missed_calls_plural, missedCallCount.toString)
+            else
+              getString(R.string.conversation_list__missed_calls_count_group, user.get)
+          } else {
+            if (missedCallCount > 1)
+              getString(R.string.conversation_list__missed_calls_plural, missedCallCount.toString)
+            else
+              getString(R.string.conversation_list__missed_calls_count)
+          }
+        } else "",
         if (pingCount > 0)
           context.getResources.getQuantityString(R.plurals.conversation_list__pings_count, pingCount, pingCount.toString) else "",
         if (likesCount > 0)
