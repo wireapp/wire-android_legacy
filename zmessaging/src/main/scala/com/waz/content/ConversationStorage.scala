@@ -54,6 +54,8 @@ trait ConversationStorage extends CachedStorage[ConvId, ConversationData] {
   def updateLocalIds(update: Map[ConvId, ConvId]): Future[Set[ConversationData]]
 
   def apply[A](f: (GenMap[ConvId, ConversationData], GenMap[RConvId, ConvId]) => A): Future[A]
+
+  def refreshRemoteMap(): Unit
 }
 
 class ConversationStorageImpl(storage: ZmsDatabase) extends CachedStorageImpl[ConvId, ConversationData](new UnlimitedLruCache(), storage)(ConversationDataDao, "ConversationStorage_Cached") with ConversationStorage {
@@ -116,6 +118,11 @@ class ConversationStorageImpl(storage: ZmsDatabase) extends CachedStorageImpl[Co
     cs foreach (convUpdated ! _)
 
     updateSearchKey(cs collect { case (p, c) if p.name != c.name || (p.convType == Group) != (c.convType == Group) || (c.name.nonEmpty && c.searchKey.isEmpty) => c })
+  }
+
+  def refreshRemoteMap(): Unit = {
+    remoteMap.clear()
+    conversationsById.values.foreach(conv => remoteMap += conv.remoteId -> conv.id)
   }
 
   private val init = for {
