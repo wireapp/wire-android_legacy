@@ -311,7 +311,7 @@ class PushServiceImpl(selfUserId:           UserId,
 object PushService {
 
   //These are the most important event types that generate push notifications
-  val TrackingEvents = Set("conversation.otr-message-add", "conversation.create", "conversation.rename", "user.connection", "conversation.member-join")
+  val TrackingEvents = Set("conversation.otr-message-add", "conversation.create", "conversation.rename", "conversation.member-join")
 
   val PipelineKey = "pipeline_processing"
 
