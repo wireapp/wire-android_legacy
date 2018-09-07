@@ -60,6 +60,12 @@ trait ConversationsService {
   def setToTeamOnly(convId: ConvId, teamOnly: Boolean): ErrorOr[Unit]
   def createLink(convId: ConvId): ErrorOr[Link]
   def removeLink(convId: ConvId): ErrorOr[Unit]
+
+  /**
+    * This method is used to update conversation state whenever we detect a user on sending or receiving a message
+    * who we didn't expect to be there - we need to expose these users to the self user
+    */
+  def addUnexpectedMembersToConv(convId: ConvId, us: Set[UserId]): Future[Unit]
 }
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
@@ -375,6 +381,18 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
           error("Failed to remove link", e)
           Left(ErrorResponse.internalError("Unable to remove link for conversation"))
       }
+
+  override def addUnexpectedMembersToConv(convId: ConvId, us: Set[UserId]) = {
+    membersStorage.getByConv(convId).map(_.map(_.userId).toSet).map(us -- _).flatMap {
+      case unexpected if unexpected.nonEmpty =>
+        for {
+          _ <- users.syncIfNeeded(unexpected)
+          _ <- membersStorage.add(convId, unexpected)
+          _ <- Future.traverse(unexpected)(u => messages.addMemberJoinMessage(convId, u, Set(u), forceCreate = true)) //add a member join message for each user discovered
+        } yield {}
+      case _ => Future.successful({})
+    }
+  }
 }
 
 object ConversationsService {

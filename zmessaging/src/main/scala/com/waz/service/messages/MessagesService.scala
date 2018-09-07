@@ -54,7 +54,9 @@ trait MessagesService {
 
   def addConnectRequestMessage(convId: ConvId, fromUser: UserId, toUser: UserId, message: String, name: String, fromSync: Boolean = false): Future[MessageData]
   def addConversationStartMessage(convId: ConvId, creator: UserId, users: Set[UserId], name: Option[String], time: Option[RemoteInstant] = None): Future[MessageData]
-  def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false): Future[Option[MessageData]]
+
+  //TODO forceCreate is a hacky workaround for a bug where previous system messages are not marked as SENT. Do NOT use!
+  def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false, forceCreate: Boolean = false): Future[Option[MessageData]]
   def addMemberLeaveMessage(convId: ConvId, selfUserId: UserId, user: UserId): Future[Any]
   def addRenameConversationMessage(convId: ConvId, selfUserId: UserId, name: String): Future[Option[MessageData]]
   def addTimerChangedMessage(convId: ConvId, from: UserId, duration: Option[FiniteDuration], time: RemoteInstant): Future[Unit]
@@ -252,13 +254,17 @@ class MessagesServiceImpl(selfUserId:   UserId,
     updater.addLocalSentMessage(MessageData(MessageId(), convId, Message.Type.MEMBER_JOIN, creator, name = name, members = users, firstMessage = true), time)
   }
 
-  override def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false) = {
+  override def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false, forceCreate: Boolean = false) = {
     verbose(s"addMemberJoinMessage($convId, $creator, $users)")
 
     def updateOrCreate(added: Set[UserId]) = {
       def update(msg: MessageData) = msg.copy(members = msg.members ++ added)
       def create = MessageData(MessageId(), convId, Message.Type.MEMBER_JOIN, creator, members = added, firstMessage = firstMessage)
-      updater.updateOrCreateLocalMessage(convId, Message.Type.MEMBER_JOIN, update, create)
+
+      if (forceCreate)
+        updater.addLocalSentMessage(create).map(Some(_))
+      else
+        updater.updateOrCreateLocalMessage(convId, Message.Type.MEMBER_JOIN, update, create)
     }
 
     // check if we have local leave message with same users

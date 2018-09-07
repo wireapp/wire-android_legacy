@@ -19,7 +19,6 @@ package com.waz.service.push
 
 import android.content.Context
 import com.waz.ZLog._
-import com.waz.api.NetworkMode
 import com.waz.api.NetworkMode.{OFFLINE, UNKNOWN}
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.GlobalPreferences.BackendDrift
@@ -28,7 +27,6 @@ import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.Event.EventDecoder
 import com.waz.model._
 import com.waz.model.otr.ClientId
-import com.waz.service.AccountsService.{InBackground, LoggedOut}
 import com.waz.service.ZMessaging.{accountTag, clock}
 import com.waz.service._
 import com.waz.service.otr.OtrService
@@ -46,7 +44,7 @@ import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{Future, Promise}
 
 /** PushService handles notifications coming from FCM, WebSocket, and fetch.
   * We assume FCM notifications are unreliable, so we use them only as information that we should perform a fetch (syncHistory).
@@ -67,7 +65,7 @@ trait PushService {
 
   def onHistoryLost: SourceSignal[Instant] with BgEventSource
   def processing: Signal[Boolean]
-  def afterProcessing[T](f : => Future[T])(implicit ec: ExecutionContext): Future[T]
+  def waitProcessing: Future[Unit]
 
   /**
     * Drift to the BE time at the moment we fetch notifications
@@ -77,7 +75,7 @@ trait PushService {
   def beDrift: Signal[Duration]
 }
 
-class PushServiceImpl(userId:               UserId,
+class PushServiceImpl(selfUserId:           UserId,
                       context:              Context,
                       userPrefs:            UserPreferences,
                       prefs:                GlobalPreferences,
@@ -98,13 +96,14 @@ class PushServiceImpl(userId:               UserId,
                      (implicit ev: AccountContext) extends PushService { self =>
   import PushService._
 
-  implicit val logTag: LogTag = accountTag[PushServiceImpl](userId)
+  implicit val logTag: LogTag = accountTag[PushServiceImpl](selfUserId)
   private implicit val dispatcher = new SerialDispatchQueue(name = "PushService")
 
   override val onHistoryLost = new SourceSignal[Instant] with BgEventSource
   override val processing = Signal(false)
-  override def afterProcessing[T](f : => Future[T])(implicit ec: ExecutionContext): Future[T] =
-    processing.filter(_ == false).head.flatMap(_ => f)
+
+  override def waitProcessing =
+    processing.filter(_ == false).head.map(_ => {})
 
   private val beDriftPref = prefs.preference(BackendDrift)
   override val beDrift = beDriftPref.signal.disableAutowiring()
@@ -172,36 +171,6 @@ class PushServiceImpl(userId:               UserId,
         } yield {}
       else Future.successful(())
     }
-  }
-
-  private val accountState = accounts.accountState(userId)
-
-  // true if web socket should be active,
-  private val wsActive = network.networkMode.flatMap {
-    case NetworkMode.OFFLINE => Signal const false
-    case _ => accountState.flatMap {
-      case LoggedOut => Signal const false
-      case _ => pushTokenService.pushActive.flatMap {
-        case false => Signal.const(true)
-        case true  =>
-          // throttles inactivity notifications to avoid disconnecting on short UI pauses (like activity change)
-          verbose(s"lifecycle no longer active, should stop the client")
-          Signal.future(CancellableFuture.delayed(timeouts.webSocket.inactivityTimeout)(false)).orElse(Signal const true)
-      }
-    }
-  }
-
-  wsActive {
-    case true =>
-      debug(s"Active, client: $clientId")
-      wsPushService.activate()
-      if (accountState.currentValue.forall(_ == InBackground)) {
-        // start android service to keep the app running while we need to be connected.
-        com.waz.zms.WebSocketService(context)
-      }
-    case _ =>
-      debug(s"onInactive")
-      wsPushService.deactivate()
   }
 
   wsPushService.notifications() { notifications =>
@@ -312,8 +281,11 @@ class PushServiceImpl(userId:               UserId,
 
         val missedEvents = notsUntilPush.filterNot(_.transient).map { n =>
           val events = JsonDecoder.array(n.events, { case (arr, i) =>
-            arr.getJSONObject(i).getString("type")
-          }).filter(TrackingEvents(_))
+            val ev = arr.getJSONObject(i)
+            (ev.getString("type"), ev.getString("from"))
+          }).filter { case (tpe, from) =>
+            TrackingEvents(tpe) && UserId(from) != selfUserId
+          }.map(_._1)
           (n.id, events)
         }.filter { case (id, evs) => evs.nonEmpty && !pushes.map(_.id).contains(id) }
 

@@ -110,7 +110,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     for {
       otoConvs   <- getOrCreateOneToOneConversations(oneToOneConvData.toSeq)
       convToUser = userIds.flatMap(e => otoConvs.get(e).map(c => c.id -> e)).toMap
-      _          <- members.addAll(convToUser.mapValues(Set(_)))
+      _          <- members.addAll(convToUser.mapValues(u => Set(u, selfUserId)))
       updatedConvs <- convsStorage.updateAll2(convToUser.keys, { conv =>
 
         val userId = convToUser(conv.id)
@@ -243,8 +243,8 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     getOrCreateOneToOneConversations(Seq(OneToOneConvData(toUser, remoteId, convType))).map(_.values.head)
 
   private def getOrCreateOneToOneConversations(convsInfo: Seq[OneToOneConvData]): Future[Map[UserId, ConversationData]] =
-    Serialized.future('getOneToOneConversations) {
-      verbose(s"getOneToOneConversation(self: $selfUserId, convs:${convsInfo.size})")
+    Serialized.future('getOrCreateOneToOneConversations) {
+      verbose(s"getOrCreateOneToOneConversations(self: $selfUserId, convs:${convsInfo.size})")
 
       def convIdForUser(userId: UserId) = ConvId(userId.str)
       def userIdForConv(convId: ConvId) = UserId(convId.str)

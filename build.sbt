@@ -7,8 +7,8 @@ import sbt._
 import sbtassembly.MappingSet
 import SharedSettings._
 
-val MajorVersion = "128"
-val MinorVersion = "1" // hotfix release
+val MajorVersion = "129"
+val MinorVersion = "0" // hotfix release
 
 version in ThisBuild := {
   val jobName = sys.env.get("JOB_NAME")
@@ -117,12 +117,10 @@ lazy val zmessaging = project
     libraryDependencies ++= Seq(
       Deps.supportV4 % Provided,
       "org.scala-lang.modules" %% "scala-async" % "0.9.7",
-      "com.evernote" % "android-job" % "1.2.0",
       "com.squareup.okhttp3" % "okhttp" % "3.9.0",
       "com.googlecode.libphonenumber" % "libphonenumber" % "7.1.1", // 7.2.x breaks protobuf
       "com.softwaremill.macwire" %% "macros" % "2.2.2" % Provided,
       "com.google.android.gms" % "play-services-base" % "11.0.0" % Provided exclude("com.android.support", "support-v4"),
-      "com.google.firebase" % "firebase-messaging" % "11.0.0" % Provided,
       Deps.avs % Provided,
       Deps.cryptobox,
       Deps.genericMessage,

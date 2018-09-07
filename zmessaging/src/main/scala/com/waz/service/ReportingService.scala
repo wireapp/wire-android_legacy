@@ -77,18 +77,18 @@ class GlobalReportingService(context: Context, cache: CacheService, metadata: Me
   implicit val tag: LogTag = logTagFor[GlobalReportingService]
 
   def generateReport(): Future[URI] =
-    cache.createForFile(mime = Mime("text/txt"), name = Some("wire_debug_report.txt"), cacheLocation = Some(cache.intCacheDir))(Expiration.in(12.hours)) flatMap { entry =>
+    cache.createForFile(mime = Mime("text/txt"), name = Some("wire_debug_report.txt"), cacheLocation = Some(cache.intCacheDir))(Expiration.in(12.hours)).flatMap { entry =>
       @SuppressWarnings(Array("deprecation"))
       lazy val writer = new PrintWriter(new OutputStreamWriter(entry.outputStream))
 
       val rs: Seq[Reporter] =
         Seq(VersionReporter) ++ (if (metadata.internalBuild) Seq(PushRegistrationReporter, ZUsersReporter) ++ reporters else Seq.empty) ++ Seq(LogCatReporter, InternalLogReporter)
 
-      RichFuture.processSequential(rs) { reporter =>
-        reporter.apply(writer)
-      } map { _ => CacheUri(entry.data, context) } andThen {
-        case _ => writer.close()
-      }
+      RichFuture.processSequential(rs)(_.apply(writer))
+        .map(_ => CacheUri(entry.data, context))
+        .andThen {
+          case _ => writer.close()
+        }
     }
 
   val VersionReporter = Reporter("Wire", { writer =>

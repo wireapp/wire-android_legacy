@@ -17,8 +17,8 @@
  */
 package com.waz.sync.handler
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.api.Message
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.{ConversationStorage, MessagesStorage}
@@ -28,7 +28,6 @@ import com.waz.service.UserService
 import com.waz.service.conversation.ConversationsContentUpdaterImpl
 import com.waz.sync.SyncResult
 import com.waz.sync.otr.OtrSyncHandler
-import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 
@@ -68,7 +67,7 @@ class ClearedSyncHandler(selfUserId:   UserId,
           Future successful SyncResult(ErrorResponse.internalError(s"No conversation found for id: $convId"))
         case Some(conv) =>
           val msg = GenericMessage(Uid(), Cleared(conv.remoteId, time))
-          otrSync.postOtrMessage(ConvId(selfUserId.str), RConvId(selfUserId.str), msg) flatMap (_.fold(e => Future.successful(SyncResult(e)), { _ =>
+          otrSync.postOtrMessage(ConvId(selfUserId.str), msg) flatMap (_.fold(e => Future.successful(SyncResult(e)), { _ =>
             if (archive) convSync.postConversationState(conv.id, ConversationState(archived = Some(true), archiveTime = Some(time)))
             else Future.successful(SyncResult.Success)
           }))

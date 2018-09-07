@@ -18,7 +18,6 @@
 package com.waz.service
 
 import android.content.{ComponentCallbacks2, Context}
-import com.evernote.android.job.{JobCreator, JobManager}
 import com.softwaremill.macwire._
 import com.waz.ZLog._
 import com.waz.api.ContentSearchQuery
@@ -45,12 +44,10 @@ import com.waz.sync.queue.{SyncContentUpdater, SyncContentUpdaterImpl}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.ui.UiModule
 import com.waz.utils.Locales
-import com.waz.utils.wrappers.AndroidContext
-import com.waz.zms.FetchJob
-import com.waz.znet._
+import com.waz.utils.wrappers.{AndroidContext, GoogleApi}
+import com.waz.znet2.http.HttpClient
 import com.waz.znet2.http.Request.UrlCreator
-import com.waz.znet2.http.{HttpClient, RequestInterceptor}
-import com.waz.znet2.{AuthRequestInterceptor, HttpClientOkHttpImpl, OkHttpWebSocketFactory}
+import com.waz.znet2.{AuthRequestInterceptor, OkHttpWebSocketFactory}
 import org.threeten.bp.{Clock, Duration, Instant}
 
 import scala.concurrent.{Future, Promise}
@@ -210,7 +207,8 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val verificationUpdater                        = wire[VerificationStateUpdater]
   lazy val msgEvents: MessageEventProcessor           = wire[MessageEventProcessor]
   lazy val connection: ConnectionServiceImpl          = wire[ConnectionServiceImpl]
-  lazy val calling: CallingService                    = wire[CallingService]
+  lazy val calling: CallingServiceImpl                    = wire[CallingServiceImpl]
+  lazy val callLogging: CallLoggingService            = wire[CallLoggingService]
   lazy val contacts: ContactsServiceImpl              = wire[ContactsServiceImpl]
   lazy val typing: TypingService                      = wire[TypingService]
   lazy val richmedia                                  = wire[RichMediaService]
@@ -224,7 +222,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val recordAndPlay                              = wire[RecordAndPlayService]
   lazy val receipts                                   = wire[ReceiptService]
   lazy val ephemeral                                  = wire[EphemeralMessagesService]
-  lazy val gsmService                                 = wire[GsmInterruptService]
 
   lazy val assetSync                                  = wire[AssetSyncHandler]
   lazy val usersearchSync                             = wire[UserSearchSyncHandler]
@@ -281,7 +278,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
     conversations
     users
     expiringUsers
-    gsmService
+    callLogging
 
     push // connect on start
 
@@ -324,19 +321,14 @@ object ZMessaging { self =>
 
   private[waz] var context: Context = _
 
+  private var prefs:     GlobalPreferences = _
+  private var googleApi: GoogleApi = _
+  private var backend:   BackendConfig = BackendConfig.StagingBackend
+
   //var for tests - and set here so that it is globally available without the need for DI
   var clock = Clock.systemUTC()
 
-  private var backend = BackendConfig.StagingBackend
-
-  def useBackend(conf: BackendConfig) = {
-    assert(context == null, "ZMessaging.useBackend should only be called before any ZMessagingApi instance is created, do that only once, asap in Application.onCreate")
-    backend = conf
-  }
-  def useStagingBackend(): Unit = useBackend(BackendConfig.StagingBackend)
-  def useProdBackend(): Unit = useBackend(BackendConfig.ProdBackend)
-
-  private lazy val _global: GlobalModule = new GlobalModuleImpl(context, backend)
+  private lazy val _global: GlobalModule = new GlobalModuleImpl(context, backend, prefs, googleApi)
   private lazy val ui: UiModule = new UiModule(_global)
 
   //Try to avoid using these - map from the futures instead.
@@ -352,22 +344,20 @@ object ZMessaging { self =>
   lazy val beDrift = _global.prefs.preference(GlobalPreferences.BackendDrift).signal
   def currentBeDrift = beDrift.currentValue.getOrElse(Duration.ZERO)
 
-  def onCreate(context: Context) = {
+  //TODO - we should probably just request the entire GlobalModule from the UI here
+  def onCreate(context: Context, beConfig: BackendConfig, prefs: GlobalPreferences, googleApi: GoogleApi) = {
     Threading.assertUiThread()
 
     if (this.currentUi == null) {
       this.context = context.getApplicationContext
+      this.backend = beConfig
+      this.prefs = prefs
+      this.googleApi = googleApi
       currentUi = ui
       currentGlobal = _global
       currentAccounts = currentGlobal.accountsService
 
       globalReady.success(_global)
-
-      JobManager.create(context).addJobCreator(new JobCreator {
-        override def create(tag: String) =
-          if (tag.contains(FetchJob.Tag)) new FetchJob
-          else null
-      })
 
       Threading.Background { Locales.preloadTransliterator(); ContentSearchQuery.preloadTransliteration(); } // "preload"... - this should be very fast, normally, but slows down to 10 to 20 seconds when multidexed...
     }
