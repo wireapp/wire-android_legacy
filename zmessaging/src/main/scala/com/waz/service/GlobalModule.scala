@@ -32,7 +32,7 @@ import com.waz.service.assets.{AudioTranscoder, GlobalRecordAndPlayService}
 import com.waz.service.call._
 import com.waz.service.downloads._
 import com.waz.service.images.{ImageLoader, ImageLoaderImpl}
-import com.waz.service.push.{GlobalNotificationsService, GlobalNotificationsServiceImpl, GlobalTokenService}
+import com.waz.service.push.{GlobalNotificationsService, GlobalNotificationsServiceImpl, GlobalTokenService, GlobalTokenServiceImpl}
 import com.waz.service.tracking.{TrackingService, TrackingServiceImpl}
 import com.waz.sync.client._
 import com.waz.threading.Threading
@@ -103,15 +103,12 @@ class GlobalModuleImpl(val context:   AContext,
   //trigger initialization of Firebase in onCreate - should prevent problems with Firebase setup
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
   val network:                  DefaultNetworkModeService        = wire[DefaultNetworkModeService]
-
-  lazy val ssoService:          SSOService                       = wire[SSOService]
-
-  val tokenService:             GlobalTokenService               = wire[GlobalTokenService]
+  val tokenService:             GlobalTokenService               = wire[GlobalTokenServiceImpl]
 
   val storage:                  Database                         = new GlobalDatabase(context)
   val accountsStorageOld:       AccountsStorageOld               = wire[AccountsStorageOldImpl]
 
-
+  lazy val ssoService:          SSOService                       = wire[SSOService]
   lazy val accountsService:     AccountsService                  = new AccountsServiceImpl(this)
   lazy val trackingService:     TrackingService                  = TrackingServiceImpl(accountsService)
   lazy val notifications:       GlobalNotificationsService       = wire[GlobalNotificationsServiceImpl]
@@ -181,7 +178,7 @@ class EmptyGlobalModule extends GlobalModule {
   override def context:               AContext                                            = ???
   override def backend:               BackendConfig                                       = ???
   override def ssoService:            SSOService                                          = ???
-  override def tokenService:          GlobalTokenService                                  = ???
+  override def tokenService:          GlobalTokenServiceImpl                                  = ???
   override def notifications:         GlobalNotificationsService                          = ???
   override def calling:               GlobalCallingService                                = ???
   override def prefs:                 GlobalPreferences                                   = ???

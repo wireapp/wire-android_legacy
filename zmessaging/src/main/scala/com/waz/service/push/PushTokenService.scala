@@ -22,10 +22,9 @@ import java.io.IOException
 import com.waz.ZLog
 import com.waz.ZLog._
 import com.waz.api.NetworkMode
-import com.waz.content.GlobalPreferences.{CurrentAccountPrefOld, PushEnabledKey}
 import com.waz.content.{AccountStorage, GlobalPreferences}
 import com.waz.model.{PushToken, PushTokenRemoveEvent, UserId}
-import com.waz.service.AccountsService.{Active, InForeground}
+import com.waz.service.AccountsService.Active
 import com.waz.service.ZMessaging.accountTag
 import com.waz.service._
 import com.waz.service.tracking.TrackingService.exception
@@ -43,38 +42,20 @@ import scala.util.control.NoStackTrace
   * Responsible for deciding when to generate and register push tokens and whether they should be active at all.
   */
 class PushTokenService(userId:       UserId,
-                       googleApi:    GoogleApi,
-                       backend:      BackendConfig,
                        globalToken:  GlobalTokenService,
-                       prefs:        GlobalPreferences,
                        accounts:     AccountsService,
                        accStorage:   AccountStorage,
                        sync:         SyncServiceHandle)(implicit accountContext: AccountContext) {
 
   implicit lazy val logTag: LogTag = accountTag[PushTokenService](userId)
 
-  implicit val dispatcher = globalToken.dispatcher
-
-  val pushEnabled    = prefs.preference(PushEnabledKey)
-  val currentAccount = prefs.preference(CurrentAccountPrefOld)
-  val currentToken   = globalToken.currentToken
-
-  private val account = accStorage.signal(userId)
+  implicit val dispatcher = new SerialDispatchQueue(name = "PushTokenService")
 
   private val isLoggedIn = accounts.accountState(userId).map {
     case _: Active => true
     case _         => false
   }
-  private val userToken = account.map(_.pushToken)
-
-  val pushActive = (for {
-    push           <- pushEnabled.signal if push
-    play           <- googleApi.isGooglePlayServicesAvailable if play
-    inForeground   <- accounts.accountState(userId).map(_ == InForeground) if !inForeground
-    current        <- currentToken.signal if current.isDefined
-    userRegistered <- userToken.map(_ == current)
-  } yield userRegistered)
-    .orElse(Signal.const(false))
+  private val userToken = accStorage.signal(userId).map(_.pushToken)
 
   val eventProcessingStage = EventScheduler.Stage[PushTokenRemoveEvent] { (_, events) =>
     globalToken.resetGlobalToken(events.map(_.token))
@@ -84,7 +65,7 @@ class PushTokenService(userId:       UserId,
   (for {
     true        <- isLoggedIn
     userToken   <- userToken
-    globalToken <- currentToken.signal
+    globalToken <- globalToken.currentToken
   } yield (globalToken, userToken)).on(dispatcher) {
     case (Some(glob), Some(user)) if glob != user =>
       sync.deletePushToken(user)
@@ -107,24 +88,32 @@ class PushTokenService(userId:       UserId,
   }
 }
 
-class GlobalTokenService(googleApi: GoogleApi,
-                         prefs: GlobalPreferences,
-                         network: NetworkModeService) {
+trait GlobalTokenService {
+  def currentToken: Signal[Option[PushToken]]
+  def resetGlobalToken(toRemove: Vector[PushToken] = Vector.empty): Future[Unit]
+  def setNewToken(): Future[Unit]
+}
+
+class GlobalTokenServiceImpl(googleApi: GoogleApi,
+                             prefs: GlobalPreferences,
+                             network: NetworkModeService) extends GlobalTokenService {
   import PushTokenService._
   import ZLog.ImplicitTag._
 
-  implicit val dispatcher = new SerialDispatchQueue(name = "PushTokenDispatchQueue")
+  implicit val dispatcher = new SerialDispatchQueue(name = "GlobalTokenService")
   implicit val ev = EventContext.Global
 
-  val currentToken = prefs.preference(GlobalPreferences.PushToken)
-  val resetToken   = prefs.preference(GlobalPreferences.ResetPushToken)
+//  val pushEnabled  = prefs.preference(PushEnabledKey) //TODO delete the push token if the PushEnabledKey is false
+  val _currentToken = prefs.preference(GlobalPreferences.PushToken)
+  override val currentToken = _currentToken.signal
+  private val resetToken    = prefs.preference(GlobalPreferences.ResetPushToken)
 
   private var settingToken = Future.successful({})
   private var deletingToken = Future.successful({})
 
   for {
     play    <- googleApi.isGooglePlayServicesAvailable
-    current <- currentToken.signal
+    current <- _currentToken.signal
     network <- network.networkMode
   } if (play && current.isEmpty && network != NetworkMode.OFFLINE) setNewToken()
 
@@ -135,8 +124,9 @@ class GlobalTokenService(googleApi: GoogleApi,
   } if (play && reset && network != NetworkMode.OFFLINE) resetGlobalToken()
 
   //Specify empty to force remove all tokens, or else only remove if `toRemove` contains the current token.
-  def resetGlobalToken(toRemove: Vector[PushToken] = Vector.empty) =
-    currentToken().flatMap {
+  override def resetGlobalToken(toRemove: Vector[PushToken] = Vector.empty) = {
+    verbose("resetGlobalToken")
+    _currentToken().flatMap {
       case Some(t) if toRemove.contains(t) || toRemove.isEmpty =>
         if (deletingToken.isCompleted) {
           deletingToken = for {
@@ -145,18 +135,20 @@ class GlobalTokenService(googleApi: GoogleApi,
               googleApi.deleteAllPushTokens()
             })
             _ <- resetToken := false
-            _ <- currentToken := None
+            _ <- _currentToken := None
           } yield {}
         }
         deletingToken
       case _ => Future.successful({})
     }
+  }
 
-  def setNewToken(): Future[Unit] = {
+  override def setNewToken() = {
+    verbose("setNewToken")
     if (settingToken.isCompleted) {
       settingToken = for {
         t <- retry(returning(googleApi.getPushToken) { t => verbose(s"Setting new push token: $t") })
-        _ <- currentToken := Some(t)
+        _ <- _currentToken := Some(t)
       } yield {}
     }
     settingToken
