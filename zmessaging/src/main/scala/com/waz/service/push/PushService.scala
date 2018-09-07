@@ -19,7 +19,6 @@ package com.waz.service.push
 
 import android.content.Context
 import com.waz.ZLog._
-import com.waz.api.NetworkMode
 import com.waz.api.NetworkMode.{OFFLINE, UNKNOWN}
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.GlobalPreferences.BackendDrift
@@ -28,7 +27,6 @@ import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.Event.EventDecoder
 import com.waz.model._
 import com.waz.model.otr.ClientId
-import com.waz.service.AccountsService.{InBackground, LoggedOut}
 import com.waz.service.ZMessaging.{accountTag, clock}
 import com.waz.service._
 import com.waz.service.otr.OtrService
@@ -173,36 +171,6 @@ class PushServiceImpl(selfUserId:           UserId,
         } yield {}
       else Future.successful(())
     }
-  }
-
-  private val accountState = accounts.accountState(selfUserId)
-
-  // true if web socket should be active,
-  private val wsActive = network.networkMode.flatMap {
-    case NetworkMode.OFFLINE => Signal const false
-    case _ => accountState.flatMap {
-      case LoggedOut => Signal const false
-      case _ => pushTokenService.pushActive.flatMap {
-        case false => Signal.const(true)
-        case true  =>
-          // throttles inactivity notifications to avoid disconnecting on short UI pauses (like activity change)
-          verbose(s"lifecycle no longer active, should stop the client")
-          Signal.future(CancellableFuture.delayed(timeouts.webSocket.inactivityTimeout)(false)).orElse(Signal const true)
-      }
-    }
-  }
-
-  wsActive {
-    case true =>
-      debug(s"Active, client: $clientId")
-      wsPushService.activate()
-      if (accountState.currentValue.forall(_ == InBackground)) {
-        // start android service to keep the app running while we need to be connected.
-        com.waz.zms.WebSocketService(context)
-      }
-    case _ =>
-      debug(s"onInactive")
-      wsPushService.deactivate()
   }
 
   wsPushService.notifications() { notifications =>
