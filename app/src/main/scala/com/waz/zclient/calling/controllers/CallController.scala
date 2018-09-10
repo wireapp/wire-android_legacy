@@ -189,9 +189,9 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     members <- zms.membersStorage.activeMembers(cId)
   } yield members
 
-  val otherUser = Signal(isGroupCall, userStorage, callConvId).flatMap {
-    case (false, usersStorage, convId) =>
-      usersStorage.optSignal(UserId(convId.str)) // one-to-one conversation has the same id as the other user, so we can access it directly
+  val otherUser = Signal(isGroupCall, userStorage, others.map(_.keys.toSeq.headOption)).flatMap {
+    case (false, usersStorage, Some(o)) =>
+      usersStorage.optSignal(o) // one-to-one conversation has the same id as the other user, so we can access it directly
     case _ => Signal.const[Option[UserData]](None) //Need a none signal to help with further signals
   }
 
@@ -352,14 +352,15 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
       userName <- callingUsername
       convName <- conversationName
       duration <- duration
-    } yield (state, isGroupCall, userName, convName, duration)).map {
-      case (SelfCalling, false, caller, _, _)        => getString(R.string.call_banner_outgoing, caller)
-      case (SelfCalling, true, _, convName, _)       => getString(R.string.call_banner_outgoing, convName)
-      case (OtherCalling, true, caller, convName, _) => getString(R.string.call_banner_incoming_group, convName, caller)
-      case (OtherCalling, false, caller, _, _)       => getString(R.string.call_banner_incoming, caller)
-      case (SelfJoining, _, _, _, _)                 => getString(R.string.call_banner_joining)
-      case (SelfConnected, _, _, _, d)               => getString(R.string.call_banner_tap_to_return_to_call, d)
-      case _                                         => getString(R.string.empty_string)
+      callee <- otherUser
+    } yield (state, isGroupCall, userName, convName, duration, callee)).map {
+      case (SelfCalling, false, _, _, _, Some(callee))  => getString(R.string.call_banner_outgoing, callee.getDisplayName)
+      case (SelfCalling, true, _, convName, _, _)       => getString(R.string.call_banner_outgoing, convName)
+      case (OtherCalling, true, caller, convName, _, _) => getString(R.string.call_banner_incoming_group, convName, caller)
+      case (OtherCalling, false, caller, _, _, _)       => getString(R.string.call_banner_incoming, caller)
+      case (SelfJoining, _, _, _, _, _)                 => getString(R.string.call_banner_joining)
+      case (SelfConnected, _, _, _, d, _)               => getString(R.string.call_banner_tap_to_return_to_call, d)
+      case _                                            => getString(R.string.empty_string)
     }.map(_.toUpperCase(getLocale))
 
   val subtitleText: Signal[String] =
