@@ -229,7 +229,7 @@ class OptionsViewController(view: OptionsView)(implicit inj: Injector, ec: Event
       for {
         uId <- zms.map(_.selfUserId)
         _ <- inject[UiLifeCycle].uiActive // This forces updating in case the user changes the tone in the system channel
-      } yield notificationManagerWrapper.map(_.getNotificationChannel(channelId(uId)).getSound)
+      } yield notificationManagerWrapper.flatMap(nm => Option(nm.getNotificationChannel(channelId(uId)).getSound))
     } else Signal.const(Option.empty[Uri])
 
 

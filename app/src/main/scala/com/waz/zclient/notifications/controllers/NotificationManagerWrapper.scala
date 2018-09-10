@@ -17,11 +17,15 @@
  */
 package com.waz.zclient.notifications.controllers
 
+import java.io.File
+import java.io.{FileNotFoundException, FileOutputStream, IOException}
+
 import android.app.{Notification, NotificationChannel, NotificationChannelGroup, NotificationManager}
-import android.content.Context
+import android.content.{ContentValues, Context}
 import android.graphics.{Color, Typeface}
 import android.net.Uri
-import android.os.Build
+import android.os.{Build, Environment}
+import android.provider.MediaStore
 import android.support.v4.app.NotificationCompat.Style
 import android.support.v4.app.{NotificationCompat, RemoteInput}
 import android.text.style.{ForegroundColorSpan, StyleSpan}
@@ -308,6 +312,10 @@ object NotificationManagerWrapper {
     }.toSeq:_*))
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+      addToExternalNotificationFolder(R.raw.new_message_gcm, getString(R.string.wire_notification_name))
+      addToExternalNotificationFolder(R.raw.ping_from_them, getString(R.string.wire_ping_name))
+
       accountChannels { channels =>
 
         notificationManager.getNotificationChannels.asScala.filter { ch =>
@@ -376,6 +384,46 @@ object NotificationManagerWrapper {
       }
 
     def getNotificationChannel(channelId: String) = notificationManager.getNotificationChannel(channelId)
+
+    private def addToExternalNotificationFolder(rawId: Int, name: String) = {
+      try {
+        val fIn = cxt.getResources.openRawResource(rawId)
+        val size = fIn.available
+        val buffer = new Array[Byte](size)
+        fIn.read(buffer)
+        fIn.close()
+
+        val filename = s"/$name.ogg"
+        val path = cxt.getExternalFilesDir(Environment.DIRECTORY_NOTIFICATIONS).getAbsolutePath
+
+        val save = new FileOutputStream(path + filename)
+        save.write(buffer)
+        save.flush()
+        save.close()
+
+        val toneFile = new File(path + filename)
+        val length = toneFile.length.toInt.asInstanceOf[Integer]
+
+        val contentValues = new ContentValues()
+
+        contentValues.put(MediaStore.MediaColumns.DATA, toneFile.getAbsolutePath)
+        contentValues.put(MediaStore.MediaColumns.TITLE, name)
+        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "audio/ogg")
+        contentValues.put(MediaStore.MediaColumns.SIZE, length)
+        contentValues.put(MediaStore.Audio.AudioColumns.IS_RINGTONE, true)
+        contentValues.put(MediaStore.Audio.AudioColumns.IS_NOTIFICATION, true)
+        contentValues.put(MediaStore.Audio.AudioColumns.IS_ALARM, true)
+        contentValues.put(MediaStore.Audio.AudioColumns.IS_MUSIC, false)
+        val uri = MediaStore.Audio.Media.INTERNAL_CONTENT_URI
+
+        cxt.getContentResolver.insert(uri, contentValues)
+
+        true
+      } catch {
+        case _: FileNotFoundException => false
+        case _: IOException => false
+      }
+    }
   }
 }
 
