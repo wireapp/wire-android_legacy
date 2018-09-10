@@ -95,8 +95,8 @@ trait GlobalTokenService {
 }
 
 class GlobalTokenServiceImpl(googleApi: GoogleApi,
-                             prefs: GlobalPreferences,
-                             network: NetworkModeService) extends GlobalTokenService {
+                             prefs:     GlobalPreferences,
+                             network:   NetworkModeService) extends GlobalTokenService {
   import PushTokenService._
   import ZLog.ImplicitTag._
 
@@ -106,7 +106,6 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
 //  val pushEnabled  = prefs.preference(PushEnabledKey) //TODO delete the push token if the PushEnabledKey is false
   val _currentToken = prefs.preference(GlobalPreferences.PushToken)
   override val currentToken = _currentToken.signal
-  private val resetToken    = prefs.preference(GlobalPreferences.ResetPushToken)
 
   private var settingToken = Future.successful({})
   private var deletingToken = Future.successful({})
@@ -116,12 +115,6 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
     current <- _currentToken.signal
     network <- network.networkMode
   } if (play && current.isEmpty && network != NetworkMode.OFFLINE) setNewToken()
-
-  for {
-    play    <- googleApi.isGooglePlayServicesAvailable
-    reset   <- resetToken.signal
-    network <- network.networkMode
-  } if (play && reset && network != NetworkMode.OFFLINE) resetGlobalToken()
 
   //Specify empty to force remove all tokens, or else only remove if `toRemove` contains the current token.
   override def resetGlobalToken(toRemove: Vector[PushToken] = Vector.empty) = {
@@ -134,7 +127,6 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
               verbose("Deleting all push tokens")
               googleApi.deleteAllPushTokens()
             })
-            _ <- resetToken := false
             _ <- _currentToken := None
           } yield {}
         }
@@ -147,7 +139,7 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
     verbose("setNewToken")
     if (settingToken.isCompleted) {
       settingToken = for {
-        t <- retry(returning(googleApi.getPushToken) { t => verbose(s"Setting new push token: $t") })
+        t <- retry(returning(googleApi.getPushToken)(t => verbose(s"Setting new push token: $t")))
         _ <- _currentToken := Some(t)
       } yield {}
     }

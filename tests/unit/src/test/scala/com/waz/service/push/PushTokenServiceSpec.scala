@@ -45,8 +45,6 @@ class PushTokenServiceSpec extends AndroidFreeSpec {
     val networkService = mock[NetworkModeService]
     val prefs          = new TestGlobalPreferences()
     val currentToken   = prefs.preference(GlobalPreferences.PushToken)
-    val resetToken     = prefs.preference(GlobalPreferences.ResetPushToken)
-    await(resetToken := false)
 
     val googlePlayAvailable = Signal(false)
     val networkMode         = Signal(NetworkMode.WIFI)
@@ -58,23 +56,10 @@ class PushTokenServiceSpec extends AndroidFreeSpec {
       new GlobalTokenServiceImpl(google, prefs, networkService)
     }
 
-    scenario("Fetches token on init if GCM available 2") {
-
-      await(resetToken := true)
-      googlePlayAvailable ! true
-      val token = PushToken("token")
-
-      (google.getPushToken _).expects().returning(token)
-      val global = initGlobalService()
-
-      result(global._currentToken.signal.filter(_.contains(token)).head)
-    }
-
     scenario("Fetches token on init if GCM available") {
       googlePlayAvailable ! true
       val token = PushToken("token")
 
-      Vector(1, 2, 3).partition(Map(1 -> 3)(_))
       (google.getPushToken _).expects().returning(token)
       val global = initGlobalService()
 
@@ -159,25 +144,6 @@ class PushTokenServiceSpec extends AndroidFreeSpec {
 
       global.resetGlobalToken()
       await(currentToken.signal.filter(_.contains(newToken)).head)
-    }
-
-    scenario("Reset global token via reset preference") {
-      val oldToken = PushToken("oldToken")
-      val newToken = PushToken("newToken")
-
-      currentToken := Some(oldToken)
-      googlePlayAvailable ! true
-      await(currentToken.signal.filter(_.contains(oldToken)).head)
-
-      (google.getPushToken _).expects().once().returning(newToken)
-      //This needs to be called
-      (google.deleteAllPushTokens _).expects().once()
-
-      val global = initGlobalService()
-
-      resetToken := true
-      await(currentToken.signal.filter(_.contains(newToken)).head)
-      await(resetToken.signal.filter(_ == false).head)
     }
   }
 
