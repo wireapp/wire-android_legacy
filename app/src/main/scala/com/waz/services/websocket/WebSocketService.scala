@@ -33,6 +33,8 @@ import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient._
 
+import scala.concurrent.duration._
+
 class WebSocketController(implicit inj: Injector) extends Injectable {
   private lazy val global   = inject[GlobalModule]
   private lazy val accounts = inject[AccountsService]
@@ -132,7 +134,7 @@ class WebSocketService extends ServiceHelper {
     }
 
   private lazy val appInForegroundSubscription =
-    controller.notificationTitleRes {
+    controller.notificationTitleRes.throttle(500.millis) {
       case None =>
         verbose("stopForeground")
         stopForeground(true)
