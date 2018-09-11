@@ -19,6 +19,7 @@ package com.waz.zclient.cursor
 
 import android.content.Context
 import android.graphics.drawable.ColorDrawable
+import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.text.{Editable, TextUtils, TextWatcher}
 import android.util.AttributeSet
 import android.view.View.OnClickListener
@@ -27,12 +28,14 @@ import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{LinearLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.model.{AccentColor, Availability, MessageExpiry}
+import com.waz.model._
+import com.waz.service.UserSearchService
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.cursor.CursorController.{EnteredTextSource, KeyboardState}
 import com.waz.zclient.messages.MessagesController
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
@@ -74,6 +77,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   val emojiButton      = findById[CursorIconButton]     (R.id.cib__emoji)
   val keyboardButton   = findById[CursorIconButton]     (R.id.cib__keyboard)
   val sendButton       = findById[CursorIconButton]     (R.id.cib__send)
+  val mentionsList     = findById[RecyclerView]         (R.id.mentions_list)
 
   val ephemeralButton = returning(findById[EphemeralTimerButton](R.id.cib__ephemeral)) { v =>
     controller.ephemeralBtnVisible.onUi(v.setVisible)
@@ -109,6 +113,35 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     scrolledToBottom <- messages.scrolledToBottom
   } yield
     !typing && (multiline || !scrolledToBottom)
+
+  private val cursorTextWatcher = new MentionsTextWatcher
+  private val mentionCandidatesAdapter = new MentionCandidatesAdapter()
+  mentionsList.setAdapter(mentionCandidatesAdapter)
+  mentionsList.setLayoutManager(new LinearLayoutManager(context))
+  mentionCandidatesAdapter.onUserClicked.onUi { info =>
+    cursorTextWatcher.createMention(info.userId, info.name, cursorEditText.getEditableText, cursorEditText.getSelectionEnd)
+  }
+
+  private val mentionSearchResults = for {
+    searchService <- inject[Signal[UserSearchService]]
+    query <- cursorTextWatcher.shouldShowMentionList
+    convId <- inject[ConversationController].currentConvId
+    results <- searchService.searchUsersInConversation(convId, query.getOrElse(""))
+  } yield results
+
+  mentionSearchResults.map(_.map(ud => MentionCandidateInfo(ud.id, ud.getDisplayName, ud.handle.getOrElse(Handle())))).onUi {
+    mentionCandidatesAdapter.setData
+  }
+
+  Signal(cursorTextWatcher.shouldShowMentionList.map(_.nonEmpty), mentionSearchResults.map(_.nonEmpty)).map{
+    case (true, true) => true
+    case _ => false
+  }.onUi(showMentionsList)
+
+  private def showMentionsList(visible: Boolean) = {
+    mentionsList.setVisible(visible)
+    topBorder.setVisible(visible)
+  }
 
   lineCount.onUi(cursorEditText.setLines(_))
 
@@ -148,6 +181,8 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
     override def afterTextChanged(editable: Editable): Unit = ()
   })
+
+  cursorEditText.addTextChangedListener(cursorTextWatcher)
 
   cursorEditText.setOnClickListener(new OnClickListener {
     override def onClick(v: View): Unit = controller.notifyKeyboardVisibilityChanged(true)
@@ -218,7 +253,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
   controller.convIsActive.onUi(this.setVisible)
 
-  topBarVisible.onUi(topBorder.setVisible)
+  //topBarVisible.onUi(topBorder.setVisible)
 
   controller.onMessageSent.onUi(_ => setText(""))
 
