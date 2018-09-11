@@ -280,12 +280,13 @@ class PushServiceImpl(selfUserId:           UserId,
         val notsUntilPush = nots.takeWhile(n => !sourcePush.contains(n.id))
 
         val missedEvents = notsUntilPush.filterNot(_.transient).map { n =>
-          val events = JsonDecoder.array(n.events, { case (arr, i) =>
-            val ev = arr.getJSONObject(i)
-            (ev.getString("type"), ev.getString("from"))
-          }).filter { case (tpe, from) =>
-            TrackingEvents(tpe) && UserId(from) != selfUserId
-          }.map(_._1)
+
+          val events =
+            JsonDecoder.array(n.events, { case (arr, i) => arr.getJSONObject(i) })
+              .filter(ev => TrackingEvents(ev.getString("type")))
+              .filter(ev => UserId(ev.getString("from")) != selfUserId)
+              .map(_.getString("type"))
+
           (n.id, events)
         }.filter { case (id, evs) => evs.nonEmpty && !pushes.map(_.id).contains(id) }
 
