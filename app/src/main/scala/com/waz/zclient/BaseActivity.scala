@@ -71,14 +71,16 @@ class BaseActivity extends AppCompatActivity
     inject[UiLifeCycle].acquireUi()
     if (!this.isInstanceOf[LaunchActivity]) permissions.registerProvider(this)
     Option(ViewUtils.getContentView(getWindow)).foreach(getControllerFactory.setGlobalLayout)
-    WebSocketService(this)
   }
 
   override protected def onResume(): Unit = {
     verbose(s"onResume")
     super.onResume()
+    onBaseActivityResume()
   }
 
+  def onBaseActivityResume(): Unit =
+    WebSocketService(this)
 
   override protected def onResumeFragments(): Unit = {
     verbose("onResumeFragments")

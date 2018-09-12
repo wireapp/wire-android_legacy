@@ -46,6 +46,9 @@ class LaunchActivity extends BaseActivity {
   //Can't call super from within anonymous class
   private def superOnBaseActivityStart() = super.onBaseActivityStart()
 
+  //No need for onBaseActivityResume in this instance of Activity
+  override def onBaseActivityResume(): Unit = {}
+
   override protected def onNewIntent(intent: Intent) = {
     super.onNewIntent(intent)
     setIntent(intent)
