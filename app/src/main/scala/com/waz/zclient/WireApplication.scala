@@ -39,6 +39,7 @@ import com.waz.log.InternalLog
 import com.waz.model.{AccentColor, ConversationData, TeamId, UserId}
 import com.waz.permissions.PermissionsService
 import com.waz.service._
+import com.waz.service.call.GlobalCallingService
 import com.waz.service.conversation.{ConversationsListStateService, ConversationsService, ConversationsUiService}
 import com.waz.service.images.ImageLoader
 import com.waz.service.messages.MessagesService
@@ -122,6 +123,7 @@ object WireApplication {
     bind [SSOService]                     to inject[GlobalModule].ssoService
     bind [GlobalNotificationsService]     to inject[GlobalModule].notifications
     bind [GoogleApi]                      to inject[GlobalModule].googleApi
+    bind [GlobalCallingService]           to inject[GlobalModule].calling
 
     bind [Signal[Option[AccountManager]]] to ZMessaging.currentAccounts.activeAccountManager
     bind [Signal[AccountManager]]         to inject[Signal[Option[AccountManager]]].collect { case Some(am) => am }
