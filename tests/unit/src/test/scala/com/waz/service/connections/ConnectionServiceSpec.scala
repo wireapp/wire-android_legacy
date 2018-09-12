@@ -112,7 +112,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
         )
       }
 
-      (convsStorage.getByRemoteIds2 _).expects(*).returning(Future.successful(Map.empty))
+      (convsStorage.getByRemoteIds2 _).expects(*).twice().returning(Future.successful(Map.empty))
       (convsStorage.updateLocalIds _).expects(Map.empty[ConvId, ConvId]).returning(Future.successful(Set.empty))
       (convsStorage.updateOrCreateAll2 _).expects(*, *).onCall { (keys: Iterable[ConvId], updater: ((ConvId, Option[ConversationData]) => ConversationData)) =>
         Future.successful(keys.map(id => updater(id, None)).toSet)
@@ -155,7 +155,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
 
       (sync.syncUsers _).expects(Set(otherUser.id)).returning(Future.successful(SyncId()))
       (usersStorage.listAll _).expects(*).returning(Future.successful(Vector(otherUser)))
-      (convsStorage.getByRemoteIds2 _).expects(Set(remoteId)).returning(Future.successful(Map.empty))
+      (convsStorage.getByRemoteIds2 _).expects(Set(remoteId)).twice().returning(Future.successful(Map.empty))
       (convsStorage.updateLocalIds _).expects(Map.empty[ConvId, ConvId]).returning(Future.successful(Set.empty))
       (convsStorage.updateOrCreateAll2 _).expects(*, *).onCall { (keys: Iterable[ConvId], updater: ((ConvId, Option[ConversationData]) => ConversationData)) =>
         Future.successful(keys.map {
