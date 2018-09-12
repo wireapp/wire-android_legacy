@@ -36,8 +36,8 @@ import com.waz.zclient.controllers.IControllerFactory
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.ViewUtils
 
-import scala.collection.immutable.ListSet
 import scala.collection.breakOut
+import scala.collection.immutable.ListSet
 
 
 class BaseActivity extends AppCompatActivity
@@ -53,21 +53,16 @@ class BaseActivity extends AppCompatActivity
 
   def injectJava[T](cls: Class[T]) = inject[T](reflect.Manifest.classType(cls), injector)
 
-  override def onCreate(savedInstanceState: Bundle) = {
+  override protected def onCreate(savedInstanceState: Bundle) = {
+    verbose(s"onCreate")
     super.onCreate(savedInstanceState)
     setTheme(getBaseTheme)
   }
 
   override def onStart(): Unit = {
+    verbose(s"onStart")
     super.onStart()
     onBaseActivityStart()
-  }
-
-  def getBaseTheme: Int = themeController.forceLoadDarkTheme
-
-  override protected def onActivityResult(requestCode: Int, resultCode: Int, data: Intent) = {
-    super.onActivityResult(requestCode, resultCode, data)
-    permissions.registerProvider(this)
   }
 
   def onBaseActivityStart(): Unit = {
@@ -79,7 +74,41 @@ class BaseActivity extends AppCompatActivity
     WebSocketService(this)
   }
 
+  override protected def onResume(): Unit = {
+    verbose(s"onResume")
+    super.onResume()
+  }
+
+
+  override protected def onResumeFragments(): Unit = {
+    verbose("onResumeFragments")
+    super.onResumeFragments()
+  }
+
+  override def onWindowFocusChanged(hasFocus: Boolean): Unit = {
+    verbose(s"onWindowFocusChanged: $hasFocus")
+  }
+
+  def getBaseTheme: Int = themeController.forceLoadDarkTheme
+
+  override protected def onActivityResult(requestCode: Int, resultCode: Int, data: Intent) = {
+    verbose(s"onActivityResult: requestCode: $requestCode, resultCode: $resultCode, data: $data")
+    super.onActivityResult(requestCode, resultCode, data)
+    permissions.registerProvider(this)
+  }
+
+  override protected def onPause(): Unit = {
+    verbose(s"onPause")
+    super.onPause()
+  }
+
+  override protected def onSaveInstanceState(outState: Bundle): Unit = {
+    verbose("onSaveInstanceState")
+    super.onSaveInstanceState(outState)
+  }
+
   override def onStop() = {
+    verbose(s"onStop")
     ZMessaging.currentUi.onPause()
     inject[UiLifeCycle].releaseUi()
     InternalLog.flush()
@@ -87,6 +116,7 @@ class BaseActivity extends AppCompatActivity
   }
 
   override def onDestroy() = {
+    verbose(s"onDestroy")
     globalTrackingController.flushEvents()
     permissions.unregisterProvider(this)
     super.onDestroy()

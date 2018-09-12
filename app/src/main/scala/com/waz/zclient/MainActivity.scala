@@ -88,8 +88,6 @@ class MainActivity extends BaseActivity
   }
 
   override def onCreate(savedInstanceState: Bundle) = {
-    info("onCreate")
-
     Option(getActionBar).foreach(_.hide())
     super.onCreate(savedInstanceState)
 
@@ -159,13 +157,7 @@ class MainActivity extends BaseActivity
 
   }
 
-  override protected def onResumeFragments() = {
-    info("onResumeFragments")
-    super.onResumeFragments()
-  }
-
   override def onStart() = {
-    info("onStart")
     getControllerFactory.getNavigationController.addNavigationControllerObserver(this)
     inject[NavigationController].mainActivityActive.mutate(_ + 1)
 
@@ -178,7 +170,6 @@ class MainActivity extends BaseActivity
   }
 
   override protected def onResume() = {
-    info("onResume")
     super.onResume()
 
     Option(ZMessaging.currentGlobal).foreach(_.googleApi.checkGooglePlayServicesAvailable(this))
@@ -291,20 +282,13 @@ class MainActivity extends BaseActivity
     transaction.commit
   }
 
-  override protected def onPause() = {
-    info("onPause")
-    super.onPause()
-  }
-
   override protected def onSaveInstanceState(outState: Bundle) = {
-    info("onSaveInstanceState")
     getControllerFactory.getNavigationController.onSaveInstanceState(outState)
     super.onSaveInstanceState(outState)
   }
 
   override def onStop() = {
     super.onStop()
-    info("onStop")
     getControllerFactory.getNavigationController.removeNavigationControllerObserver(this)
     inject[NavigationController].mainActivityActive.mutate(_ - 1)
   }
@@ -317,7 +301,6 @@ class MainActivity extends BaseActivity
   }
 
   override protected def onActivityResult(requestCode: Int, resultCode: Int, data: Intent) = {
-    info(s"OnActivity requestCode: $requestCode, resultCode: $resultCode")
     super.onActivityResult(requestCode, resultCode, data)
     Option(ZMessaging.currentGlobal).foreach(_.googleApi.onActivityResult(requestCode, resultCode))
     Option(getSupportFragmentManager.findFragmentById(R.id.fl_main_content)).foreach(_.onActivityResult(requestCode, resultCode, data))
