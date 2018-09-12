@@ -319,12 +319,6 @@ class DrawingFragment extends FragmentHelper
     sensorManager.registerListener(shakeEventListener, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL)
   }
 
-  override def onSaveInstanceState(outState: Bundle): Unit = {
-    getBitmapDrawing.foreach(outState.putParcelable(SAVED_INSTANCE_BITMAP, _))
-    assetIntentsManager.onSaveInstanceState(outState)
-    super.onSaveInstanceState(outState)
-  }
-
   override def onStop(): Unit = {
     sensorManager.unregisterListener(shakeEventListener)
     super.onStop()
