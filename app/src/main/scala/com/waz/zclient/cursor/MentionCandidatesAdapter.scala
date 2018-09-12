@@ -56,9 +56,9 @@ class MentionCandidatesAdapter extends RecyclerView.Adapter[MentionCandidateView
 }
 
 class MentionCandidateViewHolder(v: View, onUserClick: MentionCandidateInfo => Unit) extends RecyclerView.ViewHolder(v) {
-  private val nameTextView = v.findViewById[TextView](R.id.name)
-  private val handleTextView = v.findViewById[TextView](R.id.handle)
-  private val chathead = v.findViewById[ChatheadView](R.id.chathead)
+  private val nameTextView = v.findViewById[TextView](R.id.mention_name)
+  private val handleTextView = v.findViewById[TextView](R.id.mention_handle)
+  private val chathead = v.findViewById[ChatheadView](R.id.mention_chathead)
 
   private var userId = Option.empty[MentionCandidateInfo]
 

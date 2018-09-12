@@ -27,7 +27,7 @@
               android:background="@drawable/selector__transparent_button">
 
     <com.waz.zclient.common.views.ChatheadView
-        android:id="@+id/chathead"
+        android:id="@+id/mention_chathead"
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:layout_gravity="center"
@@ -50,7 +50,7 @@
                   android:layout_gravity="center_vertical">
 
         <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/name"
+            android:id="@+id/mention_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="@dimen/wire__text_size__regular"
@@ -58,7 +58,7 @@
             app:w_font="@string/wire__typeface__regular"/>
 
         <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/handle"
+            android:id="@+id/mention_handle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="@dimen/wire__text_size__small"
