@@ -8,7 +8,7 @@ import sbtassembly.MappingSet
 import SharedSettings._
 
 val MajorVersion = "129"
-val MinorVersion = "1" // hotfix release
+val MinorVersion = "2" // hotfix release
 
 version in ThisBuild := {
   val jobName = sys.env.get("JOB_NAME")
