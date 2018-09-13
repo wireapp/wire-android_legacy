@@ -172,7 +172,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
     val (tpe, ct) = MessageData.messageContent(content, weblinkEnabled = true)
     verbose(s"parsed content: $ct")
     val id = MessageId()
-    updater.addLocalMessage(MessageData(id, convId, tpe, selfUserId, ct, protos = Seq(GenericMessage(id.uid, Text(content, Map.empty, Nil)))), exp = exp) // FIXME: links
+    updater.addLocalMessage(MessageData(id, convId, tpe, selfUserId, ct, protos = Seq(GenericMessage(id.uid, Text(content, Nil, Nil)))), exp = exp) // FIXME: links
   }
 
   override def addLocationMessage(convId: ConvId, content: Location) = {

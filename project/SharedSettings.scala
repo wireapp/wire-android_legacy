@@ -26,7 +26,7 @@ object SharedSettings {
     lazy val avs = "com.wire" % "avs" % avsVersion
     lazy val avsAudio = "com.wire.avs" % "audio-notifications" % audioVersion
     lazy val cryptobox = "com.wire" % "cryptobox-android" % cryptoboxVersion
-    lazy val genericMessage = "com.wire" % "generic-message-proto" % "1.20.0"
+    lazy val genericMessage = "com.wire" % "generic-message-proto" % "1.21.2"
     lazy val backendApi = "com.wire" % "backend-api-proto" % "1.1"
     lazy val supportV4 = "com.android.support" % "support-v4" % supportLibVersion
     lazy val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.12.5" % Test

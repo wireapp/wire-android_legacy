@@ -17,64 +17,50 @@
  */
 package com.waz.model
 
-import android.content.ContentValues
 import com.waz.api.{MediaProvider, Message}
-import com.waz.db.ZMessagingDB
 import com.waz.model.messages.media.{MediaAssetData, TrackData}
+import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
-import com.waz.utils.wrappers.{DB, URI}
+import com.waz.utils.wrappers.URI
 import com.waz.utils._
 import org.json.JSONArray
-import org.robolectric.Robolectric
 import org.scalatest._
 import org.threeten.bp
 import org.threeten.bp.Instant
 
-@Ignore class MessageDataDaoSpec extends FeatureSpec with Matchers with BeforeAndAfter with RobolectricTests {
+class MessageDataDaoSpec extends AndroidFreeSpec {
 
-  lazy val dbHelper = new ZMessagingDB(Robolectric.application, "dbName")
-
-  val convId = ConvId()
   val knockUser = UserId()
-
-  val events = List(
-    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = RemoteInstant.ofEpochMilli(1)),
-    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = RemoteInstant.ofEpochMilli(2)),
-    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = RemoteInstant.ofEpochMilli(3)),
-    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = RemoteInstant.ofEpochMilli(4)),
-    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = RemoteInstant.ofEpochMilli(5)),
-    MessageData(MessageId(), convId, Message.Type.TEXT, UserId(), time = RemoteInstant.ofEpochMilli(5)),
-    MessageData(MessageId(), convId, Message.Type.KNOCK, knockUser, time = RemoteInstant.ofEpochMilli(6)),
-    MessageData(MessageId(), ConvId(), Message.Type.TEXT, UserId(), time = RemoteInstant.ofEpochMilli(7))
-  )
-
-  after {
-    dbHelper.close()
-  }
-
-  implicit def db: DB = dbHelper.getWritableDatabase
-  import com.waz.model.MessageData.MessageDataDao._
-
-  scenario("find messages returns events ordered by time") {
-    insertOrReplace(events)
-    list(findMessages(convId)) shouldEqual events.filter(_.convId == convId).sortBy(_.time)
-  }
 
   feature("MessageContent decoding") {
 
     lazy val assetId = AssetId()
     lazy val now = Instant.now
 
-    lazy val contents = Seq(
-      Json(
-        "type" -> "Text",
-        "content" -> "text content"
-      ) -> MessageContent(Message.Part.Type.TEXT, "text content"),
+    val simpleMessageContent = MessageContent(Message.Part.Type.TEXT, "text content")
+    val simpleMessageJson = Json("type" -> "Text", "content" -> "text content")
+
+    val contentWithMention = MessageContent(Message.Part.Type.TEXT, "text content @user", mentions = Seq(Mention(Some(knockUser), 13, 18)))
+    val jsonWithMention =
       Json(
         "type" -> "Text",
         "content" -> "text content @user",
-        "mentions" -> Json(knockUser.str -> "user")
-      ) -> MessageContent(Message.Part.Type.TEXT, "text content @user", mentions = Map(knockUser -> "user")),
+        "mentions" -> Json(Seq(Map("user_id" -> knockUser.str, "start" -> 13, "end" -> 18)))
+      )
+
+    val complexMesageContent =
+      MessageContent(
+        Message.Part.Type.YOUTUBE,
+        "youtube link",
+        richMedia = Option[MediaAssetData](TrackData(MediaProvider.YOUTUBE, "title", None, "link-url", None, Some(bp.Duration.ofMillis(123L)), streamable = true, None, Some("preview-url"), now)),
+        openGraph = Some(OpenGraphData("wire", "descr", Some(URI.parse("http://www.wire.com")), "website", None)),
+        Some(assetId),
+        100,
+        80,
+        syncNeeded = true,
+        mentions = Nil
+      )
+    val complexMessageJson =
       Json(
         "type" -> "YouTube",
         "content" -> "youtube link",
@@ -93,11 +79,14 @@ import org.threeten.bp.Instant
         "width" -> 100,
         "height" -> 80,
         "syncNeeded" -> true
-      ) -> MessageContent(
-            Message.Part.Type.YOUTUBE, "youtube link",
-            richMedia = Option[MediaAssetData](TrackData(MediaProvider.YOUTUBE, "title", None, "link-url", None, Some(bp.Duration.ofMillis(123L)), streamable = true, None, Some("preview-url"), now)),
-            openGraph = Some(OpenGraphData("wire", "descr", Some(URI.parse("http://www.wire.com")), "website", None)), Some(assetId), 100, 80, syncNeeded = true, mentions = Map.empty[UserId, String])
-    )
+      )
+
+    val contents =
+      Seq(
+        simpleMessageJson -> simpleMessageContent,
+        jsonWithMention -> contentWithMention,
+        complexMessageJson -> complexMesageContent
+      )
 
     scenario("Decode message content") {
       contents foreach {
@@ -108,19 +97,11 @@ import org.threeten.bp.Instant
       }
     }
 
-    scenario("Decode message with sample content json") {
-      val json = returning(new JSONArray)(arr => contents.foreach(i => arr.put(i._1)))
-
-      val msg = MessageData(MessageId(), convId, Message.Type.RICH_MEDIA, UserId())
-      insertOrReplace(msg)
-
-      getById(msg.id) shouldEqual Some(msg)
-
-      val values = new ContentValues()
-      values.put(Content.name, json.toString)
-      db.update(table.name, values, s"${Id.name} = ?", Array(msg.id.str))
-
-      getById(msg.id) shouldEqual Some(msg.copy(content = contents.map(_._2)))
+    scenario("Decode mentions") {
+      val encoded = JsonEncoder.encode(contentWithMention)
+      val decoded = JsonDecoder.decode[MessageContent](encoded.toString)
+      decoded shouldEqual contentWithMention
     }
   }
+
 }

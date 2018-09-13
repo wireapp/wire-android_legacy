@@ -61,7 +61,7 @@ class MessageSendingSpec extends AndroidFreeSpec { test =>
     scenario("Add text message") {
 
       val mId = MessageId()
-      val msgData = MessageData(mId, conv.id, Message.Type.TEXT, UserId(), MessageData.textContent("test"), protos = Seq(GenericMessage(mId.uid, Text("test", Map.empty, Nil))))
+      val msgData = MessageData(mId, conv.id, Message.Type.TEXT, UserId(), MessageData.textContent("test"), protos = Seq(GenericMessage(mId.uid, Text("test", Nil, Nil))))
       val syncId = SyncId()
 
       (messages.addTextMessage _).expects(conv.id, "test", None).once().returning(Future.successful(msgData))

@@ -91,13 +91,13 @@ package object model {
     object TextMessage {
       import scala.concurrent.duration.DurationInt
 
-      def apply(text: String, mentions: Map[UserId, String]): GenericMessage = GenericMessage(Uid(), Text(text, mentions, Nil))
+      def apply(text: String, mentions: Seq[com.waz.model.Mention]): GenericMessage = GenericMessage(Uid(), Text(text, mentions, Nil))
 
-      def apply(text: String, mentions: Map[UserId, String], links: Seq[LinkPreview]): GenericMessage = GenericMessage(Uid(), Text(text, mentions, links))
+      def apply(text: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview]): GenericMessage = GenericMessage(Uid(), Text(text, mentions, links))
 
-      def apply(msg: MessageData): GenericMessage = GenericMessage(msg.id.uid, msg.ephemeral, Text(msg.contentString, msg.content.flatMap(_.mentions).toMap, Nil))
+      def apply(msg: MessageData): GenericMessage = GenericMessage(msg.id.uid, msg.ephemeral, Text(msg.contentString, msg.content.flatMap(_.mentions), Nil))
 
-      def unapply(msg: GenericMessage): Option[(String, Map[UserId, String], Seq[LinkPreview])] = msg match {
+      def unapply(msg: GenericMessage): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview])] = msg match {
         case GenericMessage(_, Text(content, mentions, links)) =>
           Some((content, mentions, links))
         case GenericMessage(_, Ephemeral(_, Text(content, mentions, links))) =>
