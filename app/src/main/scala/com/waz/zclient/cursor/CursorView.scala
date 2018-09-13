@@ -119,7 +119,9 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   private val cursorSpanWatcher = new MentionSpanWatcher
   private val mentionCandidatesAdapter = new MentionCandidatesAdapter()
   mentionsList.setAdapter(mentionCandidatesAdapter)
-  mentionsList.setLayoutManager(new LinearLayoutManager(context))
+  mentionsList.setLayoutManager(returning(new LinearLayoutManager(context)){
+    _.setStackFromEnd(true)
+  })
   mentionCandidatesAdapter.onUserClicked.onUi { info =>
     createMention(info.userId, info.name, cursorEditText.getEditableText, cursorEditText.getSelectionStart)
   }
@@ -150,8 +152,9 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
       searchService.searchUsersInConversation(convId, query.getOrElse(""))
   } yield results
 
-  mentionSearchResults.map(_.map(ud => MentionCandidateInfo(ud.id, ud.getDisplayName, ud.handle.getOrElse(Handle())))).onUi {
-    mentionCandidatesAdapter.setData
+  mentionSearchResults.map(_.map(ud => MentionCandidateInfo(ud.id, ud.getDisplayName, ud.handle.getOrElse(Handle())))).onUi { data =>
+    mentionCandidatesAdapter.setData(data)
+    mentionsList.scrollToPosition(data.size - 1)
   }
 
   Signal(mentionQuery.map(_.nonEmpty), mentionSearchResults.map(_.nonEmpty), selectionHasMention).map {
