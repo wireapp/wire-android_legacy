@@ -632,8 +632,8 @@
     <string name="debug_report__title">Wire debug report - %1$s</string>
     <string name="debug_report__body">Please describe the steps required to reproduce the issue, provide screenshots if possible and send this email.\n\n</string>
     <string name="pref_advanced_ws_foreground_title">Maintain connection to server</string>
-    <string name="pref_advanced_ws_foreground_summary">We have detected that you do not have Google Play Services installed. Wire for Android will attempt to keep an open connection with the Wire server in order to receive notifications while the application is not in the foreground.
-        Turning off this setting may improve Wire\'s battery performance, however you will no longer receive notifications when Wire is in the background. This applies to all logged-in accounts on this device.</string>
+    <string name="pref_advanced_ws_foreground_summary">We have detected that Google Play Services are not installed. Wire will try to keep a   connection with the server open to receive notifications while the application is not in the foreground.
+        Turning this setting off may improve battery performance, but you will no longer receive notifications when Wire is in the background. This applies to all accounts on this device.</string>
 
     <!-- Support -->
     <string name="pref_support_screen_title">Support</string>
@@ -736,19 +736,19 @@
 
     <!-- Lockscreen and notifications -->
     <string name="message_notifications_channel_name">Messages</string>
-    <string name="message_notifications_channel_description">Notifications regarding all message types in the application: text, images, audio and video messages.</string>
+    <string name="message_notifications_channel_description">Notifications for all message types, including text, images, audio and video messages.</string>
 
     <string name="incoming_call_notifications_channel_name">Incoming Calls</string>
-    <string name="incoming_call_notifications_channel_description">Notifications regarding incoming calls </string>
+    <string name="incoming_call_notifications_channel_description">Notifications on incoming calls</string>
 
     <string name="ping_notifications_channel_name">Pings</string>
-    <string name="ping_notifications_channel_description">Notification settings for when other users ping you.</string>
+    <string name="ping_notifications_channel_description">Notifications when other users ping you</string>
 
     <string name="ongoing_channel_name">Background notifications</string>
-    <string name="ongoing_channel_description">Notifications that display an ongoing process or secondary action of low importance, such as calls or successfully saving an image.</string>
+    <string name="ongoing_channel_description">Notifications about ongoing processes or secondary actions, such as calls or saving an image</string>
 
     <string name="foreground_service_notification_name">Maintain connection to server</string>
-    <string name="foreground_service_notification_description">This notification is necessary to keep the connection to the Wire server alive while Wire is in the background for users without Google play services installed.</string>
+    <string name="foreground_service_notification_description">This notification is necessary to keep the connection to the server alive while Wire is in the background and Google Play Services are not installed.</string>
 
     <string name="lockscreen__talk">IS CALLING</string>
     <plurals name="notification__new_messages">
