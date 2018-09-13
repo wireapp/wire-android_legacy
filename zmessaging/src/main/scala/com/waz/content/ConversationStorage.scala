@@ -38,9 +38,9 @@ trait ConversationStorage extends CachedStorage[ConvId, ConversationData] {
 
   def conversations: IndexedSeq[ConversationData]
 
-  val convAdded: EventStream[ConversationData]
-  val convDeleted: EventStream[ConversationData]
-  val convUpdated: EventStream[(ConversationData, ConversationData)]
+  def convAdded: EventStream[ConversationData]
+  def convDeleted: EventStream[ConversationData]
+  def convUpdated: EventStream[(ConversationData, ConversationData)]
 
   def setUnknownVerification(convId: ConvId): Future[Option[(ConversationData, ConversationData)]]
   def search(prefix: SearchKey, self: UserId, handleOnly: Boolean, teamId: Option[TeamId] = None): Future[Vector[ConversationData]]
@@ -91,8 +91,10 @@ class ConversationStorageImpl(storage: ZmsDatabase) extends CachedStorageImpl[Co
     verbose(s"${cs.size} convs deleted")
     cs foreach { c =>
       conversationsById.remove(c) foreach { cd =>
-        convDeleted ! cd
-        remoteMap.remove(cd.remoteId)
+        if (remoteMap(cd.remoteId) == c) {
+          convDeleted ! cd
+          remoteMap.remove(cd.remoteId)
+        }
       }
     }
 

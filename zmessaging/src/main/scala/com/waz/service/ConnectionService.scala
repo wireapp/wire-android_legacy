@@ -276,6 +276,9 @@ class ConnectionServiceImpl(selfUserId:      UserId,
             remotes(remoteId).id -> convIdForUser(toUser)
         }.toMap)
 
+        // remotes need to be refreshed after updating local ids
+        remotes <- convsStorage.getByRemoteIds2(convsInfo.flatMap(_.remoteId).toSet)
+
         result <- convsStorage.updateOrCreateAll2(newConvs.keys, {
           case (cId, Some(conv)) =>
             remoteIds(cId).fold(conv)(rId => remotes.getOrElse(rId, conv.copy(remoteId = rId)))
