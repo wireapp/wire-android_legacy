@@ -53,15 +53,20 @@ trait OtrService {
   def encryptTargetedMessage(user: UserId, client: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]]
   def deleteClients(userMap: Map[UserId, Seq[ClientId]]): Future[Any]
   def fingerprintSignal(userId: UserId, cId: ClientId): Signal[Option[Array[Byte]]]
-  def encryptConvMessage(convId: ConvId, msg: GenericMessage, useFakeOnError: Boolean = false,
-                         partialResult: EncryptedContent = EncryptedContent.Empty,
-                         recipients: Option[Set[UserId]] = None): Future[OtrClient.EncryptedContent]
-  def encryptBroadcastMessage(msg: GenericMessage, useFakeOnError: Boolean = false,
-                              partialResult: EncryptedContent = EncryptedContent.Empty,
-                              recipients: Set[UserId] = Set.empty): Future[OtrClient.EncryptedContent]
+
+  def encryptForUsers(users:          Set[UserId],
+                      msg:            GenericMessage,
+                      useFakeOnError: Boolean = false,
+                      partialResult:  EncryptedContent): Future[EncryptedContent]
+
   def encryptAssetData(key: AESKey, data: LocalData):Future[(Sha256, LocalData, EncryptionAlgorithm)]
-  def decryptAssetData(assetId: AssetId, otrKey: Option[AESKey], sha: Option[Sha256],
-                       data: Option[Array[Byte]], encryption: Option[EncryptionAlgorithm]): Option[Array[Byte]]
+
+  def decryptAssetData(assetId:    AssetId,
+                       otrKey:     Option[AESKey],
+                       sha:        Option[Sha256],
+                       data:       Option[Array[Byte]],
+                       encryption: Option[EncryptionAlgorithm]): Option[Array[Byte]]
+
   def decryptStoredOtrEvent(ev: OtrEvent, eventWriter: PlainWriter): Future[Either[OtrError, Unit]]
   def parseGenericMessage(msgEvent: OtrMessageEvent, msg: GenericMessage): Option[MessageEvent]
 }
@@ -191,26 +196,13 @@ class OtrServiceImpl(selfUserId:     UserId,
   /**
     * @param useFakeOnError when true, we will return bomb emoji as msg content on encryption errors (for failing client)
     * @param partialResult partial content encrypted in previous run, we will use that instead of encrypting again when available
-    * @param recipients users who this message shall be encrypted for; None means 'all active users'
     */
-  def encryptConvMessage(convId: ConvId,
-                         msg: GenericMessage,
-                         useFakeOnError: Boolean = false,
-                         partialResult: EncryptedContent = EncryptedContent.Empty,
-                         recipients: Option[Set[UserId]] = None): Future[OtrClient.EncryptedContent] =
-    members.getActiveUsers(convId).map { all =>
-      returning (all.filter(id => recipients.forall(_(id)))) { users => verbose(s"active users: $all, filtered: $users") }
-    }.flatMap { users =>
-      encryptForUsers(users, GenericMessage.toByteArray(msg), useFakeOnError, partialResult)
-    }
+  override def encryptForUsers(users:          Set[UserId],
+                               msg:            GenericMessage,
+                               useFakeOnError: Boolean = false,
+                               partialResult:  EncryptedContent) = {
 
-  def encryptBroadcastMessage(msg: GenericMessage,
-                              useFakeOnError: Boolean = false,
-                              partialResult: EncryptedContent = EncryptedContent.Empty,
-                              recipients: Set[UserId] = Set.empty): Future[OtrClient.EncryptedContent] =
-    encryptForUsers(recipients.toSeq, GenericMessage.toByteArray(msg), useFakeOnError, partialResult)
-
-  private def encryptForUsers(users: Seq[UserId], msgData: Array[Byte], useFakeOnError: Boolean = false, partialResult: EncryptedContent) = {
+    val msgData = GenericMessage.toByteArray(msg)
 
     def encryptForClients(user: UserId, clients: Seq[Client], msgData: Array[Byte], useFakeOnError: Boolean, partialResult: EncryptedContent) =
       Future.traverse(clients) { client =>
@@ -221,22 +213,22 @@ class OtrServiceImpl(selfUserId:     UserId,
           case Some(bytes) => Future successful Some(client.id -> bytes)
           case None =>
             verbose(s"encrypt for client: $client")
-            sessions.withSession(sessionId(user, client.id)) { session => client.id -> session.encrypt(msgData)}.recover {
+            sessions.withSession(sessionId(user, client.id)) { session => client.id -> session.encrypt(msgData) }.recover {
               case e: Throwable =>
                 tracking.exception(e, s"encryption failed")
                 if (useFakeOnError) Some(client.id -> EncryptionFailedMsg) else None
             }
         }
 
-      } map { ms => user -> ms.flatten.toMap }
+      }.map(ms => user -> ms.flatten.toMap)
 
     Future.traverse(users) { user =>
       // list of clients to which the message should be sent for given user
-      val targetClients = clientsStorage.getClients(user) map { cs =>
+      val targetClients = clientsStorage.getClients(user).map { cs =>
         if (user == selfUserId) cs.filter(_.id != clientId) else cs
       }
 
-      targetClients.flatMap { encryptForClients(user, _, msgData, useFakeOnError, partialResult) }
+      targetClients.flatMap(encryptForClients(user, _, msgData, useFakeOnError, partialResult))
     } map (res => EncryptedContent(res.toMap.filter(_._2.nonEmpty)))
   }
 

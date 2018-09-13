@@ -34,7 +34,7 @@ import scala.concurrent.{Future, Promise}
 
 trait Avs {
   import Avs._
-  def registerAccount(callingService: CallingService): Future[WCall]
+  def registerAccount(callingService: CallingServiceImpl): Future[WCall]
   def unregisterAccount(wCall: WCall): Future[Unit]
   def onNetworkChanged(wCall: WCall): Future[Unit]
   def startCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, convType: WCallConvType.Value, cbrEnabled: Boolean): Future[Int]
@@ -80,7 +80,7 @@ class AvsImpl() extends Avs {
       error("Failed to initialise AVS - calling will not work", e)
   }
 
-  override def registerAccount(cs: CallingService) = available.flatMap { _ =>
+  override def registerAccount(cs: CallingServiceImpl) = available.flatMap { _ =>
     verbose(s"Initialising calling for: ${cs.accountId} and current client: ${cs.clientId}")
 
     val callingReady = Promise[Unit]()
@@ -159,30 +159,40 @@ class AvsImpl() extends Avs {
   }
 
 
-  private def withAvs(f: => Unit): Future[Unit] = withAvsReturning(f, {})
+  private def withAvs(f: => Unit): Future[Unit] =
+    withAvsReturning(f, {})
 
-  override def unregisterAccount(wcall: WCall) = withAvs(Calling.wcall_destroy(wcall))
+  override def unregisterAccount(wcall: WCall) =
+    withAvs(Calling.wcall_destroy(wcall))
 
-  override def onNetworkChanged(wCall: WCall) = withAvs(Calling.wcall_network_changed(wCall))
+  override def onNetworkChanged(wCall: WCall) =
+    withAvs(Calling.wcall_network_changed(wCall))
 
-  override def startCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, convType: WCallConvType.Value, cbrEnabled: Boolean) = withAvsReturning(wcall_start(wCall, convId.str, callType.id, convType.id, cbrEnabled), -1)
+  override def startCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, convType: WCallConvType.Value, cbrEnabled: Boolean) =
+    withAvsReturning(wcall_start(wCall, convId.str, callType.id, convType.id, cbrEnabled), -1)
 
-  override def answerCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, cbrEnabled: Boolean) = withAvs(wcall_answer(wCall: WCall, convId.str, callType.id, cbrEnabled))
+  override def answerCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, cbrEnabled: Boolean) =
+    withAvs(wcall_answer(wCall: WCall, convId.str, callType.id, cbrEnabled))
 
-  override def onHttpResponse(wCall: WCall, status: Int, reason: String, arg: Pointer) = withAvs(wcall_resp(wCall, status, reason, arg))
+  override def onHttpResponse(wCall: WCall, status: Int, reason: String, arg: Pointer) =
+    withAvs(wcall_resp(wCall, status, reason, arg))
 
   override def onReceiveMessage(wCall: WCall, msg: String, currTime: LocalInstant, msgTime: RemoteInstant, convId: RConvId, from: UserId, sender: ClientId) = {
     val bytes = msg.getBytes("UTF-8")
     withAvs(wcall_recv_msg(wCall, bytes, bytes.length, uint32_tTime(currTime.instant), uint32_tTime(msgTime.instant), convId.str, from.str, sender.str))
   }
 
-  override def onConfigRequest(wCall: WCall, error: Int, json: String): Future[Unit] = withAvs(wcall_config_update(wCall, error, json))
+  override def onConfigRequest(wCall: WCall, error: Int, json: String): Future[Unit] =
+    withAvs(wcall_config_update(wCall, error, json))
 
-  override def endCall(wCall: WCall, convId: RConvId) = withAvs(wcall_end(wCall, convId.str))
+  override def endCall(wCall: WCall, convId: RConvId) =
+    withAvs(wcall_end(wCall, convId.str))
 
-  override def rejectCall(wCall: WCall, convId: RConvId) = withAvs(wcall_reject(wCall, convId.str))
+  override def rejectCall(wCall: WCall, convId: RConvId) =
+    withAvs(wcall_reject(wCall, convId.str))
 
-  override def setVideoSendState(wCall: WCall, convId: RConvId, state: VideoState.Value) = withAvs(wcall_set_video_send_state(wCall, convId.str, state.id))
+  override def setVideoSendState(wCall: WCall, convId: RConvId, state: VideoState.Value) =
+    withAvs(wcall_set_video_send_state(wCall, convId.str, state.id))
 
 }
 

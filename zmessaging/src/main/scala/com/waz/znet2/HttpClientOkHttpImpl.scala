@@ -17,40 +17,32 @@
  */
 package com.waz.znet2
 
-import java.io.{ ByteArrayInputStream, InputStream }
+import java.io.{ByteArrayInputStream, InputStream}
 import java.security.MessageDigest
-import java.util.Collections
 
 import android.util.Base64
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.threading.CancellableFuture
-import com.waz.utils.{ ExecutorServiceWrapper, IoUtils, RichOption }
+import com.waz.utils.{ExecutorServiceWrapper, IoUtils, RichOption}
 import com.waz.znet.ServerTrust
-import com.waz.znet2.http.HttpClient.{ Progress, ProgressCallback }
+import com.waz.znet2.http.HttpClient.{Progress, ProgressCallback}
 import com.waz.znet2.http.Method._
-import com.waz.znet2.http.{ Headers, _ }
-import okhttp3.MultipartBody.{ Part => OkMultipartBodyPart }
-import okhttp3.{
-  CertificatePinner,
-  CipherSuite,
-  ConnectionSpec,
-  Dispatcher,
-  Interceptor,
-  OkHttpClient,
-  TlsVersion,
-  Headers => OkHeaders,
-  MediaType => OkMediaType,
-  MultipartBody => OkMultipartBody,
-  Request => OkRequest,
-  RequestBody => OkRequestBody,
-  Response => OkResponse
-}
+import com.waz.znet2.http.{Headers, _}
+import okhttp3.MultipartBody.{Part => OkMultipartBodyPart}
+import okhttp3.{CertificatePinner, CipherSuite, ConnectionSpec, Dispatcher, Interceptor, OkHttpClient, TlsVersion, Headers => OkHeaders, MediaType => OkMediaType, MultipartBody => OkMultipartBody, Request => OkRequest, RequestBody => OkRequestBody, Response => OkResponse}
 import okio.BufferedSink
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
+/**
+  * According to OkHttp response body parsing logic, we get an OkHttp Body object with empty content in case,
+  * when we receive http response without body.
+  * We would like to do not have response body in this case.
+  * For achieving this, we always check response Content-Type header, and, if it is not present,
+  * we ignore the parsed OkHttp response body. This is done in HttpClientOkHttpImpl.convertOkHttpResponse
+  */
 class HttpClientOkHttpImpl(client: OkHttpClient)(implicit protected val ec: ExecutionContext) extends HttpClient {
 
   import HttpClient._
@@ -96,7 +88,7 @@ object HttpClientOkHttpImpl {
       loggerInterceptor: Option[Interceptor] = None
   )(implicit ec: ExecutionContext): OkHttpClient = {
     val builder = new OkHttpClient.Builder()
-    connectionSpec.foreach(spec => builder.connectionSpecs(List(spec, ConnectionSpec.COMPATIBLE_TLS).asJava))
+    connectionSpec.foreach(spec => builder.connectionSpecs(List(spec, ConnectionSpec.CLEARTEXT).asJava))
     certificatePinner.foreach(pinner => builder.certificatePinner(pinner))
     loggerInterceptor.foreach(interceptor => builder.addInterceptor(interceptor))
 
@@ -116,8 +108,8 @@ object HttpClientOkHttpImpl {
     new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
       .tlsVersions(TlsVersion.TLS_1_2)
       .cipherSuites(
-        CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-        CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+        CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
       )
       .build()
 
@@ -170,6 +162,7 @@ object HttpClientOkHttpImpl {
       code = response.code(),
       headers = convertHeaders(response.headers()),
       body = Option(response.body())
+        .filterNot(_ => response.header("Content-Type") == null || response.code() == ResponseCode.NoResponse) // should be treated as empty body
         .map { body =>
           val data       = body.byteStream()
           val dataLength = if (body.contentLength() == -1) None else Some(body.contentLength())

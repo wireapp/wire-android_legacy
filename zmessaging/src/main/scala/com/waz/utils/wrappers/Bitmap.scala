@@ -18,7 +18,7 @@
 package com.waz.utils.wrappers
 
 import android.graphics.{Bitmap => ABitmap}
-import com.waz.ui.Images
+import com.waz.bitmap
 
 import scala.language.implicitConversions
 
@@ -29,11 +29,11 @@ trait Bitmap {
   def isEmpty: Boolean
 }
 
-case class AndroidBitmap(bitmap: ABitmap) extends Bitmap {
-  override def getByteCount = bitmap.getByteCount()
-  override def getWidth = bitmap.getWidth()
-  override def getHeight = bitmap.getHeight()
-  override def isEmpty = (bitmap == Images.EmptyBitmap)
+case class AndroidBitmap(bm: ABitmap) extends Bitmap {
+  override def getByteCount = bm.getByteCount()
+  override def getWidth = bm.getWidth()
+  override def getHeight = bm.getHeight()
+  override def isEmpty = (bm == bitmap.EmptyBitmap)
 }
 
 case class FakeBitmap(getByteCount: Int = 1, getWidth: Int = 1, getHeight: Int = 1, isEmpty: Boolean = false) extends Bitmap

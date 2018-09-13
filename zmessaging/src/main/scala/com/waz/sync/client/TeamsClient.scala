@@ -43,6 +43,7 @@ class TeamsClientImpl(implicit
                       authRequestInterceptor: AuthRequestInterceptor) extends TeamsClient {
 
   import HttpClient.dsl._
+  import HttpClient.AutoDerivation._
   import TeamsClient._
 
   private implicit val teamMembersDeserializer: RawBodyDeserializer[Map[UserId, PermissionsMasks]] =

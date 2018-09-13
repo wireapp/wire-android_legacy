@@ -46,6 +46,7 @@ class SoundCloudClientImpl(implicit
                            authRequestInterceptor: AuthRequestInterceptor) extends SoundCloudClient {
 
   import HttpClient.dsl._
+  import HttpClient.AutoDerivation._
   import SoundCloudClient._
   import Threading.Implicits.Background
 

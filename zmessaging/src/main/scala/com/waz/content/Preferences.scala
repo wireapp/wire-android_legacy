@@ -116,7 +116,7 @@ object Preferences {
         case e => Some(e.millis)
       }
 
-      implicit lazy val SetCodec = apply[Set[Int]](s => s.mkString(","), s => s.split(",").map(java.lang.Integer.parseInt).toSet, Set.empty[Int])
+      implicit lazy val SetCodec = apply[Set[Int]](s => s.mkString(","), s => if (s.isEmpty) Set.empty[Int] else s.split(",").map(java.lang.Integer.parseInt).toSet, Set.empty[Int])
 
       implicit lazy val FiniteDurationCodec = apply[Option[FiniteDuration]](d => String.valueOf(d.getOrElse(0.millis).toMillis), parseFiniteDurationOpt, None)
 
@@ -354,7 +354,8 @@ object GlobalPreferences {
   //TODO think of a nicer way of ensuring that these key values are used in UI - right now, we need to manually check they're correct
   lazy val AutoAnswerCallPrefKey   = PrefKey[Boolean]("PREF_KEY_AUTO_ANSWER_ENABLED")
   lazy val V31AssetsEnabledKey     = PrefKey[Boolean]("PREF_V31_ASSETS_ENABLED")
-  lazy val WsForegroundKey         = PrefKey[Boolean]("PREF_KEY_WS_FOREGROUND_SERVICE_ENABLED")
+  lazy val WsForegroundKey         = PrefKey[Boolean]("websocket_foreground_service_enabled", customDefault = true)
+  lazy val SkipTerminatingState    = PrefKey[Boolean]("skip_terminating_state") //for calling
 
   lazy val PushEnabledKey          = PrefKey[Boolean]("PUSH_ENABLED", customDefault = true)
   lazy val PushToken               = PrefKey[Option[PushToken]]("PUSH_TOKEN")
@@ -367,7 +368,6 @@ object GlobalPreferences {
 
   lazy val GPSErrorDialogShowCount = PrefKey[Int]("PREF_PLAY_SERVICES_ERROR_SHOW_COUNT")
 
-  lazy val ResetPushToken             = PrefKey[Boolean]("RESET_PUSH_TOKEN", customDefault = true)
   lazy val AnalyticsEnabled           = PrefKey[Boolean]("PREF_KEY_PRIVACY_ANALYTICS_ENABLED", customDefault = false)
   lazy val ShowMarketingConsentDialog = PrefKey[Boolean]("show_marketing_consent_dialog", customDefault = true) //can be set to false by automation
 

@@ -47,6 +47,7 @@ class YouTubeClientImpl(implicit
                         authRequestInterceptor: AuthRequestInterceptor) extends YouTubeClient {
 
   import HttpClient.dsl._
+  import HttpClient.AutoDerivation._
   import Threading.Implicits.Background
   import YouTubeClient._
 

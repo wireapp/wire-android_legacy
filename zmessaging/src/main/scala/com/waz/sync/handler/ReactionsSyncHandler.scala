@@ -20,36 +20,23 @@ package com.waz.sync.handler
 import com.waz.ZLog._
 import com.waz.model.GenericContent.Reaction
 import com.waz.model._
-import com.waz.service.conversation.ConversationsContentUpdaterImpl
 import com.waz.service.messages.ReactionsService
-import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncResult
-import com.waz.sync.client.MessagesClient
 import com.waz.sync.otr.OtrSyncHandler
-import com.waz.utils._
 
 import scala.concurrent.Future
 
-class ReactionsSyncHandler(client:    MessagesClient,
-                           convs:     ConversationsContentUpdaterImpl,
-                           service:   ReactionsService,
-                           otrSync:   OtrSyncHandler,
-                           tracking:  TrackingService) {
+class ReactionsSyncHandler(service:   ReactionsService,
+                           otrSync:   OtrSyncHandler) {
 
   private implicit val logTag: LogTag = logTagFor[ReactionsSyncHandler]
   import com.waz.threading.Threading.Implicits.Background
 
   def postReaction(id: ConvId, liking: Liking): Future[SyncResult] =
-    convs.convById(id) flatMap {
-      case Some(conv) =>
-        otrSync.postOtrMessage(conv, GenericMessage(Uid(), Reaction(liking.message, liking.action))) flatMap {
-          case Right(time) =>
-            service.updateLocalReaction(liking, time).map(_ => SyncResult.Success)
-          case Left(error) =>
-            Future.successful(SyncResult(error))
-        }
-      case None =>
-        tracking.exception(new Exception("postLiking failed, couldn't find conversation"), s"postLiking failed, couldn't find conversation")
-        Future.successful(SyncResult.failed())
+    otrSync.postOtrMessage(id, GenericMessage(Uid(), Reaction(liking.message, liking.action))).flatMap {
+      case Right(time) =>
+        service.updateLocalReaction(liking, time).map(_ => SyncResult.Success)
+      case Left(error) =>
+        Future.successful(SyncResult(error))
     }
 }

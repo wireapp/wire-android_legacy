@@ -20,8 +20,8 @@ package com.waz.bitmap.gif
 import android.graphics.Bitmap
 import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.bitmap
 import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.ui.Images
 
 import scala.concurrent.Promise
 import scala.concurrent.duration.{FiniteDuration, _}
@@ -55,7 +55,7 @@ class GifAnimator(gif: Gif, reserveFrameMemory: () => Unit, frameCallback: Bitma
         // leaving 3 millis for getCurrentFrame - should be enough since it only applies pixels to image
         frameFuture = CancellableFuture.delayed(remainingDelay - 3.millis) {
           val frame = decoder.getCurrentFrame
-          if (frame != null && frame != Images.EmptyBitmap) frameCallback(frame)
+          if (frame != null && frame != bitmap.EmptyBitmap) frameCallback(frame)
         }
         frameFuture.onComplete { _ =>
           if (!p.isCompleted) nextFrame(decoder, math.max(lastFrameTime + delay.toMillis, System.currentTimeMillis() - 100))

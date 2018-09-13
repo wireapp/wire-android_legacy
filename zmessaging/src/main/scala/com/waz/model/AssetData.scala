@@ -20,10 +20,9 @@ package com.waz.model
 import android.util.Base64
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetStatus.UploadCancelled
+import com.waz.model.MessageData.MessageDataDao.{ExpiryTime, iterating, table}
 import com.waz.service.UserService
-import com.waz.utils.wrappers.DBCursor
-//import com.waz.ZLog.ImplicitTag._
-//import com.waz.ZLog.verbose
+import com.waz.utils.wrappers.{DB, DBCursor}
 import com.waz.content.WireContentProvider
 import com.waz.db.Col._
 import com.waz.db.Dao
@@ -250,11 +249,12 @@ object AssetData {
     def unapply(asset: AssetData): Option[URI] = asset.source
   }
 
-  val MaxAllowedAssetSizeInBytes = 26214383L
-  // 25MiB - 32 + 15 (first 16 bytes are AES IV, last 1 (!) to 16 bytes are padding)
-  val MaxAllowedBackendAssetSizeInBytes = 26214400L
+  private val MaxTeamAssetSizeInBytes   = 100L * 1024 * 1024
+  private val MaxNoTeamAssetSizeInBytes = 25L  * 1024 * 1024
 
-  // 25MiB
+  def maxAssetSizeInBytes(isTeam: Boolean): Long =
+    if (isTeam) MaxTeamAssetSizeInBytes
+    else MaxNoTeamAssetSizeInBytes
 
   case class ProcessingTaskKey(id: AssetId)
 

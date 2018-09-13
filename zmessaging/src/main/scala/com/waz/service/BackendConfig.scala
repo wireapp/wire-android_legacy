@@ -17,11 +17,7 @@
  */
 package com.waz.service
 
-import android.content.Context
-import com.google.firebase.FirebaseApp
-import com.waz.ZLog.ImplicitTag._
 import com.waz.service.BackendConfig.FirebaseOptions
-import com.waz.utils.LoggedTry
 import com.waz.utils.wrappers.URI
 
 case class BackendConfig(baseUrl: URI, websocketUrl: String, firebaseOptions: FirebaseOptions, environment: String) {
@@ -30,16 +26,7 @@ case class BackendConfig(baseUrl: URI, websocketUrl: String, firebaseOptions: Fi
 
 object BackendConfig {
 
-  case class FirebaseOptions(pushSenderId: String, appId: String, apiKey: String) {
-
-    def apply(context: Context) = LoggedTry {
-      FirebaseApp.initializeApp(context, new com.google.firebase.FirebaseOptions.Builder()
-        .setApplicationId(appId)
-        .setApiKey(apiKey)
-        .setGcmSenderId(pushSenderId)
-        .build())
-    }.toOption
-  }
+  case class FirebaseOptions(pushSenderId: String, appId: String, apiKey: String)
 
   //This information can be found in downloadable google-services.json file from the BE console.
   val StagingFirebaseOptions = FirebaseOptions("723990470614", "1:723990470614:android:9a1527f79aa62284", "AIzaSyAGCoJGUtDBLJJiQPLxHQRrdkbyI0wlbo8")

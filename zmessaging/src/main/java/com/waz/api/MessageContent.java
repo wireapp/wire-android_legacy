@@ -19,54 +19,6 @@ package com.waz.api;
 
 public interface MessageContent {
 
-    class Text implements MessageContent {
-
-        private final String content;
-
-        public Text(String content) {
-            this.content = content;
-        }
-
-        public String getContent() {
-            return content;
-        }
-
-    }
-
-    class Image implements MessageContent {
-        private final ImageAsset content;
-
-        public Image(ImageAsset file) {
-            this.content = file;
-        }
-
-        public ImageAsset getContent() {
-            return content;
-        }
-    }
-
-    class Asset implements MessageContent {
-        private final AssetForUpload content;
-        private final ErrorHandler handler;
-
-        public Asset(AssetForUpload a, ErrorHandler eh) {
-            this.content = a;
-            this.handler = eh;
-        }
-
-        public AssetForUpload getContent() { return content; }
-        public ErrorHandler getErrorHandler() { return handler; }
-
-        public interface ErrorHandler {
-            void noWifiAndFileIsLarge(long sizeInBytes, NetworkMode net, Answer answer);
-        }
-
-        public interface Answer {
-            void ok();
-            void cancel();
-        }
-    }
-
     class Location implements MessageContent {
 
         private final float longitude;

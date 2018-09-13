@@ -23,12 +23,10 @@ import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
-import com.waz.service.UserService
 import com.waz.service.tracking.TrackingService
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
 import com.waz.utils.events.Signal
-import org.threeten.bp.Instant
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NoStackTrace
@@ -36,8 +34,8 @@ import scala.util.control.NoStackTrace
 trait ConversationsContentUpdater {
   def convById(id: ConvId): Future[Option[ConversationData]]
   def convByRemoteId(id: RConvId): Future[Option[ConversationData]]
+  def convsByRemoteId(ids: Set[RConvId]): Future[Map[RConvId, ConversationData]]
   def storage: ConversationStorage
-  def getOneToOneConversation(toUser: UserId, selfUserId: UserId, remoteId: Option[RConvId] = None, convType: ConversationType = ConversationType.OneToOne): Future[ConversationData]
   def updateConversation(id: ConvId, convType: Option[ConversationType] = None, hidden: Option[Boolean] = None): Future[Option[(ConversationData, ConversationData)]]
   def hideIncomingConversation(user: UserId): Future[Option[(ConversationData, ConversationData)]]
   def setConversationHidden(id: ConvId, hidden: Boolean): Future[Option[(ConversationData, ConversationData)]]
@@ -64,6 +62,7 @@ trait ConversationsContentUpdater {
 }
 
 class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
+                                      selfUserId:      UserId,
                                       teamId:          Option[TeamId],
                                       usersStorage:    UsersStorage,
                                       membersStorage:  MembersStorage,
@@ -87,6 +86,9 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
   override def convById(id: ConvId): Future[Option[ConversationData]] = storage.get(id)
 
   override def convByRemoteId(id: RConvId): Future[Option[ConversationData]] = storage.getByRemoteId(id)
+
+  override def convsByRemoteId(ids: Set[RConvId]): Future[Map[RConvId, ConversationData]] =
+    storage.getByRemoteIds2(ids)
 
   override def updateConversationName(id: ConvId, name: String) = storage.update(id, { conv =>
       if (conv.convType == ConversationType.Group)
@@ -175,36 +177,6 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
       _ <- membersStorage.add(convId, members + creator)
     } yield conv
   }
-
-  /**
-   * Finds or creates local one-to-one conversation with given user and/or remoteId.
-   * Updates remoteId if different and merges conversations if two are found for given local and remote id.
-   *
-   * Will not post created conversation to backend.
-   * TODO: improve - it looks too complicated and duplicates some code
-   */
-  override def getOneToOneConversation(toUser: UserId, selfUserId: UserId, remoteId: Option[RConvId] = None, convType: ConversationType = ConversationType.OneToOne) =
-    Serialized.future(('getOneToOneConversation, toUser)) {
-      verbose(s"getOneToOneConversation($toUser, self: $selfUserId, remote: $remoteId, convType: $convType")
-      val convId = ConvId(toUser.str)
-
-      def createConversation() = createConversationWithMembers(convId, remoteId.getOrElse(RConvId(toUser.str)), convType, selfUserId, Set(toUser))
-
-      storage.get(convId) flatMap { localConv =>
-        if (remoteId.forall(r => localConv.exists(_.remoteId == r)))
-          localConv.fold(createConversation())(Future.successful)
-        else // update remote id or merge conversations
-          storage.getByRemoteId(remoteId.get) flatMap { remoteConv =>
-            (localConv, remoteConv) match {
-              case (_, Some(remote)) =>
-                if (remote.id == convId) Future.successful(remote) // means conv was created between get(convId) and getByRemoteId(remoteId.get)
-                else storage.updateLocalId(remote.id, convId) map (_.get) // XXX: should we update messages and members here ?
-              case (Some(_), None) => storage.update(convId, _.copy(remoteId = remoteId.get)) map (_.get._2)
-              case _ => createConversation()
-            }
-          }
-      }
-    }
 
   override def hideIncomingConversation(user: UserId) = storage.update(ConvId(user.str), { conv =>
     if (conv.convType == ConversationType.Incoming) conv.copy(hidden = true) else conv

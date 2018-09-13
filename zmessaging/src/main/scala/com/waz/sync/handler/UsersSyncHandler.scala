@@ -19,7 +19,7 @@ package com.waz.sync.handler
 
 import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
-import com.waz.api.impl.{AccentColor, ErrorResponse}
+import com.waz.api.impl.ErrorResponse
 import com.waz.content.UsersStorage
 import com.waz.model._
 import com.waz.service.UserService
@@ -104,7 +104,7 @@ class UsersSyncHandler(assetSync: AssetSyncHandler,
         assetSync.uploadAssetData(assetId, public = true, retention = Retention.Eternal).future flatMap {
           case Right(uploaded) => for {
             _     <- assets.getAssetData(assetId)
-            res   <- updatedSelfToSyncResult(usersClient.updateSelf(UserInfo(id, picture = Some(Seq(uploadedPreview, uploaded).flatten))))
+            res   <- updatedSelfToSyncResult(usersClient.updateSelf(UserInfo(id, picture = Some(Seq(uploadedPreview, uploaded)))))
           } yield res
 
           case Left(err) =>

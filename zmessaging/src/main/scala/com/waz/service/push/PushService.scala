@@ -19,7 +19,6 @@ package com.waz.service.push
 
 import android.content.Context
 import com.waz.ZLog._
-import com.waz.api.NetworkMode
 import com.waz.api.NetworkMode.{OFFLINE, UNKNOWN}
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.GlobalPreferences.BackendDrift
@@ -28,14 +27,13 @@ import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.Event.EventDecoder
 import com.waz.model._
 import com.waz.model.otr.ClientId
-import com.waz.service.AccountsService.{InBackground, LoggedOut}
 import com.waz.service.ZMessaging.{accountTag, clock}
 import com.waz.service._
 import com.waz.service.otr.OtrService
 import com.waz.service.push.PushService.SyncSource
 import com.waz.service.tracking.{MissedPushEvent, ReceivedPushEvent, TrackingService}
 import com.waz.sync.SyncServiceHandle
-import com.waz.sync.client.PushNotificationsClient.{LoadNotificationsResponse, LoadNotificationsResult}
+import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
 import com.waz.sync.client.{PushNotificationEncoded, PushNotificationsClient}
 import com.waz.threading.CancellableFuture.lift
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
@@ -46,7 +44,7 @@ import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{Future, Promise}
 
 /** PushService handles notifications coming from FCM, WebSocket, and fetch.
   * We assume FCM notifications are unreliable, so we use them only as information that we should perform a fetch (syncHistory).
@@ -67,7 +65,7 @@ trait PushService {
 
   def onHistoryLost: SourceSignal[Instant] with BgEventSource
   def processing: Signal[Boolean]
-  def afterProcessing[T](f : => Future[T])(implicit ec: ExecutionContext): Future[T]
+  def waitProcessing: Future[Unit]
 
   /**
     * Drift to the BE time at the moment we fetch notifications
@@ -77,7 +75,7 @@ trait PushService {
   def beDrift: Signal[Duration]
 }
 
-class PushServiceImpl(userId:               UserId,
+class PushServiceImpl(selfUserId:           UserId,
                       context:              Context,
                       userPrefs:            UserPreferences,
                       prefs:                GlobalPreferences,
@@ -98,13 +96,14 @@ class PushServiceImpl(userId:               UserId,
                      (implicit ev: AccountContext) extends PushService { self =>
   import PushService._
 
-  implicit val logTag: LogTag = accountTag[PushServiceImpl](userId)
+  implicit val logTag: LogTag = accountTag[PushServiceImpl](selfUserId)
   private implicit val dispatcher = new SerialDispatchQueue(name = "PushService")
 
   override val onHistoryLost = new SourceSignal[Instant] with BgEventSource
   override val processing = Signal(false)
-  override def afterProcessing[T](f : => Future[T])(implicit ec: ExecutionContext): Future[T] =
-    processing.filter(_ == false).head.flatMap(_ => f)
+
+  override def waitProcessing =
+    processing.filter(_ == false).head.map(_ => {})
 
   private val beDriftPref = prefs.preference(BackendDrift)
   override val beDrift = beDriftPref.signal.disableAutowiring()
@@ -172,36 +171,6 @@ class PushServiceImpl(userId:               UserId,
         } yield {}
       else Future.successful(())
     }
-  }
-
-  private val accountState = accounts.accountState(userId)
-
-  // true if web socket should be active,
-  private val wsActive = network.networkMode.flatMap {
-    case NetworkMode.OFFLINE => Signal const false
-    case _ => accountState.flatMap {
-      case LoggedOut => Signal const false
-      case _ => pushTokenService.pushActive.flatMap {
-        case false => Signal.const(true)
-        case true  =>
-          // throttles inactivity notifications to avoid disconnecting on short UI pauses (like activity change)
-          verbose(s"lifecycle no longer active, should stop the client")
-          Signal.future(CancellableFuture.delayed(timeouts.webSocket.inactivityTimeout)(false)).orElse(Signal const true)
-      }
-    }
-  }
-
-  wsActive {
-    case true =>
-      debug(s"Active, client: $clientId")
-      wsPushService.activate()
-      if (accountState.currentValue.forall(_ == InBackground)) {
-        // start android service to keep the app running while we need to be connected.
-        com.waz.zms.WebSocketService(context)
-      }
-    case _ =>
-      debug(s"onInactive")
-      wsPushService.deactivate()
   }
 
   wsPushService.notifications() { notifications =>
@@ -286,45 +255,51 @@ class PushServiceImpl(userId:               UserId,
           else
             (for {
               _ <- if (historyLost) sync.performFullSync().map(_ => onHistoryLost ! clock.instant()) else Future.successful({})
-              drift  <- beDrift.head
-              nw     <- network.networkMode.head
-              pushes <- receivedPushes.list()
-              _ <- receivedPushes.removeAll(pushes.map(_.id))
               _ <- beDriftPref.mutate(v => time.map(clock.instant.until(_)).getOrElse(v))
-              inBackground <- lifeCycle.uiActive.map(!_).head
             } yield {
-              reportMissing(nots, pushes, drift, nw, inBackground)
+              reportMissing(nots)
               nots
             }).flatMap(storeNotifications)
       }
 
-    def reportMissing(nots: Vector[PushNotificationEncoded], pushes: Seq[ReceivedPushData], drift: Duration, nw: NetworkMode, inBackground: Boolean): Unit = {
+    def reportMissing(nots: Vector[PushNotificationEncoded]): Unit =
+      for {
+        now    <- beDrift.head.map(clock.instant + _) //get time at fetch (before waiting)
+        _      <- CancellableFuture.delay(5.seconds).future //wait a few seconds for any lagging FCM notifications before doing comparison
+        nw     <- network.networkMode.head
+        pushes <- receivedPushes.list()
+        _      <- receivedPushes.removeAll(pushes.map(_.id))
+        inBackground <- lifeCycle.uiActive.map(!_).head
+      } {
+        val sourcePush = source match {
+          case FetchFromJob(nId) => nId
+          case FetchFromIdle(nId) => nId
+          case _ => None
+        }
 
-      val sourcePush = source match {
-        case FetchFromJob(nId) => nId
-        case FetchFromIdle(nId) => nId
-        case _ => None
+        val notsUntilPush = nots.takeWhile(n => !sourcePush.contains(n.id))
+
+        val missedEvents = notsUntilPush.filterNot(_.transient).map { n =>
+
+          val events =
+            JsonDecoder.array(n.events, { case (arr, i) => arr.getJSONObject(i) })
+              .filter(ev => TrackingEvents(ev.getString("type")))
+              .filter(ev => UserId(ev.getString("from")) != selfUserId)
+              .map(_.getString("type"))
+
+          (n.id, events)
+        }.filter { case (id, evs) => evs.nonEmpty && !pushes.map(_.id).contains(id) }
+
+        val allEvents = missedEvents.toMap.values.flatten
+
+        val eventFrequency = TrackingEvents.map(e => (e, allEvents.count(_ == e))).toMap
+
+        if (missedEvents.nonEmpty) //we didn't get pushes for some returned notifications
+          tracking.track(MissedPushEvent(now, missedEvents.size, inBackground, nw, network.getNetworkOperatorName, eventFrequency, missedEvents.last._1.str))
+
+        if (pushes.nonEmpty)
+          pushes.map(p => p.copy(toFetch = Some(p.receivedAt.until(now)))).foreach(p => tracking.track(ReceivedPushEvent(p)))
       }
-
-      val notsUntilPush = nots.takeWhile(n => !sourcePush.contains(n.id))
-
-      val missedEvents = notsUntilPush.filterNot(_.transient).map { n =>
-        val events = JsonDecoder.array(n.events, { case (arr, i) =>
-          arr.getJSONObject(i).getString("type")
-        }).filter(TrackingEvents(_))
-        (n.id, events)
-      }.filter { case (id, evs) => evs.nonEmpty && !pushes.map(_.id).contains(id) }
-
-      val allEvents = missedEvents.toMap.values.flatten
-
-      val eventFrequency = TrackingEvents.map(e => (e, allEvents.count(_ == e))).toMap
-
-      if (missedEvents.nonEmpty) //we didn't get pushes for some returned notifications
-        tracking.track(MissedPushEvent(clock.instant + drift, missedEvents.size, inBackground, nw, network.getNetworkOperatorName, eventFrequency, missedEvents.last._1.str))
-
-      if (pushes.nonEmpty)
-        pushes.map(p => p.copy(toFetch = Some(p.receivedAt.until(clock.instant + drift)))).foreach(p => tracking.track(ReceivedPushEvent(p)))
-    }
 
     if (fetchInProgress.isCompleted) {
       verbose(s"Sync history in response to $source")
@@ -337,7 +312,7 @@ class PushServiceImpl(userId:               UserId,
 object PushService {
 
   //These are the most important event types that generate push notifications
-  val TrackingEvents = Set("conversation.otr-message-add", "conversation.create", "conversation.rename", "user.connection", "conversation.member-join")
+  val TrackingEvents = Set("conversation.otr-message-add", "conversation.create", "conversation.rename", "conversation.member-join")
 
   val PipelineKey = "pipeline_processing"
 

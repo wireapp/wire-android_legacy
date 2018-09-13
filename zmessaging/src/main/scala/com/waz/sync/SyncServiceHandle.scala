@@ -18,14 +18,13 @@
 package com.waz.sync
 
 import com.waz.api.IConversation.{Access, AccessRole}
-import com.waz.api.impl.AccentColor
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.{ShouldSyncConversations, ShouldSyncInitial}
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.ClientId
 import com.waz.model.sync.SyncJob.Priority
 import com.waz.model.sync._
-import com.waz.model.{Availability, _}
+import com.waz.model.{AccentColor, Availability, _}
 import com.waz.service._
 import com.waz.sync.queue.ConvLock
 import com.waz.threading.Threading
@@ -46,9 +45,6 @@ trait SyncServiceHandle {
   def syncConnectedUsers(): Future[SyncId]
   def syncConnections(dependsOn: Option[SyncId] = None): Future[SyncId]
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority): Future[SyncId]
-  def syncIntegrations(startWith: String): Future[SyncId]
-  def syncIntegration(id: ProviderId, iId: IntegrationId): Future[SyncId]
-  def syncProvider(id: ProviderId): Future[SyncId]
   def postAddBot(cId: ConvId, pId: ProviderId, iId: IntegrationId): Future[SyncId]
   def postRemoveBot(cId: ConvId, botId: UserId): Future[SyncId]
 
@@ -131,9 +127,6 @@ class AndroidSyncServiceHandle(service: SyncRequestService, timeouts: Timeouts, 
   def syncConnectedUsers() = addRequest(SyncConnectedUsers)
   def syncConnections(dependsOn: Option[SyncId]) = addRequest(SyncConnections, dependsOn = dependsOn.toSeq)
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority) = addRequest(SyncRichMedia(id), priority = priority)
-  def syncIntegrations(startWith: String) = addRequest(SyncIntegrations(startWith))
-  def syncIntegration(pId: ProviderId, iId: IntegrationId) = addRequest(SyncIntegration(pId, iId))
-  def syncProvider(pId: ProviderId) = addRequest(SyncProvider(pId))
 
   def postSelfUser(info: UserInfo) = addRequest(PostSelf(info))
   def postSelfPicture(picture: Option[AssetId]) = addRequest(PostSelfPicture(picture))
@@ -174,12 +167,13 @@ class AndroidSyncServiceHandle(service: SyncRequestService, timeouts: Timeouts, 
   def postSessionReset(conv: ConvId, user: UserId, client: ClientId) = addRequest(PostSessionReset(conv, user, client))
 
   override def performFullSync(): Future[Unit] = for {
-    id1 <- syncSelfUser().flatMap(dependency => syncConnections(Some(dependency)))
+    id1 <- syncSelfUser()
+    id6 <- syncConnections()
     id2 <- syncSelfClients()
     id3 <- syncSelfPermissions()
     id4 <- syncTeam()
     id5 <- syncConversations()
-    _ <- service.scheduler.await(Set(id1, id2, id3, id4, id5))
+    _ <- service.scheduler.await(Set(id1, id2, id3, id4, id5, id6))
   } yield ()
 }
 
@@ -204,9 +198,6 @@ class AccountSyncHandler(zms: ZMessaging) extends SyncHandler {
     case SyncSearchQuery(query)                 => zms.usersearchSync.syncSearchQuery(query)
     case ExactMatchHandle(query)                => zms.usersearchSync.exactMatchHandle(query)
     case SyncRichMedia(messageId)               => zms.richmediaSync.syncRichMedia(messageId)
-    case SyncIntegrations(startWith)            => zms.integrationsSync.syncIntegrations(startWith)
-    case SyncIntegration(pId, iId)              => zms.integrationsSync.syncIntegration(pId, iId)
-    case SyncProvider(pId)                      => zms.integrationsSync.syncProvider(pId)
     case DeletePushToken(token)                 => zms.gcmSync.deleteGcmToken(token)
     case PostConnection(userId, name, message)  => zms.connectionsSync.postConnection(userId, name, message)
     case PostConnectionStatus(userId, status)   => zms.connectionsSync.postConnectionStatus(userId, status)

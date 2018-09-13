@@ -30,6 +30,8 @@ import com.waz.model.AccountData.Password
 import com.waz.model._
 import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
+import com.waz.service.UserService.UnsplashUrl
+import com.waz.service.assets.AssetService.RawAssetInput.UriInput
 import com.waz.service.otr.OtrService.sessionId
 import com.waz.service.tracking.LoggedOutEvent
 import com.waz.sync.client.InvitationClient.ConfirmedTeamInvitation
@@ -123,9 +125,7 @@ class AccountManager(val userId:   UserId,
     }
   }
 
-  if (isLogin.contains(false)) {
-    zmessaging.flatMap(_.users.addUnsplashPicture())
-  }
+  if (isLogin.contains(false)) addUnsplashPicture()
 
   if (startedJustAfterBackup) {
     zmessaging.foreach(_.tracking.historyRestored(true))
@@ -150,6 +150,8 @@ class AccountManager(val userId:   UserId,
     }
     hasClient = exists
   }
+
+  def addUnsplashPicture(): Future[Unit] = zmessaging.flatMap(_.users.updateSelfPicture(UriInput(UnsplashUrl)))
 
   def fingerprintSignal(uId: UserId, cId: ClientId): Signal[Option[Array[Byte]]] =
     for {

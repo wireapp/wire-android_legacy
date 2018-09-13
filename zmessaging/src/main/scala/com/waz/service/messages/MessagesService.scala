@@ -43,9 +43,9 @@ import scala.concurrent.duration.{FiniteDuration, _}
 import scala.util.Success
 
 trait MessagesService {
-  def addTextMessage(convId: ConvId, content: String, mentions: Map[UserId, String] = Map.empty): Future[MessageData]
+  def addTextMessage(convId: ConvId, content: String, exp: Option[Option[FiniteDuration]] = None): Future[MessageData]
   def addKnockMessage(convId: ConvId, selfUserId: UserId): Future[MessageData]
-  def addAssetMessage(convId: ConvId, asset: AssetData): Future[MessageData]
+  def addAssetMessage(convId: ConvId, asset: AssetData, exp: Option[Option[FiniteDuration]] = None): Future[MessageData]
   def addLocationMessage(convId: ConvId, content: Location): Future[MessageData]
 
   def addMissedCallMessage(rConvId: RConvId, from: UserId, time: RemoteInstant): Future[Option[MessageData]]
@@ -54,7 +54,9 @@ trait MessagesService {
 
   def addConnectRequestMessage(convId: ConvId, fromUser: UserId, toUser: UserId, message: String, name: String, fromSync: Boolean = false): Future[MessageData]
   def addConversationStartMessage(convId: ConvId, creator: UserId, users: Set[UserId], name: Option[String], time: Option[RemoteInstant] = None): Future[MessageData]
-  def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false): Future[Option[MessageData]]
+
+  //TODO forceCreate is a hacky workaround for a bug where previous system messages are not marked as SENT. Do NOT use!
+  def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false, forceCreate: Boolean = false): Future[Option[MessageData]]
   def addMemberLeaveMessage(convId: ConvId, selfUserId: UserId, user: UserId): Future[Any]
   def addRenameConversationMessage(convId: ConvId, selfUserId: UserId, name: String): Future[Option[MessageData]]
   def addTimerChangedMessage(convId: ConvId, from: UserId, duration: Option[FiniteDuration], time: RemoteInstant): Future[Unit]
@@ -165,12 +167,12 @@ class MessagesServiceImpl(selfUserId:   UserId,
     }
   }
 
-  override def addTextMessage(convId: ConvId, content: String, mentions: Map[UserId, String] = Map.empty) = {
-    verbose(s"addTextMessage($convId, ${content.take(4)}, $mentions)")
-    val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
+  override def addTextMessage(convId: ConvId, content: String, exp: Option[Option[FiniteDuration]] = None) = {
+    verbose(s"addTextMessage($convId, ${content.take(4)}")
+    val (tpe, ct) = MessageData.messageContent(content, weblinkEnabled = true)
     verbose(s"parsed content: $ct")
     val id = MessageId()
-    updater.addLocalMessage(MessageData(id, convId, tpe, selfUserId, ct, protos = Seq(GenericMessage(id.uid, Text(content, mentions, Nil))))) // FIXME: links
+    updater.addLocalMessage(MessageData(id, convId, tpe, selfUserId, ct, protos = Seq(GenericMessage(id.uid, Text(content, Map.empty, Nil)))), exp = exp) // FIXME: links
   }
 
   override def addLocationMessage(convId: ConvId, content: Location) = {
@@ -179,7 +181,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
     updater.addLocalMessage(MessageData(id, convId, Type.LOCATION, selfUserId, protos = Seq(GenericMessage(id.uid, content))))
   }
 
-  override def addAssetMessage(convId: ConvId, asset: AssetData) = {
+  override def addAssetMessage(convId: ConvId, asset: AssetData, exp: Option[Option[FiniteDuration]] = None) = {
     val tpe = asset match {
       case AssetData.IsImage() => Message.Type.ASSET
       case AssetData.IsVideo() => Message.Type.VIDEO_ASSET
@@ -187,7 +189,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
       case _                   => Message.Type.ANY_ASSET
     }
     val mid = MessageId(asset.id.str)
-    updater.addLocalMessage(MessageData(mid, convId, tpe, selfUserId, protos = Seq(GenericMessage(mid.uid, Asset(asset)))))
+    updater.addLocalMessage(MessageData(mid, convId, tpe, selfUserId, protos = Seq(GenericMessage(mid.uid, Asset(asset)))), exp = exp)
   }
 
   override def addRenameConversationMessage(convId: ConvId, from: UserId, name: String) = {
@@ -252,13 +254,17 @@ class MessagesServiceImpl(selfUserId:   UserId,
     updater.addLocalSentMessage(MessageData(MessageId(), convId, Message.Type.MEMBER_JOIN, creator, name = name, members = users, firstMessage = true), time)
   }
 
-  override def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false) = {
+  override def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false, forceCreate: Boolean = false) = {
     verbose(s"addMemberJoinMessage($convId, $creator, $users)")
 
     def updateOrCreate(added: Set[UserId]) = {
       def update(msg: MessageData) = msg.copy(members = msg.members ++ added)
       def create = MessageData(MessageId(), convId, Message.Type.MEMBER_JOIN, creator, members = added, firstMessage = firstMessage)
-      updater.updateOrCreateLocalMessage(convId, Message.Type.MEMBER_JOIN, update, create)
+
+      if (forceCreate)
+        updater.addLocalSentMessage(create).map(Some(_))
+      else
+        updater.updateOrCreateLocalMessage(convId, Message.Type.MEMBER_JOIN, update, create)
     }
 
     // check if we have local leave message with same users

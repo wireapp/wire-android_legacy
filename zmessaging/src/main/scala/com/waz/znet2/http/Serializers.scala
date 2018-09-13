@@ -38,12 +38,6 @@ object RequestSerializer {
     override def serialize(request: Request[T]): Request[Body] = f(request)
   }
 
-  implicit val EmptyBodyRequestSerializer: RequestSerializer[EmptyBody] =
-    create(request => request.copy(body = EmptyBodyImpl))
-
-  implicit def serializerFromBodySerializer[T](implicit bs: BodySerializer[T]): RequestSerializer[T] =
-    create(request => request.copy(body = bs.serialize(request.body)))
-
 }
 
 trait BodySerializer[T] {
@@ -59,19 +53,6 @@ object BodySerializer {
   def create[T](f: T => Body): BodySerializer[T] = new BodySerializer[T] {
     override def serialize(body: T): Body = f(body)
   }
-
-  implicit val MultipartMixedBodySerializer: BodySerializer[MultipartBodyMixed] =
-    create { body =>
-      RawMultipartBodyMixed(body.parts.map(p => RawMultipartBodyMixed.Part(p.serialize, p.headers)))
-    }
-
-  implicit val MultipartFormDataBodySerializer: BodySerializer[MultipartBodyFormData] =
-    create { body =>
-      RawMultipartBodyFormData(body.parts.map(p => RawMultipartBodyFormData.Part(p.serialize, p.name, p.fileName)))
-    }
-
-  implicit def bodySerializerFromRawBodySerializer[T](implicit rbs: RawBodySerializer[T]): BodySerializer[T] =
-    create(rbs.serialize)
 
 }
 
@@ -89,25 +70,48 @@ object RawBodySerializer {
     override def serialize(body: T): RawBody = f(body)
   }
 
+}
+
+trait AutoDerivationRulesForSerializers {
+
   implicit val StringBodySerializer: RawBodySerializer[String] =
-    create(str => {
+    RawBodySerializer.create(str => {
       val bytes = str.getBytes("utf-8")
       RawBody(Some(MediaType.PlainText), () => new ByteArrayInputStream(bytes), Some(bytes.length))
     })
 
   implicit val BytesBodySerializer: RawBodySerializer[Array[Byte]] =
-    create(bytes => RawBody(Some(MediaType.Bytes), () => new ByteArrayInputStream(bytes), Some(bytes.length)))
+    RawBodySerializer.create(bytes => RawBody(Some(MediaType.Bytes), () => new ByteArrayInputStream(bytes), Some(bytes.length)))
 
   implicit val FileBodySerializer: RawBodySerializer[File] =
-    create(file => RawBody(None, () => new FileInputStream(file), Some(file.length())))
+    RawBodySerializer.create(file => RawBody(None, () => new FileInputStream(file), Some(file.length())))
 
   implicit val JsonBodySerializer: RawBodySerializer[JSONObject] =
-    create(json => {
+    RawBodySerializer.create(json => {
       val bytes = json.toString.getBytes("utf8")
       RawBody(Some(MediaType.Json), () => new ByteArrayInputStream(bytes), Some(bytes.length))
     })
 
   implicit def objectToJsonBodySerializer[T](implicit e: JsonEncoder[T]): RawBodySerializer[T] =
     JsonBodySerializer.contramap(e.apply)
+
+  implicit val MultipartMixedBodySerializer: BodySerializer[MultipartBodyMixed] =
+    BodySerializer.create { body =>
+      RawMultipartBodyMixed(body.parts.map(p => RawMultipartBodyMixed.Part(p.serialize, p.headers)))
+    }
+
+  implicit val MultipartFormDataBodySerializer: BodySerializer[MultipartBodyFormData] =
+    BodySerializer.create { body =>
+      RawMultipartBodyFormData(body.parts.map(p => RawMultipartBodyFormData.Part(p.serialize, p.name, p.fileName)))
+    }
+
+  implicit def bodySerializerFromRawBodySerializer[T](implicit rbs: RawBodySerializer[T]): BodySerializer[T] =
+    BodySerializer.create(rbs.serialize)
+
+  implicit val EmptyBodyRequestSerializer: RequestSerializer[EmptyBody] =
+    RequestSerializer.create(request => request.copy(body = EmptyBodyImpl))
+
+  implicit def serializerFromBodySerializer[T](implicit bs: BodySerializer[T]): RequestSerializer[T] =
+    RequestSerializer.create(request => request.copy(body = bs.serialize(request.body)))
 
 }

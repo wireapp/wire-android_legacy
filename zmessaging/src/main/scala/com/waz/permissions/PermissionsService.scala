@@ -22,6 +22,7 @@ import com.waz.ZLog._
 import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils.events.{EventStream, RefreshingSignal, Signal}
 
+import scala.collection.immutable.ListSet
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
 
@@ -35,19 +36,19 @@ class PermissionsService() {
 
   def registerProvider(provider: PermissionProvider) = providers.mutate(ps => ps.filter(_ != provider) :+ provider)
   def unregisterProvider(provider: PermissionProvider) = {
-    onPermissionsResult(Set.empty)
+    onPermissionsResult(ListSet.empty)
     providers.mutate(_.filter(_ != provider))
   }
 
   private lazy val refresh = EventStream[Unit]()
 
-  private lazy val knownKeys = Signal(Set.empty[PermissionKey])
+  private lazy val knownKeys = Signal(ListSet.empty[PermissionKey])
 
   private lazy val permissions =
     (for {
       keys       <- knownKeys
       Some(prov) <- providerSignal
-      res        <- RefreshingSignal(Threading.Ui(prov.hasPermissions(keys.map(Permission(_)))), refresh)
+      res        <- RefreshingSignal(Threading.Ui.apply(prov.hasPermissions(keys.map(Permission(_)))), refresh)
   } yield res).disableAutowiring()
 
   /**
@@ -57,14 +58,14 @@ class PermissionsService() {
  *
     * @return
     */
-  def permissions(keys: Set[PermissionKey]): Signal[Set[Permission]] = {
+  def permissions(keys: ListSet[PermissionKey]): Signal[Set[Permission]] = {
     knownKeys.mutate(_ ++ keys)
     permissions.map(_.filter(p => keys.contains(p.key)))
   }
 
-  def allPermissions(keys: Set[PermissionKey]): Signal[Boolean] = permissions(keys).map(_.forall(_.granted))
+  def allPermissions(keys: ListSet[PermissionKey]): Signal[Boolean] = permissions(keys).map(_.forall(_.granted))
 
-  private var currentRequest = Promise[Set[Permission]].success(Set.empty)
+  private var currentRequest = Promise[ListSet[Permission]].success(ListSet.empty)
 
   /**
     * Requests permissions as a future, allowing you to chain the result and behave accordingly for each permission you've
@@ -78,7 +79,7 @@ class PermissionsService() {
     *
     * @return the same set of permissions as requested, but providing their status too.
     */
-  def requestPermissions(keys: Set[PermissionKey]): Future[Set[Permission]] = {
+  def requestPermissions(keys: ListSet[PermissionKey]): Future[ListSet[Permission]] = {
     verbose(s"requestPermissions: $keys")
     knownKeys.mutate(_ ++ keys)
     verbose(s"Known: ${knownKeys.currentValue}")
@@ -100,7 +101,7 @@ class PermissionsService() {
                 currentRequest.tryComplete(Try(toRequest))
                 currentRequest.future
               }
-              else Threading.Ui(prov.requestPermissions(toRequest)).future.flatMap(_ => currentRequest.future)
+              else Threading.Ui.apply(prov.requestPermissions(toRequest)).future.flatMap(_ => currentRequest.future)
           } yield {
             alreadyGranted ++ res
           }
@@ -120,13 +121,13 @@ class PermissionsService() {
     }
   }
 
-  def onPermissionsResult(ps: Set[Permission]): Unit = {
+  def onPermissionsResult(ps: ListSet[Permission]): Unit = {
     refresh ! ({})
     currentRequest.tryComplete(Try(ps))
   }
 
   //Convenience method that returns (a Future of) true if all permissions were granted, and false if not.
-  def requestAllPermissions(keys: Set[PermissionKey]): Future[Boolean] =
+  def requestAllPermissions(keys: ListSet[PermissionKey]): Future[Boolean] =
     if (keys.isEmpty) Future.successful(true) else requestPermissions(keys).map(ps => ps.forall(_.granted) && ps.nonEmpty)(Threading.Background)
 
   //Non-blocking getter for java
@@ -134,7 +135,7 @@ class PermissionsService() {
 
   //Conviencce method with callback for Java classes - only allows one at a time for simplification
   def requestPermission(key: String, callback: PermissionsCallback) = {
-    requestAllPermissions(Set(key)).map(callback.onPermissionResult)(Threading.Ui)
+    requestAllPermissions(ListSet(key)).map(callback.onPermissionResult)(Threading.Ui)
   }
 }
 
@@ -148,9 +149,9 @@ object PermissionsService {
 
   trait PermissionProvider {
 
-    def requestPermissions(ps: Set[Permission]): Unit
+    def requestPermissions(ps: ListSet[Permission]): Unit
 
-    def hasPermissions(ps: Set[Permission]): Set[Permission]
+    def hasPermissions(ps: ListSet[Permission]): ListSet[Permission]
   }
 
   case class Permission(key: PermissionKey, granted: Boolean = false)

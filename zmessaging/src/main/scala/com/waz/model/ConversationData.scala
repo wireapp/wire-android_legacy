@@ -59,6 +59,38 @@ case class ConversationData(id:                   ConvId                 = ConvI
                             accessRole:           Option[AccessRole]     = None, //option for migration purposes only - at some point we do a fetch and from that point it will always be defined
                             link:                 Option[Link]           = None) {
 
+  override def toString: String =
+    s"""
+       |ConversationData:
+       | id:                   $id
+       | remoteId:             $remoteId
+       | name:                 $name
+       | creator:              $creator
+       | convType:             $convType
+       | team:                 $team
+       | lastEventTime:        $lastEventTime
+       | isActive:             $isActive
+       | lastRead:             $lastRead
+       | muted:                $muted
+       | muteTime:             $muteTime
+       | archived:             $archived
+       | archiveTime:          $archiveTime
+       | cleared:              $cleared
+       | generatedName:        $generatedName
+       | searchKey:            $searchKey
+       | unreadCount:          $unreadCount
+       | failedCount:          $failedCount
+       | missedCallMessage:    $missedCallMessage
+       | incomingKnockMessage: $incomingKnockMessage
+       | hidden:               $hidden
+       | verified:             $verified
+       | localEphemeral:       $localEphemeral
+       | globalEphemeral:      $globalEphemeral
+       | access:               $access
+       | accessRole:           $accessRole
+       | link:                 $link
+    """.stripMargin
+
   def displayName = if (convType == ConversationType.Group) name.getOrElse(generatedName) else generatedName
 
   def withFreshSearchKey = copy(searchKey = freshSearchKey)

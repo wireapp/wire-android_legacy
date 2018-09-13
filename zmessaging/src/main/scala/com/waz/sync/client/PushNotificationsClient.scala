@@ -22,13 +22,12 @@ import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model._
 import com.waz.model.otr.ClientId
-import com.waz.sync.client.PushNotificationsClient.{LoadNotificationsResponse, LoadNotificationsResult}
+import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
 import com.waz.utils.JsonDecoder.arrayColl
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
-import com.waz.znet2.http._
-import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request, ResponseCode}
+import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request, ResponseCode, _}
 import org.json.{JSONArray, JSONObject}
 import org.threeten.bp.Instant
 
@@ -37,7 +36,7 @@ import scala.util.control.NonFatal
 //TODO Think about returning models.
 trait PushNotificationsClient {
   def loadNotifications(since: Option[Uid], client: ClientId): ErrorOrResponse[LoadNotificationsResult]
-  def loadLastNotification(clientId: ClientId): ErrorOrResponse[LoadNotificationsResponse]
+  def loadLastNotification(clientId: ClientId): ErrorOrResponse[LoadNotificationsResult]
 }
 
 class PushNotificationsClientImpl(pageSize: Int = PushNotificationsClient.PageSize)
@@ -47,6 +46,7 @@ class PushNotificationsClientImpl(pageSize: Int = PushNotificationsClient.PageSi
                                   authRequestInterceptor: AuthRequestInterceptor) extends PushNotificationsClient {
 
   import HttpClient.dsl._
+  import HttpClient.AutoDerivation._
   import PushNotificationsClient._
   import com.waz.threading.Threading.Implicits.Background
 
@@ -67,12 +67,17 @@ class PushNotificationsClientImpl(pageSize: Int = PushNotificationsClient.PageSi
       }
   }
 
-  override def loadLastNotification(clientId: ClientId): ErrorOrResponse[LoadNotificationsResponse] = {
+  override def loadLastNotification(clientId: ClientId): ErrorOrResponse[LoadNotificationsResult] = {
     Request
       .Get(relativePath = NotificationsLastPath, queryParameters = queryParameters("client" -> clientId))
       .withResultType[PushNotificationEncoded]
       .withErrorType[ErrorResponse]
-      .executeSafe(notif => LoadNotificationsResponse(Vector(notif), hasMore = false, beTime = None))
+      .executeSafe { notif =>
+        LoadNotificationsResult(
+          LoadNotificationsResponse(Vector(notif), hasMore = false, beTime = None),
+          historyLost = false
+        )
+      }
   }
 }
 

@@ -20,29 +20,31 @@ package com.waz.service.call
 import com.sun.jna.Pointer
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NetworkMode
+import com.waz.content.GlobalPreferences.SkipTerminatingState
 import com.waz.content.MembersStorage
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.otr.ClientId
-import com.waz.model.{UserId, _}
+import com.waz.model.{LocalInstant, UserId, _}
 import com.waz.permissions.PermissionsService
 import com.waz.service.call.Avs.AvsClosedReason.{AnsweredElsewhere, Normal, StillOngoing}
-import com.waz.service.call.Avs.{VideoState, WCall, WCallConvType, WCallType}
+import com.waz.service.call.Avs._
 import com.waz.service.call.CallInfo.CallState._
+import com.waz.service.call.CallingServiceSpec.CallStateCheckpoint
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
 import com.waz.service.{MediaManagerService, NetworkModeService}
 import com.waz.specs.AndroidFreeSpec
-import com.waz.testutils.TestUserPreferences
-import com.waz.threading.{SerialDispatchQueue, Threading}
+import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
+import com.waz.threading.SerialDispatchQueue
+import com.waz.utils.RichInstant
 import com.waz.utils.events.Signal
 import com.waz.utils.wrappers.Context
-import com.waz.utils.{RichInstant, Serialized}
-import org.json.JSONObject
-import org.threeten.bp.Duration
+import org.threeten.bp.{Duration, Instant}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.util.control.NonFatal
 
 class CallingServiceSpec extends AndroidFreeSpec {
 
@@ -59,625 +61,778 @@ class CallingServiceSpec extends AndroidFreeSpec {
   val messages       = mock[MessagesService]
   val permissions    = mock[PermissionsService]
   val push           = mock[PushService]
+  val globalPrefs    = new TestGlobalPreferences
 
-  val clientId = ClientId("selfClient")
+  val selfUserId = UserId("self-user")
+  val clientId   = ClientId("selfClient")
 
-  feature("Basics") {
-    scenario("CallingService intialization") {
-      val pointer = new Pointer(0L)
-      val service = initCallingService(pointer)
-      result(service.wCall) shouldEqual pointer
-    }
+  val otherUser  = UserId("otherUser") //for one to one
+  val otherUser2 = UserId("otherUser2") //to be aded to ms for groups
 
-    scenario("Incoming call 1:1 call goes through SelfJoining to become SelfConnected") {
-      val otherUser = UserId("otherUser")
-      val _1t1Conv = ConversationData(ConvId(), RConvId(), Some("1:1 Conv"), account1Id, ConversationType.OneToOne)
+  val _1to1Conv     = ConversationData(ConvId(otherUser.str), RConvId(otherUser.str), Some(otherUser.str),   selfUserId, ConversationType.OneToOne)
+  val _1to1Conv2    = ConversationData(ConvId(otherUser2.str), RConvId(otherUser2.str), Some(otherUser2.str), selfUserId, ConversationType.OneToOne)
+  val team1to1Conv  = ConversationData(ConvId("team-1:1"), RConvId("team-1:1"), Some("1:1 Team Conv"), selfUserId, ConversationType.Group, Some(TeamId("team-id"))) //all team convs are goup by type
+  val groupConv     = ConversationData(ConvId("group-conv"), RConvId("group-conv"), Some("Group Conv"), selfUserId, ConversationType.Group)
+  val teamGroupConv = ConversationData(ConvId("team-group-conv"), RConvId("team-group-conv"), Some("Group Team Conv"), selfUserId, ConversationType.Group, Some(TeamId("team-id"))) //all team convs are goup by type
 
-      (convs.convByRemoteId _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(_1t1Conv)))
-      (convs.convById _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(_1t1Conv)))
-      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(false))
-      (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(otherUser)))
-      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
+  lazy val service: CallingServiceImpl = initCallingService()
 
-      val service = initCallingService()
-      val checkpoint1 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(SelfJoining)))
-      val checkpoint2 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(SelfConnected) && cur.others.keySet == Set(otherUser)))
+  scenario("CallingService intialization") {
+    val pointer = new Pointer(0L)
+    val service = initCallingService(pointer)
+    result(service.wCall) shouldEqual pointer
+  }
 
-      service.onIncomingCall(_1t1Conv.remoteId, otherUser, videoCall = false, shouldRing = true)
+  feature("Incoming 1:1 calls") {
+
+    val checkpoint1 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == OtherCalling  && c.startTime == LocalInstant(Instant.EPOCH)))
+    val checkpoint2 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == SelfJoining   && c.joinedTime.contains(LocalInstant(Instant.EPOCH + 10.seconds))))
+    val checkpoint3 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == SelfConnected && c.others.keySet == Set(otherUser) && c.estabTime.contains(LocalInstant(Instant.EPOCH + 20.seconds))))
+    val checkpoint4 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == Terminating   && c.others.keySet == Set(otherUser) && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))))
+    val checkpoint5 = callCheckpoint(_.get(_1to1Conv.id).exists(c => c.convId == _1to1Conv.id && c.state == Ended && c.endReason.contains(AvsClosedReason.Normal)      && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))), _.isEmpty)
+
+    def progressToSelfConnected(): Unit = {
+      service.onIncomingCall(_1to1Conv.remoteId, otherUser, videoCall = false, shouldRing = true)
+      awaitCP(checkpoint1)
+
+      clock.advance(10.seconds)
+
+      val callJoined = Signal(false)
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
-        service.onEstablishedCall(_1t1Conv.remoteId, otherUser)
+        callJoined.filter(identity).head.foreach { _ =>
+          clock.advance(10.seconds)
+          service.onEstablishedCall(_1to1Conv.remoteId, otherUser)
+        }
       }
-      service.startCall(_1t1Conv.id)
-      result(checkpoint1.head)
-      result(checkpoint2.head)
+
+      service.startCall(_1to1Conv.id)
+      awaitCP(checkpoint2)
+
+      callJoined ! true
+
+      awaitCP(checkpoint3)
     }
 
-    scenario("Incoming group call goes through SelfJoining to become SelfConnected") {
-      val groupMember1 = UserId("groupUser1")
-      val groupMember2 = UserId("groupUser2")
-      val groupConv = ConversationData(ConvId(), RConvId(), Some("Group Conv"), account1Id, ConversationType.Group)
-
-      (convs.convByRemoteId _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(groupConv)))
-      (convs.convById _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(groupConv)))
-      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(true))
-      (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(groupMember1, groupMember2)))
-      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
-
-      val service = initCallingService()
-      val checkpoint1 = callCheckpoint(service, _.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state.contains(SelfJoining)))
-      val checkpoint2 = callCheckpoint(service, _.contains(groupConv.id),
-        _.exists(cur => cur.convId == groupConv.id && cur.state.contains(SelfConnected) && cur.others.keySet == Set(groupMember1, groupMember2)))
-
-      service.onIncomingCall(groupConv.remoteId, groupMember1, videoCall = false, shouldRing = true)
-      (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
-        service.onEstablishedCall(groupConv.remoteId, groupMember1)
-        service.onGroupChanged(groupConv.remoteId, Set(groupMember1, groupMember2))
+    scenario("Incoming 1:1 call, self user ends the call - close_h returns before dismissal") {
+      progressToSelfConnected()
+      (avs.endCall _).expects(*, _1to1Conv.remoteId).once().onCall { (_, _) =>
+        service.onClosedCall(AvsClosedReason.Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), selfUserId)
       }
-      service.startCall(groupConv.id)
-      result(checkpoint1.head)
-      result(checkpoint2.head)
+
+      clock.advance(10.seconds)
+      service.endCall(_1to1Conv.id)
+      awaitCP(checkpoint4)
+
+      clock.advance(10.seconds)
+      service.dismissCall()
+      awaitCP(checkpoint5)
     }
 
-    scenario("Outgoing 1:1 call goes through SelfCalling to SelfJoining to SelfConnected") {
-      val otherUser = UserId("otherUser")
-      val _1t1Conv = ConversationData(ConvId(otherUser.str), RConvId(), Some("1:1 Conv"), account1Id, ConversationType.OneToOne)
+    scenario("Incoming 1:1 call, self user ends the call - close_h returns after dismissal") {
+      progressToSelfConnected()
 
-      (convs.convByRemoteId _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(_1t1Conv)))
-      (convs.convById _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(_1t1Conv)))
-      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(false))
-      (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(otherUser)))
+      val dismissedCall = Signal(false)
 
-      val service = initCallingService()
-      val checkpoint1 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(SelfCalling) && cur.caller == account1Id && cur.others.keySet == Set(otherUser)))
-      val checkpoint2 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(SelfJoining) && cur.caller == account1Id && cur.others.keySet == Set(otherUser)))
-      val checkpoint3 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(SelfConnected) && cur.caller == account1Id && cur.others.keySet == Set(otherUser)))
+      (avs.endCall _).expects(*, _1to1Conv.remoteId).once().onCall { (_, _) =>
+        dismissedCall.filter(identity).head.foreach { _ =>
+          service.onClosedCall(AvsClosedReason.Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), selfUserId)
+        }
+      }
 
-      (avs.startCall _).expects(*, *, *, *, *).once().returning(Future.successful(0))
+      clock.advance(10.seconds)
+      service.endCall(_1to1Conv.id)
+      awaitCP(checkpoint4)
 
-      service.startCall(_1t1Conv.id)
-      result(checkpoint1.head)
+      clock.advance(10.seconds)
+      await(service.dismissCall())
 
-      service.onOtherSideAnsweredCall(_1t1Conv.remoteId)
-      result(checkpoint2.head)
+      dismissedCall ! true
 
-      service.onEstablishedCall(_1t1Conv.remoteId, otherUser)
-      result(checkpoint3.head)
+      awaitCP(checkpoint5)
     }
 
-    scenario("Outgoing group call goes through SelfCalling to SelfJoining to SelfConnected") {
-      val groupMember1 = UserId("groupUser1")
-      val groupMember2 = UserId("groupUser2")
-      val groupConv = ConversationData(ConvId(), RConvId(), Some("Group Conv"), account1Id, ConversationType.Group)
+    scenario("Incoming 1:1 call, other use ends call") {
+      progressToSelfConnected()
 
-      (convs.convByRemoteId _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(groupConv)))
-      (convs.convById _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(groupConv)))
-      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(true))
-      (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(groupMember1, groupMember2)))
+      clock.advance(10.seconds)
+      service.onClosedCall(AvsClosedReason.Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), otherUser)
+      awaitCP(checkpoint4)
 
-      val service = initCallingService()
+      clock.advance(10.seconds)
+      await(service.dismissCall())
 
-      val checkpoint1 = callCheckpoint(service, _.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state.contains(SelfCalling) && cur.caller == account1Id && cur.others.keySet == Set(account1Id)))
-      val checkpoint2 = callCheckpoint(service, _.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state.contains(SelfJoining) && cur.caller == account1Id && cur.others.keySet == Set(account1Id)))
-      val checkpoint3 = callCheckpoint(service, _.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state.contains(SelfConnected) && cur.caller == account1Id && cur.others.keySet == Set(groupMember1)))
-      val checkpoint4 = callCheckpoint(service, _.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state.contains(SelfConnected) && cur.caller == account1Id && cur.others.keySet == Set(groupMember1, groupMember2)))
-
-      (avs.startCall _).expects(*, *, *, *, *).once().returning(Future.successful(0))
-
-      service.startCall(groupConv.id)
-      result(checkpoint1.head)
-
-      service.onOtherSideAnsweredCall(groupConv.remoteId)
-      result(checkpoint2.head)
-
-      //TODO which user from a group conversation gets passed down here?
-      service.onEstablishedCall(groupConv.remoteId, groupMember1)
-      println(result(service.currentCall.map(_.get.others).head))
-      result(checkpoint3.head)
-
-      service.onGroupChanged(groupConv.remoteId, Set(groupMember1, groupMember2))
-      result(checkpoint4.head)
+      awaitCP(checkpoint5)
     }
 
-    scenario("Team conversation with only 1 other member should be treated as 1:1 conversation - outgoing") {
-      val otherUser = UserId("otherUser")
-      val _1t1Conv = ConversationData(ConvId(), RConvId(), Some("1:1 Team Conv"), account1Id, ConversationType.Group, Some(TeamId())) //all team convs are goup by type
+    scenario("Incoming 1:1 call, other use ends call with skipTerminating set to true") {
+      await(globalPrefs(SkipTerminatingState) := true)
+      progressToSelfConnected()
 
-      (convs.convByRemoteId _).expects(_1t1Conv.remoteId).anyNumberOfTimes().returning(Future.successful(Some(_1t1Conv)))
-      (convs.convById _).expects(_1t1Conv.id).anyNumberOfTimes().returning(Future.successful(Some(_1t1Conv)))
-      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(false))
-      (avs.startCall _).expects(*, _1t1Conv.remoteId, WCallType.Normal, WCallConvType.OneOnOne, *).once().returning(Future.successful(0))
-      (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(otherUser, account1Id)))
-      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
-
-      val service = initCallingService()
-      val checkpoint1 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(SelfCalling) && cur.caller == account1Id && cur.others.keySet == Set(otherUser)))
-      val checkpoint2 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(SelfJoining) && cur.caller == account1Id && cur.others.keySet == Set(otherUser)))
-      val checkpoint3 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(SelfConnected) && cur.caller == account1Id && cur.others.keySet == Set(otherUser)))
-
-      service.startCall(_1t1Conv.id)
-      result(checkpoint1.head)
-
-      service.onOtherSideAnsweredCall(_1t1Conv.remoteId)
-      result(checkpoint2.head)
-
-      service.onEstablishedCall(_1t1Conv.remoteId, otherUser)
-      result(checkpoint3.head)
+      clock.advance(10.seconds)
+      service.onClosedCall(AvsClosedReason.Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), otherUser)
+      awaitCP(checkpoint5)
     }
 
     scenario("Team conversation with only 1 other member should be treated as 1:1 conversation - incoming") {
-      val otherUser = UserId("otherUser")
-      val _1t1Conv = ConversationData(ConvId(), RConvId(), Some("1:1 Team Conv"), account1Id, ConversationType.Group, Some(TeamId()))
+      val checkpoint1 = callCheckpoint(_.contains(team1to1Conv.id), _.exists(c => c.convId == team1to1Conv.id && c.state == OtherCalling  && c.startTime == LocalInstant(Instant.EPOCH)))
+      val checkpoint2 = callCheckpoint(_.contains(team1to1Conv.id), _.exists(c => c.convId == team1to1Conv.id && c.state == SelfJoining   && c.joinedTime.contains(LocalInstant(Instant.EPOCH + 10.seconds))))
+      val checkpoint3 = callCheckpoint(_.contains(team1to1Conv.id), _.exists(c => c.convId == team1to1Conv.id && c.state == SelfConnected && c.others.keySet == Set(otherUser) && c.estabTime.contains(LocalInstant(Instant.EPOCH + 20.seconds))))
+      val checkpoint4 = callCheckpoint(_.contains(team1to1Conv.id), _.exists(c => c.convId == team1to1Conv.id && c.state == Terminating   && c.others.keySet == Set(otherUser) && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))))
+      val checkpoint5 = callCheckpoint(_.get(team1to1Conv.id).exists(c => c.convId == team1to1Conv.id && c.state == Ended && c.endReason.contains(AvsClosedReason.Normal)      && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))), _.isEmpty)
 
-      (convs.convByRemoteId _).expects(_1t1Conv.remoteId).anyNumberOfTimes().returning(Future.successful(Some(_1t1Conv)))
-      (convs.convById _).expects(_1t1Conv.id).anyNumberOfTimes().returning(Future.successful(Some(_1t1Conv)))
-      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(false))
-      (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(otherUser, account1Id)))
-      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
+      service.onIncomingCall(team1to1Conv.remoteId, otherUser, videoCall = false, shouldRing = true)
+      awaitCP(checkpoint1)
 
-      val service = initCallingService()
-      val checkpoint1 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(SelfJoining)))
-      val checkpoint2 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(SelfConnected) && cur.others.keySet == Set(otherUser)))
+      clock.advance(10.seconds)
 
-      service.onIncomingCall(_1t1Conv.remoteId, otherUser, videoCall = false, shouldRing = true)
-      (avs.answerCall _).expects(*, _1t1Conv.remoteId, *, *).once().onCall { (_, _, _, _) =>
-        service.onEstablishedCall(_1t1Conv.remoteId, otherUser)
+      val callJoined = Signal(false)
+      (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
+        callJoined.filter(identity).head.foreach { _ =>
+          clock.advance(10.seconds)
+          service.onEstablishedCall(team1to1Conv.remoteId, otherUser)
+        }
       }
-      service.startCall(_1t1Conv.id)
-      result(checkpoint1.head)
-      result(checkpoint2.head)
+
+      service.startCall(team1to1Conv.id)
+      awaitCP(checkpoint2)
+
+      callJoined ! true
+
+      awaitCP(checkpoint3)
+
+      (avs.endCall _).expects(*, team1to1Conv.remoteId).once().onCall { (_, _) =>
+        service.onClosedCall(AvsClosedReason.Normal, team1to1Conv.remoteId, RemoteInstant(clock.instant()), selfUserId)
+      }
+
+      clock.advance(10.seconds)
+      service.endCall(team1to1Conv.id)
+      awaitCP(checkpoint4)
+
+      clock.advance(10.seconds)
+      service.dismissCall()
+      awaitCP(checkpoint5)
+    }
+
+    scenario("Reject incoming 1:1 call should set it to ongoing, and after close_h has been called it should be Ended, it should have skipped the Terminating phase, and the end time should be empty") {
+
+      val checkpoint1 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(cur => cur.convId == _1to1Conv.id && cur.state == OtherCalling))
+      val checkpoint2 = callCheckpoint(_.get(_1to1Conv.id).exists(c => c.convId == _1to1Conv.id && c.state == Ongoing), _.isEmpty)
+      val checkpoint3 = callCheckpoint(_.get(_1to1Conv.id).exists(c => c.convId == _1to1Conv.id && c.state == Ended && c.endReason.contains(AvsClosedReason.Normal) && c.endTime.isEmpty), _.isEmpty)
+
+      var terminatingPhaseEntered = false
+      service.currentCall.map(_.map(_.state)) {
+        case Some(Terminating) => terminatingPhaseEntered = true
+        case _ =>
+      }
+
+      service.onIncomingCall(_1to1Conv.remoteId, otherUser, videoCall = false, shouldRing = true)
+      awaitCP(checkpoint1)
+
+      (avs.rejectCall _).expects(*, *).once()
+      service.endCall(_1to1Conv.id)
+      awaitCP(checkpoint2)
+
+      //Avs gives us reason StillOngoing, state shouldn't have changed
+      service.onClosedCall(StillOngoing, _1to1Conv.remoteId, RemoteInstant(clock.instant()), otherUser)
+      awaitCP(checkpoint2)
+
+      //other side stops or call times out
+      service.onClosedCall(Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), otherUser)
+      awaitCP(checkpoint3)
+
+      terminatingPhaseEntered shouldEqual false
+    }
+  }
+
+  feature("Outgoing 1:1 calls") {
+
+    val checkpoint1 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == SelfCalling && c.startTime == LocalInstant(Instant.EPOCH)))
+    val checkpoint2 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == SelfJoining && c.joinedTime.contains(LocalInstant(Instant.EPOCH + 10.seconds))))
+    val checkpoint3 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == SelfConnected && c.others.keySet == Set(otherUser) && c.estabTime.contains(LocalInstant(Instant.EPOCH + 20.seconds))))
+    val checkpoint4 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == Terminating   && c.others.keySet == Set(otherUser) && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))))
+    val checkpoint5 = callCheckpoint(_.get(_1to1Conv.id).exists(c => c.convId == _1to1Conv.id && c.state == Ended && c.endReason.contains(AvsClosedReason.Normal)      && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))), _.isEmpty)
+
+    def progressToSelfConnected(conv: ConversationData = _1to1Conv): Unit = {
+      (avs.startCall _).expects(*, conv.remoteId, WCallType.Normal, WCallConvType.OneOnOne, *).once().returning(Future(0))
+      service.startCall(conv.id, isVideo = false, forceOption = false)
+      awaitCP(checkpoint1)
+
+      clock.advance(10.seconds)
+      service.onOtherSideAnsweredCall(conv.remoteId)
+      awaitCP(checkpoint2)
+
+      clock.advance(10.seconds)
+      service.onEstablishedCall(conv.remoteId, otherUser)
+      awaitCP(checkpoint3)
+    }
+
+    scenario("Outgoing 1:1 call, self user ends the call - close_h returns before dismissal") {
+      progressToSelfConnected()
+
+      (avs.endCall _).expects(*, _1to1Conv.remoteId).once().onCall { (_, _) =>
+        service.onClosedCall(AvsClosedReason.Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), selfUserId)
+      }
+
+      clock.advance(10.seconds)
+      service.endCall(_1to1Conv.id)
+      awaitCP(checkpoint4)
+
+      clock.advance(10.seconds)
+      service.dismissCall()
+      awaitCP(checkpoint5)
+    }
+
+    scenario("Outgoing 1:1 call, self user ends call with skipTerminating set to true") {
+      await(globalPrefs(SkipTerminatingState) := true)
+      progressToSelfConnected()
+
+      (avs.endCall _).expects(*, _1to1Conv.remoteId).once().onCall { (_, _) =>
+        service.onClosedCall(AvsClosedReason.Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), selfUserId)
+      }
+
+      clock.advance(10.seconds)
+      service.endCall(_1to1Conv.id)
+      awaitCP(checkpoint5)
+    }
+
+    scenario("Outgoing 1:1 call, self user ends the call - close_h returns after dismissal") {
+      progressToSelfConnected()
+
+      val dismissedCall = Signal(false)
+
+      (avs.endCall _).expects(*, _1to1Conv.remoteId).once().onCall { (_, _) =>
+        dismissedCall.filter(identity).head.foreach { _ =>
+          service.onClosedCall(AvsClosedReason.Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), selfUserId)
+        }
+      }
+
+      clock.advance(10.seconds)
+      service.endCall(_1to1Conv.id)
+      awaitCP(checkpoint4)
+
+      clock.advance(10.seconds)
+      await(service.dismissCall())
+
+      dismissedCall ! true
+
+      awaitCP(checkpoint5)
+    }
+
+    scenario("Outgoing 1:1 call, other use ends call") {
+      progressToSelfConnected()
+
+      clock.advance(10.seconds)
+      service.onClosedCall(AvsClosedReason.Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), otherUser)
+      awaitCP(checkpoint4)
+
+      clock.advance(10.seconds)
+      await(service.dismissCall())
+
+      awaitCP(checkpoint5)
+    }
+
+    scenario("Team conversation with only 1 other member should be treated as 1:1 conversation") {
+      val checkpoint1 = callCheckpoint(_.contains(team1to1Conv.id), _.exists(c => c.convId == team1to1Conv.id && c.state == SelfCalling && c.startTime == LocalInstant(Instant.EPOCH)))
+      val checkpoint2 = callCheckpoint(_.contains(team1to1Conv.id), _.exists(c => c.convId == team1to1Conv.id && c.state == SelfJoining && c.joinedTime.contains(LocalInstant(Instant.EPOCH + 10.seconds))))
+      val checkpoint3 = callCheckpoint(_.contains(team1to1Conv.id), _.exists(c => c.convId == team1to1Conv.id && c.state == SelfConnected && c.others.keySet == Set(otherUser) && c.estabTime.contains(LocalInstant(Instant.EPOCH + 20.seconds))))
+      val checkpoint4 = callCheckpoint(_.contains(team1to1Conv.id), _.exists(c => c.convId == team1to1Conv.id && c.state == Terminating   && c.others.keySet == Set(otherUser) && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))))
+      val checkpoint5 = callCheckpoint(_.get(team1to1Conv.id).exists(c => c.convId == team1to1Conv.id && c.state == Ended && c.endReason.contains(AvsClosedReason.Normal)      && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))), _.isEmpty)
+
+      (avs.startCall _).expects(*, team1to1Conv.remoteId, WCallType.Normal, WCallConvType.OneOnOne, *).once().returning(Future(0))
+      service.startCall(team1to1Conv.id, isVideo = false, forceOption = false)
+      awaitCP(checkpoint1)
+
+      clock.advance(10.seconds)
+      service.onOtherSideAnsweredCall(team1to1Conv.remoteId)
+      awaitCP(checkpoint2)
+
+      clock.advance(10.seconds)
+      service.onEstablishedCall(team1to1Conv.remoteId, otherUser)
+      awaitCP(checkpoint3)
+
+      (avs.endCall _).expects(*, team1to1Conv.remoteId).once().onCall { (_, _) =>
+        service.onClosedCall(AvsClosedReason.Normal, team1to1Conv.remoteId, RemoteInstant(clock.instant()), selfUserId)
+      }
+
+      clock.advance(10.seconds)
+      service.endCall(team1to1Conv.id)
+      awaitCP(checkpoint4)
+
+      clock.advance(10.seconds)
+      service.dismissCall()
+      awaitCP(checkpoint5)
+    }
+
+    scenario("Cancelling outgoing call should skip terminating phase") {
+
+      val checkpoint1 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(cur => cur.convId == _1to1Conv.id && cur.state == SelfCalling))
+      val checkpoint2 = callCheckpoint(_.get(_1to1Conv.id).exists(c => c.convId == _1to1Conv.id && c.state == Ended && c.endReason.contains(AvsClosedReason.Normal)), _.isEmpty)
+
+      var terminatingPhaseEntered = false
+      service.currentCall.map(_.map(_.state)) {
+        case Some(Terminating) => terminatingPhaseEntered = true
+        case _ =>
+      }
+
+      (avs.startCall _).expects(*, _1to1Conv.remoteId, WCallType.Normal, WCallConvType.OneOnOne, *).once().returning(Future(0))
+      service.startCall(_1to1Conv.id, isVideo = false, forceOption = false)
+      awaitCP(checkpoint1)
+
+      (avs.endCall _).expects(*, _1to1Conv.remoteId).once().onCall { (_, _) =>
+        service.onClosedCall(AvsClosedReason.Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), selfUserId)
+      }
+
+      service.endCall(_1to1Conv.id)
+      awaitCP(checkpoint2)
+
+      terminatingPhaseEntered shouldEqual false
+    }
+  }
+
+  feature("Group calls") {
+
+    scenario("Incoming group call goes through OtherCalling to SelfJoining to become SelfConnected") {
+
+      val checkpoint1 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == OtherCalling))
+      val checkpoint2 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfJoining))
+      val checkpoint3 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfConnected  && cur.others.keySet == Set(otherUser, otherUser2)))
+
+      service.onIncomingCall(groupConv.remoteId, otherUser, videoCall = false, shouldRing = true)
+
+      awaitCP(checkpoint1)
+
+      (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
+        service.onEstablishedCall(groupConv.remoteId, otherUser)
+        service.onGroupChanged(groupConv.remoteId, Set(otherUser, otherUser2))
+      }
+
+      service.startCall(groupConv.id)
+      awaitCP(checkpoint2)
+      awaitCP(checkpoint3)
+    }
+
+    scenario("Outgoing group call goes through SelfCalling to SelfJoining to SelfConnected and other users join at different times") {
+      val checkpoint1 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfCalling && cur.caller == selfUserId))
+      val checkpoint2 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfJoining && cur.caller == selfUserId))
+      val checkpoint3 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfConnected && cur.caller == selfUserId && cur.others.keySet == Set(otherUser)))
+      val checkpoint4 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfConnected && cur.caller == selfUserId && cur.others.keySet == Set(otherUser, otherUser2)))
+
+      (avs.startCall _).expects(*, *, *, *, *).once().returning(Future(0))
+
+      service.startCall(groupConv.id)
+      awaitCP(checkpoint1)
+
+      service.onOtherSideAnsweredCall(groupConv.remoteId)
+      awaitCP(checkpoint2)
+
+      //TODO which user from a group conversation gets passed down here?
+      service.onEstablishedCall(groupConv.remoteId, otherUser)
+      println(result(service.currentCall.map(_.get.others).head))
+      awaitCP(checkpoint3)
+
+      service.onGroupChanged(groupConv.remoteId, Set(otherUser, otherUser2))
+      awaitCP(checkpoint4)
     }
 
     scenario("Group Team conversation treated as group call") {
-      val groupMember1 = UserId("groupUser1")
-      val groupMember2 = UserId("groupUser2")
-      val groupConv = ConversationData(ConvId(), RConvId(), Some("Group Conv"), account1Id, ConversationType.Group, Some(TeamId()))
+      val checkpoint1 = callCheckpoint(_.contains(teamGroupConv.id), _.exists(cur => cur.convId == teamGroupConv.id && cur.state == SelfCalling && cur.caller == selfUserId))
+      val checkpoint2 = callCheckpoint(_.contains(teamGroupConv.id), _.exists(cur => cur.convId == teamGroupConv.id && cur.state == SelfJoining && cur.caller == selfUserId))
+      val checkpoint3 = callCheckpoint(_.contains(teamGroupConv.id), _.exists(cur => cur.convId == teamGroupConv.id && cur.state == SelfConnected && cur.caller == selfUserId && cur.others.keySet == Set(otherUser)))
+      val checkpoint4 = callCheckpoint(_.contains(teamGroupConv.id), _.exists(cur => cur.convId == teamGroupConv.id && cur.state == SelfConnected && cur.caller == selfUserId && cur.others.keySet == Set(otherUser, otherUser2)))
 
-      (convs.convByRemoteId _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(groupConv)))
-      (convs.convById _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(groupConv)))
-      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(true))
-      (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(groupMember1, groupMember2)))
+      (avs.startCall _).expects(*, *, *, *, *).once().returning(Future(0))
 
-      val service = initCallingService()
+      service.startCall(teamGroupConv.id)
+      awaitCP(checkpoint1)
 
-      val checkpoint1 = callCheckpoint(service, _.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state.contains(SelfCalling) && cur.caller == account1Id && cur.others.keySet == Set(account1Id)))
-      val checkpoint2 = callCheckpoint(service, _.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state.contains(SelfJoining) && cur.caller == account1Id && cur.others.keySet == Set(account1Id)))
-      val checkpoint3 = callCheckpoint(service, _.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state.contains(SelfConnected) && cur.caller == account1Id && cur.others.keySet == Set(groupMember1)))
-      val checkpoint4 = callCheckpoint(service, _.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state.contains(SelfConnected) && cur.caller == account1Id && cur.others.keySet == Set(groupMember1, groupMember2)))
+      service.onOtherSideAnsweredCall(teamGroupConv.remoteId)
+      awaitCP(checkpoint2)
 
-      (avs.startCall _).expects(*, *, *, *, *).once().returning(Future.successful(0))
+      service.onEstablishedCall(teamGroupConv.remoteId, otherUser)
+      println(result(service.currentCall.map(_.get.others).head))
+      awaitCP(checkpoint3)
+
+      service.onGroupChanged(teamGroupConv.remoteId, Set(otherUser, otherUser2))
+      awaitCP(checkpoint4)
+    }
+
+    scenario("Leave a group call and it will continue running in the background with state Ongoing - established time should not be affected") {
+      val estTime = LocalInstant(clock.instant() + 10.seconds)
+
+      val checkpoint1 = callCheckpoint(_.contains(groupConv.id), _.exists(c => c.state == SelfConnected && c.estabTime.contains(estTime)))
+      val checkpoint2 = callCheckpoint(_.get(groupConv.id).exists(c => c.state == Ongoing && c.estabTime.contains(estTime)), _.isEmpty)
+
+      service.onIncomingCall(groupConv.remoteId, otherUser, videoCall = false, shouldRing = true)
+
+      clock + 10.seconds
+
+      (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
+        service.onEstablishedCall(groupConv.remoteId, otherUser)
+        service.onGroupChanged(groupConv.remoteId, Set(otherUser, otherUser2))
+      }
+      service.startCall(groupConv.id)
+      awaitCP(checkpoint1)
+
+      (avs.endCall _).expects(*, *).once().onCall { (rId, isGroup) =>
+        service.onClosedCall(StillOngoing, groupConv.remoteId, RemoteInstant(clock.instant()), otherUser)
+      }
+
+      clock + 10.seconds
+
+      service.endCall(groupConv.id)
+      awaitCP(checkpoint2)
+    }
+
+    scenario("Incoming group call answered on another device") {
+      val checkpoint1 = callCheckpoint(_.contains(groupConv.id), _.exists(_.state == OtherCalling))
+      val checkpoint2 = callCheckpoint(_.get(groupConv.id).exists(c => c.state == Ended && c.endReason.contains(AvsClosedReason.AnsweredElsewhere)), _.isEmpty)
+
+      service.onIncomingCall(groupConv.remoteId, otherUser, videoCall = false, shouldRing = true)
+      awaitCP(checkpoint1)
+
+      service.onClosedCall(AnsweredElsewhere, groupConv.remoteId, RemoteInstant(clock.instant()), otherUser)
+      awaitCP(checkpoint2)
+    }
+
+    scenario("Cancel outgoing group call should set it to Ended") {
+      val checkpoint1 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfCalling && cur.caller == selfUserId))
+      val checkpoint2 = callCheckpoint(_.get(groupConv.id).exists(c => c.state == Ended && c.endReason.contains(AvsClosedReason.Normal)), _.isEmpty)
+
+      (avs.startCall _).expects(*, *, *, *, *).once().returning(Future(0))
 
       service.startCall(groupConv.id)
-      result(checkpoint1.head)
+      awaitCP(checkpoint1)
 
-      service.onOtherSideAnsweredCall(groupConv.remoteId)
-      result(checkpoint2.head)
+      (avs.endCall _).expects(*, groupConv.remoteId).once().onCall { (_, _) =>
+        service.onClosedCall(Normal, groupConv.remoteId, RemoteInstant(clock.instant()), otherUser)
+      }
+      service.endCall(groupConv.id)
+      awaitCP(checkpoint2)
+    }
+  }
 
-      //TODO which user from a group conversation gets passed down here?
-      service.onEstablishedCall(groupConv.remoteId, groupMember1)
-      println(result(service.currentCall.map(_.get.others).head))
-      result(checkpoint3.head)
+  feature("Ongoing group calls") {
 
-      service.onGroupChanged(groupConv.remoteId, Set(groupMember1, groupMember2))
-      result(checkpoint4.head)
+    val checkpoint1  = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == OtherCalling))
+    val checkpoint2  = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfJoining))
+    val checkpoint3  = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfConnected  && cur.others.keySet == Set(otherUser, otherUser2)))
+    val checkpoint3a = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == Terminating))
+    val checkpoint4  = callCheckpoint(_.get(groupConv.id).exists(cur => cur.state == Ongoing  && cur.others.keySet == Set(otherUser, otherUser2)), _.isEmpty)
+    val checkpoint5  = checkpoint4
+    val checkpoint6  = callCheckpoint(_.get(groupConv.id).exists(cur => cur.state == Ended), _.isEmpty)
+
+    scenario("Leaving a group call with more than 1 other member should put the call into the Ongoing state if we skip terminating") {
+      await(globalPrefs(SkipTerminatingState) := true)
+
+      service.onIncomingCall(groupConv.remoteId, otherUser, videoCall = false, shouldRing = true)
+
+      awaitCP(checkpoint1)
+
+      (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
+        service.onEstablishedCall(groupConv.remoteId, otherUser)
+        service.onGroupChanged(groupConv.remoteId, Set(otherUser, otherUser2))
+      }
+
+      service.startCall(groupConv.id)
+      awaitCP(checkpoint2)
+      awaitCP(checkpoint3)
+
+      (avs.endCall _).expects(*, groupConv.remoteId).once()
+
+      service.endCall(groupConv.id)
+
+      awaitCP(checkpoint4)
+      service.onClosedCall(StillOngoing, groupConv.remoteId, RemoteInstant(clock.instant()), selfUserId)
+
+      awaitCP(checkpoint5)
+
+      service.onClosedCall(Normal, groupConv.remoteId, RemoteInstant(clock.instant()), selfUserId)
+      awaitCP(checkpoint6)
+    }
+
+    scenario("Leaving a group call with more than 1 other member should put the call into the Ongoing state after the terminating state") {
+      service.onIncomingCall(groupConv.remoteId, otherUser, videoCall = false, shouldRing = true)
+
+      awaitCP(checkpoint1)
+
+      (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
+        service.onEstablishedCall(groupConv.remoteId, otherUser)
+        service.onGroupChanged(groupConv.remoteId, Set(otherUser, otherUser2))
+      }
+
+      service.startCall(groupConv.id)
+      awaitCP(checkpoint2)
+      awaitCP(checkpoint3)
+
+      (avs.endCall _).expects(*, groupConv.remoteId).once()
+
+      service.endCall(groupConv.id)
+
+      awaitCP(checkpoint3a)
+      service.dismissCall()
+
+      awaitCP(checkpoint4)
+      service.onClosedCall(StillOngoing, groupConv.remoteId, RemoteInstant(clock.instant()), selfUserId)
+
+      awaitCP(checkpoint5)
+
+      service.onClosedCall(Normal, groupConv.remoteId, RemoteInstant(clock.instant()), selfUserId)
+      awaitCP(checkpoint6)
+
+      //TODO now what happens if the user rejoins the call before the other side hangs up??
     }
   }
 
   feature("Ending calls") {
-    scenario("Leave group call that will continue running in the background with state Ongoing - established time should not be affected") {
-      val groupMember1 = UserId("groupUser1")
-      val groupMember2 = UserId("groupUser2")
-      val groupConv = ConversationData(ConvId(), RConvId(), Some("Group Conv"), account1Id, ConversationType.Group)
 
-      (convs.convByRemoteId _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(groupConv)))
-      (convs.convById _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(groupConv)))
-      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(true))
-      (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(groupMember1, groupMember2)))
-      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
-
-      val service = initCallingService()
-      val estTime = LocalInstant(clock.instant() + 10.seconds)
-
-      val checkpoint1 = callCheckpoint(service, _.contains(groupConv.id), _.exists(c => c.state.contains(SelfConnected) && c.estabTime.contains(estTime)))
-      val checkpoint2 = callCheckpoint(service, _.get(groupConv.id).exists(c => c.state.contains(Ongoing) && c.estabTime.contains(estTime)), _.isEmpty)
-
-      service.onIncomingCall(groupConv.remoteId, groupMember1, videoCall = false, shouldRing = true)
-
-      clock + 10.seconds
-
-      (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
-        println(s"callback time: ${clock.instant()}")
-        service.onEstablishedCall(groupConv.remoteId, groupMember1)
-        service.onGroupChanged(groupConv.remoteId, Set(groupMember1, groupMember2))
-      }
-      service.startCall(groupConv.id)
-      result(checkpoint1.head)
-
-      (avs.endCall _).expects(*, *).once().onCall { (rId, isGroup) =>
-        service.onClosedCall(StillOngoing, groupConv.remoteId, RemoteInstant(clock.instant()), groupMember1)
-      }
-
-      clock + 10.seconds
-
-      service.endCall(groupConv.id)
-      result(checkpoint2.head)
-    }
-
-    scenario("Incoming group call answered on another device") {
-      val groupMember1 = UserId("groupUser1")
-      val groupMember2 = UserId("groupUser2")
-      val groupConv = ConversationData(ConvId(), RConvId(), Some("Group Conv"), account1Id, ConversationType.Group)
-
-      (convs.convByRemoteId _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(groupConv)))
-      (convs.convById _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(groupConv)))
-      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(true))
-      (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(groupMember1, groupMember2)))
-      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
-
-      val service = initCallingService()
-      val checkpoint1 = callCheckpoint(service, _.contains(groupConv.id), _.exists(_.state.contains(OtherCalling)))
-      val checkpoint2 = callCheckpoint(service, _.isEmpty, _.isEmpty)
-
-      service.onIncomingCall(groupConv.remoteId, groupMember1, videoCall = false, shouldRing = true)
-      result(checkpoint1.head)
-
-      service.onClosedCall(AnsweredElsewhere, groupConv.remoteId, RemoteInstant(clock.instant()), groupMember1)
-      result(checkpoint2.head)
-    }
-
-    scenario("Reject incoming 1:1 call should remove it from activeCall, and then also from backgroundCalls after timeout") {
-      val otherUser = UserId("otherUser")
-      val _1t1Conv = ConversationData(ConvId(), RConvId(), Some("1:1 Conv"), account1Id, ConversationType.OneToOne)
-
-      (convs.convByRemoteId _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(_1t1Conv)))
-      (convs.convById _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(_1t1Conv)))
-      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(false))
-      (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(otherUser)))
-      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
-
-      val service = initCallingService()
-      val checkpoint1 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(OtherCalling)))
-      val checkpoint2 = callCheckpoint(service, _.contains(_1t1Conv.id), _.isEmpty)
-      val checkpoint3 = callCheckpoint(service, _.isEmpty, _.isEmpty)
-
-      service.onIncomingCall(_1t1Conv.remoteId, otherUser, videoCall = false, shouldRing = true)
-      result(checkpoint1.head)
-
-      (avs.rejectCall _).expects(*, *).once().onCall { (_, _) =>
-        service.onClosedCall(StillOngoing, _1t1Conv.remoteId, RemoteInstant(clock.instant()), otherUser)
-      }
-      service.endCall(_1t1Conv.id)
-      result(checkpoint2.head)
-
-      service.onClosedCall(Normal, _1t1Conv.remoteId, RemoteInstant(clock.instant()), otherUser)
-      result(checkpoint3.head)
-    }
-
-    scenario("Cancel outgoing group call should remove it from background and active calls") {
-      val groupMember1 = UserId("groupUser1")
-      val groupMember2 = UserId("groupUser2")
-      val groupConv = ConversationData(ConvId(), RConvId(), Some("Group Conv"), account1Id, ConversationType.Group)
-      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(true))
-
-      (convs.convByRemoteId _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(groupConv)))
-      (convs.convById _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(groupConv)))
-      (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(groupMember1, groupMember2)))
-
-      val service = initCallingService()
-
-      val checkpoint1 = callCheckpoint(service, _.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state.contains(SelfCalling) && cur.caller == account1Id && cur.others.keySet == Set(account1Id)))
-      val checkpoint2 = callCheckpoint(service, _.isEmpty, _.isEmpty)
-
-      (avs.startCall _).expects(*, *, *, *, *).once().returning(Future.successful(0))
-      service.startCall(groupConv.id)
-      result(checkpoint1.head)
-
-      (avs.endCall _).expects(*, groupConv.remoteId).once().onCall { (_, _) =>
-        service.onClosedCall(Normal, groupConv.remoteId, RemoteInstant(clock.instant()), groupMember1)
-      }
-      service.endCall(groupConv.id)
-      result(checkpoint2.head)
-    }
-
-    scenario("Chaining a startCall after endCall should wait for onClosedCallback and successfully start second call") {
-      val firstUser = UserId("first-user")
-      val firstConv = ConversationData(ConvId(firstUser.str), RConvId(firstUser.str), Some("First Conv"), account1Id, ConversationType.OneToOne)
-
-      val secondUser = UserId("second-user")
-      val secondConv = ConversationData(ConvId(secondUser.str), RConvId(secondUser.str), Some("Second Conv"), account1Id, ConversationType.OneToOne)
-
-      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(false))
-      (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(firstUser)))
-      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
-
-      (convs.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { rConvId: RConvId =>
-        Future.successful(rConvId match {
-          case firstConv.remoteId => Some(firstConv)
-          case secondConv.remoteId => Some(secondConv)
-          case _ => None
-        })
-      }
-      (convs.convById _).expects(*).anyNumberOfTimes().onCall { convId: ConvId =>
-        Future.successful(convId match {
-          case firstConv.id => Some(firstConv)
-          case secondConv.id => Some(secondConv)
-          case _ => None
-        })
-      }
-
-      val service = initCallingService()
-
-      val checkpoint1 = callCheckpoint(service, _.contains(firstConv.id), cur => cur.exists(_.state.contains(SelfConnected)) && cur.exists(_.others.contains(firstUser)))
-
-      service.onIncomingCall(firstConv.remoteId, firstUser, videoCall = false, shouldRing = true)
-      (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
-        service.onEstablishedCall(firstConv.remoteId, firstUser)
-      }
-      service.startCall(firstConv.id)
-      await(checkpoint1.head)
-
+    scenario("Chaining a startCall after endCall should wait for onClosedCallback and successfully start second call, terminating state should be skipped") {
+      val checkpoint1 = callCheckpoint(_.contains(_1to1Conv.id), cur => cur.exists(_.state == SelfConnected) && cur.exists(_.others.contains(otherUser)))
       //hang up first call and start second call, first call should be replaced
-      val checkpoint2 = callCheckpoint(service, _.contains(secondConv.id), cur => cur.exists(_.state.contains(SelfCalling)) && cur.exists(_.others.contains(secondUser)))
-      val checkpoint3 = callCheckpoint(service, _.contains(secondConv.id), cur => cur.exists(_.state.contains(SelfConnected)) && cur.exists(_.others.contains(secondUser)))
+      val checkpoint2 = callCheckpoint(_.contains(_1to1Conv2.id), cur => cur.exists(_.state == SelfCalling) && cur.exists(_.others.contains(otherUser2)))
+      val checkpoint3 = callCheckpoint(_.contains(_1to1Conv2.id), cur => cur.exists(_.state == SelfConnected) && cur.exists(_.others.contains(otherUser2)))
 
-      (avs.endCall _).expects(*, firstConv.remoteId).once().onCall { (_, _) =>
-        service.onClosedCall(Normal, firstConv.remoteId, RemoteInstant(clock.instant()), firstUser)
+      service.onIncomingCall(_1to1Conv.remoteId, otherUser, videoCall = false, shouldRing = true)
+      (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
+        service.onEstablishedCall(_1to1Conv.remoteId, otherUser)
       }
-      (avs.startCall _).expects(*, secondConv.remoteId, *, WCallConvType.OneOnOne, false).once().onCall { (_, _, _, _, _) =>
+      service.startCall(_1to1Conv.id)
+      awaitCP(checkpoint1)
+
+      (avs.endCall _).expects(*, _1to1Conv.remoteId).once().onCall { (_, _) =>
+        service.onClosedCall(Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), otherUser)
+      }
+
+      (avs.startCall _).expects(*, _1to1Conv2.remoteId, *, WCallConvType.OneOnOne, false).once().onCall { (_, _, _, _, _) =>
         for {
-          _ <- service.onOtherSideAnsweredCall(secondConv.remoteId)
-          _ <- service.onEstablishedCall(secondConv.remoteId, secondUser)
+          _ <- service.onOtherSideAnsweredCall(_1to1Conv2.remoteId)
+          _ <- service.onEstablishedCall(_1to1Conv2.remoteId, otherUser2)
         } yield {}
-        Future.successful(0)
+        Future(0)
       }
 
       for {
-        _ <- service.endCall(firstConv.id)
-        _ <- service.startCall(secondConv.id)
+        _ <- service.endCall(_1to1Conv.id, skipTerminating = true)
+        _ <- service.startCall(_1to1Conv2.id)
       } yield {}
 
-      await(checkpoint2.head)
-      await(checkpoint3.head)
+      awaitCP(checkpoint2)
+      awaitCP(checkpoint3)
     }
 
+    scenario("End a call and later start another call in the same conversation") {
+
+      val checkpoint1 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == SelfCalling && c.startTime == LocalInstant(Instant.EPOCH)))
+      val checkpoint2 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == SelfJoining && c.joinedTime.contains(LocalInstant(Instant.EPOCH + 10.seconds))))
+      val checkpoint3 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == SelfConnected && c.others.keySet == Set(otherUser) && c.estabTime.contains(LocalInstant(Instant.EPOCH + 20.seconds))))
+      val checkpoint4 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == Terminating   && c.others.keySet == Set(otherUser) && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))))
+      val checkpoint5 = callCheckpoint(_.get(_1to1Conv.id).exists(c => c.convId == _1to1Conv.id && c.state == Ended && c.endReason.contains(AvsClosedReason.Normal)      && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))), _.isEmpty)
+
+      val checkpoint6 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == SelfCalling && c.startTime == LocalInstant(Instant.EPOCH + 50.seconds)))
+      val checkpoint7 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == SelfJoining && c.joinedTime.contains(LocalInstant(Instant.EPOCH + 60.seconds))))
+
+      (avs.startCall _).expects(*, _1to1Conv.remoteId, WCallType.Normal, WCallConvType.OneOnOne, *).twice().returning(Future(0))
+      service.startCall(_1to1Conv.id)
+      awaitCP(checkpoint1)
+
+      clock.advance(10.seconds)
+      service.onOtherSideAnsweredCall(_1to1Conv.remoteId)
+      awaitCP(checkpoint2)
+
+      clock.advance(10.seconds)
+      service.onEstablishedCall(_1to1Conv.remoteId, otherUser)
+      awaitCP(checkpoint3)
+
+      clock.advance(10.seconds) //other side ends call
+      service.onClosedCall(AvsClosedReason.Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), otherUser)
+      awaitCP(checkpoint4)
+
+      clock.advance(10.seconds)
+      await(service.dismissCall())
+      awaitCP(checkpoint5)
+
+      clock.advance(10.seconds)
+      service.startCall(_1to1Conv.id)
+      awaitCP(checkpoint6)
+
+      clock.advance(10.seconds)
+      service.onOtherSideAnsweredCall(_1to1Conv.remoteId)
+      awaitCP(checkpoint7)
+    }
   }
 
   feature("Simultaneous calls") {
 
-    scenario("Receive incoming call while 1:1 call ongoing - should become active if ongoing call is dropped") {
+    scenario("Receive incoming call while 1:1 call ongoing - should become active if ongoing call is dropped by self user and terminating state should be skipped") {
 
-      val ongoingUserId = UserId()
-      val ongoingConv = ConversationData(ConvId(ongoingUserId.str), RConvId(ongoingUserId.str), Some("Ongoing Conv"), account1Id, ConversationType.OneToOne)
-
-      val incomingUserId = UserId()
-      val incomingConv = ConversationData(ConvId(incomingUserId.str), RConvId(incomingUserId.str), Some("Incoming Conv"), account1Id, ConversationType.OneToOne)
-      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(true))
-      (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(incomingUserId)))
-      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
-
-      (convs.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { rConvId: RConvId =>
-        Future.successful(rConvId match {
-          case ongoingConv.remoteId => Some(ongoingConv)
-          case incomingConv.remoteId => Some(incomingConv)
-          case _ => None
-        })
-      }
-      (convs.convById _).expects(ConvId(ongoingUserId.str)).anyNumberOfTimes().returning(Future.successful(Some(ongoingConv)))
-
-      val service = initCallingService()
-
-      val checkpoint1 = callCheckpoint(service, _.contains(ongoingConv.id), cur => cur.exists(_.state.contains(SelfConnected)) && cur.exists(_.others.contains(ongoingUserId)))
-
-      service.onIncomingCall(ongoingConv.remoteId, ongoingUserId, videoCall = false, shouldRing = true)
-      (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
-        service.onEstablishedCall(ongoingConv.remoteId, ongoingUserId)
-      }
-      service.startCall(ongoingConv.id)
-      await(checkpoint1.head)
-
+      val checkpoint1 = callCheckpoint(_.contains(_1to1Conv.id), cur => cur.exists(_.state == SelfConnected) && cur.exists(_.others.contains(otherUser)))
       //Both calls should be in available calls, but the ongoing call should be current
-      val checkpoint2 = callCheckpoint(service, { avail =>
-        avail.contains(ongoingConv.id) && avail.get(incomingConv.id).exists(_.state.contains(OtherCalling))
-      }, cur => cur.exists(_.state.contains(SelfConnected)) && cur.exists(_.others.contains(ongoingUserId)))
-
-      service.onIncomingCall(incomingConv.remoteId, incomingUserId, videoCall = false, shouldRing = false) //Receive the second call after first is established
-      await(checkpoint2.head)
-
+      val checkpoint2 = callCheckpoint({ cs => cs.contains(_1to1Conv.id) && cs.get(_1to1Conv2.id).exists(_.state == OtherCalling )}, c => c.exists(_.state == SelfConnected ) && c.exists(_.others.contains(otherUser)))
       //Hang up the ongoing call - incoming 1:1 call should become current
-      val checkpoint3 = callCheckpoint(service, _.contains(incomingConv.id), cur => cur.exists(_.state.contains(OtherCalling)) && cur.exists(_.others.contains(incomingUserId)))
-      (avs.endCall _).expects(*, ongoingConv.remoteId).once().onCall { (_, _) =>
-        service.onClosedCall(Normal, ongoingConv.remoteId, RemoteInstant(clock.instant()), ongoingUserId)
+      val checkpoint3 = callCheckpoint(_.contains(_1to1Conv2.id), cur => cur.exists(_.state == OtherCalling) && cur.exists(_.others.contains(otherUser2)))
+
+      var terminatingPhaseEntered = false
+      service.currentCall.map(_.map(_.state)) {
+        case Some(Terminating) => terminatingPhaseEntered = true
+        case _ =>
       }
-      service.endCall(ongoingConv.id)
-      await(checkpoint3.head)
+
+      service.onIncomingCall(_1to1Conv.remoteId, otherUser, videoCall = false, shouldRing = true)
+      (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
+        service.onEstablishedCall(_1to1Conv.remoteId, otherUser)
+      }
+      service.startCall(_1to1Conv.id)
+      awaitCP(checkpoint1)
+
+      service.onIncomingCall(_1to1Conv2.remoteId, otherUser2, videoCall = false, shouldRing = false) //Receive the second call after first is established
+      awaitCP(checkpoint2)
+
+      (avs.endCall _).expects(*, _1to1Conv.remoteId).once().onCall { (_, _) =>
+        service.onClosedCall(Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), otherUser)
+      }
+      service.endCall(_1to1Conv.id)
+      awaitCP(checkpoint3)
+
+      terminatingPhaseEntered shouldEqual false
     }
 
-    scenario("With a background group call, receive a 1:1 call, finish it, and then still join the group call afterwards") {
+    scenario("Receive incoming call while 1:1 call ongoing - should become active if ongoing call is dropped by other user and terminating state should be skipped") {
 
-      val groupMember1 = UserId("groupUser1")
-      val groupMember2 = UserId("groupUser2")
-      val groupConv = ConversationData(ConvId("group_conv"), RConvId("r_group_conv"), Some("Group Conv"), account1Id, ConversationType.Group)
+      val checkpoint1 = callCheckpoint(_.contains(_1to1Conv.id), cur => cur.exists(_.state == SelfConnected) && cur.exists(_.others.contains(otherUser)))
+      //Both calls should be in available calls, but the ongoing call should be current
+      val checkpoint2 = callCheckpoint({ cs => cs.contains(_1to1Conv.id) && cs.get(_1to1Conv2.id).exists(_.state == OtherCalling )}, c => c.exists(_.state == SelfConnected ) && c.exists(_.others.contains(otherUser)))
+      //Hang up the ongoing call - incoming 1:1 call should become current
+      val checkpoint3 = callCheckpoint(_.contains(_1to1Conv2.id), cur => cur.exists(_.state == OtherCalling) && cur.exists(_.others.contains(otherUser2)))
 
-      val otoUser = UserId("otoUser")
-      val otoConv = ConversationData(ConvId(otoUser.str), RConvId(otoUser.str), Some("1:1 Conv"), account1Id, ConversationType.OneToOne)
-
-      (convs.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { rConvId: RConvId =>
-        Future.successful(rConvId match {
-          case groupConv.remoteId => Some(groupConv)
-          case otoConv.remoteId => Some(otoConv)
-          case _ => None
-        })
+      var terminatingPhaseEntered = false
+      service.currentCall.map(_.map(_.state)) {
+        case Some(Terminating) => terminatingPhaseEntered = true
+        case _ =>
       }
 
-      (convs.convById _).expects(*).anyNumberOfTimes().onCall { convId: ConvId =>
-        Future.successful(convId match {
-          case groupConv.id => Some(groupConv)
-          case otoConv.id => Some(otoConv)
-          case _ => None
-        })
+      service.onIncomingCall(_1to1Conv.remoteId, otherUser, videoCall = false, shouldRing = true)
+      (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
+        service.onEstablishedCall(_1to1Conv.remoteId, otherUser)
       }
+      service.startCall(_1to1Conv.id)
+      awaitCP(checkpoint1)
 
-      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().onCall { convId: ConvId => convId match {
-        case groupConv.id => Future.successful(true)
-        case otoConv.id => Future.successful(false)
-        case other => fail(s"Unknown conv: $other")
-      }}
+      service.onIncomingCall(_1to1Conv2.remoteId, otherUser2, videoCall = false, shouldRing = false) //Receive the second call after first is established
+      awaitCP(checkpoint2)
 
-      (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(groupMember1, groupMember2)))
-      (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
+      service.onClosedCall(Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), otherUser)
 
-      (avs.setVideoSendState _).expects(*, otoConv.remoteId, Avs.VideoState.Stopped).anyNumberOfTimes()
-      val service = initCallingService()
+      awaitCP(checkpoint3)
 
-      //Checkpoint 1: Receive and reject a group call
-      val checkpoint1 = callCheckpoint(service, _.contains(groupConv.id), _.isEmpty)
+      terminatingPhaseEntered shouldEqual false
+    }
 
-      service.onIncomingCall(groupConv.remoteId, groupMember1, videoCall = false, shouldRing = true)
+    scenario("With a background group call, receive a 1:1 call, finish it, and then still join the group call afterwards - we should go through terminating state") {
+
+      //Receive and reject a group call
+      val checkpoint1 = callCheckpoint(_.contains(groupConv.id), _.isEmpty)
+
+      //Receive and accept a 1:1 call
+      val checkpoint2 = callCheckpoint(act => act.contains(groupConv.id) && act.contains(_1to1Conv.id), _.exists(c => c.others.contains(otherUser) && c.state == SelfConnected))
+
+      //1:1 call is finished, but hasn't been dismissed
+      val checkpoint3 = callCheckpoint(_.contains(groupConv.id), _.exists(_.state == Terminating))
+
+      //1:1 call is dismissed
+      val checkpoint4 = callCheckpoint(_.contains(groupConv.id), _.isEmpty)
+
+      //Join group call
+      val checkpoint5 = callCheckpoint(_.contains(groupConv.id), _.exists(c => c.others.keySet == Set(otherUser, otherUser2) && c.state == SelfConnected))
+
+      service.onIncomingCall(groupConv.remoteId, otherUser, videoCall = false, shouldRing = true)
       (avs.rejectCall _).expects(*, *).anyNumberOfTimes().onCall { (_, _) =>
-        service.onClosedCall(StillOngoing, groupConv.remoteId, RemoteInstant(clock.instant()), groupMember1)
+        service.onClosedCall(StillOngoing, groupConv.remoteId, RemoteInstant(clock.instant()), otherUser)
       }
       service.endCall(groupConv.id) //user rejects the group call
+      awaitCP(checkpoint1)
 
-      result(checkpoint1.head)
-
-      //Checkpoint 2: Receive and accept a 1:1 call
-      val checkpoint2 = callCheckpoint(service,
-        act => act.contains(groupConv.id) && act.contains(otoConv.id),
-        _.exists(curr => curr.others.contains(otoUser) && curr.state.contains(SelfConnected)))
-
-      service.onIncomingCall(otoConv.remoteId, otoUser, videoCall = false, shouldRing = true)
+      service.onIncomingCall(_1to1Conv.remoteId, otherUser, videoCall = false, shouldRing = true)
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (rId, _, _, _) =>
-        service.onEstablishedCall(otoConv.remoteId, otoUser)
+        service.onEstablishedCall(_1to1Conv.remoteId, otherUser)
       }
-      service.startCall(otoConv.id) //user accepts 1:1 call
-
-      result(checkpoint2.head)
-
-      //Checkpoint 3: 1:1 call is finished
-      val checkpoint3 = callCheckpoint(service, _.contains(groupConv.id), _.isEmpty)
+      service.startCall(_1to1Conv.id) //user accepts 1:1 call
+      awaitCP(checkpoint2)
 
       (avs.endCall _).expects(*, *).once().onCall { (rId, _) =>
-        service.onClosedCall(Normal, otoConv.remoteId, RemoteInstant(clock.instant()), otoUser)
+        service.onClosedCall(Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), otherUser)
       }
-      service.endCall(otoConv.id)
+      service.endCall(_1to1Conv.id)
+      awaitCP(checkpoint3)
 
-      result(checkpoint3.head)
-
-      //Checkpoint 4: Join group call
-      val checkpoint4 = callCheckpoint(service, _.contains(groupConv.id), _.exists(cur => cur.others.keySet == Set(groupMember1, groupMember2) && cur.state.contains(SelfConnected)))
+      service.dismissCall()
+      awaitCP(checkpoint4)
 
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (rId, _, _, _) =>
-        service.onEstablishedCall(groupConv.remoteId, groupMember1)
-        service.onGroupChanged(groupConv.remoteId, Set(groupMember1, groupMember2))
+        service.onEstablishedCall(groupConv.remoteId, otherUser)
+        service.onGroupChanged(groupConv.remoteId, Set(otherUser, otherUser2))
       }
       service.startCall(groupConv.id)
 
-      result(checkpoint4.head)
+      awaitCP(checkpoint5)
     }
   }
 
   feature("tracking") {
-    scenario("AVS metrics parsing") {
-      val metrics = "{\"version\":\"avs 3.5.37 (arm\\/linux)\",\"protocol-version\":\"3.0\",\"group\":false,\"direction\":\"Outgoing\",\"answered\":false,\"estab_time(ms)\":0,\"audio_setup_time(ms)\":0,\"dtls\":false,\"ice\":false,\"video\":true,\"media_time(s)\":0,\"mic_vol(dB)\":0,\"spk_vol(dB)\":0,\"avg_rtt\":0,\"max_rtt\":0,\"avg_jb_loss\":0,\"max_jb_loss\":0,\"avg_jb_size\":0,\"max_jb_size\":0,\"avg_loss_u\":0,\"max_loss_u\":0,\"avg_loss_d\":0,\"max_loss_d\":0,\"avg_rate_d\":0,\"min_rate_d\":0,\"avg_pkt_rate_d\":0,\"min_pkt_rate_d\":0,\"a_dropouts\":0,\"avg_rate_u\":0,\"min_rate_u\":0,\"avg_pkt_rate_u\":0,\"min_pkt_rate_u\":0,\"audio_route\":\"\",\"v_avg_rate_d\":0,\"v_min_rate_d\":0,\"v_max_rate_d\":0,\"v_avg_frame_rate_d\":0,\"v_min_frame_rate_d\":0,\"v_max_frame_rate_d\":0,\"v_dropouts\":0,\"v_avg_rate_u\":0,\"v_min_rate_u\":0,\"v_max_rate_u\":0,\"v_avg_frame_rate_u\":0,\"v_min_frame_rate_u\":0,\"v_max_frame_rate_u\":0,\"turn_alloc\":40,\"nat_estab\":0,\"dtls_estab\":0,\"ecall_error\":0,\"local_cand\":\"???\",\"remote_cand\":\"???\",\"crypto\":\"None\"}"
-      import com.waz.utils.RichJSON
-      val map = new JSONObject(metrics).topLevelStringMap
-
-      map.size         shouldEqual 53
-      map("version")   shouldEqual "avs 3.5.37 (arm/linux)"
-      map("direction") shouldEqual "Outgoing"
-    }
 
     scenario("Toggling audio or video state during a call sets wasVideoToggled to true for the rest of the call") {
 
-      val otherUser = UserId("otherUser")
-      val _1t1Conv = ConversationData(ConvId(otherUser.str), RConvId(), Some("1:1 Conv"), account1Id, ConversationType.OneToOne)
+      val checkpoint1 = callCheckpoint(_.nonEmpty, _.exists(_.state == SelfCalling))
+      val checkpoint2 = callCheckpoint(_.nonEmpty, _.exists(_.state == SelfJoining))
+      val checkpoint3 = callCheckpoint(_.nonEmpty, _.exists(_.state == SelfConnected))
+      val checkpoint4 = callCheckpoint(_.nonEmpty, _.exists(_.isVideoCall))
+      val checkpoint5 = callCheckpoint(_.nonEmpty, _.exists(_.state == Terminating))
+      val checkpoint6 = callCheckpoint(_.get(_1to1Conv.id).exists(c => c.state == Ended && c.wasVideoToggled), _.isEmpty)
 
-      (convs.convByRemoteId _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(_1t1Conv)))
-      (convs.convById _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(_1t1Conv)))
-      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(false))
-      (members.getActiveUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(otherUser)))
-
-      val lastTrackedCall = Signal[CallInfo]()
-      (tracking.trackCallState _).expects(*, *, *).anyNumberOfTimes().onCall { (user, call, _) =>
-        Future(lastTrackedCall ! call)
-      }
-
-      val service = initCallingService()
-      val checkpoint1 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(SelfCalling) && cur.caller == account1Id && cur.others.keySet == Set(otherUser)))
-      val checkpoint2 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(SelfJoining) && cur.caller == account1Id && cur.others.keySet == Set(otherUser)))
-      val checkpoint3 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(cur => cur.convId == _1t1Conv.id && cur.state.contains(SelfConnected) && cur.caller == account1Id && cur.others.keySet == Set(otherUser)))
-      val checkpoint4 = callCheckpoint(service, _.contains(_1t1Conv.id), _.exists(_.isVideoCall))
-      val checkpoint5 = callCheckpoint(service, _.isEmpty, _.isEmpty)
-
-      (avs.startCall _).expects(*, *, *, *, *).once().returning(Future.successful(0))
-      (avs.endCall _).expects(*, *).once().onCall { (_: WCall, convId: RConvId) =>
-        service.onClosedCall(Avs.AvsClosedReason.Normal, convId, RemoteInstant(clock.instant()), account1Id)
-      }
+      (avs.startCall _).expects(*, *, *, *, *).once().returning(Future(0))
       (avs.setVideoSendState _).expects(*, *, *).twice()
 
-      service.startCall(_1t1Conv.id)
-      result(checkpoint1.head)
+      service.startCall(_1to1Conv.id)
+      awaitCP(checkpoint1)
 
-      service.onOtherSideAnsweredCall(_1t1Conv.remoteId)
-      result(checkpoint2.head)
+      service.onOtherSideAnsweredCall(_1to1Conv.remoteId)
+      awaitCP(checkpoint2)
 
-      service.onEstablishedCall(_1t1Conv.remoteId, otherUser)
-      result(checkpoint3.head)
+      service.onEstablishedCall(_1to1Conv.remoteId, otherUser)
+      awaitCP(checkpoint3)
 
-      service.setVideoSendState(_1t1Conv.id, VideoState.Started)
-      result(checkpoint4.head)
+      service.setVideoSendState(_1to1Conv.id, VideoState.Started)
+      awaitCP(checkpoint4)
 
-      service.endCall(_1t1Conv.id)
-      result(checkpoint5.head)
-
-      result(lastTrackedCall.filter(_.wasVideoToggled).head) //check that wasVideoToggled gets set at least once
-
-    }
-  }
-
-  scenario("Test...") {
-    //TODO this is simplest example of what's happening on receiving a video call (between incoming call and video state change)
-    //it would be good to find a better way of fixing this, but I'll leave this here for now for future ease of testing
-
-    val lock = 1
-
-    val f1 = {
-      Serialized.future(lock) {
-        for {
-          a <- Future {
-            println("1A")
-            Thread.sleep(1000)
-            1
-          }(Threading.Background)
-          b <- Future {
-            println("1B")
-            Thread.sleep(1000)
-            2
-          } (Threading.Background)
-        } yield println(s"Result of operations: ${a + b}")
-      }.map(res => res)
-    }
-
-    val f2 =
-      Future {
-        println("2A")
-        Thread.sleep(1000)
-        Threading.Background
-      }.map { _ =>
-        println("performing task 2")
+      (avs.endCall _).expects(*, *).once().onCall { (_: WCall, convId: RConvId) =>
+        service.onClosedCall(Avs.AvsClosedReason.Normal, convId, RemoteInstant(clock.instant()), selfUserId)
       }
 
+      service.endCall(_1to1Conv.id)
+      awaitCP(checkpoint5)
 
-    result(Future.sequence(Seq(f1, f2)))
-
+      service.dismissCall()
+      awaitCP(checkpoint6)
+    }
   }
 
-  def callCheckpoint(service: CallingService, activeCheck: Map[ConvId, CallInfo] => Boolean, currentCheck: Option[CallInfo] => Boolean) =
-    (for {
-      active <- service.availableCalls
-      current <- service.currentCall
-    } yield (active, current)).filter { case (active, current) =>
-      activeCheck(active) && currentCheck(current)
+  var cpCount = 0
+  def awaitCP(cp: CallStateCheckpoint) = {
+    cpCount += 1
+    try {
+      result(cp.head)
+    } catch {
+      case NonFatal(e) =>
+        fail(s"Checkpoint $cpCount didn't match state: ${service.callProfile.currentValue}", e)
     }
+    cp.unsubscribeAll()
+  }
+
+  def callCheckpoint(callsCheck: Map[ConvId, CallInfo] => Boolean, currentCheck: Option[CallInfo] => Boolean): CallStateCheckpoint =
+    (for {
+      calls <- service.calls
+      current <- service.currentCall
+    } yield (calls, current))
+      .filter { case (calls, current) => callsCheck(calls) && currentCheck(current) }
+      .disableAutowiring()
 
   def signalTest[A](signal: Signal[A])(test: A => Boolean)(trigger: => Unit): Unit = {
     signal.disableAutowiring()
@@ -687,8 +842,54 @@ class CallingServiceSpec extends AndroidFreeSpec {
 
   def initCallingService(wCall: WCall = new Pointer(0L)) = {
     val prefs = new TestUserPreferences()
+
+    (convs.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { id: RConvId =>
+      Future.successful {
+        if (id == _1to1Conv.remoteId)     Some(_1to1Conv)
+        else if (id == _1to1Conv2.remoteId)    Some(_1to1Conv2)
+        else if (id == groupConv.remoteId)     Some(groupConv)
+        else if (id == team1to1Conv.remoteId)  Some(team1to1Conv)
+        else if (id == teamGroupConv.remoteId) Some(teamGroupConv)
+        else fail(s"Unexpected conversation id: $id")
+      }
+    }
+
+    (convs.convById _).expects(*).anyNumberOfTimes().onCall { id: ConvId =>
+      Future.successful {
+        if (id == _1to1Conv.id)     Some(_1to1Conv)
+        else if (id == _1to1Conv2.id)    Some(_1to1Conv2)
+        else if (id == groupConv.id)     Some(groupConv)
+        else if (id == team1to1Conv.id)  Some(team1to1Conv)
+        else if (id == teamGroupConv.id) Some(teamGroupConv)
+        else fail(s"Unexpected conversation id: $id")
+      }
+    }
+    (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().onCall { id: ConvId =>
+      Future.successful {
+        if (id == _1to1Conv.id)     false
+        else if (id == _1to1Conv2.id)    false
+        else if (id == groupConv.id)     true
+        else if (id == team1to1Conv.id)  false
+        else if (id == teamGroupConv.id) true
+        else fail(s"Unexpected conversation id: $id")
+      }
+    }
+
+    (members.getActiveUsers _).expects(*).anyNumberOfTimes().onCall { id: ConvId =>
+      val others =
+        if (id == _1to1Conv.id)    Set(otherUser)
+        else if (id == _1to1Conv2.id)    Set(otherUser2)
+        else if (id == groupConv.id)     Set(otherUser, otherUser2)
+        else if (id == team1to1Conv.id)  Set(otherUser)
+        else if (id == teamGroupConv.id) Set(otherUser, otherUser2)
+        else fail(s"Unexpected conversation id: $id")
+
+      Future.successful((others + selfUserId).toSeq)
+    }
+
+    (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
+
     (context.startService _).expects(*).anyNumberOfTimes().returning(true)
-    (tracking.trackCallState _).expects(account1Id, *, *).anyNumberOfTimes()
     (flows.flowManager _).expects().once().returning(None)
     (messages.addMissedCallMessage(_:RConvId, _:UserId, _:RemoteInstant)).expects(*, *, *).anyNumberOfTimes().returning(Future.successful(None))
     (messages.addMissedCallMessage(_:ConvId, _:UserId, _:RemoteInstant)).expects(*, *, *).anyNumberOfTimes().returning(Future.successful(None))
@@ -697,11 +898,16 @@ class CallingServiceSpec extends AndroidFreeSpec {
     (push.beDrift _).expects().anyNumberOfTimes().returning(Signal.const(Duration.ZERO))
 
     (avs.registerAccount _).expects(*).once().returning(Future.successful(wCall))
-    val service = new CallingService(
-      account1Id, clientId, null, context, avs, convs, convsService, members, null,
-      flows, messages, media, push, network, null, prefs, permissions, tracking
+    val s = new CallingServiceImpl(
+      selfUserId, clientId, null, context, avs, convs, convsService, members, null,
+      flows, messages, media, push, network, null, prefs, globalPrefs, permissions, tracking
     )
-    result(service.wCall)
-    service
+    result(s.wCall)
+    s
   }
+}
+
+object CallingServiceSpec {
+
+  type CallStateCheckpoint = Signal[(Map[ConvId, CallInfo], Option[CallInfo])]
 }

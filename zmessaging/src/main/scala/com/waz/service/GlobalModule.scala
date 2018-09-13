@@ -32,14 +32,14 @@ import com.waz.service.assets.{AudioTranscoder, GlobalRecordAndPlayService}
 import com.waz.service.call._
 import com.waz.service.downloads._
 import com.waz.service.images.{ImageLoader, ImageLoaderImpl}
-import com.waz.service.push.{GlobalNotificationsService, GlobalNotificationsServiceImpl, GlobalTokenService}
+import com.waz.service.push.{GlobalNotificationsService, GlobalNotificationsServiceImpl, GlobalTokenService, GlobalTokenServiceImpl}
 import com.waz.service.tracking.{TrackingService, TrackingServiceImpl}
 import com.waz.sync.client._
 import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache
 import com.waz.ui.MemoryImageCache.{Entry, Key}
 import com.waz.utils.Cache
-import com.waz.utils.wrappers.{Context, GoogleApi, GoogleApiImpl}
+import com.waz.utils.wrappers.{Context, GoogleApi}
 import com.waz.znet2.HttpClientOkHttpImpl
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RequestInterceptor}
@@ -49,6 +49,7 @@ import scala.concurrent.ExecutionContext
 trait GlobalModule {
   def context:              AContext
   def backend:              BackendConfig
+  def ssoService:           SSOService
   def tokenService:         GlobalTokenService
   def notifications:        GlobalNotificationsService
   def accountsService:      AccountsService
@@ -95,19 +96,19 @@ trait GlobalModule {
   def trackingService:      TrackingService
 }
 
-class GlobalModuleImpl(val context: AContext, val backend: BackendConfig) extends GlobalModule { global =>
-  val prefs:                    GlobalPreferences                = GlobalPreferences(context)
+class GlobalModuleImpl(val context:   AContext,
+                       val backend:   BackendConfig,
+                       val prefs:     GlobalPreferences,
+                       val googleApi: GoogleApi) extends GlobalModule { global =>
   //trigger initialization of Firebase in onCreate - should prevent problems with Firebase setup
-  val googleApi:                GoogleApi                        = new GoogleApiImpl(context, backend, prefs)
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
   val network:                  DefaultNetworkModeService        = wire[DefaultNetworkModeService]
-
-  val tokenService:             GlobalTokenService               = wire[GlobalTokenService]
+  val tokenService:             GlobalTokenService               = wire[GlobalTokenServiceImpl]
 
   val storage:                  Database                         = new GlobalDatabase(context)
   val accountsStorageOld:       AccountsStorageOld               = wire[AccountsStorageOldImpl]
 
-
+  lazy val ssoService:          SSOService                       = wire[SSOService]
   lazy val accountsService:     AccountsService                  = new AccountsServiceImpl(this)
   lazy val trackingService:     TrackingService                  = TrackingServiceImpl(accountsService)
   lazy val notifications:       GlobalNotificationsService       = wire[GlobalNotificationsServiceImpl]
@@ -176,7 +177,8 @@ class EmptyGlobalModule extends GlobalModule {
   override def trackingService:       TrackingService                                     = ???
   override def context:               AContext                                            = ???
   override def backend:               BackendConfig                                       = ???
-  override def tokenService:          GlobalTokenService                                  = ???
+  override def ssoService:            SSOService                                          = ???
+  override def tokenService:          GlobalTokenServiceImpl                                  = ???
   override def notifications:         GlobalNotificationsService                          = ???
   override def calling:               GlobalCallingService                                = ???
   override def prefs:                 GlobalPreferences                                   = ???

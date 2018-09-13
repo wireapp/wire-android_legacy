@@ -36,16 +36,14 @@ import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.otr.{OtrClientsService, OtrServiceImpl}
 import com.waz.service.tracking.TrackingService
 import com.waz.service.{MetaDataService, _}
-import com.waz.sync.client.MessagesClient
+import com.waz.sync.client.{ErrorOr, ErrorOrResponse, MessagesClient}
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.sync.queue.ConvLock
 import com.waz.sync.{SyncResult, SyncServiceHandle}
 import com.waz.threading.CancellableFuture
 import com.waz.threading.CancellableFuture.CancelException
 import com.waz.utils.{RichFutureEither, _}
-import com.waz.sync.client.{ErrorOr, ErrorOrResponse}
 import com.waz.znet2.http.ResponseCode
-import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import scala.concurrent.Future.successful
@@ -79,7 +77,7 @@ class MessagesSyncHandler(selfUserId: UserId,
     convs.convById(convId) flatMap {
       case Some(conv) =>
         val msg = GenericMessage(Uid(), Proto.MsgDeleted(conv.remoteId, msgId))
-        otrSync.postOtrMessage(ConvId(selfUserId.str), RConvId(selfUserId.str), msg) map {_.fold(e => SyncResult(e), _ => SyncResult.Success)}
+        otrSync.postOtrMessage(ConvId(selfUserId.str), msg).map(_.fold(e => SyncResult(e), _ => SyncResult.Success))
       case None =>
         successful(SyncResult(internalError("conversation not found")))
     }
@@ -89,7 +87,7 @@ class MessagesSyncHandler(selfUserId: UserId,
     convs.convById(convId) flatMap {
       case Some(conv) =>
         val msg = GenericMessage(msgId.uid, Proto.MsgRecall(recalled))
-        otrSync.postOtrMessage(conv.id, conv.remoteId, msg) flatMap {
+        otrSync.postOtrMessage(conv.id, msg).flatMap {
           case Left(e) => successful(SyncResult(e))
           case Right(time) =>
             msgContent.updateMessage(msgId)(_.copy(editTime = time, state = Message.Status.SENT)) map { _ => SyncResult.Success }
@@ -106,7 +104,7 @@ class MessagesSyncHandler(selfUserId: UserId,
           case ReceiptType.EphemeralExpired => (GenericMessage(msgId.uid, Proto.MsgRecall(msgId)), Set(selfUserId, userId))
         }
 
-        otrSync.postOtrMessage(conv.id, conv.remoteId, msg, Some(recipients), nativePush = false) map {
+        otrSync.postOtrMessage(conv.id, msg, Some(recipients), nativePush = false) map {
           case Left(e) => SyncResult(e)
           case Right(_) => SyncResult.Success
         }
@@ -164,7 +162,7 @@ class MessagesSyncHandler(selfUserId: UserId,
           case _ => (GenericMessage.TextMessage(msg), false)
         }
 
-      otrSync.postOtrMessage(conv, gm).flatMap {
+      otrSync.postOtrMessage(conv.id, gm).flatMap {
         case Right(time) if isEdit =>
           // delete original message and create new message with edited content
           service.applyMessageEdit(conv.id, msg.userId, RemoteInstant(time.instant), gm) map {
@@ -181,7 +179,7 @@ class MessagesSyncHandler(selfUserId: UserId,
 
     def post: ErrorOr[RemoteInstant] = msg.msgType match {
       case MessageData.IsAsset() => Cancellable(UploadTaskKey(msg.assetId))(uploadAsset(conv, msg)).future
-      case KNOCK => otrSync.postOtrMessage(conv, GenericMessage(msg.id.uid, msg.ephemeral, Proto.Knock()))
+      case KNOCK => otrSync.postOtrMessage(conv.id, GenericMessage(msg.id.uid, msg.ephemeral, Proto.Knock()))
       case TEXT | TEXT_EMOJI_ONLY => postTextMessage().map(_.map(_.time))
       case RICH_MEDIA =>
         postTextMessage().flatMap {
@@ -191,9 +189,9 @@ class MessagesSyncHandler(selfUserId: UserId,
       case LOCATION =>
         msg.protos.headOption match {
           case Some(GenericMessage(id, loc: Location)) if msg.isEphemeral =>
-            otrSync.postOtrMessage(conv, GenericMessage(id, Ephemeral(msg.ephemeral, loc)))
+            otrSync.postOtrMessage(conv.id, GenericMessage(id, Ephemeral(msg.ephemeral, loc)))
           case Some(proto) =>
-            otrSync.postOtrMessage(conv, proto)
+            otrSync.postOtrMessage(conv.id, proto)
           case None =>
             successful(Left(internalError(s"Unexpected location message content: $msg")))
         }
@@ -201,7 +199,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         msg.protos.headOption match {
           case Some(proto) if !msg.isEphemeral =>
             verbose(s"sending generic message: $proto")
-            otrSync.postOtrMessage(conv, proto)
+            otrSync.postOtrMessage(conv.id, proto)
           case Some(proto) =>
             successful(Left(internalError(s"Can not send generic ephemeral message: $msg")))
           case None =>
@@ -234,7 +232,7 @@ class MessagesSyncHandler(selfUserId: UserId,
 
     def postAssetMessage(asset: AssetData, preview: Option[AssetData]): ErrorOrResponse[RemoteInstant] = {
       val proto = GenericMessage(msg.id.uid, msg.ephemeral, Proto.Asset(asset, preview))
-      CancellableFuture.lift(otrSync.postOtrMessage(conv, proto) flatMap {
+      CancellableFuture.lift(otrSync.postOtrMessage(conv.id, proto) flatMap {
         case Right(time) =>
           verbose(s"posted asset message for: $asset")
           msgContent.updateMessage(msg.id)(_.copy(protos = Seq(proto), time = time)) map { _ => Right(time) }
@@ -262,12 +260,11 @@ class MessagesSyncHandler(selfUserId: UserId,
             case Some(prev) =>
               service.retentionPolicy(conv).flatMap { retention =>
                 assetSync.uploadAssetData(prev.id, retention = retention).flatMap {
-                  case Right(Some(updated)) =>
+                  case Right(updated) =>
                     postAssetMessage(asset, Some(updated)).map {
                       case (Right(_)) => Right(Some(updated))
                       case (Left(err)) => Left(err)
                     }
-                  case Right(None) => CancellableFuture successful Right(None)
                   case Left(err) => CancellableFuture successful Left(err)
                 }
               }
@@ -276,8 +273,7 @@ class MessagesSyncHandler(selfUserId: UserId,
             case Right(prev) =>
               service.retentionPolicy(conv).flatMap { retention =>
                 assetSync.uploadAssetData(asset.id, retention = retention).flatMap {
-                  case Right(Some(updated)) => postAssetMessage(updated, prev).map(_.fold(Left(_), _ => Right(origTime)))
-                  case Right(None) => CancellableFuture successful Right(RemoteInstant.Epoch) //TODO Dean: what's a good default
+                  case Right(updated) => postAssetMessage(updated, prev).map(_.fold(Left(_), _ => Right(origTime)))
                   case Left(err) if err.message.contains(AssetSyncHandler.AssetTooLarge) =>
                     CancellableFuture.lift(errors.addAssetTooLargeError(conv.id, msg.id).map { _ => Left(err) })
                   case Left(err) => CancellableFuture successful Left(err)
@@ -323,9 +319,9 @@ class MessagesSyncHandler(selfUserId: UserId,
     def post(conv: ConversationData, asset: AssetData): ErrorOr[Unit] =
       if (asset.status != status) successful(Left(internalError(s"asset $asset should have status $status")))
       else status match {
-        case UploadCancelled => otrSync.postOtrMessage(conv, GenericMessage(mid.uid, expiration, Proto.Asset(asset))).flatMapRight(_ => storage.remove(mid))
+        case UploadCancelled => otrSync.postOtrMessage(conv.id, GenericMessage(mid.uid, expiration, Proto.Asset(asset))).flatMapRight(_ => storage.remove(mid))
         case UploadFailed if asset.isImage => successful(Left(internalError(s"upload failed for image $asset")))
-        case UploadFailed => otrSync.postOtrMessage(conv, GenericMessage(mid.uid, expiration, Proto.Asset(asset))).mapRight(_ => ())
+        case UploadFailed => otrSync.postOtrMessage(conv.id, GenericMessage(mid.uid, expiration, Proto.Asset(asset))).mapRight(_ => ())
       }
 
     for {

@@ -61,22 +61,30 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
       messagesStorage.removeAll(ids)
     }
 
-  def addLocalMessage(msg: MessageData, state: Status = Status.PENDING) = Serialized.future("add local message", msg.convId) {
+  /**
+    * @param exp ConvExpiry takes precedence over one-time expiry (exp), which takes precedence over the MessageExpiry
+    */
+  def addLocalMessage(msg: MessageData, state: Status = Status.PENDING, exp: Option[Option[FiniteDuration]] = None) =
+    Serialized.future("add local message", msg.convId) {
 
-    def expiration =
-      if (MessageData.EphemeralMessageTypes(msg.msgType))
-        convs.get(msg.convId).map(_.fold(Option.empty[EphemeralDuration])(_.ephemeralExpiration))
-      else Future successful None
+      def expiration =
+        if (MessageData.EphemeralMessageTypes(msg.msgType))
+          convs.get(msg.convId).map(_.fold(Option.empty[EphemeralDuration])(_.ephemeralExpiration)).map {
+            case Some(ConvExpiry(d))    => Some(d)
+            case Some(MessageExpiry(d)) => exp.getOrElse(Some(d))
+            case _                      => exp.flatten
+          }
+        else Future.successful(None)
 
-    for {
-      time <- remoteTimeAfterLast(msg.convId) //TODO: can we find a way to save this only on the localTime of the message?
-      exp  <- expiration
-      m = returning(msg.copy(state = state, time = time, localTime = LocalInstant.Now, ephemeral = exp.map(_.duration))) { m =>
-        verbose(s"addLocalMessage: $m")
-      }
-      res <- messagesStorage.addMessage(m)
-    } yield res
-  }
+      for {
+        time <- remoteTimeAfterLast(msg.convId) //TODO: can we find a way to save this only on the localTime of the message?
+        exp  <- expiration
+        m = returning(msg.copy(state = state, time = time, localTime = LocalInstant.Now, ephemeral = exp)) { m =>
+          verbose(s"addLocalMessage: $m, exp: $exp")
+        }
+        res <- messagesStorage.addMessage(m)
+      } yield res
+    }
 
   def addLocalSentMessage(msg: MessageData, time: Option[RemoteInstant] = None) = Serialized.future("add local message", msg.convId) {
     verbose(s"addLocalSentMessage: $msg")

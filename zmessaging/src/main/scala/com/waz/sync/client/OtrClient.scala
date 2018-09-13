@@ -22,13 +22,10 @@ import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.{OtrClientType, Verification}
 import com.waz.model.AccountData.Password
-import com.waz.model.UserId
-import com.waz.model.otr._
-import com.waz.service.BackendConfig
-import com.waz.sync.client.OtrClient.{ClientKey, MessageResponse}
 import com.waz.model.otr._
 import com.waz.model.{RemoteInstant, UserId}
-import com.waz.sync.otr.OtrMessage
+import com.waz.sync.client.OtrClient.{ClientKey, MessageResponse}
+import com.waz.sync.otr.OtrSyncHandler.OtrMessage
 import com.waz.utils._
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
@@ -59,6 +56,7 @@ class OtrClientImpl(implicit
                     httpClient: HttpClient,
                     authRequestInterceptor: AuthRequestInterceptor) extends OtrClient {
 
+  import HttpClient.AutoDerivation._
   import HttpClient.dsl._
   import MessagesClient.OtrMessageSerializer
   import OtrClient._
@@ -312,17 +310,26 @@ object OtrClient {
     }
   }
 
-  sealed trait MessageResponse { def mismatch: ClientMismatch }
+  sealed trait MessageResponse {
+    def mismatch: ClientMismatch
+
+    def deleted: Map[UserId, Seq[ClientId]] =
+      mismatch.deleted
+
+    def missing: Map[UserId, Seq[ClientId]] =
+      mismatch.missing
+  }
   object MessageResponse {
     case class Success(mismatch: ClientMismatch) extends MessageResponse
     case class Failure(mismatch: ClientMismatch) extends MessageResponse
   }
 
-  case class ClientMismatch(redundant: Map[UserId, Seq[ClientId]], missing: Map[UserId, Seq[ClientId]], deleted: Map[UserId, Seq[ClientId]], time: RemoteInstant)
+  case class ClientMismatch(redundant: Map[UserId, Seq[ClientId]] = Map.empty,
+                            missing:   Map[UserId, Seq[ClientId]] = Map.empty,
+                            deleted:   Map[UserId, Seq[ClientId]] = Map.empty,
+                            time: RemoteInstant)
 
   object ClientMismatch {
-    def apply(time: RemoteInstant) = new ClientMismatch(Map.empty, Map.empty, Map.empty, time)
-
     implicit lazy val Decoder: JsonDecoder[ClientMismatch] = new JsonDecoder[ClientMismatch] {
       import JsonDecoder._
 

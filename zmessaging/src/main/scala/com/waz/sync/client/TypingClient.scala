@@ -34,6 +34,7 @@ class TypingClientImpl(implicit
                        authRequestInterceptor: AuthRequestInterceptor) extends TypingClient {
 
   import HttpClient.dsl._
+  import HttpClient.AutoDerivation._
   import TypingClient._
 
   def updateTypingState(id: RConvId, isTyping: Boolean): ErrorOrResponse[Unit] = {
