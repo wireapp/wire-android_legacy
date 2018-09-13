@@ -20,7 +20,7 @@ package com.waz.zclient.cursor
 import android.content.Context
 import android.graphics.drawable.ColorDrawable
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
-import android.text.{Editable, TextUtils, TextWatcher}
+import android.text.{Editable, Spanned, TextUtils, TextWatcher}
 import android.util.AttributeSet
 import android.view.View.OnClickListener
 import android.view._
@@ -31,16 +31,18 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.model._
 import com.waz.service.UserSearchService
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.cursor.CursorController.{EnteredTextSource, KeyboardState}
+import com.waz.zclient.cursor.Mention.{Replacement, getMention}
 import com.waz.zclient.messages.MessagesController
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
 import com.waz.zclient.ui.cursor._
 import com.waz.zclient.ui.text.TextTransform
+import com.waz.zclient.ui.text.TypefaceEditText.OnSelectionChangedListener
 import com.waz.zclient.ui.views.OnDoubleClickListener
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
@@ -114,33 +116,64 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   } yield
     !typing && (multiline || !scrolledToBottom)
 
-  private val cursorTextWatcher = new MentionsTextWatcher
+  private val cursorSpanWatcher = new MentionSpanWatcher
   private val mentionCandidatesAdapter = new MentionCandidatesAdapter()
   mentionsList.setAdapter(mentionCandidatesAdapter)
   mentionsList.setLayoutManager(new LinearLayoutManager(context))
   mentionCandidatesAdapter.onUserClicked.onUi { info =>
-    cursorTextWatcher.createMention(info.userId, info.name, cursorEditText.getEditableText, cursorEditText.getSelectionEnd)
+    createMention(info.userId, info.name, cursorEditText.getEditableText, cursorEditText.getSelectionStart)
   }
+
+  private val cursorText: SourceSignal[String] = Signal(cursorEditText.getText.toString)
+  private val cursorSelection: SourceSignal[(Int, Int)] = Signal((cursorEditText.getSelectionStart, cursorEditText.getSelectionEnd))
+
+  private val mentionQuery = Signal(cursorText, cursorSelection).collect {
+    case (text, (_, sEnd)) if sEnd <= text.length => Mention.mentionQuery(text, sEnd)
+  }
+  private val selectionHasMention = Signal(cursorText, cursorSelection).collect {
+    case (text, (_, sEnd)) if sEnd <= text.length =>
+      Mention.mentionMatch(text, sEnd).exists {
+        m => MentionSpan.hasMentionSpan(cursorEditText.getEditableText, m.start, sEnd)
+      }
+  }
+  private val cursorSingleSelection = cursorSelection.map(s => s._1 == s._2)
 
   private val mentionSearchResults = for {
     searchService <- inject[Signal[UserSearchService]]
-    query <- cursorTextWatcher.shouldShowMentionList
     convId <- inject[ConversationController].currentConvId
-    results <- searchService.searchUsersInConversation(convId, query.getOrElse(""))
+    query <- mentionQuery
+    selectionHasMention <- selectionHasMention
+    selectionSingle <- cursorSingleSelection
+    results <- if (selectionHasMention || !selectionSingle)
+      Signal.const(IndexedSeq.empty[UserData])
+    else
+      searchService.searchUsersInConversation(convId, query.getOrElse(""))
   } yield results
 
   mentionSearchResults.map(_.map(ud => MentionCandidateInfo(ud.id, ud.getDisplayName, ud.handle.getOrElse(Handle())))).onUi {
     mentionCandidatesAdapter.setData
   }
 
-  Signal(cursorTextWatcher.shouldShowMentionList.map(_.nonEmpty), mentionSearchResults.map(_.nonEmpty)).map{
-    case (true, true) => true
+  Signal(mentionQuery.map(_.nonEmpty), mentionSearchResults.map(_.nonEmpty), selectionHasMention).map {
+    case (true, true, false) => true
     case _ => false
   }.onUi(showMentionsList)
 
-  private def showMentionsList(visible: Boolean) = {
+  private def showMentionsList(visible: Boolean): Unit = {
     mentionsList.setVisible(visible)
     topBorder.setVisible(visible)
+  }
+
+  private def createMention(userId: UserId, name: String, editable: Editable, selectionIndex: Int): Unit = {
+    getMention(editable.toString, selectionIndex, userId, name).foreach {
+      case (mention, Replacement(rStart, rEnd, rText)) =>
+        editable.replace(rStart, rEnd, rText + " ")
+        editable.setSpan(
+          MentionSpan(userId, rText),
+          mention.start,
+          mention.end,
+          Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    }
   }
 
   lineCount.onUi(cursorEditText.setLines(_))
@@ -169,20 +202,36 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   mainToolbar.cursorItems ! MainCursorItems
   secondaryToolbar.cursorItems ! SecondaryCursorItems
 
+  cursorEditText.setOnSelectionChangedListener(new OnSelectionChangedListener {
+    override def onSelectionChanged(selStart: Int, selEnd: Int): Unit =
+      cursorSelection ! (selStart, selEnd)
+  })
+
   cursorEditText.addTextChangedListener(new TextWatcher() {
 
-    override def beforeTextChanged(charSequence: CharSequence, start: Int, count: Int, after: Int): Unit = ()
+    private var spans = Option.empty[Map[MentionSpan, (Int, Int)]]
+
+    override def beforeTextChanged(charSequence: CharSequence, start: Int, count: Int, after: Int): Unit = {
+      val editable = cursorEditText.getEditableText
+      editable.removeSpan(cursorSpanWatcher)
+      editable.setSpan(cursorSpanWatcher, 0, editable.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE)
+
+      //XXX: This hack is to prevent some keyboards from changing the flags of our spans.
+      // We save them here and restored them in afterTextChanged
+      spans = Some(MentionSpan.getMentionSpans(cursorEditText.getEditableText))
+    }
 
     override def onTextChanged(charSequence: CharSequence, start: Int, before: Int, count: Int): Unit = {
       val text = charSequence.toString
       controller.enteredText ! (text, EnteredTextSource.FromView)
       if (text.trim.nonEmpty) lineCount ! Math.max(cursorEditText.getLineCount, 1)
+      cursorText ! charSequence.toString
     }
 
-    override def afterTextChanged(editable: Editable): Unit = ()
+    override def afterTextChanged(editable: Editable): Unit = {
+      spans.foreach(MentionSpan.setSpans(editable, _))
+    }
   })
-
-  cursorEditText.addTextChangedListener(cursorTextWatcher)
 
   cursorEditText.setOnClickListener(new OnClickListener {
     override def onClick(v: View): Unit = controller.notifyKeyboardVisibilityChanged(true)

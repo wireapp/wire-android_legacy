@@ -25,6 +25,7 @@ import com.waz.model.{Handle, UserId}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.zclient.R
 import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.utils.StringUtils
 
 class MentionCandidatesAdapter extends RecyclerView.Adapter[MentionCandidateViewHolder] {
 
@@ -69,7 +70,7 @@ class MentionCandidateViewHolder(v: View, onUserClick: MentionCandidateInfo => U
   def bind(info: MentionCandidateInfo): Unit = {
     userId = Some(info)
     nameTextView.setText(info.name)
-    handleTextView.setText(info.name)
+    handleTextView.setText(StringUtils.formatHandle(info.handle.string))
     chathead.setUserId(info.userId)
   }
 }

@@ -19,30 +19,11 @@ package com.waz.zclient.cursor
 
 import android.graphics.Color
 import android.text._
-import android.text.style.ForegroundColorSpan
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag.implicitLogTag
+import android.text.style._
 import com.waz.model.UserId
-import com.waz.utils.events.{Signal, SourceSignal}
-import Mention._
 import scala.util.matching.Regex
 
 case class Mention(start: Int, end: Int, userId: UserId)
-case class CursorText(text: String, mentions: Seq[Mention]) {
-
-  def onTextChanged(s: CharSequence, start: Int, before: Int, count: Int): CursorText = {
-    val end = start + count
-    val unchangedMentions = mentions.filter(m => start >= m.end || end < m.start).map { m =>
-      if (m.start > end) {
-        val offset = count - before
-        m.copy(m.start + offset, m.end + offset)
-      } else m
-    }
-    CursorText(s.toString, unchangedMentions)
-  }
-
-  def addMention(mention: Mention): CursorText = copy(mentions = mentions :+ mention)
-}
 
 object Mention {
   val MentionRegex: Regex = """@[\S]*$""".r
@@ -62,43 +43,47 @@ object Mention {
   }
 }
 
-class MentionsTextWatcher extends TextWatcher {
-  var cursorText = CursorText("", Seq())
+case class MentionSpan(userId: UserId, text: String) extends ForegroundColorSpan(Color.BLUE) //TODO: Accent color
 
-  val shouldShowMentionList: SourceSignal[Option[String]] = Signal()
-
-  override def beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int): Unit = {}
-
-  override def onTextChanged(s: CharSequence, start: Int, before: Int, count: Int): Unit = {
-    cursorText = cursorText.onTextChanged(s, start, before, count)
-    shouldShowMentionList ! mentionQuery(s.toString, start + count)
+object MentionSpan {
+  def getMentionSpans(spannable: Spannable): Map[MentionSpan, (Int, Int)] = {
+    spannable.getSpans(0, spannable.length(), classOf[MentionSpan]).map { s =>
+      s -> (spannable.getSpanStart(s), spannable.getSpanEnd(s))
+    }.toMap
   }
 
-  override def afterTextChanged(s: Editable): Unit = {
-    refreshSpans(s)
-  }
-
-  private def refreshSpans(s: Editable): Unit = {
-    s.getSpans(0, s.length(), classOf[ForegroundColorSpan]).foreach(s.removeSpan(_))
-    cursorText.mentions.foreach { mention =>
-      if (mention.end < s.length() && mention.start >= 0) {
-        s.setSpan(
-          new ForegroundColorSpan(Color.BLUE), //TODO: Accent color?
-          mention.start,
-          mention.end,
-          Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-      } else {
-        ZLog.error(s"Incorrect mention span: $mention")
-      }
+  def setSpans(spannable: Spannable, spans: Map[MentionSpan, (Int, Int)]): Unit = {
+    spans.foreach {
+      case (span, (start, end)) if spannable.getSpanFlags(span) == 0 =>
+        if (end <= spannable.length && spannable.subSequence(start, end).toString == span.text) {
+          spannable.setSpan(span, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+      case (span, (_, _)) if spannable.getSpanFlags(span) != Spanned.SPAN_EXCLUSIVE_EXCLUSIVE =>
+        val (start, end) = (spannable.getSpanStart(span), spannable.getSpanEnd(span))
+        spannable.removeSpan(span)
+        spannable.setSpan(span, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+      case _ =>
     }
   }
 
-  def createMention(userId: UserId, name: String, editable: Editable, selectionIndex: Int): Unit = {
-    getMention(editable.toString, selectionIndex, userId, name).foreach {
-      case (mention, Replacement(rStart, rEnd, rText)) =>
-        editable.replace(rStart, rEnd, rText + " ")
-        cursorText = cursorText.addMention(mention)
-        refreshSpans(editable)
+  def hasMentionSpan(spannable: Spannable, selectionIndex: Int): Boolean =
+    spannable.getSpans(selectionIndex, selectionIndex, classOf[MentionSpan]).nonEmpty
+
+  def hasMentionSpan(spannable: Spannable, selectionStart: Int, selectionEnd: Int): Boolean =
+    spannable.getSpans(selectionStart, selectionEnd, classOf[MentionSpan]).nonEmpty
+}
+
+class MentionSpanWatcher extends SpanWatcher {
+
+  override def onSpanChanged(text: Spannable, what: scala.Any, ostart: Int, oend: Int, nstart: Int, nend: Int): Unit =
+    what match {
+      case m: MentionSpan if m.text != text.subSequence(nstart, nend).toString =>
+        text.removeSpan(m)
+        text.asInstanceOf[Editable].replace(nstart, nend, "")
+      case _ =>
     }
-  }
+
+  override def onSpanAdded(text: Spannable, what: scala.Any, start: Int, end: Int): Unit = ()
+
+  override def onSpanRemoved(text: Spannable, what: scala.Any, start: Int, end: Int): Unit = ()
 }
