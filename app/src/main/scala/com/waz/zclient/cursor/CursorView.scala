@@ -134,12 +134,24 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   }
   private val selectionHasMention = Signal(cursorText, cursorSelection).collect {
     case (text, (_, sEnd)) if sEnd <= text.length =>
-      Mention.mentionMatch(text, sEnd).exists {
-        m => MentionSpan.hasMentionSpan(cursorEditText.getEditableText, m.start, sEnd)
+      Mention.mentionMatch(text, sEnd).exists { m =>
+        MentionSpan.hasMentionSpan(cursorEditText.getEditableText, m.start, sEnd)
       }
   }
   private val cursorSingleSelection = cursorSelection.map(s => s._1 == s._2)
-
+  private val selectionInsideMention = Signal(cursorText, cursorSelection).collect {
+    case (text, (_, sEnd)) if sEnd <= text.length  =>
+      Mention.mentionMatch(text, sEnd).flatMap { m =>
+        MentionSpan.getMentionSpan(cursorEditText.getEditableText, m.start, sEnd).flatMap { ms =>
+          val mentionEnd = cursorEditText.getEditableText.getSpanEnd(ms)
+          val mentionStart = cursorEditText.getEditableText.getSpanStart(ms)
+          if (sEnd < mentionEnd && sEnd > mentionStart)
+            Some(mentionEnd)
+          else
+            None
+        }
+      }
+  }
   private val mentionSearchResults = for {
     searchService <- inject[Signal[UserSearchService]]
     convId <- inject[ConversationController].currentConvId
@@ -155,6 +167,10 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   mentionSearchResults.map(_.map(ud => MentionCandidateInfo(ud.id, ud.getDisplayName, ud.handle.getOrElse(Handle())))).onUi { data =>
     mentionCandidatesAdapter.setData(data)
     mentionsList.scrollToPosition(data.size - 1)
+  }
+  selectionInsideMention.onUi {
+    case Some(sel) => cursorEditText.setSelection(sel)
+    case _ =>
   }
 
   Signal(mentionQuery.map(_.nonEmpty), mentionSearchResults.map(_.nonEmpty), selectionHasMention).map {
@@ -304,8 +320,6 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   }).onUi { hintView.setVisible }
 
   controller.convIsActive.onUi(this.setVisible)
-
-  //topBarVisible.onUi(topBorder.setVisible)
 
   controller.onMessageSent.onUi(_ => setText(""))
 

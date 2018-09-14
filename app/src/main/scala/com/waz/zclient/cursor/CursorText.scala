@@ -66,11 +66,11 @@ object MentionSpan {
     }
   }
 
-  def hasMentionSpan(spannable: Spannable, selectionIndex: Int): Boolean =
-    spannable.getSpans(selectionIndex, selectionIndex, classOf[MentionSpan]).nonEmpty
+  def getMentionSpan(spannable: Spannable, selectionStart: Int, selectionEnd: Int): Option[MentionSpan] =
+    spannable.getSpans(selectionStart, selectionEnd, classOf[MentionSpan]).headOption
 
   def hasMentionSpan(spannable: Spannable, selectionStart: Int, selectionEnd: Int): Boolean =
-    spannable.getSpans(selectionStart, selectionEnd, classOf[MentionSpan]).nonEmpty
+    getMentionSpan(spannable, selectionStart, selectionEnd).nonEmpty
 }
 
 class MentionSpanWatcher extends SpanWatcher {
