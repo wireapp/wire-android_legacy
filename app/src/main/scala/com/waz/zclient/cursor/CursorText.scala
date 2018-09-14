@@ -37,7 +37,7 @@ object Mention {
   case class Replacement(start: Int, end: Int, text: String)
 
   def getMention(text: String, selectionIndex: Int, userId: UserId, name: String): Option[(Mention, Replacement)] = mentionMatch(text, selectionIndex).map { m =>
-    val atName = s"@$name"
+    val atName = s"@$name".replace(" ", "\u00A0")
     val mention = Mention(m.start, m.start + atName.length, userId)
     (mention, Replacement(m.start, m.end, atName))
   }
