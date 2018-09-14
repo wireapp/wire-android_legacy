@@ -40,7 +40,7 @@ import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.ui.views.OnDoubleClickListener
 import com.waz.zclient.{R, ViewHelper}
 
-class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper with ClickableViewPart with EphemeralPartView with EphemeralIndicatorPartView {
+class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper with ClickableViewPart with EphemeralPartView with EphemeralIndicatorPartView with MentionsViewPart {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -116,7 +116,7 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
     textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, if (isEmojiOnly(msg.message, part)) textSizeEmoji else textSizeRegular)
     textView.setTextLink(part.fold(msg.message.contentString)(_.content))
-
+    addMentionSpans(textView)
     messagePart ! part
   }
 
