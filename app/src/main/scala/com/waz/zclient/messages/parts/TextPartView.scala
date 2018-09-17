@@ -116,7 +116,7 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
     textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, if (isEmojiOnly(msg.message, part)) textSizeEmoji else textSizeRegular)
     textView.setTextLink(part.fold(msg.message.contentString)(_.content))
-    addMentionSpans(textView)
+    addMentionSpans(textView, Seq(), opts.flatMap(_.selfId))
     messagePart ! part
   }
 

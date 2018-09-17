@@ -23,8 +23,11 @@ import android.text.{Spannable, Spanned, TextPaint}
 import android.text.style._
 import android.view.View
 import android.widget.TextView
+import com.waz.model.{MessageContent, UserId}
+import com.waz.service.messages.MessageAndLikes
 import com.waz.zclient.R
-import com.waz.zclient.messages.MessageViewPart
+import com.waz.zclient.cursor.Mention
+import com.waz.zclient.messages.{MessageView, MessageViewPart}
 import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.utils.ContextUtils._
 
@@ -34,69 +37,90 @@ trait MentionsViewPart extends MessageViewPart {
 
   private implicit val cxt: Context = getContext
 
-  def addMentionSpans(textView: TextView): Unit = {
+  def addMentionSpans(textView: TextView, mentions: Seq[Mention], selfId: Option[UserId]): Unit = {
     val text = textView.getText.toString
-    //TODO: use actual mentions from the message data
-    val stubMentionRegex: Regex = """(\s|^)(@[\S]+)""".r
+
     textView.getText match {
       case spannable: Spannable =>
-        stubMentionRegex.findAllMatchIn(text).foreach { m =>
+        //TODO: use actual mentions from the message data
+        val stubMentionRegex: Regex = """(\s|^)(@[\S]+)""".r
+        stubMentionRegex.findAllMatchIn(text).map { m =>
           val start = m.start(2)
           val end = m.end(2)
-
-          //TODO: check if it's self
-          if (true) {
-            spannable.setSpan(
-              new ForegroundColorSpan(getColor(R.color.accent_blue)),
-              start,
-              end,
-              Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-            spannable.setSpan(
-              new StyleSpan(Typeface.BOLD),
-              Math.min(start + 1, end),
-              end,
-              Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-            spannable.setSpan(
-              new StyleSpan(Typeface.BOLD),
-              Math.min(start + 1, end),
-              end,
-              Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-            spannable.setSpan(
-              new RelativeSizeSpan(0.9f),
-              start,
-              Math.min(start + 1, end),
-              Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-            spannable.setSpan(
-              new ClickableSpan {
-                override def onClick(widget: View): Unit = {
-                  //TODO: Open participant view
-                }
-                override def updateDrawState(ds: TextPaint): Unit = ds.setColor(ds.linkColor)
-              },
-              start,
-              end,
-              Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-          } else {
-            spannable.setSpan(
-              new SelfMentionBackgroundSpan(getColor(R.color.accent_blue), Color.WHITE, textView.getLineHeight),
-              start,
-              end,
-              Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-            spannable.setSpan(
-              new StyleSpan(Typeface.BOLD),
-              start,
-              end,
-              Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-          }
+          Mention(start, end - start, None)
+        }.foreach {
+          applySpanForMention(spannable, _, selfId, getColor(R.color.accent_blue), textView.getLineHeight)
         }
       case _ =>
     }
+  }
+
+  private def applySpanForMention(spannable: Spannable, mention: Mention, selfId: Option[UserId], accentColor: Int, lineHeight: Int): Unit = {
+
+    val start = mention.start
+    val end = mention.start + mention.length
+
+    def applySpanForSelfMention(): Unit = {
+      spannable.setSpan(
+        new SelfMentionBackgroundSpan(accentColor, Color.WHITE, lineHeight),
+        start,
+        end,
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+      spannable.setSpan(
+        new StyleSpan(Typeface.BOLD),
+        start,
+        end,
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    }
+
+    def applySpanForOthersMention(): Unit = {
+      spannable.setSpan(
+        new ForegroundColorSpan(accentColor),
+        start,
+        end,
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+      spannable.setSpan(
+        new StyleSpan(Typeface.BOLD),
+        Math.min(start + 1, end),
+        end,
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+      spannable.setSpan(
+        new StyleSpan(Typeface.BOLD),
+        Math.min(start + 1, end),
+        end,
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+      spannable.setSpan(
+        new RelativeSizeSpan(0.9f),
+        start,
+        Math.min(start + 1, end),
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+      spannable.setSpan(
+        new ClickableSpan {
+          override def onClick(widget: View): Unit = {
+            //TODO: Open participant view
+          }
+          override def updateDrawState(ds: TextPaint): Unit = ds.setColor(ds.linkColor)
+        },
+        start,
+        end,
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    }
+
+    if (selfId == mention.userId)
+      applySpanForSelfMention()
+    else
+      applySpanForOthersMention()
+
+  }
+
+
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MessageView.MsgBindOptions]): Unit = {
+    super.set(msg, part, opts)
   }
 
   class SelfMentionBackgroundSpan(color: Int, foregroundColor: Int, textHeight: Int) extends ReplacementSpan {

@@ -94,7 +94,7 @@ class MessagesListAdapter(listDim: Signal[Dim2])(implicit inj: Injector, ec: Eve
     val isSelf = zms.currentValue.exists(_.selfUserId == data.message.userId)
     val isFirstUnread = pos > 0 && !isSelf && unreadIndex.index == pos
     val isLastSelf = listController.isLastSelf(data.message.id)
-    val opts = MsgBindOptions(pos, isSelf, isLast, isLastSelf, isFirstUnread = isFirstUnread, listDim.currentValue.getOrElse(Dim2(0, 0)), isGroup, teamId, canHaveLink)
+    val opts = MsgBindOptions(pos, isSelf, isLast, isLastSelf, isFirstUnread = isFirstUnread, listDim.currentValue.getOrElse(Dim2(0, 0)), isGroup, teamId, canHaveLink, zms.currentValue.map(_.selfUserId))
 
     val prev = if (pos == 0) None else Some(message(pos - 1).message)
     val next = if (isLast) None else Some(message(pos + 1).message)

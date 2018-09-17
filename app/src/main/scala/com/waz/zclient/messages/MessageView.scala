@@ -113,10 +113,6 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
 
         builder ++= contentParts
 
-//        if (msg.isEphemeral) {
-//          builder += PartDesc(MsgPart.EphemeralDots)
-//        }
-
         if (msg.msgType == Message.Type.ASSET && !areDownloadsAlwaysEnabled)
           builder += PartDesc(MsgPart.WifiWarning)
 
@@ -297,7 +293,8 @@ object MessageView {
                             listDimensions: Dim2,
                             isGroup: Boolean,
                             teamId: Option[TeamId],
-                            canHaveLink: Boolean)
+                            canHaveLink: Boolean,
+                            selfId: Option[UserId])
 }
 
 
