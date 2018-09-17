@@ -63,7 +63,8 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
     id('g) -> UserData(id('g), "friend user 1").copy(connection = ConnectionStatus.ACCEPTED),
     id('h) -> UserData(id('h), "friend user 2").copy(connection = ConnectionStatus.ACCEPTED),
     id('i) -> UserData(id('i), "some other friend").copy(connection = ConnectionStatus.ACCEPTED),
-    id('j) -> UserData(id('j), "meep moop").copy(email = Some(EmailAddress("moop@meep.me")))
+    id('j) -> UserData(id('j), "meep moop").copy(email = Some(EmailAddress("moop@meep.me"))),
+    id('k) -> UserData(id('k), "unconnected user").copy(connection = ConnectionStatus.UNCONNECTED)
   )
 
   def id(s: Symbol) = UserId(s.toString)
@@ -207,6 +208,30 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
 
       result(res.filter(_.nonEmpty).head)
     }
+  }
+
+  scenario("search conversation people") {
+
+    val convMembers = Set(id('a), id('b))
+
+    (queryCacheStorage.deleteBefore _).expects(*).anyNumberOfTimes().returning(Future.successful[Unit]({}))
+    (membersStorage.activeMembers _).expects(*).anyNumberOfTimes().returning(Signal.const(convMembers))
+    (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
+
+    val res = getService.searchUsersInConversation(ConvId("123"),"1")
+    result(res.filter(_.size == 1).head)
+  }
+
+  scenario("search conversation people who aren't connected") {
+
+    val convMembers = Set(id('a), id('b), id('k))
+
+    (queryCacheStorage.deleteBefore _).expects(*).anyNumberOfTimes().returning(Future.successful[Unit]({}))
+    (membersStorage.activeMembers _).expects(*).anyNumberOfTimes().returning(Signal.const(convMembers))
+    (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
+
+    val res = getService.searchUsersInConversation(ConvId("123"),"unconnected")
+    result(res.filter(_.size == 1).head)
   }
 
   def getService = {
