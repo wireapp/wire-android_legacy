@@ -59,12 +59,12 @@ class MentionsInputTest extends JUnitSuite {
 
     Mention.getMention(input, 8, userId, userName) match {
       case None => assert(false)
-      case Some((Mention(mStart, mEnd, uid), Replacement(rStart, rEnd, replacement))) =>
+      case Some((Mention(mStart, length, uid), Replacement(rStart, rEnd, replacement))) =>
         assert(mStart == 4)
-        assert(mEnd == 9)
+        assert(length == 5)
         assert(rStart == 4)
         assert(rEnd == 8)
-        assert(uid == userId)
+        assert(uid.contains(userId))
         assert(replacement == "@name")
     }
   }

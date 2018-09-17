@@ -161,7 +161,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     results <- if (selectionHasMention || !selectionSingle)
       Signal.const(IndexedSeq.empty[UserData])
     else
-      searchService.searchUsersInConversation(convId, query.getOrElse(""))
+      searchService.searchUsersInConversation(convId, query.getOrElse(""), includeSelf = true)
   } yield results
 
   mentionSearchResults.map(_.map(ud => MentionCandidateInfo(ud.id, ud.getDisplayName, ud.handle.getOrElse(Handle())))).onUi { data =>
@@ -190,7 +190,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
         editable.setSpan(
           MentionSpan(userId, rText),
           mention.start,
-          mention.end,
+          mention.length,
           Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
   }

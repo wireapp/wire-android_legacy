@@ -23,7 +23,7 @@ import android.text.style._
 import com.waz.model.UserId
 import scala.util.matching.Regex
 
-case class Mention(start: Int, end: Int, userId: UserId)
+case class Mention(start: Int, length: Int, userId: Option[UserId])
 
 object Mention {
   val MentionRegex: Regex = """@[\S]*$""".r
@@ -38,7 +38,7 @@ object Mention {
 
   def getMention(text: String, selectionIndex: Int, userId: UserId, name: String): Option[(Mention, Replacement)] = mentionMatch(text, selectionIndex).map { m =>
     val atName = s"@$name".replace(" ", "\u00A0")
-    val mention = Mention(m.start, m.start + atName.length, userId)
+    val mention = Mention(m.start, atName.length, Some(userId))
     (mention, Replacement(m.start, m.end, atName))
   }
 }
