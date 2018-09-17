@@ -17,7 +17,6 @@
  */
 package com.waz.zclient.cursor
 
-import android.graphics.Color
 import android.text._
 import android.text.style._
 import com.waz.model.UserId
@@ -43,7 +42,7 @@ object Mention {
   }
 }
 
-case class MentionSpan(userId: UserId, text: String) extends ForegroundColorSpan(Color.BLUE) //TODO: Accent color
+case class MentionSpan(userId: UserId, text: String, color: Int) extends ForegroundColorSpan(color)
 
 object MentionSpan {
   def getMentionSpans(spannable: Spannable): Map[MentionSpan, (Int, Int)] = {

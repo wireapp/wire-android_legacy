@@ -123,7 +123,9 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     _.setStackFromEnd(true)
   })
   mentionCandidatesAdapter.onUserClicked.onUi { info =>
-    createMention(info.userId, info.name, cursorEditText.getEditableText, cursorEditText.getSelectionStart)
+    accentColor.head.foreach { ac =>
+      createMention(info.userId, info.name, cursorEditText.getEditableText, cursorEditText.getSelectionStart, ac.color)
+    }
   }
 
   private val cursorText: SourceSignal[String] = Signal(cursorEditText.getText.toString)
@@ -183,12 +185,12 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     topBorder.setVisible(visible)
   }
 
-  private def createMention(userId: UserId, name: String, editable: Editable, selectionIndex: Int): Unit = {
+  private def createMention(userId: UserId, name: String, editable: Editable, selectionIndex: Int, accentColor: Int): Unit = {
     getMention(editable.toString, selectionIndex, userId, name).foreach {
       case (mention, Replacement(rStart, rEnd, rText)) =>
         editable.replace(rStart, rEnd, rText + " ")
         editable.setSpan(
-          MentionSpan(userId, rText),
+          MentionSpan(userId, rText, accentColor),
           mention.start,
           mention.length,
           Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
