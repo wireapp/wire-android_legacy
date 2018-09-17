@@ -40,12 +40,12 @@ class MessageDataDaoSpec extends AndroidFreeSpec {
     val simpleMessageContent = MessageContent(Message.Part.Type.TEXT, "text content")
     val simpleMessageJson = Json("type" -> "Text", "content" -> "text content")
 
-    val contentWithMention = MessageContent(Message.Part.Type.TEXT, "text content @user", mentions = Seq(Mention(Some(knockUser), 13, 18)))
+    val contentWithMention = MessageContent(Message.Part.Type.TEXT, "text content @user", mentions = Seq(Mention(Some(knockUser), 13, 5)))
     val jsonWithMention =
       Json(
         "type" -> "Text",
         "content" -> "text content @user",
-        "mentions" -> Json(Seq(Map("user_id" -> knockUser.str, "start" -> 13, "end" -> 18)))
+        "mentions" -> Json(Seq(Map("user_id" -> knockUser.str, "start" -> 13, "length" -> 5)))
       )
 
     val complexMesageContent =
@@ -99,6 +99,7 @@ class MessageDataDaoSpec extends AndroidFreeSpec {
 
     scenario("Decode mentions") {
       val encoded = JsonEncoder.encode(contentWithMention)
+      println(encoded.toString)
       val decoded = JsonDecoder.decode[MessageContent](encoded.toString)
       decoded shouldEqual contentWithMention
     }

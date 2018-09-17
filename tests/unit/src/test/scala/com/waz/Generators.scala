@@ -124,8 +124,8 @@ object Generators {
   implicit lazy val arbMention: Arbitrary[Mention] = Arbitrary(for {
     id     <- optGen(arbitrary[UserId])
     start  <- posNum[Int]
-    offset <- chooseNum(1,10)
-  } yield Mention(id, start, start + offset))
+    length <- chooseNum(1,10)
+  } yield Mention(id, start, length))
 
   implicit lazy val arbMessageData: Arbitrary[MessageData] = Arbitrary(resultOf(MessageData))
 

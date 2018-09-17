@@ -64,7 +64,7 @@ class MessageSendingSpec extends AndroidFreeSpec { test =>
       val msgData = MessageData(mId, conv.id, Message.Type.TEXT, UserId(), MessageData.textContent("test"), protos = Seq(GenericMessage(mId.uid, Text("test", Nil, Nil))))
       val syncId = SyncId()
 
-      (messages.addTextMessage _).expects(conv.id, "test", None).once().returning(Future.successful(msgData))
+      (messages.addTextMessage _).expects(conv.id, "test", Nil, None).once().returning(Future.successful(msgData))
 
       (convsContent.updateConversationLastRead _).expects(conv.id, msgData.time).once().returning(Future.successful(Some((conv, conv))))
 
@@ -74,6 +74,36 @@ class MessageSendingSpec extends AndroidFreeSpec { test =>
 
       val msg = Await.result(convsUi.sendTextMessage(conv.id, "test"), 1.second).get
       msg.contentString shouldEqual "test"
+    }
+
+    scenario("Add text message with a mention") {
+      val handle = "@user"
+      val text = s"aaa $handle bbb"
+      val mention = Mention(Some(UserId()), text.indexOf(handle), handle.length)
+      val mentions = Seq(mention)
+
+      val mId = MessageId()
+      val msgData = MessageData(
+        mId,
+        conv.id,
+        Message.Type.TEXT,
+        UserId(),
+        MessageData.messageContent(text, mentions, isSendingMessage = true)._2,
+        protos = Seq(GenericMessage(mId.uid, Text(text, mentions, Nil)))
+      )
+      val syncId = SyncId()
+
+      (messages.addTextMessage _).expects(conv.id, text, mentions, None).once().returning(Future.successful(msgData))
+
+      (convsContent.updateConversationLastRead _).expects(conv.id, msgData.time).once().returning(Future.successful(Some((conv, conv))))
+
+      (sync.postMessage _).expects(msgData.id, conv.id, msgData.editTime).once().returning(Future.successful(syncId))
+      val convsUi = stubService()
+
+      val msg = Await.result(convsUi.sendTextMessage(conv.id, text, mentions), 1.second).get
+      msg.contentString shouldEqual text
+      msg.content.size shouldEqual 1
+      msg.content.head.mentions shouldEqual mentions
     }
   }
 /*

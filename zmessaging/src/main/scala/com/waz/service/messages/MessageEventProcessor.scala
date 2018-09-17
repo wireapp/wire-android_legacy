@@ -25,6 +25,7 @@ import com.waz.content.MessagesStorage
 import com.waz.model.AssetMetaData.Image.Tag.{Medium, Preview}
 import com.waz.model.AssetStatus.{UploadCancelled, UploadFailed}
 import com.waz.model.GenericContent.{Asset, Calling, Cleared, Ephemeral, ImageAsset, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Receipt, Text}
+import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
 import com.waz.service.EventScheduler
 import com.waz.service.assets.AssetService
@@ -82,7 +83,7 @@ class MessageEventProcessor(selfUserId:          UserId,
       _     <- updateLastReadFromOwnMessages(conv.id, msgs)
       _     <- deleteCancelled(as)
       _     <- Future.traverse(recalls) { case (GenericMessage(id, MsgRecall(ref)), user, time) => msgsService.recallMessage(conv.id, ref, user, MessageId(id.str), time, Message.Status.SENT) }
-      _     <- RichFuture.traverseSequential(edits) { case (gm @ GenericMessage(id, MsgEdit(ref, Text(text, mentions, links))), user, time) => msgsService.applyMessageEdit(conv.id, user, time, gm) }
+      _     <- RichFuture.traverseSequential(edits) { case (gm @ GenericMessage(id, MsgEdit(ref, Text(text, mentions, links))), user, time) => msgsService.applyMessageEdit(conv.id, user, time, gm) } // TODO: handle mentions in case of MsgEdit
     } yield res
   }
 
@@ -164,8 +165,8 @@ class MessageEventProcessor(selfUserId:          UserId,
     //v3 assets go here
     def content(id: MessageId, msgContent: Any, from: UserId, time: RemoteInstant, proto: GenericMessage): MessageData = msgContent match {
       case Text(text, mentions, links) =>
-        val (tpe, content) = MessageData.messageContent(text, mentions, links)
-        MessageData(id, conv.id, tpe, from, content, time = time, localTime = event.localTime, protos = Seq(proto))
+        val (tpe, content) = MessageData.messageContent(text, mentions, isSendingMessage = false, links)
+        MessageData(id, conv.id, tpe, from, content, time = time, localTime = event.localTime, protos = Seq(TextMessage.updateMentions(proto, content.flatMap(_.mentions))))
       case Knock() =>
         MessageData(id, conv.id, Message.Type.KNOCK, from, time = time, localTime = event.localTime, protos = Seq(proto))
       case Reaction(_, _) => MessageData.Empty

@@ -258,10 +258,10 @@ object GenericContent {
   type Mention = Messages.Mention
 
   object Mention {
-    def apply(userId: Option[UserId], start: Int, end: Int) = returning(new Messages.Mention) { m =>
-      userId.map(id => m.userId = id.str)
+    def apply(userId: Option[UserId], start: Int, length: Int) = returning(new Messages.Mention) { m =>
+      userId.map(id => m.setUserId(id.str))
       m.start = start
-      m.end = end
+      m.length = length
     }
   }
 
@@ -381,12 +381,18 @@ object GenericContent {
 
     def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview]): Text = returning(new Messages.Text()) { t =>
       t.content = content
-      t.mention = mentions.map { case com.waz.model.Mention(userId, start, end) => GenericContent.Mention(userId, start, end) }(breakOut)
+      t.mentions = mentions.map { case com.waz.model.Mention(userId, start, length) => GenericContent.Mention(userId, start, length) }(breakOut).toArray
       t.linkPreview = links.toArray
     }
 
     def unapply(proto: Text): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview])] = {
-      val mentions = proto.mention.map(m => com.waz.model.Mention(Option(m.userId).map(UserId(_)), m.start, m.end)).toSeq
+      val mentions = proto.mentions.map { m =>
+        val userId = m.getUserId match {
+          case id: String if id.nonEmpty => Option(UserId(id))
+          case _ => None
+        }
+        com.waz.model.Mention(userId, m.start, m.length)
+      }.toSeq
       Option((proto.content, mentions, proto.linkPreview.toSeq))
     }
   }

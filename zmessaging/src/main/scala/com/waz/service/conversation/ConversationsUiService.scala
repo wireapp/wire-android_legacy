@@ -53,8 +53,8 @@ import scala.util.control.NonFatal
 trait ConversationsUiService {
   import ConversationsUiService._
 
-  def sendTextMessage(convId: ConvId, text: String, exp: Option[Option[FiniteDuration]] = None): Future[Some[MessageData]]
-  def sendTextMessages(convs: Seq[ConvId], text: String, exp: Option[FiniteDuration]): Future[Unit]
+  def sendTextMessage(convId: ConvId, text: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Some[MessageData]]
+  def sendTextMessages(convs: Seq[ConvId], text: String, mentions: Seq[Mention] = Nil, exp: Option[FiniteDuration]): Future[Unit]
 
   def sendAssetMessage(convId: ConvId, rawInput: RawAssetInput, confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]]
   def sendAssetMessages(convs: Seq[ConvId], assets: Seq[RawAssetInput], confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[FiniteDuration] = None): Future[Unit]
@@ -64,7 +64,7 @@ trait ConversationsUiService {
 
   def sendLocationMessage(convId: ConvId, l: api.MessageContent.Location): Future[Some[MessageData]] //TODO remove use of MessageContent.Location
 
-  def updateMessage(convId: ConvId, id: MessageId, text: String): Future[Option[MessageData]]
+  def updateMessage(convId: ConvId, id: MessageId, text: String, mentions: Seq[Mention] = Nil): Future[Option[MessageData]]
 
   def deleteMessage(convId: ConvId, id: MessageId): Future[Unit]
   def recallMessage(convId: ConvId, id: MessageId): Future[Option[MessageData]]
@@ -124,15 +124,15 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
   override val assetUploadCancelled = EventStream[Mime]() //size, mime
   override val assetUploadFailed    = EventStream[ErrorResponse]()
 
-  override def sendTextMessage(convId: ConvId, text: String, exp: Option[Option[FiniteDuration]] = None) =
+  override def sendTextMessage(convId: ConvId, text: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None) =
     for {
-      msg <- messages.addTextMessage(convId, text, exp)
+      msg <- messages.addTextMessage(convId, text, mentions, exp)
       _   <- updateLastRead(msg)
       _   <- sync.postMessage(msg.id, convId, msg.editTime)
     } yield Some(msg)
 
-  override def sendTextMessages(convs: Seq[ConvId], text: String, exp: Option[FiniteDuration]) =
-    Future.sequence(convs.map(id => sendTextMessage(id, text, Some(exp)))).map(_ => {})
+  override def sendTextMessages(convs: Seq[ConvId], text: String, mentions: Seq[Mention] = Nil, exp: Option[FiniteDuration]) =
+    Future.sequence(convs.map(id => sendTextMessage(id, text, mentions, Some(exp)))).map(_ => {})
 
   override def sendAssetMessage(convId: ConvId, rawInput: RawAssetInput, confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[Option[FiniteDuration]] = None) =
     assets.addAsset(rawInput).flatMap {
@@ -169,13 +169,19 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
     } yield Some(msg)
   }
 
-  override def updateMessage(convId: ConvId, id: MessageId, text: String): Future[Option[MessageData]] = {
+  override def updateMessage(convId: ConvId, id: MessageId, text: String, mentions: Seq[Mention] = Nil): Future[Option[MessageData]] = {
     verbose(s"updateMessage($convId, $id, $text")
     messagesContent.updateMessage(id) {
       case m if m.convId == convId && m.userId == selfUserId =>
-        val (tpe, ct) = MessageData.messageContent(text, weblinkEnabled = true)
+        val (tpe, ct) = MessageData.messageContent(text, mentions, isSendingMessage = true, weblinkEnabled = true)
         verbose(s"updated content: ${(tpe, ct)}")
-        m.copy(msgType = tpe, content = ct, protos = Seq(GenericMessage(Uid(), MsgEdit(id, GenericContent.Text(text)))), state = Message.Status.PENDING, editTime = (m.time max m.editTime) + 1.millis max LocalInstant.Now.toRemote(currentBeDrift))
+        m.copy(
+          msgType = tpe,
+          content = ct,
+          protos = Seq(GenericMessage(Uid(), MsgEdit(id, GenericContent.Text(text, mentions, Nil)))),
+          state = Message.Status.PENDING,
+          editTime = (m.time max m.editTime) + 1.millis max LocalInstant.Now.toRemote(currentBeDrift)
+        )
       case m =>
         warn(s"Can not update msg: $m")
         m

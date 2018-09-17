@@ -107,6 +107,13 @@ package object model {
         case _ =>
           None
       }
+
+      def updateMentions(msg: GenericMessage, newMentions: Seq[com.waz.model.Mention]): GenericMessage = msg match {
+        case GenericMessage(uid, Text(text, mentions, links)) if mentions != newMentions =>
+          GenericMessage(uid, Text(text, newMentions, links))
+        case _ =>
+          msg
+      }
     }
 
     //TODO Dean: this can lead to some very tricky problems - try to get around the Any...

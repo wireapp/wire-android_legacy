@@ -17,4 +17,4 @@
  */
 package com.waz.model
 
-case class Mention(userId: Option[UserId], start: Int, end: Int)
+case class Mention(userId: Option[UserId], start: Int, length: Int)
