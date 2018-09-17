@@ -19,12 +19,11 @@ package com.waz.zclient.cursor
 
 import android.text._
 import android.text.style._
-import com.waz.model.UserId
+import com.waz.model.{Mention, UserId}
+
 import scala.util.matching.Regex
 
-case class Mention(start: Int, length: Int, userId: Option[UserId])
-
-object Mention {
+object MentionUtils {
   val MentionRegex: Regex = """@[\S]*$""".r
 
   def mentionMatch(text: String, selection: Int): Option[Regex.Match] =
@@ -37,7 +36,7 @@ object Mention {
 
   def getMention(text: String, selectionIndex: Int, userId: UserId, name: String): Option[(Mention, Replacement)] = mentionMatch(text, selectionIndex).map { m =>
     val atName = s"@$name".replace(" ", "\u00A0")
-    val mention = Mention(m.start, atName.length, Some(userId))
+    val mention = Mention(Some(userId), m.start, atName.length)
     (mention, Replacement(m.start, m.end, atName))
   }
 }
@@ -49,6 +48,12 @@ object MentionSpan {
     spannable.getSpans(0, spannable.length(), classOf[MentionSpan]).map { s =>
       s -> (spannable.getSpanStart(s), spannable.getSpanEnd(s))
     }.toMap
+  }
+
+  def getMentionsFromSpans(spans: Map[MentionSpan, (Int, Int)]): Seq[Mention] = {
+    spans.map {
+      case (span, (start, end)) => Mention(Some(span.userId), start, end - start)
+    }.toSeq
   }
 
   def setSpans(spannable: Spannable, spans: Map[MentionSpan, (Int, Int)]): Unit = {

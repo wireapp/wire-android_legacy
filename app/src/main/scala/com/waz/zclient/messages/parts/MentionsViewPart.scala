@@ -17,38 +17,27 @@
  */
 package com.waz.zclient.messages.parts
 
-import android.content.Context
 import android.graphics._
 import android.text.{Spannable, Spanned, TextPaint}
 import android.text.style._
 import android.view.View
 import android.widget.TextView
-import com.waz.model.{MessageContent, UserId}
+import com.waz.model.{Mention, MessageContent, UserId}
 import com.waz.service.messages.MessageAndLikes
-import com.waz.zclient.R
-import com.waz.zclient.cursor.Mention
+import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.messages.{MessageView, MessageViewPart}
+import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.utils.ContextUtils._
 
-import scala.util.matching.Regex
+trait MentionsViewPart extends MessageViewPart with ViewHelper {
 
-trait MentionsViewPart extends MessageViewPart {
-
-  private implicit val cxt: Context = getContext
+  private val participantsController = inject[ParticipantsController]
 
   def addMentionSpans(textView: TextView, mentions: Seq[Mention], selfId: Option[UserId]): Unit = {
-    val text = textView.getText.toString
-
     textView.getText match {
       case spannable: Spannable =>
-        //TODO: use actual mentions from the message data
-        val stubMentionRegex: Regex = """(\s|^)(@[\S]+)""".r
-        stubMentionRegex.findAllMatchIn(text).map { m =>
-          val start = m.start(2)
-          val end = m.end(2)
-          Mention(start, end - start, None)
-        }.foreach {
+        mentions.foreach {
           applySpanForMention(spannable, _, selfId, getColor(R.color.accent_blue), textView.getLineHeight)
         }
       case _ =>
@@ -101,9 +90,9 @@ trait MentionsViewPart extends MessageViewPart {
 
       spannable.setSpan(
         new ClickableSpan {
-          override def onClick(widget: View): Unit = {
-            //TODO: Open participant view
-          }
+          override def onClick(widget: View): Unit =
+            participantsController.onShowUser ! mention.userId
+
           override def updateDrawState(ds: TextPaint): Unit = ds.setColor(ds.linkColor)
         },
         start,

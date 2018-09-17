@@ -55,7 +55,7 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
       inject[Signal[ConversationsUiService]].head.flatMap { convsUi =>
         content match {
           case TextContent(t) =>
-            convsUi.sendTextMessages(convs, t, expiration)
+            convsUi.sendTextMessages(convs, t, Nil, expiration)
           case uriContent =>
             convsUi.sendAssetMessages(convs, uriContent.uris.map(UriInput), (s: Long) => showWifiWarningDialog(s)(activity), expiration)
         }

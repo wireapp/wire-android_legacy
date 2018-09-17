@@ -149,8 +149,8 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def loadClients(userId: UserId): Future[Seq[Client]] =
     otrClientsStorage.head.flatMap(_.getClients(userId)) // TODO: move to SE maybe?
 
-  def sendMessage(text: String): Future[Option[MessageData]] =
-    convsUiwithCurrentConv((ui, id) => ui.sendTextMessage(id, text))
+  def sendMessage(text: String, mentions: Seq[Mention] = Nil): Future[Option[MessageData]] =
+    convsUiwithCurrentConv((ui, id) => ui.sendTextMessage(id, text, mentions))
 
   def sendMessage(input: AssetService.RawAssetInput): Future[Option[MessageData]] =
     convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, input))

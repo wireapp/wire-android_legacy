@@ -27,7 +27,7 @@ import com.google.android.gms.common.{ConnectionResult, GoogleApiAvailability}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NetworkMode
 import com.waz.content.{GlobalPreferences, UserPreferences}
-import com.waz.model.{ConvExpiry, MessageData}
+import com.waz.model.{ConvExpiry, Mention, MessageData}
 import com.waz.permissions.PermissionsService
 import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
@@ -194,14 +194,14 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
     case false => // ignore
   }
 
-  def submit(msg: String): Boolean = {
+  def submit(msg: String, mentions: Seq[Mention] = Nil): Boolean = {
     if (isEditingMessage.currentValue.contains(true)) {
       onApproveEditMessage()
       true
     }
     else if (TextUtils.isEmpty(msg.trim)) false
     else {
-      conversationController.sendMessage(msg).foreach { m =>
+      conversationController.sendMessage(msg, mentions).foreach { m =>
         m.foreach { msg =>
           onMessageSent ! msg
           cursorCallback.foreach(_.onMessageSent(msg))

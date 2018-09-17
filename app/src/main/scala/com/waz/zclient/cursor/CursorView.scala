@@ -37,7 +37,7 @@ import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.cursor.CursorController.{EnteredTextSource, KeyboardState}
-import com.waz.zclient.cursor.Mention.{Replacement, getMention}
+import com.waz.zclient.cursor.MentionUtils.{Replacement, getMention}
 import com.waz.zclient.messages.MessagesController
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
 import com.waz.zclient.ui.cursor._
@@ -132,18 +132,18 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   private val cursorSelection: SourceSignal[(Int, Int)] = Signal((cursorEditText.getSelectionStart, cursorEditText.getSelectionEnd))
 
   private val mentionQuery = Signal(cursorText, cursorSelection).collect {
-    case (text, (_, sEnd)) if sEnd <= text.length => Mention.mentionQuery(text, sEnd)
+    case (text, (_, sEnd)) if sEnd <= text.length => MentionUtils.mentionQuery(text, sEnd)
   }
   private val selectionHasMention = Signal(cursorText, cursorSelection).collect {
     case (text, (_, sEnd)) if sEnd <= text.length =>
-      Mention.mentionMatch(text, sEnd).exists { m =>
+      MentionUtils.mentionMatch(text, sEnd).exists { m =>
         MentionSpan.hasMentionSpan(cursorEditText.getEditableText, m.start, sEnd)
       }
   }
   private val cursorSingleSelection = cursorSelection.map(s => s._1 == s._2)
   private val selectionInsideMention = Signal(cursorText, cursorSelection).collect {
     case (text, (_, sEnd)) if sEnd <= text.length  =>
-      Mention.mentionMatch(text, sEnd).flatMap { m =>
+      MentionUtils.mentionMatch(text, sEnd).flatMap { m =>
         MentionSpan.getMentionSpan(cursorEditText.getEditableText, m.start, sEnd).flatMap { ms =>
           val mentionEnd = cursorEditText.getEditableText.getSpanEnd(ms)
           val mentionStart = cursorEditText.getEditableText.getSpanStart(ms)
@@ -265,7 +265,8 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
           event != null &&
           event.getKeyCode == KeyEvent.KEYCODE_ENTER &&
           event.getAction == KeyEvent.ACTION_DOWN)) {
-        controller.submit(textView.getText.toString)
+        val mentions = MentionSpan.getMentionsFromSpans(MentionSpan.getMentionSpans(cursorEditText.getEditableText))
+        controller.submit(textView.getText.toString, mentions)
       } else
         false
     }

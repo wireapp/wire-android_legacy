@@ -116,7 +116,8 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
     textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, if (isEmojiOnly(msg.message, part)) textSizeEmoji else textSizeRegular)
     textView.setTextLink(part.fold(msg.message.contentString)(_.content))
-    addMentionSpans(textView, Seq(), opts.flatMap(_.selfId))
+    val mentions = part.map(_.mentions).getOrElse(Seq())
+    addMentionSpans(textView, mentions, opts.flatMap(_.selfId))
     messagePart ! part
   }
 

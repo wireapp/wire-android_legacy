@@ -132,7 +132,7 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
               c           <- conv.head
               withService <- z.conversations.isWithService(c.id)
               isGroup     <- z.conversations.isGroupConversation(c.id)
-              msg         <- z.convsUi.sendTextMessage(c.id, sendText, Some(None))
+              msg         <- z.convsUi.sendTextMessage(c.id, sendText, Nil, Some(None))
             } {
               textView.setEnabled(true)
               if (msg.isDefined) {
