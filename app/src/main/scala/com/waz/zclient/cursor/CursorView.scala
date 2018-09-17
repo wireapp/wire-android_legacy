@@ -192,7 +192,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
         editable.setSpan(
           MentionSpan(userId, rText, accentColor),
           mention.start,
-          mention.length,
+          mention.start + mention.length,
           Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
   }
