@@ -20,7 +20,6 @@ package com.waz.zclient.ui.cursor;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
@@ -128,10 +127,11 @@ public class CursorEditText extends TypefaceEditText {
 
         @Override
         public boolean deleteSurroundingText(int beforeLength, int afterLength) {
-            if(backspaceListener != null && beforeLength == 1 && afterLength == 0)
+            if(backspaceListener != null && beforeLength == 1 && afterLength == 0) {
                 return !backspaceListener.onBackspace() && super.deleteSurroundingText(beforeLength, afterLength);
-            else
+            } else {
                 return super.deleteSurroundingText(beforeLength, afterLength);
+            }
         }
     }
 }
