@@ -28,6 +28,7 @@ import com.waz.content.{GlobalPreferences, MembersStorage, MessagesStorage}
 import com.waz.model.AssetData.{ProcessingTaskKey, UploadTaskKey}
 import com.waz.model.AssetStatus.{Syncable, UploadCancelled, UploadFailed}
 import com.waz.model.GenericContent.{Ephemeral, Knock, Location, MsgEdit}
+import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
 import com.waz.model.sync.ReceiptType
 import com.waz.service.assets._
@@ -156,18 +157,22 @@ class MessagesSyncHandler(selfUserId: UserId,
   private def postMessage(conv: ConversationData, msg: MessageData, reqEditTime: RemoteInstant)(implicit convLock: ConvLock): Future[SyncResult] = {
 
     def postTextMessage() = {
+      val adjustedMsg = msg.adjustMentions(true)
+
       val (gm, isEdit) =
-        msg.protos.lastOption match {
-          case Some(m@GenericMessage(id, MsgEdit(ref, text))) if !reqEditTime.isEpoch => (m, true) // will send edit only if original message was already sent (reqEditTime > EPOCH)
-          case _ => (GenericMessage.TextMessage(msg), false)
+        adjustedMsg.protos.lastOption match {
+          case Some(m@GenericMessage(id, MsgEdit(ref, text))) if !reqEditTime.isEpoch =>
+            (m, true) // will send edit only if original message was already sent (reqEditTime > EPOCH)
+          case _ =>
+            (TextMessage(adjustedMsg), false)
         }
 
       otrSync.postOtrMessage(conv.id, gm).flatMap {
         case Right(time) if isEdit =>
           // delete original message and create new message with edited content
-          service.applyMessageEdit(conv.id, msg.userId, RemoteInstant(time.instant), gm) map {
+          service.applyMessageEdit(conv.id, adjustedMsg.userId, RemoteInstant(time.instant), gm) map {
             case Some(m) => Right(m)
-            case _ => Right(msg.copy(time = RemoteInstant(time.instant)))
+            case _ => Right(adjustedMsg.copy(time = RemoteInstant(time.instant)))
           }
 
         case Right(time) => successful(Right(msg.copy(time = time)))

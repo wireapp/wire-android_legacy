@@ -165,8 +165,9 @@ class MessageEventProcessor(selfUserId:          UserId,
     //v3 assets go here
     def content(id: MessageId, msgContent: Any, from: UserId, time: RemoteInstant, proto: GenericMessage): MessageData = msgContent match {
       case Text(text, mentions, links) =>
-        val (tpe, content) = MessageData.messageContent(text, mentions, isSendingMessage = false, links)
-        MessageData(id, conv.id, tpe, from, content, time = time, localTime = event.localTime, protos = Seq(TextMessage.updateMentions(proto, content.flatMap(_.mentions))))
+        val (tpe, content) = MessageData.messageContent(text, mentions, links)
+        verbose(s"MessageData content: $content")
+        MessageData(id, conv.id, tpe, from, content, time = time, localTime = event.localTime, protos = Seq(proto)).adjustMentions(false)
       case Knock() =>
         MessageData(id, conv.id, Message.Type.KNOCK, from, time = time, localTime = event.localTime, protos = Seq(proto))
       case Reaction(_, _) => MessageData.Empty

@@ -170,15 +170,15 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
   }
 
   override def updateMessage(convId: ConvId, id: MessageId, text: String, mentions: Seq[Mention] = Nil): Future[Option[MessageData]] = {
-    verbose(s"updateMessage($convId, $id, $text")
+    verbose(s"updateMessage($convId, $id, $text, $mentions")
     messagesContent.updateMessage(id) {
       case m if m.convId == convId && m.userId == selfUserId =>
-        val (tpe, ct) = MessageData.messageContent(text, mentions, isSendingMessage = true, weblinkEnabled = true)
+        val (tpe, ct) = MessageData.messageContent(text, mentions, weblinkEnabled = true)
         verbose(s"updated content: ${(tpe, ct)}")
         m.copy(
           msgType = tpe,
           content = ct,
-          protos = Seq(GenericMessage(Uid(), MsgEdit(id, GenericContent.Text(text, mentions, Nil)))),
+          protos = Seq(GenericMessage(Uid(), MsgEdit(id, GenericContent.Text(text, ct.flatMap(_.mentions), Nil)))),
           state = Message.Status.PENDING,
           editTime = (m.time max m.editTime) + 1.millis max LocalInstant.Now.toRemote(currentBeDrift)
         )

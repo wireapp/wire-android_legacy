@@ -29,7 +29,7 @@ class MessageDataSpec extends AndroidFreeSpec {
     scenario("Wrap empty message in a text content") {
       val expected = MessageContent(Message.Part.Type.TEXT_EMOJI_ONLY, "") // TODO: empty content should return TEXT, not TEXT_EMOJI_ONLY
 
-      val result = MessageData.messageContent("", Nil, isSendingMessage = false)
+      val result = MessageData.messageContent("", Nil)
       result._1 shouldEqual Message.Type.TEXT
       result._2 shouldEqual Seq(expected)
     }
@@ -41,7 +41,7 @@ class MessageDataSpec extends AndroidFreeSpec {
 
       val expected = MessageContent(Message.Part.Type.TEXT, text, mentions = Seq(mention))
 
-      val result = MessageData.messageContent(text, Seq(mention), isSendingMessage = true)
+      val result = MessageData.messageContent(text, Seq(mention))
       result._1 shouldEqual Message.Type.TEXT
       result._2 shouldEqual Seq(expected)
     }
@@ -54,7 +54,7 @@ class MessageDataSpec extends AndroidFreeSpec {
 
       val expected = MessageContent(Message.Part.Type.TEXT, text, mentions = mentions)
 
-      val result = MessageData.messageContent(text, mentions, isSendingMessage = true)
+      val result = MessageData.messageContent(text, mentions)
       result._1 shouldEqual Message.Type.TEXT
       result._2 shouldEqual Seq(expected)
     }
@@ -72,7 +72,7 @@ class MessageDataSpec extends AndroidFreeSpec {
         MessageContent(Message.Part.Type.TEXT, "aaa @user2 aaa", mentions = Seq(mentions(1)))
       )
 
-      val result = MessageData.messageContent(text, mentions, isSendingMessage = true, links = Seq(linkPreview), weblinkEnabled = true)
+      val result = MessageData.messageContent(text, mentions, links = Seq(linkPreview), weblinkEnabled = true)
 
       result._1 shouldEqual Message.Type.RICH_MEDIA
       result._2 shouldEqual expected

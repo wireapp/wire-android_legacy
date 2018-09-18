@@ -141,6 +141,27 @@ case class MessageData(id:            MessageId              = MessageId(),
   def hasSameContentType(m: MessageData) = {
     msgType == m.msgType && content.zip(m.content).forall { case (c, c1) => c.tpe == c1.tpe && c.openGraph.isDefined == c1.openGraph.isDefined } // openGraph may affect message type
   }
+
+  def adjustMentions(forSending: Boolean): MessageData = {
+    verbose(s"adjustMentions(forSending = $forSending)")
+    val newContent =
+      if (mentions.isEmpty) content
+      else {
+        if (content.size == 1) content.map(_.copy(mentions = MessageData.adjustMentions(content.head.content, mentions, forSending)))
+        else
+          content.foldLeft("", Seq.empty[MessageContent]) { case ((processedText, acc), ct) =>
+            val newProcessedText = processedText + ct.content
+            val start = processedText.length
+            val end = newProcessedText.length
+            val ms  = mentions.filter(m => m.start >= start && m.start + m.length < end) // we assume mentions are not split over many contents
+            (newProcessedText, acc ++ Seq(if (ms.isEmpty) ct else ct.copy(mentions = MessageData.adjustMentions(ct.content, ms, forSending, start))))
+          }._2
+      }
+
+    val newProto = GenericMessage(id.uid, ephemeral, Text(contentString, newContent.flatMap(_.mentions), Nil))
+    if (content == newContent && protos.lastOption.contains(newProto)) this
+    else copy(content = newContent, protos = Seq(newProto))
+  }
 }
 
 case class MessageContent(tpe:        Message.Part.Type,
@@ -417,13 +438,18 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
 
   case class MessageEntry(id: MessageId, user: UserId, tpe: Message.Type = Message.Type.TEXT, state: Message.Status = Message.Status.DEFAULT, contentSize: Int = 1)
 
-  def messageContent(message: String, mentions: Seq[Mention], isSendingMessage: Boolean, links: Seq[LinkPreview] = Nil, weblinkEnabled: Boolean = false): (Message.Type, Seq[MessageContent]) =
+  def messageContent(message: String, mentions: Seq[Mention], links: Seq[LinkPreview] = Nil, weblinkEnabled: Boolean = false): (Message.Type, Seq[MessageContent]) =
     if (message.trim.isEmpty) (Message.Type.TEXT, textContent(message))
     else {
       if (links.isEmpty) {
         val ct = RichMediaContentParser.splitContent(message, weblinkEnabled)
 
-        (ct.size, ct.head.tpe, applyMentions(ct, mentions, isSendingMessage)) match {
+        (ct.size, ct.head.tpe) match {
+          case (1, Message.Part.Type.TEXT) => (Message.Type.TEXT, ct)
+          case (1, Message.Part.Type.TEXT_EMOJI_ONLY) => (Message.Type.TEXT_EMOJI_ONLY, ct)
+          case _ => (Message.Type.RICH_MEDIA, ct)
+        }
+        (ct.size, ct.head.tpe, applyMentions(ct, mentions)) match {
           case (1, Message.Part.Type.TEXT, ctWithMentions) => (Message.Type.TEXT, ctWithMentions)
           case (1, Message.Part.Type.TEXT_EMOJI_ONLY, ctWithMentions) => (Message.Type.TEXT_EMOJI_ONLY, ctWithMentions)
           case (_, _, ctWithMentions) => (Message.Type.RICH_MEDIA, ctWithMentions)
@@ -450,8 +476,22 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
 
         if (end < message.length) res ++= RichMediaContentParser.splitContent(message.substring(end))
 
-        (Message.Type.RICH_MEDIA, applyMentions(res.result(), mentions, isSendingMessage))
+        (Message.Type.RICH_MEDIA, applyMentions(res.result(), mentions))
       }
+    }
+
+  private def applyMentions(content: Seq[MessageContent], mentions: Seq[Mention]): Seq[MessageContent] =
+    if (mentions.isEmpty) content
+    else {
+      if (content.size == 1) content.map(_.copy(mentions = mentions))
+      else
+        content.foldLeft("", Seq.empty[MessageContent]) { case ((processedText, acc), ct) =>
+          val newProcessedText = processedText + ct.content
+          val start = processedText.length
+          val end = newProcessedText.length
+          val ms  = mentions.filter(m => m.start >= start && m.start + m.length < end) // we assume mentions are not split over many contents
+          (newProcessedText, acc ++ Seq(if (ms.isEmpty) ct else ct.copy(mentions = ms)))
+        }._2
     }
 
 
@@ -465,26 +505,12 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     }
   }
 
-  private def applyMentions(content: Seq[MessageContent], mentions: Seq[Mention], isSendingMessage: Boolean): Seq[MessageContent] =
-    if (mentions.isEmpty) content
-    else {
-      if (content.size == 1) content.map(_.copy(mentions = adjustMentions(content.head.content, mentions, isSendingMessage)))
-      else
-        content.foldLeft("", Seq.empty[MessageContent]) { case ((processedText, acc), ct) =>
-          val newProcessedText = processedText + ct.content
-          val start = processedText.length
-          val end = newProcessedText.length
-          val ms  = mentions.filter(m => m.start >= start && m.start + m.length < end) // we assume mentions are not split over many contents
-          (newProcessedText, acc ++ Seq(if (ms.isEmpty) ct else ct.copy(mentions = adjustMentions(ct.content, ms, isSendingMessage, start))))
-        }._2
-    }
-
   private val UTF_16_CHARSET  = Charset.forName("UTF-16")
 
   private def encode(text: String) = {
     val bytes = UTF_16_CHARSET.encode(text).array
 
-    if (bytes.length < 4 || bytes.slice(2, bytes.length).forall(_ == 0))
+    if (bytes.length < 3 || bytes.slice(2, bytes.length).forall(_ == 0))
       Array.empty[Byte]
     else if (bytes(2) == 0)
       bytes.slice(2, bytes.lastIndexWhere(_ > 0) + 1)
@@ -499,7 +525,7 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
 
     lazy val textAsUTF16 = encode(text) // optimization: textAsUTF16 is used only for incoming mentions
 
-    val res = mentions.foldLeft(Seq.empty[Mention]) { case (acc, m) =>
+    val res = mentions.foldLeft(List.empty[Mention]) { case (acc, m) =>
       val start = m.start - offset
       val end = m.start + m.length - offset
       // `encode` computes Array[Byte] with each text character encoded in two bytes,
@@ -509,8 +535,8 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
           (encode(text.substring(0, start)).length / 2, encode(text.substring(start, end)).length / 2)
         else
           (decode(textAsUTF16.slice(0, start * 2)).length, decode(textAsUTF16.slice(start * 2, end * 2)).length)
-      acc ++ Seq(Mention(m.userId, offset + preLength, handleLength))
-    }
+      Mention(m.userId, offset + preLength, handleLength) :: acc
+    }.sortBy(_.start)
 
     verbose(s"adjusted mentions: $res")
 

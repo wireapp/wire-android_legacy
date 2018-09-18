@@ -129,8 +129,9 @@ class MessagesServiceImpl(selfUserId:   UserId,
 
         def applyEdit(msg: MessageData) = for {
             _ <- edits.insert(EditHistory(msg.id, MessageId(id.str), time))
-            (tpe, ct) = MessageData.messageContent(text, mentions, isSendingMessage = false, links, weblinkEnabled = true)
-            res <- updater.addMessage(MessageData(MessageId(id.str), convId, tpe, userId, ct, Seq(TextMessage.updateMentions(gm, ct.flatMap(_.mentions))), time = msg.time, localTime = msg.localTime, editTime = time))
+            (tpe, ct) = MessageData.messageContent(text, mentions, links, weblinkEnabled = true)
+            edited = MessageData(MessageId(id.str), convId, tpe, userId, ct, Seq(gm), time = msg.time, localTime = msg.localTime, editTime = time)
+            res <- updater.addMessage(edited.adjustMentions(false))
             _ <- updater.deleteOnUserRequest(Seq(msg.id))
         } yield res
 
@@ -170,7 +171,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
 
   override def addTextMessage(convId: ConvId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None) = {
     verbose(s"addTextMessage($convId, ${content.take(4)}, $mentions")
-    val (tpe, ct) = MessageData.messageContent(content, mentions, isSendingMessage = true, weblinkEnabled = true)
+    val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
     verbose(s"parsed content: $ct")
     val id = MessageId()
     updater.addLocalMessage(MessageData(id, convId, tpe, selfUserId, ct, protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil)))), exp = exp) // FIXME: links

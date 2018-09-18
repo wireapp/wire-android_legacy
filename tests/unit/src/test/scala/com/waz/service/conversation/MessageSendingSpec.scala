@@ -88,7 +88,7 @@ class MessageSendingSpec extends AndroidFreeSpec { test =>
         conv.id,
         Message.Type.TEXT,
         UserId(),
-        MessageData.messageContent(text, mentions, isSendingMessage = true)._2,
+        MessageData.messageContent(text, mentions)._2,
         protos = Seq(GenericMessage(mId.uid, Text(text, mentions, Nil)))
       )
       val syncId = SyncId()
