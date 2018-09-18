@@ -24,21 +24,20 @@ import android.view.View
 import android.widget.TextView
 import com.waz.model.{Mention, MessageContent, UserId}
 import com.waz.service.messages.MessageAndLikes
-import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.ViewHelper
 import com.waz.zclient.messages.{MessageView, MessageViewPart}
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.ui.utils.ColorUtils
-import com.waz.zclient.utils.ContextUtils._
 
 trait MentionsViewPart extends MessageViewPart with ViewHelper {
 
   private val participantsController = inject[ParticipantsController]
 
-  def addMentionSpans(textView: TextView, mentions: Seq[Mention], selfId: Option[UserId]): Unit = {
+  def addMentionSpans(textView: TextView, mentions: Seq[Mention], selfId: Option[UserId], color: Int): Unit = {
     textView.getText match {
       case spannable: Spannable =>
         mentions.foreach {
-          applySpanForMention(spannable, _, selfId, getColor(R.color.accent_blue), textView.getLineHeight)
+          applySpanForMention(spannable, _, selfId, color, textView.getLineHeight)
         }
       case _ =>
     }
@@ -90,8 +89,12 @@ trait MentionsViewPart extends MessageViewPart with ViewHelper {
 
       spannable.setSpan(
         new ClickableSpan {
-          override def onClick(widget: View): Unit =
-            participantsController.onShowUser ! mention.userId
+          override def onClick(widget: View): Unit = {
+            mention.userId match {
+              case Some(uId) => participantsController.onShowParticipantsWithUserId ! uId
+              case _ => participantsController.onShowParticipants ! None
+            }
+          }
 
           override def updateDrawState(ds: TextPaint): Unit = ds.setColor(ds.linkColor)
         },

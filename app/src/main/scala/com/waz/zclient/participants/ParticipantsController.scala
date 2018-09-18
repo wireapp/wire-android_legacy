@@ -47,6 +47,7 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
 
   val onShowParticipants = EventStream[Option[String]]() //Option[String] = fragment tag //TODO use type?
   val onHideParticipants = EventStream[Boolean]() //Boolean represents with or without animations
+  val onShowParticipantsWithUserId = EventStream[UserId]()
 
   val onShowUser = EventStream[Option[UserId]]()
 

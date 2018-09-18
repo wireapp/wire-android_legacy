@@ -135,6 +135,12 @@ class ConversationManagerFragment extends FragmentHelper
       showFragment(ParticipantFragment.newInstance(childTag), ParticipantFragment.TAG)
     }
 
+    subs += participantsController.onShowParticipantsWithUserId.onUi { user =>
+      keyboard.hideKeyboardIfVisible()
+      navigationController.setRightPage(Page.PARTICIPANT, ConversationManagerFragment.Tag)
+      showFragment(ParticipantFragment.newInstance(user), ParticipantFragment.TAG)
+    }
+
     subs += participantsController.onHideParticipants.onUi { withAnimations =>
       navigationController.setRightPage(Page.MESSAGE_STREAM, ConversationManagerFragment.Tag)
 
