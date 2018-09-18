@@ -163,7 +163,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
       searchService.searchUsersInConversation(convId, query.getOrElse(""), includeSelf = true)
   } yield results
 
-  mentionSearchResults.map(_.map(ud => MentionCandidateInfo(ud.id, ud.getDisplayName, ud.handle.getOrElse(Handle())))).onUi { data =>
+  mentionSearchResults.map(_.map(ud => MentionCandidateInfo(ud.id, ud.name, ud.handle.getOrElse(Handle())))).onUi { data =>
     mentionCandidatesAdapter.setData(data)
     mentionsList.scrollToPosition(data.size - 1)
   }
@@ -193,6 +193,8 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
           mention.start + mention.length,
           Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         editText.setSelection(mention.start + mention.length + 1)
+        val mentions = MentionSpan.getMentionsFromSpans(MentionSpan.getMentionSpans(cursorEditText.getEditableText))
+        controller.enteredText ! (editable.toString, mentions, EnteredTextSource.FromView)
     }
   }
 
