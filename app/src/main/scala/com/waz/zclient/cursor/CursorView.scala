@@ -40,6 +40,7 @@ import com.waz.zclient.cursor.CursorController.{EnteredTextSource, KeyboardState
 import com.waz.zclient.cursor.MentionUtils.{Replacement, getMention}
 import com.waz.zclient.messages.MessagesController
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
+import com.waz.zclient.ui.cursor.CursorEditText.OnBackspaceListener
 import com.waz.zclient.ui.cursor._
 import com.waz.zclient.ui.text.TextTransform
 import com.waz.zclient.ui.text.TypefaceEditText.OnSelectionChangedListener
@@ -250,6 +251,14 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
     override def afterTextChanged(editable: Editable): Unit = {
       spans.foreach(MentionSpan.setSpans(editable, _))
+    }
+  })
+  cursorEditText.setBackspaceListener(new OnBackspaceListener {
+    override def onBackspace(): Boolean = {
+      val sStart = cursorEditText.getSelectionStart
+      val sEnd = cursorEditText.getSelectionEnd
+
+      sStart == sEnd && MentionSpan.getMentionSpans(cursorEditText.getEditableText).exists(_._2._2 == sStart)
     }
   })
 
