@@ -24,20 +24,22 @@ import com.waz.model.{Mention, UserId}
 import scala.util.matching.Regex
 
 object MentionUtils {
-  val MentionRegex: Regex = """@[\S]*$""".r
+  val MentionRegex: Regex = """([\s\n\r\t\n]|^)(@[\S]*)([\s\n\r\t\n]|$)""".r
 
   def mentionMatch(text: String, selection: Int): Option[Regex.Match] =
-    MentionRegex.findAllMatchIn(text.subSequence(0, selection)).toSeq.lastOption
+    MentionRegex.findAllMatchIn(text).toSeq.find { m =>
+      selection > m.start(2) && selection <= m.end(2)
+    }
 
   def mentionQuery(text: String, selection: Int): Option[String] =
-    MentionRegex.findFirstIn(text.subSequence(0, selection)).map(_.substring(1))
+    mentionMatch(text, selection).map(_.group(2).substring(1))
 
   case class Replacement(start: Int, end: Int, text: String)
 
   def getMention(text: String, selectionIndex: Int, userId: UserId, name: String): Option[(Mention, Replacement)] = mentionMatch(text, selectionIndex).map { m =>
     val atName = s"@$name".replace(" ", "\u00A0")
-    val mention = Mention(Some(userId), m.start, atName.length)
-    (mention, Replacement(m.start, m.end, atName))
+    val mention = Mention(Some(userId), m.start(2), atName.length)
+    (mention, Replacement(m.start(2), m.end(2), atName))
   }
 }
 

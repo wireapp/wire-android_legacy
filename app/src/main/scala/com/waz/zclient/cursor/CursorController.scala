@@ -65,7 +65,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
   val editingMsg = Signal(Option.empty[MessageData])
 
   val secondaryToolbarVisible = Signal(false)
-  val enteredText = Signal[(String, EnteredTextSource)](("", EnteredTextSource.FromController))
+  val enteredText = Signal[(String, Seq[Mention], EnteredTextSource)](("", Nil, EnteredTextSource.FromController))
   val cursorWidth = Signal[Int]()
   val editHasFocus = Signal(false)
   var cursorCallback = Option.empty[CursorCallback]
@@ -129,7 +129,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
   // notify SE about typing state
   private var prevEnteredText = ""
   enteredText {
-    case (text, EnteredTextSource.FromView) if text != prevEnteredText =>
+    case (text, _, EnteredTextSource.FromView) if text != prevEnteredText =>
       for {
         typing <- zms.map(_.typing).head
         convId <- conversationController.currentConvId.head
@@ -184,7 +184,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
     case true =>
       // giphy worked, so no need for the draft text to reappear
       inject[DraftMap].resetCurrent().map { _ =>
-        enteredText ! ("", EnteredTextSource.FromController)
+        enteredText ! ("", Nil, EnteredTextSource.FromController)
       }
     case false =>
   }
@@ -217,7 +217,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
       cs <- zms.head.map(_.convsUi)
       m <- editingMsg.head if m.isDefined
       msg = m.get
-      (text, _) <- enteredText.head
+      (text, _, _) <- enteredText.head //TODO: Mentions?
     } {
       if (text.trim().isEmpty) {
         cs.recallMessage(cId, msg.id)
@@ -285,9 +285,9 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
       }
       else showToast(R.string.location_sharing__missing_play_services)
     case Gif =>
-      enteredText.head.foreach { case (text, _) => screenController.showGiphy ! Some(text) }
+      enteredText.head.foreach { case (text, _, _) => screenController.showGiphy ! Some(text) }
     case Send =>
-      enteredText.head.foreach { case (text, _) => submit(text) }
+      enteredText.head.foreach { case (text, mentions, _) => submit(text, mentions) }
     case _ =>
       // ignore
   }

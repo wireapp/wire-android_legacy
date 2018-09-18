@@ -26,7 +26,7 @@ import android.view.View.OnClickListener
 import android.view._
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
-import android.widget.{LinearLayout, TextView}
+import android.widget.{EditText, LinearLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model._
 import com.waz.service.UserSearchService
@@ -124,7 +124,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   })
   mentionCandidatesAdapter.onUserClicked.onUi { info =>
     accentColor.head.foreach { ac =>
-      createMention(info.userId, info.name, cursorEditText.getEditableText, cursorEditText.getSelectionStart, ac.color)
+      createMention(info.userId, info.name, cursorEditText, cursorEditText.getSelectionStart, ac.color)
     }
   }
 
@@ -142,17 +142,13 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   }
   private val cursorSingleSelection = cursorSelection.map(s => s._1 == s._2)
   private val selectionInsideMention = Signal(cursorText, cursorSelection).collect {
-    case (text, (_, sEnd)) if sEnd <= text.length  =>
-      MentionUtils.mentionMatch(text, sEnd).flatMap { m =>
-        MentionSpan.getMentionSpan(cursorEditText.getEditableText, m.start, sEnd).flatMap { ms =>
-          val mentionEnd = cursorEditText.getEditableText.getSpanEnd(ms)
-          val mentionStart = cursorEditText.getEditableText.getSpanStart(ms)
-          if (sEnd < mentionEnd && sEnd > mentionStart)
-            Some(mentionEnd)
-          else
-            None
-        }
-      }
+    case (text, (sStart, sEnd)) if sEnd <= text.length  =>
+      val spannable = cursorEditText.getEditableText
+      val mentions = MentionSpan.getMentionsFromSpans(MentionSpan.getMentionSpans(spannable))
+      (mentions.find { m =>
+        (sStart > m.start && sStart < (m.start + m.length)) ||
+          (sEnd > m.start && sEnd < (m.start + m.length))
+      }, (sStart, sEnd))
   }
   private val mentionSearchResults = for {
     searchService <- inject[Signal[UserSearchService]]
@@ -171,7 +167,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     mentionsList.scrollToPosition(data.size - 1)
   }
   selectionInsideMention.onUi {
-    case Some(sel) => cursorEditText.setSelection(sel)
+    case (Some(Mention(_, start, length)), _) => cursorEditText.setSelection(start, start + length)
     case _ =>
   }
 
@@ -185,7 +181,8 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     topBorder.setVisible(visible)
   }
 
-  private def createMention(userId: UserId, name: String, editable: Editable, selectionIndex: Int, accentColor: Int): Unit = {
+  private def createMention(userId: UserId, name: String, editText: EditText, selectionIndex: Int, accentColor: Int): Unit = {
+    val editable = editText.getEditableText
     getMention(editable.toString, selectionIndex, userId, name).foreach {
       case (mention, Replacement(rStart, rEnd, rText)) =>
         editable.replace(rStart, rEnd, rText + " ")
@@ -194,6 +191,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
           mention.start,
           mention.start + mention.length,
           Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        editText.setSelection(mention.start + mention.length + 1)
     }
   }
 
@@ -244,7 +242,8 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
     override def onTextChanged(charSequence: CharSequence, start: Int, before: Int, count: Int): Unit = {
       val text = charSequence.toString
-      controller.enteredText ! (text, EnteredTextSource.FromView)
+      val mentions = MentionSpan.getMentionsFromSpans(MentionSpan.getMentionSpans(cursorEditText.getEditableText))
+      controller.enteredText ! (text, mentions,EnteredTextSource.FromView)
       if (text.trim.nonEmpty) lineCount ! Math.max(cursorEditText.getLineCount, 1)
       cursorText ! charSequence.toString
     }
@@ -314,12 +313,12 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   // allows the controller to "empty" the text field if necessary by resetting the signal.
   // specifying the source guards us from an infinite loop of the view and controller updating each other
   controller.enteredText {
-    case (text, EnteredTextSource.FromController) if text != cursorEditText.getText.toString => cursorEditText.setText(text)
+    case (text, mentions, EnteredTextSource.FromController) if text != cursorEditText.getText.toString => cursorEditText.setText(text) //TODO: Mentions!
     case _ =>
   }
 
   (controller.isEditingMessage.zip(controller.enteredText) map {
-    case (editing, (text, _)) => !editing && text.isEmpty
+    case (editing, (text, _, _)) => !editing && text.isEmpty
   }).onUi { hintView.setVisible }
 
   controller.convIsActive.onUi(this.setVisible)
