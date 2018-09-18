@@ -22,7 +22,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.MediaStore
 import android.support.annotation.Nullable
-import android.support.v7.widget.{ActionMenuView, Toolbar}
+import android.support.v7.widget.{ActionMenuView, LinearLayoutManager, RecyclerView, Toolbar}
 import android.text.TextUtils
 import android.view._
 import android.view.animation.Animation
@@ -124,7 +124,25 @@ class ConversationFragment extends FragmentHelper {
   }
 
   private var containerPreview: ViewGroup = _
-  private lazy val cursorView = view[CursorView](R.id.cv__cursor)
+  private lazy val cursorView = returning(view[CursorView](R.id.cv__cursor)) { _.foreach { v =>
+      v.mentionSearchResults.map(_.map(ud => MentionCandidateInfo(ud.id, ud.name, ud.handle.getOrElse(Handle())))).onUi { data =>
+        mentionCandidatesAdapter.setData(data)
+        mentionsList.foreach(_.scrollToPosition(data.size - 1))
+      }
+
+      mentionCandidatesAdapter.onUserClicked.onUi { info =>
+        v.accentColor.head.foreach { ac =>
+          v.createMention(info.userId, info.name, v.cursorEditText, v.cursorEditText.getSelectionStart, ac.color)
+        }
+      }
+
+      Signal(v.mentionQuery.map(_.nonEmpty), v.mentionSearchResults.map(_.nonEmpty), v.selectionHasMention).map {
+        case (true, true, false) => true
+        case _ => false
+      }.onUi(showMentionsList)
+    }
+  }
+
   private var audioMessageRecordingView: AudioMessageRecordingView = _
   private lazy val extendedCursorContainer = returning(view[ExtendedCursorContainer](R.id.ecc__conversation)) { vh =>
     inject[Signal[AccentColor]].map(_.color).onUi(c => vh.foreach(_.setAccentColor(c)))
@@ -139,6 +157,23 @@ class ConversationFragment extends FragmentHelper {
   private lazy val guestsBannerText = view[TypefaceTextView](R.id.banner_text)
 
   private var isBannerOpen = false
+
+  private lazy val messagesOpacity = view[View](R.id.mentions_opacity)
+  private lazy val mentionsList = returning(view[RecyclerView](R.id.mentions_list)) { vh =>
+    vh.foreach { v =>
+      v.setAdapter(mentionCandidatesAdapter)
+      v.setLayoutManager(returning(new LinearLayoutManager(getContext)){
+        _.setStackFromEnd(true)
+      })
+    }
+  }
+
+  private val mentionCandidatesAdapter = new MentionCandidatesAdapter()
+  private def showMentionsList(visible: Boolean): Unit = {
+    mentionsList.foreach(_.setVisible(visible))
+    messagesOpacity.foreach(_.setVisible(visible))
+    cursorView.foreach(_.topBorder.setVisible(visible))
+  }
 
   override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation =
     if (nextAnim == 0 || getParentFragment == null)

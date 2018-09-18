@@ -104,6 +104,23 @@
                 android:clipToPadding="false"
                 />
 
+            <View
+                android:id="@+id/mentions_opacity"
+                android:layout_width="match_parent"
+                android:background="@color/black_32"
+                android:visibility="gone"
+                android:layout_height="match_parent"/>
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/mentions_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="vertical"
+                android:background="@color/white"
+                android:visibility="gone"
+                android:layout_gravity="bottom"
+                />
+
             <com.waz.zclient.conversation.TypingIndicatorView
                 android:id="@+id/tiv_typing_indicator_view"
                 android:layout_width="match_parent"

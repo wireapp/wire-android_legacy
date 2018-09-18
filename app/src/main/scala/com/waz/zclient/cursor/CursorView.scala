@@ -20,9 +20,9 @@ package com.waz.zclient.cursor
 import android.content.{ClipData, Context}
 import android.graphics.{Color, Rect}
 import android.graphics.drawable.ColorDrawable
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.text._
 import android.text.method.TransformationMethod
+import android.text.{Editable, Spanned, TextUtils, TextWatcher}
 import android.util.AttributeSet
 import android.view.View.OnClickListener
 import android.view._
@@ -83,7 +83,6 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   val emojiButton      = findById[CursorIconButton]     (R.id.cib__emoji)
   val keyboardButton   = findById[CursorIconButton]     (R.id.cib__keyboard)
   val sendButton       = findById[CursorIconButton]     (R.id.cib__send)
-  val mentionsList     = findById[RecyclerView]         (R.id.mentions_list)
 
   val ephemeralButton = returning(findById[EphemeralTimerButton](R.id.cib__ephemeral)) { v =>
     controller.ephemeralBtnVisible.onUi(v.setVisible)
@@ -121,31 +120,20 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     !typing && (multiline || !scrolledToBottom)
 
   private val cursorSpanWatcher = new MentionSpanWatcher
-  private val mentionCandidatesAdapter = new MentionCandidatesAdapter()
-  mentionsList.setAdapter(mentionCandidatesAdapter)
-  mentionsList.setLayoutManager(returning(new LinearLayoutManager(context)){
-    _.setStackFromEnd(true)
-  })
-  mentionCandidatesAdapter.onUserClicked.onUi { info =>
-    accentColor.head.foreach { ac =>
-      createMention(info.userId, info.name, cursorEditText, cursorEditText.getSelectionStart, ac.color)
-    }
-  }
-
   private val cursorText: SourceSignal[String] = Signal(cursorEditText.getEditableText.toString)
   private val cursorSelection: SourceSignal[(Int, Int)] = Signal((cursorEditText.getSelectionStart, cursorEditText.getSelectionEnd))
 
-  private val mentionQuery = Signal(cursorText, cursorSelection).collect {
+  val mentionQuery = Signal(cursorText, cursorSelection).collect {
     case (text, (_, sEnd)) if sEnd <= text.length => MentionUtils.mentionQuery(text, sEnd)
   }
-  private val selectionHasMention = Signal(cursorText, cursorSelection).collect {
+  val selectionHasMention = Signal(cursorText, cursorSelection).collect {
     case (text, (_, sEnd)) if sEnd <= text.length =>
       MentionUtils.mentionMatch(text, sEnd).exists { m =>
         MentionSpan.hasMentionSpan(cursorEditText.getEditableText, m.start, sEnd)
       }
   }
-  private val cursorSingleSelection = cursorSelection.map(s => s._1 == s._2)
-  private val mentionSearchResults = for {
+  val cursorSingleSelection = cursorSelection.map(s => s._1 == s._2)
+  val mentionSearchResults = for {
     searchService <- inject[Signal[UserSearchService]]
     convId <- inject[ConversationController].currentConvId
     query <- mentionQuery
@@ -157,22 +145,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
       searchService.searchUsersInConversation(convId, query.getOrElse(""), includeSelf = true)
   } yield results
 
-  mentionSearchResults.map(_.map(ud => MentionCandidateInfo(ud.id, ud.name, ud.handle.getOrElse(Handle())))).onUi { data =>
-    mentionCandidatesAdapter.setData(data)
-    mentionsList.scrollToPosition(data.size - 1)
-  }
-
-  Signal(mentionQuery.map(_.nonEmpty), mentionSearchResults.map(_.nonEmpty), selectionHasMention).map {
-    case (true, true, false) => true
-    case _ => false
-  }.onUi(showMentionsList)
-
-  private def showMentionsList(visible: Boolean): Unit = {
-    mentionsList.setVisible(visible)
-    topBorder.setVisible(visible)
-  }
-
-  private def createMention(userId: UserId, name: String, editText: EditText, selectionIndex: Int, accentColor: Int): Unit = {
+  def createMention(userId: UserId, name: String, editText: EditText, selectionIndex: Int, accentColor: Int): Unit = {
     val editable = editText.getEditableText
     getMention(editable.toString, selectionIndex, userId, name).foreach {
       case (mention, Replacement(rStart, rEnd, rText)) =>

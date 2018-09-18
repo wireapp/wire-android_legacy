@@ -27,15 +27,6 @@
         android:layout_height="@dimen/wire__divider__height__thin"
     />
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/mentions_list"
-        android:layout_width="match_parent"
-        android:layout_height="140dp"
-        android:scrollbars="vertical"
-        android:background="@color/white"
-        android:visibility="gone"
-        />
-
     <View
         android:id="@+id/v__top_bar__cursor"
         style="?wireDivider"
