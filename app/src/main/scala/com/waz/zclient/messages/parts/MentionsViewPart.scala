@@ -28,20 +28,19 @@ import com.waz.zclient.ViewHelper
 import com.waz.zclient.messages.{MessageView, MessageViewPart}
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.ui.utils.ColorUtils
+import com.waz.ZLog.verbose
+import com.waz.ZLog.ImplicitTag._
 
 trait MentionsViewPart extends MessageViewPart with ViewHelper {
 
   private val participantsController = inject[ParticipantsController]
 
-  def addMentionSpans(textView: TextView, mentions: Seq[Mention], selfId: Option[UserId], color: Int): Unit = {
+  def addMentionSpans(textView: TextView, mentions: Seq[Mention], selfId: Option[UserId], color: Int): Unit =
     textView.getText match {
       case spannable: Spannable =>
-        mentions.foreach {
-          applySpanForMention(spannable, _, selfId, color, textView.getLineHeight)
-        }
+        mentions.foreach(applySpanForMention(spannable, _, selfId, color, textView.getLineHeight))
       case _ =>
     }
-  }
 
   private def applySpanForMention(spannable: Spannable, mention: Mention, selfId: Option[UserId], accentColor: Int, lineHeight: Int): Unit = {
 
@@ -49,6 +48,8 @@ trait MentionsViewPart extends MessageViewPart with ViewHelper {
     val end = mention.start + mention.length
 
     def applySpanForSelfMention(): Unit = {
+      verbose(s"applySpanForSelfMention, spannable: ${spannable.length()}, start: $start, end: $end")
+
       spannable.setSpan(
         new SelfMentionBackgroundSpan(accentColor, Color.WHITE, lineHeight),
         start,
@@ -63,6 +64,7 @@ trait MentionsViewPart extends MessageViewPart with ViewHelper {
     }
 
     def applySpanForOthersMention(): Unit = {
+      verbose(s"applySpanForOtherMention, spannable: ${spannable.length()}, start: $start, end: $end")
       spannable.setSpan(
         new ForegroundColorSpan(accentColor),
         start,

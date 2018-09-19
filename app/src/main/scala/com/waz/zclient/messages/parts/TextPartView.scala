@@ -17,16 +17,19 @@
  */
 package com.waz.zclient.messages.parts
 
+import java.util.UUID
+
 import android.animation.ValueAnimator
 import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.content.Context
 import android.graphics.Color
+import android.text.{SpannableString, SpannableStringBuilder}
 import android.util.{AttributeSet, TypedValue}
 import android.view.View
 import android.widget.LinearLayout
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.{ContentSearchQuery, Message}
-import com.waz.model.{MessageContent, MessageData}
+import com.waz.model.{Mention, MessageContent, MessageData}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.service.tracking.TrackingService
 import com.waz.threading.Threading
@@ -34,6 +37,7 @@ import com.waz.utils.events.Signal
 import com.waz.zclient.collection.controllers.{CollectionController, CollectionUtils}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
+import com.waz.zclient.messages.parts.TextPartView.MentionHolder
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.ui.text.LinkTextView
 import com.waz.zclient.ui.utils.ColorUtils
@@ -115,12 +119,80 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
     super.set(msg, part, opts)
 
     textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, if (isEmojiOnly(msg.message, part)) textSizeEmoji else textSizeRegular)
-    textView.setTextLink(part.fold(msg.message.contentString)(_.content))
+
+    val contentString = msg.message.contentString
+    val (text, offset) = part.fold(contentString, 0)(ct => (ct.content, contentString.indexOf(ct.content)))
     val mentions = msg.message.content.flatMap(_.mentions)
-    addMentionSpans(textView, mentions, opts.flatMap(_.selfId), accentColorController.accentColor.map(_.color).currentValue.getOrElse(Color.BLUE))
+
+    if (mentions.isEmpty) textView.setTextLink(text)
+    else {
+      // https://github.com/wearezeta/documentation/blob/master/topics/mentions/use-cases/002-receive-and-display-message.md#step-2-replace-mention-in-message
+      val (replaced, mentionHolders) = TextPartView.replaceMentions(text, mentions, offset)
+
+      textView.setTextLink(replaced)
+
+      val updatedMentions = TextPartView.updateMentions(textView.getText.toString, mentionHolders, offset)
+      restoreMentionHandles(mentionHolders)
+
+      addMentionSpans(
+        textView,
+        updatedMentions,
+        opts.flatMap(_.selfId),
+        accentColorController.accentColor.map(_.color).currentValue.getOrElse(Color.BLUE)
+      )
+    }
+
     messagePart ! part
   }
 
   def isEmojiOnly(msg: MessageData, part: Option[MessageContent]) =
     part.fold(msg.msgType == Message.Type.TEXT_EMOJI_ONLY)(_.tpe == Message.Part.Type.TEXT_EMOJI_ONLY)
+
+  private def restoreMentionHandles(mentionHolders: Seq[MentionHolder]): Unit = {
+    val text = textView.getText
+    val ssb = SpannableStringBuilder.valueOf(text)
+
+    mentionHolders.foldLeft(text.toString) { (oldText, holder) =>
+      val start = oldText.indexOf(holder.uuid)
+      val end   = start + holder.uuid.length
+      ssb.replace(start, end, holder.handle)
+      oldText.replace(holder.uuid, holder.handle)
+    }
+
+    textView.setText(new SpannableString(ssb))
+  }
+
+}
+
+object TextPartView {
+  case class MentionHolder(mention: Mention, uuid: String, handle: String)
+
+  def replaceMentions(text: String, mentions: Seq[Mention], offset: Int = 0): (String, Seq[MentionHolder]) = {
+    val (accStr, mentionHolders, resultIndex) =
+      mentions.sortBy(_.start).foldLeft(("", Seq.empty[MentionHolder], 0)){ case ((accStr, acc, resultIndex), mention) =>
+        val start = mention.start - offset
+        val end   = start + mention.length
+        val uuid  = UUID.randomUUID().toString
+        (
+          accStr + text.substring(resultIndex, start) + uuid,
+          acc ++ Seq(MentionHolder(mention, uuid, text.substring(start, end))),
+          end
+        )
+    }
+
+    (
+      if (resultIndex < text.length) accStr + text.substring(resultIndex) else accStr,
+      mentionHolders
+    )
+  }
+
+  def updateMentions(text: String, mentionHolders: Seq[MentionHolder], offset: Int): Seq[Mention] =
+    mentionHolders.sortBy(_.mention.start).foldLeft((text, Seq.empty[Mention])) { case ((oldText, acc), holder) =>
+      val start = oldText.indexOf(holder.uuid)
+      val end   = start + holder.uuid.length
+      (
+        oldText.substring(0, start) + holder.handle + (if (end < oldText.length) oldText.substring(end) else ""),
+        acc ++ Seq(holder.mention.copy(start = start + offset))
+      )
+    }._2
 }
