@@ -20,4 +20,5 @@
 -->
 <paths>
     <external-path name="external_files" path="."/>
+    <external-cache-path name="external_cache_files" path="." />
 </paths>

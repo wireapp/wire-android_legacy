@@ -80,7 +80,7 @@ import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.preferences.PreferencesController
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
-import com.waz.zclient.utils.{BackStackNavigator, BackendPicker, Callback, LocalThumbnailCache, UiStorage}
+import com.waz.zclient.utils.{BackStackNavigator, BackendPicker, Callback, ExternalFileSharing, LocalThumbnailCache, UiStorage}
 import com.waz.zclient.views.DraftMap
 import javax.net.ssl.SSLContext
 import net.hockeyapp.android.Constants
@@ -224,6 +224,7 @@ object WireApplication {
     bind [MessagesController]        to new MessagesController()
 
     bind [ClipboardUtils]       to new ClipboardUtils(ctx)
+    bind [ExternalFileSharing]  to new ExternalFileSharing(ctx)
   }
 
   def controllers(implicit ctx: WireContext) = new Module {
