@@ -21,6 +21,7 @@
     xmlns:tools="http://schemas.android.com/tools">
     <application xmlns:tools="http://schemas.android.com/tools"
         android:name="com.waz.zclient.StethoApplication"
+        android:networkSecurityConfig="@xml/network_security_config"
         tools:replace="android:name">
 
         <activity android:name="net.hockeyapp.android.UpdateActivity" />
