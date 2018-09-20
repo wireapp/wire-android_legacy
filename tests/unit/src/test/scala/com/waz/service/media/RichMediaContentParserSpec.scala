@@ -112,7 +112,7 @@ class RichMediaContentParserSpec extends AndroidFreeSpec with TableDrivenPropert
     }
 
     scenario("text with youtube link") {
-      splitContent("Here is some text. https://www.youtube.com/watch?v=MWdG413nNkI") shouldEqual List(MessageContent(TEXT, "Here is some text."), MessageContent(YOUTUBE, "https://www.youtube.com/watch?v=MWdG413nNkI"))
+      splitContent("Here is some text. https://www.youtube.com/watch?v=MWdG413nNkI") shouldEqual List(MessageContent(TEXT, "Here is some text. "), MessageContent(YOUTUBE, "https://www.youtube.com/watch?v=MWdG413nNkI"))
     }
 
     scenario("don't split proper uri") {
@@ -126,11 +126,11 @@ class RichMediaContentParserSpec extends AndroidFreeSpec with TableDrivenPropert
 
     scenario("text interleaved with multiple youtube links") {
       splitContent("Here is some text. https://www.youtube.com/watch?v=MWdG413nNkI more text https://www.youtube.com/watch?v=c0KYU2j0TM4 and even more") shouldEqual List(
-        MessageContent(TEXT, "Here is some text."),
+        MessageContent(TEXT, "Here is some text. "),
         MessageContent(YOUTUBE, "https://www.youtube.com/watch?v=MWdG413nNkI"),
-        MessageContent(TEXT, "more text"),
+        MessageContent(TEXT, " more text "),
         MessageContent(YOUTUBE, "https://www.youtube.com/watch?v=c0KYU2j0TM4"),
-        MessageContent(TEXT, "and even more")
+        MessageContent(TEXT, " and even more")
       )
     }
   }

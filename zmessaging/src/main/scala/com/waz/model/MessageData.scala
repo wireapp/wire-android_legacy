@@ -487,13 +487,10 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
       else
         content.foldLeft("", Seq.empty[MessageContent]) { case ((processedText, acc), ct) =>
           val newProcessedText = processedText + ct.content
-          val start = processedText.length
-          val end = newProcessedText.length
-          val ms  = mentions.filter(m => m.start >= start && m.start + m.length < end) // we assume mentions are not split over many contents
+          val ms = mentions.filter(m => m.start >= processedText.length && m.start + m.length <= newProcessedText.length) // we assume mentions are not split over many contents
           (newProcessedText, acc ++ Seq(if (ms.isEmpty) ct else ct.copy(mentions = ms)))
         }._2
     }
-
 
   def textContent(message: String): Seq[MessageContent] = Seq(RichMediaContentParser.textMessageContent(message))
 
@@ -520,27 +517,21 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
 
   private def decode(array: Array[Byte]) = UTF_16_CHARSET.decode(ByteBuffer.wrap(array)).toString
 
-  def adjustMentions(text: String, mentions: Seq[Mention], isSendingMessage: Boolean, offset: Int = 0): Seq[Mention] = {
-    verbose(s"adjustMentions(text: $text, mentions: $mentions, isSendingMessage: $isSendingMessage, offset: $offset)")
-
+  def adjustMentions(text: String, mentions: Seq[Mention], forSending: Boolean, offset: Int = 0): Seq[Mention] = {
     lazy val textAsUTF16 = encode(text) // optimization: textAsUTF16 is used only for incoming mentions
 
-    val res = mentions.foldLeft(List.empty[Mention]) { case (acc, m) =>
+    mentions.foldLeft(List.empty[Mention]) { case (acc, m) =>
       val start = m.start - offset
-      val end = m.start + m.length - offset
+      val end   = m.start + m.length - offset
       // `encode` computes Array[Byte] with each text character encoded in two bytes,
       // so the length of the text converted to UTF-16 is the array's length / 2.
       val (preLength, handleLength) =
-        if (isSendingMessage)
+        if (forSending)
           (encode(text.substring(0, start)).length / 2, encode(text.substring(start, end)).length / 2)
         else
           (decode(textAsUTF16.slice(0, start * 2)).length, decode(textAsUTF16.slice(start * 2, end * 2)).length)
       Mention(m.userId, offset + preLength, handleLength) :: acc
     }.sortBy(_.start)
-
-    verbose(s"adjusted mentions: $res")
-
-    res
   }
 
 

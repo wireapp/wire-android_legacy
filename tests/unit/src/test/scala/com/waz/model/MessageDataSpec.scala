@@ -67,9 +67,9 @@ class MessageDataSpec extends AndroidFreeSpec {
       val linkPreview = LinkPreview(URI.parse("http://bit.ly"), 15)
 
       val expected = List(
-        MessageContent(Message.Part.Type.TEXT, "Aaa @user1 aaa", mentions = Seq(mentions(0))),
+        MessageContent(Message.Part.Type.TEXT, "Aaa @user1 aaa ", mentions = Seq(mentions(0))),
         MessageContent(Message.Part.Type.WEB_LINK, "http://bit.ly", mentions = Nil),
-        MessageContent(Message.Part.Type.TEXT, "aaa @user2 aaa", mentions = Seq(mentions(1)))
+        MessageContent(Message.Part.Type.TEXT, " aaa @user2 aaa", mentions = Seq(mentions(1)))
       )
 
       val result = MessageData.messageContent(text, mentions, links = Seq(linkPreview), weblinkEnabled = true)
@@ -89,7 +89,7 @@ class MessageDataSpec extends AndroidFreeSpec {
       val mention = Mention(Some(UserId()), start, handle.length)
       val mentions = Seq(mention)
       println(s"mentions: $mentions")
-      val adjusted = MessageData.adjustMentions(text, mentions, isSendingMessage = true)
+      val adjusted = MessageData.adjustMentions(text, mentions, forSending = true)
       println(s"adjusted: $adjusted")
       adjusted shouldEqual mentions
     }
@@ -102,7 +102,7 @@ class MessageDataSpec extends AndroidFreeSpec {
       val mention2 = Mention(Some(UserId()), text.indexOf(handle2), handle2.length)
       val mentions = Seq(mention1, mention2)
       println(s"mentions: $mentions")
-      val adjusted = MessageData.adjustMentions(text, mentions, isSendingMessage = true)
+      val adjusted = MessageData.adjustMentions(text, mentions, forSending = true)
       println(s"adjusted: $adjusted")
       adjusted shouldEqual mentions
     }
@@ -114,7 +114,7 @@ class MessageDataSpec extends AndroidFreeSpec {
       val mention = Mention(Some(UserId()), start, handle.length)
       val mentions = Seq(mention)
       println(s"mentions: $mentions")
-      val adjusted = MessageData.adjustMentions(text, mentions, isSendingMessage = true)
+      val adjusted = MessageData.adjustMentions(text, mentions, forSending = true)
       println(s"adjusted: $adjusted")
       adjusted shouldEqual mentions
     }

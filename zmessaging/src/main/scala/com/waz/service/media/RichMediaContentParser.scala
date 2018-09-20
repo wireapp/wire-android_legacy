@@ -172,15 +172,12 @@ object RichMediaContentParser {
 class MessageContentBuilder {
   val res = Seq.newBuilder[MessageContent]
 
-  def +=(part: String) = {
-    val trimmed = part.trim
-    if (trimmed.nonEmpty) res += RichMediaContentParser.textMessageContent(trimmed)
-  }
+  def +=(part: String) =
+    if (part.trim.nonEmpty) res += RichMediaContentParser.textMessageContent(part)
 
-  def +=(tpe: Part.Type, part: String) = {
-    val trimmed = part.trim
-    if (trimmed.nonEmpty) res += MessageContent(tpe, trimmed)
-  }
+
+  def +=(tpe: Part.Type, part: String) =
+    if (part.trim.nonEmpty) res += MessageContent(tpe, part)
 
   def +=(content: MessageContent) = res += content
 
