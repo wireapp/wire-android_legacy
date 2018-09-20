@@ -44,8 +44,8 @@ trait MentionsViewPart extends MessageViewPart with ViewHelper {
 
   private def applySpanForMention(spannable: Spannable, mention: Mention, selfId: Option[UserId], accentColor: Int, lineHeight: Int): Unit = {
 
-    val start = mention.start
-    val end = mention.start + mention.length
+    val start = Math.min(mention.start, spannable.length())
+    val end = Math.min(mention.start + mention.length, spannable.length())
 
     def applySpanForSelfMention(): Unit = {
       verbose(s"applySpanForSelfMention, spannable: ${spannable.length()}, start: $start, end: $end")

@@ -17,34 +17,38 @@
  */
 package com.waz.zclient.views
 
-import com.waz.model.ConvId
+import com.waz.model.{ConvId, Mention}
 import com.waz.utils.events.Signal
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.cursor.CursorText
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class DraftMap(implicit injector: Injector) extends Injectable {
-  private val drafts = Signal(Map.empty[ConvId, String])
+  private val drafts = Signal(Map.empty[ConvId, CursorText])
   private lazy val conversationController = inject[ConversationController]
 
-  def setCurrent(text: String)(implicit ec: ExecutionContext): Future[Unit] =
-    conversationController.currentConvId.head.map { id => set(id, text) }
+  def setCurrent(text: String, mentions: Seq[Mention])(implicit ec: ExecutionContext): Future[Unit] =
+    setCurrent(CursorText(text, mentions))
+  def setCurrent(cursorText: CursorText)(implicit ec: ExecutionContext): Future[Unit] =
+    conversationController.currentConvId.head.map { id => set(id, cursorText) }
 
-  def set(id: ConvId, text: String): Unit = drafts.mutate { _ + (id -> text) }
+  def set(id: ConvId, text: String, mentions: Seq[Mention]): Unit = set(id, CursorText(text, mentions))
+  def set(id: ConvId, cursorText: CursorText): Unit = drafts.mutate { _ + (id -> cursorText) }
 
   def resetCurrent()(implicit ec: ExecutionContext): Future[Unit] =
     conversationController.currentConvId.head.map { id => drafts.mutate(_ - id) }
 
-  def get(id: ConvId)(implicit ec: ExecutionContext): Future[String] = drafts.head.map { _.getOrElse(id, "") }
+  def get(id: ConvId)(implicit ec: ExecutionContext): Future[CursorText] = drafts.head.map { _.getOrElse(id, CursorText.Empty) }
 
-  val currentDraft: Signal[String] = for {
+  val currentDraft: Signal[CursorText] = for {
     convId <- conversationController.currentConvId
     d <- drafts
-  } yield d.getOrElse(convId, "")
+  } yield d.getOrElse(convId, CursorText.Empty)
 
-  def withCurrentDraft(f: (String) => Unit)(implicit ec: ExecutionContext): Future[Unit] = currentDraft.head.map( f )
+  def withCurrentDraft(f: (CursorText) => Unit)(implicit ec: ExecutionContext): Future[Unit] = currentDraft.head.map( f )
 
-  def tearDown(): Unit = drafts ! Map.empty[ConvId, String]
+  def tearDown(): Unit = drafts ! Map.empty[ConvId, CursorText]
 }

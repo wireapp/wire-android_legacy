@@ -57,7 +57,7 @@ import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.ConversationController.ConversationChange
 import com.waz.zclient.conversation.toolbar.AudioMessageRecordingView
-import com.waz.zclient.cursor.{CursorCallback, CursorController, CursorView, EphemeralLayout}
+import com.waz.zclient.cursor._
 import com.waz.zclient.drawing.DrawingFragment.Sketch
 import com.waz.zclient.messages.{MessagesController, MessagesListView}
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
@@ -208,7 +208,7 @@ class ConversationFragment extends FragmentHelper {
           convController.getConversation(to).map {
             case Some(toConv) =>
               cursorView.foreach { view =>
-                from.foreach{ id => draftMap.set(id, view.getText.trim) }
+                from.foreach{ id => draftMap.set(id, view.getText) }
                 if (toConv.convType != ConversationType.WaitForConnection) {
                   keyboardController.hideKeyboardIfVisible()
                   loadingIndicatorView.foreach(_.hide())
@@ -361,7 +361,7 @@ class ConversationFragment extends FragmentHelper {
     globalLayoutController.addKeyboardVisibilityObserver(keyboardVisibilityObserver)
     slidingPaneController.addObserver(slidingPaneObserver)
 
-    draftMap.withCurrentDraft { draftText => if (!TextUtils.isEmpty(draftText)) cursorView.foreach(_.setText(draftText)) }
+    draftMap.withCurrentDraft { draftText => if (!TextUtils.isEmpty(draftText.text)) cursorView.foreach(_.setText(draftText)) }
 
     listView
   }
@@ -399,7 +399,7 @@ class ConversationFragment extends FragmentHelper {
     navigationController.removeNavigationControllerObserver(navigationControllerObserver)
 
     cursorView.foreach { view =>
-      if (!view.isEditingMessage) draftMap.setCurrent(view.getText.trim)
+      if (!view.isEditingMessage) draftMap.setCurrent(view.getText)
     }
     super.onStop()
   }

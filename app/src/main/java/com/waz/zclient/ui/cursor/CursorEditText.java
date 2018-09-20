@@ -20,6 +20,7 @@ package com.waz.zclient.ui.cursor;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
@@ -34,6 +35,7 @@ public class CursorEditText extends TypefaceEditText {
 
     private SelectionChangedCallback callback = null;
     private OnBackspaceListener backspaceListener = null;
+    private ContextMenuListener contextMenuListener = null;
 
     public CursorEditText(Context context) {
         super(context);
@@ -112,12 +114,20 @@ public class CursorEditText extends TypefaceEditText {
         backspaceListener = listener;
     }
 
+    public void setContextMenuListener(ContextMenuListener listener) {
+        contextMenuListener = listener;
+    }
+
     public interface SelectionChangedCallback {
         void onSelectionChanged(int selStart, int selEnd);
     }
 
     public interface OnBackspaceListener {
         boolean onBackspace();
+    }
+
+    public interface ContextMenuListener {
+        boolean onTextContextMenuItem(CursorEditText view, int id);
     }
 
     public class CursorInputConnection extends InputConnectionWrapper {
@@ -133,5 +143,10 @@ public class CursorEditText extends TypefaceEditText {
                 return super.deleteSurroundingText(beforeLength, afterLength);
             }
         }
+    }
+
+    @Override
+    public boolean onTextContextMenuItem(int id) {
+        return contextMenuListener != null && contextMenuListener.onTextContextMenuItem(this, id) || super.onTextContextMenuItem(id);
     }
 }

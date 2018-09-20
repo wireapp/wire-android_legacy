@@ -65,7 +65,7 @@ class EditCursorToolbar(val context: Context, val attrs: AttributeSet, val defSt
   val disabledTextColor = getStyledColor(R.attr.cursorEditButtonsDisabled)
 
   val messageChanged = controller.editingMsg.zip(controller.enteredText) map {
-    case (Some(msg), (text, _, _)) => msg.contentString != text
+    case (Some(msg), (CursorText(text, m), _)) => msg.contentString != text || msg.content.flatMap(_.mentions).toSet != m.toSet
     case _ => false
   }
 
@@ -87,6 +87,6 @@ class EditCursorToolbar(val context: Context, val attrs: AttributeSet, val defSt
   closeButton.onClick { controller.editingMsg ! None }
   resetButton.onClick { controller.onEditMessageReset ! (()) }
   approveButton.onClick {
-    controller.enteredText.head foreach { case (text, mentions, _) => controller.submit(text, mentions) }
+    controller.enteredText.head foreach { case (CursorText(text, mentions), _) => controller.submit(text, mentions) }
   }
 }
