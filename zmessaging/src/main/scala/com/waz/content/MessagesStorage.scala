@@ -162,7 +162,8 @@ class MessagesStorageImpl(context: Context,
         UnreadCount(
           unread.count(m => !m.isSystemMessage && m.msgType != Message.Type.KNOCK),
           unread.count(_.msgType == Message.Type.MISSED_CALL),
-          unread.count(_.msgType == Message.Type.KNOCK)
+          unread.count(_.msgType == Message.Type.KNOCK),
+          unread.count(_.hasMentionOf(userId))
         )
       }
     }
