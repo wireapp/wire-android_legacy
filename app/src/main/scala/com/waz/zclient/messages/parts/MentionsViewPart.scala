@@ -24,12 +24,12 @@ import android.view.View
 import android.widget.TextView
 import com.waz.model.{Mention, MessageContent, UserId}
 import com.waz.service.messages.MessageAndLikes
-import com.waz.zclient.ViewHelper
+import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.messages.{MessageView, MessageViewPart}
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.ui.utils.ColorUtils
-import com.waz.ZLog.verbose
-import com.waz.ZLog.ImplicitTag._
+import com.waz.utils.returning
+import com.waz.zclient.utils.ContextUtils
 
 trait MentionsViewPart extends MessageViewPart with ViewHelper {
 
@@ -48,45 +48,18 @@ trait MentionsViewPart extends MessageViewPart with ViewHelper {
     val end = Math.min(mention.start + mention.length, spannable.length())
 
     def applySpanForSelfMention(): Unit = {
-      verbose(s"applySpanForSelfMention, spannable: ${spannable.length()}, start: $start, end: $end")
-
       spannable.setSpan(
-        new SelfMentionBackgroundSpan(accentColor, Color.WHITE, lineHeight),
-        start,
-        end,
-        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-      spannable.setSpan(
-        new StyleSpan(Typeface.BOLD),
+        new SelfMentionBackgroundSpan(accentColor, ContextUtils.getStyledColor(R.attr.wirePrimaryTextColor)),
         start,
         end,
         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
     def applySpanForOthersMention(): Unit = {
-      verbose(s"applySpanForOtherMention, spannable: ${spannable.length()}, start: $start, end: $end")
       spannable.setSpan(
-        new ForegroundColorSpan(accentColor),
+        OtherMentionSpan(accentColor),
         start,
         end,
-        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-      spannable.setSpan(
-        new StyleSpan(Typeface.BOLD),
-        Math.min(start + 1, end),
-        end,
-        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-      spannable.setSpan(
-        new StyleSpan(Typeface.BOLD),
-        Math.min(start + 1, end),
-        end,
-        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-      spannable.setSpan(
-        new RelativeSizeSpan(0.9f),
-        start,
-        Math.min(start + 1, end),
         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
 
       spannable.setSpan(
@@ -117,20 +90,41 @@ trait MentionsViewPart extends MessageViewPart with ViewHelper {
     super.set(msg, part, opts)
   }
 
-  class SelfMentionBackgroundSpan(color: Int, foregroundColor: Int, textHeight: Int) extends ReplacementSpan {
-    private val sidePadding = textHeight * 0.1f
+  class SelfMentionBackgroundSpan(color: Int, foregroundColor: Int) extends OtherMentionSpan(foregroundColor) {
 
     override def draw(canvas: Canvas, text: CharSequence, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint): Unit = {
-      val t = (bottom - top) / 2 - textHeight / 2
-      val rect = new RectF(x, top + t, x + getSize(paint, text, start, end, paint.getFontMetricsInt), bottom - t)
-      paint.setColor(ColorUtils.injectAlpha(0.5f, color))
-      canvas.drawRoundRect(rect, 5f, 5f, paint)
-      paint.setColor(foregroundColor)
-      canvas.drawText(text, start, end, x + sidePadding, y, paint)
+      val textTop = y + paint.ascent()
+      val textBottom = y + paint.descent()
+
+      val rect = new RectF(x, textTop, x + getSize(paint, text, start, end, paint.getFontMetricsInt), textBottom)
+
+      val backgroundPaint = new Paint()
+      backgroundPaint.setColor(ColorUtils.injectAlpha(0.25f, color))
+      canvas.drawRoundRect(rect, 5f, 5f, backgroundPaint)
+
+      super.draw(canvas, text, start, end, x, top, y, bottom, paint)
+    }
+  }
+
+  case class OtherMentionSpan(color: Int) extends ReplacementSpan {
+
+    override def draw(canvas: Canvas, text: CharSequence, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint): Unit = {
+      val atPaint = new Paint(paint)
+      atPaint.setColor(color)
+      atPaint.setTextSize(atPaint.getTextSize * 0.9f)
+
+      val boldPaint = new Paint(paint)
+      boldPaint.setTypeface(Typeface.DEFAULT_BOLD)
+      boldPaint.setColor(color)
+
+      if (text.length() > start + 1) {
+        canvas.drawText(text, start, start + 1, x, y, atPaint)
+        canvas.drawText(text, start + 1, end, x + atPaint.measureText(text, start, start + 1), y, boldPaint)
+      }
     }
 
     override def getSize(paint: Paint, text: CharSequence, start: Int, end: Int, fm: Paint.FontMetricsInt): Int =
-      (paint.measureText(text, start, end) + sidePadding * 2).toInt
+      returning(paint)(_.setTypeface(Typeface.DEFAULT_BOLD)).measureText(text, start, end).toInt
   }
 
 }

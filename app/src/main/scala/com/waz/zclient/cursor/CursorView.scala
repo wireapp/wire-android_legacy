@@ -129,7 +129,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   val selectionHasMention = Signal(cursorText, cursorSelection).collect {
     case (text, (_, sEnd)) if sEnd <= text.length =>
       MentionUtils.mentionMatch(text, sEnd).exists { m =>
-        MentionSpan.hasMentionSpan(cursorEditText.getEditableText, m.start, sEnd)
+        CursorMentionSpan.hasMentionSpan(cursorEditText.getEditableText, m.start, sEnd)
       }
   }
   val cursorSingleSelection = cursorSelection.map(s => s._1 == s._2)
@@ -149,9 +149,9 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     val editable = editText.getEditableText
     getMention(editable.toString, selectionIndex, userId, name).foreach {
       case (mention, Replacement(rStart, rEnd, rText)) =>
-        editable.replace(rStart, rEnd, MentionSpan.PlaceholderChar + " ")
+        editable.replace(rStart, rEnd, CursorMentionSpan.PlaceholderChar + " ")
         editable.setSpan(
-          MentionSpan(userId, rText, accentColor, cursorEditText.getLineHeight),
+          CursorMentionSpan(userId, rText, accentColor),
           mention.start,
           mention.start + 1,
           Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
@@ -215,7 +215,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     override def onBackspace(): Boolean = {
       val sStart = cursorEditText.getSelectionStart
       val sEnd = cursorEditText.getSelectionEnd
-      val mentionAtSelection = MentionSpan.getMentionSpans(cursorEditText.getEditableText).find(_._3 == sEnd)
+      val mentionAtSelection = CursorMentionSpan.getMentionSpans(cursorEditText.getEditableText).find(_._3 == sEnd)
       mentionAtSelection match {
         case Some((_, s, e)) if hasSelected =>
           cursorEditText.getEditableText.replace(s, e, "")
@@ -357,16 +357,16 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     val color = accentColor.map(_.color).currentValue.getOrElse(Color.BLUE)
     var offset = 0
     var text = cursorText.text
-    var mentionSpans = Seq.empty[(MentionSpan, Int, Int)]
+    var mentionSpans = Seq.empty[(CursorMentionSpan, Int, Int)]
     cursorText.mentions.sortBy(_.start).foreach { case Mention(uid, mStart, mLength) =>
       val tStart = mStart + offset
       val tEnd = mStart + mLength + offset
       val mentionText = text.substring(tStart, tEnd)
 
-      text = text.substring(0, tStart) + MentionSpan.PlaceholderChar + text.substring(tEnd)
-      mentionSpans = mentionSpans :+ (MentionSpan(uid.get, mentionText, color, cursorEditText.getLineHeight), tStart, tStart + MentionSpan.PlaceholderChar.length)
+      text = text.substring(0, tStart) + CursorMentionSpan.PlaceholderChar + text.substring(tEnd)
+      mentionSpans = mentionSpans :+ (CursorMentionSpan(uid.get, mentionText, color), tStart, tStart + CursorMentionSpan.PlaceholderChar.length)
 
-      offset = offset + MentionSpan.PlaceholderChar.length - mLength
+      offset = offset + CursorMentionSpan.PlaceholderChar.length - mLength
     }
 
     cursorEditText.setText(text)
@@ -388,7 +388,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     var offset = 0
     var cursorText = cursorEditText.getEditableText.toString
     var mentions = Seq.empty[Mention]
-    MentionSpan.getMentionSpans(cursorEditText.getEditableText).sortBy(_._2).foreach {
+    CursorMentionSpan.getMentionSpans(cursorEditText.getEditableText).sortBy(_._2).foreach {
       case (span, s, e) =>
         val spanLength = e - s
         val mentionLength = span.text.length

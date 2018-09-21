@@ -17,10 +17,11 @@
  */
 package com.waz.zclient.cursor
 
-import android.graphics.{Canvas, Paint}
+import android.graphics.{Canvas, Paint, Typeface}
 import android.text._
 import android.text.style._
 import com.waz.model.{Mention, UserId}
+import com.waz.utils.returning
 
 import scala.util.matching.Regex
 
@@ -52,29 +53,35 @@ object MentionUtils {
   }
 }
 
-case class MentionSpan(userId: UserId, text: String, color: Int, textHeight: Int) extends ReplacementSpan {
-  private val sidePadding = 0
+case class CursorMentionSpan(userId: UserId, text: String, color: Int) extends ReplacementSpan {
 
   override def draw(canvas: Canvas, t: CharSequence, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint): Unit = {
     paint.setColor(color)
-    canvas.drawText(text, 0, text.length, x + sidePadding, y, paint)
+
+    val atPaint = new Paint(paint)
+    atPaint.setTextSize(atPaint.getTextSize * 0.9f)
+    canvas.drawText(text, 0, 1, x, y, atPaint)
+
+    paint.setTypeface(Typeface.DEFAULT_BOLD)
+    canvas.drawText(text, 1, text.length, x + paint.measureText(text, 0, 1), y, paint)
   }
 
   override def getSize(paint: Paint, t: CharSequence, start: Int, end: Int, fm: Paint.FontMetricsInt): Int =
-    (paint.measureText(text, 0, text.length) + sidePadding * 2).toInt
+    returning(new Paint(paint))(_.setTypeface(Typeface.DEFAULT_BOLD))
+      .measureText(text, 0, text.length).toInt
 }
 
-object MentionSpan {
+object CursorMentionSpan {
 
   val PlaceholderChar: String = "\u00A0"
 
-  def getMentionSpans(spannable: Spannable): Seq[(MentionSpan, Int, Int)] = {
-    spannable.getSpans(0, spannable.length(), classOf[MentionSpan]).map { s =>
+  def getMentionSpans(spannable: Spannable): Seq[(CursorMentionSpan, Int, Int)] = {
+    spannable.getSpans(0, spannable.length(), classOf[CursorMentionSpan]).map { s =>
       (s, spannable.getSpanStart(s), spannable.getSpanEnd(s))
     }
   }
 
-  def setSpans(spannable: Spannable, spans: Map[MentionSpan, (Int, Int)]): Unit = {
+  def setSpans(spannable: Spannable, spans: Map[CursorMentionSpan, (Int, Int)]): Unit = {
     spans.foreach {
       case (span, (start, end)) if spannable.getSpanFlags(span) == 0 =>
         if (end <= spannable.length && spannable.subSequence(start, end).toString == span.text) {
@@ -88,8 +95,8 @@ object MentionSpan {
     }
   }
 
-  def getMentionSpan(spannable: Spannable, selectionStart: Int, selectionEnd: Int): Option[MentionSpan] =
-    spannable.getSpans(selectionStart, selectionEnd, classOf[MentionSpan]).headOption
+  def getMentionSpan(spannable: Spannable, selectionStart: Int, selectionEnd: Int): Option[CursorMentionSpan] =
+    spannable.getSpans(selectionStart, selectionEnd, classOf[CursorMentionSpan]).headOption
 
   def hasMentionSpan(spannable: Spannable, selectionStart: Int, selectionEnd: Int): Boolean =
     getMentionSpan(spannable, selectionStart, selectionEnd).nonEmpty
@@ -99,7 +106,7 @@ class MentionSpanWatcher extends SpanWatcher {
 
   override def onSpanChanged(text: Spannable, what: scala.Any, ostart: Int, oend: Int, nstart: Int, nend: Int): Unit =
     what match {
-      case m: MentionSpan if nend - nstart > 1 =>
+      case m: CursorMentionSpan if nend - nstart > 1 =>
         text.removeSpan(m)
         text.asInstanceOf[Editable].replace(nstart, nend, "")
       case _ =>
