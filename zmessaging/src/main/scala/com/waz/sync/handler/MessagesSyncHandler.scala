@@ -157,7 +157,7 @@ class MessagesSyncHandler(selfUserId: UserId,
   private def postMessage(conv: ConversationData, msg: MessageData, reqEditTime: RemoteInstant)(implicit convLock: ConvLock): Future[SyncResult] = {
 
     def postTextMessage() = {
-      val adjustedMsg = msg.adjustMentions(true)
+      val adjustedMsg = msg.adjustMentions(true).getOrElse(msg)
 
       val (gm, isEdit) =
         adjustedMsg.protos.lastOption match {

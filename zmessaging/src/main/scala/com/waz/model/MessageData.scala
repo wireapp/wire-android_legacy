@@ -27,7 +27,7 @@ import com.waz.api.{Message, TypeFilter}
 import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.model.ConversationData.ConversationDataDao
-import com.waz.model.GenericContent.{Asset, ImageAsset, LinkPreview, Location, Text}
+import com.waz.model.GenericContent.{Asset, ImageAsset, LinkPreview, Location, MsgEdit, Text}
 import com.waz.model.GenericMessage.{GenericMessageContent, TextMessage}
 import com.waz.model.MessageData.MessageState
 import com.waz.model.messages.media.{MediaAssetData, MediaAssetDataProtocol}
@@ -142,26 +142,39 @@ case class MessageData(id:            MessageId              = MessageId(),
     msgType == m.msgType && content.zip(m.content).forall { case (c, c1) => c.tpe == c1.tpe && c.openGraph.isDefined == c1.openGraph.isDefined } // openGraph may affect message type
   }
 
-  def adjustMentions(forSending: Boolean): MessageData = {
-    verbose(s"adjustMentions(forSending = $forSending)")
-    val newContent =
-      if (mentions.isEmpty) content
-      else {
-        if (content.size == 1) content.map(_.copy(mentions = MessageData.adjustMentions(content.head.content, mentions, forSending)))
+  def adjustMentions(forSending: Boolean): Option[MessageData] =
+    if (mentions.isEmpty) None
+    else {
+      verbose(s"adjustMentions(forSending = $forSending)")
+      val newContent =
+        if (content.size == 1)
+          content.map(_.copy(mentions = MessageData.adjustMentions(content.head.content, mentions, forSending)))
         else
           content.foldLeft("", Seq.empty[MessageContent]) { case ((processedText, acc), ct) =>
             val newProcessedText = processedText + ct.content
             val start = processedText.length
-            val end = newProcessedText.length
-            val ms  = mentions.filter(m => m.start >= start && m.start + m.length < end) // we assume mentions are not split over many contents
-            (newProcessedText, acc ++ Seq(if (ms.isEmpty) ct else ct.copy(mentions = MessageData.adjustMentions(ct.content, ms, forSending, start))))
+            val end   = newProcessedText.length
+            val ms    = mentions.filter(m => m.start >= start && m.start + m.length < end) // we assume mentions are not split over many contents
+            (
+              newProcessedText,
+              acc ++ Seq(if (ms.isEmpty) ct else ct.copy(mentions = MessageData.adjustMentions(ct.content, ms, forSending, start)))
+            )
           }._2
+
+      val newMentions = newContent.flatMap(_.mentions)
+
+      val newProto = protos.lastOption match {
+        case Some(GenericMessage(uid, MsgEdit(ref, Text(_, _, links)))) =>
+          GenericMessage(uid, MsgEdit(ref, Text(contentString, newMentions, links)))
+        case Some(GenericMessage(uid, Text(_, _, links))) =>
+          GenericMessage(uid, ephemeral, Text(contentString, newMentions, links))
+        case _ =>
+          GenericMessage(id.uid, ephemeral, Text(contentString, newMentions, Nil))
       }
 
-    val newProto = GenericMessage(id.uid, ephemeral, Text(contentString, newContent.flatMap(_.mentions), Nil))
-    if (content == newContent && protos.lastOption.contains(newProto)) this
-    else copy(content = newContent, protos = Seq(newProto))
-  }
+      if (content == newContent && protos.lastOption.contains(newProto)) None
+      else Some(copy(content = newContent, protos = Seq(newProto)))
+    }
 }
 
 case class MessageContent(tpe:        Message.Part.Type,

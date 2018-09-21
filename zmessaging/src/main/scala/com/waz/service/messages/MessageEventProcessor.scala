@@ -167,7 +167,8 @@ class MessageEventProcessor(selfUserId:          UserId,
       case Text(text, mentions, links) =>
         val (tpe, content) = MessageData.messageContent(text, mentions, links)
         verbose(s"MessageData content: $content")
-        MessageData(id, conv.id, tpe, from, content, time = time, localTime = event.localTime, protos = Seq(proto)).adjustMentions(false)
+        val messageData = MessageData(id, conv.id, tpe, from, content, time = time, localTime = event.localTime, protos = Seq(proto))
+        messageData.adjustMentions(false).getOrElse(messageData)
       case Knock() =>
         MessageData(id, conv.id, Message.Type.KNOCK, from, time = time, localTime = event.localTime, protos = Seq(proto))
       case Reaction(_, _) => MessageData.Empty

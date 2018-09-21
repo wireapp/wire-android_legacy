@@ -131,7 +131,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
             _ <- edits.insert(EditHistory(msg.id, MessageId(id.str), time))
             (tpe, ct) = MessageData.messageContent(text, mentions, links, weblinkEnabled = true)
             edited = MessageData(MessageId(id.str), convId, tpe, userId, ct, Seq(gm), time = msg.time, localTime = msg.localTime, editTime = time)
-            res <- updater.addMessage(edited.adjustMentions(false))
+            res <- updater.addMessage(edited.adjustMentions(false).getOrElse(edited))
             _ <- updater.deleteOnUserRequest(Seq(msg.id))
         } yield res
 
