@@ -39,6 +39,7 @@ object ConversationBadge {
   case object IncomingCall extends Status
   case object MissedCall extends Status
   case class Count(count: Int) extends Status
+  case object Mention extends Status
 }
 
 class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ViewHelper { self =>
@@ -89,6 +90,8 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
     duration.fold(setGlyph(R.string.glyph__call, R.drawable.conversation_badge_green))(d => setText(d, R.drawable.conversation_badge_green))
   def setMissedCall() = setGlyph(R.string.glyph__end_call, R.drawable.conversation_badge_white, R.color.black)
 
+  def setMention() = setText("@", R.drawable.conversation_badge_white, R.color.black)
+
   def setStatus(status: Status): Unit = {
     this.status = status
     status match {
@@ -108,6 +111,8 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
         setMissedCall()
       case Count(count) =>
         setCount(count)
+      case Mention =>
+        setMention()
       case Empty =>
         setHidden()
     }
