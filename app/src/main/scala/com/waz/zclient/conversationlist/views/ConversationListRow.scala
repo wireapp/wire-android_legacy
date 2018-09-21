@@ -122,7 +122,9 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     call           <- z.calling.currentCall
     callDuration   <- call.filter(_.convId == conv.id).fold(Signal.const(""))(_.durationFormatted)
     isGroupConv    <- z.conversations.groupConversation(conv.id)
-  } yield (conv.id, badgeStatusForConversation(conv, conv.unreadCount.messages, typing, availableCalls, callDuration, isGroupConv))
+    lastMessage    <- controller.lastMessage(conv.id)
+    selfId         <- selfId
+  } yield (conv.id, badgeStatusForConversation(conv, conv.unreadCount, typing, availableCalls, callDuration, isGroupConv))
 
   val subtitleText = for {
     z <- zms
@@ -347,13 +349,13 @@ object ConversationListRow {
     }
   }
 
-  def badgeStatusForConversation(conversationData: ConversationData,
-                                 unreadCount:      Int,
-                                 typing:           Boolean,
-                                 availableCalls:   Map[ConvId, CallInfo],
-                                 callDuration:     String,
-                                 isGroupConv:      Boolean): ConversationBadge.Status = {
-
+  def badgeStatusForConversation(conversationData:        ConversationData,
+                                 unreadCount:             ConversationData.UnreadCount,
+                                 typing:                  Boolean,
+                                 availableCalls:          Map[ConvId, CallInfo],
+                                 callDuration:            String,
+                                 isGroupConv:             Boolean
+                                ): ConversationBadge.Status = {
     if (callDuration.nonEmpty) {
       ConversationBadge.OngoingCall(Some(callDuration))
     } else if (availableCalls.contains(conversationData.id) && isGroupConv) {
@@ -365,16 +367,18 @@ object ConversationListRow {
       ConversationBadge.WaitingConnection
     } else if (conversationData.muted) {
       ConversationBadge.Muted
+    } else if (unreadCount.mentions > 0) {
+      ConversationBadge.Mention
     } else if (typing) {
       ConversationBadge.Typing
     } else if (conversationData.incomingKnockMessage.nonEmpty) {
       ConversationBadge.Ping
     } else if (conversationData.missedCallMessage.nonEmpty) {
       ConversationBadge.MissedCall
-    } else if (unreadCount == 0) {
+    } else if (unreadCount.messages == 0) {
       ConversationBadge.Empty
-    } else if (unreadCount > 0) {
-      ConversationBadge.Count(unreadCount)
+    } else if (unreadCount.messages > 0) {
+      ConversationBadge.Count(unreadCount.messages)
     } else {
       ConversationBadge.Empty
     }
@@ -390,38 +394,44 @@ object ConversationListRow {
     lazy val senderName = user.fold(getString(R.string.conversation_list__someone))(_.getDisplayName)
     lazy val memberName = members.headOption.fold2(getString(R.string.conversation_list__someone), _.getDisplayName)
 
-    if (messageData.isEphemeral) formatSubtitle(getString(R.string.conversation_list__ephemeral), senderName, isGroup)
-    messageData.msgType match {
-      case Message.Type.TEXT | Message.Type.TEXT_EMOJI_ONLY | Message.Type.RICH_MEDIA =>
-        formatSubtitle(messageData.contentString, senderName, isGroup)
-      case Message.Type.ASSET =>
-        formatSubtitle(getString(R.string.conversation_list__shared__image), senderName, isGroup)
-      case Message.Type.ANY_ASSET =>
-        formatSubtitle(getString(R.string.conversation_list__shared__file), senderName, isGroup)
-      case Message.Type.VIDEO_ASSET =>
-        formatSubtitle(getString(R.string.conversation_list__shared__video), senderName, isGroup)
-      case Message.Type.AUDIO_ASSET =>
-        formatSubtitle(getString(R.string.conversation_list__shared__audio), senderName, isGroup)
-      case Message.Type.LOCATION =>
-        formatSubtitle(getString(R.string.conversation_list__shared__location), senderName, isGroup)
-      case Message.Type.MISSED_CALL =>
-        formatSubtitle(getString(R.string.conversation_list__missed_call), senderName, isGroup)
-      case Message.Type.KNOCK =>
-        formatSubtitle(getString(R.string.conversation_list__pinged), senderName, isGroup)
-      case Message.Type.CONNECT_ACCEPTED | Message.Type.MEMBER_JOIN if !isGroup =>
-        members.headOption.flatMap(_.handle).map(_.string).fold("")(StringUtils.formatHandle)
-      case Message.Type.MEMBER_JOIN if members.exists(_.id == selfId) =>
-        getString(R.string.conversation_list__added_you, senderName)
-      case Message.Type.MEMBER_JOIN if members.length > 1=>
-        getString(R.string.conversation_list__added, memberName)
-      case Message.Type.MEMBER_JOIN =>
-        getString(R.string.conversation_list__added, memberName)
-      case Message.Type. MEMBER_LEAVE if members.exists(_.id == selfId) && user.exists(_.id == selfId) =>
-        getString(R.string.conversation_list__left_you, senderName)
-      case Message.Type. MEMBER_LEAVE if members.exists(_.id == selfId) =>
-        getString(R.string.conversation_list__removed_you, senderName)
-      case _ =>
-        ""
+    if (messageData.isEphemeral) {
+      if (messageData.hasMentionOf(selfId))
+        formatSubtitle(getString(R.string.conversation_list__eph_and_mention), senderName, isGroup)
+      else
+      formatSubtitle(getString(R.string.conversation_list__ephemeral), senderName, isGroup)
+    } else {
+      messageData.msgType match {
+        case Message.Type.TEXT | Message.Type.TEXT_EMOJI_ONLY | Message.Type.RICH_MEDIA =>
+          formatSubtitle(messageData.contentString, senderName, isGroup)
+        case Message.Type.ASSET =>
+          formatSubtitle(getString(R.string.conversation_list__shared__image), senderName, isGroup)
+        case Message.Type.ANY_ASSET =>
+          formatSubtitle(getString(R.string.conversation_list__shared__file), senderName, isGroup)
+        case Message.Type.VIDEO_ASSET =>
+          formatSubtitle(getString(R.string.conversation_list__shared__video), senderName, isGroup)
+        case Message.Type.AUDIO_ASSET =>
+          formatSubtitle(getString(R.string.conversation_list__shared__audio), senderName, isGroup)
+        case Message.Type.LOCATION =>
+          formatSubtitle(getString(R.string.conversation_list__shared__location), senderName, isGroup)
+        case Message.Type.MISSED_CALL =>
+          formatSubtitle(getString(R.string.conversation_list__missed_call), senderName, isGroup)
+        case Message.Type.KNOCK =>
+          formatSubtitle(getString(R.string.conversation_list__pinged), senderName, isGroup)
+        case Message.Type.CONNECT_ACCEPTED | Message.Type.MEMBER_JOIN if !isGroup =>
+          members.headOption.flatMap(_.handle).map(_.string).fold("")(StringUtils.formatHandle)
+        case Message.Type.MEMBER_JOIN if members.exists(_.id == selfId) =>
+          getString(R.string.conversation_list__added_you, senderName)
+        case Message.Type.MEMBER_JOIN if members.length > 1=>
+          getString(R.string.conversation_list__added, memberName)
+        case Message.Type.MEMBER_JOIN =>
+          getString(R.string.conversation_list__added, memberName)
+        case Message.Type. MEMBER_LEAVE if members.exists(_.id == selfId) && user.exists(_.id == selfId) =>
+          getString(R.string.conversation_list__left_you, senderName)
+        case Message.Type. MEMBER_LEAVE if members.exists(_.id == selfId) =>
+          getString(R.string.conversation_list__removed_you, senderName)
+        case _ =>
+          ""
+      }
     }
   }
 
@@ -437,19 +447,19 @@ object ConversationListRow {
                                     isGroupConv:              Boolean,
                                     user:                     Option[String])
                                    (implicit context: Context): String = {
-
     if (conv.convType == ConversationType.WaitForConnection || (lastMessage.exists(_.msgType == Message.Type.MEMBER_JOIN) && conv.convType == ConversationType.OneToOne)) {
       otherMember.flatMap(_.handle.map(_.string)).fold("")(StringUtils.formatHandle)
     } else if (memberIds.count(_ != selfId) == 0 && conv.convType == ConversationType.Group) {
       ""
     } else if (conv.unreadCount.total == 0 && !conv.isActive) {
       getString(R.string.conversation_list__left_you)
-    } else if ((conv.muted || conv.incomingKnockMessage.nonEmpty || conv.missedCallMessage.nonEmpty) && typingUser.isEmpty) {
+    } else if ((conv.muted || conv.incomingKnockMessage.nonEmpty || conv.missedCallMessage.nonEmpty || conv.unreadCount.mentions > 1 || (conv.unreadCount.mentions == 1 && conv.unreadCount.total > 2)) && typingUser.isEmpty) {
       val normalMessageCount = conv.unreadCount.normal
       val missedCallCount = conv.unreadCount.call
       val pingCount = conv.unreadCount.ping
-      val likesCount = 0//TODO: There is no good way to get this so far
+      val likesCount = 0 //TODO: There is no good way to get this so far
       val unsentCount = conv.failedCount
+      val mentionsCount = conv.unreadCount.mentions
 
       val unsentString =
         if (unsentCount > 0)
@@ -460,6 +470,8 @@ object ConversationListRow {
         else
           ""
       val strings = Seq(
+        if (mentionsCount > 0)
+          context.getResources.getQuantityString(R.plurals.conversation_list__mentions_count, mentionsCount, mentionsCount.toString) else "",
         if (normalMessageCount > 0)
           context.getResources.getQuantityString(R.plurals.conversation_list__new_message_count, normalMessageCount, normalMessageCount.toString) else "",
         if (missedCallCount > 0) {

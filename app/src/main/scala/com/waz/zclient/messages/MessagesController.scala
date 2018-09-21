@@ -93,6 +93,7 @@ import scala.concurrent.Future
 
   def isLastSelf(id: MessageId) = lastSelfMessage.currentValue.exists(_.id == id)
 
+
   def onMessageRead(msg: MessageData) = {
     if (msg.isEphemeral && !msg.expired)
         zms.head.foreach(_.ephemeral.onMessageRead(msg.id))
