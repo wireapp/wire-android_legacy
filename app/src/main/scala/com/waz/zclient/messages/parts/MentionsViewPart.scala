@@ -110,6 +110,7 @@ trait MentionsViewPart extends MessageViewPart with ViewHelper {
 
     override def draw(canvas: Canvas, text: CharSequence, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint): Unit = {
       val atPaint = new Paint(paint)
+      atPaint.setTypeface(Typeface.DEFAULT)
       atPaint.setColor(color)
       atPaint.setTextSize(atPaint.getTextSize * 0.9f)
 
