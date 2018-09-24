@@ -20,18 +20,16 @@ package com.waz.zclient.cursor
 import android.support.v7.widget.RecyclerView
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.TextView
+import android.widget.{ImageView, TextView}
 import com.waz.model.{Handle, UserId}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.zclient.R
 import com.waz.zclient.common.views.ChatheadView
-import com.waz.zclient.utils.StringUtils
+import com.waz.zclient.paintcode.GuestIconWithColor
 
 class MentionCandidatesAdapter extends RecyclerView.Adapter[MentionCandidateViewHolder] {
 
   private var _data = Seq[MentionCandidateInfo]()
-
-  setHasStableIds(true)
 
   val onUserClicked: SourceStream[MentionCandidateInfo] = EventStream()
 
@@ -60,6 +58,11 @@ class MentionCandidateViewHolder(v: View, onUserClick: MentionCandidateInfo => U
   private val nameTextView = v.findViewById[TextView](R.id.mention_name)
   private val handleTextView = v.findViewById[TextView](R.id.mention_handle)
   private val chathead = v.findViewById[ChatheadView](R.id.mention_chathead)
+  private val icon = v.findViewById[ImageView](R.id.mention_icon)
+  private implicit val cxt = v.getContext
+
+  import com.waz.zclient.utils._
+  import ContextUtils._
 
   private var userId = Option.empty[MentionCandidateInfo]
 
@@ -72,7 +75,10 @@ class MentionCandidateViewHolder(v: View, onUserClick: MentionCandidateInfo => U
     nameTextView.setText(info.name)
     handleTextView.setText(StringUtils.formatHandle(info.handle.string))
     chathead.setUserId(info.userId)
+    icon.setVisible(info.isGuest)
+    if(info.isGuest)
+      icon.setImageDrawable(GuestIconWithColor(getStyledColor(R.attr.wireSecondaryTextColor)))
   }
 }
 
-case class MentionCandidateInfo(userId: UserId, name: String, handle: Handle)
+case class MentionCandidateInfo(userId: UserId, name: String, handle: Handle, isGuest: Boolean)

@@ -44,27 +44,47 @@
         app:initials_font_size="@dimen/wire__text_size__regular"
         />
 
-    <LinearLayout android:orientation="vertical"
-                  android:layout_width="match_parent"
-                  android:layout_height="wrap_content"
-                  android:layout_gravity="center_vertical">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/mention_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="@dimen/wire__text_size__regular"
-            android:textColor="?wirePrimaryTextColor"
-            app:w_font="@string/wire__typeface__regular"/>
+        <LinearLayout android:orientation="vertical"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:layout_alignParentStart="true"
+                      android:layout_gravity="center_vertical">
 
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/mention_handle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="@dimen/wire__text_size__small"
-            android:textColor="?wireSecondaryTextColor"
-            app:w_font="@string/wire__typeface__regular"/>
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/mention_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/wire__text_size__regular"
+                android:textColor="?wirePrimaryTextColor"
+                app:w_font="@string/wire__typeface__regular"/>
 
-    </LinearLayout>
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/mention_handle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/wire__text_size__small"
+                android:textColor="?wireSecondaryTextColor"
+                app:w_font="@string/wire__typeface__regular"/>
+
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/mention_icon"
+            android:layout_width="@dimen/guest_options_icon_size"
+            android:layout_height="@dimen/guest_options_icon_size"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="@dimen/wire__padding__small"
+            android:layout_marginEnd="@dimen/wire__padding__small"
+            android:visibility="visible"
+            android:scaleType="centerInside"
+            />
+
+    </RelativeLayout>
 
 </LinearLayout>

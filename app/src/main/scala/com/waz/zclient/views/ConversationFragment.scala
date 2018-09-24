@@ -134,6 +134,8 @@ class ConversationFragment extends FragmentHelper {
     }
   }
 
+  private val mentionCandidatesAdapter = new MentionCandidatesAdapter()
+
   private var audioMessageRecordingView: AudioMessageRecordingView = _
   private lazy val extendedCursorContainer = returning(view[ExtendedCursorContainer](R.id.ecc__conversation)) { vh =>
     inject[Signal[AccentColor]].map(_.color).onUi(c => vh.foreach(_.setAccentColor(c)))
@@ -159,7 +161,11 @@ class ConversationFragment extends FragmentHelper {
     }
   }
 
-  private val mentionCandidatesAdapter = new MentionCandidatesAdapter()
+  private def isUserGuest(user: UserData): Signal[Boolean] =
+    convController.currentConv.map { conv =>
+      if (!conv.isTeamOnly) user.isGuest(conv.team) else false
+    }
+
   private def showMentionsList(visible: Boolean): Unit = {
     mentionsList.foreach(_.setVisible(visible))
     messagesOpacity.foreach(_.setVisible(visible))
@@ -392,7 +398,8 @@ class ConversationFragment extends FragmentHelper {
     listView
 
     cursorView.foreach { v =>
-      subs += v.mentionSearchResults.map(_.map(ud => MentionCandidateInfo(ud.id, ud.name, ud.handle.getOrElse(Handle())))).onUi { data =>
+      subs += v.mentionSearchResults.flatMap(userList => Signal.sequence(userList.map(isUserGuest):_*).map(g => userList.zip(g))).map(_.map { case (ud, isGuest) =>
+        MentionCandidateInfo(ud.id, ud.name, ud.handle.getOrElse(Handle()), isGuest)}).onUi { data =>
         mentionCandidatesAdapter.setData(data)
         mentionsList.foreach(_.scrollToPosition(data.size - 1))
       }
