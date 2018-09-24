@@ -17,10 +17,9 @@
  */
 package com.waz.zclient.cursor
 
-import android.content.{ClipData, Context}
+import android.content.Context
 import android.graphics.{Color, Rect}
 import android.graphics.drawable.ColorDrawable
-import android.text._
 import android.text.method.TransformationMethod
 import android.text.{Editable, Spanned, TextUtils, TextWatcher}
 import android.util.AttributeSet
@@ -42,7 +41,7 @@ import com.waz.zclient.cursor.CursorController.{EnteredTextSource, KeyboardState
 import com.waz.zclient.cursor.MentionUtils.{Replacement, getMention}
 import com.waz.zclient.messages.MessagesController
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
-import com.waz.zclient.ui.cursor.CursorEditText.{ContextMenuListener, OnBackspaceListener}
+import com.waz.zclient.ui.cursor.CursorEditText.OnBackspaceListener
 import com.waz.zclient.ui.cursor._
 import com.waz.zclient.ui.text.TextTransform
 import com.waz.zclient.ui.text.TypefaceEditText.OnSelectionChangedListener
