@@ -331,6 +331,19 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     } (Threading.Ui)
   }
 
+  controller.onCursorItemClick {
+    case CursorMenuItem.Mention =>
+      mentionQuery.head.map {
+        case None =>
+          val sel = cursorEditText.getSelectionStart
+          val mentionSymbol = if (cursorEditText.getText.length() == 0 || cursorEditText.getText.charAt(Math.max(sel - 1, 0)).isWhitespace) "@" else " @"
+
+          cursorEditText.getEditableText.insert(sel, mentionSymbol)
+        case _ =>
+      } (Threading.Ui)
+    case _ =>
+  }
+
   def enableMessageWriting(): Unit = cursorEditText.requestFocus
 
   def setCallback(callback: CursorCallback) = controller.cursorCallback = Option(callback)
@@ -408,6 +421,6 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 object CursorView {
   import CursorMenuItem._
 
-  private val MainCursorItems = Seq(Camera, VideoMessage, Sketch, Gif, AudioMessage, More)
-  private val SecondaryCursorItems = Seq(Ping, File, Location, Dummy, Dummy, Less)
+  private val MainCursorItems = Seq(Camera, Mention, Sketch, Gif, AudioMessage, More)
+  private val SecondaryCursorItems = Seq(VideoMessage, Ping, File, Location, Dummy, Less)
 }

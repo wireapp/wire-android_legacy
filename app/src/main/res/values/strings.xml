@@ -1138,6 +1138,7 @@
     <string name="tooltip_audio_message">Tap and hold to send an audio message</string>
     <string name="tooltip_file">Send File</string>
     <string name="tooltip_gif">Gif</string>
+    <string name="tooltip_mention">Add Mention</string>
     <string name="new_feature">New</string>
 
     <!-- Delete -->
@@ -1514,4 +1515,6 @@
     <string name="participant_search_title">PEOPLE</string>
     <string name="generic_service_warning">Services have access to the content of this conversation</string>
     <string name="add_services_button_text">Manage services</string>
+
+    <string name="mention_symbol" translatable="false">\@</string>
 </resources>

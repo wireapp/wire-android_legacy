@@ -35,5 +35,6 @@ object CursorMenuItem {
   val Keyboard      = CursorMenuItem("KEYBOARD",      R.string.glyph__keyboard,      R.id.cursor_menu_item_keyboard,      R.string.tooltip_emoji)
   val Ping          = CursorMenuItem("PING",          R.string.glyph__ping,          R.id.cursor_menu_item_ping,          R.string.tooltip_ping)
   val Send          = CursorMenuItem("SEND",          R.string.glyph__send,          R.id.cursor_menu_item_send,          R.string.empty_string)
+  val Mention       = CursorMenuItem("MENTION",       R.string.mention_symbol,       R.id.cursor_menu_item_mention,       R.string.tooltip_mention)
   val Dummy         = CursorMenuItem("",              R.string.empty_string,         R.id.cursor_menu_item_dummy,         R.string.empty_string)
 }

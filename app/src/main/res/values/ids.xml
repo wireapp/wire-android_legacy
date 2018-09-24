@@ -47,6 +47,7 @@
     <item name="cursor_menu_item_more" type="id" />
     <item name="cursor_menu_item_less" type="id" />
     <item name="cursor_menu_item_send" type="id" />
+    <item name="cursor_menu_item_mention" type="id" />
     <item name="cursor_menu_item_dummy" type="id" />
 
     <item name="message_bottom_menu_item_forward" type="id" />
