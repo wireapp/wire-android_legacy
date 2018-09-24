@@ -80,7 +80,7 @@ class MentionsInputTest  extends AndroidFreeSpec { this: Suite =>
     val input = "123 @456 789"
     val handle = "@456"
     val mention = Mention(Some(UserId()), input.indexOf(handle), handle.length)
-    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention), 0)
+    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention))
 
     assert(holders.size == 1)
     assert(holders.head.mention == mention)
@@ -99,7 +99,7 @@ class MentionsInputTest  extends AndroidFreeSpec { this: Suite =>
     val handle2 = "@aaa"
     val mention2 = Mention(Some(UserId()), input.indexOf(handle2), handle2.length)
 
-    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention1, mention2), 0)
+    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention1, mention2))
 
     assert(holders.size == 2)
 
@@ -121,7 +121,7 @@ class MentionsInputTest  extends AndroidFreeSpec { this: Suite =>
     val input = "@456"
     val handle = "@456"
     val mention = Mention(Some(UserId()), input.indexOf(handle), handle.length)
-    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention), 0)
+    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention))
 
     assert(holders.size == 1)
     assert(holders.head.mention == mention)
@@ -135,7 +135,7 @@ class MentionsInputTest  extends AndroidFreeSpec { this: Suite =>
     val input = "@456 aaa"
     val handle = "@456"
     val mention = Mention(Some(UserId()), input.indexOf(handle), handle.length)
-    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention), 0)
+    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention))
 
     assert(holders.size == 1)
     assert(holders.head.mention == mention)
@@ -150,7 +150,7 @@ class MentionsInputTest  extends AndroidFreeSpec { this: Suite =>
     val input = "aaa @456"
     val handle = "@456"
     val mention = Mention(Some(UserId()), input.indexOf(handle), handle.length)
-    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention), 0)
+    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention))
 
     assert(holders.size == 1)
     assert(holders.head.mention == mention)
@@ -171,7 +171,7 @@ class MentionsInputTest  extends AndroidFreeSpec { this: Suite =>
     val handle2 = "@bb"
     val mention2 = Mention(Some(UserId()), input.indexOf(handle2), handle2.length)
 
-    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention0, mention1, mention2), 0)
+    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention0, mention1, mention2))
 
     assert(holders.size == 3)
 
@@ -254,7 +254,7 @@ class MentionsInputTest  extends AndroidFreeSpec { this: Suite =>
     val input = "123 @456 789"
     val handle = "@456"
     val mention = Mention(Some(UserId()), input.indexOf(handle), handle.length)
-    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention), 0)
+    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention))
     println(s"input: $input")
     println(s"replaceString: $replaceString")
 
@@ -271,12 +271,12 @@ class MentionsInputTest  extends AndroidFreeSpec { this: Suite =>
     val input = "123 @456 789"
     val handle = "@456"
     val mention = Mention(Some(UserId()), input.indexOf(handle), handle.length)
-    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention), 0)
+    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention))
 
     assert(holders.size == 1)
 
     val newText = "zzz "
-    val updated = TextPartView.updateMentions(newText + replaceString, holders, 0)
+    val updated = TextPartView.updateMentions(newText + replaceString, holders)
 
     assert(updated.size == 1)
     assert(mention.userId == updated.head.userId)
@@ -291,7 +291,7 @@ class MentionsInputTest  extends AndroidFreeSpec { this: Suite =>
     val mention0 = Mention(Some(UserId()), input.indexOf(handle0), handle0.length)
     val handle1 = "@aa"
     val mention1 = Mention(Some(UserId()), input.indexOf(handle1), handle1.length)
-    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention0, mention1), 0)
+    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention0, mention1))
 
     assert(holders.size == 2)
 
@@ -338,12 +338,26 @@ class MentionsInputTest  extends AndroidFreeSpec { this: Suite =>
     val handle = "@user"
     val mention = Mention(Some(UserId()), input.indexOf(handle), handle.length)
 
-    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention), 0)
+    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention))
     val changedString = replaceString.replace("\n\n\n", "\n")
-    val updated = TextPartView.updateMentions(changedString, holders, 0)
+    val updated = TextPartView.updateMentions(changedString, holders)
 
     assert(updated.size == 1)
     assert(updated.head.userId == mention.userId)
     assert(updated.head.start == mention.start - 2)
+  }
+
+  @Test
+  def handleWhenMentionIsDeleted(): Unit = {
+    val input = "aaa @user bbb"
+    val handle = "@user"
+    val mention = Mention(Some(UserId()), input.indexOf(handle), handle.length)
+    val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention))
+    assert(holders.size == 1)
+
+    val changedString = replaceString.replace(holders.head.uuid, "markdown")
+    val updated = TextPartView.updateMentions(changedString, holders)
+
+    assert(updated.isEmpty)
   }
 }

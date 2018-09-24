@@ -152,11 +152,12 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
     val text = textView.getText
     val ssb = SpannableStringBuilder.valueOf(text)
 
-    mentionHolders.foldLeft(text.toString) { (oldText, holder) =>
-      val start = oldText.indexOf(holder.uuid)
-      val end   = start + holder.uuid.length
-      ssb.replace(start, end, holder.handle)
-      oldText.replace(holder.uuid, holder.handle)
+    mentionHolders.foldLeft(text.toString) {
+      case (oldText, holder) if oldText.contains(holder.uuid) =>
+        val start = oldText.indexOf(holder.uuid)
+        ssb.replace(start, start + holder.uuid.length, holder.handle)
+        oldText.replace(holder.uuid, holder.handle)
+      case (oldText, _) => oldText // when Markdown deletes the mention
     }
 
     textView.setText(new SpannableString(ssb))
@@ -169,15 +170,16 @@ object TextPartView {
 
   def replaceMentions(text: String, mentions: Seq[Mention], offset: Int = 0): (String, Seq[MentionHolder]) = {
     val (accStr, mentionHolders, resultIndex) =
-      mentions.sortBy(_.start).foldLeft(("", Seq.empty[MentionHolder], 0)){ case ((accStr, acc, resultIndex), mention) =>
-        val start = mention.start - offset
-        val end   = start + mention.length
-        val uuid  = UUID.randomUUID().toString
-        (
-          accStr + text.substring(resultIndex, start) + uuid,
-          acc ++ Seq(MentionHolder(mention, uuid, text.substring(start, end))),
-          end
-        )
+      mentions.sortBy(_.start).foldLeft(("", Seq.empty[MentionHolder], 0)){
+        case ((accStr, acc, resultIndex), mention) =>
+          val start = mention.start - offset
+          val end   = start + mention.length
+          val uuid  = UUID.randomUUID().toString
+          (
+            accStr + text.substring(resultIndex, start) + uuid,
+            acc ++ Seq(MentionHolder(mention, uuid, text.substring(start, end))),
+            end
+          )
     }
 
     (
@@ -186,13 +188,15 @@ object TextPartView {
     )
   }
 
-  def updateMentions(text: String, mentionHolders: Seq[MentionHolder], offset: Int): Seq[Mention] =
-    mentionHolders.sortBy(_.mention.start).foldLeft((text, Seq.empty[Mention])) { case ((oldText, acc), holder) =>
-      val start = oldText.indexOf(holder.uuid)
-      val end   = start + holder.uuid.length
-      (
-        oldText.substring(0, start) + holder.handle + (if (end < oldText.length) oldText.substring(end) else ""),
-        acc ++ Seq(holder.mention.copy(start = start + offset))
-      )
+  def updateMentions(text: String, mentionHolders: Seq[MentionHolder], offset: Int = 0): Seq[Mention] =
+    mentionHolders.sortBy(_.mention.start).foldLeft((text, Seq.empty[Mention])) {
+      case ((oldText, acc), holder) if oldText.contains(holder.uuid) =>
+        val start = oldText.indexOf(holder.uuid)
+        val end   = start + holder.uuid.length
+        (
+          oldText.substring(0, start) + holder.handle + (if (end < oldText.length) oldText.substring(end) else ""),
+          acc ++ Seq(holder.mention.copy(start = start + offset))
+        )
+      case ((oldText, acc), _) => (oldText, acc) // when Markdown deletes the mention
     }._2
 }
