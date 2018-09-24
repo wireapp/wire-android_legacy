@@ -258,23 +258,6 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     override def onFocusChange(view: View, hasFocus: Boolean): Unit = controller.editHasFocus ! hasFocus
   })
 
-  cursorEditText.setContextMenuListener(new ContextMenuListener {
-    override def onTextContextMenuItem(view: CursorEditText, id: Int): Boolean = {
-      id match {
-        case android.R.id.copy =>
-          val clip = ClipData.newPlainText("", getText.text)
-          clipboard.setPrimaryClip(clip)
-          true
-        case android.R.id.cut =>
-          val clip = ClipData.newPlainText("", getText.text)
-          clipboard.setPrimaryClip(clip)
-          view.getEditableText.replace(view.getSelectionStart, view.getSelectionEnd, "")
-          true
-        case _ => false
-      }
-    }
-  })
-
   cursorEditText.setTransformationMethod(new TransformationMethod() {
     override def getTransformation(source: CharSequence, view: View): CharSequence = {
       source
