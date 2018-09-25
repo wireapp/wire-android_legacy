@@ -796,8 +796,8 @@
     <string name="notification__message__single__accept_request">You and %1$s are now connected</string>
     <string name="notification__message__group__default_conversation_name">group conversation</string>
     <string name="notification__message__send_failed">Message failed to send</string>
-    <string name="notification__message__ephemeral">sent a message</string>
-    <string name="notification__message_with_mention__ephemeral">mentioned you</string>
+    <string name="notification__message__ephemeral">Sent a message</string>
+    <string name="notification__message_with_mention__ephemeral">Mentioned you</string>
 
     <string name="notification__message__liked">\u2764 ‘%1$s’</string>
     <string name="notification__message__liked_message">\u2764 your message</string>
