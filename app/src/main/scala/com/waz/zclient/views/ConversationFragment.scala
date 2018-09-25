@@ -152,14 +152,7 @@ class ConversationFragment extends FragmentHelper {
   private var isBannerOpen = false
 
   private lazy val messagesOpacity = view[View](R.id.mentions_opacity)
-  private lazy val mentionsList = returning(view[RecyclerView](R.id.mentions_list)) { vh =>
-    vh.foreach { v =>
-      v.setAdapter(mentionCandidatesAdapter)
-      v.setLayoutManager(returning(new LinearLayoutManager(getContext)){
-        _.setStackFromEnd(true)
-      })
-    }
-  }
+  private lazy val mentionsList = view[RecyclerView](R.id.mentions_list)
 
   private def isUserGuest(user: UserData): Signal[Boolean] =
     convController.currentConv.map { conv =>
@@ -396,6 +389,13 @@ class ConversationFragment extends FragmentHelper {
     draftMap.withCurrentDraft { draftText => if (!TextUtils.isEmpty(draftText.text)) cursorView.foreach(_.setText(draftText)) }
 
     listView
+
+    mentionsList.foreach { v =>
+      v.setAdapter(mentionCandidatesAdapter)
+      v.setLayoutManager(returning(new LinearLayoutManager(getContext)){
+        _.setStackFromEnd(true)
+      })
+    }
 
     cursorView.foreach { v =>
       subs += v.mentionSearchResults.flatMap(userList => Signal.sequence(userList.map(isUserGuest):_*).map(g => userList.zip(g))).map(_.map { case (ud, isGuest) =>
