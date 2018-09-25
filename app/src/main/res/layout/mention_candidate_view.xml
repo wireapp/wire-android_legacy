@@ -75,7 +75,7 @@
         </LinearLayout>
 
         <ImageView
-            android:id="@+id/mention_icon"
+            android:id="@+id/guest_indicator"
             android:layout_width="@dimen/guest_options_icon_size"
             android:layout_height="@dimen/guest_options_icon_size"
             android:layout_alignParentEnd="true"
