@@ -28,13 +28,13 @@
 
     <com.waz.zclient.common.views.ChatheadView
         android:id="@+id/mention_chathead"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="@dimen/people_picker__chathead__width"
+        android:layout_height="@dimen/people_picker__chathead__width"
         android:layout_gravity="center"
         android:paddingTop="@dimen/wire__padding__12"
         android:paddingBottom="@dimen/wire__padding__12"
-        android:layout_marginStart="@dimen/wire__padding__8"
-        android:layout_marginEnd="@dimen/wire__padding__8"
+        android:layout_marginStart="@dimen/wire__padding__12"
+        android:layout_marginEnd="@dimen/wire__padding__12"
         app:show_border="false"
         app:allow_icon="false"
         app:is_round="true"
@@ -53,7 +53,8 @@
                       android:layout_width="wrap_content"
                       android:layout_height="wrap_content"
                       android:layout_alignParentStart="true"
-                      android:layout_gravity="center_vertical">
+                      android:layout_gravity="center_vertical"
+                      android:layout_marginStart="@dimen/wire__padding__8">
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:id="@+id/mention_name"
