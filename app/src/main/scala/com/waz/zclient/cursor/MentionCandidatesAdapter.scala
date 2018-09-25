@@ -20,65 +20,55 @@ package com.waz.zclient.cursor
 import android.support.v7.widget.RecyclerView
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.{ImageView, TextView}
-import com.waz.model.{Handle, UserId}
+import com.waz.model.{TeamId, UserData}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.zclient.R
-import com.waz.zclient.common.views.ChatheadView
-import com.waz.zclient.paintcode.GuestIconWithColor
+import com.waz.zclient.common.controllers.ThemeController.Theme
+import com.waz.zclient.common.views.SingleUserRowView
 
 class MentionCandidatesAdapter extends RecyclerView.Adapter[MentionCandidateViewHolder] {
 
-  private var _data = Seq[MentionCandidateInfo]()
+  private var _data = Seq[UserData]()
+  private var _teamId = Option.empty[TeamId]
+  private var _theme: Theme = Theme.Light
 
-  val onUserClicked: SourceStream[MentionCandidateInfo] = EventStream()
+  val onUserClicked: SourceStream[UserData] = EventStream()
 
-  def setData(data: Seq[MentionCandidateInfo]): Unit = {
+  def setData(data: Seq[UserData], teamId: Option[TeamId], theme: Theme): Unit = {
     _data = data
+    _teamId = teamId
+    _theme = theme
     notifyDataSetChanged()
   }
 
-  private def getItem(pos: Int): MentionCandidateInfo = _data(pos)
+  private def getItem(pos: Int): UserData = _data(pos)
 
   override def getItemCount: Int = _data.size
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): MentionCandidateViewHolder = {
-    val view = LayoutInflater.from(parent.getContext).inflate(R.layout.mention_candidate_view, parent, false)
+    val view = LayoutInflater.from(parent.getContext).inflate(R.layout.single_user_row, parent, false).asInstanceOf[SingleUserRowView]
+    view.showArrow(false)
+    view.setTheme(_theme, background = false)
+    view.setSeparatorVisible(false)
     new MentionCandidateViewHolder(view, { onUserClicked ! _ })
   }
 
   override def onBindViewHolder(holder: MentionCandidateViewHolder, position: Int): Unit = {
-    holder.bind(getItem(position))
+    holder.bind(getItem(position), _teamId)
   }
 
-  override def getItemId(position: Int): Long = getItem(position).userId.str.hashCode
+  override def getItemId(position: Int): Long = getItem(position).id.str.hashCode
 }
 
-class MentionCandidateViewHolder(v: View, onUserClick: MentionCandidateInfo => Unit) extends RecyclerView.ViewHolder(v) {
-  private val nameTextView = v.findViewById[TextView](R.id.mention_name)
-  private val handleTextView = v.findViewById[TextView](R.id.mention_handle)
-  private val chathead = v.findViewById[ChatheadView](R.id.mention_chathead)
-  private val icon = v.findViewById[ImageView](R.id.guest_indicator)
-  private implicit val cxt = v.getContext
-
-  import com.waz.zclient.utils._
-  import ContextUtils._
-
-  private var userId = Option.empty[MentionCandidateInfo]
+class MentionCandidateViewHolder(v: View, onUserClick: UserData => Unit) extends RecyclerView.ViewHolder(v) {
+  private var userData = Option.empty[UserData]
 
   v.setOnClickListener(new OnClickListener {
-    override def onClick(v: View): Unit = userId.foreach(onUserClick(_))
+    override def onClick(v: View): Unit = userData.foreach(onUserClick(_))
   })
 
-  def bind(info: MentionCandidateInfo): Unit = {
-    userId = Some(info)
-    nameTextView.setText(info.name)
-    handleTextView.setText(StringUtils.formatHandle(info.handle.string))
-    chathead.setUserId(info.userId)
-    icon.setVisible(info.isGuest)
-    if(info.isGuest)
-      icon.setImageDrawable(GuestIconWithColor(getStyledColor(R.attr.wireSecondaryTextColor)))
+  def bind(userData: UserData, teamId: Option[TeamId]): Unit = {
+    this.userData = Some(userData)
+    v.asInstanceOf[SingleUserRowView].setUserData(userData, teamId)
   }
 }
-
-case class MentionCandidateInfo(userId: UserId, name: String, handle: Handle, isGuest: Boolean)
