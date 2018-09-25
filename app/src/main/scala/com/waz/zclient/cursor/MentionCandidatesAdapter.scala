@@ -58,7 +58,7 @@ class MentionCandidateViewHolder(v: View, onUserClick: MentionCandidateInfo => U
   private val nameTextView = v.findViewById[TextView](R.id.mention_name)
   private val handleTextView = v.findViewById[TextView](R.id.mention_handle)
   private val chathead = v.findViewById[ChatheadView](R.id.mention_chathead)
-  private val icon = v.findViewById[ImageView](R.id.mention_icon)
+  private val icon = v.findViewById[ImageView](R.id.guest_indicator)
   private implicit val cxt = v.getContext
 
   import com.waz.zclient.utils._
