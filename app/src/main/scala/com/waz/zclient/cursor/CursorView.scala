@@ -141,7 +141,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     results <- if (selectionHasMention || !selectionSingle)
       Signal.const(IndexedSeq.empty[UserData])
     else
-      searchService.searchUsersInConversation(convId, query.getOrElse(""), includeSelf = true)
+      searchService.searchUsersInConversation(convId, query.getOrElse(""), includeSelf = false)
   } yield results
 
   def createMention(userId: UserId, name: String, editText: EditText, selectionIndex: Int, accentColor: Int): Unit = {
