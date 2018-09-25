@@ -455,17 +455,17 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     if (message.trim.isEmpty) (Message.Type.TEXT, textContent(message))
     else {
       if (links.isEmpty) {
-        val ct = RichMediaContentParser.splitContent(message, weblinkEnabled)
+        val ct = RichMediaContentParser.splitContent(message, mentions, 0, weblinkEnabled)
 
         (ct.size, ct.head.tpe) match {
           case (1, Message.Part.Type.TEXT) => (Message.Type.TEXT, ct)
           case (1, Message.Part.Type.TEXT_EMOJI_ONLY) => (Message.Type.TEXT_EMOJI_ONLY, ct)
           case _ => (Message.Type.RICH_MEDIA, ct)
         }
-        (ct.size, ct.head.tpe, applyMentions(ct, mentions)) match {
-          case (1, Message.Part.Type.TEXT, ctWithMentions) => (Message.Type.TEXT, ctWithMentions)
-          case (1, Message.Part.Type.TEXT_EMOJI_ONLY, ctWithMentions) => (Message.Type.TEXT_EMOJI_ONLY, ctWithMentions)
-          case (_, _, ctWithMentions) => (Message.Type.RICH_MEDIA, ctWithMentions)
+        (ct.size, ct.head.tpe) match {
+          case (1, Message.Part.Type.TEXT) => (Message.Type.TEXT, ct)
+          case (1, Message.Part.Type.TEXT_EMOJI_ONLY) => (Message.Type.TEXT_EMOJI_ONLY, ct)
+          case _ => (Message.Type.RICH_MEDIA, ct)
         }
       } else {
         // apply links
@@ -477,7 +477,7 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
         val res = new MessageContentBuilder
 
         val end = links.sortBy(_.urlOffset).foldLeft(0) { case (prevEnd, link) =>
-          if (link.urlOffset > prevEnd) res ++= RichMediaContentParser.splitContent(message.substring(prevEnd, link.urlOffset))
+          if (link.urlOffset > prevEnd) res ++= RichMediaContentParser.splitContent(message.substring(prevEnd, link.urlOffset), mentions, prevEnd)
 
           returning(linkEnd(link.urlOffset)) { end =>
             if (end > link.urlOffset) {
@@ -487,22 +487,10 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
           }
         }
 
-        if (end < message.length) res ++= RichMediaContentParser.splitContent(message.substring(end))
+        if (end < message.length) res ++= RichMediaContentParser.splitContent(message.substring(end), mentions, end)
 
-        (Message.Type.RICH_MEDIA, applyMentions(res.result(), mentions))
+        (Message.Type.RICH_MEDIA, res.result())
       }
-    }
-
-  private def applyMentions(content: Seq[MessageContent], mentions: Seq[Mention]): Seq[MessageContent] =
-    if (mentions.isEmpty) content
-    else {
-      if (content.size == 1) content.map(_.copy(mentions = mentions))
-      else
-        content.foldLeft("", Seq.empty[MessageContent]) { case ((processedText, acc), ct) =>
-          val newProcessedText = processedText + ct.content
-          val ms = mentions.filter(m => m.start >= processedText.length && m.start + m.length <= newProcessedText.length) // we assume mentions are not split over many contents
-          (newProcessedText, acc ++ Seq(if (ms.isEmpty) ct else ct.copy(mentions = ms)))
-        }._2
     }
 
   def textContent(message: String): Seq[MessageContent] = Seq(RichMediaContentParser.textMessageContent(message))

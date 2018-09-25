@@ -23,7 +23,7 @@ import android.util.Patterns
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.Message.Part
-import com.waz.model.MessageContent
+import com.waz.model.{Mention, MessageContent}
 import com.waz.sync.client.{SoundCloudClient, YouTubeClient}
 import com.waz.utils.LoggedTry
 import com.waz.utils.wrappers.URI
@@ -35,7 +35,7 @@ object RichMediaContentParser {
 
   import Part.Type._
 
-  def findMatches(content: String, weblinkEnabled: Boolean = false) = {
+  def findMatches(content: String, mentionsRanges: Seq[(Int, Int)] = Nil, weblinkEnabled: Boolean = false): Iterator[(Int, Int, Part.Type)] = {
 
     val knownDomains = (YouTubeClient.DomainNames.map(_ -> YOUTUBE) ++
       SoundCloudClient.domainNames.map(_ -> SOUNDCLOUD)
@@ -66,26 +66,35 @@ object RichMediaContentParser {
     }
 
     val m = Patterns.WEB_URL.matcher(content.replace("HTTP://", "http://")) // XXX: upper case HTTP is not matched by WEB_URL pattern
-    Iterator.continually(m.find()).takeWhile(identity).map { _ =>
+    Iterator.continually(m.find()).takeWhile(identity).flatMap { _ =>
       val start = m.start
       val end = m.end
-      if (start == 0 || content(start - 1) != '@') {
+      verbose(s"match found: start = $start, end = $end, not in mentions: ${mentionsRanges.forall(r => r._1 > start || r._2 <= end)}")
+      if ( (start == 0 || content(start - 1) != '@') && mentionsRanges.forall(r => r._1 > start || r._2 <= end)) {
         uriAndType(m.group()) map { tpe => (start, end, tpe) }
       } else None
-    }.flatten
+    }
   }
 
-  def splitContent(content: String, weblinkEnabled: Boolean = false): Seq[MessageContent] = {
+  def splitContent(content: String, mentions: Seq[Mention] = Nil, offset: Int = 0, weblinkEnabled: Boolean = false): Seq[MessageContent] = {
+    val mentionsRanges = mentions.map(m => (m.start - offset, m.start + m.length - offset) -> m).toMap.filterKeys(_._1 >= 0)
+
+    def mentionsBetween(from: Int, to: Int): Seq[Mention] =
+      mentionsRanges.filterKeys(r => r._1 >= from && r._2 <= to).values.toSeq
+
     try {
       val res = new MessageContentBuilder
 
-      val end = findMatches(content, weblinkEnabled).foldLeft(0) { case (start, (matchStart, matchEnd, tpe)) =>
-        if (start < matchStart) res += content.substring(start, matchStart)
-        res += (tpe, content.substring(matchStart, matchEnd))
-        matchEnd
+      val end = findMatches(content, mentionsRanges.keys.toSeq, weblinkEnabled).foldLeft(0) {
+        case (start, (matchStart, matchEnd, tpe)) =>
+          if (start < matchStart)
+            res += (content.substring(start, matchStart), mentionsBetween(start, matchStart))
+          res += (tpe, content.substring(matchStart, matchEnd))
+          matchEnd
       }
 
-      if (end < content.length) res += content.substring(end)
+      if (end < content.length)
+        res += (content.substring(end), mentionsBetween(end, content.length))
 
       res.result()
     } catch {
@@ -118,7 +127,8 @@ object RichMediaContentParser {
 
   private def decode[T](url: String)(op: URI => Option[T]): Option[T] = op(URI.parse(URLDecoder.decode(url, "UTF-8")))
 
-  def textMessageContent(part: String) = MessageContent(if (containsOnlyEmojis(part)) TEXT_EMOJI_ONLY else TEXT, part)
+  def textMessageContent(part: String, mentions: Seq[Mention] = Nil) =
+    MessageContent(if (containsOnlyEmojis(part)) TEXT_EMOJI_ONLY else TEXT, part, mentions = mentions)
 
   def containsOnlyEmojis(part: String): Boolean = {
 
@@ -175,9 +185,11 @@ class MessageContentBuilder {
   def +=(part: String) =
     if (part.trim.nonEmpty) res += RichMediaContentParser.textMessageContent(part)
 
-
   def +=(tpe: Part.Type, part: String) =
     if (part.trim.nonEmpty) res += MessageContent(tpe, part)
+
+  def +=(part: String, mentions: Seq[Mention]) =
+    if (part.trim.nonEmpty) res += RichMediaContentParser.textMessageContent(part, mentions)
 
   def +=(content: MessageContent) = res += content
 

@@ -18,7 +18,7 @@
 package com.waz.service.media
 
 import com.waz.api.Message.Part.Type._
-import com.waz.model.MessageContent
+import com.waz.model.{Mention, MessageContent, UserId}
 import org.scalacheck.Gen
 import org.scalatest.prop.{GeneratorDrivenPropertyChecks, TableDrivenPropertyChecks}
 import RichMediaContentParser._
@@ -133,11 +133,47 @@ class RichMediaContentParserSpec extends AndroidFreeSpec with TableDrivenPropert
         MessageContent(TEXT, " and even more")
       )
     }
+
+    scenario("don't extract a link from a mention") {
+      val mentionStr = "@[nqa2](http://google.com)"
+      val text = s"aaa $mentionStr bbb"
+      val mention = Mention(Some(UserId()), 4, mentionStr.length)
+      splitContent(text, Seq(mention), weblinkEnabled = true) shouldEqual List(MessageContent(TEXT, text, mentions = Seq(mention)))
+    }
+
+    scenario("don't extract a link from a mention being the whole message") {
+      val mentionStr = "@[nqa2](http://google.com)"
+      val mention = Mention(Some(UserId()), 0, mentionStr.length)
+      splitContent(mentionStr, Seq(mention), weblinkEnabled = true) shouldEqual List(MessageContent(TEXT, mentionStr, mentions = Seq(mention)))
+    }
+
+    scenario("don't extract a mention from a link") {
+      val mentionStr = "@nqa"
+      val text = s"[click here](http://google.com/?$mentionStr)"
+      val mention = Mention(Some(UserId()), text.indexOf("@nqa"), mentionStr.length)
+      splitContent(text, Seq(mention), weblinkEnabled = true) shouldEqual List(
+        MessageContent(TEXT, "[click here]("),
+        MessageContent(WEB_LINK, s"http://google.com/?$mentionStr)")
+      )
+    }
+
+    scenario("don't extract a link from a mention when the message has more than one link") {
+      val mentionStr = "@[nqa2](http://google.com)"
+      val text = s"aaa $mentionStr bbb http://google.com ccc"
+      val mention = Mention(Some(UserId()), 4, mentionStr.length)
+      splitContent(text, Seq(mention), weblinkEnabled = true) shouldEqual List(
+        MessageContent(TEXT, s"aaa $mentionStr bbb ", mentions = Seq(mention)),
+        MessageContent(WEB_LINK, s"http://google.com"),
+        MessageContent(TEXT, s" ccc")
+      )
+    }
+
   }
 
   //See this page for where the ranges were fetched from:
   //http://apps.timwhitlock.info/emoji/tables/unicode
   //TODO there are still some emojis missing - but there are no clean lists for the ranges of unicode characters
+
   feature("Emoji") {
 
     lazy val emojis = Source.fromInputStream(getClass.getResourceAsStream("/emojis.txt"))(Codec.UTF8).getLines().toSeq.filterNot(_.startsWith("#"))
