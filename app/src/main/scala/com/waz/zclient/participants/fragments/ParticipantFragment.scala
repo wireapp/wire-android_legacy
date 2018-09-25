@@ -120,7 +120,10 @@ class ParticipantFragment extends ManagerFragment
       case _ =>
     }
 
-    getStringArg(UserToOpenArg).map(UserId).foreach(showUser)
+    participantsController.isGroupOrBot.head.foreach {
+      case true => getStringArg(UserToOpenArg).map(UserId).foreach(showUser)
+      case _ =>
+    }
   }
 
   override def onStart(): Unit = {
