@@ -129,7 +129,7 @@ class ConversationFragment extends FragmentHelper {
   private lazy val cursorView = returning(view[CursorView](R.id.cv__cursor)) { vh =>
     mentionCandidatesAdapter.onUserClicked.onUi { info =>
       vh.foreach(v => v.accentColor.head.foreach { ac =>
-        v.createMention(info.userId, info.name, v.cursorEditText, v.cursorEditText.getSelectionStart, ac.color)
+        v.createMention(info.id, info.name, v.cursorEditText, v.cursorEditText.getSelectionStart, ac.color)
       })
     }
   }
@@ -398,10 +398,11 @@ class ConversationFragment extends FragmentHelper {
     }
 
     cursorView.foreach { v =>
-      subs += v.mentionSearchResults.flatMap(userList => Signal.sequence(userList.map(isUserGuest):_*).map(g => userList.zip(g))).map(_.map { case (ud, isGuest) =>
-        MentionCandidateInfo(ud.id, ud.name, ud.handle.getOrElse(Handle()), isGuest)}).onUi { data =>
-        mentionCandidatesAdapter.setData(data)
-        mentionsList.foreach(_.scrollToPosition(data.size - 1))
+
+      subs += Signal(v.mentionSearchResults, accountsController.teamId, inject[ThemeController].currentTheme).onUi {
+        case (data, teamId, theme) =>
+          mentionCandidatesAdapter.setData(data, teamId, theme)
+          mentionsList.foreach(_.scrollToPosition(data.size - 1))
       }
       subs += Signal(v.mentionQuery.map(_.nonEmpty), v.mentionSearchResults.map(_.nonEmpty), v.selectionHasMention).map {
         case (true, true, false) => true
