@@ -966,5 +966,5 @@
     <dimen name="services_warning_icon_height">48dp</dimen>
     <dimen name="services_warning_text_width">204dp</dimen>
     <dimen name="user_part_view_bot_size">12dp</dimen>
-
+    <dimen name="mentions_chathead_size">32dp</dimen>
 </resources>
