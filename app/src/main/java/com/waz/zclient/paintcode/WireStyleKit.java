@@ -2428,9 +2428,7 @@ public class WireStyleKit {
         canvas.scale(resizedFrame.width() / 64f, resizedFrame.height() / 64f);
 
         // Group 2
-        {
-            // Empty.
-        }
+        // Empty.
 
         // Bezier
         RectF bezierRect = CacheForSend.bezierRect;
@@ -2538,9 +2536,7 @@ public class WireStyleKit {
         canvas.scale(resizedFrame.width() / 64f, resizedFrame.height() / 64f);
 
         // Group 2
-        {
-            // Empty.
-        }
+        // Empty.
 
         // Bezier
         RectF bezierRect = CacheForEmoji.bezierRect;
