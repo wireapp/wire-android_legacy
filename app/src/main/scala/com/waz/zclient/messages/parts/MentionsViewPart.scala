@@ -110,12 +110,12 @@ trait MentionsViewPart extends MessageViewPart with ViewHelper {
 
     override def draw(canvas: Canvas, text: CharSequence, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint): Unit = {
       val atPaint = new Paint(paint)
-      atPaint.setTypeface(Typeface.DEFAULT)
       atPaint.setColor(color)
+      atPaint.setTypeface(Typeface.create(paint.getTypeface, paint.getTypeface.getStyle & ~Typeface.BOLD))
       atPaint.setTextSize(atPaint.getTextSize * 0.9f)
 
       val boldPaint = new Paint(paint)
-      boldPaint.setTypeface(Typeface.DEFAULT_BOLD)
+      boldPaint.setTypeface(Typeface.create(paint.getTypeface, paint.getTypeface.getStyle | Typeface.BOLD))
       boldPaint.setColor(color)
 
       if (text.length() > start + 1) {
@@ -126,7 +126,8 @@ trait MentionsViewPart extends MessageViewPart with ViewHelper {
 
     override def getSize(paint: Paint, text: CharSequence, start: Int, end: Int, fm: Paint.FontMetricsInt): Int = {
       paint.getFontMetricsInt(fm)
-      returning(new Paint(paint))(_.setTypeface(Typeface.DEFAULT_BOLD)).measureText(text, start, end).toInt
+      returning(new Paint(paint))(_.setTypeface(Typeface.create(paint.getTypeface, paint.getTypeface.getStyle | Typeface.BOLD)))
+        .measureText(text, start, end).toInt
     }
 
   }
