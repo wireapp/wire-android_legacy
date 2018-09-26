@@ -34,7 +34,6 @@ import org.threeten.bp.Instant
 import scala.collection.breakOut
 import scala.collection.generic.CanBuild
 import scala.concurrent.Future
-//import scala.language.higherKinds
 
 class UserSearchServiceSpec extends AndroidFreeSpec {
 
@@ -64,11 +63,95 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
     id('h) -> UserData(id('h), "friend user 2").copy(connection = ConnectionStatus.ACCEPTED),
     id('i) -> UserData(id('i), "some other friend").copy(connection = ConnectionStatus.ACCEPTED),
     id('j) -> UserData(id('j), "meep moop").copy(email = Some(EmailAddress("moop@meep.me"))),
-    id('k) -> UserData(id('k), "unconnected user").copy(connection = ConnectionStatus.UNCONNECTED)
+    id('k) -> UserData(id('k), "unconnected user").copy(connection = ConnectionStatus.UNCONNECTED),
+    id('l) -> UserData(id('l), "Björn-Rodrigo Smith"),
+    id('m) -> UserData(id('m), "John Smith"),
+    id('n) -> UserData(id('n), "Jason-John Mercier"),
+    id('o) -> UserData(id('o), "Captain Crunch").copy(handle = Some(Handle("john"))),
+    id('p) -> UserData(id('p), "Peter Pan").copy(handle = Some(Handle("john"))),
+    id('q) -> UserData(id('q), "James gjohnjones"),
+    id('r) -> UserData(id('r), "Liv Boeree").copy(handle = Some(Handle("testjohntest"))),
+    id('s) -> UserData(id('s), "blah").copy(handle = Some(Handle("mores"))),
+    id('t) -> UserData(id('t), "test handle").copy(handle = Some(Handle("smoresare")))
   )
+
+  scenario("search conversation with token starting with query") {
+
+    val convMembers = Set(id('l), id('b))
+
+    (queryCacheStorage.deleteBefore _).expects(*).anyNumberOfTimes().returning(Future.successful[Unit]({}))
+    (membersStorage.activeMembers _).expects(*).anyNumberOfTimes().returning(Signal.const(convMembers))
+    (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
+
+    val res = getService.mentionsSearchUsersInConversation(ConvId("123"),"rod")
+    result(res.filter(_.size == 1).head)
+  }
+
+  scenario("search conversation with name starting with query") {
+
+    val convMembers = Set(id('l), id('b))
+
+    (queryCacheStorage.deleteBefore _).expects(*).anyNumberOfTimes().returning(Future.successful[Unit]({}))
+    (membersStorage.activeMembers _).expects(*).anyNumberOfTimes().returning(Signal.const(convMembers))
+    (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
+
+    val res = getService.mentionsSearchUsersInConversation(ConvId("123"),"bjo")
+    result(res.filter(_.size == 1).head)
+  }
+
+  scenario("search conversation with name containing query") {
+
+    val convMembers = Set(id('l), id('m))
+
+    (queryCacheStorage.deleteBefore _).expects(*).anyNumberOfTimes().returning(Future.successful[Unit]({}))
+    (membersStorage.activeMembers _).expects(*).anyNumberOfTimes().returning(Signal.const(convMembers))
+    (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
+
+    val res = getService.mentionsSearchUsersInConversation(ConvId("123"),"rn")
+    result(res.filter{u => println(u.map(_.displayName));u.size == 1}.head)
+  }
+
+  scenario("search conversation with handle containing query") {
+
+    val convMembers = Set(id('s), id('t))
+
+    (queryCacheStorage.deleteBefore _).expects(*).anyNumberOfTimes().returning(Future.successful[Unit]({}))
+    (membersStorage.activeMembers _).expects(*).anyNumberOfTimes().returning(Signal.const(convMembers))
+    (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
+
+    val res = getService.mentionsSearchUsersInConversation(ConvId("123"),"mores")
+    result(res.filter(_.size == 2).head)
+  }
+
+  scenario("search conversation handle beginning with query") {
+
+    val convMembers = Set(id('s), id('t))
+
+    (queryCacheStorage.deleteBefore _).expects(*).anyNumberOfTimes().returning(Future.successful[Unit]({}))
+    (membersStorage.activeMembers _).expects(*).anyNumberOfTimes().returning(Signal.const(convMembers))
+    (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
+
+    val res = getService.mentionsSearchUsersInConversation(ConvId("123"),"smores")
+    result(res.filter(_.size == 1).head)
+  }
+
+  scenario("search conversation people ordering") {
+
+    val convMembers = Set(id('q), id('r),id('p), id('n), id('m), id('o))
+    val correctOrder = IndexedSeq(ud('m), ud('n), ud('o), ud('p), ud('q), ud('r))
+
+    (queryCacheStorage.deleteBefore _).expects(*).anyNumberOfTimes().returning(Future.successful[Unit]({}))
+    (membersStorage.activeMembers _).expects(*).anyNumberOfTimes().returning(Signal.const(convMembers))
+    (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
+
+    val res = getService.mentionsSearchUsersInConversation(ConvId("123"),"john")
+
+    result(res.filter(_.equals(correctOrder)).head)
+  }
 
   def id(s: Symbol) = UserId(s.toString)
   def ids(s: Symbol*) = s.map(id)(breakOut).toSet
+  def ud(s: Symbol) = users(id(s))
 
   def verifySearch(prefix: String, matches: Set[UserId]) = {
     val query = Recommended(prefix)
