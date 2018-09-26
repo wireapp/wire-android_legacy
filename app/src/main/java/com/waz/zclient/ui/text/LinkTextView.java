@@ -72,27 +72,8 @@ public class LinkTextView extends MarkdownTextView {
 
     }
 
-    public void setTextLink(String text) {
+    public void setTextLink() {
         // TODO: remove try/catch blocks when the bug is fixed
-
-        try {
-            setTransformedText(text);
-        } catch(ArrayIndexOutOfBoundsException ex) {
-                Timber.i("Error while transforming text link. text: %s", text);
-                if (BuildConfig.FLAVOR.equals("internal")) {
-                    throw ex;
-                }
-        }
-
-        try {
-            markdown();
-        } catch(ArrayIndexOutOfBoundsException ex) {
-            Timber.i("Error on markdown. text: %s", text);
-            if (BuildConfig.FLAVOR.equals("internal")) {
-                throw ex;
-            }
-        }
-
         try {
             if (Linkify.addLinks(this, Linkify.WEB_URLS | Linkify.EMAIL_ADDRESSES | Linkify.PHONE_NUMBERS)) {
                 stripUnderlines();
@@ -106,7 +87,7 @@ public class LinkTextView extends MarkdownTextView {
         try {
             refreshLinks();
         } catch(ArrayIndexOutOfBoundsException ex) {
-            Timber.i("Error while refreshing links. text: %s", text);
+            Timber.i("Error while refreshing links. text: %s", getText());
             if (BuildConfig.FLAVOR.equals("internal")) {
                 throw ex;
             }
@@ -123,7 +104,7 @@ public class LinkTextView extends MarkdownTextView {
      * Contributors on StackOverflow:
      *  - Andrei (http://stackoverflow.com/users/570217)
      */
-    private void stripUnderlines() {
+    public void stripUnderlines() {
         if (getText() == null) {
             return;
         }

@@ -28,6 +28,7 @@ import android.util.{AttributeSet, TypedValue}
 import android.view.View
 import android.widget.LinearLayout
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.info
 import com.waz.api.{ContentSearchQuery, Message}
 import com.waz.model.{Mention, MessageContent, MessageData}
 import com.waz.service.messages.MessageAndLikes
@@ -42,7 +43,7 @@ import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.ui.text.LinkTextView
 import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.ui.views.OnDoubleClickListener
-import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.{BuildConfig, R, ViewHelper}
 
 class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper with ClickableViewPart with EphemeralPartView with EphemeralIndicatorPartView with MentionsViewPart {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -96,12 +97,12 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
   } yield focused.exists(_.id == msg.id)
 
   val searchResultText = for {
-    color <- accentColorController.accentColor
-    query <- collectionController.contentSearchQuery if !query.isEmpty
+    color         <- accentColorController.accentColor
+    query         <- collectionController.contentSearchQuery if !query.isEmpty
     searchResults <- collectionController.matchingTextSearchMessages
-    msg <- message if searchResults(msg.id)
-    part <- messagePart
-    content = part.fold(msg.contentString)(_.content)
+    msg           <- message if searchResults(msg.id)
+    part          <- messagePart
+    content       =  part.fold(msg.contentString)(_.content)
   } yield
     CollectionUtils.getHighlightedSpannableString(content, ContentSearchQuery.transliterated(content), query.elements, ColorUtils.injectAlpha(0.5f, color.color))._1
 
@@ -114,6 +115,39 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
     case false => animator.end()
   }
 
+  private def setText(text: String): Unit = { // TODO: remove try/catch blocks when the bug is fixed
+    try {
+      textView.setTransformedText(text)
+    } catch {
+      case ex: ArrayIndexOutOfBoundsException =>
+        info(s"Error while transforming text link. text: $text")
+        if (BuildConfig.FLAVOR == "internal") throw ex
+    }
+
+    try {
+      textView.markdown()
+    } catch {
+      case ex: ArrayIndexOutOfBoundsException =>
+        info(s"Error on markdown. text: $text")
+        if (BuildConfig.FLAVOR == "internal") throw ex
+    }
+  }
+
+  private def restoreMentionHandles(mentionHolders: Seq[MentionHolder]): Unit = {
+    val text = textView.getText
+    val ssb = SpannableStringBuilder.valueOf(text)
+
+    mentionHolders.foldLeft(text.toString) {
+      case (oldText, holder) if oldText.contains(holder.uuid) =>
+        val start = oldText.indexOf(holder.uuid)
+        ssb.replace(start, start + holder.uuid.length, holder.handle)
+        oldText.replace(holder.uuid, holder.handle)
+      case (oldText, _) => oldText // when Markdown deletes the mention
+    }
+
+    textView.setText(new SpannableString(ssb))
+  }
+
   override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     animator.end()
     super.set(msg, part, opts)
@@ -124,12 +158,12 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
     val (text, offset) = part.fold(contentString, 0)(ct => (ct.content, contentString.indexOf(ct.content)))
     val mentions = msg.message.content.flatMap(_.mentions)
 
-    if (mentions.isEmpty) textView.setTextLink(text)
+    if (mentions.isEmpty) setText(text)
     else {
       // https://github.com/wearezeta/documentation/blob/master/topics/mentions/use-cases/002-receive-and-display-message.md#step-2-replace-mention-in-message
       val (replaced, mentionHolders) = TextPartView.replaceMentions(text, mentions, offset)
 
-      textView.setTextLink(replaced)
+      setText(replaced)
 
       val updatedMentions = TextPartView.updateMentions(textView.getText.toString, mentionHolders, offset)
       restoreMentionHandles(mentionHolders)
@@ -146,26 +180,13 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
       }
     }
 
+    textView.setTextLink()
+
     messagePart ! part
   }
 
   def isEmojiOnly(msg: MessageData, part: Option[MessageContent]) =
     part.fold(msg.msgType == Message.Type.TEXT_EMOJI_ONLY)(_.tpe == Message.Part.Type.TEXT_EMOJI_ONLY)
-
-  private def restoreMentionHandles(mentionHolders: Seq[MentionHolder]): Unit = {
-    val text = textView.getText
-    val ssb = SpannableStringBuilder.valueOf(text)
-
-    mentionHolders.foldLeft(text.toString) {
-      case (oldText, holder) if oldText.contains(holder.uuid) =>
-        val start = oldText.indexOf(holder.uuid)
-        ssb.replace(start, start + holder.uuid.length, holder.handle)
-        oldText.replace(holder.uuid, holder.handle)
-      case (oldText, _) => oldText // when Markdown deletes the mention
-    }
-
-    textView.setText(new SpannableString(ssb))
-  }
 
 }
 
