@@ -339,10 +339,10 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
 object ConversationListRow {
 
-  def formatSubtitle(content: String, user: String, group: Boolean): String = {
+  def formatSubtitle(content: String, user: String, group: Boolean, isEphemental: Boolean = false): String = {
     val groupSubtitle =  "[[%s]]: %s"
     val singleSubtitle =  "%s"
-    if (group) {
+    if (group && !isEphemental) {
       String.format(groupSubtitle, user, content)
     } else {
       String.format(singleSubtitle, content)
@@ -395,10 +395,11 @@ object ConversationListRow {
     lazy val memberName = members.headOption.fold2(getString(R.string.conversation_list__someone), _.getDisplayName)
 
     if (messageData.isEphemeral) {
-      if (messageData.hasMentionOf(selfId))
-        formatSubtitle(getString(R.string.conversation_list__eph_and_mention), senderName, isGroup)
-      else
-      formatSubtitle(getString(R.string.conversation_list__ephemeral), senderName, isGroup)
+      if (messageData.hasMentionOf(selfId)) {
+        if (isGroup) formatSubtitle(getString(R.string.conversation_list__group_eph_and_mention), senderName, isGroup, isEphemental = true)
+        else formatSubtitle(getString(R.string.conversation_list__single_eph_and_mention), senderName, isGroup, isEphemental = true)
+      } else
+        formatSubtitle(getString(R.string.conversation_list__ephemeral), senderName, isGroup, isEphemental = true)
     } else {
       messageData.msgType match {
         case Message.Type.TEXT | Message.Type.TEXT_EMOJI_ONLY | Message.Type.RICH_MEDIA =>
@@ -447,7 +448,7 @@ object ConversationListRow {
                                     isGroupConv:              Boolean,
                                     user:                     Option[String])
                                    (implicit context: Context): String = {
-    if (conv.convType == ConversationType.WaitForConnection || (lastMessage.exists(_.msgType == Message.Type.MEMBER_JOIN) && conv.convType == ConversationType.OneToOne)) {
+    if (conv.convType == ConversationType.WaitForConnection || (lastMessage.exists(_.msgType == Message.Type.MEMBER_JOIN) && !isGroupConv)) {
       otherMember.flatMap(_.handle.map(_.string)).fold("")(StringUtils.formatHandle)
     } else if (memberIds.count(_ != selfId) == 0 && conv.convType == ConversationType.Group) {
       ""
@@ -498,10 +499,10 @@ object ConversationListRow {
         lastUnreadMessage.fold {
           ""
         } { msg =>
-          subtitleStringForLastMessage(msg, lastUnreadMessageUser, lastUnreadMessageMembers, conv.convType == ConversationType.Group, selfId)
+          subtitleStringForLastMessage(msg, lastUnreadMessageUser, lastUnreadMessageMembers, isGroupConv, selfId)
         }
       } { usr =>
-        formatSubtitle(getString(R.string.conversation_list__typing), usr.getDisplayName, conv.convType == ConversationType.Group)
+        formatSubtitle(getString(R.string.conversation_list__typing), usr.getDisplayName, isGroupConv)
       }
     }
   }

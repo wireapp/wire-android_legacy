@@ -1298,8 +1298,9 @@
     <string name="conversation_list__shared__location">Shared a location</string>
     <string name="conversation_list__missed_call">Missed call</string>
     <string name="conversation_list__pinged">Pinged</string>
-    <string name="conversation_list__ephemeral">Timed message</string>
-    <string name="conversation_list__eph_and_mention">Someone mentioned you</string>
+    <string name="conversation_list__ephemeral">Someone sent you a message</string>
+    <string name="conversation_list__single_eph_and_mention">Mentioned you</string>
+    <string name="conversation_list__group_eph_and_mention">Someone mentioned you</string>
     <string name="conversation_list__typing">Typing a message…</string>
     <string name="conversation_list__someone">Someone</string>
     <string name="conversation_list__added">[[%1$s]] was added</string>

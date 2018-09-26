@@ -104,7 +104,7 @@ public class LinkTextView extends MarkdownTextView {
      * Contributors on StackOverflow:
      *  - Andrei (http://stackoverflow.com/users/570217)
      */
-    public void stripUnderlines() {
+    private void stripUnderlines() {
         if (getText() == null) {
             return;
         }
