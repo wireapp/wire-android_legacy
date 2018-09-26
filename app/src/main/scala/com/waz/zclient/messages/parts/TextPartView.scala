@@ -23,7 +23,7 @@ import android.animation.ValueAnimator
 import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.content.Context
 import android.graphics.Color
-import android.text.{SpannableString, SpannableStringBuilder}
+import android.text.{Spannable, SpannableString, SpannableStringBuilder}
 import android.util.{AttributeSet, TypedValue}
 import android.view.View
 import android.widget.LinearLayout
@@ -134,12 +134,16 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
       val updatedMentions = TextPartView.updateMentions(textView.getText.toString, mentionHolders, offset)
       restoreMentionHandles(mentionHolders)
 
-      addMentionSpans(
-        textView,
-        updatedMentions,
-        opts.flatMap(_.selfId),
-        accentColorController.accentColor.map(_.color).currentValue.getOrElse(Color.BLUE)
-      )
+      textView.getText match {
+        case spannable: Spannable =>
+          addMentionSpans(
+            spannable,
+            updatedMentions,
+            opts.flatMap(_.selfId),
+            accentColorController.accentColor.map(_.color).currentValue.getOrElse(Color.BLUE)
+          )
+        case _ =>
+      }
     }
 
     messagePart ! part
