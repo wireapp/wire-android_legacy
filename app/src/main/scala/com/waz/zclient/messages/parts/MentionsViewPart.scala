@@ -21,7 +21,6 @@ import android.graphics._
 import android.text.{Spannable, Spanned, TextPaint}
 import android.text.style._
 import android.view.View
-import android.widget.TextView
 import com.waz.model.{Mention, MessageContent, UserId}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.zclient.{R, ViewHelper}
@@ -35,14 +34,14 @@ trait MentionsViewPart extends MessageViewPart with ViewHelper {
 
   private val participantsController = inject[ParticipantsController]
 
-  def addMentionSpans(textView: TextView, mentions: Seq[Mention], selfId: Option[UserId], color: Int): Unit =
-    textView.getText match {
-      case spannable: Spannable =>
-        mentions.foreach(applySpanForMention(spannable, _, selfId, color, textView.getLineHeight))
-      case _ =>
+  def addMentionSpans(spannable: Spannable, mentions: Seq[Mention], selfId: Option[UserId], color: Int): Unit = {
+      spannable.getSpans(0, spannable.length(), classOf[OtherMentionSpan]).foreach(spannable.removeSpan)
+      spannable.getSpans(0, spannable.length(), classOf[SelfMentionBackgroundSpan]).foreach(spannable.removeSpan)
+
+      mentions.foreach(applySpanForMention(spannable, _, selfId, color))
     }
 
-  private def applySpanForMention(spannable: Spannable, mention: Mention, selfId: Option[UserId], accentColor: Int, lineHeight: Int): Unit = {
+  private def applySpanForMention(spannable: Spannable, mention: Mention, selfId: Option[UserId], accentColor: Int): Unit = {
 
     val start = Math.min(mention.start, spannable.length())
     val end = Math.min(mention.start + mention.length, spannable.length())
@@ -62,6 +61,7 @@ trait MentionsViewPart extends MessageViewPart with ViewHelper {
         end,
         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
 
+      spannable.getSpans(start, end, classOf[ClickableSpan]).foreach(spannable.removeSpan)
       spannable.setSpan(
         new ClickableSpan {
           override def onClick(widget: View): Unit = {
@@ -124,8 +124,11 @@ trait MentionsViewPart extends MessageViewPart with ViewHelper {
       }
     }
 
-    override def getSize(paint: Paint, text: CharSequence, start: Int, end: Int, fm: Paint.FontMetricsInt): Int =
-      returning(paint)(_.setTypeface(Typeface.DEFAULT_BOLD)).measureText(text, start, end).toInt
+    override def getSize(paint: Paint, text: CharSequence, start: Int, end: Int, fm: Paint.FontMetricsInt): Int = {
+      paint.getFontMetricsInt(fm)
+      returning(new Paint(paint))(_.setTypeface(Typeface.DEFAULT_BOLD)).measureText(text, start, end).toInt
+    }
+
   }
 
 }
