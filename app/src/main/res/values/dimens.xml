@@ -110,7 +110,8 @@
     <dimen name="cursor__open_button__right_margin">30dp</dimen>
     <dimen name="cursor__top_border__height">1dp</dimen>
     <dimen name="cursor__menu_button__diameter">28dp</dimen>
-    <dimen name="cursor__menu_button__padding">4dp</dimen>
+    <dimen name="cursor__menu_button__padding">6dp</dimen>
+    <dimen name="cursor__send_button__padding">10dp</dimen>
     <dimen name="cursor__send_button__width">32dp</dimen>
     <dimen name="cursor__send_button__height">32dp</dimen>
 

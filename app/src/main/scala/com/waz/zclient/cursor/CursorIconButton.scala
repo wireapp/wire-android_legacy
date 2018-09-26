@@ -44,15 +44,16 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.model.AccentColor
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.common.controllers.ThemeController
-import com.waz.zclient.ui.text.GlyphTextView
+import com.waz.zclient.paintcode.StyleKitView.StyleKitDrawMethod
+import com.waz.zclient.paintcode.{GenericStyleKitView, StyleKitView, WireStyleKit}
 import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.ui.views.FilledCircularBackgroundDrawable
 import com.waz.zclient.utils._
+import com.waz.zclient.{R, ViewHelper}
 
-class CursorIconButton(context: Context, attrs: AttributeSet, defStyleAttr: Int) extends GlyphTextView(context, attrs, defStyleAttr) with ViewHelper {
+class CursorIconButton(context: Context, attrs: AttributeSet, defStyleAttr: Int) extends GenericStyleKitView(context, attrs, defStyleAttr) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) { this(context, attrs, 0) }
   def this(context: Context) { this(context, null) }
 
@@ -67,7 +68,7 @@ class CursorIconButton(context: Context, attrs: AttributeSet, defStyleAttr: Int)
 
   val diameter = getDimenPx(R.dimen.cursor__menu_button__diameter)
 
-  val glyph = menuItem.map(_.fold(R.string.empty_string)(_.glyphResId))
+  val itemId = menuItem.collect { case Some(item) => item.resId }
 
   val bgColor = menuItem.flatMap {
     case Some(CursorMenuItem.Dummy) => Signal.const(Color.TRANSPARENT, Color.TRANSPARENT)
@@ -144,9 +145,28 @@ class CursorIconButton(context: Context, attrs: AttributeSet, defStyleAttr: Int)
     super.onFinishInflate()
 
     background.onUi(setBackground)
-    glyph.onUi(setText)
     selected.onUi(setSelected)
-    buttonColor.onUi(setTextColor)
+    buttonColor.onUi(setColor)
+    itemId.map[StyleKitDrawMethod]{
+      case R.id.cursor_menu_item_video =>         WireStyleKit.drawVideoMessage
+      case R.id.cursor_menu_item_camera =>        WireStyleKit.drawCamera
+      case R.id.cursor_menu_item_draw =>          WireStyleKit.drawSketch
+      case R.id.cursor_menu_item_ping =>          WireStyleKit.drawPing
+      case R.id.cursor_menu_item_location =>      WireStyleKit.drawLocation
+      case R.id.cursor_menu_item_emoji =>         WireStyleKit.drawEmoji
+      case R.id.cursor_menu_item_keyboard =>      WireStyleKit.drawText
+      case R.id.cursor_menu_item_file =>          WireStyleKit.drawAttachement
+      case R.id.cursor_menu_item_gif =>           WireStyleKit.drawGIF
+      case R.id.cursor_menu_item_audio_message => WireStyleKit.drawVoiceMemo
+      case R.id.cursor_menu_item_more =>          WireStyleKit.drawMore
+      case R.id.cursor_menu_item_less =>          WireStyleKit.drawMore
+      case R.id.cursor_menu_item_send =>          WireStyleKit.drawSend
+      case R.id.cursor_menu_item_mention =>       WireStyleKit.drawMentions
+      case _ =>                                   StyleKitView.NoDraw
+    }.onUi { f =>
+      setOnDraw(f)
+      invalidate()
+    }
 
   }
 }

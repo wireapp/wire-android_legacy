@@ -127,7 +127,7 @@
                                                android:layout_width="@dimen/cursor__send_button__width"
                                                android:layout_height="@dimen/cursor__send_button__width"
                                                android:layout_gravity="center"
-                                               android:padding="@dimen/cursor__menu_button__padding"
+                                               android:padding="@dimen/cursor__send_button__padding"
                                                android:textColor="@color/text__primary_dark"
                                                style="?cursorIconButton"/>
 

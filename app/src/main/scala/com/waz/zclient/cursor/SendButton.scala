@@ -58,7 +58,7 @@ class SendButton(context: Context, attrs: AttributeSet, defStyleAttr: Int) exten
   override def onFinishInflate(): Unit = {
     super.onFinishInflate()
 
-    setTextColor(getColor(R.color.text__primary_dark))
+    setColor(getColor(R.color.text__primary_dark))
 
     controller.sendButtonVisible.onUi {
       case true =>

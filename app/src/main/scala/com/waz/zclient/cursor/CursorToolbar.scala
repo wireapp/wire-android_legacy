@@ -43,6 +43,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.events.Signal
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.ui.utils.CursorUtils
+import com.waz.zclient.utils.ContextUtils.getDimenPx
 
 class CursorToolbar(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) { this(context, attrs, 0) }
@@ -66,7 +67,9 @@ class CursorToolbar(val context: Context, val attrs: AttributeSet, val defStyleA
       button.menuItem ! Some(item)
       val params = new LinearLayout.LayoutParams(buttonWidth, ViewGroup.LayoutParams.MATCH_PARENT)
       if (i < items.size - 1) params.rightMargin = rightMargin
-      customColor.foreach(button.setTextColor)
+      val p = getDimenPx(R.dimen.wire__padding__20)
+      button.setPadding(p, p, p, p)
+      customColor.foreach(button.setColor)
       addView(button, params)
     }
   }
@@ -74,7 +77,7 @@ class CursorToolbar(val context: Context, val attrs: AttributeSet, val defStyleA
   def setButtonsColor(colorStateList: ColorStateList): Unit = {
     customColor = Some(colorStateList)
     (0 until getChildCount).map(getChildAt).collect { case c: CursorIconButton => c }.foreach {
-      _.setTextColor(colorStateList)
+      _.setColor(colorStateList)
     }
   }
 
