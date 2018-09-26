@@ -99,8 +99,8 @@ class ParticipantFragment extends ManagerFragment
           case Some(SingleParticipantFragment.TagDevices) => Future.successful((SingleParticipantFragment.newInstance(Some(SingleParticipantFragment.TagDevices)), SingleParticipantFragment.Tag))
           case _ =>
             participantsController.isGroupOrBot.head.map {
-              case true => (GroupParticipantsFragment.newInstance(), GroupParticipantsFragment.Tag)
-              case false => (SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
+              case true if getStringArg(UserToOpenArg).isEmpty => (GroupParticipantsFragment.newInstance(), GroupParticipantsFragment.Tag)
+              case _ => (SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
             }
         }).map {
           case (f, tag) =>
@@ -117,11 +117,6 @@ class ParticipantFragment extends ManagerFragment
 
     participantsController.onShowUser {
       case Some(userId) => showUser(userId)
-      case _ =>
-    }
-
-    participantsController.isGroupOrBot.head.foreach {
-      case true => getStringArg(UserToOpenArg).map(UserId).foreach(showUser)
       case _ =>
     }
   }

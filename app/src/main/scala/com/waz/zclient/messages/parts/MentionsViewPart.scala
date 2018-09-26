@@ -99,7 +99,7 @@ trait MentionsViewPart extends MessageViewPart with ViewHelper {
       val rect = new RectF(x, textTop, x + getSize(paint, text, start, end, paint.getFontMetricsInt), textBottom)
 
       val backgroundPaint = new Paint()
-      backgroundPaint.setColor(ColorUtils.injectAlpha(0.25f, color))
+      backgroundPaint.setColor(ColorUtils.injectAlpha(0.4f, color))
       canvas.drawRoundRect(rect, 5f, 5f, backgroundPaint)
 
       super.draw(canvas, text, start, end, x, top, y, bottom, paint)
