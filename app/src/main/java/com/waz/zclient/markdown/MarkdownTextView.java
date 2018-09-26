@@ -21,7 +21,6 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.os.Build;
 import android.text.SpannableString;
-import android.text.method.LinkMovementMethod;
 import android.util.AttributeSet;
 
 import com.waz.model.AccentColor;
