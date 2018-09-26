@@ -92,7 +92,7 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
 
   def showDialog(data: MessageAndLikes, fromCollection: Boolean = false): Boolean = {
     // TODO: keyboard should be handled in more generic way
-    if (keyboardController.hideKeyboardIfVisible()) CancellableFuture.delayed(HideDelay){}.future else Future.successful({}).map { _ =>
+    (if (keyboardController.hideKeyboardIfVisible()) CancellableFuture.delayed(HideDelay){}.future else Future.successful({})).map { _ =>
       dialog.foreach(_.dismiss())
       dialog = Some(
         returning(new MessageBottomSheetDialog(context, R.style.message__bottom_sheet__base, data.message, Params(collection = fromCollection))) { d =>
