@@ -18,6 +18,7 @@
 package com.waz.zclient.paintcode
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.{Canvas, Color, RectF}
 import android.util.AttributeSet
 import android.view.View
@@ -30,6 +31,8 @@ trait StyleKitView {
 
 object StyleKitView {
   type StyleKitDrawMethod = (Canvas, RectF, WireStyleKit.ResizingBehavior, Int) => Unit
+
+  val NoDraw: StyleKitDrawMethod =  (_, _, _, _) => ()
 }
 
 
@@ -58,6 +61,7 @@ class GenericStyleKitView(context: Context, attrs: AttributeSet, defStyleAttr: I
 
   private val a = Option(attrs).map(a => getContext.obtainStyledAttributes(a, R.styleable.StyleKitView))
   private var color = a.map(_.getColor(R.styleable.StyleKitView_drawableColor, Color.WHITE)).getOrElse(Color.WHITE)
+  private var colorStateList: Option[ColorStateList] = None
 
   def setSoftwareLayer(enabled: Boolean): Unit = if (enabled) setLayerType(View.LAYER_TYPE_SOFTWARE, null) else setLayerType(View.LAYER_TYPE_HARDWARE, null)
 
@@ -71,11 +75,17 @@ class GenericStyleKitView(context: Context, attrs: AttributeSet, defStyleAttr: I
   }
 
   override def onDraw(canvas: Canvas): Unit = {
-    onDrawMethod.foreach(_(canvas, new RectF(getPaddingLeft, getPaddingTop, getWidth - getPaddingRight, getHeight - getPaddingBottom), WireStyleKit.ResizingBehavior.AspectFit, color))
+    val stateColor = colorStateList.map(_.getColorForState(getDrawableState, color)).getOrElse(color)
+    onDrawMethod.foreach(_(canvas, new RectF(getPaddingLeft, getPaddingTop, getWidth - getPaddingRight, getHeight - getPaddingBottom), WireStyleKit.ResizingBehavior.AspectFit, stateColor))
   }
 
   def setColor(color: Int): Unit = {
     this.color = color
+    invalidate()
+  }
+
+  def setColor(colorStateList: ColorStateList): Unit = {
+    this.colorStateList = Some(colorStateList)
     invalidate()
   }
 }
