@@ -57,7 +57,7 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
 
   lazy val otherParticipantId = otherParticipants.flatMap {
     case others if others.size == 1 => Signal.const(others.headOption)
-    case others                     => selectedParticipant.map(_.flatMap(id => others.find(_ == id)))
+    case others                     => selectedParticipant
   }
 
   lazy val otherParticipant = for {
