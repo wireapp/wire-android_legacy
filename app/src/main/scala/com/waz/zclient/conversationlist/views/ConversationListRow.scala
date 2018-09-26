@@ -369,12 +369,10 @@ object ConversationListRow {
       ConversationBadge.Mention
     } else if (typing) {
       ConversationBadge.Typing
-    } else if (conversationData.incomingKnockMessage.nonEmpty) {
-      ConversationBadge.Ping
     } else if (conversationData.missedCallMessage.nonEmpty) {
       ConversationBadge.MissedCall
-    } else if (unreadCount.messages == 0) {
-      ConversationBadge.Empty
+    } else if (conversationData.incomingKnockMessage.nonEmpty) {
+      ConversationBadge.Ping
     } else if (unreadCount.messages > 0) {
       ConversationBadge.Count(unreadCount.messages)
     } else {
@@ -470,12 +468,12 @@ object ConversationListRow {
       val strings = Seq(
         if (mentionsCount > 0)
           context.getResources.getQuantityString(R.plurals.conversation_list__mentions_count, mentionsCount, mentionsCount.toString) else "",
-        if (normalMessageCount > 0)
-          context.getResources.getQuantityString(R.plurals.conversation_list__new_message_count, normalMessageCount, normalMessageCount.toString) else "",
         if (missedCallCount > 0)
           context.getResources.getQuantityString(R.plurals.conversation_list__missed_calls_count, missedCallCount, missedCallCount.toString) else "",
         if (pingCount > 0)
           context.getResources.getQuantityString(R.plurals.conversation_list__pings_count, pingCount, pingCount.toString) else "",
+        if (normalMessageCount > 0)
+          context.getResources.getQuantityString(R.plurals.conversation_list__new_message_count, normalMessageCount, normalMessageCount.toString) else "",
         if (likesCount > 0)
           context.getResources.getQuantityString(R.plurals.conversation_list__new_likes_count, likesCount, likesCount.toString) else ""
       ).filter(_.nonEmpty)
