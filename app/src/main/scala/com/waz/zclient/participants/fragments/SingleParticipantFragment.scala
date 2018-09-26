@@ -175,7 +175,7 @@ class SingleParticipantFragment extends FragmentHelper {
   }
 
   override def onBackPressed(): Boolean = {
-    participantsController.unselectParticipant()
+    participantsController.selectedParticipant ! None
     super.onBackPressed()
   }
 }

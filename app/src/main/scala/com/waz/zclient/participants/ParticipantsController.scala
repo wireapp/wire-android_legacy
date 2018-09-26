@@ -43,7 +43,7 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
   private lazy val confirmationController = inject[IConfirmationController]
   private lazy val screenController       = inject[IConversationScreenController]
 
-  private lazy val selectedParticipant = Signal(Option.empty[UserId])
+  lazy val selectedParticipant = Signal(Option.empty[UserId])
 
   val onShowParticipants = EventStream[Option[String]]() //Option[String] = fragment tag //TODO use type?
   val onHideParticipants = EventStream[Boolean]() //Boolean represents with or without animations
