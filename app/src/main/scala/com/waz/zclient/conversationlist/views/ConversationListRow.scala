@@ -453,7 +453,7 @@ object ConversationListRow {
       ""
     } else if (conv.unreadCount.total == 0 && !conv.isActive) {
       getString(R.string.conversation_list__left_you)
-    } else if ((conv.muted || conv.incomingKnockMessage.nonEmpty || conv.missedCallMessage.nonEmpty || conv.unreadCount.mentions > 1 || (conv.unreadCount.mentions == 1 && conv.unreadCount.total > 2)) && typingUser.isEmpty) {
+    } else if ((conv.muted || conv.incomingKnockMessage.nonEmpty || conv.missedCallMessage.nonEmpty || conv.unreadCount.total > 1) && typingUser.isEmpty) {
       val normalMessageCount = conv.unreadCount.normal
       val missedCallCount = conv.unreadCount.call
       val pingCount = conv.unreadCount.ping
