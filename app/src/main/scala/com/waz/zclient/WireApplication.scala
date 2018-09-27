@@ -48,6 +48,7 @@ import com.waz.service.tracking.TrackingService
 import com.waz.services.fcm.FetchJob
 import com.waz.services.gps.GoogleApiImpl
 import com.waz.services.websocket.WebSocketController
+import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.GoogleApi
 import com.waz.zclient.appentry.controllers.{CreateTeamController, InvitationsController}
@@ -348,7 +349,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     inject[CrashController] //needs to register crash handler
     inject[ThemeController]
     inject[PreferencesController]
-    clearOldVideoFiles(getApplicationContext)
+    Future(clearOldVideoFiles(getApplicationContext))(Threading.Background)
   }
 
   override def onTerminate(): Unit = {
