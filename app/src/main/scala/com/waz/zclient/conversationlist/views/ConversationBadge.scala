@@ -24,6 +24,7 @@ import android.view.View.OnClickListener
 import android.widget.FrameLayout
 import com.waz.utils.events.EventStream
 import com.waz.zclient.conversationlist.views.ConversationBadge.{Status, _}
+import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
@@ -50,6 +51,7 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
 
   val textView = findById[TypefaceTextView](R.id.status_pill_text)
   val glyphView = findById[GlyphTextView](R.id.status_pill_glyph)
+  val styleKitView = findById[ConversationBadgeStyleKitView](R.id.status_pill_style_kit)
 
   val onClickEvent = EventStream[Status]()
 
@@ -63,6 +65,7 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
     setVisibility(View.VISIBLE)
     glyphView.setVisibility(View.VISIBLE)
     textView.setVisibility(View.GONE)
+    styleKitView.setVisibility(View.GONE)
     setBackground(getDrawable(backgroundId))
     glyphView.setText(glyphId)
     glyphView.setTextColor(getColor(textColor))
@@ -72,9 +75,21 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
     setVisibility(View.VISIBLE)
     textView.setVisibility(View.VISIBLE)
     glyphView.setVisibility(View.INVISIBLE)
+    styleKitView.setVisibility(View.INVISIBLE)
     setBackground(getDrawable(backgroundId))
     textView.setText(text)
     textView.setTextColor(getColor(textColor))
+  }
+
+  //TODO: remove glyphs and use this only
+  def setStyleKitView(status: Status, backgroundId: Int = R.drawable.conversation_badge, iconColor: Int = R.color.white): Unit = {
+    setVisibility(View.VISIBLE)
+    textView.setVisibility(View.INVISIBLE)
+    glyphView.setVisibility(View.INVISIBLE)
+    setBackground(getDrawable(backgroundId))
+    styleKitView.setVisibility(View.VISIBLE)
+    styleKitView.setColor(getColor(iconColor))
+    styleKitView.setStatus(status)
   }
 
   def setHidden() = setVisibility(View.INVISIBLE)
@@ -90,7 +105,7 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
     duration.fold(setGlyph(R.string.glyph__call, R.drawable.conversation_badge_green))(d => setText(d, R.drawable.conversation_badge_green))
   def setMissedCall() = setGlyph(R.string.glyph__end_call, R.drawable.conversation_badge_white, R.color.black)
 
-  def setMention() = setText("@", R.drawable.conversation_badge_white, R.color.black)
+  def setMention() = setStyleKitView(Mention, R.drawable.conversation_badge_white, R.color.black)
 
   def setStatus(status: Status): Unit = {
     this.status = status
@@ -118,3 +133,16 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
     }
   }
 }
+
+class ConversationBadgeStyleKitView(context: Context, attrs: AttributeSet, style: Int) extends GenericStyleKitView(context, attrs, style) {
+  def this(context: Context, attrs: AttributeSet) { this(context, attrs, 0) }
+  def this(context: Context) { this(context, null) }
+
+  def setStatus(status: Status): Unit = {
+    status match {
+      case Mention => setOnDraw(WireStyleKit.drawMentions)
+      case _ =>
+    }
+  }
+}
+

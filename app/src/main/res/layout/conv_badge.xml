@@ -50,4 +50,11 @@
         android:visibility="invisible"
         />
 
+    <com.waz.zclient.conversationlist.views.ConversationBadgeStyleKitView
+        android:id="@+id/status_pill_style_kit"
+        android:layout_width="@dimen/conversation_list__badge__icon_size"
+        android:layout_height="@dimen/conversation_list__badge__icon_size"
+        android:gravity="center"
+        android:layout_gravity="center"
+    />
 </merge>

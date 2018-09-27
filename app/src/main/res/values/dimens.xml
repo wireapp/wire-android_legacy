@@ -968,4 +968,5 @@
     <dimen name="services_warning_text_width">204dp</dimen>
     <dimen name="user_part_view_bot_size">12dp</dimen>
     <dimen name="mentions_chathead_size">32dp</dimen>
+    <dimen name="conversation_list__badge__icon_size">14dp</dimen>
 </resources>
