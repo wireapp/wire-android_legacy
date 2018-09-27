@@ -31,7 +31,6 @@ object DevicesPreferencesUtil {
   private val BOLD_SUFFIX = "]]"
   private val SEPARATOR = ' '
   private val NEW_LINE = '\n'
-  private val UNKNOWN_LOCATION = "?"
 
   def getTitle(context: Context, client: Client): CharSequence =
     TextViewUtils.getBoldText(context, context.getString(R.string.pref_devices_device_title, StringUtils.capitalise(client.model)))
@@ -56,8 +55,7 @@ object DevicesPreferencesUtil {
       case Some(regTime) => ZTimeFormatter.getSeparatorTime(context, now, LocalDateTime.ofInstant(regTime, ZoneId.systemDefault), DateFormat.is24HourFormat(context), ZoneId.systemDefault, false)
       case _ => ""
     }
-    val regLocation = client.regLocation.fold("")(_.getName)
-    context.getString(R.string.pref_devices_device_activation_summary, time, if (StringUtils.isBlank(regLocation)) UNKNOWN_LOCATION else regLocation)
+    context.getString(R.string.pref_devices_device_activation_summary, time)
   }
 
   def getFormattedFingerprint(context: Context, fingerprint: String): CharSequence = {

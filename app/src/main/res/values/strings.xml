@@ -604,8 +604,8 @@
     <string name="pref_devices_current_device_category_title">Current Device</string>
     <string name="pref_devices_other_devices_category_title">Other Devices</string>
     <string name="pref_devices_device_title" translatable="false">[[%1$s]]</string>
-    <string name="pref_devices_device_activation_summary">Activated on [[%1$s]]\nin [[%2$s]]</string>
-    <string name="pref_devices_device_activation_subtitle">Activated on [[%1$s]] in [[%2$s]]</string>
+    <string name="pref_devices_device_activation_summary">Activated [[%1$s]]\n</string>
+    <string name="pref_devices_device_activation_subtitle">Activated [[%1$s]]</string>
     <string name="pref_devices_device_id">ID: %1$s</string>
     <string name="pref_devices_device_verified">Verified</string>
     <string name="pref_devices_device_not_verified">Not verified</string>
@@ -1056,7 +1056,6 @@
     <string name="otr__participant__device_class__desktop">Desktop computer</string>
     <string name="otr__participant__tab_details">Details</string>
     <string name="otr__participant__tab_devices">Devices</string>
-    <string name="otr__device_activated_info">Activated in %s</string>
     <string name="otr__participant__single_device__my_fingerprint_link">Show my device fingerprint</string>
     <string name="otr__participant__single_device__reset_session_link">Reset session</string>
     <string name="otr__participant__my_device__description">Your device fingerprint</string>

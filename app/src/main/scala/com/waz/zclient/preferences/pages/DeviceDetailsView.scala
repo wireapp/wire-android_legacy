@@ -30,7 +30,7 @@ import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.AccountData.Password
 import com.waz.model.ConvId
-import com.waz.model.otr.{ClientId, Location}
+import com.waz.model.otr.ClientId
 import com.waz.service.AccountManager.ClientRegistrationState.LimitReached
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.sync.SyncResult
@@ -58,7 +58,7 @@ trait DeviceDetailsView {
 
   def setName(name: String): Unit
   def setId(cId: String): Unit
-  def setActivated(regTime: Instant, regLocation: Option[Location]): Unit
+  def setActivated(regTime: Instant): Unit
   def setFingerPrint(fingerprint: String): Unit
   def setRemoveOnly(removeOnly: Boolean): Unit
   def setActionsVisible(visible: Boolean): Unit
@@ -104,8 +104,8 @@ class DeviceDetailsViewImpl(context: Context, attrs: AttributeSet, style: Int) e
     TextViewUtils.boldText(idView)
   }
 
-  override def setActivated(regTime: Instant, regLocation: Option[Location]) = {
-    activatedView.setText(getActivationSummary(context, regTime, regLocation))
+  override def setActivated(regTime: Instant) = {
+    activatedView.setText(getActivationSummary(context, regTime))
     TextViewUtils.boldText(activatedView)
   }
 
@@ -125,10 +125,10 @@ class DeviceDetailsViewImpl(context: Context, attrs: AttributeSet, style: Int) e
     resetSessionView.setVisible(!removeOnly)
   }
 
-  private def getActivationSummary(context: Context, regTime: Instant, regLocation: Option[Location]): String = {
+  private def getActivationSummary(context: Context, regTime: Instant): String = {
     val now = LocalDateTime.now(ZoneId.systemDefault)
     val time = ZTimeFormatter.getSeparatorTime(context, now, LocalDateTime.ofInstant(regTime, ZoneId.systemDefault), DateFormat.is24HourFormat(context), ZoneId.systemDefault, false)
-    context.getString(R.string.pref_devices_device_activation_summary, time, regLocation.fold("?")(_.getName))
+    context.getString(R.string.pref_devices_device_activation_summary, time)
   }
 
   fingerprintView.onClickEvent{ _ =>
@@ -202,9 +202,7 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
 
   client.map(_.model).onUi(view.setName)
   client.map(_.displayId).onUi(view.setId)
-  client.map(c => (c.regTime.getOrElse(Instant.EPOCH), c.regLocation)).onUi { case (t, l) =>
-    view.setActivated(t, l)
-  }
+  client.map(_.regTime.getOrElse(Instant.EPOCH)).onUi(view.setActivated)
 
   isCurrentClient.map(!_).onUi(view.setActionsVisible)
   client.map(_.isVerified).onUi(view.setVerified)

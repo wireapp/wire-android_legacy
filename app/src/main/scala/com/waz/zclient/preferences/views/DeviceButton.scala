@@ -54,7 +54,7 @@ class DeviceButton(context: Context, attrs: AttributeSet, style: Int) extends Pi
       case Some(regTime) =>
         val now = LocalDateTime.now(ZoneId.systemDefault)
         val time = ZTimeFormatter.getSeparatorTime(context, now, LocalDateTime.ofInstant(regTime, ZoneId.systemDefault), DateFormat.is24HourFormat(context), ZoneId.systemDefault, false)
-        context.getString(R.string.pref_devices_device_activation_subtitle, time, client.regLocation.fold("?")(_.getName))
+        context.getString(R.string.pref_devices_device_activation_subtitle, time)
       case _ =>
         ""
     }
