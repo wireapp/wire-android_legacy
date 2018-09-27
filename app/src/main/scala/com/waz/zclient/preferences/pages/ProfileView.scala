@@ -241,9 +241,8 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
 
   for {
     userId    <- currentUser
-    avVisible <- usersController.availabilityVisible
     av <- usersController.availability(userId)
-  } yield (av)
+  } yield av
 
   usersController.availabilityVisible.zip(self.map(_.availability)).on(Threading.Ui) {
     case (visible, availability) => view.setAvailability(visible, availability)

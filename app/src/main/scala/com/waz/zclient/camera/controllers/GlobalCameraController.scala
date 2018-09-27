@@ -281,7 +281,7 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
             DeprecationUtils.setAutoFocusCallback(c, new AutoFocusCallbackDeprecation {
               def onAutoFocus(s: java.lang.Boolean, cam: CameraWrapper): Unit = {
                 if (!s) Timber.w("Focus was unsuccessful - ignoring")
-                promise.success(())
+                promise.trySuccess(())
                 settingFocus = false
               }
             })
