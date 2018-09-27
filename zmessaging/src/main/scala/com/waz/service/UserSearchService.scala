@@ -93,7 +93,7 @@ class UserSearchService(selfUserId:           UserId,
       sortUsers(included, filter, isHandle = false, filter)
     }
 
-  def mentionsSearchUsersInConversation(convId: ConvId, filter: Filter, includeSelf: Boolean = false): Signal[Seq[UserData]] =
+  def mentionsSearchUsersInConversation(convId: ConvId, filter: Filter, includeSelf: Boolean = false): Signal[IndexedSeq[UserData]] =
     for {
       curr <- membersStorage.activeMembers(convId)
       currData <- usersStorage.listSignal(curr)
@@ -118,7 +118,7 @@ class UserSearchService(selfUserId:           UserId,
         cmpHandle(_, _.contains(filter))
       )
 
-      rules.foldLeft[(Set[UserId],Seq[UserData])]((Set.empty, Seq())){ case ((found, results), rule) =>
+      rules.foldLeft[(Set[UserId],IndexedSeq[UserData])]((Set.empty, IndexedSeq())){ case ((found, results), rule) =>
         val matches = included.filter(rule).filter(u => !found.contains(u.id)).sortBy(_.getDisplayName)
         (found ++ matches.map(_.id).toSet, results ++: matches)
       }._2
