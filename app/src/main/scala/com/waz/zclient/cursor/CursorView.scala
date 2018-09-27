@@ -142,7 +142,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
       Signal.const(IndexedSeq.empty[UserData])
     else
       searchService.mentionsSearchUsersInConversation(convId, query.getOrElse(""), includeSelf = false)
-  } yield results
+  } yield results.reverse
 
   def createMention(userId: UserId, name: String, editText: EditText, selectionIndex: Int, accentColor: Int): Unit = {
     val editable = editText.getEditableText
