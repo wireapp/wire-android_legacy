@@ -138,7 +138,9 @@
     <string name="receive_news_and_offers_request_body">Do you want to receive news and product updates from Wire via email? You can unsubscribe at any time.</string>
 
     <string name="crashes_and_analytics_request_title">Help us make Wire better</string>
-    <string name="crashes_and_analytics_request_body">Sending anonymous usage and crash reports helps us to improve our products and services. We do not use this information for anything else.</string>
+    <string name="crashes_and_analytics_request_body">I agree that Wire may create and use anonymous usage and error reports to improve the Wire App. I can revoke this consent at any time.</string>
+    <string name="crashes_and_analytics_request_no">No</string>
+    <string name="crashes_and_analytics_request_agree">I Agree</string>
 
     <!-- Bots / Integrations / Services -->
     <string name="integrations_picker__section_title">Services</string>

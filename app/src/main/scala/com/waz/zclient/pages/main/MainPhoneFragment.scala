@@ -88,8 +88,8 @@ class MainPhoneFragment extends FragmentHelper
       showConfirmationDialog(
         getString(R.string.crashes_and_analytics_request_title),
         getString(R.string.crashes_and_analytics_request_body),
-        R.string.app_entry_dialog_accept,
-        R.string.app_entry_dialog_not_now
+        R.string.crashes_and_analytics_request_agree,
+        R.string.crashes_and_analytics_request_no
       ).flatMap { resp =>
         zms.head.flatMap { zms =>
           for {
