@@ -69,14 +69,14 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
       val processor = getProcessor
       inside(result(processor.processEvents(conv, Seq(event))).head) {
         case m =>
-          m.msgType       shouldEqual TEXT
-          m.convId        shouldEqual conv.id
-          m.userId        shouldEqual sender
-          m.content       shouldEqual MessageData.textContent(text)
-          m.time          shouldEqual event.time
-          m.localTime     shouldEqual event.localTime
-          m.state         shouldEqual Status.SENT
-          m.protos        shouldEqual Seq(event.asInstanceOf[GenericMessageEvent].content)
+          m.msgType              shouldEqual TEXT
+          m.convId               shouldEqual conv.id
+          m.userId               shouldEqual sender
+          m.content              shouldEqual MessageData.textContent(text)
+          m.time                 shouldEqual event.time
+          m.localTime            shouldEqual event.localTime
+          m.state                shouldEqual Status.SENT
+          m.protos.head.toString shouldEqual event.asInstanceOf[GenericMessageEvent].content.toString
       }
     }
 

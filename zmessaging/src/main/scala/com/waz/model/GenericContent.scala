@@ -258,9 +258,10 @@ object GenericContent {
   type Mention = Messages.Mention
 
   object Mention {
-    def apply(user: UserId, name: String) = returning(new Messages.Mention) { m =>
-      m.userId = user.str
-      m.userName = name
+    def apply(userId: Option[UserId], start: Int, length: Int) = returning(new Messages.Mention) { m =>
+      userId.map(id => m.setUserId(id.str))
+      m.start = start
+      m.length = length
     }
   }
 
@@ -374,18 +375,26 @@ object GenericContent {
   implicit object Text extends GenericContent[Text] {
     override def set(msg: GenericMessage) = msg.setText
 
-    def apply(content: String): Text = apply(content, Map.empty, Nil)
+    def apply(content: String): Text = apply(content, Nil, Nil)
 
-    def apply(content: String, links: Seq[LinkPreview]): Text = apply(content, Map.empty, links)
+    def apply(content: String, links: Seq[LinkPreview]): Text = apply(content, Nil, links)
 
-    def apply(content: String, mentions: Map[UserId, String], links: Seq[LinkPreview]): Text = returning(new Messages.Text()) { t =>
+    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview]): Text = returning(new Messages.Text()) { t =>
       t.content = content
-      t.mention = mentions.map { case (user, name) => Mention(user, name) }(breakOut)
+      t.mentions = mentions.map { case com.waz.model.Mention(userId, start, length) => GenericContent.Mention(userId, start, length) }(breakOut).toArray
       t.linkPreview = links.toArray
     }
 
-    def unapply(proto: Text): Option[(String, Map[UserId, String], Seq[LinkPreview])] =
-      Some((proto.content, proto.mention.map(m => UserId(m.userId) -> m.userName).toMap, proto.linkPreview.toSeq))
+    def unapply(proto: Text): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview])] = {
+      val mentions = proto.mentions.map { m =>
+        val userId = m.getUserId match {
+          case id: String if id.nonEmpty => Option(UserId(id))
+          case _ => None
+        }
+        com.waz.model.Mention(userId, m.start, m.length)
+      }.toSeq
+      Option((proto.content, mentions, proto.linkPreview.toSeq))
+    }
   }
 
   implicit object EphemeralText extends EphemeralContent[Text] {

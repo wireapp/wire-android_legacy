@@ -78,6 +78,52 @@ class UserSearchService(selfUserId:           UserId,
       res  <- searchLocal(filter, curr)
     } yield res.filter(conv.isUserAllowed)
 
+  def searchUsersInConversation(convId: ConvId, filter: Filter, includeSelf: Boolean = false): Signal[IndexedSeq[UserData]] =
+    for {
+      curr <- membersStorage.activeMembers(convId)
+      currData <- usersStorage.listSignal(curr)
+    } yield {
+      val included = currData.filter { user =>
+          (includeSelf || selfUserId != user.id) &&
+          !user.isWireBot &&
+          user.expiresAt.isEmpty &&
+          user.matchesFilter(filter) &&
+          user.connection != ConnectionStatus.Blocked
+      }
+      sortUsers(included, filter, isHandle = false, filter)
+    }
+
+  def mentionsSearchUsersInConversation(convId: ConvId, filter: Filter, includeSelf: Boolean = false): Signal[IndexedSeq[UserData]] =
+    for {
+      curr <- membersStorage.activeMembers(convId)
+      currData <- usersStorage.listSignal(curr)
+    } yield {
+      val included = currData.filter { user =>
+        (includeSelf || selfUserId != user.id) &&
+          !user.isWireBot &&
+          user.expiresAt.isEmpty &&
+          user.connection != ConnectionStatus.Blocked
+      }
+
+      def cmpHandle(u: UserData, fn: String => Boolean) = u.handle match {
+        case None => false
+        case Some(h) => fn(h.string)
+      }
+
+      val rules: Seq[UserData => Boolean] = Seq(
+        _.getDisplayName.toLowerCase.startsWith(filter),
+        _.searchKey.asciiRepresentation.split(" ").exists(_.startsWith(filter)),
+        cmpHandle(_, _.startsWith(filter)),
+        _.getDisplayName.toLowerCase.contains(filter),
+        cmpHandle(_, _.contains(filter))
+      )
+
+      rules.foldLeft[(Set[UserId],IndexedSeq[UserData])]((Set.empty, IndexedSeq())){ case ((found, results), rule) =>
+        val matches = included.filter(rule).filter(u => !found.contains(u.id)).sortBy(_.getDisplayName.toLowerCase)
+        (found ++ matches.map(_.id).toSet, results ++: matches)
+      }._2
+    }
+
   private def searchLocal(filter: Filter, excluded: Set[UserId] = Set.empty, showBlockedUsers: Boolean = false): Signal[IndexedSeq[UserData]] = {
     val isHandle = Handle.isHandle(filter)
     val symbolStripped = if (isHandle) Handle.stripSymbol(filter) else filter

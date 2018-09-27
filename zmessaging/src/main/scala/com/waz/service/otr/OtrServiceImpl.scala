@@ -116,7 +116,7 @@ class OtrServiceImpl(selfUserId:     UserId,
               Some(GenericMessageEvent(conv, time, from, msg).withLocalTime(localTime))
           }
         case GenericMessage(mId, SessionReset) if metadata.internalBuild => // display session reset notifications in internal build
-          Some(GenericMessageEvent(conv, time, from, GenericMessage(mId, Text("System msg: session reset", Map.empty, Nil))))
+          Some(GenericMessageEvent(conv, time, from, GenericMessage(mId, Text("System msg: session reset", Nil, Nil))))
         case GenericMessage(_, SessionReset) => None // ignore session reset notifications
         case GenericMessage(_, Calling(content)) =>
           Some(CallMessageEvent(conv, time, from, sender, content)) //call messages need sender client id

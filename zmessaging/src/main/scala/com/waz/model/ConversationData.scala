@@ -47,7 +47,7 @@ case class ConversationData(id:                   ConvId                 = ConvI
                             cleared:              Option[RemoteInstant]  = None,
                             generatedName:        String                 = "",
                             searchKey:            Option[SearchKey]      = None,
-                            unreadCount:          UnreadCount            = UnreadCount(0, 0, 0),
+                            unreadCount:          UnreadCount            = UnreadCount(0, 0, 0, 0),
                             failedCount:          Int                    = 0,
                             missedCallMessage:    Option[MessageId]      = None,
                             incomingKnockMessage: Option[MessageId]      = None,
@@ -138,8 +138,8 @@ object ConversationData {
 
   val Empty = ConversationData(ConvId(), RConvId(), None, UserId(), IConversation.Type.UNKNOWN)
 
-  case class UnreadCount(normal: Int, call: Int, ping: Int) {
-    def total = normal + call + ping
+  case class UnreadCount(normal: Int, call: Int, ping: Int, mentions: Int) {
+    def total = normal + call + ping + mentions
     def messages = normal + ping
   }
 
@@ -181,36 +181,37 @@ object ConversationData {
   case class Link(url: String)
 
   implicit object ConversationDataDao extends Dao[ConversationData, ConvId] {
-    val Id               = id[ConvId]('_id, "PRIMARY KEY").apply(_.id)
-    val RemoteId         = id[RConvId]('remote_id).apply(_.remoteId)
-    val Name             = opt(text('name))(_.name.filterNot(_.isEmpty))
-    val Creator          = id[UserId]('creator).apply(_.creator)
-    val ConvType         = int[ConversationType]('conv_type, _.id, ConversationType(_))(_.convType)
-    val Team             = opt(id[TeamId]('team))(_.team)
-    val IsManaged        = opt(bool('is_managed))(_.isManaged)
-    val LastEventTime    = remoteTimestamp('last_event_time)(_.lastEventTime)
-    val IsActive         = bool('is_active)(_.isActive)
-    val LastRead         = remoteTimestamp('last_read)(_.lastRead)
-    val Muted            = bool('muted)(_.muted)
-    val MutedTime        = remoteTimestamp('mute_time)(_.muteTime)
-    val Archived         = bool('archived)(_.archived)
-    val ArchivedTime     = remoteTimestamp('archive_time)(_.archiveTime)
-    val Cleared          = opt(remoteTimestamp('cleared))(_.cleared)
-    val GeneratedName    = text('generated_name)(_.generatedName)
-    val SKey             = opt(text[SearchKey]('search_key, _.asciiRepresentation, SearchKey.unsafeRestore))(_.searchKey)
-    val UnreadCount      = int('unread_count)(_.unreadCount.normal)
-    val UnreadCallCount  = int('unread_call_count)(_.unreadCount.call)
-    val UnreadPingCount  = int('unread_ping_count)(_.unreadCount.ping)
-    val FailedCount      = int('unsent_count)(_.failedCount)
-    val Hidden           = bool('hidden)(_.hidden)
-    val MissedCall       = opt(id[MessageId]('missed_call))(_.missedCallMessage)
-    val IncomingKnock    = opt(id[MessageId]('incoming_knock))(_.incomingKnockMessage)
-    val Verified         = text[Verification]('verified, _.name, Verification.valueOf)(_.verified)
-    val LocalEphemeral   = opt(finiteDuration('ephemeral))(_.localEphemeral)
-    val GlobalEphemeral  = opt(finiteDuration('global_ephemeral))(_.globalEphemeral)
-    val Access           = set[Access]('access, JsonEncoder.encodeAccess(_).toString(), v => JsonDecoder.array[Access](new JSONArray(v), (arr: JSONArray, i: Int) => IConversation.Access.valueOf(arr.getString(i).toUpperCase)).toSet)(_.access)
-    val AccessRole       = opt(text[IConversation.AccessRole]('access_role, JsonEncoder.encodeAccessRole, v => IConversation.AccessRole.valueOf(v.toUpperCase)))(_.accessRole)
-    val Link             = opt(text[Link]('link, _.url, v => ConversationData.Link(v)))(_.link)
+    val Id                  = id[ConvId]('_id, "PRIMARY KEY").apply(_.id)
+    val RemoteId            = id[RConvId]('remote_id).apply(_.remoteId)
+    val Name                = opt(text('name))(_.name.filterNot(_.isEmpty))
+    val Creator             = id[UserId]('creator).apply(_.creator)
+    val ConvType            = int[ConversationType]('conv_type, _.id, ConversationType(_))(_.convType)
+    val Team                = opt(id[TeamId]('team))(_.team)
+    val IsManaged           = opt(bool('is_managed))(_.isManaged)
+    val LastEventTime       = remoteTimestamp('last_event_time)(_.lastEventTime)
+    val IsActive            = bool('is_active)(_.isActive)
+    val LastRead            = remoteTimestamp('last_read)(_.lastRead)
+    val Muted               = bool('muted)(_.muted)
+    val MutedTime           = remoteTimestamp('mute_time)(_.muteTime)
+    val Archived            = bool('archived)(_.archived)
+    val ArchivedTime        = remoteTimestamp('archive_time)(_.archiveTime)
+    val Cleared             = opt(remoteTimestamp('cleared))(_.cleared)
+    val GeneratedName       = text('generated_name)(_.generatedName)
+    val SKey                = opt(text[SearchKey]('search_key, _.asciiRepresentation, SearchKey.unsafeRestore))(_.searchKey)
+    val UnreadCount         = int('unread_count)(_.unreadCount.normal)
+    val UnreadCallCount     = int('unread_call_count)(_.unreadCount.call)
+    val UnreadPingCount     = int('unread_ping_count)(_.unreadCount.ping)
+    val FailedCount         = int('unsent_count)(_.failedCount)
+    val Hidden              = bool('hidden)(_.hidden)
+    val MissedCall          = opt(id[MessageId]('missed_call))(_.missedCallMessage)
+    val IncomingKnock       = opt(id[MessageId]('incoming_knock))(_.incomingKnockMessage)
+    val Verified            = text[Verification]('verified, _.name, Verification.valueOf)(_.verified)
+    val LocalEphemeral      = opt(finiteDuration('ephemeral))(_.localEphemeral)
+    val GlobalEphemeral     = opt(finiteDuration('global_ephemeral))(_.globalEphemeral)
+    val Access              = set[Access]('access, JsonEncoder.encodeAccess(_).toString(), v => JsonDecoder.array[Access](new JSONArray(v), (arr: JSONArray, i: Int) => IConversation.Access.valueOf(arr.getString(i).toUpperCase)).toSet)(_.access)
+    val AccessRole          = opt(text[IConversation.AccessRole]('access_role, JsonEncoder.encodeAccessRole, v => IConversation.AccessRole.valueOf(v.toUpperCase)))(_.accessRole)
+    val Link                = opt(text[Link]('link, _.url, v => ConversationData.Link(v)))(_.link)
+    val UnreadMentionsCount = int('unread_mentions_count)(_.unreadCount.mentions)
 
     override val idCol = Id
     override val table = Table(
@@ -244,7 +245,9 @@ object ConversationData {
       UnreadPingCount,
       Access,
       AccessRole,
-      Link)
+      Link,
+      UnreadMentionsCount
+    )
 
     override def apply(implicit cursor: DBCursor): ConversationData =
       ConversationData(
@@ -264,7 +267,7 @@ object ConversationData {
         Cleared,
         GeneratedName,
         SKey,
-        ConversationData.UnreadCount(UnreadCount, UnreadCallCount, UnreadPingCount),
+        ConversationData.UnreadCount(UnreadCount, UnreadCallCount, UnreadPingCount, UnreadMentionsCount),
         FailedCount,
         MissedCall,
         IncomingKnock,

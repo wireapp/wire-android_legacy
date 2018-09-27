@@ -18,7 +18,7 @@
 package com.waz.service.media
 
 import com.waz.api.Message.Part.Type._
-import com.waz.model.MessageContent
+import com.waz.model.{Mention, MessageContent, UserId}
 import org.scalacheck.Gen
 import org.scalatest.prop.{GeneratorDrivenPropertyChecks, TableDrivenPropertyChecks}
 import RichMediaContentParser._
@@ -112,7 +112,7 @@ class RichMediaContentParserSpec extends AndroidFreeSpec with TableDrivenPropert
     }
 
     scenario("text with youtube link") {
-      splitContent("Here is some text. https://www.youtube.com/watch?v=MWdG413nNkI") shouldEqual List(MessageContent(TEXT, "Here is some text."), MessageContent(YOUTUBE, "https://www.youtube.com/watch?v=MWdG413nNkI"))
+      splitContent("Here is some text. https://www.youtube.com/watch?v=MWdG413nNkI") shouldEqual List(MessageContent(TEXT, "Here is some text. "), MessageContent(YOUTUBE, "https://www.youtube.com/watch?v=MWdG413nNkI"))
     }
 
     scenario("don't split proper uri") {
@@ -126,18 +126,75 @@ class RichMediaContentParserSpec extends AndroidFreeSpec with TableDrivenPropert
 
     scenario("text interleaved with multiple youtube links") {
       splitContent("Here is some text. https://www.youtube.com/watch?v=MWdG413nNkI more text https://www.youtube.com/watch?v=c0KYU2j0TM4 and even more") shouldEqual List(
-        MessageContent(TEXT, "Here is some text."),
+        MessageContent(TEXT, "Here is some text. "),
         MessageContent(YOUTUBE, "https://www.youtube.com/watch?v=MWdG413nNkI"),
-        MessageContent(TEXT, "more text"),
+        MessageContent(TEXT, " more text "),
         MessageContent(YOUTUBE, "https://www.youtube.com/watch?v=c0KYU2j0TM4"),
-        MessageContent(TEXT, "and even more")
+        MessageContent(TEXT, " and even more")
       )
     }
+
+    scenario("don't extract a link from a mention") {
+      val mentionStr = "@[nqa2](http://google.com)"
+      val text = s"aaa $mentionStr bbb"
+      val mention = Mention(Some(UserId()), 4, mentionStr.length)
+      splitContent(text, Seq(mention), weblinkEnabled = true) shouldEqual List(MessageContent(TEXT, text, mentions = Seq(mention)))
+    }
+
+    scenario("don't extract a link from a mention being the whole message") {
+      val mentionStr = "@[nqa2](http://google.com)"
+      val mention = Mention(Some(UserId()), 0, mentionStr.length)
+      splitContent(mentionStr, Seq(mention), weblinkEnabled = true) shouldEqual List(MessageContent(TEXT, mentionStr, mentions = Seq(mention)))
+    }
+
+    scenario("cut short a link if it has a mention inside") {
+      val mentionStr = "@nqa"
+      val text = s"[click here](http://google.com/?$mentionStr)"
+      val mention = Mention(Some(UserId()), text.indexOf(mentionStr), mentionStr.length)
+      splitContent(text, Seq(mention), weblinkEnabled = true) shouldEqual List(
+        MessageContent(TEXT, "[click here]("),
+        MessageContent(WEB_LINK, "http://google.com/?"),
+        MessageContent(TEXT, s"$mentionStr)", mentions = Seq(mention))
+      )
+    }
+
+    scenario("don't extract a link from a mention when the message has more than one link") {
+      val mentionStr = "@[nqa2](http://google.com)"
+      val text = s"aaa $mentionStr bbb http://google.com ccc"
+      val mention = Mention(Some(UserId()), 4, mentionStr.length)
+      splitContent(text, Seq(mention), weblinkEnabled = true) shouldEqual List(
+        MessageContent(TEXT, s"aaa $mentionStr bbb ", mentions = Seq(mention)),
+        MessageContent(WEB_LINK, s"http://google.com"),
+        MessageContent(TEXT, s" ccc")
+      )
+    }
+
+    scenario("cut short a link if it starts with a mention") {
+      val mentionStr = "@https://"
+      val text = s"${mentionStr}google.com/"
+      val mention = Mention(Some(UserId()), 0, mentionStr.length)
+      splitContent(text, Seq(mention), weblinkEnabled = true) shouldEqual List(
+        MessageContent(TEXT, mentionStr, mentions = Seq(mention)),
+        MessageContent(WEB_LINK, "google.com/")
+      )
+    }
+
+    scenario("cut short a link if it ends with a mention") {
+      val mentionStr = "@nqa"
+      val text = s"https://google.com/?user=${mentionStr}"
+      val mention = Mention(Some(UserId()), text.indexOf(mentionStr), mentionStr.length)
+      splitContent(text, Seq(mention), weblinkEnabled = true) shouldEqual List(
+        MessageContent(WEB_LINK, "https://google.com/?user="),
+        MessageContent(TEXT, mentionStr, mentions = Seq(mention))
+      )
+    }
+
   }
 
   //See this page for where the ranges were fetched from:
   //http://apps.timwhitlock.info/emoji/tables/unicode
   //TODO there are still some emojis missing - but there are no clean lists for the ranges of unicode characters
+
   feature("Emoji") {
 
     lazy val emojis = Source.fromInputStream(getClass.getResourceAsStream("/emojis.txt"))(Codec.UTF8).getLines().toSeq.filterNot(_.startsWith("#"))

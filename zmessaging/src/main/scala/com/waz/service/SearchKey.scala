@@ -36,12 +36,14 @@ final class SearchKey private (val asciiRepresentation: String) extends Serializ
 
 object SearchKey extends (String => SearchKey) {
   val empty = new SearchKey("")
-  def apply(name: String): SearchKey = if(name.isEmpty) empty else new SearchKey(transliterated(name))
+  def apply(name: String): SearchKey = if(name.isEmpty) empty else new SearchKey(transliterated(tokenize(name)))
   def unsafeRestore(asciiRepresentation: String) = new SearchKey(asciiRepresentation)
   def unapply(k: SearchKey): Option[String] = Some(k.asciiRepresentation)
 
   def transliterated(s: String): String = Locales.transliteration.transliterate(s).trim
 
+  private def tokenize(s: String): String = s.replaceAll("[-|_]+", " ")
+
   //TODO for tests only - get libcore working in tests again
-  def simple(name: String): SearchKey = if (name.isEmpty) empty else new SearchKey(name)
+  def simple(name: String): SearchKey = if (name.isEmpty) empty else new SearchKey(tokenize(name))
 }

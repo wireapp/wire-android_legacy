@@ -19,6 +19,7 @@ package com.waz.service
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
+import com.waz.api.IConversation
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
@@ -95,13 +96,14 @@ class ConnectionServiceImpl(selfUserId:      UserId,
   private def updateConversationsForConnections(eventInfos: Set[ConnectionEventInfo]): Future[Seq[ConversationData]] = {
     verbose(s"updateConversationForConnections: ${eventInfos.size}")
 
+    def getConvTypeForUser(user: UserData): IConversation.Type = user.connection match {
+      case ConnectionStatus.PendingFromUser | ConnectionStatus.Cancelled => ConversationType.WaitForConnection
+      case ConnectionStatus.PendingFromOther | ConnectionStatus.Ignored => ConversationType.Incoming
+      case _ => ConversationType.OneToOne
+    }
+
     val oneToOneConvData = eventInfos.map { case ConnectionEventInfo(user , _ , _) =>
-      val convType = user.connection match {
-        case ConnectionStatus.PendingFromUser | ConnectionStatus.Cancelled => ConversationType.WaitForConnection
-        case ConnectionStatus.PendingFromOther | ConnectionStatus.Ignored => ConversationType.Incoming
-        case _ => ConversationType.OneToOne
-      }
-      OneToOneConvData(user.id, user.conversation, convType)
+      OneToOneConvData(user.id, user.conversation, getConvTypeForUser(user))
     }
 
     val eventMap = eventInfos.map(eventInfo => eventInfo.user.id -> eventInfo).toMap
@@ -117,8 +119,12 @@ class ConnectionServiceImpl(selfUserId:      UserId,
         val user   = eventMap(userId).user
         val hidden = user.connection == ConnectionStatus.Ignored || user.connection == ConnectionStatus.Blocked || user.connection == ConnectionStatus.Cancelled
 
-        conv.copy(convType = otoConvs(userId).convType, hidden = hidden, lastEventTime = conv.lastEventTime max eventMap(userId).lastEventTime)
+        //TODO For some reasons we are loosing convType after getOrCreateOneToOneConversations. Flow is very messy and should be refactored.
+        val convType = getConvTypeForUser(user)
+
+        conv.copy(convType = convType, hidden = hidden, lastEventTime = conv.lastEventTime max eventMap(userId).lastEventTime)
       })
+
       result <- Future.sequence(updatedConvs.map { case (_, conv) =>
         messagesStorage.getLastMessage(conv.id) flatMap {
           case None if conv.convType == ConversationType.Incoming =>

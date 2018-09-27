@@ -359,7 +359,14 @@ object NotificationService {
 
   def notification(msg: MessageData, drift: bp.Duration = Duration.Zero): Option[NotificationData] = {
     mapMessageType(msg.msgType, msg.protos, msg.members, msg.userId).map { tp =>
-      NotificationData(NotId(msg.id), if (msg.isEphemeral) "" else msg.contentString, msg.convId, msg.userId, tp, if (msg.time == RemoteInstant.Epoch) msg.localTime.toRemote(drift) else msg.time, ephemeral = msg.isEphemeral, mentions = msg.mentions.keys.toSeq)
+      NotificationData(
+        NotId(msg.id),
+        if (msg.isEphemeral) "" else msg.contentString, msg.convId,
+        msg.userId, tp,
+        if (msg.time == RemoteInstant.Epoch) msg.localTime.toRemote(drift) else msg.time,
+        ephemeral = msg.isEphemeral,
+        mentions = msg.mentions.flatMap(_.userId)
+      )
     }
   }
 }

@@ -52,7 +52,7 @@ class ZMessagingDB(context: Context, dbName: String) extends DaoDB(context.getAp
 }
 
 object ZMessagingDB {
-  val DbVersion = 108
+  val DbVersion = 109
 
   lazy val daos = Seq (
     UserDataDao, SearchQueryCacheDao, AssetDataDao, ConversationDataDao,
@@ -220,6 +220,9 @@ object ZMessagingDB {
       db.execSQL("UPDATE Messages SET ephemeral = null WHERE ephemeral = 0")
       db.execSQL("UPDATE Messages SET duration = null WHERE duration = 0")
       db.execSQL("UPDATE Conversations SET ephemeral = null WHERE ephemeral = 0")
+    },
+    Migration(108, 109) { db =>
+      db.execSQL("ALTER TABLE Conversations ADD COLUMN unread_mentions_count INTEGER DEFAULT 0")
     }
   )
 }

@@ -27,7 +27,7 @@ import com.waz.api.{Message, TypeFilter}
 import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.model.ConversationData.ConversationDataDao
-import com.waz.model.GenericContent.{Asset, ImageAsset, LinkPreview, Location}
+import com.waz.model.GenericContent.{Asset, ImageAsset, LinkPreview, Location, MsgEdit, Text}
 import com.waz.model.GenericMessage.{GenericMessageContent, TextMessage}
 import com.waz.model.MessageData.MessageState
 import com.waz.model.messages.media.{MediaAssetData, MediaAssetDataProtocol}
@@ -36,8 +36,10 @@ import com.waz.service.media.{MessageContentBuilder, RichMediaContentParser}
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
 import com.waz.utils.wrappers.{DB, DBCursor, URI}
 import com.waz.utils.{EnumCodec, JsonDecoder, JsonEncoder, returning}
-import org.json.JSONObject
+import org.json.{JSONArray, JSONObject}
 import org.threeten.bp.Instant.now
+import java.nio.ByteBuffer
+import java.nio.charset.Charset
 
 import scala.collection.breakOut
 import scala.concurrent.duration._
@@ -76,7 +78,8 @@ case class MessageData(id:            MessageId              = MessageId(),
        | localTime:     $localTime
        | editTime:      $editTime
        | members:       $members
-       | other fields:  $content, $firstMessage, , $recipient, $email, $name, $ephemeral, $expiryTime, $expired, $duration
+       | content:       ${content.map(c => (c.content, c.mentions))}
+       | other fields:  $firstMessage, $recipient, $email, $name, $ephemeral, $expiryTime, $expired, $duration
     """.stripMargin
 
 
@@ -97,10 +100,10 @@ case class MessageData(id:            MessageId              = MessageId(),
 
   def isDeleted = msgType == Message.Type.RECALLED
 
-  def mentions = protos.lastOption match {
-    case Some(TextMessage(_, ms, _)) => ms
-    case _ => Map.empty
-  }
+  lazy val mentions = content.flatMap(_.mentions)
+  lazy val hasMentions = mentions.nonEmpty
+
+  def hasMentionOf(userId: UserId): Boolean = mentions.exists(_.userId.forall(_ == userId)) // a mention with userId == None is a "mention" of everyone, so it counts
 
   lazy val imageDimensions: Option[Dim2] = {
     val dims = protos.collectFirst {
@@ -138,25 +141,59 @@ case class MessageData(id:            MessageId              = MessageId(),
   def hasSameContentType(m: MessageData) = {
     msgType == m.msgType && content.zip(m.content).forall { case (c, c1) => c.tpe == c1.tpe && c.openGraph.isDefined == c1.openGraph.isDefined } // openGraph may affect message type
   }
+
+  def adjustMentions(forSending: Boolean): Option[MessageData] =
+    if (mentions.isEmpty) None
+    else {
+      verbose(s"adjustMentions(forSending = $forSending)")
+      val newContent =
+        if (content.size == 1)
+          content.map(_.copy(mentions = MessageData.adjustMentions(content.head.content, mentions, forSending)))
+        else
+          content.foldLeft("", Seq.empty[MessageContent]) { case ((processedText, acc), ct) =>
+            val newProcessedText = processedText + ct.content
+            val start = processedText.length
+            val end   = newProcessedText.length
+            val ms    = mentions.filter(m => m.start >= start && m.start + m.length < end) // we assume mentions are not split over many contents
+            (
+              newProcessedText,
+              acc ++ Seq(if (ms.isEmpty) ct else ct.copy(mentions = MessageData.adjustMentions(ct.content, ms, forSending, start)))
+            )
+          }._2
+
+      val newMentions = newContent.flatMap(_.mentions)
+
+      val newProto = protos.lastOption match {
+        case Some(GenericMessage(uid, MsgEdit(ref, Text(_, _, links)))) =>
+          GenericMessage(uid, MsgEdit(ref, Text(contentString, newMentions, links)))
+        case Some(GenericMessage(uid, Text(_, _, links))) =>
+          GenericMessage(uid, ephemeral, Text(contentString, newMentions, links))
+        case _ =>
+          GenericMessage(id.uid, ephemeral, Text(contentString, newMentions, Nil))
+      }
+
+      if (content == newContent && protos.lastOption.contains(newProto)) None
+      else Some(copy(content = newContent, protos = Seq(newProto)))
+    }
 }
 
-case class MessageContent(
-                           tpe: Message.Part.Type,
-                           content: String,
-                           richMedia: Option[MediaAssetData],
-                           openGraph: Option[OpenGraphData],
-                           asset: Option[AssetId],
-                           width: Int,
-                           height: Int,
-                           syncNeeded: Boolean,
-                           mentions: Map[UserId, String]
+case class MessageContent(tpe:        Message.Part.Type,
+                          content:    String,
+                          richMedia:  Option[MediaAssetData],
+                          openGraph:  Option[OpenGraphData],
+                          asset:      Option[AssetId],
+                          width:      Int,
+                          height:     Int,
+                          syncNeeded: Boolean,
+                          mentions:   Seq[Mention]
                          ) {
 
   def contentAsUri: URI = RichMediaContentParser.parseUriWithScheme(content)
   override def toString: String = s"MessageContent($tpe, ${content.take(4)}..., $richMedia, $openGraph, $asset, $width, $height, $syncNeeded, $mentions)"
 }
 
-object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData], Option[OpenGraphData], Option[AssetId], Int, Int, Boolean, Map[UserId, String]) => MessageContent) {
+object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData], Option[OpenGraphData], Option[AssetId], Int, Int, Boolean, Seq[Mention]) => MessageContent) {
+
   import MediaAssetDataProtocol._
 
   val Empty = apply(Message.Part.Type.TEXT, "")
@@ -167,7 +204,7 @@ object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData
             asset: Option[AssetId] = None,
             width: Int = 0, height: Int = 0,
             syncNeeded: Boolean = false,
-            mentions: Map[UserId, String] = Map.empty): MessageContent = {
+            mentions: Seq[Mention] = Nil): MessageContent = {
     MessageContent(tpe, content, emptyMediaAsset(tpe), openGraph, asset, width, height, syncNeeded, mentions)
   }
 
@@ -177,14 +214,15 @@ object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData
   implicit lazy val Decoder: JsonDecoder[MessageContent] = new JsonDecoder[MessageContent] {
     import com.waz.utils.JsonDecoder._
 
-    import scala.collection.JavaConverters._
-
-    def mentionsMap(js: JSONObject): Map[UserId, String] =
-      js.keys().asScala.map(key => UserId(key) -> js.getString(key)).toMap
+    private def decodeMentions(arr: JSONArray) =
+      Seq.tabulate(arr.length())(arr.getJSONObject).map { implicit obj =>
+        Mention(decodeOptId[UserId]('user_id), decodeInt('start), decodeInt('length))
+      }
 
     override def apply(implicit js: JSONObject): MessageContent = {
       val tpe = ContentTypeCodec.decode('type)
-      val mentions = if (js.has("mentions") && !js.isNull("mentions")) mentionsMap(js.getJSONObject("mentions")) else Map.empty[UserId, String]
+      if (js.has("connections")) array[UserConnectionEvent](js.getJSONArray("connections")).toList else Nil
+      val mentions = if (js.has("mentions") && !js.isNull("mentions")) decodeMentions(js.getJSONArray("mentions")) else Nil
       val richMedia = opt[MediaAssetData]('richMedia) orElse { // if there's no media asset for rich media message contents, we create an expired empty one
         if (tpe == Message.Part.Type.SPOTIFY || tpe == Message.Part.Type.SOUNDCLOUD || tpe == Message.Part.Type.YOUTUBE) Some(MediaAssetData.empty(tpe)) else None
       }
@@ -194,6 +232,16 @@ object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData
   }
 
   implicit lazy val Encoder: JsonEncoder[MessageContent] = new JsonEncoder[MessageContent] {
+    private def encodeMentions(mentions: Seq[Mention]): JSONArray = returning(new JSONArray()){ arr =>
+      mentions.map { case Mention(userId, start, length) =>
+        JsonEncoder { o =>
+          userId.map(id => o.put("user_id", id))
+          o.put("start", start)
+          o.put("length", length)
+        }
+      }.foreach(arr.put)
+    }
+
     override def apply(v: MessageContent): JSONObject = JsonEncoder { o =>
       o.put("type", ContentTypeCodec.encode(v.tpe))
       if (v.content != "") o.put("content", v.content)
@@ -203,11 +251,10 @@ object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData
       if (v.width != 0) o.put("width", v.width)
       if (v.height != 0) o.put("height", v.height)
       if (v.syncNeeded) o.put("syncNeeded", v.syncNeeded)
-      if (v.mentions.nonEmpty) o.put("mentions", JsonEncoder { o =>
-        v.mentions foreach { case (user, name) => o.put(user.str, name) }
-      })
+      if (v.mentions.nonEmpty) o.put("mentions", encodeMentions(v.mentions))
     }
   }
+
 
   implicit lazy val ContentTypeCodec: EnumCodec[Message.Part.Type, String] = EnumCodec.injective {
     case Message.Part.Type.TEXT            => "Text"
@@ -404,41 +451,47 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
 
   case class MessageEntry(id: MessageId, user: UserId, tpe: Message.Type = Message.Type.TEXT, state: Message.Status = Message.Status.DEFAULT, contentSize: Int = 1)
 
-  def messageContent(message: String, mentions: Map[UserId, String] = Map.empty, links: Seq[LinkPreview] = Nil, weblinkEnabled: Boolean = false): (Message.Type, Seq[MessageContent]) =
+  def messageContent(message: String, mentions: Seq[Mention], links: Seq[LinkPreview] = Nil, weblinkEnabled: Boolean = false): (Message.Type, Seq[MessageContent]) =
     if (message.trim.isEmpty) (Message.Type.TEXT, textContent(message))
-    else if (links.isEmpty) {
-      val ct = RichMediaContentParser.splitContent(message, weblinkEnabled)
+    else {
+      if (links.isEmpty) {
+        val ct = RichMediaContentParser.splitContent(message, mentions, 0, weblinkEnabled)
 
-      (ct.size, ct.head.tpe) match {
-        case (1, Message.Part.Type.TEXT) => (Message.Type.TEXT, applyMentions(ct, mentions))
-        case (1, Message.Part.Type.TEXT_EMOJI_ONLY) => (Message.Type.TEXT_EMOJI_ONLY, applyMentions(ct, mentions))
-        case _ => (Message.Type.RICH_MEDIA, applyMentions(ct, mentions))
-      }
-    } else {
-      // apply links
-      def linkEnd(offset: Int) = {
-        val end = message.indexWhere(_.isWhitespace, offset + 1)
-        if (end < 0) message.length else end
-      }
+        (ct.size, ct.head.tpe) match {
+          case (1, Message.Part.Type.TEXT) => (Message.Type.TEXT, ct)
+          case (1, Message.Part.Type.TEXT_EMOJI_ONLY) => (Message.Type.TEXT_EMOJI_ONLY, ct)
+          case _ => (Message.Type.RICH_MEDIA, ct)
+        }
+        (ct.size, ct.head.tpe) match {
+          case (1, Message.Part.Type.TEXT) => (Message.Type.TEXT, ct)
+          case (1, Message.Part.Type.TEXT_EMOJI_ONLY) => (Message.Type.TEXT_EMOJI_ONLY, ct)
+          case _ => (Message.Type.RICH_MEDIA, ct)
+        }
+      } else {
+        // apply links
+        def linkEnd(offset: Int) = {
+          val end = message.indexWhere(_.isWhitespace, offset + 1)
+          if (end < 0) message.length else end
+        }
 
-      val res = new MessageContentBuilder
+        val res = new MessageContentBuilder
 
-      val end = links.sortBy(_.urlOffset).foldLeft(0) { case (prevEnd, link) =>
-        if (link.urlOffset > prevEnd) res ++= RichMediaContentParser.splitContent(message.substring(prevEnd, link.urlOffset))
+        val end = links.sortBy(_.urlOffset).foldLeft(0) { case (prevEnd, link) =>
+          if (link.urlOffset > prevEnd) res ++= RichMediaContentParser.splitContent(message.substring(prevEnd, link.urlOffset), mentions, prevEnd)
 
-        returning(linkEnd(link.urlOffset)) { end =>
-          if (end > link.urlOffset) {
-            val openGraph = Option(link.getArticle).map { a => OpenGraphData(a.title, a.summary, None, "", Option(a.permanentUrl).filter(_.nonEmpty).map(URI.parse)) }
-            res += MessageContent(Message.Part.Type.WEB_LINK, message.substring(link.urlOffset, end), openGraph)
+          returning(linkEnd(link.urlOffset)) { end =>
+            if (end > link.urlOffset) {
+              val openGraph = Option(link.getArticle).map { a => OpenGraphData(a.title, a.summary, None, "", Option(a.permanentUrl).filter(_.nonEmpty).map(URI.parse)) }
+              res += MessageContent(Message.Part.Type.WEB_LINK, message.substring(link.urlOffset, end), openGraph)
+            }
           }
         }
+
+        if (end < message.length) res ++= RichMediaContentParser.splitContent(message.substring(end), mentions, end)
+
+        (Message.Type.RICH_MEDIA, res.result())
       }
-
-      if (end < message.length) res ++= RichMediaContentParser.splitContent(message.substring(end))
-
-      (Message.Type.RICH_MEDIA, applyMentions(res.result(), mentions))
     }
-
 
   def textContent(message: String): Seq[MessageContent] = Seq(RichMediaContentParser.textMessageContent(message))
 
@@ -450,11 +503,37 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     }
   }
 
-  private def applyMentions(content: Seq[MessageContent], mentions: Map[UserId, String]) =
-    if (mentions.isEmpty) content
-    else if (content.size == 1) content.map(_.copy(mentions = mentions))
-    else content map { ct =>
-      val ms = mentions.filter { case (id, name) => ct.content.contains(s"@$name") }
-      if (ms.isEmpty) ct else ct.copy(mentions = ms)
-    }
+  private val UTF_16_CHARSET  = Charset.forName("UTF-16")
+
+  private def encode(text: String) = {
+    val bytes = UTF_16_CHARSET.encode(text).array
+
+    if (bytes.length < 3 || bytes.slice(2, bytes.length).forall(_ == 0))
+      Array.empty[Byte]
+    else if (bytes(2) == 0)
+      bytes.slice(2, bytes.lastIndexWhere(_ > 0) + 1)
+    else
+      Array[Byte](0) ++ bytes.slice(2, bytes.lastIndexWhere(_ > 0) + 1)
+  }
+
+  private def decode(array: Array[Byte]) = UTF_16_CHARSET.decode(ByteBuffer.wrap(array)).toString
+
+  def adjustMentions(text: String, mentions: Seq[Mention], forSending: Boolean, offset: Int = 0): Seq[Mention] = {
+    lazy val textAsUTF16 = encode(text) // optimization: textAsUTF16 is used only for incoming mentions
+
+    mentions.foldLeft(List.empty[Mention]) { case (acc, m) =>
+      val start = m.start - offset
+      val end   = m.start + m.length - offset
+      // `encode` computes Array[Byte] with each text character encoded in two bytes,
+      // so the length of the text converted to UTF-16 is the array's length / 2.
+      val (preLength, handleLength) =
+        if (forSending)
+          (encode(text.substring(0, start)).length / 2, encode(text.substring(start, end)).length / 2)
+        else
+          (decode(textAsUTF16.slice(0, start * 2)).length, decode(textAsUTF16.slice(start * 2, end * 2)).length)
+      Mention(m.userId, offset + preLength, handleLength) :: acc
+    }.sortBy(_.start)
+  }
+
+
 }

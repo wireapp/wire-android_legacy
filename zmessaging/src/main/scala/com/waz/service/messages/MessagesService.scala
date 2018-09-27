@@ -25,7 +25,8 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.content.{EditHistoryStorage, MembersStorage, MessagesStorage, UsersStorage}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GenericContent._
-import com.waz.model.{MessageId, _}
+import com.waz.model.GenericMessage.TextMessage
+import com.waz.model.{Mention, MessageId, _}
 import com.waz.service._
 import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.otr.VerificationStateUpdater.{ClientUnverified, MemberAdded, VerificationChange}
@@ -43,7 +44,7 @@ import scala.concurrent.duration.{FiniteDuration, _}
 import scala.util.Success
 
 trait MessagesService {
-  def addTextMessage(convId: ConvId, content: String, exp: Option[Option[FiniteDuration]] = None): Future[MessageData]
+  def addTextMessage(convId: ConvId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[MessageData]
   def addKnockMessage(convId: ConvId, selfUserId: UserId): Future[MessageData]
   def addAssetMessage(convId: ConvId, asset: AssetData, exp: Option[Option[FiniteDuration]] = None): Future[MessageData]
   def addLocationMessage(convId: ConvId, content: Location): Future[MessageData]
@@ -129,7 +130,8 @@ class MessagesServiceImpl(selfUserId:   UserId,
         def applyEdit(msg: MessageData) = for {
             _ <- edits.insert(EditHistory(msg.id, MessageId(id.str), time))
             (tpe, ct) = MessageData.messageContent(text, mentions, links, weblinkEnabled = true)
-            res <- updater.addMessage(MessageData(MessageId(id.str), convId, tpe, userId, ct, Seq(gm), time = msg.time, localTime = msg.localTime, editTime = time))
+            edited = MessageData(MessageId(id.str), convId, tpe, userId, ct, Seq(gm), time = msg.time, localTime = msg.localTime, editTime = time)
+            res <- updater.addMessage(edited.adjustMentions(false).getOrElse(edited))
             _ <- updater.deleteOnUserRequest(Seq(msg.id))
         } yield res
 
@@ -167,12 +169,12 @@ class MessagesServiceImpl(selfUserId:   UserId,
     }
   }
 
-  override def addTextMessage(convId: ConvId, content: String, exp: Option[Option[FiniteDuration]] = None) = {
-    verbose(s"addTextMessage($convId, ${content.take(4)}")
-    val (tpe, ct) = MessageData.messageContent(content, weblinkEnabled = true)
+  override def addTextMessage(convId: ConvId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None) = {
+    verbose(s"addTextMessage($convId, ${content.take(4)}, $mentions")
+    val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
     verbose(s"parsed content: $ct")
     val id = MessageId()
-    updater.addLocalMessage(MessageData(id, convId, tpe, selfUserId, ct, protos = Seq(GenericMessage(id.uid, Text(content, Map.empty, Nil)))), exp = exp) // FIXME: links
+    updater.addLocalMessage(MessageData(id, convId, tpe, selfUserId, ct, protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil)))), exp = exp) // FIXME: links
   }
 
   override def addLocationMessage(convId: ConvId, content: Location) = {
