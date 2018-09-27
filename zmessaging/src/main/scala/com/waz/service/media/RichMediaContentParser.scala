@@ -69,10 +69,15 @@ object RichMediaContentParser {
     Iterator.continually(m.find()).takeWhile(identity).flatMap { _ =>
       val start = m.start
       val end = m.end
-      verbose(s"match found: start = $start, end = $end, not in mentions: ${mentionsRanges.forall(r => r._1 > start || r._2 <= end)}")
-      if ( (start == 0 || content(start - 1) != '@') && mentionsRanges.forall(r => r._1 > start || r._2 <= end)) {
-        uriAndType(m.group()) map { tpe => (start, end, tpe) }
-      } else None
+      if (mentionsRanges.exists(r => r._1 <= start && r._2 >= end)) None // if the link is a part of a mention, we ignore it
+      else {
+        // if the link includes a mention, we cut the link short
+        val hardStart = mentionsRanges.find(r => r._1 < start && r._2 > start && r._2 < end).fold(start)(_._2)
+        val hardEnd = mentionsRanges.find(r => r._1 > start && r._1 < end).fold(end)(_._1)
+        if (hardStart < hardEnd && (hardStart == 0 || content(hardStart - 1) != '@'))
+          uriAndType(m.group()) map { tpe => (hardStart, hardEnd, tpe) }
+        else None
+      }
     }
   }
 

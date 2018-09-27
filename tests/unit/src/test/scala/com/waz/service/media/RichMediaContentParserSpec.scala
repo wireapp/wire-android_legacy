@@ -147,13 +147,14 @@ class RichMediaContentParserSpec extends AndroidFreeSpec with TableDrivenPropert
       splitContent(mentionStr, Seq(mention), weblinkEnabled = true) shouldEqual List(MessageContent(TEXT, mentionStr, mentions = Seq(mention)))
     }
 
-    scenario("don't extract a mention from a link") {
+    scenario("cut short a link if it has a mention inside") {
       val mentionStr = "@nqa"
       val text = s"[click here](http://google.com/?$mentionStr)"
-      val mention = Mention(Some(UserId()), text.indexOf("@nqa"), mentionStr.length)
+      val mention = Mention(Some(UserId()), text.indexOf(mentionStr), mentionStr.length)
       splitContent(text, Seq(mention), weblinkEnabled = true) shouldEqual List(
         MessageContent(TEXT, "[click here]("),
-        MessageContent(WEB_LINK, s"http://google.com/?$mentionStr)")
+        MessageContent(WEB_LINK, "http://google.com/?"),
+        MessageContent(TEXT, s"$mentionStr)", mentions = Seq(mention))
       )
     }
 
@@ -165,6 +166,26 @@ class RichMediaContentParserSpec extends AndroidFreeSpec with TableDrivenPropert
         MessageContent(TEXT, s"aaa $mentionStr bbb ", mentions = Seq(mention)),
         MessageContent(WEB_LINK, s"http://google.com"),
         MessageContent(TEXT, s" ccc")
+      )
+    }
+
+    scenario("cut short a link if it starts with a mention") {
+      val mentionStr = "@https://"
+      val text = s"${mentionStr}google.com/"
+      val mention = Mention(Some(UserId()), 0, mentionStr.length)
+      splitContent(text, Seq(mention), weblinkEnabled = true) shouldEqual List(
+        MessageContent(TEXT, mentionStr, mentions = Seq(mention)),
+        MessageContent(WEB_LINK, "google.com/")
+      )
+    }
+
+    scenario("cut short a link if it ends with a mention") {
+      val mentionStr = "@nqa"
+      val text = s"https://google.com/?user=${mentionStr}"
+      val mention = Mention(Some(UserId()), text.indexOf(mentionStr), mentionStr.length)
+      splitContent(text, Seq(mention), weblinkEnabled = true) shouldEqual List(
+        MessageContent(WEB_LINK, "https://google.com/?user="),
+        MessageContent(TEXT, mentionStr, mentions = Seq(mention))
       )
     }
 
