@@ -119,7 +119,7 @@ class UserSearchService(selfUserId:           UserId,
       )
 
       rules.foldLeft[(Set[UserId],IndexedSeq[UserData])]((Set.empty, IndexedSeq())){ case ((found, results), rule) =>
-        val matches = included.filter(rule).filter(u => !found.contains(u.id)).sortBy(_.getDisplayName)
+        val matches = included.filter(rule).filter(u => !found.contains(u.id)).sortBy(_.getDisplayName.toLowerCase)
         (found ++ matches.map(_.id).toSet, results ++: matches)
       }._2
     }
