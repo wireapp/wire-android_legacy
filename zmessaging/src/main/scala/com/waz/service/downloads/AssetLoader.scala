@@ -105,7 +105,7 @@ class AssetLoaderImpl(context:         Context,
   override val onDownloadFailed   = EventStream[(AssetId, ErrorResponse)]()
 
   override def loadAsset(asset: AssetData, callback: Callback, force: Boolean): CancellableFuture[CacheEntry] = {
-    verbose(s"loadAsset: ${asset.id}, isDownloadable?: ${asset.isDownloadable}, force?: $force, mime: ${asset.mime}")
+    verbose(s"loadAsset: ${asset.id}, isDownloadable?: ${asset.isDownloadable}, force?: $force, mime: ${asset.mime}, name: ${asset.name}")
     returning(asset match {
       case _ if asset.mime == Mime.Audio.PCM => transcodeAudio(asset, callback)
       case _ => CancellableFuture.lift(cache.getEntry(asset.cacheKey)).flatMap {
