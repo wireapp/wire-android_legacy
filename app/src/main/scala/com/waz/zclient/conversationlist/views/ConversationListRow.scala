@@ -367,10 +367,10 @@ object ConversationListRow {
       ConversationBadge.WaitingConnection
     } else if (conversationData.muted) {
       ConversationBadge.Muted
-    } else if (unreadCount.mentions > 0) {
-      ConversationBadge.Mention
     } else if (typing) {
       ConversationBadge.Typing
+    }else if (unreadCount.mentions > 0) {
+      ConversationBadge.Mention
     } else if (conversationData.missedCallMessage.nonEmpty) {
       ConversationBadge.MissedCall
     } else if (conversationData.incomingKnockMessage.nonEmpty) {
@@ -471,8 +471,6 @@ object ConversationListRow {
       val strings = Seq(
         if (mentionsCount > 0)
           context.getResources.getQuantityString(R.plurals.conversation_list__mentions_count, mentionsCount, mentionsCount.toString) else "",
-        if (normalMessageCount > 0)
-          context.getResources.getQuantityString(R.plurals.conversation_list__new_message_count, normalMessageCount, normalMessageCount.toString) else "",
         if (missedCallCount > 0) {
           if (isGroupConv) {
             if (missedCallCount > 1)
