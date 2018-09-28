@@ -46,16 +46,17 @@ import com.waz.zms.NotificationsAndroidService
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
-case class Span(style: Int, range: Int, offset: Int = 0)
+case class Span(style: Int, range: Range, offset: Int = 0)
+trait Range
+case class BodyRange(start: Int, end: Int) extends Range
+object HeaderRange extends Range
+object FullBodyRange extends Range
 
 object Span {
   val ForegroundColorSpanBlack = 1
   val ForegroundColorSpanGray  = 2
   val StyleSpanBold            = 3
   val StyleSpanItalic          = 4
-
-  val HeaderRange = 1
-  val BodyRange   = 2
 }
 
 case class SpannableWrapper(header: ResString,
@@ -77,8 +78,9 @@ case class SpannableWrapper(header: ResString,
     val wholeStr = headerStr + separator + bodyStr
 
     def range(span: Span) = span.range match {
-      case Span.HeaderRange => (0, headerStr.length)
-      case Span.BodyRange   => (headerStr.length + span.offset, wholeStr.length)
+      case HeaderRange => (0, headerStr.length)
+      case FullBodyRange   => (headerStr.length + span.offset, wholeStr.length)
+      case BodyRange(start, end) => (headerStr.length + span.offset + start, headerStr.length + span.offset + end)
     }
 
     def style(span: Span) = span.style match {
@@ -99,7 +101,7 @@ case class SpannableWrapper(header: ResString,
   def +(span: Span): SpannableWrapper = copy(spans = this.spans ++ List(span))
 
   def +(sw: SpannableWrapper): SpannableWrapper = {
-    val spans     = this.spans ++ sw.spans.map(span => if (span.range == Span.HeaderRange) span.copy(range = Span.BodyRange) else span)
+    val spans     = this.spans ++ sw.spans.map(span => if (span.range == HeaderRange) span.copy(range = FullBodyRange) else span)
     val body      = if (sw.header != ResString.Empty) sw.header else sw.body
     copy(spans = spans, body = body)
   }
