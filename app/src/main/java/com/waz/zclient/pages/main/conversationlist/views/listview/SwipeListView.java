@@ -286,7 +286,7 @@ public class SwipeListView extends RecyclerView implements PullForActionView {
                 velocityTracker.recycle();
                 velocityTracker = null;
                 downX = 0;
-                return true;
+                return super.onTouchEvent(ev);
         }
 
         return super.onTouchEvent(ev);
