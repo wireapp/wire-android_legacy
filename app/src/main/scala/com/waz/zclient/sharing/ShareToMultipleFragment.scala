@@ -103,9 +103,9 @@ class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener 
 
     (for {
       z        <- zms
-      convs    <- z.convsContent.conversationsSignal
+      convs    <- z.convsStorage.contents
       selected <- Signal.wrap(adapter.conversationSelectEvent)
-    } yield (convs.conversations.find(c => c.id == selected._1).map(PickableConversation), selected._2)).onUi {
+    } yield (convs.get(selected._1).map(PickableConversation), selected._2)).onUi {
       case (Some(convData), true)  => vh.foreach(_.addElement(convData))
       case (Some(convData), false) => vh.foreach(_.removeElement(convData))
       case _ =>
@@ -264,7 +264,7 @@ class ShareToMultipleAdapter(context: Context, filter: Signal[String])(implicit 
   lazy val zms = inject[Signal[ZMessaging]]
   lazy val conversations = for{
     z <- zms
-    conversations <- Signal.future(z.convsContent.storage.getAllConvs)
+    conversations <- Signal.future(z.convsContent.storage.list)
     f <- filter
   } yield
     conversations
@@ -322,8 +322,8 @@ case class SelectableConversationRowViewHolder(view: SelectableConversationRow)(
   val convSignal = for {
     z <- zms
     cid <- conversationId
-    conversations <- z.convsStorage.convsSignal
-    conversation <- Signal(conversations.conversations.find(_.id == cid))
+    conversations <- z.convsStorage.contents
+    conversation <- Signal(conversations.get(cid))
   } yield conversation
 
   convSignal.on(Threading.Ui){

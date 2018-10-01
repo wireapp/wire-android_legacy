@@ -56,7 +56,7 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
   def startCallInCurrentConv(withVideo: Boolean, forceOption: Boolean = false) = {
     (for {
       Some(zms)  <- inject[Signal[Option[ZMessaging]]].head
-      Some(conv) <- zms.convsStats.selectedConversationId.head
+      Some(conv) <- inject[Signal[Option[ConvId]]].head
       _          <- startCall(zms.selfUserId, conv, withVideo, forceOption)
     } yield {})
       .recover {

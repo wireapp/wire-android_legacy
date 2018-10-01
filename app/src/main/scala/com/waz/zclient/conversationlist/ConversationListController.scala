@@ -65,21 +65,19 @@ class ConversationListController(implicit inj: Injector, ec: EventContext) exten
 
   lazy val establishedConversations = for {
     z          <- zms
-    convs      <- z.convsContent.conversationsSignal.throttle(ConvListUpdateThrottling )
-  } yield convs.conversations.filter(EstablishedListFilter)
+    convs      <- z.convsStorage.contents.throttle(ConvListUpdateThrottling )
+  } yield convs.values.filter(EstablishedListFilter)
 
   def conversationListData(listMode: ListMode) = for {
     z             <- zms
     processing    <- z.push.processing
     if !processing
-    conversations <- z.convsStorage.convsSignal
-    incomingConvs = conversations.conversations.filter(Incoming.filter).toSeq
+    conversations <- z.convsStorage.contents
+    incomingConvs = conversations.values.filter(Incoming.filter).toSeq
     members <- Signal.sequence(incomingConvs.map(c => z.membersStorage.activeMembers(c.id).map(_.find(_ != z.selfUserId))):_*)
   } yield {
-    val regular = conversations.conversations
-      .filter{ conversationData =>
-        listMode.filter(conversationData)
-      }
+    val regular = conversations.values
+      .filter(listMode.filter)
       .toSeq
       .sorted(listMode.sort)
     val incoming = if (listMode == Normal) (incomingConvs, members.flatten) else (Seq(), Seq())

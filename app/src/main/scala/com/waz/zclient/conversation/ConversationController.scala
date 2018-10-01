@@ -29,7 +29,7 @@ import com.waz.model._
 import com.waz.model.otr.Client
 import com.waz.service.assets.AssetService
 import com.waz.service.assets.AssetService.RawAssetInput.UriInput
-import com.waz.service.conversation.{ConversationsListStateService, ConversationsService, ConversationsUiService}
+import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.utils.wrappers.URI
@@ -48,7 +48,7 @@ import scala.concurrent.duration._
 class ConversationController(implicit injector: Injector, context: Context, ec: EventContext) extends Injectable {
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationController")
 
-  private lazy val convsStats        = inject[Signal[ConversationsListStateService]]
+  private lazy val selectedConv      = inject[Signal[SelectedConversationService]]
   private lazy val convsUi           = inject[Signal[ConversationsUiService]]
   private lazy val conversations     = inject[Signal[ConversationsService]]
   private lazy val convsStorage      = inject[Signal[ConversationStorage]]
@@ -60,10 +60,9 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   private var lastConvId = Option.empty[ConvId]
 
-  val currentConvIdOpt: Signal[Option[ConvId]] = convsStats.flatMap(_.selectedConversationId)
+  val currentConvIdOpt: Signal[Option[ConvId]] = selectedConv.flatMap(_.selectedConversationId)
 
-  val currentConvId: Signal[ConvId] =
-    convsStats.flatMap(_.selectedConversationId).collect { case Some(convId) => convId }
+  val currentConvId: Signal[ConvId] = currentConvIdOpt.collect { case Some(convId) => convId }
 
   val currentConvOpt: Signal[Option[ConversationData]] =
     currentConvIdOpt.flatMap(_.fold(Signal.const(Option.empty[ConversationData]))(conversationData)) // updates on every change of the conversation data, not only on switching
@@ -115,12 +114,12 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
       val oldId = lastConvId
       lastConvId = convId
       for {
-        convsStats   <- convsStats.head
+        selectedConv <- selectedConv.head
         convsUi      <- convsUi.head
         conv         <- getConversation(id)
         _            <- if (conv.exists(_.archived)) convsUi.setConversationArchived(id, archived = false) else Future.successful(Option.empty[ConversationData])
         _            <- convsUi.setConversationArchived(id, archived = false)
-        _            <- convsStats.selectConversation(convId)
+        _            <- selectedConv.selectConversation(convId)
       } yield { // catches changes coming from UI
         verbose(s"changing conversation from $oldId to $convId, requester: $requester")
         convChanged ! ConversationChange(from = oldId, to = convId, requester = requester)

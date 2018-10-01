@@ -37,11 +37,11 @@ import com.waz.api.NetworkMode
 import com.waz.content._
 import com.waz.jobs.PushTokenCheckJob
 import com.waz.log.InternalLog
-import com.waz.model.{AccentColor, ConversationData, TeamId, UserId}
+import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service._
 import com.waz.service.call.GlobalCallingService
-import com.waz.service.conversation.{ConversationsListStateService, ConversationsService, ConversationsUiService}
+import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
 import com.waz.service.images.ImageLoader
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.GlobalNotificationsService
@@ -149,7 +149,7 @@ object WireApplication {
 
     // services  and storages of the current zms
     bind [Signal[ConversationsService]]          to inject[Signal[ZMessaging]].map(_.conversations)
-    bind [Signal[ConversationsListStateService]] to inject[Signal[ZMessaging]].map(_.convsStats)
+    bind [Signal[SelectedConversationService]]   to inject[Signal[ZMessaging]].map(_.selectedConv)
     bind [Signal[ConversationsUiService]]        to inject[Signal[ZMessaging]].map(_.convsUi)
     bind [Signal[UserService]]                   to inject[Signal[ZMessaging]].map(_.users)
     bind [Signal[UserSearchService]]             to inject[Signal[ZMessaging]].map(_.userSearch)
@@ -215,6 +215,9 @@ object WireApplication {
 
     // current conversation data
     bind [Signal[ConversationData]] to inject[ConversationController].currentConv
+
+    // selected conversation id
+    bind [Signal[Option[ConvId]]] to inject[SelectedConversationService].selectedConversationId
 
     // accent color
     bind [Signal[AccentColor]] to inject[AccentColorController].accentColor

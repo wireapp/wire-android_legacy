@@ -179,10 +179,10 @@ class NormalConversationFragment extends ConversationListFragment {
 
   lazy val hasConversationsAndArchive = for {
     z <- zms
-    convs <- z.convsStorage.convsSignal
+    convs <- z.convsStorage.contents
   } yield {
-    (convs.conversations.exists(c => !c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType)),
-    convs.conversations.exists(c => c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType)))
+    (convs.values.exists(c => !c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType)),
+    convs.values.exists(c => c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType)))
   }
 
   lazy val archiveEnabled = hasConversationsAndArchive.map(_._2)

@@ -40,7 +40,7 @@ class ConnectRequestAdapter(context: Context)(implicit injector: Injector, event
 
   lazy val incomingRequests = for {
     z             <- zms
-    conversations <- z.convsStorage.convsSignal.map(_.conversations.filter(Incoming.filter).toSeq)
+    conversations <- z.convsStorage.contents.map(_.values.filter(Incoming.filter).toSeq)
     members       <- Signal.sequence(conversations.map(c => z.membersStorage.activeMembers(c.id).map(_.find(_ != z.selfUserId))):_*)
   } yield members.flatten
 

@@ -21,7 +21,7 @@ import java.util.Locale
 
 import android.content.Context
 import com.waz.api.OtrClientType
-import com.waz.model.UserId
+import com.waz.model.{ConvId, UserId}
 import com.waz.model.otr.{Client, ClientId, UserClients}
 import com.waz.service.{AccountManager, ZMessaging}
 import com.waz.sync.SyncResult
@@ -87,7 +87,7 @@ class ClientsController(implicit inj: Injector) extends Injectable {
   def resetSession(userId: UserId, clientId: ClientId): Future[SyncResult] = {
     (for {
       z    <- zms.head
-      convId <- z.convsStats.selectedConversationId.head.flatMap {
+      convId <- inject[Signal[Option[ConvId]]].head.flatMap {
         case Some(id) => Future.successful(id)
         case _ => userAccounts.getConversationId(userId)
       }

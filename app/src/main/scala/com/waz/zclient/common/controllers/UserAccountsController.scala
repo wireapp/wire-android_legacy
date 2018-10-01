@@ -104,7 +104,7 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
 
   lazy val unreadCount = for {
     zmsSet   <- accountsService.zmsInstances
-    countMap <- Signal.sequence(zmsSet.map(z => z.convsStorage.convsSignal.map(c => z.selfUserId -> c.conversations.map(unreadCountForConv).sum)).toSeq:_*)
+    countMap <- Signal.sequence(zmsSet.map(z => z.convsStorage.contents.map(c => z.selfUserId -> c.values.map(unreadCountForConv).sum)).toSeq:_*)
   } yield countMap.toMap
 
   def getConversationId(user: UserId) =

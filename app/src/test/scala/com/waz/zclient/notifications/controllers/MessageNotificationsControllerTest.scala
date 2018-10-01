@@ -101,9 +101,8 @@ class MessageNotificationsControllerTest extends AndroidFreeSpec { this: Suite =
     }
 
     private val convStorage = returning(mock[ConversationStorage]) { convStorage =>
-      (convStorage.convsSignal _).expects().anyNumberOfTimes().returning(Signal(ConversationsSet(SortedSet(convData))))
+      (convStorage.contents _).expects().anyNumberOfTimes().returning(Signal(Map(convData.id -> convData)))
       (convStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(Option(convData)))
-      (convStorage.conversations _).expects().anyNumberOfTimes().returning(IndexedSeq(convData))
     }
 
     private val convsStats = returning(mock[ConversationsListStateService]) { convsStats =>
