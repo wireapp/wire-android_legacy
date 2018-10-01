@@ -22,13 +22,14 @@ import com.waz.ZLog._
 import com.waz.content.Database
 import com.waz.db.DaoIdOps
 import com.waz.model.errors.NotFoundLocal
-import com.waz.threading.SerialDispatchQueue
+import com.waz.threading.{SerialDispatchQueue, Threading}
+import com.waz.utils.ContentChange.{Added, Removed, Updated}
 import com.waz.utils.events._
 import com.waz.utils.wrappers.DB
 
 import scala.collection.JavaConverters._
 import scala.collection.generic._
-import scala.collection.{GenTraversableOnce, breakOut}
+import scala.collection.{GenTraversableOnce, Seq, breakOut, mutable}
 import scala.concurrent.{ExecutionContext, Future}
 
 trait StorageDao[K, V] {
@@ -256,6 +257,8 @@ trait CachedStorage[K, V] {
   def cacheIfNotPresent(key: K, value: V): Unit
 
   def printCache(): Unit
+
+  def contents: Signal[Map[K, V]]
 }
 
 class CachedStorageImpl[K, V](cache: LruCache[K, Option[V]], db: Database)(implicit val dao: StorageDao[K, V], tag: LogTag = "CachedStorage") extends CachedStorage[K, V] {
@@ -501,5 +504,36 @@ class CachedStorageImpl[K, V](cache: LruCache[K, Option[V]], db: Database)(impli
     }.mkString("\n")
 
     verbose(s"${c.size} values in cache: ${getClass.getSimpleName}\n$vs")
+  }
+
+  // signal with all data
+  override lazy val contents: Signal[Map[K, V]] = {
+    val changesStream = EventStream.union[Seq[ContentChange[K, V]]](
+      onAdded.map(_.map(d => Added(dao.idExtractor(d), d))),
+      onUpdated.map(_.map { case (prv, curr) => Updated(dao.idExtractor(prv), prv, curr) }),
+      onDeleted.map(_.map(Removed(_)))
+    )
+
+    def load = for {
+      values   <- db.read { dao.list(_) }
+      valueMap = values.map { v => dao.idExtractor(v) -> v }.toMap
+    } yield valueMap
+
+    new AggregatingSignal[Seq[ContentChange[K, V]], Map[K, V]](changesStream, load, { (values, changes) =>
+      val added = new mutable.HashMap[K, V]
+      val removed = new mutable.HashSet[K]
+      changes foreach {
+        case Added(id, data) =>
+          removed -= id
+          added += id -> data
+        case Updated(id, _, data) =>
+          removed -= id
+          added += id -> data
+        case Removed(id) =>
+          removed += id
+          added -= id
+      }
+      values -- removed ++ added
+    }).disableAutowiring()
   }
 }

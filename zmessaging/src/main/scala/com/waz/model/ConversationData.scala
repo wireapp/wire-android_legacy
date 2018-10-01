@@ -337,6 +337,9 @@ object ConversationData {
     }
 
     def findByTeams(teams: Set[TeamId])(implicit db: DB) = iterating(findInSet(Team, teams.map(Option(_))))
+
+    def findByRemoteId(remoteId: RConvId)(implicit db: DB) = iterating(find(RemoteId, remoteId))
+    def findByRemoteIds(remoteIds: Set[RConvId])(implicit db: DB) = iterating(findInSet(RemoteId, remoteIds))
   }
 }
 

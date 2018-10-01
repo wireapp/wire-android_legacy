@@ -22,7 +22,6 @@ import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.UiLifeCycle
-import com.waz.service.conversation.ConversationsListStateService
 import com.waz.service.push.{GlobalNotificationsService, GlobalNotificationsServiceImpl, NotificationService, PushService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.testutils.TestUserPreferences
@@ -31,7 +30,6 @@ import com.waz.utils.{RichFiniteDuration, RichInstant}
 import org.threeten.bp.{Duration, Instant}
 import com.waz.ZLog.ImplicitTag._
 
-import scala.collection.Map
 import scala.concurrent.duration._
 import scala.concurrent.{Future, duration}
 
@@ -47,7 +45,6 @@ class NotificationsServiceSpec extends AndroidFreeSpec {
   val reactions = mock[ReactionsStorage]
   val userPrefs = new TestUserPreferences
   val push      = mock[PushService]
-  val convsStats = mock[ConversationsListStateService]
   val members   = mock[MembersStorage]
   val globalNots: GlobalNotificationsService = new GlobalNotificationsServiceImpl
 
@@ -185,7 +182,7 @@ class NotificationsServiceSpec extends AndroidFreeSpec {
 
   def getService = {
 
-    (storage.notifications _).expects().anyNumberOfTimes().returning(notifications)
+    (storage.contents _).expects().anyNumberOfTimes().returning(notifications)
 
     (storage.insertAll _).expects(*).anyNumberOfTimes().onCall { nots: Traversable[NotificationData] =>
       notifications ! nots.map(n => n.id -> n).toMap
@@ -199,7 +196,7 @@ class NotificationsServiceSpec extends AndroidFreeSpec {
 
     (convs.onAdded _).expects().returning(convsAdded)
     (convs.onUpdated _).expects().returning(convsUpdated)
-    (convs.getAllConvs _).expects().returning(allConvs.head)
+    (convs.list _).expects().returning(allConvs.head)
 
     (messages.onAdded _).expects().returning(msgsAdded)
     (messages.onUpdated _).expects().returning(msgsUpdated)
@@ -210,7 +207,7 @@ class NotificationsServiceSpec extends AndroidFreeSpec {
 
     (push.beDrift _).expects().anyNumberOfTimes().returning(Signal.const(Duration.ZERO))
 
-    new NotificationService(null, self, messages, lifeCycle, storage, users, convs, members, reactions, userPrefs, push, convsStats, globalNots)
+    new NotificationService(null, self, messages, lifeCycle, storage, users, convs, members, reactions, userPrefs, push, globalNots)
   }
 
 }

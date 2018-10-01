@@ -242,7 +242,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
         .expects(*, *, *, *).once().returning(Future.successful(Vector.empty[UserData]))
       (userService.acceptedOrBlockedUsers _).expects().once().returning(Signal.const(expected.map(key => (key -> users(key))).toMap))
 
-      (convsUi.findGroupConversations _).expects(*, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
+      (convsStorage.findGroupConversations _).expects(*, *, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
       (queryCacheStorage.updateOrCreate _).expects(*, *, *).once().returning(Future.successful(queryCache))
 
       (sync.syncSearchQuery _).expects(query).once().onCall { _: SearchQuery =>
@@ -274,7 +274,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
         .expects(*, *, *, *).once().returning(Future.successful(Vector.empty[UserData]))
       (userService.acceptedOrBlockedUsers _).expects().once().returning(Signal.const(Map.empty[UserId, UserData]))
 
-      (convsUi.findGroupConversations _).expects(*, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
+      (convsStorage.findGroupConversations _).expects(*, *, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
       (queryCacheStorage.updateOrCreate _).expects(*, *, *).once().returning(Future.successful(queryCache))
 
       (sync.syncSearchQuery _).expects(query).once().onCall { _: SearchQuery =>

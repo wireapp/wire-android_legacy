@@ -76,16 +76,14 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationContentUpdater")
 
-  val conversationsSignal: Signal[ConversationsSet] = storage.convsSignal
-
   val conversationsFuture = Future successful storage
 
-  storage.convUpdated { case (prev, conv) =>
-    if (prev.cleared != conv.cleared) {
+  storage.onUpdated(_.foreach {
+    case (prev, conv) if prev.cleared != conv.cleared =>
       verbose(s"cleared updated will clear messages, prev: $prev, updated: $conv")
       conv.cleared.foreach(messagesStorage.clear(conv.id, _).recoverWithLog())
-    }
-  }
+    case _ =>
+  })
 
   private val shouldFixDuplicatedConversations = userPrefs.preference(UserPreferences.FixDuplicatedConversations)
 
@@ -269,7 +267,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
           _ <- membersStorage.add(origId, Seq(selfUserId, UserId(origId.str)))
         } yield ()
       })
-    } yield storage.refreshRemoteMap()
+    } yield ()
   }
   
   private def checkMutedStatus(): Future[Unit] =

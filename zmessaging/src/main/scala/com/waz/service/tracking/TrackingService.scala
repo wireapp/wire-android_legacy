@@ -89,7 +89,7 @@ class TrackingServiceImpl(curAccount: Signal[Option[UserId]], zmsProvider: ZmsPr
   override def contribution(action: ContributionEvent.Action) = current.map {
     case Some(z) =>
       for {
-        Some(convId) <- z.convsStats.selectedConversationId.head
+        Some(convId) <- z.selectedConv.selectedConversationId.head
         Some(conv)   <- z.convsStorage.get(convId)
         userIds      <- z.membersStorage.activeMembers(convId).head
         users        <- z.usersStorage.listAll(userIds.toSeq)

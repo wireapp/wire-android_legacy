@@ -31,7 +31,6 @@ import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.service.ZMessaging.{accountTag, clock}
 import com.waz.service._
-import com.waz.service.conversation.ConversationsListStateService
 import com.waz.service.push.NotificationService.NotificationInfo
 import com.waz.threading.SerialDispatchQueue
 import com.waz.utils.events.{AggregatingSignal, EventStream, Signal}
@@ -114,7 +113,6 @@ class NotificationService(context:         Context,
                           reactionStorage: ReactionsStorage,
                           userPrefs:       UserPreferences,
                           pushService:     PushService,
-                          convsStats:      ConversationsListStateService,
                           globalNots:      GlobalNotificationsService) {
 
   import NotificationService._
@@ -133,7 +131,7 @@ class NotificationService(context:         Context,
   //For UI to decide if it should make sounds or not
   val otherDeviceActiveTime = Signal(Instant.EPOCH)
 
-  val notifications = storage.notifications.map(_.values.toIndexedSeq.sorted).flatMap { d => Signal.future(createNotifications(d)) }
+  val notifications = storage.contents.map(_.values.toIndexedSeq.sorted).flatMap { d => Signal.future(createNotifications(d)) }
 
   val lastReadProcessingStage = EventScheduler.Stage[GenericMessageEvent] { (convId, events) =>
     events.foreach {
@@ -178,7 +176,7 @@ class NotificationService(context:         Context,
       convs.onUpdated map { _ collect { case (prev, conv) if convLastRead(prev) != convLastRead(conv) => conv } }
     ) filter(_.nonEmpty)
 
-    def loadAll() = convs.getAllConvs.map(_.map(c => c.id -> convLastRead(c)).toMap)
+    def loadAll() = convs.list().map(_.map(c => c.id -> convLastRead(c)).toMap)
 
     def update(times: Map[ConvId, RemoteInstant], updates: Seq[ConversationData]) =
       times ++ updates.map(c => c.id -> convLastRead(c))(breakOut)
@@ -240,7 +238,7 @@ class NotificationService(context:         Context,
   }
 
   def removeNotifications(filter: NotificationData => Boolean = (_: NotificationData) => true) = {
-    storage.notifications.head flatMap { data =>
+    storage.contents.head flatMap { data =>
       val toRemove = data collect {
         case (id, n) if filter(n) => id
       }

@@ -52,7 +52,7 @@ class NameUpdater(selfUserId:     UserId,
 
   // load groups and members
   lazy val init = for {
-    all <- convs.getAllConvs
+    all <- convs.list()
     groups = all.filter(c => c.convType == ConversationType.Group && c.name.isEmpty)
     members <- Future.traverse(groups) { c => membersStorage.getActiveUsers(c.id) map (c.id -> _) }
   } yield {

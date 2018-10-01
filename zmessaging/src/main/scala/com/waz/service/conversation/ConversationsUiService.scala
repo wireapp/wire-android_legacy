@@ -77,7 +77,7 @@ trait ConversationsUiService {
 
   def leaveConversation(conv: ConvId): Future[Unit]
   def clearConversation(id: ConvId): Future[Option[ConversationData]]
-  def findGroupConversations(prefix: SearchKey, limit: Int, handleOnly: Boolean): Future[Seq[ConversationData]]
+
   def knock(id: ConvId): Future[Option[MessageData]]
   def setLastRead(convId: ConvId, msg: MessageData): Future[Option[ConversationData]]
 
@@ -360,9 +360,6 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
       syncId <- sync.postConversation(id, members, conv.name, teamId, ac, ar)
     } yield (conv, syncId)
   }
-
-  override def findGroupConversations(prefix: SearchKey, limit: Int, handleOnly: Boolean): Future[Seq[ConversationData]] =
-    convStorage.search(prefix, selfUserId, handleOnly).map(_.sortBy(_.displayName)(currentLocaleOrdering).take(limit))
 
   override def knock(id: ConvId): Future[Option[MessageData]] = for {
     msg <- messages.addKnockMessage(id, selfUserId)

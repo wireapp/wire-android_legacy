@@ -146,12 +146,12 @@ class MessagesStorageImpl(context: Context,
     }
   }
 
-  convs.convUpdated.on(dispatcher) {
+  convs.onUpdated.on(dispatcher) { _.foreach {
     case (prev, updated) if updated.lastRead != prev.lastRead =>
       verbose(s"lastRead of conversation ${updated.id} updated to ${updated.lastRead}, will update unread count")
       msgsIndex(updated.id).map(_.updateLastRead(updated)).recoverWithLog()
     case _ => // ignore
-  }
+  } }
 
   override def addMessage(msg: MessageData) = put(msg.id, msg)
 

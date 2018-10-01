@@ -85,7 +85,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                                eventScheduler:  => EventScheduler,
                                tracking:        TrackingService,
                                client:          ConversationsClient,
-                               stats:           ConversationsListStateService,
+                               selectedConv:    SelectedConversationService,
                                syncReqService:  SyncRequestService) extends ConversationsService {
 
   private implicit val ev = EventContext.Global
@@ -95,7 +95,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   nameUpdater.registerForUpdates()
 
   //On conversation changed, update the state of the access roles as part of migration, then check for a link if necessary
-  stats.selectedConversationId {
+  selectedConv.selectedConversationId {
     case Some(convId) => convsStorage.get(convId).flatMap {
       case Some(conv) if conv.accessRole.isEmpty =>
         for {
@@ -222,8 +222,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   private def updateConversations(responses: Seq[ConversationResponse]): Future[(Seq[ConversationData], Seq[ConversationData])] = {
 
     def updateConversationData() = {
-      def findExistingId = convsStorage { (convById, remoteMap) =>
-        def byRemoteId(id: RConvId) = returning(remoteMap.get(id).flatMap(convById.get)) { res => verbose(s"byRemoteId($id) - $res")}
+      def findExistingId = convsStorage { convById =>
+        def byRemoteId(id: RConvId) = returning(convById.values.find(_.remoteId == id)) { res => verbose(s"byRemoteId($id) - $res")}
 
         responses.map { resp =>
           val newId = if (isOneToOne(resp.convType)) resp.members.find(_ != selfUserId).fold(ConvId())(m => ConvId(m.str)) else ConvId(resp.id.str)

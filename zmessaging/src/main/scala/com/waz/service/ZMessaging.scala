@@ -200,7 +200,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val conversations: ConversationsService        = wire[ConversationsServiceImpl]
   lazy val convOrder: ConversationOrderEventsService  = wire[ConversationOrderEventsService]
   lazy val convsUi: ConversationsUiService            = wire[ConversationsUiServiceImpl]
-  lazy val convsStats: ConversationsListStateService  = wire[ConversationsListStateServiceImpl]
+  lazy val selectedConv: SelectedConversationService  = wire[SelectedConversationServiceImpl]
   lazy val teams: TeamsService                        = wire[TeamsServiceImpl]
   lazy val integrations: IntegrationsService          = wire[IntegrationsServiceImpl]
   lazy val messages: MessagesServiceImpl              = wire[MessagesServiceImpl]
