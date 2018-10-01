@@ -266,12 +266,13 @@ object Avs {
     *   WCALL_VIDEO_STATE_STARTED           1
     *   WCALL_VIDEO_STATE_BAD_CONN          2
     *   WCALL_VIDEO_STATE_PAUSED            3
-    *   NoCameraPermission - internal state 4
-    *   Unknown - internal state            5
+    *   WCALL_VIDEO_STATE_SCREENSHARE       4
+    *   NoCameraPermission - internal state 5
+    *   Unknown - internal state            6
     */
   type VideoState = VideoState.Value
   object VideoState extends Enumeration {
-    val Stopped, Started, BadConnection, Paused, NoCameraPermission, Unknown = Value
+    val Stopped, Started, BadConnection, Paused, ScreenShare, NoCameraPermission, Unknown = Value
   }
 
   /**
