@@ -228,7 +228,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
     }
 
   private def singleNotificationProperties(props: NotificationProps, userId: UserId, n: NotificationInfo, teamName: Option[String]): NotificationProps = {
-    val title        = SpannableWrapper(getMessageTitle(n, None), List(Span(Span.StyleSpanBold, Span.HeaderRange)))
+    val title        = SpannableWrapper(getMessageTitle(n, None), List(Span(Span.StyleSpanBold, HeaderRange)))
     val body         = getMessage(n, singleConversationInBatch = true)
     val requestBase  = System.currentTimeMillis.toInt
     val bigTextStyle = StyleBuilder(StyleBuilder.BigText, title = title, summaryText = teamName, bigText = Some(body))
@@ -273,16 +273,16 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
           header = header,
           body = ResString(R.plurals.conversation_list__new_message_count, ns.size),
           spans = List(
-            Span(Span.StyleSpanBold, Span.HeaderRange),
-            Span(Span.StyleSpanItalic, Span.BodyRange, separator.length),
-            Span(Span.ForegroundColorSpanGray, Span.BodyRange)
+            Span(Span.StyleSpanBold, HeaderRange),
+            Span(Span.StyleSpanItalic, FullBodyRange, separator.length),
+            Span(Span.ForegroundColorSpanGray, FullBodyRange)
           ),
           separator = separator
         )
       else
         SpannableWrapper(
           header = header,
-          spans = List(Span(Span.StyleSpanBold, Span.HeaderRange))
+          spans = List(Span(Span.StyleSpanBold, HeaderRange))
         )
 
     val requestBase = System.currentTimeMillis.toInt
@@ -357,7 +357,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
     }
 
     val body = n.tpe match {
-      case _ if n.isEphemeral && n.isUserMentioned => ResString(R.string.notification__message_with_mention__ephemeral)
+      case _ if n.isEphemeral && n.userMentions.nonEmpty => ResString(R.string.notification__message_with_mention__ephemeral)
       case _ if n.isEphemeral => ResString(R.string.notification__message__ephemeral)
       case TEXT               => ResString(message)
       case MISSED_CALL        => ResString(R.string.notification__message__one_to_one__wanted_to_talk)
@@ -383,7 +383,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
       case _ => ResString.Empty
     }
 
-    getMessageSpannable(header, body, n.tpe == TEXT)
+    getMessageSpannable(header, body, n.tpe == TEXT, n.userMentions)
   }
 
   private def getMessageTitle(n: NotificationInfo, teamName: Option[String]): ResString = {
@@ -401,9 +401,11 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
   }
 
   @TargetApi(21)
-  private def getMessageSpannable(header: ResString, body: ResString, isTextMessage: Boolean) = {
-    val spans = Span(Span.ForegroundColorSpanBlack, Span.HeaderRange) ::
-      (if (!isTextMessage) List(Span(Span.StyleSpanItalic, Span.BodyRange)) else Nil)
+  private def getMessageSpannable(header: ResString, body: ResString, isTextMessage: Boolean, mentions: Seq[Mention]) = {
+    val spans = Span(Span.ForegroundColorSpanBlack, HeaderRange) ::
+      (if (!isTextMessage)
+        List(Span(Span.StyleSpanItalic, FullBodyRange))
+      else mentions.map(m => Span(Span.StyleSpanBold, BodyRange(m.start, m.start + m.length))).toList)
     SpannableWrapper(header = header, body = body, spans = spans, separator = "")
   }
 
@@ -412,12 +414,12 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
     else {
       val prefixId =
         if (!singleConversationInBatch && n.isGroupConv)
-          if (n.isUserMentioned)
+          if (n.userMentions.nonEmpty)
             R.string.notification__message_with_mention__group__prefix__text
           else
             R.string.notification__message__group__prefix__text
         else if (!singleConversationInBatch && !n.isGroupConv || singleConversationInBatch && n.isGroupConv)
-          if (n.isUserMentioned)
+          if (n.userMentions.nonEmpty)
             R.string.notification__message_with_mention__name__prefix__text
           else
             R.string.notification__message__name__prefix__text
