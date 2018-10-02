@@ -96,7 +96,7 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
     } yield z.teamId.isDefined && z.teamId == user.teamId
 
   private def unreadCountForConv(conversationData: ConversationData): Int = {
-    if (conversationData.archived || conversationData.muted || conversationData.hidden || conversationData.convType == ConversationData.ConversationType.Self)
+    if (conversationData.archived || conversationData.muted.isAllMuted || conversationData.hidden || conversationData.convType == ConversationData.ConversationType.Self)
       0
     else
       conversationData.unreadCount.total

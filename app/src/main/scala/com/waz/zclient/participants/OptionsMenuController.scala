@@ -22,15 +22,19 @@ import com.waz.zclient.R
 import com.waz.zclient.participants.OptionsMenuController._
 
 trait OptionsMenuController {
+  val title: Signal[Option[String]]
   val optionItems: Signal[Seq[MenuItem]]
   val onMenuItemClicked: SourceStream[MenuItem]
+  val selectedItems: Signal[Set[MenuItem]]
 }
 
 object OptionsMenuController {
   case class MenuItem(titleId: Int, glyphId: Option[Int] = None, colorId: Option[Int] = Some(R.color.graphite))
 }
 
-case class BaseOptionsMenuController(options: Seq[MenuItem]) extends OptionsMenuController {
+class BaseOptionsMenuController(options: Seq[MenuItem], titleString: Option[String]) extends OptionsMenuController {
+  override val title: Signal[Option[String]] = Signal.const(titleString)
   override val optionItems: Signal[Seq[MenuItem]] = Signal(options)
   override val onMenuItemClicked: SourceStream[MenuItem] = EventStream()
+  override val selectedItems: Signal[Set[MenuItem]] = Signal.const(Set())
 }

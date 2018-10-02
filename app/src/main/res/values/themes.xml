@@ -184,6 +184,8 @@
         <item name="quoteStripeColor">@color/white_24</item>
         <item name="listPrefixColor">@color/white_64</item>
 
+        <item name="selfMentionBackgroundColor">@color/self_mention_background_light</item>
+
     </style>
 
     <style name="Theme.Light" parent="@style/Theme.Design.Light.NoActionBar">
@@ -348,6 +350,8 @@
         <item name="quoteColor">@color/graphite_64</item>
         <item name="quoteStripeColor">@color/graphite_24</item>
         <item name="listPrefixColor">@color/graphite_64</item>
+
+        <item name="selfMentionBackgroundColor">@color/self_mention_background_dark</item>
 
     </style>
 

@@ -21,7 +21,7 @@ import android.content.{Context, DialogInterface}
 import android.support.v7.app.AlertDialog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
-import com.waz.model.{ConvId, ConversationData, UserData, UserId}
+import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events._
@@ -54,6 +54,12 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
   private val screenController       = inject[IConversationScreenController]
 
   override val onMenuItemClicked: SourceStream[MenuItem] = EventStream()
+  override val selectedItems: Signal[Set[MenuItem]] = Signal.const(Set())
+  override val title: Signal[Option[String]] =
+    if (mode.inConversationList)
+      Signal.future(convController.getConversation(convId).map(_.map(_.displayName)))
+    else
+      Signal.const(None)
 
   lazy val tag: String = if (mode.inConversationList) "OptionsMenu_ConvList" else "OptionsMenu_Participants"
 
@@ -94,17 +100,24 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
       case Mode.Deleting(_) =>
         builder ++= Set(DeleteOnly, DeleteAndLeave)
       case Mode.Normal(_) =>
+
+        def notifications: MenuItem =
+          if (zms.teamId.isDefined)
+            Notifications
+          else if (conv.muted.isAllAllowed)
+            Mute
+          else
+            Unmute
+
         builder += (if (conv.archived) Unarchive else Archive)
         if (isGroup) {
           if (conv.isActive) {
-            builder += (if (conv.muted) Unmute else Mute)
-            builder += Leave
+            builder ++= Set(notifications, Leave)
           }
           builder += Delete
         } else {
           if (teamMember || connectStatus.contains(ACCEPTED) || isBot) {
-            builder += (if (conv.muted) Unmute else Mute)
-            builder += Delete
+            builder ++= Set(notifications, Delete)
             if (!teamMember && connectStatus.contains(ACCEPTED)) builder ++= Set(Block)
           }
           else if (connectStatus.contains(PENDING_FROM_USER)) builder += Block
@@ -127,10 +140,10 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
             navController.setVisiblePage(Page.CONVERSATION_LIST, tag)
             participantsController.onHideParticipants ! true
           }
-
+        case Mute   => convController.setMuted(cId, muted = MuteSet.AllMuted)
+        case Unmute   => convController.setMuted(cId, muted = MuteSet.AllAllowed)
         case Unarchive => convController.archive(cId, archive = false)
-        case Mute   => convController.setMuted(cId, muted = true)
-        case Unmute => convController.setMuted(cId, muted = false)
+        case Notifications => OptionsMenu(context, new NotificationsOptionsMenuController(convId, mode.inConversationList)).show()
         case Leave     => leaveConversation(cId)
         case Delete    => deleteConversation(cId)
         case Block     => user.map(_.id).foreach(showBlockConfirmation(cId, _))
@@ -230,11 +243,11 @@ object ConversationOptionsMenuController {
     case class Leaving(inConversationList: Boolean) extends Mode
   }
 
-  object Picture   extends MenuItem(R.string.conversation__action__picture, Some(R.string.glyph__camera))
-  object Call      extends MenuItem(R.string.conversation__action__call, Some(R.string.glyph__call))
-
   object Mute      extends MenuItem(R.string.conversation__action__silence, Some(R.string.glyph__silence))
   object Unmute    extends MenuItem(R.string.conversation__action__unsilence, Some(R.string.glyph__notify))
+  object Picture   extends MenuItem(R.string.conversation__action__picture, Some(R.string.glyph__camera))
+  object Call      extends MenuItem(R.string.conversation__action__call, Some(R.string.glyph__call))
+  object Notifications    extends MenuItem(R.string.conversation__action__notifications, Some(R.string.glyph__notify))
   object Archive   extends MenuItem(R.string.conversation__action__archive, Some(R.string.glyph__archive))
   object Unarchive extends MenuItem(R.string.conversation__action__unarchive, Some(R.string.glyph__archive))
   object Delete    extends MenuItem(R.string.conversation__action__delete, Some(R.string.glyph__delete_me))
@@ -247,6 +260,6 @@ object ConversationOptionsMenuController {
   object DeleteOnly     extends MenuItem(R.string.conversation__action__delete_only, Some(R.string.empty_string))
   object DeleteAndLeave extends MenuItem(R.string.conversation__action__delete_and_leave, Some(R.string.empty_string))
 
-  val OrderSeq = Seq(Mute, Unmute, Archive, Unarchive, Delete, Leave, Block, Unblock, LeaveOnly, LeaveAndDelete, DeleteOnly, DeleteAndLeave)
+  val OrderSeq = Seq(Mute, Unmute, Notifications, Archive, Unarchive, Delete, Leave, Block, Unblock, LeaveOnly, LeaveAndDelete, DeleteOnly, DeleteAndLeave)
 
 }

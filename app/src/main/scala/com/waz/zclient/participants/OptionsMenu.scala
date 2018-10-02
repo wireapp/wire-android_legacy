@@ -22,6 +22,7 @@ import android.os.Bundle
 import android.support.design.widget.BottomSheetDialog
 import android.view.{View, ViewGroup}
 import android.widget.{LinearLayout, TextView}
+import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.ui.animation.interpolators.penner.{Expo, Quart}
 import com.waz.zclient.ui.text.GlyphTextView
@@ -38,14 +39,25 @@ case class OptionsMenu(context: Context, controller: OptionsMenuController) exte
     val view = getLayoutInflater.inflate(R.layout.message__bottom__menu, null).asInstanceOf[LinearLayout]
     setContentView(view)
 
+    val container = view.findViewById[LinearLayout](R.id.container)
+    val title = view.findViewById[TextView](R.id.title)
+
     def params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewUtils.toPx(getContext, 48))
 
-    controller.optionItems.onUi { items =>
+    controller.title.onUi {
+      case Some(text) =>
+        title.setVisible(true)
+        title.setText(text)
+      case _ =>
+        title.setVisible(false)
+    }
 
-      view.removeAllViews()
+    Signal(controller.optionItems, controller.selectedItems).onUi { case (items, selected) =>
+
+      container.removeAllViews()
 
       items.foreach { item =>
-        view.addView(returning(getLayoutInflater.inflate(R.layout.message__bottom__menu__row, view, false)) { itemView =>
+        container.addView(returning(getLayoutInflater.inflate(R.layout.message__bottom__menu__row, container, false)) { itemView =>
 
           returning(getView[GlyphTextView](itemView, R.id.icon)) { v =>
             item.glyphId.fold(v.setVisibility(View.GONE)) { g =>
@@ -61,6 +73,10 @@ case class OptionsMenu(context: Context, controller: OptionsMenuController) exte
           itemView.onClick {
             controller.onMenuItemClicked ! item
             dismiss()
+          }
+
+          returning(getView[View](itemView, R.id.tick)) { v =>
+            v.setVisible(selected.contains(item))
           }
         }, params)
       }

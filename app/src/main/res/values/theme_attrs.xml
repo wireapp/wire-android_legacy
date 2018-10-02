@@ -161,4 +161,6 @@
     <attr name="quoteStripeColor" format="reference" />
     <attr name="listPrefixColor" format="reference" />
 
+    <attr name="selfMentionBackgroundColor" format="color" />
+
 </resources>

@@ -21,7 +21,7 @@ import android.content.Context
 import android.os.Bundle
 import android.support.design.widget.BottomSheetDialog
 import android.view.{View, ViewGroup}
-import android.widget.{LinearLayout, TextView}
+import android.widget.{LinearLayout, RelativeLayout, TextView}
 import com.waz.api.{AssetStatus, Message}
 import com.waz.model._
 import com.waz.service.ZMessaging
@@ -61,7 +61,7 @@ class MessageBottomSheetDialog(val context: Context,
     actions.on(Threading.Ui) { acts =>
       view.removeAllViews()
       acts foreach { action =>
-        val row = getLayoutInflater.inflate(R.layout.message__bottom__menu__row, view, false).asInstanceOf[LinearLayout]
+        val row = getLayoutInflater.inflate(R.layout.message__bottom__menu__row, view, false).asInstanceOf[RelativeLayout]
         row.setId(action.resId)
         val icon = row.getChildAt(0).asInstanceOf[TextView]
         icon.setText(action.glyphResId)
@@ -73,7 +73,7 @@ class MessageBottomSheetDialog(val context: Context,
             dismiss()
           }
         })
-        val params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewUtils.toPx(getContext, 48))
+        val params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewUtils.toPx(getContext, 48))
         view.addView(row, params)
       }
     }

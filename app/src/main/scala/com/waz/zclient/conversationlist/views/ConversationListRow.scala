@@ -358,19 +358,19 @@ object ConversationListRow {
                                 ): ConversationBadge.Status = {
     if (callDuration.nonEmpty) {
       ConversationBadge.OngoingCall(Some(callDuration))
-    } else if (availableCalls.contains(conversationData.id) && isGroupConv) {
+    } else if (availableCalls.contains(conversationData.id)) {
       availableCalls(conversationData.id).state match {
         case SelfCalling => OngoingCall(None)
         case _           => ConversationBadge.IncomingCall
       }
     } else if (conversationData.convType == ConversationType.WaitForConnection || conversationData.convType == ConversationType.Incoming) {
       ConversationBadge.WaitingConnection
-    } else if (conversationData.muted) {
+    } else if (unreadCount.mentions > 0 && !conversationData.muted.isAllMuted) {
+      ConversationBadge.Mention
+    } else if (!conversationData.muted.isAllAllowed) {
       ConversationBadge.Muted
     } else if (typing) {
       ConversationBadge.Typing
-    }else if (unreadCount.mentions > 0) {
-      ConversationBadge.Mention
     } else if (conversationData.missedCallMessage.nonEmpty) {
       ConversationBadge.MissedCall
     } else if (conversationData.incomingKnockMessage.nonEmpty) {
@@ -452,7 +452,14 @@ object ConversationListRow {
       ""
     } else if (conv.unreadCount.total == 0 && !conv.isActive) {
       getString(R.string.conversation_list__left_you)
-    } else if ((conv.muted || conv.incomingKnockMessage.nonEmpty || conv.missedCallMessage.nonEmpty || conv.unreadCount.mentions > 1 || (conv.unreadCount.mentions == 1 && conv.unreadCount.messages > 0)) && typingUser.isEmpty) {
+    } else if ((conv.muted.isAllMuted ||
+      conv.incomingKnockMessage.nonEmpty ||
+      conv.missedCallMessage.nonEmpty ||
+      conv.unreadCount.mentions > 1 ||
+      (conv.unreadCount.mentions == 1 && conv.unreadCount.messages > 0) ||
+      (conv.muted.onlyMentionsAllowed && (conv.unreadCount.mentions > 1 || conv.unreadCount.total - conv.unreadCount.mentions > 0)))
+      && typingUser.isEmpty) {
+
       val normalMessageCount = conv.unreadCount.normal
       val missedCallCount = conv.unreadCount.call
       val pingCount = conv.unreadCount.ping
@@ -473,13 +480,13 @@ object ConversationListRow {
           context.getResources.getQuantityString(R.plurals.conversation_list__mentions_count, mentionsCount, mentionsCount.toString) else "",
         if (missedCallCount > 0) {
           if (isGroupConv) {
-            if (missedCallCount > 1)
-              getString(R.string.conversation_list__missed_calls_plural, missedCallCount.toString)
+            if (conv.unreadCount.total > 1 || conv.isAllMuted || conv.onlyMentionsAllowed)
+              getQuantityString(R.plurals.conversation_list__missed_calls_plural, missedCallCount, missedCallCount.toString)
             else
               getString(R.string.conversation_list__missed_calls_count_group, user.get)
           } else {
-            if (missedCallCount > 1)
-              getString(R.string.conversation_list__missed_calls_plural, missedCallCount.toString)
+            if (conv.unreadCount.total > 1 || conv.isAllMuted || conv.onlyMentionsAllowed)
+              getQuantityString(R.plurals.conversation_list__missed_calls_plural, missedCallCount, missedCallCount.toString)
             else
               getString(R.string.conversation_list__missed_calls_count)
           }

@@ -70,7 +70,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   }
 
   returning(findById[CallControlButtonView](R.id.video_call)) { button =>
-    button.set(WireStyleKit.drawCamera, R.string.incoming__controls__ongoing__video, video)
+    button.set(WireStyleKit.drawVideocall, R.string.incoming__controls__ongoing__video, video)
 
     isVideoBeingSent.onUi(button.setActivated)
 

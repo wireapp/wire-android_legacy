@@ -127,6 +127,9 @@
     <color name="teams_create_button_pressed">#009b00</color>
     <color name="banner_grey">#95989A</color>
 
+    <color name="self_mention_background_light">#7BFEBF02</color>
+    <color name="self_mention_background_dark">#CCFEBF02</color>
+
 
     <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
     <!-- Component colors  -->

@@ -28,7 +28,7 @@ import com.waz.zclient.messages.{MessageView, MessageViewPart}
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.utils.returning
-import com.waz.zclient.utils.ContextUtils
+import com.waz.zclient.utils.ContextUtils._
 
 trait MentionsViewPart extends MessageViewPart with ViewHelper {
 
@@ -48,7 +48,7 @@ trait MentionsViewPart extends MessageViewPart with ViewHelper {
 
     def applySpanForSelfMention(): Unit = {
       spannable.setSpan(
-        new SelfMentionBackgroundSpan(accentColor, ContextUtils.getStyledColor(R.attr.wirePrimaryTextColor)),
+        new SelfMentionBackgroundSpan(getStyledColor(R.attr.selfMentionBackgroundColor), getStyledColor(R.attr.wirePrimaryTextColor)),
         start,
         end,
         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)

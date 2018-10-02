@@ -208,7 +208,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     }}
   }
 
-  def setMuted(id: ConvId, muted: Boolean): Future[Unit] =
+  def setMuted(id: ConvId, muted: MuteSet): Future[Unit] =
     convsUi.head.flatMap(_.setConversationMuted(id, muted)).map(_ => {})
 
   def delete(id: ConvId, alsoLeave: Boolean): CancellableFuture[Option[ConversationData]] = {
