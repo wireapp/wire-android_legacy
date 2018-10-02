@@ -434,19 +434,6 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
         null, limit.fold[String](null)(_.toString))
       db.rawQuery(q, null)
     }
-
-    /**
-     * Returns incoming messages (for all unmuted conversations) with local time greater then given time in millis.
-     */
-    def listIncomingMessages(selfUserId: UserId, since: Long, limit: Int = 25)(implicit db: DB): Vector[MessageData] = list(db.rawQuery(
-      s"""
-         | SELECT msg.*
-         | FROM ${table.name} msg, ${ConversationDataDao.table.name} conv
-         | WHERE msg.${Conv.name} = conv.${ConversationDataDao.Id.name} AND conv.${ConversationDataDao.Muted.name} = 0
-         | AND msg.${LocalTime.name} > ? AND msg.${User.name} != ?
-         | ORDER BY msg.${LocalTime.name} DESC
-         | LIMIT $limit""".stripMargin, Array(since.toString, selfUserId.str)
-    ))
   }
 
   case class MessageEntry(id: MessageId, user: UserId, tpe: Message.Type = Message.Type.TEXT, state: Message.Status = Message.Status.DEFAULT, contentSize: Int = 1)

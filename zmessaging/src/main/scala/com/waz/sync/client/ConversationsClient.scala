@@ -22,6 +22,7 @@ import com.waz.ZLog._
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.ConversationData.{ConversationType, Link}
+import com.waz.model.MuteMask.MuteMask
 import com.waz.model._
 import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
 import com.waz.utils.JsonEncoder.{encodeAccess, encodeAccessRole}
@@ -239,7 +240,7 @@ object ConversationsClient {
                                   creator:      UserId,
                                   convType:     ConversationType,
                                   team:         Option[TeamId],
-                                  muted:        Boolean,
+                                  muted:        Set[MuteMask],
                                   mutedTime:    RemoteInstant,
                                   archived:     Boolean,
                                   archivedTime: RemoteInstant,
@@ -265,7 +266,7 @@ object ConversationsClient {
           'creator,
           'type,
           'team,
-          state.muted.getOrElse(false),
+          state.muteMask,
           state.muteTime.getOrElse(RemoteInstant.Epoch),
           state.archived.getOrElse(false),
           state.archiveTime.getOrElse(RemoteInstant.Epoch),

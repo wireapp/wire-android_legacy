@@ -52,7 +52,7 @@ class ZMessagingDB(context: Context, dbName: String) extends DaoDB(context.getAp
 }
 
 object ZMessagingDB {
-  val DbVersion = 109
+  val DbVersion = 110
 
   lazy val daos = Seq (
     UserDataDao, SearchQueryCacheDao, AssetDataDao, ConversationDataDao,
@@ -223,6 +223,11 @@ object ZMessagingDB {
     },
     Migration(108, 109) { db =>
       db.execSQL("ALTER TABLE Conversations ADD COLUMN unread_mentions_count INTEGER DEFAULT 0")
+    },
+    Migration(109, 110) { db =>
+      db.execSQL("ALTER TABLE Conversations ADD COLUMN muted_status INTEGER DEFAULT 0")
+      db.execSQL("UPDATE Conversations SET muted_status = 3 WHERE muted = 1")
+      // we're unable to drop column `muted` from Android SQLite, even though it's not used anymore
     }
   )
 }

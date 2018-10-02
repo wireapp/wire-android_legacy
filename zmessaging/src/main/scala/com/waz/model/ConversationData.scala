@@ -24,6 +24,7 @@ import com.waz.api.{IConversation, Verification}
 import com.waz.db.Col._
 import com.waz.db.{Dao, Dao2}
 import com.waz.model.ConversationData.{ConversationType, Link, UnreadCount}
+import com.waz.model.MuteMask.MuteMask
 import com.waz.service.SearchKey
 import com.waz.utils.wrappers.{DB, DBCursor}
 import com.waz.utils.{JsonDecoder, JsonEncoder, _}
@@ -40,7 +41,7 @@ case class ConversationData(id:                   ConvId                 = ConvI
                             lastEventTime:        RemoteInstant          = RemoteInstant.Epoch,
                             isActive:             Boolean                = true,
                             lastRead:             RemoteInstant          = RemoteInstant.Epoch,
-                            muted:                Boolean                = false,
+                            muted:                Set[MuteMask]          = Set.empty,
                             muteTime:             RemoteInstant          = RemoteInstant.Epoch,
                             archived:             Boolean                = false,
                             archiveTime:          RemoteInstant          = RemoteInstant.Epoch,
@@ -127,7 +128,35 @@ case class ConversationData(id:                   ConvId                 = ConvI
     !(userData.isGuest(team) && isTeamOnly)
 
   def isMemberFromTeamGuest(teamId: Option[TeamId]): Boolean = team.isDefined && teamId != team
+
+  def allMuted: Boolean = muted == MuteMask.All
+
+  def mentionsAllowed: Boolean = !muted.contains(MuteMask.MentionsMuted)
 }
+
+object MuteMask {
+  sealed trait MuteMask
+  case object StandardMuted extends MuteMask
+  case object MentionsMuted extends MuteMask
+
+  val All = Set[MuteMask](StandardMuted, MentionsMuted)
+
+  val OnlyMentionsAllowed = reverse(Set(MentionsMuted))
+
+  // 0 -> `00` -> nothing muted;
+  // 1 -> `01` -> normal messages muted;
+  // 2 -> `10` -> mentions muted (normal messages not);
+  // 3 -> `11` -> both normal messages and mentions muted
+  def fromInt(status: Int): Set[MuteMask] =
+    (if ((status & 1) != 0) Set[MuteMask](StandardMuted) else Set.empty[MuteMask]) ++
+      (if ((status & 2) != 0) Set[MuteMask](MentionsMuted) else Set.empty[MuteMask])
+
+  def toInt(status: Set[MuteMask]): Int =
+    (if (status.contains(StandardMuted)) 1 else 0) | (if (status.contains(MentionsMuted)) 2 else 0)
+
+  def reverse(status: Set[MuteMask]): Set[MuteMask] = All -- status
+}
+
 
 /**
  * Conversation user binding.
@@ -191,7 +220,7 @@ object ConversationData {
     val LastEventTime       = remoteTimestamp('last_event_time)(_.lastEventTime)
     val IsActive            = bool('is_active)(_.isActive)
     val LastRead            = remoteTimestamp('last_read)(_.lastRead)
-    val Muted               = bool('muted)(_.muted)
+    val MutedStatus         = int('muted_status)(c => MuteMask.toInt(c.muted))
     val MutedTime           = remoteTimestamp('mute_time)(_.muteTime)
     val Archived            = bool('archived)(_.archived)
     val ArchivedTime        = remoteTimestamp('archive_time)(_.archiveTime)
@@ -226,7 +255,7 @@ object ConversationData {
       LastEventTime,
       IsActive,
       LastRead,
-      Muted,
+      MutedStatus,
       MutedTime,
       Archived,
       ArchivedTime,
@@ -260,7 +289,7 @@ object ConversationData {
         LastEventTime,
         IsActive,
         LastRead,
-        Muted,
+        MuteMask.fromInt(MutedStatus),
         MutedTime,
         Archived,
         ArchivedTime,

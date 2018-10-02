@@ -171,7 +171,7 @@ class NotificationService(context:         Context,
     * we don't want to show notifications for muted conversations.
     */
   private val lastReadMap = {
-    def convLastRead(c: ConversationData) = if (c.muted) RemoteInstant.Max else c.lastRead
+    def convLastRead(c: ConversationData) = if (c.allMuted) RemoteInstant.Max else c.lastRead
 
     val timeUpdates = EventStream.union(
       convs.onAdded,

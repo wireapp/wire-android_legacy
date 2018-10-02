@@ -27,6 +27,7 @@ import com.waz.api.impl._
 import com.waz.content._
 import com.waz.model.ConversationData.{ConversationType, getAccessAndRoleForGroupConv}
 import com.waz.model.GenericContent.{Location, MsgEdit}
+import com.waz.model.MuteMask.MuteMask
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.service.AccountsService.InForeground
@@ -69,7 +70,7 @@ trait ConversationsUiService {
   def deleteMessage(convId: ConvId, id: MessageId): Future[Unit]
   def recallMessage(convId: ConvId, id: MessageId): Future[Option[MessageData]]
   def setConversationArchived(id: ConvId, archived: Boolean): Future[Option[ConversationData]]
-  def setConversationMuted(id: ConvId, muted: Boolean): Future[Option[ConversationData]]
+  def setConversationMuted(id: ConvId, muted: Set[MuteMask]): Future[Option[ConversationData]]
   def setConversationName(id: ConvId, name: String): Future[Option[ConversationData]]
 
   def addConversationMembers(conv: ConvId, users: Set[UserId]): Future[Option[SyncId]]
@@ -209,9 +210,14 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
 
   override def setConversationArchived(id: ConvId, archived: Boolean): Future[Option[ConversationData]] = convs.setConversationArchived(id, archived)
 
-  override def setConversationMuted(id: ConvId, muted: Boolean): Future[Option[ConversationData]] =
+  override def setConversationMuted(id: ConvId, muted: Set[MuteMask]): Future[Option[ConversationData]] =
     convsContent.updateConversationMuted(id, muted) map {
-      case Some((_, conv)) => sync.postConversationState(id, ConversationState(muted = Some(conv.muted), muteTime = Some(conv.muteTime))); Some(conv)
+      case Some((_, conv)) =>
+        sync.postConversationState(
+          id,
+          ConversationState(muted = Some(conv.allMuted), muteTime = Some(conv.muteTime), mutedStatus = Some(MuteMask.toInt(conv.muted)))
+        )
+        Some(conv)
       case None => None
     }
 
