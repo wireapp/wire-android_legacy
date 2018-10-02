@@ -32,7 +32,7 @@ import com.waz.utils.returning
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.collection.fragments.CollectionFragment
 import com.waz.zclient.common.controllers.BrowserController
-import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
 import com.waz.zclient.controllers.collections.CollectionsObserver
 import com.waz.zclient.controllers.confirmation.{ConfirmationObserver, ConfirmationRequest, IConfirmationController}
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
@@ -75,6 +75,7 @@ class MainPhoneFragment extends FragmentHelper
   private lazy val navigationController   = inject[INavigationController]
   private lazy val singleImageController  = inject[ISingleImageController]
   private lazy val confirmationController = inject[IConfirmationController]
+  private lazy val keyboardController     = inject[KeyboardController]
 
   private lazy val confirmationMenu = returning(view[ConfirmationMenu](R.id.cm__confirm_action_light)) { vh =>
     accentColorController.accentColor.map(_.color).onUi(color => vh.foreach(_.setButtonColor(color)))
@@ -184,6 +185,7 @@ class MainPhoneFragment extends FragmentHelper
   override def onOpenUrl(url: String): Unit = browserController.openUrl(url)
 
   override def onShowSingleImage(messageId: String): Unit = {
+    keyboardController.hideKeyboardIfVisible()
     getChildFragmentManager
       .beginTransaction
       .add(R.id.fl__overlay_container, ImageFragment.newInstance(messageId), ImageFragment.Tag)
