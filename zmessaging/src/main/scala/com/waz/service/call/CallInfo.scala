@@ -51,7 +51,8 @@ case class CallInfo(convId:             ConvId,
                     estabTime:          Option[LocalInstant]              = None, //the time that a joined call was established, if any
                     endTime:            Option[LocalInstant]              = None,
                     endReason:          Option[AvsClosedReason]           = None,
-                    outstandingMsg:     Option[(GenericMessage, Pointer)] = None) { //Any messages we were unable to send due to conv degradation
+                    outstandingMsg:     Option[(GenericMessage, Pointer)] = None, //Any messages we were unable to send due to conv degradation
+                    shouldRing:         Boolean                           = true) {
 
   override def toString: String =
     s"""

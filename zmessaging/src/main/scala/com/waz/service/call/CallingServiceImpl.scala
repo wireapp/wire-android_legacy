@@ -115,7 +115,7 @@ object CallingService {
 
     val activeCall: Option[CallInfo] =
       calls
-        .filter { case (_, call) => isActive(call.state) }
+        .filter { case (_, call) => isActive(call.state) && call.shouldRing }
         .values.toSeq
         .sortBy(_.startTime)
         .headOption
@@ -182,6 +182,7 @@ class CallingServiceImpl(val accountId:       UserId,
   override val calls          = callProfile.map(_.calls).disableAutowiring() //all calls
   override val joinableCalls  = callProfile.map(_.joinableCalls).disableAutowiring() //any call a user can potentially join in the UI
   override val currentCall    = callProfile.map(_.activeCall).disableAutowiring() //state about any call for which we should show the CallingActivity
+  val joinableCallsNotMuted   = joinableCalls.map(_.filter { case (_, call) => call.shouldRing })
 
 
   //exposed for tests only
@@ -230,7 +231,8 @@ class CallingServiceImpl(val accountId:       UserId,
         OtherCalling,
         others = Map(userId -> Some(LocalInstant.Now)),
         startedAsVideoCall = videoCall,
-        videoSendState = VideoState.NoCameraPermission)
+        videoSendState = VideoState.NoCameraPermission,
+        shouldRing = !conv.muted)
 
       callProfile.mutate(p => p.copy(calls = p.calls + (newCall.convId -> newCall)))
     }
