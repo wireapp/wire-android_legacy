@@ -364,12 +364,12 @@ class DeviceActor(val deviceName: String,
 
     case MuteConv(remoteId) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>
-        z.convsUi.setConversationMuted(convId, muted = MuteMask.All)
+        z.convsUi.setConversationMuted(convId, muted = MuteSet.AllMuted)
       }.map(_ => Successful)
 
     case UnmuteConv(remoteId) =>
       zmsWithLocalConv(remoteId).flatMap { case (z, convId) =>
-        z.convsUi.setConversationMuted(convId, muted = Set.empty)
+        z.convsUi.setConversationMuted(convId, muted = MuteSet.AllAllowed)
       }.map(_ => Successful)
 
     case UpdateProfileImage(path) =>

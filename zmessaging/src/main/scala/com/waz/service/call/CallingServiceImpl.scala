@@ -232,7 +232,7 @@ class CallingServiceImpl(val accountId:       UserId,
         others = Map(userId -> Some(LocalInstant.Now)),
         startedAsVideoCall = videoCall,
         videoSendState = VideoState.NoCameraPermission,
-        shouldRing = !conv.muted)
+        shouldRing = conv.muted.isAllAllowed)
 
       callProfile.mutate(p => p.copy(calls = p.calls + (newCall.convId -> newCall)))
     }

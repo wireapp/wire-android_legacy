@@ -25,7 +25,6 @@ import com.waz.ZLog._
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.model.ConversationEvent.ConversationEventDecoder
 import com.waz.model.Event.EventDecoder
-import com.waz.model.MuteMask.MuteMask
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.{Client, ClientId}
 import com.waz.sync.client.ConversationsClient.ConversationResponse
@@ -136,17 +135,11 @@ sealed trait OtrEvent extends ConversationEvent {
 }
 case class OtrMessageEvent(convId: RConvId, time: RemoteInstant, from: UserId, sender: ClientId, recipient: ClientId, ciphertext: Array[Byte], externalData: Option[Array[Byte]] = None) extends OtrEvent
 
-case class ConversationState(archived: Option[Boolean] = None,
+case class ConversationState(archived:    Option[Boolean] = None,
                              archiveTime: Option[RemoteInstant] = None,
-                             muted: Option[Boolean] = None, // deprecated
-                             muteTime: Option[RemoteInstant] = None,
-                             mutedStatus: Option[Int] = None) {
-  def muteMask: Set[MuteMask] = (mutedStatus, muted) match {
-    case (Some(status), _)  => MuteMask.fromInt(status)
-    case (None, Some(true)) => MuteMask.All
-    case _                  => Set.empty[MuteMask]
-  }
-}
+                             muted:       Option[Boolean] = None,
+                             muteTime:    Option[RemoteInstant] = None,
+                             mutedStatus: Option[Int] = None)
 
 object ConversationState {
 

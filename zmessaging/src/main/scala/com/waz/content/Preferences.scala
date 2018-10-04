@@ -444,4 +444,6 @@ object UserPreferences {
 
   // fix for duplicated entries in the database, left there by a bug from an old version of the app
   lazy val FixDuplicatedConversations       = PrefKey[Boolean]("fix_duplicated_conversations", customDefault = true)
+
+  lazy val CheckMutedStatus                 = PrefKey[Boolean]("check_muted_status", customDefault = true)
 }

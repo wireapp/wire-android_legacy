@@ -138,7 +138,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
     storage.getByRemoteIds(convs.keys) flatMap { convIds =>
       storage.updateAll2(convIds, { conv =>
         convs.get(conv.remoteId).flatten match {
-          case Some((time, unarchiveMuted)) if conv.archiveTime.isBefore(time) && (conv.muted != MuteMask.All || unarchiveMuted) =>
+          case Some((time, unarchiveMuted)) if conv.archiveTime.isBefore(time) && (!conv.isAllMuted || unarchiveMuted) =>
             conv.copy(archived = false, archiveTime = time)
           case _ =>
             conv

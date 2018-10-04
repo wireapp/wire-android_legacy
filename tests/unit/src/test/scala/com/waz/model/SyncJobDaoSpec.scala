@@ -97,7 +97,7 @@ import scala.concurrent.duration._
         PostConv(ConvId(), Set(UserId()), None, Some(TeamId()), Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED),
         DeletePushToken(PushToken()),
         PostSelf(UserInfo(UserId(), Some("name"), Some(1), Some(EmailAddress("email")), Some(PhoneNumber("phone")), None, None)),
-        PostConvState(ConvId(), ConversationState(Some(false), Some(RemoteInstant(Instant.now)), None, Some(RemoteInstant.Epoch), Some(MuteMask.toInt(Set.empty)))),
+        PostConvState(ConvId(), ConversationState(Some(false), Some(RemoteInstant(Instant.now)), None, Some(RemoteInstant.Epoch), Some(MuteSet.AllAllowed.toInt))),
         SyncSearchQuery(SearchQuery.Recommended("meep moop")),
         PostSelfPicture(Some(AssetId())),
         PostMessage(ConvId(), MessageId(), RemoteInstant(Instant.now)),
@@ -127,7 +127,7 @@ import scala.concurrent.duration._
     }
 
     scenario("Load ConversationState without 'archived'") {
-      val original = ConversationState(Some(false), Some(RemoteInstant(Instant.now)), None, Some(RemoteInstant.Epoch), Some(MuteMask.toInt(Set.empty)))
+      val original = ConversationState(Some(false), Some(RemoteInstant(Instant.now)), None, Some(RemoteInstant.Epoch), Some(MuteSet.AllAllowed.toInt))
       val json = encode[ConversationState](original)
       json.remove("otr_archived")
       json.remove("otr_archived_ref")

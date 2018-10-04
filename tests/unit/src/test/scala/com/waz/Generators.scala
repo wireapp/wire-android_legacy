@@ -24,7 +24,6 @@ import java.util.{Date, Locale}
 import com.waz.model.AssetMetaData.Image.Tag.{Medium, Preview}
 import com.waz.model.ConversationData.{ConversationType, UnreadCount}
 import com.waz.model.GenericContent.{EncryptionAlgorithm, Text}
-import com.waz.model.MuteMask.MuteMask
 import com.waz.model.SearchQuery.{Recommended, TopPeople}
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.UserData.ConnectionStatus.{Accepted, PendingFromOther}
@@ -80,7 +79,7 @@ object Generators {
     lastEventTime <- arbitrary[RemoteInstant]
     team  <- arbitrary[Option[TeamId]]
     isActive <- arbitrary[Boolean]
-    muted <- oneOf(MuteMask.All, Set.empty[MuteMask], Set[MuteMask](MuteMask.StandardMuted), Set[MuteMask](MuteMask.MentionsMuted))
+    muted <- oneOf(MuteSet.AllMuted, MuteSet.OnlyMentionsAllowed, MuteSet.AllAllowed)
     muteTime <- arbitrary[RemoteInstant]
     archived <- arbitrary[Boolean]
     archiveTime <- arbitrary[RemoteInstant]

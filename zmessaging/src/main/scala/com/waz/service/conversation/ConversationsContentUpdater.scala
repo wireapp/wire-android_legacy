@@ -22,7 +22,6 @@ import com.waz.ZLog._
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
-import com.waz.model.MuteMask.MuteMask
 import com.waz.model.{UserId, _}
 import com.waz.service.tracking.TrackingService
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
@@ -42,7 +41,7 @@ trait ConversationsContentUpdater {
   def setConversationHidden(id: ConvId, hidden: Boolean): Future[Option[(ConversationData, ConversationData)]]
   def processConvWithRemoteId[A](remoteId: RConvId, retryAsync: Boolean, retryCount: Int = 0)(processor: ConversationData => Future[A])(implicit tag: LogTag, ec: ExecutionContext): Future[A]
   def updateConversationLastRead(id: ConvId, time: RemoteInstant): Future[Option[(ConversationData, ConversationData)]]
-  def updateConversationMuted(conv: ConvId, muted: Set[MuteMask]): Future[Option[(ConversationData, ConversationData)]]
+  def updateConversationMuted(conv: ConvId, muted: MuteSet): Future[Option[(ConversationData, ConversationData)]]
   def updateConversationName(id: ConvId, name: String): Future[Option[(ConversationData, ConversationData)]]
   def setConvActive(id: ConvId, active: Boolean): Future[Unit]
   def updateConversationArchived(id: ConvId, archived: Boolean): Future[Option[(ConversationData, ConversationData)]]
@@ -93,6 +92,14 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
     _         <- if (shouldFix) shouldFixDuplicatedConversations := false else Future.successful({})
   } yield {}
 
+  private val shouldCheckMutedStatus = userPrefs.preference(UserPreferences.CheckMutedStatus)
+
+  for {
+    shouldCheck <- shouldCheckMutedStatus()
+    _ <- if (shouldCheck) checkMutedStatus() else Future.successful({})
+    _ <- if (shouldCheck) shouldCheckMutedStatus := false else Future.successful({})
+  } yield {}
+
   override def convById(id: ConvId): Future[Option[ConversationData]] = storage.get(id)
 
   override def convByRemoteId(id: RConvId): Future[Option[ConversationData]] = storage.getByRemoteId(id)
@@ -113,7 +120,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
     c.copy(archived = archived, archiveTime = c.lastEventTime)
   })
 
-  override def updateConversationMuted(conv: ConvId, muted: Set[MuteMask]) = storage.update(conv, { c =>
+  override def updateConversationMuted(conv: ConvId, muted: MuteSet) = storage.update(conv, { c =>
     c.copy(muteTime = c.lastEventTime, muted = muted)
   })
 
@@ -135,12 +142,12 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
       case _ => (conv.archived, conv.archiveTime)
     }
 
-    val (muteTime, muted) = state match {
-      case ConversationState(_, _, _, Some(t), _) if t >= conv.muteTime => (t, state.muteMask)
+    val (muteTime, muteSet) = state match {
+      case ConversationState(_, _, _, Some(t), _) if t >= conv.muteTime => (t, MuteSet.resolveMuted(state))
       case _ => (conv.muteTime, conv.muted)
     }
 
-    conv.copy(archived = archived, archiveTime = archiveTime, muteTime = muteTime, muted = muted)
+    conv.copy(archived = archived, archiveTime = archiveTime, muteTime = muteTime, muted = muteSet)
   })
 
   override def updateLastEvent(id: ConvId, time: RemoteInstant) = storage.update(id, { conv =>
@@ -225,7 +232,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
     storage.update(id, conv => conv.copy(access = access, accessRole = accessRole, link = if (!access.contains(Access.CODE)) None else link.orElse(conv.link)))
 
 
-  def fixDuplicatedConversations(): Future[Unit] = {
+  private def fixDuplicatedConversations(): Future[Unit] = {
 
     def moveMessages(from: ConvId, to: ConvId): Future[Unit] =
       for {
@@ -261,4 +268,12 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
       })
     } yield storage.refreshRemoteMap()
   }
+  
+  private def checkMutedStatus(): Future[Unit] =
+    if (teamId.nonEmpty) Future.successful({}) else
+      for {
+        convs        <- storage.list()
+        mentionsOnly =  convs.filter(_.onlyMentionsAllowed).map(_.id)
+        _            <- storage.updateAll2(mentionsOnly, _.copy(muted = MuteSet.AllMuted))
+      } yield {}
 }
