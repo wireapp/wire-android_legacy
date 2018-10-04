@@ -78,7 +78,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
       }: _*).map(_.toMap)
       notInfo <- Signal.sequence(allCallsF.map { case (conv, (caller, account)) =>
         zs.find(_.selfUserId == account).fold2(Signal.const(Option.empty[CallInfo], "", "", false),
-          z => Signal(z.calling.joinableCalls.map(_.get(conv)),
+          z => Signal(z.calling.joinableCallsNotMuted.map(_.get(conv)),
             z.usersStorage.optSignal(caller).map(_.map(_.name).getOrElse("")),
             z.convsStorage.optSignal(conv).map(_.map(_.displayName).getOrElse("")),
             z.conversations.groupConversation(conv))).map(conv -> _)

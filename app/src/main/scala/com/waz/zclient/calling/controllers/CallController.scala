@@ -75,7 +75,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     case _       => Signal.const(None)
   }
 
-  private val gcmManager = new GSMManager(currentCallOpt.map(_.isDefined))
+  new GSMManager(currentCallOpt.map(_.isDefined))
 
   val currentCall   = currentCallOpt.collect { case Some(c) => c }
   val callConvIdOpt = currentCallOpt.map(_.map(_.convId))
