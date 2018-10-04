@@ -275,8 +275,8 @@ class NotificationService(context:         Context,
 
         data.msgType match {
           case CONNECT_REQUEST | CONNECT_ACCEPTED =>
-            Future.successful(NotificationInfo(data.id, data.msgType, data.time, data.msg, data.conv, convName = userName,
-              userName = userName, userPicture = userPicture, isEphemeral = data.ephemeral, hasBeenDisplayed = data.hasBeenDisplayed))
+            Future.successful(Option(NotificationInfo(data.id, data.msgType, data.time, data.msg, data.conv, convName = userName,
+              userName = userName, userPicture = userPicture, isEphemeral = data.ephemeral, hasBeenDisplayed = data.hasBeenDisplayed)))
           case _ =>
             for {
               msg  <- data.referencedMessage.fold2(Future.successful(None), messages.getMessage)
@@ -296,24 +296,29 @@ class NotificationService(context:         Context,
               val groupConv = if (!conv.exists(_.team.isDefined)) conv.exists(_.convType == ConversationType.Group)
               else membersCount > 2
               verbose(s"processing notif complete: ${notificationData.id}")
-              NotificationInfo(
-                notificationData.id,
-                notificationData.msgType,
-                notificationData.time,
-                notificationData.msg,
-                notificationData.conv,
-                convName = conv.map(_.displayName),
-                userName = userName,
-                userPicture = userPicture,
-                isEphemeral = data.ephemeral,
-                isGroupConv = groupConv,
-                isUserMentioned = data.mentions.contains(userId),
-                likedContent = maybeLikedContent,
-                hasBeenDisplayed = data.hasBeenDisplayed)
+              val hasMention = data.mentions.contains(userId)
+              if (conv.exists(_.muted.onlyMentionsAllowed) && !hasMention) {
+                Option.empty[NotificationInfo]
+              } else {
+                Some(NotificationInfo(
+                  notificationData.id,
+                  notificationData.msgType,
+                  notificationData.time,
+                  notificationData.msg,
+                  notificationData.conv,
+                  convName = conv.map(_.displayName),
+                  userName = userName,
+                  userPicture = userPicture,
+                  isEphemeral = data.ephemeral,
+                  isGroupConv = groupConv,
+                  isUserMentioned = data.mentions.contains(userId),
+                  likedContent = maybeLikedContent,
+                  hasBeenDisplayed = data.hasBeenDisplayed))
+              }
             }
         }
       }
-    }
+    }.map(_.flatten)
   }
 }
 
