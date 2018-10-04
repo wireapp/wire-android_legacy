@@ -270,7 +270,9 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
   }
   
   private def checkMutedStatus(): Future[Unit] =
-    if (teamId.nonEmpty) Future.successful({}) else
+    if (teamId.nonEmpty) {
+      Future.successful({})
+    } else
       for {
         convs        <- storage.list()
         mentionsOnly =  convs.filter(_.onlyMentionsAllowed).map(_.id)

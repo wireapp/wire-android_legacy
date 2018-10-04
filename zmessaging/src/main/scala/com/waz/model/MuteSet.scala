@@ -25,9 +25,9 @@ case class MuteSet(private val status: Set[MuteMask]) {
   def toInt: Int =
     (if (status.contains(StandardMuted)) 2 else 0) | (if (status.contains(MentionsMuted)) 1 else 0)
 
-  lazy val isAllMuted: Boolean          = status == AllMuted
-  lazy val isAllAllowed: Boolean        = status == AllAllowed
-  lazy val onlyMentionsAllowed: Boolean = status == OnlyMentionsAllowed
+  lazy val isAllMuted: Boolean          = status == AllMuted.status
+  lazy val isAllAllowed: Boolean        = status == AllAllowed.status
+  lazy val onlyMentionsAllowed: Boolean = status == OnlyMentionsAllowed.status
 
   def oldMutedFlag: Boolean = status.contains(StandardMuted)
 }
@@ -48,7 +48,7 @@ object MuteSet {
   def apply(status: Int): MuteSet =
     MuteSet(
       (if ((status & 1) != 0) Set[MuteMask](MentionsMuted) else Set.empty[MuteMask]) ++
-      (if ((status & 2) != 0) Set[MuteMask](StandardMuted) else Set.empty[MuteMask])
+        (if ((status & 2) != 0) Set[MuteMask](StandardMuted) else Set.empty[MuteMask])
     )
 
   def resolveMuted(convState: ConversationState): MuteSet = (convState.muted, convState.mutedStatus) match {
