@@ -57,4 +57,70 @@ class MuteSetSpec extends AndroidFreeSpec {
       assert(MuteSet(3).toInt == 3)
     }
   }
+
+  feature("Conversion from the conversation state") {
+    // the expected results in these tests are based on
+    // https://github.com/wearezeta/documentation/blob/6b1389b7bb11ca706bac540fcd0ffe6b25ed11da/topics/notifications/use-cases/001-notification-decision-tree.md
+
+    scenario("The old muted flag") {
+      val cState1 = ConversationState(muted = Some(true))
+      val muteSet1 = MuteSet.resolveMuted(cState1)
+      assert(muteSet1.onlyMentionsAllowed)
+      assert(muteSet1.oldMutedFlag)
+
+      val cState2 = ConversationState(muted = Some(false))
+      val muteSet2 = MuteSet.resolveMuted(cState2)
+      assert(muteSet2.isAllAllowed)
+      assert(!muteSet2.oldMutedFlag)
+    }
+
+    scenario("The new muted status") {
+      val cState1 = ConversationState(mutedStatus = Some(0))
+      val muteSet1 = MuteSet.resolveMuted(cState1)
+      assert(muteSet1.isAllAllowed)
+      assert(!muteSet1.oldMutedFlag)
+
+      val cState2 = ConversationState(mutedStatus = Some(2))
+      val muteSet2 = MuteSet.resolveMuted(cState2)
+      assert(muteSet2.onlyMentionsAllowed)
+      assert(muteSet2.oldMutedFlag)
+
+      val cState3 = ConversationState(mutedStatus = Some(3))
+      val muteSet3 = MuteSet.resolveMuted(cState3)
+      assert(muteSet3.isAllMuted)
+      assert(muteSet3.oldMutedFlag)
+    }
+
+    scenario("Both the old flag and the new status") {
+      // the conversation was set to "all allowed" on a device with the new version, and then set to "muted" on another device with the old version
+      val cState1 = ConversationState(muted = Some(true), mutedStatus = Some(0))
+      val muteSet1 = MuteSet.resolveMuted(cState1)
+      assert(muteSet1.onlyMentionsAllowed) // the result is "mentions only" on the new version
+      assert(muteSet1.oldMutedFlag) // and "muted" on the old
+
+      // the conversation was set to "all muted" on a device with the new version, and then set to "unmuted" on another device with the old version
+      val cState2 = ConversationState(muted = Some(false), mutedStatus = Some(3))
+      val muteSet2 = MuteSet.resolveMuted(cState2)
+      assert(muteSet2.isAllAllowed) // the result is "all allowed" on both versions
+      assert(!muteSet2.oldMutedFlag)
+
+      // now let's say the conversation from the previous example was "muted" again on the device with the old version
+      val cState3 = ConversationState(muted = Some(true), mutedStatus = Some(3))
+      val muteSet3 = MuteSet.resolveMuted(cState3)
+      assert(muteSet3.isAllMuted) // the result is "all muted" on the new version
+      assert(muteSet3.oldMutedFlag) // and "muted" on the old
+
+      // as above, but with "only mentions" on the new version
+      val cState4 = ConversationState(muted = Some(false), mutedStatus = Some(2))
+      val muteSet4 = MuteSet.resolveMuted(cState4)
+      assert(muteSet4.isAllAllowed) // the result is "all allowed" on both versions
+      assert(!muteSet4.oldMutedFlag)
+
+      // now let's say the conversation from the previous example was "muted" again on the device with the old version
+      val cState5 = ConversationState(muted = Some(true), mutedStatus = Some(2))
+      val muteSet5 = MuteSet.resolveMuted(cState5)
+      assert(muteSet5.onlyMentionsAllowed) // the result is "mentions only" on the new version - the information about the original state was preserved
+      assert(muteSet5.oldMutedFlag) // and "muted" on the old
+    }
+  }
 }
