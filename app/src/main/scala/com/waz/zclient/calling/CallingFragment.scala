@@ -75,8 +75,6 @@ abstract class UserVideoView(context: Context, val userId: UserId) extends Frame
     }
     view match {
       case vr: VideoRenderer =>
-
-        import concurrent.duration._
         controller.allVideoReceiveStates.map(_.getOrElse(userId, VideoState.Unknown)).onUi {
           case VideoState.ScreenShare =>
             vr.setShouldFill(false)
