@@ -49,8 +49,8 @@ android {
         variant.javaCompiler.dependsOn(rootProject.licenseFormat)
     }
 
-    compileSdkVersion 27
-    buildToolsVersion '27.0.3'
+    compileSdkVersion = 27
+    buildToolsVersion = '28.0.3'
 
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion

@@ -2,7 +2,7 @@
 
 buildscript {
 
-    ext.kotlinVersion = '1.2.41'
+    ext.kotlinVersion = '1.2.71'
 
     repositories {
         maven {
@@ -14,7 +14,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.1.4'
+        classpath 'com.android.tools.build:gradle:3.2.1'
         classpath 'com.jakewharton.hugo:hugo-plugin:1.2.1'
         classpath 'com.mutualmobile.gradle.plugins:dexinfo:0.1.2'
         classpath 'com.wire:gradle-android-scala-plugin:1.5.0'
@@ -67,7 +67,7 @@ ext {
     minSdkVersion = 17
     targetSdkVersion = 27
 
-    buildToolsVersion = '27.0.3'
+    buildToolsVersion = '28.0.3'
     sourceCompatibilityVersion = JavaVersion.VERSION_1_8
     targetCompatibilityVersion = JavaVersion.VERSION_1_8
 }

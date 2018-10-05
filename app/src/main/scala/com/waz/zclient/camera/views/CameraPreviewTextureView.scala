@@ -116,7 +116,7 @@ class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val de
           cxt,
           R.string.camera_permissions_denied_title,
           R.string.camera_permissions_denied_message,
-          R.string.permissions_denied_dialog_acknowledge,
+          android.R.string.ok,
           R.string.permissions_denied_dialog_settings,
           new DialogInterface.OnClickListener() {
             override def onClick(dialog: DialogInterface, which: Int): Unit = ()
