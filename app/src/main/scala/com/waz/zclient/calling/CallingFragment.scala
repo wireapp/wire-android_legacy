@@ -29,7 +29,7 @@ import com.waz.avs.{VideoPreview, VideoRenderer}
 import com.waz.model.{Dim2, UserId}
 import com.waz.service.call.Avs.VideoState
 import com.waz.threading.{SerialDispatchQueue, Threading}
-import com.waz.utils.events.Signal
+import com.waz.utils.events.{ClockSignal, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.controllers.{ThemeController, ThemeControllingFrameLayout}
@@ -68,11 +68,26 @@ abstract class UserVideoView(context: Context, val userId: UserId) extends Frame
     _.setBackgroundColor(getColor(R.color.black_16))
   }
 
-  protected def registerHandler(view: View) =
+  protected def registerHandler(view: View) = {
     controller.allVideoReceiveStates.map(_.getOrElse(userId, VideoState.Unknown)).onUi {
       case VideoState.Paused | VideoState.Stopped => view.fadeOut()
       case _                 => view.fadeIn()
     }
+    view match {
+      case vr: VideoRenderer =>
+
+        import concurrent.duration._
+        controller.allVideoReceiveStates.map(_.getOrElse(userId, VideoState.Unknown)).onUi {
+          case VideoState.ScreenShare =>
+            vr.setShouldFill(false)
+            vr.setFillRatio(1.5f)
+          case _ =>
+            vr.setShouldFill(true)
+            vr.setFillRatio(1.0f)
+        }
+      case _ =>
+    }
+  }
 
   Signal(controller.controlsVisible, shouldShowInfo, controller.isCallIncoming).onUi {
     case (_, true, true) |
@@ -146,7 +161,7 @@ class CallingFragment extends FragmentHelper {
       vh.foreach { v =>
         val videoUsers = vrs.toSeq.collect {
           case (userId, _) if userId == selfId && videoCall && incoming => userId
-          case (userId, VideoState.Started | VideoState.Paused | VideoState.BadConnection | VideoState.NoCameraPermission) => userId
+          case (userId, VideoState.Started | VideoState.Paused | VideoState.BadConnection | VideoState.NoCameraPermission | VideoState.ScreenShare) => userId
         }
         val views = videoUsers.map { uId => viewMap.getOrElse(uId, createView(uId))}
 
@@ -230,6 +245,11 @@ class CallingFragment extends FragmentHelper {
       .beginTransaction
       .replace(R.id.controls_layout, controlsFragment, ControlsFragment.Tag)
       .commit
+
+
+    controller.allVideoReceiveStates.onUi { states =>
+      verbose(s"allVideoReceiveStates: ${states.values}")
+    }
   }
 
   override def onBackPressed() = {
