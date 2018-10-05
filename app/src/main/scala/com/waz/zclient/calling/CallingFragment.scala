@@ -243,8 +243,6 @@ class CallingFragment extends FragmentHelper {
       .beginTransaction
       .replace(R.id.controls_layout, controlsFragment, ControlsFragment.Tag)
       .commit
-
-
   }
 
   override def onBackPressed() = {
