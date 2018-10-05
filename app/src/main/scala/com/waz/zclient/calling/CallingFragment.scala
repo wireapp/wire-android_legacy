@@ -245,9 +245,6 @@ class CallingFragment extends FragmentHelper {
       .commit
 
 
-    controller.allVideoReceiveStates.onUi { states =>
-      verbose(s"allVideoReceiveStates: ${states.values}")
-    }
   }
 
   override def onBackPressed() = {
