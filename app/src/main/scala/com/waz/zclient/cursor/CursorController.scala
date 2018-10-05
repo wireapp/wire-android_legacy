@@ -219,7 +219,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
       msg = m.get
       (CursorText(text, mentions), _) <- enteredText.head
     } {
-      if (text.isEmpty) {
+      if (text.trim.isEmpty) {
         cs.recallMessage(cId, msg.id)
         Toast.makeText(ctx, R.string.conversation__message_action__delete__confirmation, Toast.LENGTH_SHORT).show()
       } else {
