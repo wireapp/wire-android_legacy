@@ -137,6 +137,7 @@ class UserSearchService(selfUserId:           UserId,
         !excluded.contains(user.id) &&
           selfUserId != user.id &&
           !user.isWireBot &&
+          !user.deleted &&
           user.expiresAt.isEmpty &&
           user.matchesFilter(filter) &&
           (showBlockedUsers || (user.connection != ConnectionStatus.Blocked))

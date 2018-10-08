@@ -90,8 +90,6 @@ case class UserData(id:                    UserId,
     handle = Some(user.handle)
   )
 
-  def updated(teamId: Option[TeamId]): UserData = copy(teamId = teamId)
-
   def updateConnectionStatus(status: UserData.ConnectionStatus, time: Option[RemoteInstant] = None, message: Option[String] = None): UserData = {
     if (time.exists(_.isBefore(this.connectionLastUpdated))) this
     else if (this.connection == status) time.fold(this) { time => this.copy(connectionLastUpdated = time) }

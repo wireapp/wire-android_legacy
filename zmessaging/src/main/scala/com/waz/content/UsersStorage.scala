@@ -33,7 +33,6 @@ import scala.concurrent.Future
 trait UsersStorage extends CachedStorage[UserId, UserData] {
   def getByTeam(team: Set[TeamId]): Future[Set[UserData]]
   def searchByTeam(team: TeamId, prefix: SearchKey, handleOnly: Boolean): Future[Set[UserData]]
-  def removeByTeam(teams: Set[TeamId]): Future[Set[UserData]]
   def listAll(ids: Traversable[UserId]): Future[Vector[UserData]]
   def listSignal(ids: Traversable[UserId]): Signal[Vector[UserData]]
   def listUsersByConnectionStatus(p: Set[ConnectionStatus]): Future[Map[UserId, UserData]]
@@ -92,13 +91,13 @@ class UsersStorageImpl(context: Context, storage: ZmsDatabase) extends CachedSto
 
   def listUsersByConnectionStatus(p: Set[ConnectionStatus]): Future[Map[UserId, UserData]] =
     find[(UserId, UserData), Map[UserId, UserData]](
-      user => p(user.connection),
+      user => p(user.connection) && !user.deleted,
       db   => UserDataDao.findByConnectionStatus(p)(db),
       user => (user.id, user))
 
   def listAcceptedOrPendingUsers: Future[Map[UserId, UserData]] =
     find[(UserId, UserData), Map[UserId, UserData]](
-      user => user.isAcceptedOrPending,
+      user => user.isAcceptedOrPending && !user.deleted,
       db   => UserDataDao.findByConnectionStatus(Set(ConnectionStatus.Accepted, ConnectionStatus.PendingFromOther, ConnectionStatus.PendingFromUser))(db),
       user => (user.id, user))
 
@@ -157,11 +156,6 @@ class UsersStorageImpl(context: Context, storage: ZmsDatabase) extends CachedSto
 
   override def findUsersForService(id: IntegrationId) =
     find(_.integrationId.contains(id), UserDataDao.findService(id)(_), identity).map(_.toSet)
-
-  override def removeByTeam(teams: Set[TeamId]) = for {
-    members <- getByTeam(teams)
-    _       <- removeAll(members.map(_.id))
-  } yield members
 
   override def searchByTeam(team: TeamId, prefix: SearchKey, handleOnly: Boolean) = storage(UserDataDao.search(prefix, handleOnly, Some(team))(_)).future
 }

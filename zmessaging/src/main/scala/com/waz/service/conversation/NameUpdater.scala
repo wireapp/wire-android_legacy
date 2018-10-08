@@ -123,12 +123,15 @@ class NameUpdater(selfUserId:     UserId,
       for {
         members <- membersStorage.getByConv(conv.id)
         users <- usersStorage.getAll(members.map(_.userId).filter(_ != selfUserId))
-        name = generatedName(users.map(_.map(_.getDisplayName)))
+        name = generatedName(users.map {
+          case Some(u) if !u.deleted => Some(u.getDisplayName)
+          case _                     => None
+        })
         res <- convs.update(conv.id,  _.copy(generatedName = name))
       } yield res
     case Some(conv) => // one to one conv should use full user name
       usersStorage.get(UserId(conv.id.str)) flatMap {
-        case Some(user) => convs.update(conv.id, _.copy(generatedName = user.name))
+        case Some(user) if !user.deleted => convs.update(conv.id, _.copy(generatedName = user.name))
         case None => Future successful None
       }
     case None =>
@@ -147,7 +150,7 @@ class NameUpdater(selfUserId:     UserId,
 
     def updateOneToOnes() = {
       val names: Map[ConvId, String] = users.collect {
-        case u if u.connection != ConnectionStatus.Unconnected => ConvId(u.id.str) -> u.name // one to one use full name
+        case u if u.connection != ConnectionStatus.Unconnected && !u.deleted => ConvId(u.id.str) -> u.name // one to one use full name
       } (breakOut)
 
       if (names.isEmpty) Future successful Nil
@@ -170,7 +173,10 @@ class NameUpdater(selfUserId:     UserId,
     val users = members.flatMap(_._2).toSeq.distinct.filter(_ != selfUserId)
 
     usersStorage.getAll(users) flatMap { uds =>
-      val names: Map[UserId, Option[String]] = users.zip(uds.map(_.map(_.getDisplayName)))(breakOut)
+      val names: Map[UserId, Option[String]] = users.zip(uds.map(_.flatMap {
+        case u if !u.deleted => Some(u.getDisplayName)
+        case _               => None
+      }))(breakOut)
       val convNames = members.mapValues { us => generatedName(us.filter(_ != selfUserId) map { names.get(_).flatten }) }
       convs.updateAll2(convIds, { c => convNames.get(c.id).fold(c) { name => c.copy(generatedName = name) } })
     }
@@ -183,7 +189,7 @@ class NameUpdater(selfUserId:     UserId,
 
 object NameUpdater {
   def generatedName(convType: ConversationType)(users: GenTraversable[UserData]): String = {
-    val us = users.filter(_.connection != ConnectionStatus.Self)
+    val us = users.filter(u => u.connection != ConnectionStatus.Self && !u.deleted)
     if (convType == ConversationType.Group) us.map(user => user.getDisplayName).filter(_.nonEmpty).mkString(", ")
     else us.headOption.fold("")(_.name)
   }
