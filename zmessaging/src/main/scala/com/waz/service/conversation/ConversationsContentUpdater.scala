@@ -24,6 +24,8 @@ import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
 import com.waz.service.tracking.TrackingService
+import com.waz.sync.SyncServiceHandle
+import com.waz.sync.handler.ConversationsSyncHandler
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
 import com.waz.utils.events.Signal
@@ -68,7 +70,8 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
                                       userPrefs:       UserPreferences,
                                       membersStorage:  MembersStorage,
                                       messagesStorage: => MessagesStorage,
-                                      tracking:        TrackingService) extends ConversationsContentUpdater {
+                                      tracking:        TrackingService,
+                                      syncHandler:     SyncServiceHandle) extends ConversationsContentUpdater {
   import com.waz.utils.events.EventContext.Implicits.global
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationContentUpdater")
@@ -143,7 +146,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
     }
 
     val (muteTime, muteSet) = state match {
-      case ConversationState(_, _, _, Some(t), _) if t >= conv.muteTime => (t, MuteSet.resolveMuted(state))
+      case ConversationState(_, _, _, Some(t), _) if t >= conv.muteTime => (t, MuteSet.resolveMuted(state, teamId.isDefined))
       case _ => (conv.muteTime, conv.muted)
     }
 
@@ -277,5 +280,6 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
         convs        <- storage.list()
         mentionsOnly =  convs.filter(_.onlyMentionsAllowed).map(_.id)
         _            <- storage.updateAll2(mentionsOnly, _.copy(muted = MuteSet.AllMuted))
+        _            <- syncHandler.syncConversations()
       } yield {}
 }

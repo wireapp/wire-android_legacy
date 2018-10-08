@@ -265,7 +265,7 @@ object ConversationsClient {
           'creator,
           'type,
           'team,
-          MuteSet.resolveMuted(state),
+          MuteSet.resolveMuted(state, isTeam = true),
           state.muteTime.getOrElse(RemoteInstant.Epoch),
           state.archived.getOrElse(false),
           state.archiveTime.getOrElse(RemoteInstant.Epoch),

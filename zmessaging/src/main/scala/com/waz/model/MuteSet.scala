@@ -51,11 +51,12 @@ object MuteSet {
         (if ((status & 2) != 0) Set[MuteMask](StandardMuted) else Set.empty[MuteMask])
     )
 
-  def resolveMuted(convState: ConversationState): MuteSet = (convState.muted, convState.mutedStatus) match {
-    case (Some(true),  None)         => OnlyMentionsAllowed
-    case (Some(true),  Some(status)) => MuteSet(status | 2)
-    case (Some(false), _)            => AllAllowed
-    case (None,        Some(status)) => MuteSet(status)
-    case (None,        None)         => AllAllowed
+  def resolveMuted(convState: ConversationState, isTeam: Boolean): MuteSet = (convState.muted, convState.mutedStatus) match {
+    case (Some(true),  None) if isTeam => OnlyMentionsAllowed
+    case (Some(true),  _) if !isTeam   => AllMuted
+    case (Some(true),  Some(status))   => MuteSet(status | 2)
+    case (Some(false), _)              => AllAllowed
+    case (None,        Some(status))   => MuteSet(status)
+    case (None,        None)           => AllAllowed
   }
 }
