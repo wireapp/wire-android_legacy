@@ -115,7 +115,7 @@ object CallingService {
 
     val activeCall: Option[CallInfo] =
       calls
-        .filter { case (_, call) => isActive(call.state) && call.shouldRing }
+        .filter { case (_, call) => isActive(call.state, call.shouldRing) }
         .values.toSeq
         .sortBy(_.startTime)
         .headOption

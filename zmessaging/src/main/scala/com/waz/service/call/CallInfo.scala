@@ -155,10 +155,10 @@ object CallInfo {
     case object Terminating   extends CallState //the call no longer has any audio, but may still be displayed in the UI
     case object Ended         extends CallState //this call is finished and cleaned up. It should not be shown in the UI
 
-    val ActiveCallStates   = Set[CallState](SelfCalling, OtherCalling, SelfJoining, SelfConnected, Terminating)
+    val ActiveCallStates   = Set[CallState](SelfCalling, SelfJoining, SelfConnected, Terminating)
     val JoinableCallStates = Set[CallState](SelfCalling, OtherCalling, SelfJoining, SelfConnected, Ongoing)
 
-    def isActive(st: CallState): Boolean = ActiveCallStates(st)
+    def isActive(st: CallState, shouldRing: Boolean): Boolean = ActiveCallStates(st) || (st == OtherCalling && shouldRing)
     def isJoinable(st: CallState): Boolean = JoinableCallStates(st)
   }
 }
