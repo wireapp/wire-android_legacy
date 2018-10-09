@@ -76,7 +76,7 @@
         android:text="@string/otr__first_launch__button"
         android:textSize="@dimen/wire__text_size__smaller"
         android:textAllCaps="true"
-        android:textColor="@color/framework_confirmation_menu_button_font_color"
+        android:textColor="@color/framework_confirmation_menu_button"
         app:w_font="@string/wire__typeface__regular"
         />
 

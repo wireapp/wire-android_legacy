@@ -142,7 +142,7 @@
                     android:gravity="left|bottom"
                     android:maxLines="1"
                     android:text="@string/welcome__resend__manual"
-                    android:textColor="@color/first_time__welcome__tos_color"
+                    android:textColor="@color/first_time__welcome__tos"
                     android:textSize="@dimen/wire__text_size__small"
                     app:w_font="@string/wire__typeface__medium"
                     />
@@ -157,7 +157,7 @@
                     android:paddingLeft="@dimen/wire__padding__regular"
                     android:maxLines="1"
                     android:text="@string/welcome__resend__callme"
-                    android:textColor="@color/first_time__welcome__tos_color"
+                    android:textColor="@color/first_time__welcome__tos"
                     android:textSize="@dimen/wire__text_size__small"
                     app:w_font="@string/wire__typeface__medium"
                     />
@@ -169,7 +169,7 @@
                     android:layout_marginTop="@dimen/wire__padding__4"
                     android:layout_gravity="left|bottom"
                     android:gravity="left"
-                    android:textColor="@color/first_time__welcome__tos_color"
+                    android:textColor="@color/first_time__welcome__tos"
                     android:textSize="@dimen/wire__text_size__small"
                     app:w_font="@string/wire__typeface__regular"
                     />

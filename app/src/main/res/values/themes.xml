@@ -84,8 +84,8 @@
         <item name="cursorIconButtonVideo">@style/cursor__icon_button__video__dark</item>
         <item name="cursorEditText">@style/cursor__edit_text__dark</item>
         <item name="cursorEditBackground">@color/accent_yellow__8</item>
-        <item name="cursorEditButtons">@color/cursor_edit_buttons_color_dark</item>
-        <item name="cursorEditButtonsDisabled">@color/cursor_edit_buttons_color_disabled_dark</item>
+        <item name="cursorEditButtons">@color/cursor_edit_buttons_dark</item>
+        <item name="cursorEditButtonsDisabled">@color/cursor_edit_buttons_disabled_dark</item>
 
         <!-- User -->
         <item name="userEditText">@style/user__edit_text__dark</item>
@@ -252,8 +252,8 @@
         <item name="cursorIconButtonVideo">@style/cursor__icon_button__video__light</item>
         <item name="cursorEditText">@style/cursor__edit_text__light</item>
         <item name="cursorEditBackground">@color/accent_yellow__16</item>
-        <item name="cursorEditButtons">@color/cursor_edit_buttons_color</item>
-        <item name="cursorEditButtonsDisabled">@color/cursor_edit_buttons_color_disabled</item>
+        <item name="cursorEditButtons">@color/cursor_edit_buttons</item>
+        <item name="cursorEditButtonsDisabled">@color/cursor_edit_buttons_disabled</item>
 
         <!-- User -->
         <item name="userEditText">@style/user__edit_text__light</item>

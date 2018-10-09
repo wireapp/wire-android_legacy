@@ -82,7 +82,7 @@
             android:gravity="center"
             android:padding="@dimen/cursor__menu_button__padding"
             android:text="@string/glyph__send"
-            android:textColor="@color/drawing__icon__text_color"
+            android:textColor="@color/drawing__icon"
             />
 
         <com.waz.zclient.cursor.EphemeralTimerButton

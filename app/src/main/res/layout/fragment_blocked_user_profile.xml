@@ -93,7 +93,7 @@
                     android:gravity="center"
                     android:text="@string/confirmation_menu__cancel"
                     android:textAllCaps="true"
-                    android:textColor="@color/framework_confirmation_menu_button_font_color"
+                    android:textColor="@color/framework_confirmation_menu_button"
                     android:textSize="@dimen/framework_confirmation_menu_button_font_size"
                     app:w_font="@string/framework_confirmation_menu_button_font"
                     />

@@ -52,9 +52,9 @@ class ChatheadView(val context: Context, val attrs: AttributeSet, val defStyleAt
   def this(context: Context) = this(context, null)
 
   private val initialsTypeface  = TypefaceUtils.getTypeface(getString(R.string.chathead__user_initials__font))
-  private val initialsFontColor = getColor(R.color.chathead__user_initials__font_color)
-  private val iconOverlayColor  = getColor(R.color.chathead__glyph__overlay_color)
-  private val grayScaleColor    = getColor(R.color.chathead__non_connected__color)
+  private val initialsFontColor = getColor(R.color.chathead__user_initials)
+  private val iconOverlayColor  = getColor(R.color.chathead__glyph__overlay)
+  private val grayScaleColor    = getColor(R.color.chathead__non_connected)
   private val overlayColor      = getColor(R.color.text__secondary_light)
 
   private val a = context.getTheme.obtainStyledAttributes(attrs, R.styleable.ChatheadView, 0, 0)

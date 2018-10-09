@@ -29,7 +29,6 @@
 
     <string name="too_many_attempts_header">Too many attempts</string>
     <string name="login_later_message">Please try to log in later</string>
-    <string name="register_again_message">Please try to register again</string>
 
     <string name="email_exists_header">Email address already taken</string>
     <string name="email_exists_message">This email address has already been registered</string>
@@ -56,8 +55,6 @@
     <string name="phone_pending_login_header">Code Already Sent</string>
     <string name="phone_pending_login_message">We already sent you a code via SMS. Tap Resend after 10 minutes to get a new one.</string>
 
-    <string name="password_invalid_header">Invalid Password</string>
-    <string name="password_invalid_message">Please verify your details and try again</string>
 
     <string name="phone_budget_exhausted_header">Too many requests</string>
     <string name="phone_budget_exhausted_message">Please try again later.</string>
@@ -88,49 +85,17 @@
     <string name="your_phone_number">Your phone number</string>
 
     <!-- Receive email/sms invitation -->
-    <string name="invitation_email__normal_phone_signup_button">Sign up using phone number</string>
-    <string name="invitation_email__normal_email_signup_button">Sign up using another email</string>
-    <string name="invitation_email__password_placeholder">Password (min %1$s chars.)</string>
-    <string name="invitation_email__welcome_header">Hello, %1$s.</string>
-    <string name="invitation_email__welcome_message">Choose a password to create your account.</string>
-    <string name="invitation__continue_button">Continue</string>
-    <string name="invitation_phone__normal_phone_signup_button">Using another phone</string>
-    <string name="invitation_phone__normal_email_signup_button">Sign up using email</string>
-    <string name="invitation_phone__welcome_header">Hello, %1$s.</string>
-    <string name="invitation_phone__welcome_message">You are one step away from creating your account.</string>
-    <string name="invitation__phone__failed">Unable to register with this invitation.</string>
-    <string name="invitation__email__failed">Unable to register with this invitation.</string>
 
     <!-- People picker/start UI -->
     <string name="pick_user_search_focus">\u0020 SEARCH</string>
     <string name="pick_user_search_hint">SEARCH</string>
-    <string name="pick_user_search__add_to_conversation">\u0020 SEARCH</string>
     <string name="choose_conversation">SEARCH</string>
     <string name="people_picker__top_users_header_title">Top people</string>
-    <string name="people_picker__address_book_matches_title">Connect</string>
     <string name="people_picker__search_result_conversations_header_title">Groups</string>
     <string name="people_picker__search_result_team_conversations_header_title">%1$s Groups</string>
     <string name="people_picker__search_result_connections_header_title">Contacts</string>
     <string name="people_picker__search_result_others_header_title">Connect</string>
-    <string name="people_picker__search_result_recommended_header_title">Recommended</string>
-    <string name="people_picker__search_result_contacts_header_title">Contacts</string>
-    <string name="people_picker__search_result_team_members_header_title">Team Members</string>
-    <string name="people_picker__invite_header_title">Invite</string>
-    <string name="people_picker__confirm_button_title">Create conversation</string>
-    <string name="people_picker__confirm_button_title__add_to_conversation">Add People to Group</string>
-    <string name="people_picker__confirm_button_title__create_conversation">Create Group</string>
-    <string name="people_picker__error_message__no_results">No matching results.</string>
-    <string name="people_picker__error_message__no_results__no_shared_contacts">Find people by name or email address</string>
-    <string name="people_picker__error_message__no_results__invalid_email__no_shared_contacts">Please enter a valid email address or</string>
-    <string name="people_picker__error_message__no_results__shared_contacts__add_to_conversation">Enter a different name.</string>
-    <string name="people_picker__error_message__no_results__no_shared_contacts__add_to_conversation">Enter a different name.</string>
-    <string name="people_picker__error_message__no_results__send_invite">send\nan invitation</string>
-    <string name="people_picker__error_message__no_users_to_add_to_conversation">Everyone you\'re connected to is already in this conversation.</string>
-    <string name="people_picker__error_message__no_recommenended_users_found__body__shared_contacts">We couldn\'t find any of your contacts on Wire. Enter a full name or email address.</string>
-    <string name="people_picker__toolbar_header__group">Add people</string>
-    <string name="people_picker__toolbar_header__one_to_one">Create group</string>
     <string name="people_picker__search_result__expander_title">Show all %1$s ↓</string>
-    <string name="people_picker__guest_label">Guest</string>
     <string name="people_picker__search_people">PEOPLE</string>
     <string name="people_picker__search_services">SERVICES</string>
 
@@ -144,9 +109,6 @@
 
     <!-- Bots / Integrations / Services -->
     <string name="integrations_picker__section_title">Services</string>
-    <string name="integrations_picker__add">Add Service</string>
-    <string name="integrations_conv_bot">Bot</string>
-    <string name="integrations_chathead__section_title">Services</string>
 
     <string name="integrations_errors_add_service">Adding service not possible</string>
     <string name="integrations_errors_service_unavailable">The service is unavailable at the moment</string>
@@ -159,51 +121,21 @@
     <string name="people_picker__share_contacts__nah">Deny</string>
     <string name="people_picker__share_contacts__nevvah">Never ask again</string>
 
-    <!-- People you may know -->
-    <string name="people_picker__recommended__common_connections__one">Knows %1$s</string>
-    <string name="people_picker__recommended__common_connections__two">Knows %1$s and %2$s</string>
-    <plurals name="people_picker__recommended__common_connections__more">
-        <item quantity="two">Knows %1$s and %2$d others</item>
-        <item quantity="few">Knows %1$s and %2$d others</item>
-        <item quantity="many">Knows %1$s and %2$d others</item>
-        <item quantity="other">Knows %1$s and %2$d others</item>
-    </plurals>
-    <string name="people_picker__recommended__common_connections__hide">HIDE</string>
 
     <!-- Invite -->
-    <string name="people_picker__invite__share_details_label">Send an invitation</string>
     <!-- Should not use newline in the dialog message, not supported by all devices, text will be cut off -->
     <string name="people_picker__invite__share_details_dialog">Share Wire with your friends.</string>
     <string name="people_picker__invite__share_text__header">%1$s wants to connect on Wire</string>
     <string name="people_picker__invite__share_text__body">I\'m on Wire, search for %1$s or visit get.wire.com</string>
-    <string name="people_picker__invite__message">Hi,\nThanks for the invitation. Let\'s connect.\n%1$s</string>
-    <string name="people_picker__invite__sent_feedback">Invitation sent</string>
-    <string name="people_picker__contact_list__user_selection_button__label">OPEN</string>
-    <string name="people_picker__contact_list__user_adding_button__label">ADD</string>
-    <string name="people_picker__contact_list__contact_selection_button__label">INVITE</string>
-    <string name="people_picker__contact_list__invite_dialog__title">Send invitation</string>
-    <string name="people_picker__contact_list__searchbox__hint">\u0020 SEARCH BY NAME</string>
-    <string name="people_picker__generic_invite_button_text">Invite People to Join Wire</string>
-    <plurals name="people_picker__contact_list_contact_sub_label_common_friends">
-        <item quantity="one">%1$d person in common</item>
-        <item quantity="other">%1$d people in common</item>
-    </plurals>
-    <string name="people_picker__contact_list_contact_sub_label_address_book">%1$s in Contacts</string>
-    <string name="people_picker__contact_list_contact_sub_label_address_book_identical">in Contacts</string>
 
     <!-- Conversation: Quick menu -->
     <string name="conversation_quick_menu__conversation_button__single_label">OPEN</string>
-    <string name="conversation_quick_menu__conversation_button__group_label">CREATE GROUP</string>
 
     <!-- Conversation: System messages -->
     <string name="content__system__other_joined">[[%1$s]] joined</string>
     <string name="content__system__you_joined">[[You]] joined</string>
     <string name="content__system__other_renamed_conv">[[%1$s]] renamed the conversation</string>
     <string name="content__system__you_renamed_conv">[[You]] renamed the conversation</string>
-    <string name="content__system__message_deleted">This message has been removed</string>
-    <string name="content_system_message_timestamp_failure">Unsent message.</string>
-    <string name="content_system_message_timestamp_pending">Sending\u2026</string>
-    <string name="content_system_message_timestamp_deleted">Deleted on %1$s</string>
 
     <!-- Add people -->
     <string name="content__system__someone_added_people">[[%1$s]] added %2$s to the conversation</string>
@@ -212,7 +144,6 @@
         <item quantity="other">[[%1$s]] added %2$s and _%3$s others to the conversation_</item>
     </plurals>
     <string name="content__system__someone_added_you">[[%1$s]] added you to the conversation</string>
-    <string name="content__system__someone_added_people_and_you">[[%1$s]] added %2$s and you to the conversation</string>
     <plurals name="content__system__someone_added_people_and_you_with_others">
         <item quantity="one">[[%1$s]] added %2$s, you and _%3$s other to the conversation_</item>
         <item quantity="other">[[%1$s]] added %2$s, you and _%3$s others to the conversation_</item>
@@ -233,8 +164,6 @@
     <!-- Create conversation -->
     <string name="content__system__you_started_conversation">You started the conversation</string>
     <string name="content__system__other_started_conversation">%1$s started the conversation</string>
-    <string name="content__system__you_started_one">[[You]] started a conversation with %2$s</string>
-    <string name="content__system__other_started_one">[[%1$s]] started a conversation with you</string>
     <string name="content__system__with_you_only">with you</string>
     <string name="content__system__with_list_only">with %1$s</string>
     <plurals name="content__system__with_others_only">
@@ -255,8 +184,6 @@
     <string name="content__xxx_pinged">[[%1$s]] PINGED</string>
 
     <!-- Conversation: E2EE system messages -->
-    <string name="content__otr__conversation_verified">Conversation verified</string>
-    <string name="content__otr__conversation_unverified">Conversation not verified</string>
     <string name="content__otr__message_error">A MESSAGE FROM [[%1$s]] WAS NOT RECEIVED. _WHY?_</string>
     <string name="content__otr__message_error_you">A MESSAGE FROM YOU WAS NOT RECEIVED. _WHY?_</string>
     <string name="content__otr__identity_changed_error">[[%1$s]]\'S DEVICE IDENTITY CHANGED. UNDELIVERED MESSAGE. _LEARN MORE_</string>
@@ -296,7 +223,6 @@
 
     <string name="content__file__action__open">OPEN</string>
     <string name="content__file__action__save">SAVE</string>
-    <string name="content__file__action__share">SHARE</string>
     <string name="content__file__action__open__no_app_found">No app found to open this file type</string>
     <string name="content__file__action__save_completed">File successfully saved</string>
     <string name="content__file__action__save_error">Unable to save file</string>
@@ -304,7 +230,6 @@
     <string name="content__location__no_map_placeholder">THE LOCATION WILL APPEAR ON THE MAP WHEN YOU ARE BACK ONLINE.</string>
 
     <!-- Conversation actions -->
-    <string name="conversation__action__rename">Rename</string>
     <string name="conversation__action__delete">Delete content…</string>
     <string name="conversation__action__archive">Archive</string>
     <string name="conversation__action__unarchive">Unarchive</string>
@@ -314,7 +239,6 @@
     <string name="conversation__action__silence">Mute</string>
     <string name="conversation__action__unsilence">Unmute</string>
     <string name="conversation__action__leave">Leave group…</string>
-    <string name="conversation__action__remove">Remove</string>
     <string name="conversation__action__call">Call</string>
     <string name="conversation__action__picture">Picture</string>
     <string name="conversation__action__block">Block…</string>
@@ -331,10 +255,6 @@
     <string name="conversation__action__notifications_title">Notify me about:</string>
 
     <!-- Conversation: Profile Popover -->
-    <string name="popover__action__open">OPEN</string>
-    <string name="popover__action__remove">REMOVE</string>
-    <string name="popover__action__block">BLOCK</string>
-    <string name="popover__action__profile">PROFILE</string>
 
     <!-- Calling/voice -->
     <string name="calling__slow_connection__title">Slow Internet</string>
@@ -344,19 +264,12 @@
     <string name="calling__cannot_start__no_permission__message">Go to Settings and allow Wire to access the microphone.</string>
     <string name="calling__cannot_start__cancel__message">CANCEL</string>
     <string name="calling__cannot_start__no_camera_permission__message">Wire doesn\'t have access to the camera</string>
-    <string name="calling__cannot_start__ongoing_different_kind__title">%1$s is busy</string>
-    <string name="calling__cannot_start__ongoing_different_kind__message">Try again later</string>
-    <string name="calling__cannot_start__button_settings">SETTINGS</string>
     <string name="calling__video_call__slow_connection__message">You might experience issues during the call</string>
-    <string name="incoming__controls__incoming__decline">DECLINE</string>
-    <string name="incoming__controls__incoming__accept">ACCEPT</string>
-    <string name="incoming__controls__ongoing__hangup">HANG UP</string>
     <string name="incoming__controls__ongoing__speaker">SPEAKER</string>
     <string name="incoming__controls__ongoing__mute">MUTE</string>
     <string name="incoming__controls__ongoing__video">VIDEO</string>
     <string name="incoming__controls__ongoing__flip">FLIP</string>
     <string name="ongoing__poor_connection_message">VIDEO STOPPED DUE TO POOR CONNECTION</string>
-    <string name="calling__self_preview_unavailable">VIDEO OFF</string>
     <string name="calling__self_preview_unavailable_long">CAMERA NOT AVAILABLE</string>
 
     <string name="calling__header__joining">Connecting…</string>
@@ -391,10 +304,6 @@
 
     <!-- Connect request -->
     <string name="connect__message">Hi %1$s,\nLet\'s connect on Wire.\n%2$s</string>
-    <plurals name="connect_request__common_users__summary">
-        <item quantity="one">%1$d person in common</item>
-        <item quantity="other">%1$d people in common</item>
-    </plurals>
     <string name="connect_request__sub_header__pending_label">Pending</string>
     <string name="connect_request__cancel_request__label">CANCEL CONNECTION REQUEST</string>
     <string name="connect_request__unblock__button__text">Unblock</string>
@@ -418,8 +327,6 @@
         <item quantity="one">Do you still want to send your message?</item>
         <item quantity="other">Do you still want to send your messages?</item>
     </plurals>
-    <string name="conversation__degraded_confirmation__accept_call">Do you want to accept the call?</string>
-    <string name="conversation__degraded_confirmation__place_call">Do you still want to place the call?</string>
     <string name="conversation__degraded_confirmation__positive_action">Send anyway</string>
     <plurals name="conversation__degraded_confirmation__negative_action">
         <item quantity="zero">Show people</item>
@@ -429,35 +336,17 @@
     <string name="conversation__degraded_confirmation__negative_action_self">Show your devices</string>
     <string name="conversation_degraded_confirmation__header__you">You</string>
 
-    <!-- Profile and Participants -->
-    <plurals name="participants__sub_header_xx_people">
-        <item quantity="zero">%1$d PEOPLE</item>
-        <item quantity="one">%1$d PEOPLE</item>
-        <item quantity="two">%1$d PEOPLE</item>
-        <item quantity="few">%1$d PEOPLE</item>
-        <item quantity="many">%1$d PEOPLE</item>
-        <item quantity="other">%1$d PEOPLE</item>
-    </plurals>
-    <string name="group_name">Group name</string>
-
     <!-- Picture selection confirmation -->
     <string name="confirmation_menu__confirm_done">OK</string>
     <string name="confirmation_menu__cancel">CANCEL</string>
 
     <!-- ADD TO CONVERSATION offline -->
-    <string name="conversation__add_user__no_network__title">No Internet Connection</string>
-    <string name="conversation__add_user__no_network__message">You must be online to add people. We will try again when you are back online.</string>
-    <string name="conversation__add_user__no_network__button">OK</string>
 
     <!-- CREATE GROUP CONVERSATION FROM 1:1 offline -->
-    <string name="conversation__create_group_conversation__no_network__title">No Internet Connection</string>
-    <string name="conversation__create_group_conversation__no_network__message">You must be online to create a conversation. The other people will see your changes when you are back online.</string>
-    <string name="conversation__create_group_conversation__no_network__button">OK</string>
 
     <!-- Leave conversation -->
     <string name="confirmation_menu__meta_remove">Leave the conversation?</string>
     <string name="confirmation_menu__meta_remove_text">You won\'t be able to send or receive messages in this conversation.</string>
-    <string name="confirmation_menu__confirm_leave">LEAVE</string>
     <!-- RE-USING: confirmation_menu.cancel -->
 
     <!-- Remove from conversation dialogue -->
@@ -476,53 +365,25 @@
     <!-- Delete conversation -->
     <string name="confirmation_menu__meta_delete">Delete content?</string>
     <string name="confirmation_menu__meta_delete_text">This will clear the conversation history on all your devices.</string>
-    <string name="confirmation_menu__confirm_delete">DELETE</string>
-    <string name="confirmation_menu__delete_conversation__checkbox__label">Also leave conversation</string>
 
     <!-- Rich media -->
     <string name="content__youtube__error__text">video not found</string>
-    <string name="mediaplayer__artist__placeholder">Track</string>
-    <string name="mediaplayer__artist__error">Track is unavailable</string>
-    <string name="mediaplayer__source__soundcloud" translatable="false">SoundCloud</string>
     <string name="mediaplayer__message__onsoundcloud">on SoundCloud</string>
-    <string name="mediaplayer__source__spotify" translatable="false">Spotify</string>
     <string name="mediaplayer__message__onspotify">on Spotify</string>
-    <string name="mediaplayer__spotify__hint">Connect with Spotify</string>
-    <string name="mediaplayer__open_external">Open in browser</string>
 
     <!-- Invite banner -->
-    <string name="content__invite_banner__title">SPREAD THE WORD!</string>
-    <string name="content__invite_banner__subtitle">Add people or share a link to this conversation.</string>
-    <string name="content__invite_banner__howto_link">How does this work?</string>
-    <string name="content__invite_banner__button_label">Add people to this conversation</string>
 
     <!-- Self profile -->
-    <string name="self_name">Your full name</string>
-    <string name="self_add_email">Add email \u0026 password</string>
-    <string name="self_verify_email">Verify email</string>
-    <string name="self_add_phone">Add phone number</string>
-    <string name="self_verify_phone">Verify phone number</string>
 
     <!-- Options and settings -->
     <string name="settings_title">Settings</string>
 
     <!-- Options menu -->
-    <string name="menu_settings">SETTINGS</string>
-    <string name="menu_avs_settings">AVS SETTINGS</string>
-    <string name="menu_about">ABOUT</string>
-    <string name="menu_tutorial">TUTORIAL</string>
-    <string name="menu_help">HELP</string>
-    <string name="menu_logout">LOG OUT</string>
 
     <!-- Manage Team -->
     <string name="pref_manage_team_title">Manage Team</string>
 
     <!-- About screen -->
-    <string name="about_privacy_policy">Privacy Policy</string>
-    <string name="about_third_party_licences">Licences</string>
-    <string name="about_website">wire.com</string>
-    <string name="about_terms_of_service">Terms of Use</string>
-    <string name="about_copyright">\u00A9 Wire Swiss GmbH \u2022 %1$s</string>
     <string name="pref_category_title">Settings</string>
     <string name="pref_developer_screen_title">Developer Settings</string>
     <string name="pref_dev_avs_screen_title">AVS Settings</string>
@@ -530,17 +391,13 @@
 
     <!-- Account -->
     <string name="pref_account_screen_title">Account</string>
-    <string name="pref_account_category_title">@string/pref_account_screen_title</string>
     <string name="pref_account_name_title">Name</string>
     <string name="pref_account_edit_name_title">Edit name</string>
     <string name="pref_account_details_category_title">Info</string>
     <string name="pref_account_actions_category_title">Actions</string>
-    <string name="pref_account_personal_category_title">Personal</string>
     <string name="pref_account_appearance_category_title">Appearance</string>
     <string name="pref_account_personal_information_category_title">Personal Information</string>
     <string name="pref_account_conversations_category_title">History</string>
-    <string name="pref_account_details_category_summary">People can find you with these details.</string>
-    <string name="pref_account_personal_category_summary">The information is not visible to anyone else</string>
     <string name="pref_account_username_title">Username</string>
     <string name="pref_account_phone_title">Phone</string>
     <string name="pref_account_add_phone_title">Add phone number</string>
@@ -587,7 +444,6 @@
     <string name="pref_options_sounds_none">None</string>
     <string name="pref_options_vibration_title">Vibration</string>
     <string name="pref_options_vibration_title_o">Vibrate on ring</string>
-    <string name="pref_options_sounds_category_title">Alerts</string>
     <string name="pref_options_ringtones_category_title">Sounds</string>
     <string name="pref_options_ringtones_ringtone_title">Ringtone</string>
     <string name="pref_options_ringtones_text_title">Text tone</string>
@@ -604,9 +460,6 @@
 
     <!-- Devices -->
     <string name="pref_devices_screen_title">Devices</string>
-    <string name="pref_current_device_category_title">Current device</string>
-    <string name="pref_other_devices_category_title">Active devices</string>
-    <string name="pref_devices_summary">Tap to delete</string>
     <string name="pref_devices_current_device_category_title">Current Device</string>
     <string name="pref_devices_other_devices_category_title">Other Devices</string>
     <string name="pref_devices_device_title" translatable="false">[[%1$s]]</string>
@@ -620,7 +473,6 @@
     <string name="pref_devices_device_fingerprint_category_title">Key Fingerprint</string>
     <string name="pref_devices_device_fingerprint_summary">Wire gives every device a unique fingerprint. Compare them and verify your devices and conversations.</string>
     <string name="pref_devices_device_actions_category_title">Actions</string>
-    <string name="pref_devices_device_trust_title">Verified</string>
     <string name="pref_devices_device_reset_session_title">Reset session</string>
     <string name="pref_devices_device_reset_session_summary">If fingerprints don\'t match, reset the session to generate new encryption keys on both sides.</string>
     <string name="pref_devices_device_remove_title">Remove device</string>
@@ -632,8 +484,6 @@
     <string name="pref_advanced_screen_title">Advanced</string>
     <string name="pref_advanced_debug_report_title">Submit debug report</string>
     <string name="pref_advanced_debug_report_summary">This helps Wire Support diagnose problems.</string>
-    <string name="pref_advanced_analytics_title">Usage data and crash reports</string>
-    <string name="pref_advanced_analytics_summary">Make Wire better by sending anonymous information.</string>
     <string name="pref_advanced_reset_push_title">Reset push notifications token</string>
     <string name="pref_advanced_reset_push_summary">If you experience problems with push notifications, Wire Support may ask you to reset this token.</string>
     <string name="pref_advanced_reset_push_completed">Push token has been reset</string>
@@ -687,12 +537,7 @@
     <string name="pref__account_action__dialog__delete_phone_or_email__confirm__title">Remove</string>
     <string name="pref__account_action__dialog__delete_phone_or_email__confirm__message">Are you sure you want to remove %s from your Wire account?</string>
     <string name="pref__account_action__dialog__delete_phone__error">Unable to delete phone number</string>
-    <string name="pref__account_action__dialog__delete_email__error">Unable to delete email</string>
-    <string name="pref__account_action__dialog__delete_email__no_internet_error">You need to be online to delete email</string>
-    <string name="pref__account_action__dialog__delete_phone__no_internet_error">You need to be online to delete phone</string>
-    <string name="pref__account_action__dialog__change_email__error__invalid_email">Enter valid email</string>
     <string name="pref__account_action__dialog__change_email__title">Edit Email Address</string>
-    <string name="pref__account_action__dialog__change_username__summary">With this username, people will be able to find you on Wire without knowing your email address or phone number.</string>
     <string name="pref__account_action__dialog__change_username__rules">At least 2 characters. a–z, 0–9, and _ only</string>
     <string name="pref__account_action__dialog__change_username__title">Username</string>
     <string name="pref__account_action__dialog__change_username__error_already_taken">Already taken</string>
@@ -700,54 +545,23 @@
 
     <!-- No Internet connection -->
     <string name="system_status__no_internet">NO INTERNET</string>
-    <string name="system_status__no_server_connection">CONNECTING&#8230;</string>
 
     <!-- SHARING -->
-    <string name="system_status__sharing">CHOOSE A CONVERSATION</string>
     <string name="alert_dialog__confirmation">OK</string>
     <string name="alert_dialog__no_network__header">No Internet Connection</string>
-    <string name="sign_up__no_internet__message">You must be online to join. Check your connection and try again.</string>
-    <string name="sign_in__no_internet__message">You must be online to log in. Check your connection and try again.</string>
-    <string name="sign_up__take_picture__back">Edit name</string>
-    <string name="sign_up__take_picture_dialog__gallery">Gallery</string>
-    <string name="sign_up__take_picture_dialog__camera">Camera</string>
-    <string name="sign_up__take_picture_dialog__message">Take a new photo or select one from your existing photo library.</string>
-    <string name="sign_up__take_picture_dialog__title">Take Picture</string>
     <string name="sign_up__set_picture__choose">Choose your own</string>
     <string name="sign_up__set_picture__keep">Keep this one</string>
     <string name="sign_up__set_picture__guidance">Wire is so much nicer with a picture.</string>
     <string name="sign_up__set_picture__loading">Loading photo</string>
-    <string name="rename_conversation__no_network__message">You must be online to rename a conversation. Check your connection and try again.</string>
-    <string name="resend_message__no_network__message">You must be online to resend a message. Check your connection and try again.</string>
     <string name="leave_conversation_failed__message">You must be online to leave the conversation. Check your connection and try again.</string>
     <string name="remove_from_conversation__no_network__message">You must be online to remove people from conversations. Check your connection and try again.</string>
     <string name="calling__call_drop__message">You must be online to call. Check your connection and try again.</string>
-    <string name="profile_pic__no_network__message">You must be online to change your picture. Check your connection and try again.</string>
-    <string name="calling__voice_channel_full__title">The call is full</string>
-    <plurals name="calling__voice_channel_full__message">
-        <item quantity="zero">There\'s only room for %1$d people in here.</item> <!-- should not happen though -->
-        <item quantity="one">There\'s only room for %1$d people in here.</item>
-        <item quantity="two">There\'s only room for %1$d people in here.</item>
-        <item quantity="few">There\'s only room for %1$d people in here.</item>
-        <item quantity="many">There\'s only room for %1$d people in here.</item>
-        <item quantity="other">There\'s only room for %1$d people in here.</item>
-    </plurals>
-    <string name="calling__conversation_full__title">Too many people to call</string>
-    <plurals name="calling__conversation_full__message">
-        <item quantity="zero">Calls work in conversations with up to %1$d people.</item> <!-- should not happen though -->
-        <item quantity="one">Calls work in conversations with up to %1$d people.</item>
-        <item quantity="two">Calls work in conversations with up to %1$d people.</item>
-        <item quantity="few">Calls work in conversations with up to %1$d people.</item>
-        <item quantity="many">Calls work in conversations with up to %1$d people.</item>
-        <item quantity="other">Calls work in conversations with up to %1$d people.</item>
-    </plurals>
 
     <!-- Lockscreen and notifications -->
     <string name="message_notifications_channel_name">Messages</string>
     <string name="message_notifications_channel_description">Notifications for all message types, including text, images, audio and video messages.</string>
 
     <string name="incoming_call_notifications_channel_name">Incoming Calls</string>
-    <string name="incoming_call_notifications_channel_description">Notifications on incoming calls</string>
 
     <string name="ping_notifications_channel_name">Pings</string>
     <string name="ping_notifications_channel_description">Notifications when other users ping you</string>
@@ -758,15 +572,6 @@
     <string name="foreground_service_notification_name">Maintain connection to server</string>
     <string name="foreground_service_notification_description">This notification is necessary to keep the connection to the server alive while Wire is in the background and Google Play Services are not installed.</string>
 
-    <string name="lockscreen__talk">IS CALLING</string>
-    <plurals name="notification__new_messages">
-        <item quantity="one">Message from %2$s</item>
-        <item quantity="other">%1$d messages from %2$s</item>
-    </plurals>
-    <plurals name="notification__new_messages_groups">
-        <item quantity="one">Message in %2$s</item>
-        <item quantity="other">%1$d messages in %2$s</item>
-    </plurals>
     <plurals name="notification__new_messages__multiple">
         <item quantity="one">Message in %2$s conversations</item>
         <item quantity="other">%1$d messages in %2$s conversations</item>
@@ -784,21 +589,12 @@
     <string name="notification__message__one_to_one__shared_video">Shared a video</string>
     <string name="notification__message__one_to_one__shared_audio">Shared an audio message</string>
     <string name="notification__message__one_to_one__shared_location">Shared a location</string>
-    <string name="notification__message__one_to_one__liked">\u2764 your message</string>
 
     <!-- %1$s == username, %2$s == conversation -->
-    <string name="notification__message__name__prefix__other">%1$s \u0020</string>
     <string name="notification__message__group__prefix__other">%1$s in %2$s \u0020</string>
-    <string name="notification__message__group__pinged">pinged</string>
-    <string name="notification__message__group__shared_picture">shared a picture</string>
-    <string name="notification__message__group__shared_file">shared a file</string>
-    <string name="notification__message__group__shared_video">shared a video</string>
-    <string name="notification__message__group__shared_audio">shared an audio message</string>
-    <string name="notification__message__group__shared_location">shared a location</string>
     <string name="notification__message__group__renamed_conversation">renamed the conversation to %1$s</string>
     <string name="notification__message__group__add">added people to the conversation</string>
     <string name="notification__message__group__remove">removed people from the conversation</string>
-    <string name="notification__message__generic__accept_request">You have a new connection</string>
     <string name="notification__message__single__accept_request">You and %1$s are now connected</string>
     <string name="notification__message__group__default_conversation_name">group conversation</string>
     <string name="notification__message__send_failed">Message failed to send</string>
@@ -808,11 +604,9 @@
     <string name="notification__message__liked">\u2764 ‘%1$s’</string>
     <string name="notification__message__liked_message">\u2764 your message</string>
     <string name="notification__message__liked_picture">\u2764 your picture</string>
-    <string name="notification__message__liked_file">\u2764 your file</string>
 
     <!-- ephemeral -->
     <string name="notification__message__ephemeral_someone">Someone</string>
-    <string name="notification__message__ephemeral_details">Press for more</string>
     <plurals name="notification__message__ephemeral">
         <item quantity="one">Someone sent you a message</item>
         <item quantity="other">Someone sent you %1$d messages</item>
@@ -835,16 +629,9 @@
     </plurals>
 
     <!-- System notifications -->
-    <string name="system_notification__group_call_title">%1$s in %2$s</string>
     <string name="system_notification__silence_call">Decline</string>
     <string name="system_notification__join_call">Accept</string>
     <string name="system_notification__leave_call">End call</string>
-    <string name="system_notification__outgoing">Calling</string>
-    <string name="system_notification__outgoing_video">Video calling</string>
-    <string name="system_notification__incoming">Is calling</string>
-    <string name="system_notification__incoming_video">Is calling with video</string>
-    <string name="system_notification__ongoing">On a call</string>
-    <string name="number_of_conversations_string">ARCHIVE</string>
     <string name="system_notification__calling_one">Calling…</string>
     <string name="system_notification__calling_group">%1$s is calling…</string>
     <string name="system_notification__video_calling_one">Calling with video…</string>
@@ -871,7 +658,6 @@
     <!-- See: https://code.google.com/p/android/issues/detail?id=36744 -->
     <dimen name="notification__image_saving__image_width">512dp</dimen>
 
-    <string name="notification__file_saving__content__title">Wire file saved.</string>
 
     <!-- forced update -->
     <string name="forced_update__header">Important update</string>
@@ -881,17 +667,9 @@
     <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
     <!-- Sharing -->
     <string name="sharing__image_preview__confirm_action">SEND</string>
-    <string name="sharing__image_preview__title__single">SENDING 1 PICTURE TO\n_%1$s_</string>
-    <string name="sharing__image_preview__title__multiple">SENDING %1$s PICTURES TO\n_%2$s_</string>
     <string name="sharing__user_not_logged_in__dialog__title">Please log in</string>
     <string name="sharing__user_not_logged_in__dialog__message">Open Wire and log in to share.</string>
     <string name="sharing__user_not_logged_in__dialog__confirm">OK</string>
-    <string name="sharing__files__ok">Share</string>
-    <string name="sharing__files__cancel">Cancel</string>
-    <plurals name="sharing__files__message">
-        <item quantity="one">You are about to share %1$d file with %2$s.</item>
-        <item quantity="other">You are about to share %1$d files with %2$s.</item>
-    </plurals>
 
     <!-- Sync errors -->
     <string name="in_app_notification__sync_error__create_group_convo__title">Unable to create</string>
@@ -903,7 +681,6 @@
 
     <!--Timestamp formatting -->
     <string name="timestamp__just_now">Just now</string>
-    <string name="timestamp__a_minute_ago">A minute ago</string>
     <plurals name="timestamp__x_minutes_ago">
         <item quantity="zero">%1$d minutes ago</item>
         <item quantity="one">%1$d minute ago</item>
@@ -911,46 +688,6 @@
         <item quantity="few">%1$d minutes ago</item>
         <item quantity="many">%1$d minutes ago</item>
         <item quantity="other">%1$d minutes ago</item>
-    </plurals>
-    <plurals name="timestamp__x_hours_ago">
-        <item quantity="zero">%1$d hours ago</item>
-        <item quantity="one">%1$d hour ago</item>
-        <item quantity="two">%1$d hours ago</item>
-        <item quantity="few">%1$d hours ago</item>
-        <item quantity="many">%1$d hours ago</item>
-        <item quantity="other">%1$d hours ago</item>
-    </plurals>
-    <plurals name="timestamp__x_days_ago">
-        <item quantity="zero">%1$d days ago</item>
-        <item quantity="one">%1$d day ago</item>
-        <item quantity="two">%1$d days ago</item>
-        <item quantity="few">%1$d days ago</item>
-        <item quantity="many">%1$d days ago</item>
-        <item quantity="other">%1$d days ago</item>
-    </plurals>
-    <plurals name="timestamp__x_weeks_ago">
-        <item quantity="zero">%1$d weeks ago</item>
-        <item quantity="one">%1$d week ago</item>
-        <item quantity="two">%1$d weeks ago</item>
-        <item quantity="few">%1$d weeks ago</item>
-        <item quantity="many">%1$d weeks ago</item>
-        <item quantity="other">%1$d weeks ago</item>
-    </plurals>
-    <plurals name="timestamp__x_months_ago">
-        <item quantity="zero">%1$d months ago</item>
-        <item quantity="one">%1$d month ago</item>
-        <item quantity="two">%1$d months ago</item>
-        <item quantity="few">%1$d months ago</item>
-        <item quantity="many">%1$d months ago</item>
-        <item quantity="other">%1$d months ago</item>
-    </plurals>
-    <plurals name="timestamp__x_years_ago">
-        <item quantity="zero">%1$d years ago</item>
-        <item quantity="one">%1$d year ago</item>
-        <item quantity="two">%1$d years ago</item>
-        <item quantity="few">%1$d years ago</item>
-        <item quantity="many">%1$d years ago</item>
-        <item quantity="other">%1$d years ago</item>
     </plurals>
 
     <!-- http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html -->
@@ -963,26 +700,18 @@
     <!-- Example: MAR 9, 2015, 11:29 -->
     <string name="timestamp_pattern__date_and_time__with_year_no_weekday">MMM d, YYYY, %1$s</string>
     <!-- Example: MONDAY, 9 MARCH 2015 \u30FB 12:08 -->
-    <string name="timestamp_pattern__single_message">EEEE, d MMMM YYYY \u30FB %1$s</string>
     <!-- MONDAY -->
-    <string name="timestamp_pattern__separator_header__this_week">EEEE</string>
      <!-- MARCH 2 -->
-    <string name="timestamp_pattern__separator_header__this_year">MMMM d</string>
      <!-- MARCH 2, 2015 -->
-    <string name="timestamp_pattern__separator_header__last_year">MMMM d, YYYY</string>
-    <string name="timestamp_pattern__separator_header__today">Today</string>
-    <string name="timestamp_pattern__separator_header__yesterday">Yesterday</string>
     <!-- 23:15 -->
     <string name="timestamp_pattern__24h_format">HH:mm</string>
     <string name="timestamp_pattern__12h_format">hh:mm a</string>
     <string name="timestamp_pattern__week" translatable="false">w, YYYY</string>
-    <string name="reg__phone_alert__button">OK</string>
     <string name="country">Country</string>
     <string name="register">Register</string>
     <string name="password_placeholder">Password</string>
     <string name="email_placeholder">Email</string>
     <string name="name_placeholder">Name</string>
-    <string name="registration_back">Back</string>
 
     <!-- Strings -->
     <string name="edit_phone_number">EDIT PHONE NUMBER</string>
@@ -996,10 +725,8 @@
     <string name="activation_code_info_manual">Enter the verification code we sent to \n&lt;b&gt;%s&lt;/b&gt;</string>
     <string name="enter_name">What should we call you?</string>
     <string name="enter_name_hint">Enter Full Name</string>
-    <string name="set_a_picture">Set A Picture</string>
     <string name="new_reg__password__forgot">Forgot Password?</string>
     <string name="phone_sign_in">Phone</string>
-    <string name="go_to_register">Create Account</string>
     <string name="email_sign_in">Email</string>
     <string name="edit_email">Edit Email</string>
     <string name="hello">Hello, &lt;b&gt;%s&lt;/b&gt;</string>
@@ -1009,8 +736,6 @@
 
     <!-- Giphy -->
     <string name="giphy_preview__search_hint">Search Giphy</string>
-    <string name="giphy_preview__title_search">#%s</string>
-    <string name="giphy_preview__title_random">RANDOM</string>
     <string name="giphy_preview__error">NO GIFS FOUND.</string>
     <string name="giphy_preview__message_via_random_trending">Via giphy.com</string>
     <string name="giphy_preview__message_via_search">%s · via giphy.com</string>
@@ -1019,7 +744,6 @@
     <!--Sketch-->
     <string name="drawing__tip__picture__message">TAP COLOR TO CHANGE THE BRUSH SIZE.\n\nSHAKE TO REMOVE PHOTOS.</string>
     <string name="drawing__tip__message">TAP COLOR TO CHANGE THE BRUSH SIZE.\n\nPRESS AND HOLD TO FILL AN AREA.</string>
-    <string name="add_a_sketch">Add a sketch</string>
     <string name="sketch__emoji_keyboard__size_label__small">SMALL</string>
     <string name="sketch__emoji_keyboard__size_label__medium">MEDIUM</string>
     <string name="sketch__emoji_keyboard__size_label__large">LARGE</string>
@@ -1046,8 +770,6 @@
     <string name="otr__remove_device__button_delete">OK</string>
     <string name="otr__remove_device__button_cancel">Cancel</string>
     <string name="otr__remove_device__error">Wrong password</string>
-    <string name="otr__remove_device__button_approve">OK</string>
-    <string name="otr__remove_device__button_remove">Remove</string>
     <string name="otr__error_dialog__cannot_register__message">Remove one of your other devices to start using Wire on this one.</string>
     <string name="otr__error_dialog__cannot_register__manage_devices_button">Manage devices</string>
     <string name="otr__error_dialog__cannot_register__log_out_button">Log out</string>
@@ -1072,34 +794,20 @@
     <string name="otr__first_launch__header">It\'s the first time you\'re using Wire on this device.</string>
     <string name="otr__first_launch__sub_header">For privacy reasons, your conversation history will not appear here.</string>
     <string name="otr__first_launch__button">OK</string>
-    <string name="otr__device_approve__header">You have connected a device to your Wire account.</string>
-    <string name="otr__device_approve__note">If you didn\'t do this, remove the device and reset your password.</string>
     <string name="otr__signin__info_text">Log in</string>
     <string name="otr__reset_session__message_ok">Session has been reset</string>
     <string name="otr__reset_session__message_fail">Could not reset the session</string>
     <string name="otr__reset_session__button_ok">OK</string>
     <string name="otr__reset_session__button_fail">Try again</string>
-    <string name="otr__remove_device__no_internet__title">No Internet</string>
-    <string name="otr__remove_device__no_internet__message">Try to remove the device when you are online again.</string>
-    <string name="otr__remove_device__no_internet__button">OK</string>
-    <string name="otr__device_inbox__header">Your account was used on:</string>
-    <string name="otr__device_inbox__name">From: [[%s]]</string>
 
     <string name="advanced_image_download_wifi_info">The picture will appear when you are on Wi-Fi again</string>
     <string name="change_settings">Change Settings</string>
-    <string name="single_image__save_to_disk__error">Unable to save image, no access to external storage</string>
-    <string name="conversation_list__label_action__contacts">PEOPLE</string>
-    <string name="conversation_list__hint_header">Conversations start here</string>
-    <string name="conversation_list__hint_text">Start a conversation. Call, message and share in private or with groups.</string>
     <string name="conversation_list__action_join_call">JOIN</string>
 
     <!-- Conversation Toolbar -->
     <string name="conversation_toolbar__collection">Collection</string>
     <string name="conversation_toolbar__call_video">Video call</string>
     <string name="conversation_toolbar__call_audio">Audio call</string>
-    <string name="conversation_toolbar__delete">Delete</string>
-    <string name="conversation_toolbar__copy">Copy</string>
-    <string name="conversation_toolbar__fwd">Share</string>
 
     <!-- Asset upload errors -->
     <string name="asset_upload_error__not_found__title">File not found</string>
@@ -1114,18 +822,9 @@
     <string name="asset_upload_warning__large_file__title">You\'re not on Wi-Fi</string>
     <string name="asset_upload_warning__large_file__message_default">Are you sure you want to send a large file via the mobile network?</string>
     <string name="asset_upload_warning__large_file__message">Are you sure you want to send %1$s via the mobile network?</string>
-    <string name="asset_upload_warning__large_file__button_accept">OK</string>
-    <string name="asset_upload_warning__large_file__button_cancel">Cancel</string>
 
     <!-- Video message errors -->
-    <string name="video_message_error__too_big__title">Video too large</string>
-    <string name="video_message_error__too_big__message">You can send videos up to 25 MB.</string>
-    <string name="video_message_error__title">Video error</string>
-    <string name="video_message_error__message">Unable to process video file</string>
-    <string name="video_message_error__button">OK</string>
-    <string name="video_message_error__missing_camera_permissions">To send video messages, grant permission to access the camera and media files.</string>
     <string name="audio_message_error__missing_audio_permissions">To send audio messages, grant permission to record audio.</string>
-    <string name="audio_message_error__generic">Unable to play audio</string>
 
     <!-- Audio bit rate mode -->
     <string name="audio_message__constant_bit_rate">CONSTANT BIT RATE</string>
@@ -1148,7 +847,6 @@
     <string name="tooltip_file">Send File</string>
     <string name="tooltip_gif">Gif</string>
     <string name="tooltip_mention">Add Mention</string>
-    <string name="new_feature">New</string>
 
     <!-- Delete -->
     <string name="conversation__message_action__delete_for_me">Delete only for me?</string>
@@ -1165,9 +863,6 @@
     <string name="conversation__action_mode__fwd__chooser__title">Share with</string>
 
     <!-- video message preview -->
-    <string name="video_message__preview__header">Send to %1$s</string>
-    <string name="video_message__quick_menu__send_label">Send</string>
-    <string name="video_message__preview__compressing">COMPRESSING&#8230;</string>
 
     <string name="audio_message__recording__slide_control__slide_hint">SWIPE UP TO SEND</string>
     <string name="audio_message__recording__slide_control__tap_hint">TAP TO SEND</string>
@@ -1192,11 +887,9 @@
     <string name="message_bottom_menu_action_delete">Delete</string>
     <string name="message_bottom_menu_action_delete_local">Delete for me</string>
     <string name="message_bottom_menu_action_delete_global">Delete for everyone</string>
-    <string name="message_bottom_menu_action_forward_multiple">Share with multiple</string>
     <string name="message_bottom_menu_action_reveal">Reveal in conversation</string>
     <string name="likes_list__header">Liked by</string>
     <string name="message_bottom_menu_action_save_ok">Picture saved</string>
-    <string name="message_bottom_menu_action_save_fail" translatable="false">Error saving image</string>
 
     <string name="message_footer__tap_to_like">Tap to like</string>
     <plurals name="message_footer__number_of_likes">
@@ -1215,7 +908,6 @@
     <string name="usernames__take_over__summary">Claim your unique name on Wire. _Learn more._</string>
     <string name="usernames__take_over__choose">CHOOSE YOUR OWN</string>
     <string name="usernames__take_over__keep">KEEP THIS ONE</string>
-    <string name="pref_account_username_empty_title">Add username</string>
 
     <string name="ephemeral_message__timeout__off">Off</string>
     <string name="ephemeral_message__options_header">TIMED MESSAGES</string>
@@ -1256,18 +948,15 @@
     <string name="ephemeral_message_footer_multiple_units">%1$s and %2$s remaining</string>
     <string name="ephemeral_message_footer_single_unit">%1$s remaining</string>
 
-    <string name="collection_header_all">COLLECTION</string>
     <string name="collection_header_pictures">PICTURES</string>
     <string name="collection_header_files">FILES</string>
     <string name="collection_header_links">LINKS</string>
     <string name="collection_header_today">TODAY</string>
     <string name="collection_header_yesterday">YESTERDAY</string>
     <string name="collection_empty">NO ITEMS IN COLLECTION</string>
-    <string name="collection_send_to">Send to…</string>
     <string name="collection_all">Show all %1$s</string>
 
     <string name="multi_share_toast_sending">@string/message_footer__status__sending</string>
-    <string name="multi_share_toast_failed">Sending failed</string>
     <string name="multi_share_search_hint">SEND TO…</string>
 
     <string name="search__box__hint_text">SEARCH TEXT MESSAGES</string>
@@ -1313,11 +1002,8 @@
     <string name="conversation_list__someone">Someone</string>
     <string name="conversation_list__added">[[%1$s]] was added</string>
     <string name="conversation_list__added_you">[[%1$s]] added you</string>
-    <string name="conversation_list__left">[[%1$s]] has left</string>
     <string name="conversation_list__left_you">You left</string>
     <string name="conversation_list__removed_you">[[%1$s]] removed you</string>
-    <string name="conversation_list__removed">[[%1$s]] was removed</string>
-    <string name="conversation_list__empty_conv__subtitle">Everyone left</string>
     <string name="conversation_list__header__title">CONVERSATIONS</string>
     <string name="conversation_list__header__archive_title">ARCHIVE</string>
     <string name="guest_indicator">GUEST</string>
@@ -1364,7 +1050,6 @@
 
     <string name="teams_set_name_title">Your name</string>
     <string name="teams_set_name_hint">FULL NAME</string>
-    <string name="app_entry_slogan">Secure messaging for everyone.</string>
     <string name="app_entry_create_account">Personal</string>
     <string name="app_entry_create_account_sub">create an account</string>
     <string name="app_entry_create_team">Pro</string>
@@ -1397,18 +1082,13 @@
     <string name="teams_invitations_done">DONE</string>
 
     <string name="teams_invitations_error_too_many">The maximum number of invitations has been sent</string>
-    <string name="teams_invitations_error_blacklisted_email">The given e-mail address has been blacklisted due to a permanent bounce or a complaint.</string>
-    <string name="teams_invitations_error_no_identity">The user has no verified identity (email or phone number).</string>
-    <string name="teams_invitations_error_no_email">This operation requires the user to have a verified email address.</string>
     <string name="teams_invitations_error_already_sent">Already sent</string>
     <string name="teams_invitations_error_generic">Something went wrong, please try again</string>
 
     <string name="teams_invite_email_hint">COLLEAGUE@YOURCOMPANY.COM</string>
     <string name="teams_invitations_error_invalid_email">PLEASE ENTER A VALID EMAIL ADDRESS</string>
     <string name="teams_invitations_error_email_exists">THIS EMAIL ADDRESS IS ALREADY IN USE</string>
-    <string name="teams_invitations_error_email_exists_more">LEARN MORE</string>
     <string name="teams_invitations_error_no_internet">NO INTERNET CONNECTION</string>
-    <string name="team_invitation_add_from_address_book">ADD FROM ADDRESSBOOK</string>
     <string name="invitation_screen_title">Build your team</string>
     <string name="invitation_screen_subtitle">Invite your colleagues to join.</string>
     <string name="open_service_conversation_button_text">Open Conversation</string>
@@ -1431,7 +1111,6 @@
     <string name="add_participants_count_header">ADD PARTICIPANTS (%1$s)</string>
     <string name="new_conv_no_results">No results</string>
     <string name="new_conv_no_contacts">No contacts</string>
-    <string name="create_group_search">SEARCH FOR NAMES</string>
 
     <string name="participants_divider_services">SERVICES (%1$s)</string>
     <string name="participants_divider_people">PEOPLE (%1$s)</string>
@@ -1511,7 +1190,6 @@
     <string name="video_paused">Video paused</string>
     <string name="calling_degraded_title">New device</string>
     <string name="call_info_text">Up to 300 people can join a group conversation. Video calls work with up to 3 other people and you.</string>
-    <string name="too_many_people_video_toast">Video calls only work in groups of 4 or less.</string>
 
     <string name="markdown_link_dialog_title">Visit Link</string>
     <string name="markdown_link_dialog_message">This will take you to\n%1$s</string>

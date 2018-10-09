@@ -106,7 +106,7 @@
                 android:gravity="center"
                 android:minHeight="@dimen/touch_target_buttons"
                 android:minWidth="@dimen/touch_target_buttons"
-                android:textColor="@color/framework_confirmation_menu_button_font_color"
+                android:textColor="@color/framework_confirmation_menu_button"
                 android:textSize="@dimen/wire__text_size__small"
                 app:w_font="@string/wire__typeface__light"
                 android:textAllCaps="true"

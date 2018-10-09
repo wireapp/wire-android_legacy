@@ -52,7 +52,7 @@
         android:id="@+id/fl__preview_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/framework__camera__preview_image_background_color"
+        android:background="@color/framework__camera__preview_image_background"
         android:visibility="gone"
         />
 
@@ -61,7 +61,7 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/camera__control__height"
         android:layout_gravity="bottom"
-        android:background="@color/camera__control__color"
+        android:background="@color/camera__control__background"
         android:outAnimation="@anim/camera_control_out"
         android:inAnimation="@anim/camera_control_in"
         android:clickable="true"

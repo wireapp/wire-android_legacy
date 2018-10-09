@@ -118,7 +118,7 @@ public class ConfirmationMenu extends LinearLayout {
 
         ViewUtils.setBackground(cancelTextView,
             getButtonBackground(backgroundColor,
-                ContextUtils.getColorWithThemeJava(R.color.framework_confirmation_menu_background_color, getContext()),
+                ContextUtils.getColorWithThemeJava(R.color.framework_confirmation_menu_background, getContext()),
                 strokeWidth,
                 cornerRadius));
 

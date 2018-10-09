@@ -610,7 +610,7 @@ class DrawingFragment extends FragmentHelper
         } {
           includeBackgroundImage = true
           bg.setVisibility(if (showHint) View.VISIBLE else View.INVISIBLE)
-          tip.setTextColor(getColorWithTheme(R.color.drawing__tip__font__color_image))
+          tip.setTextColor(getColorWithTheme(R.color.drawing__tip__image))
           cv.setBackgroundBitmap(bm)
           drawingMethod match {
             case Some(DrawingMethod.EMOJI) => onEmojiClick()

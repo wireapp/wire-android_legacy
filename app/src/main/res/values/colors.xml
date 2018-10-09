@@ -32,7 +32,6 @@
     <color name="white_80">#CCFFFFFF</color>
     <color name="white_72">#C4FFFFFF</color>
     <color name="white_64">#A2FFFFFF</color>
-    <color name="white_56">#90FFFFFF</color>
     <color name="white_48">#7BFFFFFF</color>
     <color name="white_40">#66FFFFFF</color>
     <color name="white_32">#52FFFFFF</color>
@@ -100,21 +99,16 @@
     <color name="light_green">#A3EBA3</color>
     <color name="light_red">#FDA5A5</color>
 
-    <color name="yorgos">#FF4A4A4A</color>
-
     <color name="separator_dark_solid">#FF1E1F20</color>
     <color name="separator_light_solid">#FFE6E6E6</color>
 
     <color name="ephemera">#FFFF5000</color>
-    <color name="ephemera_dimmed">#3DFF5000</color>
 
     <color name="collection_background_light">#fafafa</color>
     <color name="collection_background_dark">@color/black</color>
 
-
     <!-- Teams colors palette -->
     <color name="teams_background">#F8F8F8</color>
-    <color name="teams_textfield_arrow">@color/white</color>
     <color name="teams_inactive_button">@color/graphite_16</color>
     <color name="teams_headline_text">@color/graphite</color>
     <color name="teams_headline_text_pressed">@color/graphite_40</color>
@@ -122,14 +116,11 @@
     <color name="teams_placeholder_text">@color/light_graphite</color>
     <color name="teams_error_red">#FB0807</color>
     <color name="teams_create_personal_button">@color/accent_green</color>
-    <color name="teams_active_button_pressed">#006eb0</color>
     <color name="teams_create_team_button">#2391D3</color>
-    <color name="teams_create_button_pressed">#009b00</color>
     <color name="banner_grey">#95989A</color>
 
     <color name="self_mention_background_light">#7BFEBF02</color>
     <color name="self_mention_background_dark">#CCFEBF02</color>
-
 
     <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
     <!-- Component colors  -->
@@ -169,24 +160,15 @@
     <color name="text__primary_light__40">@color/graphite_40</color>
     <color name="text__primary_light">@color/graphite</color>
     <color name="text__primary_light_16">@color/graphite_16</color>
-    <color name="text__primary_light_48">@color/graphite_48</color>
     <color name="text__secondary_light__40">@color/light_graphite_40</color>
     <color name="text__secondary_light">@color/light_graphite</color>
 
     <color name="text__primary_disabled_dark">@color/white_32</color>
     <color name="text__primary_disabled_light">@color/black_24</color>
 
-    <!--  +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    STILL UNSORTED:
-
-    The color values below have not yet been tidied up to follow the style above. If you feel like doing some,
-    please feel free :) - Dean (04/16)
-
-    -->
-
-    <color name="camera__control__color">@color/black_80</color>
-    <color name="camera__control__font_color">@color/white</color>
-    <color name="camera__control__font_color_pressed">@color/white_48</color>
+    <color name="camera__control__background">@color/black_80</color>
+    <color name="camera__control">@color/white</color>
+    <color name="camera__control__pressed">@color/white_48</color>
 
     <color name="content__image__progress_circle_background_dark">@color/black</color>
     <color name="content__image__progress_circle_background_light">@color/white</color>
@@ -196,97 +178,67 @@
     <color name="calling_video_overlay">@color/black_58</color>
 
     <!-- Cursor-->
-    <color name="cursor_menu_button__text_color">@color/graphite</color>
-    <color name="cursor_diimmed_mode_color">@color/light_graphite_16</color>
-    <color name="cursor__top_border__color">@color/light_graphite_40</color>
-    <color name="cursor_edit_text__text_color__tablet_portrait">@color/black</color>
+    <color name="cursor__top_border">@color/light_graphite_40</color>
 
-    <color name="cursor_background_color_light">@color/accent_yellow__16</color>
-    <color name="cursor_background_color_dark">@color/graphite</color>
-    <color name="cursor_edit_buttons_color">@color/graphite</color>
-    <color name="cursor_edit_buttons_color_disabled">@color/light_graphite</color>
-    <color name="cursor_edit_buttons_color_dark">@color/white</color>
-    <color name="cursor_edit_buttons_color_disabled_dark">@color/white_64</color>
+    <color name="cursor_edit_buttons">@color/graphite</color>
+    <color name="cursor_edit_buttons_disabled">@color/light_graphite</color>
+    <color name="cursor_edit_buttons_dark">@color/white</color>
+    <color name="cursor_edit_buttons_disabled_dark">@color/white_64</color>
 
     <!-- Other colors-->
     <color name="wire__overlay__light">@color/white_96</color>
     <color name="wire__edit_text_background__dark">@color/white_16</color>
     <color name="wire__edit_text_background__light">@color/light_graphite_16</color>
-    <color name="wire__otr__verified_color">#FF0096F0</color>
-    <color name="wire__otr__verified_secondary_color">#650096F0</color>
-    <color name="wire__otr__not_verified_color_dark">@color/white</color>
-    <color name="wire__otr__not_verified_color_light">@color/graphite</color>
-    <color name="wire__otr__not_verified_secondary_color_dark">@color/white_24</color>
-    <color name="wire__otr__not_verified_secondary_color_light">@color/light_graphite</color>
+    <color name="wire__otr__verified">#FF0096F0</color>
+    <color name="wire__otr__verified_secondary">#650096F0</color>
+    <color name="wire__otr__not_verified_dark">@color/white</color>
+    <color name="wire__otr__not_verified_light">@color/graphite</color>
+    <color name="wire__otr__not_verified_secondary_dark">@color/white_24</color>
+    <color name="wire__otr__not_verified_secondary_light">@color/light_graphite</color>
 
     <!-- From the app module-->
-    <color name="chathead__glyph__overlay_color">@color/black_48</color>
-    <color name="chathead__user_initials__font_color">@color/white</color>
-    <color name="chathead__non_connected__color">@color/graphite</color>
+    <color name="chathead__glyph__overlay">@color/black_48</color>
+    <color name="chathead__user_initials">@color/white</color>
+    <color name="chathead__non_connected">@color/graphite</color>
 
-    <color name="country_divider_color">@color/white_16</color>
-    <color name="new_reg__country_code__text_color">@color/white_40</color>
+    <color name="country_divider">@color/white_16</color>
+    <color name="new_reg__country_code__text">@color/white_40</color>
     <color name="mentioning__popover__background">@color/black_80</color>
 
-    <color name="content__system_message__font_color">@color/black</color>
-    <color name="content__system_message__added_multi__member_counter__circle_color">@color/white_40</color>
-    <color name="content__youtube__background_color">@color/black_48</color>
-    <color name="content__youtube__text__color">@color/white</color>
-    <color name="content__youtube__error_indicator__color">@color/white_16</color>
-    <color name="cursor__black_box__background_color">@color/white</color>
+    <color name="content__system_message">@color/black</color>
+    <color name="content__system_message__added_multi__member_counter__circle">@color/white_40</color>
+    <color name="content__youtube__background">@color/black_48</color>
+    <color name="content__youtube__text">@color/white</color>
+    <color name="content__youtube__error_indicator">@color/white_16</color>
 
-    <color name="list_archive_box__background_color">@color/black_48</color>
-    <color name="list_font_color">@color/white</color>
-    <color name="list_menu_icon_color">@color/white</color>
-    <color name="list__unsent_indicator_text_color">#111111</color> <!-- TODO change color? -->
-    <color name="list__unsent_indicator_color">@color/accent_yellow</color>
-    <color name="list__archived_box__icon_text_color">@color/white</color>
-    <color name="list__archived_box__font__text_color">@color/white_40</color>
-    <color name="conversation_list__hint_background_color">@color/white</color>
+    <color name="list_menu_icon">@color/white</color>
 
-    <color name="nearby__username__font_color">@color/white</color>
+    <color name="framework_confirmation_menu_background">@color/transparent</color>
+    <color name="framework_confirmation_menu_text_disabled">@color/graphite</color>
+    <color name="framework_confirmation_menu_button">@color/graphite</color>
 
-    <color name="framework_confirmation_menu_background_color">@color/transparent</color>
-    <color name="framework_confirmation_menu_text_font_color_disabled">@color/graphite</color>
-    <color name="framework_confirmation_menu_button_font_color">@color/graphite</color>
+    <color name="first_time__welcome__tos">@color/white_80</color>
 
-    <color name="first_time__welcome__title_color">@color/white</color>
-    <color name="first_time__welcome__tos_color">@color/white_80</color>
-
-    <color name="profile__guidance__edit_text__hint__color">@color/white_64</color>
-    <color name="framework__camera__preview_image_background_color">@color/black</color>
-    <color name="profile__settings_box__font_color">@color/white</color>
-    <color name="profile__settings_box__font_color_pressed">@color/white_48</color>
+    <color name="framework__camera__preview_image_background">@color/black</color>
     <color name="about__background">@color/accent_blue</color>
-    <color name="about__version__text_color">@color/white</color>
-    <color name="profile__edit_text_container__active_background">@color/transparent</color>
-    <color name="profile__edit_text__active_background">@color/white_16</color>
 
-    <color name="sign_in__edit_text__font_hint_color">@color/white_40</color>
-    <color name="sign_in__edit_text__font_color">@color/white</color>
-    <color name="sign_up__photo_guidance__text_color">@color/white</color>
-    <color name="profile_content_color">@color/white</color>
+    <color name="sign_in__edit_text__hint">@color/white_40</color>
+    <color name="sign_in__edit_text">@color/white</color>
+    <color name="sign_up__photo_guidance">@color/white</color>
+    <color name="profile_content">@color/white</color>
 
-    <color name="drawing__icon__text_color">@color/white</color>
-    <color name="drawing__border_line__color">@color/separator_light</color>
-    <color name="drawing__tip__font__color">@color/light_graphite</color>
-    <color name="drawing__tip__font__color_image">@color/white</color>
-    <color name="drawing__tip__background_color">@color/black_48</color>
-    <color name="drawing__conversation__name__color">@color/graphite</color>
+    <color name="drawing__icon">@color/white</color>
+    <color name="drawing__border_line">@color/separator_light</color>
+    <color name="drawing__tip">@color/light_graphite</color>
+    <color name="drawing__tip__image">@color/white</color>
+    <color name="drawing__tip__background">@color/black_48</color>
 
-    <color name="forced_update__header__font_color">@color/white</color>
-    <color name="forced_update__sub_header__font_color">@color/white</color>
-    <color name="forced_update__button__font_color">@color/accent_blue</color>
-    <color name="forced_update__button__background_color">@color/white</color>
+    <color name="forced_update__header">@color/white</color>
+    <color name="forced_update__sub_header">@color/white</color>
+    <color name="forced_update__button">@color/accent_blue</color>
+    <color name="forced_update__button__background">@color/white</color>
 
-    <color name="giphy_preview__controls_border_color">@color/white_24</color>
-
-    <!-- TODO see if you can remove/simplify these -->
-    <color name="mediaplayer__spotify__hint__text">@color/white</color>
-    <color name="mediaplayer__seekbar_placeholder_circle">@color/white_16</color>
-    <color name="mediaplayer__seekbar_circle_inner_color">@color/black_48</color>
-    <color name="mediaplayer__seekbar_circle_color">@color/light_graphite_40</color>
-    <color name="mediaplayer__seekbar_circle_progress_color">@color/accent_default</color>
+    <!-- TODO see if you can simplify these -->
 
     <color name="network_indicator__header__color">@color/accent_yellow</color>
     <color name="network_indicator__font__color">@color/white</color>
@@ -294,20 +246,10 @@
     <color name="new_reg__phone_number_text_color_hint">@color/white_40</color>
 
     <color name="participants__header__background_color">@color/transparent</color>
-    <color name="participants__chathead__name_label__color__dark">@color/black</color>
 
     <color name="people_picker__loading__color">@color/white</color>
     <color name="people_picker__input_person_token__background_color">@color/white</color>
 
-    <color name="sharing_indicator__font__color">@color/white</color>
-    <color name="sharing__image_preview__title__color">@color/white</color>
-
-    <color name="single_image_message__layout__background_color">@color/black</color>
-    <color name="single_image_message__overlay__color">@color/black_80</color>
-    <color name="single_image_message__name__font_color">@color/white</color>
-    <color name="single_image_message__date__font_color">@color/white</color>
-    <color name="single_image_message__icon__text_color_normal">@color/white</color>
-    <color name="single_image_message__icon__text_color_pressed">@color/white_40</color>
     <color name="camera_text_shadow">@color/black_48</color>
     <color name="navigation_strip_background_color">@color/black_90</color>
 </resources>

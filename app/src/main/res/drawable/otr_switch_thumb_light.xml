@@ -26,5 +26,5 @@
         android:height="@dimen/wire__otr__switch_height"
         />
 
-    <solid android:color="@color/wire__otr__not_verified_color_light" />
+    <solid android:color="@color/wire__otr__not_verified_light" />
 </shape>

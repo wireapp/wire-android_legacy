@@ -70,7 +70,7 @@ class SoundMediaPartView(context: Context, attrs: AttributeSet, style: Int)
 
   private val imageDrawable = new ImageAssetDrawable(
     image,
-    background = Some(new ColorDrawable(getColor(R.color.content__youtube__background_color)))
+    background = Some(new ColorDrawable(getColor(R.color.content__youtube__background)))
   )
 
   registerEphemeral(imageView, imageDrawable)

@@ -82,7 +82,7 @@
             android:text="@string/otr__error_dialog__cannot_register__manage_devices_button"
             android:textSize="@dimen/framework_confirmation_menu_button_font_size"
             android:textAllCaps="true"
-            android:textColor="@color/framework_confirmation_menu_button_font_color"
+            android:textColor="@color/framework_confirmation_menu_button"
             app:w_font="@string/wire__typeface__light"
             />
 

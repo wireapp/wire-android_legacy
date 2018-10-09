@@ -22,18 +22,6 @@
     xmlns:tools="http://schemas.android.com/tools">
     <item name="conversation_pager" type="id"/>
 
-    <!-- Adding placeholder to satisfy lint, otherwise lint thinks files are not used -->
-    <drawable name="placeholder1" tools:ignore="UnusedResources">@drawable/ic_launcher_wire</drawable>
-    <drawable name="placeholder2" tools:ignore="UnusedResources">@drawable/ic_launcher_wire_internal</drawable>
-    <drawable name="placeholder3" tools:ignore="UnusedResources">@drawable/ic_launcher_wire_dev</drawable>
-    <drawable name="placeholder4" tools:ignore="UnusedResources">@drawable/ic_launcher_wire_candidate</drawable>
-    <drawable name="placeholder5" tools:ignore="UnusedResources">@drawable/ic_launcher_wire_playground</drawable>
-    <drawable name="placeholder6" tools:ignore="UnusedResources">@drawable/ic_launcher_wire_qa</drawable>
-
-    <item name="cursor" type="id">666</item>
-    <item name="cursor_menu_item_left_margin" type="id" />
-    <item name="cursor_menu_item_participant" type="id" />
-    <item name="cursor_menu_item_calling" type="id" />
     <item name="cursor_menu_item_video" type="id" />
     <item name="cursor_menu_item_camera" type="id" />
     <item name="cursor_menu_item_draw" type="id" />
@@ -60,10 +48,7 @@
     <item name="message_bottom_menu_item_unlike" type="id" />
     <item name="message_bottom_menu_item_save" type="id" />
     <item name="message_bottom_menu_item_open_file" type="id" />
-    <item name="message_bottom_menu_item_forward_multiple" type="id" />
     <item name="message_bottom_menu_item_reveal" type="id" />
-
-    <item name="video_calling_view" type="id" />
 
     <item name="emoji_keyboard_item" type="id" />
 

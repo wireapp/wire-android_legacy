@@ -20,11 +20,11 @@
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true"
-          android:color="@color/camera__control__font_color_pressed"/>
+          android:color="@color/camera__control__pressed"/>
     <!-- pressed -->
     <item android:state_focused="true"
-          android:color="@color/camera__control__font_color_pressed"/>
+          android:color="@color/camera__control__pressed"/>
     <!-- focused -->
-    <item android:color="@color/camera__control__font_color"/>
+    <item android:color="@color/camera__control"/>
     <!-- default -->
 </selector>
