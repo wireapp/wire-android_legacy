@@ -52,7 +52,7 @@ class ZMessagingDB(context: Context, dbName: String) extends DaoDB(context.getAp
 }
 
 object ZMessagingDB {
-  val DbVersion = 109
+  val DbVersion = 110
 
   lazy val daos = Seq (
     UserDataDao, SearchQueryCacheDao, AssetDataDao, ConversationDataDao,
@@ -223,6 +223,41 @@ object ZMessagingDB {
     },
     Migration(108, 109) { db =>
       db.execSQL("ALTER TABLE Conversations ADD COLUMN unread_mentions_count INTEGER DEFAULT 0")
+    },
+    Migration(109, 110) { db =>
+      db.execSQL(
+        """
+          | CREATE TABLE ConversationsCopy (
+          | _id TEXT PRIMARY KEY,
+          | remote_id TEXT, name TEXT, creator TEXT, conv_type INTEGER, team TEXT, is_managed INTEGER,
+          | last_event_time INTEGER, is_active INTEGER, last_read INTEGER, mute_time INTEGER, archived INTEGER,
+          | archive_time INTEGER, cleared INTEGER, generated_name TEXT, search_key TEXT, unread_count INTEGER,
+          | unsent_count INTEGER, hidden INTEGER, missed_call TEXT, incoming_knock TEXT, verified TEXT,
+          | ephemeral INTEGER, global_ephemeral INTEGER, unread_call_count INTEGER, unread_ping_count INTEGER,
+          | access TEXT, access_role TEXT, link TEXT, unread_mentions_count INTEGER, muted_status INTEGER DEFAULT 0
+          | );
+        """.stripMargin)
+      db.execSQL(
+        """
+          |INSERT INTO ConversationsCopy(
+          | _id,
+          | remote_id, name, creator, conv_type, team, is_managed, last_event_time, is_active, last_read, mute_time,
+          | archived, archive_time, cleared, generated_name, search_key, unread_count, unsent_count, hidden,
+          | missed_call, incoming_knock, verified, ephemeral, global_ephemeral, unread_call_count, unread_ping_count,
+          | access, access_role, link, unread_mentions_count
+          | )
+          | SELECT
+          | _id,
+          | remote_id, name, creator, conv_type, team, is_managed, last_event_time, is_active, last_read, mute_time,
+          | archived, archive_time, cleared, generated_name, search_key, unread_count, unsent_count, hidden,
+          | missed_call, incoming_knock, verified, ephemeral, global_ephemeral, unread_call_count, unread_ping_count,
+          | access, access_role, link, unread_mentions_count
+          | FROM Conversations;
+        """.stripMargin)
+      db.execSQL("UPDATE ConversationsCopy SET muted_status = 2 WHERE _id in (SELECT _id FROM Conversations WHERE Conversations.muted = 1);") // muted_status == 2 => only mentions are displayed
+      db.execSQL("DROP TABLE Conversations;")
+      db.execSQL("ALTER TABLE ConversationsCopy RENAME TO Conversations;")
     }
   )
 }
+

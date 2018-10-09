@@ -40,7 +40,7 @@ case class ConversationData(id:                   ConvId                 = ConvI
                             lastEventTime:        RemoteInstant          = RemoteInstant.Epoch,
                             isActive:             Boolean                = true,
                             lastRead:             RemoteInstant          = RemoteInstant.Epoch,
-                            muted:                Boolean                = false,
+                            muted:                MuteSet                = MuteSet.AllAllowed,
                             muteTime:             RemoteInstant          = RemoteInstant.Epoch,
                             archived:             Boolean                = false,
                             archiveTime:          RemoteInstant          = RemoteInstant.Epoch,
@@ -127,7 +127,12 @@ case class ConversationData(id:                   ConvId                 = ConvI
     !(userData.isGuest(team) && isTeamOnly)
 
   def isMemberFromTeamGuest(teamId: Option[TeamId]): Boolean = team.isDefined && teamId != team
+
+  def isAllMuted: Boolean = muted.isAllMuted
+
+  def onlyMentionsAllowed: Boolean = muted.onlyMentionsAllowed
 }
+
 
 /**
  * Conversation user binding.
@@ -191,7 +196,7 @@ object ConversationData {
     val LastEventTime       = remoteTimestamp('last_event_time)(_.lastEventTime)
     val IsActive            = bool('is_active)(_.isActive)
     val LastRead            = remoteTimestamp('last_read)(_.lastRead)
-    val Muted               = bool('muted)(_.muted)
+    val MutedStatus         = int('muted_status)(_.muted.toInt)
     val MutedTime           = remoteTimestamp('mute_time)(_.muteTime)
     val Archived            = bool('archived)(_.archived)
     val ArchivedTime        = remoteTimestamp('archive_time)(_.archiveTime)
@@ -226,7 +231,7 @@ object ConversationData {
       LastEventTime,
       IsActive,
       LastRead,
-      Muted,
+      MutedStatus,
       MutedTime,
       Archived,
       ArchivedTime,
@@ -260,7 +265,7 @@ object ConversationData {
         LastEventTime,
         IsActive,
         LastRead,
-        Muted,
+        MuteSet(MutedStatus),
         MutedTime,
         Archived,
         ArchivedTime,

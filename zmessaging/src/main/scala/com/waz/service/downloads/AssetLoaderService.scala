@@ -200,7 +200,7 @@ object AssetLoaderService {
       promise.tryFailure(new CancelException("Cancelled by user"))
 
     def load() = {
-      verbose(s"performing load: ${asset.id}")
+      verbose(s"performing load: ${asset.id}, name: ${asset.name}")
       loader.loadAsset(asset, state ! _, force)
     }
 

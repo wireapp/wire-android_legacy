@@ -34,6 +34,7 @@ case class Mime(str: String) {
 object Mime {
   val Unknown = Mime("")
   val Default = Mime("application/octet-stream")
+  val Text    = Mime("text/plain")
 
   def fromFileName(fileName: String) = extensionOf(fileName).fold2(Unknown, fromExtension)
   def fromExtension(ext: String) = Option(MimeTypeMap.getSingleton.getMimeTypeFromExtension(ext)).fold2(Unknown, Mime(_))
@@ -112,6 +113,7 @@ object Mime {
     Audio.Ogg    -> "ogg",
     Audio.FLAC   -> "flac",
     Audio.WAV    -> "wav",
-    Audio.PCM    -> "m4a"
+    Audio.PCM    -> "m4a",
+    Text         -> "txt"
   )
 }

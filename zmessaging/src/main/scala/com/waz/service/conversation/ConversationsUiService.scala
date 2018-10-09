@@ -69,7 +69,7 @@ trait ConversationsUiService {
   def deleteMessage(convId: ConvId, id: MessageId): Future[Unit]
   def recallMessage(convId: ConvId, id: MessageId): Future[Option[MessageData]]
   def setConversationArchived(id: ConvId, archived: Boolean): Future[Option[ConversationData]]
-  def setConversationMuted(id: ConvId, muted: Boolean): Future[Option[ConversationData]]
+  def setConversationMuted(id: ConvId, muted: MuteSet): Future[Option[ConversationData]]
   def setConversationName(id: ConvId, name: String): Future[Option[ConversationData]]
 
   def addConversationMembers(conv: ConvId, users: Set[UserId]): Future[Option[SyncId]]
@@ -209,9 +209,14 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
 
   override def setConversationArchived(id: ConvId, archived: Boolean): Future[Option[ConversationData]] = convs.setConversationArchived(id, archived)
 
-  override def setConversationMuted(id: ConvId, muted: Boolean): Future[Option[ConversationData]] =
+  override def setConversationMuted(id: ConvId, muted: MuteSet): Future[Option[ConversationData]] =
     convsContent.updateConversationMuted(id, muted) map {
-      case Some((_, conv)) => sync.postConversationState(id, ConversationState(muted = Some(conv.muted), muteTime = Some(conv.muteTime))); Some(conv)
+      case Some((_, conv)) =>
+        sync.postConversationState(
+          id,
+          ConversationState(muted = Some(conv.muted.oldMutedFlag), muteTime = Some(conv.muteTime), mutedStatus = Some(conv.muted.toInt))
+        )
+        Some(conv)
       case None => None
     }
 

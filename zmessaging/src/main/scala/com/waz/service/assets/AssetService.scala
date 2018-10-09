@@ -239,8 +239,8 @@ class AssetServiceImpl(storage:         AssetsStorage,
             mime        = info.mime,
             sizeInBytes = info.size.getOrElse(0),
             name        = info.name.map {
-              case name if info.mime.extension.nonEmpty => name + "." + info.mime.extension
-              case name                                 => name
+              case name if info.mime.extension.nonEmpty && !name.contains(".") => name + "." + info.mime.extension
+              case name                                                        => name
             },
             source      = Some(uri),
             metaData = info.mime match {

@@ -79,7 +79,7 @@ object Generators {
     lastEventTime <- arbitrary[RemoteInstant]
     team  <- arbitrary[Option[TeamId]]
     isActive <- arbitrary[Boolean]
-    muted <- arbitrary[Boolean]
+    muted <- oneOf(MuteSet.AllMuted, MuteSet.OnlyMentionsAllowed, MuteSet.AllAllowed)
     muteTime <- arbitrary[RemoteInstant]
     archived <- arbitrary[Boolean]
     archiveTime <- arbitrary[RemoteInstant]
@@ -293,7 +293,7 @@ object Generators {
   } yield AddressBook.ContactHashes(ContactId(id), hashes))
 
   implicit lazy val arbConvState: Arbitrary[ConversationState] = Arbitrary(resultOf(
-    ConversationState(_: Option[Boolean], _: Option[RemoteInstant], _: Option[Boolean], _: Option[RemoteInstant])))
+    ConversationState(_: Option[Boolean], _: Option[RemoteInstant], _: Option[Boolean], _: Option[RemoteInstant], _: Option[Int])))
 
   lazy val serialCounter: AtomicLong = new AtomicLong()
 

@@ -135,7 +135,11 @@ sealed trait OtrEvent extends ConversationEvent {
 }
 case class OtrMessageEvent(convId: RConvId, time: RemoteInstant, from: UserId, sender: ClientId, recipient: ClientId, ciphertext: Array[Byte], externalData: Option[Array[Byte]] = None) extends OtrEvent
 
-case class ConversationState(archived: Option[Boolean] = None, archiveTime: Option[RemoteInstant] = None, muted: Option[Boolean] = None, muteTime: Option[RemoteInstant] = None)
+case class ConversationState(archived:    Option[Boolean] = None,
+                             archiveTime: Option[RemoteInstant] = None,
+                             muted:       Option[Boolean] = None,
+                             muteTime:    Option[RemoteInstant] = None,
+                             mutedStatus: Option[Int] = None)
 
 object ConversationState {
 
@@ -148,6 +152,7 @@ object ConversationState {
     state.muteTime foreach { time =>
       o.put("otr_muted_ref", JsonEncoder.encodeISOInstant(time.instant))
     }
+    state.mutedStatus.foreach { status => o.put("otr_muted_status", status) }
   }
 
   implicit lazy val Encoder: JsonEncoder[ConversationState] = new JsonEncoder[ConversationState] {
@@ -169,7 +174,9 @@ object ConversationState {
         case _                                    => (None, None)
       }
 
-      ConversationState(archived, archiveTime, muted, muteTime)
+      val mutedStatus = decodeOptInt('otr_muted_status)
+
+      ConversationState(archived, archiveTime, muted, muteTime, mutedStatus)
     }
   }
 
