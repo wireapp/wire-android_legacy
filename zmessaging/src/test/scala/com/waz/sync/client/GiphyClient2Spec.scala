@@ -25,9 +25,9 @@ import com.waz.utils.RichSeq
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class GiphyClient2Spec extends ZIntegrationSpec {
-  import com.waz.Config._
+  import com.waz.AuthenticationConfig._
 
-  private val giphyClient = new GiphyClientImpl2()
+  private lazy val giphyClient = new GiphyClientImpl2()
 
   private val testLimit = 5
   private val testOffset = testLimit

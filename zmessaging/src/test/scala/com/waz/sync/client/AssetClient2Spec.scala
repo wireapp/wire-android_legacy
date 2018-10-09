@@ -34,9 +34,9 @@ import scala.util.Random
 
 //TODO Think about tests resources cleanup
 class AssetClient2Spec extends ZIntegrationSpec {
-  import com.waz.Config._
+  import com.waz.AuthenticationConfig._
 
-  private val assetClient = new AssetClient2Impl()
+  private lazy val assetClient = new AssetClient2Impl()
   private val testAssetContent = returning(Array.ofDim[Byte](1024))(Random.nextBytes)
   private val testAssetMetadata = Metadata(retention = Retention.Volatile)
   private val testAssetMime = Mime.Default
