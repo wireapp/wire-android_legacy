@@ -128,6 +128,8 @@ case class ConversationData(id:                   ConvId                 = ConvI
 
   def isMemberFromTeamGuest(teamId: Option[TeamId]): Boolean = team.isDefined && teamId != team
 
+  def isAllAllowed: Boolean = muted.isAllAllowed
+
   def isAllMuted: Boolean = muted.isAllMuted
 
   def onlyMentionsAllowed: Boolean = muted.onlyMentionsAllowed
