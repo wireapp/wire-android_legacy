@@ -154,7 +154,7 @@ class AndroidSyncServiceHandle(service: SyncRequestService, timeouts: Timeouts, 
   def postAddBot(cId: ConvId, pId: ProviderId, iId: IntegrationId) = addRequest(PostAddBot(cId, pId, iId))
   def postRemoveBot(cId: ConvId, botId: UserId) = addRequest(PostRemoveBot(cId, botId))
 
-  def registerPush(token: PushToken) = addRequest(RegisterPushToken(token), priority = Priority.High, forceRetry = true)
+  def registerPush(token: PushToken)    = addRequest(RegisterPushToken(token), priority = Priority.High, forceRetry = true)
   def deletePushToken(token: PushToken) = addRequest(DeletePushToken(token), priority = Priority.Low)
 
   def syncSelfClients() = addRequest(SyncSelfClients, priority = Priority.Critical)

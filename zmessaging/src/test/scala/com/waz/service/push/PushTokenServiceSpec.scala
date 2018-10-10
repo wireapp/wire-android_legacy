@@ -23,12 +23,15 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NetworkMode
 import com.waz.content.{AccountStorage, GlobalPreferences}
 import com.waz.model._
+import com.waz.model.otr.ClientId
 import com.waz.service.AccountsService.{InBackground, LoggedOut}
 import com.waz.service.NetworkModeService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
+import com.waz.sync.client.PushTokenClient
+import com.waz.sync.client.PushTokenClient.PushTokenRegistration
 import com.waz.testutils.{TestBackoff, TestGlobalPreferences}
-import com.waz.threading.Threading
+import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.utils.wrappers.GoogleApi
@@ -151,6 +154,7 @@ class PushTokenServiceSpec extends AndroidFreeSpec {
 
     val global           = mock[GlobalTokenService]
     val accStorage       = mock[AccountStorage]
+    val client           = mock[PushTokenClient]
     val sync             = mock[SyncServiceHandle]
     val loggedInAccounts = Signal(Set.empty[AccountData])
 
@@ -185,8 +189,60 @@ class PushTokenServiceSpec extends AndroidFreeSpec {
       (global.currentToken _).expects().anyNumberOfTimes().returning(currentToken)
 
       accountIds.zip(syncs).map { case (id, sync) =>
-        new PushTokenService(id, global, accounts, accStorage, sync)
+        new PushTokenService(id, ClientId(id.str), global, accounts, accStorage, client, sync)
       }
+    }
+
+    scenario("Check current push tokens registered with backend - no token with matching clientId should re-register token") {
+
+      val deviceToken = PushToken("oldToken") //some old token that is no longer registered on the BE
+      currentToken ! Some(deviceToken)
+
+      val registeredTokens = Seq( //no matching token for our client on the backend
+        PushTokenRegistration(PushToken("token1"), "", ClientId("otherClient1")),
+        PushTokenRegistration(PushToken("token2"), "", ClientId("otherClient2"))
+      )
+
+      loggedInAccounts ! Set(accountData(account1Id, deviceToken)) //the current user thinks it's registered with the old token
+
+      lazy val Seq(service) = initTokenService()
+
+      //The service should attempt to re-register the global device token
+      (client.getPushTokens _).expects().once().returning(CancellableFuture.successful(Right(registeredTokens)))
+      (sync.registerPush _).expects(deviceToken).returning(Future.successful(SyncId()))
+
+      val accountToken = accountSignal(account1Id).map(_.pushToken)
+      service.checkCurrentUserTokens()
+
+      await(accountToken.head.filter(_.isEmpty)) //token gets deleted
+      awaitAllTasks
+      await(accountToken.head.filter(_ == deviceToken)) //token is reset
+    }
+
+    scenario("Check current push tokens registered with backend - if token is registered we do nothing") {
+
+      val deviceToken = PushToken("token1")
+      currentToken ! Some(deviceToken)
+
+      val registeredTokens = Seq(
+        PushTokenRegistration(PushToken("token1"), "", ClientId(account1Id.str)), //we have a matching token for our client!
+        PushTokenRegistration(PushToken("token2"), "", ClientId("otherClient2"))
+      )
+
+      loggedInAccounts ! Set(accountData(account1Id, deviceToken))
+
+      lazy val Seq(service) = initTokenService()
+
+      //The service should NOT attempt to re-register the global device token
+      (client.getPushTokens _).expects().once().returning(CancellableFuture.successful(Right(registeredTokens)))
+      (sync.registerPush _).expects(*).never()
+      (sync.deletePushToken _).expects(*).never()
+
+      val accountToken = accountSignal(account1Id).map(_.pushToken)
+      service.checkCurrentUserTokens()
+
+      awaitAllTasks
+      await(accountToken.head.filter(_ == deviceToken)) //token should be the same
     }
 
     scenario("Remove Push Token event should create new token and delete all previous tokens") {
