@@ -167,6 +167,9 @@
     <string translatable="false" name="pref_dev_full_conv_title">Create full conversation</string>
     <string translatable="false" name="prefs__username_change__username_at">\@</string>
 
+    <string translatable="false" name="pref_dev_check_push_token_title">Check Registered Push Token</string>
+    <string translatable="false" name="pref_dev_check_push_token_summary">Trigger a job to compare the push token registered for the current user on the backend with the token we have stored locally</string>
+
     <!--Account preferences-->
     <string translatable="false" name="pref_dev_category_sign_in_account_key">PREF_ACCOUNTS_SIGN_IN</string>
     <string translatable="false" name="pref_dev_category_sign_in_account_title">Sign into account</string>

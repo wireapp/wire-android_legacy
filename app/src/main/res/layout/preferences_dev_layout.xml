@@ -50,34 +50,6 @@
                 app:title="@string/pref_dev_version_info_id_title"
                 />
 
-            <com.waz.zclient.ui.text.TypefaceTextView
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/preference_button_height"
-                android:text="@string/pref_dev_category_notifications_title"
-                android:gravity="center_vertical"
-                android:paddingStart="@dimen/wire__padding__16"
-                android:paddingEnd="@dimen/wire__padding__16"
-                android:textColor="@color/accent_blue"
-                />
-
-            <com.waz.zclient.preferences.views.SwitchPreference
-                android:id="@+id/preferences_dev_gcm"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:title="@string/pref_dev_push_enabled_title"
-                app:subtitle="@string/pref_dev_push_enabled_summary"
-                app:key="@string/pref_dev_push_enabled_key"
-                />
-
-            <com.waz.zclient.preferences.views.TextButton
-                android:id="@+id/preferences_dev_websocket_freq"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/wire__padding__20"
-                app:title="@string/pref_dev_websocket_ping_interval_title"
-                app:subtitle="@string/pref_dev_websocket_ping_interval_summary"
-                />
-
             <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preferences_dev_slow_sync"
                 android:layout_width="match_parent"
@@ -113,7 +85,45 @@
                 app:subtitle="@string/pref_dev_full_conv_summary"
                 app:title="@string/pref_dev_full_conv_title"
                 app:key="@string/pref_dev_full_conv_key"
+            />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                android:text="@string/pref_dev_category_notifications_title"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/wire__padding__16"
+                android:paddingEnd="@dimen/wire__padding__16"
+                android:textColor="@color/accent_blue"
                 />
+
+            <com.waz.zclient.preferences.views.SwitchPreference
+                android:id="@+id/preferences_dev_gcm"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:title="@string/pref_dev_push_enabled_title"
+                app:subtitle="@string/pref_dev_push_enabled_summary"
+                app:key="@string/pref_dev_push_enabled_key"
+                />
+
+            <com.waz.zclient.preferences.views.TextButton
+                android:id="@+id/preferences_dev_websocket_freq"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
+                app:title="@string/pref_dev_websocket_ping_interval_title"
+                app:subtitle="@string/pref_dev_websocket_ping_interval_summary"
+                />
+
+            <com.waz.zclient.preferences.views.TextButton
+                android:id="@+id/preferences_dev_check_push_tokens"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
+                android:layout_marginBottom="@dimen/wire__padding__20"
+                app:title="@string/pref_dev_check_push_token_title"
+                app:subtitle="@string/pref_dev_check_push_token_summary"
+            />
 
         </LinearLayout>
 

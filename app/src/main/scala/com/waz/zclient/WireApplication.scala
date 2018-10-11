@@ -35,6 +35,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
 import com.waz.api.NetworkMode
 import com.waz.content._
+import com.waz.jobs.PushTokenCheckJob
 import com.waz.log.InternalLog
 import com.waz.model.{AccentColor, ConversationData, TeamId, UserId}
 import com.waz.permissions.PermissionsService
@@ -331,8 +332,9 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     JobManager.create(this).addJobCreator(new JobCreator {
       override def create(tag: String) =
-        if (tag.contains(FetchJob.Tag)) new FetchJob
-        else null
+        if      (tag.contains(FetchJob.Tag))          new FetchJob
+        else if (tag.contains(PushTokenCheckJob.Tag)) new PushTokenCheckJob
+        else    null
     })
 
     val prefs = GlobalPreferences(this)

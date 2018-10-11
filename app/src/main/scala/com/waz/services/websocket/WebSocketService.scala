@@ -26,6 +26,7 @@ import android.support.v4.app.NotificationCompat
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.content.GlobalPreferences.{PushEnabledKey, WsForegroundKey}
+import com.waz.jobs.PushTokenCheckJob
 import com.waz.service.AccountsService.InForeground
 import com.waz.service.{AccountsService, GlobalModule, ZMessaging}
 import com.waz.threading.Threading
@@ -77,7 +78,7 @@ class WebSocketController(implicit inj: Injector) extends Injectable {
 /**
   * Receiver called on boot or when app is updated.
   */
-class WebSocketBroadcastReceiver extends BroadcastReceiver {
+class OnBootAndUpdateBroadcastReceiver extends BroadcastReceiver {
 
   private var context: Context = _
 
@@ -87,9 +88,17 @@ class WebSocketBroadcastReceiver extends BroadcastReceiver {
   private lazy val controller =
     injector.binding[WebSocketController].getOrElse(throw new Exception(s"Failed to load WebSocketController")).apply()
 
+  private lazy val accounts =
+    injector.binding[AccountsService].getOrElse(throw new Exception(s"Failed to load AccountsService")).apply()
+
   override def onReceive(context: Context, intent: Intent): Unit = {
     this.context = context
     verbose(s"onReceive $intent")
+
+    accounts.zmsInstances.head.foreach { zs =>
+      zs.map(_.selfUserId).foreach(PushTokenCheckJob(_))
+    } (Threading.Background)
+
 
     controller.serviceInForeground.head.foreach {
       case true =>
