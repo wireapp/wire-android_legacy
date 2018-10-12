@@ -260,6 +260,7 @@ dependencies {
     implementation "com.android.support:cardview-v7:$supportLibVersion"
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
     implementation "android.arch.paging:runtime:$paging_version"
+    implementation "com.android.support:exifinterface:$supportLibVersion"
 
     // Play services
     implementation "com.google.android.gms:play-services-base:$playServicesVersion"

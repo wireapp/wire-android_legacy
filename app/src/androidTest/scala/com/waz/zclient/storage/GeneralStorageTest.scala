@@ -17,15 +17,10 @@
  */
 package com.waz.zclient.storage
 
-import java.net.URI
-
 import android.content.Context
 import android.support.test.InstrumentationRegistry
-import com.waz.cache2.CacheService.NoEncryption
 import com.waz.db.{Dao, DaoDB}
-import com.waz.model.{AssetId, AssetToken, Dim2, Sha256}
 import com.waz.service.assets2.AssetsStorageImpl.AssetDao
-import com.waz.service.assets2.{Asset, ImageDetails, Medium}
 import com.waz.utils.DbStorage2
 import com.waz.utils.wrappers.DB
 import com.waz.zclient.TestUtils.asyncTest
@@ -47,18 +42,6 @@ abstract class GeneralStorageTest[Entity, Id](dao: Dao[Entity, Id])(entities: Se
 
   var testDB: DB = _
   var storage: DbStorage2[Id, Entity] = _
-
-  val values = List(
-    Asset(
-      id = AssetId(),
-      token = Some(AssetToken("some_token")),
-      sha = Sha256("ad34da34"),
-      encryption = NoEncryption,
-      localSource = Some(URI.create("https://github.com/wireapp/wire-android-sync-engine/pull/437")),
-      convId = None,
-      details = ImageDetails(Dim2(1,2), Medium)
-    )
-  )
 
   @Before
   def initializeDB(): Unit = {
