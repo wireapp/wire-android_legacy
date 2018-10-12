@@ -18,7 +18,8 @@
 package com.waz.zclient.utils
 
 import android.graphics.{BitmapFactory, Matrix}
-import android.media.{ExifInterface, ThumbnailUtils}
+import android.support.media.ExifInterface
+import android.media.ThumbnailUtils
 import com.waz.utils.TrimmingLruCache.CacheSize
 import com.waz.utils.wrappers.{Bitmap, Context}
 import android.graphics.{Bitmap => AndroidBitmap}
