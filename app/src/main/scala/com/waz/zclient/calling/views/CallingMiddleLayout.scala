@@ -24,7 +24,7 @@ import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.service.call.CallInfo.CallState.{OtherCalling, SelfConnected}
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.zclient.calling.controllers.CallController
-import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.utils.ContextUtils.getDimenPx
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
@@ -39,7 +39,7 @@ class CallingMiddleLayout(val context: Context, val attrs: AttributeSet, val def
   inflate(R.layout.calling_middle_layout, this)
 
   private lazy val controller   = inject[CallController]
-  private lazy val chathead     = findById[ChatheadView](R.id.call_chathead)
+  private lazy val chathead     = findById[ChatHeadView](R.id.call_chathead)
   private lazy val participants = findById[CallParticipantsView](R.id.call_participants)
 
   lazy val onShowAllClicked: EventStream[Unit] = participants.onShowAllClicked
@@ -55,7 +55,7 @@ class CallingMiddleLayout(val context: Context, val attrs: AttributeSet, val def
   }
 
   controller.memberForPicture.onUi {
-    case Some(uId) => chathead.setUserId(uId)
+    case Some(uId) => chathead.loadUser(uId)
     case _         => chathead.clearUser()
   }
 

@@ -42,7 +42,7 @@ class ConnectRequestPartView(context: Context, attrs: AttributeSet, style: Int) 
 
   override val tpe: MsgPart = MsgPart.ConnectRequest
 
-  lazy val chathead     : ChatheadView    = findById(R.id.cv__row_conversation__connect_request__chat_head)
+  lazy val chathead     : ChatHeadView    = findById(R.id.cv__row_conversation__connect_request__chat_head)
   lazy val label        : TextView        = findById(R.id.ttv__row_conversation__connect_request__label)
   lazy val userDetails  : UserDetailsView = findById(R.id.udv__row_conversation__connect_request__user_details)
 
@@ -77,7 +77,7 @@ class ConnectRequestPartView(context: Context, attrs: AttributeSet, style: Int) 
 
   Signal(integration, user.map(_.id)).onUi {
     case (Some(i), _) => chathead.setIntegration(i)
-    case (_, usr) => chathead.setUserId(usr)
+    case (_, usr) => chathead.loadUser(usr)
   }
 
   user.map(_.id)(userDetails.setUserId)

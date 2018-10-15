@@ -25,7 +25,7 @@
               android:layout_height="@dimen/user_row_height"
     >
 
-    <com.waz.zclient.common.views.ChatheadView
+    <com.waz.zclient.common.views.ChatHeadView
         android:id="@+id/chathead"
         android:layout_width="@dimen/search__chathead__size"
         android:layout_height="@dimen/search__chathead__size"
@@ -33,9 +33,6 @@
         android:layout_centerVertical="true"
         android:layout_marginStart="@dimen/wire__padding__regular"
         android:layout_marginEnd="@dimen/wire__padding__regular"
-        app:glyph_size="@dimen/people_picker__chathead__glpyh"
-        app:isSelectable="true"
-        app:show_border="false"
         />
 
     <LinearLayout

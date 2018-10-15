@@ -21,19 +21,18 @@ import android.content.Context
 import android.graphics.Typeface
 import android.util.{AttributeSet, TypedValue}
 import android.view.{View, ViewGroup}
-import android.widget.{LinearLayout, TextView}
+import android.widget.{ImageView, LinearLayout, TextView}
+import com.bumptech.glide.request.RequestOptions
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
-import com.waz.model.{AssetData, MessageContent, MessageData, Name}
+import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events._
 import com.waz.zclient.common.controllers.AssetsController
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
-import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
+import com.waz.zclient.glide.{GlideBuilder, WireGlide}
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MsgPart._
 import com.waz.zclient.messages._
@@ -178,11 +177,12 @@ class ImageReplyPartView(context: Context, attrs: AttributeSet, style: Int) exte
 
   override def tpe: MsgPart = Reply(Image)
 
-  private val imageContainer = findById[View](R.id.image_container)
+  private val imageView = findById[ImageView](R.id.image)
 
-  private val imageSignal: Signal[ImageSource] = quotedMessage.map(m => WireImage(m.assetId))
-
-  imageContainer.setBackground(new ImageAssetDrawable(imageSignal, ScaleType.StartInside, RequestBuilder.Regular))
+  quotedMessage.map(_.assetId).onUi {
+    case Some(aid: AssetId) => GlideBuilder(aid).apply(new RequestOptions().centerInside()).into(imageView)
+    case _ => WireGlide().clear(imageView)
+  }
 }
 
 class LocationReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) {
@@ -215,14 +215,14 @@ class VideoReplyPartView(context: Context, attrs: AttributeSet, style: Int) exte
 
   override def tpe: MsgPart = Reply(VideoAsset)
 
-  private val imageContainer = findById[View](R.id.image_container)
+  private val imageView = findById[ImageView](R.id.image)
   private val imageIcon = findById[GlyphTextView](R.id.image_icon)
 
-  private val imageSignal: Signal[ImageSource] = quotedAsset.map(_.flatMap(_.previewId)).collect {
-    case Some(aId) => WireImage(aId)
+  quotedAsset.map(_.flatMap(_.previewId)).onUi {
+    case Some(aid: AssetId) => GlideBuilder(aid).apply(new RequestOptions().centerInside()).into(imageView)
+    case _ => WireGlide().clear(imageView)
   }
 
-  imageContainer.setBackground(new ImageAssetDrawable(imageSignal, ScaleType.StartInside, RequestBuilder.Regular))
   imageIcon.setVisibility(View.VISIBLE)
 }
 

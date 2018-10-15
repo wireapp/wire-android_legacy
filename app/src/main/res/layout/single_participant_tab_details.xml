@@ -30,17 +30,13 @@
         android:orientation="vertical"
         tools:ignore="UselessParent">
 
-        <com.waz.zclient.common.views.ChatheadView
+        <com.waz.zclient.common.views.ChatHeadView
             android:id="@+id/chathead"
             android:layout_width="@dimen/profile__image__width"
             android:layout_height="@dimen/profile__image__height"
-            app:show_border="false"
-            app:allow_icon="false"
             app:is_round="true"
-            app:isSelectable="false"
             app:show_waiting="false"
             app:gray_on_unconnected="false"
-            app:initials_font_size="@dimen/participant_initials_text_size"
             />
 
         <View

@@ -23,7 +23,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.model.UserId
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.messages.MessageViewFactory
 import com.waz.zclient.{R, ViewHelper}
 
@@ -42,10 +42,10 @@ trait ChatheadsRecyclerView extends ViewGroup with ViewHelper {
 
     ids.zipWithIndex foreach { case (id, index) =>
       val view =
-        if (index < getChildCount) getChildAt(index).asInstanceOf[ChatheadView]
-        else returning(cache.get[ChatheadView](chatHeadResId, this)) { addView }
+        if (index < getChildCount) getChildAt(index).asInstanceOf[ChatHeadView]
+        else returning(cache.get[ChatHeadView](chatHeadResId, this)) { addView }
 
-      view.setUserId(id)
+      view.loadUser(id)
     }
   }
 }

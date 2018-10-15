@@ -27,8 +27,11 @@ import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
+import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.CustomViewTarget
+import com.bumptech.glide.request.transition.Transition
 import com.waz.ZLog.ImplicitTag._
-import com.waz.model.{AccentColor, EmailAddress, PhoneNumber}
+import com.waz.model.{AccentColor, AssetId, EmailAddress, PhoneNumber}
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
@@ -36,9 +39,7 @@ import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.appentry.{AppEntryActivity, DialogErrorMessage}
 import com.waz.zclient.common.controllers.global.PasswordController
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
-import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
+import com.waz.zclient.glide.GlideBuilder
 import com.waz.zclient.preferences.dialogs._
 import com.waz.zclient.preferences.views.{EditNameDialog, PictureTextButton, SwitchPreference, TextButton}
 import com.waz.zclient.ui.utils.TextViewUtils._
@@ -64,7 +65,7 @@ trait AccountView {
   def setHandle(handle: String): Unit
   def setEmail(email: Option[EmailAddress]): Unit
   def setPhone(phone: Option[PhoneNumber]): Unit
-  def setPictureDrawable(drawable: Drawable): Unit
+  def setPictureId(assetId: AssetId): Unit
   def setAccentDrawable(drawable: Drawable): Unit
   def setDeleteAccountEnabled(enabled: Boolean): Unit
   def setEmailEnabled(enabled: Boolean): Unit
@@ -113,7 +114,23 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setPhone(phone: Option[PhoneNumber]) = phoneButton.setTitle(phone.map(_.str).getOrElse(getString(R.string.pref_account_add_phone_title)))
 
-  override def setPictureDrawable(drawable: Drawable) = pictureButton.setDrawableStart(Some(drawable))
+  override def setPictureId(assetId: AssetId) = {
+
+    //TODO: maybe create a util for this?
+    GlideBuilder(assetId)
+      .apply(new RequestOptions().centerCrop())
+      .into(new CustomViewTarget[View, Drawable](pictureButton) {
+      override def onResourceCleared(placeholder: Drawable): Unit =
+        pictureButton.setDrawableStart(None)
+
+      override def onLoadFailed(errorDrawable: Drawable): Unit =
+        pictureButton.setDrawableStart(None)
+
+      override def onResourceReady(resource: Drawable, transition: Transition[_ >: Drawable]): Unit = {
+        pictureButton.setDrawableStart(Some(resource))
+      }
+    })
+  }
 
   override def setAccentDrawable(drawable: Drawable) = colorButton.setDrawableStart(Some(drawable))
 
@@ -170,9 +187,9 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
     sso    <- accounts.isActiveAccountSSO
   } yield sso && (p.isDefined || !isTeam)
 
-  val selfPicture: Signal[ImageSource] = self.map(_.picture).collect{case Some(pic) => WireImage(pic)}
-
-  view.setPictureDrawable(new ImageAssetDrawable(selfPicture, scaleType = ScaleType.CenterInside, request = RequestBuilder.Round))
+  self.map(_.picture).collect{case Some(pic) => pic}.onUi { id =>
+    view.setPictureId(id)
+  }
 
   self.onUi { self =>
     self.handle.foreach(handle => view.setHandle(StringUtils.formatHandle(handle.string)))

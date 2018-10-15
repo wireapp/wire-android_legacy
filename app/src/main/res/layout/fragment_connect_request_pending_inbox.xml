@@ -57,17 +57,15 @@
             android:layout_marginTop="@dimen/wire__padding__small"
             />
 
-        <com.waz.zclient.common.views.ChatheadView
+        <com.waz.zclient.common.views.ChatHeadView
             android:id="@+id/chathead"
             android:layout_width="@dimen/profile__image__width"
             android:layout_height="@dimen/profile__image__height"
             android:layout_marginBottom="@dimen/wire__padding__regular"
             android:layout_marginTop="@dimen/wire__padding__big"
             android:layout_gravity="bottom|center_horizontal"
-            app:show_border="false"
             app:allow_icon="false"
             app:is_round="true"
-            app:isSelectable="false"
             app:show_waiting="false"
             app:gray_on_unconnected="false"
             />
