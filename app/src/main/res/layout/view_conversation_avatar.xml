@@ -25,9 +25,8 @@
     android:layout_height="@dimen/conversation_list__avatar__size"
     android:background="@drawable/conversation_group_avatar_background">
 
-    <com.waz.zclient.common.views.ChatheadView
+    <com.waz.zclient.common.views.ChatHeadView
         android:id="@+id/avatar_single"
-        app:show_border="false"
         app:is_round="true"
         app:show_waiting="false"
         app:default_background="@color/black_8"
@@ -49,9 +48,8 @@
         app:cardCornerRadius="4dp"
         app:cardElevation="0dp">
 
-        <com.waz.zclient.common.views.ChatheadView
+        <com.waz.zclient.common.views.ChatHeadView
             android:id="@+id/conversation_avatar_start_top"
-            app:show_border="false"
             app:is_round="false"
             app:show_waiting="false"
             android:layout_width="@dimen/conversation_list__avatar__small_size"
@@ -60,9 +58,8 @@
             app:default_background="@color/black_8"
             />
 
-        <com.waz.zclient.common.views.ChatheadView
+        <com.waz.zclient.common.views.ChatHeadView
             android:id="@+id/conversation_avatar_end_top"
-            app:show_border="false"
             app:is_round="false"
             app:show_waiting="false"
             android:layout_width="@dimen/conversation_list__avatar__small_size"
@@ -71,9 +68,8 @@
             app:default_background="@color/black_8"
             />
 
-        <com.waz.zclient.common.views.ChatheadView
+        <com.waz.zclient.common.views.ChatHeadView
             android:id="@+id/conversation_avatar_start_bottom"
-            app:show_border="false"
             app:is_round="false"
             app:show_waiting="false"
             android:layout_width="@dimen/conversation_list__avatar__small_size"
@@ -82,9 +78,8 @@
             app:default_background="@color/black_8"
             />
 
-        <com.waz.zclient.common.views.ChatheadView
+        <com.waz.zclient.common.views.ChatHeadView
             android:id="@+id/conversation_avatar_end_bottom"
-            app:show_border="false"
             app:is_round="false"
             app:show_waiting="false"
             android:layout_width="@dimen/conversation_list__avatar__small_size"
@@ -93,9 +88,8 @@
             app:default_background="@color/black_8"
             />
 
-        <com.waz.zclient.common.views.ChatheadView
+        <com.waz.zclient.common.views.ChatHeadView
             android:id="@+id/conversation_avatar_single_group"
-            app:show_border="false"
             app:is_round="false"
             app:show_waiting="false"
             android:layout_width="@dimen/conversation_list__avatar__big_size"

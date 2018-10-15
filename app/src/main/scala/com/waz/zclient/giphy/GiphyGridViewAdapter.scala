@@ -17,18 +17,20 @@
  */
 package com.waz.zclient.giphy
 
+import android.content.Context
 import android.graphics.drawable.ColorDrawable
 import android.support.v7.widget.RecyclerView
 import android.view.{View, ViewGroup}
+import com.bumptech.glide.request.RequestOptions
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.AssetData
 import com.waz.service.assets.AssetService.BitmapResult
 import com.waz.ui.MemoryImageCache.BitmapRequest
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageController.DataImage
-import com.waz.zclient.giphy.GiphyGridViewAdapter.{AssetLoader, ScrollGifCallback}
+import com.waz.utils.wrappers.AndroidURIUtil
+import com.waz.zclient.giphy.GiphyGridViewAdapter.ScrollGifCallback
 import com.waz.zclient.giphy.GiphySharingPreviewFragment.GifData
+import com.waz.zclient.glide.{GlideBuilder, WireGlide}
 import com.waz.zclient.pages.main.conversation.views.AspectRatioImageView
 import com.waz.zclient.ui.utils.MathUtils
 import com.waz.zclient.{Injector, R, ViewHelper}
@@ -38,12 +40,14 @@ object GiphyGridViewAdapter {
   type AssetLoader = (AssetData, BitmapRequest) => Signal[BitmapResult]
 
   class ViewHolder(view: View,
-                   val assetLoader: AssetLoader,
                    val scrollGifCallback: GiphyGridViewAdapter.ScrollGifCallback)
                   (implicit val ec: EventContext, injector: Injector)
     extends RecyclerView.ViewHolder(view) {
 
+    implicit private val cxt: Context = itemView.getContext
+
     private lazy val gifPreview = itemView.findViewById[AspectRatioImageView](R.id.iv__row_giphy_image)
+
 
     def setImageAssets(image: AssetData, preview: Option[AssetData], position: Int): Unit = {
       gifPreview.setOnClickListener(new View.OnClickListener() {
@@ -52,21 +56,27 @@ object GiphyGridViewAdapter {
         }
       })
 
-      val colorArray = itemView.getContext.getResources.getIntArray(R.array.selectable_accents_color)
+      val colorArray = cxt.getResources.getIntArray(R.array.selectable_accents_color)
       val defaultDrawable = new ColorDrawable(colorArray(position % (colorArray.length - 1)))
 
       preview match {
-        case None => gifPreview.setImageDrawable(defaultDrawable)
+        case None =>
+          WireGlide().clear(gifPreview)
+          gifPreview.setImageDrawable(defaultDrawable)
         case Some(data) =>
-          val imageAssetDrawable = new ImageAssetDrawable(
-            Signal.const(DataImage(data)),
-            background = Some(defaultDrawable)
-          )
-          gifPreview.setImageDrawable(imageAssetDrawable)
           gifPreview.setAspectRatio(
             if (MathUtils.floatEqual(data.height, 0)) 1f
             else data.width.toFloat / data.height
           )
+
+          data.source.foreach { uri =>
+            GlideBuilder(AndroidURIUtil.unwrap(uri))
+              .apply(new RequestOptions()
+                .placeholder(defaultDrawable)
+                .fitCenter()
+                .dontAnimate())
+              .into(gifPreview)
+          }
       }
     }
   }
@@ -77,8 +87,7 @@ object GiphyGridViewAdapter {
 
 }
 
-class GiphyGridViewAdapter(val scrollGifCallback: ScrollGifCallback,
-                           val assetLoader: AssetLoader)
+class GiphyGridViewAdapter(val scrollGifCallback: ScrollGifCallback)
                           (implicit val ec: EventContext, injector: Injector)
   extends RecyclerView.Adapter[GiphyGridViewAdapter.ViewHolder] {
 
@@ -88,7 +97,7 @@ class GiphyGridViewAdapter(val scrollGifCallback: ScrollGifCallback,
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): GiphyGridViewAdapter.ViewHolder = {
     val rootView = ViewHelper.inflate[View](R.layout.row_giphy_image, parent, addToParent = false)
-    new ViewHolder(rootView, assetLoader, scrollGifCallback)
+    new ViewHolder(rootView, scrollGifCallback)
   }
 
   override def onBindViewHolder(holder: GiphyGridViewAdapter.ViewHolder, position: Int): Unit = {

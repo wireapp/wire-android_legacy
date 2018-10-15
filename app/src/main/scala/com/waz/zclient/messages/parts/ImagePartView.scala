@@ -18,20 +18,29 @@
 package com.waz.zclient.messages.parts
 
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
-import android.widget.{FrameLayout, LinearLayout}
+import android.widget.{FrameLayout, ImageView, LinearLayout}
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.bumptech.glide.request.target.Target
+import com.bumptech.glide.request.{RequestListener, RequestOptions}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.MessageContent
 import com.waz.service.downloads.AssetLoader.DownloadOnWifiOnlyException
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
+import com.waz.utils.events.{NoAutowiring, Signal, SourceSignal}
 import com.waz.zclient.common.controllers.AssetsController
+import com.waz.zclient.controllers.drawing.IDrawingController.DrawingMethod
+import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.glide.GlideBuilder
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.parts.assets.ImageLayoutAssetPart
 import com.waz.zclient.messages.{HighlightViewPart, MessageViewPart, MsgPart}
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.common.views.ImageAssetDrawable.State.Failed
 import com.waz.zclient.{R, ViewHelper}
 
 class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ImageLayoutAssetPart with HighlightViewPart {
@@ -44,10 +53,9 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends F
 
   private val imageIcon = findById[View](R.id.image_icon)
 
-  val noWifi = imageDrawable.state.map {
-    case Failed(_, Some(DownloadOnWifiOnlyException)) => true
-    case _ => false
-  }
+  private val imageView = findById[ImageView](R.id.image)
+
+  val noWifi: SourceSignal[Boolean] with NoAutowiring = Signal(false)
 
   (for {
     noW  <- noWifi
@@ -55,6 +63,24 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends F
   } yield !hide && noW).on(Threading.Ui)(imageIcon.setVisible)
 
   onClicked { _ => message.head.map(assets.showSingleImage(_, this))(Threading.Ui) }
+
+  message.map(_.assetId).onUi(
+    GlideBuilder(_)
+      .addListener(new RequestListener[Drawable] {
+        override def onLoadFailed(e: GlideException, model: scala.Any, target: Target[Drawable], isFirstResource: Boolean): Boolean = {
+          noWifi ! e.getCauses.contains(DownloadOnWifiOnlyException)
+          false
+        }
+
+        override def onResourceReady(resource: Drawable, model: scala.Any, target: Target[Drawable], dataSource: DataSource, isFirstResource: Boolean): Boolean = {
+          noWifi ! false
+          false
+        }
+      })
+      .apply(new RequestOptions().fitCenter())
+      .transition(DrawableTransitionOptions.withCrossFade())
+      .into(imageView)
+  )
 
   override def onInflated(): Unit = {}
 }

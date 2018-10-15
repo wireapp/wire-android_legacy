@@ -46,7 +46,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
   inflate(R.layout.single_user_row_view)
   setTheme(Theme.Light, background = true)
 
-  private lazy val chathead = findById[ChatheadView](R.id.chathead)
+  private lazy val chathead = findById[ChatHeadView](R.id.chathead)
   private lazy val nameView = findById[TypefaceTextView](R.id.name_text)
   private lazy val subtitleView = findById[TypefaceTextView](R.id.username_text)
   private lazy val checkbox = findById[AppCompatCheckBox](R.id.checkbox)
@@ -89,7 +89,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
   def showArrow(show: Boolean): Unit = nextIndicator.setVisibility(if (show) View.VISIBLE else View.GONE)
 
   def setCallParticipantInfo(user: CallParticipantInfo): Unit = {
-    chathead.setUserId(user.userId, user.zms)
+    chathead.loadUser(user.userId)
     setTitle(user.displayName)
     setVerified(user.isVerified)
     subtitleView.setVisibility(View.GONE)
@@ -98,7 +98,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
   }
 
   def setUserData(userData: UserData, teamId: Option[TeamId], createSubtitle: (UserData) => String = SingleUserRowView.defaultSubtitle): Unit = {
-    chathead.setUserId(userData.id)
+    chathead.loadUser(userData.id)
     setTitle(userData.getDisplayName)
     if (teamId.isDefined) setAvailability(userData.availability)
     setVerified(userData.isVerified)

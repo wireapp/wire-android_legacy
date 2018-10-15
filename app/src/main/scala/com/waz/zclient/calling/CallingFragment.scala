@@ -18,7 +18,6 @@
 package com.waz.zclient.calling
 
 import android.content.Context
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.support.v7.widget.{CardView, GridLayout}
 import android.view.{LayoutInflater, View, ViewGroup}
@@ -26,15 +25,14 @@ import android.widget.{FrameLayout, ImageView, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.avs.{VideoPreview, VideoRenderer}
-import com.waz.model.{Dim2, UserId}
+import com.waz.model.{AssetId, UserId}
 import com.waz.service.call.Avs.VideoState
 import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.controllers.{ThemeController, ThemeControllingFrameLayout}
-import com.waz.zclient.common.views.BackgroundDrawable
-import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
+import com.waz.zclient.glide.BackgroundRequest
 import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
@@ -47,14 +45,13 @@ abstract class UserVideoView(context: Context, val userId: UserId) extends Frame
 
   inflate(R.layout.video_call_info_view)
 
-  private val pictureId: Signal[ImageSource] = for {
+  private val pictureId: Signal[AssetId] = for {
     z             <- controller.callingZms
     Some(picture) <- z.usersStorage.signal(userId).map(_.picture)
-  } yield WireImage(picture)
+  } yield picture
 
   protected val imageView = returning(findById[ImageView](R.id.image_view)) { view =>
-    view.setBackground(new BackgroundDrawable(pictureId, getContext, Dim2(getWidth, getHeight)))
-    view.setImageDrawable(new ColorDrawable(getColor(R.color.black_58)))
+    pictureId.onUi(BackgroundRequest(_).into(view))
   }
 
   protected val pausedText = findById[TextView](R.id.paused_text_view)
@@ -91,12 +88,6 @@ abstract class UserVideoView(context: Context, val userId: UserId) extends Frame
     case (_, true, true) |
          (false, true, _) => videoCallInfo.fadeIn()
     case _                => videoCallInfo.fadeOut()
-  }
-
-  override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {
-    super.onLayout(changed, left, top, right, bottom)
-    if (changed)
-      imageView.setBackground(new BackgroundDrawable(pictureId, getContext, Dim2(right - left, bottom - top)))
   }
 
   val shouldShowInfo: Signal[Boolean]

@@ -29,23 +29,23 @@ import android.view.inputmethod.EditorInfo
 import android.widget.LinearLayout.LayoutParams
 import android.widget.TextView.OnEditorActionListener
 import android.widget._
+import com.bumptech.glide.request.RequestOptions
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.ContentUriAssetForUpload
-import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{MessageContent => _, _}
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events._
-import com.waz.utils.returning
+import com.waz.utils.{RichWireInstant, returning}
+import com.waz.utils.wrappers.AndroidURIUtil
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent, TextContent}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.controllers.{AssetsController, SharingController}
-import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
-import com.waz.zclient.common.views.ImageController.DataImage
 import com.waz.zclient.common.views._
-import com.waz.zclient.cursor.{EphemeralTimerButton, EphemeralLayout}
+import com.waz.zclient.cursor.{EphemeralLayout, EphemeralTimerButton}
+import com.waz.zclient.glide.GlideBuilder
 import com.waz.zclient.messages.{MessagesController, UsersController}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.{ColorUtils, KeyboardUtils}
@@ -53,7 +53,6 @@ import com.waz.zclient.ui.views.CursorIconButton
 import com.waz.zclient.usersearch.views.{PickerSpannableEditText, SearchEditText}
 import com.waz.zclient.utils.ContextUtils.{getDimenPx, showToast}
 import com.waz.zclient.utils.{RichView, ViewUtils}
-import com.waz.utils.RichWireInstant
 
 import scala.util.Success
 
@@ -134,9 +133,9 @@ class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener 
 
           case ImageContent(uris) =>
             returning(inflater.inflate(R.layout.share_preview_image, layout).findViewById[ImageView](R.id.image_content)) { imagePreview =>
-              val imageAsset = AssetData.newImageAssetFromUri(tag = Tag.Medium, uri = uris.head)
-              val drawable = new ImageAssetDrawable(Signal(DataImage(imageAsset)), ScaleType.CenterCrop, RequestBuilder.Regular)
-              imagePreview.setImageDrawable(drawable)
+              GlideBuilder(AndroidURIUtil.unwrap(uris.head))
+                .apply(new RequestOptions().centerCrop())
+                .into(imagePreview)
             }
 
           case FileContent(uris) =>

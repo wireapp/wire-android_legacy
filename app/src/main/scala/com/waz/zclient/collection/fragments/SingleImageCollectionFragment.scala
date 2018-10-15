@@ -27,26 +27,26 @@ import android.util.AttributeSet
 import android.view.View.OnLongClickListener
 import android.view.ViewGroup.LayoutParams
 import android.view._
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.bumptech.glide.request.RequestOptions
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.MessageFilter
 import com.waz.model.{AssetId, MessageData}
 import com.waz.service.ZMessaging
-import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events._
 import com.waz.zclient._
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.collection.controllers.CollectionController.{AllContent, ContentType, Images}
 import com.waz.zclient.collection.fragments.SingleImageCollectionFragment.ImageSwipeAdapter
+import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.glide.GlideBuilder
 import com.waz.zclient.messages.RecyclerCursor
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.conversationpager.CustomPagerTransformer
 import com.waz.zclient.utils.ViewUtils
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageController.WireImage
-import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.views.images.TouchImageView
 
 import scala.collection.mutable
@@ -145,9 +145,9 @@ object SingleImageCollectionFragment {
       val imageView = if (discardedImages.nonEmpty) discardedImages.dequeue() else new SwipeImageView(context)
       imageView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
       imageView.setImageDrawable(new ColorDrawable(Color.TRANSPARENT))
-      getItem(position).foreach{ messageData => imageView.setMessageData(messageData) }
-      imageView.setTag(position)
+      imageView.setPosition(position)
       container.addView(imageView)
+      getItem(position).foreach(imageView.setMessageData)
       imageView
     }
 
@@ -158,9 +158,11 @@ object SingleImageCollectionFragment {
       container.removeView(view)
     }
 
-    override def isViewFromObject(view: View, obj: scala.Any): Boolean = {
-      view.getTag.equals(obj.asInstanceOf[View].getTag)
-    }
+    override def isViewFromObject(view: View, obj: scala.Any): Boolean =
+      (view, obj) match {
+        case (v: SwipeImageView, o: SwipeImageView) => v.getPosition == o.getPosition
+        case _ => false
+      }
 
     override def getCount: Int = recyclerCursor.fold(0)(_.count)
   }
@@ -169,42 +171,42 @@ object SingleImageCollectionFragment {
     def this(context: Context, attrs: AttributeSet)(implicit injector: Injector, ev: EventContext) = this(context, attrs, 0)
     def this(context: Context)(implicit injector: Injector, ev: EventContext) = this(context, null, 0)
 
+    private var position: Int = 0
+
     lazy val zms = inject[Signal[ZMessaging]]
     lazy val messageActions = inject[MessageActionsController]
 
-    private val messageData: SourceSignal[MessageData] = Signal[MessageData]()
-    private val onLayoutChanged = EventStream[Unit]()
-    private val messageAndLikes = zms.zip(messageData).flatMap{
-      case (z, md) => Signal.future(z.msgAndLikes.combineWithLikes(md))
-      case _ => Signal[MessageAndLikes]()
-    }
-    messageAndLikes.disableAutowiring()
-
-    messageData.on(Threading.Ui){
-      md => setAsset(md.assetId)
-    }
-    onLayoutChanged.on(Threading.Ui){
-      _ => messageData.currentValue.foreach(md => setAsset(md.assetId))
-    }
+    private var messageData = Option.empty[MessageData]
 
     setOnLongClickListener(new OnLongClickListener {
       override def onLongClick(v: View): Boolean = {
-        messageAndLikes.currentValue.foreach(messageActions.showDialog(_, fromCollection = true))
+        messageData.foreach { md =>
+          import Threading.Implicits.Ui
+          zms.head.flatMap(_.msgAndLikes.combineWithLikes(md)).map {
+            messageActions.showDialog(_, fromCollection = true)
+          }
+        }
         true
       }
     })
 
-    private def setAsset(assetId: AssetId): Unit =
-      setImageDrawable(new ImageAssetDrawable(Signal(WireImage(assetId)), scaleType = ImageAssetDrawable.ScaleType.CenterInside))
-
-    override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {
-      super.onLayout(changed, left, top, right, bottom)
-      onLayoutChanged ! (())
-    }
+    def setAsset(assetId: AssetId): Unit =
+      GlideBuilder(assetId)(getContext)
+        .apply(new RequestOptions().fitCenter().placeholder(new ColorDrawable(Color.TRANSPARENT)))
+        .transition(DrawableTransitionOptions.withCrossFade())
+        .into(this)
 
     def setMessageData(messageData: MessageData): Unit = {
-      this.messageData ! messageData
+      this.messageData = Option(messageData)
+      setAsset(messageData.assetId)
     }
+
+    def setPosition(position: Int): Unit = {
+      this.position = position
+    }
+
+    def getPosition: Int = this.position
+
   }
 
 }
