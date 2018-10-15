@@ -19,12 +19,10 @@ package com.waz.zclient.messages.parts
 
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
 import android.view.View
-import android.widget.{FrameLayout, TextView}
+import android.widget.{FrameLayout, ImageView, TextView}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.api.NetworkMode
 import com.waz.model.{AssetId, Dim2}
 import com.waz.service.NetworkModeService
 import com.waz.service.media.GoogleMapsMediaService
@@ -34,10 +32,9 @@ import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.messages.{ClickableViewPart, HighlightViewPart, MsgPart}
 import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.glide._
+import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.utils._
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageAssetDrawable.State
-import com.waz.zclient.common.views.ImageController.{DataImage, ImageSource, WireImage}
 import com.waz.zclient.{R, ViewHelper}
 
 class LocationPartView(context: Context, attrs: AttributeSet, style: Int)
@@ -56,7 +53,8 @@ class LocationPartView(context: Context, attrs: AttributeSet, style: Int)
   val network = inject[NetworkModeService]
   val browser = inject[BrowserController]
 
-  val imageView: View   = findById(R.id.fl__row_conversation__map_image_container)
+  val imageContainer: View   = findById(R.id.fl__row_conversation__map_image_container)
+  val imageView: ImageView = findById(R.id.location_image)
   val tvName: TextView  = findById(R.id.ttv__row_conversation_map_name)
   val pinView: TextView = findById(R.id.gtv__row_conversation__map_pin_glyph)
   val placeholder: View = findById(R.id.ttv__row_conversation_map_image_placeholder_text)
@@ -68,11 +66,22 @@ class LocationPartView(context: Context, attrs: AttributeSet, style: Int)
     msg <- message
     dim <- imageSize if dim.width > 0
   } yield
-    msg.location.fold2[ImageSource](WireImage(msg.assetId), { loc =>
-      DataImage(GoogleMapsMediaService.mapImageAsset(AssetId(s"${msg.assetId.str}_${dim.width}_${dim.height}"), loc, dim)) // use dimensions in id, to avoid caching images with different sizes
+    msg.location.fold2[AssetRequest](AssetIdRequest(msg.assetId), { loc =>
+      AssetDataRequest(GoogleMapsMediaService.mapImageAsset(AssetId(s"${msg.assetId.str}_${dim.width}_${dim.height}"), loc, dim)) // use dimensions in id, to avoid caching images with different sizes
     })
 
-  val imageDrawable = new ImageAssetDrawable(image, background = Some(new ColorDrawable(getColor(R.color.light_graphite_24))))
+  Signal(image, ephemeralColorDrawable).onUi {
+    case (_, Some(drawable)) =>
+      WireGlide().clear(imageContainer)
+      imageView.setImageDrawable(drawable)
+    case (request, _) =>
+      GlideBuilder(request).into(imageView)
+  }
+
+  val showPin = expired.map(!_)
+  showPin.onUi(pinView.setVisible(_))
+
+/*
 
   val loadingFailed = imageDrawable.state.map {
     case State.Failed(_, _) => true
@@ -90,17 +99,11 @@ class LocationPartView(context: Context, attrs: AttributeSet, style: Int)
       loadingFailed.zip(network.networkMode) map { case (failed, mode) => failed && mode == NetworkMode.OFFLINE }
   }
 
-  val showPin = expired flatMap {
-    case true => Signal const false
-    case false => imageLoaded
-  }
-
+  showPlaceholder.on(Threading.Ui) { placeholder.setVisible }
+*/
   registerEphemeral(tvName)
-  registerEphemeral(imageView, imageDrawable)
 
   name { tvName.setText }
-  showPin.on(Threading.Ui) { pinView.setVisible }
-  showPlaceholder.on(Threading.Ui) { placeholder.setVisible }
 
   accentController.accentColor.map(_.color) (pinView.setTextColor)
 
@@ -114,7 +117,7 @@ class LocationPartView(context: Context, attrs: AttributeSet, style: Int)
   override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {
     super.onLayout(changed, left, top, right, bottom)
 
-    imageSize ! Dim2(imageView.getWidth, imageView.getHeight)
+    imageSize ! Dim2(imageContainer.getWidth, imageContainer.getHeight)
   }
 
   override def onDraw(canvas: Canvas): Unit = {

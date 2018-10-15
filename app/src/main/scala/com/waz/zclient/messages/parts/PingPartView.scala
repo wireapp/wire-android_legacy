@@ -22,7 +22,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import com.waz.threading.Threading
-import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart, UsersController}
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
@@ -41,7 +41,7 @@ class PingPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
   val textSizeRegular = context.getResources.getDimensionPixelSize(R.dimen.wire__text_size__regular)
   val textSizeEmoji = context.getResources.getDimensionPixelSize(R.dimen.wire__text_size__emoji)
 
-  val chatheadView: ChatheadView        = findById(R.id.chathead)
+  val chatheadView: ChatHeadView        = findById(R.id.chathead)
   val textViewMessage: TypefaceTextView = findById(R.id.ttv__row_conversation__ping_message)
   val glyphTextView: GlyphTextView      = findById(R.id.gtv__ping_icon)
 
@@ -56,7 +56,7 @@ class PingPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
     case Other(name) => getString(R.string.content__xxx_pinged, name.toUpperCase(locale))
   }
 
-  message.map(_.userId) { chatheadView.setUserId }
+  message.map(_.userId) { chatheadView.loadUser }
 
   (for {
     t <- text

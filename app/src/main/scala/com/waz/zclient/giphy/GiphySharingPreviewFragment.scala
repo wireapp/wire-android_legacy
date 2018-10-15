@@ -17,27 +17,30 @@
  */
 package com.waz.zclient.giphy
 
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.support.v7.widget.{RecyclerView, StaggeredGridLayoutManager, Toolbar}
 import android.text.TextUtils
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{EditText, ImageView, TextView}
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.AssetData
-import com.waz.service.images.BitmapSignal
 import com.waz.service.tracking.ContributionEvent
 import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.returning
+import com.waz.utils.wrappers.URI
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
 import com.waz.zclient.common.controllers.{ScreenController, ThemeController}
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageAssetDrawable.{ScaleType, State}
-import com.waz.zclient.common.views.ImageController.{DataImage, ImageSource, NoImage}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.giphy.GiphyGridViewAdapter.ScrollGifCallback
+import com.waz.zclient.glide.{GlideBuilder, WireGlide}
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.profile.views.{ConfirmationMenu, ConfirmationMenuListener}
 import com.waz.zclient.ui.utils.TextViewUtils
@@ -64,11 +67,9 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
 
   private lazy val searchTerm = Signal[String]("")
   private lazy val isPreviewShown = Signal[Boolean](false)
+  private lazy val isGifShowing = Signal[Boolean](false)
   private lazy val selectedGif = Signal[Option[AssetData]]()
-  private lazy val gifImage: Signal[ImageSource] = selectedGif.map {
-    case Some(asset) => DataImage(asset)
-    case _ => NoImage()
-  }
+  private lazy val gifImage: Signal[Option[URI]] = selectedGif.map(_.flatMap(_.source))
 
   private lazy val giphySearchResults = for {
     giphyService <- giphyService
@@ -82,6 +83,24 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
   private lazy val previewImage = returning(view[ImageView](R.id.giphy_preview)) { vh =>
     networkService.isOnline.onUi(isOnline => vh.foreach(_.setClickable(isOnline)))
     isPreviewShown.onUi(isPreview => vh.foreach(_.fade(isPreview)))
+    gifImage.onUi {
+      case Some(uri) => vh.foreach { v =>
+        GlideBuilder(uri)
+          .addListener(new RequestListener[Drawable]() {
+            override def onLoadFailed(e: GlideException, model: scala.Any, target: Target[Drawable], isFirstResource: Boolean): Boolean = {
+              isGifShowing ! false
+              false
+            }
+
+            override def onResourceReady(resource: Drawable, model: scala.Any, target: Target[Drawable], dataSource: DataSource, isFirstResource: Boolean): Boolean = {
+              isGifShowing ! true
+              false
+            }
+          })
+          .into(v)
+      }
+      case _ => vh.foreach(WireGlide().clear(_))
+    }
   }
 
   private lazy val giphyTitle = returning(view[TextView](R.id.ttv__giphy_preview__title)) { vh =>
@@ -143,8 +162,7 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
         selectedGif ! Some(gifAsset)
         keyboardController.hideKeyboardIfVisible()
       }
-    },
-    assetLoader = BitmapSignal.apply(zms.currentValue.get, _, _)
+    }
   )) { adapter => giphySearchResults.onUi(adapter.setGiphyResults) }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
@@ -152,6 +170,7 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     closeButton
+    previewImage
 
     Option(getArguments).orElse(Option(savedInstanceState)).foreach { bundle =>
       giphySearchEditText.foreach(_.setText(bundle.getString(ArgSearchTerm)))
@@ -190,15 +209,12 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
       })
     }
 
-    val gifDrawable = new ImageAssetDrawable(gifImage, scaleType = ScaleType.CenterInside)
-    previewImage.foreach(_.setImageDrawable(gifDrawable))
-
     EventStream.union(
       searchTerm.onChanged.map(_ => true),
       selectedGif.onChanged.filter(_.isDefined).map(_ => true),
       giphySearchResults.onChanged.map(_ => false),
       isPreviewShown.onChanged.filter(_ == false),
-      gifDrawable.state.onChanged.collect { case _ : State.Loaded | _ : State.Failed => false }
+      isGifShowing.onChanged.map(!_)
     ) onUi {
       case true  => spinnerController.showSpinner(LoadingIndicatorView.InfiniteLoadingBar)
       case false => spinnerController.hideSpinner()

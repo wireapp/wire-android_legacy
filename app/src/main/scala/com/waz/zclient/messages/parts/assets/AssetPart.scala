@@ -29,8 +29,6 @@ import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageController.WireImage
 import com.waz.zclient.messages.ClickableViewPart
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.parts.assets.DeliveryState.{Downloading, OtherUploading}
@@ -118,8 +116,6 @@ trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
     case _ => true
   }
 
-  val imageDrawable = new ImageAssetDrawable(message map { m => WireImage(m.assetId) }, forceDownload = forceDownload)
-
   private lazy val imageContainer = returning(findById[FrameLayout](R.id.image_container)) {
     _.addOnLayoutChangeListener(new OnLayoutChangeListener {
       override def onLayoutChange(v: View, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int): Unit =
@@ -129,12 +125,8 @@ trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
 
   hideContent.flatMap {
     case true => Signal.const[Drawable](assetBackground)
-    case _ => imageDrawable.state map {
-      case ImageAssetDrawable.State.Failed(_, _) |
-           ImageAssetDrawable.State.Loading(_) => assetBackground
-      case _ => imageDrawable
-    } orElse Signal.const[Drawable](imageDrawable)
-  }.on(Threading.Ui)(imageContainer.setBackground(_))
+    case _ => Signal.const[Drawable](assetBackground)//TODO: is this needed?
+  }.onUi(imageContainer.setBackground)
 
   val displaySize = for {
     maxW <- maxWidth
@@ -176,7 +168,6 @@ trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
     else Offset(0, 0, maxW - dW, 0)
 
   padding.onUi { p =>
-    imageDrawable.padding ! p
     assetBackground.padding ! p
   }
 

@@ -143,30 +143,10 @@ public class GlobalLayoutController implements IGlobalLayoutController {
     public int getSoftInputModeForPage(Page page) {
         int softInputMode;
         switch (page) {
-            case SEND_CONNECT_REQUEST:
-                softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
-                break;
-            case START:
-            case LOGIN_REGISTRATION:
-            case MESSAGE_STREAM:
-                softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
-                break;
-            case ARCHIVE:
-            case CONVERSATION_LIST:
-                softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
-                break;
-            case PARTICIPANT:
-                softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
-                break;
-            case PICK_USER:
-                softInputMode =  WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
-                break;
             case PHONE_REGISTRATION_ADD_NAME:
                 softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
                 break;
-            case DRAWING:
-                softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN;
-                break;
+            case PICK_USER:
             case COLLECTION:
                 softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN;
                 break;

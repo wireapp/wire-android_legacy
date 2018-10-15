@@ -27,10 +27,8 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.FrameLayout.LayoutParams
 import com.waz.model.ConversationData.ConversationType
-import com.waz.model.{ConvId, UserId}
-import com.waz.utils.events.Signal
-import com.waz.zclient.common.views.ChatheadView
-import com.waz.zclient.common.views.ImageController.{ImageSource, NoImage}
+import com.waz.model.{ConvId, TeamId, UserData}
+import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{R, ViewHelper}
@@ -46,61 +44,82 @@ class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int)
 
   private val groupBackgroundDrawable = getDrawable(R.drawable.conversation_group_avatar_background)
 
-  private val avatarStartTop = ViewUtils.getView(this, R.id.conversation_avatar_start_top).asInstanceOf[ChatheadView]
-  private val avatarEndTop = ViewUtils.getView(this, R.id.conversation_avatar_end_top).asInstanceOf[ChatheadView]
-  private val avatarStartBottom = ViewUtils.getView(this, R.id.conversation_avatar_start_bottom).asInstanceOf[ChatheadView]
-  private val avatarEndBottom = ViewUtils.getView(this, R.id.conversation_avatar_end_bottom).asInstanceOf[ChatheadView]
+  private val avatarStartTop = ViewUtils.getView(this, R.id.conversation_avatar_start_top).asInstanceOf[ChatHeadView]
+  private val avatarEndTop = ViewUtils.getView(this, R.id.conversation_avatar_end_top).asInstanceOf[ChatHeadView]
+  private val avatarStartBottom = ViewUtils.getView(this, R.id.conversation_avatar_start_bottom).asInstanceOf[ChatHeadView]
+  private val avatarEndBottom = ViewUtils.getView(this, R.id.conversation_avatar_end_bottom).asInstanceOf[ChatHeadView]
 
-  private val avatarSingle = ViewUtils.getView(this, R.id.avatar_single).asInstanceOf[ChatheadView]
+  private val avatarSingle = ViewUtils.getView(this, R.id.avatar_single).asInstanceOf[ChatHeadView]
   private val avatarGroup = ViewUtils.getView(this, R.id.avatar_group).asInstanceOf[View]
-  private val avatarGroupSingle = ViewUtils.getView(this, R.id.conversation_avatar_single_group).asInstanceOf[ChatheadView]
-
-  private val imageSources = Seq.fill(4)(Signal[ImageSource]())
+  private val avatarGroupSingle = ViewUtils.getView(this, R.id.conversation_avatar_single_group).asInstanceOf[ChatHeadView]
 
   private val chatheads = Seq(avatarStartTop, avatarEndTop, avatarStartBottom, avatarEndBottom)
 
-  def setMembers(members: Seq[UserId], convId: ConvId, conversationType: ConversationType): Unit = {
-    conversationType match {
-      case ConversationType.Group if members.size == 1 =>
-        chatheads.foreach(_.clearUser())
-        avatarGroupSingle.setUserId(members.head)
-      case ConversationType.Group =>
-        val shuffledIds = ConversationAvatarView.shuffle(members.sortBy(_.str), convId)
-        avatarGroupSingle.clearUser()
+  def setMembers(members: Seq[UserData], convId: ConvId, isGroup: Boolean, selfTeam: Option[TeamId]): Unit = {
+    isGroup match {
+      case true if members.size == 1 =>
+        chatheads.foreach(_.clearImage())
+        avatarGroupSingle.setUserData(members.head, belongsToSelfTeam = members.head.teamId.exists(selfTeam.contains))
+        showGroupSingle()
+      case true =>
+        val shuffledIds = ConversationAvatarView.shuffle(members.sortBy(_.id.str), convId)
+        avatarGroupSingle.clearImage()
         chatheads.map(Some(_)).zipAll(shuffledIds.take(4).map(Some(_)), None, None).foreach{
-          case (Some(view), Some(uid)) =>
-            view.setUserId(uid)
+          case (Some(view), Some(ud)) =>
+            view.setUserData(ud, belongsToSelfTeam = ud.teamId.exists(selfTeam.contains))
           case (Some(view), None) =>
-            view.clearUser()
+            view.clearImage()
           case _ =>
         }
-      case ConversationType.OneToOne | ConversationType.WaitForConnection if members.nonEmpty =>
-        members.headOption.fold(avatarSingle.clearUser())(avatarSingle.setUserId)
+        showGrid()
+      case false if members.nonEmpty =>
+        members.headOption.fold(avatarSingle.clearImage())(ud => avatarSingle.setUserData(ud, belongsToSelfTeam = ud.teamId.exists(selfTeam.contains)))
+        showSingle()
       case _ =>
-        imageSources.foreach(_ ! NoImage())
+        clearImages()
     }
+  }
+
+  private def hideAll(): Unit = {
+    avatarGroup.setVisibility(View.GONE)
+    avatarSingle.setVisibility(View.GONE)
+    avatarGroupSingle.setVisibility(View.GONE)
+    setBackground(null)
+  }
+
+  private def showGrid(): Unit = {
+    avatarGroup.setVisibility(View.VISIBLE)
+    avatarSingle.setVisibility(View.GONE)
+    avatarGroupSingle.setVisibility(View.GONE)
+    setBackground(groupBackgroundDrawable)
+  }
+
+  private def showSingle(): Unit = {
+    avatarGroup.setVisibility(View.GONE)
+    avatarSingle.setVisibility(View.VISIBLE)
+    avatarGroupSingle.setVisibility(View.GONE)
+    setBackground(null)
+  }
+
+  private def showGroupSingle(): Unit = {
+    avatarGroup.setVisibility(View.VISIBLE)
+    avatarSingle.setVisibility(View.GONE)
+    avatarGroupSingle.setVisibility(View.VISIBLE)
+    setBackground(groupBackgroundDrawable)
   }
 
   def setConversationType(conversationType: ConversationType): Unit ={
     conversationType match {
-      case ConversationType.Group =>
-        avatarGroup.setVisibility(View.VISIBLE)
-        avatarSingle.setVisibility(View.GONE)
-        setBackground(groupBackgroundDrawable)
-      case ConversationType.OneToOne | ConversationType.WaitForConnection =>
-        avatarGroup.setVisibility(View.GONE)
-        avatarSingle.setVisibility(View.VISIBLE)
-        setBackground(null)
-      case _ =>
-        avatarGroup.setVisibility(View.GONE)
-        avatarSingle.setVisibility(View.GONE)
-        setBackground(null)
+      case ConversationType.Group => showGrid()
+      case ConversationType.OneToOne | ConversationType.WaitForConnection => showSingle()
+      case _ => hideAll()
     }
   }
 
-  def clearImages(): Unit ={
-    chatheads.foreach(_.clearUser())
-    avatarSingle.clearUser()
+  def clearImages(): Unit = {
+    chatheads.foreach(_.clearImage())
+    avatarSingle.clearImage()
+    avatarGroupSingle.clearImage()
   }
 }
 

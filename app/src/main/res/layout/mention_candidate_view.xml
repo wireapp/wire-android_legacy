@@ -26,7 +26,7 @@
               android:padding="@dimen/wire__padding__8"
               android:background="@drawable/selector__transparent_button">
 
-    <com.waz.zclient.common.views.ChatheadView
+    <com.waz.zclient.common.views.ChatHeadView
         android:id="@+id/mention_chathead"
         android:layout_width="@dimen/people_picker__chathead__width"
         android:layout_height="@dimen/people_picker__chathead__width"
@@ -35,13 +35,10 @@
         android:paddingBottom="@dimen/wire__padding__12"
         android:layout_marginStart="@dimen/wire__padding__12"
         android:layout_marginEnd="@dimen/wire__padding__12"
-        app:show_border="false"
         app:allow_icon="false"
         app:is_round="true"
-        app:isSelectable="false"
         app:show_waiting="false"
         app:gray_on_unconnected="false"
-        app:initials_font_size="@dimen/wire__text_size__regular"
         />
 
     <RelativeLayout

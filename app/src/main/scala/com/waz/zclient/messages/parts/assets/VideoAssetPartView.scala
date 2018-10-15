@@ -24,9 +24,7 @@ import android.widget.FrameLayout
 import com.waz.threading.Threading
 import com.waz.zclient.R
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
-import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.common.views.ImageAssetDrawable.State.Loaded
 import com.waz.ZLog.ImplicitTag._
 
 class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
@@ -40,10 +38,13 @@ class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
 
   hideContent.map(!_).on(Threading.Ui)(controls.setVisible)
 
+  //TODO
+  /*
   imageDrawable.state.map {
     case Loaded(_, _, _) => getColor(R.color.white)
     case _ => getColor(R.color.black)
   }.on(Threading.Ui)(durationView.setTextColor)
+  */
 
   asset.disableAutowiring()
 

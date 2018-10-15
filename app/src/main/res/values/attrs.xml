@@ -139,17 +139,12 @@
         <attr name="circle_fill" format="string"/>
     </declare-styleable>
 
-    <declare-styleable name="ChatheadView">
-        <attr name="glyph_size" format="dimension"/>
-        <attr name="initials_font_size" format="dimension"/>
-        <attr name="isSelectable" format="boolean"/>
-        <attr name="swap_background_and_initial_colors" format="boolean"/>
-        <attr name="allow_icon" format="boolean"/>
-        <attr name="show_border" format="boolean"/>
+    <declare-styleable name="ChatHeadView">
         <attr name="default_background" format="color"/>
         <attr name="is_round" format="boolean"/>
         <attr name="show_waiting" format="boolean"/>
         <attr name="gray_on_unconnected" format="boolean"/>
+        <attr name="allow_icon" format="boolean"/>
     </declare-styleable>
 
     <declare-styleable name="TopUserChathead">

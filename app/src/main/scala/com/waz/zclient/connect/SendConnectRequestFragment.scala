@@ -23,6 +23,7 @@ import android.os.Bundle
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.ImageView
+import com.bumptech.glide.request.RequestOptions
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.UserId
 import com.waz.service.ZMessaging
@@ -31,11 +32,9 @@ import com.waz.utils.events.{ClockSignal, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
 import com.waz.zclient.common.controllers.{ThemeController, UserAccountsController}
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
-import com.waz.zclient.common.views.ImageController.WireImage
 import com.waz.zclient.connect.PendingConnectRequestFragment.ArgUserRequester
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.glide.GlideBuilder
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.connect.UserProfileContainer
@@ -170,12 +169,9 @@ class SendConnectRequestFragment extends BaseFragment[SendConnectRequestFragment
     guestIndicatorTimer
     guestIndicatorIcon
 
-    val assetDrawable = new ImageAssetDrawable(
-      user.map(_.picture).collect { case Some(p) => WireImage(p) },
-      scaleType = ScaleType.CenterInside,
-      request = RequestBuilder.Round
-    )
-    imageViewProfile.foreach(_.setImageDrawable(assetDrawable))
+    user.map(_.picture).collect { case Some(p) => p }.onUi { id =>
+      imageViewProfile.foreach(GlideBuilder(id).apply(new RequestOptions().circleCrop()).into(_))
+    }
 
     val backgroundContainer = findById[View](R.id.background_container)
     backgroundContainer.setClickable(true)

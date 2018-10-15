@@ -19,27 +19,25 @@ package com.waz.zclient.preferences.pages
 
 import android.app.AlertDialog
 import android.content.{Context, DialogInterface, Intent}
-import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
 import android.widget.{ImageView, LinearLayout}
+import com.bumptech.glide.request.RequestOptions
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.content.UserPreferences
 import com.waz.model.otr.Client
-import com.waz.model.{AccentColor, AccountDataOld, Availability}
+import com.waz.model.{AccentColor, AccountDataOld, AssetId, Availability}
 import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.UserAccountsController
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
-import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
+import com.waz.zclient.glide.GlideBuilder
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.preferences.views.TextButton
 import com.waz.zclient.tracking.OpenedManageTeam
@@ -60,7 +58,7 @@ trait ProfileView {
   def setUserName(name: String): Unit
   def setAvailability(visible: Boolean, availability: Availability): Unit
   def setHandle(handle: String): Unit
-  def setProfilePictureDrawable(drawable: Drawable): Unit
+  def setProfilePictureAssetId(assetId: AssetId): Unit
   def setAccentColor(color: Int): Unit
   def setTeamName(name: Option[String]): Unit
   def showNewDevicesDialog(devices: Seq[Client]): Unit
@@ -126,7 +124,10 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setHandle(handle: String): Unit = userHandleText.setText(handle)
 
-  override def setProfilePictureDrawable(drawable: Drawable): Unit = userPicture.setImageDrawable(drawable)
+  override def setProfilePictureAssetId(assetId: AssetId): Unit =
+    GlideBuilder(assetId)
+      .apply(new RequestOptions().circleCrop())
+      .into(userPicture)
 
   override def setAccentColor(color: Int): Unit = {}
 
@@ -254,15 +255,15 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
 
   val team = zms.flatMap(_.teams.selfTeam)
 
-  val selfPicture: Signal[ImageSource] = self.map(_.picture).collect{ case Some(pic) => WireImage(pic) }
+  self.map(_.picture).collect{ case Some(pic) => pic }.onUi { id =>
+    view.setProfilePictureAssetId(id)
+  }
 
   val incomingClients = for {
     z       <- zms
     client  <- z.userPrefs(UserPreferences.SelfClient).signal
     clients <- client.clientId.fold(Signal.empty[Seq[Client]])(aid => z.otrClientsStorage.incomingClientsSignal(z.selfUserId, aid))
   } yield clients
-
-  view.setProfilePictureDrawable(new ImageAssetDrawable(selfPicture, scaleType = ScaleType.CenterInside, request = RequestBuilder.Round))
 
   self.on(Threading.Ui) { self =>
     view.setAccentColor(AccentColor(self.accent).color)
