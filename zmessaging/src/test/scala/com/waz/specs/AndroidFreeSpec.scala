@@ -83,7 +83,7 @@ abstract class AndroidFreeSpec extends ZMockSpec { this: Suite =>
     Future {
       t match {
         case e: exceptions.TestFailedException => swallowedFailure = Some(e)
-        case _ => ZLog.error(s"Exception sent to HockeyApp: $description", t)(tag)
+        case _ => ZLog.error(s"Exception sent: $description", t)(tag)
       }
     } (Threading.Background)
   }

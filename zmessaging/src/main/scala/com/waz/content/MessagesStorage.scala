@@ -132,7 +132,7 @@ class MessagesStorageImpl(context: Context,
           }
         }
       }
-    } .recoverWithLog(reportHockey = true)
+    } .recoverWithLog()
   }
 
   onUpdated { updates =>
@@ -142,7 +142,7 @@ class MessagesStorageImpl(context: Context,
           index <- msgsIndex(convId)
           _ <- index.update(msgs)
         } yield ()
-      } .recoverWithLog(reportHockey = true)
+      } .recoverWithLog()
     }
   }
 

@@ -32,7 +32,7 @@ case class ErrorResponse(code: Int, message: String, label: String) extends Thro
     */
   def isFatal: Boolean = ResponseCode.isFatal(code)
 
-  // if this error should be reported to hockey
+  // if this error should be reported
   def shouldReportError: Boolean = isFatal && code != ErrorResponse.CancelledCode && code != ErrorResponse.UnverifiedCode
 }
 

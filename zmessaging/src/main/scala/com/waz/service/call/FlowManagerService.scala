@@ -118,10 +118,10 @@ class DefaultFlowManagerService(context:      Context,
     flowManager.fold { warn("unable to access flow manager"); LoggedTry(fallback) } { fm => LoggedTry { op(fm) } }
 
   private def schedule(op: FlowManager => Unit)(implicit dispatcher: ExecutionContext): Future[Unit] =
-    scheduleWithoutRecovery(op) .recoverWithLog(reportHockey = true)
+    scheduleWithoutRecovery(op) .recoverWithLog()
 
   private def scheduleOr[T](op: FlowManager => T, fallback: => T)(implicit dispatcher: ExecutionContext): Future[T] =
-    scheduleWithoutRecovery(op) recover { LoggedTry.errorHandler(reportHockey = true) andThen (_.getOrElse(fallback)) }
+    scheduleWithoutRecovery(op) recover { LoggedTry.errorHandler() andThen (_.getOrElse(fallback)) }
 
   private def scheduleWithoutRecovery[T](op: FlowManager => T)(implicit dispatcher: ExecutionContext): Future[T] =
     flowManager.fold[Future[T]] { Future.failed(new IllegalStateException("unable to access flow manager")) } { fm => Future(op(fm)) (dispatcher) }

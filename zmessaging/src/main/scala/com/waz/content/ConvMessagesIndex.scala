@@ -107,7 +107,7 @@ class ConvMessagesIndex(conv: ConvId, messages: MessagesStorageImpl, selfUserId:
         convs.update(conv, _.copy(incomingKnockMessage = knock, missedCallMessage = missed, unreadCount = unread, failedCount = failed))
       }
     }
-  }.recoverWithLog(reportHockey = true)
+  }.recoverWithLog()
   def updateLastRead(c: ConversationData) = lastReadTime.mutateOrDefault(_ max c.lastRead, c.lastRead)
 
   private[waz] def loadCursor = CancellableFuture.lift(init.flatMap { _ =>

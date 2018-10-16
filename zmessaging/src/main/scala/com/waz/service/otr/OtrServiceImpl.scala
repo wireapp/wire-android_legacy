@@ -159,7 +159,7 @@ class OtrServiceImpl(selfUserId:     UserId,
         }
     }
 
-  // update client info and send error report to hockey, we want client info to somehow track originating platform
+  // update client info and send error report, we want client info to somehow track originating platform
   private def reportOtrError(e: CryptoException, ev: OtrEvent) = sync.syncClients(ev.from) map { _ =>
     clients.getClient(ev.from, ev.sender) foreach { _ => tracking.exception(e, "otr error") }
   }
