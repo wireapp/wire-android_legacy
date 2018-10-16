@@ -643,10 +643,4 @@ object GenericContent {
     }
   }
 
-  sealed trait EncryptionAlgorithm2
-  object EncryptionAlgorithm2 {
-    case object AES_CBC extends EncryptionAlgorithm2
-    case object AES_GCM extends EncryptionAlgorithm2
-  }
-
 }

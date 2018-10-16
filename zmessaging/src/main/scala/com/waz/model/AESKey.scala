@@ -33,7 +33,6 @@ object AESKey extends (String => AESKey) {
   val Empty = AESKey("")
 
   def apply(): AESKey = AESUtils.randomKey()
-  //TODO Why not this variant for random key generation?
   def random: AESKey = {
     val keyGen = KeyGenerator.getInstance("AES")
     keyGen.init(256)

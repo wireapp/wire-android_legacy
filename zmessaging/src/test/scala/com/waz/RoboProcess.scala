@@ -151,7 +151,7 @@ class RoboProcessRunner(suiteClass: Class[_], providedConfig: Option[Config] = N
 
   val sdkVersion = {
     if (config.reportSdk != -1) config.reportSdk
-    else Option(appManifest).fold(Build.VERSION_CODES.JELLY_BEAN_MR2)(_.getTargetSdkVersion)
+    else Build.VERSION_CODES.KITKAT
   }
 
   val sdkConfig = new SdkConfig(sdkVersion)
