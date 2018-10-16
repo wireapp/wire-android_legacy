@@ -30,6 +30,7 @@ import com.waz.permissions.PermissionsService
 import com.waz.permissions.PermissionsService.{Permission, PermissionProvider}
 import com.waz.service.{UiLifeCycle, ZMessaging}
 import com.waz.services.websocket.WebSocketService
+import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.IControllerFactory
@@ -38,6 +39,7 @@ import com.waz.zclient.utils.ViewUtils
 
 import scala.collection.breakOut
 import scala.collection.immutable.ListSet
+import scala.concurrent.duration._
 
 
 class BaseActivity extends AppCompatActivity
@@ -80,7 +82,9 @@ class BaseActivity extends AppCompatActivity
   }
 
   def onBaseActivityResume(): Unit =
-    WebSocketService(this)
+    CancellableFuture.delay(150.millis).foreach { _ =>
+      WebSocketService(this)
+    } (Threading.Ui)
 
   override protected def onResumeFragments(): Unit = {
     verbose("onResumeFragments")
