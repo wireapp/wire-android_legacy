@@ -142,13 +142,13 @@ class WebSocketService extends ServiceHelper {
         createNotificationChannel()
         startForeground(WebSocketService.ForegroundId,
           new NotificationCompat.Builder(this, ForegroundNotificationChannelId)
-            .setSmallIcon(R.drawable.ic_menu_logo)
+            .setSmallIcon(R.drawable.websocket)
             .setContentTitle(getString(title))
             .setContentIntent(launchIntent)
             .setStyle(new NotificationCompat.BigTextStyle()
               .bigText(getString(R.string.ws_foreground_notification_summary)))
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setPriority(if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) NotificationCompat.PRIORITY_MIN else NotificationCompat.PRIORITY_LOW)
             .build()
         )
     }
