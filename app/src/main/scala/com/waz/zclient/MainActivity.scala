@@ -47,14 +47,13 @@ import com.waz.zclient.fragments.ConnectivityFragment
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.pages.startup.UpdateFragment
+import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.preferences.dialogs.ChangeHandleFragment
-import com.waz.zclient.preferences.{PreferencesActivity, PreferencesController}
-import com.waz.zclient.tracking.{CrashController, UiTrackingController}
+import com.waz.zclient.tracking.UiTrackingController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.StringUtils.TextDrawing
-import com.waz.zclient.utils.{BuildConfigUtils, Emojis, IntentUtils, ViewUtils}
+import com.waz.zclient.utils.{Emojis, IntentUtils, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
-import net.hockeyapp.android.NativeCrashManager
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -105,11 +104,6 @@ class MainActivity extends BaseActivity
       fragmentTransaction.add(R.id.fl__offline__container, ConnectivityFragment(), ConnectivityFragment.FragmentTag)
       fragmentTransaction.commit
     } else getControllerFactory.getNavigationController.onActivityCreated(savedInstanceState)
-
-    inject[PreferencesController].analyticsEnabled.head.foreach { enabled =>
-      if (enabled && BuildConfigUtils.isHockeyUpdateEnabled && !BuildConfigUtils.isLocalBuild(this))
-        CrashController.checkForUpdates(this)
-    }
 
     accentColorController.accentColor.map(_.color).onUi(
       getControllerFactory.getUserPreferencesController.setLastAccentColor
@@ -173,11 +167,6 @@ class MainActivity extends BaseActivity
     super.onResume()
 
     Option(ZMessaging.currentGlobal).foreach(_.googleApi.checkGooglePlayServicesAvailable(this))
-
-    inject[PreferencesController].analyticsEnabled.head.foreach {
-      case true => CrashController.checkForCrashes(getApplicationContext, getControllerFactory.getUserPreferencesController.getDeviceId)
-      case false => NativeCrashManager.deleteDumpFiles(getApplicationContext)
-    } (Threading.Ui)
   }
 
   def startFirstFragment(): Unit = {

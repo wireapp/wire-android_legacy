@@ -28,7 +28,6 @@ object LogLevel {
 }
 
 case class BuildConfig (
-                 useHockeyUpdate: Boolean = true,
                  useEdgeBackend: Boolean = false,
                  useStagingBackend: Boolean = false,
                  showGridOverlay: Boolean = true,
@@ -49,7 +48,6 @@ case class BuildConfig (
 
 
   def setting = Seq[(String, String, String)] (
-    ("boolean", "USE_HOCKEY_UPDATE", useHockeyUpdate.toString),
     ("boolean", "USE_EDGE_BACKEND", useEdgeBackend.toString),
     ("boolean", "SHOW_GRIDOVERLAY", showGridOverlay.toString),
     ("boolean", "SHOW_MENTIONING", showMentioning.toString),
@@ -88,7 +86,6 @@ object BuildConfig {
     logLevelAvs = LogLevel.Verbose)
 
   lazy val Prod = BuildConfig(
-    useHockeyUpdate = false,
     showGridOverlay = false,
     showMentioning = false,
     showDeveloperOptions = false,
@@ -102,7 +99,6 @@ object BuildConfig {
     logLevelAvs = LogLevel.Supress)
 
   lazy val Internal = BuildConfig(
-    useHockeyUpdate = false,
     showMentioning = false,
     loadTimeLogger = false,
     testGallery = false,

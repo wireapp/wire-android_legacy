@@ -108,23 +108,6 @@
 -dontwarn sun.util.calendar.*
 -keep class org.threeten.bp.zone.*
 
-# For MixpanelGuard reflection
--keep public class com.mixpanel.android.mpmetrics.MixpanelAPI
--keepclassmembers public class com.mixpanel.android.mpmetrics.MixpanelAPI {
-    private final *** mConfig;
-    private final *** mDecideMessages;
-}
-
--keep public class com.mixpanel.android.mpmetrics.MPConfig
--keepclassmembers public class com.mixpanel.android.mpmetrics.MPConfig {
-    private final *** mSessionTimeoutDuration;
-}
-
--keep class com.mixpanel.android.mpmetrics.DecideMessages
--keepclassmembers class com.mixpanel.android.mpmetrics.DecideMessages {
-    private *** mAutomaticEventsEnabled;
-}
-
 # For E2EE
 -keep class com.wire.cryptobox.** { *; }
 

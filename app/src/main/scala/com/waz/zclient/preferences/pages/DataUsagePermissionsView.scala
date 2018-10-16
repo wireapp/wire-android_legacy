@@ -24,16 +24,14 @@ import android.view.View
 import android.widget.LinearLayout
 import com.waz.ZLog.ImplicitTag._
 import com.waz.service.AccountManager
-import com.waz.threading.{CancellableFuture, Threading}
+import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.preferences.views.SwitchPreference
 import com.waz.zclient.tracking.GlobalTrackingController.analyticsPrefKey
-import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, MixpanelGuard}
+import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.{BackStackKey, ContextUtils}
 import com.waz.zclient.{R, ViewHelper}
-
-import scala.concurrent.duration._
 
 class DataUsagePermissionsView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -53,14 +51,9 @@ class DataUsagePermissionsView(context: Context, attrs: AttributeSet, style: Int
     }
 
     v.setPreference(analyticsPrefKey, global = true)
-    v.pref.flatMap(_.signal).onChanged { pref =>
-      if (pref) tracking.optIn()
-      else {
-        tracking.optOut()
-        CrashController.deleteCrashReports(context.getApplicationContext)
-      }
-      setAnalyticsSwitchEnabled(false)
-      CancellableFuture.delay(MixpanelGuard.MIXPANEL_CLOSE_DELAY + 1.seconds).map(_ => setAnalyticsSwitchEnabled(true))(Threading.Ui)
+    v.pref.flatMap(_.signal).onChanged {
+      case true  => tracking.optIn()
+      case false => tracking.optOut()
     }
   }
 

@@ -28,8 +28,6 @@ import com.waz.zclient.{Injectable, Injector}
 class UiTrackingController(implicit injector: Injector, ctx: Context, ec: EventContext) extends Injectable {
   val cursorController      = inject[CursorController]
 
-  //TODO - slowly re-introduce removed localytics events to mixpanel
-
   import CursorMenuItem._
   cursorController.onCursorItemClick.onUi {
     case Ping => ZMessaging.globalModule.map(_.trackingService.contribution(Action.Ping))(Threading.Ui)

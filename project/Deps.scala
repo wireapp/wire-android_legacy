@@ -63,7 +63,6 @@ object Deps {
 
   lazy val roundedimageview = "com.makeramen" % "roundedimageview" % "2.2.0"
   lazy val timber = "com.jakewharton.timber" % "timber" % "4.1.1"
-  lazy val hockey = "net.hockeyapp.android" % "HockeySDK" % "3.7.2"
   lazy val threetenabp = "com.jakewharton.threetenabp" % "threetenabp" % "1.0.3"
   lazy val localytics = "com.localytics.android" % "library" % "3.8.0"
   lazy val nineoldandroids = "com.nineoldandroids" % "library" % "2.4.0"

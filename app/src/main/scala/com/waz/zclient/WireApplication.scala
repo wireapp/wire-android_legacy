@@ -85,7 +85,6 @@ import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTr
 import com.waz.zclient.utils.{BackStackNavigator, BackendPicker, Callback, ExternalFileSharing, LocalThumbnailCache, UiStorage}
 import com.waz.zclient.views.DraftMap
 import javax.net.ssl.SSLContext
-import net.hockeyapp.android.Constants
 
 import scala.concurrent.Future
 import scala.util.control.NonFatal
@@ -324,8 +323,6 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     new BackendPicker(this).withBackend(new Callback[BackendConfig]() {
       def callback(be: BackendConfig) = ensureInitialized(be)
     })
-
-    Constants.loadFromContext(getApplicationContext)
   }
 
   def ensureInitialized(backend: BackendConfig) = {

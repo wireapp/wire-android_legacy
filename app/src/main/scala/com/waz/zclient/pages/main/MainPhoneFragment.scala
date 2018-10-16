@@ -21,6 +21,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.v4.app.FragmentManager
 import android.view.{LayoutInflater, View, ViewGroup}
+import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.content.UserPreferences.CrashesAndAnalyticsRequestShown
 import com.waz.content.{GlobalPreferences, UserPreferences}
@@ -47,7 +48,6 @@ import com.waz.zclient.tracking.GlobalTrackingController.analyticsPrefKey
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.menus.ConfirmationMenu
 import com.waz.zclient.{ErrorsController, FragmentHelper, OnBackPressedListener, R}
-import net.hockeyapp.android.ExceptionHandler
 
 import scala.concurrent.Future
 
@@ -250,13 +250,13 @@ class MainPhoneFragment extends FragmentHelper
            CANNOT_CALL_CONVERSATION_WITH_TOO_MANY_MEMBERS |
            CANNOT_SEND_VIDEO |
            PLAYBACK_FAILURE =>
-        ExceptionHandler.saveException(new RuntimeException("Unhandled error " + error.errType), null, null)
+       ZLog.error("Unexpected error " + error.errType)
       case CANNOT_SEND_MESSAGE_TO_UNVERIFIED_CONVERSATION |
            RECORDING_FAILURE |
            CANNOT_SEND_ASSET_FILE_NOT_FOUND |
            CANNOT_SEND_ASSET_TOO_LARGE => // Handled in ConversationFragment
       case _ =>
-        ExceptionHandler.saveException(new RuntimeException("Unexpected error " + error.errType), null, null)
+        ZLog.error("Unexpected error " + error.errType)
     }
   }
 

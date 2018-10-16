@@ -23,8 +23,6 @@ import android.content.res.Resources;
 import android.support.annotation.Nullable;
 import android.text.format.DateFormat;
 import com.waz.zclient.R;
-import net.hockeyapp.android.CrashManagerListener;
-import net.hockeyapp.android.ExceptionHandler;
 import org.threeten.bp.Duration;
 import org.threeten.bp.Instant;
 import org.threeten.bp.LocalDateTime;
@@ -33,6 +31,8 @@ import org.threeten.bp.format.DateTimeFormatter;
 
 import java.util.Date;
 import java.util.Locale;
+
+import timber.log.Timber;
 
 public class ZTimeFormatter {
 
@@ -88,13 +88,8 @@ public class ZTimeFormatter {
         try {
             return DateTimeFormatter.ofPattern(pattern).format(then.atZone(timeZone));
         } catch (Exception e) {
-            ExceptionHandler.saveException(e, Thread.currentThread(),
-                                           new CrashManagerListener() {
-                                               @Override
-                                               public String getDescription() {
-                                                   return pattern;
-                                               }
-                                           });
+            Timber.e(e);
+
             if (!defaultLocale) {
                 return getSeparatorTime(context, now, then, is24HourFormat, timeZone, epocIsJustNow, showWeekday, true);
             } else {
@@ -117,13 +112,8 @@ public class ZTimeFormatter {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
             return formatter.format(DateConvertUtils.asLocalDateTime(date).atZone(ZoneId.systemDefault()));
         } catch (Exception e) {
-            ExceptionHandler.saveException(e, Thread.currentThread(),
-                                           new CrashManagerListener() {
-                                               @Override
-                                               public String getDescription() {
-                                                   return pattern;
-                                               }
-                                           });
+            Timber.e(e);
+
             if (!defaultLocale) {
                 return getSingleMessageTime(context, date, true);
             } else {
@@ -141,13 +131,8 @@ public class ZTimeFormatter {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
             return formatter.format(DateConvertUtils.asLocalDateTime(Instant.now()).atZone(ZoneId.systemDefault()));
         } catch (Exception e) {
-            ExceptionHandler.saveException(e, Thread.currentThread(),
-                                           new CrashManagerListener() {
-                                               @Override
-                                               public String getDescription() {
-                                                   return pattern;
-                                               }
-                                           });
+            Timber.e(e);
+
             if (!defaultLocale) {
                 return getCurrentWeek(context, true);
             } else {

@@ -28,7 +28,6 @@ import com.waz.ZLog._
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.service.AccountManager.ClientRegistrationState
 import com.waz.service.{AccountsService, ZMessaging}
-import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.SpinnerController.{Hide, Show}
@@ -37,13 +36,10 @@ import com.waz.zclient.appentry.AppEntryActivity._
 import com.waz.zclient.appentry.controllers.InvitationsController
 import com.waz.zclient.appentry.fragments.{TeamNameFragment, _}
 import com.waz.zclient.newreg.fragments.country.CountryController
-import com.waz.zclient.preferences.PreferencesController
-import com.waz.zclient.tracking.CrashController
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
-import net.hockeyapp.android.NativeCrashManager
 
 import scala.collection.JavaConverters._
 
@@ -146,16 +142,6 @@ class AppEntryActivity extends BaseActivity {
       case Hide(Some(message)) => progressView.hideWithMessage(message, 750)
       case Hide(_) => progressView.hide()
     }
-  }
-
-  override protected def onResume(): Unit = {
-    super.onResume()
-
-    //TODO move to new preferences
-    injectJava(classOf[PreferencesController]).analyticsEnabled.head.foreach {
-      case true => CrashController.checkForCrashes(getApplicationContext, getControllerFactory.getUserPreferencesController.getDeviceId)
-      case false => NativeCrashManager.deleteDumpFiles(getApplicationContext)
-    } (Threading.Ui)
   }
 
   override def onAttachFragment(fragment: Fragment): Unit = {

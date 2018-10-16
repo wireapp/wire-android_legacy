@@ -40,9 +40,6 @@ import android.text.Spanned;
 import android.view.View;
 import android.view.WindowManager;
 
-import net.hockeyapp.android.CrashManagerListener;
-import net.hockeyapp.android.ExceptionHandler;
-
 import java.util.Locale;
 
 import static android.hardware.Camera.getNumberOfCameras;
@@ -74,10 +71,6 @@ public class DeprecationUtils {
 
     public static Drawable getDrawable(Context context, int resId) {
         return context.getResources().getDrawable(resId);
-    }
-
-    public static void saveException(Throwable t, CrashManagerListener l) {
-        ExceptionHandler.saveException(t, l);
     }
 
     public static String formatNumber(String s) {
