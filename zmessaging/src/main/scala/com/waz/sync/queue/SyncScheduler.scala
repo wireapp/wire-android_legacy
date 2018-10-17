@@ -46,8 +46,6 @@ import scala.util.Try
 
 trait SyncScheduler {
 
-  val queue: SyncSerializer
-
   def await(id: SyncId): Future[SyncResult]
   def await(ids: Set[SyncId]): Future[Set[SyncResult]]
   def awaitRunning: Future[Int]
@@ -77,7 +75,7 @@ class SyncSchedulerImpl(context:     Context,
   private[sync] lazy val alarmManager    = Option(Context.unwrap(context)).map(_.getSystemService(ALARM_SERVICE).asInstanceOf[AlarmManager])
   private[sync] lazy val syncIntent      = Option(Context.unwrap(context)).map(SyncService.intent(_, userId))
 
-  override val queue                = new SyncSerializer
+  private val queue                 = new SyncSerializer
   private[sync] val executor        = new SyncExecutor(this, content, network, handler, tracking)
   private[sync] val executions      = new mutable.HashMap[SyncId, Future[SyncResult]]()
   private[sync] val executionsCount = Signal(0)

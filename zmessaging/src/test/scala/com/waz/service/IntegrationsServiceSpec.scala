@@ -38,7 +38,6 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
 
   val teamId = TeamId()
 
-  val syncScheduler = mock[SyncScheduler]
   val srs           = mock[SyncRequestService]
   val assets        = mock[AssetsStorage]
   val users         = mock[UsersStorage]
@@ -89,8 +88,7 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
 
     (users.findUsersForService _).expects(serviceId).returning(Future.successful(Set.empty))
     (convsUi.createGroupConversation _).expects(Option.empty[String], Set.empty[UserId], false).returning(Future.successful(createdConv, createConvSyncId))
-    (srs.scheduler _).expects().anyNumberOfTimes().returning(syncScheduler)
-    (syncScheduler.await (_: SyncId)).expects(*).twice().returning(Future.successful(SyncResult.Success))
+    (srs.await (_: SyncId)).expects(*).twice().returning(Future.successful(SyncResult.Success))
     (sync.postAddBot _).expects(createdConv.id, pId, serviceId).returning(Future.successful(addedBotSyncId))
     (members.getActiveUsers _).expects(createdConv.id).returning(Future.successful(Seq(account1Id, serviceUserId)))
     (messages.addConnectRequestMessage _).expects(createdConv.id, account1Id, serviceUserId, "", "", true).returning(Future.successful(null))
@@ -129,8 +127,7 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
     }
 
     (convsUi.createGroupConversation _).expects(Option.empty[String], Set.empty[UserId], false).returning(Future.successful(createdConv, createConvSyncId))
-    (srs.scheduler _).expects().anyNumberOfTimes().returning(syncScheduler)
-    (syncScheduler.await (_: SyncId)).expects(*).twice().returning(Future.successful(SyncResult.Success))
+    (srs.await (_: SyncId)).expects(*).twice().returning(Future.successful(SyncResult.Success))
     (sync.postAddBot _).expects(createdConv.id, pId, serviceId).returning(Future.successful(addedBotSyncId))
     (members.getActiveUsers _).expects(createdConv.id).returning(Future.successful(Seq(account1Id, serviceUserId)))
     (messages.addConnectRequestMessage _).expects(createdConv.id, account1Id, serviceUserId, "", "", true).returning(Future.successful(null))

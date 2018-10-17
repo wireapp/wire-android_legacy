@@ -94,7 +94,7 @@ class IntegrationsServiceImpl(selfUserId:   UserId,
     def createConv =
       for {
         (conv, syncId) <- convsUi.createGroupConversation()
-        res <- syncRequests.scheduler.await(syncId).flatMap {
+        res <- syncRequests.await(syncId).flatMap {
           case SyncResult.Success =>
             for {
               postResult <- addBotToConversation(conv.id, pId, serviceId)
@@ -130,7 +130,7 @@ class IntegrationsServiceImpl(selfUserId:   UserId,
   override def addBotToConversation(cId: ConvId, pId: ProviderId, iId: IntegrationId) =
     (for {
       syncId <- sync.postAddBot(cId, pId, iId)
-      result <- syncRequests.scheduler.await(syncId)
+      result <- syncRequests.await(syncId)
     } yield result).map {
       case SyncResult.Success => Right({})
       case SyncResult.Failure(Some(error), _) => Left(error)
@@ -140,7 +140,7 @@ class IntegrationsServiceImpl(selfUserId:   UserId,
   override def removeBotFromConversation(cId: ConvId, botId: UserId) =
     (for {
       syncId <- sync.postRemoveBot(cId, botId)
-      result <- syncRequests.scheduler.await(syncId)
+      result <- syncRequests.await(syncId)
     } yield result).map {
       case SyncResult.Success => Right({})
       case SyncResult.Failure(Some(error), _) => Left(error)

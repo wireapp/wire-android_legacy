@@ -173,7 +173,7 @@ class AndroidSyncServiceHandle(service: SyncRequestService, timeouts: Timeouts, 
     id3 <- syncSelfPermissions()
     id4 <- syncTeam()
     id5 <- syncConversations()
-    _ <- service.scheduler.await(Set(id1, id2, id3, id4, id5, id6))
+    _ <- service.await(Set(id1, id2, id3, id4, id5, id6))
   } yield ()
 }
 

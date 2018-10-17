@@ -100,7 +100,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       case Some(conv) if conv.accessRole.isEmpty =>
         for {
           syncId        <- sync.syncConversations(Set(conv.id))
-          _             <- syncReqService.scheduler.await(syncId)
+          _             <- syncReqService.await(syncId)
           Some(updated) <- content.convById(conv.id)
         } yield if (updated.access.contains(Access.CODE)) sync.syncConvLink(conv.id)
 
@@ -166,7 +166,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       if (userIds.contains(selfUserId)) sync.syncConversations(Set(conv.id)) //we were re-added to a group and in the meantime might have missed events
       for {
         syncId <- users.syncIfNeeded(userIds.toSet)
-        _ <- syncId.fold(Future.successful(()))(sId => syncReqService.scheduler.await(sId).map(_ => ()))
+        _ <- syncId.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
         _ <- membersStorage.add(conv.id, userIds)
         _ <- if (userIds.contains(selfUserId)) content.setConvActive(conv.id, active = true) else successful(None)
       } yield ()

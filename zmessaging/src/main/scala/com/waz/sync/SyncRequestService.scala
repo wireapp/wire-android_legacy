@@ -17,10 +17,9 @@
  */
 package com.waz.sync
 
-import android.util.Log
 import com.waz.ZLog._
+import com.waz.api.SyncState
 import com.waz.api.impl.ErrorResponse
-import com.waz.api.{SyncState, ZmsVersion}
 import com.waz.model.sync._
 import com.waz.model.{ConvId, SyncId, UserId}
 import com.waz.service.tracking.TrackingService
@@ -34,8 +33,13 @@ import com.waz.utils.wrappers.Context
 import scala.concurrent.Future
 
 trait SyncRequestService {
-  def scheduler: SyncScheduler
+
   def addRequest(job: SyncJob, forceRetry: Boolean = false): Future[SyncId]
+
+  def await(ids: Set[SyncId]): Future[Set[SyncResult]]
+  def await(id: SyncId): Future[SyncResult]
+  def awaitRunning: Future[Int]
+
   def syncState(matchers: Seq[SyncMatcher]): Signal[Data]
 }
 
@@ -55,7 +59,7 @@ class SyncRequestServiceImpl(context:   Context,
   private implicit val tag = logTagFor[SyncRequestServiceImpl]
   private implicit val dispatcher = new SerialDispatchQueue(name = "SyncDispatcher")
 
-  override val scheduler: SyncScheduler = new SyncSchedulerImpl(context, userId, content, network, this, sync, accounts, tracking)
+  private val scheduler: SyncScheduler = new SyncSchedulerImpl(context, userId, content, network, this, sync, accounts, tracking)
 
   reporting.addStateReporter { pw =>
     content.listSyncJobs flatMap { jobs =>
@@ -69,22 +73,17 @@ class SyncRequestServiceImpl(context:   Context,
     }
   }
 
-  override def addRequest(job: SyncJob, forceRetry: Boolean = false): Future[SyncId] = content.addSyncJob(job, forceRetry).map(_.id)
+  override def addRequest(job: SyncJob, forceRetry: Boolean = false) =
+    content.addSyncJob(job, forceRetry).map(_.id)
 
-  def listJobs = content.syncJobs.map(_.values.toSeq.sortBy(j => (j.timestamp, j.priority)))
+  override def await(ids: Set[SyncId]): Future[Set[SyncResult]] =
+    scheduler.await(ids)
 
-  //only print to AndroidLog directly - don't want to flood our internal log
-  def logJobs() = if (ZmsVersion.DEBUG) {
-    for {
-      rep  <- scheduler.reportString
-      jobs <- listJobs.head
-    } yield {
-      Log.d("SyncJobs", rep)
-      jobs.foreach { j =>
-        Log.d("SyncJobs", j.toString)
-      }
-    }
-  }
+  override def await(id: SyncId): Future[SyncResult] =
+    scheduler.await(id)
+
+  override def awaitRunning: Future[Int] =
+    scheduler.awaitRunning
 
   override def syncState(matchers: Seq[SyncMatcher]) =
     content.syncJobs map { _.values.filter(job => matchers.exists(_.apply(job))) } map { jobs =>
