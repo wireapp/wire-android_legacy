@@ -216,6 +216,17 @@ trait FragmentHelper extends Fragment with OnBackPressedListener with ViewFinder
     h
   }
 
+  def slideFragmentInFromRight(f: Fragment, tag: String): Unit =
+    getFragmentManager.beginTransaction
+      .setCustomAnimations(
+        R.anim.fragment_animation_second_page_slide_in_from_right,
+        R.anim.fragment_animation_second_page_slide_out_to_left,
+        R.anim.fragment_animation_second_page_slide_in_from_left,
+        R.anim.fragment_animation_second_page_slide_out_to_right)
+      .replace(R.id.fl__participant__container, f, tag)
+      .addToBackStack(tag)
+      .commit
+
   def getStringArg(key: String): Option[String] =
     Option(getArguments).flatMap(a => Option(a.getString(key)))
 

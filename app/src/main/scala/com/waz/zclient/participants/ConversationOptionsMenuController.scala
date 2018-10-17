@@ -102,7 +102,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
       case Mode.Normal(_) =>
 
         def notifications: MenuItem =
-          if (zms.teamId.isDefined)
+          if (zms.teamId.isDefined && mode.inConversationList)
             Notifications
           else if (conv.muted.isAllAllowed)
             Mute
@@ -110,15 +110,15 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
             Unmute
 
         builder += (if (conv.archived) Unarchive else Archive)
+
         if (isGroup) {
-          if (conv.isActive) {
-            builder ++= Set(notifications, Leave)
-          }
+          if (conv.isActive) builder += Leave
+          if (mode.inConversationList || zms.teamId.isEmpty) builder += notifications
           builder += Delete
         } else {
           if (teamMember || connectStatus.contains(ACCEPTED) || isBot) {
             builder ++= Set(notifications, Delete)
-            if (!teamMember && connectStatus.contains(ACCEPTED)) builder ++= Set(Block)
+            if (!teamMember && connectStatus.contains(ACCEPTED)) builder += Block
           }
           else if (connectStatus.contains(PENDING_FROM_USER)) builder += Block
         }

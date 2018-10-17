@@ -145,6 +145,11 @@ case class ConversationIcon(colorRes: Int)(implicit context: Context) extends Wi
   override def draw(canvas: Canvas) = drawConversation(canvas, getDrawingRect, ResizingBehavior.AspectFit, paint.getColor)
 }
 
+case class NotificationsIcon(color: Int)(implicit context: Context) extends WireDrawable {
+  setColor(color)
+  override def draw(canvas: Canvas) = drawAlerts(canvas, getDrawingRect, ResizingBehavior.AspectFit, paint.getColor)
+}
+
 case class EphemeralIcon(color: Int, timeUnit: TimeUnit)(implicit context: Context) extends WireDrawable {
   setColor(color)
   import com.waz.model.EphemeralDuration._

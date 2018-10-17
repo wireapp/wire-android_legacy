@@ -250,7 +250,7 @@
     <string name="conversation__action__delete_only">\tDelete content</string>
 
     <string name="conversation__action__notifications_everything">Everything</string>
-    <string name="conversation__action__notifications_mentions_only">Only mentions</string>
+    <string name="conversation__action__notifications_mentions_and_replies">Mentions and Replies</string>
     <string name="conversation__action__notifications_nothing">Nothing</string>
     <string name="conversation__action__notifications_title">Notify me about:</string>
 
@@ -1131,7 +1131,9 @@
     <string name="allow_guests">Allow guests and services</string>
     <string name="guest_options_title">Guests and services</string>
     <string name="ephemeral_options_title">Timed messages</string>
+    <string name="notifications_options_title">Notifications</string>
     <string name="ephemeral_explanation_text">Timed messages will be turned on for all the participants in this conversation</string>
+    <string name="notifications_explanation_text">You can be notified about everything (including audio and video calls) or only when you are mentioned.</string>
     <string name="show_all_participants">Show all (%1$s)</string>
 
     <string name="allow_guests_error_title">Something went wrong</string>

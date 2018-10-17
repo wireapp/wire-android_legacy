@@ -18,15 +18,15 @@
 package com.waz.zclient.conversation
 
 import android.content.Context
-import android.widget.{ImageView, LinearLayout}
-import com.waz.ZLog.ImplicitTag._
+import android.view.View
+import android.widget.{ImageView, LinearLayout, TextView}
 import com.waz.service.ZMessaging
 import com.waz.utils.events.{ClockSignal, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.{ThemeController, UserAccountsController}
 import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.messages.UsersController
-import com.waz.zclient.paintcode.GuestIcon
+import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIcon}
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
@@ -38,7 +38,7 @@ import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
 
-class ParticipantDetailsTab(val context: Context, callback: FooterMenuCallback) extends LinearLayout(context, null, 0) with ViewHelper {
+class ParticipantDetailsTab(val context: Context, callback: FooterMenuCallback, navButtonCallback: () => Unit) extends LinearLayout(context, null, 0) with ViewHelper {
 
   inflate(R.layout.single_participant_tab_details)
   setOrientation(LinearLayout.VERTICAL)
@@ -48,11 +48,35 @@ class ParticipantDetailsTab(val context: Context, callback: FooterMenuCallback) 
   private val participantsController = inject[ParticipantsController]
   private val userAccountsController = inject[UserAccountsController]
   private val themeController        = inject[ThemeController]
+  private val convController         = inject[ConversationController]
 
   private val imageView = findById[ChatheadView](R.id.chathead)
 
   private val footerMenu = returning(findById[FooterMenu](R.id.fm__footer)) {
     _.setCallback(callback)
+  }
+
+  private lazy val notificationsButton = returning(findById[View](R.id.notifications_button)) {
+    _.onClick(navButtonCallback())
+  }
+
+  private lazy val notificationsButtonNextIndicator = returning(findById[ImageView](R.id.notifications_button_next_indicator)) {
+    _.setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40))
+  }
+
+  private lazy val notificationsButtonValueText = returning(findById[TextView](R.id.notifications_button_value_text)) { view =>
+    convController.currentConv
+      .map(c => ConversationController.muteSetDisplayStringId(c.muted))
+      .onUi(textId => view.setText(textId))
+  }
+
+  zms.map(_.teamId.isDefined).onUi {
+    case true =>
+      notificationsButton.setVisible(true)
+      notificationsButtonNextIndicator
+      notificationsButtonValueText
+    case false =>
+      notificationsButton.setVisible(false)
   }
 
   private lazy val guestIndication     = findById[LinearLayout](R.id.guest_indicator)

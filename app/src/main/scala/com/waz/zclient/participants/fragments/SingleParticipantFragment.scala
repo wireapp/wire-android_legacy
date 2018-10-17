@@ -103,44 +103,47 @@ class SingleParticipantFragment extends FragmentHelper {
     super.onViewCreated(v, savedInstanceState)
 
     viewPager.foreach { pager =>
-      pager.setAdapter(new TabbedParticipantPagerAdapter(participantOtrDeviceAdapter, new FooterMenuCallback {
-
-        override def onLeftActionClicked(): Unit =
-          participantsController.otherParticipant.map(_.expiresAt.isDefined).head.foreach {
-            case false => participantsController.isGroup.head.flatMap {
-              case false => userAccountsController.hasCreateConvPermission.head.map {
-                case true => createConvController.onShowCreateConversation ! true
-                case _ => //
-              }
-              case _ => Future.successful {
-                participantsController.onHideParticipants ! true
-                participantsController.otherParticipantId.head.foreach {
-                  case Some(userId) =>
-                    screenController.hideUser()
-                    userAccountsController.getOrCreateAndOpenConvFor(userId)
-                  case _ =>
-                }
-              }
-            }
-            case _ =>
-          }
-
-        override def onRightActionClicked(): Unit =
-          (for {
-            isGroup <- participantsController.isGroup.head
-            convId  <- convController.currentConvId.head
-          } yield (isGroup, convId)).flatMap {
-            case (false, convId) => Future.successful(screenController.showConversationMenu(false, convId))
-            case (true,  convId) => userAccountsController.hasRemoveConversationMemberPermission(convId).head.flatMap {
-              case true =>
-                participantsController.otherParticipantId.head.map {
-                  case Some(userId) => participantsController.showRemoveConfirmation(userId)
+      pager.setAdapter(new TabbedParticipantPagerAdapter(
+        participantOtrDeviceAdapter,
+        new FooterMenuCallback {
+          override def onLeftActionClicked(): Unit =
+            participantsController.otherParticipant.map(_.expiresAt.isDefined).head.foreach {
+              case false => participantsController.isGroup.head.flatMap {
+                case false => userAccountsController.hasCreateConvPermission.head.map {
+                  case true => createConvController.onShowCreateConversation ! true
                   case _ => //
                 }
-              case _ => Future.successful({})
+                case _ => Future.successful {
+                  participantsController.onHideParticipants ! true
+                  participantsController.otherParticipantId.head.foreach {
+                    case Some(userId) =>
+                      screenController.hideUser()
+                      userAccountsController.getOrCreateAndOpenConvFor(userId)
+                    case _ =>
+                  }
+                }
+              }
+              case _ =>
             }
-          }
-        }))
+
+          override def onRightActionClicked(): Unit =
+            (for {
+              isGroup <- participantsController.isGroup.head
+              convId  <- convController.currentConvId.head
+            } yield (isGroup, convId)).flatMap {
+              case (false, convId) => Future.successful(screenController.showConversationMenu(false, convId))
+              case (true,  convId) => userAccountsController.hasRemoveConversationMemberPermission(convId).head.flatMap {
+                case true =>
+                  participantsController.otherParticipantId.head.map {
+                    case Some(userId) => participantsController.showRemoveConfirmation(userId)
+                    case _ => //
+                  }
+                case _ => Future.successful({})
+              }
+            }
+        },
+        () => slideFragmentInFromRight(new NotificationsOptionsFragment(), NotificationsOptionsFragment.Tag)
+      ))
 
       val tabIndicatorLayout = findById[TabIndicatorLayout](v, R.id.til_single_participant_tabs)
       tabIndicatorLayout.setPrimaryColor(getColorWithTheme(if (themeController.isDarkTheme) R.color.text__secondary_dark else R.color.text__secondary_light))

@@ -56,15 +56,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:layout_toEndOf="@id/icon"
             android:layout_toStartOf="@id/next_indicator">
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:id="@+id/name_text"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:drawablePadding="@dimen/wire__padding__6"
@@ -74,11 +73,11 @@
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:id="@+id/value_text"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:textSize="@dimen/wire__text_size__regular"
+                android:textSize="@dimen/wire__text_size__small"
                 android:textColor="@color/light_graphite_40"
                 android:drawablePadding="@dimen/wire__padding__6"
                 app:w_font="@string/wire__typeface__light"

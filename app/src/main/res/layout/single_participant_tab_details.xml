@@ -95,6 +95,72 @@
             android:layout_marginTop="@dimen/wire__padding__8"
             android:visibility="gone"/>
 
+       <RelativeLayout
+            android:id="@+id/notifications_button"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/menu_item_height"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone"
+            style="?wireBackground">
+
+            <com.waz.zclient.ui.text.GlyphTextView
+                android:id="@+id/notifications_button_icon"
+                android:layout_width="@dimen/guest_options_icon_size"
+                android:layout_height="@dimen/guest_options_icon_size"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="@dimen/wire__padding__big"
+                android:layout_marginEnd="@dimen/wire__padding__big"
+                android:scaleType="centerInside"
+                android:text="@string/glyph__notify"
+                />
+
+            <ImageView
+                android:id="@+id/notifications_button_next_indicator"
+                android:layout_width="@dimen/next_indicator_size"
+                android:layout_height="@dimen/next_indicator_size"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="@dimen/wire__padding__regular"
+                android:layout_marginEnd="@dimen/wire__padding__regular"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:orientation="vertical"
+                android:layout_toEndOf="@id/notifications_button_icon"
+                android:layout_toStartOf="@id/notifications_button_next_indicator">
+
+                <com.waz.zclient.ui.text.TypefaceTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:drawablePadding="@dimen/wire__padding__6"
+                    app:w_font="@string/wire__typeface__light"
+                    style="?startUiUserRowLabel"
+                    android:layout_gravity="start"
+                    android:text="@string/notifications_options_title"/>
+
+                <com.waz.zclient.ui.text.TypefaceTextView
+                    android:id="@+id/notifications_button_value_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textSize="@dimen/wire__text_size__small"
+                    android:textColor="@color/light_graphite_40"
+                    android:drawablePadding="@dimen/wire__padding__6"
+                    app:w_font="@string/wire__typeface__light"
+                    android:layout_gravity="end"/>
+            </LinearLayout>
+
+        </RelativeLayout>
+
     </LinearLayout>
 
 

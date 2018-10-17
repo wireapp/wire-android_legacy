@@ -38,7 +38,7 @@ import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.views.SingleUserRowView
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.ConversationController.getEphemeralDisplayString
-import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIconWithColor, HourGlassIcon}
+import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIconWithColor, HourGlassIcon, NotificationsIcon}
 import com.waz.zclient.ui.text.TypefaceEditText.OnSelectionChangedListener
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceEditText, TypefaceTextView}
 import com.waz.zclient.utils.ContextUtils._
@@ -67,10 +67,11 @@ class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: B
 
   private var convNameViewHolder = Option.empty[ConversationNameViewHolder]
 
-  val onClick             = EventStream[UserId]()
-  val onGuestOptionsClick = EventStream[Unit]()
-  val onEphemeralOptionsClick = EventStream[Unit]()
+  val onClick                    = EventStream[UserId]()
+  val onGuestOptionsClick        = EventStream[Unit]()
+  val onEphemeralOptionsClick    = EventStream[Unit]()
   val onShowAllParticipantsClick = EventStream[Unit]()
+  val onNotificationsClick       = EventStream[Unit]()
   val filter = Signal("")
 
   lazy val users = for {
@@ -84,6 +85,7 @@ class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: B
   private val shouldShowGuestButton = inject[ConversationController].currentConv.map(_.accessRole.isDefined)
 
   private lazy val positions = for {
+    z           <- zms
     users       <- users
     isTeam      <- participantsController.currentUserBelongsToConversationTeam
     convActive  <- convController.currentConv.map(_.isActive)
@@ -102,12 +104,15 @@ class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: B
     }
 
     (if (!showPeopleOnly) List(Right(ConversationName)) else Nil) :::
-    (if (convActive && isTeam && guestButton && !showPeopleOnly) List(Right(GuestOptions))
-      else Nil
+    (if (convActive && z.teamId.isDefined && !showPeopleOnly) List(Right(Notifications))
+    else Nil
       ) :::
     (if (convActive && !areWeAGuest && !showPeopleOnly) List(Right(EphemeralOptions))
       else Nil
         ) :::
+    (if (convActive && isTeam && guestButton && !showPeopleOnly) List(Right(GuestOptions))
+    else Nil
+      ) :::
     (if (people.nonEmpty && !showPeopleOnly) List(Right(PeopleSeparator))
       else Nil
       ) :::
@@ -162,6 +167,10 @@ class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: B
       returning(ConversationNameViewHolder(view, zms)) { vh =>
         convNameViewHolder = Option(vh)
       }
+    case Notifications =>
+      val view = LayoutInflater.from(parent.getContext).inflate(R.layout.list_options_button_with_value_label, parent, false)
+      view.onClick(onNotificationsClick ! {})
+      NotificationsButtonViewHolder(view, convController)
     case EphemeralOptions =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.list_options_button_with_value_label, parent, false)
       view.onClick(onEphemeralOptionsClick ! {})
@@ -212,6 +221,7 @@ object ParticipantsAdapter {
   val ConversationName  = 4
   val EphemeralOptions  = 5
   val AllParticipants   = 6
+  val Notifications     = 7
 
   case class ParticipantData(userData: UserData, isGuest: Boolean)
 
@@ -239,6 +249,17 @@ object ParticipantsAdapter {
       case _ => None
     }).map(getEphemeralDisplayString)
       .onUi(view.findViewById[TextView](R.id.value_text).setText)
+  }
+
+  case class NotificationsButtonViewHolder(view: View, convController: ConversationController)(implicit eventContext: EventContext) extends ViewHolder(view) {
+    private implicit val ctx = view.getContext
+    view.setId(R.id.notifications_options)
+    view.findViewById[ImageView](R.id.icon).setImageDrawable(NotificationsIcon(getStyledColor(R.attr.wirePrimaryTextColor)))
+    view.findViewById[TextView](R.id.name_text).setText(R.string.notifications_options_title)
+    view.findViewById[ImageView](R.id.next_indicator).setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40))
+    convController.currentConv
+      .map(c => ConversationController.muteSetDisplayStringId(c.muted))
+      .onUi(textId => view.findViewById[TextView](R.id.value_text).setText(textId))
   }
 
   case class SeparatorViewHolder(separator: View) extends ViewHolder(separator) {

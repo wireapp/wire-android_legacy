@@ -29,14 +29,14 @@ import com.waz.zclient.utils.RichView
 import com.waz.zclient.views.menus.FooterMenuCallback
 import com.waz.zclient.{Injectable, Injector, R}
 
-class TabbedParticipantPagerAdapter(participantOtrDeviceAdapter: ParticipantOtrDeviceAdapter, footerCallback: FooterMenuCallback)(implicit context: Context, injector: Injector, eventContext: EventContext)
+class TabbedParticipantPagerAdapter(participantOtrDeviceAdapter: ParticipantOtrDeviceAdapter, footerCallback: FooterMenuCallback, navButtonCallback: () => Unit)(implicit context: Context, injector: Injector, eventContext: EventContext)
   extends PagerAdapter with Injectable {
   import TabbedParticipantPagerAdapter._
 
   override def instantiateItem(container: ViewGroup, position: Int): java.lang.Object = returning(
     tabs(position) match {
       case tab@ParticipantTab('details, _) =>
-        returning( new ParticipantDetailsTab(context, footerCallback) ) {
+        returning( new ParticipantDetailsTab(context, footerCallback, navButtonCallback) ) {
           _.setTag(tab)
         }
       case ParticipantTab('devices, _) =>

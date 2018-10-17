@@ -61,6 +61,7 @@
     <item name="services_section" type="id" />
     <item name="guest_options" type="id" />
     <item name="timed_messages_options" type="id" />
+    <item name="notifications_options" type="id" />
 
     <item name="create_group_button" type="id"/>
     <item name="create_guest_room_button" type="id"/>

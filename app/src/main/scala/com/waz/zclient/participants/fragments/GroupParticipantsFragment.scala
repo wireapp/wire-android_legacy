@@ -21,7 +21,6 @@ package com.waz.zclient.participants.fragments
 import android.content.Context
 import android.os.Bundle
 import android.support.annotation.Nullable
-import android.support.v4.app.Fragment
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.ZLog.ImplicitTag._
@@ -104,23 +103,16 @@ class GroupParticipantsFragment extends FragmentHelper {
       case _ =>
     }
 
-    def slideFragmentInFromRight(f: Fragment, tag: String) =
-      getFragmentManager.beginTransaction
-        .setCustomAnimations(
-          R.anim.fragment_animation_second_page_slide_in_from_right,
-          R.anim.fragment_animation_second_page_slide_out_to_left,
-          R.anim.fragment_animation_second_page_slide_in_from_left,
-          R.anim.fragment_animation_second_page_slide_out_to_right)
-        .replace(R.id.fl__participant__container, f, tag)
-        .addToBackStack(tag)
-        .commit
-
     adapter.onGuestOptionsClick.onUi { _ =>
       slideFragmentInFromRight(new GuestOptionsFragment(), GuestOptionsFragment.Tag)
     }
 
     adapter.onEphemeralOptionsClick.onUi { _ =>
       slideFragmentInFromRight(new EphemeralOptionsFragment(), EphemeralOptionsFragment.Tag)
+    }
+
+    adapter.onNotificationsClick.onUi { _ =>
+      slideFragmentInFromRight(new NotificationsOptionsFragment(), NotificationsOptionsFragment.Tag)
     }
 
     adapter.onShowAllParticipantsClick.onUi { _ =>
