@@ -117,18 +117,6 @@ class UsersSyncHandler(assetSync: AssetSyncHandler,
     }
   } yield res
 
-
-  def syncConnectedUsers(): Future[SyncResult] = {
-    usersStorage.getContactNameParts.future flatMap { cs =>
-      usersClient.loadUsers(cs.keys.toSeq)
-    } flatMap {
-      case Right(users) => userService.updateSyncedUsers(users).map {_ => SyncResult.Success }
-      case Left(error) =>
-        warn(s"UsersClient.loadUsers failed")
-        Future.successful(SyncResult(error))
-    }
-  }
-
   def deleteAccount(): Future[SyncResult] = usersClient.deleteAccount() map {
     case Right(()) => SyncResult.Success
     case Left(error) =>

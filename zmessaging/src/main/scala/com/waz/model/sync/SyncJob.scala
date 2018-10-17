@@ -23,7 +23,7 @@ import com.waz.api.SyncState
 import com.waz.api.impl.ErrorResponse
 import com.waz.db.Col._
 import com.waz.db.Dao
-import com.waz.model.SyncId
+import com.waz.model.{SyncId, UserId}
 import com.waz.sync.queue.SyncJobMerger.{MergeResult, Merged, Unchanged, Updated}
 import com.waz.utils.wrappers.DBCursor
 import com.waz.utils.{JsonDecoder, JsonEncoder}
@@ -32,18 +32,18 @@ import org.json.JSONObject
 import scala.collection.breakOut
 import scala.util.Try
 
-case class SyncJob(id: SyncId,
-                    request: SyncRequest,
-                    dependsOn: Set[SyncId] = Set(),
-                    priority: Int = SyncJob.Priority.Normal,
-                    optional: Boolean = false,
-                    timeout: Long = 0,
-                    timestamp: Long = SyncJob.timestamp,
-                    startTime: Long = 0, // next scheduled execution time
-                    attempts: Int = 0,
-                    offline: Boolean = false,
-                    state: SyncState = SyncState.WAITING,
-                    error: Option[ErrorResponse] = None) {
+case class SyncJob(id:        SyncId,
+                   request:   SyncRequest,
+                   dependsOn: Set[SyncId]           = Set(),
+                   priority:  Int                   = SyncJob.Priority.Normal,
+                   optional:  Boolean               = false,
+                   timeout:   Long                  = 0,
+                   timestamp: Long                  = SyncJob.timestamp,
+                   startTime: Long                  = 0, // next scheduled execution time
+                   attempts:  Int                   = 0,
+                   offline:   Boolean               = false,
+                   state:     SyncState             = SyncState.WAITING,
+                   error:     Option[ErrorResponse] = None) {
 
   def mergeKey = request.mergeKey
 

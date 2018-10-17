@@ -19,9 +19,6 @@ package com.waz.sync.queue
 
 import java.io.PrintWriter
 
-import android.app.{AlarmManager, PendingIntent}
-import android.content.Context.ALARM_SERVICE
-import android.support.v4.content.WakefulBroadcastReceiver
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.NetworkMode
@@ -35,8 +32,6 @@ import com.waz.threading.CancellableFuture.CancelException
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.utils.wrappers.Context
-import com.waz.zms.SyncService
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -48,7 +43,6 @@ trait SyncScheduler {
 
   def await(id: SyncId): Future[SyncResult]
   def await(ids: Set[SyncId]): Future[Set[SyncResult]]
-  def awaitRunning: Future[Int]
 
   def withConv[A](job: SyncJob, conv: ConvId)(f: ConvLock => Future[A]): Future[A]
   def awaitPreconditions[A](job: SyncJob)(f: => Future[A]): Future[A]
@@ -57,8 +51,7 @@ trait SyncScheduler {
   def reportString: Future[String]
 }
 
-class SyncSchedulerImpl(context:     Context,
-                        userId:      UserId,
+class SyncSchedulerImpl(userId:      UserId,
                         val content: SyncContentUpdater,
                         val network: NetworkModeService,
                         service:     SyncRequestServiceImpl,
@@ -71,10 +64,6 @@ class SyncSchedulerImpl(context:     Context,
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "SyncSchedulerQueue")
 
-  private[sync] lazy val alarmSyncIntent = Option(Context.unwrap(context)).map(PendingIntent.getService(_, SyncScheduler.AlarmRequestCode, SyncService.intent(context, userId), PendingIntent.FLAG_UPDATE_CURRENT))
-  private[sync] lazy val alarmManager    = Option(Context.unwrap(context)).map(_.getSystemService(ALARM_SERVICE).asInstanceOf[AlarmManager])
-  private[sync] lazy val syncIntent      = Option(Context.unwrap(context)).map(SyncService.intent(_, userId))
-
   private val queue                 = new SyncSerializer
   private[sync] val executor        = new SyncExecutor(this, content, network, handler, tracking)
   private[sync] val executions      = new mutable.HashMap[SyncId, Future[SyncResult]]()
@@ -84,19 +73,7 @@ class SyncSchedulerImpl(context:     Context,
   private val waiting      = Signal(Map.empty[SyncId, Long])
   private val runningCount = Signal(executionsCount, waiting.map(_.size)) map { case (r, w) => r - w }
 
-  private val alarmUpdate = Signal(0L)
-  private val nextAlarm = waiting.throttle(1.second) flatMap { jobs =>
-    alarmUpdate map { _ =>
-      val time = System.currentTimeMillis()
-      val inFuture = jobs.values.filter(_ > time)
-      if (inFuture.isEmpty) None
-      else Some(inFuture.min)
-    }
-  }
-
   // start sync service any time running executors count changes from 0 to positive number
-  runningCount.map(_ > 0) { if (_) startSyncService() }
-
   content.syncStorage { storage =>
     storage.getJobs.toSeq.sortBy(_.timestamp) foreach execute
     storage.onAdded.on(dispatcher) { execute }
@@ -106,7 +83,6 @@ class SyncSchedulerImpl(context:     Context,
         case (prev, job) =>
           waiting.mutate { jobs => if (jobs.contains(job.id)) jobs.updated(job.id, getStartTime(job)) else jobs }
           waitEntries.get(job.id) foreach (_.onUpdated(job))
-          alarmUpdate ! System.currentTimeMillis() // force update of alarm signal
       }
   }
 
@@ -119,8 +95,6 @@ class SyncSchedulerImpl(context:     Context,
     case NetworkMode.OFFLINE => // do nothing
     case _ => waitEntries.foreach(_._2.onOnline())
   }
-
-  nextAlarm { updateRetryAlarm }
 
   override def reportString = Future {
     s"SyncScheduler: executors: ${executions.size}, count: ${executionsCount.currentValue}, running: ${runningCount.currentValue}, waiting: ${waiting.currentValue}"
@@ -144,8 +118,6 @@ class SyncSchedulerImpl(context:     Context,
   override def await(id: SyncId) = Future { executions.getOrElse(id, Future.successful(SyncResult.Success)) } flatMap identity
 
   override def await(ids: Set[SyncId]) = Future.sequence(ids.map(await))
-
-  override def awaitRunning = CancellableFuture.delay(1.second).future flatMap { _ => runningCount.filter(_ == 0).head }
 
   private def countWaiting[A](id: SyncId, startTime: Long)(future: Future[A]) = {
     waiting.mutate(_ + (id -> startTime))
@@ -177,26 +149,6 @@ class SyncSchedulerImpl(context:     Context,
       returning(f)(_.onComplete(_ => queue.release()))
     }
   }
-
-  private def startSyncService(): Unit = {
-    debug("starting service")
-    syncIntent.foreach { sI =>
-      val res = WakefulBroadcastReceiver.startWakefulService(context, sI)
-      if (res == null) error("Couldn't start sync service. Make sure zeta sync service is included in the app manifest.")
-    }
-  }
-
-  private def updateRetryAlarm(time: Option[Long]) = {
-    debug(s"updateRetryAlarm: $time")
-    (time, alarmManager, alarmSyncIntent) match {
-      case (Some(t), Some(am), Some(aI)) =>
-        am.set(AlarmManager.RTC, t, aI)
-      case (None, Some(am), Some(aI)) =>
-        am.cancel(aI)
-      case _ =>
-    }
-  }
-
 
   private def getStartTime(job: SyncJob): Long =
     if (job.offline && network.isOnlineMode) 0  // start right away if request last failed due to possible network errors

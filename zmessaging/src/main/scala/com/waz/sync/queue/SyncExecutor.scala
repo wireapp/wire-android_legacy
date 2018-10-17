@@ -22,7 +22,8 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.api.SyncState
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.SyncId
-import com.waz.model.sync.{SerialExecutionWithinConversation, SyncJob, SyncRequest}
+import com.waz.model.sync.SyncRequest.{RequestForConversation, Serialized}
+import com.waz.model.sync.{SyncJob, SyncRequest}
 import com.waz.service.NetworkModeService
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.{SyncHandler, SyncRequestServiceImpl, SyncResult}
@@ -42,13 +43,13 @@ class SyncExecutor(scheduler:   SyncScheduler,
   private implicit val dispatcher = new SerialDispatchQueue(name = "SyncExecutorQueue")
 
   def apply(job: SyncJob): Future[SyncResult] = job.request match {
-    case r: SerialExecutionWithinConversation =>
-      scheduler.withConv(job, r.convId) { convLock =>
-        execute(job.id) {
-          case r: SerialExecutionWithinConversation => handler(r, convLock)
-          case req => throw new RuntimeException(s"WTF - SyncJob request type has changed to: $req")
-        }
-      }
+//    case r: RequestForConversation with Serialized =>
+//      scheduler.withConv(job, r.convId) { convLock =>
+//        execute(job.id) {
+//          case r: Serialized => handler(r, convLock)
+//          case req => throw new RuntimeException(s"WTF - SyncJob request type has changed to: $req")
+//        }
+//      }
     case _ => execute(job.id)(handler(_))
   }
 
@@ -140,7 +141,7 @@ object SyncExecutor {
   val ConvRequestRetryBackoff = new ExponentialBackoff(5.seconds, 1.hour)
 
   def failureDelay(job: SyncJob) = job.request match {
-    case _: SerialExecutionWithinConversation => ConvRequestRetryBackoff.delay(job.attempts).toMillis
+    case _: Serialized => ConvRequestRetryBackoff.delay(job.attempts).toMillis
     case _ => RequestRetryBackoff.delay(job.attempts).toMillis
   }
 }

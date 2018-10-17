@@ -107,7 +107,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val syncHandler:       AccountSyncHandler      = new AccountSyncHandler(this)
   lazy val otrClientsService: OtrClientsService       = wire[OtrClientsService]
   lazy val syncContent:       SyncContentUpdater      = wire[SyncContentUpdaterImpl]
-  lazy val syncRequests:      SyncRequestService      = wire[SyncRequestServiceImpl]
+  lazy val syncRequests:      SyncRequestService      = global.syncRequests
   lazy val otrClientsSync:    OtrClientsSyncHandler   = wire[OtrClientsSyncHandlerImpl]
   lazy val otrClient:         OtrClientImpl           = account.otrClient
   lazy val credentialsClient: CredentialsUpdateClientImpl = account.credentialsClient
@@ -324,15 +324,16 @@ object ZMessaging { self =>
 
   private[waz] var context: Context = _
 
-  private var prefs:     GlobalPreferences = _
-  private var googleApi: GoogleApi = _
-  private var backend:   BackendConfig = BackendConfig.StagingBackend
-  private var base64:    Base64 = _
+  private var prefs:        GlobalPreferences = _
+  private var googleApi:    GoogleApi = _
+  private var backend:      BackendConfig = BackendConfig.StagingBackend
+  private var base64:       Base64 = _
+  private var syncRequests: SyncRequestService = _
 
   //var for tests - and set here so that it is globally available without the need for DI
   var clock = Clock.systemUTC()
 
-  private lazy val _global: GlobalModule = new GlobalModuleImpl(context, backend, prefs, googleApi, base64)
+  private lazy val _global: GlobalModule = new GlobalModuleImpl(context, backend, prefs, googleApi, base64, syncRequests)
   private lazy val ui: UiModule = new UiModule(_global)
 
   //Try to avoid using these - map from the futures instead.
@@ -349,7 +350,12 @@ object ZMessaging { self =>
   def currentBeDrift = beDrift.currentValue.getOrElse(Duration.ZERO)
 
   //TODO - we should probably just request the entire GlobalModule from the UI here
-  def onCreate(context: Context, beConfig: BackendConfig, prefs: GlobalPreferences, googleApi: GoogleApi, base64: Base64) = {
+  def onCreate(context:      Context,
+               beConfig:     BackendConfig,
+               prefs:        GlobalPreferences,
+               googleApi:    GoogleApi,
+               base64:       Base64,
+               syncRequests: SyncRequestService) = {
     Threading.assertUiThread()
 
     if (this.currentUi == null) {
@@ -358,6 +364,7 @@ object ZMessaging { self =>
       this.prefs = prefs
       this.googleApi = googleApi
       this.base64 = base64
+      this.syncRequests = syncRequests
       currentUi = ui
       currentGlobal = _global
       currentAccounts = currentGlobal.accountsService

@@ -42,8 +42,6 @@ trait UsersStorage extends CachedStorage[UserId, UserData] {
   def addOrOverwrite(user: UserData): Future[UserData]
 
   def findUsersForService(id: IntegrationId): Future[Set[UserData]]
-
-  def getContactNameParts: CancellableFuture[Map[UserId, NameParts]]
 }
 
 class UsersStorageImpl(context: Context, storage: ZmsDatabase) extends CachedStorageImpl[UserId, UserData](new TrimmingLruCache(context, Fixed(2000)), storage)(UserDataDao, "UsersStorage_Cached") with UsersStorage {
@@ -64,8 +62,6 @@ class UsersStorageImpl(context: Context, storage: ZmsDatabase) extends CachedSto
     }
     cs
   }
-
-  override def getContactNameParts = contactNameParts.map(_.toMap)
 
   onAdded { users =>
     users foreach { user =>

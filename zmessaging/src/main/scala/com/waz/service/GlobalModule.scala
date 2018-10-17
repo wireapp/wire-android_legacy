@@ -34,6 +34,7 @@ import com.waz.service.downloads._
 import com.waz.service.images.{ImageLoader, ImageLoaderImpl}
 import com.waz.service.push.{GlobalNotificationsService, GlobalNotificationsServiceImpl, GlobalTokenService, GlobalTokenServiceImpl}
 import com.waz.service.tracking.{TrackingService, TrackingServiceImpl}
+import com.waz.sync.SyncRequestService
 import com.waz.sync.client._
 import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache
@@ -50,6 +51,7 @@ import scala.concurrent.ExecutionContext
 trait GlobalModule {
   def context:              AContext
   def backend:              BackendConfig
+  def syncRequests:         SyncRequestService
   def ssoService:           SSOService
   def tokenService:         GlobalTokenService
   def notifications:        GlobalNotificationsService
@@ -98,11 +100,12 @@ trait GlobalModule {
   def trackingService:      TrackingService
 }
 
-class GlobalModuleImpl(val context:   AContext,
-                       val backend:   BackendConfig,
-                       val prefs:     GlobalPreferences,
-                       val googleApi: GoogleApi,
-                       val base64: Base64) extends GlobalModule { global =>
+class GlobalModuleImpl(val context:      AContext,
+                       val backend:      BackendConfig,
+                       val prefs:        GlobalPreferences,
+                       val googleApi:    GoogleApi,
+                       val base64:       Base64,
+                       val syncRequests: SyncRequestService) extends GlobalModule { global =>
   //trigger initialization of Firebase in onCreate - should prevent problems with Firebase setup
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
   val network:                  DefaultNetworkModeService        = wire[DefaultNetworkModeService]
@@ -217,5 +220,6 @@ class EmptyGlobalModule extends GlobalModule {
   override def httpClient:               HttpClient                                          = ???
   override def httpClientForLongRunning: HttpClient                                          = ???
   override def base64:                   Base64                                              = ???
+  override def syncRequests:             SyncRequestService                                  = ???
 }
 

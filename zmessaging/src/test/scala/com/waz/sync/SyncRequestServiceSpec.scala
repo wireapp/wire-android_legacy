@@ -25,7 +25,8 @@ import com.waz.api.NetworkMode
 import com.waz.api.NetworkMode.UNKNOWN
 import com.waz.content.{Database, UserPreferences}
 import com.waz.model._
-import com.waz.model.sync.{SerialExecutionWithinConversation, SyncJob, SyncRequest}
+import com.waz.model.sync.SyncRequest.Serialized
+import com.waz.model.sync.{SyncJob, SyncRequest}
 import com.waz.service._
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.queue.{ConvLock, SyncContentUpdaterImpl}
@@ -61,7 +62,6 @@ class SyncRequestServiceSpec extends AndroidFreeSpec {
 
   scenario("Execute a few basic tasks") {
     (sync.apply (_:SyncRequest)).expects(*).returning(Future.successful(SyncResult(true)))
-    (sync.apply (_:SerialExecutionWithinConversation, _:ConvLock)).expects(*, *).returning(Future.successful(SyncResult(true)))
 
     val (handle, service) = getSyncServiceHandle
 
@@ -83,7 +83,7 @@ class SyncRequestServiceSpec extends AndroidFreeSpec {
     (reporting.addStateReporter(_: (PrintWriter) => Future[Unit])(_: LogTag)).expects(*, *)
 
     val content = new SyncContentUpdaterImpl(db)
-    val service = new SyncRequestServiceImpl(context, account1Id, content, network, sync, reporting, accounts, tracking)
-    (new AndroidSyncServiceHandle(service, timeouts, prefs), service)
+    val service = new SyncRequestServiceImpl(account1Id, content, network, sync, reporting, accounts, tracking)
+    (new AndroidSyncServiceHandle(account1Id, service, timeouts, prefs), service)
   }
 }

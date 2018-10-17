@@ -20,6 +20,7 @@ package com.waz.sync
 import com.waz.ZLog._
 import com.waz.api.SyncState
 import com.waz.api.impl.ErrorResponse
+import com.waz.model.sync.SyncRequest.RequestForConversation
 import com.waz.model.sync._
 import com.waz.model.{ConvId, SyncId, UserId}
 import com.waz.service.tracking.TrackingService
@@ -28,24 +29,21 @@ import com.waz.sync.SyncRequestServiceImpl.{Data, SyncMatcher}
 import com.waz.sync.queue.{SyncContentUpdater, SyncScheduler, SyncSchedulerImpl}
 import com.waz.threading.SerialDispatchQueue
 import com.waz.utils.events.Signal
-import com.waz.utils.wrappers.Context
 
 import scala.concurrent.Future
 
 trait SyncRequestService {
 
-  def addRequest(job: SyncJob, forceRetry: Boolean = false): Future[SyncId]
+  def addRequest(account: UserId, job: SyncJob, forceRetry: Boolean = false): Future[SyncId]
 
   def await(ids: Set[SyncId]): Future[Set[SyncResult]]
   def await(id: SyncId): Future[SyncResult]
-  def awaitRunning: Future[Int]
 
   def syncState(matchers: Seq[SyncMatcher]): Signal[Data]
 }
 
 
-class SyncRequestServiceImpl(context:   Context,
-                             userId:    UserId,
+class SyncRequestServiceImpl(accountId: UserId,
                              content:   SyncContentUpdater,
                              network:   NetworkModeService,
                              sync: =>   SyncHandler,
@@ -59,11 +57,11 @@ class SyncRequestServiceImpl(context:   Context,
   private implicit val tag = logTagFor[SyncRequestServiceImpl]
   private implicit val dispatcher = new SerialDispatchQueue(name = "SyncDispatcher")
 
-  private val scheduler: SyncScheduler = new SyncSchedulerImpl(context, userId, content, network, this, sync, accounts, tracking)
+  private val scheduler: SyncScheduler = new SyncSchedulerImpl(accountId, content, network, this, sync, accounts, tracking)
 
   reporting.addStateReporter { pw =>
     content.listSyncJobs flatMap { jobs =>
-      pw.println(s"SyncJobs for account $userId:")
+      pw.println(s"SyncJobs for account $accountId:")
       jobs.toSeq.sortBy(_.timestamp) foreach { job =>
         pw.println(job.toString)
       }
@@ -73,7 +71,7 @@ class SyncRequestServiceImpl(context:   Context,
     }
   }
 
-  override def addRequest(job: SyncJob, forceRetry: Boolean = false) =
+  override def addRequest(account: UserId, job: SyncJob, forceRetry: Boolean = false) =
     content.addSyncJob(job, forceRetry).map(_.id)
 
   override def await(ids: Set[SyncId]): Future[Set[SyncResult]] =
@@ -82,14 +80,15 @@ class SyncRequestServiceImpl(context:   Context,
   override def await(id: SyncId): Future[SyncResult] =
     scheduler.await(id)
 
-  override def awaitRunning: Future[Int] =
-    scheduler.awaitRunning
-
   override def syncState(matchers: Seq[SyncMatcher]) =
     content.syncJobs map { _.values.filter(job => matchers.exists(_.apply(job))) } map { jobs =>
       val state = if (jobs.isEmpty) SyncState.COMPLETED else jobs.minBy(_.state.ordinal()).state
       Data(state, ProgressUnknown, jobs.flatMap(_.error).toSeq)
     }
+
+  //only used in tests currently
+  def listJobs =
+    content.syncJobs.map(_.values.toSeq.sortBy(j => (j.timestamp, j.priority)))
 }
 
 object SyncRequestServiceImpl {
@@ -103,7 +102,7 @@ object SyncRequestServiceImpl {
   case class SyncMatcher(cmd: SyncCommand, convId: Option[ConvId]) {
 
     private def convMatches(job: SyncJob) = job.request match {
-      case req: ConversationReference => convId forall (_ == req.convId)
+      case req: RequestForConversation => convId forall (_ == req.convId)
       case _ => true
     }
 

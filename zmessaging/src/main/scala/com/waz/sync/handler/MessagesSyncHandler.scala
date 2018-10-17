@@ -39,7 +39,6 @@ import com.waz.service.tracking.TrackingService
 import com.waz.service.{MetaDataService, _}
 import com.waz.sync.client.{ErrorOr, ErrorOrResponse, MessagesClient}
 import com.waz.sync.otr.OtrSyncHandler
-import com.waz.sync.queue.ConvLock
 import com.waz.sync.{SyncResult, SyncServiceHandle}
 import com.waz.threading.CancellableFuture
 import com.waz.threading.CancellableFuture.CancelException
@@ -113,7 +112,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         successful(SyncResult(internalError("conversation not found")))
     }
 
-  def postMessage(convId: ConvId, id: MessageId, editTime: RemoteInstant)(implicit convLock: ConvLock): Future[SyncResult] = {
+  def postMessage(convId: ConvId, id: MessageId, editTime: RemoteInstant): Future[SyncResult] = {
 
     def shouldGiveUpSending(msg: MessageData) = !network.isOnlineMode || timeouts.messages.sendingTimeout.elapsedSince(msg.time.instant)
 
@@ -154,7 +153,7 @@ class MessagesSyncHandler(selfUserId: UserId,
     }
   }
 
-  private def postMessage(conv: ConversationData, msg: MessageData, reqEditTime: RemoteInstant)(implicit convLock: ConvLock): Future[SyncResult] = {
+  private def postMessage(conv: ConversationData, msg: MessageData, reqEditTime: RemoteInstant): Future[SyncResult] = {
 
     def postTextMessage() = {
       val adjustedMsg = msg.adjustMentions(true).getOrElse(msg)
@@ -233,7 +232,7 @@ class MessagesSyncHandler(selfUserId: UserId,
     }
   }
 
-  private def uploadAsset(conv: ConversationData, msg: MessageData)(implicit convLock: ConvLock): ErrorOrResponse[RemoteInstant] = {
+  private def uploadAsset(conv: ConversationData, msg: MessageData): ErrorOrResponse[RemoteInstant] = {
     verbose(s"uploadAsset($conv, $msg)")
 
     def postAssetMessage(asset: AssetData, preview: Option[AssetData], origTime: Option[RemoteInstant] = None): ErrorOrResponse[RemoteInstant] = {
@@ -263,7 +262,6 @@ class MessagesSyncHandler(selfUserId: UserId,
       postOriginal(asset).flatMap {
         case Left(err) => CancellableFuture successful Left(err)
         case Right(origTime) =>
-          convLock.release()
           //send preview
           CancellableFuture.lift(asset.previewId.map(assets.getAssetData).getOrElse(Future successful None)).flatMap {
             case Some(prev) =>

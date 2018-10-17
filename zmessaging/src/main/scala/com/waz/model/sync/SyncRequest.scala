@@ -54,30 +54,32 @@ sealed abstract class SyncRequest {
   def isDuplicateOf(req: SyncRequest): Boolean = this == req
 }
 
-sealed trait ConversationReference extends SyncRequest {
-  val convId: ConvId
-  override val mergeKey: Any = (cmd, convId)
-}
-
-// sync requests which should be serialized (executed one by one) in a conversation context
-// if we executed them in parallel then we would end up with unexpected messages ordering (or other errors)
-sealed trait SerialExecutionWithinConversation extends ConversationReference
-
 object SyncRequest {
-  import sync.{SyncCommand => Cmd}
 
   sealed abstract class BaseRequest(val cmd: SyncCommand) extends SyncRequest
+  sealed abstract class RequestForConversation(cmd: SyncCommand) extends BaseRequest(cmd) {
+    val convId: ConvId
+    override val mergeKey: Any = (cmd, convId)
+  }
 
-  case object Unknown extends BaseRequest(Cmd.Unknown)
-  case object SyncSelf extends BaseRequest(Cmd.SyncSelf)
-  case object DeleteAccount extends BaseRequest(Cmd.DeleteAccount)
-  case object SyncConversations extends BaseRequest(Cmd.SyncConversations)
-  case object SyncConnections extends BaseRequest(Cmd.SyncConnections)
-  case object SyncConnectedUsers extends BaseRequest(Cmd.SyncConnectedUsers)
-  case object SyncSelfClients extends BaseRequest(Cmd.SyncSelfClients)
+  sealed abstract class RequestForUser(cmd: SyncCommand) extends BaseRequest(cmd) {
+    val userId: UserId
+    override val mergeKey = (cmd, userId)
+  }
+
+  sealed trait Serialized extends SyncRequest
+
+  import sync.{SyncCommand => Cmd}
+
+  case object Unknown             extends BaseRequest(Cmd.Unknown)
+  case object SyncSelf            extends BaseRequest(Cmd.SyncSelf)
+  case object DeleteAccount       extends BaseRequest(Cmd.DeleteAccount)
+  case object SyncConversations   extends BaseRequest(Cmd.SyncConversations)
+  case object SyncConnections     extends BaseRequest(Cmd.SyncConnections)
+  case object SyncSelfClients     extends BaseRequest(Cmd.SyncSelfClients)
   case object SyncSelfPermissions extends BaseRequest(Cmd.SyncSelfPermissions)
   case object SyncClientsLocation extends BaseRequest(Cmd.SyncClientLocation)
-  case object SyncTeam extends BaseRequest(Cmd.SyncTeam)
+  case object SyncTeam            extends BaseRequest(Cmd.SyncTeam)
 
   case class SyncTeamMember(userId: UserId) extends BaseRequest(Cmd.SyncTeam) {
     override val mergeKey: Any = (cmd, userId)
@@ -130,17 +132,28 @@ object SyncRequest {
     override val mergeKey: Any = (cmd, availability.id)
   }
 
-  sealed abstract class RequestForConversation(cmd: SyncCommand) extends BaseRequest(cmd) with ConversationReference
-
-  case class PostConv(convId: ConvId, users: Set[UserId], name: Option[String], team: Option[TeamId], access: Set[Access], accessRole: AccessRole) extends RequestForConversation(Cmd.PostConv) with SerialExecutionWithinConversation {
+  case class PostConv(convId:     ConvId,
+                      users:      Set[UserId],
+                      name:       Option[String],
+                      team:       Option[TeamId],
+                      access:     Set[Access],
+                      accessRole: AccessRole) extends RequestForConversation(Cmd.PostConv) with Serialized {
     override def merge(req: SyncRequest) = mergeHelper[PostConv](req)(Merged(_))
   }
 
-  case class PostConvName(convId: ConvId, name: String) extends RequestForConversation(Cmd.PostConvName) with SerialExecutionWithinConversation {
+  case class PostConvName(convId: ConvId, name: String) extends RequestForConversation(Cmd.PostConvName) with Serialized {
     override def merge(req: SyncRequest) = mergeHelper[PostConvName](req)(Merged(_))
   }
 
-  case class PostConvState(convId: ConvId, state: ConversationState) extends RequestForConversation(Cmd.PostConvState) with SerialExecutionWithinConversation {
+  case class PostConvState(convId: ConvId, state: ConversationState) extends RequestForConversation(Cmd.PostConvState) with Serialized {
+
+    private def mergeConvState(o: ConversationState, n: ConversationState) = {
+      val a = if (o.archiveTime.exists(t => n.archiveTime.forall(_.isBefore(t)))) o else n
+      val m = if (o.muteTime.exists(t => n.muteTime.forall(_.isBefore(t)))) o else n
+
+      ConversationState(a.archived, a.archiveTime, m.muted, m.muteTime, m.mutedStatus)
+    }
+
     override def merge(req: SyncRequest) = mergeHelper[PostConvState](req)(other => Merged(copy(state = mergeConvState(state, other.state))))
   }
 
@@ -149,18 +162,18 @@ object SyncRequest {
     override def merge(req: SyncRequest) = mergeHelper[PostLastRead](req)(Merged(_))
   }
 
-  case class PostCleared(convId: ConvId, time: RemoteInstant) extends RequestForConversation(Cmd.PostCleared) with SerialExecutionWithinConversation {
+  case class PostCleared(convId: ConvId, time: RemoteInstant) extends RequestForConversation(Cmd.PostCleared) with Serialized {
     override val mergeKey: Any = (cmd, convId)
     override def merge(req: SyncRequest) = mergeHelper[PostCleared](req) { other =>
       Merged(PostCleared(convId, time max other.time))
     }
   }
 
-  case class PostTypingState(convId: ConvId, isTyping: Boolean) extends RequestForConversation(Cmd.PostTypingState) with SerialExecutionWithinConversation {
+  case class PostTypingState(convId: ConvId, isTyping: Boolean) extends RequestForConversation(Cmd.PostTypingState) with Serialized {
     override def merge(req: SyncRequest) = mergeHelper[PostTypingState](req)(Merged(_))
   }
 
-  case class PostMessage(convId: ConvId, messageId: MessageId, editTime: RemoteInstant) extends RequestForConversation(Cmd.PostMessage) with SerialExecutionWithinConversation {
+  case class PostMessage(convId: ConvId, messageId: MessageId, editTime: RemoteInstant) extends RequestForConversation(Cmd.PostMessage) with Serialized {
     override val mergeKey = (cmd, convId, messageId)
     override def merge(req: SyncRequest) = mergeHelper[PostMessage](req) { r =>
       // those requests are merged if message was edited multiple times (or unsent message was edited before sync is finished)
@@ -188,7 +201,7 @@ object SyncRequest {
     override val mergeKey = (cmd, convId, msg, recalledId)
   }
 
-  case class PostAssetStatus(convId: ConvId, messageId: MessageId, exp: Option[FiniteDuration], status: AssetStatus.Syncable) extends RequestForConversation(Cmd.PostAssetStatus) with SerialExecutionWithinConversation {
+  case class PostAssetStatus(convId: ConvId, messageId: MessageId, exp: Option[FiniteDuration], status: AssetStatus.Syncable) extends RequestForConversation(Cmd.PostAssetStatus) with Serialized {
     override val mergeKey = (cmd, convId, messageId)
     override def merge(req: SyncRequest) = mergeHelper[PostAssetStatus](req)(Merged(_))
   }
@@ -199,20 +212,17 @@ object SyncRequest {
     override val mergeKey = (cmd, id)
   }
 
-  case class SyncClients(user: UserId) extends BaseRequest(Cmd.SyncClients) {
-    override val mergeKey = (cmd, user)
-  }
+  case class SyncClients(userId: UserId) extends RequestForUser(Cmd.SyncClients)
 
-  case class SyncPreKeys(user: UserId, clients: Set[ClientId]) extends BaseRequest(Cmd.SyncPreKeys) {
-    override val mergeKey = (cmd, user)
+  case class SyncPreKeys(userId: UserId, clients: Set[ClientId]) extends RequestForUser(Cmd.SyncPreKeys) {
 
     override def merge(req: SyncRequest) = mergeHelper[SyncPreKeys](req) { other =>
       if (other.clients.subsetOf(clients)) Merged(this)
-      else Merged(SyncPreKeys(user, clients ++ other.clients))
+      else Merged(SyncPreKeys(userId, clients ++ other.clients))
     }
 
     override def isDuplicateOf(req: SyncRequest): Boolean = req match {
-      case SyncPreKeys(u, cs) => u == user && clients.subsetOf(cs)
+      case SyncPreKeys(u, cs) => u == userId && clients.subsetOf(cs)
       case _ => false
     }
   }
@@ -231,11 +241,6 @@ object SyncRequest {
 
   case class PostSessionReset(convId: ConvId, userId: UserId, client: ClientId) extends RequestForConversation(Cmd.PostSessionReset) {
     override val mergeKey: Any = (cmd, convId, userId, client)
-  }
-
-  sealed abstract class RequestForUser(cmd: SyncCommand) extends BaseRequest(cmd) {
-    val userId: UserId
-    override val mergeKey = (cmd, userId)
   }
 
   case class PostConnection(userId: UserId, name: String, message: String) extends RequestForUser(Cmd.PostConnection)
@@ -282,7 +287,7 @@ object SyncRequest {
     }
   }
 
-  case class PostConvJoin(convId: ConvId, users: Set[UserId]) extends RequestForConversation(Cmd.PostConvJoin) with SerialExecutionWithinConversation {
+  case class PostConvJoin(convId: ConvId, users: Set[UserId]) extends RequestForConversation(Cmd.PostConvJoin) with Serialized {
     override def merge(req: SyncRequest) = mergeHelper[PostConvJoin](req) { other => Merged(PostConvJoin(convId, users ++ other.users)) }
 
     override def isDuplicateOf(req: SyncRequest): Boolean = req match {
@@ -292,20 +297,13 @@ object SyncRequest {
   }
 
   // leave endpoint on backend accepts only one user as parameter (no way to remove multiple users at once)
-  case class PostConvLeave(convId: ConvId, user: UserId) extends RequestForConversation(Cmd.PostConvLeave) with SerialExecutionWithinConversation {
+  case class PostConvLeave(convId: ConvId, user: UserId) extends RequestForConversation(Cmd.PostConvLeave) with Serialized {
     override val mergeKey = (cmd, convId, user)
   }
 
   private def mergeHelper[A <: SyncRequest : ClassTag](other: SyncRequest)(f: A => MergeResult[A]): MergeResult[A] = other match {
     case req: A if req.mergeKey == other.mergeKey => f(req)
     case _ => Unchanged
-  }
-
-  def mergeConvState(o: ConversationState, n: ConversationState) = {
-    val a = if (o.archiveTime.exists(t => n.archiveTime.forall(_.isBefore(t)))) o else n
-    val m = if (o.muteTime.exists(t => n.muteTime.forall(_.isBefore(t)))) o else n
-
-    ConversationState(a.archived, a.archiveTime, m.muted, m.muteTime, m.mutedStatus)
   }
 
   implicit lazy val Decoder: JsonDecoder[SyncRequest] = new JsonDecoder[SyncRequest] {
@@ -350,7 +348,6 @@ object SyncRequest {
           case Cmd.SyncConversations         => SyncConversations
           case Cmd.SyncTeam                  => SyncTeam
           case Cmd.SyncTeamMember            => SyncTeamMember(userId)
-          case Cmd.SyncConnectedUsers        => SyncConnectedUsers
           case Cmd.SyncConnections           => SyncConnections
           case Cmd.RegisterPushToken         => RegisterPushToken(decodeId[PushToken]('token))
           case Cmd.PostSelf                  => PostSelf(JsonDecoder[UserInfo]('user))
@@ -472,7 +469,7 @@ object SyncRequest {
         case SyncPreKeys(user, clients) =>
           o.put("user", user.str)
           o.put("clients", arrString(clients.toSeq map (_.str)))
-        case SyncSelf | SyncTeam | DeleteAccount | SyncConversations | SyncConnections | SyncConnectedUsers |
+        case SyncSelf | SyncTeam | DeleteAccount | SyncConversations | SyncConnections |
              SyncSelfClients | SyncSelfPermissions | SyncClientsLocation | Unknown => () // nothing to do
       }
     }
@@ -480,8 +477,9 @@ object SyncRequest {
 }
 
 object SerialConvRequest {
+  import SyncRequest._
   def unapply(req: SyncRequest): Option[ConvId] = req match {
-    case p: ConversationReference with SerialExecutionWithinConversation => Some(p.convId)
+    case p: RequestForConversation with Serialized => Some(p.convId)
     case _ => None
   }
 }
