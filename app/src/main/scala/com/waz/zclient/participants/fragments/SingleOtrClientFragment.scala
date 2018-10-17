@@ -21,10 +21,12 @@ import android.content.{ClipData, ClipboardManager, Context, DialogInterface}
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{CompoundButton, TextView}
+import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.error
 import com.waz.api.Verification
 import com.waz.model.UserId
 import com.waz.model.otr.ClientId
-import com.waz.sync.SyncResult
+import com.waz.sync.SyncResult._
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
@@ -179,13 +181,13 @@ class SingleOtrClientFragment extends FragmentHelper {
       clientsController.resetSession(uId, cId).map { res =>
         resetSessionButton.foreach(_.setEnabled(true))
         res match {
-          case SyncResult.Success =>
+          case Success =>
             ViewUtils.showAlertDialog(
               getActivity,
               R.string.empty_string,
               R.string.otr__reset_session__message_ok,
               R.string.otr__reset_session__button_ok, null, true)
-          case SyncResult.Failure(_, _) =>
+          case Failure(_) =>
             ViewUtils.showAlertDialog(
               getActivity,
               R.string.empty_string,
@@ -198,6 +200,8 @@ class SingleOtrClientFragment extends FragmentHelper {
                   resetSession()
                 }
               })
+          case Retry(_) =>
+            error("Awaiting a sync job should not return Retry")//TODO return ErrorOr[Unit] from await?
         }
       } (Threading.Ui)
     case _ =>

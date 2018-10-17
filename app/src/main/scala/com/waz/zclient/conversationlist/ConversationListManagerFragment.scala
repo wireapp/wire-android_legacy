@@ -28,7 +28,6 @@ import com.waz.api.SyncState._
 import com.waz.model._
 import com.waz.model.sync.SyncCommand._
 import com.waz.service.ZMessaging
-import com.waz.sync.SyncRequestServiceImpl.SyncMatcher
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
@@ -157,7 +156,7 @@ class ConversationListManagerFragment extends Fragment
 
       (for {
         z        <- zms
-        syncSate <- z.syncRequests.syncState(SyncMatchers).map(_.state)
+        syncSate <- z.syncRequests.syncState(z.selfUserId, SyncMatchers)
         animType <- animationType
       } yield (syncSate, animType)).onUi { case (state, animType) =>
         state match {
@@ -420,7 +419,7 @@ class ConversationListManagerFragment extends Fragment
 }
 
 object ConversationListManagerFragment {
-  lazy val SyncMatchers = Seq(SyncConversations, SyncSelf, SyncConnections).map(SyncMatcher(_, None))
+  lazy val SyncMatchers = Seq(SyncConversations, SyncSelf, SyncConnections)
 
   lazy val ConvListUpdateThrottling = 250.millis
 

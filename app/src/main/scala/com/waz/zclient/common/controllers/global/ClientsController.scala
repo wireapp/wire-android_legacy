@@ -86,7 +86,7 @@ class ClientsController(implicit inj: Injector) extends Injectable {
 
   def resetSession(userId: UserId, clientId: ClientId): Future[SyncResult] = {
     (for {
-      z    <- zms.head
+      z      <- zms.head
       convId <- inject[Signal[Option[ConvId]]].head.flatMap {
         case Some(id) => Future.successful(id)
         case _ => userAccounts.getConversationId(userId)
@@ -95,7 +95,7 @@ class ClientsController(implicit inj: Injector) extends Injectable {
       resp   <- z.syncRequests.await(syncId)
     } yield resp)
       .recover {
-        case e: Throwable => SyncResult.failed()
+        case e: Throwable => SyncResult(e)
       }
   }
 

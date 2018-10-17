@@ -21,9 +21,8 @@ ext {
     playServicesVersion = '15.0.1'
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
     stethoVersion = '1.5.0'
-    zMessagingDevVersion = "133.2178"
+    zMessagingDevVersion = "133.2179@aar"
     paging_version = "1.0.0"
-
     // Release version number must be like this X.0(.Y)
     zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '133.0.498@aar'
 
@@ -58,7 +57,7 @@ android {
         versionCode System.getenv("BUILD_NUMBER") as Integer ?: 99999
         versionName majorVersion + android.defaultConfig.versionCode
         applicationId "com.waz.zclient"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "com.waz.background.TestRunner"
     }
 
     packagingOptions {
@@ -253,12 +252,10 @@ dependencies {
     }
 
     // For using local files in app/libs
-
     //implementation (name:'avs', ext:'aar')
-
     //implementation (name:'audio-notifications', ext:'aar')
-
     //implementation (name:'zmessaging-android', ext:'aar')
+
     implementation "$avsGroup:$avsName:${internal ? avsInternalVersion : avsVersion}"
     implementation("com.wire:zmessaging-android:${internal ? zMessagingDevVersion : zMessagingReleaseVersion}") {
         transitive = true
@@ -286,6 +283,11 @@ dependencies {
     implementation "com.google.android.gms:play-services-gcm:$playServicesVersion"
     implementation 'com.google.firebase:firebase-messaging:17.3.0'
 
+    //WorkManager
+    def work_version = "1.0.0-alpha10"
+    implementation "android.arch.work:work-runtime:$work_version"
+    implementation "android.arch.work:work-firebase:$work_version"
+
     //third party libraries
     implementation 'com.evernote:android-job:1.2.6'
     implementation 'com.jakewharton.timber:timber:4.7.0'
@@ -310,6 +312,17 @@ dependencies {
     testImplementation 'com.crittercism.dexmaker:dexmaker-dx:1.4'
     testImplementation 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
     testImplementation "android.arch.paging:common:$paging_version"
+
+    androidTestImplementation 'junit:junit:4.12'
+    androidTestImplementation 'org.mockito:mockito-core:1.10.19'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test:rules:1.0.2'
+
+    //The dexmaker stuff is needed for Mockito to work completely
+    androidTestImplementation 'com.crittercism.dexmaker:dexmaker:1.4'
+    androidTestImplementation 'com.crittercism.dexmaker:dexmaker-dx:1.4'
+    androidTestImplementation 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
+    androidTestImplementation "android.arch.work:work-testing:$work_version"
 
     ScalaCompileOptions.metaClass.daemonServer = true
     ScalaCompileOptions.metaClass.fork = true

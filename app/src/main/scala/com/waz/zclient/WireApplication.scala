@@ -34,6 +34,7 @@ import com.google.android.gms.security.ProviderInstaller
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
 import com.waz.api.NetworkMode
+import com.waz.background.WorkManagerSyncRequestService
 import com.waz.content._
 import com.waz.jobs.PushTokenCheckJob
 import com.waz.log.InternalLog
@@ -49,6 +50,7 @@ import com.waz.service.tracking.TrackingService
 import com.waz.services.fcm.FetchJob
 import com.waz.services.gps.GoogleApiImpl
 import com.waz.services.websocket.WebSocketController
+import com.waz.sync.SyncHandler
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.GoogleApi
@@ -85,6 +87,7 @@ import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTr
 import com.waz.zclient.utils.{BackStackNavigator, BackendPicker, Callback, ExternalFileSharing, LocalThumbnailCache, UiStorage, AndroidBase64}
 import com.waz.zclient.views.DraftMap
 import javax.net.ssl.SSLContext
+import org.threeten.bp.Clock
 
 import scala.concurrent.Future
 import scala.util.control.NonFatal
@@ -96,6 +99,8 @@ object WireApplication {
   type AccountToAssetsStorage = (UserId) => Future[Option[AssetsStorage]]
 
   lazy val Global = new Module {
+
+    verbose("Global module created!!")
 
     implicit lazy val ctx:          WireApplication = WireApplication.APP_INSTANCE
     implicit lazy val wContext:     WireContext     = ctx
@@ -125,6 +130,8 @@ object WireApplication {
     bind [GlobalNotificationsService]     to inject[GlobalModule].notifications
     bind [GoogleApi]                      to inject[GlobalModule].googleApi
     bind [GlobalCallingService]           to inject[GlobalModule].calling
+    bind [SyncHandler]                    to inject[GlobalModule].syncHandler
+    bind [Clock]                          to ZMessaging.clock
 
     bind [Signal[Option[AccountManager]]] to ZMessaging.currentAccounts.activeAccountManager
     bind [Signal[AccountManager]]         to inject[Signal[Option[AccountManager]]].collect { case Some(am) => am }
@@ -193,6 +200,8 @@ object WireApplication {
     bind [SpinnerController]       to new SpinnerController()
 
     bind [UiStorage] to new UiStorage()
+
+    bind [WorkManagerSyncRequestService]  to new WorkManagerSyncRequestService()
 
     //notifications
     bind [MessageNotificationsController]  to new MessageNotificationsController()
@@ -346,13 +355,13 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     val googleApi = GoogleApiImpl(this, backend, prefs)
     val base64 = new AndroidBase64()
 
-    ZMessaging.onCreate(this, backend, prefs, googleApi, base64)
+    ZMessaging.onCreate(this, backend, prefs, googleApi, base64, inject[WorkManagerSyncRequestService])
 
     inject[NotificationManagerWrapper]
     inject[ImageNotificationsController]
     inject[CallingNotificationsController]
 
-    //TODO [AN-4942] - is this early enough for app launch events?
+//    //TODO [AN-4942] - is this early enough for app launch events?
     inject[GlobalTrackingController]
     inject[CrashController] //needs to register crash handler
     inject[ThemeController]

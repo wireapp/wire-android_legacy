@@ -226,12 +226,14 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
         zms.otrService.resetSession(conv.getOrElse(ConvId(zms.selfUserId.str)), zms.selfUserId, clientId) flatMap zms.syncRequests.await
       }
     }.recover {
-      case e: Throwable => SyncResult.failed()
+      case e: Throwable => SyncResult(e)
     }.map {
-      case SyncResult.Success => view.showToast(R.string.otr__reset_session__message_ok)
-      case SyncResult.Failure(err, _) =>
+      case SyncResult.Success      => view.showToast(R.string.otr__reset_session__message_ok)
+      case SyncResult.Failure(err) =>
         warn(s"session reset failed: $err")
         view.showDialog(R.string.otr__reset_session__message_fail, R.string.otr__reset_session__button_ok, R.string.otr__reset_session__button_fail, onPos = resetSession())
+      case SyncResult.Retry(err)   =>
+        error(s"Await sync result shouldn't return retry: $err")
     }(Threading.Ui)
   }
 
