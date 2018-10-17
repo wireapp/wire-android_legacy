@@ -92,7 +92,7 @@ class ClientsController(implicit inj: Injector) extends Injectable {
         case _ => userAccounts.getConversationId(userId)
       }
       syncId <- z.otrService.resetSession(convId, userId, clientId)
-      resp   <- z.syncRequests.scheduler.await(syncId)
+      resp   <- z.syncRequests.await(syncId)
     } yield resp)
       .recover {
         case e: Throwable => SyncResult.failed()

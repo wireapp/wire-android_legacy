@@ -223,7 +223,7 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
   private def resetSession(): Unit = {
     zms.head.flatMap { zms =>
       zms.selectedConv.selectedConvIdPref() flatMap { conv =>
-        zms.otrService.resetSession(conv.getOrElse(ConvId(zms.selfUserId.str)), zms.selfUserId, clientId) flatMap zms.syncRequests.scheduler.await
+        zms.otrService.resetSession(conv.getOrElse(ConvId(zms.selfUserId.str)), zms.selfUserId, clientId) flatMap zms.syncRequests.await
       }
     }.recover {
       case e: Throwable => SyncResult.failed()
