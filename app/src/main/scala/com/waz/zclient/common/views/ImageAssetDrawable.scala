@@ -244,7 +244,7 @@ object ImageAssetDrawable {
     val asset = AssetData.newImageAsset(tag = Medium).copy(sizeInBytes = imageData.length, data = Some(imageData))
     new ImageAssetDrawable(
       Signal.const(DataImage(asset)),
-      scaleType = ScaleType.CenterCrop,
+      scaleType = ScaleType.CenterInside,
       request = if (isMirrored) RequestBuilder.RegularMirrored else RequestBuilder.Regular
     )
   }

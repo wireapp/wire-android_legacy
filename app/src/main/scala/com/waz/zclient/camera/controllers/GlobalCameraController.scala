@@ -313,12 +313,12 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
     PreviewSize(w, h)
   }
 
-  private def getPictureSize(pms: CameraParamsWrapper) = {
-    val (bigger, smaller) = pms.get.getSupportedPictureSizes.asScala.map(new CameraSizeWrapper(_)).partition { size =>
-      size.height >= ImageAssetGenerator.MediumSize
+  private def getPictureSize(pms: CameraParamsWrapper) =
+    pms.get.getSupportedPictureSizes.asScala.map(new CameraSizeWrapper(_)).minBy { s =>
+      val is16_9 = math.abs( (s.width.toDouble / s.height) - GlobalCameraController.Ratio_16_9 ) < 0.01
+      val differenceToHeight = Math.abs(s.height - ImageAssetGenerator.MediumSize)
+      (!is16_9, differenceToHeight) //Ordering[Boolean] considers false < true, so we want to flip the is16_9 check to give them preference
     }
-    if (bigger.nonEmpty) bigger.minBy(_.width) else smaller.maxBy(_.width)
-  }
 
   /**
     * activityRotation is relative to the natural orientation of the device, regardless of how the device is rotated.
@@ -342,6 +342,10 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
   private def supportsFocusMode(pms: CameraParamsWrapper, mode: String) = Option(pms.get.getSupportedFocusModes).fold(false)(_.contains(mode))
 
   private def setFocusMode(pms: CameraParamsWrapper, mode: String) = if (supportsFocusMode(pms, mode)) pms.get.setFocusMode(mode)
+}
+
+object GlobalCameraController {
+  val Ratio_16_9: Double = 16.0 / 9.0
 }
 
 object WireCamera {
