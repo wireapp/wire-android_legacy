@@ -20,7 +20,7 @@ package com.waz.zclient.storage
 import android.content.Context
 import android.support.test.InstrumentationRegistry
 import com.waz.db.{Dao, DaoDB}
-import com.waz.service.assets2.AssetsStorageImpl.AssetDao
+import com.waz.service.assets2.AssetStorageImpl.AssetDao
 import com.waz.utils.DbStorage2
 import com.waz.utils.wrappers.DB
 import com.waz.zclient.TestUtils.asyncTest
