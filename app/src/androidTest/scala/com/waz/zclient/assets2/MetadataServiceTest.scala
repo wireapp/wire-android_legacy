@@ -17,10 +17,13 @@
  */
 package com.waz.zclient.assets2
 
+import android.graphics.BitmapFactory
+import android.media.ExifInterface
 import android.support.test.InstrumentationRegistry._
 import android.support.test.filters.MediumTest
 import android.support.test.runner.AndroidJUnit4
 import com.waz.model.errors._
+import com.waz.service.assets2.Medium
 import com.waz.zclient.TestUtils._
 import com.waz.zclient.dev.test.R
 import org.junit.Test
@@ -33,15 +36,15 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class MetadataServiceTest {
 
   val metadataService = new MetadataServiceImpl(
-    new AndroidUriHelper(getContext),
-    new AndroidMetadataRetriever(getTargetContext)
+    getContext,
+    new AndroidUriHelper(getContext)
   )
 
   @Test
-  def extractForImage(): Unit = asyncTest {
-    val uri = getResourceUri(getContext, R.raw.test_img)
+  def extractForImageBitmap(): Unit = asyncTest {
+    val bitmap = BitmapFactory.decodeResource(getContext.getResources, R.raw.test_img)
     for {
-      errorOrMeta <- metadataService.extractForImage(uri).modelToEither
+      errorOrMeta <- metadataService.extractForImage(bitmap, ExifInterface.ORIENTATION_ROTATE_90, Medium).modelToEither
     } yield {
       lazy val errorMsg = s"Extracted metadata: $errorOrMeta"
       assert(errorOrMeta.isRight, errorMsg)
@@ -51,10 +54,23 @@ class MetadataServiceTest {
   }
 
   @Test
-  def extractForImage2(): Unit = asyncTest {
+  def extractForImage(): Unit = asyncTest {
+    val uri = getResourceUri(getContext, R.raw.test_img)
+    for {
+      errorOrMeta <- metadataService.extractForImage(uri, Medium).modelToEither
+    } yield {
+      lazy val errorMsg = s"Extracted metadata: $errorOrMeta"
+      assert(errorOrMeta.isRight, errorMsg)
+      val meta = errorOrMeta.right.get
+      assert(meta.dimensions.width > 0 && meta.dimensions.height > 0, errorMsg)
+    }
+  }
+
+  @Test
+  def extractForImageProvideVideoUri(): Unit = asyncTest {
     val uri = getResourceUri(getContext, R.raw.test_video)
     for {
-      errorOrMeta <- metadataService.extractForImage(uri).modelToEither
+      errorOrMeta <- metadataService.extractForImage(uri, Medium).modelToEither
     } yield {
       lazy val errorMsg = s"Extracted metadata: $errorOrMeta"
       assert(errorOrMeta.isLeft, errorMsg)
@@ -75,10 +91,34 @@ class MetadataServiceTest {
   }
 
   @Test
-  def extractForVideo2(): Unit = asyncTest {
+  def extractForVideoProvideImageUri(): Unit = asyncTest {
     val uri = getResourceUri(getContext, R.raw.test_img)
     for {
       errorOrMeta <- metadataService.extractForVideo(uri).modelToEither
+    } yield {
+      lazy val errorMsg = s"Extracted metadata: $errorOrMeta"
+      assert(errorOrMeta.isLeft, errorMsg)
+    }
+  }
+
+  @Test
+  def extractForAudio(): Unit = asyncTest {
+    val uri = getResourceUri(getContext, R.raw.test_audio)
+    for {
+      errorOrMeta <- metadataService.extractForAudio(uri).modelToEither
+    } yield {
+      lazy val errorMsg = s"Extracted metadata: $errorOrMeta"
+      assert(errorOrMeta.isRight, errorMsg)
+      val meta = errorOrMeta.right.get
+      assert(meta.loudness.levels.nonEmpty && !meta.duration.isZero, errorMsg)
+    }
+  }
+
+  @Test
+  def extractForAudioProvideImageUri(): Unit = asyncTest {
+    val uri = getResourceUri(getContext, R.raw.test_img)
+    for {
+      errorOrMeta <- metadataService.extractForAudio(uri).modelToEither
     } yield {
       lazy val errorMsg = s"Extracted metadata: $errorOrMeta"
       assert(errorOrMeta.isLeft, errorMsg)
