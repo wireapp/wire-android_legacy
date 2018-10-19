@@ -23,7 +23,7 @@ import android.support.test.filters.MediumTest
 import android.support.test.runner.AndroidJUnit4
 import com.waz.cache2.CacheService.{AES_CBC_Encryption, NoEncryption}
 import com.waz.model._
-import com.waz.service.assets2.AssetsStorageImpl.AssetDao
+import com.waz.service.assets2.AssetStorageImpl.AssetDao
 import com.waz.service.assets2._
 import org.junit.runner.RunWith
 import org.threeten.bp.Duration
