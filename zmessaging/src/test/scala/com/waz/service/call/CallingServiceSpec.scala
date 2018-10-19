@@ -521,6 +521,10 @@ class CallingServiceSpec extends AndroidFreeSpec {
     val checkpoint5  = checkpoint4
     val checkpoint6  = callCheckpoint(_.get(groupConv.id).exists(cur => cur.state == Ended), _.isEmpty)
 
+    val checkpoint7  = callCheckpoint(_.get(groupConv.id).exists(cur => cur.state == Ongoing && cur.others.keySet == Set(otherUser)), _.isEmpty)
+    val checkpoint8  = callCheckpoint(_.get(groupConv.id).exists(cur => cur.state == Ongoing && cur.others.keySet == Set(otherUser, otherUser2)), _.isEmpty)
+    val checkpoint9  = checkpoint8
+
     scenario("Leaving a group call with more than 1 other member should put the call into the Ongoing state if we skip terminating") {
       await(globalPrefs(SkipTerminatingState) := true)
 
@@ -580,6 +584,25 @@ class CallingServiceSpec extends AndroidFreeSpec {
       awaitCP(checkpoint6)
 
       //TODO now what happens if the user rejoins the call before the other side hangs up??
+    }
+
+    scenario("If a user joins an ongoing group call in the background, it shouldn't be bumped to active") {
+      await(globalPrefs(SkipTerminatingState) := true)
+      service.onIncomingCall(groupConv.remoteId, otherUser, videoCall = false, shouldRing = true)
+
+      service.endCall(groupConv.id)
+      service.dismissCall()
+      service.onClosedCall(StillOngoing, groupConv.remoteId, RemoteInstant(clock.instant()), selfUserId)
+
+      awaitCP(checkpoint7)
+
+      service.onGroupChanged(groupConv.remoteId, Set(otherUser, otherUser2))
+
+      awaitCP(checkpoint8)
+
+      service.onIncomingCall(groupConv.remoteId, otherUser, videoCall = false, shouldRing = false) //Group check message gets triggered after a bit
+
+      awaitCP(checkpoint9)
     }
   }
 
@@ -683,7 +706,7 @@ class CallingServiceSpec extends AndroidFreeSpec {
       service.startCall(_1to1Conv.id)
       awaitCP(checkpoint1)
 
-      service.onIncomingCall(_1to1Conv2.remoteId, otherUser2, videoCall = false, shouldRing = false) //Receive the second call after first is established
+      service.onIncomingCall(_1to1Conv2.remoteId, otherUser2, videoCall = false, shouldRing = true) //Receive the second call after first is established
       awaitCP(checkpoint2)
 
       (avs.endCall _).expects(*, _1to1Conv.remoteId).once().onCall { (_, _) =>
@@ -716,7 +739,7 @@ class CallingServiceSpec extends AndroidFreeSpec {
       service.startCall(_1to1Conv.id)
       awaitCP(checkpoint1)
 
-      service.onIncomingCall(_1to1Conv2.remoteId, otherUser2, videoCall = false, shouldRing = false) //Receive the second call after first is established
+      service.onIncomingCall(_1to1Conv2.remoteId, otherUser2, videoCall = false, shouldRing = true) //Receive the second call after first is established
       awaitCP(checkpoint2)
 
       service.onClosedCall(Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), otherUser)

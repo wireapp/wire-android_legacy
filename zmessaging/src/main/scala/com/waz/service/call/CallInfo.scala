@@ -77,6 +77,7 @@ case class CallInfo(convId:             ConvId,
        | endTime:            $endTime
        | endReason:          ${endReason.map(reasonString)}
        | hasOutstandingMsg:  ${outstandingMsg.isDefined}
+       | shouldRing:         $shouldRing
     """.stripMargin
 
   val duration = estabTime match {
