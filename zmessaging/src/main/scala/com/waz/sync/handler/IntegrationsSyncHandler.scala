@@ -17,8 +17,6 @@
  */
 package com.waz.sync.handler
 
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.api.impl.ErrorResponse
 import com.waz.model._
 import com.waz.service.EventPipeline
@@ -44,16 +42,10 @@ class IntegrationsSyncHandlerImpl(convs:      ConversationsContentUpdater,
     convs.convById(cId).collect { case Some(c) => c.remoteId }.flatMap { rId =>
       client.addBot(rId, pId, iId).future.flatMap {
         case Right(event) =>
-          verbose(s"addBot($cId, $pId, $iId)")
           pipeline(Seq(event)).map(_ => SyncResult.Success)
         case Left(resp@ErrorResponse(502, _, "bad-gateway")) =>
-          verbose(s"bot refuses to be added $resp")
-          Future.successful(SyncResult.Failure(Some(resp), shouldRetry = false))
-        case Left(resp@ErrorResponse(409, _, "too-many-bots")) =>
-          verbose(s"too many bots in a conversation $resp")
-          Future.successful(SyncResult.Failure(Some(resp), shouldRetry = false))
+          Future.successful(SyncResult(resp).copy(shouldRetry = false))
         case Left(error) =>
-          verbose(s"addBot returned $error")
           Future.successful(SyncResult(error))
       }
     }
@@ -62,10 +54,8 @@ class IntegrationsSyncHandlerImpl(convs:      ConversationsContentUpdater,
     convs.convById(cId).collect { case Some(c) => c.remoteId }.flatMap { rId =>
       client.removeBot(rId, userId).future.flatMap {
         case Right(event) =>
-          verbose(s"removeBot($cId, $userId)")
           pipeline(Seq(event)).map(_ => SyncResult.Success)
         case Left(error) =>
-          verbose(s"removeBot returned $error")
           Future.successful(SyncResult(error))
       }
     }

@@ -228,6 +228,6 @@ class AccountSyncHandler(accountId: UserId, zms: ZMessaging) extends SyncHandler
     case PostConvState(convId, state)                        => zms.conversationSync.postConversationState(convId, state)
     case PostTypingState(convId, ts)                         => zms.typingSync.postTypingState(convId, ts)
     case PostCleared(convId, time)                           => zms.clearedSync.postCleared(convId, time)
-    case Unknown                                             => Future successful SyncResult.Success
+    case Unknown                                             => Future.successful(SyncResult.failed("Unknown sync request"))
   }
 }

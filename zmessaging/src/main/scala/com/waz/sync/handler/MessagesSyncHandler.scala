@@ -22,7 +22,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.Message
 import com.waz.api.impl.ErrorResponse
-import com.waz.api.impl.ErrorResponse.internalError
+import com.waz.api.impl.ErrorResponse.{Cancelled, internalError}
 import com.waz.cache.CacheService
 import com.waz.content.{GlobalPreferences, MembersStorage, MessagesStorage}
 import com.waz.model.AssetData.{ProcessingTaskKey, UploadTaskKey}
@@ -74,12 +74,14 @@ class MessagesSyncHandler(selfUserId: UserId,
   import com.waz.threading.Threading.Implicits.Background
 
   def postDeleted(convId: ConvId, msgId: MessageId): Future[SyncResult] =
-    convs.convById(convId) flatMap {
+    convs.convById(convId).flatMap {
       case Some(conv) =>
         val msg = GenericMessage(Uid(), Proto.MsgDeleted(conv.remoteId, msgId))
-        otrSync.postOtrMessage(ConvId(selfUserId.str), msg).map(_.fold(e => SyncResult(e), _ => SyncResult.Success))
+        otrSync
+          .postOtrMessage(ConvId(selfUserId.str), msg)
+          .map(SyncResult(_))
       case None =>
-        successful(SyncResult(internalError("conversation not found")))
+        successful(SyncResult.failed("conversation not found"))
     }
 
 
@@ -90,10 +92,12 @@ class MessagesSyncHandler(selfUserId: UserId,
         otrSync.postOtrMessage(conv.id, msg).flatMap {
           case Left(e) => successful(SyncResult(e))
           case Right(time) =>
-            msgContent.updateMessage(msgId)(_.copy(editTime = time, state = Message.Status.SENT)) map { _ => SyncResult.Success }
+            msgContent
+              .updateMessage(msgId)(_.copy(editTime = time, state = Message.Status.SENT))
+              .map(_ => SyncResult.Success)
         }
       case None =>
-        successful(SyncResult(internalError("conversation not found")))
+        successful(SyncResult.failed("conversation not found"))
     }
 
   def postReceipt(convId: ConvId, msgId: MessageId, userId: UserId, tpe: ReceiptType): Future[SyncResult] =
@@ -104,17 +108,17 @@ class MessagesSyncHandler(selfUserId: UserId,
           case ReceiptType.EphemeralExpired => (GenericMessage(msgId.uid, Proto.MsgRecall(msgId)), Set(selfUserId, userId))
         }
 
-        otrSync.postOtrMessage(conv.id, msg, Some(recipients), nativePush = false) map {
-          case Left(e) => SyncResult(e)
-          case Right(_) => SyncResult.Success
-        }
+        otrSync
+          .postOtrMessage(conv.id, msg, Some(recipients), nativePush = false)
+          .map(SyncResult(_))
       case None =>
-        successful(SyncResult(internalError("conversation not found")))
+        successful(SyncResult.failed("conversation not found"))
     }
 
   def postMessage(convId: ConvId, id: MessageId, editTime: RemoteInstant): Future[SyncResult] = {
 
-    def shouldGiveUpSending(msg: MessageData) = !network.isOnlineMode || timeouts.messages.sendingTimeout.elapsedSince(msg.time.instant)
+    def shouldGiveUpSending(msg: MessageData) =
+      !network.isOnlineMode || timeouts.messages.sendingTimeout.elapsedSince(msg.time.instant)
 
     storage.getMessage(id) flatMap { message =>
       message.fold(successful(None: Option[ConversationData]))(msg => convs.convById(msg.convId)) map { conv =>
@@ -124,32 +128,35 @@ class MessagesSyncHandler(selfUserId: UserId,
       case (Some(msg), Some(conv)) =>
         postMessage(conv, msg, editTime)
           .recover {
-            case c: CancelException =>
-              SyncResult(ErrorResponse.Cancelled)
+            case _: CancelException =>
+              SyncResult(Cancelled)
             case e: Throwable =>
-              error(s"postMessage($conv, $msg) failed", e)
-              SyncResult.Failure(Some(internalError(e.getMessage)), shouldRetry = false)
+              SyncResult(e)
           }
           .flatMap {
             case SyncResult.Success => successful(SyncResult.Success)
-            case res@SyncResult.Failure(Some(ErrorResponse.Cancelled), _) =>
+            case res@SyncResult.Failure(Some(Cancelled), _) =>
               verbose(s"postMessage($msg) was cancelled")
-              msgContent.updateMessage(id)(_.copy(state = Message.Status.FAILED_READ)) map { _ => res }
+              msgContent
+                .updateMessage(id)(_.copy(state = Message.Status.FAILED_READ))
+                .map(_ => res)
             case res@SyncResult.Failure(error, shouldRetry) =>
               val shouldGiveUp = shouldGiveUpSending(msg)
               warn(s"postMessage failed with res: $res, shouldRetry: $shouldRetry, shouldGiveUp: $shouldGiveUp, offline: ${!network.isOnlineMode}, msg.localTime: ${msg.localTime}")
               if (!shouldRetry || shouldGiveUp)
-                service.messageDeliveryFailed(conv.id, msg, error.getOrElse(internalError(s"shouldRetry: $shouldRetry, shouldGiveUp: $shouldGiveUp, offline: ${!network.isOnlineMode}"))).map(_ => SyncResult.Failure(error, shouldRetry = false))
+                service
+                  .messageDeliveryFailed(conv.id, msg, error.getOrElse(internalError(s"shouldRetry: $shouldRetry, shouldGiveUp: $shouldGiveUp, offline: ${!network.isOnlineMode}")))
+                  .map(_ => SyncResult.Failure(error, shouldRetry = false))
               else successful(res)
 
           }
       case (Some(msg), None) =>
-        tracking.exception(new Exception("postMessage failed, couldn't find conversation for msg"), "postMessage failed, couldn't find conversation for msg")
-        service.messageDeliveryFailed(msg.convId, msg, internalError("conversation not found")) map (_ => SyncResult.aborted())
+        service
+          .messageDeliveryFailed(msg.convId, msg, internalError("conversation not found"))
+          .map(_ => SyncResult.failed("postMessage failed, couldn't find conversation for msg"))
 
       case _ =>
-        tracking.exception(new Exception("postMessage failed, couldn't find a message nor conversation"), "postMessage failed, couldn't find a message nor conversation")
-        successful(SyncResult.aborted())
+        successful(SyncResult.failed("postMessage failed, couldn't find either message or conversation"))
     }
   }
 
@@ -203,7 +210,7 @@ class MessagesSyncHandler(selfUserId: UserId,
           case Some(proto) if !msg.isEphemeral =>
             verbose(s"sending generic message: $proto")
             otrSync.postOtrMessage(conv.id, proto)
-          case Some(proto) =>
+          case Some(_) =>
             successful(Left(internalError(s"Can not send generic ephemeral message: $msg")))
           case None =>
             successful(Left(internalError(s"Unsupported message type in postOtrMessage: $tpe")))
@@ -217,18 +224,14 @@ class MessagesSyncHandler(selfUserId: UserId,
           .flatMap(_ => messageSent(conv.id, msg, time))
           .map(_ => SyncResult.Success)
       case Left(error@ErrorResponse(ResponseCode.Forbidden, _, "unknown-client")) =>
-        verbose(s"postOtrMessage($msg), failed: $error")
-        clients.onCurrentClientRemoved() map { _ => SyncResult(error) }
-      case Left(error@ErrorResponse.Cancelled) =>
-        verbose(s"postOtrMessage($msg) cancelled")
-        successful(SyncResult(error))
+        clients
+          .onCurrentClientRemoved()
+          .map(_ => SyncResult(error))
       case Left(error) =>
-        verbose(s"postOtrMessage($msg), failed: $error")
         successful(SyncResult(error))
     }.recover {
       case _ : CancelException =>
-        verbose(s"postOtrMessage($msg) cancelled")
-        SyncResult(ErrorResponse.Cancelled)
+        SyncResult(Cancelled)
     }
   }
 
@@ -237,14 +240,14 @@ class MessagesSyncHandler(selfUserId: UserId,
 
     def postAssetMessage(asset: AssetData, preview: Option[AssetData], origTime: Option[RemoteInstant] = None): ErrorOrResponse[RemoteInstant] = {
       val proto = GenericMessage(msg.id.uid, msg.ephemeral, Proto.Asset(asset, preview))
-      CancellableFuture.lift(otrSync.postOtrMessage(conv.id, proto) flatMap {
+      CancellableFuture.lift(otrSync.postOtrMessage(conv.id, proto).flatMap {
         case Right(time) =>
           val updateTime = origTime.getOrElse(time)
           verbose(s"posted asset message for: $asset, with update time: $updateTime (origTime: $origTime)")
-          msgContent.updateMessage(msg.id)(_.copy(protos = Seq(proto), time = updateTime)) map { _ => Right(updateTime) }
+          msgContent.updateMessage(msg.id)(_.copy(protos = Seq(proto), time = updateTime)).map(_ => Right(updateTime))
         case Left(err) =>
           warn(s"posting asset message failed: $err")
-          Future successful Left(err)
+          Future.successful(Left(err))
       })
     }
 
@@ -301,7 +304,7 @@ class MessagesSyncHandler(selfUserId: UserId,
     AssetProcessing.get(ProcessingTaskKey(msg.assetId)).flatMap { _ =>
       CancellableFuture lift assets.getAssetData(msg.assetId).flatMap {
         case None => CancellableFuture successful Left(internalError(s"no asset found for msg: $msg"))
-        case Some(asset) if asset.status == AssetStatus.UploadCancelled => CancellableFuture successful Left(ErrorResponse.Cancelled)
+        case Some(asset) if asset.status == AssetStatus.UploadCancelled => CancellableFuture successful Left(Cancelled)
         case Some(asset) =>
           verbose(s"Sending asset: $asset")
           sendWithV3(asset)
@@ -343,6 +346,6 @@ class MessagesSyncHandler(selfUserId: UserId,
       aid    = msg.right.map(_.assetId)
       asset  <- aid.flatMapFuture(id => assets.getAssetData(id).or(internalError(s"asset $id not found")))
       result <- conv.flatMapFuture(c => asset.flatMapFuture(a => post(c, a)))
-    } yield result.fold(SyncResult(_), _ => SyncResult.Success)
+    } yield SyncResult(result)
   }
 }

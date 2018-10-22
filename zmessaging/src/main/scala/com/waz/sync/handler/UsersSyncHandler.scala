@@ -46,17 +46,19 @@ class UsersSyncHandler(assetSync: AssetSyncHandler,
 
   def syncUsers(ids: UserId*): Future[SyncResult] = usersClient.loadUsers(ids).future flatMap {
     case Right(users) =>
-      userService.updateSyncedUsers(users) map { _ => SyncResult.Success }
+      userService
+        .updateSyncedUsers(users)
+        .map(_ => SyncResult.Success)
     case Left(error) =>
-      warn(s"load user request failed for: $ids")
       Future.successful(SyncResult(error))
   }
 
   def syncSelfUser(): Future[SyncResult] = usersClient.loadSelf().future flatMap {
     case Right(user) =>
-      userService.updateSyncedUsers(IndexedSeq(user)) map { _ => SyncResult.Success }
+      userService
+        .updateSyncedUsers(IndexedSeq(user))
+        .map(_ => SyncResult.Success)
     case Left(error) =>
-      warn(s"load self request failed")
       Future.successful(SyncResult(error))
   }
 
@@ -64,7 +66,6 @@ class UsersSyncHandler(assetSync: AssetSyncHandler,
     case Right(user) =>
       updatedSelfToSyncResult(usersClient.updateSelf(UserInfo(user.id, name = Some(name))))
     case Left(error) =>
-      warn(s"load self request failed")
       Future.successful(SyncResult(error))
   }
 
@@ -72,27 +73,25 @@ class UsersSyncHandler(assetSync: AssetSyncHandler,
     case Right(user) =>
       updatedSelfToSyncResult(usersClient.updateSelf(UserInfo(user.id, accentId = Some(color.id))))
     case Left(error) =>
-      warn(s"load self request failed")
       Future.successful(SyncResult(error))
   }
 
-  def postSelfUser(info: UserInfo): Future[SyncResult] = updatedSelfToSyncResult(usersClient.updateSelf(info))
+  def postSelfUser(info: UserInfo): Future[SyncResult] =
+    updatedSelfToSyncResult(usersClient.updateSelf(info))
 
-  def postSelfPicture(): Future[SyncResult] = userService.getSelfUser flatMap {
-    case Some(userData) => userData.picture match {
-      case Some(assetId)  => postSelfPicture(userData.id, assetId)
-      case None           => updatedSelfToSyncResult(usersClient.updateSelf(UserInfo(userData.id, picture = None)))
+  def postSelfPicture(): Future[SyncResult] =
+    userService.getSelfUser flatMap {
+      case Some(userData) => userData.picture match {
+        case Some(assetId) => postSelfPicture(userData.id, assetId)
+        case None          => updatedSelfToSyncResult(usersClient.updateSelf(UserInfo(userData.id, picture = None)))
+      }
+      case _ => Future.successful(SyncResult.retry())
     }
-    case _ => Future.successful(SyncResult.failed())
-  }
 
   def postAvailability(availability: Availability): Future[SyncResult] = {
     verbose(s"postAvailability($availability)")
     otrSync.broadcastMessage(GenericMessage(Uid(), GenericContent.AvailabilityStatus(availability)))
-      .map {
-        case Left(e) => SyncResult.Failure(Some(e))
-        case Right(_) => SyncResult.Success
-      }
+      .map(SyncResult(_))
   }
 
   private def postSelfPicture(id: UserId, assetId: AssetId): Future[SyncResult] = for {
@@ -108,22 +107,16 @@ class UsersSyncHandler(assetSync: AssetSyncHandler,
           } yield res
 
           case Left(err) =>
-            error(s"self picture upload asset $assetId failed: $err")
-            Future.successful(SyncResult.failed())
+            Future.successful(SyncResult(err))
         }
       case Left(err) =>
-        warn(s"Failed to upload small profile picture: $err")
-        Future.successful(SyncResult.failed())
+        Future.successful(SyncResult(err))
     }
   } yield res
 
-  def deleteAccount(): Future[SyncResult] = usersClient.deleteAccount() map {
-    case Right(()) => SyncResult.Success
-    case Left(error) =>
-      warn(s"Account deletion failed: $error")
-      SyncResult(error)
-  }
+  def deleteAccount(): Future[SyncResult] =
+    usersClient.deleteAccount().map(SyncResult(_))
 
   private def updatedSelfToSyncResult(updatedSelf: Future[Either[ErrorResponse, Unit]]): Future[SyncResult] =
-    updatedSelf map (_.fold[SyncResult](SyncResult(_), _ => SyncResult.Success))
+    updatedSelf.map(SyncResult(_))
 }

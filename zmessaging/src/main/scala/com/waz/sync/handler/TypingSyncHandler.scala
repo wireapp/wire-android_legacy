@@ -17,8 +17,6 @@
  */
 package com.waz.sync.handler
 
-import com.waz.ZLog._
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.ConvId
 import com.waz.service.conversation._
 import com.waz.sync.SyncResult
@@ -35,13 +33,12 @@ class TypingSyncHandler(client: TypingClient, convs: ConversationsContentUpdater
     convs.convById(convId) flatMap {
       case Some(conv) =>
         client.updateTypingState(conv.remoteId, isTyping = typing).future map {
-          case Right(_) => SyncResult.Success
+          case Right(_)  => SyncResult.Success
           case Left(err) => SyncResult(err).copy(shouldRetry = false) // don't retry, we don't want to block sync queue
         }
 
       case None =>
-        warn(s"conversation not found: $convId")
-        Future successful SyncResult.failed()
+        Future.successful(SyncResult.failed(s"conversation not found: $convId"))
     }
   }
 }

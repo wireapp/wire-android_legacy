@@ -30,7 +30,7 @@ import com.waz.service.otr._
 import com.waz.sync.SyncResult
 import com.waz.sync.client.OtrClient
 import com.waz.threading.Threading
-import com.waz.utils.{Locales, LoggedTry, Serialized}
+import com.waz.utils.{Locales, LoggedTry}
 
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -174,8 +174,7 @@ class OtrClientsSyncHandlerImpl(context:    Context,
             update match {
               case Some((_, UserClients(_, cs))) if cs.values.forall(_.regLocation.forall(_.hasName)) => SyncResult.Success
               case _ =>
-                verbose(s"user clients were not updated, locations: $locations, toSync: $toSync")
-                SyncResult.failed()
+                SyncResult.retry(s"user clients were not updated, locations: $locations, toSync: $toSync")
             }
           }
     }

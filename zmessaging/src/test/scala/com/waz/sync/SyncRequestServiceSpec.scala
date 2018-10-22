@@ -61,7 +61,7 @@ class SyncRequestServiceSpec extends AndroidFreeSpec {
   }
 
   scenario("Execute a few basic tasks") {
-    (sync.apply (_:SyncRequest)).expects(*).returning(Future.successful(SyncResult(true)))
+    (sync.apply (_:SyncRequest)).expects(*).returning(Future.successful(SyncResult.Success))
 
     val (handle, service) = getSyncServiceHandle
 

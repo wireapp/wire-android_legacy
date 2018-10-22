@@ -42,11 +42,25 @@ object SyncResult {
     override val isSuccess = false
   }
 
-  def apply(error: ErrorResponse) = Failure(Some(error), ! error.isFatal)
+  def apply(error: ErrorResponse): Failure =
+    Failure(Some(error), !error.isFatal)
 
-  def apply(success: Boolean) = if (success) Success else failed()
+  //TODO this loses important information about the exception - would be better if ErrorResponse extended Throwable/Exception
+  def apply(e: Throwable): SyncResult =
+    Failure(Some(ErrorResponse.internalError(e.getMessage)), shouldRetry = false)
 
-  def failed(): SyncResult = Failure(None, true)
+  def apply(result: Either[ErrorResponse, _]): SyncResult =
+    result.fold[SyncResult](SyncResult(_), _ => SyncResult.Success)
 
-  def aborted(): SyncResult = Failure(None, false)
+  def retry(msg: String): SyncResult =
+    Failure(Some(ErrorResponse(ErrorResponse.RetryCode, msg, "internal-error-retry")))
+
+  def retry(): SyncResult =
+    retry("")
+
+  def failed(msg: String): SyncResult =
+    Failure(Some(ErrorResponse.internalError(msg)), shouldRetry = false)
+
+  def failed(): SyncResult =
+    failed("")
 }

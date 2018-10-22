@@ -44,6 +44,7 @@ object ErrorResponse {
   val UnverifiedCode = 497
   val TimeoutCode = 599
   val ConnectionErrorCode = 598
+  val RetryCode = 597
   val UnauthorizedCode = 401
 
   val InternalError = ErrorResponse(InternalErrorCode, "InternalError", "")

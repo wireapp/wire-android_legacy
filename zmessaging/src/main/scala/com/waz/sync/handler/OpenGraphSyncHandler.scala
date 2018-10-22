@@ -22,7 +22,6 @@ import com.waz.ZLog._
 import com.waz.api.Message
 import com.waz.api.Message.Part
 import com.waz.api.impl.ErrorResponse
-import com.waz.api.impl.ErrorResponse._
 import com.waz.content._
 import com.waz.model.AssetMetaData.Image.Tag.Medium
 import com.waz.model.GenericContent.{Asset, LinkPreview, Text}
@@ -56,41 +55,43 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
                            assetClient:     AssetClient) { //TODO assetClient not used
   import com.waz.threading.Threading.Implicits.Background
 
-  def postMessageMeta(convId: ConvId, msgId: MessageId, editTime: RemoteInstant): Future[SyncResult] = messages.getMessage(msgId) flatMap {
-    case None => Future successful SyncResult(internalError(s"No message found with id: $msgId"))
-    case Some(msg) if msg.msgType != Message.Type.RICH_MEDIA =>
-      debug(s"postMessageMeta, message is not RICH_MEDIA: $msg")
-      Future successful SyncResult.Success
-    case Some(msg) if msg.content.forall(_.tpe != Part.Type.WEB_LINK) =>
-      verbose(s"postMessageMeta, no WEB_LINK found in msg: $msg")
-      Future successful SyncResult.Success
-    case Some(msg) if msg.editTime != editTime =>
-      verbose(s"postMessageMeta, message has already been edited: $msg")
-      Future successful SyncResult.Success
-    case Some(msg) =>
-      convs.get(convId) flatMap {
-        case None => Future successful SyncResult(internalError(s"No conversation found with id: $convId"))
-        case Some(conv) =>
-          messagesService.retentionPolicy(conv).future.flatMap { retention =>
-            updateOpenGraphData(msg, retention) flatMap {
-              case Left(errors) => Future successful SyncResult(errors.head)
-              case Right(links) =>
-                updateLinkPreviews(msg, links, retention) flatMap {
-                  case Left(errors) => Future successful SyncResult(errors.head)
-                  case Right(TextMessage(_, _, Seq(), _)) =>
-                    verbose(s"didn't find any previews in message links: $msg")
-                    Future successful SyncResult.Success
-                  case Right(proto) =>
-                    verbose(s"updated link previews: $proto")
-                    otrSync.postOtrMessage(conv.id, proto) map {
-                      case Left(err) => SyncResult(err)
-                      case Right(_) => SyncResult.Success
-                    }
-                }
+  def postMessageMeta(convId: ConvId, msgId: MessageId, editTime: RemoteInstant): Future[SyncResult] =
+    messages.getMessage(msgId) flatMap {
+      case None =>
+        Future.successful(SyncResult.failed(s"No message found with id: $msgId"))
+      case Some(msg) if msg.msgType != Message.Type.RICH_MEDIA =>
+        debug(s"postMessageMeta, message is not RICH_MEDIA: $msg")
+        Future.successful(SyncResult.Success)
+      case Some(msg) if msg.content.forall(_.tpe != Part.Type.WEB_LINK) =>
+        verbose(s"postMessageMeta, no WEB_LINK found in msg: $msg")
+        Future.successful(SyncResult.Success)
+      case Some(msg) if msg.editTime != editTime =>
+        verbose(s"postMessageMeta, message has already been edited: $msg")
+        Future.successful(SyncResult.Success)
+      case Some(msg) =>
+        convs.get(convId) flatMap {
+          case None =>
+            Future.successful(SyncResult.failed(s"No conversation found with id: $convId"))
+          case Some(conv) =>
+            messagesService.retentionPolicy(conv).future.flatMap { retention =>
+              updateOpenGraphData(msg, retention).flatMap {
+                case Left(errors) => Future.successful(SyncResult(errors.head))
+                case Right(links) =>
+                  updateLinkPreviews(msg, links, retention) flatMap {
+                    case Left(errors) => Future.successful(SyncResult(errors.head))
+                    case Right(TextMessage(_, _, Seq(), _)) =>
+                      verbose(s"didn't find any previews in message links: $msg")
+                      Future.successful(SyncResult.Success)
+                    case Right(proto) =>
+                      verbose(s"updated link previews: $proto")
+                      otrSync
+                        .postOtrMessage(conv.id, proto)
+                        .map(SyncResult(_))
+                  }
+              }
             }
-          }
-      }
-  }
+        }
+    }
 
   private def updateIfNotEdited(msg: MessageData, updater: MessageData => MessageData) =
     messages.update(msg.id, {

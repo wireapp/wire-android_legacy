@@ -17,12 +17,12 @@
  */
 package com.waz.sync.handler
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.content.UsersStorage
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.UserId
-import com.waz.service.{ConnectionServiceImpl, EventPipeline}
+import com.waz.service.ConnectionServiceImpl
 import com.waz.sync.SyncResult
 import com.waz.sync.client.ConnectionsClient
 import com.waz.threading.Threading
@@ -40,10 +40,11 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
   def syncConnections(): Future[SyncResult] = {
     connectionsClient.loadConnections().future flatMap {
       case Left(error) =>
-        warn("syncConnections failed")
         Future.successful(SyncResult(error))
       case Right(connections) =>
-        connectionService.handleUserConnectionEvents(connections).map(_ => SyncResult.Success)
+        connectionService
+          .handleUserConnectionEvents(connections)
+          .map(_ => SyncResult.Success)
     }
   }
 
@@ -51,10 +52,10 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
     connectionsClient.createConnection(userId, name, message).future flatMap {
       case Right(event) =>
         verbose(s"postConnection($userId) success: $event")
-        connectionService.handleUserConnectionEvents(Seq(event)).map(_ => SyncResult.Success)
-
+        connectionService
+          .handleUserConnectionEvents(Seq(event))
+          .map(_ => SyncResult.Success)
       case Left(error) =>
-        warn("postConnection failed")
         Future.successful(SyncResult(error))
     }
 
@@ -75,7 +76,6 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
     }
 
     case None =>
-      error(s"No user found for id: $userId")
-      Future.successful(SyncResult.failed())
+      Future.successful(SyncResult.retry(s"No user found for id: $userId"))
   }
 }
