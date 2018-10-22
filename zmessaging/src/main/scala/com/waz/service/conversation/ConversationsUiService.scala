@@ -26,7 +26,7 @@ import com.waz.api.NetworkMode.{OFFLINE, WIFI}
 import com.waz.api.impl._
 import com.waz.content._
 import com.waz.model.ConversationData.{ConversationType, getAccessAndRoleForGroupConv}
-import com.waz.model.GenericContent.{Location, MsgEdit}
+import com.waz.model.GenericContent.{Location, MsgEdit, Quote}
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.service.AccountsService.InForeground
@@ -55,6 +55,8 @@ trait ConversationsUiService {
 
   def sendTextMessage(convId: ConvId, text: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Some[MessageData]]
   def sendTextMessages(convs: Seq[ConvId], text: String, mentions: Seq[Mention] = Nil, exp: Option[FiniteDuration]): Future[Unit]
+
+  def sendReplyMessage(replyTo: MessageId, ext: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]]
 
   def sendAssetMessage(convId: ConvId, rawInput: RawAssetInput, confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]]
   def sendAssetMessages(convs: Seq[ConvId], assets: Seq[RawAssetInput], confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[FiniteDuration] = None): Future[Unit]
@@ -134,6 +136,13 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
   override def sendTextMessages(convs: Seq[ConvId], text: String, mentions: Seq[Mention] = Nil, exp: Option[FiniteDuration]) =
     Future.sequence(convs.map(id => sendTextMessage(id, text, mentions, Some(exp)))).map(_ => {})
 
+  override def sendReplyMessage(replyTo: MessageId, text: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None) =
+    for {
+      msg <- messages.addReplyMessage(replyTo, text, mentions, exp)
+      _   <- msg.fold(Future.successful(Option.empty[(ConversationData, ConversationData)]))(updateLastRead)
+      _   <- msg.fold(Future.successful(Option.empty[SyncId]))(m => sync.postMessage(m.id, m.convId, m.editTime).map(Some(_)))
+    } yield msg
+
   override def sendAssetMessage(convId: ConvId, rawInput: RawAssetInput, confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[Option[FiniteDuration]] = None) =
     assets.addAsset(rawInput).flatMap {
       case Some(asset) => postAssetMessage(convId, asset, confirmation, exp)
@@ -178,7 +187,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
         m.copy(
           msgType = tpe,
           content = ct,
-          protos = Seq(GenericMessage(Uid(), MsgEdit(id, GenericContent.Text(text, ct.flatMap(_.mentions), Nil)))),
+          protos = Seq(GenericMessage(Uid(), MsgEdit(id, GenericContent.Text(text, ct.flatMap(_.mentions), Nil, m.quote)))),
           state = Message.Status.PENDING,
           editTime = (m.time max m.editTime) + 1.millis max LocalInstant.Now.toRemote(currentBeDrift)
         )

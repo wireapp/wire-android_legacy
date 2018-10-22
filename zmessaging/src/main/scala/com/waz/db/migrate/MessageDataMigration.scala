@@ -131,7 +131,7 @@ object MessageDataMigration {
         val time = c.getLong(5)
 
         val contentString = protos.lastOption match {
-          case Some(TextMessage(ct, _, _)) => ct
+          case Some(TextMessage(ct, _, _, _)) => ct
           case _ if msgType == api.Message.Type.RICH_MEDIA => content.map(_.content).mkString(" ")
           case _ => content.headOption.fold("")(_.content)
         }

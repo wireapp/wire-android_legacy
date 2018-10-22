@@ -21,12 +21,14 @@ import com.waz.api.Message
 import com.waz.api.Message.Status
 import com.waz.api.Message.Type._
 import com.waz.content._
+import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.messages.{MessagesContentUpdater, MessagesServiceImpl}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
 import com.waz.testutils.TestGlobalPreferences
+import com.waz.threading.Threading
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -72,6 +74,34 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     (storage.addMessage _).expects(*).once().onCall { msg: MessageData => Future.successful(msg) }
 
     result(service.addMemberJoinMessage(convId, instigator, usersAdded)).map(_.copy(id = newMsg.id)) shouldEqual Some(newMsg)
+  }
+
+  scenario("Create a reply text MessageData") {
+    import Threading.Implicits.Background
+
+    val service = getService
+
+    val messageId = MessageId()
+    val convId = ConvId()
+
+    val msg = MessageData(messageId, convId, TEXT, selfUserId)
+    val conv = ConversationData(convId, RConvId(), Some("conv"))
+
+    (storage.getLastMessage _).expects(convId).once().returning(Future.successful(None))
+    (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(conv)))
+    (storage.addMessage _).expects(*).anyNumberOfTimes().onCall { msg: MessageData => Future.successful(msg) }
+
+    var originalMsgId = MessageId()
+
+    val reply = service.addTextMessage(convId, "aaa").flatMap { msg1 =>
+      originalMsgId = msg1.id
+      (storage.getMessage _).expects(msg1.id).once().returning(Future.successful(Some(msg1)))
+      (storage.getLastMessage _).expects(convId).once().returning(Future.successful(Some(msg1)))
+
+      service.addReplyMessage(msg1.id, "bbb").collect { case Some(msg2) => (msg2.contentString, msg2.replyTo) }
+    }
+
+    result(reply) shouldEqual ("bbb", Some(originalMsgId))
   }
 
   def getService = {

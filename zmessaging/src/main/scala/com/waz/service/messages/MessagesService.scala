@@ -25,7 +25,6 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.content.{EditHistoryStorage, MembersStorage, MessagesStorage, UsersStorage}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GenericContent._
-import com.waz.model.GenericMessage.TextMessage
 import com.waz.model.{Mention, MessageId, _}
 import com.waz.service._
 import com.waz.service.conversation.ConversationsContentUpdater
@@ -48,6 +47,7 @@ trait MessagesService {
   def addKnockMessage(convId: ConvId, selfUserId: UserId): Future[MessageData]
   def addAssetMessage(convId: ConvId, asset: AssetData, exp: Option[Option[FiniteDuration]] = None): Future[MessageData]
   def addLocationMessage(convId: ConvId, content: Location): Future[MessageData]
+  def addReplyMessage(replyTo: MessageId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]]
 
   def addMissedCallMessage(rConvId: RConvId, from: UserId, time: RemoteInstant): Future[Option[MessageData]]
   def addMissedCallMessage(convId: ConvId, from: UserId, time: RemoteInstant): Future[Option[MessageData]]
@@ -125,7 +125,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
       }
 
     gm match {
-      case GenericMessage(id, MsgEdit(msgId, Text(text, mentions, links))) =>
+      case GenericMessage(id, MsgEdit(msgId, Text(text, mentions, links, quote))) =>
 
         def applyEdit(msg: MessageData) = for {
             _ <- edits.insert(EditHistory(msg.id, MessageId(id.str), time))
@@ -170,11 +170,32 @@ class MessagesServiceImpl(selfUserId:   UserId,
   }
 
   override def addTextMessage(convId: ConvId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None) = {
-    verbose(s"addTextMessage($convId, ${content.take(4)}, $mentions")
+    verbose(s"addTextMessage($convId, ${content.take(4)}, $mentions, $exp")
     val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
     verbose(s"parsed content: $ct")
     val id = MessageId()
     updater.addLocalMessage(MessageData(id, convId, tpe, selfUserId, ct, protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil)))), exp = exp) // FIXME: links
+  }
+
+  override def addReplyMessage(replyTo: MessageId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None) = {
+    verbose(s"addReplyMessage($replyTo, ${content.take(4)}, $mentions, $exp")
+    updater.getMessage(replyTo).flatMap {
+      case Some(original) =>
+        val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
+        verbose(s"parsed content: $ct")
+        val id = MessageId()
+        updater.addLocalMessage(
+          MessageData(
+            id, original.convId, tpe, selfUserId, ct,
+            protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, Some(Quote(replyTo, None))))), // TODO: Sha256
+            replyTo = Some(replyTo)
+          ),
+          exp = exp
+        ).map(Option(_))
+      case None =>
+        error(s"A reply to a non-existent message: $replyTo")
+        Future successful None
+    }
   }
 
   override def addLocationMessage(convId: ConvId, content: Location) = {

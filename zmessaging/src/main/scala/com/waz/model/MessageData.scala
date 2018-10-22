@@ -27,7 +27,7 @@ import com.waz.api.{Message, TypeFilter}
 import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.model.ConversationData.ConversationDataDao
-import com.waz.model.GenericContent.{Asset, ImageAsset, LinkPreview, Location, MsgEdit, Text}
+import com.waz.model.GenericContent.{Asset, ImageAsset, LinkPreview, Location, MsgEdit, Quote, Text}
 import com.waz.model.GenericMessage.{GenericMessageContent, TextMessage}
 import com.waz.model.MessageData.MessageState
 import com.waz.model.messages.media.{MediaAssetData, MediaAssetDataProtocol}
@@ -62,7 +62,9 @@ case class MessageData(id:            MessageId              = MessageId(),
                        ephemeral:     Option[FiniteDuration] = None,
                        expiryTime:    Option[LocalInstant]   = None, // local expiration time
                        expired:       Boolean                = false,
-                       duration:      Option[FiniteDuration] = None //for successful calls and message_timer changes
+                       duration:      Option[FiniteDuration] = None, //for successful calls and message_timer changes
+                       replyTo:       Option[MessageId]      = None,
+                       validReply:    Boolean                = false
                       ) {
 
   override def toString: String =
@@ -79,7 +81,7 @@ case class MessageData(id:            MessageId              = MessageId(),
        | editTime:      $editTime
        | members:       $members
        | content:       ${content.map(c => (c.content, c.mentions))}
-       | other fields:  $firstMessage, $recipient, $email, $name, $ephemeral, $expiryTime, $expired, $duration
+       | other fields:  $firstMessage, $recipient, $email, $name, $ephemeral, $expiryTime, $expired, $duration, $replyTo, $validReply
     """.stripMargin
 
 
@@ -89,9 +91,19 @@ case class MessageData(id:            MessageId              = MessageId(),
   }
 
   lazy val contentString = protos.lastOption match {
-    case Some(TextMessage(ct, _, _)) => ct
+    case Some(TextMessage(ct, _, _, _)) => ct
     case _ if msgType == api.Message.Type.RICH_MEDIA => content.map(_.content).mkString(" ")
     case _ => content.headOption.fold("")(_.content)
+  }
+
+  lazy val links: Seq[LinkPreview] = protos.lastOption match {
+    case Some(TextMessage(_, _, links, _)) => links
+    case _ => Nil
+  }
+
+  lazy val quote: Option[Quote] = protos.lastOption match {
+    case Some(TextMessage(_, _, _, quote)) => quote
+    case _ => None
   }
 
   def assetId = AssetId(id.str)
@@ -164,10 +176,10 @@ case class MessageData(id:            MessageId              = MessageId(),
       val newMentions = newContent.flatMap(_.mentions)
 
       val newProto = protos.lastOption match {
-        case Some(GenericMessage(uid, MsgEdit(ref, Text(_, _, links)))) =>
-          GenericMessage(uid, MsgEdit(ref, Text(contentString, newMentions, links)))
-        case Some(GenericMessage(uid, Text(_, _, links))) =>
-          GenericMessage(uid, ephemeral, Text(contentString, newMentions, links))
+        case Some(GenericMessage(uid, MsgEdit(ref, Text(_, _, links, quote)))) =>
+          GenericMessage(uid, MsgEdit(ref, Text(contentString, newMentions, links, quote)))
+        case Some(GenericMessage(uid, Text(_, _, links, quote))) =>
+          GenericMessage(uid, ephemeral, Text(contentString, newMentions, links, quote))
         case _ =>
           GenericMessage(id.uid, ephemeral, Text(contentString, newMentions, Nil))
       }
@@ -204,9 +216,9 @@ object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData
             asset: Option[AssetId] = None,
             width: Int = 0, height: Int = 0,
             syncNeeded: Boolean = false,
-            mentions: Seq[Mention] = Nil): MessageContent = {
+            mentions: Seq[Mention] = Nil): MessageContent =
     MessageContent(tpe, content, emptyMediaAsset(tpe), openGraph, asset, width, height, syncNeeded, mentions)
-  }
+
 
   def emptyMediaAsset(tpe: Message.Part.Type) =
     if (tpe == Message.Part.Type.SPOTIFY || tpe == Message.Part.Type.SOUNDCLOUD || tpe == Message.Part.Type.YOUTUBE) Some(MediaAssetData.empty(tpe)) else None
@@ -270,7 +282,10 @@ object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData
   }
 }
 
-object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[MessageContent], Seq[GenericMessage], Boolean, Set[UserId], Option[UserId], Option[String], Option[String], Message.Status, RemoteInstant, LocalInstant, RemoteInstant, Option[FiniteDuration], Option[LocalInstant], Boolean, Option[FiniteDuration]) => MessageData) {
+object MessageData extends
+  ((MessageId, ConvId, Message.Type, UserId, Seq[MessageContent], Seq[GenericMessage], Boolean, Set[UserId], Option[UserId],
+    Option[String], Option[String], Message.Status, RemoteInstant, LocalInstant, RemoteInstant, Option[FiniteDuration],
+    Option[LocalInstant], Boolean, Option[FiniteDuration], Option[MessageId], Boolean) => MessageData) {
   val Empty = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""))
   val Deleted = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""), state = Message.Status.DELETED)
   val isUserContent = Set(TEXT, TEXT_EMOJI_ONLY, ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, RICH_MEDIA, LOCATION)
@@ -313,30 +328,33 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
   implicit object MessageDataDao extends Dao[MessageData, MessageId]  {
     import com.waz.db._
 
-    val Id = id[MessageId]('_id, "PRIMARY KEY").apply(_.id)
-    val Conv = id[ConvId]('conv_id).apply(_.convId)
-    val Type = text[Message.Type]('msg_type, MessageTypeCodec.encode, MessageTypeCodec.decode)(_.msgType)
-    val User = id[UserId]('user_id).apply(_.userId)
-    val Content = jsonArray[MessageContent, Seq, Vector]('content).apply(_.content)
-    val Protos = protoSeq[GenericMessage, Seq, Vector]('protos).apply(_.protos)
-    val ContentSize = int('content_size)(_.content.size)
+    val Id           = id[MessageId]('_id, "PRIMARY KEY").apply(_.id)
+    val Conv         = id[ConvId]('conv_id).apply(_.convId)
+    val Type         = text[Message.Type]('msg_type, MessageTypeCodec.encode, MessageTypeCodec.decode)(_.msgType)
+    val User         = id[UserId]('user_id).apply(_.userId)
+    val Content      = jsonArray[MessageContent, Seq, Vector]('content).apply(_.content)
+    val Protos       = protoSeq[GenericMessage, Seq, Vector]('protos).apply(_.protos)
+    val ContentSize  = int('content_size)(_.content.size)
     val FirstMessage = bool('first_msg)(_.firstMessage)
-    val Members = set[UserId]('members, _.mkString(","), _.split(",").filter(!_.isEmpty).map(UserId(_))(breakOut))(_.members)
-    val Recipient = opt(id[UserId]('recipient))(_.recipient)
-    val Email = opt(text('email))(_.email)
-    val Name = opt(text('name))(_.name)
-    val State = text[MessageState]('msg_state, _.name, Message.Status.valueOf)(_.state)
-    val Time = remoteTimestamp('time)(_.time)
-    val LocalTime = localTimestamp('local_time)(_.localTime)
-    val EditTime = remoteTimestamp('edit_time)(_.editTime)
-    val Ephemeral = opt(finiteDuration('ephemeral))(_.ephemeral)
-    val ExpiryTime = opt(localTimestamp('expiry_time))(_.expiryTime)
-    val Expired = bool('expired)(_.expired)
-    val Duration = opt(finiteDuration('duration))(_.duration)
+    val Members      = set[UserId]('members, _.mkString(","), _.split(",").filter(!_.isEmpty).map(UserId(_))(breakOut))(_.members)
+    val Recipient    = opt(id[UserId]('recipient))(_.recipient)
+    val Email        = opt(text('email))(_.email)
+    val Name         = opt(text('name))(_.name)
+    val State        = text[MessageState]('msg_state, _.name, Message.Status.valueOf)(_.state)
+    val Time         = remoteTimestamp('time)(_.time)
+    val LocalTime    = localTimestamp('local_time)(_.localTime)
+    val EditTime     = remoteTimestamp('edit_time)(_.editTime)
+    val Ephemeral    = opt(finiteDuration('ephemeral))(_.ephemeral)
+    val ExpiryTime   = opt(localTimestamp('expiry_time))(_.expiryTime)
+    val Expired      = bool('expired)(_.expired)
+    val Duration     = opt(finiteDuration('duration))(_.duration)
+    val ReplyTo      = opt(id[MessageId]('reply_to))(_.replyTo)
+    val ValidReply   = bool('valid_reply)(_.validReply)
 
     override val idCol = Id
 
-    override val table = Table("Messages", Id, Conv, Type, User, Content, Protos, Time, LocalTime, FirstMessage, Members, Recipient, Email, Name, State, ContentSize, EditTime, Ephemeral, ExpiryTime, Expired, Duration)
+    override val table =
+      Table("Messages", Id, Conv, Type, User, Content, Protos, Time, LocalTime, FirstMessage, Members, Recipient, Email, Name, State, ContentSize, EditTime, Ephemeral, ExpiryTime, Expired, Duration, ReplyTo, ValidReply)
 
     override def onCreate(db: DB): Unit = {
       super.onCreate(db)
@@ -344,7 +362,7 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     }
 
     override def apply(implicit cursor: DBCursor): MessageData =
-      MessageData(Id, Conv, Type, User, Content, Protos, FirstMessage, Members, Recipient, Email, Name, State, Time, LocalTime, EditTime, Ephemeral, ExpiryTime, Expired, Duration)
+      MessageData(Id, Conv, Type, User, Content, Protos, FirstMessage, Members, Recipient, Email, Name, State, Time, LocalTime, EditTime, Ephemeral, ExpiryTime, Expired, Duration, ReplyTo, ValidReply)
 
     def deleteForConv(id: ConvId)(implicit db: DB) = delete(Conv, id)
 
@@ -480,7 +498,7 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
       }
     }
 
-  def textContent(message: String): Seq[MessageContent] = Seq(RichMediaContentParser.textMessageContent(message))
+  def textContent(message: String): Seq[MessageContent] = Seq(RichMediaContentParser.textMessageContent(message, Nil))
 
   object IsAsset {
     def apply(tpe: Message.Type): Boolean = unapply(tpe)
@@ -521,6 +539,5 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
       Mention(m.userId, offset + preLength, handleLength) :: acc
     }.sortBy(_.start)
   }
-
 
 }

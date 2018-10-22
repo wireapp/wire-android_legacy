@@ -83,7 +83,7 @@ class MessageEventProcessor(selfUserId:          UserId,
       _     <- updateLastReadFromOwnMessages(conv.id, msgs)
       _     <- deleteCancelled(as)
       _     <- Future.traverse(recalls) { case (GenericMessage(id, MsgRecall(ref)), user, time) => msgsService.recallMessage(conv.id, ref, user, MessageId(id.str), time, Message.Status.SENT) }
-      _     <- RichFuture.traverseSequential(edits) { case (gm @ GenericMessage(id, MsgEdit(ref, Text(text, mentions, links))), user, time) => msgsService.applyMessageEdit(conv.id, user, time, gm) } // TODO: handle mentions in case of MsgEdit
+      _     <- RichFuture.traverseSequential(edits) { case (gm @ GenericMessage(id, MsgEdit(ref, Text(text, mentions, links, _))), user, time) => msgsService.applyMessageEdit(conv.id, user, time, gm) } // TODO: handle mentions in case of MsgEdit
     } yield res
   }
 
@@ -111,7 +111,7 @@ class MessageEventProcessor(selfUserId:          UserId,
           val asset = a.copy(id = AssetId(id.str))
           verbose(s"Received asset v3: $asset with preview: $preview")
           saveAssetAndPreview(asset, preview)
-        case (Text(_, _, linkPreviews), _) =>
+        case (Text(_, _, linkPreviews, _), _) =>
           Future.sequence(linkPreviews.zipWithIndex.map {
             case (LinkPreview.WithAsset(a@AssetData.WithRemoteId(_)), index) =>
               val asset = a.copy(id = if (index == 0) AssetId(id.str) else AssetId())
@@ -164,10 +164,10 @@ class MessageEventProcessor(selfUserId:          UserId,
 
     //v3 assets go here
     def content(id: MessageId, msgContent: Any, from: UserId, time: RemoteInstant, proto: GenericMessage): MessageData = msgContent match {
-      case Text(text, mentions, links) =>
+      case Text(text, mentions, links, quote) =>
         val (tpe, content) = MessageData.messageContent(text, mentions, links)
         verbose(s"MessageData content: $content")
-        val messageData = MessageData(id, conv.id, tpe, from, content, time = time, localTime = event.localTime, protos = Seq(proto))
+        val messageData = MessageData(id, conv.id, tpe, from, content, time = time, localTime = event.localTime, protos = Seq(proto), replyTo = quote.map(q => MessageId(q.quotedMessageId)))
         messageData.adjustMentions(false).getOrElse(messageData)
       case Knock() =>
         MessageData(id, conv.id, Message.Type.KNOCK, from, time = time, localTime = event.localTime, protos = Seq(proto))
@@ -231,8 +231,8 @@ class MessageEventProcessor(selfUserId:          UserId,
       * We may need to do more involved checks in future.
       */
     def sanitize(msg: GenericMessage): GenericMessage = msg match {
-      case GenericMessage(uid, Text(text, mentions, links)) if text.length > MaxTextContentLength =>
-        GenericMessage(uid, Text(text.take(MaxTextContentLength), mentions, links.filter { p => p.url.length + p.urlOffset <= MaxTextContentLength }))
+      case GenericMessage(uid, Text(text, mentions, links, quote)) if text.length > MaxTextContentLength =>
+        GenericMessage(uid, Text(text.take(MaxTextContentLength), mentions, links.filter { p => p.url.length + p.urlOffset <= MaxTextContentLength }, quote))
       case _ =>
         msg
     }

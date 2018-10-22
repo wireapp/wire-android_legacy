@@ -107,12 +107,12 @@ class EphemeralMessagesService(selfUserId: UserId,
 
     msg.msgType match {
       case TEXT | TEXT_EMOJI_ONLY =>
-        msg.copy(expired = true, content = Nil, protos = Seq(GenericMessage(msg.id.uid, Text(obfuscate(msg.contentString)))))
+        msg.copy(expired = true, content = Nil, protos = Seq(GenericMessage(msg.id.uid, Text(obfuscate(msg.contentString), Nil, msg.links, msg.quote))))
       case RICH_MEDIA =>
         val content = msg.content map { ct =>
           ct.copy(content = obfuscate(ct.content), openGraph = None) //TODO: asset and rich media
         }
-        msg.copy(expired = true, content = content, protos = Seq(GenericMessage(msg.id.uid, Text(obfuscate(msg.contentString))))) // TODO: obfuscate links
+        msg.copy(expired = true, content = content, protos = Seq(GenericMessage(msg.id.uid, Text(obfuscate(msg.contentString), Nil, msg.links, msg.quote)))) // TODO: obfuscate links
       case VIDEO_ASSET | AUDIO_ASSET =>
         removeSource(msg)
         msg.copy(expired = true)

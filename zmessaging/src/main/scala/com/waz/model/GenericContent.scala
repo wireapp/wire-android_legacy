@@ -265,6 +265,18 @@ object GenericContent {
     }
   }
 
+  type Quote = Messages.Quote
+
+  object Quote {
+    def apply(replyTo: MessageId, sha256: Option[Sha256]) = returning(new Messages.Quote) { q =>
+      q.quotedMessageId = replyTo.str
+      sha256.foreach(sha => if (sha.bytes.nonEmpty) q.quotedMessageSha256 = sha.bytes)
+    }
+
+    def unapply(quote: Quote): Option[(MessageId, Option[Sha256])] =
+      Some(MessageId(quote.quotedMessageId), Option(quote.quotedMessageSha256).collect { case bytes if bytes.nonEmpty => Sha256.calculate(bytes) })
+  }
+
   type LinkPreview = Messages.LinkPreview
 
   object LinkPreview {
@@ -375,17 +387,22 @@ object GenericContent {
   implicit object Text extends GenericContent[Text] {
     override def set(msg: GenericMessage) = msg.setText
 
-    def apply(content: String): Text = apply(content, Nil, Nil)
+    def apply(content: String): Text = apply(content, Nil, Nil, None)
 
-    def apply(content: String, links: Seq[LinkPreview]): Text = apply(content, Nil, links)
+    def apply(content: String, links: Seq[LinkPreview]): Text = apply(content, Nil, links, None)
 
-    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview]): Text = returning(new Messages.Text()) { t =>
+    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview]): Text = apply(content, mentions, links, None)
+
+    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Quote): Text = apply(content, mentions, links, Some(quote))
+
+    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Option[Quote]): Text = returning(new Messages.Text()) { t =>
       t.content = content
       t.mentions = mentions.map { case com.waz.model.Mention(userId, start, length) => GenericContent.Mention(userId, start, length) }(breakOut).toArray
       t.linkPreview = links.toArray
+      quote.foreach(q => t.quote = q)
     }
 
-    def unapply(proto: Text): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview])] = {
+    def unapply(proto: Text): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview], Option[Quote])] = {
       val mentions = proto.mentions.map { m =>
         val userId = m.getUserId match {
           case id: String if id.nonEmpty => Option(UserId(id))
@@ -393,7 +410,7 @@ object GenericContent {
         }
         com.waz.model.Mention(userId, m.start, m.length)
       }.toSeq
-      Option((proto.content, mentions, proto.linkPreview.toSeq))
+      Option((proto.content, mentions, proto.linkPreview.toSeq, Option(proto.quote)))
     }
   }
 

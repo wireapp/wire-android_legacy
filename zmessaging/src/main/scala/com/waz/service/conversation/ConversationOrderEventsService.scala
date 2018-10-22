@@ -153,7 +153,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
   }
 
   private def hasMention(event: Event): Boolean = event match {
-    case GenericMessageEvent(_, _, _, GenericMessage(_, Text(_, mentions, _))) =>
+    case GenericMessageEvent(_, _, _, GenericMessage(_, Text(_, mentions, _, _))) =>
       mentions.exists(_.userId.contains(selfUserId))
     case _ => false
   }

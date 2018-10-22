@@ -95,22 +95,24 @@ package object model {
 
       def apply(text: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview]): GenericMessage = GenericMessage(Uid(), Text(text, mentions, links))
 
+      def apply(text: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Option[Quote]): GenericMessage = GenericMessage(Uid(), Text(text, mentions, links, quote))
+
       def apply(msg: MessageData): GenericMessage = GenericMessage(msg.id.uid, msg.ephemeral, Text(msg.contentString, msg.content.flatMap(_.mentions), Nil))
 
-      def unapply(msg: GenericMessage): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview])] = msg match {
-        case GenericMessage(_, Text(content, mentions, links)) =>
-          Some((content, mentions, links))
-        case GenericMessage(_, Ephemeral(_, Text(content, mentions, links))) =>
-          Some((content, mentions, links))
-        case GenericMessage(_, MsgEdit(_, Text(content, mentions, links))) =>
-          Some((content, mentions, links))
+      def unapply(msg: GenericMessage): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview], Option[Quote])] = msg match {
+        case GenericMessage(_, Text(content, mentions, links, quote)) =>
+          Some((content, mentions, links, quote))
+        case GenericMessage(_, Ephemeral(_, Text(content, mentions, links, quote))) =>
+          Some((content, mentions, links, quote))
+        case GenericMessage(_, MsgEdit(_, Text(content, mentions, links, quote))) =>
+          Some((content, mentions, links, quote))
         case _ =>
           None
       }
 
       def updateMentions(msg: GenericMessage, newMentions: Seq[com.waz.model.Mention]): GenericMessage = msg match {
-        case GenericMessage(uid, Text(text, mentions, links)) if mentions != newMentions =>
-          GenericMessage(uid, Text(text, newMentions, links))
+        case GenericMessage(uid, Text(text, mentions, links, quote)) if mentions != newMentions =>
+          GenericMessage(uid, Text(text, newMentions, links, quote))
         case _ =>
           msg
       }

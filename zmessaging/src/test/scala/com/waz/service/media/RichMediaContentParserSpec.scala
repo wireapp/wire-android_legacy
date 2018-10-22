@@ -18,7 +18,7 @@
 package com.waz.service.media
 
 import com.waz.api.Message.Part.Type._
-import com.waz.model.{Mention, MessageContent, UserId}
+import com.waz.model.{Mention, MessageContent, MessageId, UserId}
 import org.scalacheck.Gen
 import org.scalatest.prop.{GeneratorDrivenPropertyChecks, TableDrivenPropertyChecks}
 import RichMediaContentParser._
@@ -188,7 +188,6 @@ class RichMediaContentParserSpec extends AndroidFreeSpec with TableDrivenPropert
         MessageContent(TEXT, mentionStr, mentions = Seq(mention))
       )
     }
-
   }
 
   //See this page for where the ranges were fetched from:
