@@ -36,7 +36,6 @@ import scala.collection.breakOut
 import scala.concurrent.Future
 
 trait OtrClientsSyncHandler {
-  def syncSelfClients(): Future[SyncResult]
   def syncClients(user: UserId): Future[SyncResult]
   def postLabel(id: ClientId, label: String): Future[SyncResult]
   def syncPreKeys(clients: Map[UserId, Seq[ClientId]]): Future[SyncResult]
@@ -56,13 +55,8 @@ class OtrClientsSyncHandlerImpl(context:    Context,
 
   private lazy val sessions = cryptoBox.sessions
 
-  def syncSelfClients(): Future[SyncResult] = Serialized.future("sync-self-clients", this) { // serialized to avoid races with registration
-    verbose(s"syncSelfClients")
-    syncClients(userId)
-  }
-
   def syncClients(user: UserId): Future[SyncResult] = {
-    verbose(s"syncClients")
+    verbose(s"syncClients: $user")
 
     def hasSession(user: UserId, client: ClientId) = sessions.getSession(OtrService.sessionId(user, client)).map(_.isDefined)
 

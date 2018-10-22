@@ -178,11 +178,11 @@ trait SyncHandler {
   def apply(req: SyncRequest): Future[SyncResult]
 }
 
-class AccountSyncHandler(zms: ZMessaging) extends SyncHandler {
+class AccountSyncHandler(accountId: UserId, zms: ZMessaging) extends SyncHandler {
   import com.waz.model.sync.SyncRequest._
 
   override def apply(req: SyncRequest): Future[SyncResult] = req match {
-    case SyncSelfClients                                     => zms.otrClientsSync.syncSelfClients()
+    case SyncSelfClients                                     => zms.otrClientsSync.syncClients(accountId)
     case SyncClients(user)                                   => zms.otrClientsSync.syncClients(user)
     case SyncClientsLocation                                 => zms.otrClientsSync.syncClientsLocation()
     case SyncPreKeys(user, clients)                          => zms.otrClientsSync.syncPreKeys(Map(user -> clients.toSeq))
