@@ -681,6 +681,41 @@ class CallingServiceSpec extends AndroidFreeSpec {
       service.onOtherSideAnsweredCall(_1to1Conv.remoteId)
       awaitCP(checkpoint7)
     }
+
+    scenario("End a call and later receive another call in the same conversation") {
+
+      val checkpoint1 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == SelfCalling && c.startTime == LocalInstant(Instant.EPOCH)))
+      val checkpoint2 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == SelfJoining && c.joinedTime.contains(LocalInstant(Instant.EPOCH + 10.seconds))))
+      val checkpoint3 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == SelfConnected && c.others.keySet == Set(otherUser) && c.estabTime.contains(LocalInstant(Instant.EPOCH + 20.seconds))))
+      val checkpoint4 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == Terminating   && c.others.keySet == Set(otherUser) && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))))
+      val checkpoint5 = callCheckpoint(_.get(_1to1Conv.id).exists(c => c.convId == _1to1Conv.id && c.state == Ended && c.endReason.contains(AvsClosedReason.Normal)      && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))), _.isEmpty)
+
+      val checkpoint6 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == OtherCalling && c.startTime == LocalInstant(Instant.EPOCH + 50.seconds)))
+
+      (avs.startCall _).expects(*, _1to1Conv.remoteId, WCallType.Normal, WCallConvType.OneOnOne, *).once().returning(Future(0))
+      service.startCall(_1to1Conv.id)
+      awaitCP(checkpoint1)
+
+      clock.advance(10.seconds)
+      service.onOtherSideAnsweredCall(_1to1Conv.remoteId)
+      awaitCP(checkpoint2)
+
+      clock.advance(10.seconds)
+      service.onEstablishedCall(_1to1Conv.remoteId, otherUser)
+      awaitCP(checkpoint3)
+
+      clock.advance(10.seconds) //other side ends call
+      service.onClosedCall(AvsClosedReason.Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), otherUser)
+      awaitCP(checkpoint4)
+
+      clock.advance(10.seconds)
+      await(service.dismissCall())
+      awaitCP(checkpoint5)
+
+      clock.advance(10.seconds)
+      service.onIncomingCall(_1to1Conv.remoteId, otherUser, videoCall = false, shouldRing = true)
+      awaitCP(checkpoint6)
+    }
   }
 
   feature("Simultaneous calls") {
