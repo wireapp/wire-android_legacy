@@ -22,6 +22,7 @@ import com.waz.model._
 import com.waz.service.EventPipeline
 import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.sync.SyncResult
+import com.waz.sync.SyncResult.Failure
 import com.waz.sync.client.IntegrationsClient
 import com.waz.threading.Threading
 
@@ -44,7 +45,7 @@ class IntegrationsSyncHandlerImpl(convs:      ConversationsContentUpdater,
         case Right(event) =>
           pipeline(Seq(event)).map(_ => SyncResult.Success)
         case Left(resp@ErrorResponse(502, _, "bad-gateway")) =>
-          Future.successful(SyncResult(resp).copy(shouldRetry = false))
+          Future.successful(Failure(resp))
         case Left(error) =>
           Future.successful(SyncResult(error))
       }

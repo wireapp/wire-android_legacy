@@ -17,14 +17,13 @@
  */
 package com.waz.sync.queue
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.api.SyncState
 import com.waz.content._
 import com.waz.model.SyncId
 import com.waz.model.sync.SyncJob.SyncJobDao
 import com.waz.model.sync._
-import com.waz.sync.queue.SyncContentUpdater.{Add, Cmd, Del, Update}
 import com.waz.sync.queue.SyncJobMerger.{Merged, Unchanged, Updated}
 import com.waz.threading.SerialDispatchQueue
 import com.waz.utils._

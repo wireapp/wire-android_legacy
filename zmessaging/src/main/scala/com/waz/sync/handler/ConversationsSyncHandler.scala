@@ -29,6 +29,7 @@ import com.waz.service.assets.AssetService
 import com.waz.service.conversation.{ConversationOrderEventsService, ConversationsContentUpdaterImpl, ConversationsService}
 import com.waz.service.messages.MessagesService
 import com.waz.sync.SyncResult
+import com.waz.sync.SyncResult.{Retry, Success}
 import com.waz.sync.client.ConversationsClient
 import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
 import com.waz.threading.Threading
@@ -67,7 +68,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       conversationsClient.loadConversations(remoteIds).future flatMap {
         case Right(resps) =>
           debug(s"syncConversations received ${resps.size}")
-          convService.updateConversationsWithDeviceStartMessage(resps).map(_ => SyncResult.Success)
+          convService.updateConversationsWithDeviceStartMessage(resps).map(_ => Success)
         case Left(error) =>
           warn(s"ConversationsClient.syncConversations($ids) failed with error: $error")
           Future.successful(SyncResult(error))
@@ -80,7 +81,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
         debug(s"syncConversations received ${convs.size}")
         val future = convService.updateConversationsWithDeviceStartMessage(convs)
         if (hasMore) syncConversations(convs.lastOption.map(_.id)).flatMap(res => future.map(_ => res))
-        else future.map(_ => SyncResult.Success)
+        else future.map(_ => Success)
       case Left(error) =>
         warn(s"ConversationsClient.loadConversations($start) failed with error: $error")
         Future.successful(SyncResult(error))
@@ -104,7 +105,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
         postConvRespHandler(resp)
     }
 
-    Future.traverse(members.grouped(PostMembersLimit))(post) map { _.find(!_.isSuccess).getOrElse(SyncResult.Success) }
+    Future.traverse(members.grouped(PostMembersLimit))(post) map { _.find(_ != Success).getOrElse(Success) }
   }
 
   def postConversationMemberLeave(id: ConvId, user: UserId): Future[SyncResult] =
@@ -117,7 +118,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
             case Right(_) =>
               verbose(s"postConversationState finished")
               convEvents.handlePostConversationEvent(event)
-                .map(_ => SyncResult.Success)
+                .map(_ => Success)
             case Left(error) =>
               Future.successful(SyncResult(error))
           }
@@ -126,7 +127,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
           conversationsClient
             .postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(conv.lastEventTime)))
             .future
-            .map(_ => SyncResult.Success)
+            .map(_ => Success)
 
         case Left(error) =>
           Future.successful(SyncResult(error))
@@ -145,7 +146,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       case Right(response) =>
         convService.updateConversationsWithDeviceStartMessage(Seq(response)).flatMap { _ =>
           if (toAdd.nonEmpty) postConversationMemberJoin(convId, toAdd)
-          else Future.successful(SyncResult.Success)
+          else Future.successful(Success)
         }
       case Left(resp@ErrorResponse(403, msg, "not-connected")) =>
         warn(s"got error: $resp")
@@ -162,13 +163,13 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       Some(conv) <- convs.convById(convId)
       resp       <- conversationsClient.getLink(conv.remoteId).future
       res        <- resp match {
-        case Right(l)  => convStorage.update(conv.id, _.copy(link = l)).map(_ => SyncResult.Success)
+        case Right(l)  => convStorage.update(conv.id, _.copy(link = l)).map(_ => Success)
         case Left(err) => Future.successful(SyncResult(err))
       }
     } yield res)
       .recover {
         case NonFatal(e) =>
-          SyncResult.retry("Failed to update conversation link")
+          Retry("Failed to update conversation link")
       }
   }
 
@@ -180,10 +181,10 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       event.localTime = LocalInstant.Now
       convEvents
         .handlePostConversationEvent(event)
-        .map(_ => SyncResult.Success)
+        .map(_ => Success)
     case Right(None) =>
       debug(s"postConv got success response, but no event")
-      Future.successful(SyncResult.Success)
+      Future.successful(Success)
     case Left(error) => Future.successful(SyncResult(error))
   }
 
@@ -191,6 +192,6 @@ class ConversationsSyncHandler(selfUserId:          UserId,
     convs.convById(id) flatMap {
       case Some(conv) => body(conv)
       case _ =>
-        Future.successful(SyncResult.retry(s"No conversation found for id: $id")) // XXX: does it make sense to retry ?
+        Future.successful(Retry(s"No conversation found for id: $id")) // XXX: does it make sense to retry ?
     }
 }

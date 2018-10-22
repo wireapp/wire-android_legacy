@@ -24,6 +24,7 @@ import com.waz.model.GenericContent.LastRead
 import com.waz.model._
 import com.waz.service.MetaDataService
 import com.waz.sync.SyncResult
+import com.waz.sync.SyncResult.{Failure, Success}
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.utils.RichWireInstant
 
@@ -37,14 +38,14 @@ class LastReadSyncHandler(selfUserId: UserId, convs: ConversationStorage, metada
 
     convs.get(convId).flatMap {
       case Some(conv) if conv.lastRead.isAfter(time) => // no need to send this msg as lastRead was already advanced
-        Future.successful(SyncResult.Success)
+        Future.successful(Success)
       case Some(conv) =>
         val msg = GenericMessage(Uid(), LastRead(conv.remoteId, time))
         otrSync
           .postOtrMessage(ConvId(selfUserId.str), msg)
           .map(SyncResult(_))
       case None =>
-        Future.successful(SyncResult.failed(s"No conversation found for id: $convId"))
+        Future.successful(Failure(s"No conversation found for id: $convId"))
     }
   }
 }

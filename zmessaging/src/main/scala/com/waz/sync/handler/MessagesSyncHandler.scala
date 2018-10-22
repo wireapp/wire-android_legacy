@@ -37,6 +37,7 @@ import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.otr.{OtrClientsService, OtrServiceImpl}
 import com.waz.service.tracking.TrackingService
 import com.waz.service.{MetaDataService, _}
+import com.waz.sync.SyncResult.{Failure, Retry}
 import com.waz.sync.client.{ErrorOr, ErrorOrResponse, MessagesClient}
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.sync.{SyncResult, SyncServiceHandle}
@@ -81,7 +82,7 @@ class MessagesSyncHandler(selfUserId: UserId,
           .postOtrMessage(ConvId(selfUserId.str), msg)
           .map(SyncResult(_))
       case None =>
-        successful(SyncResult.failed("conversation not found"))
+        successful(Failure("conversation not found"))
     }
 
 
@@ -97,7 +98,7 @@ class MessagesSyncHandler(selfUserId: UserId,
               .map(_ => SyncResult.Success)
         }
       case None =>
-        successful(SyncResult.failed("conversation not found"))
+        successful(Failure("conversation not found"))
     }
 
   def postReceipt(convId: ConvId, msgId: MessageId, userId: UserId, tpe: ReceiptType): Future[SyncResult] =
@@ -112,13 +113,19 @@ class MessagesSyncHandler(selfUserId: UserId,
           .postOtrMessage(conv.id, msg, Some(recipients), nativePush = false)
           .map(SyncResult(_))
       case None =>
-        successful(SyncResult.failed("conversation not found"))
+        successful(Failure("conversation not found"))
     }
 
   def postMessage(convId: ConvId, id: MessageId, editTime: RemoteInstant): Future[SyncResult] = {
 
     def shouldGiveUpSending(msg: MessageData) =
       !network.isOnlineMode || timeouts.messages.sendingTimeout.elapsedSince(msg.time.instant)
+
+    def failSending(msg: MessageData, error: ErrorResponse) = {
+      service
+        .messageDeliveryFailed(convId, msg, error)
+        .map(_ => Failure(error))
+    }
 
     storage.getMessage(id) flatMap { message =>
       message.fold(successful(None: Option[ConversationData]))(msg => convs.convById(msg.convId)) map { conv =>
@@ -135,28 +142,25 @@ class MessagesSyncHandler(selfUserId: UserId,
           }
           .flatMap {
             case SyncResult.Success => successful(SyncResult.Success)
-            case res@SyncResult.Failure(Some(Cancelled), _) =>
+            case res@Failure(Cancelled) =>
               verbose(s"postMessage($msg) was cancelled")
               msgContent
                 .updateMessage(id)(_.copy(state = Message.Status.FAILED_READ))
                 .map(_ => res)
-            case res@SyncResult.Failure(error, shouldRetry) =>
-              val shouldGiveUp = shouldGiveUpSending(msg)
-              warn(s"postMessage failed with res: $res, shouldRetry: $shouldRetry, shouldGiveUp: $shouldGiveUp, offline: ${!network.isOnlineMode}, msg.localTime: ${msg.localTime}")
-              if (!shouldRetry || shouldGiveUp)
-                service
-                  .messageDeliveryFailed(conv.id, msg, error.getOrElse(internalError(s"shouldRetry: $shouldRetry, shouldGiveUp: $shouldGiveUp, offline: ${!network.isOnlineMode}")))
-                  .map(_ => SyncResult.Failure(error, shouldRetry = false))
-              else successful(res)
-
+            case Failure(error) =>
+              failSending(msg, error)
+            case Retry(error) if shouldGiveUpSending(msg) =>
+              failSending(msg, error)
+            case res =>
+              Future.successful(res)
           }
       case (Some(msg), None) =>
         service
           .messageDeliveryFailed(msg.convId, msg, internalError("conversation not found"))
-          .map(_ => SyncResult.failed("postMessage failed, couldn't find conversation for msg"))
+          .map(_ => Failure("postMessage failed, couldn't find conversation for msg"))
 
       case _ =>
-        successful(SyncResult.failed("postMessage failed, couldn't find either message or conversation"))
+        successful(Failure("postMessage failed, couldn't find either message or conversation"))
     }
   }
 

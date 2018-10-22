@@ -32,6 +32,7 @@ import com.waz.service.otr.OtrService
 import com.waz.service.push.PushService
 import com.waz.service.{ErrorsService, UserService}
 import com.waz.sync.SyncResult
+import com.waz.sync.SyncResult.Failure
 import com.waz.sync.client.AssetClient.{Metadata, Retention, UploadResponse}
 import com.waz.sync.client.OtrClient.{ClientMismatch, EncryptedContent, MessageResponse}
 import com.waz.sync.client._
@@ -188,10 +189,10 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
 
     convData.flatMap {
       case None =>
-        successful(SyncResult.failed(s"conv not found: $convId, for user: $user in postSessionReset"))
+        successful(Failure(s"conv not found: $convId, for user: $user in postSessionReset"))
       case Some(conv) =>
         msgContent.flatMap {
-          case None => successful(SyncResult.failed(s"session not found for $user, $client"))
+          case None => successful(Failure(s"session not found for $user, $client"))
           case Some(content) =>
             msgClient
               .postMessage(conv.remoteId, OtrMessage(selfClientId, content), ignoreMissing = true).future

@@ -104,7 +104,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   implicit lazy val evContext = account.accountContext
 
   lazy val sync:              SyncServiceHandle       = wire[AndroidSyncServiceHandle]
-  lazy val syncHandler:       AccountSyncHandler      = new AccountSyncHandler(this)
+  lazy val syncHandler:       AccountSyncHandler      = new AccountSyncHandler(selfUserId, this)
   lazy val otrClientsService: OtrClientsService       = wire[OtrClientsService]
   lazy val syncContent:       SyncContentUpdater      = wire[SyncContentUpdaterImpl]
   lazy val syncRequests:      SyncRequestService      = global.syncRequests

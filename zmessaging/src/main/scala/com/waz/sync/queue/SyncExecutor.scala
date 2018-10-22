@@ -17,15 +17,16 @@
  */
 package com.waz.sync.queue
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.api.SyncState
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.SyncId
-import com.waz.model.sync.SyncRequest.{RequestForConversation, Serialized}
+import com.waz.model.sync.SyncRequest.Serialized
 import com.waz.model.sync.{SyncJob, SyncRequest}
 import com.waz.service.NetworkModeService
 import com.waz.service.tracking.TrackingService
+import com.waz.sync.SyncResult._
 import com.waz.sync.{SyncHandler, SyncRequestServiceImpl, SyncResult}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
@@ -66,7 +67,7 @@ class SyncExecutor(scheduler:   SyncScheduler,
       scheduler.awaitPreconditions(job) {
         withJob { execute(_, sync) }
       } flatMap {
-        case SyncResult.Failure(_, true) => execute(id)(sync)
+        case Retry(_) => execute(id)(sync)
         case res => Future.successful(res)
       }
     }
@@ -77,19 +78,20 @@ class SyncExecutor(scheduler:   SyncScheduler,
 
     if (job.optional && job.timeout > 0 && job.timeout < System.currentTimeMillis()) {
       info(s"Optional request timeout elapsed, dropping: $job")
-      content.removeSyncJob(job.id) map { _ => SyncResult.Success}
+      content
+        .removeSyncJob(job.id)
+        .map(_ => Success)
     } else {
       val future = content.updateSyncJob(job.id)(job => job.copy(attempts = job.attempts + 1, state = SyncState.SYNCING, error = None, offline = !network.isOnlineMode))
         .flatMap {
           case None => Future.successful(SyncResult(ErrorResponse.internalError(s"Could not update job: $job")))
           case Some(updated) =>
-            (sync(updated.request) recover {
-              case e: Throwable =>
-                error(s"syncHandler($updated) failed with unexpected error", e)
-                SyncResult(ErrorResponse.internalError(s"syncHandler($updated) failed with unexpected error: ${e.getMessage}"))
-            }) flatMap { res =>
-              processSyncResult(updated, res)
-            }
+            sync(updated.request)
+              .recover {
+                case e: Throwable =>
+                  SyncResult(ErrorResponse.internalError(s"syncHandler($updated) failed with unexpected error: ${e.getMessage}"))
+              }
+              .flatMap(res => processSyncResult(updated, res))
         }
 
       // this is only to check for any long running sync requests, which could mean very serious problem
@@ -103,34 +105,30 @@ class SyncExecutor(scheduler:   SyncScheduler,
 
   private def processSyncResult(job: SyncJob, result: SyncResult): Future[SyncResult] = {
 
-    def delete() = content.removeSyncJob(job.id) map { _ => result }
-
-    def drop() = content.removeSyncJob(job.id) map { _ => result }
-
     result match {
-      case SyncResult.Success =>
+      case Success =>
         debug(s"SyncRequest: $job completed successfully")
-        delete()
-      case SyncResult.Failure(error, false) =>
+        content.removeSyncJob(job.id).map(_ => result)
+      case res@SyncResult.Failure(error) =>
         warn(s"SyncRequest: $job, failed permanently with error: $error")
-        if (error.exists(_.shouldReportError)) {
-          tracking.exception(new RuntimeException(s"Request ${job.request.cmd} failed permanently with error: ${error.map(_.code)}") with NoStackTrace, s"Got fatal error, dropping request: $job\n error: $error")
+        if (error.shouldReportError) {
+          tracking.exception(new RuntimeException(s"Request ${job.request.cmd} failed permanently with error: ${error.code}") with NoStackTrace, s"Got fatal error, dropping request: $job\n error: $error")
         }
-        drop()
-      case SyncResult.Failure(error, true) =>
+        content.removeSyncJob(job.id).map(_ => res)
+      case Retry(error) =>
         warn(s"SyncRequest: $job, failed with error: $error")
         if (job.attempts > SyncRequestServiceImpl.MaxSyncAttempts) {
-          tracking.exception(new RuntimeException(s"Request ${job.request.cmd} failed with error: ${error.map(_.code)}") with NoStackTrace, s"MaxSyncAttempts exceeded, dropping request: $job\n error: $error")
-          drop()
+          tracking.exception(new RuntimeException(s"Request ${job.request.cmd} failed with error: ${error.code}") with NoStackTrace, s"MaxSyncAttempts exceeded, dropping request: $job\n error: $error")
+          content.removeSyncJob(job.id).map(_ => SyncResult.Failure(error))
         } else if (job.timeout > 0 && job.timeout < job.startTime) {
-          tracking.exception(new RuntimeException(s"Request ${job.request.cmd} timed-out with error: ${error.map(_.code)}") with NoStackTrace, s"Request timeout elapsed, dropping request: $job\n error: $error")
-          drop()
+          tracking.exception(new RuntimeException(s"Request ${job.request.cmd} timed-out with error: ${error.code}") with NoStackTrace, s"Request timeout elapsed, dropping request: $job\n error: $error")
+          content.removeSyncJob(job.id).map(_ => SyncResult.Failure(error))
         } else {
           verbose(s"will schedule retry for: $job, $job")
           val nextTryTime = System.currentTimeMillis() + SyncExecutor.failureDelay(job)
-          content.updateSyncJob(job.id)(job => job.copy(state = SyncState.FAILED, startTime = nextTryTime, error = error, offline = job.offline || !network.isOnlineMode)) map { _ =>
-            result
-          }
+          content
+            .updateSyncJob(job.id)(job => job.copy(state = SyncState.FAILED, startTime = nextTryTime, error = Some(error), offline = job.offline || !network.isOnlineMode))
+            .map(_ => result)
         }
     }
   }

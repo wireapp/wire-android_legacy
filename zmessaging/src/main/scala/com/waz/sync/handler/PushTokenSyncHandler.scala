@@ -24,6 +24,7 @@ import com.waz.model.PushToken
 import com.waz.service.BackendConfig
 import com.waz.service.push.PushTokenService
 import com.waz.sync.SyncResult
+import com.waz.sync.SyncResult.Retry
 import com.waz.sync.client.PushTokenClient
 import com.waz.sync.client.PushTokenClient.PushTokenRegistration
 import com.waz.threading.{CancellableFuture, Threading}
@@ -42,7 +43,7 @@ class PushTokenSyncHandler(pushTokenService: PushTokenService, backend: BackendC
           .onTokenRegistered(token)
           .map(_ => SyncResult.Success)
       case Right(_)  =>
-        Future.successful(SyncResult.retry("Unexpected response"))
+        Future.successful(Retry("Unexpected response"))
       case Left(err) =>
         Future.successful(SyncResult(err))
     }

@@ -85,7 +85,7 @@ class UsersSyncHandler(assetSync: AssetSyncHandler,
         case Some(assetId) => postSelfPicture(userData.id, assetId)
         case None          => updatedSelfToSyncResult(usersClient.updateSelf(UserInfo(userData.id, picture = None)))
       }
-      case _ => Future.successful(SyncResult.retry())
+      case _ => Future.successful(SyncResult.Retry())
     }
 
   def postAvailability(availability: Availability): Future[SyncResult] = {

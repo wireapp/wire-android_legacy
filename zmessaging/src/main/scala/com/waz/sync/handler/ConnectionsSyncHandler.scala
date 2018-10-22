@@ -24,6 +24,7 @@ import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.UserId
 import com.waz.service.ConnectionServiceImpl
 import com.waz.sync.SyncResult
+import com.waz.sync.SyncResult.{Retry, Success}
 import com.waz.sync.client.ConnectionsClient
 import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
@@ -44,7 +45,7 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
       case Right(connections) =>
         connectionService
           .handleUserConnectionEvents(connections)
-          .map(_ => SyncResult.Success)
+          .map(_ => Success)
     }
   }
 
@@ -54,19 +55,19 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
         verbose(s"postConnection($userId) success: $event")
         connectionService
           .handleUserConnectionEvents(Seq(event))
-          .map(_ => SyncResult.Success)
+          .map(_ => Success)
       case Left(error) =>
         Future.successful(SyncResult(error))
     }
 
   def postConnectionStatus(userId: UserId, status: Option[ConnectionStatus]): Future[SyncResult] = usersStorage.get(userId) flatMap {
-    case Some(user) => connectionsClient.updateConnection(userId, status getOrElse user.connection).future flatMap {
+    case Some(user) => connectionsClient.updateConnection(userId, status getOrElse user.connection).future.flatMap {
       case Right(Some(event)) =>
-        connectionService.handleUserConnectionEvents(Seq(event)).map(_ => SyncResult.Success)
+        connectionService.handleUserConnectionEvents(Seq(event)).map(_ => Success)
 
       case Right(None) =>
         warn("postConnectionStatus was successful, but didn't return an event, no change")
-        Future.successful(SyncResult.Success)
+        Future.successful(Success)
 
       case Left(error) =>
         // FIXME: handle 'bad-conn-update' response, it's possible that there is some race condition and the state that
@@ -76,6 +77,6 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
     }
 
     case None =>
-      Future.successful(SyncResult.retry(s"No user found for id: $userId"))
+      Future.successful(Retry(s"No user found for id: $userId"))
   }
 }

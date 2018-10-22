@@ -28,6 +28,7 @@ import com.waz.model.UserId
 import com.waz.model.otr.{Client, ClientId, Location, UserClients}
 import com.waz.service.otr._
 import com.waz.sync.SyncResult
+import com.waz.sync.SyncResult.{Retry, Success}
 import com.waz.sync.client.OtrClient
 import com.waz.threading.Threading
 import com.waz.utils.{Locales, LoggedTry}
@@ -73,16 +74,16 @@ class OtrClientsSyncHandlerImpl(context:    Context,
         toSync <- withoutSession(clients)
         err <- if (toSync.isEmpty) Future successful None else syncSessions(Map(user -> toSync))
       } yield
-        err.fold[SyncResult](SyncResult.Success)(SyncResult(_))
+        err.fold[SyncResult](Success)(SyncResult(_))
 
     def updatePreKeys(id: ClientId) =
       netClient.loadRemainingPreKeys(id).future flatMap {
         case Right(ids) =>
           verbose(s"remaining prekeys: $ids")
           cryptoBox.generatePreKeysIfNeeded(ids) flatMap {
-            case keys if keys.isEmpty => Future.successful(SyncResult.Success)
+            case keys if keys.isEmpty => Future.successful(Success)
             case keys => netClient.updateKeys(id, Some(keys)).future map {
-              case Right(_) => SyncResult.Success
+              case Right(_) => Success
               case Left(error) => SyncResult(error)
             }
           }
@@ -104,7 +105,7 @@ class OtrClientsSyncHandlerImpl(context:    Context,
           _   <- syncSessionsIfNeeded(ucs.clients.keys)
           res <- updatePreKeys(selfClient)
           _   <- res match {
-            case SyncResult.Success => otrClients.lastSelfClientsSyncPref := System.currentTimeMillis()
+            case Success => otrClients.lastSelfClientsSyncPref := System.currentTimeMillis()
             case _ => Future.successful({})
           }
         } yield res
@@ -113,13 +114,13 @@ class OtrClientsSyncHandlerImpl(context:    Context,
 
   def postLabel(id: ClientId, label: String): Future[SyncResult] =
     netClient.postClientLabel(id, label).future map {
-      case Right(_) => SyncResult.Success
+      case Right(_) => Success
       case Left(err) => SyncResult(err)
     }
 
   def syncPreKeys(clients: Map[UserId, Seq[ClientId]]): Future[SyncResult] = syncSessions(clients) map {
     case Some(error) => SyncResult(error)
-    case None => SyncResult.Success
+    case None => Success
   }
 
   def syncSessions(clients: Map[UserId, Seq[ClientId]]): Future[Option[ErrorResponse]] =
@@ -159,12 +160,14 @@ class OtrClientsSyncHandlerImpl(context:    Context,
       })
 
     storage.get(userId) flatMap {
-      case None => Future successful SyncResult.Success
+      case None =>
+        Future.successful(Success)
       case Some(ucs) =>
         val toSync = ucs.clients.values collect {
           case Client(_, _, _, _, Some(loc), _, _, _, _) if !loc.hasName => loc
         }
-        if (toSync.isEmpty) Future successful SyncResult.Success
+        if (toSync.isEmpty)
+          Future.successful(Success)
         else
           for {
             ls <- loadNames(toSync)
@@ -172,9 +175,9 @@ class OtrClientsSyncHandlerImpl(context:    Context,
             update <- storage.update(userId, updateClients(locations))
           } yield {
             update match {
-              case Some((_, UserClients(_, cs))) if cs.values.forall(_.regLocation.forall(_.hasName)) => SyncResult.Success
+              case Some((_, UserClients(_, cs))) if cs.values.forall(_.regLocation.forall(_.hasName)) => Success
               case _ =>
-                SyncResult.retry(s"user clients were not updated, locations: $locations, toSync: $toSync")
+                Retry(s"user clients were not updated, locations: $locations, toSync: $toSync")
             }
           }
     }

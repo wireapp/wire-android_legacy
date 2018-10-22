@@ -32,6 +32,7 @@ import com.waz.service.images.{ImageAssetGenerator, ImageLoader}
 import com.waz.service.messages.MessagesService
 import com.waz.service.otr.OtrServiceImpl
 import com.waz.sync.SyncResult
+import com.waz.sync.SyncResult.{Failure, Success}
 import com.waz.sync.client.AssetClient.Retention
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
 import com.waz.sync.client.{AssetClient, OpenGraphClient}
@@ -58,20 +59,20 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
   def postMessageMeta(convId: ConvId, msgId: MessageId, editTime: RemoteInstant): Future[SyncResult] =
     messages.getMessage(msgId) flatMap {
       case None =>
-        Future.successful(SyncResult.failed(s"No message found with id: $msgId"))
+        Future.successful(Failure(s"No message found with id: $msgId"))
       case Some(msg) if msg.msgType != Message.Type.RICH_MEDIA =>
         debug(s"postMessageMeta, message is not RICH_MEDIA: $msg")
-        Future.successful(SyncResult.Success)
+        Future.successful(Success)
       case Some(msg) if msg.content.forall(_.tpe != Part.Type.WEB_LINK) =>
         verbose(s"postMessageMeta, no WEB_LINK found in msg: $msg")
-        Future.successful(SyncResult.Success)
+        Future.successful(Success)
       case Some(msg) if msg.editTime != editTime =>
         verbose(s"postMessageMeta, message has already been edited: $msg")
-        Future.successful(SyncResult.Success)
+        Future.successful(Success)
       case Some(msg) =>
         convs.get(convId) flatMap {
           case None =>
-            Future.successful(SyncResult.failed(s"No conversation found with id: $convId"))
+            Future.successful(Failure(s"No conversation found with id: $convId"))
           case Some(conv) =>
             messagesService.retentionPolicy(conv).future.flatMap { retention =>
               updateOpenGraphData(msg, retention).flatMap {
@@ -81,7 +82,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
                     case Left(errors) => Future.successful(SyncResult(errors.head))
                     case Right(TextMessage(_, _, Seq(), _)) =>
                       verbose(s"didn't find any previews in message links: $msg")
-                      Future.successful(SyncResult.Success)
+                      Future.successful(Success)
                     case Right(proto) =>
                       verbose(s"updated link previews: $proto")
                       otrSync

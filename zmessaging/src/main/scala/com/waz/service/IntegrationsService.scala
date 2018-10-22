@@ -25,8 +25,9 @@ import com.waz.content.{AssetsStorage, ConversationStorage, MembersStorage, User
 import com.waz.model._
 import com.waz.service.conversation.ConversationsUiService
 import com.waz.service.messages.MessagesService
+import com.waz.sync.SyncResult.{Failure, Success}
 import com.waz.sync.client.{ErrorOr, IntegrationsClient}
-import com.waz.sync.{SyncRequestService, SyncResult, SyncServiceHandle}
+import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.Threading
 
 import scala.concurrent.Future
@@ -95,18 +96,20 @@ class IntegrationsServiceImpl(selfUserId:   UserId,
       for {
         (conv, syncId) <- convsUi.createGroupConversation()
         res <- syncRequests.await(syncId).flatMap {
-          case SyncResult.Success =>
+          case Success =>
             for {
               postResult <- addBotToConversation(conv.id, pId, serviceId)
               service    <- members.getActiveUsers(conv.id)
               res        <- postResult.fold(Left(_), _ => Right(service.find(_ != selfUserId))) match {
-                case Left(error) => Future.successful(Left(error))
+                case Left(error)    => Future.successful(Left(error))
                 case Right(Some(u)) => messages.addConnectRequestMessage(conv.id, selfUserId, u, "", "", fromSync = true).map(_ => Right(conv.id))
-                case Right(_) => Future.successful(Left(ErrorResponse.internalError("No user found for newly added service found - this shouldn't happen")))
+                case Right(_)       => Future.successful(Left(ErrorResponse.internalError("No user found for newly added service found - this shouldn't happen")))
               }
             } yield res
-          case result =>
-            Future.successful(Left(result.error.getOrElse(ErrorResponse.internalError("Failed to create group conversation for bot"))))
+          case Failure(err) =>
+            Future.successful(Left(err))
+          case _ =>
+            Future.successful(Left(internalError("Await should not have completed on SyncResult.Retry")))
         }
       } yield res
 
@@ -132,9 +135,9 @@ class IntegrationsServiceImpl(selfUserId:   UserId,
       syncId <- sync.postAddBot(cId, pId, iId)
       result <- syncRequests.await(syncId)
     } yield result).map {
-      case SyncResult.Success => Right({})
-      case SyncResult.Failure(Some(error), _) => Left(error)
-      case _ => Left(internalError("Unknown error"))
+      case Success        => Right({})
+      case Failure(error) => Left(error)
+      case _              => Left(internalError("Await should not have completed with SyncResult.Retry"))
     }
 
   override def removeBotFromConversation(cId: ConvId, botId: UserId) =
@@ -142,8 +145,8 @@ class IntegrationsServiceImpl(selfUserId:   UserId,
       syncId <- sync.postRemoveBot(cId, botId)
       result <- syncRequests.await(syncId)
     } yield result).map {
-      case SyncResult.Success => Right({})
-      case SyncResult.Failure(Some(error), _) => Left(error)
-      case _ => Left(internalError("Unknown error"))
+      case Success        => Right({})
+      case Failure(error) => Left(error)
+      case _              => Left(internalError("Await should not have completed with SyncResult.Retry"))
     }
 }

@@ -26,6 +26,7 @@ import com.waz.model.sync.SyncJob.Priority
 import com.waz.model.sync._
 import com.waz.model.{AccentColor, Availability, _}
 import com.waz.service._
+import com.waz.sync.SyncResult.Failure
 import com.waz.threading.Threading
 
 import scala.concurrent.Future
@@ -228,6 +229,6 @@ class AccountSyncHandler(accountId: UserId, zms: ZMessaging) extends SyncHandler
     case PostConvState(convId, state)                        => zms.conversationSync.postConversationState(convId, state)
     case PostTypingState(convId, ts)                         => zms.typingSync.postTypingState(convId, ts)
     case PostCleared(convId, time)                           => zms.clearedSync.postCleared(convId, time)
-    case Unknown                                             => Future.successful(SyncResult.failed("Unknown sync request"))
+    case Unknown                                             => Future.successful(Failure("Unknown sync request"))
   }
 }
