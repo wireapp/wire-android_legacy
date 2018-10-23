@@ -23,16 +23,18 @@ import com.waz.ZLog
 import com.waz.ZLog._
 import com.waz.api.NetworkMode
 import com.waz.content.{AccountStorage, GlobalPreferences}
+import com.waz.model.otr.ClientId
 import com.waz.model.{PushToken, PushTokenRemoveEvent, UserId}
 import com.waz.service.AccountsService.Active
 import com.waz.service.ZMessaging.accountTag
 import com.waz.service._
 import com.waz.service.tracking.TrackingService.exception
 import com.waz.sync.SyncServiceHandle
+import com.waz.sync.client.{ErrorOr, PushTokenClient}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.GoogleApi
-import com.waz.utils.{Backoff, ExponentialBackoff, returning}
+import com.waz.utils.{Backoff, ExponentialBackoff, RichEither, returning}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -42,9 +44,11 @@ import scala.util.control.NoStackTrace
   * Responsible for deciding when to generate and register push tokens and whether they should be active at all.
   */
 class PushTokenService(userId:       UserId,
+                       clientId:     ClientId,
                        globalToken:  GlobalTokenService,
                        accounts:     AccountsService,
                        accStorage:   AccountStorage,
+                       client:       PushTokenClient,
                        sync:         SyncServiceHandle)(implicit accountContext: AccountContext) {
 
   implicit lazy val logTag: LogTag = accountTag[PushTokenService](userId)
@@ -76,6 +80,34 @@ class PushTokenService(userId:       UserId,
       sync.deletePushToken(user)
     case _ => //do nothing
   }
+
+  /**
+    * @return Future(Right(true)) if we had to re-register the token (and thus should also perform a fetch. False
+    *         indicates no need for a fetch
+    */
+  def checkCurrentUserTokens(): ErrorOr[Boolean] =
+    for {
+      res <- client.getPushTokens().future
+      tok <- res.flatMapFuture(ts => userToken.head.map(t => Right((t, ts))))
+      res <- tok match {
+        case Right((Some(localUserToken), backendUserTokens)) =>
+          val backendUserToken = backendUserTokens.find(_.clientId == clientId).map(_.token)
+          if (backendUserToken.contains(localUserToken)) {
+            verbose("Current device push token is already registered with the backend")
+            Future.successful(Right(false))
+          }
+          else {
+            verbose("Current device push token is not registered with the Backend! Will re-register")
+            //There is no matching push token for this client on the backend, we need to re-register this user with the
+            //current device token. We can do this by wiping the current value saved for this user. The subscription above
+            //will then re-evaluate and re-register the token.
+            accStorage.update(userId, _.copy(pushToken = None)).map(_ => Right(true))
+          }
+
+        case Right(_) => Future.successful(Right(false))
+        case Left(err) => Future.successful(Left(err))
+      }
+    } yield res
 
   def onTokenRegistered(token: PushToken): Future[Unit] = {
     verbose(s"onTokenRegistered: $userId, $token")

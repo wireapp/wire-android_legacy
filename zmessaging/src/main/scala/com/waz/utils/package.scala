@@ -131,6 +131,15 @@ package object utils {
     }
   }
 
+  implicit class RichSeq[A](val seq: Seq[A]) extends AnyVal {
+    def distinctBy[B](extractor: A => B): Seq[A] =
+      seq.foldLeft((Seq.empty[A], Set.empty[B])) { case ((acc, set), item) =>
+        val key = extractor(item)
+        if (set.contains(key)) (acc, set)
+        else (acc :+ item, set + key)
+      }._1
+  }
+
   implicit class RichOption[A](val opt: Option[A]) extends AnyVal {
     @inline final def fold2[B](ifEmpty: => B, f: A => B): B = if (opt.isEmpty) ifEmpty else f(opt.get) // option's catamorphism with better type inference properties than the one provided by the std lib
     def mapFuture[B](f: A => Future[B])(implicit ec: ExecutionContext): Future[Option[B]] = flatMapFuture(f(_).map(Some(_)))
@@ -235,7 +244,7 @@ package object utils {
   implicit class RichFuture[A](val a: Future[A]) extends AnyVal {
     def flatten[B](implicit executor: ExecutionContext, ev: A <:< Future[B]): Future[B] = a.flatMap(ev)
     def zip[B](f: Future[B])(implicit executor: ExecutionContext) = RichFuture.zip(a, f)
-    def recoverWithLog(reportHockey: Boolean = false)(implicit tag: LogTag): Future[Unit] = RichFuture.recoverWithLog(a, reportHockey)
+    def recoverWithLog()(implicit tag: LogTag): Future[Unit] = RichFuture.recoverWithLog(a)
     def lift: CancellableFuture[A] = CancellableFuture.lift(a)
     def andThenFuture[B](pf: Try[A] =/> Future[B])(implicit ec: ExecutionContext): Future[A] = {
       val p = Promise[A]
@@ -243,8 +252,8 @@ package object utils {
       p.future
     }
 
-    def logFailure(reportHockey: Boolean = false)(implicit tag: LogTag): Future[A] =
-      a.andThen { case Failure(cause) => LoggedTry.errorHandler(reportHockey)(implicitly)(cause) }(Threading.Background)
+    def logFailure()(implicit tag: LogTag): Future[A] =
+      a.andThen { case Failure(cause) => LoggedTry.errorHandler()(implicitly)(cause) }(Threading.Background)
 
     def withTimeout(t: FiniteDuration): Future[A] =
       Future.firstCompletedOf(
@@ -285,14 +294,14 @@ package object utils {
       processNext(as)
     }
 
-    def recoverWithLog[A](f: Future[A], reportHockey: Boolean = false)(implicit tag: LogTag): Future[Unit] = {
+    def recoverWithLog[A](f: Future[A])(implicit tag: LogTag): Future[Unit] = {
       val p = Promise[Unit]()
       f.onComplete {
         case Success(_) =>
           p.success(())
         case Failure(t) =>
           p.success(())
-          LoggedTry.errorHandler(reportHockey)(implicitly)(t)
+          LoggedTry.errorHandler()(implicitly)(t)
       }(Threading.Background)
       p.future
     }
@@ -304,7 +313,7 @@ package object utils {
     def processSequential[A, B](as: Seq[A])(f: A => Future[B])(implicit executor: ExecutionContext, tag: LogTag): Future[Unit] = {
       def processNext(remaining: Seq[A]): Future[Unit] =
         if (remaining.isEmpty) Future.successful(())
-        else LoggedTry(recoverWithLog(f(remaining.head), reportHockey = true)).getOrElse(Future.successful(())) flatMap { _ => processNext(remaining.tail) }
+        else LoggedTry(recoverWithLog(f(remaining.head))).getOrElse(Future.successful(())) flatMap { _ => processNext(remaining.tail) }
 
       processNext(as)
     }

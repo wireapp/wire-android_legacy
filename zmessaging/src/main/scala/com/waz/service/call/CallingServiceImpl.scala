@@ -232,9 +232,13 @@ class CallingServiceImpl(val accountId:       UserId,
         others = Map(userId -> Some(LocalInstant.Now)),
         startedAsVideoCall = videoCall,
         videoSendState = VideoState.NoCameraPermission,
-        shouldRing = conv.muted.isAllAllowed)
+        shouldRing = conv.muted.isAllAllowed && shouldRing)
 
-      callProfile.mutate(p => p.copy(calls = p.calls + (newCall.convId -> newCall)))
+      callProfile.mutate { p =>
+        // If we have a call in the profile with the same id, this incoming call should be just a GROUPCHECK
+        val call = p.calls.get(newCall.convId).filter(c => !isFinished(c.state)).getOrElse(newCall)
+        p.copy(calls = p.calls + (call.convId -> call))
+      }
     }
 
   def onOtherSideAnsweredCall(rConvId: RConvId): Future[Unit] =

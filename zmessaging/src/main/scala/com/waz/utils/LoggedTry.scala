@@ -25,18 +25,18 @@ import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 object LoggedTry {
-  def apply[A](f: => A)(implicit tag: LogTag): Try[A] = try Success(f) catch errorHandler(reportHockey = true)
+  def apply[A](f: => A)(implicit tag: LogTag): Try[A] = try Success(f) catch errorHandler()
 
-  def local[A](f: => A)(implicit tag: LogTag): Try[A] = try Success(f) catch errorHandler(reportHockey = false)
+  def local[A](f: => A)(implicit tag: LogTag): Try[A] = try Success(f) catch errorHandler()
 
-  def errorHandler[A](reportHockey: Boolean = false)(implicit tag: LogTag): PartialFunction[Throwable, Try[A]] = {
+  def errorHandler[A]()(implicit tag: LogTag): PartialFunction[Throwable, Try[A]] = {
     case NonFatal(e) =>
       ZLog.warn("logged try failed", e)
-      if (reportHockey || utils.isTest ) exception(e, "logged try failed (non-fatal)")
+      if (utils.isTest ) exception(e, "logged try failed (non-fatal)")
       Failure(e)
     case e: Throwable =>
       ZLog.error("logged try got fatal error", e)
-      if (reportHockey || utils.isTest) exception(e, "logged try failed (fatal)")
+      if (utils.isTest) exception(e, "logged try failed (fatal)")
       Failure(BoxedError(e))
   }
 }

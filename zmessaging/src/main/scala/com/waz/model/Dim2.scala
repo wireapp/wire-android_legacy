@@ -20,7 +20,10 @@ package com.waz.model
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import org.json.JSONObject
 
-case class Dim2(width: Int, height: Int)
+case class Dim2(width: Int, height: Int) {
+  def swap: Dim2 = Dim2(width = height, height = width)
+}
+
 object Dim2 extends ((Int, Int) => Dim2) {
   import JsonDecoder._
 
@@ -32,6 +35,7 @@ object Dim2 extends ((Int, Int) => Dim2) {
       o.put("height", data.height)
     }
   }
+
   implicit lazy val Dim2Decoder: JsonDecoder[Dim2] = new JsonDecoder[Dim2] {
     override def apply(implicit js: JSONObject): Dim2 = Dim2('width, 'height)
   }

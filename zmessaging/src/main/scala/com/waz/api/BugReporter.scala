@@ -28,6 +28,7 @@ object BugReporter {
       case fileUri => listener.onReportGenerated(fileUri)
     }
   }
+
 }
 
 trait ReportListener {

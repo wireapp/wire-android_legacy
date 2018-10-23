@@ -22,11 +22,18 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.model.AccountData.AccountDataDao
 import com.waz.model.AccountDataOld.AccountDataOldDao
 import com.waz.model._
-import com.waz.threading.Threading
 import com.waz.utils.TrimmingLruCache.Fixed
-import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
+import com.waz.utils.wrappers.DB
+import com.waz.utils.{CachedStorage, CachedStorage2, CachedStorageImpl, DbStorage2, InMemoryStorage2, Storage2, TrimmingLruCache}
 
-import scala.concurrent.Future
+import scala.concurrent.ExecutionContext
+
+trait AccountStorage2 extends Storage2[UserId, AccountData]
+class AccountStorageImpl2(context: Context, db: DB, ec: ExecutionContext)
+  extends CachedStorage2[UserId, AccountData](
+    new DbStorage2(AccountDataDao)(ec, db),
+    new InMemoryStorage2[UserId, AccountData](new TrimmingLruCache(context, Fixed(8)), AccountDataDao.idExtractor)(ec)
+  )(ec) with AccountStorage2
 
 trait AccountStorage extends CachedStorage[UserId, AccountData]
 class AccountStorageImpl(context: Context, storage: Database) extends CachedStorageImpl[UserId, AccountData](new TrimmingLruCache(context, Fixed(8)), storage)(AccountDataDao) with AccountStorage

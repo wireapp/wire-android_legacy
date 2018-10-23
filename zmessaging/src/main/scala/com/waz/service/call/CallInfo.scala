@@ -77,6 +77,7 @@ case class CallInfo(convId:             ConvId,
        | endTime:            $endTime
        | endReason:          ${endReason.map(reasonString)}
        | hasOutstandingMsg:  ${outstandingMsg.isDefined}
+       | shouldRing:         $shouldRing
     """.stripMargin
 
   val duration = estabTime match {
@@ -157,8 +158,10 @@ object CallInfo {
 
     val ActiveCallStates   = Set[CallState](SelfCalling, SelfJoining, SelfConnected, Terminating)
     val JoinableCallStates = Set[CallState](SelfCalling, OtherCalling, SelfJoining, SelfConnected, Ongoing)
+    val FinishedStates = Set[CallState](Terminating, Ended)
 
     def isActive(st: CallState, shouldRing: Boolean): Boolean = ActiveCallStates(st) || (st == OtherCalling && shouldRing)
     def isJoinable(st: CallState): Boolean = JoinableCallStates(st)
+    def isFinished(st: CallState): Boolean = FinishedStates(st)
   }
 }

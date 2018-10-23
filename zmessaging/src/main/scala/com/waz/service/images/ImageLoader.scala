@@ -156,8 +156,9 @@ class ImageLoaderImpl(context:                  Context,
           Future {
             val newFile = AssetService.saveImageFile(mime)
             IoUtils.copy(data.inputStream, new FileOutputStream(newFile))
+            val scanUri = URI.fromFile(newFile)
+            context.sendBroadcast(Intent.scanFileIntent(scanUri))
             val uri = new AndroidURI(FileProvider.getUriForFile(context, context.getApplicationContext.getPackageName + ".fileprovider", newFile))
-            context.sendBroadcast(Intent.scanFileIntent(uri))
             Some(uri)
           }(Threading.IO)
         case _ =>

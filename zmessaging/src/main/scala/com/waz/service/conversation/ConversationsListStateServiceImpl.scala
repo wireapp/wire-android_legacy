@@ -59,7 +59,7 @@ class ConversationsListStateServiceImpl(convs: ConversationStorage, userPrefs: U
 
   convs.list .map { cs =>
     cs foreach onAdded
-  } .recoverWithLog(reportHockey = true)(logTagFor[ConversationsListStateServiceImpl])
+  } .recoverWithLog()(logTagFor[ConversationsListStateServiceImpl])
 
   private def onAdded(c: ConversationData) = if (!c.archived) {
     addToCounts(c, +1)
