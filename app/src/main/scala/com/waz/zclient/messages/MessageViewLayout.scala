@@ -26,10 +26,11 @@ import android.view.{Gravity, View, ViewGroup}
 import android.widget.FrameLayout
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.model.MessageContent
+import com.waz.model.{MessageContent, MessageData}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MessageViewLayout.PartDesc
+import com.waz.zclient.messages.parts.ReplyPartView
 
 abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: Int) extends ViewGroup(context, attrs, style) {
   protected val factory: MessageViewFactory
@@ -42,7 +43,7 @@ abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: I
 
   setClipChildren(false)
 
-  protected def setParts(msg: MessageAndLikes, parts: Seq[PartDesc], opts: MsgBindOptions): Unit = {
+  protected def setParts(msg: MessageAndLikes, quote: Option[MessageData], parts: Seq[PartDesc], opts: MsgBindOptions): Unit = {
     verbose(s"setParts: opts: $opts, parts: ${parts.map(_.tpe)}")
 
     // recycle views in reverse order, recycled views are stored in a Stack, this way we will get the same views back if parts are the same
@@ -56,6 +57,10 @@ abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: I
       val view = factory.get(tpe, this)
       view.setVisibility(View.VISIBLE)
       view.set(msg, content, opts)
+      view match {
+        case v: ReplyPartView => v.setQuote(quote.get)
+        case _ =>
+      }
       if (view.getParent == null) addViewInLayout(view, index, Option(view.getLayoutParams).getOrElse(defaultLayoutParams))
       view
     }

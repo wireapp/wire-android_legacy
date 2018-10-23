@@ -73,7 +73,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
     } else false
   }
 
-  def set(mAndL: MessageAndLikes, prev: Option[MessageData], next: Option[MessageData], opts: MsgBindOptions): Unit = {
+  def set(mAndL: MessageAndLikes, quote: Option[MessageData], prev: Option[MessageData], next: Option[MessageData], opts: MsgBindOptions): Unit = {
     val animateFooter = msgId == mAndL.message.id && hasFooter != shouldShowFooter(mAndL, opts)
     hasFooter = shouldShowFooter(mAndL, opts)
     data = mAndL
@@ -89,16 +89,17 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
           (if (msg.members.nonEmpty) Seq(PartDesc(MemberChange)) else Seq.empty) ++
           (if (canHaveLink) Seq(PartDesc(WirelessLink)) else Seq.empty)
       }
-      else if (msg.msgType == Message.Type.RICH_MEDIA){
-        val contentWithOG = msg.content.filter(_.openGraph.isDefined)
-        if (contentWithOG.size == 1 && msg.content.size == 1) {
-          msg.content.map(content => PartDesc(MsgPart(content.tpe), Some(content)))
-        } else {
-          Seq(PartDesc(MsgPart(Message.Type.TEXT, isOneToOne))) ++ contentWithOG.map(content => PartDesc(MsgPart(content.tpe), Some(content))).filter(_.tpe == WebLink)
-        }
+      else {
+        quote.toSeq.map(q => PartDesc(Reply(q.msgType))) ++
+          (if (msg.msgType == Message.Type.RICH_MEDIA) {
+            val contentWithOG = msg.content.filter(_.openGraph.isDefined)
+            if (contentWithOG.size == 1 && msg.content.size == 1)
+              msg.content.map(content => PartDesc(MsgPart(content.tpe), Some(content)))
+            else
+              Seq(PartDesc(MsgPart(Message.Type.TEXT, isOneToOne))) ++ contentWithOG.map(content => PartDesc(MsgPart(content.tpe), Some(content))).filter(_.tpe == WebLink)
+          }
+          else Seq(PartDesc(MsgPart(msg.msgType, isOneToOne))))
       }
-      else
-        Seq(PartDesc(MsgPart(msg.msgType, isOneToOne)))
     } .filter(_.tpe != MsgPart.Empty)
 
     val parts =
@@ -124,7 +125,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
 
     val (top, bottom) = if (parts.isEmpty) (0, 0) else getMargins(prev.map(_.msgType), next.map(_.msgType), parts.head.tpe, parts.last.tpe, isOneToOne)
     setPadding(0, top, 0, bottom)
-    setParts(mAndL, parts, opts)
+    setParts(mAndL, quote, parts, opts)
 
     if (animateFooter)
       getFooter foreach { footer =>

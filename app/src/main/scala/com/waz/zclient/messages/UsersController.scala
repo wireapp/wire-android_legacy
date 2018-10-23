@@ -123,6 +123,7 @@ class UsersController(implicit injector: Injector, context: Context) extends Inj
   def userHandle(id: UserId): Signal[Option[Handle]] = user(id).map(_.handle)
 
   def user(id: UserId): Signal[UserData] = zMessaging.flatMap(_.usersStorage.signal(id))
+  def userOpt(id: UserId): Signal[Option[UserData]] = zMessaging.flatMap(_.usersStorage.optSignal(id))
   def users(ids: Iterable[UserId]): Signal[Vector[UserData]] = zMessaging.flatMap(_.usersStorage.listSignal(ids))
 
   def selfUser: Signal[UserData] = selfUserId.flatMap(user)

@@ -18,10 +18,23 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<com.waz.zclient.messages.parts.ReplyPartView
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/image_container"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:baselineAligned="false"
-/>
+    android:layout_height="match_parent">
+
+    <com.waz.zclient.ui.text.GlyphTextView
+        android:id="@+id/image_icon"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:text="@string/glyph__picture"
+        android:textColor="@color/graphite_40"
+        android:textSize="@dimen/wire__icon_button__text_size"
+        android:visibility="gone"
+    />
+
+</FrameLayout>
+

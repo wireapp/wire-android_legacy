@@ -18,7 +18,6 @@
 package com.waz.zclient.messages
 
 import com.waz.api.Message
-
 sealed trait MsgPart
 sealed trait SeparatorPart extends MsgPart
 
@@ -49,6 +48,25 @@ object MsgPart {
   case object MessageTimer extends MsgPart
   case object Empty extends MsgPart
   case object Unknown extends MsgPart
+
+  case class Reply(replyType: MsgPart) extends MsgPart
+
+  object Reply {
+    def apply(msgType: Message.Type): Reply = {
+      import Message.Type._
+      Reply(msgType match {
+        case TEXT
+             | TEXT_EMOJI_ONLY
+             | RICH_MEDIA => Text
+        case ASSET        => Image
+        case ANY_ASSET    => FileAsset
+        case VIDEO_ASSET  => VideoAsset
+        case AUDIO_ASSET  => AudioAsset
+        case LOCATION     => Location
+        case _            => Unknown
+      })
+    }
+  }
 
   def apply(msgType: Message.Type, isOneToOne: Boolean): MsgPart = {
     import Message.Type._

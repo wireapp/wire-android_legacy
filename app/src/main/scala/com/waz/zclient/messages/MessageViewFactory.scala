@@ -21,7 +21,8 @@ import android.view.{View, ViewGroup}
 import android.widget.LinearLayout
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
-import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.R
+import com.waz.zclient.ViewHelper._
 
 import scala.collection.mutable
 
@@ -43,32 +44,35 @@ class MessageViewFactory {
       verbose(s"there was no cached $tpe, building a new one")
       import MsgPart._
       tpe match {
-        case User               => ViewHelper.inflate(R.layout.message_user, parent, false)
-        case Separator          => ViewHelper.inflate(R.layout.message_separator, parent, false)
-        case SeparatorLarge     => ViewHelper.inflate(R.layout.message_separator_large, parent, false)
-        case Footer             => ViewHelper.inflate(R.layout.message_footer, parent, false)
-        case Text               => ViewHelper.inflate(R.layout.message_text, parent, false)
-        case Ping               => ViewHelper.inflate(R.layout.message_ping, parent, false)
-        case Rename             => ViewHelper.inflate(R.layout.message_rename, parent, false)
-        case Image              => ViewHelper.inflate(R.layout.message_image, parent, false)
-        case YouTube            => ViewHelper.inflate(R.layout.message_youtube, parent, false)
-        case WebLink            => ViewHelper.inflate(R.layout.message_link_preview, parent, false)
-        case FileAsset          => ViewHelper.inflate(R.layout.message_file_asset, parent, false)
-        case AudioAsset         => ViewHelper.inflate(R.layout.message_audio_asset, parent, false)
-        case VideoAsset         => ViewHelper.inflate(R.layout.message_video_asset, parent, false)
-        case Location           => ViewHelper.inflate(R.layout.message_location, parent, false)
-        case MemberChange       => ViewHelper.inflate(R.layout.message_member_change, parent, false)
-        case ConnectRequest     => ViewHelper.inflate(R.layout.message_connect_request, parent, false)
-        case ConversationStart  => ViewHelper.inflate(R.layout.message_conversation_start, parent, false)
-        case WirelessLink       => ViewHelper.inflate(R.layout.message_wireless_link, parent, false)
-        case OtrMessage         => ViewHelper.inflate(R.layout.message_otr_part, parent, false)
-        case SoundMedia         => ViewHelper.inflate(R.layout.message_soundmedia, parent, false)
-        case MissedCall         => ViewHelper.inflate(R.layout.message_missed_call, parent, false)
-        case EphemeralDots      => ViewHelper.inflate(R.layout.message_ephemeral_dots_view, parent, false)
-        case WifiWarning        => ViewHelper.inflate(R.layout.message_wifi_warning, parent, false)
-        case MessageTimer       => ViewHelper.inflate(R.layout.message_msg_timer_changed, parent, false)
+        case User               => inflate(R.layout.message_user, parent, false)
+        case Separator          => inflate(R.layout.message_separator, parent, false)
+        case SeparatorLarge     => inflate(R.layout.message_separator_large, parent, false)
+        case Footer             => inflate(R.layout.message_footer, parent, false)
+        case Text               => inflate(R.layout.message_text, parent, false)
+        case Ping               => inflate(R.layout.message_ping, parent, false)
+        case Rename             => inflate(R.layout.message_rename, parent, false)
+        case Image              => inflate(R.layout.message_image, parent, false)
+        case YouTube            => inflate(R.layout.message_youtube, parent, false)
+        case WebLink            => inflate(R.layout.message_link_preview, parent, false)
+        case FileAsset          => inflate(R.layout.message_file_asset, parent, false)
+        case AudioAsset         => inflate(R.layout.message_audio_asset, parent, false)
+        case VideoAsset         => inflate(R.layout.message_video_asset, parent, false)
+        case Location           => inflate(R.layout.message_location, parent, false)
+        case MemberChange       => inflate(R.layout.message_member_change, parent, false)
+        case ConnectRequest     => inflate(R.layout.message_connect_request, parent, false)
+        case ConversationStart  => inflate(R.layout.message_conversation_start, parent, false)
+        case WirelessLink       => inflate(R.layout.message_wireless_link, parent, false)
+        case OtrMessage         => inflate(R.layout.message_otr_part, parent, false)
+        case SoundMedia         => inflate(R.layout.message_soundmedia, parent, false)
+        case MissedCall         => inflate(R.layout.message_missed_call, parent, false)
+        case EphemeralDots      => inflate(R.layout.message_ephemeral_dots_view, parent, false)
+        case WifiWarning        => inflate(R.layout.message_wifi_warning, parent, false)
+        case MessageTimer       => inflate(R.layout.message_msg_timer_changed, parent, false)
+        case Reply(Text)        => inflate(R.layout.message_reply_text, parent, false)
+        case Reply(_)           => new EmptyPartView(parent.getContext)
         case Empty              => new EmptyPartView(parent.getContext)
         case Unknown            => new EmptyPartView(parent.getContext) // TODO: display error msg, only used in internal
+
       }
     }
   }
@@ -79,6 +83,6 @@ class MessageViewFactory {
   }
 
   def get[A <: View](resId: Int, parent: ViewGroup): A =
-    viewCache.get(resId).flatMap(s => if (s.isEmpty) None else Some(s.pop().asInstanceOf[A])).getOrElse { ViewHelper.inflate[A](resId, parent, addToParent = false) }
+    viewCache.get(resId).flatMap(s => if (s.isEmpty) None else Some(s.pop().asInstanceOf[A])).getOrElse { inflate[A](resId, parent, addToParent = false) }
 
 }
