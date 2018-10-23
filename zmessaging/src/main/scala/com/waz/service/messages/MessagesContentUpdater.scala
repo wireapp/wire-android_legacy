@@ -64,7 +64,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
   /**
     * @param exp ConvExpiry takes precedence over one-time expiry (exp), which takes precedence over the MessageExpiry
     */
-  def addLocalMessage(msg: MessageData, state: Status = Status.PENDING, exp: Option[Option[FiniteDuration]] = None) =
+  def addLocalMessage(msg: MessageData, state: Status = Status.PENDING, exp: Option[Option[FiniteDuration]] = None, localTime: LocalInstant = LocalInstant.Now) =
     Serialized.future("add local message", msg.convId) {
 
       def expiration =
@@ -79,7 +79,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
       for {
         time <- remoteTimeAfterLast(msg.convId) //TODO: can we find a way to save this only on the localTime of the message?
         exp  <- expiration
-        m = returning(msg.copy(state = state, time = time, localTime = LocalInstant.Now, ephemeral = exp)) { m =>
+        m = returning(msg.copy(state = state, time = time, localTime = localTime, ephemeral = exp)) { m =>
           verbose(s"addLocalMessage: $m, exp: $exp")
         }
         res <- messagesStorage.addMessage(m)

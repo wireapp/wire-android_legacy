@@ -64,7 +64,8 @@ case class MessageData(id:            MessageId              = MessageId(),
                        expired:       Boolean                = false,
                        duration:      Option[FiniteDuration] = None, //for successful calls and message_timer changes
                        quote:         Option[MessageId]      = None,
-                       quoteValidity: Boolean                = false
+                       quoteValidity: Boolean                = false,
+                       quoteHash:     Option[Sha256]         = None
                       ) {
 
   override def toString: String =
@@ -284,7 +285,7 @@ object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData
 object MessageData extends
   ((MessageId, ConvId, Message.Type, UserId, Seq[MessageContent], Seq[GenericMessage], Boolean, Set[UserId], Option[UserId],
     Option[String], Option[String], Message.Status, RemoteInstant, LocalInstant, RemoteInstant, Option[FiniteDuration],
-    Option[LocalInstant], Boolean, Option[FiniteDuration], Option[MessageId], Boolean) => MessageData) {
+    Option[LocalInstant], Boolean, Option[FiniteDuration], Option[MessageId], Boolean, Option[Sha256]) => MessageData) {
   val Empty = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""))
   val Deleted = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""), state = Message.Status.DELETED)
   val isUserContent = Set(TEXT, TEXT_EMOJI_ONLY, ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, RICH_MEDIA, LOCATION)

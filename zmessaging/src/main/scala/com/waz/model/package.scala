@@ -17,9 +17,9 @@
  */
 package com.waz
 
-import android.util.Base64
 import com.google.protobuf.nano.{CodedInputByteBufferNano, MessageNano}
 import com.waz.model.nano.Messages
+import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{JsonDecoder, JsonEncoder, returning}
 import org.json.JSONObject
 
@@ -127,12 +127,12 @@ package object model {
     }
 
     implicit object JsDecoder extends JsonDecoder[GenericMessage] {
-      override def apply(implicit js: JSONObject): GenericMessage = GenericMessage(Base64.decode(js.getString("proto"), Base64.DEFAULT))
+      override def apply(implicit js: JSONObject): GenericMessage = GenericMessage(AESUtils.base64(js.getString("proto")))
     }
 
     implicit object JsEncoder extends JsonEncoder[GenericMessage] {
       override def apply(v: GenericMessage): JSONObject = JsonEncoder { o =>
-        o.put("proto", Base64.encodeToString(MessageNano.toByteArray(v), Base64.NO_WRAP))
+        o.put("proto", AESUtils.base64(MessageNano.toByteArray(v)))
       }
     }
 

@@ -17,9 +17,6 @@
  */
 package com.waz.model
 
-import java.util.Date
-
-import android.util.Base64
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.IConversation.{Access, AccessRole}
@@ -30,6 +27,7 @@ import com.waz.model.otr.{Client, ClientId}
 import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.sync.client.OtrClient
 import com.waz.utils.JsonDecoder._
+import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{JsonDecoder, JsonEncoder, _}
 import org.json.{JSONException, JSONObject}
 
@@ -306,15 +304,15 @@ object MessageEvent {
       event match {
         case GenericMessageEvent(convId, time, from, content) =>
           setFields(json, convId, time, from, "conversation.generic-message")
-            .put("content", Base64.encodeToString(GenericMessage.toByteArray(content), Base64.NO_WRAP))
+            .put("content", AESUtils.base64(GenericMessage.toByteArray(content)))
         case GenericAssetEvent(convId, time, from, content, dataId, data) =>
           setFields(json, convId, time, from, "conversation.generic-asset")
             .put("dataId", dataId.str)
             .put("data", data match {
               case None => null
-              case Some(d) => Base64.encodeToString(d, Base64.NO_WRAP)
+              case Some(d) => AESUtils.base64(d)
             })
-            .put("content", Base64.encodeToString(GenericMessage.toByteArray(content), Base64.NO_WRAP))
+            .put("content", AESUtils.base64(GenericMessage.toByteArray(content)))
         case OtrErrorEvent(convId, time, from, error) =>
           setFields(json, convId, time, from, "conversation.otr-error")
             .put("error", OtrError.OtrErrorEncoder(error))

@@ -18,7 +18,6 @@
 package com.waz.model
 
 
-import android.util.Base64
 import com.google.protobuf.nano.MessageNano
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetMetaData.Loudness
@@ -26,9 +25,10 @@ import com.waz.model.AssetStatus.{DownloadFailed, UploadCancelled, UploadDone, U
 import com.waz.model.nano.Messages
 import com.waz.model.nano.Messages.MessageEdit
 import com.waz.utils._
+import com.waz.utils.crypto.AESUtils
 import com.waz.utils.wrappers.URI
 import org.json.JSONObject
-import org.threeten.bp.{Duration => Dur, Instant}
+import org.threeten.bp.{Duration => Dur}
 
 import scala.collection.breakOut
 import scala.concurrent.duration._
@@ -216,7 +216,7 @@ object GenericContent {
   }
 
   implicit object EphemeralAsset extends EphemeralContent[Asset] {
-    override def set(eph: Ephemeral): (Asset) => Ephemeral = eph.setAsset
+    override def set(eph: Ephemeral): Asset => Ephemeral = eph.setAsset
   }
 
   type ImageAsset = Messages.ImageAsset
@@ -326,12 +326,12 @@ object GenericContent {
     }
 
     implicit object JsDecoder extends JsonDecoder[LinkPreview] {
-      override def apply(implicit js: JSONObject): LinkPreview = Messages.LinkPreview.parseFrom(Base64.decode(js.getString("proto"), Base64.DEFAULT))
+      override def apply(implicit js: JSONObject): LinkPreview = Messages.LinkPreview.parseFrom(AESUtils.base64(js.getString("proto")))
     }
 
     implicit object JsEncoder extends JsonEncoder[LinkPreview] {
       override def apply(v: LinkPreview): JSONObject = JsonEncoder { o =>
-        o.put("proto", Base64.encodeToString(MessageNano.toByteArray(v), Base64.NO_WRAP))
+        o.put("proto", AESUtils.base64(MessageNano.toByteArray(v)))
       }
     }
 

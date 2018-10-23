@@ -21,7 +21,6 @@ import com.waz.api.Message
 import com.waz.api.Message.Status
 import com.waz.api.Message.Type._
 import com.waz.content._
-import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.messages.{MessagesContentUpdater, MessagesServiceImpl}
@@ -29,6 +28,7 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
 import com.waz.testutils.TestGlobalPreferences
 import com.waz.threading.Threading
+import com.waz.utils.crypto.ReplyHashing
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -45,7 +45,8 @@ class MessagesServiceSpec extends AndroidFreeSpec {
   val deletions =     mock[MsgDeletionStorage]
   val members =       mock[MembersStorage]
   val users =         mock[UsersStorage]
-  val prefs          = new TestGlobalPreferences()
+  val replyHashing =  mock[ReplyHashing]
+  val prefs =         new TestGlobalPreferences()
 
   scenario("Add local memberJoinEvent with no previous member change events") {
 
@@ -90,6 +91,7 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     (storage.getLastMessage _).expects(convId).once().returning(Future.successful(None))
     (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(conv)))
     (storage.addMessage _).expects(*).anyNumberOfTimes().onCall { msg: MessageData => Future.successful(msg) }
+    (replyHashing.hashMessage _).expects(*).once().onCall { _: MessageData => Future.successful(Sha256("sbc")) }
 
     var originalMsgId = MessageId()
 
@@ -106,6 +108,6 @@ class MessagesServiceSpec extends AndroidFreeSpec {
 
   def getService = {
     val updater = new MessagesContentUpdater(storage, convsStorage, deletions, prefs)
-    new MessagesServiceImpl(selfUserId, None, storage, updater, edits, convs, network, members, users, sync)
+    new MessagesServiceImpl(selfUserId, None, replyHashing, storage, updater, edits, convs, network, members, users, sync)
   }
 }

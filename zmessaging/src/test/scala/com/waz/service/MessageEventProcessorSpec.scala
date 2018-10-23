@@ -30,6 +30,7 @@ import com.waz.service.messages.{MessageEventProcessor, MessagesContentUpdater, 
 import com.waz.service.otr.OtrService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.testutils.TestGlobalPreferences
+import com.waz.utils.crypto.ReplyHashing
 import com.waz.utils.events.EventStream
 import org.scalatest.Inside
 
@@ -45,6 +46,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
   val otrClientsStorage = mock[OtrClientsStorage]
   val deletions         = mock[MsgDeletionStorage]
   val assets            = mock[AssetService]
+  val replyHashing      = mock[ReplyHashing]
   val msgsService       = mock[MessagesService]
   val convs             = mock[ConversationsContentUpdater]
   val otr               = mock[OtrService]
@@ -62,7 +64,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
       clock.advance(5.seconds)
       val event = GenericMessageEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, GenericMessage(Uid("uid"), Text(text)))
 
-      (storage.updateOrCreateAll _).expects(*).onCall { updaters: Map[MessageId, (Option[MessageData]) => MessageData] =>
+      (storage.updateOrCreateAll _).expects(*).onCall { updaters: Map[MessageId, Option[MessageData] => MessageData] =>
         Future.successful(updaters.values.map(_.apply(None)).toSet)
       }
 
@@ -178,7 +180,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
     //often repeated mocks
     (deletions.getAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
 
-    new MessageEventProcessor(selfUserId, storage, content, assets, msgsService, convsService, convs, otr)
+    new MessageEventProcessor(selfUserId, storage, content, assets, replyHashing, msgsService, convsService, convs, otr)
   }
 
 }

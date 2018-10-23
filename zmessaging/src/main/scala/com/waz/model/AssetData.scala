@@ -17,12 +17,10 @@
  */
 package com.waz.model
 
-import android.util.Base64
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetStatus.UploadCancelled
-import com.waz.model.MessageData.MessageDataDao.{ExpiryTime, iterating, table}
 import com.waz.service.UserService
-import com.waz.utils.wrappers.{DB, DBCursor}
+import com.waz.utils.wrappers.DBCursor
 import com.waz.content.WireContentProvider
 import com.waz.db.Col._
 import com.waz.db.Dao
@@ -33,6 +31,7 @@ import com.waz.model.otr.SignalingKey
 import com.waz.service.ZMessaging
 import com.waz.utils.JsonDecoder.{apply => _, opt => _}
 import com.waz.utils._
+import com.waz.utils.crypto.AESUtils
 import com.waz.utils.wrappers.URI
 import org.json.JSONObject
 import org.threeten.bp.Duration
@@ -86,7 +85,7 @@ case class AssetData(id:          AssetId               = AssetId(),
   lazy val size = data.fold(sizeInBytes)(_.length)
 
   //be careful when accessing - can be expensive
-  lazy val data64 = data.map(Base64.encodeToString(_, Base64.NO_WRAP | Base64.NO_PADDING))
+  lazy val data64 = data.map(AESUtils.base64)
 
   lazy val fileExtension = mime.extension
 
@@ -150,7 +149,7 @@ object AssetData {
     */
   val NonKeyURIs: Set[URI] = Set(UserService.UnsplashUrl)
 
-  def decodeData(data64: String): Array[Byte] = Base64.decode(data64, Base64.NO_PADDING | Base64.NO_WRAP)
+  def decodeData(data64: String): Array[Byte] = AESUtils.base64(data64)
 
   def cacheKeyFrom(uri: URI): CacheKey = WireContentProvider.CacheUri.unapply(ZMessaging.context)(uri).getOrElse(CacheKey(uri.toString))
 

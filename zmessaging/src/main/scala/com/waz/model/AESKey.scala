@@ -17,6 +17,7 @@
  */
 package com.waz.model
 
+import java.math.BigInteger
 import java.security.MessageDigest
 
 import com.waz.utils.crypto.AESUtils
@@ -46,6 +47,8 @@ case class Sha256(str: String) {
   def bytes = AESUtils.base64(str)
 
   def matches(bytes: Array[Byte]) = str == com.waz.utils.sha2(bytes)
+
+  def hexString = String.format("%02X", new BigInteger(1, AESUtils.base64(str))).toLowerCase
 }
 object Sha256 {
   val Empty = Sha256("")

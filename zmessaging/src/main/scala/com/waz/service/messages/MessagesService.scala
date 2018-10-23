@@ -22,7 +22,7 @@ import com.waz.ZLog._
 import com.waz.api.Message
 import com.waz.api.Message.{Status, Type}
 import com.waz.api.impl.ErrorResponse
-import com.waz.content.{EditHistoryStorage, MembersStorage, MessagesStorage, UsersStorage}
+import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GenericContent._
 import com.waz.model.{Mention, MessageId, _}
@@ -34,6 +34,7 @@ import com.waz.sync.client.AssetClient.Retention
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
+import com.waz.utils.crypto.ReplyHashing
 import com.waz.utils.events.{EventContext, Signal}
 
 import scala.collection.breakOut
@@ -82,6 +83,7 @@ trait MessagesService {
 
 class MessagesServiceImpl(selfUserId:   UserId,
                           teamId:       Option[TeamId],
+                          replyHashing: ReplyHashing,
                           storage:      MessagesStorage,
                           updater:      MessagesContentUpdater,
                           edits:        EditHistoryStorage,
@@ -142,11 +144,11 @@ class MessagesServiceImpl(selfUserId:   UserId,
           case _ =>
             // original message was already deleted, let's check if it was already updated
             edits.get(msgId) flatMap {
-              case Some(EditHistory(_, updated, editTime)) if editTime <= time =>
+              case Some(EditHistory(_, _, editTime)) if editTime <= time =>
                 verbose(s"message $msgId has already been updated, discarding later update")
                 Future successful None
 
-              case Some(EditHistory(_, updated, editTime)) =>
+              case Some(EditHistory(_, updated, _)) =>
                 // this happens if message has already been edited locally,
                 // but that edit is actually newer than currently received one, so we should revert it
                 // we always use only the oldest edit for given message (as each update changes the message id)
@@ -177,24 +179,34 @@ class MessagesServiceImpl(selfUserId:   UserId,
     updater.addLocalMessage(MessageData(id, convId, tpe, selfUserId, ct, protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil)))), exp = exp) // FIXME: links
   }
 
-  override def addReplyMessage(quote: MessageId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None) = {
+  override def addReplyMessage(quote: MessageId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]] = {
+
     verbose(s"addReplyMessage($quote, ${content.take(4)}, $mentions, $exp")
     updater.getMessage(quote).flatMap {
       case Some(original) =>
         val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
         verbose(s"parsed content: $ct")
         val id = MessageId()
-        updater.addLocalMessage(
-          MessageData(
-            id, original.convId, tpe, selfUserId, ct,
-            protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, Some(Quote(quote, None))))), // TODO: Sha256
-            quote = Some(quote)
-          ),
-          exp = exp
-        ).map(Option(_))
+        val localTime = LocalInstant.Now
+        replyHashing.hashMessage(original).flatMap { hash =>
+          updater.addLocalMessage(
+            MessageData(
+              id, original.convId, tpe, selfUserId, ct,
+              protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, Some(Quote(quote, Some(hash)))))),
+              quote = Some(quote)
+            ),
+            exp = exp,
+            localTime = localTime
+          ).map(Option(_))
+        }
+        .recover {
+          case e@(_:IllegalArgumentException|_:replyHashing.MissingAssetException) =>
+            error(s"Got exception when checking reply hash, skipping", e)
+            None
+        }
       case None =>
         error(s"A reply to a non-existent message: $quote")
-        Future successful None
+        Future.successful(None)
     }
   }
 

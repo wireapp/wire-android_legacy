@@ -22,12 +22,11 @@ import java.util.Date
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.{TimeUnit, TimeoutException}
 
-import android.util.Base64
 import com.waz.ZLog.LogTag
 import com.waz.api.UpdateListener
 import com.waz.model.{LocalInstant, WireInstant}
-import com.waz.service.ZMessaging.clock
 import com.waz.threading.{CancellableFuture, Threading}
+import com.waz.utils.crypto.AESUtils
 import com.waz.utils.wrappers.{URI, URIBuilder}
 import org.json.{JSONArray, JSONObject}
 import org.threeten.bp
@@ -44,7 +43,6 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.language.{higherKinds, implicitConversions}
 import scala.math.{Ordering, abs}
-import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 import scala.{PartialFunction => =/>}
 
@@ -56,13 +54,13 @@ package object utils {
     def updated() = body
   }
 
-  def sha2(s: String): String = Base64.encodeToString(MessageDigest.getInstance("SHA-256").digest(s.getBytes("utf8")), Base64.NO_WRAP)
+  def sha2(s: String): String = AESUtils.base64(MessageDigest.getInstance("SHA-256").digest(s.getBytes("utf8")))
 
-  def sha2(bytes: Array[Byte]): String = Base64.encodeToString(MessageDigest.getInstance("SHA-256").digest(bytes), Base64.NO_WRAP)
+  def sha2(bytes: Array[Byte]): String = AESUtils.base64(MessageDigest.getInstance("SHA-256").digest(bytes))
 
   def withSHA2[A](f: SHA2Digest => A): A = f(new SHA2Digest {
     private lazy val digester = MessageDigest.getInstance("SHA-256")
-    override def apply(s: String): String = Base64.encodeToString(digester.digest(s.getBytes("utf8")), Base64.NO_WRAP)
+    override def apply(s: String): String = AESUtils.base64(digester.digest(s.getBytes("utf8")))
   })
 
   trait SHA2Digest {

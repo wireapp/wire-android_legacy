@@ -32,6 +32,7 @@ trait WireInstant {
 
   def javaDate: Date = new Date(instant.toEpochMilli)
   def toEpochMilli: Long = instant.toEpochMilli
+  def toEpochSec: Long = instant.getEpochSecond
 
   def isEpoch: Boolean = instant == Instant.EPOCH
 }
@@ -72,4 +73,5 @@ object LocalInstant {
   def Now = LocalInstant(Instant.now(clock))
   def Now(clock: Clock) = LocalInstant(Instant.now(clock))
   def ofEpochMilli(epochMilli: Long) = LocalInstant(Instant.ofEpochMilli(epochMilli))
+  def ofEpochSecond(epochSecond: Long) = LocalInstant(Instant.ofEpochSecond(epochSecond))
 }

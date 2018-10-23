@@ -44,6 +44,7 @@ import com.waz.sync.queue.{SyncContentUpdater, SyncContentUpdaterImpl}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.ui.UiModule
 import com.waz.utils.Locales
+import com.waz.utils.crypto.ReplyHashingImpl
 import com.waz.utils.wrappers.{AndroidContext, GoogleApi}
 import com.waz.znet2.http.HttpClient
 import com.waz.znet2.http.Request.UrlCreator
@@ -222,6 +223,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val recordAndPlay                              = wire[RecordAndPlayService]
   lazy val receipts                                   = wire[ReceiptService]
   lazy val ephemeral                                  = wire[EphemeralMessagesService]
+  lazy val replyHashing                               = wire[ReplyHashingImpl]
 
   lazy val assetSync                                  = wire[AssetSyncHandler]
   lazy val usersearchSync                             = wire[UserSearchSyncHandler]
