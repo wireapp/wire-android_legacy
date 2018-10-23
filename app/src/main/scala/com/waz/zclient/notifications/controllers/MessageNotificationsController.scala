@@ -46,6 +46,7 @@ import com.waz.zclient.common.controllers.SoundController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.navigation.Page
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.conversationlist.ConversationListAdapter
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{ResString, RingtoneUtils}
@@ -115,15 +116,15 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
     accs     <- accounts.accountsWithManagers
     uiActive <- inject[UiLifeCycle].uiActive
     selfId   <- selfId
-    convId   <- convController.currentConvId.map(Option(_)).orElse(Signal.const(Option.empty[ConvId]))
-    convs    <- convsStorage.map(_.conversations)
+    convId   <- convController.currentConvIdOpt
+    convs    <- convsStorage.flatMap(_.convsSignal.map(_.conversations.filter(ConversationListAdapter.Normal.filter).map(_.id).toSet))
     page     <- navigationController.visiblePage
   } yield
     accs.map { accId =>
       accId ->
         (if (selfId != accId || !uiActive) Set.empty[ConvId]
         else page match {
-          case Page.CONVERSATION_LIST => convs.map(_.id).toSet
+          case Page.CONVERSATION_LIST => convs
           case Page.MESSAGE_STREAM    => Set(convId).flatten
           case _                      => Set.empty[ConvId]
         })
