@@ -54,7 +54,7 @@ import com.waz.zclient.controllers.globallayout.{IGlobalLayoutController, Keyboa
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page, PagerControllerObserver}
 import com.waz.zclient.controllers.singleimage.{ISingleImageController, SingleImageObserver}
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
-import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.conversation.{ConversationController, ReplyContent, ReplyController, ReplyView}
 import com.waz.zclient.conversation.ConversationController.ConversationChange
 import com.waz.zclient.conversation.toolbar.AudioMessageRecordingView
 import com.waz.zclient.cursor._
@@ -101,6 +101,7 @@ class ConversationFragment extends FragmentHelper {
   private lazy val callStartController    = inject[CallStartController]
   private lazy val accountsController     = inject[UserAccountsController]
   private lazy val globalPrefs            = inject[GlobalPreferences]
+  private lazy val replyController        = inject[ReplyController]
 
   //TODO remove use of old java controllers
   private lazy val globalLayoutController     = inject[IGlobalLayoutController]
@@ -153,6 +154,7 @@ class ConversationFragment extends FragmentHelper {
 
   private lazy val messagesOpacity = view[View](R.id.mentions_opacity)
   private lazy val mentionsList = view[RecyclerView](R.id.mentions_list)
+  private lazy val replyView = view[ReplyView](R.id.reply_view)
 
   private def isUserGuest(user: UserData): Signal[Boolean] =
     convController.currentConv.map { conv =>
@@ -162,7 +164,6 @@ class ConversationFragment extends FragmentHelper {
   private def showMentionsList(visible: Boolean): Unit = {
     mentionsList.foreach(_.setVisible(visible))
     messagesOpacity.foreach(_.setVisible(visible))
-    cursorView.foreach(_.topBorder.setVisible(visible))
   }
 
   override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation =
@@ -267,6 +268,9 @@ class ConversationFragment extends FragmentHelper {
     }
 
     keyboardController.isKeyboardVisible.onUi(visible => if(visible) collapseGuestsBanner())
+
+    replyController.replyData.map(_.isEmpty)
+      .onUi(visible => cursorView.foreach(_.topBorder.setVisible(visible)))
   }
 
   private def updateGuestsBanner(hasGuest: Boolean, hasBot: Boolean, isGroup: Boolean): Unit = {
@@ -336,6 +340,10 @@ class ConversationFragment extends FragmentHelper {
     leftMenu = findById(R.id.conversation_left_menu)
     toolbar = findById(R.id.t_conversation_toolbar)
     toolbarTitle = ViewUtils.getView(toolbar, R.id.tv__conversation_toolbar__title).asInstanceOf[TextView]
+
+    replyView.foreach {
+      _.setOnClose(replyController.clearMessage())
+    }
   }
 
   override def onStart(): Unit = {
@@ -404,10 +412,23 @@ class ConversationFragment extends FragmentHelper {
           mentionCandidatesAdapter.setData(data, teamId, theme)
           mentionsList.foreach(_.scrollToPosition(data.size - 1))
       }
-      subs += Signal(v.mentionQuery.map(_.nonEmpty), v.mentionSearchResults.map(_.nonEmpty), v.selectionHasMention).map {
+
+      val mentionsListShouldShow = Signal(v.mentionQuery.map(_.nonEmpty), v.mentionSearchResults.map(_.nonEmpty), v.selectionHasMention).map {
         case (true, true, false) => true
         case _ => false
-      }.onUi(showMentionsList)
+      }
+
+      subs += mentionsListShouldShow.onUi(showMentionsList)
+
+      subs += mentionsListShouldShow.zip(replyController.replyContent).onUi {
+        case (false, Some(ReplyContent(messageData, asset, senderName))) =>
+          replyView.foreach { rv =>
+            rv.setMessage(messageData, asset, senderName)
+            rv.setVisible(true)
+          }
+        case _ =>
+          replyView.foreach(_.setVisible(false))
+      }
     }
   }
 

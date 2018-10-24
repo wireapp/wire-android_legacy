@@ -111,6 +111,16 @@
                 android:visibility="gone"
                 android:layout_height="match_parent"/>
 
+            <com.waz.zclient.conversation.ReplyView
+                android:id="@+id/reply_view"
+                android:layout_width="match_parent"
+                android:layout_height="72dp"
+                android:scrollbars="vertical"
+                android:background="?wireBackgroundColor"
+                android:visibility="visible"
+                android:layout_gravity="bottom"
+                />
+
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/mentions_list"
                 android:layout_width="match_parent"

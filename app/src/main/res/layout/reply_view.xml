@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_width="match_parent"
+             android:layout_height="80dp"
+             android:clickable="true"
+             android:focusable="true">
+
+    <View
+        style="?wireDivider"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/wire__divider__height__thin"
+        />
+
+    <ImageButton
+        android:id="@+id/reply_close"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="@dimen/wire__padding__small"
+        android:layout_marginStart="@dimen/wire__padding__regular"
+        android:src="?actionModeCloseDrawable"
+        android:background="@drawable/selector__transparent_button"/>
+
+    <RelativeLayout
+        android:id="@+id/reply_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="72dp"
+        android:layout_marginEnd="@dimen/wire__padding__regular"
+        android:layout_marginTop="@dimen/wire__padding__small"
+        android:layout_marginBottom="@dimen/wire__padding__small"
+        android:paddingStart="@dimen/wire__padding__2"
+        android:background="@drawable/reply_background">
+
+        <TextView
+            android:id="@+id/reply_sender"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="?wirePrimaryTextColor"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="@dimen/wire__padding__small"
+            android:layout_marginStart="@dimen/wire__padding__small"
+            android:drawablePadding="@dimen/wire__padding__8"
+            android:textStyle="bold"
+            android:textSize="@dimen/wire__text_size__small"/>
+
+        <ImageView
+            android:id="@+id/reply_image"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="@dimen/wire__padding__small"
+            android:visibility="gone"/>
+
+        <TextView
+            android:id="@+id/reply_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="?wirePrimaryTextColor"
+            android:textSize="@dimen/wire__text_size__small"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="@dimen/wire__padding__small"
+            android:layout_marginStart="@dimen/wire__padding__small"
+            android:layout_marginEnd="@dimen/wire__padding__small"
+            android:layout_toStartOf="@id/reply_image"
+            android:drawablePadding="@dimen/wire__padding__4"
+            android:ellipsize="end"
+            android:maxLines="1"/>
+
+    </RelativeLayout>
+
+</merge>

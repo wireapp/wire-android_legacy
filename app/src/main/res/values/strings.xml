@@ -888,6 +888,7 @@
     <string name="message_bottom_menu_action_delete_local">Delete for me</string>
     <string name="message_bottom_menu_action_delete_global">Delete for everyone</string>
     <string name="message_bottom_menu_action_reveal">Reveal in conversation</string>
+    <string name="message_bottom_menu_action_reply">Reply</string>
     <string name="likes_list__header">Liked by</string>
     <string name="message_bottom_menu_action_save_ok">Picture saved</string>
 
@@ -1217,4 +1218,12 @@
 
     <string name="wire_notification_name">Wire Notification</string>
     <string name="wire_ping_name">Wire Ping</string>
+
+    <string name="reply_self_name">You</string>
+    <string name="reply_message_type_image">IMAGE</string>
+    <string name="reply_message_type_video">VIDEO</string>
+    <string name="reply_message_type_audio">AUDIO MESSAGE</string>
+    <string name="reply_message_type_location">LOCATION</string>
+    <string name="reply_message_type_asset">ATTACHMENT</string>
+
 </resources>

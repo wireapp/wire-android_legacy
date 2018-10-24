@@ -22,17 +22,10 @@
        xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <View
-        style="?wireDivider"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/wire__divider__height__thin"
-    />
-
-    <View
         android:id="@+id/v__top_bar__cursor"
         style="?wireDivider"
         android:layout_width="match_parent"
         android:layout_height="@dimen/wire__divider__height__thin"
-        android:visibility="gone"
         />
 
     <FrameLayout
