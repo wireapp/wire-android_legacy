@@ -193,7 +193,7 @@ class NotificationService(context:         Context,
     }
   }
 
-  messages.onAdded { msgs => add(msgs.flatMap(m => notification(m, pushService.beDrift.currentValue.getOrElse(Duration.Zero)))) }
+  messages.onAdded { msgs => buildNotifications(msgs) }
 
   messages.onUpdated { updates =>
     // add notification when message sending fails
@@ -208,7 +208,33 @@ class NotificationService(context:         Context,
     val updatedAssets = updates collect {
       case (prev, msg) if msg.state == Message.Status.SENT && msg.msgType == Message.Type.ANY_ASSET => msg
     }
-    if (updatedAssets.nonEmpty) add(updatedAssets.flatMap(m => notification(m, pushService.beDrift.currentValue.getOrElse(Duration.Zero))))
+
+    buildNotifications(updatedAssets)
+  }
+
+  private def buildNotifications(msgs: Seq[MessageData]): Unit = {
+    def build(msg: MessageData, isQuote: Boolean, drift: bp.Duration) = mapMessageType(msg.msgType, msg.protos, msg.members, msg.userId).map { tp =>
+      NotificationData(
+        NotId(msg.id),
+        if (msg.isEphemeral) "" else msg.contentString, msg.convId,
+        msg.userId, tp,
+        if (msg.time == RemoteInstant.Epoch) msg.localTime.toRemote(drift) else msg.time,
+        ephemeral = msg.isEphemeral,
+        mentions  = msg.mentions.flatMap(_.userId),
+        isQuote   = msg.quote.nonEmpty
+      )
+    }
+
+    val notifications = msgs.map(m => m.quote match {
+      case None =>
+        Future.successful(build(m, isQuote = false, drift = pushService.beDrift.currentValue.getOrElse(Duration.Zero)))
+      case Some(quoteId) =>
+        messages.getMessage(quoteId)
+          .map(_.exists(_.userId == userId))
+          .map(isQuote => build(m, isQuote = isQuote, drift = pushService.beDrift.currentValue.getOrElse(Duration.Zero)))
+    })
+
+    Future.sequence(notifications).map(_.flatten).foreach(add)
   }
 
   messages.onDeleted { ids =>
@@ -295,7 +321,7 @@ class NotificationService(context:         Context,
               else membersCount > 2
               verbose(s"processing notif complete: ${notificationData.id}")
               val hasMention = data.mentions.contains(userId)
-              if (conv.exists(_.muted.onlyMentionsAllowed) && !hasMention) {
+              if (conv.exists(_.muted.onlyMentionsAllowed) && !hasMention && !data.isQuote) {
                 Option.empty[NotificationInfo]
               } else {
                 Some(NotificationInfo(
@@ -304,14 +330,15 @@ class NotificationService(context:         Context,
                   notificationData.time,
                   notificationData.msg,
                   notificationData.conv,
-                  convName = conv.map(_.displayName),
-                  userName = userName,
-                  userPicture = userPicture,
-                  isEphemeral = data.ephemeral,
-                  isGroupConv = groupConv,
-                  isUserMentioned = data.mentions.contains(userId),
-                  likedContent = maybeLikedContent,
-                  hasBeenDisplayed = data.hasBeenDisplayed))
+                  convName         = conv.map(_.displayName),
+                  userName         = userName,
+                  userPicture      = userPicture,
+                  isEphemeral      = data.ephemeral,
+                  isGroupConv      = groupConv,
+                  isUserMentioned  = hasMention,
+                  likedContent     = maybeLikedContent,
+                  hasBeenDisplayed = data.hasBeenDisplayed,
+                  isQuote          = data.isQuote))
               }
             }
         }
@@ -330,14 +357,15 @@ object NotificationService {
                               time: RemoteInstant,
                               message: String,
                               convId: ConvId,
-                              convName: Option[String] = None,
-                              userName: Option[String] = None,
-                              userPicture: Option[AssetId] = None,
-                              isGroupConv: Boolean = false,
-                              isUserMentioned: Boolean = false,
-                              isEphemeral: Boolean = false,
+                              convName: Option[String]           = None,
+                              userName: Option[String]           = None,
+                              userPicture: Option[AssetId]       = None,
+                              isGroupConv: Boolean               = false,
+                              isUserMentioned: Boolean           = false,
+                              isEphemeral: Boolean               = false,
                               likedContent: Option[LikedContent] = None,
-                              hasBeenDisplayed: Boolean = false
+                              hasBeenDisplayed: Boolean          = false,
+                              isQuote: Boolean                   = false
   )
 
   def mapMessageType(mTpe: Message.Type, protos: Seq[GenericMessage], members: Set[UserId], sender: UserId): Option[NotificationType] = {
@@ -357,19 +385,6 @@ object NotificationService {
         else Some(NotificationType.MEMBER_JOIN)
       case MEMBER_LEAVE => Some(NotificationType.MEMBER_LEAVE)
       case _ => None
-    }
-  }
-
-  def notification(msg: MessageData, drift: bp.Duration = Duration.Zero): Option[NotificationData] = {
-    mapMessageType(msg.msgType, msg.protos, msg.members, msg.userId).map { tp =>
-      NotificationData(
-        NotId(msg.id),
-        if (msg.isEphemeral) "" else msg.contentString, msg.convId,
-        msg.userId, tp,
-        if (msg.time == RemoteInstant.Epoch) msg.localTime.toRemote(drift) else msg.time,
-        ephemeral = msg.isEphemeral,
-        mentions = msg.mentions.flatMap(_.userId)
-      )
     }
   }
 }

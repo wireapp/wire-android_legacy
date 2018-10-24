@@ -175,6 +175,31 @@ class NotificationsServiceSpec extends AndroidFreeSpec {
     result(service.notifications.filter(nots => nots.size == 1 && nots.exists(_.convId == conv.id)).head)
   }
 
+  scenario("Create a notification for a quote message") {
+    val otherUserId = UserId("user1")
+    val otherUser = UserData(otherUserId, "otherUser")
+    val conv = ConversationData(ConvId("conv"), RConvId(), Some("conv"), otherUserId, ConversationType.OneToOne, lastRead = RemoteInstant.Epoch)
+    fillMembers(conv, Seq(otherUserId, self))
+    allConvs ! IndexedSeq(conv)
+    inForeground ! false
+    clock + 10.seconds //messages arrive some time after the account was last visible
+
+    val msgId1 = MessageId("msg1")
+    val msg1 = MessageData(msgId1, conv.id, Message.Type.TEXT, self)
+    val msgId2 = MessageId("msg2")
+    val msg2 = MessageData(msgId2, conv.id, Message.Type.TEXT, otherUserId, quote = Some(msgId1))
+
+    (users.get _).expects(otherUserId).anyNumberOfTimes.returning(Future.successful(Some(otherUser)))
+    (convs.get _).expects(conv.id).anyNumberOfTimes.returning(Future.successful(Some(conv)))
+    (messages.getMessage _).expects(msgId1).once.returning(Future.successful(Some(msg1)))
+
+    val service = getService
+
+    msgsAdded ! Seq(msg2)
+
+    result(service.notifications.filter(nots => nots.size == 1 && nots.exists(n => n.convId == conv.id && n.isQuote)).head)
+  }
+
 
   def fillMembers(conv: ConversationData, users: Seq[UserId]) = {
     (members.getByConv _).expects(conv.id).anyNumberOfTimes().returning(Future.successful((users :+ self).map(uid => ConversationMemberData(uid, conv.id)).toIndexedSeq))
