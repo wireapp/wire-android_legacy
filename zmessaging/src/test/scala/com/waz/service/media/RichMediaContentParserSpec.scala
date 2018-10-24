@@ -18,7 +18,7 @@
 package com.waz.service.media
 
 import com.waz.api.Message.Part.Type._
-import com.waz.model.{Mention, MessageContent, MessageId, UserId}
+import com.waz.model.{Mention, MessageContent, UserId}
 import org.scalacheck.Gen
 import org.scalatest.prop.{GeneratorDrivenPropertyChecks, TableDrivenPropertyChecks}
 import RichMediaContentParser._

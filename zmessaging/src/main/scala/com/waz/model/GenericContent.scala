@@ -268,8 +268,8 @@ object GenericContent {
   type Quote = Messages.Quote
 
   object Quote {
-    def apply(replyTo: MessageId, sha256: Option[Sha256]) = returning(new Messages.Quote) { q =>
-      q.quotedMessageId = replyTo.str
+    def apply(id: MessageId, sha256: Option[Sha256]) = returning(new Messages.Quote) { q =>
+      q.quotedMessageId = id.str
       sha256.foreach(sha => if (sha.bytes.nonEmpty) q.quotedMessageSha256 = sha.bytes)
     }
 

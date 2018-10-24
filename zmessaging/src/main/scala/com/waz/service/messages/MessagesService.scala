@@ -47,7 +47,7 @@ trait MessagesService {
   def addKnockMessage(convId: ConvId, selfUserId: UserId): Future[MessageData]
   def addAssetMessage(convId: ConvId, asset: AssetData, exp: Option[Option[FiniteDuration]] = None): Future[MessageData]
   def addLocationMessage(convId: ConvId, content: Location): Future[MessageData]
-  def addReplyMessage(replyTo: MessageId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]]
+  def addReplyMessage(quote: MessageId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]]
 
   def addMissedCallMessage(rConvId: RConvId, from: UserId, time: RemoteInstant): Future[Option[MessageData]]
   def addMissedCallMessage(convId: ConvId, from: UserId, time: RemoteInstant): Future[Option[MessageData]]
@@ -177,9 +177,9 @@ class MessagesServiceImpl(selfUserId:   UserId,
     updater.addLocalMessage(MessageData(id, convId, tpe, selfUserId, ct, protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil)))), exp = exp) // FIXME: links
   }
 
-  override def addReplyMessage(replyTo: MessageId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None) = {
-    verbose(s"addReplyMessage($replyTo, ${content.take(4)}, $mentions, $exp")
-    updater.getMessage(replyTo).flatMap {
+  override def addReplyMessage(quote: MessageId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None) = {
+    verbose(s"addReplyMessage($quote, ${content.take(4)}, $mentions, $exp")
+    updater.getMessage(quote).flatMap {
       case Some(original) =>
         val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
         verbose(s"parsed content: $ct")
@@ -187,13 +187,13 @@ class MessagesServiceImpl(selfUserId:   UserId,
         updater.addLocalMessage(
           MessageData(
             id, original.convId, tpe, selfUserId, ct,
-            protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, Some(Quote(replyTo, None))))), // TODO: Sha256
-            replyTo = Some(replyTo)
+            protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, Some(Quote(quote, None))))), // TODO: Sha256
+            quote = Some(quote)
           ),
           exp = exp
         ).map(Option(_))
       case None =>
-        error(s"A reply to a non-existent message: $replyTo")
+        error(s"A reply to a non-existent message: $quote")
         Future successful None
     }
   }

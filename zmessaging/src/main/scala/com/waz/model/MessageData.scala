@@ -63,8 +63,8 @@ case class MessageData(id:            MessageId              = MessageId(),
                        expiryTime:    Option[LocalInstant]   = None, // local expiration time
                        expired:       Boolean                = false,
                        duration:      Option[FiniteDuration] = None, //for successful calls and message_timer changes
-                       replyTo:       Option[MessageId]      = None,
-                       validReply:    Boolean                = false
+                       quote:         Option[MessageId]      = None,
+                       quoteValidity: Boolean                = false
                       ) {
 
   override def toString: String =
@@ -81,7 +81,7 @@ case class MessageData(id:            MessageId              = MessageId(),
        | editTime:      $editTime
        | members:       $members
        | content:       ${content.map(c => (c.content, c.mentions))}
-       | other fields:  $firstMessage, $recipient, $email, $name, $ephemeral, $expiryTime, $expired, $duration, $replyTo, $validReply
+       | other fields:  $firstMessage, $recipient, $email, $name, $ephemeral, $expiryTime, $expired, $duration, $quote, $quoteValidity
     """.stripMargin
 
 
@@ -101,7 +101,7 @@ case class MessageData(id:            MessageId              = MessageId(),
     case _ => Nil
   }
 
-  lazy val quote: Option[Quote] = protos.lastOption match {
+  lazy val protoQuote: Option[Quote] = protos.lastOption match {
     case Some(TextMessage(_, _, _, quote)) => quote
     case _ => None
   }
@@ -328,33 +328,33 @@ object MessageData extends
   implicit object MessageDataDao extends Dao[MessageData, MessageId]  {
     import com.waz.db._
 
-    val Id           = id[MessageId]('_id, "PRIMARY KEY").apply(_.id)
-    val Conv         = id[ConvId]('conv_id).apply(_.convId)
-    val Type         = text[Message.Type]('msg_type, MessageTypeCodec.encode, MessageTypeCodec.decode)(_.msgType)
-    val User         = id[UserId]('user_id).apply(_.userId)
-    val Content      = jsonArray[MessageContent, Seq, Vector]('content).apply(_.content)
-    val Protos       = protoSeq[GenericMessage, Seq, Vector]('protos).apply(_.protos)
-    val ContentSize  = int('content_size)(_.content.size)
-    val FirstMessage = bool('first_msg)(_.firstMessage)
-    val Members      = set[UserId]('members, _.mkString(","), _.split(",").filter(!_.isEmpty).map(UserId(_))(breakOut))(_.members)
-    val Recipient    = opt(id[UserId]('recipient))(_.recipient)
-    val Email        = opt(text('email))(_.email)
-    val Name         = opt(text('name))(_.name)
-    val State        = text[MessageState]('msg_state, _.name, Message.Status.valueOf)(_.state)
-    val Time         = remoteTimestamp('time)(_.time)
-    val LocalTime    = localTimestamp('local_time)(_.localTime)
-    val EditTime     = remoteTimestamp('edit_time)(_.editTime)
-    val Ephemeral    = opt(finiteDuration('ephemeral))(_.ephemeral)
-    val ExpiryTime   = opt(localTimestamp('expiry_time))(_.expiryTime)
-    val Expired      = bool('expired)(_.expired)
-    val Duration     = opt(finiteDuration('duration))(_.duration)
-    val ReplyTo      = opt(id[MessageId]('reply_to))(_.replyTo)
-    val ValidReply   = bool('valid_reply)(_.validReply)
+    val Id            = id[MessageId]('_id, "PRIMARY KEY").apply(_.id)
+    val Conv          = id[ConvId]('conv_id).apply(_.convId)
+    val Type          = text[Message.Type]('msg_type, MessageTypeCodec.encode, MessageTypeCodec.decode)(_.msgType)
+    val User          = id[UserId]('user_id).apply(_.userId)
+    val Content       = jsonArray[MessageContent, Seq, Vector]('content).apply(_.content)
+    val Protos        = protoSeq[GenericMessage, Seq, Vector]('protos).apply(_.protos)
+    val ContentSize   = int('content_size)(_.content.size)
+    val FirstMessage  = bool('first_msg)(_.firstMessage)
+    val Members       = set[UserId]('members, _.mkString(","), _.split(",").filter(!_.isEmpty).map(UserId(_))(breakOut))(_.members)
+    val Recipient     = opt(id[UserId]('recipient))(_.recipient)
+    val Email         = opt(text('email))(_.email)
+    val Name          = opt(text('name))(_.name)
+    val State         = text[MessageState]('msg_state, _.name, Message.Status.valueOf)(_.state)
+    val Time          = remoteTimestamp('time)(_.time)
+    val LocalTime     = localTimestamp('local_time)(_.localTime)
+    val EditTime      = remoteTimestamp('edit_time)(_.editTime)
+    val Ephemeral     = opt(finiteDuration('ephemeral))(_.ephemeral)
+    val ExpiryTime    = opt(localTimestamp('expiry_time))(_.expiryTime)
+    val Expired       = bool('expired)(_.expired)
+    val Duration      = opt(finiteDuration('duration))(_.duration)
+    val Quote         = opt(id[MessageId]('quote))(_.quote)
+    val QuoteValidity = bool('quote_validity)(_.quoteValidity)
 
     override val idCol = Id
 
     override val table =
-      Table("Messages", Id, Conv, Type, User, Content, Protos, Time, LocalTime, FirstMessage, Members, Recipient, Email, Name, State, ContentSize, EditTime, Ephemeral, ExpiryTime, Expired, Duration, ReplyTo, ValidReply)
+      Table("Messages", Id, Conv, Type, User, Content, Protos, Time, LocalTime, FirstMessage, Members, Recipient, Email, Name, State, ContentSize, EditTime, Ephemeral, ExpiryTime, Expired, Duration, Quote, QuoteValidity)
 
     override def onCreate(db: DB): Unit = {
       super.onCreate(db)
@@ -362,7 +362,7 @@ object MessageData extends
     }
 
     override def apply(implicit cursor: DBCursor): MessageData =
-      MessageData(Id, Conv, Type, User, Content, Protos, FirstMessage, Members, Recipient, Email, Name, State, Time, LocalTime, EditTime, Ephemeral, ExpiryTime, Expired, Duration, ReplyTo, ValidReply)
+      MessageData(Id, Conv, Type, User, Content, Protos, FirstMessage, Members, Recipient, Email, Name, State, Time, LocalTime, EditTime, Ephemeral, ExpiryTime, Expired, Duration, Quote, QuoteValidity)
 
     def deleteForConv(id: ConvId)(implicit db: DB) = delete(Conv, id)
 
@@ -498,7 +498,7 @@ object MessageData extends
       }
     }
 
-  def textContent(message: String): Seq[MessageContent] = Seq(RichMediaContentParser.textMessageContent(message, Nil))
+  def textContent(message: String): Seq[MessageContent] = Seq(RichMediaContentParser.textMessageContent(message))
 
   object IsAsset {
     def apply(tpe: Message.Type): Boolean = unapply(tpe)

@@ -136,9 +136,9 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
   override def sendTextMessages(convs: Seq[ConvId], text: String, mentions: Seq[Mention] = Nil, exp: Option[FiniteDuration]) =
     Future.sequence(convs.map(id => sendTextMessage(id, text, mentions, Some(exp)))).map(_ => {})
 
-  override def sendReplyMessage(replyTo: MessageId, text: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None) =
+  override def sendReplyMessage(quote: MessageId, text: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None) =
     for {
-      msg <- messages.addReplyMessage(replyTo, text, mentions, exp)
+      msg <- messages.addReplyMessage(quote, text, mentions, exp)
       _   <- msg.fold(Future.successful(Option.empty[(ConversationData, ConversationData)]))(updateLastRead)
       _   <- msg.fold(Future.successful(Option.empty[SyncId]))(m => sync.postMessage(m.id, m.convId, m.editTime).map(Some(_)))
     } yield msg
@@ -187,7 +187,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
         m.copy(
           msgType = tpe,
           content = ct,
-          protos = Seq(GenericMessage(Uid(), MsgEdit(id, GenericContent.Text(text, ct.flatMap(_.mentions), Nil, m.quote)))),
+          protos = Seq(GenericMessage(Uid(), MsgEdit(id, GenericContent.Text(text, ct.flatMap(_.mentions), Nil, m.protoQuote)))),
           state = Message.Status.PENDING,
           editTime = (m.time max m.editTime) + 1.millis max LocalInstant.Now.toRemote(currentBeDrift)
         )

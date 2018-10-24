@@ -259,8 +259,8 @@ object ZMessagingDB {
       db.execSQL("ALTER TABLE ConversationsCopy RENAME TO Conversations;")
     },
     Migration(110, 111) { db =>
-      db.execSQL("ALTER TABLE Messages ADD COLUMN reply_to TEXT")
-      db.execSQL("ALTER TABLE Messages ADD COLUMN valid_reply INTEGER DEFAULT 0")
+      db.execSQL("ALTER TABLE Messages ADD COLUMN quote TEXT")
+      db.execSQL("ALTER TABLE Messages ADD COLUMN quote_validity INTEGER DEFAULT 0")
     }
   )
 }

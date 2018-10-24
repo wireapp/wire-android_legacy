@@ -76,7 +76,7 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     result(service.addMemberJoinMessage(convId, instigator, usersAdded)).map(_.copy(id = newMsg.id)) shouldEqual Some(newMsg)
   }
 
-  scenario("Create a reply text MessageData") {
+  scenario("Create a quote") {
     import Threading.Implicits.Background
 
     val service = getService
@@ -93,15 +93,15 @@ class MessagesServiceSpec extends AndroidFreeSpec {
 
     var originalMsgId = MessageId()
 
-    val reply = service.addTextMessage(convId, "aaa").flatMap { msg1 =>
+    val quote = service.addTextMessage(convId, "aaa").flatMap { msg1 =>
       originalMsgId = msg1.id
       (storage.getMessage _).expects(msg1.id).once().returning(Future.successful(Some(msg1)))
       (storage.getLastMessage _).expects(convId).once().returning(Future.successful(Some(msg1)))
 
-      service.addReplyMessage(msg1.id, "bbb").collect { case Some(msg2) => (msg2.contentString, msg2.replyTo) }
+      service.addReplyMessage(msg1.id, "bbb").collect { case Some(msg2) => (msg2.contentString, msg2.quote) }
     }
 
-    result(reply) shouldEqual ("bbb", Some(originalMsgId))
+    result(quote) shouldEqual ("bbb", Some(originalMsgId))
   }
 
   def getService = {
