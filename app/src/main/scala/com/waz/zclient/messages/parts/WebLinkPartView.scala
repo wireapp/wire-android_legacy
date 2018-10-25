@@ -25,7 +25,6 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.Message.Part
 import com.waz.model.GenericContent.LinkPreview
-import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.sync.client.OpenGraphClient.OpenGraphData

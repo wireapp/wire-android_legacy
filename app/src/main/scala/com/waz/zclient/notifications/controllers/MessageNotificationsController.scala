@@ -359,6 +359,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
 
     val body = n.tpe match {
       case _ if n.isEphemeral && n.isUserMentioned => ResString(R.string.notification__message_with_mention__ephemeral)
+      case _ if n.isEphemeral && n.isQuote => ResString(R.string.notification__message_with_quote__ephemeral)
       case _ if n.isEphemeral => ResString(R.string.notification__message__ephemeral)
       case TEXT               => ResString(message)
       case MISSED_CALL        => ResString(R.string.notification__message__one_to_one__wanted_to_talk)
@@ -415,11 +416,15 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
         if (!singleConversationInBatch && n.isGroupConv)
           if (n.isUserMentioned)
             R.string.notification__message_with_mention__group__prefix__text
+          else if (n.isQuote)
+            R.string.notification__message_with_quote__group__prefix__text
           else
             R.string.notification__message__group__prefix__text
         else if (!singleConversationInBatch && !n.isGroupConv || singleConversationInBatch && n.isGroupConv)
           if (n.isUserMentioned)
             R.string.notification__message_with_mention__name__prefix__text
+          else if (n.isQuote)
+            R.string.notification__message_with_quote__name__prefix__text
           else
             R.string.notification__message__name__prefix__text
         else 0

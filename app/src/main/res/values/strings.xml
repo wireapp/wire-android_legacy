@@ -582,6 +582,8 @@
     <string name="notification__message__group__prefix__text">%1$s in %2$s: \u0020</string>
     <string name="notification__message_with_mention__name__prefix__text">Mention from %1$s: \u0020</string>
     <string name="notification__message_with_mention__group__prefix__text">Mention from %1$s in %2$s: \u0020</string>
+    <string name="notification__message_with_quote__name__prefix__text">Reply from %1$s: \u0020</string>
+    <string name="notification__message_with_quote__group__prefix__text">Reply from %1$s in %2$s: \u0020</string>
     <string name="notification__message__one_to_one__wanted_to_talk">Called</string>
     <string name="notification__message__one_to_one__pinged">Pinged</string>
     <string name="notification__message__one_to_one__shared_picture">Shared a picture</string>
@@ -600,6 +602,7 @@
     <string name="notification__message__send_failed">Message failed to send</string>
     <string name="notification__message__ephemeral">Sent a message</string>
     <string name="notification__message_with_mention__ephemeral">Mentioned you</string>
+    <string name="notification__message_with_quote__ephemeral">Replied to your message</string>
 
     <string name="notification__message__liked">\u2764 ‘%1$s’</string>
     <string name="notification__message__liked_message">\u2764 your message</string>
