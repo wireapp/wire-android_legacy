@@ -130,7 +130,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
     def unarchiveTime(es: Traversable[ConversationEvent]) = {
       val all = es.filter(shouldUnarchive)
       if (all.isEmpty) None
-      else Some((all.maxBy(_.time).time, all.exists(unarchiveMuted), all.exists(hasMention)))
+      else Some((all.maxBy(_.time).time, all.exists(unarchiveMuted), all.exists(hasMentionOrQuote)))
     }
 
     val convs = events.groupBy(_.convId).mapValues(unarchiveTime).filter(_._2.isDefined)
@@ -138,7 +138,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
     storage.getByRemoteIds(convs.keys) flatMap { convIds =>
       storage.updateAll2(convIds, { conv =>
         convs.get(conv.remoteId).flatten match {
-          case Some((time, unarchiveMuted, hasMention)) if conv.archiveTime.isBefore(time) && (conv.isAllAllowed || unarchiveMuted || (conv.onlyMentionsAllowed && hasMention)) =>
+          case Some((time, unarchiveMuted, hasMentionOrQuote)) if conv.archiveTime.isBefore(time) && (conv.isAllAllowed || unarchiveMuted || (conv.onlyMentionsAllowed && hasMentionOrQuote)) =>
             conv.copy(archived = false, archiveTime = time)
           case _ =>
             conv
@@ -152,9 +152,9 @@ class ConversationOrderEventsService(selfUserId: UserId,
     case _ => false
   }
 
-  private def hasMention(event: Event): Boolean = event match {
-    case GenericMessageEvent(_, _, _, GenericMessage(_, Text(_, mentions, _, _))) =>
-      mentions.exists(_.userId.contains(selfUserId))
+  private def hasMentionOrQuote(event: Event): Boolean = event match {
+    case GenericMessageEvent(_, _, _, GenericMessage(_, Text(_, mentions, _, quote))) =>
+      mentions.exists(_.userId.contains(selfUserId)) || quote.nonEmpty
     case _ => false
   }
 }
