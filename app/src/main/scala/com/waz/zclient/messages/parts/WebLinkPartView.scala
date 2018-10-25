@@ -25,7 +25,6 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.Message.Part
 import com.waz.model.GenericContent.LinkPreview
-import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
@@ -64,10 +63,7 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
   } yield {
     val index = msg.content.indexOf(ct)
     val linkIndex = msg.content.take(index).count(_.tpe == Part.Type.WEB_LINK)
-    msg.protos.lastOption flatMap {
-      case TextMessage(_, _, previews, _) if index >= 0 && previews.size > linkIndex => Some(previews(linkIndex))
-      case _ => None
-    }
+    if (index >= 0 && msg.links.size > linkIndex) Some(msg.links(linkIndex)) else None
   }
 
   val image = for {

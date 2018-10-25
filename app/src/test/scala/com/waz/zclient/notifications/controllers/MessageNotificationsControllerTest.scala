@@ -446,5 +446,4 @@ class MessageNotificationsControllerTest extends AndroidFreeSpec { this: Suite =
 
     waitForProps(_.exists(_._2.lastIsPing.contains(true)))
   }
-
 }
