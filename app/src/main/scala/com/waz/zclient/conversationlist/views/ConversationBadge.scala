@@ -41,6 +41,7 @@ object ConversationBadge {
   case object MissedCall extends Status
   case class Count(count: Int) extends Status
   case object Mention extends Status
+  case object Quote extends Status
 }
 
 class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ViewHelper { self =>
@@ -107,6 +108,8 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
 
   def setMention() = setStyleKitView(Mention, R.drawable.conversation_badge_white, R.color.black)
 
+  def setQuote() = setStyleKitView(Quote, R.drawable.conversation_badge_white, R.color.black)
+
   def setStatus(status: Status): Unit = {
     this.status = status
     status match {
@@ -128,6 +131,8 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
         setCount(count)
       case Mention =>
         setMention()
+      case Quote =>
+        setQuote()
       case Empty =>
         setHidden()
     }
