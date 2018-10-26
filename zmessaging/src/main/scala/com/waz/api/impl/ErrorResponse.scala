@@ -26,6 +26,10 @@ import org.json.JSONObject
 import scala.util.Try
 
 case class ErrorResponse(code: Int, message: String, label: String) extends Throwable {
+
+
+  override def toString: String = s"ErrorResponse(code: $code, message: $message, label: $label)"
+
   /**
     * Returns true if retrying the request will always fail.
     * Non-fatal errors are temporary and retrying the request with the same parameters could eventually succeed.
