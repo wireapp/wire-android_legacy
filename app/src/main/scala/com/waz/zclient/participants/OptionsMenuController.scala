@@ -29,7 +29,13 @@ trait OptionsMenuController {
 }
 
 object OptionsMenuController {
-  case class MenuItem(titleId: Int, glyphId: Option[Int] = None, colorId: Option[Int] = Some(R.color.graphite))
+  trait MenuItem {
+    val titleId: Int
+    val iconId: Option[Int]
+    val colorId: Option[Int]
+  }
+
+  case class BaseMenuItem(titleId: Int, iconId: Option[Int] = None, colorId: Option[Int] = Some(R.color.graphite)) extends MenuItem
 }
 
 class BaseOptionsMenuController(options: Seq[MenuItem], titleString: Option[String]) extends OptionsMenuController {

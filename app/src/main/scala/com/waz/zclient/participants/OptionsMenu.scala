@@ -18,14 +18,16 @@
 package com.waz.zclient.participants
 
 import android.content.Context
+import android.graphics.{Canvas, Rect, RectF}
 import android.os.Bundle
 import android.support.design.widget.BottomSheetDialog
 import android.view.{View, ViewGroup}
 import android.widget.{LinearLayout, TextView}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
+import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
+import com.waz.zclient.paintcode.{WireDrawable, WireStyleKit}
 import com.waz.zclient.ui.animation.interpolators.penner.{Expo, Quart}
-import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.utils.ViewUtils.getView
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{DialogHelper, R}
@@ -59,12 +61,19 @@ case class OptionsMenu(context: Context, controller: OptionsMenuController) exte
       items.foreach { item =>
         container.addView(returning(getLayoutInflater.inflate(R.layout.message__bottom__menu__row, container, false)) { itemView =>
 
-          returning(getView[GlyphTextView](itemView, R.id.icon)) { v =>
-            item.glyphId.fold(v.setVisibility(View.GONE)) { g =>
+          returning(getView[View](itemView, R.id.icon)) { v =>
+            item.iconId.fold(v.setVisibility(View.GONE)) { g =>
               v.setVisibility(View.VISIBLE)
-              v.setText(g)
+              val drawable = new WireDrawable {
+                override def draw(canvas: Canvas): Unit ={
+                  OptionsMenu.drawForId(g)(canvas, getDrawingRect, ResizingBehavior.AspectFit, this.paint.getColor)
+                }
+              }
+              drawable.setPadding(new Rect(v.getPaddingLeft, v.getPaddingTop, v.getPaddingRight, v.getPaddingBottom))
+              val color = item.colorId.map(getColor).getOrElse(getColor(R.color.graphite))
+              drawable.setColor(color)
+              v.setBackground(drawable)
             }
-            item.colorId.map(getColor).foreach(v.setTextColor(_))
           }
           returning(getView[TextView](itemView, R.id.text)) { v =>
             v.setText(item.titleId)
@@ -95,4 +104,30 @@ object OptionsMenu {
   case object Opening extends AnimState
   case object Closing extends AnimState
   case object Closed  extends AnimState
+
+  def drawForId(id: Int): (Canvas, RectF, ResizingBehavior, Int) => Unit = id match {
+    case R.id.message_bottom_menu_item_forward => WireStyleKit.drawShare
+    case R.id.message_bottom_menu_item_copy => WireStyleKit.drawCopied
+    case R.id.message_bottom_menu_item_delete => WireStyleKit.drawDelete
+    case R.id.message_bottom_menu_item_delete_local => WireStyleKit.drawDeleteforme
+    case R.id.message_bottom_menu_item_delete_global => WireStyleKit.drawDeleteforeveryone
+    case R.id.message_bottom_menu_item_edit => WireStyleKit.drawEdit
+    case R.id.message_bottom_menu_item_like => WireStyleKit.drawLike
+    case R.id.message_bottom_menu_item_unlike => WireStyleKit.drawLiked
+    case R.id.message_bottom_menu_item_save => WireStyleKit.drawSave
+    case R.id.message_bottom_menu_item_open_file => WireStyleKit.drawFile
+    case R.id.message_bottom_menu_item_reveal => WireStyleKit.drawReveal
+    case R.id.message_bottom_menu_item_reply => WireStyleKit.drawReply
+
+    case R.string.glyph__silence => WireStyleKit.drawMuteAlerts
+    case R.string.glyph__notify => WireStyleKit.drawAlerts
+    case R.string.glyph__camera => WireStyleKit.drawCamera
+    case R.string.glyph__call => WireStyleKit.drawAcceptCall
+    case R.string.glyph__archive => WireStyleKit.drawArchive
+    case R.string.glyph__delete_me => WireStyleKit.drawDeleteforme
+    case R.string.glyph__leave => WireStyleKit.drawLeave
+    case R.string.glyph__block => WireStyleKit.drawBlock
+
+    case _ => (_, _, _, _) => ()
+  }
 }

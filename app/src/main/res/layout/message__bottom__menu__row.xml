@@ -29,16 +29,14 @@
               android:clickable="true"
               android:focusable="true">
 
-    <com.waz.zclient.ui.text.GlyphTextView
+    <View
         android:id="@+id/icon"
         android:layout_width="@dimen/message__bottom_menu__icon_view_size"
         android:layout_height="@dimen/message__bottom_menu__icon_view_size"
         android:layout_marginEnd="@dimen/wire__padding__regular"
         android:layout_alignParentStart="true"
         android:layout_centerVertical="true"
-        android:textSize="@dimen/wire__text_size__regular"
-        android:textColor="@color/graphite"
-        android:gravity="center"
+        android:padding="@dimen/wire__padding__4"
         />
 
     <com.waz.zclient.ui.text.TypefaceTextView

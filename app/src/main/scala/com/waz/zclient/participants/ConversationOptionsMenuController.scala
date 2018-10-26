@@ -243,22 +243,22 @@ object ConversationOptionsMenuController {
     case class Leaving(inConversationList: Boolean) extends Mode
   }
 
-  object Mute      extends MenuItem(R.string.conversation__action__silence, Some(R.string.glyph__silence))
-  object Unmute    extends MenuItem(R.string.conversation__action__unsilence, Some(R.string.glyph__notify))
-  object Picture   extends MenuItem(R.string.conversation__action__picture, Some(R.string.glyph__camera))
-  object Call      extends MenuItem(R.string.conversation__action__call, Some(R.string.glyph__call))
-  object Notifications    extends MenuItem(R.string.conversation__action__notifications, Some(R.string.glyph__notify))
-  object Archive   extends MenuItem(R.string.conversation__action__archive, Some(R.string.glyph__archive))
-  object Unarchive extends MenuItem(R.string.conversation__action__unarchive, Some(R.string.glyph__archive))
-  object Delete    extends MenuItem(R.string.conversation__action__delete, Some(R.string.glyph__delete_me))
-  object Leave     extends MenuItem(R.string.conversation__action__leave, Some(R.string.glyph__leave))
-  object Block     extends MenuItem(R.string.conversation__action__block, Some(R.string.glyph__block))
-  object Unblock   extends MenuItem(R.string.conversation__action__unblock, Some(R.string.glyph__block))
+  object Mute      extends BaseMenuItem(R.string.conversation__action__silence, Some(R.string.glyph__silence))
+  object Unmute    extends BaseMenuItem(R.string.conversation__action__unsilence, Some(R.string.glyph__notify))
+  object Picture   extends BaseMenuItem(R.string.conversation__action__picture, Some(R.string.glyph__camera))
+  object Call      extends BaseMenuItem(R.string.conversation__action__call, Some(R.string.glyph__call))
+  object Notifications    extends BaseMenuItem(R.string.conversation__action__notifications, Some(R.string.glyph__notify))
+  object Archive   extends BaseMenuItem(R.string.conversation__action__archive, Some(R.string.glyph__archive))
+  object Unarchive extends BaseMenuItem(R.string.conversation__action__unarchive, Some(R.string.glyph__archive))
+  object Delete    extends BaseMenuItem(R.string.conversation__action__delete, Some(R.string.glyph__delete_me))
+  object Leave     extends BaseMenuItem(R.string.conversation__action__leave, Some(R.string.glyph__leave))
+  object Block     extends BaseMenuItem(R.string.conversation__action__block, Some(R.string.glyph__block))
+  object Unblock   extends BaseMenuItem(R.string.conversation__action__unblock, Some(R.string.glyph__block))
 
-  object LeaveOnly      extends MenuItem(R.string.conversation__action__leave_only, Some(R.string.empty_string))
-  object LeaveAndDelete extends MenuItem(R.string.conversation__action__leave_and_delete, Some(R.string.empty_string))
-  object DeleteOnly     extends MenuItem(R.string.conversation__action__delete_only, Some(R.string.empty_string))
-  object DeleteAndLeave extends MenuItem(R.string.conversation__action__delete_and_leave, Some(R.string.empty_string))
+  object LeaveOnly      extends BaseMenuItem(R.string.conversation__action__leave_only, Some(R.string.empty_string))
+  object LeaveAndDelete extends BaseMenuItem(R.string.conversation__action__leave_and_delete, Some(R.string.empty_string))
+  object DeleteOnly     extends BaseMenuItem(R.string.conversation__action__delete_only, Some(R.string.empty_string))
+  object DeleteAndLeave extends BaseMenuItem(R.string.conversation__action__delete_and_leave, Some(R.string.empty_string))
 
   val OrderSeq = Seq(Mute, Unmute, Notifications, Archive, Unarchive, Delete, Leave, Block, Unblock, LeaveOnly, LeaveAndDelete, DeleteOnly, DeleteAndLeave)
 

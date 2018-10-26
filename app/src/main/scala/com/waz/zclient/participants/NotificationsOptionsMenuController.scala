@@ -22,7 +22,7 @@ import com.waz.service.ZMessaging
 import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.{Injectable, Injector, R}
-import com.waz.zclient.participants.OptionsMenuController.MenuItem
+import com.waz.zclient.participants.OptionsMenuController.BaseMenuItem
 import com.waz.zclient.utils.ContextUtils.getString
 
 class NotificationsOptionsMenuController(convId: ConvId, fromConversationList: Boolean)(implicit injector: Injector, context: Context, ec: EventContext) extends OptionsMenuController with Injectable {
@@ -51,7 +51,7 @@ class NotificationsOptionsMenuController(convId: ConvId, fromConversationList: B
   }.onUi(m => convController.setMuted(convId, muted = m))
 }
 
-object Everything   extends MenuItem(R.string.conversation__action__notifications_everything, None)
-object OnlyMentions extends MenuItem(R.string.conversation__action__notifications_mentions_only, None)
-object Nothing      extends MenuItem(R.string.conversation__action__notifications_nothing, None)
+object Everything   extends BaseMenuItem(R.string.conversation__action__notifications_everything, None)
+object OnlyMentions extends BaseMenuItem(R.string.conversation__action__notifications_mentions_only, None)
+object Nothing      extends BaseMenuItem(R.string.conversation__action__notifications_nothing, None)
 
