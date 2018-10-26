@@ -113,7 +113,6 @@ case class MessageData(id:            MessageId              = MessageId(),
   def isDeleted = msgType == Message.Type.RECALLED
 
   lazy val mentions = content.flatMap(_.mentions)
-  lazy val hasMentions = mentions.nonEmpty
 
   def hasMentionOf(userId: UserId): Boolean = mentions.exists(_.userId.forall(_ == userId)) // a mention with userId == None is a "mention" of everyone, so it counts
 

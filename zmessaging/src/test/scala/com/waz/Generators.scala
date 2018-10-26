@@ -153,7 +153,7 @@ object Generators {
   implicit lazy val arbAssetToken: Arbitrary[AssetToken] = Arbitrary(resultOf(AssetToken))
   implicit lazy val arbOtrKey: Arbitrary[AESKey] = Arbitrary(sideEffect(AESKey()))
   implicit lazy val arbSha256: Arbitrary[Sha256] = Arbitrary(arbitrary[Array[Byte]].map(b => Sha256(sha2(b))))
-  implicit lazy val arbUnreadCount: Arbitrary[UnreadCount] = Arbitrary(for (n <- chooseNum(0,1000); c <- chooseNum(0,1000); p <- chooseNum(0,1000); m <- chooseNum(0,1000)) yield UnreadCount(n, c, p, m))
+  implicit lazy val arbUnreadCount: Arbitrary[UnreadCount] = Arbitrary(for (n <- chooseNum(0,1000); c <- chooseNum(0,1000); p <- chooseNum(0,1000); m <- chooseNum(0,1000); q <- chooseNum(0, 1000)) yield UnreadCount(n, c, p, m, q))
 
   object MediaAssets {
     implicit lazy val arbArtistData: Arbitrary[ArtistData] = Arbitrary(resultOf(ArtistData))

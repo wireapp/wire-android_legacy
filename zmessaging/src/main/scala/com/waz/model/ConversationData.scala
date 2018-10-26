@@ -47,7 +47,7 @@ case class ConversationData(id:                   ConvId                 = ConvI
                             cleared:              Option[RemoteInstant]  = None,
                             generatedName:        String                 = "",
                             searchKey:            Option[SearchKey]      = None,
-                            unreadCount:          UnreadCount            = UnreadCount(0, 0, 0, 0),
+                            unreadCount:          UnreadCount            = UnreadCount(0, 0, 0, 0, 0),
                             failedCount:          Int                    = 0,
                             missedCallMessage:    Option[MessageId]      = None,
                             incomingKnockMessage: Option[MessageId]      = None,
@@ -145,8 +145,8 @@ object ConversationData {
 
   val Empty = ConversationData(ConvId(), RConvId(), None, UserId(), IConversation.Type.UNKNOWN)
 
-  case class UnreadCount(normal: Int, call: Int, ping: Int, mentions: Int) {
-    def total = normal + call + ping + mentions
+  case class UnreadCount(normal: Int, call: Int, ping: Int, mentions: Int, quotes: Int) {
+    def total = normal + call + ping + mentions + quotes
     def messages = normal + ping
   }
 
@@ -219,6 +219,7 @@ object ConversationData {
     val AccessRole          = opt(text[IConversation.AccessRole]('access_role, JsonEncoder.encodeAccessRole, v => IConversation.AccessRole.valueOf(v.toUpperCase)))(_.accessRole)
     val Link                = opt(text[Link]('link, _.url, v => ConversationData.Link(v)))(_.link)
     val UnreadMentionsCount = int('unread_mentions_count)(_.unreadCount.mentions)
+    val UnreadQuotesCount   = int('unread_quote_count)(_.unreadCount.quotes)
 
     override val idCol = Id
     override val table = Table(
@@ -253,7 +254,8 @@ object ConversationData {
       Access,
       AccessRole,
       Link,
-      UnreadMentionsCount
+      UnreadMentionsCount,
+      UnreadQuotesCount
     )
 
     override def apply(implicit cursor: DBCursor): ConversationData =
@@ -274,7 +276,7 @@ object ConversationData {
         Cleared,
         GeneratedName,
         SKey,
-        ConversationData.UnreadCount(UnreadCount, UnreadCallCount, UnreadPingCount, UnreadMentionsCount),
+        ConversationData.UnreadCount(UnreadCount, UnreadCallCount, UnreadPingCount, UnreadMentionsCount, UnreadQuotesCount),
         FailedCount,
         MissedCall,
         IncomingKnock,

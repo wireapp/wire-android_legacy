@@ -225,14 +225,11 @@ class NotificationService(context:         Context,
       )
     }
 
-    val notifications = msgs.map(m => m.quote match {
-      case None =>
-        Future.successful(build(m, isQuote = false, drift = pushService.beDrift.currentValue.getOrElse(Duration.Zero)))
-      case Some(quoteId) =>
-        messages.getMessage(quoteId)
-          .map(_.exists(_.userId == userId))
-          .map(isQuote => build(m, isQuote = isQuote, drift = pushService.beDrift.currentValue.getOrElse(Duration.Zero)))
-    })
+    val notifications = msgs.map(m =>
+      messages.isQuoteOfSelf(m).map(isQuote =>
+        build(m, isQuote, drift = pushService.beDrift.currentValue.getOrElse(Duration.Zero))
+      )
+    )
 
     Future.sequence(notifications).map(_.flatten).foreach(add)
   }

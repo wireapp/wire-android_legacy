@@ -74,6 +74,9 @@ trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
   def clear(convId: ConvId, clearTime: RemoteInstant): Future[Unit]
 
   def lastMessageFromSelfAndFromOther(conv: ConvId): Signal[(Option[MessageData], Option[MessageData])]
+
+  def isQuoteOfSelf(message: MessageData): Future[Boolean]
+  def countUnread(conv: ConvId, lastReadTime: RemoteInstant): Future[UnreadCount]
 }
 
 class MessagesStorageImpl(context: Context,
@@ -155,19 +158,34 @@ class MessagesStorageImpl(context: Context,
 
   override def addMessage(msg: MessageData) = put(msg.id, msg)
 
-  def countUnread(conv: ConvId, lastReadTime: RemoteInstant): Future[UnreadCount] = {
-    storage { MessageDataDao.findMessagesFrom(conv, lastReadTime)(_) }.future.map { msgs =>
+  override def countUnread(conv: ConvId, lastReadTime: RemoteInstant): Future[UnreadCount] = {
+    // if a message is both a mention and a quote, we count it as a mention
+    def isQuoteButNotMention(m: MessageData) =
+      if (m.hasMentionOf(userId)) Future.successful(false)
+      else isQuoteOfSelf(m)
+
+    storage {
+      MessageDataDao.findMessagesFrom(conv, lastReadTime)(_)
+    }.future.flatMap { msgs =>
       msgs.acquire { msgs =>
-        val unread = msgs.filter { m => !m.isLocal && m.convId == conv && m.time.isAfter(lastReadTime) && !m.isDeleted && m.userId != userId && m.msgType != Message.Type.UNKNOWN } .toVector
-        UnreadCount(
-          unread.count(m => !m.isSystemMessage && m.msgType != Message.Type.KNOCK && !m.hasMentionOf(userId)),
-          unread.count(_.msgType == Message.Type.MISSED_CALL),
-          unread.count(_.msgType == Message.Type.KNOCK),
-          unread.count(_.hasMentionOf(userId))
+        val unread = msgs.filter { m => !m.isLocal && m.convId == conv && m.time.isAfter(lastReadTime) && !m.isDeleted && m.userId != userId && m.msgType != Message.Type.UNKNOWN }.toVector
+        Future.sequence(unread.map(isQuoteButNotMention)).map(_.count(q => q)).map(unreadQuotes =>
+          UnreadCount(
+            unread.count(m => !m.isSystemMessage && m.msgType != Message.Type.KNOCK && !m.hasMentionOf(userId)) - unreadQuotes,
+            unread.count(_.msgType == Message.Type.MISSED_CALL),
+            unread.count(_.msgType == Message.Type.KNOCK),
+            unread.count(_.hasMentionOf(userId)),
+            unreadQuotes
+          )
         )
       }
     }
+
   }
+
+  override def isQuoteOfSelf(msg: MessageData) =
+    if (!msg.quoteValidity) Future.successful(false)
+    else msg.quote.fold(Future.successful(false))(quoteId => get(quoteId).map(_.exists(_.userId == userId)))
 
   def countSentByType(selfUserId: UserId, tpe: Message.Type): Future[Int] = storage(MessageDataDao.countSentByType(selfUserId, tpe)(_).toInt)
 
