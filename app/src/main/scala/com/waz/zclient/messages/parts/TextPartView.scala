@@ -38,7 +38,6 @@ import com.waz.utils.events.Signal
 import com.waz.zclient.collection.controllers.{CollectionController, CollectionUtils}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
-import com.waz.zclient.messages.parts.TextPartView.MentionHolder
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.ui.text.LinkTextView
 import com.waz.zclient.ui.utils.ColorUtils
@@ -133,21 +132,6 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
     }
   }
 
-  private def restoreMentionHandles(mentionHolders: Seq[MentionHolder]): Unit = {
-    val text = textView.getText
-    val ssb = SpannableStringBuilder.valueOf(text)
-
-    mentionHolders.foldLeft(text.toString) {
-      case (oldText, holder) if oldText.contains(holder.uuid) =>
-        val start = oldText.indexOf(holder.uuid)
-        ssb.replace(start, start + holder.uuid.length, holder.handle)
-        oldText.replace(holder.uuid, holder.handle)
-      case (oldText, _) => oldText // when Markdown deletes the mention
-    }
-
-    textView.setText(new SpannableString(ssb))
-  }
-
   override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     animator.end()
     super.set(msg, part, opts)
@@ -166,7 +150,7 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
       setText(replaced)
 
       val updatedMentions = TextPartView.updateMentions(textView.getText.toString, mentionHolders, offset)
-      restoreMentionHandles(mentionHolders)
+      textView.setText(TextPartView.restoreMentionHandles(textView.getText.toString, mentionHolders))
 
       textView.getText match {
         case spannable: Spannable =>
@@ -224,4 +208,18 @@ object TextPartView {
         )
       case ((oldText, acc), _) => (oldText, acc) // when Markdown deletes the mention
     }._2
+
+  def restoreMentionHandles(text: String, mentionHolders: Seq[MentionHolder]): Spannable = {
+    val ssb = SpannableStringBuilder.valueOf(text)
+
+    mentionHolders.foldLeft(text.toString) {
+      case (oldText, holder) if oldText.contains(holder.uuid) =>
+        val start = oldText.indexOf(holder.uuid)
+        ssb.replace(start, start + holder.uuid.length, holder.handle)
+        oldText.replace(holder.uuid, holder.handle)
+      case (oldText, _) => oldText // when Markdown deletes the mention
+    }
+
+    new SpannableString(ssb)
+  }
 }

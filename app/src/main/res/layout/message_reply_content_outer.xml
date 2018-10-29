@@ -20,48 +20,46 @@
 -->
 <merge
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
->
+    >
 
     <LinearLayout
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:padding="@dimen/wire__padding__8"
+        android:background="@drawable/rounded_graphite_stroke_rectangle">
 
-        <View
-            android:layout_width="2dp"
-            android:background="@color/graphite_24"
-            android:layout_height="match_parent"
-            android:layout_marginEnd="8dp"
-        />
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="?wirePrimaryTextColor"
+            android:textSize="@dimen/wire__text_size__small"
+            app:w_font="@string/wire__typeface__medium"
+            />
 
         <LinearLayout
             android:id="@+id/content"
             android:orientation="vertical"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_height="match_parent"
-        >
-
-            <TextView
-                android:id="@+id/name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="16dp"
+            android:layout_marginTop="@dimen/wire__padding__4"
+            android:layout_marginBottom="@dimen/wire__padding__4"
             />
 
-            <TextView
-                android:id="@+id/timestamp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textSize="11dp"
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/timestamp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="?wireSecondaryTextColor"
+            android:textSize="@dimen/wire__text_size__small"
+            app:w_font="@string/wire__typeface__regular"
             />
-
-        </LinearLayout>
 
     </LinearLayout>
-
 
 </merge>

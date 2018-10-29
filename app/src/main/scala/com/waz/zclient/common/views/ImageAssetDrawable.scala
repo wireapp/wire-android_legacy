@@ -203,6 +203,16 @@ object ImageAssetDrawable {
         matrix.postTranslate(dx, dy)
       }
     }
+    case object StartInside extends ScaleType {
+      override def apply(matrix: Matrix, w: Int, h: Int, viewSize: Dim2): Unit = {
+        val scale = math.min(viewSize.width.toFloat / w, viewSize.height.toFloat / h)
+        val dx = - (w * scale - viewSize.width) / 2
+        val dy = - (h * scale - viewSize.height) / 2
+
+        matrix.setScale(scale, scale)
+        matrix.postTranslate(0, dy)
+      }
+    }
     case object CenterXCrop extends ScaleType {
       override def apply(matrix: Matrix, w: Int, h: Int, viewSize: Dim2): Unit = {
         val scale = math.max(viewSize.width.toFloat / w, viewSize.height.toFloat / h)

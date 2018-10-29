@@ -45,7 +45,7 @@ import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.{LocalDateTime, ZoneId}
 
 trait MessageViewPart extends View {
-  val tpe: MsgPart
+  def tpe: MsgPart
   protected val messageAndLikes = Signal[MessageAndLikes]()
   protected val message = messageAndLikes.map(_.message)
   message.disableAutowiring() //important to ensure the signal keeps updating itself in the absence of any listeners
