@@ -30,14 +30,14 @@ import com.waz.utils.returning
 import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.common.views.ImageController.WireImage
 import com.waz.zclient.common.views.RoundedImageAssetDrawable
-import com.waz.zclient.conversation.ReplyView.{ContentCompoundDrawable, ReplyBackgroundDrawable}
+import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
 import com.waz.zclient.messages.UsersController.DisplayName
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
+import com.waz.zclient.paintcode.WireStyleKit
 import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
-import com.waz.zclient.paintcode.{WireDrawable, WireStyleKit}
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.RichView
+import com.waz.zclient.utils.{RichTextView, RichView}
 import com.waz.zclient.{R, ViewHelper}
 
 class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends FrameLayout(context, attrs, defStyle) with ViewHelper {
@@ -89,15 +89,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
 
   private def setSender(name: String, edited: Boolean): Unit = {
     senderText.setText(name)
-    val drawable = if (edited) {
-      val size = getDimenPx(R.dimen.wire__text_size__smaller)
-      returning(new ContentCompoundDrawable(WireStyleKit.drawEdit, getStyledColor(R.attr.wirePrimaryTextColor))) {
-        _.setBounds(0, 0, size, size)
-      }
-    } else {
-      null
-    }
-    senderText.setCompoundDrawablesRelative(null, null, drawable, null)
+    senderText.setEndCompoundDrawable(if (edited) Some(WireStyleKit.drawEdit) else None, getStyledColor(R.attr.wirePrimaryTextColor))
   }
 
   private def setImageMessage(assetId: AssetId): Unit = {
@@ -147,16 +139,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
   }
 
   private def setStartIcon(drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit]): Unit = {
-    val drawable = drawMethod match {
-      case Some(draw) =>
-        val size = getDimenPx(R.dimen.wire__text_size__smaller)
-        returning(new ContentCompoundDrawable(draw, getStyledColor(R.attr.wirePrimaryTextColor))) {
-          _.setBounds(0, 0, size, size)
-        }
-      case _ =>
-        null
-    }
-    contentText.setCompoundDrawablesRelative(drawable, null, null, null)
+    contentText.setStartCompoundDrawable(drawMethod, getStyledColor(R.attr.wirePrimaryTextColor))
   }
 
   private def setBoldContent(): Unit = {
@@ -174,10 +157,6 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
 }
 
 object ReplyView {
-  class ContentCompoundDrawable(drawMethod: (Canvas, RectF, ResizingBehavior, Int) => Unit, color: Int) extends WireDrawable {
-    setColor(color)
-    override def draw(canvas: Canvas): Unit = drawMethod(canvas, new RectF(getBounds),  ResizingBehavior.AspectFit, color)
-  }
 
   class ReplyBackgroundDrawable(borderColor: Int, backgroundColor: Int) extends Drawable {
 

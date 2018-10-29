@@ -30,4 +30,7 @@
     android:minHeight="16dp"
     android:gravity="center_vertical"
     android:includeFontPadding="false"
-    app:w_font="@string/wire__typeface__light"/>
+    app:w_font="@string/wire__typeface__light"
+    android:ellipsize="end"
+    android:maxLines="4"
+    />

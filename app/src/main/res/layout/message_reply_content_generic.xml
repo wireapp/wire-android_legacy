@@ -31,4 +31,5 @@
     app:w_font="@string/wire__typeface__bold"
     android:maxLines="1"
     android:drawablePadding="@dimen/wire__padding__4"
+    android:ellipsize="end"
     />

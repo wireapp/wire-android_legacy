@@ -26,19 +26,25 @@
     >
 
     <LinearLayout
+        android:id="@+id/quote_container"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="@dimen/wire__padding__8"
+        android:layout_marginTop="@dimen/wire__padding__regular"
+        android:paddingTop="@dimen/wire__padding__8"
+        android:paddingBottom="@dimen/wire__padding__8"
+        android:paddingStart="@dimen/wire__padding__12"
+        android:paddingEnd="@dimen/wire__padding__8"
         android:background="@drawable/rounded_graphite_stroke_rectangle">
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/name"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="?wirePrimaryTextColor"
             android:textSize="@dimen/wire__text_size__small"
             app:w_font="@string/wire__typeface__medium"
+            android:drawablePadding="@dimen/wire__padding__4"
             />
 
         <LinearLayout

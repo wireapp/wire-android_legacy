@@ -19,24 +19,28 @@ package com.waz.zclient.messages.parts
 
 import android.content.Context
 import android.text.Spannable
-import android.util.AttributeSet
+import android.text.format.DateFormat
+import android.util.{AttributeSet, TypedValue}
 import android.view.{View, ViewGroup}
 import android.widget.{LinearLayout, TextView}
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
+import com.waz.api.Message
 import com.waz.model.{AssetData, MessageData}
 import com.waz.utils.events.{NoAutowiring, Signal, SourceSignal}
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
+import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
 import com.waz.zclient.messages.MsgPart._
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart, UsersController}
+import com.waz.zclient.paintcode.WireStyleKit
 import com.waz.zclient.ui.text.{GlyphTextView, LinkTextView, TypefaceTextView}
 import com.waz.zclient.utils.ContextUtils.{getString, getStyledColor}
-import com.waz.zclient.utils.ZTimeFormatter
+import com.waz.zclient.utils.{DateConvertUtils, RichTextView, ZTimeFormatter}
 import com.waz.zclient.{R, ViewHelper}
-import org.threeten.bp.DateTimeUtils
+import org.threeten.bp.{LocalDateTime, ZoneId}
 
 abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ClickableViewPart with ViewHelper with EphemeralPartView {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -50,6 +54,7 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) 
   private val name      = findById[TextView](R.id.name)
   private val timestamp = findById[TextView](R.id.timestamp)
   private val content   = findById[ViewGroup](R.id.content)
+  private val container = findById[ViewGroup](R.id.quote_container)
 
   val quoteView = tpe match {
     case Reply(Text)       => Some(inflate(R.layout.message_reply_content_text,     addToParent = false))
@@ -61,6 +66,9 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) 
     case _ => None
   }
   quoteView.foreach(content.addView)
+
+  container.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+  container.setBackground(new ReplyBackgroundDrawable(getStyledColor(R.attr.replyBorderColor), getStyledColor(R.attr.wireBackgroundCollection)))
 
   protected val quotedMessage: SourceSignal[MessageData] with NoAutowiring = Signal[MessageData]()
   protected val quotedAsset: Signal[Option[AssetData]] =
@@ -87,10 +95,14 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) 
 
   quotedMessage
     .map(_.time.instant)
-    .map(DateTimeUtils.toDate)
-    .map(ZTimeFormatter.getSingleMessageTime(getContext, _))
+    .map(DateConvertUtils.asLocalDateTime)
+    .map(t => ZTimeFormatter.getSeparatorTime(getContext, LocalDateTime.now, t, DateFormat.is24HourFormat(getContext), ZoneId.systemDefault, false, false))
     .map(getString(R.string.quote_timestamp_message, _))
     .onUi(timestamp.setText)
+
+  quotedMessage.map(!_.editTime.isEpoch).onUi { edited =>
+    name.setEndCompoundDrawable(if (edited) Some(WireStyleKit.drawEdit) else None, getStyledColor(R.attr.wirePrimaryTextColor))
+  }
 }
 
 class TextReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) with MentionsViewPart {
@@ -101,15 +113,14 @@ class TextReplyPartView(context: Context, attrs: AttributeSet, style: Int) exten
 
   private lazy val textView = findById[LinkTextView](R.id.text)
 
+  val textSizeRegular = context.getResources.getDimensionPixelSize(R.dimen.wire__text_size__small)
+  val textSizeEmoji = context.getResources.getDimensionPixelSize(R.dimen.wire__text_size__huge)
+
   //TODO: Merge duplicated stuff from TextPartView
   quotedMessage.onUi { message =>
-    textView.setText(message.contentString)
-    textView.markdown()
-    textView.getText match {
-      case s: Spannable =>
-        addMentionSpans(s, message.mentions, None, getStyledColor(R.attr.wirePrimaryTextColor))
-      case _ =>
-    }
+    val textSize = if (message.msgType == Message.Type.TEXT_EMOJI_ONLY) textSizeEmoji else textSizeRegular
+
+    textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize)
 
     val text = message.contentString
     val offset = 0
@@ -166,6 +177,7 @@ class LocationReplyPartView(context: Context, attrs: AttributeSet, style: Int) e
   private lazy val textView = findById[TypefaceTextView](R.id.text)
 
   quotedMessage.map(_.location.map(_.getName).getOrElse("")).onUi(textView.setText)
+  textView.setStartCompoundDrawable(Some(WireStyleKit.drawLocation), getStyledColor(R.attr.wirePrimaryTextColor))
 }
 
 class FileReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) {
@@ -177,6 +189,7 @@ class FileReplyPartView(context: Context, attrs: AttributeSet, style: Int) exten
   private lazy val textView = findById[TypefaceTextView](R.id.text)
 
   quotedAsset.map(_.flatMap(_.name).getOrElse("")).onUi(textView.setText)
+  textView.setStartCompoundDrawable(Some(WireStyleKit.drawFile), getStyledColor(R.attr.wirePrimaryTextColor))
 }
 
 class VideoReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) {
@@ -204,7 +217,8 @@ class AudioReplyPartView(context: Context, attrs: AttributeSet, style: Int) exte
 
   private lazy val textView = findById[TypefaceTextView](R.id.text)
 
-  textView.setText(R.string.quote_audio_message)
+  textView.setText(R.string.reply_message_type_audio)
+  textView.setStartCompoundDrawable(Some(WireStyleKit.drawVoiceMemo), getStyledColor(R.attr.wirePrimaryTextColor))
 }
 
 

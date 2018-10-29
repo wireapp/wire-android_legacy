@@ -98,9 +98,10 @@ class MessagesListAdapter(listDim: Signal[Dim2])(implicit inj: Injector, ec: Eve
 
     val prev = if (pos == 0) None else Some(message(pos - 1).message)
     val next = if (isLast) None else Some(message(pos + 1).message)
-    //TODO remove when testing finished
 
+    //TODO remove when testing finished
     val quote = prev
+
     holder.bind(data, quote, prev, next, opts)
     if (data.message.isEphemeral) {
       ephemeralCount.mutate(_ + data.message.id)

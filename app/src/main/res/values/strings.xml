@@ -1227,5 +1227,4 @@
     <string name="reply_message_type_asset">ATTACHMENT</string>
 
     <string name="quote_timestamp_message">Original message from %s</string>
-    <string name="quote_audio_message">Audio Message</string>
 </resources>

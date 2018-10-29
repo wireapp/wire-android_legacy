@@ -19,8 +19,8 @@ package com.waz.zclient
 
 import java.util.Locale
 
-import android.graphics.LightingColorFilter
-import android.graphics.drawable.LayerDrawable
+import android.graphics.drawable.{Drawable, LayerDrawable}
+import android.graphics.{Canvas, LightingColorFilter, RectF}
 import android.support.v7.preference.Preference
 import android.support.v7.preference.Preference.{OnPreferenceChangeListener, OnPreferenceClickListener}
 import android.text.{Editable, TextWatcher}
@@ -32,6 +32,8 @@ import android.widget.{EditText, SeekBar, TextView}
 import com.waz.model.otr.Client
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
+import com.waz.zclient.paintcode.WireDrawable
+import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
 import com.waz.zclient.ui.views.OnDoubleClickListener
 import com.waz.zclient.utils.ContextUtils._
 
@@ -171,6 +173,12 @@ package object utils {
     }
   }
 
+
+  class ContentCompoundDrawable(drawMethod: (Canvas, RectF, ResizingBehavior, Int) => Unit, color: Int) extends WireDrawable {
+    setColor(color)
+    override def draw(canvas: Canvas): Unit = drawMethod(canvas, new RectF(getBounds),  ResizingBehavior.AspectFit, color)
+  }
+
   implicit class RichTextView(val textView: TextView) extends AnyVal {
     def addTextListener(callback: String => Unit): TextWatcher = {
       returning(new TextWatcher {
@@ -178,6 +186,26 @@ package object utils {
         override def onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) = callback(s.toString)
         override def afterTextChanged(s: Editable) = {}
       }){ textView.addTextChangedListener }
+    }
+
+    def getCompoundDrawable(drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit], color: Int): Drawable = {
+      val size = textView.getTextSize.toInt
+      drawMethod match {
+        case Some(draw) =>
+          returning(new ContentCompoundDrawable(draw, getStyledColor(R.attr.wirePrimaryTextColor)(textView.getContext))) {
+            _.setBounds(0, 0, size, size)
+          }
+        case _ =>
+          null
+      }
+    }
+
+    def setStartCompoundDrawable(drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit], color: Int): Unit = {
+      textView.setCompoundDrawablesRelative(getCompoundDrawable(drawMethod, color), null, null, null)
+    }
+
+    def setEndCompoundDrawable(drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit], color: Int): Unit = {
+      textView.setCompoundDrawablesRelative(null, null, getCompoundDrawable(drawMethod, color), null)
     }
   }
 
