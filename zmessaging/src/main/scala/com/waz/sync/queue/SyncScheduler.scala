@@ -73,7 +73,6 @@ class SyncSchedulerImpl(userId:      UserId,
   private val waiting      = Signal(Map.empty[SyncId, Long])
   private val runningCount = Signal(executionsCount, waiting.map(_.size)) map { case (r, w) => r - w }
 
-  // start sync service any time running executors count changes from 0 to positive number
   content.syncStorage { storage =>
     storage.getJobs.toSeq.sortBy(_.timestamp) foreach execute
     storage.onAdded.on(dispatcher) { execute }

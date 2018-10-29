@@ -23,7 +23,7 @@ import com.waz.api.SyncState
 import com.waz.api.impl.ErrorResponse
 import com.waz.db.Col._
 import com.waz.db.Dao
-import com.waz.model.{SyncId, UserId}
+import com.waz.model.SyncId
 import com.waz.sync.queue.SyncJobMerger.{MergeResult, Merged, Unchanged, Updated}
 import com.waz.utils.wrappers.DBCursor
 import com.waz.utils.{JsonDecoder, JsonEncoder}

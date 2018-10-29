@@ -21,7 +21,6 @@ import android.content.Context
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.Message
-import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.{Cancelled, internalError}
 import com.waz.cache.CacheService
 import com.waz.content.{GlobalPreferences, MembersStorage, MessagesStorage}
@@ -37,12 +36,11 @@ import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.otr.{OtrClientsService, OtrServiceImpl}
 import com.waz.service.tracking.TrackingService
 import com.waz.service.{MetaDataService, _}
-import com.waz.sync.SyncResult.{Failure, Retry}
+import com.waz.sync.SyncResult.Failure
 import com.waz.sync.client.{ErrorOr, ErrorOrResponse, MessagesClient}
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.sync.{SyncResult, SyncServiceHandle}
 import com.waz.threading.CancellableFuture
-import com.waz.threading.CancellableFuture.CancelException
 import com.waz.utils.{RichFutureEither, _}
 import com.waz.znet2.http.ResponseCode
 
@@ -116,44 +114,32 @@ class MessagesSyncHandler(selfUserId: UserId,
         successful(Failure("conversation not found"))
     }
 
-  def postMessage(convId: ConvId, id: MessageId, editTime: RemoteInstant): Future[SyncResult] = {
-
-    def shouldGiveUpSending(msg: MessageData) =
-      !network.isOnlineMode || timeouts.messages.sendingTimeout.elapsedSince(msg.time.instant)
-
-    def failSending(msg: MessageData, error: ErrorResponse) = {
-      service
-        .messageDeliveryFailed(convId, msg, error)
-        .map(_ => Failure(error))
-    }
-
-    storage.getMessage(id) flatMap { message =>
-      message.fold(successful(None: Option[ConversationData]))(msg => convs.convById(msg.convId)) map { conv =>
-        (message, conv)
-      }
-    } flatMap {
+  def postMessage(convId: ConvId, id: MessageId, editTime: RemoteInstant): Future[SyncResult] =
+    storage.getMessage(id).flatMap { message =>
+      message
+        .fold(successful(None: Option[ConversationData]))(msg => convs.convById(msg.convId))
+        .map(conv => (message, conv))
+    }.flatMap {
       case (Some(msg), Some(conv)) =>
-        postMessage(conv, msg, editTime)
-          .recover {
-            case _: CancelException =>
-              SyncResult(Cancelled)
-            case e: Throwable =>
-              SyncResult(e)
-          }
-          .flatMap {
-            case SyncResult.Success => successful(SyncResult.Success)
-            case res@Failure(Cancelled) =>
-              verbose(s"postMessage($msg) was cancelled")
-              msgContent
-                .updateMessage(id)(_.copy(state = Message.Status.FAILED_READ))
-                .map(_ => res)
-            case Failure(error) =>
-              failSending(msg, error)
-            case Retry(error) if shouldGiveUpSending(msg) =>
-              failSending(msg, error)
-            case res =>
-              Future.successful(res)
-          }
+        postMessage(conv, msg, editTime).flatMap {
+          case Right(time) =>
+            verbose(s"postOtrMessage($msg) successful $time")
+            for {
+              _ <- service.messageSent(convId, msg.id, time)
+              (prevLastTime, lastTime) <- msgContent.updateLocalMessageTimes(convId, msg.time, time)
+                .map(_.lastOption.map { case (p, c) => (p.time, c.time)}.getOrElse((msg.time, time)))
+              // update conv lastRead time if there is no unread message after the message that was just sent
+              _ <- convs.storage.update(convId, c => if (!c.lastRead.isAfter(prevLastTime)) c.copy(lastRead = lastTime) else c)
+              _ <- convs.updateLastEvent(convId, time)
+            } yield SyncResult.Success
+
+          case Left(error) =>
+            for {
+              _ <- if (error.code == ResponseCode.Forbidden && error.label == "unknown-client") clients.onCurrentClientRemoved() else Future.successful({})
+              _ <- service.messageDeliveryFailed(convId, msg, error)
+            } yield SyncResult(error)
+        }
+
       case (Some(msg), None) =>
         service
           .messageDeliveryFailed(msg.convId, msg, internalError("conversation not found"))
@@ -162,9 +148,8 @@ class MessagesSyncHandler(selfUserId: UserId,
       case _ =>
         successful(Failure("postMessage failed, couldn't find either message or conversation"))
     }
-  }
 
-  private def postMessage(conv: ConversationData, msg: MessageData, reqEditTime: RemoteInstant): Future[SyncResult] = {
+  private def postMessage(conv: ConversationData, msg: MessageData, reqEditTime: RemoteInstant) = {
 
     def postTextMessage() = {
       val adjustedMsg = msg.adjustMentions(true).getOrElse(msg)
@@ -191,7 +176,7 @@ class MessagesSyncHandler(selfUserId: UserId,
 
     import Message.Type._
 
-    def post: ErrorOr[RemoteInstant] = msg.msgType match {
+    msg.msgType match {
       case MessageData.IsAsset() => Cancellable(UploadTaskKey(msg.assetId))(uploadAsset(conv, msg)).future
       case KNOCK => otrSync.postOtrMessage(conv.id, GenericMessage(msg.id.uid, msg.ephemeral, Proto.Knock()))
       case TEXT | TEXT_EMOJI_ONLY => postTextMessage().map(_.map(_.time))
@@ -219,23 +204,6 @@ class MessagesSyncHandler(selfUserId: UserId,
           case None =>
             successful(Left(internalError(s"Unsupported message type in postOtrMessage: $tpe")))
         }
-    }
-
-    post.flatMap {
-      case Right(time) =>
-        verbose(s"postOtrMessage($msg) successful $time")
-        service.messageSent(conv.id, msg.id, time)
-          .flatMap(_ => messageSent(conv.id, msg, time))
-          .map(_ => SyncResult.Success)
-      case Left(error@ErrorResponse(ResponseCode.Forbidden, _, "unknown-client")) =>
-        clients
-          .onCurrentClientRemoved()
-          .map(_ => SyncResult(error))
-      case Left(error) =>
-        successful(SyncResult(error))
-    }.recover {
-      case _ : CancelException =>
-        SyncResult(Cancelled)
     }
   }
 
@@ -314,25 +282,6 @@ class MessagesSyncHandler(selfUserId: UserId,
           sendWithV3(asset)
       }
     }
-  }
-
-  private[waz] def messageSent(convId: ConvId, msg: MessageData, time: RemoteInstant) = {
-    debug(s"otrMessageSent($convId. $msg, $time)")
-
-    def updateLocalTimes(conv: ConvId, prevTime: RemoteInstant, time: RemoteInstant) =
-      msgContent.updateLocalMessageTimes(conv, prevTime, time) flatMap { updated =>
-        val prevLastTime = updated.lastOption.fold(prevTime)(_._1.time)
-        val lastTime = updated.lastOption.fold(time)(_._2.time)
-        // update conv lastRead time if there is no unread message after the message that was just sent
-        convs.storage.update(conv,
-          c => if (!c.lastRead.isAfter(prevLastTime)) c.copy(lastRead = lastTime) else c
-        )
-      }
-
-    for {
-      _ <- updateLocalTimes(convId, msg.time, time)
-      _ <- convs.updateLastEvent(convId, time)
-    } yield ()
   }
 
   def postAssetStatus(cid: ConvId, mid: MessageId, expiration: Option[FiniteDuration], status: Syncable): Future[SyncResult] = {
