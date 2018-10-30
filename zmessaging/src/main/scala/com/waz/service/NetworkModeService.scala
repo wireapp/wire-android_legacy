@@ -81,12 +81,26 @@ class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle) extend
       Option(context.getSystemService(Context.POWER_SERVICE)).map(_.asInstanceOf[PowerManager]).exists(_.isDeviceIdleMode)
     else false
 
-  def isOfflineMode = networkMode.currentValue contains NetworkMode.OFFLINE
-  def isUnknown = networkMode.currentValue contains NetworkMode.UNKNOWN
-  def isOnlineMode = !isOfflineMode && !isUnknown
+  def isOfflineMode =
+    networkMode.currentValue.exists(NetworkModeService.isOfflineMode)
+
+  def isUnknown =
+    networkMode.currentValue.exists(NetworkModeService.isUnknown)
+
+  def isOnlineMode =
+    !isOfflineMode && !isUnknown
 }
 
 object NetworkModeService {
+
+  def isOfflineMode(mode: NetworkMode): Boolean =
+    mode == NetworkMode.OFFLINE
+
+  def isUnknown(mode: NetworkMode): Boolean =
+    mode == NetworkMode.UNKNOWN
+
+  def isOnlineMode(mode: NetworkMode): Boolean =
+    !isOfflineMode(mode) && !isUnknown(mode)
 
   /*
    * This part (the mapping of mobile data network types to the networkMode enum) of the Wire software

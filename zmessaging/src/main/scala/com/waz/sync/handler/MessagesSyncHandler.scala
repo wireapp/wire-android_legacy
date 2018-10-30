@@ -17,27 +17,27 @@
  */
 package com.waz.sync.handler
 
-import android.content.Context
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.Message
+import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.{Cancelled, internalError}
-import com.waz.cache.CacheService
-import com.waz.content.{GlobalPreferences, MembersStorage, MessagesStorage}
+import com.waz.content.MessagesStorage
 import com.waz.model.AssetData.{ProcessingTaskKey, UploadTaskKey}
 import com.waz.model.AssetStatus.{Syncable, UploadCancelled, UploadFailed}
 import com.waz.model.GenericContent.{Ephemeral, Knock, Location, MsgEdit}
 import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
 import com.waz.model.sync.ReceiptType
+import com.waz.service.NetworkModeService.isOfflineMode
+import com.waz.service._
 import com.waz.service.assets._
-import com.waz.service.conversation.{ConversationOrderEventsService, ConversationsContentUpdater}
+import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
-import com.waz.service.otr.{OtrClientsService, OtrServiceImpl}
-import com.waz.service.tracking.TrackingService
-import com.waz.service.{MetaDataService, _}
+import com.waz.service.otr.OtrClientsService
+import com.waz.sync.SyncHandler.RequestInfo
 import com.waz.sync.SyncResult.Failure
-import com.waz.sync.client.{ErrorOr, ErrorOrResponse, MessagesClient}
+import com.waz.sync.client.{ErrorOr, ErrorOrResponse}
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.sync.{SyncResult, SyncServiceHandle}
 import com.waz.threading.CancellableFuture
@@ -46,30 +46,20 @@ import com.waz.znet2.http.ResponseCode
 
 import scala.concurrent.Future
 import scala.concurrent.Future.successful
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{FiniteDuration, _}
 
 class MessagesSyncHandler(selfUserId: UserId,
-                          context:    Context,
                           service:    MessagesService,
                           msgContent: MessagesContentUpdater,
-                          convEvents: ConversationOrderEventsService,
-                          client:     MessagesClient,
-                          otr:        OtrServiceImpl,
                           clients:    OtrClientsService,
                           otrSync:    OtrSyncHandler,
                           convs:      ConversationsContentUpdater,
                           storage:    MessagesStorage,
                           assetSync:  AssetSyncHandler,
-                          network:    DefaultNetworkModeService,
-                          metadata:   MetaDataService,
-                          prefs:      GlobalPreferences,
                           sync:       SyncServiceHandle,
                           assets:     AssetService,
-                          cache:      CacheService,
-                          members:    MembersStorage,
-                          tracking:   TrackingService,
-                          errors:     ErrorsService, timeouts: Timeouts) {
-
+                          errors:     ErrorsService) {
+  import MessagesSyncHandler._
   import com.waz.threading.Threading.Implicits.Background
 
   def postDeleted(convId: ConvId, msgId: MessageId): Future[SyncResult] =
@@ -114,7 +104,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         successful(Failure("conversation not found"))
     }
 
-  def postMessage(convId: ConvId, id: MessageId, editTime: RemoteInstant): Future[SyncResult] =
+  def postMessage(convId: ConvId, id: MessageId, editTime: RemoteInstant)(implicit info: RequestInfo): Future[SyncResult] =
     storage.getMessage(id).flatMap { message =>
       message
         .fold(successful(None: Option[ConversationData]))(msg => convs.convById(msg.convId))
@@ -135,9 +125,22 @@ class MessagesSyncHandler(selfUserId: UserId,
 
           case Left(error) =>
             for {
-              _ <- if (error.code == ResponseCode.Forbidden && error.label == "unknown-client") clients.onCurrentClientRemoved() else Future.successful({})
-              _ <- service.messageDeliveryFailed(convId, msg, error)
-            } yield SyncResult(error)
+              _ <- error match {
+                case ErrorResponse(ResponseCode.Forbidden, _, "unknown-client") =>
+                  clients.onCurrentClientRemoved()
+                case _ =>
+                  Future.successful({})
+              }
+              result <- SyncResult(error) match {
+                case _: SyncResult.Failure |
+                     _: SyncResult.Retry if MessageTimeout.elapsedSince(info.requestStart) || info.network.exists(isOfflineMode) =>
+                  service
+                    .messageDeliveryFailed(convId, msg, error)
+                    .map(_ => Failure(error))
+                case r =>
+                  Future.successful(r)
+              }
+            } yield result
         }
 
       case (Some(msg), None) =>
@@ -301,4 +304,8 @@ class MessagesSyncHandler(selfUserId: UserId,
       result <- conv.flatMapFuture(c => asset.flatMapFuture(a => post(c, a)))
     } yield SyncResult(result)
   }
+}
+
+object MessagesSyncHandler {
+  val MessageTimeout = 30.seconds
 }

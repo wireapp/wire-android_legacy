@@ -18,6 +18,7 @@
 package com.waz.sync
 
 import com.waz.api.IConversation.{Access, AccessRole}
+import com.waz.api.NetworkMode
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.{ShouldSyncConversations, ShouldSyncInitial}
 import com.waz.model.UserData.ConnectionStatus
@@ -28,6 +29,7 @@ import com.waz.model.{AccentColor, Availability, _}
 import com.waz.service._
 import com.waz.sync.SyncResult.Failure
 import com.waz.threading.Threading
+import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -105,10 +107,10 @@ class AndroidSyncServiceHandle(account: UserId, service: SyncRequestService, tim
     _ <- shouldSyncConversations := false
   } yield {}
 
-  private def addRequest(req: SyncRequest, priority: Int = Priority.Normal, dependsOn: Seq[SyncId] = Nil, optional: Boolean = false, timeout: Long = 0, forceRetry: Boolean = false, delay: FiniteDuration = Duration.Zero): Future[SyncId] = {
+  private def addRequest(req: SyncRequest, priority: Int = Priority.Normal, dependsOn: Seq[SyncId] = Nil, forceRetry: Boolean = false, delay: FiniteDuration = Duration.Zero): Future[SyncId] = {
     val timestamp = SyncJob.timestamp
     val startTime = if (delay == Duration.Zero) 0 else timestamp + delay.toMillis
-    service.addRequest(account, SyncJob(SyncId(), req, dependsOn.toSet, priority = priority, optional = optional, timeout = timeout, timestamp = timestamp, startTime = startTime), forceRetry)
+    service.addRequest(account, SyncJob(SyncId(), req, dependsOn.toSet, priority = priority, timestamp = timestamp, startTime = startTime), forceRetry)
   }
 
   def syncSearchQuery(query: SearchQuery) = addRequest(SyncSearchQuery(query), priority = Priority.High)
@@ -131,14 +133,14 @@ class AndroidSyncServiceHandle(account: UserId, service: SyncRequestService, tim
   def postSelfName(name: String) = addRequest(PostSelfName(name))
   def postSelfAccentColor(color: AccentColor) = addRequest(PostSelfAccentColor(color))
   def postAvailability(status: Availability) = addRequest(PostAvailability(status))
-  def postMessage(id: MessageId, conv: ConvId, time: RemoteInstant) = addRequest(PostMessage(conv, id, time), timeout = System.currentTimeMillis() + timeouts.messages.sendingTimeout.toMillis, forceRetry = true)
+  def postMessage(id: MessageId, conv: ConvId, time: RemoteInstant) = addRequest(PostMessage(conv, id, time), forceRetry = true)
   def postDeleted(conv: ConvId, msg: MessageId) = addRequest(PostDeleted(conv, msg))
   def postRecalled(conv: ConvId, msg: MessageId, recalled: MessageId) = addRequest(PostRecalled(conv, msg, recalled))
   def postAssetStatus(id: MessageId, conv: ConvId, exp: Option[FiniteDuration], status: AssetStatus.Syncable) = addRequest(PostAssetStatus(conv, id, exp, status))
   def postAddressBook(ab: AddressBook) = addRequest(PostAddressBook(ab))
   def postConnection(user: UserId, name: String, message: String) = addRequest(PostConnection(user, name, message))
   def postConnectionStatus(user: UserId, status: ConnectionStatus) = addRequest(PostConnectionStatus(user, Some(status)))
-  def postTypingState(conv: ConvId, typing: Boolean) = addRequest(PostTypingState(conv, typing), optional = true, timeout = System.currentTimeMillis() + timeouts.typing.refreshDelay.toMillis)
+  def postTypingState(conv: ConvId, typing: Boolean) = addRequest(PostTypingState(conv, typing))
   def postConversationName(id: ConvId, name: String) = addRequest(PostConvName(id, name))
   def postConversationState(id: ConvId, state: ConversationState) = addRequest(PostConvState(id, state))
   def postConversationMemberJoin(id: ConvId, members: Seq[UserId]) = addRequest(PostConvJoin(id, members.toSet))
@@ -176,13 +178,20 @@ class AndroidSyncServiceHandle(account: UserId, service: SyncRequestService, tim
 }
 
 trait SyncHandler {
-  def apply(req: SyncRequest): Future[SyncResult]
+  import SyncHandler._
+  def apply(req: SyncRequest)(implicit info: RequestInfo): Future[SyncResult]
+}
+
+object SyncHandler {
+  case class RequestInfo(attempt: Int, requestStart: Instant, network: Option[NetworkMode] = None)
 }
 
 class AccountSyncHandler(accountId: UserId, zms: ZMessaging) extends SyncHandler {
   import com.waz.model.sync.SyncRequest._
 
-  override def apply(req: SyncRequest): Future[SyncResult] = req match {
+  import SyncHandler._
+
+  override def apply(req: SyncRequest)(implicit info: RequestInfo): Future[SyncResult] = req match {
     case SyncSelfClients                                     => zms.otrClientsSync.syncClients(accountId)
     case SyncClients(user)                                   => zms.otrClientsSync.syncClients(user)
     case SyncClientsLocation                                 => zms.otrClientsSync.syncClientsLocation()

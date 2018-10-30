@@ -151,7 +151,6 @@ class SyncSchedulerImpl(userId:      UserId,
 
   private def getStartTime(job: SyncJob): Long =
     if (job.offline && network.isOnlineMode) 0  // start right away if request last failed due to possible network errors
-    else if (job.timeout > 0) math.min(job.startTime, job.timeout)
     else job.startTime
 
 

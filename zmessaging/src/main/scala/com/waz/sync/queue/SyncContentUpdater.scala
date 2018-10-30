@@ -75,7 +75,7 @@ class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater {
         job.request match {
           case SerialConvRequest(conv) =>
             storage.getJobs.filter { j => SerialConvRequest.unapply(j.request).contains(conv) && j.priority > job.priority } foreach { j =>
-              storage.update(j.id)(j => j.copy(priority = math.min(j.priority, job.priority), optional = j.optional && job.optional))
+              storage.update(j.id)(j => j.copy(priority = math.min(j.priority, job.priority)))
             }
           case _ =>
         }
@@ -164,13 +164,13 @@ class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater {
     mergers.getOrElseUpdate(job.mergeKey, new SyncJobMerger(job.mergeKey, storage)).merge(job)
 
   private def updateDeps(job: SyncJob, syncStorage: SyncStorage): Unit =
-    job.dependsOn foreach { dep => updateSchedule(dep, job.priority, job.optional, syncStorage) }
+    job.dependsOn foreach { dep => updateSchedule(dep, job.priority, syncStorage) }
 
-  private def updateSchedule(id: SyncId, priority: Int, optional: Boolean = false, syncStorage: SyncStorage): Unit =
+  private def updateSchedule(id: SyncId, priority: Int, syncStorage: SyncStorage): Unit =
     syncStorage.update(id) { job =>
-      job.copy(priority = math.min(job.priority, priority), optional = job.optional || optional)
+      job.copy(priority = math.min(job.priority, priority))
     } foreach { job =>
-      job.dependsOn foreach { updateSchedule(_, priority, optional, syncStorage) }
+      job.dependsOn foreach { updateSchedule(_, priority, syncStorage) }
     }
 }
 

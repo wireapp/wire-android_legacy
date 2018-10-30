@@ -17,21 +17,32 @@
  */
 package com.waz.sync.handler
 
+import com.waz.api.impl.ErrorResponse.expired
 import com.waz.model.ConvId
+import com.waz.service.Timeouts
 import com.waz.service.conversation._
+import com.waz.sync.SyncHandler.RequestInfo
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.{Failure, Success}
 import com.waz.sync.client.TypingClient
 import com.waz.threading.Threading
+import com.waz.utils._
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
-class TypingSyncHandler(client: TypingClient, convs: ConversationsContentUpdaterImpl, typingService: TypingService) {
+class TypingSyncHandler(client:        TypingClient,
+                        convs:         ConversationsContentUpdaterImpl,
+                        typingService: TypingService,
+                        timeouts:      Timeouts) {
 
+  import TypingSyncHandler._
   import Threading.Implicits.Background
 
-  def postTypingState(convId: ConvId, typing: Boolean): Future[SyncResult] = {
-    convs.convById(convId) flatMap {
+  def postTypingState(convId: ConvId, typing: Boolean)(implicit info: RequestInfo): Future[SyncResult] =
+    if (TypingIndicatorTimeout.elapsedSince(info.requestStart))
+      Future.successful(SyncResult.Failure(expired("Typing indicator request no longer valid")))
+    else convs.convById(convId).flatMap {
       case Some(conv) =>
         client.updateTypingState(conv.remoteId, isTyping = typing).future map {
           case Right(_)  => Success
@@ -41,5 +52,8 @@ class TypingSyncHandler(client: TypingClient, convs: ConversationsContentUpdater
       case None =>
         Future.successful(Failure(s"conversation not found: $convId"))
     }
-  }
+}
+
+object TypingSyncHandler {
+  val TypingIndicatorTimeout = 45.seconds
 }

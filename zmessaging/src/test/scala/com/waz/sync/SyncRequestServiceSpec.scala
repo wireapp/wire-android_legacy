@@ -25,11 +25,11 @@ import com.waz.api.NetworkMode
 import com.waz.api.NetworkMode.UNKNOWN
 import com.waz.content.{Database, UserPreferences}
 import com.waz.model._
-import com.waz.model.sync.SyncRequest.Serialized
 import com.waz.model.sync.{SyncJob, SyncRequest}
 import com.waz.service._
 import com.waz.specs.AndroidFreeSpec
-import com.waz.sync.queue.{ConvLock, SyncContentUpdaterImpl}
+import com.waz.sync.SyncHandler.RequestInfo
+import com.waz.sync.queue.SyncContentUpdaterImpl
 import com.waz.testutils.TestUserPreferences
 import com.waz.threading.CancellableFuture
 import com.waz.utils.events.Signal
@@ -61,7 +61,7 @@ class SyncRequestServiceSpec extends AndroidFreeSpec {
   }
 
   scenario("Execute a few basic tasks") {
-    (sync.apply (_:SyncRequest)).expects(*).returning(Future.successful(SyncResult.Success))
+    (sync.apply (_:SyncRequest)(_: RequestInfo)).expects(*, *).returning(Future.successful(SyncResult.Success))
 
     val (handle, service) = getSyncServiceHandle
 

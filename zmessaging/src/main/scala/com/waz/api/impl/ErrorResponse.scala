@@ -20,7 +20,7 @@ package com.waz.api.impl
 import com.waz.sync.client.{JsonObjectResponse, ResponseContent}
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.znet2.http.HttpClient.CustomErrorConstructor
-import com.waz.znet2.http.{BodyDeserializer, HttpClient, ResponseCode}
+import com.waz.znet2.http.{HttpClient, ResponseCode}
 import org.json.JSONObject
 
 import scala.util.Try
@@ -49,6 +49,7 @@ object ErrorResponse {
   val TimeoutCode = 599
   val ConnectionErrorCode = 598
   val RetryCode = 597
+  val ExpiredCode = 596
   val UnauthorizedCode = 401
 
   val InternalError = ErrorResponse(InternalErrorCode, "InternalError", "")
@@ -90,4 +91,10 @@ object ErrorResponse {
   }
 
   def internalError(msg: String) = ErrorResponse(InternalError.code, msg, "internal-error")
+
+  def timeout(msg: String) = ErrorResponse(TimeoutCode, msg, "timeout")
+
+  def expired(msg: String) = ErrorResponse(ExpiredCode, msg, "expired")
+
+
 }

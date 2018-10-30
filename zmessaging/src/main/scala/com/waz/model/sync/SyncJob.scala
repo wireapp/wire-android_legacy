@@ -36,8 +36,6 @@ case class SyncJob(id:        SyncId,
                    request:   SyncRequest,
                    dependsOn: Set[SyncId]           = Set(),
                    priority:  Int                   = SyncJob.Priority.Normal,
-                   optional:  Boolean               = false,
-                   timeout:   Long                  = 0,
                    timestamp: Long                  = SyncJob.timestamp,
                    startTime: Long                  = 0, // next scheduled execution time
                    attempts:  Int                   = 0,
@@ -65,7 +63,6 @@ case class SyncJob(id:        SyncId,
   private def merged(req: SyncRequest, job: SyncJob, forceRetry: Boolean): SyncJob =
     copy(request = req,
       priority = priority min job.priority,
-      optional = optional && job.optional,
       attempts = if (forceRetry) 0 else attempts,
       startTime = if (forceRetry || state != SyncState.FAILED) math.min(startTime, job.startTime) else math.max(startTime, job.startTime),
       dependsOn = dependsOn ++ job.dependsOn)
@@ -82,8 +79,6 @@ object SyncJob {
       o.put("request", JsonEncoder.encode(job.request))
       if (job.dependsOn.nonEmpty) o.put("dependsOn", JsonEncoder.arrString(job.dependsOn.map(_.str).toSeq))
       o.put("priority", job.priority)
-      if (job.optional) o.put("optional", true)
-      if (job.timeout != 0) o.put("timeout", job.timeout)
       o.put("timestamp", job.timestamp)
       o.put("startTime", job.startTime)
       if (job.attempts != 0) o.put("attempts", job.attempts)
@@ -97,7 +92,7 @@ object SyncJob {
     import JsonDecoder._
     override def apply(implicit js: JSONObject): SyncJob = {
       val state = Try(SyncState.valueOf('state)).toOption.getOrElse(SyncState.WAITING)
-      SyncJob(SyncId('id), JsonDecoder[SyncRequest]('request), decodeStringSeq('dependsOn).map(SyncId(_))(breakOut), 'priority, 'optional, 'timeout, 'timestamp, 'startTime, 'attempts, 'offline, state, opt('error, ErrorResponse.Decoder.apply(_)))
+      SyncJob(SyncId('id), JsonDecoder[SyncRequest]('request), decodeStringSeq('dependsOn).map(SyncId(_))(breakOut), 'priority, 'timestamp, 'startTime, 'attempts, 'offline, state, opt('error, ErrorResponse.Decoder.apply(_)))
     }
   }
 
