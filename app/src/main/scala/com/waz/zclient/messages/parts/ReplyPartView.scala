@@ -128,12 +128,12 @@ class TextReplyPartView(context: Context, attrs: AttributeSet, style: Int) exten
 
     if (mentions.isEmpty) {
       textView.setText(text)
-      textView.markdown()
+      textView.markdownQuotes()
     } else {
       val (replaced, mentionHolders) = TextPartView.replaceMentions(text, mentions, offset)
 
       textView.setTransformedText(replaced)
-      textView.markdown()
+      textView.markdownQuotes()
 
       val updatedMentions = TextPartView.updateMentions(textView.getText.toString, mentionHolders, offset)
 

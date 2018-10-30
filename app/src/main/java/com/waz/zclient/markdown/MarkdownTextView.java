@@ -124,11 +124,31 @@ public class MarkdownTextView extends TypefaceTextView implements ViewHelper {
         setLineSpacing(0f, 1.1f);
     }
 
+    private void configureQuoteStyleSheet() {
+        mStyleSheet = new StyleSheet();
+        mStyleSheet.setBaseFontColor(getCurrentTextColor());
+        mStyleSheet.setBaseFontSize((int) getTextSize());
+        mStyleSheet.setCodeColor(getCurrentTextColor());
+        mStyleSheet.setQuoteColor(getCurrentTextColor());
+        mStyleSheet.setQuoteStripeColor(getCurrentTextColor());
+        mStyleSheet.setListPrefixColor(getCurrentTextColor());
+        mStyleSheet.setLinkColor(getCurrentTextColor());
+        setLinkTextColor(getCurrentTextColor());
+        setLineSpacing(0f, 1.1f);
+    }
+
     /**
      * Mark down the text currently in the buffer.
      */
     public void markdown() {
         if (mStyleSheet == null) { configureStyleSheet(); }
+        String text = getText().toString();
+        SpannableString result = Markdown.parse(text, mStyleSheet);
+        setText(result);
+    }
+
+    public void markdownQuotes() {
+        if (mStyleSheet == null) { configureQuoteStyleSheet(); }
         String text = getText().toString();
         SpannableString result = Markdown.parse(text, mStyleSheet);
         setText(result);

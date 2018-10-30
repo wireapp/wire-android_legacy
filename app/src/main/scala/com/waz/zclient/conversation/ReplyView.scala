@@ -35,6 +35,7 @@ import com.waz.zclient.messages.UsersController.DisplayName
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.paintcode.WireStyleKit
 import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
+import com.waz.zclient.ui.text.LinkTextView
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichTextView, RichView}
@@ -48,7 +49,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
 
   private val closeButton = findById[ImageButton](R.id.reply_close)
   private val senderText = findById[TextView](R.id.reply_sender)
-  private val contentText = findById[TextView](R.id.reply_content)
+  private val contentText = findById[LinkTextView](R.id.reply_content)
   private val image = findById[ImageView](R.id.reply_image)
   private val container = findById[ViewGroup](R.id.reply_container)
 
@@ -153,6 +154,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
     contentText.setTypeface(TypefaceUtils.getTypeface(getString(R.string.wire__typeface__regular)))
     contentText.setAllCaps(false)
     contentText.setTextSize(TypedValue.COMPLEX_UNIT_PX, getDimenPx(R.dimen.wire__text_size__small))
+    contentText.markdownQuotes()
   }
 }
 
