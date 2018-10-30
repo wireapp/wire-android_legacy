@@ -47,6 +47,7 @@ import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RequestInterceptor}
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
 trait GlobalModule {
   def context:              AContext
@@ -141,7 +142,7 @@ class GlobalModuleImpl(val context:      AContext,
 
   lazy val urlCreator:          UrlCreator                       = UrlCreator.simpleAppender(backend.baseUrl.toString)
   implicit lazy val httpClient: HttpClient                       = HttpClientOkHttpImpl(enableLogging = ZmsVersion.DEBUG)(Threading.BlockingIO)
-  lazy val httpClientForLongRunning: HttpClient                  = HttpClientOkHttpImpl(enableLogging = ZmsVersion.DEBUG)(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
+  lazy val httpClientForLongRunning: HttpClient                  = HttpClientOkHttpImpl(enableLogging = ZmsVersion.DEBUG, timeout = Some(30.seconds))(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
 
   implicit lazy val requestInterceptor: RequestInterceptor       = RequestInterceptor.identity
 

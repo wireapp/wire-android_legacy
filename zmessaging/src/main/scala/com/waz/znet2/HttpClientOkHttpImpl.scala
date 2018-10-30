@@ -19,6 +19,7 @@ package com.waz.znet2
 
 import java.io.{ByteArrayInputStream, InputStream}
 import java.security.MessageDigest
+import java.util.concurrent.TimeUnit
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
@@ -34,6 +35,7 @@ import okhttp3.{CertificatePinner, CipherSuite, ConnectionSpec, Dispatcher, Inte
 import okio.BufferedSink
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -73,24 +75,31 @@ class HttpClientOkHttpImpl(client: OkHttpClient)(implicit protected val ec: Exec
 
 object HttpClientOkHttpImpl {
 
-  def apply(enableLogging: Boolean)(implicit ec: ExecutionContext): HttpClientOkHttpImpl =
+  def apply(enableLogging: Boolean, timeout: Option[FiniteDuration] = None)(implicit ec: ExecutionContext): HttpClientOkHttpImpl =
     new HttpClientOkHttpImpl(
       createOkHttpClient(
         Some(createModernConnectionSpec),
         Some(createCertificatePinner),
-        if (enableLogging) Some(createLoggerInterceptor) else None
+        if (enableLogging) Some(createLoggerInterceptor) else None,
+        timeout
       )
     )
 
   def createOkHttpClient(
       connectionSpec: Option[ConnectionSpec] = None,
       certificatePinner: Option[CertificatePinner] = None,
-      loggerInterceptor: Option[Interceptor] = None
+      loggerInterceptor: Option[Interceptor] = None,
+      timeout: Option[FiniteDuration] = None
   )(implicit ec: ExecutionContext): OkHttpClient = {
     val builder = new OkHttpClient.Builder()
     connectionSpec.foreach(spec => builder.connectionSpecs(List(spec, ConnectionSpec.CLEARTEXT).asJava))
     certificatePinner.foreach(pinner => builder.certificatePinner(pinner))
     loggerInterceptor.foreach(interceptor => builder.addInterceptor(interceptor))
+    timeout.foreach { t =>
+      builder.connectTimeout(t.toMillis, TimeUnit.MILLISECONDS)
+      builder.writeTimeout(t.toMillis, TimeUnit.MILLISECONDS)
+      builder.readTimeout(t.toMillis, TimeUnit.MILLISECONDS)
+    }
 
     builder
       .dispatcher(createDispatcher(ec))
