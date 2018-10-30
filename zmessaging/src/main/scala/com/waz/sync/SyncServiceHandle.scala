@@ -107,11 +107,8 @@ class AndroidSyncServiceHandle(account: UserId, service: SyncRequestService, tim
     _ <- shouldSyncConversations := false
   } yield {}
 
-  private def addRequest(req: SyncRequest, priority: Int = Priority.Normal, dependsOn: Seq[SyncId] = Nil, forceRetry: Boolean = false, delay: FiniteDuration = Duration.Zero): Future[SyncId] = {
-    val timestamp = SyncJob.timestamp
-    val startTime = if (delay == Duration.Zero) 0 else timestamp + delay.toMillis
-    service.addRequest(account, SyncJob(SyncId(), req, dependsOn.toSet, priority = priority, timestamp = timestamp, startTime = startTime), forceRetry)
-  }
+  private def addRequest(req: SyncRequest, priority: Int = Priority.Normal, dependsOn: Seq[SyncId] = Nil, forceRetry: Boolean = false, delay: FiniteDuration = Duration.Zero): Future[SyncId] =
+    service.addRequest(account, req, priority, dependsOn, forceRetry, delay)
 
   def syncSearchQuery(query: SearchQuery) = addRequest(SyncSearchQuery(query), priority = Priority.High)
   def syncUsers(ids: Set[UserId]) = addRequest(SyncUser(ids))
