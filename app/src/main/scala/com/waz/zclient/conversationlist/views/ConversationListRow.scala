@@ -19,12 +19,13 @@ package com.waz.zclient.conversationlist.views
 
 import android.animation.ObjectAnimator
 import android.content.Context
+import android.support.constraint.ConstraintLayout
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
+import android.widget.FrameLayout
 import android.widget.LinearLayout.LayoutParams
-import android.widget.{FrameLayout, LinearLayout}
-import com.waz.ZLog.verbose
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.verbose
 import com.waz.api.Message
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
@@ -82,7 +83,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   private val conversationId = Signal[Option[ConvId]]()
 
-  val container = ViewUtils.getView(this, R.id.conversation_row_container).asInstanceOf[LinearLayout]
+  val container = ViewUtils.getView(this, R.id.conversation_row_container).asInstanceOf[ConstraintLayout]
   val title = ViewUtils.getView(this, R.id.conversation_title).asInstanceOf[TypefaceTextView]
   val subtitle = ViewUtils.getView(this, R.id.conversation_subtitle).asInstanceOf[TypefaceTextView]
   val avatar = ViewUtils.getView(this, R.id.conversation_icon).asInstanceOf[ConversationAvatarView]

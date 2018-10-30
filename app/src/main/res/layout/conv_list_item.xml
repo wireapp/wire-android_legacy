@@ -29,93 +29,73 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"/>
 
-    <LinearLayout android:id="@+id/conversation_row_container"
-                  android:orientation="horizontal"
-                  android:layout_width="match_parent"
-                  android:layout_height="match_parent">
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/conversation_row_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
 
 
-        <com.waz.zclient.conversationlist.views.ConversationAvatarView
-            android:id="@+id/conversation_icon"
+    <com.waz.zclient.conversationlist.views.ConversationAvatarView
+        android:id="@+id/conversation_icon"
             android:layout_width="@dimen/conversation_list__avatar__size"
             android:layout_height="@dimen/conversation_list__avatar__size"
-            android:layout_gravity="center"
-            android:layout_marginEnd="@dimen/wire__padding__regular"
             android:layout_marginStart="@dimen/wire__padding__regular"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/conversation_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/wire__padding__8"
+            android:layout_marginStart="@dimen/wire__padding__16"
+            android:drawablePadding="@dimen/wire__padding__6"
+            android:ellipsize="end"
+            android:gravity="start|center_vertical"
+            android:maxLines="1"
+            android:textColor="@color/white"
+            android:textSize="@dimen/wire__text_size__regular"
+            app:layout_constraintBottom_toTopOf="@+id/conversation_subtitle"
+            app:layout_constraintEnd_toStartOf="@+id/conversation_badge"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toEndOf="@+id/conversation_icon"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed"
+            app:w_font="@string/wire__typeface__light"/>
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/conversation_subtitle"
+            style="?startUiUserRowSubLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:gravity="start|top"
+            android:maxLines="1"
+            android:textSize="@dimen/wire__text_size__small"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/conversation_title"
+            app:layout_constraintTop_toBottomOf="@+id/conversation_title"
+            app:w_font="@string/wire__typeface__light"
             />
 
-        <RelativeLayout
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            >
+        <com.waz.zclient.conversationlist.views.ConversationBadge
+            android:id="@+id/conversation_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/conversation_list__badge__height"
+            android:layout_marginEnd="@dimen/wire__padding__regular"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:layout_toStartOf="@+id/conversation_badge"
-                android:layout_marginEnd="@dimen/conversation_list__row__side_padding"
-                android:layout_marginStart="@dimen/conversation_list__row__zero"
-                >
+        <View
+            android:id="@+id/conversation_separator"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/wire__divider__height__thin"
+            android:background="@color/white_8"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="@id/conversation_title"/>
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    />
-
-                <com.waz.zclient.ui.text.TypefaceTextView
-                    android:id="@+id/conversation_title"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:gravity="start|center_vertical"
-                    android:maxLines="1"
-                    android:drawablePadding="@dimen/wire__padding__6"
-                    app:w_font="@string/wire__typeface__light"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/wire__text_size__regular"
-                    />
-
-                <com.waz.zclient.ui.text.TypefaceTextView
-                    android:id="@+id/conversation_subtitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:gravity="start|top"
-                    android:maxLines="1"
-                    app:w_font="@string/wire__typeface__light"
-                    android:textSize="@dimen/wire__text_size__small"
-                    style="?startUiUserRowSubLabel"
-                    />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    />
-            </LinearLayout>
-
-            <com.waz.zclient.conversationlist.views.ConversationBadge
-                android:id="@+id/conversation_badge"
-                android:layout_width="wrap_content"
-                android:layout_height="@dimen/conversation_list__badge__height"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:layout_gravity="center"
-                android:layout_marginEnd="@dimen/conversation_list__row__side_padding"
-                android:layout_marginStart="@dimen/conversation_list__row__zero"/>
-
-            <View
-                android:id="@+id/conversation_separator"
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:layout_alignParentBottom="true"
-                android:background="@color/white_8"
-                />
-
-        </RelativeLayout>
-
-    </LinearLayout>
+    </android.support.constraint.ConstraintLayout>
 </merge>
