@@ -19,14 +19,11 @@ package com.waz.sync
 
 import com.waz.ZLog._
 import com.waz.api.SyncState
-import com.waz.api.impl.ErrorResponse
 import com.waz.model.sync.SyncJob.Priority
-import com.waz.model.sync.SyncRequest.RequestForConversation
 import com.waz.model.sync._
-import com.waz.model.{ConvId, SyncId, UserId}
+import com.waz.model.{SyncId, UserId}
 import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountContext, AccountsService, NetworkModeService, ReportingService}
-import com.waz.sync.SyncRequestServiceImpl.{Data, SyncMatcher}
 import com.waz.sync.queue.{SyncContentUpdater, SyncScheduler, SyncSchedulerImpl}
 import com.waz.threading.SerialDispatchQueue
 import com.waz.utils.events.Signal
@@ -46,9 +43,8 @@ trait SyncRequestService {
   def await(ids: Set[SyncId]): Future[Set[SyncResult]]
   def await(id: SyncId): Future[SyncResult]
 
-  def syncState(matchers: Seq[SyncMatcher]): Signal[Data]
+  def syncState(account: UserId, matchers: Seq[SyncCommand]): Signal[SyncState]
 }
-
 
 class SyncRequestServiceImpl(accountId: UserId,
                              content:   SyncContentUpdater,
@@ -58,8 +54,6 @@ class SyncRequestServiceImpl(accountId: UserId,
                              accounts:  AccountsService,
                              tracking:  TrackingService
                             )(implicit accountContext: AccountContext) extends SyncRequestService {
-
-  import SyncRequestServiceImpl._
 
   private implicit val tag = logTagFor[SyncRequestServiceImpl]
   private implicit val dispatcher = new SerialDispatchQueue(name = "SyncDispatcher")
@@ -95,32 +89,12 @@ class SyncRequestServiceImpl(accountId: UserId,
   override def await(id: SyncId): Future[SyncResult] =
     scheduler.await(id)
 
-  override def syncState(matchers: Seq[SyncMatcher]) =
-    content.syncJobs map { _.values.filter(job => matchers.exists(_.apply(job))) } map { jobs =>
-      val state = if (jobs.isEmpty) SyncState.COMPLETED else jobs.minBy(_.state.ordinal()).state
-      Data(state, ProgressUnknown, jobs.flatMap(_.error).toSeq)
-    }
+  override def syncState(account: UserId, commands: Seq[SyncCommand]) =
+    content.syncJobs
+      .map(_.values.filter(job => commands.contains(job.request.cmd)))
+      .map(jobs => if (jobs.isEmpty) SyncState.COMPLETED else jobs.minBy(_.state.ordinal()).state)
 
   //only used in tests currently
   def listJobs =
     content.syncJobs.map(_.values.toSeq.sortBy(j => (j.timestamp, j.priority)))
-}
-
-object SyncRequestServiceImpl {
-
-  val ProgressUnknown = -1
-
-  case class Data(state: SyncState = SyncState.COMPLETED, progress: Int = 0, errors: Seq[ErrorResponse] = Nil)
-
-  val MaxSyncAttempts = 20
-
-  case class SyncMatcher(cmd: SyncCommand, convId: Option[ConvId]) {
-
-    private def convMatches(job: SyncJob) = job.request match {
-      case req: RequestForConversation => convId forall (_ == req.convId)
-      case _ => true
-    }
-
-    def apply(job: SyncJob) = job.request.cmd == cmd && convMatches(job)
-  }
 }

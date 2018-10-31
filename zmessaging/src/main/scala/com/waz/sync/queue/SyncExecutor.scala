@@ -27,7 +27,7 @@ import com.waz.service.NetworkModeService
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncHandler.RequestInfo
 import com.waz.sync.SyncResult._
-import com.waz.sync.{SyncHandler, SyncRequestServiceImpl, SyncResult}
+import com.waz.sync.{SyncHandler, SyncResult}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
 import org.threeten.bp.Instant
@@ -42,6 +42,7 @@ class SyncExecutor(scheduler:   SyncScheduler,
                    network:     NetworkModeService,
                    handler: =>  SyncHandler,
                    tracking:    TrackingService) {
+  import SyncExecutor._
   private implicit val dispatcher = new SerialDispatchQueue(name = "SyncExecutorQueue")
 
   def apply(job: SyncJob): Future[SyncResult] = {
@@ -98,7 +99,7 @@ class SyncExecutor(scheduler:   SyncScheduler,
         content.removeSyncJob(job.id).map(_ => res)
       case Retry(error) =>
         warn(s"SyncRequest: $job, failed with error: $error")
-        if (job.attempts > SyncRequestServiceImpl.MaxSyncAttempts) {
+        if (job.attempts > MaxSyncAttempts) {
           tracking.exception(new RuntimeException(s"Request ${job.request.cmd} failed with error: ${error.code}") with NoStackTrace, s"MaxSyncAttempts exceeded, dropping request: $job\n error: $error")
           content.removeSyncJob(job.id).map(_ => SyncResult.Failure(error))
         } else {
@@ -113,6 +114,7 @@ class SyncExecutor(scheduler:   SyncScheduler,
 }
 
 object SyncExecutor {
+  val MaxSyncAttempts = 20
   val RequestRetryBackoff = new ExponentialBackoff(5.seconds, 1.day)
   val ConvRequestRetryBackoff = new ExponentialBackoff(5.seconds, 1.hour)
 
