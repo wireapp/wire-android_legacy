@@ -113,7 +113,7 @@ class TextReplyPartView(context: Context, attrs: AttributeSet, style: Int) exten
 
   private lazy val textView = findById[LinkTextView](R.id.text)
 
-  val textSizeRegular = context.getResources.getDimensionPixelSize(R.dimen.wire__text_size__small)
+  val textSizeRegular = context.getResources.getDimensionPixelSize(R.dimen.wire__text_size__regular_small)
   val textSizeEmoji = context.getResources.getDimensionPixelSize(R.dimen.wire__text_size__huge)
 
   //TODO: Merge duplicated stuff from TextPartView

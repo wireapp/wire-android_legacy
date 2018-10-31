@@ -142,13 +142,15 @@ public class MarkdownTextView extends TypefaceTextView implements ViewHelper {
      */
     public void markdown() {
         if (mStyleSheet == null) { configureStyleSheet(); }
-        String text = getText().toString();
-        SpannableString result = Markdown.parse(text, mStyleSheet);
-        setText(result);
+        applyMarkdown();
     }
 
     public void markdownQuotes() {
         if (mStyleSheet == null) { configureQuoteStyleSheet(); }
+        applyMarkdown();
+    }
+
+    private void applyMarkdown() {
         String text = getText().toString();
         SpannableString result = Markdown.parse(text, mStyleSheet);
         setText(result);
