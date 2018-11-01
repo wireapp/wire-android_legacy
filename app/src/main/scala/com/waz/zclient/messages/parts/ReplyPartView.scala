@@ -18,6 +18,7 @@
 package com.waz.zclient.messages.parts
 
 import android.content.Context
+import android.graphics.Typeface
 import android.text.Spannable
 import android.text.format.DateFormat
 import android.util.{AttributeSet, TypedValue}
@@ -37,6 +38,7 @@ import com.waz.zclient.messages.MsgPart._
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart, UsersController}
 import com.waz.zclient.paintcode.WireStyleKit
 import com.waz.zclient.ui.text.{GlyphTextView, LinkTextView, TypefaceTextView}
+import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils.{getString, getStyledColor}
 import com.waz.zclient.utils.{DateConvertUtils, RichTextView, ZTimeFormatter}
 import com.waz.zclient.{R, ViewHelper}
@@ -51,8 +53,8 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) 
   setOrientation(LinearLayout.HORIZONTAL)
   inflate(R.layout.message_reply_content_outer)
 
-  private val name      = findById[TextView](R.id.name)
-  private val timestamp = findById[TextView](R.id.timestamp)
+  protected val name: TextView = findById[TextView](R.id.name)
+  protected val timestamp: TextView = findById[TextView](R.id.timestamp)
   private val content   = findById[ViewGroup](R.id.content)
   private val container = findById[ViewGroup](R.id.quote_container)
 
@@ -63,6 +65,7 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) 
     case Reply(AudioAsset) => Some(inflate(R.layout.message_reply_content_generic, addToParent = false))
     case Reply(VideoAsset) => Some(inflate(R.layout.message_reply_content_image, addToParent = false))
     case Reply(FileAsset)  => Some(inflate(R.layout.message_reply_content_generic, addToParent = false))
+    case Reply(Unknown)    => Some(inflate(R.layout.message_reply_content_unknown, addToParent = false))
     case _ => None
   }
   quoteView.foreach(content.addView)
@@ -150,6 +153,7 @@ class TextReplyPartView(context: Context, attrs: AttributeSet, style: Int) exten
         case _ =>
       }
     }
+    textView.setIncludeFontPadding(false)
 
   }
 
@@ -219,6 +223,19 @@ class AudioReplyPartView(context: Context, attrs: AttributeSet, style: Int) exte
 
   textView.setText(R.string.reply_message_type_audio)
   textView.setStartCompoundDrawable(Some(WireStyleKit.drawVoiceMemo), getStyledColor(R.attr.wirePrimaryTextColor))
+}
+
+class UnknownReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) {
+  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
+  def this(context: Context) = this(context, null, 0)
+
+  override def tpe: MsgPart = Reply(Unknown)
+
+  private lazy val textView = findById[TypefaceTextView](R.id.text)
+
+  name.setVisibility(View.GONE)
+  timestamp.setVisibility(View.GONE)
+  textView.setTypeface(TypefaceUtils.getTypeface(getString(R.string.wire__typeface__regular)), Typeface.ITALIC)
 }
 
 

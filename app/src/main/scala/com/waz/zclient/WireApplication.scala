@@ -246,7 +246,7 @@ object WireApplication {
     bind [AssetsController]          to new AssetsController()
     bind [BrowserController]         to new BrowserController()
     bind [MessageViewFactory]        to new MessageViewFactory()
-    bind [ReplyController]             to new ReplyController()
+    bind [ReplyController]           to new ReplyController()
 
     bind [ScreenController]          to new ScreenController()
     bind [MessageActionsController]  to new MessageActionsController()

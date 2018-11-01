@@ -1225,6 +1225,7 @@
     <string name="reply_message_type_audio">AUDIO MESSAGE</string>
     <string name="reply_message_type_location">LOCATION</string>
     <string name="reply_message_type_asset">ATTACHMENT</string>
+    <string name="reply_message_type_unknown">You cannot see this message.</string>
 
     <string name="quote_timestamp_message">Original message from %s</string>
 </resources>

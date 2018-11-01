@@ -35,7 +35,7 @@ import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.controllers._
 import com.waz.zclient.controllers.location.ILocationController
-import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.conversation.{ConversationController, ReplyController}
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.drawing.DrawingFragment
 import com.waz.zclient.messages.MessageBottomSheetDialog.MessageAction
@@ -58,6 +58,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
   val conversationController  = inject[ConversationController]
   lazy val convListController = inject[ConversationListController]
   lazy val callController     = inject[CallController]
+  private lazy val replyController = inject[ReplyController]
 
   val conv = conversationController.currentConv
 
@@ -201,10 +202,13 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
     }
     else if (TextUtils.isEmpty(msg.trim)) false
     else {
-      conversationController.sendMessage(msg, mentions).foreach { m =>
-        m.foreach { msg =>
-          onMessageSent ! msg
-          cursorCallback.foreach(_.onMessageSent(msg))
+      replyController.replyData.map(_.map(_._1)).head.foreach { quote =>
+        conversationController.sendMessage(msg, mentions, quote).foreach { m =>
+          m.foreach { msg =>
+            onMessageSent ! msg
+            cursorCallback.foreach(_.onMessageSent(msg))
+            replyController.clearMessage()
+          }
         }
       }
       true

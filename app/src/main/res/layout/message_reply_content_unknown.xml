@@ -18,10 +18,18 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<com.waz.zclient.messages.parts.PingPartView
+<com.waz.zclient.ui.text.TypefaceTextView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/text"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:baselineAligned="false"
-/>
+    android:textSize="@dimen/wire__text_size__smaller"
+    android:textColor="?wireSecondaryTextColor"
+    app:w_font="@string/wire__typeface__regular"
+    android:maxLines="1"
+    android:drawablePadding="@dimen/wire__padding__4"
+    android:ellipsize="end"
+    android:text="@string/reply_message_type_unknown"
+    android:textStyle="italic"
+    />

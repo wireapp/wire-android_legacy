@@ -74,6 +74,7 @@ class MessageViewFactory {
         case Reply(VideoAsset)  => inflate(R.layout.message_reply_video, parent, false)
         case Reply(FileAsset)   => inflate(R.layout.message_reply_file, parent, false)
         case Reply(AudioAsset)  => inflate(R.layout.message_reply_audio, parent, false)
+        case Reply(Unknown)     => inflate(R.layout.message_reply_unknown, parent, false)
         case Reply(_)           => new EmptyPartView(parent.getContext)
         case Empty              => new EmptyPartView(parent.getContext)
         case Unknown            => new EmptyPartView(parent.getContext) // TODO: display error msg, only used in internal

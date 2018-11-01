@@ -31,10 +31,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="@dimen/wire__padding__regular"
-        android:paddingTop="@dimen/wire__padding__8"
-        android:paddingBottom="@dimen/wire__padding__8"
-        android:paddingStart="@dimen/wire__padding__12"
-        android:paddingEnd="@dimen/wire__padding__8"
+        android:paddingTop="@dimen/wire__padding__12"
+        android:paddingBottom="@dimen/wire__padding__12"
+        android:paddingStart="@dimen/wire__padding__regular"
+        android:paddingEnd="@dimen/wire__padding__12"
         android:background="@drawable/rounded_graphite_stroke_rectangle">
 
         <com.waz.zclient.ui.text.TypefaceTextView
@@ -53,8 +53,6 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginTop="@dimen/wire__padding__4"
-            android:layout_marginBottom="@dimen/wire__padding__4"
             />
 
         <com.waz.zclient.ui.text.TypefaceTextView

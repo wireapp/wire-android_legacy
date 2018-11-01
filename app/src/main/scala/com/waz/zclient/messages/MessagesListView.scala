@@ -222,8 +222,8 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesListAdapter)(im
     case None => Signal.empty[MessageData]
   }(msgsController.onMessageRead)
 
-  def bind(msg: MessageAndLikes, quote: Option[MessageData], prev: Option[MessageData], next: Option[MessageData], opts: MsgBindOptions): Unit = {
-    view.set(msg, quote, prev, next, opts)
+  def bind(msg: MessageAndLikes, prev: Option[MessageData], next: Option[MessageData], opts: MsgBindOptions): Unit = {
+    view.set(msg,prev, next, opts)
     message ! msg.message
     this.opts = Some(opts)
     _isFocused = selection.isFocused(msg.message.id)
