@@ -37,7 +37,7 @@ class JVMBase64 extends Base64 {
 case class Sha256Inj(str: String)(implicit base64: Base64) {
   def bytes = base64.decode(str)
 
-  def hexString = String.format("%02X", new BigInteger(1, AESUtils.base64(str))).toLowerCase
+  def hexString = String.format("%02X", new BigInteger(1, base64.decode(str))).toLowerCase
 
   def sha256(): Sha256 = Sha256(str)
 }
