@@ -32,7 +32,9 @@ import scala.collection.{breakOut, mutable}
 import scala.concurrent.duration._
 import scala.concurrent.Future
 
-trait ReactionsStorage extends CachedStorage[(MessageId, UserId), Liking]
+trait ReactionsStorage extends CachedStorage[(MessageId, UserId), Liking] {
+  def loadAll(msgs: Seq[MessageId]): Future[Vector[Likes]]
+}
 
 class ReactionsStorageImpl(context: Context, storage: Database) extends CachedStorageImpl[(MessageId, UserId), Liking](new TrimmingLruCache(context, Fixed(MessagesStorage.cacheSize)), storage)(LikingDao, "LikingStorage") with ReactionsStorage {
   import ReactionsStorageImpl._
@@ -79,7 +81,7 @@ class ReactionsStorageImpl(context: Context, storage: Database) extends CachedSt
     else updateOrCreate(liking.id, _ max liking, liking)
   }.flatMap(_ => getLikes(liking.message))
 
-  def loadAll(msgs: Seq[MessageId]): Future[Vector[Likes]] = Future {
+  override def loadAll(msgs: Seq[MessageId]): Future[Vector[Likes]] = Future {
     msgs.map(m => m -> Option(likesCache.get(m))).toMap
   } flatMap { cached =>
     val toLoad: Set[MessageId] = cached.collect { case (id, None) => id } (breakOut)
@@ -102,3 +104,7 @@ object ReactionsStorageImpl {
 }
 
 case class Likes(message: MessageId, likers: Map[UserId, RemoteInstant])
+
+object Likes {
+  def Empty(message: MessageId) = Likes(message, Map())
+}

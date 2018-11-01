@@ -303,12 +303,11 @@ trait MessageAndLikesStorage {
   def apply(ids: Seq[MessageId]): Future[Seq[MessageAndLikes]]
   def getMessageAndLikes(id: MessageId): Future[Option[MessageAndLikes]]
   def combineWithLikes(msg: MessageData): Future[MessageAndLikes]
-  def withLikes(msgs: Seq[MessageData]): Future[Seq[MessageAndLikes]]
-  def combine(msg: MessageData, likes: Likes, selfUserId: UserId): MessageAndLikes
+  def combine(msg: MessageData, likes: Likes, selfUserId: UserId, quote: Option[MessageData]): MessageAndLikes
   def sortedLikes(likes: Likes, selfUserId: UserId): (IndexedSeq[UserId], Boolean)
 }
 
-class MessageAndLikesStorageImpl(selfUserId: UserId, messages: MessagesStorage, likings: ReactionsStorageImpl) extends MessageAndLikesStorage {
+class MessageAndLikesStorageImpl(selfUserId: UserId, messages: MessagesStorage, likings: ReactionsStorage) extends MessageAndLikesStorage {
   import com.waz.threading.Threading.Implicits.Background
   import com.waz.utils.events.EventContext.Implicits.global
 
@@ -318,28 +317,37 @@ class MessageAndLikesStorageImpl(selfUserId: UserId, messages: MessagesStorage, 
   messages.messageChanged { ms => ms foreach { m => onUpdate ! m.id }}
   likings.onChanged { _ foreach { l => onUpdate ! l.message } }
 
-  def apply(ids: Seq[MessageId]): Future[Seq[MessageAndLikes]] =
-    messages.getMessages(ids: _*) flatMap { msgs => withLikes(msgs.flatten) }
 
-  def getMessageAndLikes(id: MessageId): Future[Option[MessageAndLikes]] =
-    messages.getMessage(id).flatMap(_.fold2(Future.successful(None), msg => combineWithLikes(msg).map(Some(_))))
-
-  def combineWithLikes(msg: MessageData): Future[MessageAndLikes] =
-    likings.getLikes(msg.id).map(l => combine(msg, l, selfUserId))
-
-  def withLikes(msgs: Seq[MessageData]): Future[Seq[MessageAndLikes]] = {
-    val ids: Set[MessageId] = msgs.map(_.id)(breakOut)
-      likings.loadAll(msgs.map(_.id)).map { likes =>
-      val likesById = likes.by[MessageId, Map](_.message)
-      returning(msgs.map(msg => combine(msg, likesById(msg.id), selfUserId))) { _ =>
-        verbose(s"combined ${ids.size} message(s) with ${likesById.size} liking(s)")
-      }
-    }.andThen { case Failure(t) => error("failed while adding likings to messages", t) }
+  def apply(ids: Seq[MessageId]): Future[Seq[MessageAndLikes]] = for {
+    msgs <- messages.getMessages(ids: _*).map(_.flatten)
+    likes <- getLikes(msgs)
+    quotes <- getQuotes(msgs)
+  } yield msgs.map { msg =>
+    combine(msg, likes.getOrElse(msg.id, Likes.Empty(msg.id)), selfUserId, quotes.get(msg.id).flatten)
   }
 
-  def combine(msg: MessageData, likes: Likes, selfUserId: UserId): MessageAndLikes =
-    if (likes.likers.isEmpty) MessageAndLikes(msg, Vector(), false)
-    else sortedLikes(likes, selfUserId) match { case (likers, selfLikes) => MessageAndLikes(msg, likers, selfLikes) }
+  def getMessageAndLikes(id: MessageId): Future[Option[MessageAndLikes]] = apply(Seq(id)).map(_.headOption)
+
+  override def combineWithLikes(msg: MessageData): Future[MessageAndLikes] = for {
+    likes <- getLikes(Seq(msg))
+    quotes <- getQuotes(Seq(msg))
+  } yield combine(msg, likes.getOrElse(msg.id, Likes.Empty(msg.id)), selfUserId, quotes.get(msg.id).flatten)
+
+  def getQuotes(msgs: Seq[MessageData]): Future[Map[MessageId, Option[MessageData]]] = {
+    Future.sequence(msgs.flatMap(m => m.quote.map(m.id -> _).toSeq).map {
+      case (m, q) => messages.getMessage(q).map(m -> _)
+    }).map(_.toMap)
+  }
+
+  def getLikes(msgs: Seq[MessageData]): Future[Map[MessageId, Likes]] = {
+    likings.loadAll(msgs.map(_.id)).map { likes =>
+      likes.by[MessageId, Map](_.message)
+    }
+  }
+
+  def combine(msg: MessageData, likes: Likes, selfUserId: UserId, quote: Option[MessageData]): MessageAndLikes =
+    if (likes.likers.isEmpty) MessageAndLikes(msg, Vector(), likedBySelf = false, quote)
+    else sortedLikes(likes, selfUserId) match { case (likers, selfLikes) => MessageAndLikes(msg, likers, selfLikes, quote) }
 
 
   def sortedLikes(likes: Likes, selfUserId: UserId): (IndexedSeq[UserId], Boolean) =

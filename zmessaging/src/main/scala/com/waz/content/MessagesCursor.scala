@@ -57,6 +57,7 @@ class MessagesCursor(cursor: DBCursor,
   private implicit val dispatcher = new SerialDispatchQueue(name = "MessagesCursor")
 
   private val messages = new LruCache[MessageId, MessageAndLikes](WindowSize * 2)
+  private val quotes = new LruCache[MessageId, Seq[MessageId]](WindowSize * 2)
   private val windowLoader = new WindowLoader(cursor)
 
   val createTime = LocalInstant.Now //used in UI
@@ -67,10 +68,13 @@ class MessagesCursor(cursor: DBCursor,
 
   private val subs = Seq (
     loader.onUpdate { id =>
-      Option(messages.get(id)) foreach { prev =>
 
-        loader.getMessageAndLikes(id).foreach(_ foreach { mAndL =>
-          messages.put(id, mAndL)
+      val replies = Option(quotes.get(id)).map(qs => qs.map(q => Option(messages.get(q)))).getOrElse(Seq())
+
+      (replies :+ Option(messages.get(id))).flatten.foreach { prev =>
+
+        loader.getMessageAndLikes(prev.message.id).foreach(_ foreach { mAndL =>
+          putMessage(mAndL)
           onUpdate ! (prev, mAndL)
         })
       }
@@ -133,7 +137,7 @@ class MessagesCursor(cursor: DBCursor,
     } else {
       val time = System.nanoTime()
       loader(ids) .map { ms =>
-        ms foreach { m => messages.put(m.message.id, m) }
+        ms foreach { m => putMessage(m) }
         verbose(s"pre-fetched ${ids.size} ids, got ${ms.size} msgs, for window offset: ${window.offset} in: ${(System.nanoTime() - time) / 1000 / 1000f} ms")
       } (Threading.Background) // LruCache is thread-safe, this mustn't be blocked by UI processing
     }
@@ -175,7 +179,7 @@ class MessagesCursor(cursor: DBCursor,
         Option(messages.get(id)).getOrElse {
           logTime(s"loading message for id: $id, position: $index") {
             val m = LoggedTry(Await.result(loader(Seq(id)), 500.millis).headOption).toOption.flatten
-            m foreach { messages.put(id, _) }
+            m.foreach(putMessage)
             m.getOrElse(MessageAndLikes.Empty)
           }
         }
@@ -209,6 +213,14 @@ class MessagesCursor(cursor: DBCursor,
       case c if c != 0 && from == to => -1
       case c if c > 0 => cursorBinarySearch(time, from, idx)
       case _ => cursorBinarySearch(time, idx + 1, to)
+    }
+  }
+
+  private def putMessage(message: MessageAndLikes) {
+    messages.put(message.message.id, message)
+    message.quote.foreach { q =>
+      val qs = Option(quotes.get(q.id)).getOrElse(Seq())
+      quotes.put(q.id, qs :+ message.message.id)
     }
   }
 }

@@ -258,7 +258,8 @@ object Generators {
     others <- listOf(arbitrary[UserId])
     includeSelf <- frequency((4, false), (1, true))
     ids = if (includeSelf) self :: others else others
-  } yield MessageAndLikes(msg, ids.toVector, includeSelf))
+    quote <- optGen(arbitrary[MessageData])
+  } yield MessageAndLikes(msg, ids.toVector, includeSelf, quote))
 
   implicit lazy val arbMetaData: Arbitrary[AssetMetaData] = Arbitrary(oneOf(arbImageMetaData.arbitrary, arbVideoMetaData.arbitrary, arbAudioMetaData.arbitrary))
   implicit lazy val arbImageMetaData: Arbitrary[AssetMetaData.Image] = Arbitrary(for (d <- arbitrary[Dim2]; t <- oneOf(Medium, Preview)) yield AssetMetaData.Image(d, t))
