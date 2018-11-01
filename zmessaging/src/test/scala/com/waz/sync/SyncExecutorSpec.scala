@@ -43,7 +43,7 @@ class SyncExecutorSpec extends AndroidFreeSpec {
   }
 
   def getExecutor = {
-    new SyncExecutor(scheduler, content, network, handler, tracking)
+    new SyncExecutor(account1Id, scheduler, content, network, handler, tracking)
   }
 
 }

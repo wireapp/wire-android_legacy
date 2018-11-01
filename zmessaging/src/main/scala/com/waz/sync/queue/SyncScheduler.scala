@@ -51,7 +51,7 @@ trait SyncScheduler {
   def reportString: Future[String]
 }
 
-class SyncSchedulerImpl(userId:      UserId,
+class SyncSchedulerImpl(accountId:   UserId,
                         val content: SyncContentUpdater,
                         val network: NetworkModeService,
                         service:     SyncRequestServiceImpl,
@@ -65,7 +65,7 @@ class SyncSchedulerImpl(userId:      UserId,
   private implicit val dispatcher = new SerialDispatchQueue(name = "SyncSchedulerQueue")
 
   private val queue                 = new SyncSerializer
-  private[sync] val executor        = new SyncExecutor(this, content, network, handler, tracking)
+  private[sync] val executor        = new SyncExecutor(accountId, this, content, network, handler, tracking)
   private[sync] val executions      = new mutable.HashMap[SyncId, Future[SyncResult]]()
   private[sync] val executionsCount = Signal(0)
 
@@ -85,7 +85,7 @@ class SyncSchedulerImpl(userId:      UserId,
       }
   }
 
-  accounts.accountState(userId).on(dispatcher) {
+  accounts.accountState(accountId).on(dispatcher) {
     case _: Active => waitEntries.foreach(_._2.onRestart())
     case _ =>
   }
@@ -138,7 +138,7 @@ class SyncSchedulerImpl(userId:      UserId,
     waitEntries.put(job.id, entry)
 
     val jobReady = for {
-      _ <- accounts.accountState(userId).filter(_ != LoggedOut).head
+      _ <- accounts.accountState(accountId).filter(_ != LoggedOut).head
       _ <- entry.future
     } yield {}
 

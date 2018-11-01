@@ -40,7 +40,6 @@ import com.waz.sync._
 import com.waz.sync.client._
 import com.waz.sync.handler._
 import com.waz.sync.otr.{OtrClientsSyncHandler, OtrClientsSyncHandlerImpl, OtrSyncHandler, OtrSyncHandlerImpl}
-import com.waz.sync.queue.{SyncContentUpdater, SyncContentUpdaterImpl}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.ui.UiModule
 import com.waz.utils.Locales
@@ -104,10 +103,9 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   implicit lazy val evContext = account.accountContext
 
   lazy val sync:              SyncServiceHandle       = wire[AndroidSyncServiceHandle]
-  lazy val syncHandler:       AccountSyncHandler      = new AccountSyncHandler(selfUserId, this)
-  lazy val otrClientsService: OtrClientsService       = wire[OtrClientsService]
-  lazy val syncContent:       SyncContentUpdater      = wire[SyncContentUpdaterImpl]
   lazy val syncRequests:      SyncRequestService      = global.syncRequests
+
+  lazy val otrClientsService: OtrClientsService       = wire[OtrClientsService]
   lazy val otrClientsSync:    OtrClientsSyncHandler   = wire[OtrClientsSyncHandlerImpl]
   lazy val otrClient:         OtrClientImpl           = account.otrClient
   lazy val credentialsClient: CredentialsUpdateClientImpl = account.credentialsClient
@@ -287,7 +285,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
 
     // services listening on lifecycle verified login events
     contacts
-    syncRequests
 
     // services listening for storage updates
     richmedia

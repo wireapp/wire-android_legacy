@@ -21,6 +21,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.SyncState
 import com.waz.api.impl.ErrorResponse
+import com.waz.model.UserId
 import com.waz.model.sync.SyncJob
 import com.waz.model.sync.SyncRequest.Serialized
 import com.waz.service.NetworkModeService
@@ -37,7 +38,8 @@ import scala.concurrent.{Future, TimeoutException}
 import scala.util.Failure
 import scala.util.control.NoStackTrace
 
-class SyncExecutor(scheduler:   SyncScheduler,
+class SyncExecutor(account:     UserId,
+                   scheduler:   SyncScheduler,
                    content:     SyncContentUpdater,
                    network:     NetworkModeService,
                    handler: =>  SyncHandler,
@@ -69,7 +71,7 @@ class SyncExecutor(scheduler:   SyncScheduler,
       .flatMap {
         case None => Future.successful(SyncResult(ErrorResponse.internalError(s"Could not update job: $job")))
         case Some(updated) =>
-          handler(updated.request)(RequestInfo(updated.attempts, Instant.ofEpochMilli(updated.startTime), network.networkMode.currentValue))
+          handler(account, updated.request)(RequestInfo(updated.attempts, Instant.ofEpochMilli(updated.startTime), network.networkMode.currentValue))
             .recover {
               case e: Throwable =>
                 SyncResult(ErrorResponse.internalError(s"syncHandler($updated) failed with unexpected error: ${e.getMessage}"))

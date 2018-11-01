@@ -34,7 +34,7 @@ import com.waz.service.downloads._
 import com.waz.service.images.{ImageLoader, ImageLoaderImpl}
 import com.waz.service.push.{GlobalNotificationsService, GlobalNotificationsServiceImpl, GlobalTokenService, GlobalTokenServiceImpl}
 import com.waz.service.tracking.{TrackingService, TrackingServiceImpl}
-import com.waz.sync.SyncRequestService
+import com.waz.sync.{AccountSyncHandler, SyncHandler, SyncRequestService}
 import com.waz.sync.client._
 import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache
@@ -52,7 +52,10 @@ import scala.concurrent.duration._
 trait GlobalModule {
   def context:              AContext
   def backend:              BackendConfig
+
   def syncRequests:         SyncRequestService
+  def syncHandler:          SyncHandler
+
   def ssoService:           SSOService
   def tokenService:         GlobalTokenService
   def notifications:        GlobalNotificationsService
@@ -115,8 +118,10 @@ class GlobalModuleImpl(val context:      AContext,
   val storage:                  Database                         = new GlobalDatabase(context)
   val accountsStorageOld:       AccountsStorageOld               = wire[AccountsStorageOldImpl]
 
+
   lazy val ssoService:          SSOService                       = wire[SSOService]
   lazy val accountsService:     AccountsService                  = new AccountsServiceImpl(this)
+  lazy val syncHandler:         SyncHandler                      = new AccountSyncHandler(accountsService)
   lazy val trackingService:     TrackingService                  = TrackingServiceImpl(accountsService)
   lazy val notifications:       GlobalNotificationsService       = wire[GlobalNotificationsServiceImpl]
   lazy val calling:             GlobalCallingService             = new GlobalCallingService
@@ -222,5 +227,6 @@ class EmptyGlobalModule extends GlobalModule {
   override def httpClientForLongRunning: HttpClient                                          = ???
   override def base64:                   Base64                                              = ???
   override def syncRequests:             SyncRequestService                                  = ???
+  override def syncHandler:              SyncHandler                                         = ???
 }
 
