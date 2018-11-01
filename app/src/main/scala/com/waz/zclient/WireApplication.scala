@@ -82,7 +82,7 @@ import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.preferences.PreferencesController
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
-import com.waz.zclient.utils.{BackStackNavigator, BackendPicker, Callback, ExternalFileSharing, LocalThumbnailCache, UiStorage}
+import com.waz.zclient.utils.{BackStackNavigator, BackendPicker, Callback, ExternalFileSharing, LocalThumbnailCache, UiStorage, AndroidBase64}
 import com.waz.zclient.views.DraftMap
 import javax.net.ssl.SSLContext
 
@@ -337,8 +337,9 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     val prefs = GlobalPreferences(this)
     val googleApi = GoogleApiImpl(this, backend, prefs)
+    val base64 = new AndroidBase64()
 
-    ZMessaging.onCreate(this, backend, prefs, googleApi)
+    ZMessaging.onCreate(this, backend, prefs, googleApi, base64)
 
     inject[NotificationManagerWrapper]
     inject[ImageNotificationsController]
