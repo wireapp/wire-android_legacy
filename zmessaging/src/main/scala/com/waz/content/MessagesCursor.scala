@@ -216,7 +216,7 @@ class MessagesCursor(cursor: DBCursor,
     }
   }
 
-  private def putMessage(message: MessageAndLikes) {
+  private def putMessage(message: MessageAndLikes) = {
     messages.put(message.message.id, message)
     message.quote.foreach { q =>
       val qs = Option(quotes.get(q.id)).getOrElse(Seq())

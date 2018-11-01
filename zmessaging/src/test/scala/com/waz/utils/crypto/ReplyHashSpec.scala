@@ -17,10 +17,8 @@
  */
 package com.waz.utils.crypto
 
-import java.util.UUID
-
 import com.waz.content.AssetsStorage
-import com.waz.model.{AssetId, LocalInstant, RAssetId}
+import com.waz.model.{LocalInstant, RAssetId}
 import com.waz.specs.AndroidFreeSpec
 
 /**
@@ -33,8 +31,7 @@ class ReplyHashSpec extends AndroidFreeSpec {
   private val timestamp2 = LocalInstant.ofEpochSecond(1540213965)
 
   val assetStorage = mock[AssetsStorage]
-
-  import AssetId._
+  val base64 = new JVMBase64
 
   feature("hashing of quoted messages") {
 
@@ -86,5 +83,5 @@ class ReplyHashSpec extends AndroidFreeSpec {
 
   }
 
-  private def getReplyHashing = new ReplyHashingImpl(assetStorage)
+  private def getReplyHashing = new ReplyHashingImpl(assetStorage)(base64)
 }

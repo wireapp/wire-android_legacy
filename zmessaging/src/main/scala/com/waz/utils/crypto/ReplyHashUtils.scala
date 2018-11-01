@@ -30,18 +30,18 @@ trait ReplyHashing {
   class MissingAssetException(message: String) extends Exception(message)
 }
 
-class ReplyHashingImpl(storage: AssetsStorage) extends ReplyHashing {
+class ReplyHashingImpl(storage: AssetsStorage)(implicit base64: Base64) extends ReplyHashing {
 
   import com.waz.threading.Threading.Implicits.Background
 
   override def hashMessage(m: MessageData): Future[Sha256] = {
     import com.waz.api.Message.Type._
     m.msgType match {
-      case TEXT | RICH_MEDIA | TEXT_EMOJI_ONLY => Future.successful(hashTextReply(m.contentString, m.localTime))
-      case LOCATION => Future.successful(hashLocation(m.location.get.getLatitude, m.location.get.getLongitude, m.localTime))
+      case TEXT | RICH_MEDIA | TEXT_EMOJI_ONLY => Future.successful(hashTextReply(m.contentString, m.localTime).sha256())
+      case LOCATION => Future.successful(hashLocation(m.location.get.getLatitude, m.location.get.getLongitude, m.localTime).sha256())
       case ANY_ASSET | ASSET | VIDEO_ASSET | AUDIO_ASSET =>
         storage.get(m.assetId).map(_.flatMap(_.remoteId)).flatMap {
-          case Some(rId) => Future.successful(hashAsset(rId, m.localTime))
+          case Some(rId) => Future.successful(hashAsset(rId, m.localTime).sha256())
           case None => Future.failed(new MissingAssetException(s"Failed to find asset with id ${m.assetId}"))
         }
       case _ =>
@@ -49,16 +49,16 @@ class ReplyHashingImpl(storage: AssetsStorage) extends ReplyHashing {
     }
   }
 
-  protected[crypto] def hashAsset(assetId: RAssetId, timestamp: LocalInstant): Sha256 = hashTextReply(assetId.str, timestamp)
+  protected[crypto] def hashAsset(assetId: RAssetId, timestamp: LocalInstant): Sha256Inj = hashTextReply(assetId.str, timestamp)
 
-  protected[crypto] def hashTextReply(content: String, timestamp: LocalInstant): Sha256 =
-    Sha256.calculate(content.getBytes("UTF-16") ++ timestamp.toEpochSec.getBytes)
+  protected[crypto] def hashTextReply(content: String, timestamp: LocalInstant): Sha256Inj =
+    Sha256Inj.calculate(content.getBytes("UTF-16") ++ timestamp.toEpochSec.getBytes)
 
-  protected[crypto] def hashLocation(lat: Float, lng: Float, timestamp: LocalInstant): Sha256 = {
+  protected[crypto] def hashLocation(lat: Float, lng: Float, timestamp: LocalInstant): Sha256Inj = {
     import java.lang.Math.round
     val latNorm: Long = round(lat*1000).toLong
     val lngNorm: Long = round(lng*1000).toLong
-    Sha256.calculate(ByteBuffer.allocate(16).putLong(latNorm).putLong(lngNorm).array() ++ timestamp.toEpochSec.getBytes)
+    Sha256Inj.calculate(ByteBuffer.allocate(16).putLong(latNorm).putLong(lngNorm).array() ++ timestamp.toEpochSec.getBytes)
   }
 
   private implicit class RichLong(l: Long) {

@@ -39,6 +39,7 @@ import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache
 import com.waz.ui.MemoryImageCache.{Entry, Key}
 import com.waz.utils.Cache
+import com.waz.utils.crypto.Base64
 import com.waz.utils.wrappers.{Context, GoogleApi}
 import com.waz.znet2.HttpClientOkHttpImpl
 import com.waz.znet2.http.Request.UrlCreator
@@ -89,6 +90,7 @@ trait GlobalModule {
   def blacklist:            VersionBlacklistService
   def factory:              ZMessagingFactory
   def lifecycle:            UiLifeCycle
+  def base64:               Base64
 
   def flowmanager:          FlowManagerService
   def mediaManager:         MediaManagerService
@@ -99,7 +101,8 @@ trait GlobalModule {
 class GlobalModuleImpl(val context:   AContext,
                        val backend:   BackendConfig,
                        val prefs:     GlobalPreferences,
-                       val googleApi: GoogleApi) extends GlobalModule { global =>
+                       val googleApi: GoogleApi,
+                       val base64: Base64) extends GlobalModule { global =>
   //trigger initialization of Firebase in onCreate - should prevent problems with Firebase setup
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
   val network:                  DefaultNetworkModeService        = wire[DefaultNetworkModeService]
@@ -213,5 +216,6 @@ class EmptyGlobalModule extends GlobalModule {
   override def urlCreator:               UrlCreator                                          = ???
   override def httpClient:               HttpClient                                          = ???
   override def httpClientForLongRunning: HttpClient                                          = ???
+  override def base64:                   Base64                                              = ???
 }
 
