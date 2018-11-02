@@ -127,32 +127,36 @@ class MessagesServiceImpl(selfUserId:   UserId,
       }
 
     gm match {
-      case GenericMessage(id, MsgEdit(msgId, Text(text, mentions, links, quote))) =>
+      case GenericMessage(newId, MsgEdit(oldId, Text(text, mentions, links, quote))) =>
 
-        def applyEdit(msg: MessageData) = for {
-            _ <- edits.insert(EditHistory(msg.id, MessageId(id.str), time))
-            (tpe, ct) = MessageData.messageContent(text, mentions, links, weblinkEnabled = true)
-            edited = MessageData(MessageId(id.str), convId, tpe, userId, ct, Seq(gm), time = msg.time, localTime = msg.localTime, editTime = time)
-            res <- updater.addMessage(edited.adjustMentions(false).getOrElse(edited))
-            _ <- updater.deleteOnUserRequest(Seq(msg.id))
-        } yield res
+        def applyEdit(msg: MessageData) = {
+          val newMsgId = MessageId(newId.str)
+          for {
+            _         <- edits.insert(EditHistory(msg.id, newMsgId, time))
+            (tpe, ct) =  MessageData.messageContent(text, mentions, links, weblinkEnabled = true)
+            edited    =  MessageData(newMsgId, convId, tpe, userId, ct, Seq(gm), time = msg.time, localTime = msg.localTime, editTime = time)
+            res       <- updater.addMessage(edited.adjustMentions(false).getOrElse(edited))
+            quotesOf  <- storage.findQuotesOf(msg.id)
+            _         <- storage.updateAll2(quotesOf.map(_.id), _.replaceQuote(newMsgId))
+            _         <- updater.deleteOnUserRequest(Seq(msg.id))
+          } yield res
+        }
 
-        updater.getMessage(msgId) flatMap {
+        updater.getMessage(oldId) flatMap {
           case Some(msg) if msg.userId == userId && msg.convId == convId =>
-            verbose(s"got edit event for msg: $msg")
             applyEdit(msg)
           case _ =>
             // original message was already deleted, let's check if it was already updated
-            edits.get(msgId) flatMap {
+            edits.get(oldId) flatMap {
               case Some(EditHistory(_, _, editTime)) if editTime <= time =>
-                verbose(s"message $msgId has already been updated, discarding later update")
+                verbose(s"message $oldId has already been updated, discarding later update")
                 Future successful None
 
               case Some(EditHistory(_, updated, _)) =>
                 // this happens if message has already been edited locally,
                 // but that edit is actually newer than currently received one, so we should revert it
                 // we always use only the oldest edit for given message (as each update changes the message id)
-                verbose(s"message $msgId has already been updated, will overwrite new message")
+                verbose(s"message $oldId has already been updated, will overwrite new message")
                 findLatestUpdate(updated) flatMap {
                   case Some(msg) => applyEdit(msg)
                   case None =>

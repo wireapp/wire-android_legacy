@@ -76,6 +76,7 @@ trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
   def lastMessageFromSelfAndFromOther(conv: ConvId): Signal[(Option[MessageData], Option[MessageData])]
 
   def isQuoteOfSelf(message: MessageData): Future[Boolean]
+  def findQuotesOf(msgId: MessageId): Future[Seq[MessageData]]
   def countUnread(conv: ConvId, lastReadTime: RemoteInstant): Future[UnreadCount]
 }
 
@@ -186,6 +187,8 @@ class MessagesStorageImpl(context: Context,
   override def isQuoteOfSelf(msg: MessageData) =
     if (!msg.quoteValidity) Future.successful(false)
     else msg.quote.fold(Future.successful(false))(quoteId => get(quoteId).map(_.exists(_.userId == userId)))
+
+  override def findQuotesOf(msgId: MessageId): Future[Seq[MessageData]] = storage(MessageDataDao.findQuotesOf(msgId)(_))
 
   def countSentByType(selfUserId: UserId, tpe: Message.Type): Future[Int] = storage(MessageDataDao.countSentByType(selfUserId, tpe)(_).toInt)
 

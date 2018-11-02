@@ -107,6 +107,16 @@ case class MessageData(id:            MessageId              = MessageId(),
     case _ => None
   }
 
+  // used to create a copy of the message quoting the one that had its msgId changed
+  def replaceQuote(quoteId: MessageId): MessageData = {
+    // we assume that the reply is already valid, so we don't have to update the hash (the old one is invalid)
+    val newProtos = protos.lastOption match {
+      case Some(TextMessage(text, ms, ls, Some(q))) => Seq(TextMessage(text, ms, ls, Some(Quote(quoteId, None))))
+      case _ => protos
+    }
+    copy(quote = Some(quoteId), quoteHash = None, protos = newProtos)
+  }
+
   def assetId = AssetId(id.str)
 
   def isLocal = state == Message.Status.DEFAULT || state == Message.Status.PENDING || state == Message.Status.FAILED || state == Message.Status.FAILED_READ
@@ -438,9 +448,10 @@ object MessageData extends
 
     def countSentByType(selfUserId: UserId, tpe: Message.Type)(implicit db: DB) = queryNumEntries(db, table.name, s"${User.name} = '${User(selfUserId)}' AND ${Type.name} = '${Type(tpe)}'")
 
-
     def findByType(conv: ConvId, tpe: Message.Type)(implicit db: DB) =
       iterating(db.query(table.name, null, s"${Conv.name} = '$conv' AND ${Type.name} = '${Type(tpe)}'", null, null, null, s"${Time.name} ASC"))
+
+    def findQuotesOf(msgId: MessageId)(implicit db: DB) = list(db.query(table.name, null, s"${Quote.name} = '$msgId'", null, null, null, null))
 
     def msgIndexCursorFiltered(conv: ConvId, types: Seq[TypeFilter], limit: Option[Int] = None)(implicit db: DB): DBCursor = {
       val builder = new SQLiteQueryBuilder()
