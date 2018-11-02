@@ -172,19 +172,19 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     name <- conversationName
     Some(convId) <- conversationId
     av <- controller.availability(convId)
-  } yield (name, av)).on(Threading.Ui) { case (name, av) =>
+  } yield (name, av)).onUi { case (name, av) =>
     title.setText(name)
     AvailabilityView.displayLeftOfText(title, av, title.getCurrentTextColor, pushDown = true)
   }
 
-  subtitleText.on(Threading.Ui) {
+  subtitleText.onUi {
     case (convId, text) if conversationData.forall(_.id == convId) =>
       setSubtitle(text)
     case _ =>
       verbose("Outdated conversation subtitle")
     }
 
-  badgeInfo.on(Threading.Ui) {
+  badgeInfo.onUi {
     case (convId, status) if conversationData.forall(_.id == convId) =>
       badge.setStatus(status)
     case _ =>
@@ -202,7 +202,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     case _ =>
       verbose("Outdated avatar info")
   }
-  avatarInfo.on(Threading.Ui){
+  avatarInfo.onUi{
     case (convId, convType, members, alpha) if conversationData.forall(_.id == convId) =>
       if (convType == ConversationType.Group && members.size == 1 && conversationData.exists(_.team.nonEmpty)) {
         avatar.setConversationType(ConversationType.OneToOne)
@@ -242,7 +242,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     avatar.setConversationType(conversationData.convType)
     avatar.clearImages()
     avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_active))
-    conversationId.publish(Some(conversationData.id), Threading.Background)
+    conversationId.publish(Some(conversationData.id), Threading.Ui)
     closeImmediate()
   }
 

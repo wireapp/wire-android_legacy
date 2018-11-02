@@ -77,15 +77,9 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
   }
 
   private def resetContent() = {
-    sharableContent.publish(None, dispatcher)
-    targetConvs.publish(Seq.empty, dispatcher)
-    ephemeralExpiration.publish(None, dispatcher)
-  }
-
-  def clearSharingFor(convId: ConvId) = if (convId != null) {
-    targetConvs.currentValue.foreach { convs =>
-      if (convs.contains(convId)) resetContent()
-    }
+    sharableContent     ! None
+    targetConvs         ! Seq.empty
+    ephemeralExpiration ! None
   }
 
   def publishTextContent(text: String): Unit =
