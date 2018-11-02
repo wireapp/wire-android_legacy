@@ -97,7 +97,7 @@ package object model {
 
       def apply(text: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Option[Quote]): GenericMessage = GenericMessage(Uid(), Text(text, mentions, links, quote))
 
-      def apply(msg: MessageData): GenericMessage = GenericMessage(msg.id.uid, msg.ephemeral, Text(msg.contentString, msg.content.flatMap(_.mentions), Nil))
+      def apply(msg: MessageData): GenericMessage = GenericMessage(msg.id.uid, msg.ephemeral, Text(msg.contentString, msg.content.flatMap(_.mentions), Nil, msg.protoQuote))
 
       def unapply(msg: GenericMessage): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview], Option[Quote])] = msg match {
         case GenericMessage(_, Text(content, mentions, links, quote)) =>
