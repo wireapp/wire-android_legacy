@@ -222,14 +222,14 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   private def updateConversations(responses: Seq[ConversationResponse]): Future[(Seq[ConversationData], Seq[ConversationData])] = {
 
     def updateConversationData() = {
-      def findExistingId = convsStorage { convById =>
-        def byRemoteId(id: RConvId) = returning(convById.values.find(_.remoteId == id)) { res => verbose(s"byRemoteId($id) - $res")}
+      def findExistingId = convsStorage { convsById =>
+        def byRemoteId(id: RConvId) = convsById.values.find(_.remoteId == id)
 
         responses.map { resp =>
           val newId = if (isOneToOne(resp.convType)) resp.members.find(_ != selfUserId).fold(ConvId())(m => ConvId(m.str)) else ConvId(resp.id.str)
 
           val matching = byRemoteId(resp.id).orElse {
-            convById.get(newId).orElse {
+            convsById.get(newId).orElse {
               if (isOneToOne(resp.convType)) None
               else byRemoteId(ConversationsService.generateTempConversationId(resp.members + selfUserId))
             }
