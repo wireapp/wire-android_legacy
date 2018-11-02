@@ -140,11 +140,10 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
         } else {
           scrollController.onScrolledInvisible()
         }
-      case RecyclerView.SCROLL_STATE_DRAGGING => {
+      case RecyclerView.SCROLL_STATE_DRAGGING =>
         scrollController.onDragging()
         messagesController.scrolledToBottom ! false
         Option(getContext).map(_.asInstanceOf[Activity]).foreach(a => KeyboardUtils.hideKeyboard(a))
-      }
       case _ =>
     }
   })

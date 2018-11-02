@@ -664,7 +664,9 @@ class ConversationFragment extends FragmentHelper {
 
     override def onCursorClicked(): Unit = cursorView.foreach { cView =>
       listView.foreach { lView =>
-        if (!cView.isEditingMessage && lView.scrollController.targetPosition.isEmpty) lView.scrollToBottom()
+        replyController.replyData.foreach{ data  =>
+          if (!cView.isEditingMessage && lView.scrollController.targetPosition.isEmpty && data.isEmpty) lView.scrollToBottom()
+        }
       }
     }
 
