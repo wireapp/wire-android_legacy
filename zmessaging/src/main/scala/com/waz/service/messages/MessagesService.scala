@@ -134,7 +134,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
           for {
             _         <- edits.insert(EditHistory(msg.id, newMsgId, time))
             (tpe, ct) =  MessageData.messageContent(text, mentions, links, weblinkEnabled = true)
-            edited    =  MessageData(newMsgId, convId, tpe, userId, ct, Seq(gm), time = msg.time, localTime = msg.localTime, editTime = time)
+            edited    =  msg.copy(id = newMsgId, msgType = tpe, content = ct, protos = Seq(gm), editTime = time)
             res       <- updater.addMessage(edited.adjustMentions(false).getOrElse(edited))
             quotesOf  <- storage.findQuotesOf(msg.id)
             _         <- storage.updateAll2(quotesOf.map(_.id), _.replaceQuote(newMsgId))
