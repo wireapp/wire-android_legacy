@@ -18,15 +18,17 @@
 package com.waz.log
 
 import java.io._
-import java.util.Calendar
 
+import com.waz.DebugMode
 import com.waz.ZLog.LogTag
 import com.waz.api.ZmsVersion
-import com.waz.service.ZMessaging
+import com.waz.log.ZLog2.Log
 import com.waz.service.ZMessaging.clock
 
+import scala.Ordered._
 import scala.collection.mutable
 
+//TODO Merge this class with ZLog2 after migration period
 object InternalLog {
   sealed trait LogLevel
   object LogLevel {
@@ -35,12 +37,21 @@ object InternalLog {
     case object Info    extends LogLevel { override def toString = "I" }
     case object Debug   extends LogLevel { override def toString = "D" }
     case object Verbose extends LogLevel { override def toString = "V" }
-  }
 
+    def weight(level: LogLevel): Int = level match {
+      case Verbose => 1
+      case Debug => 2
+      case Info => 3
+      case Warn => 4
+      case Error => 5
+    }
+
+    implicit val ordering: Ordering[LogLevel] = Ordering by weight
+  }
 
   private val outputs = mutable.HashMap[String, LogOutput]()
 
-  def getOutputs = outputs.values.toList
+  def getOutputs: List[LogOutput] = outputs.values.toList
 
   def reset(): Unit = this.synchronized {
     outputs.values.foreach( _.close() )
@@ -49,9 +60,9 @@ object InternalLog {
 
   def flush(): Unit = outputs.values.foreach( _.flush() )
 
-  def apply(id: String) = outputs.get(id)
+  def apply(id: String): Option[LogOutput] = outputs.get(id)
 
-  def add(output: LogOutput) = this.synchronized {
+  def add(output: LogOutput): LogOutput = this.synchronized {
     outputs.getOrElseUpdate(output.id, output)
   }
 
@@ -60,7 +71,7 @@ object InternalLog {
     case _ =>
   } }
 
-  def init(basePath: String) =
+  def init(basePath: String): LogOutput =
     if (ZmsVersion.DEBUG) {
       add(new AndroidLogOutput)
       add(new BufferedLogOutput(basePath))
@@ -77,7 +88,7 @@ object InternalLog {
   def debug(msg: String, tag: LogTag): Unit                   = log(msg, Debug, tag)
   def verbose(msg: String, tag: LogTag): Unit                 = log(msg, Verbose, tag)
 
-  def stackTrace(cause: Throwable) = Option(cause) match {
+  def stackTrace(cause: Throwable): LogTag = Option(cause) match {
     case Some(c) => val result = new StringWriter()
                     c.printStackTrace(new PrintWriter(result))
                     result.toString
@@ -96,6 +107,27 @@ object InternalLog {
     else if (n < 100) "0" + n.toString
     else n.toString
 
-  private def log(msg: String, level: LogLevel, tag: LogTag): Unit = outputs.values.foreach { _.log(msg, level, tag) }
-  private def log(msg: String, cause: Throwable, level: LogLevel, tag: LogTag): Unit = outputs.values.foreach { _.log(msg, cause, level, tag) }
+  private def log(msg: String, level: LogLevel, tag: LogTag): Unit =
+    outputs.values.foreach { _.log(msg, level, tag) }
+
+  private def log(msg: String, cause: Throwable, level: LogLevel, tag: LogTag): Unit =
+    outputs.values.foreach { _.log(msg, cause, level, tag) }
+
+  def log(log: Log, level: LogLevel, tag: LogTag): Unit =
+    writeLog(log, level, out => out.log(_, level, tag))
+
+  def log(log: Log, cause: Throwable, level: LogLevel, tag: LogTag): Unit =
+    writeLog(log, level, out => out.log(_, cause, level, tag))
+
+  private def writeLog(log: Log, level: LogLevel, logMsgConsumerCreator: LogOutput => String => Unit): Unit = {
+    val targetOutputs = outputs.values.filter(_.level <= level)
+    if (targetOutputs.nonEmpty) {
+      val logMessage =
+        if (DebugMode.isEnabled) log.buildMessageUnsafe
+        else log.buildMessageSafe
+
+      targetOutputs.foreach(output => logMsgConsumerCreator(output)(logMessage))
+    }
+  }
+
 }

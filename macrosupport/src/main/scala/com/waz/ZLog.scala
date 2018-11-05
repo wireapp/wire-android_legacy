@@ -19,7 +19,6 @@ package com.waz
 
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox.Context
-
 import scala.annotation.tailrec
 
 object ZLog {
@@ -32,13 +31,21 @@ object ZLog {
     implicit def implicitLogTag: LogTag = macro ZLogMacros.enclosingLogTag
   }
 
+  @deprecated("Use methods from ZLog2 instead", "zmessaging 133")
   def error(message: String, cause: Throwable)(implicit tag: LogTag): Unit = macro ZLogMacros.errorWithCause
+  @deprecated("Use methods from ZLog2 instead", "zmessaging 133")
   def error(message: String)(implicit tag: LogTag): Unit = macro ZLogMacros.error
+  @deprecated("Use methods from ZLog2 instead", "zmessaging 133")
   def warn(message: String, cause: Throwable)(implicit tag: LogTag): Unit = macro ZLogMacros.warnWithCause
+  @deprecated("Use methods from ZLog2 instead", "zmessaging 133")
   def warn(message: String)(implicit tag: LogTag): Unit = macro ZLogMacros.warn
+  @deprecated("Use methods from ZLog2 instead", "zmessaging 133")
   def info(message: String)(implicit tag: LogTag): Unit = macro ZLogMacros.info
+  @deprecated("Use methods from ZLog2 instead", "zmessaging 133")
   def debug(message: String)(implicit tag: LogTag): Unit = macro ZLogMacros.debug
+  @deprecated("Use methods from ZLog2 instead", "zmessaging 133")
   def verbose(message: String)(implicit tag: LogTag): Unit = macro ZLogMacros.verbose
+
   def logTime[A](message: String)(body: A)(implicit tag: LogTag): A = macro ZLogMacros.logTime[A]
 }
 
