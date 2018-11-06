@@ -170,7 +170,8 @@ class MessagesStorageImpl(context: Context,
     }.future.flatMap { msgs =>
       msgs.acquire { msgs =>
         val unread = msgs.filter { m => !m.isLocal && m.convId == conv && m.time.isAfter(lastReadTime) && !m.isDeleted && m.userId != userId && m.msgType != Message.Type.UNKNOWN }.toVector
-        Future.sequence(unread.map(isQuoteButNotMention)).map(_.count(q => q)).map(unreadQuotes =>
+        Future.sequence(unread.map(isQuoteButNotMention)).map(_.count(q => q)).map { unreadQuotes =>
+          verbose(s"unread: ${unread.size}, unread quotes: $unreadQuotes")
           UnreadCount(
             unread.count(m => !m.isSystemMessage && m.msgType != Message.Type.KNOCK && !m.hasMentionOf(userId)) - unreadQuotes,
             unread.count(_.msgType == Message.Type.MISSED_CALL),
@@ -178,15 +179,14 @@ class MessagesStorageImpl(context: Context,
             unread.count(_.hasMentionOf(userId)),
             unreadQuotes
           )
-        )
+        }
       }
     }
 
   }
 
   override def isQuoteOfSelf(msg: MessageData) =
-    if (!msg.quoteValidity) Future.successful(false)
-    else msg.quote.fold(Future.successful(false))(quoteId => get(quoteId).map(_.exists(_.userId == userId)))
+    msg.quote.fold(Future.successful(false))(quoteId => get(quoteId).map(_.exists(_.userId == userId)))
 
   override def findQuotesOf(msgId: MessageId): Future[Seq[MessageData]] = storage(MessageDataDao.findQuotesOf(msgId)(_))
 

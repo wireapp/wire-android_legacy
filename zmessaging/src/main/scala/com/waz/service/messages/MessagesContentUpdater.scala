@@ -133,7 +133,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
     }
 
   private[service] def addMessages(convId: ConvId, msgs: Seq[MessageData]): Future[Set[MessageData]] = {
-    verbose(s"addMessages: ${msgs.map(_.id)}")
+    verbose(s"addMessages: ${msgs.map(m => (m.id, m.msgType, m.mentions, m.quote, m.quoteValidity))}")
 
     for {
       toAdd <- skipPreviouslyDeleted(msgs)
@@ -188,7 +188,16 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
         msg.copy(id = m.id, localTime = m.localTime)
 
       def mergeMatching(prev: MessageData, msg: MessageData) = {
-        val u = prev.copy(msgType = if (msg.msgType != Message.Type.UNKNOWN) msg.msgType else prev.msgType , time = if (msg.time.isBefore(prev.time) || prev.isLocal) msg.time else prev.time, protos = prev.protos ++ msg.protos, content = msg.content)
+        verbose(s"mergeMathing, prev: $prev, with new $msg")
+        val u = prev.copy(
+          msgType       = if (msg.msgType != Message.Type.UNKNOWN) msg.msgType else prev.msgType ,
+          time          = if (msg.time.isBefore(prev.time) || prev.isLocal) msg.time else prev.time,
+          protos        = prev.protos ++ msg.protos,
+          content       = msg.content,
+          quote         = msg.quote,
+          quoteValidity = msg.quoteValidity,
+          quoteHash     = msg.quoteHash
+        )
         prev.msgType match {
           case Message.Type.RECALLED => prev // ignore updates to already recalled message
           case _ => u

@@ -17,6 +17,9 @@
  */
 package com.waz
 
+import java.nio.ByteBuffer
+import java.nio.charset.Charset
+
 import com.google.protobuf.nano.{CodedInputByteBufferNano, MessageNano}
 import com.waz.model.nano.Messages
 import com.waz.utils.crypto.AESUtils
@@ -141,4 +144,19 @@ package object model {
       override def apply(in: CodedInputByteBufferNano): GenericMessage = Messages.GenericMessage.parseFrom(in)
     }
   }
+
+  val UTF_16_CHARSET  = Charset.forName("UTF-16")
+
+  def encode(text: String) = {
+    val bytes = UTF_16_CHARSET.encode(text).array
+
+    if (bytes.length < 3 || bytes.slice(2, bytes.length).forall(_ == 0))
+      Array.empty[Byte]
+    else if (bytes(2) == 0)
+      bytes.slice(2, bytes.lastIndexWhere(_ > 0) + 1)
+    else
+      Array[Byte](0) ++ bytes.slice(2, bytes.lastIndexWhere(_ > 0) + 1)
+  }
+
+  def decode(array: Array[Byte]) = UTF_16_CHARSET.decode(ByteBuffer.wrap(array)).toString
 }

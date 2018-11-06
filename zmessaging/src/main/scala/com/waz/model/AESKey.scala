@@ -50,6 +50,7 @@ case class Sha256(str: String) {
 
   def hexString = String.format("%02X", new BigInteger(1, AESUtils.base64(str))).toLowerCase
 }
+
 object Sha256 {
   val Empty = Sha256("")
 

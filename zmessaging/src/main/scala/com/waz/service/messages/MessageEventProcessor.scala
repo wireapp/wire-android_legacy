@@ -60,13 +60,18 @@ class MessageEventProcessor(selfUserId:          UserId,
     }
   }
 
-  private def checkReplyHashes(m: MessageData): Future[MessageData] = {
-    if(m.quote.isDefined) {
-      storage.getMessage(m.quote.get).flatMap {
-        case Some(original) => replyHashing.hashMessage(original).map(hash => m.copy(quoteValidity = hash == m.quoteHash.get))
-        case None => Future.successful(m)
-      }
-    } else Future.successful(m)
+  private def checkReplyHashes(m: MessageData): Future[MessageData] = m.quote.fold(Future.successful(m)) { quoteId =>
+    storage.getMessage(quoteId).flatMap {
+      case Some(original) =>
+        replyHashing.hashMessage(original).map { hash =>
+          verbose(s"checkReplyHashes for ${(m.id, m.contentString, m.quote, m.quoteValidity, m.quoteHash.map(_.hexString))}")
+          val newValidity = m.quoteHash.contains(hash)
+          verbose(s"calculated hash is ${hash.hexString}, the new quote validity is $newValidity")
+          if (m.quoteValidity != newValidity) m.copy(quoteValidity = newValidity) else m
+        }
+      case None =>
+        Future.successful(m)
+    }
   }
 
   private[service] def processEvents(conv: ConversationData, events: Seq[MessageEvent]): Future[Set[MessageData]] = {
@@ -87,7 +92,7 @@ class MessageEventProcessor(selfUserId:          UserId,
     for {
       as    <- updateAssets(toProcess)
       msgs  <- Future.sequence(toProcess map { createMessage(conv, _) } filter (_ != MessageData.Empty) map checkReplyHashes)
-      _     = verbose(s"messages from events: ${msgs.map(m => m.id -> m.msgType)}")
+      _     = verbose(s"messages from events: ${msgs.map(m => (m.id, m.msgType, m.mentions, m.quote, m.quoteValidity))}")
       _     <- convsService.addUnexpectedMembersToConv(conv.id, potentiallyUnexpectedMembers)
       res   <- content.addMessages(conv.id, msgs)
       _     <- updateLastReadFromOwnMessages(conv.id, msgs)
@@ -177,6 +182,7 @@ class MessageEventProcessor(selfUserId:          UserId,
       case Text(text, mentions, links, quote) =>
         val (tpe, content) = MessageData.messageContent(text, mentions, links)
         verbose(s"MessageData content: $content")
+        verbose(s"MessageData hash: ${quote.map(q => (q.quotedMessageId, Sha256(q.quotedMessageSha256).hexString))}")
         val messageData = MessageData(id, conv.id, tpe, from, content, time = time, localTime = event.localTime, protos = Seq(proto),
           quote = quote.map(q => MessageId(q.quotedMessageId)), quoteHash = quote.map(q => Sha256(q.quotedMessageSha256)))
         messageData.adjustMentions(false).getOrElse(messageData)
