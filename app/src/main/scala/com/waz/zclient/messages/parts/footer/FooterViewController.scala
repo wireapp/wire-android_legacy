@@ -22,7 +22,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
 import com.waz.api.Message.Status
 import com.waz.model.{LocalInstant, MessageData}
-import com.waz.service.ZMessaging
+import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.service.messages.{MessageAndLikes, MessagesService}
 import com.waz.threading.CancellableFuture
 import com.waz.utils._
@@ -108,11 +108,12 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
     isGroup     <- conversationController.groupConversation(convId)
     msg         <- message
     timeout     <- ephemeralTimeout
+    isOffline   <- inject[NetworkModeService].isOnline.map(!_)
   } yield {
     val timestamp = ZTimeFormatter.getSingleMessageTime(context, DateTimeUtils.toDate(msg.time.instant))
     timeout match {
       case Some(t)                          => ephemeralTimeoutString(timestamp, t)
-      case None if selfUserId == msg.userId => statusString(timestamp, msg, isGroup)
+      case None if selfUserId == msg.userId => statusString(timestamp, msg, isGroup, isOffline)
       case None                             => timestamp
     }
   }
@@ -135,8 +136,9 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
 
   def onLikeClicked() = messageAndLikes.head.map { likesController.onLikeButtonClicked ! _ }
 
-  private def statusString(timestamp: String, m: MessageData, isGroup: Boolean) =
+  private def statusString(timestamp: String, m: MessageData, isGroup: Boolean, isOffline: Boolean) =
     m.state match {
+      case Status.PENDING if isOffline => getString(R.string.message_footer__status__waiting_for_connection)
       case Status.PENDING              => getString(R.string.message_footer__status__sending)
       case Status.SENT                 => getString(R.string.message_footer__status__sent, timestamp)
       case Status.DELIVERED if isGroup => getString(R.string.message_footer__status__sent, timestamp)

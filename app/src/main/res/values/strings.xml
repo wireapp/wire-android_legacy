@@ -903,6 +903,7 @@
         <item quantity="other">%1$d people</item>
     </plurals>
     <string name="message_footer__status__sending">Sending…</string>
+    <string name="message_footer__status__waiting_for_connection">Waiting for connection…</string>
     <string name="message_footer__status__sent">%1$s \u30FB Sent</string>
     <string name="message_footer__status__delivered">%1$s \u30FB Delivered</string>
     <string name="message_footer__status__failed">Sending failed. _Resend_</string>

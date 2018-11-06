@@ -119,7 +119,7 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
   likeButton.init(controller)
   likeDetails.init(controller)
 
-  controller.timestampText.zip(controller.linkColor).on(Threading.Ui) { case (string, color) =>
+  controller.timestampText.zip(controller.linkColor).onUi { case (string, color) =>
     timeStampAndStatus.setText(string)
     if (string.contains('_')) {
       TextViewUtils.linkifyText(timeStampAndStatus, color, false, controller.linkCallback)
@@ -128,7 +128,7 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
 
   private var lastShow = false
   private var lastMsgId = MessageId()
-  controller.showTimestamp.on(Threading.Ui) { st =>
+  controller.showTimestamp.onUi { st =>
     switchAnim.cancel()
 
     val msgId = message.currentValue.fold(lastMsgId)(_.id)
@@ -146,7 +146,7 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
     lastMsgId = msgId
   }
 
-  controller.expiring.on(Threading.Ui)(likeButton.setGone)
+  controller.expiring.onUi(likeButton.setGone)
 
   override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {
     super.onLayout(changed, left, top, right, bottom)
