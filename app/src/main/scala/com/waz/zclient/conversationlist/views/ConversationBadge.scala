@@ -146,6 +146,7 @@ class ConversationBadgeStyleKitView(context: Context, attrs: AttributeSet, style
   def setStatus(status: Status): Unit = {
     status match {
       case Mention => setOnDraw(WireStyleKit.drawMentions)
+      case Quote   => setOnDraw(WireStyleKit.drawReply)
       case _ =>
     }
   }
