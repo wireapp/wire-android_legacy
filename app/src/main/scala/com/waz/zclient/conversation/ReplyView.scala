@@ -99,7 +99,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
     image.setVisibility(View.VISIBLE)
     contentText.setText(R.string.reply_message_type_video)
     setBoldContent()
-    setStartIcon(Some(WireStyleKit.drawCamera))
+    setStartIcon(Some(WireStyleKit.drawVideocall))
     val imageDrawable = new RoundedImageAssetDrawable(Signal.const(WireImage(assetId)), scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single, cornerRadius = 10)
     image.setImageDrawable(imageDrawable)
   }
