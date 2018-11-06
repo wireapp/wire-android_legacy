@@ -99,7 +99,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
     image.setVisibility(View.VISIBLE)
     contentText.setText(R.string.reply_message_type_video)
     setBoldContent()
-    setStartIcon(Some(WireStyleKit.drawVideoMessage))
+    setStartIcon(Some(WireStyleKit.drawCamera))
     val imageDrawable = new RoundedImageAssetDrawable(Signal.const(WireImage(assetId)), scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single, cornerRadius = 10)
     image.setImageDrawable(imageDrawable)
   }
@@ -120,7 +120,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
 
   private def setAsset(fileDescription: String): Unit = {
     image.setVisibility(View.GONE)
-    setStartIcon(Some(WireStyleKit.drawAttachement))
+    setStartIcon(Some(WireStyleKit.drawFile))
     contentText.setText(fileDescription)
     setBoldContent()
   }

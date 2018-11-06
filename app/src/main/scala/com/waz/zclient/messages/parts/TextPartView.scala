@@ -150,18 +150,15 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
       setText(replaced)
 
       val updatedMentions = TextPartView.updateMentions(textView.getText.toString, mentionHolders, offset)
-      textView.setText(TextPartView.restoreMentionHandles(textView.getText.toString, mentionHolders))
 
-      textView.getText match {
-        case spannable: Spannable =>
-          addMentionSpans(
-            spannable,
-            updatedMentions,
-            opts.flatMap(_.selfId),
-            accentColorController.accentColor.map(_.color).currentValue.getOrElse(Color.BLUE)
-          )
-        case _ =>
-      }
+      val spannable = TextPartView.restoreMentionHandles(textView.getText, mentionHolders)
+      addMentionSpans(
+        spannable,
+        updatedMentions,
+        opts.flatMap(_.selfId),
+        accentColorController.accentColor.map(_.color).currentValue.getOrElse(Color.BLUE)
+      )
+      textView.setText(spannable)
     }
 
     textView.setTextLink()
@@ -209,7 +206,7 @@ object TextPartView {
       case ((oldText, acc), _) => (oldText, acc) // when Markdown deletes the mention
     }._2
 
-  def restoreMentionHandles(text: String, mentionHolders: Seq[MentionHolder]): Spannable = {
+  def restoreMentionHandles(text: CharSequence, mentionHolders: Seq[MentionHolder]): Spannable = {
     val ssb = SpannableStringBuilder.valueOf(text)
 
     mentionHolders.foldLeft(text.toString) {

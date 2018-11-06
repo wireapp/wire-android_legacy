@@ -19,7 +19,6 @@ package com.waz.zclient.messages.parts
 
 import android.content.Context
 import android.graphics.Typeface
-import android.text.Spannable
 import android.text.format.DateFormat
 import android.util.{AttributeSet, TypedValue}
 import android.view.{View, ViewGroup}
@@ -130,7 +129,7 @@ class TextReplyPartView(context: Context, attrs: AttributeSet, style: Int) exten
     val mentions = message.content.flatMap(_.mentions)
 
     if (mentions.isEmpty) {
-      textView.setText(text)
+      textView.setTransformedText(text)
       textView.markdownQuotes()
     } else {
       val (replaced, mentionHolders) = TextPartView.replaceMentions(text, mentions, offset)
@@ -140,21 +139,15 @@ class TextReplyPartView(context: Context, attrs: AttributeSet, style: Int) exten
 
       val updatedMentions = TextPartView.updateMentions(textView.getText.toString, mentionHolders, offset)
 
-      textView.setText(TextPartView.restoreMentionHandles(textView.getText.toString, mentionHolders))
-
-      textView.getText match {
-        case spannable: Spannable =>
-          addMentionSpans(
-            spannable,
-            updatedMentions,
-            None,
-            getStyledColor(R.attr.wirePrimaryTextColor)
-          )
-        case _ =>
-      }
+      val spannable = TextPartView.restoreMentionHandles(textView.getText, mentionHolders)
+      addMentionSpans(
+        spannable,
+        updatedMentions,
+        None,
+        getStyledColor(R.attr.wirePrimaryTextColor)
+      )
+      textView.setText(spannable)
     }
-    textView.setIncludeFontPadding(false)
-
   }
 
 }
