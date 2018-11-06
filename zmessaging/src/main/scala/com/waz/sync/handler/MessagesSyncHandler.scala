@@ -29,7 +29,6 @@ import com.waz.model.GenericContent.{Ephemeral, Knock, Location, MsgEdit}
 import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
 import com.waz.model.sync.ReceiptType
-import com.waz.service.NetworkModeService.isOfflineMode
 import com.waz.service._
 import com.waz.service.assets._
 import com.waz.service.conversation.ConversationsContentUpdater
@@ -46,7 +45,7 @@ import com.waz.znet2.http.ResponseCode
 
 import scala.concurrent.Future
 import scala.concurrent.Future.successful
-import scala.concurrent.duration.{FiniteDuration, _}
+import scala.concurrent.duration.FiniteDuration
 
 class MessagesSyncHandler(selfUserId: UserId,
                           service:    MessagesService,
@@ -59,7 +58,6 @@ class MessagesSyncHandler(selfUserId: UserId,
                           sync:       SyncServiceHandle,
                           assets:     AssetService,
                           errors:     ErrorsService) {
-  import MessagesSyncHandler._
   import com.waz.threading.Threading.Implicits.Background
 
   def postDeleted(convId: ConvId, msgId: MessageId): Future[SyncResult] =
@@ -132,11 +130,10 @@ class MessagesSyncHandler(selfUserId: UserId,
                   Future.successful({})
               }
               result <- SyncResult(error) match {
-                case _: SyncResult.Failure |
-                     _: SyncResult.Retry if MessageTimeout.elapsedSince(info.requestStart) || info.network.exists(isOfflineMode) =>
+                case r: SyncResult.Failure =>
                   service
                     .messageDeliveryFailed(convId, msg, error)
-                    .map(_ => Failure(error))
+                    .map(_ => r)
                 case r =>
                   Future.successful(r)
               }
@@ -304,8 +301,4 @@ class MessagesSyncHandler(selfUserId: UserId,
       result <- conv.flatMapFuture(c => asset.flatMapFuture(a => post(c, a)))
     } yield SyncResult(result)
   }
-}
-
-object MessagesSyncHandler {
-  val MessageTimeout = 30.seconds
 }
