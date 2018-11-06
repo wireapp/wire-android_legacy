@@ -31,8 +31,6 @@ import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleTyp
 import com.waz.zclient.common.views.ImageController.WireImage
 import com.waz.zclient.common.views.RoundedImageAssetDrawable
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
-import com.waz.zclient.messages.UsersController.DisplayName
-import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.paintcode.WireStyleKit
 import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
 import com.waz.zclient.ui.text.LinkTextView
@@ -61,11 +59,6 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
   container.setBackground(new ReplyBackgroundDrawable(getStyledColor(R.attr.replyBorderColor), getStyledColor(R.attr.wireBackgroundColor)))
 
   def setOnClose(onClose: => Unit): Unit = this.onClose = () => onClose
-
-  def setMessage(messageData: MessageData, assetData: Option[AssetData], senderName: DisplayName): Unit = senderName match {
-    case Other(userName) => setMessage(messageData, assetData, userName)
-    case Me =>              setMessage(messageData, assetData, getString(R.string.reply_self_name))
-  }
 
   def setMessage(messageData: MessageData, assetData: Option[AssetData], senderName: String): Unit = {
     setSender(senderName, !messageData.editTime.isEpoch)

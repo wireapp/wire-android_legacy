@@ -202,12 +202,12 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
     }
     else if (TextUtils.isEmpty(msg.trim)) false
     else {
-      replyController.replyData.map(_.map(_._1)).head.foreach { quote =>
+      replyController.currentReplyContent.head.map(_.map(_.message.id)).foreach { quote =>
         conversationController.sendMessage(msg, mentions, quote).foreach { m =>
           m.foreach { msg =>
             onMessageSent ! msg
             cursorCallback.foreach(_.onMessageSent(msg))
-            replyController.clearMessage()
+            replyController.clearMessage(msg.convId)
           }
         }
       }

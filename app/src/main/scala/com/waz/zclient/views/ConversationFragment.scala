@@ -269,7 +269,7 @@ class ConversationFragment extends FragmentHelper {
 
     keyboardController.isKeyboardVisible.onUi(visible => if(visible) collapseGuestsBanner())
 
-    replyController.replyData.map(_.isEmpty)
+    replyController.currentReplyContent.map(_.isEmpty)
       .onUi(visible => cursorView.foreach(_.topBorder.setVisible(visible)))
   }
 
@@ -342,7 +342,7 @@ class ConversationFragment extends FragmentHelper {
     toolbarTitle = ViewUtils.getView(toolbar, R.id.tv__conversation_toolbar__title).asInstanceOf[TextView]
 
     replyView.foreach {
-      _.setOnClose(replyController.clearMessage())
+      _.setOnClose(replyController.clearMessageInCurrentConversation())
     }
   }
 
@@ -420,7 +420,7 @@ class ConversationFragment extends FragmentHelper {
 
       subs += mentionsListShouldShow.onUi(showMentionsList)
 
-      subs += mentionsListShouldShow.zip(replyController.replyContent).onUi {
+      subs += mentionsListShouldShow.zip(replyController.currentReplyContent).onUi {
         case (false, Some(ReplyContent(messageData, asset, senderName))) =>
           replyView.foreach { rv =>
             rv.setMessage(messageData, asset, senderName)
@@ -664,7 +664,7 @@ class ConversationFragment extends FragmentHelper {
 
     override def onCursorClicked(): Unit = cursorView.foreach { cView =>
       listView.foreach { lView =>
-        replyController.replyData.foreach{ data  =>
+        replyController.currentReplyContent.foreach{ data  =>
           if (!cView.isEditingMessage && lView.scrollController.targetPosition.isEmpty && data.isEmpty) lView.scrollToBottom()
         }
       }

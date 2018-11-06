@@ -26,10 +26,11 @@
 
     <ImageButton
         android:id="@+id/reply_close"
-        android:layout_width="16dp"
-        android:layout_height="16dp"
+        android:layout_width="@dimen/cursor__menu_button__diameter"
+        android:layout_height="@dimen/cursor__menu_button__diameter"
+        android:padding="@dimen/wire__padding__6"
         android:layout_marginTop="@dimen/wire__padding__regular"
-        android:layout_marginStart="@dimen/wire__padding__regular"
+        android:layout_marginStart="@dimen/wire__padding__18"
         android:src="?actionModeCloseDrawable"
         android:background="@drawable/selector__transparent_button"/>
 

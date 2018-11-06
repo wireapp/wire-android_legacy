@@ -21,34 +21,36 @@ import android.content.Context
 import com.waz.model.{AssetData, ConvId, MessageData, MessageId}
 import com.waz.utils.events.{EventContext, Signal, SourceSignal}
 import com.waz.zclient.common.controllers.AssetsController
-import com.waz.zclient.messages.UsersController.DisplayName
 import com.waz.zclient.messages.{MessagesController, UsersController}
 import com.waz.zclient.{Injectable, Injector}
+import com.waz.ZLog.ImplicitTag.implicitLogTag
+import scala.concurrent.Future
 
 class ReplyController(implicit injector: Injector, context: Context, ec: EventContext) extends Injectable {
+
+  import com.waz.threading.Threading.Implicits.Background
 
   private val conversationController = inject[ConversationController]
   private val messagesController = inject[MessagesController]
   private val usersController = inject[UsersController]
   private val assetsController = inject[AssetsController]
 
-  val replyData: SourceSignal[Option[(MessageId, ConvId)]] = Signal(None)
+  val replyData: SourceSignal[Map[ConvId, MessageId]] = Signal(Map())
 
-  val replyContent: Signal[Option[ReplyContent]] = (for {
-    Some((msgId, _)) <- replyData
+  def replyContent(convId: ConvId): Signal[Option[ReplyContent]] = (for {
+    Some(msgId) <- replyData.map(_.get(convId))
     Some(msg) <- messagesController.getMessage(msgId)
-    sender <- usersController.displayName(msg.userId)
+    sender <- usersController.displayNameStringIncludingSelf(msg.userId)
     asset <- assetsController.assetSignal(msg.assetId).map(a => Option(a._1)).orElse(Signal.const(Option.empty[AssetData]))
   } yield Option(ReplyContent(msg, asset, sender))).orElse(Signal.const(None))
 
-  conversationController.currentConvId.zip(replyData) {
-    case (currentConv, Some((_, replyConv))) if currentConv != replyConv =>
-      replyData ! None
-    case _ =>
-  }
+  val currentReplyContent: Signal[Option[ReplyContent]] = conversationController.currentConvId.flatMap(replyContent)
 
-  def replyToMessage(msg: MessageId, convId: ConvId): Unit = replyData ! Some((msg, convId))
-  def clearMessage(): Unit = replyData ! None
+  def replyToMessage(msg: MessageId, convId: ConvId): Boolean = replyData.mutate { _ + (convId -> msg) }
+  def clearMessage(convId: ConvId): Boolean = replyData.mutate { _ - convId }
+
+  def replyInCurrentConversation(msg: MessageId): Future[Boolean] = conversationController.currentConvId.head.map(replyToMessage(msg, _))
+  def clearMessageInCurrentConversation(): Future[Boolean] = conversationController.currentConvId.head.map(clearMessage)
 }
 
-case class ReplyContent(message: MessageData, asset: Option[AssetData], sender: DisplayName)
+case class ReplyContent(message: MessageData, asset: Option[AssetData], sender: String)
