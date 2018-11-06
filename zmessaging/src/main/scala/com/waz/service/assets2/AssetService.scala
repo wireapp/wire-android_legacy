@@ -21,7 +21,7 @@ import java.io.InputStream
 import java.net.URI
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.{debug, verbose}
+import com.waz.ZLog._
 import com.waz.cache2.CacheService
 import com.waz.model.errors._
 import com.waz.model.{AssetId, Mime}

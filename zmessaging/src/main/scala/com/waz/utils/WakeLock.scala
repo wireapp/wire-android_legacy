@@ -19,7 +19,8 @@ package com.waz.utils
 
 import android.content.Context
 import android.os.PowerManager
-import com.waz.ZLog.{LogTag, verbose}
+import com.waz.ZLog.LogTag
+import com.waz.log.ZLog2._
 import com.waz.threading.CancellableFuture
 import com.waz.threading.Threading.Implicits.Background
 
@@ -38,12 +39,12 @@ class WakeLockImpl(context: Context, level: Int = PowerManager.PARTIAL_WAKE_LOCK
   protected lazy val wakeLock = powerManager.newWakeLock(level, tag)
 
   protected def acquire()(implicit srcTag: LogTag): Unit = {
-    verbose(s"acquiring wakelock, src: $srcTag")(tag)
+    verbose(l"acquiring wakelock, src: ${wrapString(srcTag)}")(tag)
     wakeLock.acquire()
   }
 
   protected def release()(implicit srcTag: LogTag): Unit = {
-    verbose(s"releasing wakelock, src: $srcTag")(tag)
+    verbose(l"releasing wakelock, src: ${wrapString(srcTag)}")(tag)
     wakeLock.release()
   }
 

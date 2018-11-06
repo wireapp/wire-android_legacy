@@ -21,26 +21,64 @@ import com.waz.ZLog.LogTag
 import com.waz.log.InternalLog.LogLevel.{Debug, Error, Info, Verbose, Warn}
 
 import scala.annotation.tailrec
+import scala.reflect.ClassTag
 
 object ZLog2 {
 
-  trait LogShow[T] {
+  trait LogShow[-T] {
     def showSafe(value: T): String
     def showUnsafe(value: T): String = showSafe(value)
   }
 
   object LogShow {
+    import shapeless._
+    import shapeless.ops.record.ToMap
+
     def apply[T: LogShow]: LogShow[T] = implicitly[LogShow[T]]
     def create[T](safe: T => String): LogShow[T] = new LogShow[T] {
       override def showSafe(value: T): String = safe(value)
     }
+
+    //maybe we need to tune it
+    def create[T, H <: HList](hideFields: Set[String] = Set.empty, inlineFields: Set[String] = Set.empty, padding: Int = 2)
+                             (implicit ct: ClassTag[T], lg: LabelledGeneric.Aux[T, H], tm: ToMap[H]): LogShow[T] =
+      new LogShow[T] {
+        override def showSafe(value: T): String = {
+          val record = tm.apply(lg.to(value)).collect {
+            case (k: Symbol, v) if !hideFields.contains(k.name) => k.name -> v
+          }
+
+          val (inlined, normal) = record.partition(t => inlineFields.contains(t._1))
+          val builder = new StringBuilder(s"\n${ct.runtimeClass.getSimpleName}:\n")
+          val paddingStr = String.valueOf(Array.fill(padding)(' '))
+
+          val padTo = if (normal.isEmpty) 0 else normal.keySet.maxBy(_.length).length
+
+          normal.foreach { case (fieldName, fieldValue) =>
+            builder.append(paddingStr).append(String.format("%1$-" + (padTo + 1) + "s", fieldName + ":")).append(s" $fieldValue").append("\n")
+          }
+
+          if (inlined.nonEmpty) {
+            builder.append(paddingStr).append("OTHER FIELDS: ")
+            inlined.foreach { case (fieldName, fieldValue) =>
+                builder.append(fieldName).append(" = ").append(fieldValue.toString).append(" | ")
+            }
+          }
+
+          builder.toString()
+        }
+      }
 
     implicit val ByteLogShow: LogShow[Byte] = create(_.toString)
     implicit val ShortLogShow: LogShow[Short] = create(_.toString)
     implicit val IntLogShow: LogShow[Int] = create(_.toString)
     implicit val LongLogShow: LogShow[Long] = create(_.toString)
 
+    implicit val FloatLogShow: LogShow[Float] = create(_.toString)
+    implicit val DoubleLogShow: LogShow[Double] = create(_.toString)
+
     implicit val ThrowableShow: LogShow[Throwable] = create(_.toString)
+    implicit val WrappedStringLogShow: LogShow[WrappedString] = create(_.value)
   }
 
   trait CanBeShown {
@@ -77,5 +115,10 @@ object ZLog2 {
   def info(log: Log)(implicit tag: LogTag): Unit                    = InternalLog.log(log, Info, tag)
   def debug(log: Log)(implicit tag: LogTag): Unit                   = InternalLog.log(log, Debug, tag)
   def verbose(log: Log)(implicit tag: LogTag): Unit                 = InternalLog.log(log, Verbose, tag)
+
+  class WrappedString(val value: String) extends AnyVal
+
+  @deprecated("Only for legacy support. Will be removed after migration", " ")
+  def wrapString(str: String): WrappedString = new WrappedString(str)
 
 }

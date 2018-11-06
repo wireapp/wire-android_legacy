@@ -17,11 +17,11 @@
  */
 package com.waz.znet2
 
-import com.waz.sync.client.{AuthenticationManager, AuthenticationManager2}
+import com.waz.sync.client.{ AuthenticationManager, AuthenticationManager2 }
 import com.waz.threading.CancellableFuture
 import com.waz.znet2.http.HttpClient.ProgressCallback
 import com.waz.znet2.http._
-import com.waz.ZLog.verbose
+import com.waz.log.ZLog2._
 import com.waz.ZLog.ImplicitTag._
 
 class AuthRequestInterceptor(authManager: AuthenticationManager, httpClient: HttpClient, attеmptsIfAuthFailed: Int = 1)
@@ -41,9 +41,9 @@ class AuthRequestInterceptor(authManager: AuthenticationManager, httpClient: Htt
       uploadCallback: Option[ProgressCallback],
       downloadCallback: Option[ProgressCallback],
       response: Response[Body]
-  ): CancellableFuture[Response[Body]] = {
+  ): CancellableFuture[Response[Body]] =
     if (response.code == ResponseCode.Unauthorized && attеmptsIfAuthFailed > 0) {
-      verbose(s"Got 'Unauthorized' error. Retrying... Attempts left: ${attеmptsIfAuthFailed - 1}")
+      verbose(l"Got 'Unauthorized' error. Retrying... Attempts left: ${attеmptsIfAuthFailed - 1}")
       CancellableFuture.lift(authManager.invalidateToken()).flatMap { _ =>
         httpClient.execute(
           request.copy(interceptor = new AuthRequestInterceptor(authManager, httpClient, attеmptsIfAuthFailed - 1)),
@@ -52,12 +52,13 @@ class AuthRequestInterceptor(authManager: AuthenticationManager, httpClient: Htt
         )
       }
     } else CancellableFuture.successful(response)
-  }
 
 }
 
-class AuthRequestInterceptor2(authManager: AuthenticationManager2, httpClient: HttpClient, attеmptsIfAuthFailed: Int = 1)
-  extends RequestInterceptor {
+class AuthRequestInterceptor2(authManager: AuthenticationManager2,
+                              httpClient: HttpClient,
+                              attеmptsIfAuthFailed: Int = 1)
+    extends RequestInterceptor {
   import com.waz.threading.Threading.Implicits.Background
 
   override def intercept(request: Request[Body]): CancellableFuture[Request[Body]] =
@@ -69,13 +70,13 @@ class AuthRequestInterceptor2(authManager: AuthenticationManager2, httpClient: H
     }
 
   override def intercept(
-                          request: Request[Body],
-                          uploadCallback: Option[ProgressCallback],
-                          downloadCallback: Option[ProgressCallback],
-                          response: Response[Body]
-                        ): CancellableFuture[Response[Body]] = {
+      request: Request[Body],
+      uploadCallback: Option[ProgressCallback],
+      downloadCallback: Option[ProgressCallback],
+      response: Response[Body]
+  ): CancellableFuture[Response[Body]] =
     if (response.code == ResponseCode.Unauthorized && attеmptsIfAuthFailed > 0) {
-      verbose(s"Got 'Unauthorized' error. Retrying... Attempts left: ${attеmptsIfAuthFailed - 1}")
+      verbose(l"Got 'Unauthorized' error. Retrying... Attempts left: ${attеmptsIfAuthFailed - 1}")
       CancellableFuture.lift(authManager.invalidateToken()).flatMap { _ =>
         httpClient.execute(
           request.copy(interceptor = new AuthRequestInterceptor2(authManager, httpClient, attеmptsIfAuthFailed - 1)),
@@ -84,6 +85,5 @@ class AuthRequestInterceptor2(authManager: AuthenticationManager2, httpClient: H
         )
       }
     } else CancellableFuture.successful(response)
-  }
 
 }
