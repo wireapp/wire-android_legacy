@@ -18,12 +18,13 @@
 package com.waz.model
 
 import com.waz.db.Dao
+import com.waz.model
 import com.waz.utils.JsonDecoder
 import com.waz.utils.wrappers.DBCursor
 import org.json.JSONObject
 
 case class TeamData(id:      TeamId,
-                    name:    String,
+                    name:    Name,
                     creator: UserId,
                     icon:    Option[RAssetId] = None,
                     iconKey: Option[AESKey]  = None)
@@ -47,7 +48,7 @@ object TeamData {
   import com.waz.db.Col._
   implicit object TeamDataDoa extends Dao[TeamData, TeamId] {
     val Id      = id[TeamId]      ('_id, "PRIMARY KEY").apply(_.id)
-    val Name    = text            ('name)(_.name)
+    val Name    = text[model.Name]('name, _.str, model.Name)(_.name)
     val Creator = id[UserId]      ('creator).apply(_.creator)
     val Icon    = opt(id[RAssetId] ('icon))(_.icon)
     val IconKey = opt(text[AESKey]('icon_key, _.str, AESKey))(_.iconKey)

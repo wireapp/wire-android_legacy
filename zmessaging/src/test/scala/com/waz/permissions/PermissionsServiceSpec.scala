@@ -17,7 +17,7 @@
  */
 package com.waz.permissions
 
-import com.waz.permissions.PermissionsService.{Permission, PermissionProvider}
+import com.waz.permissions.PermissionsService.{Permission, PermissionKey, PermissionProvider}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.threading.Threading
 import com.waz.utils.events.{Signal, SourceSignal}

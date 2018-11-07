@@ -19,8 +19,8 @@ package com.waz.service.push
 
 import java.io.IOException
 
-import com.waz.ZLog
-import com.waz.ZLog._
+import com.waz.ZLog.LogTag
+import com.waz.log.ZLog2._
 import com.waz.api.NetworkMode
 import com.waz.content.{AccountStorage, GlobalPreferences}
 import com.waz.model.otr.ClientId
@@ -93,11 +93,11 @@ class PushTokenService(userId:       UserId,
         case Right((Some(localUserToken), backendUserTokens)) =>
           val backendUserToken = backendUserTokens.find(_.clientId == clientId).map(_.token)
           if (backendUserToken.contains(localUserToken)) {
-            verbose("Current device push token is already registered with the backend")
+            verbose(l"Current device push token is already registered with the backend")
             Future.successful(Right(false))
           }
           else {
-            verbose("Current device push token is not registered with the Backend! Will re-register")
+            verbose(l"Current device push token is not registered with the Backend! Will re-register")
             //There is no matching push token for this client on the backend, we need to re-register this user with the
             //current device token. We can do this by wiping the current value saved for this user. The subscription above
             //will then re-evaluate and re-register the token.
@@ -110,12 +110,12 @@ class PushTokenService(userId:       UserId,
     } yield res
 
   def onTokenRegistered(token: PushToken): Future[Unit] = {
-    verbose(s"onTokenRegistered: $userId, $token")
+    verbose(l"onTokenRegistered: $userId, $token")
     (for {
       true <- isLoggedIn.head
       _    <- accStorage.update(userId, _.copy(pushToken = Some(token)))
     } yield {}).recover {
-      case _ => warn("account was not logged in after token sync completed")
+      case _ => warn(l"account was not logged in after token sync completed")
     }
   }
 }
@@ -130,7 +130,7 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
                              prefs:     GlobalPreferences,
                              network:   NetworkModeService) extends GlobalTokenService {
   import PushTokenService._
-  import ZLog.ImplicitTag._
+  import com.waz.ZLog.ImplicitTag._
 
   implicit val dispatcher = new SerialDispatchQueue(name = "GlobalTokenService")
   implicit val ev = EventContext.Global
@@ -150,13 +150,13 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
 
   //Specify empty to force remove all tokens, or else only remove if `toRemove` contains the current token.
   override def resetGlobalToken(toRemove: Vector[PushToken] = Vector.empty) = {
-    verbose("resetGlobalToken")
+    verbose(l"resetGlobalToken")
     _currentToken().flatMap {
       case Some(t) if toRemove.contains(t) || toRemove.isEmpty =>
         if (deletingToken.isCompleted) {
           deletingToken = for {
             _ <- retry({
-              verbose("Deleting all push tokens")
+              verbose(l"Deleting all push tokens")
               googleApi.deleteAllPushTokens()
             })
             _ <- _currentToken := None
@@ -168,10 +168,10 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
   }
 
   override def setNewToken() = {
-    verbose("setNewToken")
+    verbose(l"setNewToken")
     if (settingToken.isCompleted) {
       settingToken = for {
-        t <- retry(returning(googleApi.getPushToken)(t => verbose(s"Setting new push token: $t")))
+        t <- retry(returning(googleApi.getPushToken)(t => verbose(l"Setting new push token: $t")))
         _ <- _currentToken := Some(t)
       } yield {}
     }
@@ -181,7 +181,7 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
   private def retry[A](f: => A, attempts: Int = 0): Future[A] = {
     returning(dispatcher(f).future.recoverWith {
       case ex: IOException =>
-        error(s"Failed action on google APIs, probably due to server connectivity error, will retry again", ex)
+        error(l"Failed action on google APIs, probably due to server connectivity error, will retry again", ex)
         for {
           _ <- if (attempts % logAfterAttempts == 0) exception(new Exception("Too many push token registration attempts") with NoStackTrace, s"Failed to register an FCM push token after $logAfterAttempts attempts") else Future.successful({})
           _ <- CancellableFuture.delay(ResetBackoff.delay(attempts)).future

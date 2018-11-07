@@ -17,8 +17,6 @@
  */
 package com.waz.service
 
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.internalError
 import com.waz.content.{AssetsStorage, ConversationStorage, MembersStorage, UsersStorage}
@@ -76,7 +74,6 @@ class IntegrationsServiceImpl(selfUserId:   UserId,
   //new AssetData, and replace the AssetId on the IntegrationData with that of the asset previously put in the data base.
   //This has to be done first by checking the remote ids for any matches
   private def updateAssets(svs: Map[IntegrationData, Option[AssetData]]): Future[Seq[IntegrationData]] = {
-    verbose(s"updateAssets: $svs")
     val services = svs.keys.toSet
     val assets = svs.values.flatten.toSet
     val remoteIds = assets.flatMap(_.remoteId)

@@ -17,10 +17,11 @@
  */
 package com.waz.model
 
+import com.waz.log.ZLog2.SafeToLog
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import org.json.JSONObject
 
-case class Dim2(width: Int, height: Int) {
+case class Dim2(width: Int, height: Int) extends SafeToLog {
   def swap: Dim2 = Dim2(width = height, height = width)
 }
 

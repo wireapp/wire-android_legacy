@@ -42,8 +42,6 @@ case class EmailCredentials(email: EmailAddress, password: Password, code: Optio
   }
 
   override def addToLoginJson(o: JSONObject): Unit = addToRegistrationJson(o)
-
-  override def toString: String = s"EmailCredentials($email, $password)"
 }
 
 case class PhoneCredentials(phone: PhoneNumber, code: ConfirmationCode) extends Credentials {
@@ -57,11 +55,9 @@ case class PhoneCredentials(phone: PhoneNumber, code: ConfirmationCode) extends 
     o.put("phone", phone.str)
     o.put(codeName, code.str)
   }
-
-  override def toString: String = s"PhoneCredentials($phone, ConfirmationCode(******))"
 }
 
-case class HandleCredentials(handle: Handle, password: String) extends Credentials {
+case class HandleCredentials(handle: Handle, password: Password) extends Credentials {
   override val autoLogin = false
 
   override def addToRegistrationJson(o: JSONObject): Unit = {
@@ -70,7 +66,5 @@ case class HandleCredentials(handle: Handle, password: String) extends Credentia
   }
 
   override def addToLoginJson(o: JSONObject): Unit = addToRegistrationJson(o)
-
-  override def toString: String = s"UsernameBasedCredentials($handle, $password)"
 }
 

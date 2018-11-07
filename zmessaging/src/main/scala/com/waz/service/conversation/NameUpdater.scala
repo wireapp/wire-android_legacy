@@ -21,7 +21,7 @@ import com.waz.ZLog._
 import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.UserData.ConnectionStatus
-import com.waz.model.{ConvId, UserData, UserId}
+import com.waz.model.{ConvId, Name, UserData, UserId}
 import com.waz.threading.SerialDispatchQueue
 import com.waz.utils.events.EventContext
 import com.waz.utils.{BiRelation, ThrottledProcessingQueue}
@@ -149,7 +149,7 @@ class NameUpdater(selfUserId:     UserId,
     def updateGroups() = queue.enqueue(users.map(_.id))
 
     def updateOneToOnes() = {
-      val names: Map[ConvId, String] = users.collect {
+      val names: Map[ConvId, Name] = users.collect {
         case u if u.connection != ConnectionStatus.Unconnected && !u.deleted => ConvId(u.id.str) -> u.name // one to one use full name
       } (breakOut)
 
@@ -173,7 +173,7 @@ class NameUpdater(selfUserId:     UserId,
     val users = members.flatMap(_._2).toSeq.distinct.filter(_ != selfUserId)
 
     usersStorage.getAll(users) flatMap { uds =>
-      val names: Map[UserId, Option[String]] = users.zip(uds.map(_.flatMap {
+      val names: Map[UserId, Option[Name]] = users.zip(uds.map(_.flatMap {
         case u if !u.deleted => Some(u.getDisplayName)
         case _               => None
       }))(breakOut)
@@ -182,15 +182,15 @@ class NameUpdater(selfUserId:     UserId,
     }
   }
 
-  private def generatedName(userNames: GenTraversable[Option[String]]): String = {
-    userNames.flatten.filter(_.nonEmpty).mkString(", ")
+  private def generatedName(userNames: GenTraversable[Option[Name]]): Name = {
+    Name(userNames.flatten.filter(_.nonEmpty).mkString(", "))
   }
 }
 
 object NameUpdater {
-  def generatedName(convType: ConversationType)(users: GenTraversable[UserData]): String = {
+  def generatedName(convType: ConversationType)(users: GenTraversable[UserData]): Name = {
     val us = users.filter(u => u.connection != ConnectionStatus.Self && !u.deleted)
-    if (convType == ConversationType.Group) us.map(user => user.getDisplayName).filter(_.nonEmpty).mkString(", ")
-    else us.headOption.fold("")(_.name)
+    if (convType == ConversationType.Group) Name(us.map(user => user.getDisplayName).filter(_.nonEmpty).mkString(", "))
+    else us.headOption.fold(Name.Empty)(_.name)
   }
 }

@@ -69,11 +69,11 @@ class CallingServiceSpec extends AndroidFreeSpec {
   val otherUser  = UserId("otherUser") //for one to one
   val otherUser2 = UserId("otherUser2") //to be aded to ms for groups
 
-  val _1to1Conv     = ConversationData(ConvId(otherUser.str), RConvId(otherUser.str), Some(otherUser.str),   selfUserId, ConversationType.OneToOne)
-  val _1to1Conv2    = ConversationData(ConvId(otherUser2.str), RConvId(otherUser2.str), Some(otherUser2.str), selfUserId, ConversationType.OneToOne)
-  val team1to1Conv  = ConversationData(ConvId("team-1:1"), RConvId("team-1:1"), Some("1:1 Team Conv"), selfUserId, ConversationType.Group, Some(TeamId("team-id"))) //all team convs are goup by type
-  val groupConv     = ConversationData(ConvId("group-conv"), RConvId("group-conv"), Some("Group Conv"), selfUserId, ConversationType.Group)
-  val teamGroupConv = ConversationData(ConvId("team-group-conv"), RConvId("team-group-conv"), Some("Group Team Conv"), selfUserId, ConversationType.Group, Some(TeamId("team-id"))) //all team convs are goup by type
+  val _1to1Conv     = ConversationData(ConvId(otherUser.str), RConvId(otherUser.str), Some(Name(otherUser.str)),   selfUserId, ConversationType.OneToOne)
+  val _1to1Conv2    = ConversationData(ConvId(otherUser2.str), RConvId(otherUser2.str), Some(Name(otherUser2.str)), selfUserId, ConversationType.OneToOne)
+  val team1to1Conv  = ConversationData(ConvId("team-1:1"), RConvId("team-1:1"), Some(Name("1:1 Team Conv")), selfUserId, ConversationType.Group, Some(TeamId("team-id"))) //all team convs are goup by type
+  val groupConv     = ConversationData(ConvId("group-conv"), RConvId("group-conv"), Some(Name("Group Conv")), selfUserId, ConversationType.Group)
+  val teamGroupConv = ConversationData(ConvId("team-group-conv"), RConvId("team-group-conv"), Some(Name("Group Team Conv")), selfUserId, ConversationType.Group, Some(TeamId("team-id"))) //all team convs are goup by type
 
   lazy val service: CallingServiceImpl = initCallingService()
 

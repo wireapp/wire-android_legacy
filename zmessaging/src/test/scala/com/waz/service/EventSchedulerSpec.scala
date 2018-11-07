@@ -143,9 +143,9 @@ class EventSchedulerSpec extends FeatureSpec with Matchers with OptionValues wit
   }
 
   feature("Defining event processing stages") {
-    lazy val e1 = RenameConversationEvent(RConvId("R"), RemoteInstant(Instant.now()), UserId("u1"), "meep 1")
+    lazy val e1 = RenameConversationEvent(RConvId("R"), RemoteInstant(Instant.now()), UserId("u1"), Name("meep 1"))
     lazy val e2 = UserPropertiesSetEvent("e2", "u1")
-    lazy val e3 = RenameConversationEvent(RConvId("R"), RemoteInstant(Instant.now()), UserId("u2"), "meep 2")
+    lazy val e3 = RenameConversationEvent(RConvId("R"), RemoteInstant(Instant.now()), UserId("u2"), Name("meep 2"))
     lazy val e4 = UserPropertiesSetEvent("e4", "u2")
 
     scenario("Eligibility check")(withFixture { env => import env._

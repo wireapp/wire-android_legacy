@@ -24,7 +24,7 @@ import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.media.MediaMetadataRetriever._
 import android.net.Uri
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.service.assets.MetaDataRetriever
 import com.waz.utils.wrappers.URI
@@ -111,7 +111,7 @@ object AssetMetaData {
         dim       = if (rotation / 90 % 2 == 0) Dim2(width, height) else Dim2(height, width)
         duration <- retrieve(METADATA_KEY_DURATION, "duration", s => bp.Duration.ofMillis(s.toLong))
       } yield {
-        verbose(s"width: $width, height: $height, rotation: $rotation, dim: $dim, duration: $duration")
+        verbose(l"width: $width, height: $height, rotation: $rotation, dim: $dim, duration: $duration")
         AssetMetaData.Video(dim, duration)
       }
     }

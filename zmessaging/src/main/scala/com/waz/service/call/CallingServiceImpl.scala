@@ -21,10 +21,10 @@ package com.waz.service.call
 import android.Manifest.permission.CAMERA
 import com.sun.jna.Pointer
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.GlobalPreferences.SkipTerminatingState
 import com.waz.content.{GlobalPreferences, MembersStorage, UserPreferences}
+import com.waz.log.ZLog2._
 import com.waz.model.otr.ClientId
 import com.waz.model.{ConvId, RConvId, UserId, _}
 import com.waz.permissions.PermissionsService
@@ -129,7 +129,7 @@ object CallingService {
     val endedCalls: Map[A, CallInfo] =
       calls.filter { case (_, call) => call.state == Ended }
 
-    override def toString: LogTag =
+    override def toString: String =
       s"active call: $activeCall, incomingCalls: ${incomingCalls.values} joinable calls: ${joinableCalls.values}, ended calls: ${endedCalls.values}"
   }
 
@@ -177,7 +177,7 @@ class CallingServiceImpl(val accountId:       UserId,
 
   private[call] val callProfile = Signal(CallProfile.Empty)
 
-  callProfile.map(_.toString)(verbose(_))
+  callProfile(p => verbose(l"Call profile: ${p.calls}"))
 
   override val calls          = callProfile.map(_.calls).disableAutowiring() //all calls
   override val joinableCalls  = callProfile.map(_.joinableCalls).disableAutowiring() //any call a user can potentially join in the UI
@@ -188,14 +188,14 @@ class CallingServiceImpl(val accountId:       UserId,
   //exposed for tests only
   private[call] lazy val wCall = returningF(avs.registerAccount(this)) { call =>
     call.onFailure {
-      case NonFatal(e) => error(s"Failed to initialise WCall for user: $accountId", e)
+      case NonFatal(e) => error(l"Failed to initialise WCall for user: $accountId", e)
     }
   }
 
   Option(ZMessaging.currentAccounts).foreach(
     _.accountsWithManagers.map(_.contains(accountId)) {
       case false =>
-        verbose(s"Account $accountId logged out, unregistering from AVS")
+        verbose(l"Account $accountId logged out, unregistering from AVS")
         wCall.map(avs.unregisterAccount)
       case true =>
     }(EventContext.Global)
@@ -213,7 +213,7 @@ class CallingServiceImpl(val accountId:       UserId,
     */
   def onIncomingCall(convId: RConvId, userId: UserId, videoCall: Boolean, shouldRing: Boolean): Future[Unit] =
     withConvAndIsGroup(convId) { (_, conv, isGroup) =>
-      verbose(s"Incoming call from $userId in conv: $convId (should ring: $shouldRing)")
+      verbose(l"Incoming call from $userId in conv: $convId (should ring: $shouldRing)")
 
       permissions.allPermissions(ListSet(CAMERA)).head.foreach { granted =>
         updateCallInfo(conv.id, _.copy(videoSendState = (videoCall, granted) match {
@@ -243,18 +243,18 @@ class CallingServiceImpl(val accountId:       UserId,
 
   def onOtherSideAnsweredCall(rConvId: RConvId): Future[Unit] =
     updateCallIfActive(rConvId) { (_, conv, call) =>
-      verbose(s"outgoing call answered for conv: ${conv.id}")
+      verbose(l"outgoing call answered for conv: ${conv.id}")
       call.updateCallState(SelfJoining)
     } ("onOtherSideAnsweredCall")
 
   def onMissedCall(rConvId: RConvId, time: RemoteInstant, userId: UserId, videoCall: Boolean): Future[Option[MessageData]] = {
-    verbose(s"Missed call for conversation: $rConvId at $time from user $userId. Video: $videoCall")
+    verbose(l"Missed call for conversation: $rConvId at $time from user $userId. Video: $videoCall")
     messagesService.addMissedCallMessage(rConvId, userId, time)
   }
 
   def onEstablishedCall(rConvId: RConvId, userId: UserId): Future[Unit] =
     updateCallIfActive(rConvId) { (_, conv, c) =>
-      verbose(s"call established for conv: ${conv.id}, userId: $userId, time: ${clock.instant}")
+      verbose(l"call established for conv: ${conv.id}, userId: $userId, time: ${clock.instant}")
       setVideoSendState(conv.id, c.videoSendState) //will upgrade call videoSendState
       setCallMuted(c.muted) //Need to set muted only after call is established
       //on est. group call, switch from self avatar to other user now in case `onGroupChange` is delayed
@@ -268,7 +268,7 @@ class CallingServiceImpl(val accountId:       UserId,
         callProfile.mutate { p =>
           val skipTerminatingUltimate = skipTerminating || skipTerminatingPref
           val updatedCall = p.calls.get(conv.id).map { call =>
-            verbose(s"endCall: $convId, skipTerminating (ultimate): $skipTerminatingUltimate. Active call in state: ${call.state}")
+            verbose(l"endCall: $convId, skipTerminating (ultimate): $skipTerminatingUltimate. Active call in state: ${call.state}")
             //avs reject and end call will always trigger the onClosedCall callback - there we handle the end of the call
             if (call.state == OtherCalling) avs.rejectCall(w, conv.remoteId) else avs.endCall(w, conv.remoteId)
             //if there is another incoming call - skip the terminating state
@@ -289,7 +289,7 @@ class CallingServiceImpl(val accountId:       UserId,
 
   override def dismissCall() =
     updateActiveCallAsync { (_, conv, call) =>
-      verbose(s"dismissCall(): ${conv.id}")
+      verbose(l"dismissCall(): ${conv.id}")
       call.state match {
         case Terminating => call.updateCallState(if (call.others.size > 1) Ongoing else Ended)
         case _ => call
@@ -300,7 +300,7 @@ class CallingServiceImpl(val accountId:       UserId,
     withConv(rConvId) { (_, conv) =>
       globalPrefs(SkipTerminatingState).apply().map { skipTerminating =>
         callProfile.mutate { p =>
-          verbose(s"call closed for reason: ${reasonString(reason)}, conv: ${conv.id} at $time, userId: $userId, currentState: ${p.activeCall.map(_.state)}, skipTerminating: $skipTerminating")
+          verbose(l"call closed for reason: ${showString(reasonString(reason))}, conv: ${conv.id} at $time, userId: $userId, currentState: ${p.activeCall.map(_.state)}, skipTerminating: $skipTerminating")
           val updatedCall = p.calls.get(conv.id).map { c =>
             // Group calls that you don't answer (but are answered by other users) will be "closed"
             // with reason StillOngoing. We need to keep these around so the user can join them later
@@ -323,7 +323,7 @@ class CallingServiceImpl(val accountId:       UserId,
     tracking.track(AVSMetricsEvent(metricsJson), Some(accountId))
 
   def onConfigRequest(wcall: WCall): Int = {
-    verbose("onConfigRequest")
+    verbose(l"onConfigRequest")
     callingClient.getConfig.map { resp =>
       avs.onConfigRequest(wcall, resp.fold(err => err.code, _ => 0), resp.fold(_ => "", identity))
     }
@@ -332,19 +332,19 @@ class CallingServiceImpl(val accountId:       UserId,
 
   def onBitRateStateChanged(enabled: Boolean): Unit =
     updateActiveCallAsync { (_, _, call) =>
-      verbose(s"onBitRateStateChanged enabled=$enabled")
+      verbose(l"onBitRateStateChanged enabled=$enabled")
       call.copy(isCbrEnabled = enabled)
     }("onBitRateStateChanged")
 
   def onVideoStateChanged(userId: String, videoReceiveState: VideoState): Future[Unit] =
     updateActiveCallAsync { (_, _, call) =>
-      verbose(s"video state changed: $videoReceiveState")
+      verbose(l"video state changed: $videoReceiveState")
       call.updateVideoState(UserId(userId), videoReceiveState)
     }("onVideoStateChanged")
 
   def onGroupChanged(rConvId: RConvId, members: Set[UserId]): Future[Unit] =
     updateCallIfActive(rConvId) { (w, conv, call) =>
-      verbose(s"group members changed, convId: ${conv.id}, other members: $members")
+      verbose(l"group members changed, convId: ${conv.id}, other members: $members")
       val updated = members.map { userId =>
         userId -> call.others.getOrElse(userId, Some(LocalInstant.Now))
       }.toMap
@@ -355,7 +355,7 @@ class CallingServiceImpl(val accountId:       UserId,
   network.networkMode.onChanged { _ =>
     currentCall.head.flatMap {
       case Some(_) =>
-        verbose("network mode changed during call - informing AVS")
+        verbose(l"network mode changed during call - informing AVS")
         wCall.map(avs.onNetworkChanged)
       case _ => Future.successful({})
     }
@@ -363,7 +363,7 @@ class CallingServiceImpl(val accountId:       UserId,
 
   override def startCall(convId: ConvId, isVideo: Boolean = false, forceOption: Boolean = false) =
     Serialized.future(self) {
-      verbose(s"startCall $convId, isVideo: $isVideo, forceOption: $forceOption")
+      verbose(l"startCall $convId, isVideo: $isVideo, forceOption: $forceOption")
       (for {
         w          <- wCall
         Some(conv) <- convs.convById(convId)
@@ -387,22 +387,22 @@ class CallingServiceImpl(val accountId:       UserId,
               Future.successful {
                 call.state match {
                   case OtherCalling =>
-                    verbose(s"Answering call")
+                    verbose(l"Answering call")
                     avs.answerCall(w, conv.remoteId, callType, !vbr)
                     updateActiveCall(_.updateCallState(SelfJoining))("startCall/OtherCalling")
                     if (forceOption)
                       setVideoSendState(convId, if (isVideo)  Avs.VideoState.Started else Avs.VideoState.Stopped)
                   case _ =>
-                    warn("Tried to join an already joined/connecting call - ignoring")
+                    warn(l"Tried to join an already joined/connecting call - ignoring")
                 }
               }
             case Some(_) =>
-              Future.successful(warn("Tried to start a new call while already in a call - ignoring"))
+              Future.successful(warn(l"Tried to start a new call while already in a call - ignoring"))
             case None =>
               profile.calls.get(convId) match {
                 case Some(call) if !Set[CallState](Ended, Terminating)(call.state) =>
                   Future.successful {
-                    verbose("Joining an ongoing background call")
+                    verbose(l"Joining an ongoing background call")
                     avs.answerCall(w, conv.remoteId, callType, !vbr)
                     val active = call.updateCallState(SelfJoining).copy(joinedTime = None, estabTime = None) // reset previous call state if exists
                     callProfile.mutate(_.copy(calls = profile.calls + (convId -> active)))
@@ -411,7 +411,7 @@ class CallingServiceImpl(val accountId:       UserId,
                       setVideoSendState(convId, if (isVideo)  Avs.VideoState.Started else Avs.VideoState.Stopped)
                   }
                 case _ =>
-                  verbose("No active call, starting new call")
+                  verbose(l"No active call, starting new call")
                   avs.startCall(w, conv.remoteId, callType, convType, !vbr).map {
                     case 0 =>
                       //Assume that when a video call starts, sendingVideo will be true. From here on, we can then listen to state handler
@@ -425,13 +425,13 @@ class CallingServiceImpl(val accountId:       UserId,
                         startedAsVideoCall = isVideo,
                         videoSendState = if (isVideo) VideoState.Started else VideoState.Stopped)
                       callProfile.mutate(_.copy(calls = profile.calls + (newCall.convId -> newCall)))
-                    case err => warn(s"Unable to start call, reason: errno: $err")
+                    case err => warn(l"Unable to start call, reason: errno: $err")
                   }
               }
           }
       } yield {}).recover {
         case NonFatal(e) =>
-          error("Failed to start call", e)
+          error(l"Failed to start call", e)
       }
     }
 
@@ -441,20 +441,20 @@ class CallingServiceImpl(val accountId:       UserId,
         (info.outstandingMsg, info.state) match {
           case (Some((msg, ctx)), _) => convs.storage.setUnknownVerification(info.convId).map(_ => sendCallMessage(info.convId, msg, ctx))
           case (None, OtherCalling) => convs.storage.setUnknownVerification(info.convId).map(_ => startCall(info.convId))
-          case _ => error(s"Tried resending message on invalid info: ${info.convId} in state ${info.state} with msg: ${info.outstandingMsg}")
+          case _ => error(l"Tried resending message on invalid info: ${info.convId} in state ${info.state}")
         }
-      case None => warn("Tried to continue degraded call without a current active call")
+      case None => warn(l"Tried to continue degraded call without a current active call")
     }
 
   private def sendCallMessage(convId: ConvId, msg: GenericMessage, ctx: Pointer): Unit =
     withConv(convId) { (w, conv) =>
-      verbose(s"Sending msg on behalf of avs: convId: $convId, msg: $msg")
+      verbose(l"Sending msg on behalf of avs: convId: $convId")
       otrSyncHandler.postOtrMessage(convId, msg).map {
         case Right(_) =>
           updateActiveCall(_.copy(outstandingMsg = None))("sendCallMessage/verified")
           avs.onHttpResponse(w, 200, "", ctx)
         case Left(ErrorResponse.Unverified) =>
-          warn(s"Conversation degraded, delay sending message on behalf of AVS")
+          warn(l"Conversation degraded, delay sending message on behalf of AVS")
           //TODO need to handle degrading of conversation during a call
           //Currently, the call will just time out...
           updateActiveCall(_.copy(outstandingMsg = Some(msg, ctx)))("sendCallMessage/unverified")
@@ -467,7 +467,7 @@ class CallingServiceImpl(val accountId:       UserId,
   //TODO - we should actually end all calls here - we don't want any other incoming calls to compete with GSM
   def onInterrupted(): Unit =
     updateActiveCallAsync { (w, conv, call) =>
-      verbose("onInterrupted - gsm call received")
+      verbose(l"onInterrupted - gsm call received")
       //Ensure that conversation state is only performed INSIDE withConv
       avs.endCall(w, conv.remoteId)
       call
@@ -475,7 +475,7 @@ class CallingServiceImpl(val accountId:       UserId,
 
   override def setCallMuted(muted: Boolean): Unit =
     fm.foreach { f =>
-      verbose(s"setCallMuted: $muted")
+      verbose(l"setCallMuted: $muted")
       updateActiveCall { c =>
         f.setMute(muted)
         c.copy(muted = muted)
@@ -492,7 +492,7 @@ class CallingServiceImpl(val accountId:       UserId,
         case NoCameraPermission => Stopped //NoCameraPermission is only valid for incoming
         case c => c
       }
-      verbose(s"setVideoSendActive: $convId, providedState: $state, targetState: $targetSt")
+      verbose(l"setVideoSendActive: $convId, providedState: $state, targetState: $targetSt")
       if (state != NoCameraPermission) avs.setVideoSendState(w, conv.remoteId, targetSt)
       call.updateVideoState(accountId, targetSt)
     }("setVideoSendState")
@@ -507,7 +507,7 @@ class CallingServiceImpl(val accountId:       UserId,
     wCall.map { w =>
       val drift = pushService.beDrift.currentValue.getOrElse(Duration.ZERO)
       val curTime = LocalInstant(clock.instant + drift)
-      verbose(s"Received msg for avs: localTime: ${clock.instant} curTime: $curTime, drift: $drift, msgTime: $msgTime, msg: $msg")
+      verbose(l"Received msg for avs: localTime: ${clock.instant} curTime: $curTime, drift: $drift, msgTime: $msgTime")
       avs.onReceiveMessage(w, msg, curTime, msgTime, convId, from, sender)
     }
 
@@ -527,7 +527,7 @@ class CallingServiceImpl(val accountId:       UserId,
       wCall.flatMap { w =>
         loadConversation.map {
           case Some(conv) => f(w, conv)
-          case _          => error(convNotFoundMsg)
+          case _          => error(l"${showString(convNotFoundMsg)}")
         }
       }
     }
@@ -541,7 +541,7 @@ class CallingServiceImpl(val accountId:       UserId,
         isGroup    <- convsService.isGroupConversation(conv.id)
       } yield f(w, conv, isGroup))
         .recover {
-          case NonFatal(e) => error(s"Unknown remote convId: $convId")
+          case NonFatal(e) => error(l"Unknown remote convId: $convId")
         }
     }
 
@@ -550,7 +550,7 @@ class CallingServiceImpl(val accountId:       UserId,
       updateCallInfo(conv.id, {
         case call if conv.id == call.convId => f(w, conv, call)
         case c =>
-          warn(s"$caller tried to update a call that wasn't the active one")
+          warn(l"${showString(caller)} tried to update a call that wasn't the active one")
           c
       }) (caller)
     }
@@ -561,7 +561,7 @@ class CallingServiceImpl(val accountId:       UserId,
       updateCallInfo(convId, {
         case call if conv.id == call.convId => f(w, conv, call)
         case c =>
-          warn(s"$caller tried to update a call that wasn't the active one")
+          warn(l"${showString(caller)} tried to update a call that wasn't the active one")
           c
       }) (caller)
     }
@@ -573,7 +573,7 @@ class CallingServiceImpl(val accountId:       UserId,
         wCall.flatMap { w =>
           convs.convById(convId).map {
             case Some(conv) => updateCallInfo(convId, f(w, conv, _))(caller)
-            case _          => error(s"Could not find conversation: $convId")
+            case _          => error(l"Could not find conversation: $convId")
           }
         }
       }
@@ -584,7 +584,7 @@ class CallingServiceImpl(val accountId:       UserId,
       p.copy(calls = {
         val updated = p.activeCall.map(f)
         updated.fold {
-          warn(s"$caller tried to update active call when there was none - no change")
+          warn(l"${showString(caller)} tried to update active call when there was none - no change")
           p.calls
         }(u => p.calls + (u.convId -> u))
       })
@@ -596,7 +596,7 @@ class CallingServiceImpl(val accountId:       UserId,
       p.copy(calls = {
         val updated = p.calls.get(convId).map(f)
         updated.fold {
-          warn(s"$caller tried to update call info when there was none - no change")
+          warn(l"${showString(caller)} tried to update call info when there was none - no change")
           p.calls
         }(u => p.calls + (u.convId -> u))
       })

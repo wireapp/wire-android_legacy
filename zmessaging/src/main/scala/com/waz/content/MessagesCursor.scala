@@ -18,10 +18,11 @@
 package com.waz.content
 
 import android.support.v4.util.LruCache
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.logTime
 import com.waz.content.MessagesCursor.Entry
 import com.waz.db.{CursorIterator, Reader, ReverseCursorIterator}
+import com.waz.log.ZLog2._
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.service.tracking.TrackingService
@@ -29,7 +30,6 @@ import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils._
 import com.waz.utils.events.EventStream
 import com.waz.utils.wrappers.DBCursor
-import org.threeten.bp.Instant
 
 import scala.collection.Searching.{Found, InsertionPoint}
 import scala.concurrent.{Await, Future}
@@ -81,7 +81,7 @@ class MessagesCursor(cursor: DBCursor,
     }
   )
 
-  verbose(s"init(_, $lastReadIndex, $lastReadTime) - lastRead: $lastReadIndex")
+  verbose(l"init(_, $lastReadIndex, $lastReadTime) - lastRead: $lastReadIndex")
 
   override def close(): Unit = {
     Threading.assertUiThread()
@@ -92,7 +92,7 @@ class MessagesCursor(cursor: DBCursor,
   override def finalize(): Unit = Future(if (! cursor.isClosed) cursor.close())
 
   def prefetchById(id: MessageId): Future[Unit] = {
-    verbose(s"prefetchById($id)")
+    verbose(l"prefetchById($id)")
     for {
       m <- loader(Seq(id))
       i <- m.headOption.fold(Future successful lastReadIndex) { d => asyncIndexOf(d.message.time) }
@@ -103,14 +103,14 @@ class MessagesCursor(cursor: DBCursor,
   /** will block if message is outside of prefetched window */
   override def indexOf(time: RemoteInstant): Int =
     returning(LoggedTry(Await.result(asyncIndexOf(time), 10.seconds)).getOrElse(lastReadIndex)) { index =>
-      verbose(s"indexOf($time) = $index, lastReadTime: $lastReadTime")
+      verbose(l"indexOf($time) = $index, lastReadTime: $lastReadTime")
     }
 
   def asyncIndexOf(time: RemoteInstant, binarySearch: Boolean = false): Future[Int] = {
     def cursorSearch(from: Int, to: Int) = Future {
       logTime(s"time: $time not found in pre-fetched window, had to go through cursor, binarySearch: $binarySearch") {
         val index = if (binarySearch) cursorBinarySearch(time, from, to) else cursorLinearSearch(time, from, to)
-        verbose(s"index in cursor: $index")
+        verbose(l"index in cursor: $index")
         index
       }
     }
@@ -132,13 +132,13 @@ class MessagesCursor(cursor: DBCursor,
 
   def prefetch(window: IndexWindow): Future[Unit] = Future(window.msgs.iterator.filter(m => messages.get(m.id) == null).map(_.id).toVector) flatMap { ids =>
     if (ids.isEmpty) {
-      verbose(s"prefetch at offset ${window.offset} unnecessary")
+      verbose(l"prefetch at offset ${window.offset} unnecessary")
       Future.successful(())
     } else {
       val time = System.nanoTime()
       loader(ids) .map { ms =>
         ms foreach { m => putMessage(m) }
-        verbose(s"pre-fetched ${ids.size} ids, got ${ms.size} msgs, for window offset: ${window.offset} in: ${(System.nanoTime() - time) / 1000 / 1000f} ms")
+        verbose(l"pre-fetched ${ids.size} ids, got ${ms.size} msgs, for window offset: ${window.offset} in: ${(System.nanoTime() - time) / 1000 / 1000f} ms")
       } (Threading.Background) // LruCache is thread-safe, this mustn't be blocked by UI processing
     }
   }
@@ -166,7 +166,7 @@ class MessagesCursor(cursor: DBCursor,
       MessageAndLikes.Empty
     } else {
       val fetching = if (prevWindow != window) {
-        verbose(s"prefetching at $index, offset: ${window.offset}")
+        verbose(l"prefetching at $index, offset: ${window.offset}")
         prevWindow = window
         prefetch(window)
       } else futureUnit
@@ -280,11 +280,11 @@ class WindowLoader(cursor: DBCursor)(implicit dispatcher: SerialDispatchQueue) {
       (window.offset + WindowSize < totalCount && index + count > window.offset + WindowSize - WindowMargin)
 
   private def fetchWindow(start: Int, end: Int) = {
-    verbose(s"fetchWindow($start, $end)")
+    verbose(l"fetchWindow($start, $end)")
 
     val items = (start until end) map { pos =>
       if (cursor.moveToPosition(pos)) Entry(cursor) else {
-        error(s"can not move cursor to position: $pos, requested fetchWindow($start, $end)")
+        error(l"can not move cursor to position: $pos, requested fetchWindow($start, $end)")
         Entry.Empty
       }
     }
@@ -307,13 +307,13 @@ class WindowLoader(cursor: DBCursor)(implicit dispatcher: SerialDispatchQueue) {
     require(minCount <= MessagesCursor.WindowSize)
 
     if (shouldRefresh(window, index, minCount)) {
-      verbose(s"shouldRefresh($index) = true   offset: ${window.offset}")
+      verbose(l"shouldRefresh($index) = true   offset: ${window.offset}")
       windowLoading = loadWindow(index, minCount)
     }
 
     if (window.contains(index) && window.contains(index + minCount - 1)) Future.successful(window)
     else {
-      verbose(s"window doesn't contain all: $index - $minCount")
+      verbose(l"window doesn't contain all: $index - $minCount")
       windowLoading
     }
   }

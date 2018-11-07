@@ -39,12 +39,12 @@ class WakeLockImpl(context: Context, level: Int = PowerManager.PARTIAL_WAKE_LOCK
   protected lazy val wakeLock = powerManager.newWakeLock(level, tag)
 
   protected def acquire()(implicit srcTag: LogTag): Unit = {
-    verbose(l"acquiring wakelock, src: ${wrapString(srcTag)}")(tag)
+    verbose(l"acquiring wakelock, src: ${showString(srcTag)}")(tag)
     wakeLock.acquire()
   }
 
   protected def release()(implicit srcTag: LogTag): Unit = {
-    verbose(l"releasing wakelock, src: ${wrapString(srcTag)}")(tag)
+    verbose(l"releasing wakelock, src: ${showString(srcTag)}")(tag)
     wakeLock.release()
   }
 

@@ -20,6 +20,7 @@ package com.waz.cache
 import java.io._
 
 import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.model.CacheKey
 import com.waz.utils.IoUtils
 
@@ -110,5 +111,11 @@ class CacheEntry(val data: CacheEntryData, service: CacheService) extends LocalD
 }
 
 object CacheEntry {
+
+  implicit val CacheEntryLogShow: LogShow[CacheEntry] =
+    LogShow.createFrom { e =>
+      l"CacheEntry: data: ${e.data}"
+    }
+
   def unapply(entry: CacheEntry): Option[(CacheKey, Option[Array[Byte]], File)] = Some((entry.data.key, entry.content, entry.cacheFile))
 }

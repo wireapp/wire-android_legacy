@@ -25,10 +25,28 @@ import com.waz.model.nano.Messages
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{JsonDecoder, JsonEncoder, returning}
 import org.json.JSONObject
-
+import scala.language.implicitConversions
 import scala.concurrent.duration.FiniteDuration
 
 package object model {
+
+  case class Name(str: String) {
+    def length = str.length
+
+    override def toString: String = str
+
+    def isEmpty: Boolean = str.isEmpty
+    def nonEmpty: Boolean = str.nonEmpty
+
+    def substring(beginIndex: Int, endIndex: Int) =
+      Name(str.substring(beginIndex, endIndex))
+  }
+
+  object Name extends (String => Name) {
+    implicit def toNameString(name: Name): String = name.str
+    implicit def fromNameString(str: String): Name = Name(str)
+    val Empty = Name("")
+  }
 
   trait ProtoDecoder[A <: MessageNano] {
     def apply(data: Array[Byte]): A

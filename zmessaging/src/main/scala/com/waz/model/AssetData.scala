@@ -17,22 +17,19 @@
  */
 package com.waz.model
 
-import com.waz.model.AssetMetaData.Image.Tag
-import com.waz.model.AssetStatus.UploadCancelled
-import com.waz.service.UserService
-import com.waz.utils.wrappers.DBCursor
 import com.waz.content.WireContentProvider
 import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.model.AssetMetaData.Image
-import com.waz.model.AssetStatus.UploadDone
+import com.waz.model.AssetMetaData.Image.Tag
+import com.waz.model.AssetStatus.{UploadCancelled, UploadDone}
 import com.waz.model.GenericContent.EncryptionAlgorithm
 import com.waz.model.otr.SignalingKey
-import com.waz.service.ZMessaging
+import com.waz.service.{UserService, ZMessaging}
 import com.waz.utils.JsonDecoder.{apply => _, opt => _}
 import com.waz.utils._
 import com.waz.utils.crypto.AESUtils
-import com.waz.utils.wrappers.URI
+import com.waz.utils.wrappers.{DBCursor, URI}
 import org.json.JSONObject
 import org.threeten.bp.Duration
 
@@ -62,25 +59,6 @@ case class AssetData(id:          AssetId               = AssetId(),
                     ) {
 
   import AssetData._
-
-  override def toString: String =
-    s"""
-       |AssetData:
-       | id:            $id
-       | mime:          $mime
-       | sizeInBytes:   $sizeInBytes
-       | status:        $status
-       | rId:           $remoteId
-       | token:         $token
-       | otrKey:        $otrKey
-       | sha:           $sha
-       | encryption     $encryption
-       | preview:       $previewId
-       | metaData:      $metaData
-       | convId:        $convId
-       | data (length): ${data.map(_.length).getOrElse(0)}
-       | other fields:  $name, $source, $proxyPath, $v2ProfileId
-    """.stripMargin
 
   lazy val size = data.fold(sizeInBytes)(_.length)
 

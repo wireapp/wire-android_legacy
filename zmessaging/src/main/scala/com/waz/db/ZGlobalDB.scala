@@ -20,7 +20,7 @@ package com.waz.db
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.cache.CacheEntryData.CacheEntryDao
 import com.waz.content.ZmsDatabase
 import com.waz.db.Col._
@@ -43,7 +43,7 @@ class ZGlobalDB(context: Context, dbNameSuffix: String = "")
   }
 
   def clearAllData(db: SQLiteDatabase) = {
-    debug("wiping global db...")
+    debug(l"wiping global db...")
     dropAllTables(db)
     onCreate(db)
   }

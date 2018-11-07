@@ -20,9 +20,11 @@ package com.waz.cache
 import java.io.File
 import java.lang.System.currentTimeMillis
 
+import com.waz.log.ZLog2._
 import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.db.DbTranslator.FileTranslator
+import com.waz.log.ZLog2.LogShow
 import com.waz.model._
 import com.waz.utils.returning
 import com.waz.utils.wrappers.{DB, DBCursor}
@@ -39,6 +41,12 @@ case class CacheEntryData(key:      CacheKey,
                           length:   Option[Long]        = None)
 
 object CacheEntryData {
+
+  implicit val CacheEntryDataLogShow: LogShow[CacheEntryData] =
+    LogShow.createFrom { e =>
+      import e._
+      l"CacheEntryData: key: $key | lastUsed: $lastUsed | timeout: $timeout | mimeType: $mimeType"
+    }
 
   implicit object CacheEntryDao extends Dao[CacheEntryData, CacheKey] with CacheEntryDataUpgrades {
     val Key = id[CacheKey]('key, "PRIMARY KEY").apply(_.key)

@@ -30,14 +30,12 @@ case class NotificationData(id:                NotId             = NotId(),
                             user:              UserId            = UserId(),
                             msgType:           NotificationType  = NotificationType.TEXT,
                             time:              RemoteInstant     = RemoteInstant.Epoch,
-                            userName:          Option[String]    = None,
+                            userName:          Option[Name]      = None,
                             ephemeral:         Boolean           = false,
                             mentions:          Seq[UserId]       = Seq.empty,
                             referencedMessage: Option[MessageId] = None,
                             hasBeenDisplayed:  Boolean           = false,
-                            isQuote:           Boolean           = false) {
-  override def toString: String = s"NotificationData($id, ${msg.take(4)}..., $conv, $user, $msgType, $time, $userName, $ephemeral, $mentions, $referencedMessage, $hasBeenDisplayed, $isQuote)"
-}
+                            isQuote:           Boolean           = false)
 
 object NotificationData {
 

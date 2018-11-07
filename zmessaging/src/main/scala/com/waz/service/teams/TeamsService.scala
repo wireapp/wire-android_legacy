@@ -176,7 +176,7 @@ class TeamsServiceImpl(selfUser:           UserId,
     else Future.successful({})
   }
 
-  private def onTeamUpdated(id: TeamId, name: Option[String], icon: Option[RAssetId], iconKey: Option[AESKey]) = {
+  private def onTeamUpdated(id: TeamId, name: Option[Name], icon: Option[RAssetId], iconKey: Option[AESKey]) = {
     verbose(s"onTeamUpdated: $id, name: $name, icon: $icon, iconKey: $iconKey")
     teamStorage.update(id, team => team.copy (
       name    = name.getOrElse(team.name),

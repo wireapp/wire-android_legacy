@@ -24,9 +24,8 @@ import android.os.Build.VERSION_CODES.M
 import android.os.PowerManager
 import android.telephony.TelephonyManager
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.NetworkMode
-import com.waz.threading.Threading
+import com.waz.log.ZLog2._
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
 
@@ -67,7 +66,7 @@ class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle) extend
       case None => NetworkMode.OFFLINE
       case Some(info) => if (info.isConnected) computeMode(info, telephonyManager) else NetworkMode.OFFLINE
     }
-    verbose(s"updateNetworkMode: $mode")
+    verbose(l"updateNetworkMode: $mode")
 
     networkMode ! mode
   }
@@ -137,7 +136,7 @@ object NetworkModeService {
         case TelephonyManager.NETWORK_TYPE_LTE =>
           NetworkMode._4G
         case _ =>
-          info("Unknown network type, defaulting to Wifi")
+          info(l"Unknown network type, defaulting to Wifi")
           NetworkMode.WIFI
       }
   }.getOrElse(NetworkMode.OFFLINE)

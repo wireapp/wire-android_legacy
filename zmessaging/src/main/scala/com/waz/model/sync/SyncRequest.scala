@@ -17,7 +17,7 @@
  */
 package com.waz.model.sync
 
-import com.waz.ZLog.error
+import com.waz.log.ZLog2._
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.AddressBook.AddressBookDecoder
@@ -120,7 +120,7 @@ object SyncRequest {
     override def merge(req: SyncRequest) = mergeHelper[PostSelfPicture](req)(Merged(_))
   }
 
-  case class PostSelfName(name: String) extends BaseRequest(Cmd.PostSelfName) {
+  case class PostSelfName(name: Name) extends BaseRequest(Cmd.PostSelfName) {
     override def merge(req: SyncRequest) = mergeHelper[PostSelfName](req)(Merged(_))
   }
 
@@ -134,14 +134,14 @@ object SyncRequest {
 
   case class PostConv(convId:     ConvId,
                       users:      Set[UserId],
-                      name:       Option[String],
+                      name:       Option[Name],
                       team:       Option[TeamId],
                       access:     Set[Access],
                       accessRole: AccessRole) extends RequestForConversation(Cmd.PostConv) with Serialized {
     override def merge(req: SyncRequest) = mergeHelper[PostConv](req)(Merged(_))
   }
 
-  case class PostConvName(convId: ConvId, name: String) extends RequestForConversation(Cmd.PostConvName) with Serialized {
+  case class PostConvName(convId: ConvId, name: Name) extends RequestForConversation(Cmd.PostConvName) with Serialized {
     override def merge(req: SyncRequest) = mergeHelper[PostConvName](req)(Merged(_))
   }
 
@@ -243,7 +243,8 @@ object SyncRequest {
     override val mergeKey: Any = (cmd, convId, userId, client)
   }
 
-  case class PostConnection(userId: UserId, name: String, message: String) extends RequestForUser(Cmd.PostConnection)
+
+  case class PostConnection(userId: UserId, name: Name, message: String) extends RequestForUser(Cmd.PostConnection)
 
   case class PostConnectionStatus(userId: UserId, status: Option[ConnectionStatus]) extends RequestForUser(Cmd.PostConnectionStatus) {
     override def merge(req: SyncRequest) = mergeHelper[PostConnectionStatus](req)(Merged(_)) // always use incoming request value
@@ -331,7 +332,7 @@ object SyncRequest {
           case Cmd.PostTypingState           => PostTypingState(convId, 'typing)
           case Cmd.PostConnectionStatus      => PostConnectionStatus(userId, opt('status, js => ConnectionStatus(js.getString("status"))))
           case Cmd.PostSelfPicture           => PostSelfPicture(decodeOptAssetId('asset))
-          case Cmd.PostSelfName              => PostSelfName(decodeString('name))
+          case Cmd.PostSelfName              => PostSelfName('name)
           case Cmd.PostSelfAccentColor       => PostSelfAccentColor(AccentColor(decodeInt('color)))
           case Cmd.PostAvailability          => PostAvailability(Availability(decodeInt('availability)))
           case Cmd.PostMessage               => PostMessage(convId, messageId, 'time)
@@ -368,7 +369,7 @@ object SyncRequest {
         }
       } catch {
         case NonFatal(e) =>
-          error(s"Error reading SyncCommand: $cmd", e)
+          error(l"Error reading SyncCommand: ${showString(cmd)}", e)
           TrackingService.exception(e, s"Error reading SyncCommand: $cmd")
           Unknown
       }

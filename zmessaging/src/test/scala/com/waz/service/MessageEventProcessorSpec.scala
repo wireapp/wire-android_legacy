@@ -135,7 +135,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
       clock.advance(1.second)
       testRound(MemberLeaveEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded.toSeq))
       clock.advance(1.second)
-      testRound(RenameConversationEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, "new name"))
+      testRound(RenameConversationEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, Name("new name")))
     }
 
     scenario("System message events are overridden if only local version is present") {
@@ -149,7 +149,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
       val localMsg = MessageData(MessageId(), conv.id, RENAME, selfUserId, time = RemoteInstant(clock.instant()), localTime = LocalInstant(clock.instant()), state = Status.PENDING)
 
       clock.advance(1.second) //some time later, we get the response from the backend
-      val event = RenameConversationEvent(conv.remoteId, RemoteInstant(clock.instant()), selfUserId, "new name")
+      val event = RenameConversationEvent(conv.remoteId, RemoteInstant(clock.instant()), selfUserId, Name("new name"))
 
       (storage.getMessages _).expects(*).returning(Future.successful(Seq.empty))
       (storage.hasSystemMessage _).expects(conv.id, event.time, RENAME, selfUserId).returning(Future.successful(false))

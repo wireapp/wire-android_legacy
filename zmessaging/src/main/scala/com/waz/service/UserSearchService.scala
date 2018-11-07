@@ -18,20 +18,19 @@
 package com.waz.service
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.content._
+import com.waz.log.ZLog2._
 import com.waz.model.SearchQuery.{Recommended, RecommendedHandle}
 import com.waz.model.UserData.{ConnectionStatus, UserDataDao}
 import com.waz.model.{SearchQuery, _}
+import com.waz.service.ZMessaging.clock
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService}
 import com.waz.service.teams.TeamsService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.UserSearchClient.UserSearchEntry
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
-import com.waz.service.ZMessaging.clock
 import com.waz.utils.events._
-import org.threeten.bp.Instant
 
 import scala.collection.immutable.Set
 import scala.collection.{breakOut, mutable}
@@ -240,13 +239,13 @@ class UserSearchService(selfUserId:           UserId,
       updated <- userService.updateUsers(results)
       _       <- userService.syncIfNeeded(updated.map(_.id), Duration.Zero)
       ids     = results.map(_.id)(breakOut): Vector[UserId]
-      _       = verbose(s"updateSearchResults($query, ${results.map(_.handle)})")
+      _       = verbose(l"updateSearchResults($query, ${results.map(_.handle)})")
       _       <- queryCache.updateOrCreate(query, updating(ids), SearchQueryCache(query, clock.instant(), Some(ids)))
     } yield ()
 
     query match {
       case RecommendedHandle(handle) if !results.map(_.handle).exists(_.exactMatchQuery(handle)) =>
-        debug(s"exact match requested: $handle")
+        debug(l"exact match requested")
         sync.exactMatchHandle(Handle(Handle.stripSymbol(handle)))
       case _ =>
     }
@@ -258,10 +257,10 @@ class UserSearchService(selfUserId:           UserId,
     val query = RecommendedHandle(handle.withSymbol)
     def updating(id: UserId)(cached: SearchQueryCache) = cached.copy(query, clock.instant(), Some(cached.entries.map(_.toSet ++ Set(userId)).getOrElse(Set(userId)).toVector))
 
-    debug(s"update exact match: $handle, $userId")
+    debug(l"update exact match: $handle, $userId")
     usersStorage.get(userId).collect {
       case Some(user) =>
-        debug(s"received exact match: ${user.handle}")
+        debug(l"received exact match: ${user.handle}")
         exactMatchUser ! Some(user)
         queryCache.updateOrCreate(query, updating(userId), SearchQueryCache(query, clock.instant(), Some(Vector(userId))))
     }(Threading.Background)

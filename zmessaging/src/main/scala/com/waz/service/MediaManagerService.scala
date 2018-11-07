@@ -20,7 +20,7 @@ package com.waz.service
 import android.content.Context
 import android.net.Uri
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.content.Preferences.Preference.PrefCodec.IntensityLevelCodec
 import com.waz.content.UserPreferences.Sounds
 import com.waz.media.manager.config.Configuration
@@ -58,7 +58,7 @@ class DefaultMediaManagerService(context: Context) extends MediaManagerService {
 
       override def onPlaybackRouteChanged(route: Int): Unit = {
         val pbr = PlaybackRoute.fromAvsIndex(route)
-        debug(s"onPlaybackRouteChanged($pbr)")
+        debug(l"onPlaybackRouteChanged($pbr)")
         self.onPlaybackRouteChanged ! pbr
       }
     })
@@ -68,7 +68,7 @@ class DefaultMediaManagerService(context: Context) extends MediaManagerService {
 
   mediaManager.onFailure {
     case NonFatal(e) =>
-      error("MediaManager was not instantiated properly", e)
+      error(l"MediaManager was not instantiated properly", e)
   }
 
   val isSpeakerOn = RefreshingSignal(mediaManager.map(_.isLoudSpeakerOn), onPlaybackRouteChanged)
@@ -77,7 +77,7 @@ class DefaultMediaManagerService(context: Context) extends MediaManagerService {
     case None => Signal.const(IntensityLevelCodec.default)
     case Some(z) => z.userPrefs.preference(Sounds).signal
   }).getOrElse {
-    warn("No CurrentAccounts available - this may be being called too early...")
+    warn(l"No CurrentAccounts available - this may be being called too early...")
     Signal.const(IntensityLevelCodec.default)
   }
 

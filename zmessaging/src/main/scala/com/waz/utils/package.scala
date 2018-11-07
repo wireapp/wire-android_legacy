@@ -42,7 +42,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.language.{higherKinds, implicitConversions}
-import scala.math.{Ordering, abs}
+import scala.math.Ordering
 import scala.util.{Failure, Success, Try}
 import scala.{PartialFunction => =/>}
 
@@ -86,7 +86,6 @@ package object utils {
   }
   def max(d1: Date, d2: Date): Date = if (d2.after(d1)) d2 else d1
   def min(d1: Date, d2: Date): Date = if (d2.after(d1)) d1 else d2
-  def nanoNow = System.nanoTime.nanos
 
   @tailrec
   def compareAndSet[A](ref: AtomicReference[A])(updater: A => A): A = {
@@ -183,13 +182,6 @@ package object utils {
     def fromEpoch = Instant.ofEpochMilli(a.toMillis)
     def asJava = bp.Duration.ofNanos(a.toNanos)
     def elapsedSince(b: bp.Instant): Boolean = b plus a isBefore now
-    def untilNow = {
-      val n = (nanoNow - a).toNanos.toDouble
-      if (abs(n) > 1e9d) s"${n.toDouble / 1e9d} s"
-      else if (abs(n) > 1e6d) s"${n.toDouble / 1e6d} ms"
-      else if (abs(n) > 1e3d) s"${n.toDouble / 1e3d} µs"
-      else s"$n ns"
-    }
     def fromNow(): LocalInstant = LocalInstant.Now + a
   }
 

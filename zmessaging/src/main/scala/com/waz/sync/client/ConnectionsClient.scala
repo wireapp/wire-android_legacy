@@ -38,7 +38,7 @@ import scala.util.control.NonFatal
 trait ConnectionsClient {
   def loadConnections(start: Option[UserId] = None, pageSize: Int = PageSize): ErrorOrResponse[Seq[UserConnectionEvent]]
   def loadConnection(id: UserId): ErrorOrResponse[UserConnectionEvent]
-  def createConnection(user: UserId, name: String, message: String): ErrorOrResponse[UserConnectionEvent]
+  def createConnection(user: UserId, name: Name, message: String): ErrorOrResponse[UserConnectionEvent]
   def updateConnection(user: UserId, status: ConnectionStatus): ErrorOrResponse[Option[UserConnectionEvent]]
 }
 
@@ -84,7 +84,7 @@ class ConnectionsClientImpl(implicit
       .executeSafe
   }
 
-  override def createConnection(user: UserId, name: String, message: String): ErrorOrResponse[UserConnectionEvent] = {
+  override def createConnection(user: UserId, name: Name, message: String): ErrorOrResponse[UserConnectionEvent] = {
     val jsonData = Json("user" -> user.toString, "name" -> name, "message" -> message)
     Request.Post(relativePath = ConnectionsPath, body = jsonData)
       .withResultType[UserConnectionEvent]

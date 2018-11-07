@@ -17,12 +17,11 @@
  */
 package com.waz.service.messages
 
-import java.util.NoSuchElementException
-
-import com.waz.ZLog._
+import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message.Status.DELIVERED
 import com.waz.api.Message.Type._
 import com.waz.content.{ConversationStorage, MessagesStorage}
+import com.waz.log.ZLog2._
 import com.waz.model.sync.ReceiptType
 import com.waz.model.{MessageId, UserId}
 import com.waz.service.conversation.ConversationsService
@@ -35,7 +34,6 @@ import scala.concurrent.Future.successful
 
 class ReceiptService(messages: MessagesStorage, convsStorage: ConversationStorage, sync: SyncServiceHandle, selfUserId: UserId, convsService: ConversationsService) {
   import EventContext.Implicits.global
-  import ImplicitTag._
   import Threading.Implicits.Background
 
   messages.onAdded { msgs =>
@@ -52,7 +50,7 @@ class ReceiptService(messages: MessagesStorage, convsStorage: ConversationStorag
 
   def processReceipts(receipts: Seq[MessageId]) =
     if (receipts.nonEmpty) {
-      debug(s"received receipts: $receipts")
+      debug(l"received receipts: $receipts")
       messages.updateAll2(receipts, _.copy(state = DELIVERED))
     } else successful(Seq.empty)
 }

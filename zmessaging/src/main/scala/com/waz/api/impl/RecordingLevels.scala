@@ -20,7 +20,7 @@ package com.waz.api.impl
 import com.waz.api
 import com.waz.utils.events.{AggregatingSignal, EventStream, Signal}
 import com.waz.utils.returning
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.ZLog.ImplicitTag._
 
 import scala.concurrent.Future
@@ -45,7 +45,7 @@ case class AudioOverview(allLevels: Option[Vector[Float]]) extends api.AudioOver
   override def isEmpty: Boolean = allLevels.forall(_.isEmpty)
 
   override def getLevels(numberOfLevels: Int): Array[Float] = {
-    verbose(s"getLevels($numberOfLevels) from $toString")
+    verbose(l"getLevels($numberOfLevels)")
     allLevels.filterNot(_.isEmpty).fold(Array.fill(numberOfLevels)(0f)) { levels =>
       if (numberOfLevels == 0) Array.empty[Float]
       else if (levels.length == 1) Array.fill(numberOfLevels)(levels(0))
@@ -61,8 +61,6 @@ case class AudioOverview(allLevels: Option[Vector[Float]]) extends api.AudioOver
       }
     }
   }
-
-  override lazy val toString: String = s"""AudioOverview(${allLevels.map(l => s"${l.size} level(s)")})"""
 }
 
 class LinearInterpolation(controlPoints: Vector[Float]) extends PartialFunction[Float, Float] {

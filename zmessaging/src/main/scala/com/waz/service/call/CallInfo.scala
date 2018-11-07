@@ -19,7 +19,7 @@ package com.waz.service.call
 
 import com.sun.jna.Pointer
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
+import com.waz.log.ZLog2._
 import com.waz.model.{ConvId, GenericMessage, LocalInstant, UserId}
 import com.waz.service.call.Avs.AvsClosedReason.reasonString
 import com.waz.service.call.Avs.VideoState._
@@ -53,32 +53,6 @@ case class CallInfo(convId:             ConvId,
                     endReason:          Option[AvsClosedReason]           = None,
                     outstandingMsg:     Option[(GenericMessage, Pointer)] = None, //Any messages we were unable to send due to conv degradation
                     shouldRing:         Boolean                           = true) {
-
-  override def toString: String =
-    s"""
-       |CallInfo:
-       | convId:             $convId
-       | account:            $account
-       | isGroup:            $isGroup
-       | caller:             $caller
-       | state:              $state
-       | prevState:          $prevState
-       | others:             $others
-       | maxParticipants:    $maxParticipants
-       | muted:              $muted
-       | isCbrEnabled:       $isCbrEnabled
-       | startedAsVideoCall: $startedAsVideoCall
-       | videoSendState:     $videoSendState
-       | videoReceiveStates: $videoReceiveStates
-       | wasVideoToggled:    $wasVideoToggled
-       | startTime:          $startTime
-       | joinedTime:         $joinedTime
-       | estabTime:          $estabTime
-       | endTime:            $endTime
-       | endReason:          ${endReason.map(reasonString)}
-       | hasOutstandingMsg:  ${outstandingMsg.isDefined}
-       | shouldRing:         $shouldRing
-    """.stripMargin
 
   val duration = estabTime match {
     case Some(est) => ClockSignal(1.second).map(_ => Option(between(est.instant, LocalInstant.Now.instant)))
@@ -134,7 +108,7 @@ case class CallInfo(convId:             ConvId,
       if (userId == account) this.copy(videoSendState = videoState)
       else this.copy(videoReceiveStates = this.videoReceiveStates + (userId -> videoState))
 
-    verbose(s"updateVideoSendState: $userId, $videoState, newCall: $newCall")
+    verbose(l"updateVideoSendState: $userId, $videoState, newCall: $newCall")
 
     val wasVideoToggled = newCall.wasVideoToggled || (newCall.isVideoCall != this.isVideoCall)
     newCall.copy(wasVideoToggled = wasVideoToggled)
@@ -144,7 +118,7 @@ case class CallInfo(convId:             ConvId,
 
 object CallInfo {
 
-  sealed trait CallState
+  sealed trait CallState extends SafeToLog
 
   object CallState {
 

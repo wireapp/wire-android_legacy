@@ -20,7 +20,8 @@ package com.waz.service.push
 import android.app.AlarmManager
 import android.content.Context
 import com.waz.ZLog
-import com.waz.ZLog._
+import com.waz.ZLog.LogTag
+import com.waz.log.ZLog2._
 import com.waz.api.Message
 import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.NotificationsHandler.NotificationType._
@@ -62,13 +63,13 @@ class GlobalNotificationsServiceImpl extends GlobalNotificationsService {
     Option(ZMessaging.currentAccounts) match {
       case Some(accountsService) =>
         accountsService.zmsInstances.flatMap { zs =>
-          verbose(s"zmsInstances count: ${zs.size}")
+          verbose(l"zmsInstances count: ${zs.size}")
           val seq = zs.map { z =>
             val service = z.notifications
             val notifications = service.notifications
             val shouldBeSilent = service.otherDeviceActiveTime.map { t =>
               val timeDiff = clock.instant.toEpochMilli - t.toEpochMilli
-              verbose(s"otherDeviceActiveTime: $t, current time: ${clock.instant}, timeDiff: ${timeDiff.millis.toSeconds}")(service.logTag)
+              verbose(l"otherDeviceActiveTime: $t, current time: ${clock.instant}, timeDiff: ${timeDiff.millis.toSeconds}")(service.logTag)
               timeDiff < NotificationsAndroidService.checkNotificationsTimeout.toMillis
             }
 
@@ -76,7 +77,7 @@ class GlobalNotificationsServiceImpl extends GlobalNotificationsService {
               silent <- shouldBeSilent.orElse(Signal.const(false))
               nots <- notifications
             } yield {
-              verbose(s"groupedNotifications for account: ${z.selfUserId} -> (silent: $silent, notsCount: ${nots.size})")
+              verbose(l"groupedNotifications for account: ${z.selfUserId} -> (silent: $silent, notsCount: ${nots.size})")
               z.selfUserId -> (silent, nots)
             }
           }.toSeq
@@ -84,7 +85,7 @@ class GlobalNotificationsServiceImpl extends GlobalNotificationsService {
           Signal.sequence(seq: _*).map(_.toMap)
         }
       case None =>
-        error("No AccountsService available")
+        error(l"No AccountsService available")
         Signal.empty
     }
 
@@ -96,7 +97,7 @@ class GlobalNotificationsServiceImpl extends GlobalNotificationsService {
           case None      => Future.successful({})
         }
       case None =>
-        error("No AccountsService available")
+        error(l"No AccountsService available")
         Future.successful({})
     }
   }
@@ -124,7 +125,7 @@ class NotificationService(context:         Context,
   val alarmService = Option(context) match {
     case Some(c) => Some(c.getSystemService(Context.ALARM_SERVICE).asInstanceOf[AlarmManager])
     case _ =>
-      warn("No context, could not start alarm service")
+      warn(l"No context, could not start alarm service")
       None
   }
 
@@ -158,7 +159,7 @@ class NotificationService(context:         Context,
       case ev @ UserConnectionEvent(_, _, userId, _, ConnectionStatus.Accepted, time, name) =>
         NotificationData(NotId(CONNECT_ACCEPTED, userId), "", ConvId(userId.str), userId, CONNECT_ACCEPTED, time = time, userName = name)
       case ContactJoinEvent(userId, _) =>
-        verbose("ContactJoinEvent")
+        verbose(l"ContactJoinEvent")
         NotificationData(NotId(CONTACT_JOIN, userId), "", ConvId(userId.str), userId, CONTACT_JOIN)
     })
   })
@@ -188,7 +189,7 @@ class NotificationService(context:         Context,
     removeNotifications { n =>
       val lastRead = lrMap.getOrElse(n.conv, RemoteInstant.Epoch)
       val removeIf = !lastRead.isBefore(n.time)
-      verbose(s"Removing notif(${n.id}) if lastRead: $lastRead is not before n.time: ${n.time}?: $removeIf")
+      verbose(l"Removing notif(${n.id}) if lastRead: $lastRead is not before n.time: ${n.time}?: $removeIf")
       removeIf
     }
   }
@@ -281,19 +282,19 @@ class NotificationService(context:         Context,
         val lastRead = lrMap.get(n.conv)
         val sourceVisible = notificationSourceVisible.get(userId).exists(_.contains(n.conv))
         val filter = n.user != userId && lastRead.forall(_.isBefore(n.time)) && !sourceVisible
-        verbose(s"Inserting notif(${n.id}) if conv lastRead: $lastRead isBefore ${n.time}?: $filter")
+        verbose(l"Inserting notif(${n.id}) if conv lastRead: $lastRead isBefore ${n.time}?: $filter")
 
         filter
       })
-      _ = if (res.nonEmpty) verbose(s"inserted: ${res.size} notifications")
+      _ = if (res.nonEmpty) verbose(l"inserted: ${res.size} notifications")
     } yield res
 
   private def createNotifications(ns: Seq[NotificationData]): Future[Seq[NotificationInfo]] = {
-    verbose(s"createNotifications: ${ns.size}")
+    verbose(l"createNotifications: ${ns.size}")
     Future.traverse(ns) { data =>
-      verbose(s"processing notif: $data")
+      verbose(l"processing notif: $data")
       usersStorage.get(data.user).flatMap { user =>
-        val userName = user map (_.getDisplayName) filterNot (_.isEmpty) orElse data.userName
+        val userName = user.map(_.getDisplayName).filterNot(_.isEmpty).orElse(data.userName)
         val userPicture = user.flatMap(_.picture)
 
         data.msgType match {
@@ -318,7 +319,7 @@ class NotificationService(context:         Context,
 
               val groupConv = if (!conv.exists(_.team.isDefined)) conv.exists(_.convType == ConversationType.Group)
               else membersCount > 2
-              verbose(s"processing notif complete: ${notificationData.id}")
+              verbose(l"processing notif complete: ${notificationData.id}")
               val hasMention = data.mentions.contains(userId)
               if (conv.exists(_.muted.onlyMentionsAllowed) && !hasMention && !data.isQuote) {
                 Option.empty[NotificationInfo]
@@ -356,8 +357,8 @@ object NotificationService {
                               time: RemoteInstant,
                               message: String,
                               convId: ConvId,
-                              convName: Option[String]           = None,
-                              userName: Option[String]           = None,
+                              convName: Option[Name]             = None,
+                              userName: Option[Name]             = None,
                               userPicture: Option[AssetId]       = None,
                               isGroupConv: Boolean               = false,
                               isUserMentioned: Boolean           = false,

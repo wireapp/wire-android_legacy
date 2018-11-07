@@ -72,7 +72,7 @@ import scala.language.postfixOps
 
     scenario("the empty string always matches") {
       forAll { key: SearchKey =>
-        SearchKey.empty.isAtTheStartOfAnyWordIn(key) shouldBe true
+        SearchKey.Empty.isAtTheStartOfAnyWordIn(key) shouldBe true
       }
     }
   }

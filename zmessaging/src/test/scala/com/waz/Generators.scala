@@ -26,7 +26,6 @@ import com.waz.model.ConversationData.{ConversationType, UnreadCount}
 import com.waz.model.GenericContent.{EncryptionAlgorithm, Text}
 import com.waz.model.SearchQuery.{Recommended, TopPeople}
 import com.waz.model.UserData.ConnectionStatus
-import com.waz.model.UserData.ConnectionStatus.{Accepted, PendingFromOther}
 import com.waz.model._
 import com.waz.model.messages.media._
 import com.waz.model.otr.ClientId
@@ -49,18 +48,6 @@ import scala.concurrent.duration.{FiniteDuration, _}
 object Generators {
   import MediaAssets._
 
-  implicit lazy val genGcmEvent: Gen[Event] = {
-    implicit val arbConnectionStatus: Arbitrary[ConnectionStatus] = Arbitrary(oneOf(PendingFromOther, Accepted))
-
-    oneOf[Event](
-      resultOf(UserConnectionEvent.apply _),
-      resultOf(ContactJoinEvent),
-      resultOf(MemberJoinEvent),
-      resultOf(MemberLeaveEvent),
-      resultOf(RenameConversationEvent)
-    )
-  }
-
   lazy val alphaNumStr = listOf(alphaNumChar).map(_.mkString)
 
   implicit lazy val arbUri: Arbitrary[URI] = Arbitrary(for {
@@ -68,47 +55,49 @@ object Generators {
     path <- alphaNumStr
   } yield URI.parse(s"$scheme://$path"))
 
+  implicit lazy val arbName = Arbitrary(resultOf((Name)))
+
   implicit lazy val arbConversationData: Arbitrary[ConversationData] = Arbitrary(for {
-    id <- arbitrary[ConvId]
-    remoteId <- arbitrary[RConvId]
-    name <- arbitrary[Option[String]]
-    creator <- arbitrary[UserId]
-    convType <- arbitrary[ConversationType]
+    id            <- arbitrary[ConvId]
+    remoteId      <- arbitrary[RConvId]
+    name          <- arbitrary[Option[Name]]
+    creator       <- arbitrary[UserId]
+    convType      <- arbitrary[ConversationType]
     lastEventTime <- arbitrary[RemoteInstant]
-    team  <- arbitrary[Option[TeamId]]
-    isActive <- arbitrary[Boolean]
-    muted <- oneOf(MuteSet.AllMuted, MuteSet.OnlyMentionsAllowed, MuteSet.AllAllowed)
-    muteTime <- arbitrary[RemoteInstant]
-    archived <- arbitrary[Boolean]
-    archiveTime <- arbitrary[RemoteInstant]
-    cleared <- arbitrary[Option[RemoteInstant]]
-    generatedName <- arbitrary[String]
-    searchKey = name map SearchKey
-    unreadCount <- arbitrary[UnreadCount]
-    failedCount <- posNum[Int]
-    missedCall <- arbitrary[Option[MessageId]]
+    team          <- arbitrary[Option[TeamId]]
+    isActive      <- arbitrary[Boolean]
+    muted         <- oneOf(MuteSet.AllMuted, MuteSet.OnlyMentionsAllowed, MuteSet.AllAllowed)
+    muteTime      <- arbitrary[RemoteInstant]
+    archived      <- arbitrary[Boolean]
+    archiveTime   <- arbitrary[RemoteInstant]
+    cleared       <- arbitrary[Option[RemoteInstant]]
+    generatedName <- arbitrary[Name]
+    searchKey     = name.map(SearchKey(_))
+    unreadCount   <- arbitrary[UnreadCount]
+    failedCount   <- posNum[Int]
+    missedCall    <- arbitrary[Option[MessageId]]
     incomingKnock <- arbitrary[Option[MessageId]]
     hidden <- arbitrary[Boolean]
   } yield ConversationData(id, remoteId, name, creator, convType, team, lastEventTime, isActive, RemoteInstant.Epoch, muted, muteTime, archived, archiveTime, cleared, generatedName, searchKey, unreadCount, failedCount, missedCall, incomingKnock, hidden))
 
   implicit lazy val arbUserData: Arbitrary[UserData] = Arbitrary(for {
-    id <- arbitrary[UserId]
-    teamId <- arbitrary[Option[TeamId]]
-    name <- arbitrary[String]
-    email <- arbitrary[Option[EmailAddress]]
-    phone <- arbitrary[Option[PhoneNumber]]
-    trackingId <- arbitrary[Option[TrackingId]]
-    picture <- arbitrary[Option[AssetId]]
-    accent <- arbitrary[Int]
-    searchKey = SearchKey(name)
-    connection <- arbitrary[ConnectionStatus]
+    id                    <- arbitrary[UserId]
+    teamId                <- arbitrary[Option[TeamId]]
+    name                  <- arbitrary[Name]
+    email                 <- arbitrary[Option[EmailAddress]]
+    phone                 <- arbitrary[Option[PhoneNumber]]
+    trackingId            <- arbitrary[Option[TrackingId]]
+    picture               <- arbitrary[Option[AssetId]]
+    accent                <- arbitrary[Int]
+    searchKey             = SearchKey(name)
+    connection            <- arbitrary[ConnectionStatus]
     connectionLastUpdated <- arbitrary[RemoteInstant]
-    connectionMessage <- arbitrary[Option[String]]
-    conversation <- arbitrary[Option[RConvId]]
-    relation <- arbitrary[Relation]
-    syncTimestamp <- arbitrary[Option[LocalInstant]]
-    displayName <- arbitrary[String]
-    handle <- arbitrary[Option[Handle]]
+    connectionMessage     <- arbitrary[Option[String]]
+    conversation          <- arbitrary[Option[RConvId]]
+    relation              <- arbitrary[Relation]
+    syncTimestamp         <- arbitrary[Option[LocalInstant]]
+    displayName           <- arbitrary[Name]
+    handle                <- arbitrary[Option[Handle]]
   } yield UserData(id, teamId, name, email, phone, trackingId, picture, accent, searchKey, connection, connectionLastUpdated, connectionMessage, conversation, relation, syncTimestamp, displayName, handle = handle))
 
   implicit lazy val arbOpenGraphData: Arbitrary[OpenGraphData] = Arbitrary(resultOf(OpenGraphData))
@@ -279,7 +268,7 @@ object Generators {
     picture <- arbitrary[Option[AssetData]]
     trackingId <- arbitrary[Option[TrackingId]]
     accent <- arbitrary[Option[Int]]
-  } yield UserInfo(userId, name, accent, email, phone, Some(picture.toSeq), trackingId))
+  } yield UserInfo(userId, name.map(Name), accent, email, phone, Some(picture.toSeq), trackingId))
 
   implicit lazy val arbAddressBook: Arbitrary[AddressBook] = Arbitrary(for {
     selfHashes <- arbitrary[Seq[String]] map (_ map sha2)

@@ -21,7 +21,7 @@ import java.io._
 import java.util.Locale
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.api.ZmsVersion
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.internalError
@@ -61,7 +61,7 @@ class AccountManager(val userId:   UserId,
 
   implicit val dispatcher = new SerialDispatchQueue()
   implicit val accountContext: AccountContext = new AccountContext(userId, accounts)
-  verbose(s"Creating for: $userId, team: $teamId, initialSelf: $initialSelf, startJustAfterBackup: $startedJustAfterBackup, isLogin: $isLogin")
+  verbose(l"Creating for: $userId, team: $teamId, initialSelf: $initialSelf, startJustAfterBackup: $startedJustAfterBackup, isLogin: $isLogin")
 
   private def doAfterBackupCleanup() =
     Future.traverse(List(
@@ -120,7 +120,7 @@ class AccountManager(val userId:   UserId,
       cId     <- clientId.collect { case Some(id) => id }.head
       Some(_) <- checkCryptoBox()
     } yield {
-      verbose(s"Creating new ZMessaging instance for $userId, $cId, $teamId, service: $this")
+      verbose(l"Creating new ZMessaging instance for $userId, $cId, $teamId")
       global.factory.zmessaging(teamId, cId, this, storage, cryptoBox)
     }
   }
@@ -144,7 +144,7 @@ class AccountManager(val userId:   UserId,
   private var hasClient = false
   otrCurrentClient.map(_.isDefined) { exists =>
     if (hasClient && !exists) {
-      info(s"client has been removed on backend, logging out")
+      info(l"client has been removed on backend, logging out")
       global.trackingService.loggedOut(LoggedOutEvent.RemovedClient, userId)
       logoutAndResetClient()
     }
@@ -164,7 +164,7 @@ class AccountManager(val userId:   UserId,
     } yield fingerprint
 
   def getOrRegisterClient(): ErrorOr[ClientRegistrationState] = {
-    verbose(s"registerClient()")
+    verbose(l"registerClient()")
 
     def getSelfClients: ErrorOr[Unit] = {
       for {
@@ -176,7 +176,7 @@ class AccountManager(val userId:   UserId,
     Serialized.future("register-client", this) {
       clientState.head.flatMap {
         case st@Registered(_) =>
-          verbose("Client already registered, returning")
+          verbose(l"Client already registered, returning")
           Future.successful(Right(st))
         case _ =>
           for {
@@ -285,12 +285,12 @@ class AccountManager(val userId:   UserId,
     } yield ()
 
   def setEmail(email: EmailAddress): ErrorOr[Unit] = {
-    verbose(s"setEmail: $email")
+    verbose(l"setEmail: $email")
     credentialsClient.updateEmail(email).future
   }
 
   def setPassword(password: Password): ErrorOr[Unit] = {
-    verbose(s"setPassword: $password")
+    verbose(l"setPassword: $password")
     credentialsClient.updatePassword(password, None).future.flatMap {
       case Left(err) => Future.successful(Left(err))
       case Right(_) => global.accountsStorage.update(userId, _.copy(password = Some(password))).map(_ => Right({}))
@@ -299,7 +299,7 @@ class AccountManager(val userId:   UserId,
 
   //TODO should only have one request at a time?
   def checkEmailActivation(email: EmailAddress): ErrorOrResponse[Unit] = {
-    verbose(s"checkEmailActivation $email")
+    verbose(l"checkEmailActivation $email")
     CancellableFuture.lift(updateSelf).flatMap {
       case Right(user) if !user.email.contains(email) => CancellableFuture.delay(3.seconds).flatMap(_ => checkEmailActivation(email))
       case Right(_)                                   => CancellableFuture.successful(Right({}))
@@ -310,18 +310,18 @@ class AccountManager(val userId:   UserId,
   def hasPassword(): ErrorOrResponse[Boolean] = credentialsClient.hasPassword()
 
   def hasMarketingConsent: Future[Boolean] = {
-    verbose("hasMarketingConsent")
+    verbose(l"hasMarketingConsent")
     credentialsClient.hasMarketingConsent.map {
       case Right(result) => result
       case Left(err) =>
-        verbose(s"Error while getting hasMarketingConsent: $err")
+        verbose(l"Error while getting hasMarketingConsent: $err")
         false
     }.future
   }
 
   //receiving = None will set a preference so the app knows to ask again
   def setMarketingConsent(receiving: Option[Boolean]): ErrorOr[Unit] = {
-    verbose(s"setMarketingConsent: $receiving")
+    verbose(l"setMarketingConsent: $receiving")
     receiving match {
       case Some(v) =>
         val meta = global.metadata

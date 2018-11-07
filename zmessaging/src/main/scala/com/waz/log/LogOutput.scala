@@ -24,6 +24,7 @@ import scala.concurrent.Future
 
 trait LogOutput {
   val id: String
+  val showSafeOnly: Boolean
   def level: LogLevel = LogLevel.Verbose
 
   def log(str: String, level: InternalLog.LogLevel, tag: LogTag, ex: Option[Throwable] = None): Unit

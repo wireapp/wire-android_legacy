@@ -87,7 +87,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
         Future.successful(SyncResult(error))
     }
 
-  def postConversationName(id: ConvId, name: String): Future[SyncResult] =
+  def postConversationName(id: ConvId, name: Name): Future[SyncResult] =
     postConv(id) { conv => conversationsClient.postName(conv.remoteId, name).future }
 
   def postConversationMemberJoin(id: ConvId, members: Set[UserId]): Future[SyncResult] = withConversation(id) { conv =>
@@ -139,7 +139,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       conversationsClient.postConversationState(conv.remoteId, state).map(SyncResult(_))
     }
 
-  def postConversation(convId: ConvId, users: Set[UserId], name: Option[String], team: Option[TeamId], access: Set[Access], accessRole: AccessRole): Future[SyncResult] = {
+  def postConversation(convId: ConvId, users: Set[UserId], name: Option[Name], team: Option[TeamId], access: Set[Access], accessRole: AccessRole): Future[SyncResult] = {
     debug(s"postConversation($convId, $users, $name)")
     val (toCreate, toAdd) = users.splitAt(PostMembersLimit)
     conversationsClient.postConversation(toCreate, name, team, access, accessRole).future.flatMap {

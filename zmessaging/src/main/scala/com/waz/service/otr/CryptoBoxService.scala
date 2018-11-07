@@ -21,7 +21,7 @@ import java.io.File
 
 import android.content.Context
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.api.Verification
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.OtrLastPrekey
@@ -56,7 +56,7 @@ class CryptoBoxService(context: Context, userId: UserId, metadata: MetaDataServi
   }
 
   private def load = LoggedTry {
-    verbose("cryptobox directory created")
+    verbose(l"cryptobox directory created")
     cryptoBoxDir.mkdirs()
     CryptoBox.open(cryptoBoxDir.getAbsolutePath)
   } .toOption
@@ -70,7 +70,7 @@ class CryptoBoxService(context: Context, userId: UserId, metadata: MetaDataServi
     _cryptoBox.foreach(_.close())
     _cryptoBox = None
     IoUtils.deleteRecursively(cryptoBoxDir)
-    verbose(s"cryptobox directory deleted")
+    verbose(l"cryptobox directory deleted")
   }
 
   def close() = Future {

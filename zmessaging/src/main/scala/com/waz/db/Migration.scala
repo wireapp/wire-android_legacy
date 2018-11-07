@@ -18,8 +18,9 @@
 package com.waz.db
 
 import android.database.sqlite.SQLiteDatabase
-import com.waz.ZLog._
-import com.waz.service.ZMessaging
+import com.waz.ZLog
+import com.waz.ZLog.LogTag
+import com.waz.log.ZLog2._
 import com.waz.service.tracking.TrackingService
 import com.waz.utils.wrappers.DB
 
@@ -33,6 +34,10 @@ trait Migration { self =>
 }
 
 object Migration {
+
+  implicit val MigrationLogShow: LogShow[Migration] =
+    LogShow.create(m => s"Migration from ${m.fromVersion} to ${m.toVersion}")
+
   val AnyVersion = -1
 
   def apply(from: Int, to: Int)(migrations: (DB => Unit)*): Migration = new Migration {
@@ -53,7 +58,7 @@ object Migration {
  */
 class Migrations(migrations: Migration*) {
 
-  private implicit val logTag: LogTag = logTagFor[Migrations]
+  private implicit val logTag: LogTag = ZLog.logTagFor[Migrations]
   val toVersionMap = migrations.groupBy(_.toVersion)
 
   def plan(from: Int, to: Int): List[Migration] = {
@@ -95,13 +100,13 @@ class Migrations(migrations: Migration*) {
         case ms =>
           try {
             ms.foreach { m =>
-              verbose(s"applying migration: $m")
+              verbose(l"applying $m")
               m(db)
               db.execSQL(s"PRAGMA user_version = ${m.toVersion}")
             }
           } catch {
             case NonFatal(e) =>
-              error(s"Migration failed for $storage, from: $fromVersion to: $toVersion", e)
+              error(l"Migration failed for from: $fromVersion to: $toVersion", e)
               TrackingService.exception(e, s"Migration failed for $storage, from: $fromVersion to: $toVersion")
               fallback(storage, db)
           }
@@ -110,7 +115,7 @@ class Migrations(migrations: Migration*) {
   }
 
   def fallback(storage: DaoDB, db: SQLiteDatabase): Unit = {
-    warn(s"Dropping all data for $storage.")
+    warn(l"Dropping all data!!")
     storage.dropAllTables(db)
     storage.onCreate(db)
   }

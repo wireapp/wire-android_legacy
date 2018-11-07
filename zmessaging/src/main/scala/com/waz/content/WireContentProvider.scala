@@ -22,7 +22,7 @@ import android.database.{Cursor, MatrixCursor}
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.provider.OpenableColumns
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.cache.{CacheEntryData, Expiration}
 import com.waz.model.CacheKey
@@ -45,12 +45,12 @@ class WireContentProvider extends ContentProvider {
   private def getEntry(key: CacheKey) = Await.result(cache.getEntry(key), AsyncTimeout)
 
   override def getType(uri: Uri): String = {
-    verbose(s"getType($uri)")
+    verbose(l"getType($uri)")
     uri match {
       case CacheUriExtractor(key) =>
-        returning(getEntry(key).map(_.data.mimeType.str).orNull) { tpe => verbose(s"found entry type: $tpe")}
+        returning(getEntry(key).map(_.data.mimeType.str).orNull) { tpe => verbose(l"found entry type: ${showString(tpe)}")}
       case _ =>
-        verbose(s"content not found")
+        verbose(l"content not found")
         null
     }
   }
@@ -62,19 +62,19 @@ class WireContentProvider extends ContentProvider {
   override def delete(uri: Uri, selection: String, selectionArgs: Array[String]): Int = 0
 
   override def onCreate(): Boolean = {
-    verbose(s"onCreate")
+    verbose(l"onCreate")
     true
   }
 
   override def query(uri: Uri, projection: Array[String], selection: String, selectionArgs: Array[String], sortOrder: String): Cursor = {
-    verbose(s"query($uri)")
+    verbose(l"query($uri)")
     val columns = Option(projection).getOrElse(Array(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE))
     val result = new MatrixCursor(columns)
 
     uri match {
       case CacheUriExtractor(key) =>
         getEntry(key) foreach { entry =>
-          verbose(s"found entry: $entry")
+          verbose(l"found entry: $entry")
           result.addRow(columns map {
             case OpenableColumns.DISPLAY_NAME => entry.data.fileName.getOrElse("")
             case OpenableColumns.SIZE => java.lang.Long.valueOf(entry.length)
@@ -88,17 +88,17 @@ class WireContentProvider extends ContentProvider {
   }
 
   override def openFile(uri: Uri, mode: String): ParcelFileDescriptor = {
-    verbose(s"openFile($uri, $mode)")
+    verbose(l"openFile($uri, ${showString(mode)}")
     uri match {
       case CacheUriExtractor(key) =>
-        verbose(s"CacheUriExtractor: $key")
+        verbose(l"CacheUriExtractor: $key")
         Await.result(getDecryptedEntry(key), AsyncTimeout) match {
           case Some(entry) =>
             val file = entry.copyDataToFile()
-            verbose(s"found entry, copying data to file: ${file.getAbsolutePath}. Data contains: ${entry.length} bytes")
+            verbose(l"found entry, copying data to file: $file. Data contains: ${entry.length} bytes")
             ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
           case None =>
-            verbose(s"no cache entry found, attempting to open uri: $uri")
+            verbose(l"no cache entry found, attempting to open uri: $uri")
             super.openFile(uri, mode)
         }
       case _ =>
@@ -109,10 +109,10 @@ class WireContentProvider extends ContentProvider {
   private def getDecryptedEntry(key: CacheKey) =
     cache.getEntry(key) flatMap {
       case Some(entry) if entry.data.encKey.isDefined =>
-        verbose("getDecryptedEntry: entry was decrypted")
+        verbose(l"getDecryptedEntry: entry was decrypted")
         cache.getOrElse(CacheKey.decrypted(key), cache.addStream(key, entry.inputStream, entry.data.mimeType, entry.data.fileName, Some(cache.intCacheDir))(Expiration.in(12.hours))) map (Some(_))
       case res =>
-        verbose("getDecryptedEntry: entry was NOT decrypted")
+        verbose(l"getDecryptedEntry: entry was NOT decrypted")
         CancellableFuture successful res
     }
 

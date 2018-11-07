@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 import android.content.Context
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.{Message, MessageFilter}
 import com.waz.model.ConversationData.UnreadCount
@@ -154,7 +154,7 @@ class MessagesStorageImpl(context:     Context,
 
   convs.onUpdated.on(dispatcher) { _.foreach {
     case (prev, updated) if updated.lastRead != prev.lastRead =>
-      verbose(s"lastRead of conversation ${updated.id} updated to ${updated.lastRead}, will update unread count")
+      verbose(l"lastRead of conversation ${updated.id} updated to ${updated.lastRead}, will update unread count")
       msgsIndex(updated.id).map(_.updateLastRead(updated)).recoverWithLog()
     case _ => // ignore
   } }
@@ -178,7 +178,7 @@ class MessagesStorageImpl(context:     Context,
           }
 
         repliesNotMentionsCount.map { unreadReplies =>
-          verbose(s"unread: ${unread.size}, unread replies: $unreadReplies")
+          verbose(l"unread: ${unread.size}, unread replies: $unreadReplies")
           UnreadCount(
             normal   = unread.count(m => !m.isSystemMessage && m.msgType != Message.Type.KNOCK && !m.hasMentionOf(selfUserId)) - unreadReplies,
             call     = unread.count(_.msgType == Message.Type.MISSED_CALL),
@@ -244,7 +244,7 @@ class MessagesStorageImpl(context:     Context,
     getMessage(id) flatMap {
       case Some(msg) => delete(msg)
       case None =>
-        warn(s"No message found for: $id")
+        warn(l"No message found for: $id")
         Future.successful(())
     }
 
@@ -261,7 +261,7 @@ class MessagesStorageImpl(context:     Context,
     } yield ()
 
   def clear(conv: ConvId, upTo: RemoteInstant): Future[Unit] = {
-    verbose(s"clear($conv, $upTo)")
+    verbose(l"clear($conv, $upTo)")
     for {
       _ <- storage { MessageDataDao.deleteUpTo(conv, upTo)(_) } .future
       _ <- storage { MessageContentIndexDao.deleteUpTo(conv, upTo)(_) } .future
@@ -273,7 +273,7 @@ class MessagesStorageImpl(context:     Context,
   }
 
   override def deleteAll(conv: ConvId) = {
-    verbose(s"deleteAll($conv)")
+    verbose(l"deleteAll($conv)")
     for {
       _ <- storage { MessageDataDao.deleteForConv(conv)(_) } .future
       _ <- storage { MessageContentIndexDao.deleteForConv(conv)(_) } .future
@@ -290,7 +290,7 @@ class MessagesStorageImpl(context:     Context,
       case 0 => false
       case 1 => true
       case _ =>
-        warn("Found multiple system messages with given timestamp")
+        warn(l"Found multiple system messages with given timestamp")
         true
     }
   }

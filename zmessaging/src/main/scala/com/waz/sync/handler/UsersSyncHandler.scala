@@ -62,7 +62,7 @@ class UsersSyncHandler(assetSync: AssetSyncHandler,
       Future.successful(SyncResult(error))
   }
 
-  def postSelfName(name: String): Future[SyncResult] = usersClient.loadSelf().future flatMap {
+  def postSelfName(name: Name): Future[SyncResult] = usersClient.loadSelf().future flatMap {
     case Right(user) =>
       updatedSelfToSyncResult(usersClient.updateSelf(UserInfo(user.id, name = Some(name))))
     case Left(error) =>

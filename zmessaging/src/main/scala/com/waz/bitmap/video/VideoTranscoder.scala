@@ -24,7 +24,7 @@ import android.content.Context
 import android.media._
 import android.os.Build
 import android.view.Surface
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.ProgressIndicator.{ProgressData, ProgressReporter}
 import com.waz.bitmap.video.VideoTranscoder.CodecResponse._
@@ -133,8 +133,8 @@ abstract class BaseTranscoder(context: Context) extends VideoTranscoder {
       val inputChannels = Try(inputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)) getOrElse 1
       val inputSampleRate = Try(inputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)) getOrElse SAMPLE_RATE_48KHZ
 
-      verbose(s"inputChannels: $inputChannels")
-      verbose(s"inputSampleRate: $inputSampleRate")
+      verbose(l"inputChannels: $inputChannels")
+      verbose(l"inputSampleRate: $inputSampleRate")
 
       val (channels, sampleRate, resample) = (inputChannels, inputSampleRate) match {
         case (1, SAMPLE_RATE_8KHZ) =>
@@ -193,7 +193,7 @@ abstract class BaseTranscoder(context: Context) extends VideoTranscoder {
       if (meta.duration.getSeconds <= 0) MaxVideoBitRate // FIXME: metadata is not always reliable
       else math.min(MaxVideoBitRate, clamp((MaxFileSizeBytes * 8 / meta.duration.getSeconds).toInt))
 
-    verbose(s"input video frame rate: ${Try(inputFormat.getInteger(MediaFormat.KEY_FRAME_RATE))}")
+    verbose(l"input video frame rate: ${Try(inputFormat.getInteger(MediaFormat.KEY_FRAME_RATE))}")
 
     returning(MediaFormat.createVideoFormat(OUTPUT_VIDEO_MIME_TYPE, dim.width, dim.height)) { format =>
       format.setInteger(MediaFormat.KEY_COLOR_FORMAT, OUTPUT_VIDEO_COLOR_FORMAT)

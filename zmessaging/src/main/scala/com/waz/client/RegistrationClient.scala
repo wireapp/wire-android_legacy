@@ -33,7 +33,7 @@ trait RegistrationClient {
   def requestEmailCode(email: EmailAddress): ErrorOr[Unit] //for now only used for registration
   def requestVerificationEmail(email: EmailAddress): ErrorOr[Unit]
   def verifyRegistrationMethod(method: Either[PhoneNumber, EmailAddress], code: ConfirmationCode, dryRun: Boolean): ErrorOr[Option[(Cookie, Label)]]
-  def register(credentials: Credentials, name: String, teamName: Option[String]): ErrorOr[(UserInfo, Option[(Cookie, Label)])]
+  def register(credentials: Credentials, name: Name, teamName: Option[Name]): ErrorOr[(UserInfo, Option[(Cookie, Label)])]
 }
 
 class RegistrationClientImpl(implicit
@@ -45,7 +45,7 @@ class RegistrationClientImpl(implicit
   import RegistrationClientImpl._
   import com.waz.threading.Threading.Implicits.Background
 
-  override def register(credentials: Credentials, name: String, teamName: Option[String]): ErrorOr[(UserInfo, Option[(Cookie, Label)])] = {
+  override def register(credentials: Credentials, name: Name, teamName: Option[Name]): ErrorOr[(UserInfo, Option[(Cookie, Label)])] = {
     val label = Label()
     val params = JsonEncoder { o =>
       o.put("name", name)

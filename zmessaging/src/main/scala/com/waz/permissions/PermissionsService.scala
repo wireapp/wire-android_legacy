@@ -18,7 +18,7 @@
 package com.waz.permissions
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils.events.{EventStream, RefreshingSignal, Signal}
 
@@ -58,12 +58,12 @@ class PermissionsService() {
  *
     * @return
     */
-  def permissions(keys: ListSet[PermissionKey]): Signal[Set[Permission]] = {
+  def permissions(keys: ListSet[String]): Signal[Set[Permission]] = {
     knownKeys.mutate(_ ++ keys)
     permissions.map(_.filter(p => keys.contains(p.key)))
   }
 
-  def allPermissions(keys: ListSet[PermissionKey]): Signal[Boolean] = permissions(keys).map(_.forall(_.granted))
+  def allPermissions(keys: ListSet[String]): Signal[Boolean] = permissions(keys).map(_.forall(_.granted))
 
   private var currentRequest = Promise[ListSet[Permission]].success(ListSet.empty)
 
@@ -79,23 +79,22 @@ class PermissionsService() {
     *
     * @return the same set of permissions as requested, but providing their status too.
     */
-  def requestPermissions(keys: ListSet[PermissionKey]): Future[ListSet[Permission]] = {
-    verbose(s"requestPermissions: $keys")
+  def requestPermissions(keys: ListSet[String]): Future[ListSet[Permission]] = {
+    verbose(l"requestPermissions: ${keys.map(showString)}")
     knownKeys.mutate(_ ++ keys)
-    verbose(s"Known: ${knownKeys.currentValue}")
 
     def request() = {
       currentRequest = Promise()
       providerSignal.head.flatMap {
         case Some(prov) =>
-          verbose(s"requesting from provider: $prov")
+          verbose(l"requesting from provider: $prov")
           for {
             ps <- permissions.head
-            _ = verbose(s"current ps: $ps")
+            _ = verbose(l"current ps: $ps")
             fromKeys       = ps.filter(p => keys.contains(p.key))
             toRequest      = fromKeys.filter(!_.granted)
             alreadyGranted = fromKeys -- toRequest
-            _ = verbose(s"to request: $toRequest, already granted: $alreadyGranted")
+            _ = verbose(l"to request: $toRequest, already granted: $alreadyGranted")
             res <-
               if (toRequest.isEmpty) {
                 currentRequest.tryComplete(Try(toRequest))
@@ -106,17 +105,17 @@ class PermissionsService() {
             alreadyGranted ++ res
           }
         case None =>
-          warn("Currently no permissions provider - can't request permissions at this time. Assuming all are denied")
+          warn(l"Currently no permissions provider - can't request permissions at this time. Assuming all are denied")
           currentRequest.tryComplete(Try(keys.map(Permission(_))))
           currentRequest.future
       }
     }
 
     if (currentRequest.isCompleted) {
-      verbose("no outstanding requests")
+      verbose(l"no outstanding requests")
       request()
     } else {
-      verbose("outstanding request, waiting for it to finish first")
+      verbose(l"outstanding request, waiting for it to finish first")
       currentRequest.future.flatMap(_ => request())
     }
   }
@@ -127,7 +126,7 @@ class PermissionsService() {
   }
 
   //Convenience method that returns (a Future of) true if all permissions were granted, and false if not.
-  def requestAllPermissions(keys: ListSet[PermissionKey]): Future[Boolean] =
+  def requestAllPermissions(keys: ListSet[String]): Future[Boolean] =
     if (keys.isEmpty) Future.successful(true) else requestPermissions(keys).map(ps => ps.forall(_.granted) && ps.nonEmpty)(Threading.Background)
 
   //Non-blocking getter for java
@@ -141,19 +140,18 @@ class PermissionsService() {
 
 object PermissionsService {
 
+  type PermissionKey = String
+
   trait PermissionsCallback {
     def onPermissionResult(granted: Boolean): Unit
   }
 
-  type PermissionKey = String
-
-  trait PermissionProvider {
+  trait PermissionProvider extends SafeToLog {
 
     def requestPermissions(ps: ListSet[Permission]): Unit
 
     def hasPermissions(ps: ListSet[Permission]): ListSet[Permission]
   }
 
-  case class Permission(key: PermissionKey, granted: Boolean = false)
-
+  case class Permission(key: PermissionKey, granted: Boolean = false) extends SafeToLog
 }

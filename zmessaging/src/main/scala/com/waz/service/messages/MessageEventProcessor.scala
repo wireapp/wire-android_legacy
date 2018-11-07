@@ -19,9 +19,9 @@ package com.waz.service.messages
 
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.{error, verbose, warn}
 import com.waz.api.{Message, Verification}
-import com.waz.content.{AssetsStorage, MessagesStorage}
+import com.waz.content.MessagesStorage
+import com.waz.log.ZLog2._
 import com.waz.model.AssetMetaData.Image.Tag.{Medium, Preview}
 import com.waz.model.AssetStatus.{UploadCancelled, UploadFailed}
 import com.waz.model.GenericContent.{Asset, Calling, Cleared, Ephemeral, ImageAsset, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Receipt, Text}
@@ -53,9 +53,9 @@ class MessageEventProcessor(selfUserId:          UserId,
   private implicit val ec = EventContext.Global
 
   val messageEventProcessingStage = EventScheduler.Stage[MessageEvent] { (convId, events) =>
-    verbose(s"got events to process: $events")
+    verbose(l"got events to process: $events")
     convs.processConvWithRemoteId(convId, retryAsync = true) { conv =>
-      verbose(s"processing events for conv: $conv, events: $events")
+      verbose(l"processing events for conv: $conv, events: $events")
       processEvents(conv, events)
     }
   }
@@ -65,10 +65,6 @@ class MessageEventProcessor(selfUserId:          UserId,
       case Some(original) =>
         replyHashing.hashMessage(original).map { hash =>
           val newValidity = m.quoteHash.contains(hash)
-          verbose(s""""
-            checkReplyHashes for ${(m.id, m.contentString, original.time, m.quote, m.quoteValidity, m.quoteHash.map(_.hexString))},
-            calculated hash is ${hash.hexString}, the new quote validity is $newValidity
-           """)
           if (m.quoteValidity != newValidity) m.copy(quoteValidity = newValidity) else m
         }
       case None =>
@@ -94,7 +90,7 @@ class MessageEventProcessor(selfUserId:          UserId,
     for {
       as    <- updateAssets(toProcess)
       msgs  <- Future.sequence(toProcess map { createMessage(conv, _) } filter (_ != MessageData.Empty) map checkReplyHashes)
-      _     = verbose(s"messages from events: ${msgs.map(m => (m.id, m.msgType, m.mentions, m.quote, m.quoteValidity))}")
+      _     = verbose(l"messages from events: ${msgs.map(m => m.id -> m.msgType)}")
       _     <- convsService.addUnexpectedMembersToConv(conv.id, potentiallyUnexpectedMembers)
       res   <- content.addMessages(conv.id, msgs)
       _     <- updateLastReadFromOwnMessages(conv.id, msgs)
@@ -121,18 +117,18 @@ class MessageEventProcessor(selfUserId:          UserId,
     //For assets v3, the RAssetId will be contained in the proto content. For v2, it will be passed along with in the GenericAssetEvent
     //A defined convId marks that the asset is a v2 asset.
     def update(id: Uid, convId: Option[RConvId], ct: Any, v2RId: Option[RAssetId], data: Option[Array[Byte]]): Future[Seq[AssetData]] = {
-      verbose(s"update asset for event: $id, convId: $convId, ct: $ct, v2RId: $v2RId, data: $data")
+      verbose(l"update asset for event: $id, convId: $convId")
 
       (ct, v2RId) match {
         case (Asset(a@AssetData.WithRemoteId(_), preview), _) =>
           val asset = a.copy(id = AssetId(id.str))
-          verbose(s"Received asset v3: $asset with preview: $preview")
+          verbose(l"Received asset v3: $asset with preview: $preview")
           saveAssetAndPreview(asset, preview)
         case (Text(_, _, linkPreviews, _), _) =>
           Future.sequence(linkPreviews.zipWithIndex.map {
             case (LinkPreview.WithAsset(a@AssetData.WithRemoteId(_)), index) =>
               val asset = a.copy(id = if (index == 0) AssetId(id.str) else AssetId())
-              verbose(s"Received link preview asset: $asset")
+              verbose(l"Received link preview asset: $asset")
               saveAssetAndPreview(asset, None)
             case _ => Future successful Seq.empty[AssetData]
           }).map(_.flatten)
@@ -140,24 +136,24 @@ class MessageEventProcessor(selfUserId:          UserId,
           val forPreview = a.otrKey.isEmpty //For assets containing previews, the second GenericMessage contains remote information about the preview, not the asset
           val asset = a.copy(id = AssetId(id.str), remoteId = if (forPreview) None else Some(rId), convId = convId, data = if (forPreview) None else decryptAssetData(a, data))
           val preview = p.map(_.copy(remoteId = if (forPreview) Some(rId) else None, convId = convId, data = if (forPreview) decryptAssetData(a, data) else None))
-          verbose(s"Received asset v2 non-image (forPreview?: $forPreview): $asset with preview: $preview")
+          verbose(l"Received asset v2 non-image (forPreview?: $forPreview): $asset with preview: $preview")
           saveAssetAndPreview(asset, preview)
         case (ImageAsset(a@AssetData.IsImageWithTag(Preview)), _) =>
-          verbose(s"Received image preview for msg: $id. Dropping")
+          verbose(l"Received image preview for msg: $id. Dropping")
           Future successful Seq.empty[AssetData]
         case (ImageAsset(a@AssetData.IsImageWithTag(Medium)), Some(rId)) =>
           val asset = a.copy(id = AssetId(id.str), remoteId = Some(rId), convId = convId, data = decryptAssetData(a, data))
-          verbose(s"Received asset v2 image: $asset")
+          verbose(l"Received asset v2 image: $asset")
           assets.mergeOrCreateAsset(asset).map( _.fold(Seq.empty[AssetData])( Seq(_) ))
         case (Asset(a, _), _) if a.status == UploadFailed && a.isImage =>
-          verbose(s"Received a message about a failed image upload: $id. Dropping")
+          verbose(l"Received a message about a failed image upload: $id. Dropping")
           Future successful Seq.empty[AssetData]
         case (Asset(a, _), _) if a.status == UploadCancelled =>
-          verbose(s"Uploader cancelled asset: $id")
+          verbose(l"Uploader cancelled asset: $id")
           assets.updateAsset(AssetId(id.str), _.copy(status = UploadCancelled)).map( _.fold(Seq.empty[AssetData])( Seq(_) ))
         case (Asset(a, preview), _ ) =>
           val asset = a.copy(id = AssetId(id.str))
-          verbose(s"Received asset without remote data - we will expect another update: $asset")
+          verbose(l"Received asset without remote data - we will expect another update: $asset")
           saveAssetAndPreview(asset, preview)
         case (Ephemeral(_, content), _)=>
           update(id, convId, content, v2RId, data)
@@ -183,8 +179,7 @@ class MessageEventProcessor(selfUserId:          UserId,
     def content(id: MessageId, msgContent: Any, from: UserId, time: RemoteInstant, proto: GenericMessage): MessageData = msgContent match {
       case Text(text, mentions, links, quote) =>
         val (tpe, content) = MessageData.messageContent(text, mentions, links)
-        verbose(s"MessageData content: $content")
-        verbose(s"MessageData hash: ${quote.map(q => (q.quotedMessageId, Sha256(q.quotedMessageSha256).hexString))}")
+        verbose(l"MessageData content: $content")
         val messageData = MessageData(id, conv.id, tpe, from, content, time = time, localTime = event.localTime, protos = Seq(proto),
           quote = quote.map(q => MessageId(q.quotedMessageId)), quoteHash = quote.map(q => Sha256(q.quotedMessageSha256)))
         messageData.adjustMentions(false).getOrElse(messageData)
@@ -214,7 +209,7 @@ class MessageEventProcessor(selfUserId:          UserId,
       case Ephemeral(expiry, ct) =>
         content(id, ct, from, time, proto).copy(ephemeral = expiry)
       case _ =>
-        error(s"unexpected generic message content: $msgContent")
+        error(l"unexpected generic message content for id: $id")
         // TODO: this message should be processed again after app update, maybe future app version will understand it
         MessageData(id, conv.id, Message.Type.UNKNOWN, from, time = time, localTime = event.localTime, protos = Seq(proto))
     }
@@ -236,7 +231,6 @@ class MessageEventProcessor(selfUserId:          UserId,
       case Ephemeral(expiry, ect) =>
         assetContent(id, ect, from, time, msg).copy(ephemeral = expiry)
       case _ =>
-        error(s"unexpected generic asset content: $msg")
         // TODO: this message should be processed again after app update, maybe future app version will understand it
         MessageData(id, conv.id, Message.Type.UNKNOWN, from, time = time, localTime = event.localTime, protos = Seq(msg))
     }
@@ -279,7 +273,6 @@ class MessageEventProcessor(selfUserId:          UserId,
       case _:CallMessageEvent =>
         MessageData.Empty
       case _ =>
-        warn(s"Unexpected event for addMessage: $event")
         MessageData.Empty
     }
   }
@@ -302,7 +295,7 @@ class MessageEventProcessor(selfUserId:          UserId,
     Future.traverse(updates) {
       case (prev, up) if up.verified == Verification.VERIFIED => msgsService.addOtrVerifiedMessage(up.id)
       case (prev, up) if prev.verified == Verification.VERIFIED =>
-        verbose(s"addMessagesAfterVerificationUpdate with prev=${prev.verified} and up=${up.verified}")
+        verbose(l"addMessagesAfterVerificationUpdate with prev=${prev.verified} and up=${up.verified}")
         val convId = up.id
         val changedUsers = convUsers(convId).filter(!_.isVerified).flatMap { u => changes.get(u.id).map(u.id -> _) }
         val (users, change) =

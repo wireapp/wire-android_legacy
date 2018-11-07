@@ -29,8 +29,10 @@ import android.os.Build.VERSION_CODES.LOLLIPOP
 import android.provider.ContactsContract.DisplayNameSources._
 import android.provider.{BaseColumns, ContactsContract}
 import com.google.i18n.phonenumbers.PhoneNumberUtil
+import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.ZLog.logTime
+import com.waz.log.ZLog2._
 import com.waz.content.UserPreferences._
 import com.waz.content._
 import com.waz.model.AddressBook.ContactHashes
@@ -87,7 +89,7 @@ class ContactsServiceImpl(userId:         UserId,
   }
 
   contactsObserver.onChanged.on(Background) { _ =>
-    verbose("contacts provider signaled change; marking contacts list for reload")
+    verbose(l"contacts provider signaled change; marking contacts list for reload")
     markContactsDirty()
   }(EventContext.Global)
 
@@ -121,11 +123,10 @@ class ContactsServiceImpl(userId:         UserId,
   }
 
   private def updatedContactMatches(user: UserData): Future[Set[ContactId]] = storage { implicit db =>
-    val start = nanoNow
     returning(user.phone.fold2(Set.empty[ContactId], p => PhoneNumbersDao.findBy(p)) ++ user.email.fold2(Set.empty, e => EmailAddressesDao.findBy(e))) { contacts =>
       if (user.hasEmailOrPhone) ContactsOnWireDao.delete(ContactsOnWireDao.User, user.id)
       if (contacts.nonEmpty) ContactsOnWireDao.insertOrIgnore(contacts.iterator.map((user.id, _)))
-      verbose(s"user ${user.id} locally matches ${contacts.size} contact(s) [${start.untilNow}]")
+      verbose(l"user ${user.id} locally matches ${contacts.size} contact(s)")
     }
   }
 
@@ -135,12 +136,12 @@ class ContactsServiceImpl(userId:         UserId,
 
   shareContactsPref.signal.map(teamId.isEmpty && _).onChanged {
     case true =>
-      verbose(s"contact sharing allowed")
+      verbose(l"contact sharing allowed")
       markContactsDirty()
       requestUploadIfNeeded()
       updateContactsAndMatches()
     case false =>
-      verbose(s"contact sharing not allowed")
+      verbose(l"contact sharing not allowed")
       markContactsDirty()
       updateContactsAndMatches()
       storage(AddressBook.save(AddressBook.Empty)(_))
@@ -169,7 +170,6 @@ class ContactsServiceImpl(userId:         UserId,
   lazy val unifiedContacts =
     Signal(contactsSignal.map(_.filter(_._2.hasProperName)), acceptedOrPendingUsers, contactsOnWireSignal, contactsUpdater) flatMap { case (contacts, acceptedOrPending, (onWire, onWireUsers), _) =>
       Signal.future(Future {
-        val start = nanoNow
         val users: Map[UserId, UserData] = acceptedOrPending ++ onWireUsers
         val notOnWire = contacts.keysIterator.filterNot(onWire.containsRight).to[ArrayBuffer]
         val onWireButUnconnected = onWire.aftersets.keysIterator.filterNot(uid => acceptedOrPending.contains(uid) || users.get(uid).forall(_.isConnected)).to[ArrayBuffer]
@@ -187,7 +187,7 @@ class ContactsServiceImpl(userId:         UserId,
           SeqMap(other.fold2(alpha, o => alpha :+ ("#", o)))(_._1, _._2)
         }
 
-        verbose(s"unified contacts in ${start.untilNow}: ${acceptedOrPending.size} accepted/pending user(s), ${contacts.size} total contact(s) (${notOnWire.size} not on Wire), ${onWire.size} user(s) match a contact (${onWireButUnconnected.size} not connected)")
+        verbose(l"unified contacts ${acceptedOrPending.size} accepted/pending user(s), ${contacts.size} total contact(s) (${notOnWire.size} not on Wire), ${onWire.size} user(s) match a contact (${onWireButUnconnected.size} not connected)")
 
         val top10Contacts = onWire.aftersets.valuesIterator.flatMap(_.headOption).toSet.take(10).toVector
         val totalCount = onWire.aftersets.size
@@ -240,8 +240,7 @@ class ContactsServiceImpl(userId:         UserId,
         }.to[mut.HashSet]
 
       def updateWithLimit(limit: Option[Int]): Future[Int] = {
-        verbose(s"updateWithLimit: $limit")
-        val start = nanoNow
+        verbose(l"updateWithLimit: $limit")
 
         for {
           updated  <- sharedContacts(limit)
@@ -255,7 +254,7 @@ class ContactsServiceImpl(userId:         UserId,
           _        <- storage(ContactsOnWireDao.deleteEvery(toDelete)(_)).future
           _        <- Future(contactsLoaded ! updated)
         } yield {
-          verbose(s"imported ${updated.size} contact(s) (limit: $limit) in ${start.untilNow}")
+          verbose(l"imported ${updated.size} contact(s) (limit: $limit)")
           updated.size
         }
       }
@@ -273,7 +272,7 @@ class ContactsServiceImpl(userId:         UserId,
   private[waz] def requestUploadIfNeeded() = shareContactsPermissionGranted.flatMap {
     case true =>
       atMostOncePer(userId, uploadCheckInterval) {
-        verbose(s"requestUploadIfNeeded()")
+        verbose(l"requestUploadIfNeeded()")
 
         def atLeastOncePerUploadMaxDelayOrOnVersionUpgrade = for {
           timeOfLastUpload <- lastUploadTime()
@@ -328,8 +327,6 @@ class ContactsServiceImpl(userId:         UserId,
   private def previouslyUploadedAddressBook() = storage.read(AddressBook.load(_))
 
   private def sharedContacts(maybeLimit: Option[Int]): Future[IndexedSeq[Contact]] = {
-    val start = nanoNow
-
     val phones = sharedPhoneNumbers(maybeLimit)
     val emails = sharedEmailAddresses(maybeLimit)
     def nonNull(s: String) = if (s ne null) s else ""
@@ -361,7 +358,7 @@ class ContactsServiceImpl(userId:         UserId,
           }
         })
     } yield {
-      verbose(s"loaded ${contacts.size} contact(s) from provider in ${start.untilNow}")
+      verbose(l"loaded ${contacts.size} contact(s) from provider")
       contacts
     }
   }
@@ -429,7 +426,7 @@ class ContactsServiceImpl(userId:         UserId,
     val pymk = result.map(_._1)
     def onWire = result.flatIterator
 
-    verbose(s"social graph search found ${result.iterator.map(_._2.size).sum} contact(s) on wire and ${pymk.size} PYMK")
+    verbose(l"social graph search found ${result.iterator.map(_._2.size).sum} contact(s) on wire and ${pymk.size} PYMK")
 
     for {
       _ <- storage(AddressBook.save(ab)(_)).future

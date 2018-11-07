@@ -23,7 +23,6 @@ import com.waz.service.conversation.ConversationsUiService
 import com.waz.service.messages.MessagesService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.IntegrationsClient
-import com.waz.sync.queue.SyncScheduler
 import com.waz.sync.{SyncRequestService, SyncResult, SyncServiceHandle}
 import com.waz.threading.{CancellableFuture, Threading}
 
@@ -87,11 +86,11 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
     val serviceUserId = UserId("service-user")
 
     (users.findUsersForService _).expects(serviceId).returning(Future.successful(Set.empty))
-    (convsUi.createGroupConversation _).expects(Option.empty[String], Set.empty[UserId], false).returning(Future.successful(createdConv, createConvSyncId))
+    (convsUi.createGroupConversation _).expects(Option.empty[Name], Set.empty[UserId], false).returning(Future.successful(createdConv, createConvSyncId))
     (srs.await (_: SyncId)).expects(*).twice().returning(Future.successful(SyncResult.Success))
     (sync.postAddBot _).expects(createdConv.id, pId, serviceId).returning(Future.successful(addedBotSyncId))
     (members.getActiveUsers _).expects(createdConv.id).returning(Future.successful(Seq(account1Id, serviceUserId)))
-    (messages.addConnectRequestMessage _).expects(createdConv.id, account1Id, serviceUserId, "", "", true).returning(Future.successful(null))
+    (messages.addConnectRequestMessage _).expects(createdConv.id, account1Id, serviceUserId, "", Name.Empty, true).returning(Future.successful(null))
 
     result(service.getOrCreateConvWithService(pId, serviceId)) shouldEqual Right(createdConv.id)
   }
@@ -103,7 +102,7 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
 
     val serviceUserInGroupId = UserId("service-user-in-group")
 
-    val serviceUserInGroup = UserData(serviceUserInGroupId, name = "service", searchKey = SearchKey.simple("service"), providerId = Some(pId), integrationId = Some(serviceId))
+    val serviceUserInGroup = UserData(serviceUserInGroupId, name = Name("service"), searchKey = SearchKey.simple("service"), providerId = Some(pId), integrationId = Some(serviceId))
     val groupConvId = ConvId("group-conv")
 
     val membersInGroupConv = Set(
@@ -126,11 +125,11 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
       Future.successful(Seq.empty)
     }
 
-    (convsUi.createGroupConversation _).expects(Option.empty[String], Set.empty[UserId], false).returning(Future.successful(createdConv, createConvSyncId))
+    (convsUi.createGroupConversation _).expects(Option.empty[Name], Set.empty[UserId], false).returning(Future.successful(createdConv, createConvSyncId))
     (srs.await (_: SyncId)).expects(*).twice().returning(Future.successful(SyncResult.Success))
     (sync.postAddBot _).expects(createdConv.id, pId, serviceId).returning(Future.successful(addedBotSyncId))
     (members.getActiveUsers _).expects(createdConv.id).returning(Future.successful(Seq(account1Id, serviceUserId)))
-    (messages.addConnectRequestMessage _).expects(createdConv.id, account1Id, serviceUserId, "", "", true).returning(Future.successful(null))
+    (messages.addConnectRequestMessage _).expects(createdConv.id, account1Id, serviceUserId, "", Name.Empty, true).returning(Future.successful(null))
 
     result(service.getOrCreateConvWithService(pId, serviceId)) shouldEqual Right(createdConv.id)
 
@@ -143,7 +142,7 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
 
     val serviceUserId = UserId("service-user-in-group")
 
-    val serviceUser = UserData(serviceUserId, name = "service", searchKey = SearchKey.simple("service"), providerId = Some(pId), integrationId = Some(serviceId))
+    val serviceUser = UserData(serviceUserId, name = Name("service"), searchKey = SearchKey.simple("service"), providerId = Some(pId), integrationId = Some(serviceId))
     val existingConvId = ConvId("existing-conv")
     val existingConv = ConversationData(existingConvId, team = Some(teamId), name = None)
 

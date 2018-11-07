@@ -18,10 +18,10 @@
 package com.waz.service
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.IConversation
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.content._
+import com.waz.log.ZLog2._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
@@ -38,7 +38,7 @@ import scala.collection.breakOut
 import scala.concurrent.Future
 
 trait ConnectionService {
-  def connectToUser(userId: UserId, message: String, name: String): Future[Option[ConversationData]]
+  def connectToUser(userId: UserId, message: String, name: Name): Future[Option[ConversationData]]
   def handleUserConnectionEvents(events: Seq[UserConnectionEvent]): Future[Unit]
 }
 
@@ -63,16 +63,16 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     RichFuture.processSequential(es) { e =>
       users.getOrCreateUser(e.user) flatMap { _ =>
         // update user name if it was just created (has empty name)
-        users.updateUserData(e.user, u => u.copy(name = if (u.name == "") e.name else u.name))
+        users.updateUserData(e.user, u => u.copy(name = if (u.name == Name.Empty) e.name else u.name))
       }
     }
   }
 
   def handleUserConnectionEvents(events: Seq[UserConnectionEvent]) = {
-    verbose(s"handleUserConnectionEvents: $events")
+    verbose(l"handleUserConnectionEvents: $events")
     def updateOrCreate(event: UserConnectionEvent)(user: Option[UserData]): UserData =
       user.fold {
-        UserData(event.to, None, UserService.DefaultUserName, None, None, connection = event.status, conversation = Some(event.convId), connectionMessage = event.message, searchKey = SearchKey(UserService.DefaultUserName), connectionLastUpdated = event.lastUpdated,
+        UserData(event.to, None, Name.Empty, None, None, connection = event.status, conversation = Some(event.convId), connectionMessage = event.message, searchKey = SearchKey.Empty, connectionLastUpdated = event.lastUpdated,
           handle = None)
       } {
         _.copy(conversation = Some(event.convId)).updateConnectionStatus(event.status, Some(event.lastUpdated), event.message)
@@ -81,12 +81,12 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     val lastEvents = events.groupBy(_.to).map { case (to, es) => to -> es.maxBy(_.lastUpdated) }
     val fromSync: Set[UserId] = lastEvents.filter(_._2.localTime == LocalInstant.Epoch).map(_._2.to)(breakOut)
 
-    verbose(s"lastEvents: $lastEvents, fromSync: $fromSync")
+    verbose(l"lastEvents: $lastEvents, fromSync: $fromSync")
 
     usersStorage.updateOrCreateAll2(lastEvents.map(_._2.to), { case (uId, user) => updateOrCreate(lastEvents(uId))(user) })
       .map { users => (users.map(u => (u, lastEvents(u.id).lastUpdated)), fromSync) }
   }.flatMap { case (users, fromSync) =>
-    verbose(s"syncing $users and fromSync: $fromSync")
+    verbose(l"syncing $users and fromSync: $fromSync")
     val toSync = users filter { case (user, _) => user.connection == ConnectionStatus.Accepted || user.connection == ConnectionStatus.PendingFromOther || user.connection == ConnectionStatus.PendingFromUser }
     sync.syncUsers(toSync.map(_._1.id)(breakOut)) flatMap { _ =>
       updateConversationsForConnections(users.map(u => ConnectionEventInfo(u._1, fromSync(u._1.id), u._2))).map(_ => ())
@@ -94,7 +94,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
   }
 
   private def updateConversationsForConnections(eventInfos: Set[ConnectionEventInfo]): Future[Seq[ConversationData]] = {
-    verbose(s"updateConversationForConnections: ${eventInfos.size}")
+    verbose(l"updateConversationForConnections: ${eventInfos.size}")
 
     def getConvTypeForUser(user: UserData): IConversation.Type = user.connection match {
       case ConnectionStatus.PendingFromUser | ConnectionStatus.Cancelled => ConversationType.WaitForConnection
@@ -149,13 +149,13 @@ class ConnectionServiceImpl(selfUserId:      UserId,
   /**
    * Connects to user and creates one-to-one conversation if needed. Returns existing conversation if user is already connected.
    */
-  def connectToUser(userId: UserId, message: String, name: String): Future[Option[ConversationData]] = {
+  def connectToUser(userId: UserId, message: String, name: Name): Future[Option[ConversationData]] = {
 
-    def sanitizedName = if (name.isEmpty) "_" else if (name.length >= 256) name.substring(0, 256) else name
+    def sanitizedName = if (name.isEmpty) Name("_") else if (name.length >= 256) name.substring(0, 256) else name
 
     def connectIfUnconnected() = users.getOrCreateUser(userId).flatMap { user =>
       if (user.isConnected) {
-        verbose(s"User already connected: $user")
+        verbose(l"User already connected: $user")
         Future.successful(None)
       } else {
         users.updateConnectionStatus(user.id, ConnectionStatus.PendingFromUser).flatMap {
@@ -169,7 +169,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
       case Some(_) =>
         for {
           conv <- getOrCreateOneToOneConversation(userId, convType = ConversationType.WaitForConnection)
-          _ = verbose(s"connectToUser, conv: $conv")
+          _ = verbose(l"connectToUser, conv: $conv")
           _ <- messages.addConnectRequestMessage(conv.id, selfUserId, userId, message, name)
         } yield Some(conv)
       case None => //already connected
@@ -227,7 +227,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     users.updateUserData(userId, { user =>
       if (user.connection == ConnectionStatus.PendingFromUser) user.copy(connection = ConnectionStatus.Cancelled)
       else {
-        warn(s"can't cancel connection for user in wrong state: $user")
+        warn(l"can't cancel connection for user in wrong state: $user")
         user
       }
     }) flatMap {
@@ -250,7 +250,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
 
   private def getOrCreateOneToOneConversations(convsInfo: Seq[OneToOneConvData]): Future[Map[UserId, ConversationData]] =
     Serialized.future('getOrCreateOneToOneConversations) {
-      verbose(s"getOrCreateOneToOneConversations(self: $selfUserId, convs:${convsInfo.size})")
+      verbose(l"getOrCreateOneToOneConversations(self: $selfUserId, convs:${convsInfo.size})")
 
       def convIdForUser(userId: UserId) = ConvId(userId.str)
       def userIdForConv(convId: ConvId) = UserId(convId.str)

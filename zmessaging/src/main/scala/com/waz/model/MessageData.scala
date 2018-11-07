@@ -17,16 +17,18 @@
  */
 package com.waz.model
 
+import java.nio.ByteBuffer
+import java.nio.charset.Charset
+
 import android.database.DatabaseUtils.queryNumEntries
 import android.database.sqlite.SQLiteQueryBuilder
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
-import com.waz.api
+import com.waz.{api, model}
 import com.waz.api.Message.Type._
 import com.waz.api.{Message, TypeFilter}
 import com.waz.db.Col._
 import com.waz.db.Dao
-import com.waz.model.ConversationData.ConversationDataDao
+import com.waz.log.ZLog2._
 import com.waz.model.GenericContent.{Asset, ImageAsset, LinkPreview, Location, MsgEdit, Quote, Text}
 import com.waz.model.GenericMessage.{GenericMessageContent, TextMessage}
 import com.waz.model.MessageData.MessageState
@@ -38,8 +40,6 @@ import com.waz.utils.wrappers.{DB, DBCursor, URI}
 import com.waz.utils.{EnumCodec, JsonDecoder, JsonEncoder, returning}
 import org.json.{JSONArray, JSONObject}
 import org.threeten.bp.Instant.now
-import java.nio.ByteBuffer
-import java.nio.charset.Charset
 
 import scala.collection.breakOut
 import scala.concurrent.duration._
@@ -54,7 +54,7 @@ case class MessageData(id:            MessageId              = MessageId(),
                        members:       Set[UserId]            = Set.empty[UserId],
                        recipient:     Option[UserId]         = None,
                        email:         Option[String]         = None,
-                       name:          Option[String]         = None,
+                       name:          Option[Name]           = None,
                        state:         MessageState           = Message.Status.SENT,
                        time:          RemoteInstant          = RemoteInstant(now(clock)), //TODO: now is local...
                        localTime:     LocalInstant           = LocalInstant.Epoch,
@@ -67,25 +67,6 @@ case class MessageData(id:            MessageId              = MessageId(),
                        quoteValidity: Boolean                = false,
                        quoteHash:     Option[Sha256]         = None
                       ) {
-
-  override def toString: String =
-    s"""
-       |MessageData:
-       | id:            $id
-       | convId:        $convId
-       | msgType:       $msgType
-       | userId:        $userId
-       | protos:        ${protos.toString().replace("\n", "")}
-       | state:         $state
-       | time:          $time
-       | localTime:     $localTime
-       | editTime:      $editTime
-       | members:       $members
-       | content:       ${content.map(c => (c.content, c.mentions))}
-       | other fields:  $firstMessage, $recipient, $email, $name, $ephemeral, $expiryTime, $expired, $duration, $quote, $quoteValidity
-    """.stripMargin
-
-
   def getContent(index: Int) = {
     if (index == 0) content.headOption.getOrElse(MessageContent.Empty)
     else content.drop(index).headOption.getOrElse(MessageContent.Empty)
@@ -134,7 +115,7 @@ case class MessageData(id:            MessageId              = MessageId(),
     } orElse content.headOption.collect {
       case MessageContent(_, _, _, _, Some(_), w, h, _, _) => Dim2(w, h)
     }
-    verbose(s"dims $dims from protos: $protos")
+    verbose(l"dims $dims")
     dims
   }
 
@@ -167,7 +148,7 @@ case class MessageData(id:            MessageId              = MessageId(),
   def adjustMentions(forSending: Boolean): Option[MessageData] =
     if (mentions.isEmpty) None
     else {
-      verbose(s"adjustMentions(forSending = $forSending)")
+      verbose(l"adjustMentions(forSending = $forSending)")
       val newContent =
         if (content.size == 1)
           content.map(_.copy(mentions = MessageData.adjustMentions(content.head.content, mentions, forSending)))
@@ -211,7 +192,6 @@ case class MessageContent(tpe:        Message.Part.Type,
                          ) {
 
   def contentAsUri: URI = RichMediaContentParser.parseUriWithScheme(content)
-  override def toString: String = s"MessageContent($tpe, ${content.take(4)}..., $richMedia, $openGraph, $asset, $width, $height, $syncNeeded, $mentions)"
 }
 
 object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData], Option[OpenGraphData], Option[AssetId], Int, Int, Boolean, Seq[Mention]) => MessageContent) {
@@ -294,8 +274,9 @@ object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData
 
 object MessageData extends
   ((MessageId, ConvId, Message.Type, UserId, Seq[MessageContent], Seq[GenericMessage], Boolean, Set[UserId], Option[UserId],
-    Option[String], Option[String], Message.Status, RemoteInstant, LocalInstant, RemoteInstant, Option[FiniteDuration],
+    Option[String], Option[Name], Message.Status, RemoteInstant, LocalInstant, RemoteInstant, Option[FiniteDuration],
     Option[LocalInstant], Boolean, Option[FiniteDuration], Option[MessageId], Boolean, Option[Sha256]) => MessageData) {
+
   val Empty = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""))
   val Deleted = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""), state = Message.Status.DELETED)
   val isUserContent = Set(TEXT, TEXT_EMOJI_ONLY, ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, RICH_MEDIA, LOCATION)
@@ -338,26 +319,26 @@ object MessageData extends
   implicit object MessageDataDao extends Dao[MessageData, MessageId]  {
     import com.waz.db._
 
-    val Id            = id[MessageId]('_id, "PRIMARY KEY").apply(_.id)
-    val Conv          = id[ConvId]('conv_id).apply(_.convId)
-    val Type          = text[Message.Type]('msg_type, MessageTypeCodec.encode, MessageTypeCodec.decode)(_.msgType)
-    val User          = id[UserId]('user_id).apply(_.userId)
-    val Content       = jsonArray[MessageContent, Seq, Vector]('content).apply(_.content)
-    val Protos        = protoSeq[GenericMessage, Seq, Vector]('protos).apply(_.protos)
-    val ContentSize   = int('content_size)(_.content.size)
-    val FirstMessage  = bool('first_msg)(_.firstMessage)
-    val Members       = set[UserId]('members, _.mkString(","), _.split(",").filter(!_.isEmpty).map(UserId(_))(breakOut))(_.members)
-    val Recipient     = opt(id[UserId]('recipient))(_.recipient)
-    val Email         = opt(text('email))(_.email)
-    val Name          = opt(text('name))(_.name)
-    val State         = text[MessageState]('msg_state, _.name, Message.Status.valueOf)(_.state)
-    val Time          = remoteTimestamp('time)(_.time)
-    val LocalTime     = localTimestamp('local_time)(_.localTime)
-    val EditTime      = remoteTimestamp('edit_time)(_.editTime)
-    val Ephemeral     = opt(finiteDuration('ephemeral))(_.ephemeral)
-    val ExpiryTime    = opt(localTimestamp('expiry_time))(_.expiryTime)
-    val Expired       = bool('expired)(_.expired)
-    val Duration      = opt(finiteDuration('duration))(_.duration)
+    val Id = id[MessageId]('_id, "PRIMARY KEY").apply(_.id)
+    val Conv = id[ConvId]('conv_id).apply(_.convId)
+    val Type = text[Message.Type]('msg_type, MessageTypeCodec.encode, MessageTypeCodec.decode)(_.msgType)
+    val User = id[UserId]('user_id).apply(_.userId)
+    val Content = jsonArray[MessageContent, Seq, Vector]('content).apply(_.content)
+    val Protos = protoSeq[GenericMessage, Seq, Vector]('protos).apply(_.protos)
+    val ContentSize = int('content_size)(_.content.size)
+    val FirstMessage = bool('first_msg)(_.firstMessage)
+    val Members = set[UserId]('members, _.mkString(","), _.split(",").filter(!_.isEmpty).map(UserId(_))(breakOut))(_.members)
+    val Recipient = opt(id[UserId]('recipient))(_.recipient)
+    val Email = opt(text('email))(_.email)
+    val Name = opt(text[model.Name]('name, _.str, model.Name(_)))(_.name)
+    val State = text[MessageState]('msg_state, _.name, Message.Status.valueOf)(_.state)
+    val Time = remoteTimestamp('time)(_.time)
+    val LocalTime = localTimestamp('local_time)(_.localTime)
+    val EditTime = remoteTimestamp('edit_time)(_.editTime)
+    val Ephemeral = opt(finiteDuration('ephemeral))(_.ephemeral)
+    val ExpiryTime = opt(localTimestamp('expiry_time))(_.expiryTime)
+    val Expired = bool('expired)(_.expired)
+    val Duration = opt(finiteDuration('duration))(_.duration)
     val Quote         = opt(id[MessageId]('quote))(_.quote)
     val QuoteValidity = bool('quote_validity)(_.quoteValidity)
 

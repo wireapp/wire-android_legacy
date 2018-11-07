@@ -20,7 +20,7 @@ package com.waz.content
 import android.content.Context
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.UserData.{ConnectionStatus, UserDataDao}
-import com.waz.model.{IntegrationId, TeamId, UserData, UserId}
+import com.waz.model._
 import com.waz.service.SearchKey
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.TrimmingLruCache.Fixed
@@ -134,7 +134,7 @@ class UsersStorageImpl(context: Context, storage: ZmsDatabase) extends CachedSto
 
   def updateDisplayNamesWithSameFirst(users: Seq[UserId], cs: mutable.HashMap[UserId, NameParts]): Unit = {
     def setFullName(user: UserId) = update(user, { (u : UserData) => u.copy(displayName = u.name) })
-    def setDisplayName(user: UserId, name: String) = update(user, (_: UserData).copy(displayName = name))
+    def setDisplayName(user: UserId, name: String) = update(user, (_: UserData).copy(displayName = Name(name)))
 
     if (users.isEmpty) CancellableFuture.successful(())
     else if (users.size == 1) {

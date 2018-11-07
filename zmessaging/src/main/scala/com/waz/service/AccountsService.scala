@@ -20,7 +20,7 @@ package com.waz.service
 import java.io.File
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.api.impl.ErrorResponse
 import com.waz.api._
 import com.waz.content.GlobalPreferences._
@@ -76,7 +76,7 @@ trait AccountsService {
   def loginPhone(phone: String, code: String) = login(PhoneCredentials(PhoneNumber(phone), ConfirmationCode(code)))
   def login(loginCredentials: Credentials): ErrorOr[UserId]
 
-  def register(registerCredentials: Credentials, name: String, teamName: Option[String] = None): ErrorOr[Option[AccountManager]]
+  def register(registerCredentials: Credentials, name: Name, teamName: Option[Name] = None): ErrorOr[Option[AccountManager]]
 
   def createAccountManager(userId: UserId, dbFile: Option[File], isLogin: Option[Boolean], initialUser: Option[UserInfo] = None): Future[Option[AccountManager]] //TODO return error codes on failure?
 
@@ -107,7 +107,7 @@ object AccountsService {
 
   val AccountManagersKey = "accounts-map"
 
-  trait AccountState
+  sealed trait AccountState extends SafeToLog
 
   case object LoggedOut extends AccountState
 
@@ -166,7 +166,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
         _ <- Future.sequence(accs.filter(_.userId.isDefined).map { acc =>
           val userId = acc.userId.get
           //migrate the databases
-          verbose(s"Renaming database and cryptobox dir: ${acc.id.str} to ${userId.str}")
+          verbose(l"Renaming database and cryptobox dir: ${acc.id} to $userId")
 
           val dbFileOld = context.getDatabasePath(acc.id.str)
 
@@ -178,7 +178,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
             val fileToMove = new File(dbFileOld.getParent, s"${userId.str}$ext")
             val res = f.renameTo(fileToMove)
             if(!res && !ext.equals(exts.last)) {
-              error(s"Failed to rename file ${f.getAbsolutePath}")
+              error(l"Failed to rename file $f")
               res
             } else if (!res && ext.equals(exts.last)) {
               //journal is not always present, so if copying it fails, and it the original file doesn't exist, then just skip it
@@ -193,7 +193,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
           val cryptoBoxDirNew = new File(new File(context.getFilesDir, global.metadata.cryptoBoxDirName), userId.str)
           val cryptoBoxRenamed = cryptoBoxDirOld.renameTo(cryptoBoxDirNew)
 
-          verbose(s"DB migration successful?: $dbRenamed, cryptobox migration successful?: $cryptoBoxRenamed")
+          verbose(l"DB migration successful?: $dbRenamed, cryptobox migration successful?: $cryptoBoxRenamed")
 
           //Ensure that the current active account remains active
           if (active.contains(acc.id)) activeAccountPref := Some(userId) else Future.successful({})
@@ -207,7 +207,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
             case (_, "PASSWORD_MISSING") => PasswordMissing
             case (_, "LIMIT_REACHED") => LimitReached
             case _ =>
-              error(s"Unknown client registration state: ${acc.clientId}, ${acc.clientRegState}. Defaulting to unregistered")
+              error(l"Unknown client registration state: ${acc.clientId}, ${showString(acc.clientRegState)}. Defaulting to unregistered")
               Unregistered
           }
 
@@ -237,7 +237,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
       } yield {}
   }.recoverWith {
     case NonFatal(e) =>
-      warn("Failed to migrate databases, aborting operation", e)
+      warn(l"Failed to migrate databases, aborting operation", e)
       markMigrationDone()
   }
 
@@ -249,7 +249,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
 
 
   storage.map(_.onDeleted(_.foreach { user =>
-    verbose(s"user logged out: $user")
+    verbose(l"user logged out: $user")
     global.trackingService.loggedOut(LoggedOutEvent.InvalidCredentials, user)
     Serialized.future(AccountManagersKey)(Future[Unit](accountManagers.mutate(_.filterNot(_.userId == user))))
   }))
@@ -269,14 +269,14 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
           if (restore.isFailure) global.trackingService.historyRestored(false) // HistoryRestoreSucceeded is sent from the new AccountManager
         }.get // if the import failed this will rethrow the exception
 
-      verbose(s"getOrCreateAccountManager: $userId")
+      verbose(l"getOrCreateAccountManager: $userId")
       val managers = await { accountManagers.orElse(Signal.const(Set.empty[AccountManager])).head }
       val manager = managers.find(_.userId == userId)
       if (manager.nonEmpty) {
-        warn(s"AccountManager for: $userId already created")
+        warn(l"AccountManager for: $userId already created")
         manager
       } else {
-        verbose(s"No AccountManager for: $userId, creating new one")
+        verbose(l"No AccountManager for: $userId, creating new one")
         val account = await(storage.flatMap(_.get(userId)))
         val user = await {
           for {
@@ -284,7 +284,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
             _    <- prefs(LoggingInUser) := None
           } yield user
         }
-        if (account.isEmpty) warn(s"No logged in account for user: $userId, not creating account manager")
+        if (account.isEmpty) warn(l"No logged in account for user: $userId, not creating account manager")
         account.map { acc =>
           val newManager = new AccountManager(userId, acc.teamId, global, this, startedJustAfterBackup = importDbFile.nonEmpty, user, isLogin)
           accountManagers.mutateOrDefault(_ + newManager, Set(newManager))
@@ -304,7 +304,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
         uiActive <- global.lifecycle.uiActive
       } yield {
         returning(if (!loggedIn) LoggedOut else if (uiActive && selected) InForeground else InBackground) { state =>
-          verbose(s"account state changed: $userId -> $state: selected: $selected, loggedIn: $loggedIn, uiActive: $uiActive")
+          verbose(l"account state changed: $userId -> $state: selected: $selected, loggedIn: $loggedIn, uiActive: $uiActive")
         }
       }
 
@@ -335,17 +335,17 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
     zs  <- Signal.sequence(ams.map(am => Signal.future(am.zmessaging)).toSeq: _*)
   } yield
     returning(zs.toSet) { v =>
-      verbose(s"Loaded: ${v.size} zms instances for ${ams.size} accounts")
+      verbose(l"Loaded: ${v.size} zms instances for ${ams.size} accounts")
     }).disableAutowiring()
 
   override def getZms(userId: UserId): Future[Option[ZMessaging]] = {
-    verbose(s"getZms: $userId")
+    verbose(l"getZms: $userId")
     zmsInstances.head.map(_.find(_.selfUserId == userId))
   }
 
   //TODO optional delete history (https://github.com/wireapp/android-project/issues/51)
   def logout(userId: UserId) = {
-    verbose(s"logout: $userId")
+    verbose(l"logout: $userId")
     for {
       current       <- activeAccountId.head
       otherAccounts <- accountsWithManagers.head.map(_.filter(userId != _))
@@ -359,7 +359,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
     * (no cookie) or if anything else goes wrong, we leave the user logged out
     */
   override def setAccount(userId: Option[UserId]) = {
-    verbose(s"setAccount: $userId")
+    verbose(l"setAccount: $userId")
     userId match {
       case Some(id) =>
         activeAccountId.head.flatMap {
@@ -367,7 +367,7 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
           case Some(_)   => accountManagers.head.map(_.find(_.userId == id)).flatMap {
             case Some(_) => activeAccountPref := Some(id)
             case _ =>
-              warn(s"Tried to set active user who is not logged in: $userId, not changing account")
+              warn(l"Tried to set active user who is not logged in: $userId, not changing account")
               Future.successful({})
           }
           case _ => activeAccountPref := Some(id)
@@ -380,19 +380,19 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
     regClient.requestVerificationEmail(email)
 
   override def requestPhoneCode(phone: PhoneNumber, login: Boolean, call: Boolean = false) = {
-    verbose(s"requestPhoneConfirmationCode: $phone, login=$login, call=$call")
+    verbose(l"requestPhoneConfirmationCode: $phone, login=$login, call=$call")
     phoneNumbers.normalize(phone).flatMap { normalizedPhone =>
       regClient.requestPhoneCode(normalizedPhone.getOrElse(phone), login, call)
     }
   }
 
   override def requestEmailCode(email: EmailAddress) = {
-    verbose(s"requestEmailConfirmationCode: $email")
+    verbose(l"requestEmailConfirmationCode: $email")
     regClient.requestEmailCode(email)
   }
 
   override def verifyPhoneNumber(phone: PhoneNumber, code: ConfirmationCode, dryRun: Boolean) = {
-    verbose(s"verifyPhoneNumber: $phone, $code, $dryRun")
+    verbose(l"verifyPhoneNumber: $phone, $code, $dryRun")
     phoneNumbers.normalize(phone).flatMap { normalizedPhone =>
       regClient.verifyRegistrationMethod(Left(normalizedPhone.getOrElse(phone)), code, dryRun).map(_.fold(Left(_), _ => Right({})))
       //TODO handle label and cookie!(https://github.com/wireapp/android-project/issues/51)
@@ -400,13 +400,13 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
   }
 
   override def verifyEmailAddress(email: EmailAddress, code: ConfirmationCode, dryRun: Boolean = true) = {
-    verbose(s"verifyEmailAddress: $email, $code, $dryRun")
+    verbose(l"verifyEmailAddress: $email, $code, $dryRun")
     regClient.verifyRegistrationMethod(Right(email), code, dryRun).map(_.fold(Left(_), _ => Right({})))
     //TODO handle label and cookie! (https://github.com/wireapp/android-project/issues/51)
   }
 
   override def login(loginCredentials: Credentials) = {
-    verbose(s"login: $loginCredentials")
+    verbose(l"login: $loginCredentials")
     loginClient.login(loginCredentials).flatMap {
       case Right(LoginResult(token, Some(cookie), _)) => //TODO handle label (https://github.com/wireapp/android-project/issues/51)
         loginClient.getSelfUserInfo(token).flatMap {
@@ -417,16 +417,16 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
           case Left(err)   => Future.successful(Left(err))
         }
       case Right(_) =>
-        warn("login didn't return with a cookie, aborting")
+        warn(l"login didn't return with a cookie, aborting")
         Future.successful(Left(ErrorResponse.internalError("No cookie for user after login - can't create account")))
       case Left(error) =>
-        verbose(s"login failed: $error")
+        verbose(l"login failed: $error")
         Future.successful(Left(error))
     }
   }
 
-  override def register(registerCredentials: Credentials, name: String, teamName: Option[String] = None) = {
-    verbose(s"register: $registerCredentials, name: $name, teamName: $teamName")
+  override def register(registerCredentials: Credentials, name: Name, teamName: Option[Name] = None) = {
+    verbose(l"register: $registerCredentials, name: $name, teamName: $teamName")
     regClient.register(registerCredentials, name, teamName).flatMap {
       case Right((user, Some((cookie, _)))) =>
         for {
@@ -436,23 +436,23 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
           _  <- setAccount(Some(user.id))
         } yield Right(am)
       case Right(_) =>
-        warn("Register didn't return a cookie")
+        warn(l"Register didn't return a cookie")
         Future.successful(Left(ErrorResponse.internalError("No cookie for user after registration - can't create account")))
       case Left(error) =>
-        verbose(s"register failed: $error")
+        verbose(l"register failed: $error")
         Future.successful(Left(error))
     }
   }
 
   private def addAccountEntry(user: UserInfo, cookie: Cookie, token: Option[AccessToken], credentials: Option[Credentials]): Future[Unit] = {
-    verbose(s"addAccountEntry: $user, $cookie, $token, $credentials")
+    verbose(l"addAccountEntry: $user, $cookie, $token, $credentials")
     storage
       .flatMap(_.updateOrCreate(user.id, _.copy(cookie = cookie, accessToken = token, password = credentials.flatMap(_.maybePassword)), AccountData(user.id, user.teamId, cookie, token, password = credentials.flatMap(_.maybePassword))))
       .map(_ => {})
   }
 
   override def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, (HasOtherClients, HadDB)]] = {
-    verbose(s"SSO login: $userId $cookie")
+    verbose(l"SSO login: $userId $cookie")
     loginClient.access(cookie, None).flatMap {
       case Right(loginResult) =>
         loginClient.getSelfUserInfo(loginResult.accessToken).flatMap {
@@ -465,11 +465,11 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
               _  = r.fold(_ => (), res => if (!res._1) am.foreach(_.addUnsplashPicture()))
             } yield r
           case Left(error) =>
-            verbose(s"SSO login - Get self error: $error")
+            verbose(l"SSO login - Get self error: $error")
             Future.successful(Left(error))
         }
       case Left(error) =>
-        verbose(s"SSO login - access error: $error")
+        verbose(l"SSO login - access error: $error")
         Future.successful(Left(error))
     }
   }

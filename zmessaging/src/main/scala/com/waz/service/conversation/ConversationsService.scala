@@ -207,7 +207,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       case _ =>
         for {
           user  <- usersStorage.get(selfUserId)
-          conv  =  ConversationData(ConvId(selfUserId.str), RConvId(selfUserId.str), None, selfUserId, ConversationType.Self, generatedName = user.map(_.name).getOrElse(""))
+          conv  =  ConversationData(ConvId(selfUserId.str), RConvId(selfUserId.str), None, selfUserId, ConversationType.Self, generatedName = user.map(_.name).getOrElse(Name.Empty))
           saved <- convsStorage.getOrCreate(selfConvId, conv).map(Some(_))
         } yield saved
     }

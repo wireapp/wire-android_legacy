@@ -47,6 +47,8 @@ import scala.concurrent.Future
 class SystemLogOutput extends LogOutput {
   override val id: LogTag = SystemLogOutput.id
 
+  override val showSafeOnly: Boolean = false
+
   override def log(str: String, level: InternalLog.LogLevel, tag: LogTag, ex: Option[Throwable] = None): Unit = {
     println(s"$dateTag/$level/$tag: $str")
     ex.foreach(e => println(InternalLog.stackTrace(e)))
@@ -54,6 +56,7 @@ class SystemLogOutput extends LogOutput {
 
   override def close(): Future[Unit] = Future.successful {}
   override def flush(): Future[Unit] = Future.successful {}
+
 }
 
 object SystemLogOutput {

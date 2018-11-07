@@ -25,7 +25,8 @@ import android.content.{ContentResolver, Context}
 import android.media.ExifInterface
 import android.os.Environment
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.ZLog.LogTag
+import com.waz.log.ZLog2._
 import com.waz.api
 import com.waz.api.ProgressIndicator.State
 import com.waz.api.impl.ProgressIndicator.ProgressData
@@ -69,9 +70,7 @@ object AssetService {
 
   object RawAssetInput {
     case class UriInput(uri: URI) extends RawAssetInput
-    case class ByteInput(bytes: Array[Byte]) extends RawAssetInput {
-      override def toString = s"ByteInput(${bytes.length} bytes)"
-    }
+    case class ByteInput(bytes: Array[Byte]) extends RawAssetInput
     case class BitmapInput(bitmap: Bitmap, orientation: Int = ExifInterface.ORIENTATION_NORMAL) extends RawAssetInput
     case class WireAssetInput(id: AssetId) extends RawAssetInput
   }
@@ -163,7 +162,7 @@ class AssetServiceImpl(storage:         AssetsStorage,
       case UploadDone => //only if the asset is uploaded, check for a cache entry. Upload state takes precedence over download state
         cache.optSignal(asset.cacheKey).map(_.isDefined) flatMap {
           case true =>
-            verbose(s"uploaded asset also has cache entry, must be downloaded. For key: ${asset.cacheKey}")
+            verbose(l"uploaded asset also has cache entry, must be downloaded. For key: ${asset.cacheKey}")
             Signal.const(api.AssetStatus.DOWNLOAD_DONE)
           case false =>
             loaderService.getLoadProgress(id).map(_.state) map {
@@ -198,7 +197,7 @@ class AssetServiceImpl(storage:         AssetsStorage,
         messages.get(MessageId(id.str)) flatMap {
           case Some(m) => sync.postAssetStatus(m.id, m.convId, m.ephemeral, status)
           case None =>
-            warn(s"No message found for asset upload: $id")
+            warn(l"No message found for asset upload: $id")
             Future.successful(())
         }
       case _ =>
@@ -214,7 +213,7 @@ class AssetServiceImpl(storage:         AssetsStorage,
   //note, overrideId is only used for AssetForUpload (always a uri-based input). Once we remove the AssetForUplaod, we can
   //also remove this parameter
   override def addAsset(input: RawAssetInput, isProfilePic: Boolean = false, overrideId: Option[AssetId] = None) = {
-    verbose(s"addAsset: input: $input, isProfilePic: $isProfilePic")
+    verbose(l"addAsset: input: $input, isProfilePic: $isProfilePic")
 
     def generateImageData(asset: AssetData, isProfilePic: Boolean = false) =
       generator.generateWireAsset(asset, isProfilePic).future.flatMap { data =>
@@ -263,7 +262,7 @@ class AssetServiceImpl(storage:         AssetsStorage,
               storage.insert(asset).map(Some(_))
           }
         } yield {
-          verbose(s"created asset: $saved")
+          verbose(l"created asset: $saved")
           saved
         }
 
@@ -281,7 +280,7 @@ class AssetServiceImpl(storage:         AssetsStorage,
           mime = mime,
           metaData = Some(AssetMetaData.Image(Dim2(w, h), Medium)),
           data = {
-            verbose(s"data requested, compress completed: ${imageData.isCompleted}")
+            verbose(l"data requested, compress completed: ${imageData.isCompleted}")
             // XXX: this is ugly, but will only be accessed from bg thread and very rarely, so we should be fine with that hack
             LoggedTry(Await.result(imageData, 15.seconds)).toOption
           }
@@ -337,7 +336,7 @@ class AssetServiceImpl(storage:         AssetsStorage,
           name = nm,
           previewId = prev.map(_.id),
           sizeInBytes = entry.length))
-    } yield returning(updated)(a => verbose(s"Generated preview and meta data for ${asset.id}"))
+    } yield returning(updated)(a => verbose(l"Generated preview and meta data for ${asset.id}"))
   }
 
   private def markDownloadFailed(id: AssetId) = storage.updateAsset(id, _.copy(status = DownloadFailed))
@@ -351,20 +350,20 @@ class AssetServiceImpl(storage:         AssetsStorage,
           case Some(entry: CacheEntry) =>
             CancellableFuture successful {
               val uri = Some(CacheUri(entry.data, context))
-              verbose(s"Created cache entry uri: $uri for asset: $id")
+              verbose(l"Created cache entry uri: $uri for asset: $id")
               uri
             }
           case Some(data) =>
             CancellableFuture lift cache.addStream(a.cacheKey, data.inputStream, a.mime, a.name, Some(cache.intCacheDir))(Expiration.in(12.hours)) map { e =>
               val uri = Some(CacheUri(e.data, context))
-              verbose(s"Created cache entry, and then uri: $uri for asset: ${a.id}")
+              verbose(l"Created cache entry, and then uri: $uri for asset: ${a.id}")
               uri
             }
           case None =>
             CancellableFuture successful None
         }
       case _ =>
-        warn(s"asset not found: $id")
+        warn(l"asset not found: $id")
         CancellableFuture successful None
     }
 
@@ -407,7 +406,7 @@ class AssetServiceImpl(storage:         AssetsStorage,
         case true =>
           getTargetFile(dir).fold(successful(Option.empty[File]))(saveAssetData)
         case _ =>
-          warn("permission to save asset to downloads denied")
+          warn(l"permission to save asset to downloads denied")
           successful(None)
       }
     } else successful(None)

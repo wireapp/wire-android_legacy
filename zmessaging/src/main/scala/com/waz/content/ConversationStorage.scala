@@ -18,7 +18,7 @@
 package com.waz.content
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.api.Verification
 import com.waz.api.Verification.UNKNOWN
 import com.waz.model.ConversationData.ConversationDataDao
@@ -53,14 +53,14 @@ class ConversationStorageImpl(storage: ZmsDatabase) extends CachedStorageImpl[Co
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationStorage")
 
   onAdded.on(dispatcher) { cs =>
-    verbose(s"${cs.size} convs added")
+    verbose(l"${cs.size} convs added")
     updateSearchKey(cs)
   }
 
   def setUnknownVerification(convId: ConvId) = update(convId, { c => c.copy(verified = if (c.verified == Verification.UNVERIFIED) UNKNOWN else c.verified) })
 
   onUpdated.on(dispatcher) { cs =>
-    verbose(s"${cs.size} convs updated")
+    verbose(l"${cs.size} convs updated")
     updateSearchKey(cs collect { case (p, c) if p.name != c.name || (p.convType == Group) != (c.convType == Group) || (c.name.nonEmpty && c.searchKey.isEmpty) => c })
   }
 
@@ -69,7 +69,7 @@ class ConversationStorageImpl(storage: ZmsDatabase) extends CachedStorageImpl[Co
     updater = (c: ConversationData) => c.copy(searchKey = c.savedOrFreshSearchKey)
     _       <- updateAll2(convs.map(_.id), updater)
   } yield {
-    verbose(s"Caching ${convs.size} conversations")
+    verbose(l"Caching ${convs.size} conversations")
   }
 
   private def updateSearchKey(cs: Seq[ConversationData]) =
@@ -107,7 +107,7 @@ class ConversationStorageImpl(storage: ZmsDatabase) extends CachedStorageImpl[Co
     } yield result
 
   override def findGroupConversations(prefix: SearchKey, self: UserId, limit: Int, handleOnly: Boolean): Future[Seq[ConversationData]] =
-    storage(ConversationDataDao.search(prefix, self, handleOnly, None)(_)).map(_.sortBy(_.displayName)(currentLocaleOrdering).take(limit))
+    storage(ConversationDataDao.search(prefix, self, handleOnly, None)(_)).map(_.sortBy(_.displayName.str)(currentLocaleOrdering).take(limit))
 
   private def findByRemoteId(remoteId: RConvId) = find(c => c.remoteId == remoteId, ConversationDataDao.findByRemoteId(remoteId)(_), identity)
   private def findByRemoteIds(remoteIds: Set[RConvId]) = find(c => remoteIds.contains(c.remoteId), ConversationDataDao.findByRemoteIds(remoteIds)(_), identity)

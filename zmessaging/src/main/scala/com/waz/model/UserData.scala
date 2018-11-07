@@ -20,6 +20,7 @@ package com.waz.model
 import com.waz.api.Verification
 import com.waz.db.Col._
 import com.waz.db.Dao
+import com.waz.model
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.service.SearchKey
 import com.waz.sync.client.UserSearchClient.UserSearchEntry
@@ -31,7 +32,7 @@ import scala.concurrent.duration._
 
 case class UserData(id:                    UserId,
                     teamId:                Option[TeamId]        = None,
-                    name:                  String,
+                    name:                  Name,
                     email:                 Option[EmailAddress]  = None,
                     phone:                 Option[PhoneNumber]   = None,
                     trackingId:            Option[TrackingId]    = None,
@@ -44,7 +45,7 @@ case class UserData(id:                    UserId,
                     conversation:          Option[RConvId]       = None, // remote conversation id with this contact (one-to-one)
                     relation:              Relation              = Relation.Other, //unused - remove in future migration
                     syncTimestamp:         Option[LocalInstant]  = None,
-                    displayName:           String                = "",
+                    displayName:           Name                  = Name.Empty,
                     verified:              Verification          = Verification.UNKNOWN, // user is verified if he has any otr client, and all his clients are verified
                     deleted:               Boolean               = false,
                     availability:          Availability          = Availability.None,
@@ -70,7 +71,7 @@ case class UserData(id:                    UserId,
     phone = user.phone.orElse(phone),
     accent = user.accentId.getOrElse(accent),
     trackingId = user.trackingId.orElse(trackingId),
-    searchKey = SearchKey(if (withSearchKey) user.name.getOrElse(name) else ""),
+    searchKey = SearchKey(if (withSearchKey) user.name.getOrElse(name).str else ""),
     picture = user.mediumPicture.map(_.id).orElse(picture),
     deleted = user.deleted,
     handle = user.handle match {
@@ -147,9 +148,9 @@ object UserData {
   }
 
   // used for testing only
-  def apply(name: String): UserData = UserData(UserId(name), name = name, searchKey = SearchKey.simple(name))
+  def apply(name: String): UserData = UserData(UserId(name), name = Name(name), searchKey = SearchKey.simple(name))
 
-  def apply(id: UserId, name: String): UserData = UserData(id, None, name, None, None, searchKey = SearchKey(name), handle = None)
+  def apply(id: UserId, name: String): UserData = UserData(id, None, Name(name), None, None, searchKey = SearchKey(name), handle = None)
 
   def apply(entry: UserSearchEntry): UserData =
     UserData(
@@ -164,8 +165,8 @@ object UserData {
   def apply(user: UserInfo): UserData = apply(user, withSearchKey = true)
 
   def apply(user: UserInfo, withSearchKey: Boolean): UserData =
-    UserData(user.id, None, user.name.getOrElse(""), user.email, user.phone, user.trackingId, user.mediumPicture.map(_.id),
-      user.accentId.getOrElse(AccentColor.defaultColor.id), SearchKey(if (withSearchKey) user.name.getOrElse("") else ""), deleted = user.deleted,
+    UserData(user.id, None, user.name.getOrElse(Name.Empty), user.email, user.phone, user.trackingId, user.mediumPicture.map(_.id),
+      user.accentId.getOrElse(AccentColor.defaultColor.id), SearchKey(if (withSearchKey) user.name.getOrElse(Name.Empty).str else ""), deleted = user.deleted,
       handle = user.handle, providerId = user.service.map(_.provider), integrationId = user.service.map(_.id))
 
   implicit lazy val Decoder: JsonDecoder[UserData] = new JsonDecoder[UserData] {
@@ -212,7 +213,7 @@ object UserData {
   implicit object UserDataDao extends Dao[UserData, UserId] {
     val Id = id[UserId]('_id, "PRIMARY KEY").apply(_.id)
     val TeamId = opt(id[TeamId]('teamId))(_.teamId)
-    val Name = text('name)(_.name)
+    val Name = text[model.Name]('name, _.str, model.Name(_))(_.name)
     val Email = opt(emailAddress('email))(_.email)
     val Phone = opt(phoneNumber('phone))(_.phone)
     val TrackingId = opt(id[TrackingId]('tracking_id))(_.trackingId)
@@ -225,7 +226,7 @@ object UserData {
     val Conversation = opt(id[RConvId]('conversation))(_.conversation)
     val Rel = text[Relation]('relation, _.name, Relation.valueOf)(_.relation)
     val Timestamp = opt(localTimestamp('timestamp))(_.syncTimestamp)
-    val DisplayName = text('display_name)(_.displayName)
+    val DisplayName = text[model.Name]('display_name, _.str, model.Name(_))(_.displayName)
     val Verified = text[Verification]('verified, _.name, Verification.valueOf)(_.verified)
     val Deleted = bool('deleted)(_.deleted)
     val AvailabilityStatus = int[Availability]('availability, _.id, Availability.apply)(_.availability)

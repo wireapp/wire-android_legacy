@@ -78,8 +78,8 @@ class ContactsDaoSpec extends FeatureSpec with Matchers with RobolectricTests {
     coyote.copy(
       emailAddresses = Set(EmailAddress("coyote@wile.me"), EmailAddress("wile.e.coyote@gmail.not"))))
 
-  lazy val meepUser = UserData(UserId("meepuser"), None, "Meep Moop", None, Some(PhoneNumber("123")), searchKey = SearchKey("Meep Moop"), handle = Some(Handle.random))
-  lazy val coyoteUser = UserData(UserId("coyoteuser"), None, "Wile E. Coyote", Some(EmailAddress("wile.e.coyote@gmail.not")), None, searchKey = SearchKey("Wile E. Coyote"), handle = Some(Handle.random))
+  lazy val meepUser = UserData(UserId("meepuser"), None, Name("Meep Moop"), None, Some(PhoneNumber("123")), searchKey = SearchKey("Meep Moop"), handle = Some(Handle.random))
+  lazy val coyoteUser = UserData(UserId("coyoteuser"), None, Name("Wile E. Coyote"), Some(EmailAddress("wile.e.coyote@gmail.not")), None, searchKey = SearchKey("Wile E. Coyote"), handle = Some(Handle.random))
 
   def contact(name: String) = Contact(ContactId(), name, NameSource.StructuredName, name, SearchKey(name), Set.empty, Set.empty)
 

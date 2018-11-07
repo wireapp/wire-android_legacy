@@ -19,9 +19,7 @@ package com.waz.log
 
 import java.io._
 
-import com.waz.DebugMode
 import com.waz.ZLog.LogTag
-import com.waz.api.ZmsVersion
 import com.waz.log.ZLog2.Log
 import com.waz.service.ZMessaging.clock
 
@@ -71,14 +69,6 @@ object InternalLog {
     case _ =>
   } }
 
-  def init(basePath: String): LogOutput =
-    if (ZmsVersion.DEBUG) {
-      add(new AndroidLogOutput)
-      add(new BufferedLogOutput(basePath))
-    } else {
-      add(new ProductionBufferedOutput(basePath))
-    }
-
   import LogLevel._
   def error(msg: String, cause: Throwable, tag: LogTag): Unit = log(msg, cause, Error, tag)
   def error(msg: String, tag: LogTag): Unit                   = log(msg, Error, tag)
@@ -98,15 +88,6 @@ object InternalLog {
 
   def dateTag = s"${clock.instant().toString}-TID:${Thread.currentThread().getId}"
 
-  private final def twoc(n: Int) =
-    if(n < 10) "0"+n.toString
-    else n.toString
-
-  private final def threec(n: Int) =
-    if (n < 10) "00"+n.toString
-    else if (n < 100) "0" + n.toString
-    else n.toString
-
   private def log(msg: String, level: LogLevel, tag: LogTag): Unit =
     outputs.values.foreach { _.log(msg, level, tag) }
 
@@ -120,13 +101,12 @@ object InternalLog {
     writeLog(log, level, out => out.log(_, cause, level, tag))
 
   private def writeLog(log: Log, level: LogLevel, logMsgConsumerCreator: LogOutput => String => Unit): Unit = {
-    val targetOutputs = outputs.values.filter(_.level <= level)
-    if (targetOutputs.nonEmpty) {
+    outputs.values.filter(_.level <= level).foreach { output =>
       val logMessage =
-        if (DebugMode.isEnabled) log.buildMessageUnsafe
-        else log.buildMessageSafe
+        if (output.showSafeOnly) log.buildMessageSafe
+        else log.buildMessageUnsafe
 
-      targetOutputs.foreach(output => logMsgConsumerCreator(output)(logMessage))
+      logMsgConsumerCreator(output)(logMessage)
     }
   }
 
