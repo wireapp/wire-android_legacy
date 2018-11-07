@@ -73,7 +73,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
     } else false
   }
 
-  def set(mAndL: MessageAndLikes, prev: Option[MessageData], next: Option[MessageData], opts: MsgBindOptions): Unit = {
+  def set(mAndL: MessageAndLikes, prev: Option[MessageData], next: Option[MessageData], opts: MsgBindOptions, adapter: MessagesListAdapter): Unit = {
     val animateFooter = msgId == mAndL.message.id && hasFooter != shouldShowFooter(mAndL, opts)
     hasFooter = shouldShowFooter(mAndL, opts)
     data = mAndL
@@ -130,7 +130,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
 
     val (top, bottom) = if (parts.isEmpty) (0, 0) else getMargins(prev.map(_.msgType), next.map(_.msgType), parts.head.tpe, parts.last.tpe, isOneToOne)
     setPadding(0, top, 0, bottom)
-    setParts(mAndL, parts, opts)
+    setParts(mAndL, parts, opts, adapter)
 
     if (animateFooter)
       getFooter foreach { footer =>

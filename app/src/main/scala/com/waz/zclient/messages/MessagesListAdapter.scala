@@ -32,13 +32,14 @@ import com.waz.zclient.messages.MessagesListView.UnreadIndex
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.zclient.{Injectable, Injector}
 
-class MessagesListAdapter(listDim: Signal[Dim2])(implicit inj: Injector, ec: EventContext)
+class MessagesListAdapter(listDim: Signal[Dim2], realViewHeight: Signal[Int])(implicit inj: Injector, ec: EventContext)
   extends MessagesListView.Adapter() with Injectable { adapter =>
 
   lazy val zms = inject[Signal[ZMessaging]]
   lazy val listController = inject[MessagesController]
   lazy val conversationController = inject[ConversationController]
   val ephemeralCount = Signal(Set.empty[MessageId])
+  val scrollController = new ScrollController(this, realViewHeight)
 
   var unreadIndex = UnreadIndex(0)
 

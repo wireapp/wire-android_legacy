@@ -28,6 +28,8 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.model.MessageContent
 import com.waz.service.messages.MessageAndLikes
+import com.waz.threading.Threading
+import com.waz.utils.events.EventContext
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MessageViewLayout.PartDesc
 import com.waz.zclient.messages.parts.ReplyPartView
@@ -43,7 +45,7 @@ abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: I
 
   setClipChildren(false)
 
-  protected def setParts(msg: MessageAndLikes, parts: Seq[PartDesc], opts: MsgBindOptions): Unit = {
+  protected def setParts(msg: MessageAndLikes, parts: Seq[PartDesc], opts: MsgBindOptions, adapter: MessagesListAdapter)(implicit ec: EventContext): Unit = {
     verbose(s"setParts: opts: $opts, parts: ${parts.map(_.tpe)}")
 
     // recycle views in reverse order, recycled views are stored in a Stack, this way we will get the same views back if parts are the same
@@ -58,14 +60,20 @@ abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: I
       view.setVisibility(View.VISIBLE)
       view.set(msg, content, opts)
       view match {
-        case v: ReplyPartView if msg.quote.nonEmpty => v.setQuote(msg.quote.get)
+        case v: ReplyPartView if msg.quote.nonEmpty =>
+          v.setQuote(msg.quote.get)
+          v.onClicked.onUi { _ =>
+            adapter.positionForMessage(msg.quote.get).foreach { pos =>
+              if (pos >= 0) adapter.scrollController.scrollToPositionRequested ! pos
+            } (Threading.Ui)
+          }
         case _ =>
       }
       if (view.getParent == null) addViewInLayout(view, index, Option(view.getLayoutParams).getOrElse(defaultLayoutParams))
       view
     }
 
-    (0 until getChildCount).map(getChildAt(_)).foreach { v =>
+    (0 until getChildCount).map(getChildAt).foreach { v =>
       if (!views.contains(v)) removeView(v)
     }
 

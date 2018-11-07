@@ -34,7 +34,7 @@ import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleTyp
 import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
 import com.waz.zclient.messages.MsgPart._
-import com.waz.zclient.messages.{ClickableViewPart, MsgPart, UsersController}
+import com.waz.zclient.messages._
 import com.waz.zclient.paintcode.WireStyleKit
 import com.waz.zclient.ui.text.{GlyphTextView, LinkTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.TypefaceUtils
@@ -78,7 +78,7 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) 
       case (asset, _) => Option(asset)
     }.orElse(Signal.const(Option.empty[AssetData]))
 
-  def setQuote(quotedMessage: MessageData) = {
+  def setQuote(quotedMessage: MessageData): Unit = {
     ZLog.verbose(s"setQuote: $quotedMessage")
     this.quotedMessage ! quotedMessage
   }
