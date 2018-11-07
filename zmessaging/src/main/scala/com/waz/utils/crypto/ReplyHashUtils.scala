@@ -27,7 +27,6 @@ import com.waz.model.GenericMessage.TextMessage
 import com.waz.utils.returning
 
 import scala.concurrent.Future
-
 import java.lang.Long.BYTES
 import java.lang.Math.round
 
