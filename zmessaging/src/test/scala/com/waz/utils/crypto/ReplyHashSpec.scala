@@ -27,8 +27,8 @@ import com.waz.specs.AndroidFreeSpec
   */
 class ReplyHashSpec extends AndroidFreeSpec {
 
-  private val timestamp1 = RemoteInstant.ofEpochMilli(1540213769)
-  private val timestamp2 = RemoteInstant.ofEpochMilli(1540213965)
+  private val timestamp1 = RemoteInstant.ofEpochSec(1540213769)
+  private val timestamp2 = RemoteInstant.ofEpochSec(1540213965)
 
   private val rt = RemoteInstant.Epoch
 

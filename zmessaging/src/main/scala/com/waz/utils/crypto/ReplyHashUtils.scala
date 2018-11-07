@@ -66,7 +66,7 @@ class ReplyHashingImpl(storage: AssetsStorage)(implicit base64: Base64) extends 
 
   protected[crypto] def hashTextReply(content: String, timestamp: RemoteInstant): Sha256Inj = {
     val bytes =
-      "\uFEFF".getBytes("UTF-16BE") ++ content.getBytes("UTF-16BE") ++ timestamp.toEpochMilli.getBytes
+      "\uFEFF".getBytes("UTF-16BE") ++ content.getBytes("UTF-16BE") ++ timestamp.toEpochSec.getBytes
     returning(Sha256Inj.calculate(bytes)) { sha =>
       verbose(s"hashTextReply($content, ${timestamp.javaDate}): ${sha.hexString}")
     }
@@ -75,7 +75,7 @@ class ReplyHashingImpl(storage: AssetsStorage)(implicit base64: Base64) extends 
   protected[crypto] def hashLocation(lat: Float, lng: Float, timestamp: RemoteInstant): Sha256Inj = {
     val latNorm: Long = round(lat*1000).toLong
     val lngNorm: Long = round(lng*1000).toLong
-    Sha256Inj.calculate(ByteBuffer.allocate(BYTES * 2).putLong(latNorm).putLong(lngNorm).array() ++ timestamp.toEpochMilli.getBytes)
+    Sha256Inj.calculate(ByteBuffer.allocate(BYTES * 2).putLong(latNorm).putLong(lngNorm).array() ++ timestamp.toEpochSec.getBytes)
   }
 
   private implicit class RichLong(l: Long) {

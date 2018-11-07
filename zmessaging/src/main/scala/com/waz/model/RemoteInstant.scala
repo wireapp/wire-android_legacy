@@ -52,6 +52,7 @@ object RemoteInstant {
   def Epoch = RemoteInstant(Instant.EPOCH)
   def Max = RemoteInstant(Instant.MAX)
   def ofEpochMilli(epochMilli: Long) = RemoteInstant(Instant.ofEpochMilli(epochMilli))
+  def ofEpochSec(epochSecond: Long) = RemoteInstant(Instant.ofEpochSecond(epochSecond))
 }
 
 case class LocalInstant(instant: Instant) extends WireInstant with Comparable[LocalInstant] {
