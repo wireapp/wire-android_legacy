@@ -24,7 +24,7 @@
     android:id="@+id/text"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:textSize="@dimen/wire__text_size__smaller"
+    android:textSize="@dimen/wire__text_size__regular_small"
     android:textColor="?wireSecondaryTextColor"
     app:w_font="@string/wire__typeface__regular"
     android:maxLines="1"
