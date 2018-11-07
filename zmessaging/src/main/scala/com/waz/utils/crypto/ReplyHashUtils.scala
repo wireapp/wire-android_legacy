@@ -66,7 +66,8 @@ class ReplyHashingImpl(storage: AssetsStorage)(implicit base64: Base64) extends 
   protected[crypto] def hashAsset(assetId: RAssetId, timestamp: RemoteInstant): Sha256Inj = hashTextReply(assetId.str, timestamp)
 
   protected[crypto] def hashTextReply(content: String, timestamp: RemoteInstant): Sha256Inj = {
-    val bytes =  "\uFEFF".getBytes("UTF-16BE") ++ encode(content) ++ timestamp.toEpochMilli.getBytes
+    val bytes =
+      "\uFEFF".getBytes("UTF-16BE") ++ content.getBytes("UTF-16BE") ++ timestamp.toEpochMilli.getBytes
     returning(Sha256Inj.calculate(bytes)) { sha =>
       verbose(s"hashTextReply($content, ${timestamp.javaDate}): ${sha.hexString}")
     }

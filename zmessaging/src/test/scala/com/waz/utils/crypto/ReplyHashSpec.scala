@@ -65,11 +65,11 @@ class ReplyHashSpec extends AndroidFreeSpec {
       hash shouldEqual "f25a925d55116800e66872d2a82d8292adf1d4177195703f976bc884d32b5c94"
     }
 
-/*    scenario("arabic") {
+    scenario("arabic") {
       val str = "بغداد"
       val hash = getReplyHashing.hashTextReply(str, timestamp2).bytes.hex
       hash shouldEqual "5830012f6f14c031bf21aded5b07af6e2d02d01074f137d106d4645e4dc539ca"
-    }*/
+    }
 
     scenario("check location 1") {
       val lat: Float = 52.5166667.toFloat
