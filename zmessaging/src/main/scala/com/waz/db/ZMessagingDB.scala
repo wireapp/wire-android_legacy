@@ -52,7 +52,7 @@ class ZMessagingDB(context: Context, dbName: String) extends DaoDB(context.getAp
 }
 
 object ZMessagingDB {
-  val DbVersion = 111
+  val DbVersion = 112
 
   lazy val daos = Seq (
     UserDataDao, SearchQueryCacheDao, AssetDataDao, ConversationDataDao,
@@ -261,6 +261,9 @@ object ZMessagingDB {
     Migration(110, 111) { db =>
       db.execSQL("ALTER TABLE Messages ADD COLUMN quote TEXT")
       db.execSQL("ALTER TABLE Messages ADD COLUMN quote_validity INTEGER DEFAULT 0")
+    },
+    Migration(111, 112) { db =>
+      db.execSQL("ALTER TABLE Conversations ADD COLUMN unread_quote_count INTEGER DEFAULT 0")
     }
   )
 }
