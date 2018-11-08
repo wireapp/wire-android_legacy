@@ -309,6 +309,7 @@ trait MessageAndLikesStorage {
   val onUpdate: EventStream[MessageId]
   def apply(ids: Seq[MessageId]): Future[Seq[MessageAndLikes]]
   def getMessageAndLikes(id: MessageId): Future[Option[MessageAndLikes]]
+  def combineWithLikes(msgs: Seq[MessageData]): Future[Seq[MessageAndLikes]]
   def combineWithLikes(msg: MessageData): Future[MessageAndLikes]
   def combine(msg: MessageData, likes: Likes, selfUserId: UserId, quote: Option[MessageData]): MessageAndLikes
   def sortedLikes(likes: Likes, selfUserId: UserId): (IndexedSeq[UserId], Boolean)
@@ -335,10 +336,14 @@ class MessageAndLikesStorageImpl(selfUserId: UserId, messages: MessagesStorage, 
 
   def getMessageAndLikes(id: MessageId): Future[Option[MessageAndLikes]] = apply(Seq(id)).map(_.headOption)
 
-  override def combineWithLikes(msg: MessageData): Future[MessageAndLikes] = for {
-    likes <- getLikes(Seq(msg))
-    quotes <- getQuotes(Seq(msg))
-  } yield combine(msg, likes.getOrElse(msg.id, Likes.Empty(msg.id)), selfUserId, quotes.get(msg.id).flatten)
+  override def combineWithLikes(msgs: Seq[MessageData]): Future[Seq[MessageAndLikes]] = for {
+    likes <- getLikes(msgs)
+    quotes <- getQuotes(msgs)
+  } yield msgs.map { msg =>
+    combine(msg, likes.getOrElse(msg.id, Likes.Empty(msg.id)), selfUserId, quotes.get(msg.id).flatten)
+  }
+
+  override def combineWithLikes(msg: MessageData): Future[MessageAndLikes] = combineWithLikes(Seq(msg)).map(_.head)
 
   def getQuotes(msgs: Seq[MessageData]): Future[Map[MessageId, Option[MessageData]]] = {
     Future.sequence(msgs.flatMap(m => m.quote.map(m.id -> _).toSeq).map {

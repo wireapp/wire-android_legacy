@@ -440,6 +440,8 @@ object MessageData extends
     private val IndexColumns = Array(Id.name, Time.name)
     def msgIndexCursor(conv: ConvId)(implicit db: DB) = db.query(table.name, IndexColumns, s"${Conv.name} = '$conv'", null, null, null, s"${Time.name} ASC")
 
+    def msgCursor(conv: ConvId)(implicit db: DB) = db.query(table.name, null, s"${Conv.name} = '$conv'", null, null, null, s"${Time.name} DESC")
+
     def countAtLeastAsOld(conv: ConvId, time: RemoteInstant)(implicit db: DB) =
       queryNumEntries(db, table.name, s"""${Conv.name} = '${Conv(conv)}' AND ${Time.name} <= ${Time(time)}""")
 
