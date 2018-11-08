@@ -73,7 +73,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
     } else false
   }
 
-  def set(mAndL: MessageAndLikes, prev: Option[MessageData], next: Option[MessageData], opts: MsgBindOptions, adapter: MessagesListAdapter): Unit = {
+  def set(mAndL: MessageAndLikes, prev: Option[MessageData], next: Option[MessageData], opts: MsgBindOptions, adapter: MessagesPagedListAdapter): Unit = {
     val animateFooter = msgId == mAndL.message.id && hasFooter != shouldShowFooter(mAndL, opts)
     hasFooter = shouldShowFooter(mAndL, opts)
     data = mAndL

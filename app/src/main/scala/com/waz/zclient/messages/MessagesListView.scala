@@ -17,26 +17,25 @@
  */
 package com.waz.zclient.messages
 
-import java.util
-
 import android.app.Activity
+import android.arch.paging.PagedList
 import android.content.Context
 import android.support.v7.widget.RecyclerView.{OnScrollListener, ViewHolder}
 import android.support.v7.widget.{DefaultItemAnimator, LinearLayoutManager, RecyclerView}
 import android.util.AttributeSet
 import android.view.WindowManager
+import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.{AssetStatus, Message}
 import com.waz.model.{ConvId, Dim2, MessageData}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
+import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
-import com.waz.zclient.messages.ScrollController.{BottomScroll, PositionScroll}
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.{Injectable, Injector, ViewHelper}
@@ -45,104 +44,103 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
-  import MessagesListView._
+  private val messagesController = inject[MessagesController]
+  private val messageActionsController = inject[MessageActionsController]
+  private val messagePagedListController = inject[MessagePagedListController]
+  private val collectionsController = inject[CollectionController]
 
   val viewDim = Signal[Dim2]()
   val realViewHeight = Signal[Int]()
-  val layoutManager = new MessagesListLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-  val adapter = new MessagesListAdapter(viewDim, realViewHeight)
-  val scrollController: ScrollController = adapter.scrollController
+  val layoutManager = new MessagesListLayoutManager(context, LinearLayoutManager.VERTICAL, true)
+  val adapter = new MessagesPagedListAdapter()
+  val scrollController = new ScrollController(adapter, this, layoutManager)
 
-  val messagesController = inject[MessagesController]
-  val messageActionsController = inject[MessageActionsController]
+  private val plCallback: PagedList.Callback = new PagedList.Callback {
 
-  viewDim.on(Threading.Ui){_ => adapter.notifyDataSetChanged()}
+    private def notifyChanged(): Unit = {
+      scrollController.onPagedListChanged()
+      adapter.notifyDataSetChanged()
+    }
 
-  messageActionsController.messageToReveal {
-    case Some(messageData) =>
-      adapter
-        .scrollToMessage(messageData)
-        .foreach( _ => messageActionsController.messageToReveal ! None)(Threading.Ui)
-    case None =>
+    override def onChanged(position: Int, count: Int): Unit = notifyChanged()
+
+    override def onInserted(position: Int, count: Int): Unit = notifyChanged()
+
+    override def onRemoved(position: Int, count: Int): Unit = notifyChanged()
   }
 
   setHasFixedSize(true)
   setLayoutManager(layoutManager)
   setAdapter(adapter)
+
+  private var prevConv = Option.empty[ConvId]
+  messagePagedListController.pagedListData.onUi { case (data, PagedListWrapper(pl), messageToReveal) =>
+    pl.addWeakCallback(null, plCallback)
+    adapter.convInfo = data
+    adapter.submitList(pl)
+
+    val dataSource = pl.getDataSource.asInstanceOf[MessageDataSource]
+    val unread = dataSource.positionForMessage(data.lastRead).filter(_ >= 0)
+    val toReveal = messageToReveal.flatMap(mtr => dataSource.positionForMessage(mtr).filter(_ >= 0))
+
+    if (!prevConv.contains(data.convId)) {
+      scrollController.reset(toReveal.orElse(unread).getOrElse(0))
+      prevConv = Some(data.convId)
+    } else {
+      scrollController.onPagedListReplaced(pl)
+      toReveal.foreach(scrollController.scrollToPositionRequested ! _)
+    }
+  }
+
+  scrollController.reachedQueuedScroll.filter(_.force).onUi { _ =>
+    messageActionsController.messageToReveal ! None
+  }
+
+  viewDim.onUi { dim =>
+    ZLog.verbose(s"viewDim($dim)")
+    adapter.listDim = dim
+    adapter.notifyDataSetChanged()
+  }
+
+  realViewHeight.onChanged {
+    scrollController.onListHeightChanged ! _
+  }
+
+  adapter.onScrollRequested.onUi { case (message, _) =>
+    collectionsController.focusedItem ! Some(message)
+  }
+
   setItemAnimator(new DefaultItemAnimator {
     // always reuse view holder, we will handle animations ourselves
-    override def canReuseUpdatedViewHolder(viewHolder: ViewHolder, payloads: util.List[AnyRef]): Boolean = true
+    override def canReuseUpdatedViewHolder(viewHolder: ViewHolder, payloads: java.util.List[AnyRef]): Boolean = true
   })
-
-  adapter.ephemeralCount { set =>
-    val count = set.size
-    Option(getContext).foreach {
-      case a:Activity =>
-        count match {
-          case 0 => a.getWindow.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-          case _ => a.getWindow.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        }
-      case _ => // not attached, ignore
-    }
-  }
-
-  scrollController.onScroll.on(Threading.Ui) { scroll =>
-
-    def scrollCloseToTarget(target: Int, current: Int) =
-      if (math.abs(current - target) > MaxSmoothScroll)
-        layoutManager.scrollToPosition(if (target > current) target - MaxSmoothScroll else target + MaxSmoothScroll)
-
-    verbose(s"Scrolling to: $scroll")
-
-    scroll match {
-      case BottomScroll(false) =>
-        val target = adapter.getItemCount - 1
-        layoutManager.snapToEnd()
-        layoutManager.scrollToPosition(target)
-        scrollController.onScrolled(target)
-        verbose(s"Scrolling target: $target, item count: ${adapter.getItemCount}")
-
-      case BottomScroll(true) =>
-        val target = Math.max(0, adapter.getItemCount - 1)
-        val current = layoutManager.findFirstVisibleItemPosition()
-        layoutManager.snapToEnd()
-        scrollCloseToTarget(target, current)
-        smoothScrollToPosition(target)
-        verbose(s"Scrolling target: $target, current: $current, item count: ${adapter.getItemCount}")
-
-      case PositionScroll(pos, false) =>
-        val target = Math.min(pos, adapter.getItemCount - 1)
-        layoutManager.snapToStart()
-        layoutManager.scrollToPosition(target)
-        scrollController.onScrolled(target)
-        verbose(s"Scrolling target: $target, item count: ${adapter.getItemCount}")
-
-      case PositionScroll(pos, true) =>
-        val current = layoutManager.findFirstVisibleItemPosition()
-        layoutManager.snapToStart()
-        scrollCloseToTarget(pos, current)
-        smoothScrollToPosition(pos)
-        verbose(s"Scrolling target: $pos, current: $current, item count: ${adapter.getItemCount}")
-    }
-  }
 
   addOnScrollListener(new OnScrollListener {
     override def onScrollStateChanged(recyclerView: RecyclerView, newState: Int): Unit = newState match {
       case RecyclerView.SCROLL_STATE_IDLE =>
         val page = inject[INavigationController].getCurrentPage
         if (page == Page.MESSAGE_STREAM) {
-          scrollController.onScrolled(layoutManager.findLastVisibleItemPosition())
-          messagesController.scrolledToBottom ! (layoutManager.findLastCompletelyVisibleItemPosition() == adapter.getItemCount - 1)
-        } else {
-          scrollController.onScrolledInvisible()
+          messagesController.scrolledToBottom ! (layoutManager.findLastCompletelyVisibleItemPosition() == 0)
         }
-      case RecyclerView.SCROLL_STATE_DRAGGING =>
-        scrollController.onDragging()
+
+      case RecyclerView.SCROLL_STATE_DRAGGING => {
         messagesController.scrolledToBottom ! false
         Option(getContext).map(_.asInstanceOf[Activity]).foreach(a => KeyboardUtils.hideKeyboard(a))
+      }
       case _ =>
     }
   })
+
+  adapter.hasEphemeral.onUi { hasEphemeral =>
+    Option(getContext).foreach {
+      case a: Activity =>
+        if (hasEphemeral)
+          a.getWindow.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        else
+          a.getWindow.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+      case _ => // not attahced, ignore
+    }
+  }
 
   override def onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int): Unit = {
     //We don't want the original height of the view to change if the keyboard comes up, or else images will be resized to
@@ -161,14 +159,9 @@ object MessagesListView {
   val MaxSmoothScroll = 50
 
   case class UnreadIndex(index: Int) extends AnyVal
-
-  abstract class Adapter extends RecyclerView.Adapter[MessageViewHolder] {
-    def getConvId: Option[ConvId]
-    def getUnreadIndex: UnreadIndex
-  }
 }
 
-case class MessageViewHolder(view: MessageView, adapter: MessagesListAdapter)(implicit ec: EventContext, inj: Injector) extends RecyclerView.ViewHolder(view) with Injectable {
+case class MessageViewHolder(view: MessageView, adapter: MessagesPagedListAdapter)(implicit ec: EventContext, inj: Injector) extends RecyclerView.ViewHolder(view) with Injectable {
 
   private val selection = inject[ConversationController].messages
   private val msgsController = inject[MessagesController]

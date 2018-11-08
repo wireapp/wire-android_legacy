@@ -73,7 +73,7 @@ import com.waz.zclient.conversation.creation.CreateConversationController
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.cursor.CursorController
 import com.waz.zclient.messages.controllers.{MessageActionsController, NavigationController}
-import com.waz.zclient.messages.{LikesController, MessageViewFactory, MessagesController, UsersController}
+import com.waz.zclient.messages.{LikesController, MessagePagedListController, MessageViewFactory, MessagesController, UsersController}
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.AndroidNotificationsManager
 import com.waz.zclient.notifications.controllers.{CallingNotificationsController, ImageNotificationsController, MessageNotificationsController, NotificationManagerWrapper}
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
@@ -164,6 +164,7 @@ object WireApplication {
     bind [Signal[MessagesService]]               to inject[Signal[ZMessaging]].map(_.messages)
     bind [Signal[IntegrationsService]]           to inject[Signal[ZMessaging]].map(_.integrations)
     bind [Signal[UserPreferences]]               to inject[Signal[ZMessaging]].map(_.userPrefs)
+    bind [Signal[MessageAndLikesStorage]]        to inject[Signal[ZMessaging]].map(_.msgAndLikes)
 
     // old controllers
     // TODO: remove controller factory, reimplement those controllers
@@ -271,6 +272,8 @@ object WireApplication {
       * MessageActionsController in the CallingActivity, for example
       */
     bind [UiTrackingController]    to new UiTrackingController()
+
+    bind[MessagePagedListController] to new MessagePagedListController()
   }
 
   protected def clearOldVideoFiles(context: Context): Unit = {

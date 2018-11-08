@@ -156,7 +156,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
       case state => state
     }
 
-    if (keyboardIsVisible) editHasFocus.head.foreach { hasFocus =>
+    if (keyboardIsVisible) editHasFocus.currentValue.foreach { hasFocus =>
       if (hasFocus) {
         cursorCallback.foreach(_.onCursorClicked())
       }

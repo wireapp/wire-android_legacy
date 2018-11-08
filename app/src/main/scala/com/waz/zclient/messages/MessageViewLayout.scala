@@ -44,7 +44,7 @@ abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: I
 
   setClipChildren(false)
 
-  protected def setParts(msg: MessageAndLikes, parts: Seq[PartDesc], opts: MsgBindOptions, adapter: MessagesListAdapter)(implicit ec: EventContext): Unit = {
+  protected def setParts(msg: MessageAndLikes, parts: Seq[PartDesc], opts: MsgBindOptions, adapter: MessagesPagedListAdapter)(implicit ec: EventContext): Unit = {
     verbose(s"setParts: opts: $opts, parts: ${parts.map(_.tpe)}")
 
     // recycle views in reverse order, recycled views are stored in a Stack, this way we will get the same views back if parts are the same
@@ -61,8 +61,10 @@ abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: I
       (view, msg.quote) match {
         case (v: ReplyPartView, Some(quote)) if msg.message.quoteValidity =>
           v.setQuote(quote)
-          v.onClicked.onUi { _ =>
-            adapter.scrollToMessage(quote)
+          v.onQuoteClick.onUi { _ =>
+            adapter.positionForMessage(quote.id).foreach { pos =>
+              if (pos >= 0) adapter.onScrollRequested ! (quote, pos)
+            }
           }
         case _ =>
       }

@@ -35,7 +35,9 @@
         android:paddingBottom="@dimen/wire__padding__12"
         android:paddingStart="@dimen/wire__padding__regular"
         android:paddingEnd="@dimen/wire__padding__12"
-        android:background="@drawable/rounded_graphite_stroke_rectangle">
+        android:background="@drawable/rounded_graphite_stroke_rectangle"
+        android:clickable="true"
+        android:focusable="true">
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/name"

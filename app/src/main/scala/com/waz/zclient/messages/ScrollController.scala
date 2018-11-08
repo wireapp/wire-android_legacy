@@ -1,105 +1,179 @@
 /**
- * Wire
- * Copyright (C) 2018 Wire Swiss GmbH
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+  * Wire
+  * Copyright (C) 2018 Wire Swiss GmbH
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
 package com.waz.zclient.messages
 
+import android.arch.paging.PagedList
 import android.support.v7.widget.RecyclerView
-import com.waz.ZLog
-import com.waz.model.ConvId
-import com.waz.utils.events.{EventContext, EventStream, Signal}
-import com.waz.zclient.messages.MessagesListView.UnreadIndex
-import com.waz.zclient.messages.ScrollController.{BottomScroll, LastVisiblePosition, PositionScroll, Scroll}
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.verbose
+import com.waz.service.messages.MessageAndLikes
+import com.waz.utils.events.{EventContext, EventStream, SourceStream}
+import ScrollController._
+import android.support.v7.widget.RecyclerView.OnScrollListener
 
-class ScrollController(adapter: MessagesListView.Adapter, listHeight: Signal[Int])(implicit ec: EventContext) {
+class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, layoutManager: MessagesListLayoutManager)(implicit ec: EventContext) {
 
-  var targetPosition = Option.empty[Int]
-  private var lastVisiblePosition = LastVisiblePosition(0, lastMessage = false)
+  private var lastVisiblePosition = 0
   private var dragging = false
-  private var prevCount = 0
-  private var prevConv = Option.empty[ConvId]
+  private var previousCount = Option.empty[Int]
 
-  val scrollToPositionRequested = EventStream[Int]
-  val onScrollToBottomRequested = EventStream[Boolean]
-  private val onListLoaded = EventStream[UnreadIndex]
-  private val onMessageAdded = EventStream[Int]
+  private var queuedScroll = Option.empty[Scroll]
 
-  def shouldScrollToBottom = targetPosition.isEmpty && !dragging && adapter.getUnreadIndex.index == adapter.getItemCount
+  val onListLoaded: SourceStream[Int] = EventStream[Int]
+  val scrollToPositionRequested: SourceStream[Int] = EventStream[Int]
+  val onScrollToBottomRequested: SourceStream[Boolean] = EventStream[Boolean]
+  val onMessageAdded: SourceStream[Int] = EventStream[Int]
+  val onListHeightChanged: SourceStream[Int] = EventStream[Int]
 
-  def onScrolled(lastVisiblePosition: Int) = {
-    this.lastVisiblePosition = LastVisiblePosition(lastVisiblePosition, lastVisiblePosition == lastPosition)
-    dragging = false
-    ZLog.verbose(s"onScrolled $lastVisiblePosition")
-  }
-
-  def onScrolledInvisible() = this.lastVisiblePosition = LastVisiblePosition(lastVisiblePosition.position, lastVisiblePosition.position == lastPosition)
-
-  def onDragging(): Unit = {
-    dragging = true
-    targetPosition = None
-    ZLog.verbose(s"onDragging")
-  }
-
-  private def lastPosition = adapter.getItemCount - 1
-
-  adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver {
-    override def onChanged(): Unit = {
-      ZLog.verbose(s"AdapterDataObserver onChanged prevCount: $prevCount, adapter item count: ${adapter.getItemCount}, prevConv: $prevConv, adapter conv: ${adapter.getConvId}")
-      if (prevConv.isDefined && prevConv != adapter.getConvId || prevCount == 0) {
-        targetPosition match {
-          case Some(pos) =>
-            scrollToPositionRequested ! pos
-          case _ if shouldScrollToBottom && lastVisiblePosition.lastMessage =>
-            onScrollToBottomRequested ! false
-          case _ =>
-            lastVisiblePosition = LastVisiblePosition(adapter.getUnreadIndex.index, adapter.getUnreadIndex.index == adapter.getItemCount - 1 || adapter.getItemCount == 0)
-            onListLoaded ! adapter.getUnreadIndex
-        }
-      }
-
-      prevConv = adapter.getConvId
-      prevCount = adapter.getItemCount
-    }
-
-    override def onItemRangeInserted(positionStart: Int, itemCount: Int): Unit = {
-      ZLog.verbose(s"AdapterDataObserver onItemRangeInserted positionStart : $positionStart, itemCount: $itemCount, prevCount: $prevCount, adapter item count: ${adapter.getItemCount}")
-      if (itemCount == adapter.getItemCount)
-        onChanged()
-      else if (adapter.getItemCount == positionStart + itemCount && positionStart != 0) {
-        onMessageAdded ! positionStart + itemCount - 1
-        prevCount = adapter.getItemCount
-      }
-    }
-  })
+  val reachedQueuedScroll: SourceStream[Scroll] = EventStream[Scroll]
 
   val onScroll: EventStream[Scroll] = EventStream.union(
-    onListLoaded.filter(_.index > 0).map { case UnreadIndex(pos) => PositionScroll(pos, smooth = false) },
-    onScrollToBottomRequested.map(smooth => BottomScroll(smooth = smooth)),
-    listHeight.onChanged.filter(_ => shouldScrollToBottom && targetPosition.isEmpty && lastVisiblePosition.lastMessage).map(_ => BottomScroll(smooth = false)),
-    listHeight.onChanged.filter(_ => !shouldScrollToBottom && targetPosition.nonEmpty).map(_ => PositionScroll(targetPosition.get, smooth = false)),
-    onMessageAdded.filter(_ => !dragging && targetPosition.isEmpty && lastVisiblePosition.lastMessage).map(_ => BottomScroll(smooth = true)),
-    scrollToPositionRequested.map(pos => PositionScroll(pos, smooth = false))
+    onListLoaded.map { pos =>
+      Scroll(pos, smooth = false, force = true)
+    },
+    onScrollToBottomRequested.filter(_ => queuedScroll.isEmpty).map { _ =>
+      BottomScroll(smooth = false)
+    },
+    onListHeightChanged.filter(_ => shouldScrollToBottom && lastVisiblePosition == LastMessageIndex).map { _ =>
+      BottomScroll(smooth = false)
+    },
+    onListHeightChanged.filter(_ => !shouldScrollToBottom && queuedScroll.nonEmpty).map { _ =>
+      queuedScroll.get
+    },
+    onMessageAdded.filter(_ => !dragging && queuedScroll.isEmpty && lastVisiblePosition == LastMessageIndex).map { _ =>
+      BottomScroll(smooth = false)
+    },
+    scrollToPositionRequested.map { pos =>
+      Scroll(pos, smooth = false, force = true)
+    }
   )
+
+  adapter.onScrollRequested(scrollToPositionRequested ! _._2)
+
+  view.addOnScrollListener(new OnScrollListener {
+    override def onScrollStateChanged(recyclerView: RecyclerView, newState: Int): Unit =
+      newState match {
+        case RecyclerView.SCROLL_STATE_DRAGGING => startDragging()
+        case _ => stopDragging()
+      }
+
+    override def onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int): Unit = {
+
+      def from: Int = {
+        val f = layoutManager.findFirstCompletelyVisibleItemPosition()
+        if (f == -1) layoutManager.findFirstVisibleItemPosition() else f
+      }
+
+      def to: Int = {
+        val t = layoutManager.findLastCompletelyVisibleItemPosition()
+        if (t == -1) layoutManager.findLastVisibleItemPosition() else t
+      }
+
+      onScroll(from, to)
+    }
+
+  })
+
+  onScroll.onUi(processScroll)
+
+  def reset(unreadPos: Int): Unit = {
+    verbose(s"reset $unreadPos")
+    queuedScroll = None
+    onListLoaded ! unreadPos
+  }
+
+  def onPagedListChanged(): Unit = {
+    verbose(s"onPagedListChanged")
+    queuedScroll.foreach(processScroll)
+  }
+
+  def onPagedListReplaced(pl: PagedList[MessageAndLikes]): Unit = {
+    val newCount = pl.getDataSource.asInstanceOf[MessageDataSource].totalCount
+    verbose(s"onPagedListReplaced $newCount, $previousCount")
+    if (previousCount.exists(_ < newCount)) {
+      onMessageAdded ! newCount - previousCount.getOrElse(0)
+    } else {
+      queuedScroll.foreach(processScroll)
+    }
+    previousCount = Some(newCount)
+  }
+
+  private def canScrollTo(pos: Int): Boolean =
+    Option(adapter.getCurrentList).exists(_.get(pos) != null)
+
+  private def requestLoadAround(pos: Int): Unit = {
+    Option(adapter.getCurrentList).foreach(_.loadAround(pos))
+  }
+
+  private def processScroll(s: Scroll): Unit = {
+    verbose(s"Scrolling to: $s")
+    if (queuedScroll.forall(!_.force)) {
+      queuedScroll = Some(s)
+    }
+    queuedScroll.foreach { scroll =>
+      val target = scroll.pos
+
+      if (scroll.pos == LastMessageIndex)
+        layoutManager.snapToEnd()
+      else
+        layoutManager.snapToStart()
+
+      if (scroll.smooth) {
+        view.smoothScrollToPosition(target)
+      } else {
+        if (canScrollTo(target)) {
+          layoutManager.snapToEnd()
+          view.scrollToPosition(target)
+        } else {
+          requestLoadAround(target)
+        }
+      }
+    }
+  }
+
+  private def onScroll(lastVisiblePosition: => Int, firstVisiblePosition: => Int): Unit = {
+    this.lastVisiblePosition = lastVisiblePosition
+    queuedScroll match {
+      case Some(scroll @ Scroll(pos, _, _)) if pos >= lastVisiblePosition && pos <= firstVisiblePosition =>
+        reachedQueuedScroll ! scroll
+        queuedScroll = None
+      case Some(scroll) =>
+        processScroll(scroll)
+      case _ =>
+    }
+  }
+
+  private def startDragging(): Unit = {
+    dragging = true
+    queuedScroll = None
+    verbose(s"startDragging")
+  }
+
+  private def stopDragging(): Unit = {
+    dragging = false
+    verbose(s"stopDragging")
+  }
+
+  private def shouldScrollToBottom: Boolean = queuedScroll.isEmpty && !dragging && adapter.unreadIsLast
 }
 
 object ScrollController {
-  trait Scroll
-  case class PositionScroll(position: Int, smooth: Boolean) extends Scroll
-  case class BottomScroll(smooth: Boolean) extends Scroll
-
-  case class LastVisiblePosition(position: Int, lastMessage: Boolean)
+  case class Scroll(pos: Int, smooth: Boolean, force: Boolean = false)
+  def BottomScroll(smooth: Boolean, force: Boolean = false) = Scroll(LastMessageIndex, smooth, force)
+  val LastMessageIndex: Int = 0
 }

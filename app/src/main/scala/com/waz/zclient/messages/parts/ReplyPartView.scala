@@ -26,7 +26,7 @@ import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
 import com.waz.model.{AssetData, MessageData}
-import com.waz.utils.events.{NoAutowiring, Signal, SourceSignal}
+import com.waz.utils.events._
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
@@ -40,8 +40,9 @@ import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils.{getString, getStyledColor}
 import com.waz.zclient.utils.{DateConvertUtils, RichTextView, ZTimeFormatter}
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.utils.RichView
 
-abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ClickableViewPart with ViewHelper with EphemeralPartView {
+abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper with EphemeralPartView {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -54,6 +55,8 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) 
   protected val timestamp: TextView = findById[TextView](R.id.timestamp)
   private val content   = findById[ViewGroup](R.id.content)
   private val container = findById[ViewGroup](R.id.quote_container)
+
+  val onQuoteClick: SourceStream[Unit] = EventStream[Unit]
 
   val quoteView = tpe match {
     case Reply(Text)       => Some(inflate(R.layout.message_reply_content_text,     addToParent = false))
@@ -103,6 +106,8 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) 
   quotedMessage.map(!_.editTime.isEpoch).onUi { edited =>
     name.setEndCompoundDrawable(if (edited) Some(WireStyleKit.drawEdit) else None, getStyledColor(R.attr.wirePrimaryTextColor))
   }
+
+  container.onClick(onQuoteClick ! {()})
 }
 
 class TextReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) with MentionsViewPart {

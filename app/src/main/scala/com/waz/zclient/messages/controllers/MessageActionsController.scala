@@ -68,7 +68,7 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
   val onDeleteConfirmed = EventStream[(MessageData, Boolean)]() // Boolean == isRecall(true) or localDelete(false)
   val onAssetSaved = EventStream[AssetData]()
 
-  val messageToReveal = Signal[Option[MessageData]]()
+  val messageToReveal = Signal[Option[MessageData]](None)
 
   private var dialog = Option.empty[OptionsMenu]
 
