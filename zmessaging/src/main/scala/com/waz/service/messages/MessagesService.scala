@@ -185,7 +185,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
 
   override def addReplyMessage(quote: MessageId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]] = {
 
-    verbose(s"addReplyMessage($quote, ${content.take(4)}, $mentions, $exp")
+    verbose(s"addReplyMessage($quote, ${content.take(4)}, $mentions, $exp)")
     updater.getMessage(quote).flatMap {
       case Some(original) =>
         val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
@@ -197,7 +197,9 @@ class MessagesServiceImpl(selfUserId:   UserId,
             MessageData(
               id, original.convId, tpe, selfUserId, ct,
               protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, Some(Quote(quote, Some(hash)))))),
-              quote = Some(quote)
+              quote = Some(quote),
+              quoteHash = Some(hash),
+              quoteValidity = true
             ),
             exp = exp,
             localTime = localTime
