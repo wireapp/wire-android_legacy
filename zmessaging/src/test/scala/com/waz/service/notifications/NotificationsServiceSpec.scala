@@ -34,7 +34,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Future, duration}
 
 class NotificationsServiceSpec extends AndroidFreeSpec {
-
+  import com.waz.threading.Threading.Implicits.Background
 
   val self      = UserId()
   val messages  = mock[MessagesStorage]
@@ -48,6 +48,11 @@ class NotificationsServiceSpec extends AndroidFreeSpec {
   val members   = mock[MembersStorage]
   val globalNots: GlobalNotificationsService = new GlobalNotificationsServiceImpl
 
+  val messagesInStorage = Signal(Map[MessageId, MessageData]()).disableAutowiring()
+
+  (messages.getAll _).expects(*).anyNumberOfTimes.onCall { ids: Traversable[MessageId] =>
+    messagesInStorage.head.map(msgs => ids.map(msgs.get).toSeq )
+  }
 
   val inForeground = Signal(false)
   val beDrift      = Signal(Duration.ZERO)
@@ -83,8 +88,6 @@ class NotificationsServiceSpec extends AndroidFreeSpec {
 
       (users.get _).expects(user.id).twice.returning(Future.successful(Some(user)))
       (convs.get _).expects(conv.id).twice.returning(Future.successful(Some(conv)))
-      (messages.isQuoteOfSelf _).expects(msg1).once.returning(Future.successful(false))
-      (messages.isQuoteOfSelf _).expects(msg2).once.returning(Future.successful(false))
 
       val service = getService
 
@@ -107,8 +110,6 @@ class NotificationsServiceSpec extends AndroidFreeSpec {
 
       (users.get _).expects(user.id).twice.returning(Future.successful(Some(user)))
       (convs.get _).expects(conv.id).twice.returning(Future.successful(Some(conv)))
-      (messages.isQuoteOfSelf _).expects(msg1).once.returning(Future.successful(false))
-      (messages.isQuoteOfSelf _).expects(msg2).once.returning(Future.successful(false))
 
       val service = getService
 
@@ -146,8 +147,6 @@ class NotificationsServiceSpec extends AndroidFreeSpec {
 
       (users.get _).expects(user.id).twice.returning(Future.successful(Some(user)))
       (convs.get _).expects(conv.id).twice.returning(Future.successful(Some(conv)))
-      (messages.isQuoteOfSelf _).expects(msg1).once.returning(Future.successful(false))
-      (messages.isQuoteOfSelf _).expects(msg2).once.returning(Future.successful(false))
 
       msgsAdded ! Seq(msg1, msg2)
 
@@ -173,8 +172,6 @@ class NotificationsServiceSpec extends AndroidFreeSpec {
 
     (users.get _).expects(user.id).once.returning(Future.successful(Some(user)))
     (convs.get _).expects(conv.id).once.returning(Future.successful(Some(conv)))
-    (messages.isQuoteOfSelf _).expects(msg1).once.returning(Future.successful(false))
-    (messages.isQuoteOfSelf _).expects(msg2).once.returning(Future.successful(false))
 
     val service = getService
 
@@ -192,11 +189,15 @@ class NotificationsServiceSpec extends AndroidFreeSpec {
     inForeground ! false
     clock + 10.seconds //messages arrive some time after the account was last visible
 
-    val msg = MessageData(MessageId("msg"), conv.id, Message.Type.TEXT, otherUserId, quote = Some(MessageId("other msg")))
+    val otherMsgId = MessageId("other msg")
+    val otherMsg = MessageData(otherMsgId, conv.id, Message.Type.TEXT, self)
+    val msg = MessageData(MessageId("msg"), conv.id, Message.Type.TEXT, otherUserId, quote = Some(otherMsgId))
 
     (users.get _).expects(otherUserId).anyNumberOfTimes.returning(Future.successful(Some(otherUser)))
     (convs.get _).expects(conv.id).anyNumberOfTimes.returning(Future.successful(Some(conv)))
-    (messages.isQuoteOfSelf _).expects(msg).once.returning(Future.successful(true))
+
+    messagesInStorage ! Map(otherMsgId -> otherMsg)
+
 
     val service = getService
 

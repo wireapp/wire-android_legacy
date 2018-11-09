@@ -56,7 +56,7 @@ trait ConversationsUiService {
   def sendTextMessage(convId: ConvId, text: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Some[MessageData]]
   def sendTextMessages(convs: Seq[ConvId], text: String, mentions: Seq[Mention] = Nil, exp: Option[FiniteDuration]): Future[Unit]
 
-  def sendReplyMessage(replyTo: MessageId, ext: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]]
+  def sendReplyMessage(replyTo: MessageId, text: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]]
 
   def sendAssetMessage(convId: ConvId, rawInput: RawAssetInput, confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]]
   def sendAssetMessages(convs: Seq[ConvId], assets: Seq[RawAssetInput], confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[FiniteDuration] = None): Future[Unit]
@@ -137,11 +137,15 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
     Future.sequence(convs.map(id => sendTextMessage(id, text, mentions, Some(exp)))).map(_ => {})
 
   override def sendReplyMessage(quote: MessageId, text: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None) =
-    for {
-      msg <- messages.addReplyMessage(quote, text, mentions, exp)
-      _   <- msg.fold(Future.successful(Option.empty[(ConversationData, ConversationData)]))(updateLastRead)
-      _   <- msg.fold(Future.successful(Option.empty[SyncId]))(m => sync.postMessage(m.id, m.convId, m.editTime).map(Some(_)))
-    } yield msg
+    messages.addReplyMessage(quote, text, mentions, exp).flatMap {
+      case Some(m) =>
+        for {
+          _ <- updateLastRead(m)
+          _ <- sync.postMessage(m.id, m.convId, m.editTime)
+        } yield Some(m)
+      case None =>
+        Future.successful(None)
+    }
 
   override def sendAssetMessage(convId: ConvId, rawInput: RawAssetInput, confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[Option[FiniteDuration]] = None) =
     assets.addAsset(rawInput).flatMap {
@@ -180,7 +184,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
 
   override def updateMessage(convId: ConvId, id: MessageId, text: String, mentions: Seq[Mention] = Nil): Future[Option[MessageData]] = {
     verbose(s"updateMessage($convId, $id, $text, $mentions")
-    messagesContent.updateMessage(id) {
+    messagesStorage.update(id, {
       case m if m.convId == convId && m.userId == selfUserId =>
         val (tpe, ct) = MessageData.messageContent(text, mentions, weblinkEnabled = true)
         verbose(s"updated content: ${(tpe, ct)}")
@@ -194,8 +198,8 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
       case m =>
         warn(s"Can not update msg: $m")
         m
-    } flatMap {
-      case Some(m) => sync.postMessage(m.id, m.convId, m.editTime) map { _ => Some(m) } // using PostMessage sync request to use the same logic for failures and retrying
+    }) flatMap {
+      case Some((_, m)) => sync.postMessage(m.id, m.convId, m.editTime) map { _ => Some(m) } // using PostMessage sync request to use the same logic for failures and retrying
       case None => Future successful None
     }
   }

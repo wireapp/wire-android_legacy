@@ -75,20 +75,22 @@ trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
 
   def lastMessageFromSelfAndFromOther(conv: ConvId): Signal[(Option[MessageData], Option[MessageData])]
 
-  def isQuoteOfSelf(message: MessageData): Future[Boolean]
   def findQuotesOf(msgId: MessageId): Future[Seq[MessageData]]
   def countUnread(conv: ConvId, lastReadTime: RemoteInstant): Future[UnreadCount]
 }
 
-class MessagesStorageImpl(context: Context,
-                          storage: ZmsDatabase,
-                          userId: UserId,
-                          convs: ConversationStorage,
-                          users: UsersStorage,
+class MessagesStorageImpl(context:     Context,
+                          storage:     ZmsDatabase,
+                          selfUserId:  UserId,
+                          convs:       ConversationStorage,
+                          users:       UsersStorage,
                           msgAndLikes: => MessageAndLikesStorage,
-                          timeouts: Timeouts,
-                          tracking: TrackingService) extends
-    CachedStorageImpl[MessageId, MessageData](new TrimmingLruCache[MessageId, Option[MessageData]](context, Fixed(MessagesStorage.cacheSize)), storage)(MessageDataDao, "MessagesStorage_Cached") with MessagesStorage {
+                          timeouts:    Timeouts,
+                          tracking:    TrackingService)
+  extends CachedStorageImpl[MessageId, MessageData](
+    new TrimmingLruCache[MessageId, Option[MessageData]](context, Fixed(MessagesStorage.cacheSize)),
+    storage
+  )(MessageDataDao, "MessagesStorage_Cached") with MessagesStorage {
 
   import com.waz.utils.events.EventContext.Implicits.global
 
@@ -108,14 +110,14 @@ class MessagesStorageImpl(context: Context,
 
   def msgsIndex(conv: ConvId): Future[ConvMessagesIndex] =
     Option(indexes.get(conv)).fold {
-      Future(returning(new ConvMessagesIndex(conv, this, userId, users, convs, msgAndLikes, storage, tracking))(indexes.put(conv, _)))
+      Future(returning(new ConvMessagesIndex(conv, this, selfUserId, users, convs, msgAndLikes, storage, tracking))(indexes.put(conv, _)))
     } {
       Future.successful
     }
 
   def msgsFilteredIndex(conv: ConvId, messageFilter: MessageFilter): Future[ConvMessagesIndex] =
     filteredIndexes.get(conv, messageFilter).fold {
-      Future(returning(new ConvMessagesIndex(conv, this, userId, users, convs, msgAndLikes, storage, tracking, filter = Some(messageFilter)))(filteredIndexes.put(conv, messageFilter, _)))
+      Future(returning(new ConvMessagesIndex(conv, this, selfUserId, users, convs, msgAndLikes, storage, tracking, filter = Some(messageFilter)))(filteredIndexes.put(conv, messageFilter, _)))
     } {
       Future.successful
     }
@@ -161,32 +163,34 @@ class MessagesStorageImpl(context: Context,
 
   override def countUnread(conv: ConvId, lastReadTime: RemoteInstant): Future[UnreadCount] = {
     // if a message is both a mention and a quote, we count it as a mention
-    def isQuoteButNotMention(m: MessageData) =
-      if (m.hasMentionOf(userId)) Future.successful(false)
-      else isQuoteOfSelf(m)
-
     storage {
       MessageDataDao.findMessagesFrom(conv, lastReadTime)(_)
     }.future.flatMap { msgs =>
       msgs.acquire { msgs =>
-        val unread = msgs.filter { m => !m.isLocal && m.convId == conv && m.time.isAfter(lastReadTime) && !m.isDeleted && m.userId != userId && m.msgType != Message.Type.UNKNOWN }.toVector
-        Future.sequence(unread.map(isQuoteButNotMention)).map(_.count(q => q)).map { unreadQuotes =>
-          verbose(s"unread: ${unread.size}, unread quotes: $unreadQuotes")
+        val unread = msgs.filter { m => !m.isLocal && m.convId == conv && m.time.isAfter(lastReadTime) && !m.isDeleted && m.userId != selfUserId && m.msgType != Message.Type.UNKNOWN }.toVector
+
+        val repliesNotMentionsCount = getAll(unread.filter(!_.hasMentionOf(selfUserId)).flatMap(_.quote)).map(_.flatten)
+          .map { quotes =>
+            unread.count { m =>
+              val quote = quotes.find(q => m.quote.contains(q.id))
+              quote.exists(_.userId == selfUserId)
+            }
+          }
+
+        repliesNotMentionsCount.map { unreadReplies =>
+          verbose(s"unread: ${unread.size}, unread replies: $unreadReplies")
           UnreadCount(
-            unread.count(m => !m.isSystemMessage && m.msgType != Message.Type.KNOCK && !m.hasMentionOf(userId)) - unreadQuotes,
-            unread.count(_.msgType == Message.Type.MISSED_CALL),
-            unread.count(_.msgType == Message.Type.KNOCK),
-            unread.count(_.hasMentionOf(userId)),
-            unreadQuotes
+            normal   = unread.count(m => !m.isSystemMessage && m.msgType != Message.Type.KNOCK && !m.hasMentionOf(selfUserId)) - unreadReplies,
+            call     = unread.count(_.msgType == Message.Type.MISSED_CALL),
+            ping     = unread.count(_.msgType == Message.Type.KNOCK),
+            mentions = unread.count(_.hasMentionOf(selfUserId)),
+            quotes   = unreadReplies
           )
         }
       }
     }
 
   }
-
-  override def isQuoteOfSelf(msg: MessageData) =
-    msg.quote.fold(Future.successful(false))(quoteId => get(quoteId).map(_.exists(_.userId == userId)))
 
   override def findQuotesOf(msgId: MessageId): Future[Seq[MessageData]] = storage(MessageDataDao.findQuotesOf(msgId)(_))
 

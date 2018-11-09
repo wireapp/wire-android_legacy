@@ -25,7 +25,7 @@ import com.waz.specs.AndroidFreeSpec
   * This test class checks that our hashing implementation matches that defined in
   * https://github.com/wearezeta/documentation/blob/master/topics/replies/use-cases/004-quote-hash.md
   */
-class ReplyHashSpec extends AndroidFreeSpec {
+class ReplyHashingSpec extends AndroidFreeSpec {
 
   private val timestamp1 = RemoteInstant.ofEpochSec(1540213769)
   private val timestamp2 = RemoteInstant.ofEpochSec(1540213965)

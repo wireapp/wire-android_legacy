@@ -35,7 +35,7 @@ import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.crypto.ReplyHashing
-import com.waz.utils.events.{EventContext, Signal}
+import com.waz.utils.events.{EventContext, EventStream, Signal}
 
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -44,6 +44,8 @@ import scala.concurrent.duration.{FiniteDuration, _}
 import scala.util.Success
 
 trait MessagesService {
+  def msgEdited: EventStream[(MessageId, MessageId)]
+
   def addTextMessage(convId: ConvId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[MessageData]
   def addKnockMessage(convId: ConvId, selfUserId: UserId): Future[MessageData]
   def addAssetMessage(convId: ConvId, asset: AssetData, exp: Option[Option[FiniteDuration]] = None): Future[MessageData]
@@ -95,6 +97,8 @@ class MessagesServiceImpl(selfUserId:   UserId,
   import Threading.Implicits.Background
   private implicit val ec = EventContext.Global
 
+  override val msgEdited = EventStream[(MessageId, MessageId)]()
+
   override def recallMessage(convId: ConvId, msgId: MessageId, userId: UserId, systemMsgId: MessageId = MessageId(), time: RemoteInstant, state: Message.Status = Message.Status.PENDING) =
     updater.getMessage(msgId) flatMap {
       case Some(msg) if msg.convId != convId =>
@@ -138,6 +142,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
             res       <- updater.addMessage(edited.adjustMentions(false).getOrElse(edited))
             quotesOf  <- storage.findQuotesOf(msg.id)
             _         <- storage.updateAll2(quotesOf.map(_.id), _.replaceQuote(newMsgId))
+            _         =  msgEdited ! (msg.id, newMsgId)
             _         <- updater.deleteOnUserRequest(Seq(msg.id))
           } yield res
         }

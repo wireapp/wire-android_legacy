@@ -212,27 +212,29 @@ class NotificationService(context:         Context,
     buildNotifications(updatedAssets)
   }
 
-  private def buildNotifications(msgs: Seq[MessageData]): Unit = {
-    def build(msg: MessageData, isQuote: Boolean, drift: bp.Duration) = mapMessageType(msg.msgType, msg.protos, msg.members, msg.userId).map { tp =>
-      NotificationData(
-        NotId(msg.id),
-        if (msg.isEphemeral) "" else msg.contentString, msg.convId,
-        msg.userId, tp,
-        if (msg.time == RemoteInstant.Epoch) msg.localTime.toRemote(drift) else msg.time,
-        ephemeral = msg.isEphemeral,
-        mentions  = msg.mentions.flatMap(_.userId),
-        isQuote   = msg.quote.nonEmpty
-      )
-    }
+  private def buildNotifications(msgs: Seq[MessageData]): Unit =
+    messages.getAll(msgs.filter(!_.hasMentionOf(userId)).flatMap(_.quote)).map { quotes =>
+      val quoteIds = quotes.flatten.filter(_.userId == userId).map(_.id).toSet
 
-    val notifications = msgs.map(m =>
-      messages.isQuoteOfSelf(m).map(isQuote =>
-        build(m, isQuote, drift = pushService.beDrift.currentValue.getOrElse(Duration.Zero))
-      )
-    )
+      msgs.flatMap(msg =>
+        mapMessageType(msg.msgType, msg.protos, msg.members, msg.userId).map { tp =>
+          val drift: bp.Duration = pushService.beDrift.currentValue.getOrElse(Duration.Zero)
 
-    Future.sequence(notifications).map(_.flatten).foreach(add)
-  }
+          NotificationData(
+            NotId(msg.id),
+            if (msg.isEphemeral) "" else msg.contentString, msg.convId,
+            msg.userId,
+            tp,
+            if (msg.time == RemoteInstant.Epoch) msg.localTime.toRemote(drift) else msg.time,
+            ephemeral = msg.isEphemeral,
+            mentions = msg.mentions.flatMap(_.userId),
+            isQuote = msg.quote.exists(quoteIds)
+          )
+        }
+      )
+
+    }.foreach(add)
+
 
   messages.onDeleted { ids =>
     storage.removeAll(ids.map(NotId(_)))
