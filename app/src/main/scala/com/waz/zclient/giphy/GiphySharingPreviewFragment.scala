@@ -34,7 +34,7 @@ import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.returning
-import com.waz.utils.wrappers.URI
+import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
 import com.waz.zclient.common.controllers.{ScreenController, ThemeController}
@@ -69,7 +69,7 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
   private lazy val isPreviewShown = Signal[Boolean](false)
   private lazy val isGifShowing = Signal[Boolean](false)
   private lazy val selectedGif = Signal[Option[AssetData]]()
-  private lazy val gifImage: Signal[Option[URI]] = selectedGif.map(_.flatMap(_.source))
+  private lazy val gifImage: Signal[Option[URIWrapper]] = selectedGif.map(_.flatMap(_.source))
 
   private lazy val giphySearchResults = for {
     giphyService <- giphyService
@@ -250,7 +250,7 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
         if (TextUtils.isEmpty(term)) getString(R.string.giphy_preview__message_via_random_trending)
         else getString(R.string.giphy_preview__message_via_search, term)
       _    <- conversationController.sendMessage(msg)
-      _    <- conversationController.sendMessage(gif.flatMap(_.source).get, getActivity)
+      _    <- conversationController.sendAssetMessage(gif.flatMap(_.source).map(u => URIWrapper.toJava(u)).get, getActivity, None)
     } yield screenController.hideGiphy ! true
   }
 

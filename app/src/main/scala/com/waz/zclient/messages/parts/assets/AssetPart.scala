@@ -22,7 +22,8 @@ import android.view.View.OnLayoutChangeListener
 import android.view.{View, ViewGroup}
 import android.widget.{FrameLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.model.{AssetData, Dim2, MessageContent}
+import com.waz.model.{Dim2, MessageContent}
+import com.waz.service.assets2.Asset.{Audio, Video}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -50,8 +51,10 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper with Ephemer
     case _ => throw new Exception("Unexpected AssetPart view type - ensure you define the content layout and an id for the content for the part")
   }(self))
 
-  val asset = controller.assetSignal(message)
-  val deliveryState = DeliveryState(message, asset)
+  val assetId = message.map(_.assetId.get)
+  val asset = controller.assetSignal(assetId)
+  val assetStatus = controller.assetStatusSignal(assetId)
+  val deliveryState = DeliveryState(message, assetStatus.map(_._1))
   val completed = deliveryState.map(_ == DeliveryState.Complete)
   val accentColorController = inject[AccentColorController]
   protected val showDots: Signal[Boolean] = deliveryState.map(state => state == OtherUploading)
@@ -79,8 +82,9 @@ trait ActionableAssetPart extends AssetPart {
 }
 
 trait PlayableAsset extends ActionableAssetPart {
-  val duration = asset.map(_._1).map {
-    case AssetData.WithDuration(d) => Some(d)
+  val duration = asset.map(_.details).map {
+    case details: Video => Some(details.duration)
+    case details: Audio => Some(details.duration)
     case _ => None
   }
   val formattedDuration = duration.map(_.fold("")(d => StringUtils.formatTimeSeconds(d.getSeconds)))

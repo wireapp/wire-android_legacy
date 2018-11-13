@@ -28,11 +28,12 @@ import android.view.View.{GONE, INVISIBLE, VISIBLE}
 import android.view.{LayoutInflater, MotionEvent, View}
 import android.widget.{FrameLayout, SeekBar, TextView}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.api.{AudioAssetForUpload, PlaybackControls}
-import com.waz.model.AssetId
+import com.waz.api.PlaybackControls
+import com.waz.model.{AESKey, AssetId}
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, RecordingCancelled, RecordingSuccessful}
+import com.waz.service.assets2.{Content, ContentForUpload}
 import com.waz.threading.CancellableFuture.CancelException
 import com.waz.threading.Threading
 import com.waz.utils.events.{ClockSignal, Signal}
@@ -51,6 +52,7 @@ import org.threeten.bp.Instant.now
 import org.threeten.bp.{Duration, Instant}
 
 import scala.collection.immutable.ListSet
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
 
@@ -68,14 +70,14 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
 
   private val slideControlState = Signal(Recording)
 
-  private var currentAsset    = Option.empty[AudioAssetForUpload]
+  private var currentAudio    = Option.empty[ContentForUpload]
   private var currentAssetKey = Option.empty[AssetMediaKey]
   private val startTime = Signal(Option.empty[Instant])
 
   //TODO remove playback controls
   private var playbackControls = Option.empty[PlaybackControls]
   private val playbackControlsModelObserver = new ModelObserver[PlaybackControls]() {
-    override def updated(model: PlaybackControls) = {
+    override def updated(model: PlaybackControls): Unit = {
       if (model.isPlaying) bottomButtonTextView.setText(R.string.glyph__pause)
       else bottomButtonTextView.setText(R.string.glyph__play)
       recordingSeekBar.setMax(model.getDuration.toMillis.toInt)
@@ -104,7 +106,7 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
 
   returning(findById[View](R.id.send_button_container))(_.onClick {
     playbackControls.filter(_.isPlaying).foreach(_.stop())
-    currentAsset.foreach(sendAudioAsset)
+    currentAudio.foreach(sendAudioAsset)
   })
 
   private val cancelButton = returning(findById[View](R.id.cancel_button_container))(_.onClick {
@@ -208,7 +210,7 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     playbackControls = None
     currentAssetKey.foreach(recordingService.cancelRecording)
     currentAssetKey = None
-    currentAsset = None
+    currentAudio = None
     startTime ! None
     stopRecordingIndicator()
     layoutController.resetScreenAwakeState()
@@ -237,7 +239,8 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
       recordingService.record(key, 25.minutes).flatMap { case (start, futureAsset) =>
         startTime ! Some(start)
         futureAsset.map {
-          case RecordingSuccessful(asset, lengthLimitReached) =>
+          case RecordingSuccessful(audio, lengthLimitReached) =>
+            val content = ContentForUpload(s"audio_message_${AESKey().str}", Content.File(audio.mime, audio.file))
             if (lengthLimitReached) {
               ViewUtils.showAlertDialog(
                 getContext,
@@ -246,15 +249,16 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
                 R.string.audio_message__recording__limit_reached__confirmation,
                 R.string.confirmation_menu__cancel,
                 new DialogInterface.OnClickListener() {
-                  override def onClick(dialogInterface: DialogInterface, i: Int) = sendAudioAsset(asset)
+                  override def onClick(dialogInterface: DialogInterface, i: Int) =
+                    sendAudioAsset(content)
                 },
                 null)
             } else slideControlState.currentValue match {
               case Some(SendFromRecording) =>
-                sendAudioAsset(asset)
+                sendAudioAsset(content)
               case _ =>
-                currentAsset = Some(asset)
-                playbackControls = Some(returning(asset.getPlaybackControls) { ctrls =>
+                currentAudio = Some(content)
+                playbackControls = Some(returning(audio.getPlaybackControls) { ctrls =>
                   playbackControlsModelObserver.setAndUpdate(ctrls)
                 })
             }
@@ -267,8 +271,8 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
       } (Threading.Ui)
   }
 
-  private def sendAudioAsset(asset: AudioAssetForUpload) =
-    convController.sendMessage(asset, getContext.asInstanceOf[Activity]).map(_ => hide())(Threading.Ui)
+  private def sendAudioAsset(content: ContentForUpload): Future[Unit] =
+    convController.sendAssetMessage(content, getContext.asInstanceOf[Activity], None).map(_ => hide())(Threading.Ui)
 
   def onMotionEventFromAudioMessageButton(motionEvent: MotionEvent) = {
     motionEvent.getAction match {

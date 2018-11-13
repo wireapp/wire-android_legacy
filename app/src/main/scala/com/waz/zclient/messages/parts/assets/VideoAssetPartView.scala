@@ -49,8 +49,8 @@ class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   asset.disableAutowiring()
 
   assetActionButton.onClicked.filter(_ == DeliveryState.Complete) { _ =>
-    asset.currentValue foreach { case (a, _) =>
-      controller.openFile(a)
+    asset.currentValue foreach { case a =>
+      controller.openFile(a.id)
     }
   }
 

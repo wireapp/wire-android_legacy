@@ -22,14 +22,16 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
-import com.waz.api.AudioAssetForUpload;
+
 import com.waz.api.AudioEffect;
 import com.waz.api.AudioOverview;
 import com.waz.api.RecordingControls;
 import com.waz.api.Subscriber;
 import com.waz.api.Subscription;
+import com.waz.service.assets.GlobalRecordAndPlayService;
 import com.waz.zclient.R;
 import com.waz.zclient.utils.ViewUtils;
+
 import org.threeten.bp.Instant;
 
 
@@ -125,7 +127,7 @@ public class VoiceFilterRecordingLayout extends FrameLayout implements
     }
 
     @Override
-    public void onRecordingFinished(AudioAssetForUpload recording,
+    public void onRecordingFinished(GlobalRecordAndPlayService.Audio recording,
                                     boolean fileSizeLimitReached,
                                     AudioOverview overview) {
         subscription.cancel();
@@ -142,7 +144,7 @@ public class VoiceFilterRecordingLayout extends FrameLayout implements
     }
 
     @Override
-    public void sendRecording(AudioAssetForUpload audioAssetForUpload, AudioEffect appliedAudioEffect) {
+    public void sendRecording(GlobalRecordAndPlayService.Audio audioAssetForUpload, AudioEffect appliedAudioEffect) {
 
     }
 

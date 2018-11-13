@@ -17,23 +17,26 @@
  */
 package com.waz.zclient.conversation
 
+import java.net.URI
+
 import android.app.Activity
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Bitmap.CompressFormat
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api
-import com.waz.api.{AssetForUpload, IConversation, Verification}
-import com.waz.content._
+import com.waz.api.{IConversation, Verification}
+import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.Client
-import com.waz.service.assets.AssetService
-import com.waz.service.assets.AssetService.RawAssetInput.UriInput
-import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
+import com.waz.service.assets2.{Content, ContentForUpload, UriHelper}
+import com.waz.service.conversation.{SelectedConversationService, ConversationsService, ConversationsUiService}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
-import com.waz.utils.wrappers.URI
 import com.waz.utils.{Serialized, returning, _}
+import com.waz.zclient.assets2.ImageCompressUtils
 import com.waz.zclient.conversation.ConversationController.ConversationChange
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
@@ -42,7 +45,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R}
 import org.threeten.bp.Instant
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 class ConversationController(implicit injector: Injector, context: Context, ec: EventContext) extends Injectable {
@@ -55,6 +58,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   private lazy val membersStorage    = inject[Signal[MembersStorage]]
   private lazy val usersStorage      = inject[Signal[UsersStorage]]
   private lazy val otrClientsStorage = inject[Signal[OtrClientsStorage]]
+  private lazy val uriHelper         = inject[UriHelper]
 
   lazy val convListController = inject[ConversationListController]
 
@@ -156,18 +160,30 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
       })
     }
 
-  def sendMessage(input: AssetService.RawAssetInput): Future[Option[MessageData]] =
-    convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, input))
+  def sendAssetMessage(content: ContentForUpload): Future[Option[MessageData]] =
+    convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content))
 
-  def sendMessage(uri: URI, activity: Activity): Future[Option[MessageData]] =
-    convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, UriInput(uri), (s: Long) => showWifiWarningDialog(s)(activity)))
+  def sendAssetMessage(content: ContentForUpload, activity: Activity, exp: Option[Option[FiniteDuration]]): Future[Option[MessageData]] =
+    convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content, (s: Long) => showWifiWarningDialog(s)(activity), exp))
 
-  def sendMessage(audioAsset: AssetForUpload, activity: Activity): Future[Option[MessageData]] =
-    audioAsset match {
-      case asset: com.waz.api.impl.AudioAssetForUpload =>
-        convsUiwithCurrentConv((ui, id) => ui.sendMessage(id, asset, (s: Long) => showWifiWarningDialog(s)(activity)))
-      case _ => Future.successful(None)
-    }
+  def sendAssetMessage(bitmap: Bitmap, assetName: String): Future[Option[MessageData]] = {
+    for {
+      image <- Future { ImageCompressUtils.compress(bitmap, CompressFormat.JPEG) }
+      content = ContentForUpload(assetName, Content.Bytes(Mime.Image.Jpg, image))
+      msg <- convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content))
+    } yield msg
+  }
+
+  def sendAssetMessage(uri: URI, activity: Activity, exp: Option[Option[FiniteDuration]]): Future[Option[MessageData]] = {
+    val content = for {
+      fileName <- uriHelper.extractFileName(uri)
+    } yield ContentForUpload(fileName,  Content.Uri(uri))
+
+    for {
+      content <- Future.fromTry(content)
+      msg <- sendAssetMessage(content, activity, exp)
+    } yield msg
+  }
 
   def sendMessage(location: api.MessageContent.Location): Future[Option[MessageData]] =
     convsUiwithCurrentConv((ui, id) => ui.sendLocationMessage(id, location))

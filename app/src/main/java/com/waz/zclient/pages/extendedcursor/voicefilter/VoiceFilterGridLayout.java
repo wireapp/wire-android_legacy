@@ -26,16 +26,18 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import com.waz.api.AudioAssetForUpload;
+
 import com.waz.api.AudioEffect;
 import com.waz.api.AudioOverview;
 import com.waz.api.RecordingControls;
+import com.waz.service.assets.GlobalRecordAndPlayService;
 import com.waz.zclient.R;
 import com.waz.zclient.ui.animation.interpolators.penner.Quad;
 import com.waz.zclient.ui.text.GlyphTextView;
 import com.waz.zclient.utils.ContextUtils;
 import com.waz.zclient.utils.StringUtils;
 import com.waz.zclient.utils.ViewUtils;
+
 import org.threeten.bp.Instant;
 
 
@@ -246,10 +248,10 @@ public class VoiceFilterGridLayout extends FrameLayout implements
     }
 
     @Override
-    public void onRecordingFinished(AudioAssetForUpload recording,
+    public void onRecordingFinished(GlobalRecordAndPlayService.Audio recording,
                                     boolean fileSizeLimitReached,
                                     AudioOverview overview) {
-        trackTime.setText(StringUtils.formatTimeSeconds(recording.getDuration().getSeconds()));
+        trackTime.setText(StringUtils.formatTimeSeconds(recording.duration().getSeconds()));
         showTime();
     }
 
@@ -317,7 +319,7 @@ public class VoiceFilterGridLayout extends FrameLayout implements
 
 
     @Override
-    public void sendRecording(AudioAssetForUpload audioAssetForUpload, AudioEffect appliedAudioEffect) {
+    public void sendRecording(GlobalRecordAndPlayService.Audio audioAssetForUpload, AudioEffect appliedAudioEffect) {
 
     }
 }

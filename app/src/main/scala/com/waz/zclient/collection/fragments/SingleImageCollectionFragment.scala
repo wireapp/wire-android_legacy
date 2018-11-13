@@ -198,7 +198,10 @@ object SingleImageCollectionFragment {
 
     def setMessageData(messageData: MessageData): Unit = {
       this.messageData = Option(messageData)
-      setAsset(messageData.assetId)
+      messageData.assetId match {
+        case Some(id: AssetId) => setAsset(id)
+        case _ =>
+      }
     }
 
     def setPosition(position: Int): Unit = {
