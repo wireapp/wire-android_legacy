@@ -41,6 +41,7 @@ import com.waz.log.{AndroidLogOutput, BufferedLogOutput, InternalLog}
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service._
+import com.waz.service.assets2.{AssetDetailsService, AssetPreviewService, UriHelper}
 import com.waz.service.call.GlobalCallingService
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
 import com.waz.service.images.ImageLoader
@@ -55,6 +56,7 @@ import com.waz.utils.SafeBase64
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.GoogleApi
 import com.waz.zclient.appentry.controllers.{CreateTeamController, InvitationsController}
+import com.waz.zclient.assets2.{AndroidUriHelper, AssetDetailsServiceImpl, AssetPreviewServiceImpl}
 import com.waz.zclient.calling.controllers.{CallController, CallStartController}
 import com.waz.zclient.camera.controllers.{AndroidCameraFactory, GlobalCameraController}
 import com.waz.zclient.collection.controllers.CollectionController
@@ -370,14 +372,23 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     val prefs = GlobalPreferences(this)
     val googleApi = GoogleApiImpl(this, backend, prefs)
 
+    val assets2Module = new Assets2Module {
+      override def uriHelper: UriHelper =
+        new AndroidUriHelper(getApplicationContext)
+      override def assetDetailsService: AssetDetailsService =
+        new AssetDetailsServiceImpl(uriHelper)(getApplicationContext, Threading.BlockingIO)
+      override def assetPreviewService: AssetPreviewService =
+        new AssetPreviewServiceImpl()(getApplicationContext, Threading.BlockingIO)
+    }
+
     ZMessaging.onCreate(
       this,
       backend,
       prefs,
       googleApi,
       null, //TODO: Use sync engine's version for now
-      inject[MessageNotificationsController]
-    )
+      inject[MessageNotificationsController],
+      assets2Module)
 
     inject[NotificationManagerWrapper]
     inject[ImageNotificationsController]

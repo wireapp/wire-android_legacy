@@ -29,17 +29,18 @@ import android.view.animation.Animation
 import android.widget.{AbsListView, FrameLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.api.{AudioAssetForUpload, AudioEffect, ErrorType}
+import com.waz.api.{AudioEffect, ErrorType}
 import com.waz.content.GlobalPreferences
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{AccentColor, MessageContent => _, _}
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
-import com.waz.service.assets.AssetService.RawAssetInput
+import com.waz.service.assets.GlobalRecordAndPlayService.Audio
+import com.waz.service.assets2.{Content, ContentForUpload}
 import com.waz.service.call.CallingService
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{EventStreamWithAuxSignal, Signal}
-import com.waz.utils.wrappers.URI
+import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.utils.{returning, returningF}
 import com.waz.zclient.Intents.ShowDevicesIntent
 import com.waz.zclient.calling.controllers.{CallController, CallStartController}
@@ -503,24 +504,24 @@ class ConversationFragment extends FragmentHelper {
         })
     }
 
-    override def onSketchOnPreviewPicture(input: RawAssetInput, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit = {
+    override def onSketchOnPreviewPicture(input: Content, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit = {
       screenController.showSketch ! Sketch.cameraPreview(input, method)
       extendedCursorContainer.foreach(_.close(true))
     }
 
-    override def onSendPictureFromPreview(input: RawAssetInput, source: ImagePreviewLayout.Source): Unit = {
-      convController.sendMessage(input)
+    override def onSendPictureFromPreview(image: Content, source: ImagePreviewLayout.Source): Unit = {
+      convController.sendAssetMessage(ContentForUpload(s"camera_preview_${AESKey().str}", image))
       extendedCursorContainer.foreach(_.close(true))
       onCancelPreview()
     }
   }
 
   private val assetIntentsManagerCallback = new AssetIntentsManager.Callback {
-    override def onDataReceived(intentType: AssetIntentsManager.IntentType, uri: URI): Unit = intentType match {
+    override def onDataReceived(intentType: AssetIntentsManager.IntentType, uri: URIWrapper): Unit = intentType match {
       case AssetIntentsManager.IntentType.FILE_SHARING =>
         permissions.requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
           case true =>
-            convController.sendMessage(uri, getActivity)
+            convController.sendAssetMessage(URIWrapper.toJava(uri), getActivity, None)
           case _ =>
             ViewUtils.showAlertDialog(
               getActivity,
@@ -534,7 +535,7 @@ class ConversationFragment extends FragmentHelper {
       case AssetIntentsManager.IntentType.GALLERY =>
         showImagePreview { _.setImage(uri, ImagePreviewLayout.Source.DeviceGallery) }
       case _ =>
-        convController.sendMessage(uri, getActivity)
+        convController.sendAssetMessage(URIWrapper.toJava(uri), getActivity, None)
         navigationController.setRightPage(Page.MESSAGE_STREAM, TAG)
         extendedCursorContainer.foreach(_.close(true))
     }
@@ -604,8 +605,9 @@ class ConversationFragment extends FragmentHelper {
 
           override def onCancel(): Unit = extendedCursorContainer.foreach(_.close(false))
 
-          override def sendRecording(audioAssetForUpload: AudioAssetForUpload, appliedAudioEffect: AudioEffect): Unit = {
-            convController.sendMessage(audioAssetForUpload, getActivity)
+          override def sendRecording(audio: Audio, appliedAudioEffect: AudioEffect): Unit = {
+            val content = ContentForUpload(s"audio_record_${AESKey().str}", Content.File(audio.mime, audio.file))
+            convController.sendAssetMessage(content, getActivity, None)
             extendedCursorContainer.foreach(_.close(true))
           }
         }))
@@ -615,7 +617,7 @@ class ConversationFragment extends FragmentHelper {
 
           override def openVideo(): Unit = captureVideoAskPermissions()
 
-          override def onGalleryPictureSelected(uri: URI): Unit = {
+          override def onGalleryPictureSelected(uri: URIWrapper): Unit = {
             previewShown ! true
             showImagePreview {
               _.setImage(uri, ImagePreviewLayout.Source.InAppGallery)

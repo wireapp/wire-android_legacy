@@ -25,7 +25,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.MessageContent
 import com.waz.model.{MessageContent => _, _}
-import com.waz.service.assets.AssetService.RawAssetInput
+import com.waz.service.assets2.{Content, ContentForUpload}
 import com.waz.service.tracking.GroupConversationEvent
 import com.waz.threading.Threading
 import com.waz.zclient.camera.CameraFragment
@@ -224,9 +224,9 @@ class ConversationManagerFragment extends FragmentHelper
     navigationController.setRightPage(Page.MESSAGE_STREAM, ConversationManagerFragment.Tag)
   }
 
-  override def onBitmapSelected(input: RawAssetInput, cameraContext: CameraContext): Unit =
+  override def onBitmapSelected(content: Content, cameraContext: CameraContext): Unit =
     if (cameraContext == CameraContext.MESSAGE) {
-      inject[ConversationController].sendMessage(input)
+      inject[ConversationController].sendAssetMessage(ContentForUpload(s"photo_${AESKey().str}", content))
       cameraController.closeCamera(CameraContext.MESSAGE)
   }
 

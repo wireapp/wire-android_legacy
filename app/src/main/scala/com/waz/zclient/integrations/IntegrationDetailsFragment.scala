@@ -68,7 +68,7 @@ class IntegrationDetailsFragment extends FragmentHelper {
   private lazy val name        = getStringArg(Name)
   private lazy val description = getStringArg(Description)
   private lazy val summary     = getStringArg(Summary)
-  private lazy val assetId     = getStringArg(Asset).map(AssetId)
+  private lazy val assetId     = getStringArg(Asset).map(AssetId.apply)
 
   //will only be defined if removing from a conversation
   private lazy val fromConv    = getStringArg(RemoveFromConv).map(ConvId)

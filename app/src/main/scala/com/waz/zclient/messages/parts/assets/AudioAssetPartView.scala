@@ -40,7 +40,7 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
 
   accentColorController.accentColor.map(_.color).onUi(progressBar.setColor)
 
-  val playControls = controller.getPlaybackControls(asset.map(_._1))
+  val playControls = controller.getPlaybackControls(asset)
 
   duration.map(_.getOrElse(Duration.ZERO).toMillis.toInt).on(Threading.Ui)(progressBar.setMax)
   playControls.flatMap(_.playHead).map(_.toMillis.toInt).on(Threading.Ui)(progressBar.setProgress)
@@ -49,13 +49,13 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
 
   isPlaying { assetActionButton.isPlaying ! _ }
 
-  (for {
-    pl <- isPlaying
-    a <- asset
-  } yield (pl, a)).onChanged {
-    case (pl, (a, _)) =>
-      if (pl) controller.onAudioPlayed ! a
-  }
+//  (for {
+//    pl <- isPlaying
+//    a <- asset
+//  } yield (pl, a)).onChanged {
+//    case (pl, a) =>
+//      if (pl) controller.onAudioPlayed ! a
+//  }
 
   assetActionButton.onClicked.filter(state => state == DeliveryState.Complete || state == DeliveryState.DownloadFailed) { _ =>
     playControls.currentValue.foreach(_.playOrPause())

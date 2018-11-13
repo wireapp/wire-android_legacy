@@ -25,9 +25,8 @@ import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.content.{MessagesStorage, ReactionsStorage}
-import com.waz.model.{Liking, MessageId, UserId}
+import com.waz.model.{AssetId, Liking, MessageId, UserId}
 import com.waz.service.ZMessaging
-import com.waz.service.assets.AssetService.RawAssetInput.WireAssetInput
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.returning
@@ -111,7 +110,7 @@ class ImageFragment extends FragmentHelper {
   }
 
   lazy val imageInput = collectionController.focusedItem.collect {
-    case Some(messageData) => WireAssetInput(messageData.assetId)
+    case Some(messageData) => messageData.assetId
   } disableAutowiring()
 
   var animationStarted = false
@@ -145,8 +144,8 @@ class ImageFragment extends FragmentHelper {
 
         method.foreach { m =>
           getFragmentManager.popBackStack()
-          imageInput.head.foreach { asset =>
-            screenController.showSketch ! Sketch.singleImage(asset, m)
+          imageInput.head.collect { case Some(id: AssetId) => id }.foreach { assetId =>
+            screenController.showSketch ! Sketch.asset(assetId, m)
           }
         }
       case item: MessageActionToolbarItem =>

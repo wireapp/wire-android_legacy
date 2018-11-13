@@ -31,7 +31,7 @@ import android.view.{MenuItem, View, ViewGroup}
 import android.widget._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.content.UserPreferences
-import com.waz.service.assets.AssetService.RawAssetInput
+import com.waz.service.assets2.Content
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -178,11 +178,12 @@ class PreferencesActivity extends BaseActivity
   }
 
   //TODO do we need to check internet connectivity here?
-  override def onBitmapSelected(input: RawAssetInput, cameraContext: CameraContext): Unit =
+  override def onBitmapSelected(input: Content, cameraContext: CameraContext): Unit =
     if (cameraContext == CameraContext.SETTINGS) {
-      inject[Signal[ZMessaging]].head.map { zms =>
-        zms.users.updateSelfPicture(input)
-      } (Threading.Background)
+      //FIXME
+//      inject[Signal[ZMessaging]].head.map { zms =>
+//        zms.users.updateSelfPicture(input)
+//      } (Threading.Background)
       getSupportFragmentManager.popBackStack(CameraFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
     }
 

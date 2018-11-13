@@ -17,27 +17,28 @@
  */
 package com.waz.zclient.drawing
 
+import java.net.URI
+
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.content.Intent
-import android.graphics.Bitmap
+import android.graphics.{Bitmap, BitmapFactory}
 import android.hardware.{Sensor, SensorManager}
 import android.os.Bundle
 import android.support.v7.widget.Toolbar
 import android.view._
 import android.widget.{FrameLayout, TextView}
+import cats.data.OptionT
+import cats.instances.future._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.MemoryImageCache
-import com.waz.model.AccentColor
-import com.waz.model.{AssetData, AssetId}
+import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
-import com.waz.service.assets.AssetService.RawAssetInput
-import com.waz.service.assets.AssetService.RawAssetInput.{BitmapInput, ByteInput, UriInput, WireAssetInput}
+import com.waz.service.assets2.{AssetService, Content, UriHelper}
 import com.waz.threading.Threading
-import com.waz.ui.MemoryImageCache.BitmapRequest
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.utils.wrappers.URI
+import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.zclient.common.controllers.ScreenController
 import com.waz.zclient.common.controllers.global.KeyboardController
 import com.waz.zclient.controllers.drawing.IDrawingController.{DrawingDestination, DrawingMethod}
@@ -79,34 +80,47 @@ object DrawingFragment {
     }
   }
 
-  case class Sketch(input: Option[RawAssetInput], dest: DrawingDestination, method: DrawingMethod)
+  case class Sketch(input: Option[Either[Content, AssetId]], dest: DrawingDestination, method: DrawingMethod)
 
   object Sketch {
     import DrawingDestination._
     import DrawingMethod._
 
     val BlankSketch = Sketch(None, SKETCH_BUTTON, DRAW)
-    def cameraPreview(input: RawAssetInput, method: DrawingMethod = DRAW) = Sketch(Some(input), CAMERA_PREVIEW_VIEW, method)
-    def singleImage(input: RawAssetInput, method: DrawingMethod = DRAW) = Sketch(Some(input), SINGLE_IMAGE_VIEW, method)
+    def cameraPreview(input: Content, method: DrawingMethod = DRAW) =
+      Sketch(Some(Left(input)), CAMERA_PREVIEW_VIEW, method)
+    def singleImage(input: Content, method: DrawingMethod = DRAW) =
+      Sketch(Some(Left(input)), SINGLE_IMAGE_VIEW, method)
+    def asset(assetId: AssetId, method: DrawingMethod = DRAW) =
+      Sketch(Some(Right(assetId)), SINGLE_IMAGE_VIEW, method)
   }
 
+  private val ContentMimeArg  = "CONTENT_MIME"
   private val BytesInputArg   = "BYTES_INPUT"
   private val UriInputArg     = "URI_INPUT"
+  private val FileInputArg    = "FILE_INPUT"
   private val AssetInputArg   = "ASSET_INPUT"
 
-  def putInputToBundle(b: Bundle, input: Option[RawAssetInput]): Unit = {
-    input match {
-      case Some(ByteInput(bytes))   => b.putByteArray(BytesInputArg, bytes)
-      case Some(UriInput(uri))      => b.putString(UriInputArg, uri.toString)
-      case Some(WireAssetInput(id)) => b.putString(AssetInputArg, id.str)
-      case _ =>
-    }
+  def putInputToBundle(b: Bundle, input: Option[Either[Content, AssetId]]): Unit = {
+//    input match {
+//      case Some(Left(content)) => b.putString(ContentMimeArg, content.mime.str)
+//      case _ =>
+//    }
+//    input match {
+//      case Some(Left(Content.Bytes(_, bytes))) => b.putByteArray(BytesInputArg, bytes)
+//      case Some(Left(Content.Uri(_, uri))) => b.putString(UriInputArg, uri.toString)
+//      case Some(Left(Content.File(_, file))) => b.putString(FileInputArg, file.getAbsolutePath)
+//      case Some(Right(assetId)) => b.putString(AssetInputArg, assetId.str)
+//      case _ =>
+//    }
   }
 
-  def getInputFromBundle(b: Bundle): Option[RawAssetInput] = {
-    Option(b.getString(UriInputArg)).map(URI.parse).map(UriInput)
-      .orElse(Option(b.getByteArray(BytesInputArg)).map(ByteInput))
-      .orElse(Option(b.getString(AssetInputArg)).map(AssetId).map(WireAssetInput))
+  def getInputFromBundle(b: Bundle): Option[Either[Content, AssetId]] = {
+    None
+//    Option(b.getString(UriInputArg)).map(URI.create).map(Content.Uri).map(Left.apply)
+//      .orElse(Option(b.getByteArray(BytesInputArg)).map(Content.Bytes).map(Left.apply))
+//      .orElse(Option(b.getString(FileInputArg)).map(new File(_)).map(Content.File).map(Left.apply))
+//      .orElse(Option(b.getString(AssetInputArg)).map(AssetId.apply).map(Right.apply))
   }
 
 }
@@ -125,12 +139,14 @@ class DrawingFragment extends FragmentHelper
   private lazy val keyboardController = inject[KeyboardController]
   private lazy val userPrefController = inject[IUserPreferencesController] //TODO replace with SE prefs
   private lazy val sensorManager      = inject[SensorManager]
+  private lazy val uriHelper          = inject[UriHelper]
+  private lazy val assetService       = inject[AssetService]
 
   private lazy val accentColor = inject[Signal[AccentColor]].map(_.color)
 
   private lazy val drawingDestination = getStringArg(ArgDrawingDestination).map(DrawingDestination.valueOf)
 
-  private var imageInput             = Option.empty[RawAssetInput]
+  private var imageInput             = Option.empty[Either[Content, AssetId]]
   private var drawingMethod          = Option.empty[DrawingMethod]
   private var currentEmojiSize       = EmojiSize.SMALL
   private var includeBackgroundImage = false
@@ -191,7 +207,7 @@ class DrawingFragment extends FragmentHelper
 
   private lazy val sendDrawingButton  = returning(view[CursorIconButton](R.id.tv__send_button)) { vh =>
     vh.onClick { _ =>
-      getFinalSketchBitmap.map(inject[ConversationController].sendMessage)
+      getFinalSketchBitmap.map(inject[ConversationController].sendAssetMessage(_, s"sketch_${AESKey().str}"))
       drawingDestination.foreach(screenController.hideSketch ! _)
     }
 
@@ -327,7 +343,7 @@ class DrawingFragment extends FragmentHelper
   override def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit =
     assetIntentsManager.onActivityResult(requestCode, resultCode, data)
 
-  override def onDataReceived(tpe: AssetIntentsManager.IntentType, uri: URI): Unit = {
+  override def onDataReceived(tpe: AssetIntentsManager.IntentType, uri: URIWrapper): Unit = {
     import AssetIntentsManager.IntentType._
     tpe match {
       case SKETCH_FROM_GALLERY =>
@@ -342,7 +358,7 @@ class DrawingFragment extends FragmentHelper
           v.removeBackgroundBitmap()
         }
 
-        imageInput = Some(UriInput(uri))
+        imageInput = Some(Left(Content.Uri(URI.create(uri.toString))))
         setBackgroundBitmap(false)
         onSketchClick()
       case _ =>
@@ -558,7 +574,7 @@ class DrawingFragment extends FragmentHelper
   private def getBitmapDrawing =
     drawingCanvasView.map(_.getBitmap)
 
-  private def getFinalSketchBitmap =
+  private def getFinalSketchBitmap: Option[Bitmap] =
     drawingCanvasView.map { v =>
       try {
         val bitmapTrim = v.getImageTrimValues
@@ -568,7 +584,7 @@ class DrawingFragment extends FragmentHelper
         case _: Throwable => //TODO do we want to handle fatal too?
           v.getBitmap
       }
-    }.map(BitmapInput(_))
+    }
 
   private def clampSketchEditBoxPosition(params: FrameLayout.LayoutParams): Unit = {
     sketchEditTextView.foreach { v =>
@@ -584,42 +600,35 @@ class DrawingFragment extends FragmentHelper
   }
 
   def setBackgroundBitmap(showHint: Boolean): Unit = {
-
     drawingViewTip.foreach { v =>
       if (showHint) v.setText(getString(R.string.drawing__tip__picture__message))
       else hideTip()
     }
 
-    (for {
-      z      <- inject[Signal[ZMessaging]].head
-      asset  <- imageInput.fold(Future.successful(Option.empty[AssetData]))(z.assets.addAsset(_, isProfilePic = false))
-      bitmap <- asset match {
-        case Some(a) =>
-          z.imageLoader
-            .loadBitmap(a, BitmapRequest.Single(getOrientationDependentDisplayWidth, mirror = false), forceDownload = false)
-            .map(Some(_))
-            .future
-        case None => Future.successful(None)
+    for {
+      z      <- OptionT.liftF(inject[Signal[ZMessaging]].head)
+      input  <- OptionT.fromOption(imageInput)
+      is     <- input match {
+        case Left(content) => OptionT.liftF(Future.fromTry(content.openInputStream(uriHelper)))
+        case Right(assetId) => OptionT.liftF(assetService.loadContentById(assetId).future)
       }
-    } yield bitmap).foreach {
-      case Some(bm) =>
-        for {
-          cv  <- drawingCanvasView
-          tip <- drawingViewTip
-          bg  <- drawingTipBackground
-        } {
-          includeBackgroundImage = true
-          bg.setVisibility(if (showHint) View.VISIBLE else View.INVISIBLE)
-          tip.setTextColor(getColorWithTheme(R.color.drawing__tip__image))
-          cv.setBackgroundBitmap(bm)
-          drawingMethod match {
-            case Some(DrawingMethod.EMOJI) => onEmojiClick()
-            case Some(DrawingMethod.TEXT)  => onTextClick()
-            case _ =>
-          }
-        }
-      case _ =>
+      bitmap = BitmapFactory.decodeStream(is)
+    } yield for {
+      cv  <- drawingCanvasView
+      tip <- drawingViewTip
+      bg  <- drawingTipBackground
+    } {
+      includeBackgroundImage = true
+      bg.setVisibility(if (showHint) View.VISIBLE else View.INVISIBLE)
+      tip.setTextColor(getColorWithTheme(R.color.drawing__tip__image))
+      cv.setBackgroundBitmap(bitmap)
+      drawingMethod match {
+        case Some(DrawingMethod.EMOJI) => onEmojiClick()
+        case Some(DrawingMethod.TEXT)  => onTextClick()
+        case _ =>
+      }
     }
+
   }
 
   override def onScrollWidthChanged(width: Int): Unit = {}
