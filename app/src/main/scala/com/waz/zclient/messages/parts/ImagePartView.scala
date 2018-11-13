@@ -28,7 +28,7 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.target.Target
 import com.bumptech.glide.request.{RequestListener, RequestOptions}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.model.MessageContent
+import com.waz.model.{AssetId, MessageContent}
 import com.waz.service.downloads.AssetLoader.DownloadOnWifiOnlyException
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
@@ -62,10 +62,16 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends F
     hide <- hideContent
   } yield !hide && noW).on(Threading.Ui)(imageIcon.setVisible)
 
+  private def openDrawingFragment(drawingMethod: DrawingMethod) =
+    for {
+      msg <- message.currentValue
+      assetId <- msg.assetId.collect { case id: AssetId => id }
+    } { assets.openDrawingFragment(assetId, drawingMethod) }
+
   onClicked { _ => message.head.map(assets.showSingleImage(_, this))(Threading.Ui) }
 
-  message.map(_.assetId).onUi(
-    GlideBuilder(_)
+  message.map(_.assetId).collect { case Some(id: AssetId) => id }.onUi(
+    GlideBuilder.forAsset(_)
       .addListener(new RequestListener[Drawable] {
         override def onLoadFailed(e: GlideException, model: scala.Any, target: Target[Drawable], isFirstResource: Boolean): Boolean = {
           noWifi ! e.getCauses.contains(DownloadOnWifiOnlyException)

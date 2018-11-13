@@ -138,14 +138,17 @@ class CollectionImageView(context: Context) extends ImageView(context) with Coll
 
   private val target = new CustomImageViewTarget(this)
 
-  Signal(messageData.map(_.assetId), ephemeralColorDrawable).onUi { case (id, None) =>
-    GlideBuilder(id)
-      .apply(new RequestOptions().transforms(new CenterCrop(), new RoundedCorners(CornerRadius)).placeholder(new ColorDrawable(Color.TRANSPARENT)))
-      .transition(DrawableTransitionOptions.withCrossFade())
-      .into(target)
-  case (_, Some(ephemeralDrawable)) =>
-    WireGlide().clear(this)
-    setImageDrawable(ephemeralDrawable)
+  Signal(messageData.map(_.assetId), ephemeralColorDrawable).onUi {
+    case (Some(id: AssetId), None) =>
+      GlideBuilder(id)
+        .apply(new RequestOptions().transforms(new CenterCrop(), new RoundedCorners(CornerRadius)).placeholder(new ColorDrawable(Color.TRANSPARENT)))
+        .transition(DrawableTransitionOptions.withCrossFade())
+        .into(target)
+    case (_, Some(ephemeralDrawable)) =>
+      WireGlide().clear(this)
+      setImageDrawable(ephemeralDrawable)
+    case _ =>
+
   }
 
   this.onClick {

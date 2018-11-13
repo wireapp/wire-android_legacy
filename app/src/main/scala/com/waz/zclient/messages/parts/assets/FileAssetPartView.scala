@@ -24,14 +24,14 @@ import android.text.format.Formatter
 import android.util.AttributeSet
 import android.view.View
 import android.widget._
-import com.waz.api.AssetStatus._
+import com.waz.ZLog.ImplicitTag._
+import com.waz.service.assets2.AssetStatus
 import com.waz.threading.Threading
 import com.waz.zclient.R
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
 import com.waz.zclient.messages.parts.assets.DeliveryState._
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.ZLog.ImplicitTag._
 
 class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style) with ActionableAssetPart with FileLayoutAssetPart with HighlightViewPart { self =>
@@ -44,15 +44,16 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   private val fileNameView: TextView = findById(R.id.file_name)
   private val fileInfoView: TextView = findById(R.id.file_info)
 
-  asset.map(_._1.name.getOrElse("")).on(Threading.Ui)(fileNameView.setText)
-  asset.map(_._2).map(_ == DOWNLOAD_DONE).map { case true => View.VISIBLE; case false => View.GONE }.on(Threading.Ui)(downloadedIndicator.setVisibility)
+  asset.map(_.name).on(Threading.Ui)(fileNameView.setText)
+  assetStatus.map(_._1).map(_ == AssetStatus.Done)
+    .map { case true => View.VISIBLE; case false => View.GONE }
+    .on(Threading.Ui)(downloadedIndicator.setVisibility)
 
 
-  val sizeAndExt = asset.map {
-    case (a, _) =>
-      val size = if (a.sizeInBytes <= 0) None else Some(Formatter.formatFileSize(context, a.sizeInBytes))
-      val ext = Option(a.mime.extension).map(_.toUpperCase(Locale.getDefault))
-      (size, ext)
+  val sizeAndExt = asset.map { asset =>
+    val size = if (asset.size <= 0) None else Some(Formatter.formatFileSize(context, asset.size))
+    val ext = Option(asset.mime.extension).map(_.toUpperCase(Locale.getDefault))
+    (size, ext)
   }
 
   val text = deliveryState.map {
@@ -75,7 +76,7 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   text.on(Threading.Ui)(fileInfoView.setText)
 
   assetActionButton.onClicked.filter(state => state == DeliveryState.Complete || state == DeliveryState.DownloadFailed) { _ =>
-    asset.currentValue.foreach { case (a, _ ) => controller.openFile(a) }
+    asset.currentValue.foreach { a => controller.openFile(a.id) }
   }
 }
 

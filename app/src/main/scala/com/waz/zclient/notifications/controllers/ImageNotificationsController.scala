@@ -46,7 +46,7 @@ class ImageNotificationsController(implicit cxt: WireContext, eventContext: Even
   val savedImageId = Signal[Option[AssetId]](None)
   val savedImageUri = Signal[URI]()
 
-  def showImageSavedNotification(imageId: AssetId, uri: URI) = Option(imageId).zip(Option(uri)).foreach {
+  def showImageSavedNotification(imageId: AssetId, uri: URI): Unit = Option(imageId).zip(Option(uri)).foreach {
     case (id, ur) =>
       savedImageId ! Some(id)
       savedImageUri ! uri

@@ -21,13 +21,11 @@ import java.net.URI
 
 import android.support.test.filters.MediumTest
 import android.support.test.runner.AndroidJUnit4
-import com.waz.cache2.CacheService.{AES_CBC_Encryption, NoEncryption}
 import com.waz.model._
 import com.waz.service.assets2.RawAssetStorage.RawAssetDao
 import com.waz.service.assets2.{RawAsset, _}
 import com.waz.sync.client.AssetClient2.Retention
 import org.junit.runner.RunWith
-import org.threeten.bp.Duration
 
 /**
   * Wire
@@ -54,44 +52,48 @@ class RawAssetStorageTest extends GeneralStorageTest(RawAssetDao)(
       id = RawAssetId(),
       sha = Sha256("ad34da34"),
       encryption = NoEncryption,
-      source = URI.create("https://github.com/wireapp/wire-android-sync-engine/pull/437"),
+      encryptionSalt = None,
+      localSource = Some(LocalSource(URI.create("https://github.com/wireapp/wire-android-sync-engine/pull/437"), Sha256.Empty)),
       mime = Mime.Default,
+      name = "test",
       uploaded = 50,
       size = 1000,
       retention = Retention.Eternal,
       public = true,
-      convId = None,
       details = ImageDetails(Dim2(1,2), Medium),
-      assetId = None
-    ),
-    RawAsset(
-      id = RawAssetId(),
-      sha = Sha256("ad34da34"),
-      encryption = NoEncryption,
-      source = URI.create("https://github.com/wireapp/wire-android-sync-engine/pull/437"),
-      mime = Mime.Default,
-      uploaded = 50,
-      size = 1000,
-      retention = Retention.Eternal,
-      public = false,
-      convId = None,
-      details = AudioDetails(Duration.ofDays(1), Loudness(Vector(0.4f, 0.5f, 0.6f))),
-      assetId = Some(AssetId())
-    ),
-    RawAsset(
-      id = RawAssetId(),
-      sha = Sha256("ad34da34"),
-      encryption = AES_CBC_Encryption(AESKey()),
-      source = URI.create("https://github.com/wireapp/wire-android-sync-engine/pull/437"),
-      mime = Mime.Default,
-      uploaded = 50,
-      size = 1000,
-      retention = Retention.Eternal,
-      public = true,
-      convId = None,
-      details = VideoDetails(Dim2(1,2), Duration.ofDays(1)),
-      assetId = None
+      assetId = None,
+      messageId = None,
+      uploadStatus = UploadStatus.Done,
+      preview = RawPreviewEmpty
     )
+//    RawAsset(
+//      id = RawAssetId(),
+//      sha = Sha256("ad34da34"),
+//      encryption = NoEncryption,
+//      source = URI.create("https://github.com/wireapp/wire-android-sync-engine/pull/437"),
+//      mime = Mime.Default,
+//      uploaded = 50,
+//      size = 1000,
+//      retention = Retention.Eternal,
+//      public = false,
+//      convId = None,
+//      details = AudioDetails(Duration.ofDays(1), Loudness(Vector(0.4f, 0.5f, 0.6f))),
+//      assetId = Some(AssetId())
+//    ),
+//    RawAsset(
+//      id = RawAssetId(),
+//      sha = Sha256("ad34da34"),
+//      encryption = AES_CBC_Encryption(AESKey()),
+//      source = URI.create("https://github.com/wireapp/wire-android-sync-engine/pull/437"),
+//      mime = Mime.Default,
+//      uploaded = 50,
+//      size = 1000,
+//      retention = Retention.Eternal,
+//      public = true,
+//      convId = None,
+//      details = VideoDetails(Dim2(1,2), Duration.ofDays(1)),
+//      assetId = None
+//    )
   ),
   idExtractor = _.id
 )

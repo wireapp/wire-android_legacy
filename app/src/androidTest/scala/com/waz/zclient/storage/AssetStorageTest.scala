@@ -21,12 +21,10 @@ import java.net.URI
 
 import android.support.test.filters.MediumTest
 import android.support.test.runner.AndroidJUnit4
-import com.waz.cache2.CacheService.{AES_CBC_Encryption, NoEncryption}
 import com.waz.model._
 import com.waz.service.assets2.AssetStorageImpl.AssetDao
 import com.waz.service.assets2._
 import org.junit.runner.RunWith
-import org.threeten.bp.Duration
 
 @RunWith(classOf[AndroidJUnit4])
 @MediumTest
@@ -37,31 +35,38 @@ class AssetStorageTest extends GeneralStorageTest(AssetDao)(
       token = Some(AssetToken("some_token_1")),
       sha = Sha256("ad34da34"),
       encryption = NoEncryption,
-      localSource = Some(URI.create("https://github.com/wireapp/wire-android-sync-engine/pull/437")),
+      localSource = Some(LocalSource(URI.create("https://github.com/wireapp/wire-android-sync-engine/pull/437"), Sha256.Empty)),
+      name = "test_asset",
+      size = 225,
       convId = None,
       preview = None,
-      details = ImageDetails(Dim2(1,2), Medium)
-    ),
-    Asset(
-      id = AssetId(),
-      token = Some(AssetToken("some_token_2")),
-      sha = Sha256("ad34da34"),
-      encryption = NoEncryption,
-      localSource = Some(URI.create("https://github.com/wireapp/wire-android-sync-engine/pull/437")),
-      convId = Some(RConvId()),
-      preview = None,
-      details = AudioDetails(Duration.ofDays(1), Loudness(Vector(0.4f, 0.5f, 0.6f)))
-    ),
-    Asset(
-      id = AssetId(),
-      token = Some(AssetToken("some_token_3")),
-      sha = Sha256("ad34da34"),
-      encryption = AES_CBC_Encryption(AESKey()),
-      localSource = Some(URI.create("https://github.com/wireapp/wire-android-sync-engine/pull/437")),
-      convId = None,
-      preview = None,
-      details = VideoDetails(Dim2(1,2), Duration.ofDays(1))
+      details = ImageDetails(Dim2(1,2), Medium),
+      mime = Mime.Unknown,
+      messageId = None
     )
+//    Asset(
+//      id = AssetId(),
+//      token = Some(AssetToken("some_token_2")),
+//      sha = Sha256("ad34da34"),
+//      encryption = NoEncryption,
+//      localSource = Some(URI.create("https://github.com/wireapp/wire-android-sync-engine/pull/437")),
+//      convId = Some(RConvId()),
+//      preview = None,
+//      name = "test_asset",
+//      size = 225,
+//      details = AudioDetails(Duration.ofDays(1), Loudness(Vector(0.4f, 0.5f, 0.6f))),
+//      messageId = Some(MessageId())
+//    ),
+//    Asset(
+//      id = AssetId(),
+//      token = Some(AssetToken("some_token_3")),
+//      sha = Sha256("ad34da34"),
+//      encryption = AES_CBC_Encryption(AESKey()),
+//      localSource = Some(URI.create("https://github.com/wireapp/wire-android-sync-engine/pull/437")),
+//      convId = None,
+//      preview = None,
+//      details = VideoDetails(Dim2(1,2), Duration.ofDays(1))
+//    )
   ),
   idExtractor = _.id
 )

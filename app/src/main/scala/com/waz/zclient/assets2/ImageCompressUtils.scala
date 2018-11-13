@@ -15,23 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.controllers.camera;
+package com.waz.zclient.assets2
 
-import com.waz.service.assets2.Content;
-import com.waz.zclient.pages.main.profile.camera.CameraContext;
+import java.io.ByteArrayOutputStream
 
-public interface ICameraController {
-    void addCameraActionObserver(CameraActionObserver cameraActionObserver);
+import android.graphics.Bitmap
+import android.graphics.Bitmap.CompressFormat
 
-    void removeCameraActionObserver(CameraActionObserver cameraActionObserver);
+object ImageCompressUtils {
 
-    void openCamera(CameraContext cameraContext);
+  def defaultCompressionQuality(format: CompressFormat): Int = format match {
+    case CompressFormat.JPEG => 75
+    case _ => 50
+  }
 
-    void closeCamera(CameraContext cameraContext);
+  def compress(in: Bitmap, toFormat: CompressFormat, quality: Option[Int] = None): Array[Byte] = {
+    val out = new ByteArrayOutputStream()
+    in.compress(toFormat, quality.getOrElse(defaultCompressionQuality(toFormat)), out)
+    out.toByteArray
+  }
 
-    void onBitmapSelected(Content content, CameraContext cameraContext);
-
-    void onCameraNotAvailable(CameraContext cameraContext);
-
-    void tearDown();
 }

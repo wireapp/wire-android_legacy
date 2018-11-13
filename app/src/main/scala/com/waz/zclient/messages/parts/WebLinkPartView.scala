@@ -17,6 +17,8 @@
  */
 package com.waz.zclient.messages.parts
 
+import java.net.URL
+
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.support.v7.widget.CardView
@@ -30,10 +32,9 @@ import com.waz.api.Message.Part
 import com.waz.model.GenericContent.LinkPreview
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
-import com.waz.sync.client.OpenGraphClient.OpenGraphData
+import com.waz.sync.client.OpenGraphClient.{OpenGraphData, OpenGraphImage}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.utils.wrappers.URI
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views.ProgressDotsDrawable
 import com.waz.zclient.glide.{GlideBuilder, WireGlide}
@@ -68,12 +69,12 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
     if (index >= 0 && msg.links.size > linkIndex) Some(msg.links(linkIndex)) else None
   }
 
-  val image: Signal[Option[Either[AssetData, URI]]] = for {
+  val image: Signal[Option[Either[AssetData, URL]]] = for {
     ct <- content
     lp <- linkPreview
   } yield (ct.openGraph, lp) match {
     case (_, Some(LinkPreview.WithAsset(asset)))            => Some(Left(asset))
-    case (Some(OpenGraphData(_, _, Some(uri), _, _)), None) => Some(Right(uri))
+    case (Some(OpenGraphData(_, _, Some(OpenGraphImage(url)), _, _)), None) => Some(Right(url))
     case _                                                  => None
   }
 

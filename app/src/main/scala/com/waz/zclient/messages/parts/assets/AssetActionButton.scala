@@ -23,20 +23,20 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.graphics.{Canvas, ColorFilter, Paint, PixelFormat}
 import android.util.AttributeSet
-import com.waz.api.impl.ProgressIndicator.ProgressData
+import com.waz.ZLog.ImplicitTag._
 import com.waz.model.MessageData
 import com.waz.service.ZMessaging
+import com.waz.service.assets2.{AssetDownloadStatus, AssetUploadStatus}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.common.controllers.global.AccentColorController
-import DeliveryState._
+import com.waz.zclient.messages.parts.assets.DeliveryState._
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.views.GlyphProgressView
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.zclient.common.controllers.AssetsController
 
 class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) extends GlyphProgressView(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -49,8 +49,10 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
   val message = Signal[MessageData]()
   val accentController = inject[AccentColorController]
 
-  val asset = assets.assetSignal(message)
-  val deliveryState = DeliveryState(message, asset)
+  val assetId = message.map(_.assetId).collect { case Some(id) => id }
+  val asset = assets.assetSignal(assetId)
+  val assetStatus = assets.assetStatusSignal(assetId)
+  val deliveryState = DeliveryState(message, assetStatus.map(_._1))
 
   val isPlaying = Signal(false)
 
@@ -58,7 +60,7 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
 
   private val normalButtonDrawable = getDrawable(R.drawable.selector__icon_button__background__video_message)
   private val errorButtonDrawable = getDrawable(R.drawable.selector__icon_button__background__video_message__error)
-  private val onCompletedDrawable = if (isFileType) new FileDrawable(asset.map(_._1.mime.extension)) else normalButtonDrawable
+  private val onCompletedDrawable = if (isFileType) new FileDrawable(asset.map(_.mime.extension)) else normalButtonDrawable
 
   accentController.accentColor.map(_.color).on(Threading.Ui)(setProgressColor)
 
@@ -83,26 +85,14 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
     case _                        => null
   }
 
-  private val progress = for {
-    assetId <- message.map(_.assetId)
-    state <- deliveryState flatMap {
-      case Uploading => assets.uploadProgress(assetId).map(Option(_))
-      case Downloading => assets.downloadProgress(assetId).map(Option(_))
-      case _ => Signal const Option.empty[ProgressData]
-    }
-  } yield state
-
   text.on(Threading.Ui) { setText }
   drawable.on(Threading.Ui) { setBackground }
 
-  progress.on(Threading.Ui) {
-    case Some(p) =>
-      import com.waz.api.ProgressIndicator.State._
-      p.state match {
-        case CANCELLED | FAILED | COMPLETED => clearProgress()
-        case RUNNING if p.total == -1 => startEndlessProgress()
-        case RUNNING => setProgress(if (p.total > 0) p.current.toFloat / p.total.toFloat else 0)
-        case _ => clearProgress()
+  assetStatus.on(Threading.Ui) {
+    case (AssetUploadStatus.InProgress | AssetDownloadStatus.InProgress, Some(progress)) =>
+      progress.total match {
+        case Some(total) => setProgress(if (total > 0) progress.progress.toFloat / total.toFloat else 0)
+        case _ => startEndlessProgress()
       }
     case _ => clearProgress()
   }
@@ -113,8 +103,8 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
 
   onClicked {
     case UploadFailed => message.currentValue.foreach(assets.retry)
-    case Uploading    => message.currentValue.foreach(assets.cancelUpload)
-    case Downloading  => message.currentValue.foreach(assets.cancelDownload)
+    case Uploading    => message.currentValue.foreach(m => assets.cancelUpload(m.assetId.get))
+    case Downloading  => message.currentValue.foreach(m => assets.cancelDownload(m.assetId.get))
     case _ => // do nothing, individual view parts will handle what happens when in the Completed state.
   }
 }

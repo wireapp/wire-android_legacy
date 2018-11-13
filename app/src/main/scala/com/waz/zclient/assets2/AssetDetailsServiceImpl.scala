@@ -17,23 +17,23 @@
  */
 package com.waz.zclient.assets2
 
-import java.net.URI
+import java.io.FileInputStream
 import java.nio.ByteOrder
 import java.util.Locale
 
 import android.content.Context
-import android.graphics.{Bitmap, BitmapFactory}
+import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever.{METADATA_KEY_DURATION, METADATA_KEY_VIDEO_HEIGHT, METADATA_KEY_VIDEO_ROTATION, METADATA_KEY_VIDEO_WIDTH}
 import android.media._
-import android.net.Uri
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.bitmap.video.{MediaCodecHelper, TrackDecoder}
-import com.waz.model.Dim2
+import com.waz.model.{Dim2, Mime}
 import com.waz.service.assets.AudioLevels
-import com.waz.service.assets.AudioLevels.{TrackInfo, loudnessOverview, _}
-import com.waz.service.assets2._
+import com.waz.service.assets.AudioLevels.{TrackInfo, loudnessOverview}
+import com.waz.service.assets2.{ImageTag, _}
 import com.waz.utils.{IoUtils, _}
+import com.waz.zclient.assets2.MetadataExtractionUtils._
 import org.threeten.bp
 
 import scala.concurrent.duration._
@@ -41,33 +41,24 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.math.round
 import scala.util.{Failure, Success, Try}
 
+class AssetDetailsServiceImpl(uriHelper: UriHelper)
+                             (implicit context: Context, ec: ExecutionContext) extends AssetDetailsService {
+  import AssetDetailsServiceImpl._
 
-class MetadataServiceImpl(context: Context, uriHelper: UriHelper)
-                         (implicit ec: ExecutionContext) extends MetadataService {
-  import MetadataServiceImpl._
+  override def extract(mime: Mime, content: CanExtractMetadata): Future[AssetDetails] = {
+    if (Mime.Image.supported.contains(mime)) extractForImage(content, Medium)
+    else if (Mime.Video.supported.contains(mime)) extractForVideo(asSource(content))
+    else if (Mime.Audio.supported.contains(mime)) extractForAudio(asSource(content))
+    else Future.successful(BlobDetails)
+  }
 
-  private def withMetadataRetriever[A](uri: URI)(f: MediaMetadataRetriever => A): Future[A] =
-    Future {
-      Managed(new MediaMetadataRetriever).acquire { retriever =>
-        val androidUri = Uri.parse(uri.toString)
-        retriever.setDataSource(context, androidUri)
-        f(retriever)
+  private def extractForImage(content: CanExtractMetadata, tag: ImageTag): Future[ImageDetails] =
+    for {
+      is <- content match {
+        case Content.File(_, file) => Future.successful(new FileInputStream(file))
+        case Content.Uri(uri) => Future.fromTry(uriHelper.openInputStream(uri))
       }
-    }
-
-  //TODO We should try to remove this method
-  def extractForImage(bm: Bitmap, orientation: Int, tag: ImageTag): Future[ImageDetails] =
-    Future {
-      val dimensions = Dim2(bm.getWidth, bm.getHeight)
-      ImageDetails(
-        if (shouldSwapDimensionsExif(orientation)) dimensions.swap else dimensions,
-        tag
-      )
-    }
-
-  override def extractForImage(uri: URI, tag: ImageTag): Future[ImageDetails] =
-    Future.fromTry(uriHelper.openInputStream(uri)).flatMap { is =>
-      IoUtils.withResource(is) { _ =>
+      details <- IoUtils.withResource(is) { _ =>
         val opts = new BitmapFactory.Options
         opts.inJustDecodeBounds = true
         BitmapFactory.decodeStream(is, null, opts)
@@ -79,45 +70,49 @@ class MetadataServiceImpl(context: Context, uriHelper: UriHelper)
         else
           Future.successful(ImageDetails(Dim2(opts.outWidth, opts.outHeight), tag))
       }
-    }
+    } yield details
 
-  override def extractForVideo(uri: URI): Future[VideoDetails] =
-    withMetadataRetriever(uri) { implicit retriever =>
-      for {
-        width <- retrieve(METADATA_KEY_VIDEO_WIDTH, "video width", _.toInt)
-        height <- retrieve(METADATA_KEY_VIDEO_HEIGHT, "video height", _.toInt)
-        rotation <- retrieve(METADATA_KEY_VIDEO_ROTATION, "video rotation", _.toInt)
-        duration <- retrieve(METADATA_KEY_DURATION, "video duration", s => bp.Duration.ofMillis(s.toLong))
-      } yield {
-        val dimensions = Dim2(width, height)
-        VideoDetails(
-          dimensions = if (shouldSwapDimensions(rotation)) dimensions.swap else dimensions,
-          duration
-        )
+  private def extractForVideo(source: Source): Future[VideoDetails] =
+    Future {
+      createMetadataRetriever(source).acquire { implicit retriever =>
+        for {
+          width <- retrieve(METADATA_KEY_VIDEO_WIDTH, "video width", _.toInt)
+          height <- retrieve(METADATA_KEY_VIDEO_HEIGHT, "video height", _.toInt)
+          rotation <- retrieve(METADATA_KEY_VIDEO_ROTATION, "video rotation", _.toInt)
+          duration <- retrieve(METADATA_KEY_DURATION, "video duration", s => bp.Duration.ofMillis(s.toLong))
+        } yield {
+          val dimensions = Dim2(width, height)
+          VideoDetails(
+            dimensions = if (shouldSwapDimensions(rotation)) dimensions.swap else dimensions,
+            duration
+          )
+        }
       }
     } flatMap {
       case Right(details) => Future.successful(details)
       case Left(msg) => Future.failed(new IllegalArgumentException(msg))
     }
 
-  override def extractForAudio(uri: URI, bars: Int = 100): Future[AudioDetails] =
-    withMetadataRetriever(uri) { implicit retriever =>
-      for {
-        duration <- retrieve(METADATA_KEY_DURATION, "video duration", s => bp.Duration.ofMillis(s.toLong))
-        loudness <- extractAudioLoudness(uri, bars)
-      } yield {
-        AudioDetails(duration, loudness)
+  private def extractForAudio(source: Source, bars: Int = 100): Future[AudioDetails] =
+    Future {
+      createMetadataRetriever(source).acquire { implicit retriever =>
+        for {
+          duration <- retrieve(METADATA_KEY_DURATION, "audio duration", s => bp.Duration.ofMillis(s.toLong))
+          loudness <- extractAudioLoudness(source, bars)
+        } yield {
+          AudioDetails(duration, loudness)
+        }
       }
     } flatMap {
       case Right(details) => Future.successful(details)
       case Left(msg) => Future.failed(new IllegalArgumentException(msg))
     }
 
-  private def extractAudioLoudness(content: URI, numBars: Int): Either[String, Loudness] =
+  private def extractAudioLoudness(source: Source, numBars: Int): Either[String, Loudness] =
     Try {
       val overview = for {
-        extractor <- Managed(new MediaExtractor)
-        trackInfo  = extractAudioTrackInfo(extractor, content)
+        extractor <- createMediaExtractor(source)
+        trackInfo  = extractAudioTrackInfo(extractor, source)
         helper    <- Managed(new MediaCodecHelper(createAudioDecoder(trackInfo)))
         _          = helper.codec.start()
         decoder    = new TrackDecoder(extractor, helper)
@@ -140,10 +135,8 @@ class MetadataServiceImpl(context: Context, uriHelper: UriHelper)
         Left("can not extract audio levels")
     }
 
-  private def extractAudioTrackInfo(extractor: MediaExtractor, content: URI): TrackInfo = {
-    debug(s"data source: $content")
-
-    extractor.setDataSource(context, Uri.parse(content.toString), null)
+  private def extractAudioTrackInfo(extractor: MediaExtractor, source: Source): TrackInfo = {
+    debug(s"data source: $source")
     debug(s"track count: ${extractor.getTrackCount}")
 
     val audioTrack = Iterator.range(0, extractor.getTrackCount).map { n =>
@@ -160,7 +153,7 @@ class MetadataServiceImpl(context: Context, uriHelper: UriHelper)
 
     def get[A](k: String, f: MediaFormat => String => A): A =
       if (format.containsKey(k)) f(format)(k)
-      else throw new NoSuchElementException(s"media format does not contain information about '$k'; mime = '$mime'; URI = $content")
+      else throw new NoSuchElementException(s"media format does not contain information about '$k'; mime = '$mime'; source = $source")
 
     val samplingRate = get(MediaFormat.KEY_SAMPLE_RATE, _.getInteger)
     val channels = get(MediaFormat.KEY_CHANNEL_COUNT, _.getInteger)
@@ -172,19 +165,7 @@ class MetadataServiceImpl(context: Context, uriHelper: UriHelper)
 
 }
 
-object MetadataServiceImpl {
-
-  implicit val RetrieverCleanup: Cleanup[MediaMetadataRetriever] =
-    new Cleanup[MediaMetadataRetriever] {
-      override def apply(a: MediaMetadataRetriever): Unit = a.release()
-    }
-
-  def retrieve[A](key: Int, tag: String, convert: String => A)
-                 (implicit retriever: MediaMetadataRetriever): Either[String, A] =
-    for {
-      s <- Option(retriever.extractMetadata(key)).toRight(s"$tag ($key) is null")
-      result <- Try(convert(s)).toRight(t => s"unable to convert $tag ($key) of value '$s': ${t.getMessage}")
-    } yield result
+object AssetDetailsServiceImpl {
 
   def createAudioDecoder(info: TrackInfo): MediaCodec =
     returning(MediaCodec.createDecoderByType(info.mime)) { mc =>

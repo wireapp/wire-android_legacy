@@ -20,12 +20,14 @@ package com.waz.zclient.pages.extendedcursor.voicefilter;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.FrameLayout;
-import com.waz.api.AudioAssetForUpload;
+
 import com.waz.api.AudioEffect;
 import com.waz.api.AudioOverview;
 import com.waz.api.RecordingControls;
+import com.waz.service.assets.GlobalRecordAndPlayService;
 import com.waz.zclient.R;
 import com.waz.zclient.utils.ViewUtils;
+
 import org.threeten.bp.Instant;
 
 public class VoiceFilterLayout extends FrameLayout implements VoiceFilterController.RecordingObserver {
@@ -71,7 +73,7 @@ public class VoiceFilterLayout extends FrameLayout implements VoiceFilterControl
     }
 
     @Override
-    public void onRecordingFinished(AudioAssetForUpload recording,
+    public void onRecordingFinished(GlobalRecordAndPlayService.Audio recording,
                                     boolean fileSizeLimitReached,
                                     AudioOverview overview) {
         voiceFilterContent.showNext();
@@ -92,9 +94,9 @@ public class VoiceFilterLayout extends FrameLayout implements VoiceFilterControl
     }
 
     @Override
-    public void sendRecording(AudioAssetForUpload audioAssetForUpload, AudioEffect appliedAudioEffect) {
+    public void sendRecording(GlobalRecordAndPlayService.Audio audio, AudioEffect appliedAudioEffect) {
         if (callback != null) {
-            callback.sendRecording(audioAssetForUpload, appliedAudioEffect);
+            callback.sendRecording(audio, appliedAudioEffect);
         }
     }
 
@@ -115,6 +117,6 @@ public class VoiceFilterLayout extends FrameLayout implements VoiceFilterControl
 
         void onAudioMessageRecordingStarted();
 
-        void sendRecording(AudioAssetForUpload audioAssetForUpload, AudioEffect appliedAudioEffect);
+        void sendRecording(GlobalRecordAndPlayService.Audio audio, AudioEffect appliedAudioEffect);
     }
 }

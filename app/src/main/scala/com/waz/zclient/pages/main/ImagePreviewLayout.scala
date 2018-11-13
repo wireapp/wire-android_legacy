@@ -17,6 +17,8 @@
  */
 package com.waz.zclient.pages.main
 
+import java.net.URI
+
 import android.content.Context
 import android.text.TextUtils
 import android.util.AttributeSet
@@ -25,16 +27,16 @@ import android.widget.{FrameLayout, ImageView, TextView}
 import com.bumptech.glide.request.RequestOptions
 import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.model.Name
-import com.waz.service.assets.AssetService.RawAssetInput
-import com.waz.service.assets.AssetService.RawAssetInput.{ByteInput, UriInput}
+import com.waz.model.Mime
+import com.waz.service.assets2.Content
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.returning
-import com.waz.utils.wrappers.URI
+import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.drawing.IDrawingController
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.glide.{GlideBuilder, WireGlide}
 import com.waz.zclient.glide.transformations.ScaleTransformation
+import com.waz.zclient.glide.{GlideBuilder, WireGlide}
 import com.waz.zclient.pages.main.profile.views.{ConfirmationMenu, ConfirmationMenuListener}
 import com.waz.zclient.ui.theme.OptionsDarkTheme
 import com.waz.zclient.utils.RichView
@@ -52,7 +54,7 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int) exte
 
   private val onDrawClicked = EventStream[IDrawingController.DrawingMethod]()
 
-  private var imageInput = Option.empty[RawAssetInput]
+  private var imageInput = Option.empty[Content]
   private var source = Option.empty[ImagePreviewLayout.Source]
 
   private lazy val approveImageSelectionMenu = returning(findViewById[ConfirmationMenu](R.id.cm__cursor_preview)) { menu =>
@@ -116,13 +118,14 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int) exte
 
   onDrawClicked.onUi { method =>
     (imageInput, source, callback) match {
-      case (Some(a), Some(s), Some(c)) => c.onSketchOnPreviewPicture(a, s, method)
+      case (Some(content), Some(s), Some(c)) => c.onSketchOnPreviewPicture(content, s, method)
       case _ =>
     }
   }
 
   override def confirm(): Unit = (imageInput, source, callback) match {
-    case (Some(a), Some(s), Some(c)) => c.onSendPictureFromPreview(a, s)
+    case (Some(content), Some(s), Some(c)) =>
+      c.onSendPictureFromPreview(content, s)
     case _ =>
   }
 
@@ -132,15 +135,15 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int) exte
 
   def setImage(imageData: Array[Byte], isMirrored: Boolean): Unit = {
     this.source = Option(ImagePreviewLayout.Source.Camera)
-    this.imageInput = Some(ByteInput(imageData))
+    this.imageInput = Some(Content.Bytes(Mime.Image.Jpg, imageData))
     val request = WireGlide().load(imageData)
     if (isMirrored) request.apply(new RequestOptions().transform(new ScaleTransformation(-1f, 1f)))
     request.into(imageView)
   }
 
-  def setImage(uri: URI, source: ImagePreviewLayout.Source): Unit = {
+  def setImage(uri: URIWrapper, source: ImagePreviewLayout.Source): Unit = {
     this.source = Option(source)
-    this.imageInput = Some(UriInput(uri))
+    this.imageInput = Some(Content.Uri(URI.create(uri.toString)))
     GlideBuilder(uri)
       .apply(new RequestOptions().centerInside()).into(imageView)
   }
@@ -158,9 +161,9 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int) exte
 trait ImagePreviewCallback {
   def onCancelPreview(): Unit
 
-  def onSketchOnPreviewPicture(image: RawAssetInput, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit
+  def onSketchOnPreviewPicture(image: Content, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit
 
-  def onSendPictureFromPreview(imageAsset: RawAssetInput, source: ImagePreviewLayout.Source): Unit
+  def onSendPictureFromPreview(image: Content, source: ImagePreviewLayout.Source): Unit
 }
 
 object ImagePreviewLayout {

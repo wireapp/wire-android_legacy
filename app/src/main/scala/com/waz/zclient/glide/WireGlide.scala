@@ -17,6 +17,8 @@
  */
 package com.waz.zclient.glide
 
+import java.net.URL
+
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.net.Uri
@@ -30,10 +32,11 @@ object WireGlide {
 
 object GlideBuilder {
   def apply(drawable: Drawable)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(drawable)
-  def forAsset(assetId: AssetId)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(AssetIdRequest(assetId))
+  def forAsset(assetId: AssetId)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(Asset2Request(assetId))
   def apply(assetId: AssetId)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(AssetIdRequest(assetId))
   def apply(assetData: AssetData)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(AssetDataRequest(assetData))
   def apply(assetRequest: AssetRequest)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(assetRequest)
   def apply(uri: Uri)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(uri)
   def apply(uri: URI)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(AndroidURIUtil.unwrap(uri))
+  def apply(url: URL)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(Uri.parse(url.toString))
 }

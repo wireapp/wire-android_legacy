@@ -23,24 +23,25 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.{FrameLayout, ImageView, TextView}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.model.{AssetId, Dim2}
+import com.waz.model.Dim2
 import com.waz.service.NetworkModeService
-import com.waz.service.media.GoogleMapsMediaService
 import com.waz.threading.Threading
-import com.waz.utils._
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.messages.{ClickableViewPart, HighlightViewPart, MsgPart}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.glide._
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
-import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 
 class LocationPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style)
-    with ClickableViewPart with ViewHelper with EphemeralPartView with EphemeralIndicatorPartView
-    with HighlightViewPart {
+    with HighlightViewPart
+    with ClickableViewPart
+    with ViewHelper
+    with EphemeralPartView
+    with EphemeralIndicatorPartView {
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -62,24 +63,24 @@ class LocationPartView(context: Context, attrs: AttributeSet, style: Int)
   private val imageSize = Signal[Dim2]()
 
   val name = message.map(_.location.fold("")(_.getName))
-  val image = for {
-    msg <- message
-    dim <- imageSize if dim.width > 0
-  } yield
-    msg.location.fold2[AssetRequest](AssetIdRequest(msg.assetId), { loc =>
-      AssetDataRequest(GoogleMapsMediaService.mapImageAsset(AssetId(s"${msg.assetId.str}_${dim.width}_${dim.height}"), loc, dim)) // use dimensions in id, to avoid caching images with different sizes
-    })
-
-  Signal(image, ephemeralColorDrawable).onUi {
-    case (_, Some(drawable)) =>
-      WireGlide().clear(imageContainer)
-      imageView.setImageDrawable(drawable)
-    case (request, _) =>
-      GlideBuilder(request).into(imageView)
-  }
-
-  val showPin = expired.map(!_)
-  showPin.onUi(pinView.setVisible(_))
+//  val image = for {
+//    msg <- message
+//    dim <- imageSize if dim.width > 0
+//  } yield
+//    msg.location.fold2[AssetRequest](AssetIdRequest(msg.assetId), { loc =>
+//      AssetDataRequest(GoogleMapsMediaService.mapImageAsset(AssetId(s"${msg.assetId.str}_${dim.width}_${dim.height}"), loc, dim)) // use dimensions in id, to avoid caching images with different sizes
+//    })
+//
+//  Signal(image, ephemeralColorDrawable).onUi {
+//    case (_, Some(drawable)) =>
+//      WireGlide().clear(imageContainer)
+//      imageView.setImageDrawable(drawable)
+//    case (request, _) =>
+//      GlideBuilder(request).into(imageView)
+//  }
+//
+//  val showPin = expired.map(!_)
+//  showPin.onUi(pinView.setVisible(_))
 
 /*
 
