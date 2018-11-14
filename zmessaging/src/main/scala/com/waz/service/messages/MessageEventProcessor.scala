@@ -64,9 +64,11 @@ class MessageEventProcessor(selfUserId:          UserId,
     storage.getMessage(quoteId).flatMap {
       case Some(original) =>
         replyHashing.hashMessage(original).map { hash =>
-          verbose(s"checkReplyHashes for ${(m.id, m.contentString, m.quote, m.quoteValidity, m.quoteHash.map(_.hexString))}")
           val newValidity = m.quoteHash.contains(hash)
-          verbose(s"calculated hash is ${hash.hexString}, the new quote validity is $newValidity")
+          verbose(s""""
+            checkReplyHashes for ${(m.id, m.contentString, original.time.toEpochMilli, m.quote, m.quoteValidity, m.quoteHash.map(_.hexString))},
+            calculated hash is ${hash.hexString}, the new quote validity is $newValidity
+           """)
           if (m.quoteValidity != newValidity) m.copy(quoteValidity = newValidity) else m
         }
       case None =>

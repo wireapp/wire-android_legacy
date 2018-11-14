@@ -235,12 +235,13 @@ class MessagesSyncHandler(selfUserId: UserId,
   private def uploadAsset(conv: ConversationData, msg: MessageData)(implicit convLock: ConvLock): ErrorOrResponse[RemoteInstant] = {
     verbose(s"uploadAsset($conv, $msg)")
 
-    def postAssetMessage(asset: AssetData, preview: Option[AssetData]): ErrorOrResponse[RemoteInstant] = {
+    def postAssetMessage(asset: AssetData, preview: Option[AssetData], origTime: Option[RemoteInstant] = None): ErrorOrResponse[RemoteInstant] = {
       val proto = GenericMessage(msg.id.uid, msg.ephemeral, Proto.Asset(asset, preview))
       CancellableFuture.lift(otrSync.postOtrMessage(conv.id, proto) flatMap {
         case Right(time) =>
-          verbose(s"posted asset message for: $asset")
-          msgContent.updateMessage(msg.id)(_.copy(protos = Seq(proto), time = time)) map { _ => Right(time) }
+          val updateTime = origTime.getOrElse(time)
+          verbose(s"posted asset message for: $asset, with update time: $updateTime (origTime: $origTime)")
+          msgContent.updateMessage(msg.id)(_.copy(protos = Seq(proto), time = updateTime)) map { _ => Right(updateTime) }
         case Left(err) =>
           warn(s"posting asset message failed: $err")
           Future successful Left(err)
@@ -252,7 +253,9 @@ class MessagesSyncHandler(selfUserId: UserId,
       if (asset.status != AssetStatus.UploadNotStarted) CancellableFuture successful Right(msg.time)
       else asset.mime match {
         case Mime.Image() => CancellableFuture.successful(Right(msg.time))
-        case _ => postAssetMessage(asset, None)
+        case _ =>
+          verbose(s"send original")
+          postAssetMessage(asset, None)
       }
 
     def sendWithV3(asset: AssetData) = {
@@ -263,10 +266,11 @@ class MessagesSyncHandler(selfUserId: UserId,
           //send preview
           CancellableFuture.lift(asset.previewId.map(assets.getAssetData).getOrElse(Future successful None)).flatMap {
             case Some(prev) =>
+              verbose("send preview")
               service.retentionPolicy(conv).flatMap { retention =>
                 assetSync.uploadAssetData(prev.id, retention = retention).flatMap {
                   case Right(updated) =>
-                    postAssetMessage(asset, Some(updated)).map {
+                    postAssetMessage(asset, Some(updated), Some(origTime)).map {
                       case (Right(_)) => Right(Some(updated))
                       case (Left(err)) => Left(err)
                     }
@@ -278,7 +282,12 @@ class MessagesSyncHandler(selfUserId: UserId,
             case Right(prev) =>
               service.retentionPolicy(conv).flatMap { retention =>
                 assetSync.uploadAssetData(asset.id, retention = retention).flatMap {
-                  case Right(updated) => postAssetMessage(updated, prev).map(_.fold(Left(_), _ => Right(origTime)))
+                  case Right(updated) if asset.isImage =>
+                    verbose("send image asset")
+                    postAssetMessage(updated, prev).map(_.fold(Left(_), _ => Right(origTime)))
+                  case Right(updated) =>
+                    verbose("send non-image asset")
+                    postAssetMessage(updated, prev, Some(origTime)).map(_.fold(Left(_), _ => Right(origTime)))
                   case Left(err) if err.message.contains(AssetSyncHandler.AssetTooLarge) =>
                     CancellableFuture.lift(errors.addAssetTooLargeError(conv.id, msg.id).map { _ => Left(err) })
                   case Left(err) => CancellableFuture successful Left(err)

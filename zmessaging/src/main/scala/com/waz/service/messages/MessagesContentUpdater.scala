@@ -80,7 +80,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
         time <- remoteTimeAfterLast(msg.convId) //TODO: can we find a way to save this only on the localTime of the message?
         exp  <- expiration
         m = returning(msg.copy(state = state, time = time, localTime = localTime, ephemeral = exp)) { m =>
-          verbose(s"addLocalMessage: $m, exp: $exp")
+          verbose(s"addLocalMessage: $m, exp: $exp, time: $time")
         }
         res <- messagesStorage.addMessage(m)
       } yield res
@@ -188,7 +188,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
         msg.copy(id = m.id, localTime = m.localTime)
 
       def mergeMatching(prev: MessageData, msg: MessageData) = {
-        verbose(s"mergeMathing, prev: $prev, with new $msg")
+        verbose(s"mergeMatching, prev: $prev, with new $msg")
         val u = prev.copy(
           msgType       = if (msg.msgType != Message.Type.UNKNOWN) msg.msgType else prev.msgType ,
           time          = if (msg.time.isBefore(prev.time) || prev.isLocal) msg.time else prev.time,
