@@ -66,7 +66,7 @@ class MessageEventProcessor(selfUserId:          UserId,
         replyHashing.hashMessage(original).map { hash =>
           val newValidity = m.quoteHash.contains(hash)
           verbose(s""""
-            checkReplyHashes for ${(m.id, m.contentString, original.time.toEpochMilli, m.quote, m.quoteValidity, m.quoteHash.map(_.hexString))},
+            checkReplyHashes for ${(m.id, m.contentString, original.time, m.quote, m.quoteValidity, m.quoteHash.map(_.hexString))},
             calculated hash is ${hash.hexString}, the new quote validity is $newValidity
            """)
           if (m.quoteValidity != newValidity) m.copy(quoteValidity = newValidity) else m

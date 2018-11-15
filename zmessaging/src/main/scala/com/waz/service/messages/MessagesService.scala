@@ -198,7 +198,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
         val id = MessageId()
         val localTime = LocalInstant.Now
         replyHashing.hashMessage(original).flatMap { hash =>
-          verbose(s"hash before sending: ${hash.hexString}, original time: ${original.time.toEpochMilli}")
+          verbose(s"hash before sending: ${hash.hexString}, original time: ${original.time}")
           updater.addLocalMessage(
             MessageData(
               id, original.convId, tpe, selfUserId, ct,

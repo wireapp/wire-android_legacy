@@ -68,7 +68,7 @@ class ReplyHashingImpl(storage: AssetsStorage)(implicit base64: Base64) extends 
     val bytes =
       "\uFEFF".getBytes("UTF-16BE") ++ content.getBytes("UTF-16BE") ++ timestamp.toEpochSec.getBytes
     returning(Sha256Inj.calculate(bytes)) { sha =>
-      verbose(s"hashTextReply($content, ${timestamp.javaDate}): ${sha.hexString}")
+      verbose(s"hashTextReply($content, $timestamp): ${sha.hexString}")
     }
   }
 

@@ -132,7 +132,7 @@ class MessagesSyncHandler(selfUserId: UserId,
               SyncResult.Failure(Some(internalError(e.getMessage)), shouldRetry = false)
           }
           .flatMap {
-            case SyncResult.Success => service.messageSent(conv.id, msg) map (_ => SyncResult.Success)
+            case SyncResult.Success => successful(SyncResult.Success)
             case res@SyncResult.Failure(Some(ErrorResponse.Cancelled), _) =>
               verbose(s"postMessage($msg) was cancelled")
               msgContent.updateMessage(id)(_.copy(state = Message.Status.FAILED_READ)) map { _ => res }
@@ -215,7 +215,9 @@ class MessagesSyncHandler(selfUserId: UserId,
     post.flatMap {
       case Right(time) =>
         verbose(s"postOtrMessage($msg) successful $time")
-        messageSent(conv.id, msg, time) map { _ => SyncResult.Success }
+        service.messageSent(conv.id, msg)
+          .flatMap(_ => messageSent(conv.id, msg, time))
+          .map(_ => SyncResult.Success)
       case Left(error@ErrorResponse(ResponseCode.Forbidden, _, "unknown-client")) =>
         verbose(s"postOtrMessage($msg), failed: $error")
         clients.onCurrentClientRemoved() map { _ => SyncResult(error) }
