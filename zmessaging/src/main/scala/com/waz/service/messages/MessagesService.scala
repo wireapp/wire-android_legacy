@@ -78,7 +78,7 @@ trait MessagesService {
 
   def removeLocalMemberJoinMessage(convId: ConvId, users: Set[UserId]): Future[Any]
 
-  def messageSent(convId: ConvId, msg: MessageData): Future[Option[MessageData]]
+  def messageSent(convId: ConvId, msgId: MessageId, newTime: RemoteInstant): Future[Option[MessageData]]
   def messageDeliveryFailed(convId: ConvId, msg: MessageData, error: ErrorResponse): Future[Option[MessageData]]
   def retentionPolicy(convData: ConversationData): CancellableFuture[Retention]
 }
@@ -384,9 +384,9 @@ class MessagesServiceImpl(selfUserId:   UserId,
       case _ => successful(None)
     }
 
-  def messageSent(convId: ConvId, msg: MessageData): Future[Option[MessageData]] = {
+  def messageSent(convId: ConvId, msgId: MessageId, newTime: RemoteInstant): Future[Option[MessageData]] = {
     import com.waz.utils.RichFiniteDuration
-    updater.updateMessage(msg.id) { m => m.copy(state = Message.Status.SENT, expiryTime = m.ephemeral.map(_.fromNow())) } andThen {
+    updater.updateMessage(msgId) { m => m.copy(state = Message.Status.SENT, time = newTime, expiryTime = m.ephemeral.map(_.fromNow())) } andThen {
       case Success(Some(m)) => storage.onMessageSent ! m
     }
   }

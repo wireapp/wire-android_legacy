@@ -170,11 +170,10 @@ class MessagesSyncHandler(selfUserId: UserId,
       otrSync.postOtrMessage(conv.id, gm).flatMap {
         case Right(time) if isEdit =>
           // delete original message and create new message with edited content
-          service.applyMessageEdit(conv.id, adjustedMsg.userId, RemoteInstant(time.instant), gm) map {
+          service.applyMessageEdit(conv.id, msg.userId, RemoteInstant(time.instant), gm) map {
             case Some(m) => Right(m)
-            case _ => Right(adjustedMsg.copy(time = RemoteInstant(time.instant)))
+            case _ => Right(msg.copy(time = RemoteInstant(time.instant)))
           }
-
         case Right(time) => successful(Right(msg.copy(time = time)))
         case Left(err) => successful(Left(err))
       }
@@ -215,7 +214,7 @@ class MessagesSyncHandler(selfUserId: UserId,
     post.flatMap {
       case Right(time) =>
         verbose(s"postOtrMessage($msg) successful $time")
-        service.messageSent(conv.id, msg)
+        service.messageSent(conv.id, msg.id, time)
           .flatMap(_ => messageSent(conv.id, msg, time))
           .map(_ => SyncResult.Success)
       case Left(error@ErrorResponse(ResponseCode.Forbidden, _, "unknown-client")) =>
@@ -286,7 +285,7 @@ class MessagesSyncHandler(selfUserId: UserId,
                 assetSync.uploadAssetData(asset.id, retention = retention).flatMap {
                   case Right(updated) if asset.isImage =>
                     verbose("send image asset")
-                    postAssetMessage(updated, prev).map(_.fold(Left(_), _ => Right(origTime)))
+                    postAssetMessage(updated, prev).map(_.fold(Left(_), updateTime => Right(updateTime)))
                   case Right(updated) =>
                     verbose("send non-image asset")
                     postAssetMessage(updated, prev, Some(origTime)).map(_.fold(Left(_), _ => Right(origTime)))
