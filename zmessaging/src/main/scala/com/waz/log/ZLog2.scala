@@ -156,35 +156,52 @@ object ZLog2 {
     private val TakeOnly = 3
 
     //TODO, why doesn't it work just to define the LogShow[Traversable[T]]?
-    private def fromTraversable[T: LogShow](m: Traversable[T]): String = {
-      val rem = m.size - TakeOnly
-      val end = if (rem > 0) s" and $rem other elements..." else ""
-      m.map(implicitly[LogShow[T]].showSafe).take(TakeOnly).mkString("", ", ", end)
+    private def safeFromTraversable[T: LogShow](m: Traversable[T]): String = {
+      if (m.isEmpty) m.toString()
+      else {
+        val rem = m.size - TakeOnly
+        val end = if (rem > 0) s" and $rem other elements..." else ""
+        m.map(implicitly[LogShow[T]].showSafe).take(TakeOnly).mkString("", ", ", end)
+      }
+    }
+
+    private def unsafeFromTraversable[T: LogShow](m: Traversable[T]): String = {
+      if (m.isEmpty) m.toString()
+      else {
+        val rem = m.size - TakeOnly
+        val end = if (rem > 0) s" and $rem other elements..." else ""
+        m.map(implicitly[LogShow[T]].showUnsafe).take(TakeOnly).mkString("", ", ", end)
+      }
     }
 
     implicit def traversableShow[T: LogShow]: LogShow[Traversable[T]] =
-      create(fromTraversable(_))
+      create(safeFromTraversable(_), unsafeFromTraversable(_))
 
     implicit def arrayShow[T: LogShow]: LogShow[Array[T]] =
-      create(fromTraversable(_))
+      create(safeFromTraversable(_), unsafeFromTraversable(_))
 
     implicit def listSetShow[T: LogShow]: LogShow[ListSet[T]] =
-      create(fromTraversable(_))
+      create(safeFromTraversable(_), unsafeFromTraversable(_))
 
 //    implicit def mapShow[A: LogShow, B: LogShow]: LogShow[Map[A, B]] =
 //      create(fromTraversable(_))
 
     implicit def optionShow[T: LogShow]: LogShow[Option[T]] =
-      create(_.map(implicitly[LogShow[T]].showSafe).toString)
+      create(_.map(implicitly[LogShow[T]].showSafe).toString, _.map(implicitly[LogShow[T]].showUnsafe).toString)
 
     implicit def tryShow[T: LogShow]: LogShow[Try[T]] =
-      create(_.map(implicitly[LogShow[T]].showSafe).toString)
+      create(_.map(implicitly[LogShow[T]].showSafe).toString, _.map(implicitly[LogShow[T]].showUnsafe).toString)
 
     implicit def tuple2Show[A: LogShow, B: LogShow]: LogShow[(A, B)] =
-      create( t => (implicitly[LogShow[A]].showSafe(t._1), implicitly[LogShow[B]].showSafe(t._2)).toString())
+      create(
+        t => (implicitly[LogShow[A]].showSafe(t._1), implicitly[LogShow[B]].showSafe(t._2)).toString(),
+        t => (implicitly[LogShow[A]].showUnsafe(t._1), implicitly[LogShow[B]].showUnsafe(t._2)).toString())
 
     implicit def tuple3Show[A: LogShow, B: LogShow, C: LogShow]: LogShow[(A, B, C)] =
-      create( t => (implicitly[LogShow[A]].showSafe(t._1), implicitly[LogShow[B]].showSafe(t._2), implicitly[LogShow[C]].showSafe(t._3)).toString())
+      create(
+        t => (implicitly[LogShow[A]].showSafe(t._1), implicitly[LogShow[B]].showSafe(t._2), implicitly[LogShow[C]].showSafe(t._3)).toString(),
+        t => (implicitly[LogShow[A]].showUnsafe(t._1), implicitly[LogShow[B]].showUnsafe(t._2), implicitly[LogShow[C]].showUnsafe(t._3)).toString()
+      )
 
     //TODO figure out a generic LogShow for Enums, most will be safe to log:
     implicit val NetworkModeShow:           LogShow[NetworkMode]                           = LogShow.create(_.name())
@@ -310,9 +327,7 @@ object ZLog2 {
     implicit val NotificationDataLogShow: LogShow[NotificationData] =
       LogShow.createFrom { n =>
         import n._
-        l"""
-           |NotificationData(id: $id | conv: $conv | user: $user | msgType: $msgType | time: $time | userName: $userName)
-        """.stripMargin
+        l"NotificationData(id: $id | conv: $conv | user: $user | msgType: $msgType | time: $time)"
       }
 
     implicit val TeamDataLogShow: LogShow[TeamData] =

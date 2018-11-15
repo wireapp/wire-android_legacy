@@ -112,6 +112,8 @@ package object model {
     object TextMessage {
       import scala.concurrent.duration.DurationInt
 
+      def apply(text: String): GenericMessage = GenericMessage(Uid(), Text(text, Nil, Nil, expectsReadConfirmation = false))
+
       def apply(text: String, mentions: Seq[com.waz.model.Mention], expectsReadConfirmation: Boolean): GenericMessage = GenericMessage(Uid(), Text(text, mentions, Nil, expectsReadConfirmation))
 
       def apply(text: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], expectsReadConfirmation: Boolean): GenericMessage = GenericMessage(Uid(), Text(text, mentions, links, expectsReadConfirmation))

@@ -32,7 +32,7 @@ import com.waz.service.assets.{AudioTranscoder, GlobalRecordAndPlayService}
 import com.waz.service.call._
 import com.waz.service.downloads._
 import com.waz.service.images.{ImageLoader, ImageLoaderImpl}
-import com.waz.service.push.{GlobalNotificationsService, GlobalNotificationsServiceImpl, GlobalTokenService, GlobalTokenServiceImpl}
+import com.waz.service.push._
 import com.waz.service.tracking.{TrackingService, TrackingServiceImpl}
 import com.waz.sync.{AccountSyncHandler, SyncHandler, SyncRequestService}
 import com.waz.sync.client._
@@ -50,66 +50,67 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 trait GlobalModule {
-  def context:              AContext
-  def backend:              BackendConfig
+  def context:                  AContext
+  def backend:                  BackendConfig
 
-  def syncRequests:         SyncRequestService
-  def syncHandler:          SyncHandler
+  def syncRequests:             SyncRequestService
+  def syncHandler:              SyncHandler
 
-  def ssoService:           SSOService
-  def tokenService:         GlobalTokenService
-  def notifications:        GlobalNotificationsService
-  def accountsService:      AccountsService
-  def calling:              GlobalCallingService
-  def prefs:                GlobalPreferences
-  def googleApi:            GoogleApi
-  def storage:              Database
-  def metadata:             MetaDataService
-  def cache:                CacheService
-  def bitmapDecoder:        BitmapDecoder
-  def trimmingLruCache:     Cache[Key, Entry]
-  def imageCache:           MemoryImageCache
-  def network:              DefaultNetworkModeService
-  def phoneNumbers:         PhoneNumberService
-  def timeouts:             Timeouts
-  def permissions:          PermissionsService
-  def avs:                  Avs
-  def reporting:            GlobalReportingService
-  def loginClient:          LoginClient
-  def regClient:            RegistrationClient
-  def urlCreator:           UrlCreator
-  def httpClient:           HttpClient
+  def ssoService:               SSOService
+  def tokenService:             GlobalTokenService
+  def notificationsUi:          NotificationUiController
+  def accountsService:          AccountsService
+  def calling:                  GlobalCallingService
+  def prefs:                    GlobalPreferences
+  def googleApi:                GoogleApi
+  def storage:                  Database
+  def metadata:                 MetaDataService
+  def cache:                    CacheService
+  def bitmapDecoder:            BitmapDecoder
+  def trimmingLruCache:         Cache[Key, Entry]
+  def imageCache:               MemoryImageCache
+  def network:                  DefaultNetworkModeService
+  def phoneNumbers:             PhoneNumberService
+  def timeouts:                 Timeouts
+  def permissions:              PermissionsService
+  def avs:                      Avs
+  def reporting:                GlobalReportingService
+  def loginClient:              LoginClient
+  def regClient:                RegistrationClient
+  def urlCreator:               UrlCreator
+  def httpClient:               HttpClient
   def httpClientForLongRunning: HttpClient
-  def globalAssetClient:    AssetClient
-  def globalLoader:         AssetLoader
-  def videoTranscoder:      VideoTranscoder
-  def audioTranscoder:      AudioTranscoder
-  def loaderService:        AssetLoaderService
-  def cacheCleanup:         CacheCleaningService
-  def accountsStorage:      AccountStorage
-  def accountsStorageOld:   AccountsStorageOld
-  def teamsStorage:         TeamsStorage
-  def recordingAndPlayback: GlobalRecordAndPlayService
-  def tempFiles:            TempFileService
-  def imageLoader:          ImageLoader
-  def blacklistClient:      VersionBlacklistClient
-  def blacklist:            VersionBlacklistService
-  def factory:              ZMessagingFactory
-  def lifecycle:            UiLifeCycle
-  def base64:               Base64
+  def globalAssetClient:        AssetClient
+  def globalLoader:             AssetLoader
+  def videoTranscoder:          VideoTranscoder
+  def audioTranscoder:          AudioTranscoder
+  def loaderService:            AssetLoaderService
+  def cacheCleanup:             CacheCleaningService
+  def accountsStorage:          AccountStorage
+  def accountsStorageOld:       AccountsStorageOld
+  def teamsStorage:             TeamsStorage
+  def recordingAndPlayback:     GlobalRecordAndPlayService
+  def tempFiles:                TempFileService
+  def imageLoader:              ImageLoader
+  def blacklistClient:          VersionBlacklistClient
+  def blacklist:                VersionBlacklistService
+  def factory:                  ZMessagingFactory
+  def lifecycle:                UiLifeCycle
+  def base64:                   Base64
 
-  def flowmanager:          FlowManagerService
-  def mediaManager:         MediaManagerService
+  def flowmanager:              FlowManagerService
+  def mediaManager:             MediaManagerService
 
-  def trackingService:      TrackingService
+  def trackingService:          TrackingService
 }
 
-class GlobalModuleImpl(val context:      AContext,
-                       val backend:      BackendConfig,
-                       val prefs:        GlobalPreferences,
-                       val googleApi:    GoogleApi,
-                       val base64:       Base64,
-                       val syncRequests: SyncRequestService) extends GlobalModule { global =>
+class GlobalModuleImpl(val context:                 AContext,
+                       val backend:                 BackendConfig,
+                       val prefs:                   GlobalPreferences,
+                       val googleApi:               GoogleApi,
+                       val base64:                  Base64,
+                       val syncRequests:            SyncRequestService,
+                       val notificationsUi: NotificationUiController) extends GlobalModule { global =>
   //trigger initialization of Firebase in onCreate - should prevent problems with Firebase setup
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
   val network:                  DefaultNetworkModeService        = wire[DefaultNetworkModeService]
@@ -122,7 +123,6 @@ class GlobalModuleImpl(val context:      AContext,
   lazy val ssoService:          SSOService                       = wire[SSOService]
   lazy val accountsService:     AccountsService                  = new AccountsServiceImpl(this)
   lazy val syncHandler:         SyncHandler                      = new AccountSyncHandler(accountsService)
-  lazy val notifications:       GlobalNotificationsService       = wire[GlobalNotificationsServiceImpl]
   lazy val calling:             GlobalCallingService             = new GlobalCallingService
 
   lazy val contextWrapper:      Context                          = Context.wrap(context)
@@ -185,7 +185,7 @@ class EmptyGlobalModule extends GlobalModule {
   override def backend:                  BackendConfig                                       = ???
   override def ssoService:               SSOService                                          = ???
   override def tokenService:             GlobalTokenServiceImpl                              = ???
-  override def notifications:            GlobalNotificationsService                          = ???
+  override def notificationsUi:          NotificationUiController                            = ???
   override def calling:                  GlobalCallingService                                = ???
   override def prefs:                    GlobalPreferences                                   = ???
   override def googleApi:                GoogleApi                                           = ???
