@@ -24,7 +24,7 @@ import com.waz.api.ContentSearchQuery
 import com.waz.content.{MembersStorageImpl, UsersStorageImpl, ZmsDatabase, _}
 import com.waz.model._
 import com.waz.model.otr.ClientId
-import com.waz.service.EventScheduler.{Interleaved, Sequential, Stage}
+import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.service.assets._
 import com.waz.service.call._
 import com.waz.service.conversation._
@@ -256,26 +256,20 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
 
     new EventScheduler(
       Stage(Sequential)(
-        Stage(Interleaved)(
-          connection.connectionEventsStage,
-          connection.contactJoinEventsStage,
-          users.userUpdateEventsStage,
-          users.userDeleteEventsStage,
-          calling.callMessagesStage,
-          teams.eventsProcessingStage,
-          typing.typingEventStage,
-          otrClientsService.otrClientsProcessingStage,
-          pushToken.eventProcessingStage,
-          Stage(Sequential)(
-            convOrder.conversationOrderEventsStage,
-            conversations.convStateEventProcessingStage,
-            Stage(Interleaved)(
-              msgEvents.messageEventProcessingStage,
-              genericMsgs.eventProcessingStage
-            )
-          ),
-          propertiesService.eventProcessor
-        ),
+        connection.connectionEventsStage,
+        connection.contactJoinEventsStage,
+        users.userUpdateEventsStage,
+        users.userDeleteEventsStage,
+        calling.callMessagesStage,
+        teams.eventsProcessingStage,
+        typing.typingEventStage,
+        otrClientsService.otrClientsProcessingStage,
+        pushToken.eventProcessingStage,
+        convOrder.conversationOrderEventsStage,
+        conversations.convStateEventProcessingStage,
+        msgEvents.messageEventProcessingStage,
+        genericMsgs.eventProcessingStage,
+        propertiesService.eventProcessor,
         notifications.notificationEventsStage,
         notifications.lastReadProcessingStage
       )
