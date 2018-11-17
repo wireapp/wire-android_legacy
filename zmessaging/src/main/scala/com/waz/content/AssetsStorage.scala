@@ -19,7 +19,6 @@ package com.waz.content
 
 import android.content.Context
 import com.waz.model.AssetData.AssetDataDao
-import com.waz.model.AssetMetaData.Image
 import com.waz.model.AssetStatus.UploadDone
 import com.waz.model._
 import com.waz.threading.SerialDispatchQueue
@@ -56,12 +55,6 @@ class AssetsStorageImpl(context: Context, storage: Database) extends CachedStora
 
   //Useful for receiving parts of an asset message or remote data. Note, this only merges non-defined properties, any current data remaining as is.
   private def merge(cur: AssetData, newData: AssetData): AssetData = {
-
-    val metaData = cur.metaData match {
-      case None => newData.metaData
-      case Some(AssetMetaData.Image(dim, tag)) if tag == Image.Tag.Empty => Image(dim, newData.tag)
-      case _ => cur.metaData
-    }
 
     val res = cur.copy(
       mime        = if (cur.mime == Mime.Unknown)  newData.mime         else cur.mime,

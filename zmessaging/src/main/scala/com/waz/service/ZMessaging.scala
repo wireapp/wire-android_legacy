@@ -44,6 +44,7 @@ import com.waz.sync.queue.{SyncContentUpdater, SyncContentUpdaterImpl}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.ui.UiModule
 import com.waz.utils.Locales
+import com.waz.utils.crypto.{Base64, ReplyHashingImpl}
 import com.waz.utils.wrappers.{AndroidContext, GoogleApi}
 import com.waz.znet2.http.HttpClient
 import com.waz.znet2.http.Request.UrlCreator
@@ -111,6 +112,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val otrClient:         OtrClientImpl           = account.otrClient
   lazy val credentialsClient: CredentialsUpdateClientImpl = account.credentialsClient
   implicit lazy val authRequestInterceptor: AuthRequestInterceptor = account.authRequestInterceptor
+  implicit lazy val base64: Base64 = global.base64
 
   def context           = global.context
   def accountStorage    = global.accountsStorage
@@ -200,7 +202,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val conversations: ConversationsService        = wire[ConversationsServiceImpl]
   lazy val convOrder: ConversationOrderEventsService  = wire[ConversationOrderEventsService]
   lazy val convsUi: ConversationsUiService            = wire[ConversationsUiServiceImpl]
-  lazy val convsStats: ConversationsListStateService  = wire[ConversationsListStateServiceImpl]
+  lazy val selectedConv: SelectedConversationService  = wire[SelectedConversationServiceImpl]
   lazy val teams: TeamsService                        = wire[TeamsServiceImpl]
   lazy val integrations: IntegrationsService          = wire[IntegrationsServiceImpl]
   lazy val messages: MessagesServiceImpl              = wire[MessagesServiceImpl]
@@ -222,6 +224,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val recordAndPlay                              = wire[RecordAndPlayService]
   lazy val receipts                                   = wire[ReceiptService]
   lazy val ephemeral                                  = wire[EphemeralMessagesService]
+  lazy val replyHashing                               = wire[ReplyHashingImpl]
 
   lazy val assetSync                                  = wire[AssetSyncHandler]
   lazy val usersearchSync                             = wire[UserSearchSyncHandler]
@@ -324,11 +327,12 @@ object ZMessaging { self =>
   private var prefs:     GlobalPreferences = _
   private var googleApi: GoogleApi = _
   private var backend:   BackendConfig = BackendConfig.StagingBackend
+  private var base64:    Base64 = _
 
   //var for tests - and set here so that it is globally available without the need for DI
   var clock = Clock.systemUTC()
 
-  private lazy val _global: GlobalModule = new GlobalModuleImpl(context, backend, prefs, googleApi)
+  private lazy val _global: GlobalModule = new GlobalModuleImpl(context, backend, prefs, googleApi, base64)
   private lazy val ui: UiModule = new UiModule(_global)
 
   //Try to avoid using these - map from the futures instead.
@@ -345,7 +349,7 @@ object ZMessaging { self =>
   def currentBeDrift = beDrift.currentValue.getOrElse(Duration.ZERO)
 
   //TODO - we should probably just request the entire GlobalModule from the UI here
-  def onCreate(context: Context, beConfig: BackendConfig, prefs: GlobalPreferences, googleApi: GoogleApi) = {
+  def onCreate(context: Context, beConfig: BackendConfig, prefs: GlobalPreferences, googleApi: GoogleApi, base64: Base64) = {
     Threading.assertUiThread()
 
     if (this.currentUi == null) {
@@ -353,6 +357,7 @@ object ZMessaging { self =>
       this.backend = beConfig
       this.prefs = prefs
       this.googleApi = googleApi
+      this.base64 = base64
       currentUi = ui
       currentGlobal = _global
       currentAccounts = currentGlobal.accountsService

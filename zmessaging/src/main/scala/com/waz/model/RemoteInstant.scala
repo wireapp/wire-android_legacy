@@ -32,6 +32,7 @@ trait WireInstant {
 
   def javaDate: Date = new Date(instant.toEpochMilli)
   def toEpochMilli: Long = instant.toEpochMilli
+  def toEpochSec: Long = instant.getEpochSecond
 
   def isEpoch: Boolean = instant == Instant.EPOCH
 }
@@ -51,6 +52,7 @@ object RemoteInstant {
   def Epoch = RemoteInstant(Instant.EPOCH)
   def Max = RemoteInstant(Instant.MAX)
   def ofEpochMilli(epochMilli: Long) = RemoteInstant(Instant.ofEpochMilli(epochMilli))
+  def ofEpochSec(epochSecond: Long) = RemoteInstant(Instant.ofEpochSecond(epochSecond))
 }
 
 case class LocalInstant(instant: Instant) extends WireInstant with Comparable[LocalInstant] {
@@ -72,4 +74,5 @@ object LocalInstant {
   def Now = LocalInstant(Instant.now(clock))
   def Now(clock: Clock) = LocalInstant(Instant.now(clock))
   def ofEpochMilli(epochMilli: Long) = LocalInstant(Instant.ofEpochMilli(epochMilli))
+  def ofEpochSecond(epochSecond: Long) = LocalInstant(Instant.ofEpochSecond(epochSecond))
 }

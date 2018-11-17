@@ -22,7 +22,6 @@ import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.UiLifeCycle
-import com.waz.service.conversation.ConversationsListStateService
 import com.waz.service.push.{GlobalNotificationsService, GlobalNotificationsServiceImpl, NotificationService, PushService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.testutils.TestUserPreferences
@@ -31,12 +30,11 @@ import com.waz.utils.{RichFiniteDuration, RichInstant}
 import org.threeten.bp.{Duration, Instant}
 import com.waz.ZLog.ImplicitTag._
 
-import scala.collection.Map
 import scala.concurrent.duration._
 import scala.concurrent.{Future, duration}
 
 class NotificationsServiceSpec extends AndroidFreeSpec {
-
+  import com.waz.threading.Threading.Implicits.Background
 
   val self      = UserId()
   val messages  = mock[MessagesStorage]
@@ -47,10 +45,14 @@ class NotificationsServiceSpec extends AndroidFreeSpec {
   val reactions = mock[ReactionsStorage]
   val userPrefs = new TestUserPreferences
   val push      = mock[PushService]
-  val convsStats = mock[ConversationsListStateService]
   val members   = mock[MembersStorage]
   val globalNots: GlobalNotificationsService = new GlobalNotificationsServiceImpl
 
+  val messagesInStorage = Signal(Map[MessageId, MessageData]()).disableAutowiring()
+
+  (messages.getAll _).expects(*).anyNumberOfTimes.onCall { ids: Traversable[MessageId] =>
+    messagesInStorage.head.map(msgs => ids.map(msgs.get).toSeq )
+  }
 
   val inForeground = Signal(false)
   val beDrift      = Signal(Duration.ZERO)
@@ -178,6 +180,32 @@ class NotificationsServiceSpec extends AndroidFreeSpec {
     result(service.notifications.filter(nots => nots.size == 1 && nots.exists(_.convId == conv.id)).head)
   }
 
+  scenario("Create a notification for a quote message") {
+    val otherUserId = UserId("user1")
+    val otherUser = UserData(otherUserId, "otherUser")
+    val conv = ConversationData(ConvId("conv"), RConvId(), Some("conv"), otherUserId, ConversationType.OneToOne, lastRead = RemoteInstant.Epoch)
+    fillMembers(conv, Seq(otherUserId, self))
+    allConvs ! IndexedSeq(conv)
+    inForeground ! false
+    clock + 10.seconds //messages arrive some time after the account was last visible
+
+    val otherMsgId = MessageId("other msg")
+    val otherMsg = MessageData(otherMsgId, conv.id, Message.Type.TEXT, self)
+    val msg = MessageData(MessageId("msg"), conv.id, Message.Type.TEXT, otherUserId, quote = Some(otherMsgId))
+
+    (users.get _).expects(otherUserId).anyNumberOfTimes.returning(Future.successful(Some(otherUser)))
+    (convs.get _).expects(conv.id).anyNumberOfTimes.returning(Future.successful(Some(conv)))
+
+    messagesInStorage ! Map(otherMsgId -> otherMsg)
+
+
+    val service = getService
+
+    msgsAdded ! Seq(msg)
+
+    result(service.notifications.filter(nots => nots.size == 1 && nots.exists(n => n.convId == conv.id && n.isQuote)).head)
+  }
+
 
   def fillMembers(conv: ConversationData, users: Seq[UserId]) = {
     (members.getByConv _).expects(conv.id).anyNumberOfTimes().returning(Future.successful((users :+ self).map(uid => ConversationMemberData(uid, conv.id)).toIndexedSeq))
@@ -185,7 +213,7 @@ class NotificationsServiceSpec extends AndroidFreeSpec {
 
   def getService = {
 
-    (storage.notifications _).expects().anyNumberOfTimes().returning(notifications)
+    (storage.contents _).expects().anyNumberOfTimes().returning(notifications)
 
     (storage.insertAll _).expects(*).anyNumberOfTimes().onCall { nots: Traversable[NotificationData] =>
       notifications ! nots.map(n => n.id -> n).toMap
@@ -199,7 +227,7 @@ class NotificationsServiceSpec extends AndroidFreeSpec {
 
     (convs.onAdded _).expects().returning(convsAdded)
     (convs.onUpdated _).expects().returning(convsUpdated)
-    (convs.getAllConvs _).expects().returning(allConvs.head)
+    (convs.list _).expects().returning(allConvs.head)
 
     (messages.onAdded _).expects().returning(msgsAdded)
     (messages.onUpdated _).expects().returning(msgsUpdated)
@@ -210,7 +238,7 @@ class NotificationsServiceSpec extends AndroidFreeSpec {
 
     (push.beDrift _).expects().anyNumberOfTimes().returning(Signal.const(Duration.ZERO))
 
-    new NotificationService(null, self, messages, lifeCycle, storage, users, convs, members, reactions, userPrefs, push, convsStats, globalNots)
+    new NotificationService(null, self, messages, lifeCycle, storage, users, convs, members, reactions, userPrefs, push, globalNots)
   }
 
 }

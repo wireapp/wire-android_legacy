@@ -153,7 +153,7 @@ object Generators {
   implicit lazy val arbAssetToken: Arbitrary[AssetToken] = Arbitrary(resultOf(AssetToken))
   implicit lazy val arbOtrKey: Arbitrary[AESKey] = Arbitrary(sideEffect(AESKey()))
   implicit lazy val arbSha256: Arbitrary[Sha256] = Arbitrary(arbitrary[Array[Byte]].map(b => Sha256(sha2(b))))
-  implicit lazy val arbUnreadCount: Arbitrary[UnreadCount] = Arbitrary(for (n <- chooseNum(0,1000); c <- chooseNum(0,1000); p <- chooseNum(0,1000); m <- chooseNum(0,1000)) yield UnreadCount(n, c, p, m))
+  implicit lazy val arbUnreadCount: Arbitrary[UnreadCount] = Arbitrary(for (n <- chooseNum(0,1000); c <- chooseNum(0,1000); p <- chooseNum(0,1000); m <- chooseNum(0,1000); q <- chooseNum(0, 1000)) yield UnreadCount(n, c, p, m, q))
 
   object MediaAssets {
     implicit lazy val arbArtistData: Arbitrary[ArtistData] = Arbitrary(resultOf(ArtistData))
@@ -258,7 +258,8 @@ object Generators {
     others <- listOf(arbitrary[UserId])
     includeSelf <- frequency((4, false), (1, true))
     ids = if (includeSelf) self :: others else others
-  } yield MessageAndLikes(msg, ids.toVector, includeSelf))
+    quote <- optGen(arbitrary[MessageData])
+  } yield MessageAndLikes(msg, ids.toVector, includeSelf, quote))
 
   implicit lazy val arbMetaData: Arbitrary[AssetMetaData] = Arbitrary(oneOf(arbImageMetaData.arbitrary, arbVideoMetaData.arbitrary, arbAudioMetaData.arbitrary))
   implicit lazy val arbImageMetaData: Arbitrary[AssetMetaData.Image] = Arbitrary(for (d <- arbitrary[Dim2]; t <- oneOf(Medium, Preview)) yield AssetMetaData.Image(d, t))

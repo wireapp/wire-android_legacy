@@ -8,7 +8,7 @@ import sbt._
 
 import scala.util.Random
 
-val MajorVersion = "132"
+val MajorVersion = "133"
 val MinorVersion = "0" // hotfix release
 
 version in ThisBuild := {
@@ -132,7 +132,7 @@ lazy val zmessaging = project
       "com.squareup.okhttp3"          %  "okhttp"                % "3.9.0",
       "com.googlecode.libphonenumber" %  "libphonenumber"        % "7.1.1", // 7.2.x breaks protobuf
       "com.wire"                      %  "cryptobox-android"     % "1.0.0",
-      "com.wire"                      %  "generic-message-proto" % "1.21.6",
+      "com.wire"                      %  "generic-message-proto" % "1.22.1",
       "com.wire"                      %  "backend-api-proto"     % "1.1",
       "io.circe"                      %% "circe-core"            % circeVersion,
       "io.circe"                      %% "circe-generic"         % circeVersion,

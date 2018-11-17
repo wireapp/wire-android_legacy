@@ -26,7 +26,7 @@ import com.waz.api.NetworkMode.{OFFLINE, WIFI}
 import com.waz.api.impl._
 import com.waz.content._
 import com.waz.model.ConversationData.{ConversationType, getAccessAndRoleForGroupConv}
-import com.waz.model.GenericContent.{Location, MsgEdit}
+import com.waz.model.GenericContent.{Location, MsgEdit, Quote}
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.service.AccountsService.InForeground
@@ -56,6 +56,8 @@ trait ConversationsUiService {
   def sendTextMessage(convId: ConvId, text: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Some[MessageData]]
   def sendTextMessages(convs: Seq[ConvId], text: String, mentions: Seq[Mention] = Nil, exp: Option[FiniteDuration]): Future[Unit]
 
+  def sendReplyMessage(replyTo: MessageId, text: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]]
+
   def sendAssetMessage(convId: ConvId, rawInput: RawAssetInput, confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]]
   def sendAssetMessages(convs: Seq[ConvId], assets: Seq[RawAssetInput], confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[FiniteDuration] = None): Future[Unit]
 
@@ -77,7 +79,7 @@ trait ConversationsUiService {
 
   def leaveConversation(conv: ConvId): Future[Unit]
   def clearConversation(id: ConvId): Future[Option[ConversationData]]
-  def findGroupConversations(prefix: SearchKey, limit: Int, handleOnly: Boolean): Future[Seq[ConversationData]]
+
   def knock(id: ConvId): Future[Option[MessageData]]
   def setLastRead(convId: ConvId, msg: MessageData): Future[Option[ConversationData]]
 
@@ -134,6 +136,17 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
   override def sendTextMessages(convs: Seq[ConvId], text: String, mentions: Seq[Mention] = Nil, exp: Option[FiniteDuration]) =
     Future.sequence(convs.map(id => sendTextMessage(id, text, mentions, Some(exp)))).map(_ => {})
 
+  override def sendReplyMessage(quote: MessageId, text: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None) =
+    messages.addReplyMessage(quote, text, mentions, exp).flatMap {
+      case Some(m) =>
+        for {
+          _ <- updateLastRead(m)
+          _ <- sync.postMessage(m.id, m.convId, m.editTime)
+        } yield Some(m)
+      case None =>
+        Future.successful(None)
+    }
+
   override def sendAssetMessage(convId: ConvId, rawInput: RawAssetInput, confirmation: WifiWarningConfirmation = DefaultConfirmation, exp: Option[Option[FiniteDuration]] = None) =
     assets.addAsset(rawInput).flatMap {
       case Some(asset) => postAssetMessage(convId, asset, confirmation, exp)
@@ -171,22 +184,22 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
 
   override def updateMessage(convId: ConvId, id: MessageId, text: String, mentions: Seq[Mention] = Nil): Future[Option[MessageData]] = {
     verbose(s"updateMessage($convId, $id, $text, $mentions")
-    messagesContent.updateMessage(id) {
+    messagesStorage.update(id, {
       case m if m.convId == convId && m.userId == selfUserId =>
         val (tpe, ct) = MessageData.messageContent(text, mentions, weblinkEnabled = true)
         verbose(s"updated content: ${(tpe, ct)}")
         m.copy(
           msgType = tpe,
           content = ct,
-          protos = Seq(GenericMessage(Uid(), MsgEdit(id, GenericContent.Text(text, ct.flatMap(_.mentions), Nil)))),
+          protos = Seq(GenericMessage(Uid(), MsgEdit(id, GenericContent.Text(text, ct.flatMap(_.mentions), Nil, m.protoQuote)))),
           state = Message.Status.PENDING,
           editTime = (m.time max m.editTime) + 1.millis max LocalInstant.Now.toRemote(currentBeDrift)
         )
       case m =>
         warn(s"Can not update msg: $m")
         m
-    } flatMap {
-      case Some(m) => sync.postMessage(m.id, m.convId, m.editTime) map { _ => Some(m) } // using PostMessage sync request to use the same logic for failures and retrying
+    }) flatMap {
+      case Some((_, m)) => sync.postMessage(m.id, m.convId, m.editTime) map { _ => Some(m) } // using PostMessage sync request to use the same logic for failures and retrying
       case None => Future successful None
     }
   }
@@ -360,9 +373,6 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
       syncId <- sync.postConversation(id, members, conv.name, teamId, ac, ar)
     } yield (conv, syncId)
   }
-
-  override def findGroupConversations(prefix: SearchKey, limit: Int, handleOnly: Boolean): Future[Seq[ConversationData]] =
-    convStorage.search(prefix, selfUserId, handleOnly).map(_.sortBy(_.displayName)(currentLocaleOrdering).take(limit))
 
   override def knock(id: ConvId): Future[Option[MessageData]] = for {
     msg <- messages.addKnockMessage(id, selfUserId)

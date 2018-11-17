@@ -17,12 +17,15 @@
  */
 package com.waz.sync.queue
 
-import com.waz.model.sync.SyncJob
+import com.waz.model.AssetStatus.UploadFailed
+import com.waz.model.sync.{SyncJob, SyncRequest}
 import com.waz.model.sync.SyncJob.Priority
-import com.waz.model.sync.SyncRequest.RegisterPushToken
-import com.waz.model.{PushToken, SyncId}
+import com.waz.model.sync.SyncRequest.{PostAssetStatus, RegisterPushToken}
+import com.waz.model.{ConvId, MessageId, PushToken, SyncId}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.queue.SyncJobMerger.Merged
+
+import scala.concurrent.duration._
 
 class SyncRequestSpec extends AndroidFreeSpec {
 
@@ -32,6 +35,11 @@ class SyncRequestSpec extends AndroidFreeSpec {
     val job2 = SyncJob(SyncId(), RegisterPushToken(PushToken("token2")), priority = Priority.High)
 
     job1.merge(job2) shouldEqual Merged(job1.copy(request = job2.request))
+  }
+
+  scenario("PostAssetStatus encoding decoding") {
+    val request = PostAssetStatus(ConvId(), MessageId(), Some(10.minutes), UploadFailed)
+    SyncRequest.Decoder.apply(SyncRequest.Encoder(request)) shouldEqual request
   }
 
 

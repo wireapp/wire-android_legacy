@@ -17,7 +17,6 @@
  */
 package com.waz.sync.client
 
-import android.util.Base64
 import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.{OtrClientType, Verification}
@@ -27,6 +26,7 @@ import com.waz.model.{RemoteInstant, UserId}
 import com.waz.sync.client.OtrClient.{ClientKey, MessageResponse}
 import com.waz.sync.otr.OtrSyncHandler.OtrMessage
 import com.waz.utils._
+import com.waz.utils.crypto.AESUtils
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
@@ -249,7 +249,7 @@ object OtrClient {
     override def apply(content: EncryptedContent): JSONObject = JsonEncoder { o =>
       content.content foreach { case (user, clients) =>
         o.put(user.str, JsonEncoder { u =>
-          clients foreach { case (c, msg) => u.put(c.str, Base64.encodeToString(msg, Base64.NO_WRAP)) }
+          clients foreach { case (c, msg) => u.put(c.str, AESUtils.base64(msg)) }
         })
       }
     }
@@ -257,7 +257,7 @@ object OtrClient {
 
   implicit lazy val PreKeyDecoder: JsonDecoder[PreKey] = JsonDecoder.lift { implicit js =>
     val keyStr: String = 'key
-    new PreKey('id, Base64.decode(keyStr, Base64.DEFAULT))
+    new PreKey('id, AESUtils.base64(keyStr))
   }
 
   implicit lazy val ClientDecoder: JsonDecoder[ClientKey] = JsonDecoder.lift { implicit js =>

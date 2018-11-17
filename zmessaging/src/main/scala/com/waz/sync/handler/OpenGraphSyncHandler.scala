@@ -77,7 +77,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
               case Right(links) =>
                 updateLinkPreviews(msg, links, retention) flatMap {
                   case Left(errors) => Future successful SyncResult(errors.head)
-                  case Right(TextMessage(_, _, Seq())) =>
+                  case Right(TextMessage(_, _, Seq(), _)) =>
                     verbose(s"didn't find any previews in message links: $msg")
                     Future successful SyncResult.Success
                   case Right(proto) =>
@@ -137,7 +137,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
     }
 
     msg.protos.lastOption match {
-      case Some(TextMessage(content, mentions, ps)) =>
+      case Some(TextMessage(content, mentions, ps, quote)) =>
         val previews = if (ps.isEmpty) createEmptyPreviews(content) else ps
 
         RichFuture.traverseSequential(links zip previews) { case (link, preview) => generatePreview(msg.assetId, link.openGraph.get, preview, retention) } flatMap { res =>
@@ -147,7 +147,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
             case (_, p) => p
           }
 
-          val proto = GenericMessage(msg.id.uid, msg.ephemeral, Text(content, mentions, updated))
+          val proto = GenericMessage(msg.id.uid, msg.ephemeral, Text(content, mentions, updated, quote))
 
           updateIfNotEdited(msg, _.copy(protos = Seq(proto))) map { _ => if (errors.isEmpty) Right(proto) else Left(errors) }
         }

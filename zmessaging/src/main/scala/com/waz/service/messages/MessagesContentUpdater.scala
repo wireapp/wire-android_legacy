@@ -64,7 +64,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
   /**
     * @param exp ConvExpiry takes precedence over one-time expiry (exp), which takes precedence over the MessageExpiry
     */
-  def addLocalMessage(msg: MessageData, state: Status = Status.PENDING, exp: Option[Option[FiniteDuration]] = None) =
+  def addLocalMessage(msg: MessageData, state: Status = Status.PENDING, exp: Option[Option[FiniteDuration]] = None, localTime: LocalInstant = LocalInstant.Now) =
     Serialized.future("add local message", msg.convId) {
 
       def expiration =
@@ -79,8 +79,8 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
       for {
         time <- remoteTimeAfterLast(msg.convId) //TODO: can we find a way to save this only on the localTime of the message?
         exp  <- expiration
-        m = returning(msg.copy(state = state, time = time, localTime = LocalInstant.Now, ephemeral = exp)) { m =>
-          verbose(s"addLocalMessage: $m, exp: $exp")
+        m = returning(msg.copy(state = state, time = time, localTime = localTime, ephemeral = exp)) { m =>
+          verbose(s"addLocalMessage: $m, exp: $exp, time: $time")
         }
         res <- messagesStorage.addMessage(m)
       } yield res
@@ -133,7 +133,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
     }
 
   private[service] def addMessages(convId: ConvId, msgs: Seq[MessageData]): Future[Set[MessageData]] = {
-    verbose(s"addMessages: ${msgs.map(_.id)}")
+    verbose(s"addMessages: ${msgs.map(m => (m.id, m.msgType, m.mentions, m.quote, m.quoteValidity))}")
 
     for {
       toAdd <- skipPreviouslyDeleted(msgs)
@@ -188,7 +188,16 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
         msg.copy(id = m.id, localTime = m.localTime)
 
       def mergeMatching(prev: MessageData, msg: MessageData) = {
-        val u = prev.copy(msgType = if (msg.msgType != Message.Type.UNKNOWN) msg.msgType else prev.msgType , time = if (msg.time.isBefore(prev.time) || prev.isLocal) msg.time else prev.time, protos = prev.protos ++ msg.protos, content = msg.content)
+        verbose(s"mergeMatching, prev: $prev, with new $msg")
+        val u = prev.copy(
+          msgType       = if (msg.msgType != Message.Type.UNKNOWN) msg.msgType else prev.msgType ,
+          time          = if (msg.time.isBefore(prev.time) || prev.isLocal) msg.time else prev.time,
+          protos        = prev.protos ++ msg.protos,
+          content       = msg.content,
+          quote         = msg.quote,
+          quoteValidity = msg.quoteValidity,
+          quoteHash     = msg.quoteHash
+        )
         prev.msgType match {
           case Message.Type.RECALLED => prev // ignore updates to already recalled message
           case _ => u

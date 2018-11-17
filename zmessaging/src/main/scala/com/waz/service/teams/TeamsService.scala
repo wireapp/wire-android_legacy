@@ -19,7 +19,7 @@ package com.waz.service.teams
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.content.ContentChange.{Added, Removed, Updated}
+import com.waz.utils.ContentChange.{Added, Removed, Updated}
 import com.waz.content._
 import com.waz.model.AccountDataOld.PermissionsMasks
 import com.waz.model.ConversationData.ConversationDataDao
@@ -29,7 +29,7 @@ import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.{EventScheduler, SearchKey}
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
-import com.waz.utils.RichFuture
+import com.waz.utils.{ContentChange, RichFuture}
 import com.waz.utils.events.{AggregatingSignal, EventStream, RefreshingSignal, Signal}
 
 import scala.collection.Seq

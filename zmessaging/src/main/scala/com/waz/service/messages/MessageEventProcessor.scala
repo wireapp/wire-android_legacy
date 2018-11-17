@@ -21,11 +21,10 @@ package com.waz.service.messages
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.{error, verbose, warn}
 import com.waz.api.{Message, Verification}
-import com.waz.content.MessagesStorage
+import com.waz.content.{AssetsStorage, MessagesStorage}
 import com.waz.model.AssetMetaData.Image.Tag.{Medium, Preview}
 import com.waz.model.AssetStatus.{UploadCancelled, UploadFailed}
 import com.waz.model.GenericContent.{Asset, Calling, Cleared, Ephemeral, ImageAsset, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Receipt, Text}
-import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
 import com.waz.service.EventScheduler
 import com.waz.service.assets.AssetService
@@ -33,6 +32,7 @@ import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsS
 import com.waz.service.otr.OtrService
 import com.waz.service.otr.VerificationStateUpdater.{ClientAdded, ClientUnverified, MemberAdded, VerificationChange}
 import com.waz.threading.Threading
+import com.waz.utils.crypto.ReplyHashing
 import com.waz.utils.events.EventContext
 import com.waz.utils.{RichFuture, _}
 
@@ -42,6 +42,7 @@ class MessageEventProcessor(selfUserId:          UserId,
                             storage:             MessagesStorage,
                             content:             MessagesContentUpdater,
                             assets:              AssetService,
+                            replyHashing:        ReplyHashing,
                             msgsService:         MessagesService,
                             convsService:        ConversationsService,
                             convs:               ConversationsContentUpdater,
@@ -56,6 +57,22 @@ class MessageEventProcessor(selfUserId:          UserId,
     convs.processConvWithRemoteId(convId, retryAsync = true) { conv =>
       verbose(s"processing events for conv: $conv, events: $events")
       processEvents(conv, events)
+    }
+  }
+
+  private def checkReplyHashes(m: MessageData): Future[MessageData] = m.quote.fold(Future.successful(m)) { quoteId =>
+    storage.getMessage(quoteId).flatMap {
+      case Some(original) =>
+        replyHashing.hashMessage(original).map { hash =>
+          val newValidity = m.quoteHash.contains(hash)
+          verbose(s""""
+            checkReplyHashes for ${(m.id, m.contentString, original.time, m.quote, m.quoteValidity, m.quoteHash.map(_.hexString))},
+            calculated hash is ${hash.hexString}, the new quote validity is $newValidity
+           """)
+          if (m.quoteValidity != newValidity) m.copy(quoteValidity = newValidity) else m
+        }
+      case None =>
+        Future.successful(m)
     }
   }
 
@@ -76,14 +93,14 @@ class MessageEventProcessor(selfUserId:          UserId,
 
     for {
       as    <- updateAssets(toProcess)
-      msgs  = toProcess map { createMessage(conv, _) } filter (_ != MessageData.Empty)
-      _     = verbose(s"messages from events: ${msgs.map(m => m.id -> m.msgType)}")
+      msgs  <- Future.sequence(toProcess map { createMessage(conv, _) } filter (_ != MessageData.Empty) map checkReplyHashes)
+      _     = verbose(s"messages from events: ${msgs.map(m => (m.id, m.msgType, m.mentions, m.quote, m.quoteValidity))}")
       _     <- convsService.addUnexpectedMembersToConv(conv.id, potentiallyUnexpectedMembers)
       res   <- content.addMessages(conv.id, msgs)
       _     <- updateLastReadFromOwnMessages(conv.id, msgs)
       _     <- deleteCancelled(as)
       _     <- Future.traverse(recalls) { case (GenericMessage(id, MsgRecall(ref)), user, time) => msgsService.recallMessage(conv.id, ref, user, MessageId(id.str), time, Message.Status.SENT) }
-      _     <- RichFuture.traverseSequential(edits) { case (gm @ GenericMessage(id, MsgEdit(ref, Text(text, mentions, links))), user, time) => msgsService.applyMessageEdit(conv.id, user, time, gm) } // TODO: handle mentions in case of MsgEdit
+      _     <- RichFuture.traverseSequential(edits) { case (gm @ GenericMessage(_, MsgEdit(_, Text(_, _, _, _))), user, time) => msgsService.applyMessageEdit(conv.id, user, time, gm) } // TODO: handle mentions in case of MsgEdit
     } yield res
   }
 
@@ -111,7 +128,7 @@ class MessageEventProcessor(selfUserId:          UserId,
           val asset = a.copy(id = AssetId(id.str))
           verbose(s"Received asset v3: $asset with preview: $preview")
           saveAssetAndPreview(asset, preview)
-        case (Text(_, _, linkPreviews), _) =>
+        case (Text(_, _, linkPreviews, _), _) =>
           Future.sequence(linkPreviews.zipWithIndex.map {
             case (LinkPreview.WithAsset(a@AssetData.WithRemoteId(_)), index) =>
               val asset = a.copy(id = if (index == 0) AssetId(id.str) else AssetId())
@@ -164,10 +181,12 @@ class MessageEventProcessor(selfUserId:          UserId,
 
     //v3 assets go here
     def content(id: MessageId, msgContent: Any, from: UserId, time: RemoteInstant, proto: GenericMessage): MessageData = msgContent match {
-      case Text(text, mentions, links) =>
+      case Text(text, mentions, links, quote) =>
         val (tpe, content) = MessageData.messageContent(text, mentions, links)
         verbose(s"MessageData content: $content")
-        val messageData = MessageData(id, conv.id, tpe, from, content, time = time, localTime = event.localTime, protos = Seq(proto))
+        verbose(s"MessageData hash: ${quote.map(q => (q.quotedMessageId, Sha256(q.quotedMessageSha256).hexString))}")
+        val messageData = MessageData(id, conv.id, tpe, from, content, time = time, localTime = event.localTime, protos = Seq(proto),
+          quote = quote.map(q => MessageId(q.quotedMessageId)), quoteHash = quote.map(q => Sha256(q.quotedMessageSha256)))
         messageData.adjustMentions(false).getOrElse(messageData)
       case Knock() =>
         MessageData(id, conv.id, Message.Type.KNOCK, from, time = time, localTime = event.localTime, protos = Seq(proto))
@@ -185,8 +204,8 @@ class MessageEventProcessor(selfUserId:          UserId,
         MessageData(id, convId, Message.Type.ANY_ASSET, from, time = time, localTime = event.localTime, protos = Seq(proto))
       case Location(_, _, _, _) =>
         MessageData(id, convId, Message.Type.LOCATION, from, time = time, localTime = event.localTime, protos = Seq(proto))
-      case LastRead(remoteId, timestamp) => MessageData.Empty
-      case Cleared(remoteId, timestamp) => MessageData.Empty
+      case LastRead(_, _) => MessageData.Empty
+      case Cleared(_, _) => MessageData.Empty
       case MsgDeleted(_, _) => MessageData.Empty
       case MsgRecall(_) => MessageData.Empty
       case MsgEdit(_, _) => MessageData.Empty
@@ -231,8 +250,8 @@ class MessageEventProcessor(selfUserId:          UserId,
       * We may need to do more involved checks in future.
       */
     def sanitize(msg: GenericMessage): GenericMessage = msg match {
-      case GenericMessage(uid, Text(text, mentions, links)) if text.length > MaxTextContentLength =>
-        GenericMessage(uid, Text(text.take(MaxTextContentLength), mentions, links.filter { p => p.url.length + p.urlOffset <= MaxTextContentLength }))
+      case GenericMessage(uid, Text(text, mentions, links, quote)) if text.length > MaxTextContentLength =>
+        GenericMessage(uid, Text(text.take(MaxTextContentLength), mentions, links.filter { p => p.url.length + p.urlOffset <= MaxTextContentLength }, quote))
       case _ =>
         msg
     }

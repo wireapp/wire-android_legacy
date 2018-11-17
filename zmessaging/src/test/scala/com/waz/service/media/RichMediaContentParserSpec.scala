@@ -188,7 +188,6 @@ class RichMediaContentParserSpec extends AndroidFreeSpec with TableDrivenPropert
         MessageContent(TEXT, mentionStr, mentions = Seq(mention))
       )
     }
-
   }
 
   //See this page for where the ranges were fetched from:

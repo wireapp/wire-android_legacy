@@ -74,17 +74,23 @@ trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
   def clear(convId: ConvId, clearTime: RemoteInstant): Future[Unit]
 
   def lastMessageFromSelfAndFromOther(conv: ConvId): Signal[(Option[MessageData], Option[MessageData])]
+
+  def findQuotesOf(msgId: MessageId): Future[Seq[MessageData]]
+  def countUnread(conv: ConvId, lastReadTime: RemoteInstant): Future[UnreadCount]
 }
 
-class MessagesStorageImpl(context: Context,
-                          storage: ZmsDatabase,
-                          userId: UserId,
-                          convs: ConversationStorage,
-                          users: UsersStorage,
+class MessagesStorageImpl(context:     Context,
+                          storage:     ZmsDatabase,
+                          selfUserId:  UserId,
+                          convs:       ConversationStorage,
+                          users:       UsersStorage,
                           msgAndLikes: => MessageAndLikesStorage,
-                          timeouts: Timeouts,
-                          tracking: TrackingService) extends
-    CachedStorageImpl[MessageId, MessageData](new TrimmingLruCache[MessageId, Option[MessageData]](context, Fixed(MessagesStorage.cacheSize)), storage)(MessageDataDao, "MessagesStorage_Cached") with MessagesStorage {
+                          timeouts:    Timeouts,
+                          tracking:    TrackingService)
+  extends CachedStorageImpl[MessageId, MessageData](
+    new TrimmingLruCache[MessageId, Option[MessageData]](context, Fixed(MessagesStorage.cacheSize)),
+    storage
+  )(MessageDataDao, "MessagesStorage_Cached") with MessagesStorage {
 
   import com.waz.utils.events.EventContext.Implicits.global
 
@@ -104,14 +110,14 @@ class MessagesStorageImpl(context: Context,
 
   def msgsIndex(conv: ConvId): Future[ConvMessagesIndex] =
     Option(indexes.get(conv)).fold {
-      Future(returning(new ConvMessagesIndex(conv, this, userId, users, convs, msgAndLikes, storage, tracking))(indexes.put(conv, _)))
+      Future(returning(new ConvMessagesIndex(conv, this, selfUserId, users, convs, msgAndLikes, storage, tracking))(indexes.put(conv, _)))
     } {
       Future.successful
     }
 
   def msgsFilteredIndex(conv: ConvId, messageFilter: MessageFilter): Future[ConvMessagesIndex] =
     filteredIndexes.get(conv, messageFilter).fold {
-      Future(returning(new ConvMessagesIndex(conv, this, userId, users, convs, msgAndLikes, storage, tracking, filter = Some(messageFilter)))(filteredIndexes.put(conv, messageFilter, _)))
+      Future(returning(new ConvMessagesIndex(conv, this, selfUserId, users, convs, msgAndLikes, storage, tracking, filter = Some(messageFilter)))(filteredIndexes.put(conv, messageFilter, _)))
     } {
       Future.successful
     }
@@ -146,28 +152,47 @@ class MessagesStorageImpl(context: Context,
     }
   }
 
-  convs.convUpdated.on(dispatcher) {
+  convs.onUpdated.on(dispatcher) { _.foreach {
     case (prev, updated) if updated.lastRead != prev.lastRead =>
       verbose(s"lastRead of conversation ${updated.id} updated to ${updated.lastRead}, will update unread count")
       msgsIndex(updated.id).map(_.updateLastRead(updated)).recoverWithLog()
     case _ => // ignore
-  }
+  } }
 
   override def addMessage(msg: MessageData) = put(msg.id, msg)
 
-  def countUnread(conv: ConvId, lastReadTime: RemoteInstant): Future[UnreadCount] = {
-    storage { MessageDataDao.findMessagesFrom(conv, lastReadTime)(_) }.future.map { msgs =>
+  override def countUnread(conv: ConvId, lastReadTime: RemoteInstant): Future[UnreadCount] = {
+    // if a message is both a mention and a quote, we count it as a mention
+    storage {
+      MessageDataDao.findMessagesFrom(conv, lastReadTime)(_)
+    }.future.flatMap { msgs =>
       msgs.acquire { msgs =>
-        val unread = msgs.filter { m => !m.isLocal && m.convId == conv && m.time.isAfter(lastReadTime) && !m.isDeleted && m.userId != userId && m.msgType != Message.Type.UNKNOWN } .toVector
-        UnreadCount(
-          unread.count(m => !m.isSystemMessage && m.msgType != Message.Type.KNOCK && !m.hasMentionOf(userId)),
-          unread.count(_.msgType == Message.Type.MISSED_CALL),
-          unread.count(_.msgType == Message.Type.KNOCK),
-          unread.count(_.hasMentionOf(userId))
-        )
+        val unread = msgs.filter { m => !m.isLocal && m.convId == conv && m.time.isAfter(lastReadTime) && !m.isDeleted && m.userId != selfUserId && m.msgType != Message.Type.UNKNOWN }.toVector
+
+        val repliesNotMentionsCount = getAll(unread.filter(!_.hasMentionOf(selfUserId)).flatMap(_.quote)).map(_.flatten)
+          .map { quotes =>
+            unread.count { m =>
+              val quote = quotes.find(q => m.quote.contains(q.id))
+              quote.exists(_.userId == selfUserId)
+            }
+          }
+
+        repliesNotMentionsCount.map { unreadReplies =>
+          verbose(s"unread: ${unread.size}, unread replies: $unreadReplies")
+          UnreadCount(
+            normal   = unread.count(m => !m.isSystemMessage && m.msgType != Message.Type.KNOCK && !m.hasMentionOf(selfUserId)) - unreadReplies,
+            call     = unread.count(_.msgType == Message.Type.MISSED_CALL),
+            ping     = unread.count(_.msgType == Message.Type.KNOCK),
+            mentions = unread.count(_.hasMentionOf(selfUserId)),
+            quotes   = unreadReplies
+          )
+        }
       }
     }
+
   }
+
+  override def findQuotesOf(msgId: MessageId): Future[Seq[MessageData]] = storage(MessageDataDao.findQuotesOf(msgId)(_))
 
   def countSentByType(selfUserId: UserId, tpe: Message.Type): Future[Int] = storage(MessageDataDao.countSentByType(selfUserId, tpe)(_).toInt)
 
@@ -285,12 +310,11 @@ trait MessageAndLikesStorage {
   def apply(ids: Seq[MessageId]): Future[Seq[MessageAndLikes]]
   def getMessageAndLikes(id: MessageId): Future[Option[MessageAndLikes]]
   def combineWithLikes(msg: MessageData): Future[MessageAndLikes]
-  def withLikes(msgs: Seq[MessageData]): Future[Seq[MessageAndLikes]]
-  def combine(msg: MessageData, likes: Likes, selfUserId: UserId): MessageAndLikes
+  def combine(msg: MessageData, likes: Likes, selfUserId: UserId, quote: Option[MessageData]): MessageAndLikes
   def sortedLikes(likes: Likes, selfUserId: UserId): (IndexedSeq[UserId], Boolean)
 }
 
-class MessageAndLikesStorageImpl(selfUserId: UserId, messages: MessagesStorage, likings: ReactionsStorageImpl) extends MessageAndLikesStorage {
+class MessageAndLikesStorageImpl(selfUserId: UserId, messages: MessagesStorage, likings: ReactionsStorage) extends MessageAndLikesStorage {
   import com.waz.threading.Threading.Implicits.Background
   import com.waz.utils.events.EventContext.Implicits.global
 
@@ -300,28 +324,37 @@ class MessageAndLikesStorageImpl(selfUserId: UserId, messages: MessagesStorage, 
   messages.messageChanged { ms => ms foreach { m => onUpdate ! m.id }}
   likings.onChanged { _ foreach { l => onUpdate ! l.message } }
 
-  def apply(ids: Seq[MessageId]): Future[Seq[MessageAndLikes]] =
-    messages.getMessages(ids: _*) flatMap { msgs => withLikes(msgs.flatten) }
 
-  def getMessageAndLikes(id: MessageId): Future[Option[MessageAndLikes]] =
-    messages.getMessage(id).flatMap(_.fold2(Future.successful(None), msg => combineWithLikes(msg).map(Some(_))))
-
-  def combineWithLikes(msg: MessageData): Future[MessageAndLikes] =
-    likings.getLikes(msg.id).map(l => combine(msg, l, selfUserId))
-
-  def withLikes(msgs: Seq[MessageData]): Future[Seq[MessageAndLikes]] = {
-    val ids: Set[MessageId] = msgs.map(_.id)(breakOut)
-      likings.loadAll(msgs.map(_.id)).map { likes =>
-      val likesById = likes.by[MessageId, Map](_.message)
-      returning(msgs.map(msg => combine(msg, likesById(msg.id), selfUserId))) { _ =>
-        verbose(s"combined ${ids.size} message(s) with ${likesById.size} liking(s)")
-      }
-    }.andThen { case Failure(t) => error("failed while adding likings to messages", t) }
+  def apply(ids: Seq[MessageId]): Future[Seq[MessageAndLikes]] = for {
+    msgs <- messages.getMessages(ids: _*).map(_.flatten)
+    likes <- getLikes(msgs)
+    quotes <- getQuotes(msgs)
+  } yield msgs.map { msg =>
+    combine(msg, likes.getOrElse(msg.id, Likes.Empty(msg.id)), selfUserId, quotes.get(msg.id).flatten)
   }
 
-  def combine(msg: MessageData, likes: Likes, selfUserId: UserId): MessageAndLikes =
-    if (likes.likers.isEmpty) MessageAndLikes(msg, Vector(), false)
-    else sortedLikes(likes, selfUserId) match { case (likers, selfLikes) => MessageAndLikes(msg, likers, selfLikes) }
+  def getMessageAndLikes(id: MessageId): Future[Option[MessageAndLikes]] = apply(Seq(id)).map(_.headOption)
+
+  override def combineWithLikes(msg: MessageData): Future[MessageAndLikes] = for {
+    likes <- getLikes(Seq(msg))
+    quotes <- getQuotes(Seq(msg))
+  } yield combine(msg, likes.getOrElse(msg.id, Likes.Empty(msg.id)), selfUserId, quotes.get(msg.id).flatten)
+
+  def getQuotes(msgs: Seq[MessageData]): Future[Map[MessageId, Option[MessageData]]] = {
+    Future.sequence(msgs.flatMap(m => m.quote.map(m.id -> _).toSeq).map {
+      case (m, q) => messages.getMessage(q).map(m -> _)
+    }).map(_.toMap)
+  }
+
+  def getLikes(msgs: Seq[MessageData]): Future[Map[MessageId, Likes]] = {
+    likings.loadAll(msgs.map(_.id)).map { likes =>
+      likes.by[MessageId, Map](_.message)
+    }
+  }
+
+  def combine(msg: MessageData, likes: Likes, selfUserId: UserId, quote: Option[MessageData]): MessageAndLikes =
+    if (likes.likers.isEmpty) MessageAndLikes(msg, Vector(), likedBySelf = false, quote)
+    else sortedLikes(likes, selfUserId) match { case (likers, selfLikes) => MessageAndLikes(msg, likers, selfLikes, quote) }
 
 
   def sortedLikes(likes: Likes, selfUserId: UserId): (IndexedSeq[UserId], Boolean) =

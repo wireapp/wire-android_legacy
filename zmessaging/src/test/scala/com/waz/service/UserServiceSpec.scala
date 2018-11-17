@@ -21,7 +21,7 @@ import com.waz.content._
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.{Availability, _}
 import com.waz.service.assets.AssetService
-import com.waz.service.conversation.ConversationsListStateService
+import com.waz.service.conversation.SelectedConversationService
 import com.waz.service.push.PushService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
@@ -52,7 +52,7 @@ class UserServiceSpec extends AndroidFreeSpec {
   val database        = mock[Database]
   val assetsStorage   = mock[AssetsStorage]
   val credentials     = mock[CredentialsUpdateClient]
-  val stats           = mock[ConversationsListStateService]
+  val selectedConv    = mock[SelectedConversationService]
   val userPrefs       = new TestUserPreferences
 
   (usersStorage.optSignal _).expects(*).anyNumberOfTimes().onCall((id: UserId) => Signal.const(users.find(_.id == id)))
@@ -61,7 +61,7 @@ class UserServiceSpec extends AndroidFreeSpec {
   (sync.syncUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(SyncId()))
   (assetService.updateAssets _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
   (usersStorage.updateOrCreateAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
-  (stats.selectedConversationId _).expects().anyNumberOfTimes().returning(Signal.const(None))
+  (selectedConv.selectedConversationId _).expects().anyNumberOfTimes().returning(Signal.const(None))
 
   private def getService = {
 
@@ -69,7 +69,7 @@ class UserServiceSpec extends AndroidFreeSpec {
 
     new UserServiceImpl(
       users.head.id, None, accountsService, accountsStrg, usersStorage, membersStorage,
-      userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials, stats
+      userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials, selectedConv
     )
   }
 

@@ -69,7 +69,7 @@ class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle) extend
     }
     verbose(s"updateNetworkMode: $mode")
 
-    networkMode.publish(mode, Threading.Background)
+    networkMode ! mode
   }
 
   override def getNetworkOperatorName = Option(telephonyManager.getNetworkOperatorName).filter(_.nonEmpty).getOrElse("unknown")

@@ -19,7 +19,6 @@ package com.waz.service
 
 import com.waz.content.{MembersStorage, UsersStorage}
 import com.waz.model._
-import com.waz.service.conversation.ConversationsListStateService
 import com.waz.service.push.PushService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
@@ -33,7 +32,6 @@ import scala.concurrent.duration._
 class ExpiredUsersServiceSpec extends AndroidFreeSpec {
 
   implicit val ec = Threading.Background
-  val convState = mock[ConversationsListStateService]
   val push      = mock[PushService]
   val members   = mock[MembersStorage]
   val users     = mock[UserService]
@@ -149,10 +147,9 @@ class ExpiredUsersServiceSpec extends AndroidFreeSpec {
 
   def getService = {
     (members.onDeleted _).expects().once().returning(onDeleted)
-    (convState.selectedConversationId _).expects().anyNumberOfTimes().returning(currentConv)
     (push.beDrift _).expects().anyNumberOfTimes().returning(Signal.const(Duration.ZERO))
 
-    new ExpiredUsersService(convState, push, members, users, usersStorage, sync)
+    new ExpiredUsersService(push, members, users, usersStorage, sync)
   }
 
 }

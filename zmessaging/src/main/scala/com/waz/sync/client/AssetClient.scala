@@ -20,11 +20,11 @@ package com.waz.sync.client
 import java.io.{BufferedOutputStream, File, FileOutputStream, InputStream}
 import java.security.{DigestOutputStream, MessageDigest}
 
-import android.util.Base64
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ProgressIndicator.{Callback, ProgressData}
 import com.waz.cache.{CacheEntry, CacheService, Expiration, LocalData}
 import com.waz.model.{Mime, _}
+import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{IoUtils, JsonDecoder, JsonEncoder}
 import com.waz.znet2.http.HttpClient.AutoDerivation._
 import com.waz.znet2.http.HttpClient.dsl._
@@ -185,6 +185,6 @@ object AssetClient {
     */
   def md5(data: LocalData): String = md5(data.inputStream)
 
-  def md5(is: InputStream): String = Base64.encodeToString(IoUtils.md5(is), Base64.NO_WRAP)
+  def md5(is: InputStream): String = AESUtils.base64(IoUtils.md5(is))
 
 }

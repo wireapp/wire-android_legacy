@@ -17,9 +17,12 @@
  */
 package com.waz
 
-import android.util.Base64
+import java.nio.ByteBuffer
+import java.nio.charset.Charset
+
 import com.google.protobuf.nano.{CodedInputByteBufferNano, MessageNano}
 import com.waz.model.nano.Messages
+import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{JsonDecoder, JsonEncoder, returning}
 import org.json.JSONObject
 
@@ -95,22 +98,24 @@ package object model {
 
       def apply(text: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview]): GenericMessage = GenericMessage(Uid(), Text(text, mentions, links))
 
-      def apply(msg: MessageData): GenericMessage = GenericMessage(msg.id.uid, msg.ephemeral, Text(msg.contentString, msg.content.flatMap(_.mentions), Nil))
+      def apply(text: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Option[Quote]): GenericMessage = GenericMessage(Uid(), Text(text, mentions, links, quote))
 
-      def unapply(msg: GenericMessage): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview])] = msg match {
-        case GenericMessage(_, Text(content, mentions, links)) =>
-          Some((content, mentions, links))
-        case GenericMessage(_, Ephemeral(_, Text(content, mentions, links))) =>
-          Some((content, mentions, links))
-        case GenericMessage(_, MsgEdit(_, Text(content, mentions, links))) =>
-          Some((content, mentions, links))
+      def apply(msg: MessageData): GenericMessage = GenericMessage(msg.id.uid, msg.ephemeral, Text(msg.contentString, msg.content.flatMap(_.mentions), Nil, msg.protoQuote))
+
+      def unapply(msg: GenericMessage): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview], Option[Quote])] = msg match {
+        case GenericMessage(_, Text(content, mentions, links, quote)) =>
+          Some((content, mentions, links, quote))
+        case GenericMessage(_, Ephemeral(_, Text(content, mentions, links, quote))) =>
+          Some((content, mentions, links, quote))
+        case GenericMessage(_, MsgEdit(_, Text(content, mentions, links, quote))) =>
+          Some((content, mentions, links, quote))
         case _ =>
           None
       }
 
       def updateMentions(msg: GenericMessage, newMentions: Seq[com.waz.model.Mention]): GenericMessage = msg match {
-        case GenericMessage(uid, Text(text, mentions, links)) if mentions != newMentions =>
-          GenericMessage(uid, Text(text, newMentions, links))
+        case GenericMessage(uid, Text(text, mentions, links, quote)) if mentions != newMentions =>
+          GenericMessage(uid, Text(text, newMentions, links, quote))
         case _ =>
           msg
       }
@@ -125,12 +130,12 @@ package object model {
     }
 
     implicit object JsDecoder extends JsonDecoder[GenericMessage] {
-      override def apply(implicit js: JSONObject): GenericMessage = GenericMessage(Base64.decode(js.getString("proto"), Base64.DEFAULT))
+      override def apply(implicit js: JSONObject): GenericMessage = GenericMessage(AESUtils.base64(js.getString("proto")))
     }
 
     implicit object JsEncoder extends JsonEncoder[GenericMessage] {
       override def apply(v: GenericMessage): JSONObject = JsonEncoder { o =>
-        o.put("proto", Base64.encodeToString(MessageNano.toByteArray(v), Base64.NO_WRAP))
+        o.put("proto", AESUtils.base64(MessageNano.toByteArray(v)))
       }
     }
 

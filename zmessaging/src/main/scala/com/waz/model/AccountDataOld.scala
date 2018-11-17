@@ -17,7 +17,6 @@
  */
 package com.waz.model
 
-import android.util.Base64
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.db.Col._
@@ -30,8 +29,8 @@ import com.waz.utils.Locales.currentLocaleOrdering
 import com.waz.utils.scrypt.SCrypt
 import com.waz.utils.wrappers.{DB, DBContentValues, DBCursor, DBProgram}
 import com.waz.utils.{JsonDecoder, JsonEncoder}
-import com.waz.zms.BuildConfig
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
+import com.waz.utils.crypto.AESUtils
 import org.json.JSONObject
 
 import scala.collection.mutable
@@ -273,7 +272,7 @@ object AccountDataOld {
       if (password.isEmpty) "" else {
         val salt = id.str.replace("-", "").getBytes("utf8").take(16)
         val hash = SCrypt.scrypt(password.getBytes("utf8"), salt, 1024, 8, 1, 32)
-        Base64.encodeToString(hash, Base64.NO_WRAP)
+        AESUtils.base64(hash)
       }
     }
 

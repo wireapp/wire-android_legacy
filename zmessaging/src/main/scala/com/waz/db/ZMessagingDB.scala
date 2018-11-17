@@ -52,7 +52,7 @@ class ZMessagingDB(context: Context, dbName: String) extends DaoDB(context.getAp
 }
 
 object ZMessagingDB {
-  val DbVersion = 110
+  val DbVersion = 112
 
   lazy val daos = Seq (
     UserDataDao, SearchQueryCacheDao, AssetDataDao, ConversationDataDao,
@@ -257,6 +257,13 @@ object ZMessagingDB {
       db.execSQL("UPDATE ConversationsCopy SET muted_status = 2 WHERE _id in (SELECT _id FROM Conversations WHERE Conversations.muted = 1);") // muted_status == 2 => only mentions are displayed
       db.execSQL("DROP TABLE Conversations;")
       db.execSQL("ALTER TABLE ConversationsCopy RENAME TO Conversations;")
+    },
+    Migration(110, 111) { db =>
+      db.execSQL("ALTER TABLE Messages ADD COLUMN quote TEXT")
+      db.execSQL("ALTER TABLE Messages ADD COLUMN quote_validity INTEGER DEFAULT 0")
+    },
+    Migration(111, 112) { db =>
+      db.execSQL("ALTER TABLE Conversations ADD COLUMN unread_quote_count INTEGER DEFAULT 0")
     }
   )
 }

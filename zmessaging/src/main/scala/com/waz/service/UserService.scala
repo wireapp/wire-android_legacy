@@ -27,7 +27,7 @@ import com.waz.service.EventScheduler.Stage
 import com.waz.service.UserService._
 import com.waz.service.assets.AssetService
 import com.waz.service.assets.AssetService.RawAssetInput
-import com.waz.service.conversation.ConversationsListStateService
+import com.waz.service.conversation.SelectedConversationService
 import com.waz.service.push.PushService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.UserSearchClient.UserSearchEntry
@@ -94,7 +94,7 @@ class UserServiceImpl(selfUserId:        UserId,
                       sync:              SyncServiceHandle,
                       assetsStorage:     AssetsStorage,
                       credentialsClient: CredentialsUpdateClient,
-                      stats:             ConversationsListStateService) extends UserService {
+                      selectedConv:      SelectedConversationService) extends UserService {
 
   import Threading.Implicits.Background
   private implicit val ec = EventContext.Global
@@ -111,7 +111,7 @@ class UserServiceImpl(selfUserId:        UserId,
     }
 
   val currentConvMembers = for {
-    Some(convId) <- stats.selectedConversationId
+    Some(convId) <- selectedConv.selectedConversationId
     membersIds   <- membersStorage.activeMembers(convId)
   } yield membersIds
 
@@ -333,8 +333,7 @@ object UserService {
   * wireless guest user. It then starts a countdown timer for the remaining duration of the life of the user, and at the
   * end of that timer, fires a sync request to trigger a BE check
   */
-class ExpiredUsersService(convState:    ConversationsListStateService,
-                          push:         PushService,
+class ExpiredUsersService(push:         PushService,
                           members:      MembersStorage,
                           users:        UserService,
                           usersStorage: UsersStorage,

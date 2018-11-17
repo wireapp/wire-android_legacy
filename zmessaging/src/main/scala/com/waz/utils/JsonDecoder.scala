@@ -21,12 +21,12 @@ import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
 import java.util.{Date, Locale, TimeZone}
 
-import android.util.Base64
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.model.AssetMetaData.Loudness
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.ClientId
+import com.waz.utils.crypto.AESUtils
 import com.waz.utils.wrappers.URI
 import org.json.{JSONArray, JSONObject}
 import org.threeten.bp.{Duration, Instant}
@@ -118,7 +118,7 @@ object JsonDecoder {
   def decodeOptISOInstant(s: Symbol)(implicit js: JSONObject): Option[Instant] = opt(s, decodeISOInstant(s)(_))
   def decodeOptISORemoteInstant(s: Symbol)(implicit js: JSONObject): Option[RemoteInstant] = opt(s, decodeISOInstant(s)(_)).map(RemoteInstant(_))
 
-  implicit def decodeByteString(s: Symbol)(implicit js: JSONObject): Array[Byte] = Base64.decode(decodeString(s), Base64.NO_WRAP)
+  implicit def decodeByteString(s: Symbol)(implicit js: JSONObject): Array[Byte] = AESUtils.base64(decodeString(s))
   implicit def decodeOptByteString(s: Symbol)(implicit js: JSONObject): Option[Array[Byte]] = opt(s, js => decodeByteString(s)(js))
 
   implicit def decodeObject(s: Symbol)(implicit js: JSONObject): JSONObject = withDefault(s, null.asInstanceOf[JSONObject], _.getJSONObject(s.name))
@@ -195,7 +195,7 @@ object JsonDecoder {
   implicit def decodeMessageId(s: Symbol)(implicit js: JSONObject): MessageId = MessageId(js.getString(s.name))
   implicit def decodeHandle(s: Symbol)(implicit js: JSONObject): Handle = Handle(js.getString(s.name))
   implicit def decodeInvitationId(s: Symbol)(implicit js: JSONObject): InvitationId = InvitationId(js.getString(s.name))
-  implicit def decodeMessage(s: Symbol)(implicit js: JSONObject): GenericMessage = GenericMessage(Base64.decode(decodeString(s), Base64.NO_WRAP))
+  implicit def decodeMessage(s: Symbol)(implicit js: JSONObject): GenericMessage = GenericMessage(AESUtils.base64(decodeString(s)))
 
   implicit def decodeId[A](s: Symbol)(implicit js: JSONObject, id: Id[A]): A = id.decode(js.getString(s.name))
 

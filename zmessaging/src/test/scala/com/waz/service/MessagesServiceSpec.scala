@@ -27,6 +27,8 @@ import com.waz.service.messages.{MessagesContentUpdater, MessagesServiceImpl}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
 import com.waz.testutils.TestGlobalPreferences
+import com.waz.threading.Threading
+import com.waz.utils.crypto.ReplyHashing
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -43,7 +45,8 @@ class MessagesServiceSpec extends AndroidFreeSpec {
   val deletions =     mock[MsgDeletionStorage]
   val members =       mock[MembersStorage]
   val users =         mock[UsersStorage]
-  val prefs          = new TestGlobalPreferences()
+  val replyHashing =  mock[ReplyHashing]
+  val prefs =         new TestGlobalPreferences()
 
   scenario("Add local memberJoinEvent with no previous member change events") {
 
@@ -74,8 +77,37 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     result(service.addMemberJoinMessage(convId, instigator, usersAdded)).map(_.copy(id = newMsg.id)) shouldEqual Some(newMsg)
   }
 
+  scenario("Create a quote") {
+    import Threading.Implicits.Background
+
+    val service = getService
+
+    val messageId = MessageId()
+    val convId = ConvId()
+
+    val msg = MessageData(messageId, convId, TEXT, selfUserId)
+    val conv = ConversationData(convId, RConvId(), Some("conv"))
+
+    (storage.getLastMessage _).expects(convId).once().returning(Future.successful(None))
+    (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(conv)))
+    (storage.addMessage _).expects(*).anyNumberOfTimes().onCall { msg: MessageData => Future.successful(msg) }
+    (replyHashing.hashMessage _).expects(*).once().onCall { _: MessageData => Future.successful(Sha256("sbc")) }
+
+    var originalMsgId = MessageId()
+
+    val quote = service.addTextMessage(convId, "aaa").flatMap { msg1 =>
+      originalMsgId = msg1.id
+      (storage.getMessage _).expects(msg1.id).once().returning(Future.successful(Some(msg1)))
+      (storage.getLastMessage _).expects(convId).once().returning(Future.successful(Some(msg1)))
+
+      service.addReplyMessage(msg1.id, "bbb").collect { case Some(msg2) => (msg2.contentString, msg2.quote) }
+    }
+
+    result(quote) shouldEqual ("bbb", Some(originalMsgId))
+  }
+
   def getService = {
     val updater = new MessagesContentUpdater(storage, convsStorage, deletions, prefs)
-    new MessagesServiceImpl(selfUserId, None, storage, updater, edits, convs, network, members, users, sync)
+    new MessagesServiceImpl(selfUserId, None, replyHashing, storage, updater, edits, convs, network, members, users, sync)
   }
 }

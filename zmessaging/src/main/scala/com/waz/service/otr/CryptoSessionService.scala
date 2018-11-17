@@ -17,11 +17,11 @@
  */
 package com.waz.service.otr
 
-import android.util.Base64
 import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.service.push.PushNotificationEventsStorage.PlainWriter
 import com.waz.threading.Threading
+import com.waz.utils.crypto.AESUtils
 import com.waz.utils.events.{AggregatingSignal, EventStream}
 import com.waz.utils.{LoggedTry, Serialized, returning}
 import com.wire.cryptobox.{CryptoBox, CryptoSession, PreKey}
@@ -77,7 +77,7 @@ class CryptoSessionService(cryptoBox: CryptoBoxService) {
     def decrypt(arg: Option[CryptoBox]): (CryptoSession, Array[Byte]) = arg match {
       case None => throw new Exception("CryptoBox missing")
       case Some(cb) =>
-        verbose(s"decryptMessage($sessionId for message: ${msg.length} = ${Base64.encodeToString(msg, 0)})")
+        verbose(s"decryptMessage($sessionId for message: ${msg.length} = ${AESUtils.base64(msg)})")
         loadSession(cb, sessionId).fold {
           val sm = cb.initSessionFromMessage(sessionId, msg)
           onCreate ! sessionId

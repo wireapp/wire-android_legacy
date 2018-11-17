@@ -191,7 +191,7 @@ class UserSearchService(selfUserId:           UserId,
 
     val conversations: Signal[IndexedSeq[ConversationData]] =
       if (shouldShowGroupConversations)
-        Signal.future(convsUi.findGroupConversations(SearchKey(filter), Int.MaxValue, handleOnly = isHandle))
+        Signal.future(convsStorage.findGroupConversations(SearchKey(filter), selfUserId, Int.MaxValue, handleOnly = isHandle))
           .map(_.filter(conv => teamId.forall(conv.team.contains)).distinct.toIndexedSeq)
           .flatMap { convs =>
             val gConvs = convs.map { c =>

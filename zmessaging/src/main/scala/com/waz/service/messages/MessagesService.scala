@@ -22,10 +22,9 @@ import com.waz.ZLog._
 import com.waz.api.Message
 import com.waz.api.Message.{Status, Type}
 import com.waz.api.impl.ErrorResponse
-import com.waz.content.{EditHistoryStorage, MembersStorage, MessagesStorage, UsersStorage}
+import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GenericContent._
-import com.waz.model.GenericMessage.TextMessage
 import com.waz.model.{Mention, MessageId, _}
 import com.waz.service._
 import com.waz.service.conversation.ConversationsContentUpdater
@@ -35,7 +34,8 @@ import com.waz.sync.client.AssetClient.Retention
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
-import com.waz.utils.events.{EventContext, Signal}
+import com.waz.utils.crypto.ReplyHashing
+import com.waz.utils.events.{EventContext, EventStream, Signal}
 
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -44,10 +44,13 @@ import scala.concurrent.duration.{FiniteDuration, _}
 import scala.util.Success
 
 trait MessagesService {
+  def msgEdited: EventStream[(MessageId, MessageId)]
+
   def addTextMessage(convId: ConvId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[MessageData]
   def addKnockMessage(convId: ConvId, selfUserId: UserId): Future[MessageData]
   def addAssetMessage(convId: ConvId, asset: AssetData, exp: Option[Option[FiniteDuration]] = None): Future[MessageData]
   def addLocationMessage(convId: ConvId, content: Location): Future[MessageData]
+  def addReplyMessage(quote: MessageId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]]
 
   def addMissedCallMessage(rConvId: RConvId, from: UserId, time: RemoteInstant): Future[Option[MessageData]]
   def addMissedCallMessage(convId: ConvId, from: UserId, time: RemoteInstant): Future[Option[MessageData]]
@@ -75,13 +78,14 @@ trait MessagesService {
 
   def removeLocalMemberJoinMessage(convId: ConvId, users: Set[UserId]): Future[Any]
 
-  def messageSent(convId: ConvId, msg: MessageData): Future[Option[MessageData]]
+  def messageSent(convId: ConvId, msgId: MessageId, newTime: RemoteInstant): Future[Option[MessageData]]
   def messageDeliveryFailed(convId: ConvId, msg: MessageData, error: ErrorResponse): Future[Option[MessageData]]
   def retentionPolicy(convData: ConversationData): CancellableFuture[Retention]
 }
 
 class MessagesServiceImpl(selfUserId:   UserId,
                           teamId:       Option[TeamId],
+                          replyHashing: ReplyHashing,
                           storage:      MessagesStorage,
                           updater:      MessagesContentUpdater,
                           edits:        EditHistoryStorage,
@@ -92,6 +96,8 @@ class MessagesServiceImpl(selfUserId:   UserId,
                           sync:         SyncServiceHandle) extends MessagesService {
   import Threading.Implicits.Background
   private implicit val ec = EventContext.Global
+
+  override val msgEdited = EventStream[(MessageId, MessageId)]()
 
   override def recallMessage(convId: ConvId, msgId: MessageId, userId: UserId, systemMsgId: MessageId = MessageId(), time: RemoteInstant, state: Message.Status = Message.Status.PENDING) =
     updater.getMessage(msgId) flatMap {
@@ -125,32 +131,37 @@ class MessagesServiceImpl(selfUserId:   UserId,
       }
 
     gm match {
-      case GenericMessage(id, MsgEdit(msgId, Text(text, mentions, links))) =>
+      case GenericMessage(newId, MsgEdit(oldId, Text(text, mentions, links, quote))) =>
 
-        def applyEdit(msg: MessageData) = for {
-            _ <- edits.insert(EditHistory(msg.id, MessageId(id.str), time))
-            (tpe, ct) = MessageData.messageContent(text, mentions, links, weblinkEnabled = true)
-            edited = MessageData(MessageId(id.str), convId, tpe, userId, ct, Seq(gm), time = msg.time, localTime = msg.localTime, editTime = time)
-            res <- updater.addMessage(edited.adjustMentions(false).getOrElse(edited))
-            _ <- updater.deleteOnUserRequest(Seq(msg.id))
-        } yield res
+        def applyEdit(msg: MessageData) = {
+          val newMsgId = MessageId(newId.str)
+          for {
+            _         <- edits.insert(EditHistory(msg.id, newMsgId, time))
+            (tpe, ct) =  MessageData.messageContent(text, mentions, links, weblinkEnabled = true)
+            edited    =  msg.copy(id = newMsgId, msgType = tpe, content = ct, protos = Seq(gm), editTime = time)
+            res       <- updater.addMessage(edited.adjustMentions(false).getOrElse(edited))
+            quotesOf  <- storage.findQuotesOf(msg.id)
+            _         <- storage.updateAll2(quotesOf.map(_.id), _.replaceQuote(newMsgId))
+            _         =  msgEdited ! (msg.id, newMsgId)
+            _         <- updater.deleteOnUserRequest(Seq(msg.id))
+          } yield res
+        }
 
-        updater.getMessage(msgId) flatMap {
+        updater.getMessage(oldId) flatMap {
           case Some(msg) if msg.userId == userId && msg.convId == convId =>
-            verbose(s"got edit event for msg: $msg")
             applyEdit(msg)
           case _ =>
             // original message was already deleted, let's check if it was already updated
-            edits.get(msgId) flatMap {
-              case Some(EditHistory(_, updated, editTime)) if editTime <= time =>
-                verbose(s"message $msgId has already been updated, discarding later update")
+            edits.get(oldId) flatMap {
+              case Some(EditHistory(_, _, editTime)) if editTime <= time =>
+                verbose(s"message $oldId has already been updated, discarding later update")
                 Future successful None
 
-              case Some(EditHistory(_, updated, editTime)) =>
+              case Some(EditHistory(_, updated, _)) =>
                 // this happens if message has already been edited locally,
                 // but that edit is actually newer than currently received one, so we should revert it
                 // we always use only the oldest edit for given message (as each update changes the message id)
-                verbose(s"message $msgId has already been updated, will overwrite new message")
+                verbose(s"message $oldId has already been updated, will overwrite new message")
                 findLatestUpdate(updated) flatMap {
                   case Some(msg) => applyEdit(msg)
                   case None =>
@@ -170,11 +181,45 @@ class MessagesServiceImpl(selfUserId:   UserId,
   }
 
   override def addTextMessage(convId: ConvId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None) = {
-    verbose(s"addTextMessage($convId, ${content.take(4)}, $mentions")
+    verbose(s"addTextMessage($convId, ${content.take(4)}, $mentions, $exp")
     val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
     verbose(s"parsed content: $ct")
     val id = MessageId()
     updater.addLocalMessage(MessageData(id, convId, tpe, selfUserId, ct, protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil)))), exp = exp) // FIXME: links
+  }
+
+  override def addReplyMessage(quote: MessageId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]] = {
+
+    verbose(s"addReplyMessage($quote, ${content.take(4)}, $mentions, $exp)")
+    updater.getMessage(quote).flatMap {
+      case Some(original) =>
+        val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
+        verbose(s"parsed content: $ct")
+        val id = MessageId()
+        val localTime = LocalInstant.Now
+        replyHashing.hashMessage(original).flatMap { hash =>
+          verbose(s"hash before sending: ${hash.hexString}, original time: ${original.time}")
+          updater.addLocalMessage(
+            MessageData(
+              id, original.convId, tpe, selfUserId, ct,
+              protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, Some(Quote(quote, Some(hash)))))),
+              quote = Some(quote),
+              quoteHash = Some(hash),
+              quoteValidity = true
+            ),
+            exp = exp,
+            localTime = localTime
+          ).map(Option(_))
+        }
+        .recover {
+          case e@(_:IllegalArgumentException|_:replyHashing.MissingAssetException) =>
+            error(s"Got exception when checking reply hash, skipping", e)
+            None
+        }
+      case None =>
+        error(s"A reply to a non-existent message: $quote")
+        Future.successful(None)
+    }
   }
 
   override def addLocationMessage(convId: ConvId, content: Location) = {
@@ -339,9 +384,9 @@ class MessagesServiceImpl(selfUserId:   UserId,
       case _ => successful(None)
     }
 
-  def messageSent(convId: ConvId, msg: MessageData): Future[Option[MessageData]] = {
+  def messageSent(convId: ConvId, msgId: MessageId, newTime: RemoteInstant): Future[Option[MessageData]] = {
     import com.waz.utils.RichFiniteDuration
-    updater.updateMessage(msg.id) { m => m.copy(state = Message.Status.SENT, expiryTime = m.ephemeral.map(_.fromNow())) } andThen {
+    updater.updateMessage(msgId) { m => m.copy(state = Message.Status.SENT, time = newTime, expiryTime = m.ephemeral.map(_.fromNow())) } andThen {
       case Success(Some(m)) => storage.onMessageSent ! m
     }
   }

@@ -20,10 +20,10 @@ package com.waz.znet2
 import java.io.{ByteArrayInputStream, InputStream}
 import java.security.MessageDigest
 
-import android.util.Base64
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.threading.CancellableFuture
+import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{ExecutorServiceWrapper, IoUtils, RichOption}
 import com.waz.znet.ServerTrust
 import com.waz.znet2.http.HttpClient.{Progress, ProgressCallback}
@@ -100,7 +100,7 @@ object HttpClientOkHttpImpl {
   def createCertificatePinner: CertificatePinner = {
     val publicKeySha256 = MessageDigest.getInstance("SHA-256").digest(ServerTrust.WirePublicKey)
     new CertificatePinner.Builder()
-      .add(s"*.${ServerTrust.WireDomain}", "sha256/" + Base64.encodeToString(publicKeySha256, Base64.DEFAULT))
+      .add(s"*.${ServerTrust.WireDomain}", "sha256/" + AESUtils.base64(publicKeySha256))
       .build()
   }
 

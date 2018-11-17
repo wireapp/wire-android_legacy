@@ -446,7 +446,7 @@ object SyncRequest {
 
         case PostAssetStatus(_, mid, exp, status) =>
           putId("message", mid)
-          o.put("ephemeral", exp.map(_.toMillis))
+          exp.foreach(v => o.put("ephemeral", v.toMillis))
           o.put("status", JsonEncoder.encode(status))
 
         case PostSelf(info) => o.put("user", JsonEncoder.encode(info))
