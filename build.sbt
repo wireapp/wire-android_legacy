@@ -8,7 +8,7 @@ import sbt._
 
 import scala.util.Random
 
-val MajorVersion = "132"
+val MajorVersion = "133"
 val MinorVersion = "0" // hotfix release
 
 version in ThisBuild := {
