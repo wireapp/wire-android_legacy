@@ -21,7 +21,7 @@ import android.content.Context
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
 import com.waz.api.Message.Status
-import com.waz.model.{LocalInstant, MessageData}
+import com.waz.model.{LocalInstant, MessageData, ReadReceipt}
 import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.service.messages.{MessageAndLikes, MessagesService}
 import com.waz.threading.CancellableFuture
@@ -49,6 +49,7 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
   val signals                = inject[UsersController]
   val likesController        = inject[LikesController]
 
+  val readReceiptsStorage = inject[Signal[ZMessaging]].map(_.readReceiptsStorage)
   val conversationController = inject[ConversationController]
 
   private lazy val zms = inject[Signal[ZMessaging]]
@@ -108,12 +109,13 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
     isGroup     <- conversationController.groupConversation(convId)
     msg         <- message
     timeout     <- ephemeralTimeout
+    reads       <- readReceiptsStorage.flatMap(_.receipts(msg.id))
     isOffline   <- inject[NetworkModeService].isOnline.map(!_)
   } yield {
     val timestamp = ZTimeFormatter.getSingleMessageTime(context, DateTimeUtils.toDate(msg.time.instant))
     timeout match {
       case Some(t)                          => ephemeralTimeoutString(timestamp, t)
-      case None if selfUserId == msg.userId => statusString(timestamp, msg, isGroup, isOffline)
+      case None if selfUserId == msg.userId => statusString(timestamp, msg, isGroup, isOffline, reads)
       case None                             => timestamp
     }
   }
@@ -136,8 +138,12 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
 
   def onLikeClicked() = messageAndLikes.head.map { likesController.onLikeButtonClicked ! _ }
 
-  private def statusString(timestamp: String, m: MessageData, isGroup: Boolean, isOffline: Boolean) =
-    m.state match {
+  private def statusString(timestamp: String, m: MessageData, isGroup: Boolean, isOffline: Boolean, reads: Seq[ReadReceipt]) = {
+    if (reads.nonEmpty && isGroup) {
+      getString(R.string.message_footer__status__read_group, timestamp, reads.size.toString)
+    } else if (reads.nonEmpty){
+      getString(R.string.message_footer__status__read, timestamp)
+    } else m.state match {
       case Status.PENDING if isOffline => getString(R.string.message_footer__status__waiting_for_connection)
       case Status.PENDING              => getString(R.string.message_footer__status__sending)
       case Status.SENT                 => getString(R.string.message_footer__status__sent, timestamp)
@@ -148,6 +154,7 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
            Status.FAILED_READ          => getString(R.string.message_footer__status__failed)
       case _                           => timestamp
     }
+  }
 
   private def ephemeralTimeoutString(timestamp: String, remaining: FiniteDuration) = {
 

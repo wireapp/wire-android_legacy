@@ -908,6 +908,8 @@
     <string name="message_footer__status__delivered">%1$s \u30FB Delivered</string>
     <string name="message_footer__status__failed">Sending failed. _Resend_</string>
     <string name="message_footer__status__deleted">%1$s \u30FB Deleted</string>
+    <string name="message_footer__status__read">%1$s \u30FB Read</string>
+    <string name="message_footer__status__read_group">%1$s \u30FB Read by %2$s</string>
 
     <string name="ephemeral_message__timeout_selection_info">SET A TIME FOR THE MESSAGE TO DISAPPEAR</string>
 
