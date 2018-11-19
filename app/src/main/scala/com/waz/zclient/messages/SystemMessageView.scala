@@ -20,9 +20,9 @@ package com.waz.zclient.messages
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.graphics.{Canvas, Paint}
+import android.support.constraint.ConstraintLayout
 import android.util.AttributeSet
 import android.view.View
-import android.widget.RelativeLayout
 import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.returning
 import com.waz.zclient.common.views.LinkTextView
@@ -36,7 +36,7 @@ import com.waz.zclient.utils.RichView
   * View implementing system message layout: row containing icon, text and expandable line.
   * By hard-coding layout logic in this class we can avoid using complicated view hierarchies.
   */
-class SystemMessageView(context: Context, attrs: AttributeSet, style: Int) extends RelativeLayout(context, attrs, style) with ViewHelper {
+class SystemMessageView(context: Context, attrs: AttributeSet, style: Int) extends ConstraintLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 

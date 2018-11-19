@@ -29,19 +29,23 @@
         android:id="@+id/unread_dot"
         android:layout_width="@dimen/content__padding_left"
         android:layout_height="match_parent"
-        />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
 
 
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/separator__time"
         style="?messageStreamTimestamp"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:textAllCaps="true"
-        app:w_font="@string/wire__typeface__bold"
-        />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/unread_dot"
+        app:layout_constraintTop_toTopOf="parent"
+        app:w_font="@string/wire__typeface__bold"/>
 
 
 </com.waz.zclient.messages.SeparatorViewLarge>

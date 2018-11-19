@@ -24,34 +24,33 @@
                                         android:layout_height="wrap_content"
                                         android:layout_gravity="center"
                                         android:layout_marginBottom="@dimen/message_stream_separator_bottom_margin"
-                                        android:gravity="center_horizontal"
-                                        android:orientation="vertical"
     >
 
     <com.waz.zclient.messages.UnreadDot
         android:id="@+id/unread_dot"
         android:layout_width="@dimen/content__padding_left"
         android:layout_height="@dimen/wire__margin__huge"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
 
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/separator__time"
         style="?messageStreamTimestampSmall"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/wire__margin__huge"
-        android:layout_toEndOf="@id/unread_dot"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:textAllCaps="true"
-        app:w_font="@string/wire__typeface__light"
-        />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/unread_dot"
+        app:layout_constraintTop_toTopOf="parent"
+        app:w_font="@string/wire__typeface__light"/>
 
     <View
         style="?wireDivider"
         android:layout_width="match_parent"
         android:layout_height="@dimen/wire__divider__height__thin"
-        android:layout_alignParentBottom="true"
-        />
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
 </com.waz.zclient.messages.SeparatorView>

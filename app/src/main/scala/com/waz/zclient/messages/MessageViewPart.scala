@@ -21,10 +21,11 @@ import android.animation.ValueAnimator
 import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.content.Context
 import android.graphics.{Canvas, Color, Paint}
+import android.support.constraint.ConstraintLayout
 import android.text.format.DateFormat
 import android.util.AttributeSet
 import android.view.View
-import android.widget.{LinearLayout, RelativeLayout}
+import android.widget.LinearLayout
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
 import com.waz.model._
@@ -154,14 +155,14 @@ trait TimeSeparator extends MessageViewPart with ViewHelper {
   }
 }
 
-class SeparatorView(context: Context, attrs: AttributeSet, style: Int) extends RelativeLayout(context, attrs, style) with TimeSeparator {
+class SeparatorView(context: Context, attrs: AttributeSet, style: Int) extends ConstraintLayout(context, attrs, style) with TimeSeparator {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
   override val tpe: MsgPart = MsgPart.Separator
 }
 
-class SeparatorViewLarge(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with TimeSeparator {
+class SeparatorViewLarge(context: Context, attrs: AttributeSet, style: Int) extends ConstraintLayout(context, attrs, style) with TimeSeparator {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 

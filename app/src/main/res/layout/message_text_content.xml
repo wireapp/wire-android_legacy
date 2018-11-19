@@ -29,7 +29,7 @@
         android:id="@+id/text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/content__padding_left"
+        android:layout_marginStart="@dimen/content__padding_left"
         android:layout_gravity="center_vertical"
         android:textSize="@dimen/wire__text_size__small"
         android:textColor="?wirePrimaryTextColor"
