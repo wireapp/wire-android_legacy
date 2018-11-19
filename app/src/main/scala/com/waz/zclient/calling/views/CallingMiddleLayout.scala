@@ -54,7 +54,10 @@ class CallingMiddleLayout(val context: Context, val attrs: AttributeSet, val def
     participants.setVisible(display == CallDisplay.Participants)
   }
 
-  controller.callerId.onUi(chathead.setUserId)
+  controller.memberForPicture.onUi {
+    case Some(uId) => chathead.setUserId(uId)
+    case _         => chathead.clearUser()
+  }
 
   override def onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int): Unit = {
     super.onLayout(changed, l, t, r, b)

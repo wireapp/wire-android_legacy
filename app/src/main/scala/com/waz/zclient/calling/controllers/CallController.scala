@@ -195,6 +195,12 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     case _ => Signal.const[Option[UserData]](None) //Need a none signal to help with further signals
   }
 
+  val memberForPicture: Signal[Option[UserId]] = for {
+    self <- callingZms.map(_.selfUserId)
+    member <- conversationMembers.map(_.find(_ != self))
+    isGroup <- isGroupCall
+  } yield member.filter(_ => !isGroup)
+
   private lazy val lastControlsClick = Signal[(Boolean, Instant)]() //true = show controls and set timer, false = hide controls
 
   import com.waz.ZLog.ImplicitTag.implicitLogTag
