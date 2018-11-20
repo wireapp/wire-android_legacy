@@ -60,16 +60,19 @@ class MessageEventProcessor(selfUserId:          UserId,
     }
   }
 
-  private def checkReplyHashes(m: MessageData): Future[MessageData] = m.quote.fold(Future.successful(m)) { quoteId =>
-    storage.getMessage(quoteId).flatMap {
-      case Some(original) =>
-        replyHashing.hashMessage(original).map { hash =>
-          val newValidity = m.quoteHash.contains(hash)
-          if (m.quoteValidity != newValidity) m.copy(quoteValidity = newValidity) else m
-        }
-      case None =>
-        Future.successful(m)
-    }
+  def checkReplyHashes(msgs: Seq[MessageData]): Future[Seq[MessageData]] = {
+    val (standard, quotes) = msgs.partition(_.quote.isEmpty)
+
+    for {
+      originals     <- storage.getMessages(quotes.flatMap(_.quote): _*)
+      hashes        <- replyHashing.hashMessages(originals.flatten)
+      updatedQuotes =  quotes.map(q => q.quote match {
+                         case Some(id) if hashes.contains(id) =>
+                           val newValidity = q.quoteHash.contains(hashes(id))
+                           if (q.quoteValidity != newValidity) q.copy(quoteValidity = newValidity) else q
+                         case _ => q
+                       })
+    } yield standard ++ updatedQuotes
   }
 
   private[service] def processEvents(conv: ConversationData, events: Seq[MessageEvent]): Future[Set[MessageData]] = {
@@ -89,7 +92,8 @@ class MessageEventProcessor(selfUserId:          UserId,
 
     for {
       as    <- updateAssets(toProcess)
-      msgs  <- Future.sequence(toProcess map { createMessage(conv, _) } filter (_ != MessageData.Empty) map checkReplyHashes)
+      msgs  = toProcess map { createMessage(conv, _) } filter (_ != MessageData.Empty)
+      msgs  <- checkReplyHashes(msgs)
       _     = verbose(l"messages from events: ${msgs.map(m => m.id -> m.msgType)}")
       _     <- convsService.addUnexpectedMembersToConv(conv.id, potentiallyUnexpectedMembers)
       res   <- content.addMessages(conv.id, msgs)

@@ -31,8 +31,10 @@ import com.waz.service.otr.OtrService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.testutils.TestGlobalPreferences
 import com.waz.utils.crypto.ReplyHashing
-import com.waz.utils.events.EventStream
+import com.waz.utils.events.{EventStream, Signal}
 import org.scalatest.Inside
+import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.threading.Threading
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -53,6 +55,14 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
   val convsService      = mock[ConversationsService]
   val prefs             = new TestGlobalPreferences()
 
+  val messagesInStorage = Signal[Seq[MessageData]](Seq.empty)
+  (storage.getMessages _).expects(*).anyNumberOfTimes.onCall { ids: Traversable[MessageId] =>
+    messagesInStorage.head.map(msgs => ids.map(id => msgs.find(_.id == id)).toSeq)(Threading.Background)
+  }
+
+  (replyHashing.hashMessages _).expects(*).anyNumberOfTimes.onCall { msgs: Seq[MessageData] =>
+    Future.successful(msgs.filter(m => m.quote.isDefined && m.quoteHash.isDefined).map(m => m.id -> m.quoteHash.get).toMap)
+  }
 
   feature("Push events processing") {
     scenario("Process text message event") {
@@ -94,10 +104,12 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
       clock.advance(5.seconds)
       val event = MemberJoinEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded.toSeq)
 
-      (storage.getMessages _).expects(*).returning(Future.successful(Seq.empty))
       (storage.hasSystemMessage _).expects(conv.id, event.time, MEMBER_JOIN, sender).returning(Future.successful(false))
       (storage.lastLocalMessage _).expects(conv.id, MEMBER_JOIN).returning(Future.successful(None))
-      (storage.addMessage _).expects(*).once().onCall { m: MessageData => Future.successful(m) }
+      (storage.addMessage _).expects(*).once().onCall { m: MessageData =>
+        messagesInStorage.mutate(_ ++ Seq(m))
+        Future.successful(m)
+      }
 
       val processor = getProcessor
       inside(result(processor.processEvents(conv, Seq(event))).head) {
@@ -121,7 +133,6 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
         UserId("user2")
       )
 
-      (storage.getMessages _).expects(*).repeated(3).returning(Future.successful(Seq.empty))
       (storage.hasSystemMessage _).expects(*, *, *, *).repeated(3).returning(Future.successful(true))
       (storage.addMessage _).expects(*).never()
 
@@ -151,11 +162,13 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
       clock.advance(1.second) //some time later, we get the response from the backend
       val event = RenameConversationEvent(conv.remoteId, RemoteInstant(clock.instant()), selfUserId, Name("new name"))
 
-      (storage.getMessages _).expects(*).returning(Future.successful(Seq.empty))
       (storage.hasSystemMessage _).expects(conv.id, event.time, RENAME, selfUserId).returning(Future.successful(false))
       (storage.lastLocalMessage _).expects(conv.id, RENAME).returning(Future.successful(Some(localMsg)))
       (storage.remove (_: MessageId)).expects(localMsg.id).returning(Future.successful({}))
-      (storage.addMessage _).expects(*).onCall { msg : MessageData => Future.successful(msg)}
+      (storage.addMessage _).expects(*).onCall { msg : MessageData =>
+        messagesInStorage.mutate(_ ++ Seq(msg))
+        Future.successful(msg)
+      }
       (convs.updateConversationLastRead _).expects(conv.id, event.time).onCall { (convId: ConvId, instant: RemoteInstant) =>
         Future.successful(Some((conv, conv.copy(lastRead = instant))))
       }
