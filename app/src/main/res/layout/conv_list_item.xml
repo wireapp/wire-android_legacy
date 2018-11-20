@@ -68,17 +68,19 @@
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/conversation_subtitle"
             style="?startUiUserRowSubLabel"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/wire__padding__8"
             android:ellipsize="end"
             android:gravity="start|top"
             android:maxLines="1"
             android:textSize="@dimen/wire__text_size__small"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/conversation_badge"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="@+id/conversation_title"
             app:layout_constraintTop_toBottomOf="@+id/conversation_title"
-            app:w_font="@string/wire__typeface__light"
-            />
+            app:w_font="@string/wire__typeface__light"/>
 
         <com.waz.zclient.conversationlist.views.ConversationBadge
             android:id="@+id/conversation_badge"
