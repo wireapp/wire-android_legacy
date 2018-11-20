@@ -63,11 +63,9 @@ class TypingIndicatorView(val context: Context, val attrs: AttributeSet, val def
   }
 
   private def startAnimation() =
-    animationRunning match {
-      case true => Unit
-      case false =>
-        animationRunning = true
-        runAnimation()
+    if(!animationRunning) {
+      animationRunning = true
+      runAnimation()
     }
 
   private def runAnimation(): Unit =

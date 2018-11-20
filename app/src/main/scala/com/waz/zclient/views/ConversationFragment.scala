@@ -126,6 +126,7 @@ class ConversationFragment extends FragmentHelper {
     inject[Signal[AccentColor]].map(_.color)(c => vh.foreach(_.setColor(c)))
   }
 
+
   private var containerPreview: ViewGroup = _
   private lazy val cursorView = returning(view[CursorView](R.id.cv__cursor)) { vh =>
     mentionCandidatesAdapter.onUserClicked.onUi { info =>
@@ -155,11 +156,6 @@ class ConversationFragment extends FragmentHelper {
   private lazy val messagesOpacity = view[View](R.id.mentions_opacity)
   private lazy val mentionsList = view[RecyclerView](R.id.mentions_list)
   private lazy val replyView = view[ReplyView](R.id.reply_view)
-
-  private def isUserGuest(user: UserData): Signal[Boolean] =
-    convController.currentConv.map { conv =>
-      if (!conv.isTeamOnly) user.isGuest(conv.team) else false
-    }
 
   private def showMentionsList(visible: Boolean): Unit = {
     mentionsList.foreach(_.setVisible(visible))
@@ -268,9 +264,6 @@ class ConversationFragment extends FragmentHelper {
     }
 
     keyboardController.isKeyboardVisible.onUi(visible => if(visible) collapseGuestsBanner())
-
-    replyController.currentReplyContent.map(_.isEmpty)
-      .onUi(visible => cursorView.foreach(_.topBorder.setVisible(visible)))
   }
 
   private def updateGuestsBanner(hasGuest: Boolean, hasBot: Boolean, isGroup: Boolean): Unit = {
@@ -318,8 +311,6 @@ class ConversationFragment extends FragmentHelper {
     super.onViewCreated(view, savedInstanceState)
 
     if (savedInstanceState != null) previewShown ! savedInstanceState.getBoolean(SAVED_STATE_PREVIEW, false)
-
-    findById(R.id.tiv_typing_indicator_view)
 
     containerPreview = findById(R.id.fl__conversation_overlay)
 

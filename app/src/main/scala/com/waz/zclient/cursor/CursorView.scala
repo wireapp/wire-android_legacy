@@ -36,7 +36,7 @@ import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
-import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.conversation.{ConversationController, ReplyController}
 import com.waz.zclient.cursor.CursorController.{EnteredTextSource, KeyboardState}
 import com.waz.zclient.cursor.MentionUtils.{Replacement, getMention}
 import com.waz.zclient.messages.MessagesController
@@ -53,17 +53,20 @@ import com.waz.zclient.{ClipboardUtils, R, ViewHelper}
 
 class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
     extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
+
   def this(context: Context, attrs: AttributeSet) { this(context, attrs, 0) }
   def this(context: Context) { this(context, null) }
 
   import CursorView._
   import Threading.Implicits.Ui
 
-  val controller       = inject[CursorController]
-  val accentColor      = inject[Signal[AccentColor]]
-  val layoutController = inject[IGlobalLayoutController]
-  val messages         = inject[MessagesController]
-  val clipboard        = inject[ClipboardUtils]
+
+  val clipboard                    = inject[ClipboardUtils]
+  val layoutController             = inject[IGlobalLayoutController]
+  val accentColor                  = inject[Signal[AccentColor]]
+  val messages                     = inject[MessagesController]
+  private val controller           = inject[CursorController]
+  private lazy val replyController = inject[ReplyController]
 
   setOrientation(LinearLayout.VERTICAL)
   inflate(R.layout.cursor_view_content)
@@ -111,12 +114,10 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   }
 
   val lineCount = Signal(1)
-  val topBarVisible = for {
-    multiline <- lineCount.map(_ > 2)
-    typing <- controller.typingIndicatorVisible
-    scrolledToBottom <- messages.scrolledToBottom
-  } yield
-    !typing && (multiline || !scrolledToBottom)
+
+  Signal(controller.typingIndicatorVisible, replyController.currentReplyContent)
+    .map { case (typing, currentReply) => !typing && currentReply.isEmpty  }
+    .onUi(topBorder.setVisible)
 
   private val cursorSpanWatcher = new MentionSpanWatcher
   private val cursorText: SourceSignal[String] = Signal(cursorEditText.getEditableText.toString)
