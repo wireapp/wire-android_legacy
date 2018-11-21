@@ -18,16 +18,19 @@
 package com.waz.service.conversation
 
 import com.waz.ZLog
-import com.waz.content.ConversationStorage
+import com.waz.content.{ConversationStorage, MessagesStorage}
 import com.waz.model.ConversationData.ConversationType
-import com.waz.model.{ConversationData, MemberJoinEvent, _}
+import com.waz.model.{ConversationData, GenericMessage, GenericMessageEvent, MemberJoinEvent, _}
 import com.waz.service.EventScheduler.{Interleaved, Parallel, Sequential, Stage}
 import com.waz.service.messages.MessagesService
 import com.waz.service.{EventPipelineImpl, EventScheduler, UserService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.SerialDispatchQueue
+import com.waz.utils.events.Signal
 import org.threeten.bp.Instant
+import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.model.GenericContent.Quote
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -83,35 +86,60 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec {
     result(pipeline.apply(events).map(_ => println(output.toString)))
   }
 
-  lazy val convs     = mock[ConversationsContentUpdater]
-  lazy val storage   = mock[ConversationStorage]
-  lazy val messages  = mock[MessagesService]
-  lazy val users     = mock[UserService]
-  lazy val sync      = mock[SyncServiceHandle]
+  lazy val convs      = mock[ConversationsContentUpdater]
+  lazy val storage    = mock[ConversationStorage]
+  lazy val messages   = mock[MessagesService]
+  lazy val msgStorage = mock[MessagesStorage]
+  lazy val users      = mock[UserService]
+  lazy val sync       = mock[SyncServiceHandle]
+
+  val selfUserId = UserId("user1")
+  val convId = ConvId()
+  val rConvId = RConvId()
+  val convsInStorage = Signal[Map[ConvId, ConversationData]]()
+
+  (storage.getByRemoteIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(convId)))
+  (convs.processConvWithRemoteId[Unit] (_: RConvId, _: Boolean, _: Int)(_: ConversationData => Future[Unit])(_:ZLog.LogTag, _:ExecutionContext)).expects(*, *, *, *, *, *).anyNumberOfTimes.onCall {
+    p: Product =>
+      convsInStorage.head.map(_.head._2).flatMap { conv =>
+        p.productElement(3).asInstanceOf[ConversationData => Future[Unit]].apply(conv)
+      }
+  }
+
+  (convs.updateLastEvent _).expects(*, *).anyNumberOfTimes.onCall { (convId : ConvId, i: RemoteInstant) =>
+    convsInStorage.head.map { convs =>
+      val conv = convs(convId)
+      val updatedConv = convs(convId).copy(lastEventTime = i)
+      convsInStorage.mutate(_ + (convId -> updatedConv))
+      Some(conv, updatedConv)
+    }
+  }
+
+  (storage.updateAll2 _).expects(*, *).anyNumberOfTimes.onCall { (keys: Iterable[ConvId], updater: ConversationData => ConversationData) =>
+    val ids = keys.toSet
+    convsInStorage.head.map(_.filterKeys(ids.contains).map { case (id, c) => id -> (c, updater(c)) }).map { updates =>
+      convsInStorage.mutate {
+        _.map {
+          case (id, c) if updates.contains(id) => id -> updates(id)._2
+          case (id, c) => id -> c
+        }
+      }
+      updates.values.toSeq
+    }
+  }
+
+  (storage.get _).expects(*).anyNumberOfTimes.onCall { id: ConvId => convsInStorage.head.map(_.get(id)) }
+
+  lazy val scheduler: EventScheduler = new EventScheduler(Stage(Sequential)(service.conversationOrderEventsStage))
+  lazy val pipeline = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
+  lazy val service = new ConversationOrderEventsService(selfUserId, convs, storage, messages, msgStorage, users, sync, pipeline)
 
   scenario("System messages shouldn't change order except it contains self") {
 
-    val selfUserId = UserId("user1")
-    val convId = ConvId()
-    val rConvId = RConvId()
-    val conv = ConversationData(ConvId(), rConvId, Some(Name("name")), UserId(), ConversationType.Group, lastEventTime = RemoteInstant.Epoch)
-    var updatedConv = conv.copy()
+    val conv = ConversationData(convId, rConvId, Some(Name("name")), UserId(), ConversationType.Group, lastEventTime = RemoteInstant.Epoch)
+    convsInStorage ! Map(convId -> conv)
 
-    (storage.getByRemoteIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(convId)))
-
-    (convs.processConvWithRemoteId[Unit] (_: RConvId, _: Boolean, _: Int)(_: ConversationData => Future[Unit])(_:ZLog.LogTag, _:ExecutionContext)).expects(*, *, *, *, *, *).onCall {
-      p: Product =>
-        p.productElement(3).asInstanceOf[ConversationData => Future[Unit]].apply(conv)
-    }
-
-    (convs.updateLastEvent _).expects(*, *).once().onCall { (_: ConvId, i: RemoteInstant) =>
-      updatedConv = conv.copy(lastEventTime = i)
-      Future.successful(Some(conv, updatedConv))
-    }
-
-    lazy val scheduler: EventScheduler = new EventScheduler(Stage(Sequential)(service.conversationOrderEventsStage))
-    lazy val pipeline  = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
-    lazy val service = new ConversationOrderEventsService(selfUserId, convs, storage, messages, users, sync, pipeline)
+    (msgStorage.getMessages _).expects(Vector.empty).once().returns(Future.successful(Seq.empty))
 
     val events = Seq(
       MemberJoinEvent(rConvId, RemoteInstant.ofEpochMilli(1), UserId(), Seq(selfUserId)),
@@ -120,7 +148,137 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec {
       MemberLeaveEvent(rConvId, RemoteInstant.ofEpochMilli(4), UserId(), Seq(UserId("user3"))))
 
     result(pipeline.apply(events))
-    updatedConv.lastEventTime shouldBe RemoteInstant.ofEpochMilli(1)
+    result(storage.get(convId)).map(_.lastEventTime) shouldBe Some(RemoteInstant.ofEpochMilli(1))
   }
 
+  scenario("Unarchive conversation with a new message if not muted") {
+
+    val conv = ConversationData(
+      convId,
+      rConvId,
+      Some(Name("name")),
+      UserId(),
+      ConversationType.Group,
+      lastEventTime = RemoteInstant.Epoch,
+      archived = true,
+      muted = MuteSet.AllAllowed
+    )
+
+    convsInStorage ! Map(convId -> conv)
+
+    (msgStorage.getMessages _).expects(Vector.empty).once.returns(Future.successful(Seq.empty))
+
+    result(storage.get(convId)).map(_.archived) shouldEqual Some(true)
+
+    val events = Seq(
+      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(1), UserId(), GenericMessage.TextMessage("hello", Nil))
+    )
+    result(pipeline.apply(events))
+
+    result(storage.get(convId)).map(_.archived) shouldEqual Some(false)
+
+  }
+
+  scenario("Unarchive conversation with a mention") {
+    val conv = ConversationData(
+      convId,
+      rConvId,
+      Some(Name("name")),
+      UserId(),
+      ConversationType.Group,
+      lastEventTime = RemoteInstant.Epoch,
+      archived = true,
+      muted = MuteSet.OnlyMentionsAllowed
+    )
+
+    convsInStorage ! Map(convId -> conv)
+
+    (msgStorage.getMessages _).expects(Vector.empty).once().returns(Future.successful(Seq.empty))
+
+    result(storage.get(convId)).map(_.archived) shouldEqual Some(true)
+
+    // false positive check: don't unarchive because of a standard text message
+    val events1 = Seq(
+      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(1), UserId(), GenericMessage.TextMessage("hello", Nil))
+    )
+    result(pipeline.apply(events1))
+    result(storage.get(convId)).map(_.archived) shouldEqual Some(true)
+
+    val events2 = Seq(
+      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(2), UserId(), GenericMessage.TextMessage("hello @user", Seq(Mention(Some(selfUserId), 6, 11))))
+    )
+    result(pipeline.apply(events2))
+    result(storage.get(convId)).map(_.archived) shouldEqual Some(false)
+  }
+
+  scenario("Unarchive conversation with a reply") {
+    val conv = ConversationData(
+      convId,
+      rConvId,
+      Some(Name("name")),
+      UserId(),
+      ConversationType.Group,
+      lastEventTime = RemoteInstant.Epoch,
+      archived = true,
+      muted = MuteSet.OnlyMentionsAllowed
+    )
+
+    convsInStorage ! Map(convId -> conv)
+
+    val msgId = MessageId()
+    val message = MessageData(msgId, convId, userId = selfUserId)
+
+    (msgStorage.getMessages _).expects(*).twice().onCall { ids: Seq[MessageId] =>
+      val msgs = ids.map(id => if (id == msgId) Some(message) else None)
+      Future.successful(msgs)
+    }
+
+    result(storage.get(convId)).map(_.archived) shouldEqual Some(true)
+
+    // false positive check: don't unarchive because of a standard text message
+    val events1 = Seq(
+      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(1), UserId(), GenericMessage.TextMessage("hello", Nil))
+    )
+    result(pipeline.apply(events1))
+    result(storage.get(convId)).map(_.archived) shouldEqual Some(true)
+
+    val events2 = Seq(
+      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(2), UserId(), GenericMessage.TextMessage("hello @user", Nil, Nil, Some(Quote(msgId, None))))
+    )
+    result(pipeline.apply(events2))
+    result(storage.get(convId)).map(_.archived) shouldEqual Some(false)
+  }
+
+  scenario("Do not unarchive conversation") {
+    val conv = ConversationData(
+      convId,
+      rConvId,
+      Some(Name("name")),
+      UserId(),
+      ConversationType.Group,
+      lastEventTime = RemoteInstant.Epoch,
+      archived = true,
+      muted = MuteSet.AllMuted
+    )
+
+    convsInStorage ! Map(convId -> conv)
+
+    val msgId = MessageId()
+    val message = MessageData(msgId, convId, userId = selfUserId)
+
+    (msgStorage.getMessages _).expects(*).anyNumberOfTimes.onCall { ids: Seq[MessageId] =>
+      val msgs = ids.map(id => if (id == msgId) Some(message) else None)
+      Future.successful(msgs)
+    }
+
+    result(storage.get(convId)).map(_.archived) shouldEqual Some(true)
+
+    val events = Seq(
+      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(1), UserId(), GenericMessage.TextMessage("hello", Nil)),
+      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(2), UserId(), GenericMessage.TextMessage("hello @user", Seq(Mention(Some(selfUserId), 6, 11)))),
+      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(3), UserId(), GenericMessage.TextMessage("hello @user", Nil, Nil, Some(Quote(msgId, None))))
+    )
+    result(pipeline.apply(events))
+    result(storage.get(convId)).map(_.archived) shouldEqual Some(true)
+  }
 }
