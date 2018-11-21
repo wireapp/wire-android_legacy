@@ -741,7 +741,7 @@
     <!-- Giphy -->
     <string name="giphy_preview__search_hint">Search Giphy</string>
     <string name="giphy_preview__error">NO GIFS FOUND.</string>
-    <string name="giphy_preview__message_via_random_trending">Via giphy.com</string>
+    <string name="giphy_preview__message_via_random_trending">via giphy.com</string>
     <string name="giphy_preview__message_via_search">%s · via giphy.com</string>
     <string name="service_giphy_name">Giphy</string>
 
