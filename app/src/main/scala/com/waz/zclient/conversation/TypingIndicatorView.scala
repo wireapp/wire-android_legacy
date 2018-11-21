@@ -24,6 +24,8 @@ import android.view.View
 import android.widget.{FrameLayout, TextView}
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
+import com.waz.zclient.utils.ContextUtils._
+
 
 import com.waz.zclient.{R, ViewHelper}
 
@@ -32,13 +34,15 @@ class TypingIndicatorView(val context: Context, val attrs: AttributeSet, val def
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 
-  val zms = inject[Signal[ZMessaging]]
-  lazy val convController = inject[ConversationController]
+  private val zms = inject[Signal[ZMessaging]]
+  private lazy val convController = inject[ConversationController]
+  private lazy val replyController = inject[ReplyController]
   inflate(R.layout.typing_indicator)
 
-  val nameTextView = findById[TextView](R.id.ttv__typing_indicator_names)
-  val dotsView = findById[View](R.id.gtv__is_typing_dots)
-  val penView = findById[View](R.id.gtv__is_typing_pen)
+  private val nameTextView = findById[TextView](R.id.ttv__typing_indicator_names)
+  private val dotsView = findById[View](R.id.gtv__is_typing_dots)
+  private val penView = findById[View](R.id.gtv__is_typing_pen)
+  private val topBackground = findById[View](R.id.top_background)
 
   private var animationRunning: Boolean = false
   private val handler = new Handler
@@ -61,6 +65,11 @@ class TypingIndicatorView(val context: Context, val attrs: AttributeSet, val def
       startAnimation()
     }
   }
+
+  replyController.currentReplyContent.map { reply =>
+    if(reply.nonEmpty) getStyledColor(R.attr.wireBackgroundColor)
+    else getStyledColor(R.attr.wireBackgroundCollection)
+  }.onUi(topBackground.setBackgroundColor)
 
   private def startAnimation() =
     if(!animationRunning) {

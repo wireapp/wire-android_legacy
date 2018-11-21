@@ -118,6 +118,13 @@
                     android:visibility="gone"
                     />
 
+                <com.waz.zclient.conversation.TypingIndicatorView
+                    android:id="@+id/tiv_typing_indicator_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/typing_indicator_layout_height"
+                    android:layout_gravity="bottom"
+                    />
+
             </LinearLayout>
 
             <View
@@ -127,8 +134,6 @@
                 android:visibility="gone"
                 android:layout_height="match_parent"/>
 
-
-
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/mentions_list"
                 android:layout_width="match_parent"
@@ -136,13 +141,6 @@
                 android:scrollbars="vertical"
                 android:background="?wireBackgroundColor"
                 android:visibility="gone"
-                android:layout_gravity="bottom"
-                />
-
-            <com.waz.zclient.conversation.TypingIndicatorView
-                android:id="@+id/tiv_typing_indicator_view"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/typing_indicator_layout_height"
                 android:layout_gravity="bottom"
                 />
 
