@@ -114,11 +114,13 @@ class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, la
   }
 
   private def canScrollTo(pos: Int): Boolean =
-    Option(adapter.getCurrentList).exists(_.get(pos) != null)
+    Option(adapter.getCurrentList).exists { list =>
+      pos >= 0 && pos < list.size() && list.get(pos) != null
+    }
 
-  private def requestLoadAround(pos: Int): Unit = {
-    Option(adapter.getCurrentList).foreach(_.loadAround(pos))
-  }
+  private def requestLoadAround(pos: Int): Unit =
+    Option(adapter.getCurrentList).filter(list => pos >= 0 && pos < list.size())
+      .foreach(_.loadAround(pos))
 
   private def processScroll(s: Scroll): Unit = {
     verbose(s"Scrolling to: $s")

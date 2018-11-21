@@ -42,7 +42,7 @@ class MessageDataSource(val cursor: Option[DBCursor])(implicit inj: Injector, ec
   private val messageAndLikesStorage = inject[Signal[MessageAndLikesStorage]]
 
   private def load(start: Int, count: Int): Future[Seq[MessageAndLikes]] = cursor match {
-    case Some(c) =>
+    case Some(c) if !c.isClosed =>
       var msgData: Seq[MessageData] = Nil
       synchronized {
         val totalCount = c.getCount
@@ -81,23 +81,25 @@ class MessageDataSource(val cursor: Option[DBCursor])(implicit inj: Injector, ec
     }
   }
 
-  def positionForMessage(messageId: MessageId): Option[Int] = {
-    cursor.map { cursor =>
-      new CursorIterator(cursor)(MessageEntryReader).indexWhere(e => e.id == messageId)
+  def positionForMessage(messageId: MessageId): Option[Int] = synchronized {
+    cursor.filter(!_.isClosed).map { c =>
+      new CursorIterator(c)(MessageEntryReader).indexWhere(e => e.id == messageId)
     }
   }
 
-  def positionForMessage(time: RemoteInstant): Option[Int] = {
-    cursor.map { cursor =>
-      new CursorIterator(cursor)(MessageEntryReader).indexWhere(e => e.time == time)
+  def positionForMessage(time: RemoteInstant): Option[Int] = synchronized {
+    cursor.filter(!_.isClosed).map { c =>
+      new CursorIterator(c)(MessageEntryReader).indexWhere(e => e.time == time)
     }
   }
 
   def totalCount: Int = cursor.map(_.getCount).getOrElse(0)
 
   override def invalidate(): Unit = {
-    cursor.foreach(_.close())
     super.invalidate()
+    synchronized {
+      cursor.foreach(_.close())
+    }
   }
 }
 
