@@ -135,9 +135,9 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
     Option(getContext).foreach {
       case a: Activity =>
         if (hasEphemeral)
-          a.getWindow.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        else
           a.getWindow.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        else
+          a.getWindow.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
       case _ => // not attahced, ignore
     }
   }
