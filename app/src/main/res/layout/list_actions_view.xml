@@ -35,7 +35,7 @@
         android:layout_height="@dimen/conversation_list__action_icon__size"
         android:layout_marginStart="@dimen/wire__padding__10"
         android:layout_marginEnd="@dimen/wire__padding__10"
-        android:layout_gravity="left|center_vertical"
+        android:layout_gravity="start|center_vertical"
         android:text="@string/glyph__people"
         android:textColor="@color/text__primary_dark"
         android:textSize="@dimen/wire__icon_button__text_size"
@@ -52,7 +52,7 @@
         android:textSize="@dimen/wire__icon_button__text_size"
         android:textColor="@color/text__primary_dark"
         android:gravity="center"
-        android:layout_gravity="right|center_vertical"
+        android:layout_gravity="end|center_vertical"
         />
 
 </merge>
