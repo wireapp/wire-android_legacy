@@ -107,6 +107,7 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
   }
 
   adapter.onScrollRequested.onUi { case (message, _) =>
+    collectionsController.focusedItem ! None // needed in case we requested a scroll to the same message again
     collectionsController.focusedItem ! Some(message)
   }
 
