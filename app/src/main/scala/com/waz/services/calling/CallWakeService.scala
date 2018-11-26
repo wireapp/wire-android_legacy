@@ -22,10 +22,10 @@ import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.ZMessaging
+import com.waz.services.{FutureService, ZMessagingService}
 import com.waz.utils.events.EventContext
 import com.waz.utils.returning
 import com.waz.utils.wrappers.Intent
-import com.waz.zms.{FutureService, ZMessagingService}
 
 import scala.concurrent.Future
 

@@ -20,8 +20,8 @@ package com.waz.services.fcm
 import com.evernote.android.job.Job.Result
 import com.evernote.android.job.util.support.PersistableBundleCompat
 import com.evernote.android.job.{Job, JobManager, JobRequest}
-import com.waz.ZLog.{error, verbose}
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.{error, verbose}
 import com.waz.model.{Uid, UserId}
 import com.waz.service.AccountsService.InBackground
 import com.waz.service.ZMessaging
@@ -76,7 +76,7 @@ object FetchJob {
   val NotificationExtra = "notification"
 
   val MinExecutionDelay = 1.millis //must be greater than 0
-  val MaxExecutionDelay = 15.seconds
+  val MaxExecutionDelay = 2.seconds
   val InitialBackoffDelay = 500.millis
 
   def apply(userId: UserId, nId: Option[Uid]): Unit = {

@@ -26,9 +26,9 @@ import com.waz.service.ZMessaging.clock
 import com.waz.service.push.PushService.FetchFromIdle
 import com.waz.service.push.{PushService, ReceivedPushData, ReceivedPushStorage}
 import com.waz.service.{AccountsService, NetworkModeService, ZMessaging}
+import com.waz.services.ZMessagingService
 import com.waz.threading.Threading
 import com.waz.utils.{JsonDecoder, RichInstant, Serialized}
-import com.waz.zms.ZMessagingService
 import org.json
 import org.threeten.bp.Instant
 
@@ -48,7 +48,7 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
 
   override def onNewToken(s: String): Unit = {
     ZMessaging.globalModule.map {
-      info(s"onNewToken()")
+      info(s"onNewToken: $s")
       _.tokenService.setNewToken()
     } (Threading.Background)
   }

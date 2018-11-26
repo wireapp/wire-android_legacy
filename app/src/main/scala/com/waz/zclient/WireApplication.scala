@@ -45,7 +45,6 @@ import com.waz.service.call.GlobalCallingService
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
 import com.waz.service.images.ImageLoader
 import com.waz.service.messages.MessagesService
-import com.waz.service.push.GlobalNotificationsService
 import com.waz.service.tracking.TrackingService
 import com.waz.services.fcm.FetchJob
 import com.waz.services.gps.GoogleApiImpl
@@ -77,14 +76,14 @@ import com.waz.zclient.cursor.CursorController
 import com.waz.zclient.messages.controllers.{MessageActionsController, NavigationController}
 import com.waz.zclient.messages.{LikesController, MessagePagedListController, MessageViewFactory, MessagesController, UsersController}
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.AndroidNotificationsManager
-import com.waz.zclient.notifications.controllers.{CallingNotificationsController, ImageNotificationsController, MessageNotificationsController, NotificationManagerWrapper}
+import com.waz.zclient.notifications.controllers._
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneController
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.preferences.PreferencesController
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
-import com.waz.zclient.utils.{BackStackNavigator, BackendPicker, Callback, ExternalFileSharing, LocalThumbnailCache, SafeLoggingEnabled, UiStorage, AndroidBase64}
+import com.waz.zclient.utils.{AndroidBase64, BackStackNavigator, BackendPicker, Callback, ExternalFileSharing, LocalThumbnailCache, SafeLoggingEnabled, UiStorage}
 import com.waz.zclient.views.DraftMap
 import javax.net.ssl.SSLContext
 import org.threeten.bp.Clock
@@ -97,6 +96,9 @@ object WireApplication {
 
   type AccountToImageLoader = (UserId) => Future[Option[ImageLoader]]
   type AccountToAssetsStorage = (UserId) => Future[Option[AssetsStorage]]
+  type AccountToUsersStorage = (UserId) => Future[Option[UsersStorage]]
+  type AccountToConvsStorage = (UserId) => Future[Option[ConversationStorage]]
+  type AccountToConvsService = (UserId) => Future[Option[ConversationsService]]
 
   lazy val Global = new Module {
 
@@ -123,11 +125,11 @@ object WireApplication {
     //SE Services
     bind [GlobalModule]                   to ZMessaging.currentGlobal
     bind [AccountsService]                to ZMessaging.currentAccounts
+    bind [Signal[AccountsService]]        to Signal.future(ZMessaging.accountsService) //use for early-initialised classes
     bind [BackendConfig]                  to inject[GlobalModule].backend
     bind [AccountStorage]                 to inject[GlobalModule].accountsStorage
     bind [TeamsStorage]                   to inject[GlobalModule].teamsStorage
     bind [SSOService]                     to inject[GlobalModule].ssoService
-    bind [GlobalNotificationsService]     to inject[GlobalModule].notifications
     bind [GoogleApi]                      to inject[GlobalModule].googleApi
     bind [GlobalCallingService]           to inject[GlobalModule].calling
     bind [SyncHandler]                    to inject[GlobalModule].syncHandler
@@ -147,9 +149,12 @@ object WireApplication {
     import com.waz.threading.Threading.Implicits.Background
     bind [AccountToImageLoader]   to (userId => inject[AccountsService].getZms(userId).map(_.map(_.imageLoader)))
     bind [AccountToAssetsStorage] to (userId => inject[AccountsService].getZms(userId).map(_.map(_.assetsStorage)))
+    bind [AccountToUsersStorage]  to (userId => inject[AccountsService].getZms(userId).map(_.map(_.usersStorage)))
+    bind [AccountToConvsStorage]  to (userId => inject[AccountsService].getZms(userId).map(_.map(_.convsStorage)))
+    bind [AccountToConvsService]  to (userId => inject[AccountsService].getZms(userId).map(_.map(_.conversations)))
 
     // the current user's id
-    bind [Signal[Option[UserId]]] to ZMessaging.currentUi.currentZms.map(_.map(_.selfUserId))
+    bind [Signal[Option[UserId]]] to inject[Signal[AccountsService]].flatMap(_.activeAccountId)
     bind [Signal[UserId]]         to inject[Signal[ZMessaging]].map(_.selfUserId)
     bind [Signal[Option[TeamId]]] to inject[Signal[ZMessaging]].map(_.teamId)
 
@@ -161,7 +166,6 @@ object WireApplication {
     bind [Signal[UserService]]                   to inject[Signal[ZMessaging]].map(_.users)
     bind [Signal[UserSearchService]]             to inject[Signal[ZMessaging]].map(_.userSearch)
     bind [Signal[ConversationStorage]]           to inject[Signal[ZMessaging]].map(_.convsStorage)
-    bind [Signal[NotificationStorage]]           to inject[Signal[ZMessaging]].map(_.notifStorage)
     bind [Signal[UsersStorage]]                  to inject[Signal[ZMessaging]].map(_.usersStorage)
     bind [Signal[MembersStorage]]                to inject[Signal[ZMessaging]].map(_.membersStorage)
     bind [Signal[OtrClientsStorage]]             to inject[Signal[ZMessaging]].map(_.otrClientsStorage)
@@ -360,7 +364,15 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     val googleApi = GoogleApiImpl(this, backend, prefs)
     val base64 = new AndroidBase64()
 
-    ZMessaging.onCreate(this, backend, prefs, googleApi, base64, inject[WorkManagerSyncRequestService])
+    ZMessaging.onCreate(
+      this,
+      backend,
+      prefs,
+      googleApi,
+      base64,
+      inject[WorkManagerSyncRequestService],
+      inject[MessageNotificationsController]
+    )
 
     inject[NotificationManagerWrapper]
     inject[ImageNotificationsController]

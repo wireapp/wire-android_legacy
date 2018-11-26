@@ -17,8 +17,7 @@
  */
 package com.waz.zclient.notifications.controllers
 
-import java.io.File
-import java.io.{FileNotFoundException, FileOutputStream, IOException}
+import java.io.{File, FileNotFoundException, FileOutputStream, IOException}
 
 import android.app.{Notification, NotificationChannel, NotificationChannelGroup, NotificationManager}
 import android.content.{ContentValues, Context}
@@ -36,6 +35,7 @@ import com.waz.content.Preferences.PrefKey
 import com.waz.content.UserPreferences
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.AccountsService
+import com.waz.services.notifications.NotificationsHandlerService
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
@@ -45,7 +45,6 @@ import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{Mes
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.utils.{ResString, RingtoneUtils, format}
 import com.waz.zclient.{Injectable, Injector, Intents, R}
-import com.waz.zms.NotificationsAndroidService
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -229,11 +228,8 @@ case class NotificationProps(accountId:                UserId,
       case (accountId, convId, requestBase) => builder.setContentIntent(Intents.OpenConvIntent(accountId, convId, requestBase))
     }
 
-    clearNotificationsIntent.foreach {
-      case (uId, Some(convId)) =>
-        builder.setDeleteIntent(NotificationsAndroidService.clearNotificationsIntent(uId, convId, cxt))
-      case (uId, None) =>
-        builder.setDeleteIntent(NotificationsAndroidService.clearNotificationsIntent(uId, cxt))
+    clearNotificationsIntent.foreach { case (uId, convId) =>
+      builder.setDeleteIntent(NotificationsHandlerService.clearNotificationsIntent(uId, convId))
     }
 
     contentInfo.foreach(builder.setContentInfo)
@@ -259,10 +255,10 @@ case class NotificationProps(accountId:                UserId,
 
   private def createQuickReplyAction(userId: UserId, convId: ConvId, requestCode: Int, bundleEnabled: Boolean)(implicit cxt: Context) = {
     if (bundleEnabled) {
-      val remoteInput = new RemoteInput.Builder(NotificationsAndroidService.InstantReplyKey)
+      val remoteInput = new RemoteInput.Builder(NotificationsHandlerService.InstantReplyKey)
         .setLabel(getString(R.string.notification__action__reply))
         .build
-      new NotificationCompat.Action.Builder(R.drawable.ic_action_reply, getString(R.string.notification__action__reply), NotificationsAndroidService.quickReplyIntent(userId, convId, cxt))
+      new NotificationCompat.Action.Builder(R.drawable.ic_action_reply, getString(R.string.notification__action__reply), NotificationsHandlerService.quickReplyIntent(userId, convId))
         .addRemoteInput(remoteInput)
         .setAllowGeneratedReplies(true)
         .build()
@@ -273,6 +269,8 @@ case class NotificationProps(accountId:                UserId,
 
 trait NotificationManagerWrapper {
   def getActiveNotificationIds: Seq[Int]
+  def showNotification(id: Int, notificationProps: NotificationProps): Unit
+  def cancelNotifications(ids: Set[Int]): Unit
 }
 
 object NotificationManagerWrapper {
@@ -362,17 +360,9 @@ object NotificationManagerWrapper {
         })
     }
 
-    private val controller = inject[MessageNotificationsController]
-
-    controller.notificationsToCancel.onUi { ids =>
-      verbose(s"cancel: $ids")
-      ids.foreach(notificationManager.cancel)
-    }
-
-    controller.notificationToBuild.onUi { case (id, props) =>
+    def showNotification(id: Int, notificationProps: NotificationProps) = {
       verbose(s"build: $id")
-
-      notificationManager.notify(id, props.build())
+      notificationManager.notify(id, notificationProps.build())
     }
 
     override def getActiveNotificationIds: Seq[Int] =
@@ -427,6 +417,11 @@ object NotificationManagerWrapper {
         case _: FileNotFoundException => false
         case _: IOException => false
       }
+    }
+
+    override def cancelNotifications(ids: Set[Int]): Unit = {
+      verbose(s"cancel: $ids")
+      ids.foreach(notificationManager.cancel)
     }
   }
 }
