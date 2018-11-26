@@ -94,7 +94,7 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
 
 object MessagePagedListController {
   val PageSize: Int = 50
-  val InitialLoadSizeHint: Int = 100
+  val InitialLoadSizeHint: Int = 50
   val PrefetchDistance: Int = 100
 }
 
