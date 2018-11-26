@@ -29,7 +29,6 @@ import android.widget.{ImageView, TextView}
 import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.api.Verification
 import com.waz.model._
-import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events._
 import com.waz.utils.returning
@@ -44,15 +43,23 @@ import com.waz.zclient.ui.text.{GlyphTextView, TypefaceEditText, TypefaceTextVie
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R}
-
 import scala.concurrent.duration._
+import com.waz.content.UsersStorage
+import com.waz.service.conversation.ConversationsUiService
 
-//TODO: Good target for refactoring. The adapter and its data should be separated.
-class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: Boolean = false)(implicit context: Context, injector: Injector, eventContext: EventContext)
+class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
+                          maxParticipants: Option[Int] = None,
+                          showPeopleOnly: Boolean = false,
+                          showArrow: Boolean = true,
+                          createSubtitle: Option[(UserData) => String] = None
+                         )(implicit context: Context, injector: Injector, eventContext: EventContext)
   extends RecyclerView.Adapter[ViewHolder] with Injectable {
   import ParticipantsAdapter._
 
-  private lazy val zms                    = inject[Signal[ZMessaging]]
+  private lazy val usersStorage = inject[Signal[UsersStorage]]
+  private lazy val convsUi      = inject[Signal[ConversationsUiService]]
+  private lazy val team         = inject[Signal[Option[TeamId]]]
+
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val convController         = inject[ConversationController]
   private lazy val themeController        = inject[ThemeController]
@@ -75,17 +82,18 @@ class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: B
   val filter = Signal("")
 
   lazy val users = for {
-    z       <- zms
-    userIds <- participantsController.otherParticipants.map(_.toSeq)
-    users   <- Signal.sequence(userIds.filterNot(_ == z.selfUserId).map(z.usersStorage.signal): _*)
-    f       <- filter
+    usersStorage  <- usersStorage
+    tId           <- team
+    userIds       <- userIds
+    users         <- usersStorage.listSignal(userIds)
+    f             <- filter
     filteredUsers = users.filter(_.matchesFilter(f))
-  } yield filteredUsers.map(u => ParticipantData(u, u.isGuest(z.teamId) && !u.isWireBot)).sortBy(_.userData.getDisplayName.str)
+  } yield filteredUsers.map(u => ParticipantData(u, u.isGuest(tId) && !u.isWireBot)).sortBy(_.userData.getDisplayName.str)
 
   private val shouldShowGuestButton = inject[ConversationController].currentConv.map(_.accessRole.isDefined)
 
   private lazy val positions = for {
-    z           <- zms
+    tId         <- team
     users       <- users
     isTeam      <- participantsController.currentUserBelongsToConversationTeam
     convActive  <- convController.currentConv.map(_.isActive)
@@ -104,7 +112,7 @@ class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: B
     }
 
     (if (!showPeopleOnly) List(Right(ConversationName)) else Nil) :::
-    (if (convActive && z.teamId.isDefined && !showPeopleOnly) List(Right(Notifications))
+    (if (convActive && tId.isDefined && !showPeopleOnly) List(Right(Notifications))
     else Nil
       ) :::
     (if (convActive && !areWeAGuest && !showPeopleOnly) List(Right(EphemeralOptions))
@@ -145,7 +153,7 @@ class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: B
       notifyDataSetChanged()
   }
 
-  zms.map(_.teamId).onUi { tId =>
+  team.onUi { tId =>
     teamId = tId
     notifyDataSetChanged()
   }
@@ -159,12 +167,12 @@ class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: B
       GuestOptionsButtonViewHolder(view, convController)
     case UserRow =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.single_user_row, parent, false).asInstanceOf[SingleUserRowView]
-      view.showArrow(true)
+      view.showArrow(showArrow)
       view.setTheme(if (themeController.isDarkTheme) Theme.Dark else Theme.Light, background = true)
       ParticipantRowViewHolder(view, onClick)
     case ConversationName =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.conversation_name_row, parent, false)
-      returning(ConversationNameViewHolder(view, zms)) { vh =>
+      returning(ConversationNameViewHolder(view, convsUi)) { vh =>
         convNameViewHolder = Option(vh)
       }
     case Notifications =>
@@ -183,14 +191,16 @@ class ParticipantsAdapter(maxParticipants: Option[Int] = None, showPeopleOnly: B
   }
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = (items(position), holder) match {
-    case (Right(AllParticipants), h: ShowAllParticipantsViewHolder) => h.bind(peopleCount)
-    case (Left(userData), h: ParticipantRowViewHolder)            => h.bind(userData, teamId, maxParticipants.forall(peopleCount <= _) && items.lift(position + 1).forall(_.isRight))
-    case (Right(ConversationName), h: ConversationNameViewHolder) => for (id <- convId; name <- convName) h.bind(id, name, convVerified, teamId.isDefined)
+    case (Right(AllParticipants), h: ShowAllParticipantsViewHolder) =>
+      h.bind(peopleCount)
+    case (Left(userData), h: ParticipantRowViewHolder) =>
+      h.bind(userData, teamId, maxParticipants.forall(peopleCount <= _) && items.lift(position + 1).forall(_.isRight), createSubtitle)
+    case (Right(ConversationName), h: ConversationNameViewHolder) =>
+      for (id <- convId; name <- convName) h.bind(id, name, convVerified, teamId.isDefined)
     case (Right(sepType), h: SeparatorViewHolder) if Set(PeopleSeparator, ServicesSeparator).contains(sepType) =>
       val count = if (sepType == PeopleSeparator) peopleCount else botCount
       h.setTitle(getString(if (sepType == PeopleSeparator) R.string.participants_divider_people else R.string.participants_divider_services, count.toString))
       h.setId(if (sepType == PeopleSeparator) R.id.participants_section else R.id.services_section)
-
     case _ =>
   }
 
@@ -275,14 +285,17 @@ object ParticipantsAdapter {
 
     view.onClick(userId.foreach(onClick ! _))
 
-    def bind(participant: ParticipantData, teamId: Option[TeamId], lastRow: Boolean): Unit = {
+    def bind(participant: ParticipantData, teamId: Option[TeamId], lastRow: Boolean, createSubtitle: Option[(UserData) => String]): Unit = {
       userId = Some(participant.userData.id)
-      view.setUserData(participant.userData, teamId)
+      createSubtitle match {
+        case Some(f) => view.setUserData(participant.userData, teamId, f)
+        case None    => view.setUserData(participant.userData, teamId)
+      }
       view.setSeparatorVisible(!lastRow)
     }
   }
 
-  case class ConversationNameViewHolder(view: View, zms: Signal[ZMessaging]) extends ViewHolder(view) {
+  case class ConversationNameViewHolder(view: View, convsUi: Signal[ConversationsUiService]) extends ViewHolder(view) {
     private val callInfo = view.findViewById[TextView](R.id.call_info)
     private val editText = view.findViewById[TypefaceEditText](R.id.conversation_name_edit_text)
     private val penGlyph = view.findViewById[GlyphTextView](R.id.conversation_name_edit_glyph)
@@ -307,7 +320,7 @@ object ParticipantsAdapter {
           stopEditing()
           convId.foreach { c =>
             import Threading.Implicits.Background
-            zms.head.flatMap(_.convsUi.setConversationName(c, v.getText.toString))
+            convsUi.head.foreach(_.setConversationName(c, v.getText.toString))
           }
         }
         false

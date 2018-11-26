@@ -55,7 +55,7 @@ import com.waz.zclient.controllers.drawing.IDrawingController.DrawingDestination
 import com.waz.zclient.controllers.location.{ILocationController, LocationObserver}
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.creation.{CreateConversationController, CreateConversationManagerFragment}
-import com.waz.zclient.conversation.{ConversationController, LikesListFragment}
+import com.waz.zclient.conversation.{ConversationController, LikesAndReadsFragment}
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.drawing.DrawingFragment
 import com.waz.zclient.giphy.GiphySharingPreviewFragment
@@ -116,7 +116,7 @@ class ConversationManagerFragment extends FragmentHelper
         if ((navigationController.getCurrentRightPage == Page.CAMERA) && !change.noChange)
           cameraController.closeCamera(CameraContext.MESSAGE)
 
-        screenController.showLikesForMessage ! None
+        screenController.showMessageDetails ! None
 
         participantsController.onHideParticipants ! false
       } else if (!change.noChange) {
@@ -124,9 +124,9 @@ class ConversationManagerFragment extends FragmentHelper
       }
     }
 
-    subs += screenController.showLikesForMessage.onUi {
-      case Some(mId) => showFragment(new LikesListFragment, LikesListFragment.Tag)
-      case None      => getChildFragmentManager.popBackStack(LikesListFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+    subs += screenController.showMessageDetails.onUi {
+      case Some(mId) => showFragment(new LikesAndReadsFragment, LikesAndReadsFragment.Tag)
+      case None      => getChildFragmentManager.popBackStack(LikesAndReadsFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
     }
 
     subs += participantsController.onShowParticipants.onUi { childTag =>

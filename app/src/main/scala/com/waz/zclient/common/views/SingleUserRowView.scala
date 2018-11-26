@@ -75,10 +75,12 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
     nameView.setText(text)
   }
 
-  def setSubtitle(text: Option[String]): Unit = text.fold(subtitleView.setVisibility(View.GONE)) { t =>
-    subtitleView.setVisibility(View.VISIBLE)
-    subtitleView.setText(t)
-  }
+  def setSubtitle(text: String): Unit =
+    if (text.isEmpty) subtitleView.setVisibility(View.GONE)
+    else {
+      subtitleView.setVisibility(View.VISIBLE)
+      subtitleView.setText(text)
+    }
 
   def setChecked(checked: Boolean): Unit = checkbox.setChecked(checked)
 
@@ -95,14 +97,12 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
     videoIndicator.setVisibility(if (user.isVideoEnabled) View.VISIBLE else View.GONE)
   }
 
-  def setUserData(userData: UserData, teamId: Option[TeamId], showSubtitle: Boolean = true): Unit = {
+  def setUserData(userData: UserData, teamId: Option[TeamId], createSubtitle: (UserData) => String = SingleUserRowView.defaultSubtitle): Unit = {
     chathead.setUserId(userData.id)
     setTitle(userData.getDisplayName)
     if (teamId.isDefined) setAvailability(userData.availability)
     setVerified(userData.isVerified)
-    val handle = userData.handle.map(h => StringUtils.formatHandle(h.string))
-    val expiration = userData.expiresAt.map(ea => GuestUtils.timeRemainingString(ea.instant, Instant.now))
-    if (showSubtitle) setSubtitle(expiration.orElse(handle)) else subtitleView.setVisibility(View.GONE)
+    setSubtitle(createSubtitle(userData))
     setIsGuest(userData.isGuest(teamId) && !userData.isWireBot)
   }
 
@@ -111,7 +111,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
     setTitle(integration.name)
     setAvailability(Availability.None)
     setVerified(false)
-    setSubtitle(Some(integration.summary))
+    setSubtitle(integration.summary)
   }
 
   def setIsGuest(guest: Boolean): Unit = guestIndicator.setVisibility(if (guest) View.VISIBLE else View.GONE)
@@ -144,5 +144,13 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
       v.setLayoutParams(params)
       auxContainer.addView(v)
     }
+  }
+}
+
+object SingleUserRowView {
+  def defaultSubtitle(user: UserData)(implicit context: Context): String = {
+    val handle = user.handle.map(h => StringUtils.formatHandle(h.string))
+    val expiration = user.expiresAt.map(ea => GuestUtils.timeRemainingString(ea.instant, Instant.now))
+    expiration.orElse(handle).getOrElse("")
   }
 }

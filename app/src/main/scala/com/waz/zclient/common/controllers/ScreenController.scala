@@ -29,7 +29,7 @@ class ScreenController(implicit injector: Injector, context: Context) extends In
 
   def openOtrDevicePreferences(): Unit = context.startActivity(ShowDevicesIntent)
 
-  val showLikesForMessage = Signal(Option.empty[MessageId])
+  val showMessageDetails = Signal(Option.empty[MessageId])
 
   val showGiphy = EventStream[Option[String]]()
 

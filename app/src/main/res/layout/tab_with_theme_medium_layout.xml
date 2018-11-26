@@ -18,10 +18,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<com.waz.zclient.common.views.ChatheadView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    app:show_border="false"
-    android:layout_marginEnd="@dimen/wire__padding__small"
-    android:layout_width="@dimen/content__footer__chathead__size"
-    android:layout_height="@dimen/content__footer__chathead__size" />
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@android:id/text1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/wire__text_size__regular_small"
+        app:w_font="@string/wire__typeface__medium"
+        android:layout_gravity="center"
+        android:textColor="?wirePrimaryTextColor"
+        />
+
+</FrameLayout>
