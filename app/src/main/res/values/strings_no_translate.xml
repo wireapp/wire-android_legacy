@@ -202,7 +202,7 @@
     <string translatable="false" name="url_manage_services_staging">https://wire-admin-dev.zinfra.io/services/</string>
     <string translatable="false" name="usernames__learn_more__link">https://wire.com/support/username/</string>
     <string translatable="false" name="pref_support_website_url">https://support.wire.com</string>
-    <string translatable="false" name="pref_support_contact_url">https://support.wire.com/hc/de/requests/new</string>
+    <string translatable="false" name="pref_support_contact_url">https://support.wire.com/hc/requests/new</string>
     <string translatable="false" name="pref_about_website_url">https://wire.com</string>
 
 
