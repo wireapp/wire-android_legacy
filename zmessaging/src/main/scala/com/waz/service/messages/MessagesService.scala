@@ -18,7 +18,7 @@
 package com.waz.service.messages
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.api.Message
 import com.waz.api.Message.{Status, Type}
 import com.waz.api.impl.ErrorResponse
@@ -102,7 +102,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
   override def recallMessage(convId: ConvId, msgId: MessageId, userId: UserId, systemMsgId: MessageId = MessageId(), time: RemoteInstant, state: Message.Status = Message.Status.PENDING) =
     updater.getMessage(msgId) flatMap {
       case Some(msg) if msg.convId != convId =>
-        error(s"can not recall message belonging to other conversation: $msg, requested by $userId")
+        error(l"can not recall message belonging to other conversation: $msg, requested by $userId")
         Future successful None
       case Some(msg) if msg.canRecall(convId, userId) =>
         updater.deleteOnUserRequest(Seq(msgId)) flatMap { _ =>
@@ -114,7 +114,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
         // ephemeral message expired on other device, or on receiver side
         updater.deleteOnUserRequest(Seq(msgId)) map { _ => None }
       case msg =>
-        warn(s"can not recall $msg, requested by $userId")
+        warn(l"can not recall $msg, requested by $userId")
         Future successful None
     }
 
@@ -154,51 +154,51 @@ class MessagesServiceImpl(selfUserId:   UserId,
             // original message was already deleted, let's check if it was already updated
             edits.get(oldId) flatMap {
               case Some(EditHistory(_, _, editTime)) if editTime <= time =>
-                verbose(s"message $oldId has already been updated, discarding later update")
+                verbose(l"message $oldId has already been updated, discarding later update")
                 Future successful None
 
               case Some(EditHistory(_, updated, _)) =>
                 // this happens if message has already been edited locally,
                 // but that edit is actually newer than currently received one, so we should revert it
                 // we always use only the oldest edit for given message (as each update changes the message id)
-                verbose(s"message $oldId has already been updated, will overwrite new message")
+                verbose(l"message $oldId has already been updated, will overwrite new message")
                 findLatestUpdate(updated) flatMap {
                   case Some(msg) => applyEdit(msg)
                   case None =>
-                    error(s"Previously updated message was not found for: $gm")
+                    error(l"Previously updated message was not found for: $gm")
                     Future successful None
                 }
 
               case None =>
-                verbose(s"didn't find the original message for edit: $gm")
+                verbose(l"didn't find the original message for edit: $gm")
                 Future successful None
             }
         }
       case _ =>
-        error(s"invalid message for applyMessageEdit: $gm")
+        error(l"invalid message for applyMessageEdit: $gm")
         Future successful None
     }
   }
 
   override def addTextMessage(convId: ConvId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None) = {
-    verbose(s"addTextMessage($convId, ${content.take(4)}, $mentions, $exp")
+    verbose(l"addTextMessage($convId, ${content.size}, $mentions, $exp")
     val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
-    verbose(s"parsed content: $ct")
+    verbose(l"parsed content: $ct")
     val id = MessageId()
     updater.addLocalMessage(MessageData(id, convId, tpe, selfUserId, ct, protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil)))), exp = exp) // FIXME: links
   }
 
   override def addReplyMessage(quote: MessageId, content: String, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]] = {
 
-    verbose(s"addReplyMessage($quote, ${content.take(4)}, $mentions, $exp)")
+    verbose(l"addReplyMessage($quote, ${content.size}, $mentions, $exp)")
     updater.getMessage(quote).flatMap {
       case Some(original) =>
         val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
-        verbose(s"parsed content: $ct")
+        verbose(l"parsed content: $ct")
         val id = MessageId()
         val localTime = LocalInstant.Now
         replyHashing.hashMessage(original).flatMap { hash =>
-          verbose(s"hash before sending: ${hash.hexString}, original time: ${original.time}")
+          verbose(l"hash before sending: $hash, original time: ${original.time}")
           updater.addLocalMessage(
             MessageData(
               id, original.convId, tpe, selfUserId, ct,
@@ -213,17 +213,17 @@ class MessagesServiceImpl(selfUserId:   UserId,
         }
         .recover {
           case e@(_:IllegalArgumentException|_:replyHashing.MissingAssetException) =>
-            error(s"Got exception when checking reply hash, skipping", e)
+            error(l"Got exception when checking reply hash, skipping", e)
             None
         }
       case None =>
-        error(s"A reply to a non-existent message: $quote")
+        error(l"A reply to a non-existent message: $quote")
         Future.successful(None)
     }
   }
 
   override def addLocationMessage(convId: ConvId, content: Location) = {
-    verbose(s"addLocationMessage($convId, $content)")
+    verbose(l"addLocationMessage($convId, $content)")
     val id = MessageId()
     updater.addLocalMessage(MessageData(id, convId, Type.LOCATION, selfUserId, protos = Seq(GenericMessage(id.uid, content))))
   }
@@ -258,7 +258,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
   }
 
   override def addKnockMessage(convId: ConvId, selfUserId: UserId) = {
-    debug(s"addKnockMessage($convId, $selfUserId)")
+    debug(l"addKnockMessage($convId, $selfUserId)")
     updater.addLocalMessage(MessageData(MessageId(), convId, Message.Type.KNOCK, selfUserId))
   }
 
@@ -302,7 +302,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
   }
 
   override def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false, forceCreate: Boolean = false) = {
-    verbose(s"addMemberJoinMessage($convId, $creator, $users)")
+    verbose(l"addMemberJoinMessage($convId, $creator, $users)")
 
     def updateOrCreate(added: Set[UserId]) = {
       def update(msg: MessageData) = msg.copy(members = msg.members ++ added)
@@ -338,7 +338,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
           updater.updateMessage(msg.id) { _.copy(members = members) } // FIXME: possible race condition with addMemberJoinMessage or sync
         }
       case _ =>
-        warn("removeLocalMemberJoinMessage: no local join message found")
+        warn(l"removeLocalMemberJoinMessage: no local join message found")
         CancellableFuture.successful(())
     }
   }
@@ -359,7 +359,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
   override def addOtrVerifiedMessage(convId: ConvId) =
     storage.getLastMessage(convId) flatMap {
       case Some(msg) if msg.msgType == Message.Type.OTR_UNVERIFIED || msg.msgType == Message.Type.OTR_DEVICE_ADDED ||  msg.msgType == Message.Type.OTR_MEMBER_ADDED =>
-        verbose(s"addOtrVerifiedMessage, removing previous message: $msg")
+        verbose(l"addOtrVerifiedMessage, removing previous message: $msg")
         storage.remove(msg.id) map { _ => None }
       case _ =>
         updater.addLocalMessage(MessageData(MessageId(), convId, Message.Type.OTR_VERIFIED, selfUserId), Status.SENT) map { Some(_) }
@@ -371,7 +371,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
       case MemberAdded => Message.Type.OTR_MEMBER_ADDED
       case _ => Message.Type.OTR_DEVICE_ADDED
     }
-    verbose(s"addOtrUnverifiedMessage($convId, $users, $change), msgType is $msgType")
+    verbose(l"addOtrUnverifiedMessage($convId, $users, $change), msgType is $msgType")
     updater.addLocalSentMessage(MessageData(MessageId(), convId, msgType, selfUserId, members = users.toSet)) map { Some(_) }
   }
 
@@ -395,7 +395,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
     convs.convByRemoteId(rConvId).flatMap {
       case Some(conv) => addMissedCallMessage(conv.id, from, time)
       case None =>
-        warn(s"No conversation found for remote id: $rConvId")
+        warn(l"No conversation found for remote id: $rConvId")
         Future.successful(None)
     }
 

@@ -20,12 +20,13 @@ package com.waz.sync.otr
 import android.content.Context
 import android.location.Geocoder
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.api.Verification
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.OtrClientsStorage
 import com.waz.model.UserId
 import com.waz.model.otr.{Client, ClientId, Location, UserClients}
+import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr._
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.{Retry, Success}
@@ -57,9 +58,9 @@ class OtrClientsSyncHandlerImpl(context:    Context,
   private lazy val sessions = cryptoBox.sessions
 
   def syncClients(user: UserId): Future[SyncResult] = {
-    verbose(s"syncClients: $user")
+    verbose(l"syncClients: $user")
 
-    def hasSession(user: UserId, client: ClientId) = sessions.getSession(OtrService.sessionId(user, client)).map(_.isDefined)
+    def hasSession(user: UserId, client: ClientId) = sessions.getSession(SessionId(user, client)).map(_.isDefined)
 
     def loadClients = (if (user == userId) netClient.loadClients() else netClient.loadClients(user)).future
 
@@ -79,7 +80,7 @@ class OtrClientsSyncHandlerImpl(context:    Context,
     def updatePreKeys(id: ClientId) =
       netClient.loadRemainingPreKeys(id).future flatMap {
         case Right(ids) =>
-          verbose(s"remaining prekeys: $ids")
+          verbose(l"remaining prekeys: $ids")
           cryptoBox.generatePreKeysIfNeeded(ids) flatMap {
             case keys if keys.isEmpty => Future.successful(Success)
             case keys => netClient.updateKeys(id, Some(keys)).future map {
@@ -130,7 +131,7 @@ class OtrClientsSyncHandlerImpl(context:    Context,
         case Right(us) =>
           for {
             _ <- otrClients.updateClients(us.mapValues(_.map { case (id, key) => Client(id, "") }))
-            prekeys = us.flatMap { case (u, cs) => cs map { case (c, p) => (OtrService.sessionId(u, c), p)} }
+            prekeys = us.flatMap { case (u, cs) => cs map { case (c, p) => (SessionId(u, c), p)} }
             _ <- Future.traverse(prekeys) { case (id, p) => sessions.getOrCreateSession(id, p) }
             _ <- VerificationStateUpdater.awaitUpdated(userId)
           } yield None

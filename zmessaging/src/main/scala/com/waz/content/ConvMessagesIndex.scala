@@ -69,10 +69,6 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
     val lastMessageFromSelf: Signal[Option[MessageData]] = returning(sources.lastMessageFromSelf)(_.disableAutowiring())
     val lastMessageFromOther: Signal[Option[MessageData]] = returning(sources.lastMessageFromOther)(_.disableAutowiring())
 
-    lastMessageFromSelf { msg =>
-      info(l"last message from self is now ${msg.map(_.id)}")
-    }
-
     val unreadCount = for {
       time <- sources.lastReadTime
       _ <- Signal.wrap(LocalInstant.Epoch, indexChanged.map(_.time)).throttle(500.millis)
@@ -104,7 +100,6 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
       }
     }.map { _ =>
       Signal(signals.unreadCount, signals.failedCount, signals.lastMissedCall, signals.incomingKnock).throttle(500.millis) { case (unread, failed, missed, knock) =>
-        verbose(l"update conversation state: unread: $unread, failed: $failed, missed: $missed, knock: $knock")
         convs.update(convId, _.copy(incomingKnockMessage = knock, missedCallMessage = missed, unreadCount = unread, failedCount = failed))
       }
     }
@@ -179,7 +174,6 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
 
   private[content] def add(msgs: Seq[MessageData]): Future[Unit] = init map { _ =>
     msgs foreach { msg =>
-      verbose(l"add(${msg.id}), last: ${lastMessage.currentValue.map(_.map(_.id))}")
 
       if (msg.isLocal && lastLocalMessageByType.get(msg.msgType).forall(_.time.isBefore(msg.time)))
         lastLocalMessageByType(msg.msgType) = msg

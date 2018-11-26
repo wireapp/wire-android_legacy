@@ -32,7 +32,7 @@ import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
 import com.waz.service.UserService.UnsplashUrl
 import com.waz.service.assets.AssetService.RawAssetInput.UriInput
-import com.waz.service.otr.OtrService.sessionId
+import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.tracking.LoggedOutEvent
 import com.waz.sync.client.InvitationClient.ConfirmedTeamInvitation
 import com.waz.sync.client.{InvitationClientImpl, OtrClientImpl}
@@ -160,7 +160,7 @@ class AccountManager(val userId:   UserId,
         if (userId == uId && selfClientId.contains(cId))
           Signal.future(cryptoBox(Future successful _.getLocalFingerprint))
         else
-          cryptoBox.sessions.remoteFingerprint(sessionId(uId, cId))
+          cryptoBox.sessions.remoteFingerprint(SessionId(uId, cId))
     } yield fingerprint
 
   def getOrRegisterClient(): ErrorOr[ClientRegistrationState] = {

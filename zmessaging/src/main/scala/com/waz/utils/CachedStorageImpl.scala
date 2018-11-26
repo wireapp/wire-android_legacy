@@ -256,8 +256,6 @@ trait CachedStorage[K, V] {
 
   def cacheIfNotPresent(key: K, value: V): Unit
 
-  def printCache(): Unit
-
   def contents: Signal[Map[K, V]]
 }
 
@@ -418,7 +416,6 @@ class CachedStorageImpl[K, V](cache: LruCache[K, Option[V]], db: Database)(impli
   def updateOrCreateAll2(keys: Iterable[K], updater: ((K, Option[V]) => V)): Future[Set[V]] =
     if (keys.isEmpty) Future successful Set.empty[V]
     else {
-      verbose(s"updateOrCreateAll: ${keys.size} keys: ${keys.take(5)}...")
       getAll(keys) flatMap { values =>
         val loaded: Map[K, Option[V]] = keys.iterator.zip(values.iterator).map { case (k, v) => k -> Option(cache.get(k)).flatten.orElse(v) }.toMap
         val toSave = Vector.newBuilder[V]
@@ -494,17 +491,6 @@ class CachedStorageImpl[K, V](cache: LruCache[K, Option[V]], db: Database)(impli
   def cacheIfNotPresent(key: K, value: V) = cachedOrElse(key, Future {
     Option(cache.get(key)).getOrElse { returning(Some(value))(cache.put(key, _)) }
   })
-
-  override def printCache(): Unit = {
-    val c = cache.snapshot().asScala
-
-    val vs = c.map {
-      case (key, Some(v)) => v.toString
-      case _ => ""
-    }.mkString("\n")
-
-    verbose(s"${c.size} values in cache: ${getClass.getSimpleName}\n$vs")
-  }
 
   // signal with all data
   override lazy val contents: Signal[Map[K, V]] = {

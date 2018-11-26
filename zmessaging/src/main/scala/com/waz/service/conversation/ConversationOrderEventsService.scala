@@ -18,7 +18,7 @@
 package com.waz.service.conversation
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.content.{ConversationStorage, MessagesStorage}
 import com.waz.model.GenericContent._
 import com.waz.model._
@@ -94,7 +94,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
   }
 
   def handlePostConversationEvent(event: ConversationEvent): Future[Unit] = {
-    debug(s"handlePostConversationEvent($event)")
+    debug(l"handlePostConversationEvent($event)")
     Future.sequence(Seq(
       event match {
         case ev: MessageEvent => pipeline(Seq(ev.withCurrentLocalTime())) // local time is required for the hot knock mechanism
@@ -112,7 +112,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
   private def processConversationOrderEvents(convId: RConvId, es: Seq[ConversationEvent]) =
     if (es.isEmpty) Future.successful(())
     else convs.processConvWithRemoteId(convId, retryAsync = true) { conv =>
-      verbose(s"processConversationOrderEvents($conv, $es)")
+      verbose(l"processConversationOrderEvents($conv, $es)")
       val lastTime = es.maxBy(_.time).time
       val fromSelf = es.filter(_.from == selfUserId)
       val lastRead = if (fromSelf.isEmpty) None else Some(fromSelf.maxBy(_.time).time)
@@ -127,7 +127,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
     }
 
   private def processConversationUnarchiveEvents(convId: RConvId, events: Seq[ConversationEvent]) = {
-    verbose(s"processConversationUnarchiveEvents($convId, ${events.size} events)")
+    verbose(l"processConversationUnarchiveEvents($convId, ${events.size} events)")
     for {
       convs   <- Future.sequence(events.filter(shouldUnarchive).groupBy(_.convId).map {
                   case (rId, es) if hasMentions(es) =>

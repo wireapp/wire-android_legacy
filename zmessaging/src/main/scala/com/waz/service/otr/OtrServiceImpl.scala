@@ -21,7 +21,7 @@ import java.io._
 import javax.crypto.Mac
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.cache.{CacheService, LocalData}
 import com.waz.content.{GlobalPreferences, MembersStorageImpl, OtrClientsStorage}
 import com.waz.model.GenericContent.ClientAction.SessionReset
@@ -101,14 +101,14 @@ class OtrServiceImpl(selfUserId:     UserId,
     val extData = otrMsg.externalData
     val localTime = otrMsg.localTime
     if (!(GenericMessage.isBroadcastMessage(genericMsg) || from == selfUserId) && conv.str == selfUserId.str) {
-      warn("Received a message to the self-conversation by someone else than self and it's not a broadcast")
+      warn(l"Received a message to the self-conversation by someone else than self and it's not a broadcast")
       None
     } else {
       genericMsg match {
         case GenericMessage(_, External(key, sha)) =>
           decodeExternal(key, Some(sha), extData) match {
             case None =>
-              error(s"External message could not be decoded External($key, $sha), data: $extData")
+              error(l"External message could not be decoded External($key, $sha), data: $extData")
               Some(OtrErrorEvent(conv, time, from, DecryptionError("symmetric decryption failed", from, sender)))
             case Some(GenericMessage(_, Calling(content))) =>
               Some(CallMessageEvent(conv, time, from, sender, content)) //call messages need sender client id
@@ -136,17 +136,17 @@ class OtrServiceImpl(selfUserId:     UserId,
   override def decryptStoredOtrEvent(ev: OtrEvent, eventWriter: PlainWriter)
       : Future[Either[OtrError, Unit]] =
     clients.getOrCreateClient(ev.from, ev.sender) flatMap { _ =>
-      sessions.decryptMessage(sessionId(ev.from, ev.sender), ev.ciphertext, eventWriter)
+      sessions.decryptMessage(SessionId(ev.from, ev.sender), ev.ciphertext, eventWriter)
         .map(Right(_))
         .recoverWith {
           case e: CryptoException =>
             import CryptoException.Code._
             e.code match {
               case DUPLICATE_MESSAGE =>
-                verbose(s"detected duplicate message for event: $ev")
+                verbose(l"detected duplicate message for event: $ev")
                 Future successful Left(Duplicate)
               case OUTDATED_MESSAGE =>
-                error(s"detected outdated message for event: $ev")
+                error(l"detected outdated message for event: $ev")
                 reportOtrError(e, ev)
                 Future successful Left(Duplicate)
               case REMOTE_IDENTITY_CHANGED =>
@@ -166,7 +166,7 @@ class OtrServiceImpl(selfUserId:     UserId,
 
   def resetSession(conv: ConvId, user: UserId, client: ClientId): Future[SyncId] =
     for {
-      _ <- sessions.deleteSession(sessionId(user, client))
+      _ <- sessions.deleteSession(SessionId(user, client))
       _ <- clientsStorage.updateVerified(user, client, verified = false)
       _ <- sync.syncPreKeys(user, Set(client))
       syncId <- sync.postSessionReset(conv, user, client)
@@ -174,21 +174,21 @@ class OtrServiceImpl(selfUserId:     UserId,
 
   def decryptCloudMessage(data: Array[Byte], mac: Array[Byte]): Future[Option[JSONObject]] = clients.getSelfClient map {
     case Some(client @ Client(_, _, _, _, _, _, Some(key), _, _)) =>
-      verbose(s"decrypting gcm for client $client")
+      verbose(l"decrypting gcm for client $client")
       if (hmacSha256(key, data).toSeq != mac.toSeq) {
-        warn(s"gcm MAC doesn't match")
+        warn(l"gcm MAC doesn't match")
         None
       } else
         LoggedTry(new JSONObject(new String(AESUtils.decrypt(key.encKey, data), "utf8"))).toOption
     case c =>
-      warn(s"can not decrypt gcm, no signaling key found: $c")
+      warn(l"can not decrypt gcm, no signaling key found: $c")
       None
   }
 
   def encryptTargetedMessage(user: UserId, client: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]] = {
     val msgData = GenericMessage.toByteArray(msg)
 
-    sessions.withSession(sessionId(user, client)) { session =>
+    sessions.withSession(SessionId(user, client)) { session =>
       EncryptedContent(Map(user -> Map(client -> session.encrypt(msgData))))
     }
   }
@@ -212,8 +212,8 @@ class OtrServiceImpl(selfUserId:     UserId,
         previous match {
           case Some(bytes) => Future successful Some(client.id -> bytes)
           case None =>
-            verbose(s"encrypt for client: $client")
-            sessions.withSession(sessionId(user, client.id)) { session => client.id -> session.encrypt(msgData) }.recover {
+            verbose(l"encrypt for client: $client")
+            sessions.withSession(SessionId(user, client.id)) { session => client.id -> session.encrypt(msgData) }.recover {
               case e: Throwable =>
                 tracking.exception(e, s"encryption failed")
                 if (useFakeOnError) Some(client.id -> EncryptionFailedMsg) else None
@@ -234,13 +234,13 @@ class OtrServiceImpl(selfUserId:     UserId,
 
   def deleteClients(userMap: Map[UserId, Seq[ClientId]]): Future[Any] = Future.traverse(userMap) {
     case (user, cs) => clients.removeClients(user, cs) flatMap { _ =>
-      Future.traverse(cs) { c => sessions.deleteSession(sessionId(user, c)) }
+      Future.traverse(cs) { c => sessions.deleteSession(SessionId(user, c)) }
     }
   }
 
   def fingerprintSignal(userId: UserId, cId: ClientId): Signal[Option[Array[Byte]]] =
     if (userId == selfUserId && cId == clientId) Signal.future(cryptoBox { cb => Future successful cb.getLocalFingerprint })
-    else cryptoBox.sessions.remoteFingerprint(sessionId(userId, cId))
+    else cryptoBox.sessions.remoteFingerprint(SessionId(userId, cId))
 
   def encryptAssetDataCBC(key: AESKey, data: LocalData): Future[(Sha256, LocalData, EncryptionAlgorithm)] = {
     import Threading.Implicits.Background
@@ -271,7 +271,7 @@ class OtrServiceImpl(selfUserId:     UserId,
       otrKey.map { key =>
         if (sha.forall(_.str == com.waz.utils.sha2(arr))) LoggedTry(AESUtils.decrypt(key, arr)).toOption else None
       }.getOrElse {
-        warn(s"got otr asset event without otr key: $assetId")
+        warn(l"got otr asset event without otr key: $assetId")
         Some(arr)
       }
     }.filter(_.nonEmpty)
@@ -292,7 +292,9 @@ object OtrService {
 
   val EncryptionFailedMsg = "\uD83D\uDCA3".getBytes("utf8")
 
-  def sessionId(user: UserId, client: ClientId) = s"${user}_$client"
+  case class SessionId(user: UserId, client: ClientId) {
+    override def toString: String = s"${user}_$client"
+  }
 
   def hmacSha256(key: SignalingKey, data: Array[Byte]) = {
     val mac = Mac.getInstance("HmacSHA256")

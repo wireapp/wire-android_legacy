@@ -48,7 +48,7 @@ case class Sha256(str: String) {
 
   def matches(bytes: Array[Byte]) = str == com.waz.utils.sha2(bytes)
 
-  def hexString = String.format("%02X", new BigInteger(1, AESUtils.base64(str))).toLowerCase
+  def hexString = String.format("%02X", new BigInteger(1, bytes)).toLowerCase
 }
 
 object Sha256 {

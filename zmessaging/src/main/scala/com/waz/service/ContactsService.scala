@@ -126,7 +126,6 @@ class ContactsServiceImpl(userId:         UserId,
     returning(user.phone.fold2(Set.empty[ContactId], p => PhoneNumbersDao.findBy(p)) ++ user.email.fold2(Set.empty, e => EmailAddressesDao.findBy(e))) { contacts =>
       if (user.hasEmailOrPhone) ContactsOnWireDao.delete(ContactsOnWireDao.User, user.id)
       if (contacts.nonEmpty) ContactsOnWireDao.insertOrIgnore(contacts.iterator.map((user.id, _)))
-      verbose(l"user ${user.id} locally matches ${contacts.size} contact(s)")
     }
   }
 

@@ -178,7 +178,6 @@ class MessagesStorageImpl(context:     Context,
           }
 
         repliesNotMentionsCount.map { unreadReplies =>
-          verbose(l"unread: ${unread.size}, unread replies: $unreadReplies")
           UnreadCount(
             normal   = unread.count(m => !m.isSystemMessage && m.msgType != Message.Type.KNOCK && !m.hasMentionOf(selfUserId)) - unreadReplies,
             call     = unread.count(_.msgType == Message.Type.MISSED_CALL),

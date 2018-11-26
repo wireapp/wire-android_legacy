@@ -254,8 +254,6 @@ object ConversationsClient {
 
     implicit lazy val Decoder: JsonDecoder[ConversationResponse] = new JsonDecoder[ConversationResponse] {
       override def apply(implicit js: JSONObject): ConversationResponse = {
-        debug(s"decoding response: $js")
-
         val members = js.getJSONObject("members")
         val state = ConversationState.Decoder(members.getJSONObject("self"))
 

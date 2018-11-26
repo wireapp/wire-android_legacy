@@ -26,16 +26,19 @@ import com.waz.api.{MessageContent => _, _}
 import com.waz.content.Preferences.PrefKey
 import com.waz.log.InternalLog.LogLevel.{Debug, Error, Info, Verbose, Warn}
 import com.waz.model.AccountData.Password
+import com.waz.model.GenericContent.Location
 import com.waz.model._
-import com.waz.model.otr.ClientId
+import com.waz.model.otr.{Client, ClientId, UserClients}
 import com.waz.service.PlaybackRoute
 import com.waz.service.assets.AssetService.RawAssetInput
 import com.waz.service.assets.AssetService.RawAssetInput.{BitmapInput, ByteInput, UriInput, WireAssetInput}
 import com.waz.service.call.Avs.AvsClosedReason.reasonString
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo
+import com.waz.service.otr.OtrService.SessionId
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.utils.{sha2, wrappers}
+import org.json.JSONObject
 import org.threeten.bp
 import org.threeten.bp.Instant
 
@@ -137,6 +140,10 @@ object ZLog2 {
     implicit val ThrowableShow:      LogShow[Throwable]      = logShowWithToString
     implicit val ShowStringLogShow:  LogShow[ShowString]     = logShowWithToString
 
+    implicit val Sha256LogShow: LogShow[Sha256] = create(_.hexString, _.str)
+
+    implicit val JSONObjectLogShow:  LogShow[JSONObject] = logShowWithHash
+
     //TODO how much of a file/uri can we show in prod?
     //common types
     implicit val FileLogShow: LogShow[File] = create(_ => "<file>", _.getAbsolutePath)
@@ -145,13 +152,13 @@ object ZLog2 {
     implicit val WUriLogShow: LogShow[wrappers.URI] = create(_ => "<uri>", _.toString)
 
     //collections
-    private val TakeOnly = 10
+    private val TakeOnly = 3
 
     //TODO, why doesn't it work just to define the LogShow[Traversable[T]]?
     private def fromTraversable[T: LogShow](m: Traversable[T]): String = {
       val rem = m.size - TakeOnly
-      val end = if (rem > 0) s"and $rem other elements..." else ""
-      m.map(implicitly[LogShow[T]].showSafe).take(TakeOnly).mkString("", "\n", end)
+      val end = if (rem > 0) s" and $rem other elements..." else ""
+      m.map(implicitly[LogShow[T]].showSafe).take(TakeOnly).mkString("", ", ", end)
     }
 
     implicit def traversableShow[T: LogShow]: LogShow[Traversable[T]] =
@@ -174,6 +181,9 @@ object ZLog2 {
 
     implicit def tuple2Show[A: LogShow, B: LogShow]: LogShow[(A, B)] =
       create( t => (implicitly[LogShow[A]].showSafe(t._1), implicitly[LogShow[B]].showSafe(t._2)).toString())
+
+    implicit def tuple3Show[A: LogShow, B: LogShow, C: LogShow]: LogShow[(A, B, C)] =
+      create( t => (implicitly[LogShow[A]].showSafe(t._1), implicitly[LogShow[B]].showSafe(t._2), implicitly[LogShow[C]].showSafe(t._3)).toString())
 
     //TODO figure out a generic LogShow for Enums, most will be safe to log:
     implicit val NetworkModeShow:           LogShow[NetworkMode]                           = LogShow.create(_.name())
@@ -200,7 +210,7 @@ object ZLog2 {
     implicit val CacheKeyShow:   LogShow[CacheKey]   = logShowWithHash
     implicit val AssetTokenShow: LogShow[AssetToken] = logShowWithHash
 
-    implicit val PasswordShow: LogShow[Password] = create(p => "********") //Also don't show in debug mode (e.g. Internal)
+    implicit val PasswordShow: LogShow[Password] = create(_ => "********") //Also don't show in debug mode (e.g. Internal)
 
     implicit val NameShow:              LogShow[Name]             = logShowWithHash
     implicit val EmailShow:             LogShow[EmailAddress]     = logShowWithHash
@@ -238,6 +248,21 @@ object ZLog2 {
       t => s"AccessToken(${t.accessToken.take(10)}, exp: ${t.expiresAt}, isValid: ${t.isValid})",
       t => s"AccessToken(${t.accessToken}, exp: ${t.expiresAt}, isValid: ${t.isValid})"
     )
+
+    implicit val ClientLogShow: LogShow[Client] = createFrom { c =>
+      import c._
+      l"Client(id: $id | regTime: $regTime | verified: $verified)"
+    }
+
+    implicit val UserClientsLogShow: LogShow[UserClients] = createFrom { c =>
+      import c._
+      l"UserClients(user: $user | clients: ${clients.values})"
+    }
+
+    implicit val SessionIdLogShow: LogShow[SessionId] = createFrom { id =>
+      import id._
+      l"SessionId(userId: $user | client: $client)"
+    }
 
     implicit val MessageDataLogShow: LogShow[MessageData] =
       LogShow.createFrom { m =>
@@ -291,6 +316,14 @@ object ZLog2 {
         """.stripMargin
       }
 
+    implicit val TeamDataLogShow: LogShow[TeamData] =
+      LogShow.createFrom { n =>
+        import n._
+        l"""
+           |TeamData(id: $id | name: $name | creator: $creator)
+        """.stripMargin
+      }
+
     implicit val VideoStateLogShow: LogShow[VideoState] = logShowWithToString
     implicit val CallInfoLogShow: LogShow[CallInfo] =
       LogShow.createFrom { n =>
@@ -306,6 +339,26 @@ object ZLog2 {
 
     //Events
     implicit val EventLogShow: LogShow[Event] = logShowWithHash
+    implicit val OtrErrorLogShow: LogShow[OtrError] =
+      LogShow.createFrom {
+        case Duplicate => l"Duplicate"
+        case DecryptionError(msg, from, sender) => l"DecryptionError(msg: ${showString(msg)} | from: $from | sender: $sender)"
+        case IdentityChangedError(from, sender) => l"IdentityChangedError(from: $from | sender: $sender)"
+        case UnknownOtrErrorEvent(json) => l"UnknownOtrErrorEvent(json: $json)"
+      }
+    implicit val OtrErrorEventLogShow: LogShow[OtrErrorEvent] =
+      LogShow.createFrom { e =>
+        import e._
+        l"OtrErrorEvent(convId: $convId | time: $time | from: $from | error: ${e.error})"
+      }
+
+    //Protos
+    implicit val GenericMessageLogShow: LogShow[GenericMessage] = LogShow.create { m =>
+      m.getContentCase
+      s"GenericMessage(messageId: ${sha2(m.messageId)} | contentCase: ${m.getContentCase})"
+    }
+
+    implicit val LocationLogShow: LogShow[Location] = LogShow.logShowWithHash
   }
 
   trait CanBeShown {
