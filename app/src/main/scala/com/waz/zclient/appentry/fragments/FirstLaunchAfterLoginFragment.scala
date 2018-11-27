@@ -26,7 +26,6 @@ import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.UserId
 import com.waz.permissions.PermissionsService
@@ -34,7 +33,7 @@ import com.waz.service.AccountsService
 import com.waz.service.BackupManager.InvalidMetadata
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
-import com.waz.utils.{RichFuture, returning, _}
+import com.waz.utils.{returning, _}
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.appentry.fragments.FirstLaunchAfterLoginFragment._
 import com.waz.zclient.pages.main.conversation.AssetIntentsManager
@@ -43,10 +42,10 @@ import com.waz.zclient.ui.views.ZetaButton
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{FragmentHelper, R, SpinnerController}
 
-import scala.concurrent.duration._
 import scala.async.Async.{async, await}
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 object FirstLaunchAfterLoginFragment {
   val Tag: String = classOf[FirstLaunchAfterLoginFragment].getName
@@ -177,7 +176,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
           case _ => activity.onEnterApplication(openSettings = false)
         }
       }
-    } logFailure() recover {
+    }.recover {
       case InvalidMetadata.UserId =>
         spinnerController.showSpinner(false)
         displayError(R.string.backup_import_error_wrong_account_title, R.string.backup_import_error_wrong_account)

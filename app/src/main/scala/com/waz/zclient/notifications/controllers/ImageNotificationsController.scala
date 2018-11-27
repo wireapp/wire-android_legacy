@@ -28,12 +28,13 @@ import com.waz.service.assets.AssetService.BitmapResult
 import com.waz.service.images.BitmapSignal
 import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache.BitmapRequest.Single
-import com.waz.utils.LoggedTry
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.URI
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.IntentUtils._
 import com.waz.zclient.{Injectable, Injector, R, WireContext}
+
+import scala.util.Try
 
 class ImageNotificationsController(implicit cxt: WireContext, eventContext: EventContext, inj: Injector) extends Injectable {
 
@@ -88,12 +89,12 @@ class ImageNotificationsController(implicit cxt: WireContext, eventContext: Even
 
     def showNotification() = notManager.notify(ZETA_SAVE_IMAGE_NOTIFICATION_ID, builder.build())
 
-    LoggedTry(showNotification()).recover { case e =>
+    Try(showNotification()).recover { case e =>
       error(s"Notify failed: try without bitmap. Error: $e")
       builder.setLargeIcon(null)
       try showNotification()
       catch {
-        case e: Throwable => error("second display attempt failed, aborting")
+        case e: Throwable => error("second display attempt failed, aborting", e)
       }
     }
   }

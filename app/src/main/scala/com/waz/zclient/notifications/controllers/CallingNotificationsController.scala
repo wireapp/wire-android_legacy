@@ -37,7 +37,7 @@ import com.waz.threading.Threading.Implicits.Background
 import com.waz.ui.MemoryImageCache.BitmapRequest.Regular
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.{Context, Intent}
-import com.waz.utils.{LoggedTry, _}
+import com.waz.utils._
 import com.waz.zclient.Intents.{CallIntent, OpenCallingScreen}
 import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
@@ -47,6 +47,7 @@ import com.waz.zclient.utils.ContextUtils.{getString, _}
 import com.waz.zclient.utils.RingtoneUtils
 
 import scala.concurrent.Future
+import scala.util.Try
 import scala.util.control.NonFatal
 
 class CallingNotificationsController(implicit cxt: WireContext, eventContext: EventContext, inj: Injector) extends Injectable {
@@ -150,7 +151,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
         notificationManager.notify(CallNotificationTag, not.id, builder.build())
       }
 
-      LoggedTry(showNotification()).recover {
+      Try(showNotification()).recover {
         case NonFatal(e) =>
           error(s"Notify failed: try without bitmap", e)
           builder.setLargeIcon(null)

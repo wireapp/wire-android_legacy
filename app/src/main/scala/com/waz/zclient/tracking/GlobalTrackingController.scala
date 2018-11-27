@@ -27,7 +27,7 @@ import com.waz.content.{GlobalPreferences, UsersStorage}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
 import com.waz.service.ZMessaging
-import com.waz.service.tracking.TrackingService.{NoReporting, track}
+import com.waz.service.tracking.TrackingService.NoReporting
 import com.waz.service.tracking._
 import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils.RichThreetenBPDuration
@@ -56,6 +56,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
   val zmsOpt      = inject[Signal[Option[ZMessaging]]]
   val zMessaging  = inject[Signal[ZMessaging]]
   val currentConv = inject[Signal[ConversationData]]
+  val tracking    = inject[TrackingService]
 
   def optIn(): Future[Unit] = {
     verbose("optIn")
@@ -120,13 +121,13 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     }
 
   def onEnteredCredentials(response: Either[ErrorResponse, _], method: SignInMethod): Unit =
-    track(EnteredCredentialsEvent(method, responseToErrorPair(response)), None)
+    tracking.track(EnteredCredentialsEvent(method, responseToErrorPair(response)), None)
 
   def onEnterCode(response: Either[ErrorResponse, Unit], method: SignInMethod): Unit =
-    track(EnteredCodeEvent(method, responseToErrorPair(response)))
+    tracking.track(EnteredCodeEvent(method, responseToErrorPair(response)))
 
   def onRequestResendCode(response: Either[ErrorResponse, Unit], method: SignInMethod, isCall: Boolean): Unit =
-    track(ResendVerificationEvent(method, isCall, responseToErrorPair(response)))
+    tracking.track(ResendVerificationEvent(method, isCall, responseToErrorPair(response)))
 
   def onAddNameOnRegistration(response: Either[ErrorResponse, Unit], inputType: InputType): Unit =
     for {
@@ -134,8 +135,8 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
       _   <- ZMessaging.currentAccounts.activeZms.collect { case Some(z) => z }.head
       acc <- ZMessaging.currentAccounts.activeAccount.collect { case Some(acc) => acc }.head
     } yield {
-      track(EnteredNameOnRegistrationEvent(inputType, responseToErrorPair(response)), Some(acc.id))
-      track(RegistrationSuccessfulEvent(SignInFragment.Phone), Some(acc.id))
+      tracking.track(EnteredNameOnRegistrationEvent(inputType, responseToErrorPair(response)), Some(acc.id))
+      tracking.track(RegistrationSuccessfulEvent(SignInFragment.Phone), Some(acc.id))
     }
 
   def flushEvents(): Unit = {}

@@ -19,16 +19,14 @@ package com.waz.zclient.common.controllers
 
 import android.content.{Context, Intent}
 import android.net.Uri
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.MessageContent.Location
 import com.waz.model.MessageId
 import com.waz.service.BackendConfig
-import com.waz.utils.LoggedTry
 import com.waz.utils.events.EventStream
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
-import com.waz.zclient.{Injectable, Injector, R}
-import com.waz.zclient.utils.IntentUtils
 import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.IntentUtils
+import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.util.Try
 
@@ -44,7 +42,7 @@ class BrowserController(implicit context: Context, injector: Injector) extends I
 
   def openUrl(uri: String): Try[Unit] = openUrl(AndroidURIUtil.parse(uri))
 
-  def openUrl(uri: URI): Try[Unit] = LoggedTry {
+  def openUrl(uri: URI): Try[Unit] = Try {
     val intent = new Intent(Intent.ACTION_VIEW, normalizeHttp(AndroidURIUtil.unwrap(uri)))
     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     context.startActivity(intent)

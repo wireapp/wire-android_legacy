@@ -22,6 +22,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.EmailAddress
 import com.waz.service.AccountsService
+import com.waz.service.tracking.TrackingService
 import com.waz.service.tracking.TrackingService._
 import com.waz.sync.client.InvitationClient.ConfirmedTeamInvitation
 import com.waz.threading.CancellableFuture
@@ -38,6 +39,7 @@ class InvitationsController(implicit inj: Injector, eventContext: EventContext, 
 
   private lazy val accountsService      = inject[AccountsService]
   private lazy val createTeamController = inject[CreateTeamController]
+  private lazy val tracking             = inject[TrackingService]
 
   var inputEmail = ""
 
@@ -61,7 +63,7 @@ class InvitationsController(implicit inj: Injector, eventContext: EventContext, 
       response match {
         case Left(e) => Left(e)
         case Right(_) =>
-          track(TeamInviteSent(), account.map(_.userId))
+          tracking.track(TeamInviteSent(), account.map(_.userId))
           Right(())
       }
   }

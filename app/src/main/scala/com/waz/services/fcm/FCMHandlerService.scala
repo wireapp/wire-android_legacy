@@ -18,23 +18,23 @@
 package com.waz.services.fcm
 
 import com.google.firebase.messaging.{FirebaseMessagingService, RemoteMessage}
-import com.waz.ZLog.{info, verbose, warn}
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.{info, verbose, warn}
 import com.waz.model.{Uid, UserId}
 import com.waz.service.AccountsService.InForeground
 import com.waz.service.ZMessaging.clock
 import com.waz.service.push.PushService.FetchFromIdle
 import com.waz.service.push.{PushService, ReceivedPushData, ReceivedPushStorage}
-import com.waz.service.tracking.TrackingService.exception
 import com.waz.service.{AccountsService, NetworkModeService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.{JsonDecoder, LoggedTry, RichInstant, Serialized}
+import com.waz.utils.{JsonDecoder, RichInstant, Serialized}
 import com.waz.zms.ZMessagingService
 import org.json
 import org.threeten.bp.Instant
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
+import scala.util.Try
 
 /**
   * For more information, see: https://firebase.google.com/docs/cloud-messaging/android/receive
@@ -44,6 +44,7 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
 
   lazy val pushSenderId = ZMessaging.currentGlobal.backend.pushSenderId
   lazy val accounts = ZMessaging.currentAccounts
+  lazy val tracking = ZMessaging.currentGlobal.trackingService
 
   override def onNewToken(s: String): Unit = {
     ZMessaging.globalModule.map {
@@ -82,7 +83,7 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
               }
             case _ =>
               warn(UserKeyMissingMsg)
-              exception(new Exception(UserKeyMissingMsg), UserKeyMissingMsg)
+              tracking.exception(new Exception(UserKeyMissingMsg), UserKeyMissingMsg)
               Future.successful({})
           }
         case Some(_) =>
@@ -172,7 +173,7 @@ object FCMHandlerService {
   object NoticeNotification {
     def unapply(data: Map[String, String]): Option[Uid] =
       (data.get(TypeKey), data.get(DataKey)) match {
-        case (Some("notice"), Some(content)) => LoggedTry(JsonDecoder.decodeUid('id)(new json.JSONObject(content))).toOption
+        case (Some("notice"), Some(content)) => Try(JsonDecoder.decodeUid('id)(new json.JSONObject(content))).toOption
         case _ => None
       }
   }
