@@ -20,15 +20,15 @@ package com.waz.service.push
 import java.io.IOException
 
 import com.waz.ZLog.LogTag
-import com.waz.log.ZLog2._
 import com.waz.api.NetworkMode
 import com.waz.content.{AccountStorage, GlobalPreferences}
+import com.waz.log.ZLog2._
 import com.waz.model.otr.ClientId
 import com.waz.model.{PushToken, PushTokenRemoveEvent, UserId}
 import com.waz.service.AccountsService.Active
 import com.waz.service.ZMessaging.accountTag
 import com.waz.service._
-import com.waz.service.tracking.TrackingService.exception
+import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.{ErrorOr, PushTokenClient}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
@@ -128,7 +128,8 @@ trait GlobalTokenService {
 
 class GlobalTokenServiceImpl(googleApi: GoogleApi,
                              prefs:     GlobalPreferences,
-                             network:   NetworkModeService) extends GlobalTokenService {
+                             network:   NetworkModeService,
+                             tracking:  TrackingService) extends GlobalTokenService {
   import PushTokenService._
   import com.waz.ZLog.ImplicitTag._
 
@@ -183,7 +184,7 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
       case ex: IOException =>
         error(l"Failed action on google APIs, probably due to server connectivity error, will retry again", ex)
         for {
-          _ <- if (attempts % logAfterAttempts == 0) exception(new Exception("Too many push token registration attempts") with NoStackTrace, s"Failed to register an FCM push token after $logAfterAttempts attempts") else Future.successful({})
+          _ <- if (attempts % logAfterAttempts == 0) tracking.exception(new Exception("Too many push token registration attempts") with NoStackTrace, s"Failed to register an FCM push token after $logAfterAttempts attempts") else Future.successful({})
           _ <- CancellableFuture.delay(ResetBackoff.delay(attempts)).future
           _ <- network.networkMode.filter(_ != NetworkMode.OFFLINE).head
           t <- retry(f, attempts + 1)

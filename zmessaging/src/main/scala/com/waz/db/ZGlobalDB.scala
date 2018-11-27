@@ -30,12 +30,13 @@ import com.waz.model.AccountData.AccountDataDao
 import com.waz.model.TeamData.TeamDataDoa
 import com.waz.model.otr.ClientId
 import com.waz.model.{AccountId, UserId}
+import com.waz.service.tracking.TrackingService
 import com.waz.utils.wrappers.DB
 import com.waz.utils.{JsonDecoder, JsonEncoder, Resource}
 import com.waz.sync.client.AuthenticationManager.AccessToken
 
-class ZGlobalDB(context: Context, dbNameSuffix: String = "")
-  extends DaoDB(context.getApplicationContext, DbName + dbNameSuffix, null, DbVersion, daos, Migrations.migrations(context)) {
+class ZGlobalDB(context: Context, dbNameSuffix: String = "", tracking: TrackingService)
+  extends DaoDB(context.getApplicationContext, DbName + dbNameSuffix, null, DbVersion, daos, Migrations.migrations(context), tracking) {
 
   override def onUpgrade(db: SQLiteDatabase, from: Int, to: Int): Unit = {
     if (from < 5) clearAllData(db)

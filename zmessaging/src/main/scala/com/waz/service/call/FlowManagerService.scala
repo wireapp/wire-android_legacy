@@ -61,7 +61,7 @@ class DefaultFlowManagerService(context:      Context,
     doWithFlowManager(_.networkChanged())
   }
 
-  lazy val flowManager: Option[FlowManager] = LoggedTry {
+  lazy val flowManager: Option[FlowManager] = Try {
     val fm = new FlowManager(context, null, if (globalPrefs.getFromPref(AutoAnswerCallPrefKey)) avsAudioTestFlag else 0)
     fm.addListener(flowListener)
     fm
@@ -115,13 +115,13 @@ class DefaultFlowManagerService(context:      Context,
   private def doWithFlowManager(op: FlowManager => Unit): Try[Unit] = withFlowManager(op, ())
 
   private def withFlowManager[T](op: FlowManager => T, fallback: => T): Try[T] =
-    flowManager.fold { warn("unable to access flow manager"); LoggedTry(fallback) } { fm => LoggedTry { op(fm) } }
+    flowManager.fold { warn("unable to access flow manager"); Try(fallback) } { fm => Try { op(fm) } }
 
   private def schedule(op: FlowManager => Unit)(implicit dispatcher: ExecutionContext): Future[Unit] =
     scheduleWithoutRecovery(op) .recoverWithLog()
 
   private def scheduleOr[T](op: FlowManager => T, fallback: => T)(implicit dispatcher: ExecutionContext): Future[T] =
-    scheduleWithoutRecovery(op) recover { LoggedTry.errorHandler() andThen (_.getOrElse(fallback)) }
+    scheduleWithoutRecovery(op).recover { case _: Throwable => fallback }
 
   private def scheduleWithoutRecovery[T](op: FlowManager => T)(implicit dispatcher: ExecutionContext): Future[T] =
     flowManager.fold[Future[T]] { Future.failed(new IllegalStateException("unable to access flow manager")) } { fm => Future(op(fm)) (dispatcher) }

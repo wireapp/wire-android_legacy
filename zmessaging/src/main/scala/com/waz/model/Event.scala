@@ -191,9 +191,7 @@ object Event {
 
     def gcmTokenRemoveEvent(implicit js: JSONObject) = PushTokenRemoveEvent(token = 'token, senderId = 'app, client = 'client)
 
-    override def apply(implicit js: JSONObject): Event = LoggedTry {
-
-      lazy val data = if (js.has("data") && !js.isNull("data")) Try(js.getJSONObject("data")).toOption else None
+    override def apply(implicit js: JSONObject): Event = Try {
 
       decodeString('type) match {
         case tpe if tpe.startsWith("conversation") => ConversationEventDecoder(js)
@@ -229,7 +227,7 @@ object ConversationEvent {
     Some((e.convId, e.time, e.from))
 
   implicit lazy val ConversationEventDecoder: JsonDecoder[ConversationEvent] = new JsonDecoder[ConversationEvent] {
-    override def apply(implicit js: JSONObject): ConversationEvent = LoggedTry {
+    override def apply(implicit js: JSONObject): ConversationEvent = Try {
 
       lazy val d = if (js.has("data") && !js.isNull("data")) Try(js.getJSONObject("data")).toOption else None
 
@@ -270,7 +268,7 @@ object OtrErrorEvent {
     OtrErrorDecoder(js.getJSONObject(s.name))
 
   implicit lazy val OtrErrorDecoder: JsonDecoder[OtrError] = new JsonDecoder[OtrError] {
-    override def apply(implicit js: JSONObject): OtrError = LoggedTry {
+    override def apply(implicit js: JSONObject): OtrError = Try {
       decodeString('type) match {
         case "otr-error.decryption-error" => DecryptionError('msg, 'from, 'sender)
         case "otr-error.identity-changed-error" => IdentityChangedError('from, 'sender)

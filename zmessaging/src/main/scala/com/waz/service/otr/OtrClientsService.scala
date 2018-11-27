@@ -54,7 +54,7 @@ class OtrClientsService(selfId:    UserId,
   }
 
   val otrClientsProcessingStage = EventScheduler.Stage[OtrClientEvent] { (convId, events) =>
-    RichFuture.processSequential(events) {
+    RichFuture.traverseSequential(events) {
       case OtrClientAddEvent(client) =>
         for {
           _  <- updateUserClients(selfId, Seq(client))

@@ -18,31 +18,32 @@
 package com.waz.service.otr
 
 import java.io._
-import javax.crypto.Mac
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
 import com.waz.cache.{CacheService, LocalData}
 import com.waz.content.{GlobalPreferences, MembersStorageImpl, OtrClientsStorage}
+import com.waz.log.ZLog2._
 import com.waz.model.GenericContent.ClientAction.SessionReset
 import com.waz.model.GenericContent._
 import com.waz.model._
 import com.waz.model.otr._
 import com.waz.service._
-import com.waz.service.tracking.TrackingService
 import com.waz.service.push.PushNotificationEventsStorage.PlainWriter
+import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.OtrClient
 import com.waz.sync.client.OtrClient.EncryptedContent
 import com.waz.threading.Threading
+import com.waz.utils._
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.utils.{LoggedTry, _}
 import com.wire.cryptobox.CryptoException
+import javax.crypto.Mac
 import org.json.JSONObject
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.util.Try
 
 
 trait OtrService {
@@ -129,8 +130,8 @@ class OtrServiceImpl(selfUserId:     UserId,
   private def decodeExternal(key: AESKey, sha: Option[Sha256], extData: Option[Array[Byte]]) =
     for {
       data  <- extData if sha.forall(_.matches(data))
-      plain <- LoggedTry(AESUtils.decrypt(key, data)).toOption
-      msg  <- LoggedTry(GenericMessage(plain)).toOption
+      plain <- Try(AESUtils.decrypt(key, data)).toOption
+      msg  <- Try(GenericMessage(plain)).toOption
     } yield msg
 
   override def decryptStoredOtrEvent(ev: OtrEvent, eventWriter: PlainWriter)
@@ -179,7 +180,7 @@ class OtrServiceImpl(selfUserId:     UserId,
         warn(l"gcm MAC doesn't match")
         None
       } else
-        LoggedTry(new JSONObject(new String(AESUtils.decrypt(key.encKey, data), "utf8"))).toOption
+        Try(new JSONObject(new String(AESUtils.decrypt(key.encKey, data), "utf8"))).toOption
     case c =>
       warn(l"can not decrypt gcm, no signaling key found: $c")
       None
@@ -269,7 +270,7 @@ class OtrServiceImpl(selfUserId:     UserId,
   def decryptAssetDataCBC(assetId: AssetId, otrKey: Option[AESKey], sha: Option[Sha256], data: Option[Array[Byte]]): Option[Array[Byte]] = {
     data.flatMap { arr =>
       otrKey.map { key =>
-        if (sha.forall(_.str == com.waz.utils.sha2(arr))) LoggedTry(AESUtils.decrypt(key, arr)).toOption else None
+        if (sha.forall(_.str == com.waz.utils.sha2(arr))) Try(AESUtils.decrypt(key, arr)).toOption else None
       }.getOrElse {
         warn(l"got otr asset event without otr key: $assetId")
         Some(arr)

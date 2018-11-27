@@ -25,8 +25,8 @@ import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetMetaData.Image.Tag.{Medium, Preview}
 import com.waz.model.{AssetData, AssetMetaData, Dim2, Mime}
 import com.waz.threading.CancellableFuture
+import com.waz.utils.JsonDecoder
 import com.waz.utils.wrappers.URI
-import com.waz.utils.{JsonDecoder, LoggedTry}
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
@@ -46,8 +46,8 @@ class GiphyClientImpl(implicit
                       authRequestInterceptor: AuthRequestInterceptor) extends GiphyClient {
 
   import GiphyClient._
-  import HttpClient.dsl._
   import HttpClient.AutoDerivation._
+  import HttpClient.dsl._
   import com.waz.threading.Threading.Implicits.Background
 
   private implicit val giphySeqDeserializer: RawBodyDeserializer[Seq[(Option[AssetData], AssetData)]] =
@@ -121,7 +121,7 @@ object GiphyClient {
 
     def decode(js: JSONObject) = {
       js.getJSONObject("meta").getInt("status") match {
-        case 200 => LoggedTry {
+        case 200 => Try {
           JsonDecoder.array(js.getJSONArray("data"), { (arr, index) =>
             val images = arr.getJSONObject(index).getJSONObject("images")
 

@@ -27,7 +27,7 @@ import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
-import com.waz.utils.RichFuture.processSequential
+import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream}
 
 import scala.concurrent.Future
@@ -55,7 +55,7 @@ class TypingService(userId:        UserId,
 
   val onTypingChanged = EventStream[(ConvId, IndexedSeq[TypingUser])]()
 
-  val typingEventStage = EventScheduler.Stage[TypingEvent]((c, es) => processSequential(es)(handleTypingEvent))
+  val typingEventStage = EventScheduler.Stage[TypingEvent]((c, es) => traverseSequential(es)(handleTypingEvent))
 
   accounts.accountState(userId).on(dispatcher) {
     case InForeground => // fine

@@ -256,7 +256,7 @@ class NotificationService(context:         Context,
       storage.removeAll(toRemove.map(NotId(_))).flatMap { _ =>
         add(toAdd.valuesIterator.map(r => NotificationData(NotId(r.id), "", convsByMsg.getOrElse(r.message, ConvId(r.user.str)), r.user, LIKE, time = r.timestamp, referencedMessage = Some(r.message))).toVector)
       }
-    }.logFailure()
+    }
   }
 
   reactionStorage.onDeleted { ids =>

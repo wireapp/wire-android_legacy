@@ -20,10 +20,10 @@ package com.waz.sync.otr
 import android.content.Context
 import android.location.Geocoder
 import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
 import com.waz.api.Verification
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.OtrClientsStorage
+import com.waz.log.ZLog2._
 import com.waz.model.UserId
 import com.waz.model.otr.{Client, ClientId, Location, UserClients}
 import com.waz.service.otr.OtrService.SessionId
@@ -32,10 +32,11 @@ import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.{Retry, Success}
 import com.waz.sync.client.OtrClient
 import com.waz.threading.Threading
-import com.waz.utils.{Locales, LoggedTry}
+import com.waz.utils.Locales
 
 import scala.collection.breakOut
 import scala.concurrent.Future
+import scala.util.Try
 
 trait OtrClientsSyncHandler {
   def syncClients(user: UserId): Future[SyncResult]
@@ -145,7 +146,7 @@ class OtrClientsSyncHandlerImpl(context:    Context,
 
     def loadName(lat: Double, lon: Double) = Future {
       val geocoder = new Geocoder(context, Locales.currentLocale)
-      LoggedTry.local(geocoder.getFromLocation(lat, lon, 1).asScala).toOption.flatMap(_.headOption).flatMap { add =>
+      Try(geocoder.getFromLocation(lat, lon, 1).asScala).toOption.flatMap(_.headOption).flatMap { add =>
         Option(Seq(Option(add.getLocality), Option(add.getCountryCode)).flatten.mkString(", ")).filter(_.nonEmpty)
       }
     } (Threading.BlockingIO)

@@ -56,7 +56,7 @@ object Migration {
  * Uses given list of migrations to migrate database from one version to another.
  * Finds shortest migration path and applies it.
  */
-class Migrations(migrations: Migration*) {
+class Migrations(migrations: Migration*)(implicit val tracking: TrackingService) {
 
   private implicit val logTag: LogTag = ZLog.logTagFor[Migrations]
   val toVersionMap = migrations.groupBy(_.toVersion)
@@ -107,7 +107,7 @@ class Migrations(migrations: Migration*) {
           } catch {
             case NonFatal(e) =>
               error(l"Migration failed for from: $fromVersion to: $toVersion", e)
-              TrackingService.exception(e, s"Migration failed for $storage, from: $fromVersion to: $toVersion")
+              tracking.exception(e, s"Migration failed for $storage, from: $fromVersion to: $toVersion")
               fallback(storage, db)
           }
       }

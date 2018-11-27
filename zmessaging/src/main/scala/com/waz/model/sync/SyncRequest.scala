@@ -368,10 +368,7 @@ object SyncRequest {
           case Cmd.Unknown                   => Unknown
         }
       } catch {
-        case NonFatal(e) =>
-          error(l"Error reading SyncCommand: ${showString(cmd)}", e)
-          TrackingService.exception(e, s"Error reading SyncCommand: $cmd")
-          Unknown
+        case NonFatal(e) => Unknown
       }
     }
   }

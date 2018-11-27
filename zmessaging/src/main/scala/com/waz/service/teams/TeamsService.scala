@@ -75,7 +75,7 @@ class TeamsServiceImpl(selfUser:           UserId,
     val convsCreated = events.collect { case ConversationCreate(_, id) => id }.toSet
     val convsDeleted = events.collect { case ConversationDelete(_, id) => id }.toSet
     for {
-      _ <- RichFuture.processSequential(events.collect { case e:Update => e}) { case Update(id, name, icon, iconKey) => onTeamUpdated(id, name, icon, iconKey) }
+      _ <- RichFuture.traverseSequential(events.collect { case e:Update => e}) { case Update(id, name, icon, iconKey) => onTeamUpdated(id, name, icon, iconKey) }
       _ <- onMembersJoined(membersJoined -- membersLeft)
       _ <- onMembersLeft(membersLeft -- membersJoined)
       _ <- onMembersUpdated(membersUpdated)

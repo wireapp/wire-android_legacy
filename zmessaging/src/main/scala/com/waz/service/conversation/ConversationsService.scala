@@ -110,7 +110,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   }
 
   val convStateEventProcessingStage = EventScheduler.Stage[ConversationStateEvent] { (_, events) =>
-    RichFuture.processSequential(events)(processConversationEvent(_, selfUserId))
+    RichFuture.traverseSequential(events)(processConversationEvent(_, selfUserId))
   }
 
   push.onHistoryLost { req =>

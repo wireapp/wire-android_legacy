@@ -33,6 +33,7 @@ import org.json.JSONObject
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
+import scala.util.Try
 import scala.util.control.NonFatal
 
 trait MediaManagerService {
@@ -49,7 +50,7 @@ class DefaultMediaManagerService(context: Context) extends MediaManagerService {
   private implicit val ev = EventContext.Global
 
   private val onPlaybackRouteChanged = EventStream[PlaybackRoute]()
-  private val audioConfig = LoggedTry(new JSONObject(IoUtils.asString(context.getAssets.open(AudioConfigAsset)))).toOption
+  private val audioConfig = Try(new JSONObject(IoUtils.asString(context.getAssets.open(AudioConfigAsset)))).toOption
 
   val mediaManager = Future {
     val manager = MediaManager.getInstance(context.getApplicationContext)

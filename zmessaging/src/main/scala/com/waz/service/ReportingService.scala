@@ -47,9 +47,9 @@ trait ReportingService {
   }
 
   private[service] def generateStateReport(writer: PrintWriter) =
-    Future { reporters } flatMap { rs =>
-      RichFuture.processSequential(rs)(_.apply(writer))
-    }
+    Future(reporters).flatMap { rs =>
+      RichFuture.traverseSequential(rs)(_.apply(writer))
+    }.map(_ => {})
 }
 
 object ReportingService {
@@ -84,7 +84,7 @@ class GlobalReportingService(context: Context, cache: CacheService, metadata: Me
       val rs: Seq[Reporter] =
         Seq(VersionReporter) ++ (if (metadata.internalBuild) Seq(PushRegistrationReporter, ZUsersReporter) ++ reporters else Seq.empty) ++ Seq(LogCatReporter, InternalLogReporter)
 
-      RichFuture.processSequential(rs)(_.apply(writer))
+      RichFuture.traverseSequential(rs)(_.apply(writer))
         .map(_ => CacheUri(entry.data, context))
         .andThen {
           case _ => writer.close()

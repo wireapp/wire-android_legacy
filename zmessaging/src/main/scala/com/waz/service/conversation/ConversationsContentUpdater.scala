@@ -222,7 +222,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
         warn(l"No conversation data found for remote id: $remoteId on try: $retryCount")(tag)
         if (retryAsync) {
           retry()
-          Future.failed(BoxedError(new NoSuchElementException(s"No conversation data found for: $remoteId") with NoStackTrace)) // use BoxedError to avoid sending unnecessary report
+          Future.failed(new NoSuchElementException(s"No conversation data found for: $remoteId"))
         } else
           retry()
     } (ec)

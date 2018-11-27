@@ -57,7 +57,7 @@ class ZMessagingFactory(global: GlobalModule) {
 
   implicit val tracking = global.trackingService
 
-  def baseStorage(userId: UserId) = new StorageModule(global.context, userId, global.prefs)
+  def baseStorage(userId: UserId) = new StorageModule(global.context, userId, global.prefs, global.trackingService)
 
   def auth(userId: UserId) = new AuthenticationManager(userId, global.accountsStorage, global.loginClient, tracking)
 
@@ -69,8 +69,8 @@ class ZMessagingFactory(global: GlobalModule) {
   def zmessaging(teamId: Option[TeamId], clientId: ClientId, accountManager: AccountManager, storage: StorageModule, cryptoBox: CryptoBoxService) = wire[ZMessaging]
 }
 
-class StorageModule(context: Context, val userId: UserId, globalPreferences: GlobalPreferences) {
-  lazy val db                                         = new ZmsDatabase(userId, context)
+class StorageModule(context: Context, val userId: UserId, globalPreferences: GlobalPreferences, tracking: TrackingService) {
+  lazy val db                                         = new ZmsDatabase(userId, context, tracking)
   lazy val userPrefs                                  = UserPreferences.apply(context, db, globalPreferences)
   lazy val usersStorage:      UsersStorage            = wire[UsersStorageImpl]
   lazy val otrClientsStorage: OtrClientsStorage       = wire[OtrClientsStorageImpl]
@@ -374,20 +374,4 @@ object ZMessaging { self =>
       } // "preload"... - this should be very fast, normally, but slows down to 10 to 20 seconds when multidexed...
     }
   }
-
-  // should be called on low memory events
-  def onTrimMemory(level: Int): CancellableFuture[Unit] = level match {
-    case ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN |
-         ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW |
-         ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL =>
-      TrackingService.exception(new RuntimeException(s"onTrimMemory($level)"), null)
-      Threading.Background {
-        currentGlobal.cache.deleteExpired()
-        currentGlobal.imageCache.clear()
-      }
-    case _ => CancellableFuture.successful {}
-  }
-
-
-
 }

@@ -33,7 +33,7 @@ import com.waz.utils.wrappers.DBCursor
 
 import scala.collection.Searching.{Found, InsertionPoint}
 import scala.concurrent.{Await, Future}
-import scala.util.Success
+import scala.util.{Success, Try}
 
 trait MsgCursor {
   def size: Int
@@ -102,7 +102,7 @@ class MessagesCursor(cursor: DBCursor,
 
   /** will block if message is outside of prefetched window */
   override def indexOf(time: RemoteInstant): Int =
-    returning(LoggedTry(Await.result(asyncIndexOf(time), 10.seconds)).getOrElse(lastReadIndex)) { index =>
+    returning(Try(Await.result(asyncIndexOf(time), 10.seconds)).getOrElse(lastReadIndex)) { index =>
       verbose(l"indexOf($time) = $index, lastReadTime: $lastReadTime")
     }
 
@@ -153,7 +153,7 @@ class MessagesCursor(cursor: DBCursor,
 
     windowFuture.value match {
       case Some(Success(result)) => result
-      case _ => logTime(s"loading window for index: $index")(LoggedTry(Await.result(windowFuture, 5.seconds)).getOrElse(new IndexWindow(index, IndexedSeq.empty)))
+      case _ => logTime(s"loading window for index: $index")(Try(Await.result(windowFuture, 5.seconds)).getOrElse(new IndexWindow(index, IndexedSeq.empty)))
     }
   }
 
@@ -175,10 +175,10 @@ class MessagesCursor(cursor: DBCursor,
 
       val msg = messages.get(id)
       if (msg ne null) msg else {
-        logTime("waiting for window to prefetch")(LoggedTry(Await.result(fetching, 5.seconds)))
+        logTime("waiting for window to prefetch")(Try(Await.result(fetching, 5.seconds)))
         Option(messages.get(id)).getOrElse {
           logTime(s"loading message for id: $id, position: $index") {
-            val m = LoggedTry(Await.result(loader(Seq(id)), 500.millis).headOption).toOption.flatten
+            val m = Try(Await.result(loader(Seq(id)), 500.millis).headOption).toOption.flatten
             m.foreach(putMessage)
             m.getOrElse(MessageAndLikes.Empty)
           }

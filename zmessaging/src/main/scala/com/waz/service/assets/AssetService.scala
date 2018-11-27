@@ -26,7 +26,6 @@ import android.media.ExifInterface
 import android.os.Environment
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.LogTag
-import com.waz.log.ZLog2._
 import com.waz.api
 import com.waz.api.ProgressIndicator.State
 import com.waz.api.impl.ProgressIndicator.ProgressData
@@ -35,13 +34,14 @@ import com.waz.bitmap.BitmapUtils
 import com.waz.cache.{CacheEntry, CacheService, Expiration, LocalData}
 import com.waz.content.WireContentProvider.CacheUri
 import com.waz.content._
+import com.waz.log.ZLog2._
 import com.waz.model.AssetData.{ProcessingTaskKey, UploadTaskKey}
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetMetaData.Image.Tag.Medium
 import com.waz.model.AssetStatus.Order._
 import com.waz.model.AssetStatus.{DownloadFailed, UploadCancelled, UploadDone, UploadFailed, UploadInProgress}
 import com.waz.model.ErrorData.AssetError
-import com.waz.model.Mime.{Audio, Image}
+import com.waz.model.Mime.Image
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service.ErrorsService
@@ -63,6 +63,7 @@ import scala.collection.immutable.ListSet
 import scala.concurrent.Future.successful
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.util.Try
 
 object AssetService {
 
@@ -282,7 +283,7 @@ class AssetServiceImpl(storage:         AssetsStorage,
           data = {
             verbose(l"data requested, compress completed: ${imageData.isCompleted}")
             // XXX: this is ugly, but will only be accessed from bg thread and very rarely, so we should be fine with that hack
-            LoggedTry(Await.result(imageData, 15.seconds)).toOption
+            Try(Await.result(imageData, 15.seconds)).toOption
           }
         ), isProfilePic)
 

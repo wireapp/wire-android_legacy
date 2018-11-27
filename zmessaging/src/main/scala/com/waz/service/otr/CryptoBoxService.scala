@@ -34,6 +34,7 @@ import com.wire.cryptobox.{CryptoBox, PreKey}
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
+import scala.util.Try
 
 class CryptoBoxService(context: Context, userId: UserId, metadata: MetaDataService, userPrefs: UserPreferences) {
   import CryptoBoxService._
@@ -55,7 +56,7 @@ class CryptoBoxService(context: Context, userId: UserId, metadata: MetaDataServi
     }
   }
 
-  private def load = LoggedTry {
+  private def load = Try {
     verbose(l"cryptobox directory created")
     cryptoBoxDir.mkdirs()
     CryptoBox.open(cryptoBoxDir.getAbsolutePath)

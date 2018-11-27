@@ -22,10 +22,17 @@ import android.database.sqlite.SQLiteDatabase.CursorFactory
 import android.database.sqlite.{SQLiteDatabase, SQLiteOpenHelper}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.log.ZLog2._
+import com.waz.service.tracking.TrackingService
 
 import scala.util.Try
 
-class DaoDB(context: Context, name: String, factory: CursorFactory, version: Int, daos: Seq[BaseDao[_]], migrations: Seq[Migration])
+class DaoDB(context:    Context,
+            name:       String,
+            factory:    CursorFactory,
+            version:    Int,
+            daos:       Seq[BaseDao[_]],
+            migrations: Seq[Migration],
+            tracking:   TrackingService)
   extends SQLiteOpenHelper(context, name, factory, version) {
 
   override def onConfigure(db: SQLiteDatabase): Unit = {
@@ -59,7 +66,7 @@ class DaoDB(context: Context, name: String, factory: CursorFactory, version: Int
   }
 
   override def onUpgrade(db: SQLiteDatabase, from: Int, to: Int): Unit =
-    new Migrations(migrations: _*).migrate(this, from, to)(db)
+    new Migrations(migrations: _*)(tracking).migrate(this, from, to)(db)
 
   def dropAllTables(db: SQLiteDatabase): Unit =
     daos.foreach { dao =>

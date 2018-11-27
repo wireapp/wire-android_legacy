@@ -115,14 +115,14 @@ class GlobalModuleImpl(val context:      AContext,
   val network:                  DefaultNetworkModeService        = wire[DefaultNetworkModeService]
   val tokenService:             GlobalTokenService               = wire[GlobalTokenServiceImpl]
 
-  val storage:                  Database                         = new GlobalDatabase(context)
+  val trackingService:          TrackingService                  = TrackingServiceImpl(accountsService)
+  val storage:                  Database                         = new GlobalDatabase(context, tracking = trackingService)
   val accountsStorageOld:       AccountsStorageOld               = wire[AccountsStorageOldImpl]
 
 
   lazy val ssoService:          SSOService                       = wire[SSOService]
   lazy val accountsService:     AccountsService                  = new AccountsServiceImpl(this)
   lazy val syncHandler:         SyncHandler                      = new AccountSyncHandler(accountsService)
-  lazy val trackingService:     TrackingService                  = TrackingServiceImpl(accountsService)
   lazy val notifications:       GlobalNotificationsService       = wire[GlobalNotificationsServiceImpl]
   lazy val calling:             GlobalCallingService             = new GlobalCallingService
 

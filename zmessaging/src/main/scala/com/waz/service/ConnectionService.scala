@@ -60,7 +60,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
   val connectionEventsStage = EventScheduler.Stage[UserConnectionEvent]((c, e) => handleUserConnectionEvents(e))
 
   val contactJoinEventsStage = EventScheduler.Stage[ContactJoinEvent] { (c, es) =>
-    RichFuture.processSequential(es) { e =>
+    RichFuture.traverseSequential(es) { e =>
       users.getOrCreateUser(e.user) flatMap { _ =>
         // update user name if it was just created (has empty name)
         users.updateUserData(e.user, u => u.copy(name = if (u.name == Name.Empty) e.name else u.name))

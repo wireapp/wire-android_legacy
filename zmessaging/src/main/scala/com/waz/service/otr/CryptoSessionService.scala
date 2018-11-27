@@ -17,17 +17,18 @@
  */
 package com.waz.service.otr
 
-import com.waz.log.ZLog2._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.log.ZLog2._
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.push.PushNotificationEventsStorage.PlainWriter
 import com.waz.threading.Threading
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.events.{AggregatingSignal, EventStream}
-import com.waz.utils.{LoggedTry, Serialized, returning}
+import com.waz.utils.{Serialized, returning}
 import com.wire.cryptobox.{CryptoBox, CryptoSession, PreKey}
 
 import scala.concurrent.Future
+import scala.util.Try
 
 class CryptoSessionService(cryptoBox: CryptoBoxService) {
 
@@ -52,7 +53,7 @@ class CryptoSessionService(cryptoBox: CryptoBoxService) {
   }
 
   private def loadSession(cb: CryptoBox, id: SessionId): Option[CryptoSession] =
-    LoggedTry(Option(cb.tryGetSession(id.toString))).getOrElse {
+    Try(Option(cb.tryGetSession(id.toString))).getOrElse {
       error(l"session loading failed unexpectedly, will delete session file")
       cb.deleteSession(id.toString)
       None
