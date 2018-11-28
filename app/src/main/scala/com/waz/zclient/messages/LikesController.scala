@@ -22,7 +22,6 @@ import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.{Injectable, Injector}
-import com.waz.ZLog.ImplicitTag._
 
 class LikesController(implicit ec: EventContext, injector: Injector) extends Injectable {
 

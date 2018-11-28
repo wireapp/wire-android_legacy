@@ -18,7 +18,6 @@
 package com.waz.zclient.common.controllers
 
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.SelfPermissions
 import com.waz.model.AccountDataOld.Permission

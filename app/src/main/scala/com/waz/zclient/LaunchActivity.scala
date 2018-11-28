@@ -18,7 +18,6 @@
 package com.waz.zclient
 
 import android.content.Intent
-import com.waz.ZLog.ImplicitTag._
 import com.waz.service.{AccountsService, BackendConfig}
 import com.waz.threading.Threading
 import com.waz.zclient.appentry.AppEntryActivity

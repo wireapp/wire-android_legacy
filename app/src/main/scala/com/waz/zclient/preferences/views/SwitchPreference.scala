@@ -26,9 +26,8 @@ import com.waz.content.Preferences.PrefKey
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventStream, Signal}
-import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.utils.RichView
-import com.waz.ZLog.ImplicitTag._
+import com.waz.zclient.{R, ViewHelper}
 
 trait Switchable {
   val onCheckedChange: EventStream[Boolean]

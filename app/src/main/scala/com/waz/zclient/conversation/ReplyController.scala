@@ -18,14 +18,13 @@
 package com.waz.zclient.conversation
 
 import android.content.Context
+import com.waz.content.MessagesStorage
 import com.waz.model.{AssetData, ConvId, MessageData, MessageId}
+import com.waz.service.messages.MessagesService
 import com.waz.utils.events.{EventContext, Signal, SourceSignal}
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.messages.{MessagesController, UsersController}
 import com.waz.zclient.{Injectable, Injector}
-import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.content.MessagesStorage
-import com.waz.service.messages.MessagesService
 
 import scala.concurrent.Future
 

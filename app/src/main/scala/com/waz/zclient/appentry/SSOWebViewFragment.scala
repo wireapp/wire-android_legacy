@@ -24,7 +24,6 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.webkit.WebView
 import android.widget.TextView
 import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag._
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils._

@@ -25,7 +25,6 @@ import com.waz.model.{ConvId, UserId}
 import com.waz.model.otr.{Client, ClientId, UserClients}
 import com.waz.service.{AccountManager, ZMessaging}
 import com.waz.sync.SyncResult
-import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversation.ConversationController

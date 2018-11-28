@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.conversationlist
 
+import com.waz.api.Message
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.ZMessaging
@@ -29,8 +30,6 @@ import com.waz.zclient.conversationlist.ConversationListManagerFragment.ConvList
 import com.waz.zclient.conversationlist.views.ConversationAvatarView
 import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.api.Message
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}

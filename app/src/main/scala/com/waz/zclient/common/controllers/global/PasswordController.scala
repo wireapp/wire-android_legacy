@@ -17,7 +17,6 @@
  */
 package com.waz.zclient.common.controllers.global
 
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.AccountData.Password
 import com.waz.service.{AccountsService, GlobalModule}
 import com.waz.threading.Threading

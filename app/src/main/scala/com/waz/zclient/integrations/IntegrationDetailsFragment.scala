@@ -24,7 +24,6 @@ import android.support.annotation.Nullable
 import android.support.v4.app.FragmentManager
 import android.view._
 import android.widget.ImageView
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model
 import com.waz.model._

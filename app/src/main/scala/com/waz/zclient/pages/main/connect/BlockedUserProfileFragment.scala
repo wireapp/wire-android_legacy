@@ -38,7 +38,6 @@ import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{ImageView, LinearLayout}
 import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading

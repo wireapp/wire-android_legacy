@@ -26,7 +26,6 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.conversationlist.ConversationListAdapter.Incoming
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{Injectable, Injector}
-import com.waz.ZLog.ImplicitTag._
 
 import scala.util.Try
 

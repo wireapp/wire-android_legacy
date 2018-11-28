@@ -22,7 +22,6 @@ import android.os.Bundle
 import android.support.v7.widget.Toolbar
 import android.view._
 import android.widget.TextView
-import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.ManagerFragment.Page

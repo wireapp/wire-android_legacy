@@ -31,7 +31,6 @@ import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.utils.RichView
-import com.waz.ZLog.ImplicitTag._
 
 class AccentColorPickerFragment extends DialogFragment with FragmentHelper {
 

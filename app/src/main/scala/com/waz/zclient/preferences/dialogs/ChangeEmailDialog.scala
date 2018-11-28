@@ -26,10 +26,10 @@ import android.support.v7.app.AlertDialog
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, WindowManager}
 import android.widget.{EditText, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.AccountData.Password
 import com.waz.model.EmailAddress
 import com.waz.service.{UserService, ZMessaging}
+import com.waz.sync.client.ErrorOr
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.returning
@@ -38,7 +38,6 @@ import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.pages.main.profile.validator.{EmailValidator, PasswordValidator}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, R}
-import com.waz.sync.client.ErrorOr
 
 import scala.util.Try
 

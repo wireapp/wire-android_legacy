@@ -18,7 +18,6 @@
 package com.waz.zclient.participants
 
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading

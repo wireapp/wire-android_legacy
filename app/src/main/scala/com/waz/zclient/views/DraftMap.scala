@@ -19,10 +19,9 @@ package com.waz.zclient.views
 
 import com.waz.model.{ConvId, Mention}
 import com.waz.utils.events.Signal
-import com.waz.zclient.{Injectable, Injector}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.cursor.CursorText
+import com.waz.zclient.{Injectable, Injector}
 
 import scala.concurrent.{ExecutionContext, Future}
 

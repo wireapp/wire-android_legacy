@@ -18,12 +18,11 @@
 package com.waz.zclient.messages.parts.footer
 
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
 import com.waz.api.Message.Status
 import com.waz.model.{LocalInstant, MessageData}
-import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.service.messages.{MessageAndLikes, MessagesService}
+import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.threading.CancellableFuture
 import com.waz.utils._
 import com.waz.utils.events.{ClockSignal, EventContext, Signal}

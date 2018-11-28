@@ -26,7 +26,6 @@ import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, ViewGroup}
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{ImageView, TextView}
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.api.Verification
 import com.waz.model._
 import com.waz.service.ZMessaging
