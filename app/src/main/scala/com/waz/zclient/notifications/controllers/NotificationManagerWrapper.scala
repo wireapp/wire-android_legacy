@@ -416,7 +416,11 @@ object NotificationManagerWrapper {
         contentValues.put(MediaStore.Audio.AudioColumns.IS_MUSIC, false)
         val uri = MediaStore.Audio.Media.INTERNAL_CONTENT_URI
 
-        cxt.getContentResolver.insert(uri, contentValues)
+        val query = cxt.getContentResolver.query(uri, null, s"${MediaStore.MediaColumns.DATA} LIKE '%$name%'", null, null)
+        if (query.getCount == 0) {
+          cxt.getContentResolver.insert(uri, contentValues)
+        }
+        query.close()
 
         true
       } catch {
