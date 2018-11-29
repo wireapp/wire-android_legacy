@@ -286,11 +286,7 @@ object ZLog2 {
     implicit val ConvDataLogShow: LogShow[ConversationData] =
       LogShow.createFrom { c =>
         import c._
-        l"""
-           |ConversationData(id: $id | remoteId: $remoteId | name: $name | convType: $convType | team: $team | muted: $muted | muteTime: $muteTime |
-           |  archived: $archived archivedTime: $archiveTime | lastRead: $lastRead | cleared: $cleared | unreadCount: $unreadCount)
-        """.stripMargin
-
+        l"ConversationData(id: $id | remoteId: $remoteId | name: $name | convType: $convType | team: $team | lastEventTime: $lastEventTime | muted: $muted | muteTime: $muteTime | archived: $archived | archivedTime: $archiveTime | lastRead: $lastRead | cleared: $cleared | unreadCount: $unreadCount)"
       }
 
     implicit val MentionShow: LogShow[Mention] =
