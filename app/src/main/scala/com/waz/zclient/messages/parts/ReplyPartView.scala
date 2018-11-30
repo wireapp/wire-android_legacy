@@ -26,13 +26,16 @@ import android.widget.{LinearLayout, TextView}
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
-import com.waz.model.{AssetData, MessageData, Name}
+import com.waz.model.{AssetData, MessageContent, MessageData, Name}
+import com.waz.service.messages.MessageAndLikes
+import com.waz.threading.Threading
 import com.waz.utils.events._
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
+import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MsgPart._
 import com.waz.zclient.messages._
 import com.waz.zclient.paintcode.WireStyleKit
@@ -43,7 +46,7 @@ import com.waz.zclient.utils.{DateConvertUtils, RichTextView}
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.utils.ZTimeFormatter.getSeparatorTime
-import org.threeten.bp.{LocalDateTime, ZoneId}
+import org.threeten.bp.{Instant, LocalDateTime, ZoneId}
 
 abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper with EphemeralPartView {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -101,19 +104,25 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) 
 
   quotedMessage
     .map(_.time.instant)
-    .map(DateConvertUtils.asLocalDateTime)
-    .map { t =>
-      val context = getContext
-      getSeparatorTime(context, LocalDateTime.now, t, DateFormat.is24HourFormat(context), ZoneId.systemDefault, true)
-    }
-    .map(getString(R.string.quote_timestamp_message, _))
-    .onUi(timestamp.setText)
+    .onUi(setTimestamp)
 
   quotedMessage.map(!_.editTime.isEpoch).onUi { edited =>
     name.setEndCompoundDrawable(if (edited) Some(WireStyleKit.drawEdit) else None, getStyledColor(R.attr.wirePrimaryTextColor))
   }
 
   container.onClick(onQuoteClick ! {()})
+
+  private def setTimestamp(instant: Instant) = {
+    val context = getContext
+    val dateStr = getSeparatorTime(context, LocalDateTime.now, DateConvertUtils.asLocalDateTime(instant), DateFormat.is24HourFormat(context), ZoneId.systemDefault, true)
+    timestamp.setText(getString(R.string.quote_timestamp_message, dateStr))
+  }
+
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
+    super.set(msg, part, opts)
+
+    quotedMessage.map(_.time.instant).head.foreach(setTimestamp)(Threading.Ui)
+  }
 }
 
 class TextReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) with MentionsViewPart {
