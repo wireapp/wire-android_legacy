@@ -21,8 +21,10 @@ import android.animation.Animator.AnimatorListener
 import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.animation.{Animator, ValueAnimator}
 import android.content.Context
-import android.graphics.Rect
+import android.graphics._
 import android.support.v4.view.ViewCompat
+import android.text.{SpannableStringBuilder, Spanned}
+import android.text.style.ReplacementSpan
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.{FrameLayout, TextView}
@@ -34,6 +36,8 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.parts.footer.FooterPartView.HideAnimator
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
+import com.waz.zclient.paintcode.WireStyleKit
+import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
@@ -123,6 +127,31 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
     timeStampAndStatus.setText(string)
     if (string.contains('_')) {
       TextViewUtils.linkifyText(timeStampAndStatus, color, false, controller.linkCallback)
+    }
+    addReadSpan(timeStampAndStatus)
+  }
+
+
+  class ReadSpan extends ReplacementSpan {
+
+    override def draw(canvas: Canvas, t: CharSequence, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint): Unit = {
+      val rect = new RectF(x, top, x + getSize(paint, t, start, end, paint.getFontMetricsInt), bottom)
+      WireStyleKit.drawView(canvas, rect, ResizingBehavior.AspectFit, paint.getColor)
+    }
+
+    override def getSize(paint: Paint, t: CharSequence, start: Int, end: Int, fm: Paint.FontMetricsInt): Int =
+      paint.measureText(t, start, end).toInt
+  }
+
+
+  def addReadSpan(text: TextView): Unit = {
+    val str = text.getText.toString
+    val spanStart = str.indexOf("@")
+    if (spanStart >= 0) {
+      val spanEnd = spanStart + 1
+      val spannable = new SpannableStringBuilder(str)
+      spannable.setSpan(new ReadSpan(), spanStart, spanEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+      text.setText(spannable)
     }
   }
 

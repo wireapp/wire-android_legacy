@@ -113,9 +113,11 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
     isOffline   <- inject[NetworkModeService].isOnline.map(!_)
   } yield {
     val timestamp = ZTimeFormatter.getSingleMessageTime(context, DateTimeUtils.toDate(msg.time.instant))
+    val editedTimestamp = ZTimeFormatter.getSingleMessageTime(context, DateTimeUtils.toDate(msg.editTime.instant))
+    val finalTimestamp = if (msg.editTime.isEpoch) timestamp else getString(R.string.message_footer__status__edited, editedTimestamp)
     timeout match {
       case Some(t)                          => ephemeralTimeoutString(timestamp, t)
-      case None if selfUserId == msg.userId => statusString(timestamp, msg, isGroup, isOffline, reads)
+      case None if selfUserId == msg.userId => statusString(finalTimestamp, msg, isGroup, isOffline, reads)
       case None                             => timestamp
     }
   }
@@ -142,7 +144,8 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
     if (reads.nonEmpty && isGroup) {
       getString(R.string.message_footer__status__read_group, timestamp, reads.size.toString)
     } else if (reads.nonEmpty){
-      getString(R.string.message_footer__status__read, timestamp)
+      val readTimestampString = ZTimeFormatter.getSingleMessageTime(context, DateTimeUtils.toDate(reads.head.timestamp.instant))
+      getString(R.string.message_footer__status__read, timestamp, readTimestampString)
     } else m.state match {
       case Status.PENDING if isOffline => getString(R.string.message_footer__status__waiting_for_connection)
       case Status.PENDING              => getString(R.string.message_footer__status__sending)
