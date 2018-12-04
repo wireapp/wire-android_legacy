@@ -37,12 +37,13 @@ import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.views.SingleUserRowView
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.ConversationController.getEphemeralDisplayString
-import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIconWithColor, HourGlassIcon, NotificationsIcon}
+import com.waz.zclient.paintcode._
 import com.waz.zclient.ui.text.TypefaceEditText.OnSelectionChangedListener
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceEditText, TypefaceTextView}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R}
+
 import scala.concurrent.duration._
 import com.waz.content.UsersStorage
 import com.waz.service.conversation.ConversationsUiService
@@ -79,6 +80,7 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
   val onEphemeralOptionsClick    = EventStream[Unit]()
   val onShowAllParticipantsClick = EventStream[Unit]()
   val onNotificationsClick       = EventStream[Unit]()
+  val onReadReceiptsClick        = EventStream[Unit]()
   val filter = Signal("")
 
   lazy val users = for {
@@ -232,6 +234,7 @@ object ParticipantsAdapter {
   val EphemeralOptions  = 5
   val AllParticipants   = 6
   val Notifications     = 7
+  val ReadReceipts      = 8
 
   case class ParticipantData(userData: UserData, isGuest: Boolean)
 
@@ -270,6 +273,14 @@ object ParticipantsAdapter {
     convController.currentConv
       .map(c => ConversationController.muteSetDisplayStringId(c.muted))
       .onUi(textId => view.findViewById[TextView](R.id.value_text).setText(textId))
+  }
+
+  case class ReadReceiptsButtonViewHolder(view: View, convController: ConversationController)(implicit eventContext: EventContext) extends ViewHolder(view) {
+    private implicit val ctx = view.getContext
+    view.setId(R.id.read_receipts_options)
+    view.findViewById[ImageView](R.id.icon).setImageDrawable(ViewWithColor(getStyledColor(R.attr.wirePrimaryTextColor)))
+    view.findViewById[TextView](R.id.name_text).setText(R.string.read_receipts_toggle_text)
+    view.findViewById[ImageView](R.id.next_indicator).setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40))
   }
 
   case class SeparatorViewHolder(separator: View) extends ViewHolder(separator) {

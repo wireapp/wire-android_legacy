@@ -422,6 +422,7 @@
     <string name="pref_account_data_usage_permissions">Data Usage Permissions</string>
     <string name="pref_backup_screen_title">Back Up Conversations</string>
 
+
     <!-- Data Usage Permissions -->
 
     <string name="pref_advanced_send_anonymous_data_title">Send Anonymous Data</string>
@@ -1143,7 +1144,14 @@
     <string name="participants_divider_people">PEOPLE (%1$s)</string>
     <string name="group_name_hint">GROUP NAME</string>
     <string name="allow_guests_toggle_text">Allow guests and services</string>
-    <string name="allow_guests_toggle_info_text">Open this conversation to services and people outside your team. You can always change it later.</string>
+    <string name="allow_guests_toggle_info_text">Open this conversation to services and people outside your team.</string>
+    <string name="read_receipts_toggle_text">Read receipts</string>
+    <string name="read_receipts_toggle_info_text">When this is on, people can see when their messages in this conversation are read.</string>
+    <string name="create_conv_options_title_text">Conversation options</string>
+    <string name="create_conv_options_subtitle_allow_guests">Allow guests</string>
+    <string name="create_conv_options_subtitle_read_receipts">Read receipts</string>
+    <string name="create_conv_options_subtitle_on">ON</string>
+    <string name="create_conv_options_subtitle_off">OFF</string>
 
     <string name="open_this_conversation_to_people_outside_your_team">Open this conversation to services and people outside your team.</string>
     <string name="allow_guests">Allow guests and services</string>

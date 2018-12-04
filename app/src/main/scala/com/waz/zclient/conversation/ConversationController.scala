@@ -23,7 +23,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api
 import com.waz.api.{AssetForUpload, IConversation, Verification}
-import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
+import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.Client
@@ -220,10 +220,10 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     if (alsoLeave) leave(id).flatMap(_ => clear(id)) else clear(id)
   }
 
-  def createGuestRoom(): Future[ConversationData] = createGroupConversation(Some(context.getString(R.string.guest_room_name)), Set(), false)
+  def createGuestRoom(): Future[ConversationData] = createGroupConversation(Some(context.getString(R.string.guest_room_name)), Set(), false, false)
 
-  def createGroupConversation(name: Option[Name], users: Set[UserId], teamOnly: Boolean): Future[ConversationData] =
-    convsUi.head.flatMap(_.createGroupConversation(name, users, teamOnly)).map(_._1)
+  def createGroupConversation(name: Option[Name], users: Set[UserId], teamOnly: Boolean, readReceipts: Boolean): Future[ConversationData] =
+    convsUi.head.flatMap(_.createGroupConversation(name, users, teamOnly, if (readReceipts) 1 else 0)).map(_._1)
 
   def withCurrentConvName(callback: Callback[String]): Unit = currentConvName.head.foreach(callback.callback)(Threading.Ui)
 
@@ -238,7 +238,6 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def removeConvChangedCallback(callback: Callback[ConversationChange]): Unit = convChangedCallbackSet -= callback
 
   convChanged.onUi { ev => convChangedCallbackSet.foreach(callback => callback.callback(ev)) }
-
 
   object messages {
 

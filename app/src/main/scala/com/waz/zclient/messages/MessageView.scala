@@ -90,11 +90,11 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
           (if (canHaveLink) Seq(PartDesc(WirelessLink)) else Seq.empty)
       }
       else {
-        val quotePart = (mAndL.quote, mAndL.message.quote, mAndL.message.quote.exists(_.validity)) match {
-          case (Some(quote), _, true) => Seq(PartDesc(Reply(quote.msgType)))
-          case (Some(_), _, false)    => Seq(PartDesc(Reply(Unknown))) // the quote is invalid
-          case (None, Some(_), _)     => Seq(PartDesc(Reply(Unknown))) // the quote was deleted
-          case _                      => Seq[PartDesc]()
+        val quotePart = (mAndL.quote, mAndL.message.quote) match {
+          case (Some(quote), Some(qInfo)) if qInfo.validity => Seq(PartDesc(Reply(quote.msgType)))
+          case (Some(_), Some(_))                           => Seq(PartDesc(Reply(Unknown))) // the quote is invalid
+          case (None, Some(_))                              => Seq(PartDesc(Reply(Unknown))) // the quote was deleted
+          case _                                            => Seq[PartDesc]()
         }
 
         quotePart ++
