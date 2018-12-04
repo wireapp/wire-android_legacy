@@ -101,6 +101,24 @@
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
+                android:text="Privacy"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/wire__padding__16"
+                android:paddingEnd="@dimen/wire__padding__16"
+                android:textColor="@color/accent_blue"
+                />
+
+            <com.waz.zclient.preferences.views.SwitchPreference
+                android:id="@+id/preferences_account_read_receipts"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:title="Send Read Receipts"
+                app:subtitle="When this is off, you won’t be able to see read receipts from other people. This setting does not apply to group conversations."
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
                 android:text="@string/pref_account_personal_information_category_title"
                 android:gravity="center_vertical"
                 android:paddingStart="@dimen/wire__padding__16"
