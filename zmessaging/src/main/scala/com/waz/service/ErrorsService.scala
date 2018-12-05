@@ -79,7 +79,7 @@ class ErrorsServiceImpl(userId:    UserId,
     dismissHandler = dismissHandler.orElse(handler)
   }
 
-  def getErrors: Signal[Vector[ErrorData]] = new RefreshingSignal[Vector[ErrorData], Long](CancellableFuture { errors.values.toVector.sortBy(_.time) }, onChanged)
+  def getErrors: Signal[Vector[ErrorData]] = new RefreshingSignal(CancellableFuture(errors.values.toVector.sortBy(_.time)), onChanged)
 
   def dismissError(id: Uid): Future[Unit] =
     storage { ErrorDataDao.getById(id)(_) }
