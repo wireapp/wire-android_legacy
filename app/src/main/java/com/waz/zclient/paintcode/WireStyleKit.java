@@ -22,7 +22,6 @@ import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Path;
 import java.util.Stack;
 

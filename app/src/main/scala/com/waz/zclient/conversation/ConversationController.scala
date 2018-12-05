@@ -181,9 +181,22 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   def setCurrentConvName(name: String): Future[Unit] =
     for {
-      id <- currentConvId.head
-      _  <- convsUi.head.flatMap(_.setConversationName(id, name))
-    } yield {}
+      service     <- convsUi.head
+      id          <- currentConvId.head
+      currentName <- currentConv.map(_.displayName).head
+    } yield {
+      val newName = Name(name)
+      if (newName != currentName) service.setConversationName(id, newName)
+    }
+
+  def setCurrentConvReadReceipts(readReceiptsEnabled: Boolean): Future[Unit] =
+    for {
+      service             <- convsUi.head
+      id                  <- currentConvId.head
+      currentReadReceipts <- currentConv.map(_.readReceiptsAllowed).head
+    } yield
+      if (currentReadReceipts != readReceiptsEnabled)
+        service.setReceiptMode(id, if (readReceiptsEnabled) 1 else 0)
 
   def addMembers(id: ConvId, users: Set[UserId]): Future[Unit] =
     convsUi.head.flatMap(_.addConversationMembers(id, users)).map(_ => {})
