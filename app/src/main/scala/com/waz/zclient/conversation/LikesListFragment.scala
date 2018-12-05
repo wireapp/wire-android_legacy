@@ -20,7 +20,7 @@ package com.waz.zclient.conversation
 import android.os.Bundle
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView, Toolbar}
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.model.{Liking, MessageId}
+import com.waz.model.MessageId
 import com.waz.service.ZMessaging
 import com.waz.threading.CancellableFuture
 import com.waz.utils.events.{RefreshingSignal, Signal}
@@ -28,7 +28,6 @@ import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ScreenController
 import com.waz.zclient.pages.main.conversation.ConversationManagerFragment
 import com.waz.zclient.{FragmentHelper, R}
-import com.waz.content.Likes
 
 class LikesListFragment extends FragmentHelper {
 
@@ -38,10 +37,7 @@ class LikesListFragment extends FragmentHelper {
   private lazy val likersListView = view[RecyclerView](R.id.rv__likes_list)
   private lazy val likesAdapter   = returning(new LikesAdapter(getContext)) { adapter =>
     def getLikes(zms: ZMessaging, messageId: MessageId) =
-      new RefreshingSignal[Likes, Seq[Liking]](
-        CancellableFuture.lift(zms.reactionsStorage.getLikes(messageId)),
-        zms.reactionsStorage.onChanged.map(_.filter(_.message == messageId))
-      )
+      new RefreshingSignal(CancellableFuture.lift(zms.reactionsStorage.getLikes(messageId)), zms.reactionsStorage.onChanged.map(_.filter(_.message == messageId)))
 
     (for {
       z               <- inject[Signal[ZMessaging]]

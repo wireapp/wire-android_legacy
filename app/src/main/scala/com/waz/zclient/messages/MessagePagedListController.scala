@@ -35,6 +35,7 @@ import Threading.Implicits.Background
 
 import scala.concurrent.{ExecutionContext, Future}
 import MessagePagedListController._
+import com.waz.ZLog
 import com.waz.utils.returning
 import com.waz.zclient.messages.controllers.MessageActionsController
 
@@ -66,18 +67,26 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
       .build()) { pl => _pagedList = Option(pl) }
   }
 
-  private def convChanged(zms: ZMessaging, convId: ConvId): EventStream[Seq[MessageId]] =
+  private def cursorRefreshEvent(zms: ZMessaging, convId: ConvId): EventStream[_] = {
     EventStream.union(
-      zms.messagesStorage.onChanged.filter(_.exists(_.convId == convId)).map(_.map(_.id)),
-      zms.reactionsStorage.onChanged.map(_.map(_.message)),
-      zms.messagesStorage.onDeleted)
+      zms.messagesStorage.onMessagesDeletedInConversation.map(_.contains(convId)),
+      zms.messagesStorage.onAdded.map(_.exists(_.convId == convId)),
+      zms.messagesStorage.onUpdated.map(_.exists { case (prev, updated) =>
+        updated.convId == convId &&  MessagesPagedListAdapter.areMessageContentsTheSame(prev, updated)
+      }),
+      new FutureEventStream(zms.reactionsStorage.onChanged.map(_.map(_.message)), { msgs: Seq[MessageId] =>
+        zms.messagesStorage.getMessages(msgs: _*).map(_.flatten.exists(_.convId == convId))
+      })
+    ).filter(identity(_))
+  }
 
   lazy val pagedListData: Signal[(MessageAdapterData, PagedListWrapper[MessageAndLikes], Option[MessageId])] = for {
     z                       <- zms
     (cId, cTeam, teamOnly)  <- convController.currentConv.map(c => (c.id, c.team, c.isTeamOnly))
     isGroup                 <- Signal.future(z.conversations.isGroupConversation(cId))
     canHaveLink             = isGroup && cTeam.exists(z.teamId.contains(_)) && !teamOnly
-    cursor                  <- RefreshingSignal[Option[DBCursor], Seq[MessageId]](loadCursor(cId), convChanged(z, cId))
+    cursor                  <- RefreshingSignal(loadCursor(cId), cursorRefreshEvent(z, cId))
+    _ = ZLog.verbose("cursor changed")
     list                    = PagedListWrapper(getPagedList(cursor))
     lastRead                <- convController.currentConv.map(_.lastRead)
     messageToReveal         <- messageActionsController.messageToReveal.map(_.map(_.id))

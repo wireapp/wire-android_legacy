@@ -98,6 +98,13 @@ class MessagesPagedListAdapter()(implicit ec: EventContext, inj: Injector) exten
 object MessagesPagedListAdapter {
   val MessageDataDiffCallback: DiffUtil.ItemCallback[MessageAndLikes] = new DiffUtil.ItemCallback[MessageAndLikes] {
     override def areItemsTheSame(o: MessageAndLikes, n: MessageAndLikes): Boolean = n.message.id == o.message.id
-    override def areContentsTheSame(o: MessageAndLikes, n: MessageAndLikes): Boolean = o == n
+    override def areContentsTheSame(o: MessageAndLikes, n: MessageAndLikes): Boolean =
+      areMessageContentsTheSame(o.message, n.message)
+  }
+
+  def areMessageContentsTheSame(prev: MessageData, updated: MessageData): Boolean = {
+    updated.contentString != prev.contentString &&
+      updated.expired != prev.expired &&
+      updated.imageDimensions != prev.imageDimensions
   }
 }
