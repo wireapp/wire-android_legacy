@@ -43,6 +43,8 @@ trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
   def onMessageSent:   SourceStream[MessageData]
   def onMessageFailed: SourceStream[(MessageData, ErrorResponse)]
 
+  def onMessagesDeletedInConversation: EventStream[Set[ConvId]]
+
   def delete(msg: MessageData): Future[Unit]
   def deleteAll(conv: ConvId):  Future[Unit]
 
@@ -94,6 +96,8 @@ class MessagesStorageImpl(context:     Context,
   //For tracking on UI
   val onMessageSent = EventStream[MessageData]()
   val onMessageFailed = EventStream[(MessageData, ErrorResponse)]()
+
+  val onMessagesDeletedInConversation = EventStream[Set[ConvId]]()
 
   private val indexes = new ConcurrentHashMap[ConvId, ConvMessagesIndex]
   private val filteredIndexes = new MultiKeyLruCache[ConvId, MessageFilter, ConvMessagesIndex](MessagesStorage.filteredMessagesCacheSize)
@@ -227,6 +231,7 @@ class MessagesStorageImpl(context:     Context,
       index <- msgsIndex(msg.convId)
       _ <- index.delete(msg)
       _ <- storage.flushWALToDatabase()
+      _ = onMessagesDeletedInConversation ! Set(msg.convId)
     } yield ()
 
   override def remove(id: MessageId): Future[Unit] =
@@ -247,6 +252,7 @@ class MessagesStorageImpl(context:     Context,
         msgsIndex(msg.convId).flatMap(_.delete(msg)))
       }
       _ <- storage.flushWALToDatabase()
+      _ = onMessagesDeletedInConversation ! msgs.map(_.convId).toSet
     } yield ()
 
   def clear(conv: ConvId, upTo: RemoteInstant): Future[Unit] = {
@@ -270,6 +276,7 @@ class MessagesStorageImpl(context:     Context,
       _ <- Future(msgsFilteredIndex(conv).foreach(_.delete()))
       _ <- msgsIndex(conv).flatMap(_.delete())
       _ <- storage.flushWALToDatabase()
+      _ = onMessagesDeletedInConversation ! Set(conv)
     } yield ()
   }
 
