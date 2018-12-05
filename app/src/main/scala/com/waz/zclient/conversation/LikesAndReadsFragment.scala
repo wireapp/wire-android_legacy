@@ -48,25 +48,26 @@ class LikesAndReadsFragment extends FragmentHelper {
   import Threading.Implicits.Ui
   implicit def ctx: Context = getActivity
 
-  private lazy val zms              = inject[Signal[ZMessaging]]
-  private lazy val screenController = inject[ScreenController]
+  private lazy val zms                 = inject[Signal[ZMessaging]]
+  private lazy val screenController    = inject[ScreenController]
+  private lazy val readReceiptsStorage = inject[Signal[ReadReceiptsStorage]]
 
   private val visibleTab = Signal[Tab](ReadsTab)
 
-  private lazy val likes: Signal[Seq[UserId]] = Signal(zms, screenController.showMessageDetails).flatMap {
-    case (z, Some(msgId)) =>
-      new RefreshingSignal[Seq[UserId], Seq[Liking]](
-        CancellableFuture.lift(z.reactionsStorage.getLikes(msgId).map(_.likers.keys.toSeq)),
-        z.reactionsStorage.onChanged.map(_.filter(_.message == msgId))
-      )
-    case _ => Signal.const(Seq.empty[UserId])
-  }
+  private lazy val likes: Signal[Seq[UserId]] =
+    Signal(zms, screenController.showMessageDetails)
+      .collect { case (z, Some(msgId)) => (z, msgId) }
+      .flatMap { case (z, msgId) =>
+          new RefreshingSignal[Seq[UserId], Seq[Liking]](
+            CancellableFuture.lift(z.reactionsStorage.getLikes(msgId).map(_.likers.keys.toSeq)),
+            z.reactionsStorage.onChanged.map(_.filter(_.message == msgId))
+          )
+      }
 
-  private lazy val reads: Signal[Seq[UserId]] = Signal(zms, screenController.showMessageDetails).flatMap {
-    case (z, Some(msgId)) =>
-      zms.flatMap(_.readReceiptsStorage.receipts(msgId).map(_.map(_.user)))
-    case _ => Signal.const(Seq.empty[UserId])
-  }
+  private lazy val reads: Signal[Seq[UserId]] =
+    Signal(readReceiptsStorage, screenController.showMessageDetails)
+      .collect { case (storage, Some(msgId)) => (storage, msgId) }
+      .flatMap { case (storage, msgId) => storage.receipts(msgId).map(_.map(_.user)) }
 
   private lazy val viewToDisplay = for {
     tab       <- visibleTab
@@ -206,7 +207,7 @@ class LikesAndReadsFragment extends FragmentHelper {
     }))
 
     (for {
-      receipts    <- inject[Signal[ReadReceiptsStorage]]
+      receipts    <- readReceiptsStorage
       Some(msgId) <- screenController.showMessageDetails
       rs          <- receipts.receipts(msgId)
     } yield rs.map(r => r.user -> r.timestamp).toMap).onUi {
