@@ -21,9 +21,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 import android.content.Context
 import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.{Message, MessageFilter}
+import com.waz.log.ZLog2._
 import com.waz.model.ConversationData.UnreadCount
 import com.waz.model.MessageData.{MessageDataDao, MessageEntry}
 import com.waz.model._
@@ -37,14 +37,9 @@ import com.waz.utils.events.{EventStream, Signal, SourceStream}
 
 import scala.collection._
 import scala.concurrent.Future
-import scala.util.Failure
 
 trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
 
-  //def for tests
-  def messageAdded:    EventStream[Seq[MessageData]]
-  def messageUpdated:  EventStream[Seq[(MessageData, MessageData)]]
-  def messageChanged:  EventStream[Seq[MessageData]]
   def onMessageSent:   SourceStream[MessageData]
   def onMessageFailed: SourceStream[(MessageData, ErrorResponse)]
 
@@ -95,11 +90,6 @@ class MessagesStorageImpl(context:     Context,
   import com.waz.utils.events.EventContext.Implicits.global
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "MessagesStorage")
-
-  override val messageAdded = onAdded
-  override val messageUpdated = onUpdated
-
-  val messageChanged = EventStream.union(messageAdded, messageUpdated.map(_.map(_._2)))
 
   //For tracking on UI
   val onMessageSent = EventStream[MessageData]()
@@ -321,7 +311,7 @@ class MessageAndLikesStorageImpl(selfUserId: UserId, messages: MessagesStorage, 
   val onUpdate = EventStream[MessageId]() // TODO: use batching, maybe report new message data instead of just id
 
   messages.onDeleted { ids => ids foreach { onUpdate ! _ } }
-  messages.messageChanged { ms => ms foreach { m => onUpdate ! m.id }}
+  messages.onChanged { ms => ms foreach { m => onUpdate ! m.id }}
   likings.onChanged { _ foreach { l => onUpdate ! l.message } }
 
 

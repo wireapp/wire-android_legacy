@@ -48,7 +48,7 @@ class MessageAndLikesStorageSpec extends AndroidFreeSpec {
       val ids = Seq(MessageId("1"), MessageId("2"), MessageId("3"))
 
       (messagesStorage.onDeleted _).expects().anyNumberOfTimes().returning(EventStream[Seq[MessageId]]())
-      (messagesStorage.messageChanged _).expects().anyNumberOfTimes().returning(EventStream[Seq[MessageData]]())
+      (messagesStorage.onChanged _).expects().anyNumberOfTimes().returning(EventStream[Seq[MessageData]]())
       (reactionsStorage.onChanged _).expects().anyNumberOfTimes().returning(EventStream[Seq[Liking]]())
 
       (messagesStorage.getMessages _).expects(*).anyNumberOfTimes().onCall { ids: Seq[MessageId] =>
