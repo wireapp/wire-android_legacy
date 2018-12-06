@@ -27,6 +27,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{ImageView, LinearLayout}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
+import com.waz.content.UserPreferences
 import com.waz.model.ConversationData.ConversationType._
 import com.waz.model._
 import com.waz.service.{AccountsService, ZMessaging}
@@ -172,6 +173,8 @@ class NormalConversationFragment extends ConversationListFragment {
     clients <- z.otrClientsStorage.incomingClientsSignal(z.selfUserId, z.clientId)
   } yield clients
 
+  private lazy val readReceiptsChanged = zms.flatMap(_.userPrefs(UserPreferences.ReadReceiptsRemotelyChanged).signal)
+
   private lazy val unreadCount = (for {
     Some(accountId) <- accounts.activeAccountId
     count  <- userAccountsController.unreadCount.map(_.filterNot(_._1 == accountId).values.sum)
@@ -196,8 +199,8 @@ class NormalConversationFragment extends ConversationListFragment {
 
   override lazy val topToolbar = returning(view[NormalTopToolbar](R.id.conversation_list_top_toolbar)) { vh =>
     accentColor.map(_.color).onUi(color => vh.foreach(_.setIndicatorColor(color)))
-    Signal(unreadCount, incomingClients).onUi {
-      case (count, clients) => vh.foreach(_.setIndicatorVisible(clients.nonEmpty || count > 0))
+    Signal(unreadCount, incomingClients, readReceiptsChanged).onUi {
+      case (count, clients, rrChanged) => vh.foreach(_.setIndicatorVisible(clients.nonEmpty || count > 0 || rrChanged))
     }
   }
 

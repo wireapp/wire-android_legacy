@@ -1267,4 +1267,8 @@
     <string name="reply_message_type_unknown">You cannot see this message.</string>
 
     <string name="quote_timestamp_message">Original message from %s</string>
+
+    <string name="read_receipts_remotely_enabled_title">You have enabled read receipts</string>
+    <string name="read_receipts_remotely_disabled_title">You have disabled read receipts</string>
+    <string name="read_receipts_remotely_changed_message">You can change this option in your account settings.</string>
 </resources>

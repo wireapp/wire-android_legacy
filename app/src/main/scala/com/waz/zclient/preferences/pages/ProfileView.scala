@@ -48,10 +48,12 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage, UserSignal, ZTimeFormatter}
 import com.waz.zclient.views.AvailabilityView
 import org.threeten.bp.{LocalDateTime, ZoneId}
+import com.waz.zclient.utils.ContextUtils._
 
 trait ProfileView {
   val onDevicesDialogAccept: EventStream[Unit]
   val onManageTeamClick: EventStream[Unit]
+  val onReadReceiptsDismissed: EventStream[Unit]
 
   def setUserName(name: String): Unit
   def setAvailability(visible: Boolean, availability: Availability): Unit
@@ -62,6 +64,8 @@ trait ProfileView {
   def showNewDevicesDialog(devices: Seq[Client]): Unit
   def setManageTeamEnabled(enabled: Boolean): Unit
   def setAddAccountEnabled(enabled: Boolean): Unit
+  def showReadReceiptsChanged(current: Boolean): Unit
+  def clearDialog(): Unit
 }
 
 class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ProfileView with ViewHelper {
@@ -82,9 +86,10 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   val settingsButton = findById[TextButton](R.id.profile_settings)
 
   override val onDevicesDialogAccept = EventStream[Unit]()
+  override val onReadReceiptsDismissed = EventStream[Unit]()
   override val onManageTeamClick: EventStream[Unit] = teamButton.onClickEvent.map(_ => ())
 
-  private var deviceDialog = Option.empty[AlertDialog]
+  private var dialog = Option.empty[AlertDialog]
 
   teamButton.onClickEvent.on(Threading.Ui) { _ =>
     context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(context.getString(R.string.pref_manage_team_url)))) }
@@ -133,12 +138,16 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     teamDivider.setVisibility(if (enabled) View.VISIBLE else View.INVISIBLE)
   }
 
+  def clearDialog(): Unit = {
+    dialog.foreach(_.dismiss())
+    dialog = None
+  }
+
   override def showNewDevicesDialog(devices: Seq[Client]) = {
-    deviceDialog.foreach(_.dismiss())
-    deviceDialog = None
+    clearDialog()
     if (devices.nonEmpty) {
       val builder = new AlertDialog.Builder(context)
-      deviceDialog = Option(builder.setTitle(R.string.new_devices_dialog_title)
+      dialog = Option(builder.setTitle(R.string.new_devices_dialog_title)
         .setMessage(getNewDevicesMessage(devices))
         .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener {
           override def onClick(dialog: DialogInterface, which: Int) = {
@@ -154,6 +163,23 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
         })
         .show())
     }
+  }
+
+  override def showReadReceiptsChanged(current: Boolean): Unit = {
+    clearDialog()
+    val builder = new AlertDialog.Builder(context)
+    builder
+      .setTitle(if (current) R.string.read_receipts_remotely_enabled_title else R.string.read_receipts_remotely_disabled_title)
+      .setMessage(getString(R.string.read_receipts_remotely_changed_message))
+      .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener {
+        override def onClick(dialog: DialogInterface, which: Int) = {
+          dialog.dismiss()
+          onReadReceiptsDismissed ! (())
+        }
+      })
+      .setCancelable(false)
+
+    dialog = Option(builder.show())
   }
 
   override def setAddAccountEnabled(enabled: Boolean): Unit = {
@@ -213,6 +239,7 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
   lazy val tracking        = inject[TrackingService]
   lazy val usersController = inject[UsersController]
   lazy val usersAccounts   = inject[UserAccountsController]
+  private lazy val userPrefs = zms.map(_.userPrefs)
 
   val currentUser = accounts.activeAccountId.collect { case Some(id) => id }
 
@@ -250,10 +277,31 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
 
   team.on(Threading.Ui) { team => view.setTeamName(team.map(_.name)) }
 
-  incomingClients.onUi { clients => view.showNewDevicesDialog(clients) }
+  type DialogInfo = Either[Seq[Client], Boolean]
+
+  private val dialogInfo: Signal[Option[DialogInfo]] = for {
+    clients <- incomingClients
+    rrChanged <- userPrefs.flatMap(_(UserPreferences.ReadReceiptsRemotelyChanged).signal)
+    currentRR <- zms.flatMap(_.propertiesService.readReceiptsEnabled)
+  } yield if (clients.nonEmpty)
+      Some(Left(clients))
+    else if (rrChanged)
+      Some(Right(currentRR))
+    else
+      None
+
+  dialogInfo.onUi {
+    case Some(Left(clients)) => view.showNewDevicesDialog(clients)
+    case Some(Right(currentRR)) => view.showReadReceiptsChanged(currentRR)
+    case _ => view.clearDialog()
+  }
 
   view.onDevicesDialogAccept.on(Threading.Background) { _ =>
     zms.head.flatMap(z => z.otrClientsService.updateUnknownToUnverified(z.selfUserId))(Threading.Background)
+  }
+
+  view.onReadReceiptsDismissed.on(Threading.Background) { _ =>
+    userPrefs.head.flatMap(prefs => prefs(UserPreferences.ReadReceiptsRemotelyChanged) := false)(Threading.Background)
   }
 
   usersAccounts.selfPermissions
