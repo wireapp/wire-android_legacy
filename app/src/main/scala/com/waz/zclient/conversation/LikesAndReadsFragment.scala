@@ -38,6 +38,7 @@ import com.waz.zclient.pages.main.conversation.ConversationManagerFragment
 import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
 import com.waz.zclient.participants.ParticipantsAdapter
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
+import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.utils.ContextUtils.getStyledColor
 import com.waz.zclient.utils.{DateConvertUtils, RichView, ZTimeFormatter}
 import com.waz.zclient.{FragmentHelper, R}
@@ -105,7 +106,7 @@ class LikesAndReadsFragment extends FragmentHelper {
 
   private lazy val emptyListView = returning(view[View](R.id.empty_list_view)) { vh =>
     val emptyListIcon = findById[GenericStyleKitView](R.id.empty_list_icon)
-    emptyListIcon.setColor(getStyledColor(R.attr.wireSecondaryTextColor))
+    emptyListIcon.setColor(ColorUtils.injectAlpha(0.25f, getStyledColor(R.attr.wireSecondaryTextColor)))
     val emptyListText = findById[TypefaceTextView](R.id.empty_list_text)
 
     viewToDisplay.onUi {

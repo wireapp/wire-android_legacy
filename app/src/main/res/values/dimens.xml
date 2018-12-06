@@ -969,4 +969,7 @@
     <dimen name="user_part_view_bot_size">12dp</dimen>
     <dimen name="mentions_chathead_size">32dp</dimen>
     <dimen name="conversation_list__badge__icon_size">14dp</dimen>
+
+    <dimen name="empty_likes_reads_icon_size">144dp</dimen>
+    <dimen name="empty_likes_reads_text_width">160dp</dimen>
 </resources>

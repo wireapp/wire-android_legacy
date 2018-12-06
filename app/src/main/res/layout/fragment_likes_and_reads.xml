@@ -40,7 +40,7 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:textSize="@dimen/wire__text_size__regular_small"
+                android:textSize="@dimen/wire__text_size__smaller"
                 android:textColor="?wirePrimaryTextColor"
                 app:w_font="@string/wire__typeface__medium"
                 />
@@ -56,31 +56,39 @@
                 />
     </RelativeLayout>
 
-    <android.support.design.widget.TabLayout
-        android:id="@+id/likes_and_reads_tabs"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:tabIndicatorColor="?wirePrimaryTextColor"
-        app:tabTextColor="?wirePrimaryTextColor"
-        app:tabMode="fixed"
-        app:tabSelectedTextColor="@color/light_graphite"
-        app:tabIndicatorHeight="@dimen/wire__divider__height"
-        android:background="?wireBackgroundColor"
-        >
-        <android.support.design.widget.TabItem
-            android:text="@string/tab_title_read"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout="@layout/tab_with_theme_medium_layout"
-            />
+        android:background="?wireBackgroundColor">
 
-        <android.support.design.widget.TabItem
-            android:text="@string/tab_title_likes"
-            android:layout_width="wrap_content"
+        <android.support.design.widget.TabLayout
+            android:id="@+id/likes_and_reads_tabs"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout="@layout/tab_with_theme_medium_layout"
-            />
-    </android.support.design.widget.TabLayout>
+            app:tabIndicatorColor="?wirePrimaryTextColor"
+            app:tabTextColor="?wirePrimaryTextColor"
+            app:tabMode="fixed"
+            app:tabSelectedTextColor="@color/light_graphite"
+            app:tabIndicatorHeight="@dimen/wire__divider__height"
+            android:layout_marginStart="@dimen/wire__padding__regular"
+            android:layout_marginEnd="@dimen/wire__padding__regular"
+            >
+            <android.support.design.widget.TabItem
+                android:text="@string/tab_title_read"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout="@layout/tab_with_theme_medium_layout"
+                />
+
+            <android.support.design.widget.TabItem
+                android:text="@string/tab_title_likes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout="@layout/tab_with_theme_medium_layout"
+                />
+        </android.support.design.widget.TabLayout>
+
+    </FrameLayout>
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -100,34 +108,31 @@
             android:layout_height="match_parent"
             />
 
-        <RelativeLayout
+        <LinearLayout
             android:id="@+id/empty_list_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal|center_vertical"
+            android:layout_gravity="center"
             android:gravity="center"
             android:visibility="gone"
+            android:orientation="vertical"
             >
             <com.waz.zclient.paintcode.GenericStyleKitView
                 android:id="@+id/empty_list_icon"
-                android:layout_width="@dimen/profile__image__width"
-                android:layout_height="@dimen/profile__image__height"
+                android:layout_width="@dimen/empty_likes_reads_icon_size"
+                android:layout_height="@dimen/empty_likes_reads_icon_size"
                 android:gravity="center"
-                android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true"
-                android:layout_centerVertical="true"
                 />
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:id="@+id/empty_list_text"
-                android:layout_width="match_parent"
+                android:layout_width="@dimen/empty_likes_reads_text_width"
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:textSize="@dimen/wire__text_size__regular_small"
                 android:maxLines="2"
                 android:textColor="?wireSecondaryTextColor"
-                android:layout_below="@id/empty_list_icon"
                 />
-        </RelativeLayout>
+        </LinearLayout>
     </FrameLayout>
 
     <com.waz.zclient.ui.text.TypefaceTextView
@@ -138,7 +143,7 @@
         android:layout_marginBottom="@dimen/wire__padding__8"
         android:maxLines="2"
         android:textColor="?wireSecondaryTextColor"
-        android:textSize="@dimen/wire__text_size__regular_small"
+        android:textSize="@dimen/wire__text_size__smaller"
         app:w_font="@string/wire__typeface__light"
         />
 </LinearLayout>
