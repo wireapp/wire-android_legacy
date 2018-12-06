@@ -25,8 +25,8 @@ import android.view.View.{OnClickListener, OnLayoutChangeListener}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, ImageView}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.model.{Liking, MessageId}
-import com.waz.service.ZMessaging
+import com.waz.content.{MessagesStorage, ReactionsStorage}
+import com.waz.model.{Liking, MessageId, UserId}
 import com.waz.service.assets.AssetService.RawAssetInput.WireAssetInput
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventStream, Signal}
@@ -63,7 +63,9 @@ class ImageFragment extends FragmentHelper {
 
   implicit def context: Context = getContext
 
-  lazy val zms                      = inject[Signal[ZMessaging]]
+  private lazy val selfUserId       = inject[Signal[UserId]]
+  private lazy val reactionsStorage = inject[Signal[ReactionsStorage]]
+  private lazy val messagesStorage  = inject[Signal[MessagesStorage]]
   lazy val collectionController     = inject[CollectionController]
   lazy val convController           = inject[ConversationController]
   lazy val messageActionsController = inject[MessageActionsController]
@@ -71,23 +73,21 @@ class ImageFragment extends FragmentHelper {
   lazy val singleImageController    = inject[ISingleImageController]
   lazy val replyController          = inject[ReplyController]
 
-  lazy val likedBySelf = collectionController.focusedItem flatMap {
-    case Some(m) => zms.flatMap { z =>
-      z.reactionsStorage.signal((m.id, z.selfUserId)).map(_.action == Liking.like).orElse(Signal const false)
-    }
-    case None => Signal.const(false)
+  lazy val likedBySelf = Signal(collectionController.focusedItem, selfUserId, reactionsStorage).flatMap {
+    case (Some(m), self, reactions) =>
+      reactions.signal((m.id, self)).map(_.action == Liking.like).orElse(Signal.const(false))
+    case _ => Signal.const(false)
   }
 
   lazy val message = collectionController.focusedItem.collect { case Some(msg) => msg }.disableAutowiring()
 
   lazy val topCursorItems: Signal[Seq[ToolbarItem]] = {
     message.flatMap { m =>
-      if (m.isEphemeral) zms.map(_.selfUserId == m.userId).map { fromSelf =>
-        (if (fromSelf)
+      if (m.isEphemeral) selfUserId.map { self =>
+        (if (self == m.userId)
             Seq(MessageActionToolbarItem(MessageAction.Save))
         else
             Seq.empty) :+ MessageActionToolbarItem(MessageAction.Delete)
-
       } else likedBySelf.map { isLiked =>
         Seq(
           MessageActionToolbarItem(if (isLiked) MessageAction.Unlike else MessageAction.Like),
@@ -179,8 +179,8 @@ class ImageFragment extends FragmentHelper {
         if(v.getWidth > 0 && !animationStarted){
           animationStarted = true
           Option(getArguments.getString(ArgMessageId)).foreach { messageId =>
-            zms.head.flatMap(_.messagesStorage.get(MessageId(messageId))).map { _.foreach(msg => collectionController.focusedItem ! Some(msg)) }
-            val imageSignal: Signal[ImageSource] = zms.flatMap(_.messagesStorage.signal(MessageId(messageId))).map(msg => WireImage(msg.assetId))
+            messagesStorage.head.flatMap(_.get(MessageId(messageId))).map { _.foreach(msg => collectionController.focusedItem ! Some(msg)) }
+            val imageSignal: Signal[ImageSource] = messagesStorage.flatMap(_.signal(MessageId(messageId))).map(msg => WireImage(msg.assetId))
             animateOpeningTransition(new ImageAssetDrawable(imageSignal))
           }
         }

@@ -26,14 +26,14 @@ import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.content.ReadReceiptsStorage
-import com.waz.model.{Liking, RemoteInstant, UserData, UserId}
+import com.waz.content.{ReactionsStorage, ReadReceiptsStorage}
+import com.waz.model.{RemoteInstant, UserData, UserId}
 import com.waz.service.ZMessaging
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.{RefreshingSignal, Signal}
+import com.waz.threading.Threading
+import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.zclient.common.controllers.{ScreenController, UserAccountsController}
 import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
+import com.waz.zclient.common.controllers.{ScreenController, UserAccountsController}
 import com.waz.zclient.pages.main.conversation.ConversationManagerFragment
 import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
 import com.waz.zclient.participants.ParticipantsAdapter
@@ -46,26 +46,21 @@ import org.threeten.bp.{LocalDateTime, ZoneId}
 
 class LikesAndReadsFragment extends FragmentHelper {
   import LikesAndReadsFragment._
-
   import Threading.Implicits.Ui
   implicit def ctx: Context = getActivity
 
   private lazy val zms                 = inject[Signal[ZMessaging]]
   private lazy val screenController    = inject[ScreenController]
   private lazy val readReceiptsStorage = inject[Signal[ReadReceiptsStorage]]
+  private lazy val reactionsStorage    = inject[Signal[ReactionsStorage]]
   private lazy val accountsController  = inject[UserAccountsController]
 
   private val visibleTab = Signal[Tab](ReadsTab)
 
   private lazy val likes: Signal[Seq[UserId]] =
-    Signal(zms, screenController.showMessageDetails)
-      .collect { case (z, Some(msgId)) => (z, msgId) }
-      .flatMap { case (z, MessageDetailsParams(msgId, _)) =>
-          new RefreshingSignal[Seq[UserId], Seq[Liking]](
-            CancellableFuture.lift(z.reactionsStorage.getLikes(msgId).map(_.likers.keys.toSeq)),
-            z.reactionsStorage.onChanged.map(_.filter(_.message == msgId))
-          )
-      }
+    Signal(reactionsStorage, screenController.showMessageDetails)
+      .collect { case (storage, Some(msgId)) => (storage, msgId) }
+      .flatMap { case (storage, MessageDetailsParams(msgId, _)) => storage.likes(msgId).map(_.likers.keys.toSeq) }
 
   private lazy val reads: Signal[Seq[UserId]] =
     Signal(readReceiptsStorage, screenController.showMessageDetails)
