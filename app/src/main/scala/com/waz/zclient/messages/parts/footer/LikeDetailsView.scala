@@ -37,10 +37,10 @@ class LikeDetailsView(context: Context, attrs: AttributeSet, style: Int) extends
   private val description: TextView = findById(R.id.like__description)
 
   def init(controller: FooterViewController): Unit = {
-    val likedBy = controller.messageAndLikes.map(_.likes)
+    val likedBy = controller.messageAndLikes.map(_.likes.sortBy(_.str))
 
     def getDisplayNameString(ids: Seq[UserId]): Signal[String] = {
-      if (ids.nonEmpty)
+      if (ids.size > 3)
         Signal.const(getQuantityString(R.plurals.message_footer__number_of_likes, ids.size, Integer.valueOf(ids.size)))
       else
         Signal.sequence(ids map { controller.signals.displayNameStringIncludingSelf } :_*).map { names =>
@@ -49,7 +49,7 @@ class LikeDetailsView(context: Context, attrs: AttributeSet, style: Int) extends
         }
     }
 
-    val displayText = likedBy flatMap getDisplayNameString
+    val displayText = likedBy.flatMap(getDisplayNameString)
 
     displayText.onUi(description.setText)
   }
