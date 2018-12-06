@@ -20,20 +20,13 @@ package com.waz.zclient.messages.parts.footer
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
+import com.waz.ZLog.ImplicitTag._
 import com.waz.model.UserId
-import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.zclient.common.controllers.ScreenController
-import com.waz.zclient.conversation.ConversationController
-
-import scala.concurrent.Future
 
 class LikeDetailsView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
-  import Threading.Implicits.Ui
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
@@ -41,16 +34,13 @@ class LikeDetailsView(context: Context, attrs: AttributeSet, style: Int) extends
   inflate(R.layout.message_footer_like_details)
   setOrientation(LinearLayout.HORIZONTAL)
 
-  private lazy val convController = inject[ConversationController]
-  private lazy val screenController = inject[ScreenController]
-
   private val description: TextView = findById(R.id.like__description)
 
   def init(controller: FooterViewController): Unit = {
     val likedBy = controller.messageAndLikes.map(_.likes)
 
     def getDisplayNameString(ids: Seq[UserId]): Signal[String] = {
-      if (ids.size > 0)
+      if (ids.nonEmpty)
         Signal.const(getQuantityString(R.plurals.message_footer__number_of_likes, ids.size, Integer.valueOf(ids.size)))
       else
         Signal.sequence(ids map { controller.signals.displayNameStringIncludingSelf } :_*).map { names =>
@@ -59,22 +49,9 @@ class LikeDetailsView(context: Context, attrs: AttributeSet, style: Int) extends
         }
     }
 
-    def showLikers() = {
-      convController.currentConvIsGroup.head.flatMap {
-        case false => Future.successful(None)
-        case true => controller.message.map(m => Some(m.id)).head
-      }.foreach {
-        case Some(mId) =>
-          screenController.showMessageDetails ! Some(mId)
-        case _ =>
-      }
-    }
-
     val displayText = likedBy flatMap getDisplayNameString
 
     displayText.onUi(description.setText)
-
-    description.onClick(showLikers())
   }
 }
 

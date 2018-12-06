@@ -33,6 +33,9 @@ import com.waz.model.{MessageContent, MessageId}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
+import com.waz.zclient.common.controllers.ScreenController
+import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
+import com.waz.zclient.conversation.{ConversationController, LikesAndReadsFragment}
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.parts.footer.FooterPartView.HideAnimator
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
@@ -43,12 +46,17 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 
+import scala.concurrent.Future
+
 //TODO tracking ?
 class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ClickableViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
   override val tpe: MsgPart = MsgPart.Footer
+
+  private lazy val convController = inject[ConversationController]
+  private lazy val screenController = inject[ScreenController]
 
   inflate(R.layout.message_footer_content)
 
@@ -122,6 +130,9 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
 
   likeButton.init(controller)
   likeDetails.init(controller)
+
+  likeDetails.onClick(showDetails(true))
+  timeStampAndStatus.onClick(showDetails(false))
 
   controller.timestampText.zip(controller.linkColor).onUi { case (string, color) =>
     timeStampAndStatus.setText(string)
@@ -200,6 +211,19 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
   def slideContentIn(): Unit = contentAnim.start()
 
   def slideContentOut(): Unit = hideAnim.start()
+
+  def showDetails(fromLikes: Boolean) = {
+    import Threading.Implicits.Ui
+
+    convController.currentConvIsGroup.head.flatMap {
+      case false => Future.successful(None)
+      case true => controller.message.map(m => Some(m.id)).head
+    }.foreach {
+      case Some(mId) =>
+        screenController.showMessageDetails ! Some(MessageDetailsParams(mId, if (fromLikes) LikesAndReadsFragment.LikesTab else LikesAndReadsFragment.ReadsTab))
+      case _ =>
+    }
+  }
 }
 
 object FooterPartView {

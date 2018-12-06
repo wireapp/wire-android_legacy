@@ -125,7 +125,7 @@ class ConversationManagerFragment extends FragmentHelper
     }
 
     subs += screenController.showMessageDetails.onUi {
-      case Some(mId) => showFragment(new LikesAndReadsFragment, LikesAndReadsFragment.Tag)
+      case Some(ScreenController.MessageDetailsParams(_, tab)) => showFragment(LikesAndReadsFragment.newInstance(tab), LikesAndReadsFragment.Tag)
       case None      => getChildFragmentManager.popBackStack(LikesAndReadsFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
     }
 

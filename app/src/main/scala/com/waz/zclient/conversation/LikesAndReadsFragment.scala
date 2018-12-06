@@ -33,6 +33,7 @@ import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{RefreshingSignal, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ScreenController
+import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
 import com.waz.zclient.pages.main.conversation.ConversationManagerFragment
 import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
 import com.waz.zclient.participants.ParticipantsAdapter
@@ -57,7 +58,7 @@ class LikesAndReadsFragment extends FragmentHelper {
   private lazy val likes: Signal[Seq[UserId]] =
     Signal(zms, screenController.showMessageDetails)
       .collect { case (z, Some(msgId)) => (z, msgId) }
-      .flatMap { case (z, msgId) =>
+      .flatMap { case (z, MessageDetailsParams(msgId, _)) =>
           new RefreshingSignal[Seq[UserId], Seq[Liking]](
             CancellableFuture.lift(z.reactionsStorage.getLikes(msgId).map(_.likers.keys.toSeq)),
             z.reactionsStorage.onChanged.map(_.filter(_.message == msgId))
@@ -66,7 +67,7 @@ class LikesAndReadsFragment extends FragmentHelper {
 
   private lazy val reads: Signal[Seq[UserId]] =
     Signal(readReceiptsStorage, screenController.showMessageDetails)
-      .collect { case (storage, Some(msgId)) => (storage, msgId) }
+      .collect { case (storage, Some(MessageDetailsParams(msgId, _))) => (storage, msgId) }
       .flatMap { case (storage, msgId) => storage.receipts(msgId).map(_.map(_.user)) }
 
   private lazy val viewToDisplay = for {
@@ -76,8 +77,8 @@ class LikesAndReadsFragment extends FragmentHelper {
 
   private lazy val message = for {
     z           <- zms
-    Some(msgId) <- screenController.showMessageDetails
-    msg         <- z.messagesStorage.signal(msgId)
+    Some(msgParams) <- screenController.showMessageDetails
+    msg         <- z.messagesStorage.signal(msgParams.messageId)
   } yield msg
 
   private lazy val isOwnMessage = for {
@@ -190,7 +191,7 @@ class LikesAndReadsFragment extends FragmentHelper {
     }
 
     Signal(screenController.showMessageDetails, isOwnMessage).head.foreach {
-      case (Some(msgId), true) =>
+      case (Some(_), true) =>
         tabs.foreach(_.setVisible(true))
 
         if (Option(savedInstanceState).isEmpty)
@@ -208,8 +209,8 @@ class LikesAndReadsFragment extends FragmentHelper {
 
     (for {
       receipts    <- readReceiptsStorage
-      Some(msgId) <- screenController.showMessageDetails
-      rs          <- receipts.receipts(msgId)
+      Some(msgParams) <- screenController.showMessageDetails
+      rs          <- receipts.receipts(msgParams.messageId)
     } yield rs.map(r => r.user -> r.timestamp).toMap).onUi {
       readTimestamps = _
     }
