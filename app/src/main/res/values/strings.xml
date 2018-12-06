@@ -1147,6 +1147,9 @@
     <string name="allow_guests_toggle_info_text">Open this conversation to services and people outside your team.</string>
     <string name="read_receipts_toggle_text">Read receipts</string>
     <string name="read_receipts_toggle_info_text">When this is on, people can see when their messages in this conversation are read.</string>
+    <string name="read_receipts_info_title">YOU HAVE ENABLED READ RECEIPTS</string>
+    <string name="read_receipts_info_1">If both sides turn on read receipts, you can see when\nmessages are read.</string>
+    <string name="read_receipts_info_2">You can change this option in your account settings.</string>
     <string name="create_conv_options_title_text">Conversation options</string>
     <string name="create_conv_options_subtitle_allow_guests">Allow guests</string>
     <string name="create_conv_options_subtitle_read_receipts">Read receipts</string>

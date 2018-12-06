@@ -95,7 +95,51 @@
             android:layout_marginTop="@dimen/wire__padding__8"
             android:visibility="gone"/>
 
-       <RelativeLayout
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/read_receipts_info_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            app:w_font="@string/wire__typeface__medium"
+            android:textSize="@dimen/wire__text_size__small"
+            android:textColor="?wireSecondaryTextColor"
+            android:layout_marginTop="@dimen/wire__padding__small"
+            android:paddingStart="@dimen/wire__padding__regular"
+            android:paddingEnd="@dimen/wire__padding__huge"
+            android:text="@string/read_receipts_info_title"
+           />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/read_receipts_info_1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            app:w_font="@string/wire__typeface__light"
+            android:textSize="@dimen/wire__text_size__small"
+            android:textColor="?wireSecondaryTextColor"
+            android:layout_marginTop="@dimen/wire__padding__small"
+            android:layout_marginBottom="@dimen/wire__padding__small"
+            android:paddingStart="@dimen/wire__padding__regular"
+            android:paddingEnd="@dimen/wire__padding__huge"
+            android:text="@string/read_receipts_info_1"
+            />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/read_receipts_info_2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            app:w_font="@string/wire__typeface__light"
+            android:textSize="@dimen/wire__text_size__small"
+            android:textColor="?wireSecondaryTextColor"
+            android:layout_marginBottom="@dimen/wire__padding__small"
+            android:paddingStart="@dimen/wire__padding__regular"
+            android:paddingEnd="@dimen/wire__padding__huge"
+            android:text="@string/read_receipts_info_2"
+            />
+<!--
+        <RelativeLayout
             android:id="@+id/notifications_button"
             android:layout_width="match_parent"
             android:layout_height="@dimen/menu_item_height"
@@ -160,7 +204,7 @@
             </LinearLayout>
 
         </RelativeLayout>
-
+-->
     </LinearLayout>
 
 

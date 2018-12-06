@@ -102,7 +102,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
       case Mode.Normal(_) =>
 
         def notifications: MenuItem =
-          if (zms.teamId.isDefined && mode.inConversationList)
+          if (zms.teamId.isDefined)
             Notifications
           else if (conv.muted.isAllAllowed)
             Mute
