@@ -107,11 +107,14 @@ class ConversationManagerFragment extends FragmentHelper
 
     import ConversationChangeRequester._
     subs += convController.convChanged.onUi { change =>
-      if ((change.requester == START_CONVERSATION) ||
-        (change.requester == INCOMING_CALL) ||
-        (change.requester == LEAVE_CONVERSATION) ||
-        (change.requester == DELETE_CONVERSATION) ||
-        (change.requester == BLOCK_USER)) {
+      if (
+        change.requester == START_CONVERSATION ||
+        change.requester == INCOMING_CALL ||
+        change.requester == LEAVE_CONVERSATION ||
+        change.requester == DELETE_CONVERSATION ||
+        change.requester == BLOCK_USER ||
+        change.requester == CONVERSATION_LIST
+      ) {
 
         if ((navigationController.getCurrentRightPage == Page.CAMERA) && !change.noChange)
           cameraController.closeCamera(CameraContext.MESSAGE)

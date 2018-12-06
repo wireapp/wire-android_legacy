@@ -142,11 +142,13 @@ class ParticipantDetailsTab(val context: Context, callback: FooterMenuCallback, 
   private lazy val readReceiptsInfo1 = findById[TypefaceTextView](R.id.read_receipts_info_1)
   private lazy val readReceiptsInfo2 = findById[TypefaceTextView](R.id.read_receipts_info_2)
 
-  zms.flatMap(_.propertiesService.readReceiptsEnabled).onUi { readReceiptsEnabled =>
-    readReceiptsInfoTitle.setVisible(readReceiptsEnabled)
-    readReceiptsInfo1.setVisible(readReceiptsEnabled)
-    readReceiptsInfo2.setVisible(readReceiptsEnabled)
-  }
+  Signal(zms.flatMap(_.propertiesService.readReceiptsEnabled), userAccountsController.isTeam)
+    .map { case (receipts, team) => receipts && team }
+    .onUi { showInfo =>
+      readReceiptsInfoTitle.setVisible(showInfo)
+      readReceiptsInfo1.setVisible(showInfo)
+      readReceiptsInfo2.setVisible(showInfo)
+    }
 }
 
 

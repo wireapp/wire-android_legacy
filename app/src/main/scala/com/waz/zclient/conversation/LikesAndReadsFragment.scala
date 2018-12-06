@@ -32,7 +32,7 @@ import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{RefreshingSignal, Signal}
 import com.waz.utils.returning
-import com.waz.zclient.common.controllers.ScreenController
+import com.waz.zclient.common.controllers.{ScreenController, UserAccountsController}
 import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
 import com.waz.zclient.pages.main.conversation.ConversationManagerFragment
 import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
@@ -52,6 +52,7 @@ class LikesAndReadsFragment extends FragmentHelper {
   private lazy val zms                 = inject[Signal[ZMessaging]]
   private lazy val screenController    = inject[ScreenController]
   private lazy val readReceiptsStorage = inject[Signal[ReadReceiptsStorage]]
+  private lazy val accountsController  = inject[UserAccountsController]
 
   private val visibleTab = Signal[Tab](ReadsTab)
 
@@ -122,9 +123,9 @@ class LikesAndReadsFragment extends FragmentHelper {
   }
 
   private lazy val title = returning(view[TypefaceTextView](R.id.message_details_title)) { vh =>
-    isOwnMessage.map {
-      case true  => R.string.message_details_title
-      case false => R.string.message_likes_title
+    Signal(isOwnMessage, accountsController.isTeam).map {
+      case (true, true)  => R.string.message_details_title
+      case _             => R.string.message_liked_title
     }.onUi(resId => vh.foreach(_.setText(resId)))
   }
 
@@ -190,8 +191,8 @@ class LikesAndReadsFragment extends FragmentHelper {
       rv.setAdapter(new ParticipantsAdapter(likes, showPeopleOnly = true, showArrow = false))
     }
 
-    Signal(screenController.showMessageDetails, isOwnMessage).head.foreach {
-      case (Some(_), true) =>
+    Signal(screenController.showMessageDetails, isOwnMessage, accountsController.isTeam).head.foreach {
+      case (Some(_), true, true) =>
         tabs.foreach(_.setVisible(true))
 
         if (Option(savedInstanceState).isEmpty)

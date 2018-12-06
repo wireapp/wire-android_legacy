@@ -897,7 +897,7 @@
     <string name="message_bottom_menu_action_save_ok">Picture saved</string>
 
     <string name="message_details_title">MESSAGE DETAILS</string>
-    <string name="message_likes_title">LIKES</string>
+    <string name="message_liked_title">LIKED</string>
     <string name="message_details_sent">Sent</string>
     <string name="message_details_last_edited">Edited</string>
     <string name="tab_title_read">READ</string>
