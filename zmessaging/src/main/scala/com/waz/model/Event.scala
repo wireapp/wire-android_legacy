@@ -20,6 +20,7 @@ package com.waz.model
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.log.ZLog2.SafeToLog
+import com.waz.log.ZLog2._
 import com.waz.model.ConversationEvent.ConversationEventDecoder
 import com.waz.model.Event.EventDecoder
 import com.waz.model.UserData.ConnectionStatus
@@ -206,7 +207,7 @@ object Event {
         case "user.client-add" => OtrClientAddEvent(OtrClient.ClientsResponse.client(js.getJSONObject("client")))
         case "user.client-remove" => OtrClientRemoveEvent(decodeId[ClientId]('id)(js.getJSONObject("client"), implicitly))
         case _ =>
-          error(s"unhandled event: $js")
+          error(l"unhandled event: $js")
           UnknownEvent(js)
       }
     } .getOrElse(UnknownEvent(js))
@@ -252,11 +253,11 @@ object ConversationEvent {
         case "conversation.generic-asset"        => GenericAssetEvent('convId, time, 'from, 'content, 'dataId, decodeOptByteString('data))
         case "conversation.otr-error"            => OtrErrorEvent('convId, time, 'from, decodeOtrError('error))
         case _ =>
-          error(s"unhandled event: $js")
+          error(l"unhandled event: $js")
           UnknownConvEvent(js)
       }
     } .getOrElse {
-      error(s"unhandled event: $js")
+      error(l"unhandled event: $js")
       UnknownConvEvent(js)
     }
   }
@@ -274,11 +275,11 @@ object OtrErrorEvent {
         case "otr-error.identity-changed-error" => IdentityChangedError('from, 'sender)
         case "otr-error.duplicate" => Duplicate
         case _ =>
-          error(s"unhandled event: $js")
+          error(l"unhandled event: $js")
           UnknownOtrErrorEvent(js)
       }
     }.getOrElse {
-      error(s"unhandled event: $js")
+      error(l"unhandled event: $js")
       UnknownOtrErrorEvent(js)
     }
   }
@@ -390,7 +391,7 @@ object TeamEvent {
         case "team.conversation-create" => ConversationCreate('team, RConvId(decodeString('conv)('data)))
         case "team.conversation-delete" => ConversationDelete('team, RConvId(decodeString('conv)('data)))
         case _ =>
-          error(s"Unhandled event: $js")
+          error(l"Unhandled event: $js")
           UnknownTeamEvent(js)
     }
   }
