@@ -34,6 +34,7 @@ import com.waz.service.downloads._
 import com.waz.service.images.{ImageLoader, ImageLoaderImpl}
 import com.waz.service.push.{GlobalNotificationsService, GlobalNotificationsServiceImpl, GlobalTokenService, GlobalTokenServiceImpl}
 import com.waz.service.tracking.{TrackingService, TrackingServiceImpl}
+import com.waz.sync.{AccountSyncHandler, SyncHandler, SyncRequestService}
 import com.waz.sync.client._
 import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache
@@ -46,10 +47,15 @@ import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RequestInterceptor}
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
 trait GlobalModule {
   def context:              AContext
   def backend:              BackendConfig
+
+  def syncRequests:         SyncRequestService
+  def syncHandler:          SyncHandler
+
   def ssoService:           SSOService
   def tokenService:         GlobalTokenService
   def notifications:        GlobalNotificationsService
@@ -98,22 +104,25 @@ trait GlobalModule {
   def trackingService:      TrackingService
 }
 
-class GlobalModuleImpl(val context:   AContext,
-                       val backend:   BackendConfig,
-                       val prefs:     GlobalPreferences,
-                       val googleApi: GoogleApi,
-                       val base64: Base64) extends GlobalModule { global =>
+class GlobalModuleImpl(val context:      AContext,
+                       val backend:      BackendConfig,
+                       val prefs:        GlobalPreferences,
+                       val googleApi:    GoogleApi,
+                       val base64:       Base64,
+                       val syncRequests: SyncRequestService) extends GlobalModule { global =>
   //trigger initialization of Firebase in onCreate - should prevent problems with Firebase setup
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
   val network:                  DefaultNetworkModeService        = wire[DefaultNetworkModeService]
   val tokenService:             GlobalTokenService               = wire[GlobalTokenServiceImpl]
 
-  val storage:                  Database                         = new GlobalDatabase(context)
+  val trackingService:          TrackingService                  = TrackingServiceImpl(accountsService)
+  val storage:                  Database                         = new GlobalDatabase(context, tracking = trackingService)
   val accountsStorageOld:       AccountsStorageOld               = wire[AccountsStorageOldImpl]
+
 
   lazy val ssoService:          SSOService                       = wire[SSOService]
   lazy val accountsService:     AccountsService                  = new AccountsServiceImpl(this)
-  lazy val trackingService:     TrackingService                  = TrackingServiceImpl(accountsService)
+  lazy val syncHandler:         SyncHandler                      = new AccountSyncHandler(accountsService)
   lazy val notifications:       GlobalNotificationsService       = wire[GlobalNotificationsServiceImpl]
   lazy val calling:             GlobalCallingService             = new GlobalCallingService
 
@@ -138,7 +147,7 @@ class GlobalModuleImpl(val context:   AContext,
 
   lazy val urlCreator:          UrlCreator                       = UrlCreator.simpleAppender(backend.baseUrl.toString)
   implicit lazy val httpClient: HttpClient                       = HttpClientOkHttpImpl(enableLogging = ZmsVersion.DEBUG)(Threading.BlockingIO)
-  lazy val httpClientForLongRunning: HttpClient                  = HttpClientOkHttpImpl(enableLogging = ZmsVersion.DEBUG)(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
+  lazy val httpClientForLongRunning: HttpClient                  = HttpClientOkHttpImpl(enableLogging = ZmsVersion.DEBUG, timeout = Some(30.seconds))(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
 
   implicit lazy val requestInterceptor: RequestInterceptor       = RequestInterceptor.identity
 
@@ -217,5 +226,7 @@ class EmptyGlobalModule extends GlobalModule {
   override def httpClient:               HttpClient                                          = ???
   override def httpClientForLongRunning: HttpClient                                          = ???
   override def base64:                   Base64                                              = ???
+  override def syncRequests:             SyncRequestService                                  = ???
+  override def syncHandler:              SyncHandler                                         = ???
 }
 

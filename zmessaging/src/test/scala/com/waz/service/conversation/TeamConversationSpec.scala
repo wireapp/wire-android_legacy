@@ -45,7 +45,7 @@ class TeamConversationSpec extends AndroidFreeSpec {
 
     scenario("Create 1:1 conversation within a team with existing 1:1 conversation between the two members should return existing conversation") {
       val otherUserId = UserId("otherUser")
-      val otherUser = UserData(otherUserId, team, "other", searchKey = SearchKey.simple("other"))
+      val otherUser = UserData(otherUserId, team, Name("other"), searchKey = SearchKey.simple("other"))
 
       val existingConv = ConversationData(creator = self, convType = Group, team = team)
 
@@ -67,9 +67,9 @@ class TeamConversationSpec extends AndroidFreeSpec {
 
     scenario("Existing 1:1 conversation between two team members with NAME should not be returned") {
       val otherUserId = UserId("otherUser")
-      val otherUser = UserData(otherUserId, team, "other", searchKey = SearchKey.simple("other"))
+      val otherUser = UserData(otherUserId, team, Name("other"), searchKey = SearchKey.simple("other"))
 
-      val name = Some("Conv Name")
+      val name = Some(Name("Conv Name"))
       val existingConv = ConversationData(creator = self, name = name, convType = Group, team = team)
 
       (userStorage.get _).expects(otherUserId).once().returning(Future.successful(Some(otherUser)))
@@ -85,7 +85,7 @@ class TeamConversationSpec extends AndroidFreeSpec {
 
       (convsStorage.getAll _).expects(Seq(existingConv.id)).once().returning(Future.successful(Seq(Some(existingConv))))
       (convsContent.createConversationWithMembers _).expects(*, *, Group, self, Set(otherUserId), None, false, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED).once().onCall {
-        (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, us: Set[UserId], n: Option[String], hid: Boolean, ac: Set[Access], ar: AccessRole) =>
+        (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, us: Set[UserId], n: Option[Name], hid: Boolean, ac: Set[Access], ar: AccessRole) =>
           Future.successful(ConversationData(conv, r, n, cr, tpe, team, hidden = hid, access = ac, accessRole = Some(ar)))
       }
       (messages.addConversationStartMessage _).expects(*, self, Set(otherUserId), None, None).once().returning(Future.successful(null))
@@ -101,7 +101,7 @@ class TeamConversationSpec extends AndroidFreeSpec {
     //TODO under what circumstances is the user connection status "Ignored"? What happens if you're just unconnected with that person?
     scenario("Create 1:1 conversation with a non-team member should create a real 1:1 conversation") {
       val otherUserId = UserId("otherUser")
-      val otherUser = UserData(otherUserId, Some(TeamId("different_team")), "other", searchKey = SearchKey.simple("other"), connection = ConnectionStatus.Ignored)
+      val otherUser = UserData(otherUserId, Some(TeamId("different_team")), Name("other"), searchKey = SearchKey.simple("other"), connection = ConnectionStatus.Ignored)
 
       val expectedConv = ConversationData(ConvId("otherUser"), creator = self, convType = OneToOne, team = None)
 
@@ -109,7 +109,7 @@ class TeamConversationSpec extends AndroidFreeSpec {
 
       (convsContent.convById _).expects(ConvId("otherUser")).returning(Future.successful(None))
       (convsContent.createConversationWithMembers _).expects(ConvId("otherUser"), *, Incoming, otherUserId, Set(self), None, true, Set(Access.PRIVATE), AccessRole.PRIVATE).once().onCall {
-        (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, us: Set[UserId], n: Option[String], hid: Boolean, ac: Set[Access], ar: AccessRole) =>
+        (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, us: Set[UserId], n: Option[Name], hid: Boolean, ac: Set[Access], ar: AccessRole) =>
           Future.successful(ConversationData(conv, r, n, cr, tpe, team, hidden = hid, access = ac, accessRole = Some(ar)))
       }
 

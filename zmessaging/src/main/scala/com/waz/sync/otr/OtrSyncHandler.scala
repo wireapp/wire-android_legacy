@@ -32,6 +32,7 @@ import com.waz.service.otr.OtrService
 import com.waz.service.push.PushService
 import com.waz.service.{ErrorsService, UserService}
 import com.waz.sync.SyncResult
+import com.waz.sync.SyncResult.Failure
 import com.waz.sync.client.AssetClient.{Metadata, Retention, UploadResponse}
 import com.waz.sync.client.OtrClient.{ClientMismatch, EncryptedContent, MessageResponse}
 import com.waz.sync.client._
@@ -172,29 +173,30 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
 
     val msg = GenericMessage(Uid(), Proto.ClientAction.SessionReset)
 
-    val convData = convStorage.get(convId) flatMap {
+    val convData = convStorage.get(convId).flatMap {
       case None => convStorage.get(ConvId(user.str))
       case conv => successful(conv)
     }
 
-    def msgContent = service.encryptTargetedMessage(user, client, msg) flatMap {
+    def msgContent = service.encryptTargetedMessage(user, client, msg).flatMap {
       case Some(ct) => successful(Some(ct))
       case None =>
-        clientsSyncHandler.syncSessions(Map(user -> Seq(client))) flatMap { _ =>
-          service.encryptTargetedMessage(user, client, msg)
-        }
+        for {
+          _       <- clientsSyncHandler.syncSessions(Map(user -> Seq(client)))
+          content <- service.encryptTargetedMessage(user, client, msg)
+        } yield content
     }
 
-    convData flatMap {
-      case None => successful(SyncResult(internalError(s"conv not found: $convId, for user: $user in postSessionReset")))
+    convData.flatMap {
+      case None =>
+        successful(Failure(s"conv not found: $convId, for user: $user in postSessionReset"))
       case Some(conv) =>
-        msgContent flatMap {
-          case None => successful(SyncResult(internalError(s"session not found for $user, $client")))
+        msgContent.flatMap {
+          case None => successful(Failure(s"session not found for $user, $client"))
           case Some(content) =>
-            msgClient.postMessage(conv.remoteId, OtrMessage(selfClientId, content), ignoreMissing = true).future map {
-              case Right(_) => SyncResult.Success
-              case Left(err) => SyncResult(err)
-            }
+            msgClient
+              .postMessage(conv.remoteId, OtrMessage(selfClientId, content), ignoreMissing = true).future
+              .map(SyncResult(_))
         }
     }
   }

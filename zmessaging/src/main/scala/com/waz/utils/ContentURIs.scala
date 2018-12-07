@@ -31,7 +31,7 @@ import scala.util.Try
 object ContentURIs {
 
   def queryContentUriMetaData(context: Context, uri: URI): Future[MetaData] = Future {
-    def mimeFromResolver = LoggedTry(Option(context.getContentResolver.getType(URI.unwrap(uri)))).toOption.flatten.map(Mime(_)).filterNot(_.isEmpty)
+    def mimeFromResolver = Try(Option(context.getContentResolver.getType(URI.unwrap(uri)))).toOption.flatten.map(Mime(_)).filterNot(_.isEmpty)
     def mimeFromExtension = Option(uri.getLastPathSegment).map(Mime.fromFileName).filterNot(_.isEmpty)
     def mime = mimeFromResolver orElse mimeFromExtension getOrElse Mime.Default
 

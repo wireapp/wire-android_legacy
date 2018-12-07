@@ -19,34 +19,31 @@ package com.waz.sync
 
 import com.waz.api.impl.ErrorResponse
 
-sealed trait SyncResult {
-
-  val isSuccess: Boolean
-
-  // we should only retry if it makes sense (temporary network or server errors)
-  // there is no point retrying requests which failed with 4xx status
-  val shouldRetry: Boolean
-
-  val error: Option[ErrorResponse]
-}
+sealed trait SyncResult
 
 object SyncResult {
 
-  case object Success extends SyncResult {
-    override val isSuccess = true
-    override val shouldRetry = false
-    override val error = None
+  case object Success extends SyncResult
+
+  case class Failure(error: ErrorResponse) extends SyncResult
+  object Failure {
+    def apply(msg: String = ""): Failure =
+      Failure(ErrorResponse.internalError(msg))
   }
 
-  case class Failure(error: Option[ErrorResponse], shouldRetry: Boolean = true) extends SyncResult {
-    override val isSuccess = false
+  case class Retry(error: ErrorResponse) extends SyncResult
+  object Retry {
+    def apply(msg: String = ""): Retry =
+      new Retry(ErrorResponse(ErrorResponse.RetryCode, msg, "internal-error-retry"))
   }
 
-  def apply(error: ErrorResponse) = Failure(Some(error), ! error.isFatal)
+  def apply(error: ErrorResponse): SyncResult =
+    if (!error.isFatal) Retry(error) else Failure(error)
 
-  def apply(success: Boolean) = if (success) Success else failed()
+  //TODO this loses important information about the exception - would be better if ErrorResponse extended Throwable/Exception
+  def apply(e: Throwable): SyncResult =
+    Failure(ErrorResponse.internalError(e.getMessage))
 
-  def failed(): SyncResult = Failure(None, true)
-
-  def aborted(): SyncResult = Failure(None, false)
+  def apply(result: Either[ErrorResponse, _]): SyncResult =
+    result.fold[SyncResult](SyncResult(_), _ => SyncResult.Success)
 }

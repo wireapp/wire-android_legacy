@@ -21,7 +21,7 @@ import java.io.{File, InputStream}
 
 import android.graphics.BitmapFactory.Options
 import android.graphics.BitmapFactory
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
@@ -48,7 +48,7 @@ class BitmapDecoder {
       loader(sampleSize)
     } catch {
       case e: OutOfMemoryError if sampleSize < maxSampleSize =>
-        warn(s"decoding failed for sampleSize: $sampleSize", e)
+        warn(l"decoding failed for sampleSize: $sampleSize", e)
         retryOnError(nextPowerOfTwo(sampleSize), maxSampleSize)(loader)
     }
   }

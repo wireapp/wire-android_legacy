@@ -17,10 +17,11 @@
  */
 package com.waz.content
 
-import com.waz.ZLog._
-import com.waz.api.{Message, MessageFilter}
+import com.waz.ZLog.{LogTag, logTime}
 import com.waz.api.Message.Status
+import com.waz.api.{Message, MessageFilter}
 import com.waz.content.ConvMessagesIndex._
+import com.waz.log.ZLog2._
 import com.waz.model.MessageData.{MessageDataDao, isUserContent}
 import com.waz.model._
 import com.waz.service.tracking.TrackingService
@@ -68,10 +69,6 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
     val lastMessageFromSelf: Signal[Option[MessageData]] = returning(sources.lastMessageFromSelf)(_.disableAutowiring())
     val lastMessageFromOther: Signal[Option[MessageData]] = returning(sources.lastMessageFromOther)(_.disableAutowiring())
 
-    lastMessageFromSelf { msg =>
-      info(s"last message from self is now ${msg.map(_.id)}")
-    }
-
     val unreadCount = for {
       time <- sources.lastReadTime
       _ <- Signal.wrap(LocalInstant.Epoch, indexChanged.map(_.time)).throttle(500.millis)
@@ -103,7 +100,6 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
       }
     }.map { _ =>
       Signal(signals.unreadCount, signals.failedCount, signals.lastMissedCall, signals.incomingKnock).throttle(500.millis) { case (unread, failed, missed, knock) =>
-        verbose(s"update conversation state: unread: $unread, failed: $failed, missed: $missed, knock: $knock")
         convs.update(convId, _.copy(incomingKnockMessage = knock, missedCallMessage = missed, unreadCount = unread, failedCount = failed))
       }
     }
@@ -111,7 +107,7 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
   def updateLastRead(c: ConversationData) = lastReadTime.mutateOrDefault(_ max c.lastRead, c.lastRead)
 
   private[waz] def loadCursor = CancellableFuture.lift(init.flatMap { _ =>
-    verbose(s"loadCursor for $convId")
+    verbose(l"loadCursor for $convId")
     storage.read { implicit db =>
       val (cursor, order) = filter match {
         //TODO: this ignores other filter types if the content query is on. they should all be considered...
@@ -121,7 +117,7 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
       }
       val time = lastReadTime.currentValue.getOrElse(RemoteInstant.Epoch)
       val readMessagesCount = MessageDataDao.countAtLeastAsOld(convId, time).toInt
-      verbose(s"index of $time = $readMessagesCount")
+      verbose(l"index of $time = $readMessagesCount")
       (cursor, order, time, math.max(0, readMessagesCount - 1))
     }.map { case (cursor, order, time, lastReadIndex) =>
       new MessagesCursor(cursor, lastReadIndex, time, msgAndLikes, tracking)(order)
@@ -166,7 +162,7 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
     val lastFromOtherRemoved = lastMessageFromOther.mutate(_ filterNot f)
 
     if (lastRemoved || lastSentRemoved || lastFromSelfRemoved) {
-      verbose("last message was removed, need to fetch it from db")
+      verbose(l"last message was removed, need to fetch it from db")
       storage.read { implicit db =>
         MessageDataDao.last(convId) foreach updateSignal(lastMessage)
         MessageDataDao.lastSent(convId) foreach updateSignal(lastSentMessage)
@@ -178,7 +174,6 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
 
   private[content] def add(msgs: Seq[MessageData]): Future[Unit] = init map { _ =>
     msgs foreach { msg =>
-      verbose(s"add(${msg.id}), last: ${lastMessage.currentValue.map(_.map(_.id))}")
 
       if (msg.isLocal && lastLocalMessageByType.get(msg.msgType).forall(_.time.isBefore(msg.time)))
         lastLocalMessageByType(msg.msgType) = msg
@@ -208,13 +203,13 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
 
   private[content] def update(updates: Seq[(MessageData, MessageData)]): Future[Unit] = init map { _ =>
     updates foreach { case (msg, updated) =>
-      verbose(s"update($msg, $updated)")
+      verbose(l"update($msg, $updated)")
       assert(msg.id == updated.id, "trying to change message id")
 
       if (msg.isLocal && !updated.isLocal && lastLocalMessageByType.get(msg.msgType).exists(_.id == msg.id))
         lastLocalMessageByType.remove(msg.msgType)
       else if (updated.isLocal && !msg.isLocal)
-        debug(s"non-local message was updated to local: $msg -> $updated")
+        debug(l"non-local message was updated to local: $msg -> $updated")
     }
 
     if (updates.nonEmpty) {

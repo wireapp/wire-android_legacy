@@ -19,14 +19,13 @@ package com.waz
 import com.waz.ZLog.LogTag
 import com.waz.model.{AssetId, ConvId, IntegrationId, UserId}
 import com.waz.service.ZMessaging
-import com.waz.service.call.Avs.AvsClosedReason
 import com.waz.service.call.CallInfo
 import com.waz.service.tracking.{ContributionEvent, IntegrationAdded, TrackingEvent, TrackingService}
 import com.waz.utils.events.EventStream
 
 import scala.concurrent.Future
 
-class DisabledTrackingService extends TrackingService {
+object DisabledTrackingService extends TrackingService {
   override def events: EventStream[(Option[ZMessaging], TrackingEvent)] = ???
   override def track(event: TrackingEvent, userId: Option[UserId]): Future[Unit] = Future.successful(())
   override def contribution(action: ContributionEvent.Action): Future[Unit] = Future.successful(())

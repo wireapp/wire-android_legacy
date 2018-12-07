@@ -65,18 +65,11 @@ object TrackingService {
   implicit val dispatcher = new SerialDispatchQueue(name = "TrackingService")
   private[waz] implicit val ec: EventContext = EventContext.Global
 
-  def exception(e: Throwable, description: String, userId: Option[UserId] = None)(implicit tag: LogTag): Future[Unit] = {
-    ZMessaging.globalModule.map(_.trackingService.exception(e, description, userId)(tag))
-  }
-
-  def track(event: TrackingEvent, userId: Option[UserId] = None): Future[Unit] =
-    ZMessaging.globalModule.map(_.trackingService.track(event, userId))
-
   trait NoReporting { self: Throwable => }
 
 }
 
-class TrackingServiceImpl(curAccount: Signal[Option[UserId]], zmsProvider: ZmsProvider) extends TrackingService {
+class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: ZmsProvider) extends TrackingService {
   import TrackingService._
 
   val events = EventStream[(Option[ZMessaging], TrackingEvent)]()
@@ -194,7 +187,7 @@ object TrackingServiceImpl {
 
   import com.waz.threading.Threading.Implicits.Background
 
-  def apply(accountsService: AccountsService): TrackingServiceImpl =
+  def apply(accountsService: => AccountsService): TrackingServiceImpl =
     new TrackingServiceImpl(
       accountsService.activeAccountId,
       (userId: Option[UserId]) => userId.fold(Future.successful(Option.empty[ZMessaging]))(uId => accountsService.zmsInstances.head.map(_.find(_.selfUserId == uId))))

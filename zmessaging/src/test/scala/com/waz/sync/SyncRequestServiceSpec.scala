@@ -25,10 +25,11 @@ import com.waz.api.NetworkMode
 import com.waz.api.NetworkMode.UNKNOWN
 import com.waz.content.{Database, UserPreferences}
 import com.waz.model._
-import com.waz.model.sync.{SerialExecutionWithinConversation, SyncJob, SyncRequest}
+import com.waz.model.sync.{SyncJob, SyncRequest}
 import com.waz.service._
 import com.waz.specs.AndroidFreeSpec
-import com.waz.sync.queue.{ConvLock, SyncContentUpdaterImpl}
+import com.waz.sync.SyncHandler.RequestInfo
+import com.waz.sync.queue.SyncContentUpdaterImpl
 import com.waz.testutils.TestUserPreferences
 import com.waz.threading.CancellableFuture
 import com.waz.utils.events.Signal
@@ -60,16 +61,15 @@ class SyncRequestServiceSpec extends AndroidFreeSpec {
   }
 
   scenario("Execute a few basic tasks") {
-    (sync.apply (_:SyncRequest)).expects(*).returning(Future.successful(SyncResult(true)))
-    (sync.apply (_:SerialExecutionWithinConversation, _:ConvLock)).expects(*, *).returning(Future.successful(SyncResult(true)))
+    (sync.apply (_: UserId, _:SyncRequest)(_: RequestInfo)).expects(*, *, *).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
 
     val (handle, service) = getSyncServiceHandle
 
     result(for {
       id   <- handle.syncSelfUser()
       id2  <- handle.postMessage(MessageId(), ConvId(), RemoteInstant(clock.instant()))
-      res  <- service.scheduler.await(id)
-      res2 <- service.scheduler.await(id2)
+      res  <- service.await(id)
+      res2 <- service.await(id2)
     } yield (res, res2))
 
     result(service.listJobs.head) should have size 0
@@ -83,7 +83,7 @@ class SyncRequestServiceSpec extends AndroidFreeSpec {
     (reporting.addStateReporter(_: (PrintWriter) => Future[Unit])(_: LogTag)).expects(*, *)
 
     val content = new SyncContentUpdaterImpl(db)
-    val service = new SyncRequestServiceImpl(context, account1Id, content, network, sync, reporting, accounts, tracking)
-    (new AndroidSyncServiceHandle(service, timeouts, prefs), service)
+    val service = new SyncRequestServiceImpl(account1Id, content, network, sync, reporting, accounts, tracking)
+    (new AndroidSyncServiceHandle(account1Id, service, timeouts, prefs), service)
   }
 }

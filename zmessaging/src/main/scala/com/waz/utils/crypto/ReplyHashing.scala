@@ -30,8 +30,11 @@ import scala.concurrent.Future
 import java.lang.Long.BYTES
 import java.lang.Math.round
 
+import com.waz.api.Message.Type._
+
 trait ReplyHashing {
   def hashMessage(m: MessageData): Future[Sha256]
+  def hashMessages(msgs: Seq[MessageData]): Future[Map[MessageId, Sha256]]
 
   class MissingAssetException(message: String) extends Exception(message)
 }
@@ -40,26 +43,29 @@ class ReplyHashingImpl(storage: AssetsStorage)(implicit base64: Base64) extends 
 
   import com.waz.threading.Threading.Implicits.Background
 
-  override def hashMessage(m: MessageData): Future[Sha256] = {
-    import com.waz.api.Message.Type._
-    m.msgType match {
-      case TEXT | RICH_MEDIA | TEXT_EMOJI_ONLY =>
-        m.protos.last match {
-          case TextMessage(content, _, _, _) =>
-            Future.successful(hashTextReply(content, m.time).sha256())
-          case _ =>
-            Future.successful(Sha256.Empty) // should not happen
-        }
-      case LOCATION =>
-        Future.successful(hashLocation(m.location.get.getLatitude, m.location.get.getLongitude, m.time).sha256())
-      case ANY_ASSET | ASSET | VIDEO_ASSET | AUDIO_ASSET =>
-        storage.get(m.assetId).map(_.flatMap(_.remoteId)).flatMap {
-          case Some(rId) => Future.successful(hashAsset(rId, m.time).sha256())
-          case None => Future.failed(new MissingAssetException(s"Failed to find asset with id ${m.assetId}"))
-        }
-      case _ =>
-        Future.failed(new IllegalArgumentException(s"Cannot hash illegal reply to message type: ${m.msgType}"))
-    }
+  override def hashMessage(m: MessageData): Future[Sha256] = hashMessages(Seq(m)).map(_(m.id))
+
+  override def hashMessages(msgs: Seq[MessageData]): Future[Map[MessageId, Sha256]] = {
+    val (assetMsgs, otherMsgs) = msgs.partition(m => ReplyHashing.assetTypes.contains(m.msgType))
+    for {
+      assets     <- storage.getAll(assetMsgs.map(_.assetId))
+      assetPairs =  assetMsgs.map(m => m -> assets.find(_.exists(_.id == m.assetId)).flatMap(_.flatMap(_.remoteId)))
+      assetShas  <- Future.sequence(assetPairs.map {
+                      case (m, Some(rId)) => Future.successful(m.id -> hashAsset(rId, m.time).sha256())
+                      case (m, None)      => Future.failed(new MissingAssetException(s"Failed to find asset with id ${m.assetId}"))
+                    })
+      otherShas  <- Future.sequence(otherMsgs.map {
+                      case m if ReplyHashing.textTypes.contains(m.msgType) =>
+                        m.protos.last match {
+                          case TextMessage(content, _, _, _) => Future.successful(m.id -> hashTextReply(content, m.time).sha256())
+                          case _                             => Future.successful(m.id -> Sha256.Empty) // should not happen
+                        }
+                      case m if m.msgType == LOCATION =>
+                        Future.successful(m.id -> hashLocation(m.location.get.getLatitude, m.location.get.getLongitude, m.time).sha256())
+                      case m =>
+                        Future.failed(new IllegalArgumentException(s"Cannot hash illegal reply to message type: ${m.msgType}"))
+                    })
+    } yield (assetShas ++ otherShas).toMap
   }
 
   protected[crypto] def hashAsset(assetId: RAssetId, timestamp: RemoteInstant): Sha256Inj = hashTextReply(assetId.str, timestamp)
@@ -79,8 +85,12 @@ class ReplyHashingImpl(storage: AssetsStorage)(implicit base64: Base64) extends 
   }
 
   private implicit class RichLong(l: Long) {
-    def getBytes: Array[Byte] =
-      ByteBuffer.allocate(BYTES).putLong(l).array()
+    def getBytes: Array[Byte] = ByteBuffer.allocate(BYTES).putLong(l).array()
   }
 
+}
+
+object ReplyHashing {
+  private[crypto] val assetTypes = Set(ANY_ASSET, ASSET, VIDEO_ASSET, AUDIO_ASSET)
+  private[crypto] val textTypes  = Set(TEXT, RICH_MEDIA, TEXT_EMOJI_ONLY)
 }

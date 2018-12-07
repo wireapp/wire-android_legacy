@@ -99,7 +99,7 @@ object UserSearchClient {
   def handlesQuery(handle: Handle): String =
     UserSearchClient.HandlesPath + "/" + Handle.stripSymbol(handle.string)
 
-  case class UserSearchEntry(id: UserId, name: String, colorId: Option[Int], handle: Handle)
+  case class UserSearchEntry(id: UserId, name: Name, colorId: Option[Int], handle: Handle)
 
   object UserSearchEntry {
     import JsonDecoder._

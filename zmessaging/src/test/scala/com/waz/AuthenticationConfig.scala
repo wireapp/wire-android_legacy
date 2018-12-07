@@ -41,9 +41,7 @@ object AuthenticationConfig {
 
   implicit lazy val urlCreator: UrlCreator = UrlCreator.simpleAppender(BackendUrl)
 
-  private val trackingService = new DisabledTrackingService
-
-  private val LoginClient: LoginClient = new LoginClientImpl(trackingService)
+  private val LoginClient: LoginClient = new LoginClientImpl(DisabledTrackingService)
 
   lazy val AuthenticationManager: AuthenticationManager2 = {
     val loginResult = Await.result(LoginClient.login(testEmailCredentials), 1.minute) match {
@@ -66,7 +64,7 @@ object AuthenticationConfig {
     val accountStorage = new UnlimitedInMemoryStorage[UserId, AccountData](_.id) with AccountStorage2
     Await.ready(accountStorage.save(testAccountData), 1.minute)
 
-    new AuthenticationManager2(userInfo.id, accountStorage, LoginClient, trackingService)
+    new AuthenticationManager2(userInfo.id, accountStorage, LoginClient, DisabledTrackingService)
   }
 
   implicit lazy val authRequestInterceptor: AuthRequestInterceptor2 = new AuthRequestInterceptor2(AuthenticationManager, HttpClient)

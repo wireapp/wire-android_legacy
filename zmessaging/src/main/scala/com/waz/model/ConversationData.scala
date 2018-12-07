@@ -23,6 +23,8 @@ import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.{IConversation, Verification}
 import com.waz.db.Col._
 import com.waz.db.{Dao, Dao2}
+import com.waz.log.ZLog2.SafeToLog
+import com.waz.model
 import com.waz.model.ConversationData.{ConversationType, Link, UnreadCount}
 import com.waz.service.SearchKey
 import com.waz.utils.wrappers.{DB, DBCursor}
@@ -33,7 +35,7 @@ import scala.concurrent.duration._
 
 case class ConversationData(id:                   ConvId                 = ConvId(),
                             remoteId:             RConvId                = RConvId(),
-                            name:                 Option[String]         = None,
+                            name:                 Option[Name]           = None,
                             creator:              UserId                 = UserId(),
                             convType:             ConversationType       = ConversationType.Group,
                             team:                 Option[TeamId]         = None,
@@ -45,7 +47,7 @@ case class ConversationData(id:                   ConvId                 = ConvI
                             archived:             Boolean                = false,
                             archiveTime:          RemoteInstant          = RemoteInstant.Epoch,
                             cleared:              Option[RemoteInstant]  = None,
-                            generatedName:        String                 = "",
+                            generatedName:        Name                   = Name.Empty,
                             searchKey:            Option[SearchKey]      = None,
                             unreadCount:          UnreadCount            = UnreadCount(0, 0, 0, 0, 0),
                             failedCount:          Int                    = 0,
@@ -59,43 +61,11 @@ case class ConversationData(id:                   ConvId                 = ConvI
                             accessRole:           Option[AccessRole]     = None, //option for migration purposes only - at some point we do a fetch and from that point it will always be defined
                             link:                 Option[Link]           = None) {
 
-  override def toString: String =
-    s"""
-       |ConversationData:
-       | id:                   $id
-       | remoteId:             $remoteId
-       | name:                 $name
-       | creator:              $creator
-       | convType:             $convType
-       | team:                 $team
-       | lastEventTime:        $lastEventTime
-       | isActive:             $isActive
-       | lastRead:             $lastRead
-       | muted:                $muted
-       | muteTime:             $muteTime
-       | archived:             $archived
-       | archiveTime:          $archiveTime
-       | cleared:              $cleared
-       | generatedName:        $generatedName
-       | searchKey:            $searchKey
-       | unreadCount:          $unreadCount
-       | failedCount:          $failedCount
-       | missedCallMessage:    $missedCallMessage
-       | incomingKnockMessage: $incomingKnockMessage
-       | hidden:               $hidden
-       | verified:             $verified
-       | localEphemeral:       $localEphemeral
-       | globalEphemeral:      $globalEphemeral
-       | access:               $access
-       | accessRole:           $accessRole
-       | link:                 $link
-    """.stripMargin
-
   def displayName = if (convType == ConversationType.Group) name.getOrElse(generatedName) else generatedName
 
   def withFreshSearchKey = copy(searchKey = freshSearchKey)
   def savedOrFreshSearchKey = searchKey.orElse(freshSearchKey)
-  def freshSearchKey = if (convType == ConversationType.Group) name map SearchKey else None
+  def freshSearchKey = if (convType == ConversationType.Group) name.map(SearchKey(_)) else None
 
   lazy val completelyCleared = cleared.exists(!_.isBefore(lastEventTime))
 
@@ -145,7 +115,7 @@ object ConversationData {
 
   val Empty = ConversationData(ConvId(), RConvId(), None, UserId(), IConversation.Type.UNKNOWN)
 
-  case class UnreadCount(normal: Int, call: Int, ping: Int, mentions: Int, quotes: Int) {
+  case class UnreadCount(normal: Int, call: Int, ping: Int, mentions: Int, quotes: Int) extends SafeToLog {
     def total = normal + call + ping + mentions + quotes
     def messages = normal + ping
   }
@@ -190,7 +160,7 @@ object ConversationData {
   implicit object ConversationDataDao extends Dao[ConversationData, ConvId] {
     val Id                  = id[ConvId]('_id, "PRIMARY KEY").apply(_.id)
     val RemoteId            = id[RConvId]('remote_id).apply(_.remoteId)
-    val Name                = opt(text('name))(_.name.filterNot(_.isEmpty))
+    val Name                = opt(text[model.Name]('name, _.str, model.Name(_)))(_.name.filterNot(_.isEmpty))
     val Creator             = id[UserId]('creator).apply(_.creator)
     val ConvType            = int[ConversationType]('conv_type, _.id, ConversationType(_))(_.convType)
     val Team                = opt(id[TeamId]('team))(_.team)
@@ -203,7 +173,7 @@ object ConversationData {
     val Archived            = bool('archived)(_.archived)
     val ArchivedTime        = remoteTimestamp('archive_time)(_.archiveTime)
     val Cleared             = opt(remoteTimestamp('cleared))(_.cleared)
-    val GeneratedName       = text('generated_name)(_.generatedName)
+    val GeneratedName       = text[model.Name]('generated_name, _.str, model.Name(_))(_.generatedName)
     val SKey                = opt(text[SearchKey]('search_key, _.asciiRepresentation, SearchKey.unsafeRestore))(_.searchKey)
     val UnreadCount         = int('unread_count)(_.unreadCount.normal)
     val UnreadCallCount     = int('unread_call_count)(_.unreadCount.call)

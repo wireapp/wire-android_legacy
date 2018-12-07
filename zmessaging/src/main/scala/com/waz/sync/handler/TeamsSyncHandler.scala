@@ -47,8 +47,12 @@ class TeamsSyncHandlerImpl(userId:    UserId,
   override def syncTeam(): Future[SyncResult] = teamId match {
     case Some(id) => client.getTeamData(id).future.flatMap {
       case Right(data) => client.getTeamMembers(id).future.flatMap {
-        case Left(errorResponse) => Future.successful(SyncResult(errorResponse))
-        case Right(members) =>  service.onTeamSynced(data, members).map(_ => SyncResult.Success)
+        case Right(members) =>
+          service
+            .onTeamSynced(data, members)
+            .map(_ => SyncResult.Success)
+        case Left(errorResponse) =>
+          Future.successful(SyncResult(errorResponse))
       }
       case Left(error) => Future.successful(SyncResult(error))
     }
@@ -58,8 +62,12 @@ class TeamsSyncHandlerImpl(userId:    UserId,
   override def syncMember(uId: UserId) = teamId match {
     case Some(tId) =>
       client.getPermissions(tId, uId).future.flatMap {
-        case Right(p) => service.onMemberSynced(uId, p).map(_ => SyncResult.Success)
-        case Left(e)  => Future.successful(SyncResult(e))
+        case Right(p) =>
+          service
+            .onMemberSynced(uId, p)
+            .map(_ => SyncResult.Success)
+        case Left(e) =>
+          Future.successful(SyncResult(e))
       }
     case _ => Future.successful(SyncResult.Success)
   }

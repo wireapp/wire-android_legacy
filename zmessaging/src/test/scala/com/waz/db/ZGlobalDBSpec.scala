@@ -17,6 +17,7 @@
  */
 package com.waz.db
 
+import com.waz.DisabledTrackingService
 import com.waz.model.KeyValueData.KeyValueDataDao
 import com.waz.model._
 import com.waz.utils.DbLoader
@@ -25,7 +26,7 @@ import org.robolectric.Robolectric
 import org.scalatest._
 
 class ZGlobalDBSpec extends FeatureSpec with Matchers with OptionValues with Inspectors with BeforeAndAfter with RobolectricTests with DbLoader {
-  lazy val dbHelper = new ZGlobalDB(Robolectric.application)
+  lazy val dbHelper = new ZGlobalDB(Robolectric.application, tracking = DisabledTrackingService)
 
   after {
     dbHelper.close()
@@ -35,7 +36,7 @@ class ZGlobalDBSpec extends FeatureSpec with Matchers with OptionValues with Ins
   feature("Database migrations") {
 
     def createZmessagingDb(id: AccountId, userId: UserId) = {
-      val zdb = new ZMessagingDB(Robolectric.application, id.str)
+      val zdb = new ZMessagingDB(Robolectric.application, id.str, DisabledTrackingService)
       implicit val db: DB  = zdb.getWritableDatabase
       KeyValueDataDao.insertOrIgnore(KeyValueData("self_user_id", userId.str))
       db.close()

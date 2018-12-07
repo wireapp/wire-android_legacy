@@ -22,7 +22,7 @@ import com.waz.ZLog.LogTag
 
 import scala.concurrent.Future
 
-class AndroidLogOutput extends LogOutput {
+class AndroidLogOutput(override val showSafeOnly: Boolean = false) extends LogOutput {
 
   override val id = AndroidLogOutput.id
 

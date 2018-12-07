@@ -62,7 +62,7 @@ case class AccountData(id:           UserId              = UserId(),
 object AccountData {
 
   case class Password(str: String) {
-    override def toString = "********"
+    override def toString: String = str
   }
 
   //Labels can be used to revoke all cookies for a given client

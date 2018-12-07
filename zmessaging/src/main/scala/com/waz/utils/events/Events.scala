@@ -17,10 +17,12 @@
  */
 package com.waz.utils.events
 
-import scala.concurrent.{Future, ExecutionContext}
-import scala.ref.WeakReference
 import com.waz.threading.Threading
-import com.waz.utils.{LoggedTry, returning}
+import com.waz.utils.returning
+
+import scala.concurrent.{ExecutionContext, Future}
+import scala.ref.WeakReference
+import scala.util.Try
 
 object Events {
   type Subscriber[-E] = E => Unit
@@ -107,7 +109,7 @@ class SignalSubscription[E](source: Signal[E], subscriber: Events.Subscriber[E],
   override def changed(currentContext: Option[ExecutionContext]): Unit = synchronized {
     source.value foreach { event =>
       if (subscribed) {
-        if (contextDiffersFrom(currentContext)) Future(if (subscribed) LoggedTry(subscriber(event))("SignalSubscription"))(executionContext.get)
+        if (contextDiffersFrom(currentContext)) Future(if (subscribed) Try(subscriber(event)))(executionContext.get)
         else subscriber(event)
       }
     }
@@ -126,7 +128,7 @@ class StreamSubscription[E](source: EventStream[E], subscriber: Events.Subscribe
 
   override def onEvent(event: E, currentContext: Option[ExecutionContext]): Unit = {
     if (subscribed) {
-      if (contextDiffersFrom(currentContext)) Future(if (subscribed) LoggedTry(subscriber(event))("StreamSubscription"))(executionContext.get)
+      if (contextDiffersFrom(currentContext)) Future(if (subscribed) Try(subscriber(event)))(executionContext.get)
       else subscriber(event)
     }
   }

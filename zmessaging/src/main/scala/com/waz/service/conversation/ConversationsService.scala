@@ -19,7 +19,7 @@ package com.waz.service.conversation
 
 import com.softwaremill.macwire._
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.api.ErrorType
 import com.waz.api.IConversation.Access
 import com.waz.api.impl.ErrorResponse
@@ -100,7 +100,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       case Some(conv) if conv.accessRole.isEmpty =>
         for {
           syncId        <- sync.syncConversations(Set(conv.id))
-          _             <- syncReqService.scheduler.await(syncId)
+          _             <- syncReqService.await(syncId)
           Some(updated) <- content.convById(conv.id)
         } yield if (updated.access.contains(Access.CODE)) sync.syncConvLink(conv.id)
 
@@ -110,11 +110,11 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   }
 
   val convStateEventProcessingStage = EventScheduler.Stage[ConversationStateEvent] { (_, events) =>
-    RichFuture.processSequential(events)(processConversationEvent(_, selfUserId))
+    RichFuture.traverseSequential(events)(processConversationEvent(_, selfUserId))
   }
 
   push.onHistoryLost { req =>
-    verbose(s"onSlowSyncNeeded($req)")
+    verbose(l"onSlowSyncNeeded($req)")
     // TODO: this is just very basic implementation creating empty message
     // This should be updated to include information about possibly missed changes
     // this message will be shown rarely (when notifications stream skips data)
@@ -153,7 +153,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                 _    <- sync.syncConversations(Set(conv.id))
               } yield {}
             case _ =>
-              warn(s"No conversation data found for event: $ev on try: $retryCount")
+              warn(l"No conversation data found for event: $ev on try: $retryCount")
               content.processConvWithRemoteId(rConvId, retryAsync = true) { processUpdateEvent(_, ev) }
           }
       }
@@ -166,7 +166,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       if (userIds.contains(selfUserId)) sync.syncConversations(Set(conv.id)) //we were re-added to a group and in the meantime might have missed events
       for {
         syncId <- users.syncIfNeeded(userIds.toSet)
-        _ <- syncId.fold(Future.successful(()))(sId => syncReqService.scheduler.await(sId).map(_ => ()))
+        _ <- syncId.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
         _ <- membersStorage.add(conv.id, userIds)
         _ <- if (userIds.contains(selfUserId)) content.setConvActive(conv.id, active = true) else successful(None)
       } yield ()
@@ -180,7 +180,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case MemberUpdateEvent(_, _, _, state) => content.updateConversationState(conv.id, state)
 
     case ConnectRequestEvent(_, _, from, _, recipient, _, _) =>
-      debug(s"ConnectRequestEvent(from = $from, recipient = $recipient")
+      debug(l"ConnectRequestEvent(from = $from, recipient = $recipient")
       membersStorage.add(conv.id, Set(from, recipient)).flatMap { added =>
         users.syncIfNeeded(added.map(_.userId))
       }
@@ -207,7 +207,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       case _ =>
         for {
           user  <- usersStorage.get(selfUserId)
-          conv  =  ConversationData(ConvId(selfUserId.str), RConvId(selfUserId.str), None, selfUserId, ConversationType.Self, generatedName = user.map(_.name).getOrElse(""))
+          conv  =  ConversationData(ConvId(selfUserId.str), RConvId(selfUserId.str), None, selfUserId, ConversationType.Self, generatedName = user.map(_.name).getOrElse(Name.Empty))
           saved <- convsStorage.getOrCreate(selfConvId, conv).map(Some(_))
         } yield saved
     }
@@ -298,7 +298,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   } yield ()
 
   def forceNameUpdate(id: ConvId) = {
-    warn(s"forceNameUpdate($id)")
+    warn(l"forceNameUpdate($id)")
     nameUpdater.forceNameUpdate(id)
   }
 
@@ -343,7 +343,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
             else Future.successful(Right {})
         } yield resp).recover {
           case NonFatal(e) =>
-            warn("Unable to set team only mode on conversation", e)
+            warn(l"Unable to set team only mode on conversation", e)
             Left(ErrorResponse.internalError("Unable to set team only mode on conversation"))
         }
     }
@@ -363,7 +363,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     } yield linkResp)
       .recover {
         case NonFatal(e) =>
-          error("Failed to create link", e)
+          error(l"Failed to create link", e)
           Left(ErrorResponse.internalError("Unable to create link for conversation"))
       }
 
@@ -378,7 +378,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     } yield resp)
       .recover {
         case NonFatal(e) =>
-          error("Failed to remove link", e)
+          error(l"Failed to remove link", e)
           Left(ErrorResponse.internalError("Unable to remove link for conversation"))
       }
 

@@ -17,8 +17,8 @@
  */
 package com.waz.sync.handler
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.model.AddressBook
 import com.waz.service._
 import com.waz.service.tracking.TrackingService
@@ -27,7 +27,6 @@ import com.waz.sync.client.AddressBookClient
 import com.waz.threading.Threading
 
 import scala.concurrent.Future
-import scala.util.control.NoStackTrace
 
 class AddressBookSyncHandler(contacts: ContactsServiceImpl, client: AddressBookClient, tracking: TrackingService) {
 
@@ -39,18 +38,16 @@ class AddressBookSyncHandler(contacts: ContactsServiceImpl, client: AddressBookC
       // TODO: post incremental changes only - once backend supports that
       for {
         postRes <- client.postAddressBook(ab).future
-        result <- postRes match {
+        result  <- postRes match {
           case Left(error) =>
-            debug(s"postAddressBook failed with error: $error")
-            if (error.isFatal) tracking.exception(new RuntimeException(s"upload failed: ${error.code}") with NoStackTrace, error.toString)
             Future.successful(SyncResult(error))
           case Right(users) =>
-            debug("postAddressBook successful")
-            contacts.onAddressBookUploaded(ab, users) map (_ => SyncResult.Success) recover {
-              case e: Throwable =>
-                tracking.exception(e, s"address book upload result processing failed")
-                SyncResult.Failure(None, shouldRetry = false)
-            }
+            contacts.onAddressBookUploaded(ab, users)
+              .map(_ => SyncResult.Success)
+              .recover {
+                case e: Throwable =>
+                  SyncResult(e)
+              }
         }
       } yield result
     }

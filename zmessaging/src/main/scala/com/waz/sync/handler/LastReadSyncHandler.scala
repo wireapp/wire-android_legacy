@@ -19,12 +19,12 @@ package com.waz.sync.handler
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.api.impl.ErrorResponse
 import com.waz.content.ConversationStorage
 import com.waz.model.GenericContent.LastRead
 import com.waz.model._
 import com.waz.service.MetaDataService
 import com.waz.sync.SyncResult
+import com.waz.sync.SyncResult.{Failure, Success}
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.utils.RichWireInstant
 
@@ -36,14 +36,16 @@ class LastReadSyncHandler(selfUserId: UserId, convs: ConversationStorage, metada
   def postLastRead(convId: ConvId, time: RemoteInstant): Future[SyncResult] = {
     verbose(s"postLastRead($convId, $time)")
 
-    convs.get(convId) flatMap {
+    convs.get(convId).flatMap {
       case Some(conv) if conv.lastRead.isAfter(time) => // no need to send this msg as lastRead was already advanced
-        Future successful SyncResult.Success
+        Future.successful(Success)
       case Some(conv) =>
         val msg = GenericMessage(Uid(), LastRead(conv.remoteId, time))
-        otrSync.postOtrMessage(ConvId(selfUserId.str), msg).map(_.fold(SyncResult(_), { _ => SyncResult.Success }))
+        otrSync
+          .postOtrMessage(ConvId(selfUserId.str), msg)
+          .map(SyncResult(_))
       case None =>
-        Future successful SyncResult(ErrorResponse.internalError(s"No conversation found for id: $convId"))
+        Future.successful(Failure(s"No conversation found for id: $convId"))
     }
   }
 }

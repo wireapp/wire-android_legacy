@@ -18,7 +18,7 @@
 package com.waz.service.messages
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.api.Message
 import com.waz.api.Message.Status
 import com.waz.content.GlobalPreferences.BackendDrift
@@ -80,16 +80,16 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
         time <- remoteTimeAfterLast(msg.convId) //TODO: can we find a way to save this only on the localTime of the message?
         exp  <- expiration
         m = returning(msg.copy(state = state, time = time, localTime = localTime, ephemeral = exp)) { m =>
-          verbose(s"addLocalMessage: $m, exp: $exp, time: $time")
+          verbose(l"addLocalMessage: $m, exp: $exp")
         }
         res <- messagesStorage.addMessage(m)
       } yield res
     }
 
   def addLocalSentMessage(msg: MessageData, time: Option[RemoteInstant] = None) = Serialized.future("add local message", msg.convId) {
-    verbose(s"addLocalSentMessage: $msg")
+    verbose(l"addLocalSentMessage: $msg")
     time.fold(lastSentEventTime(msg.convId))(Future.successful).flatMap { t =>
-      verbose(s"adding local sent message to storage, $t")
+      verbose(l"adding local sent message to storage, $t")
       messagesStorage.addMessage(msg.copy(state = Status.SENT, time = t + 1.millis, localTime = LocalInstant.Now))
     }
   }
@@ -116,7 +116,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
       messagesStorage.lastLocalMessage(convId, msgType) flatMap {
         case Some(msg) => // got local message, try updating
           @volatile var shouldCreate = false
-          verbose(s"got local message: $msg, will update")
+          verbose(l"got local message: $msg, will update")
           updateMessage(msg.id) { msg =>
             if (msg.isLocal) update(msg)
             else { // msg was already synced, need to create new local message
@@ -124,7 +124,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
               msg
             }
           } flatMap { res =>
-            verbose(s"shouldCreate: $shouldCreate")
+            verbose(l"shouldCreate: $shouldCreate")
             if (shouldCreate) addLocalMessage(create).map(Some(_))
             else Future.successful(res)
           }
@@ -133,7 +133,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
     }
 
   private[service] def addMessages(convId: ConvId, msgs: Seq[MessageData]): Future[Set[MessageData]] = {
-    verbose(s"addMessages: ${msgs.map(m => (m.id, m.msgType, m.mentions, m.quote, m.quoteValidity))}")
+    verbose(l"addMessages: ${msgs.map(_.id)}")
 
     for {
       toAdd <- skipPreviouslyDeleted(msgs)
@@ -162,7 +162,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
             case false =>
               messagesStorage.lastLocalMessage(convId, msg.msgType).flatMap {
                 case Some(m) if m.userId == msg.userId =>
-                  verbose(s"lastLocalMessage(${msg.msgType}) : $m")
+                  verbose(l"lastLocalMessage(${msg.msgType}) : $m")
 
                   if (m.msgType == Message.Type.MEMBER_JOIN || m.msgType == Message.Type.MEMBER_LEAVE) {
                     val remaining = m.members.diff(msg.members)
@@ -170,7 +170,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
                   }
                   messagesStorage.remove(m.id).flatMap(_ => messagesStorage.addMessage(msg.copy(localTime = m.localTime)))
                 case res =>
-                  verbose(s"lastLocalMessage(${msg.msgType}) returned: $res")
+                  verbose(l"lastLocalMessage(${msg.msgType}) returned: $res")
                   messagesStorage.addMessage(msg)
               }.map(Some(_))
             case true =>
@@ -188,7 +188,6 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
         msg.copy(id = m.id, localTime = m.localTime)
 
       def mergeMatching(prev: MessageData, msg: MessageData) = {
-        verbose(s"mergeMatching, prev: $prev, with new $msg")
         val u = prev.copy(
           msgType       = if (msg.msgType != Message.Type.UNKNOWN) msg.msgType else prev.msgType ,
           time          = if (msg.time.isBefore(prev.time) || prev.isLocal) msg.time else prev.time,
@@ -209,7 +208,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
         if (prev.isLocal && prev.userId == msg.userId) mergeLocal(prev, msg)
         else if (prev.userId == msg.userId) mergeMatching(prev, msg)
         else {
-          warn(s"got message id conflict, will add it with random id, existing: $prev, new: $msg")
+          warn(l"got message id conflict, will add it with random id, existing: $prev, new: $msg")
           addMessage(msg.copy(id = MessageId()))
           prev
         }
@@ -230,9 +229,9 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
   // updates server timestamp for local messages, this should make sure that local messages are ordered correctly after one of them is sent
   def updateLocalMessageTimes(conv: ConvId, prevTime: RemoteInstant, time: RemoteInstant) =
     messagesStorage.findLocalFrom(conv, prevTime) flatMap { local =>
-      verbose(s"local messages from $prevTime: $local")
+      verbose(l"local messages from $prevTime: $local")
       messagesStorage updateAll2(local.map(_.id), { m =>
-        verbose(s"try updating local message time, msg: $m, time: $time")
+        verbose(l"try updating local message time, msg: $m, time: $time")
         if (m.isLocal) m.copy(time = time + (m.time.toEpochMilli - prevTime.toEpochMilli).millis) else m
       })
     }

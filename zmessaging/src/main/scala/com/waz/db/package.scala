@@ -18,7 +18,7 @@
 package com.waz
 
 import com.waz.utils._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.wrappers._
 import com.waz.utils.wrappers.DB
@@ -112,7 +112,7 @@ package db {
 
   object DeferredModeReadTransactionSupport {
     def create: ReadTransactionSupport = new ReadTransactionSupport {
-      verbose("using deferred mode read transactions")
+      verbose(l"using deferred mode read transactions")
 
       override def beginReadTransaction(db: DB): Unit = try reflectiveBegin(db) catch { case _: Exception => db.beginTransactionNonExclusive() }
 
@@ -128,7 +128,7 @@ package db {
 
   object FallbackReadTransactionSupport {
     def create: ReadTransactionSupport = new ReadTransactionSupport {
-      verbose("using fallback support for read transactions")
+      verbose(l"using fallback support for read transactions")
       override def beginReadTransaction(db: DB): Unit = db.beginTransactionNonExclusive()
     }
   }

@@ -23,7 +23,7 @@ import org.json.JSONObject
 
 case class Team(
     id: TeamId,
-    name: String,
+    name: Name,
     creator: UserId,
     icon: Option[RAssetId] = None,
     iconKey: Option[AESKey] = None,

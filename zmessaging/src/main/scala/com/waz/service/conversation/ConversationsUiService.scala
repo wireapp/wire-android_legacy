@@ -18,13 +18,13 @@
 package com.waz.service.conversation
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.Message
 import com.waz.api.NetworkMode.{OFFLINE, WIFI}
 import com.waz.api.impl._
 import com.waz.content._
+import com.waz.log.ZLog2._
 import com.waz.model.ConversationData.{ConversationType, getAccessAndRoleForGroupConv}
 import com.waz.model.GenericContent.{Location, MsgEdit, Quote}
 import com.waz.model.UserData.ConnectionStatus
@@ -40,7 +40,6 @@ import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.{ConversationsClient, ErrorOr}
 import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.Locales.currentLocaleOrdering
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.events.EventStream
@@ -72,7 +71,7 @@ trait ConversationsUiService {
   def recallMessage(convId: ConvId, id: MessageId): Future[Option[MessageData]]
   def setConversationArchived(id: ConvId, archived: Boolean): Future[Option[ConversationData]]
   def setConversationMuted(id: ConvId, muted: MuteSet): Future[Option[ConversationData]]
-  def setConversationName(id: ConvId, name: String): Future[Option[ConversationData]]
+  def setConversationName(id: ConvId, name: Name): Future[Option[ConversationData]]
 
   def addConversationMembers(conv: ConvId, users: Set[UserId]): Future[Option[SyncId]]
   def removeConversationMember(conv: ConvId, user: UserId): Future[Option[SyncId]]
@@ -88,7 +87,7 @@ trait ConversationsUiService {
 
   //conversation creation methods
   def getOrCreateOneToOneConversation(other: UserId): Future[ConversationData]
-  def createGroupConversation(name: Option[String] = None, members: Set[UserId] = Set.empty, teamOnly: Boolean = false): Future[(ConversationData, SyncId)]
+  def createGroupConversation(name: Option[Name] = None, members: Set[UserId] = Set.empty, teamOnly: Boolean = false): Future[(ConversationData, SyncId)]
 
   def assetUploadCancelled : EventStream[Mime]
   def assetUploadFailed    : EventStream[ErrorResponse]
@@ -163,7 +162,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
     }
 
   private def postAssetMessage(convId: ConvId, asset: AssetData, confirmation: WifiWarningConfirmation, exp: Option[Option[FiniteDuration]] = None) = {
-    verbose(s"postAssetMessage: $convId, $asset")
+    verbose(l"postAssetMessage: $convId, $asset")
     for {
       message    <- messages.addAssetMessage(convId, asset, exp)
       _          <- updateLastRead(message)
@@ -183,11 +182,11 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
   }
 
   override def updateMessage(convId: ConvId, id: MessageId, text: String, mentions: Seq[Mention] = Nil): Future[Option[MessageData]] = {
-    verbose(s"updateMessage($convId, $id, $text, $mentions")
+    verbose(l"updateMessage($convId, $id, $mentions")
     messagesStorage.update(id, {
       case m if m.convId == convId && m.userId == selfUserId =>
         val (tpe, ct) = MessageData.messageContent(text, mentions, weblinkEnabled = true)
-        verbose(s"updated content: ${(tpe, ct)}")
+        verbose(l"updated content: ${(tpe, ct)}")
         m.copy(
           msgType = tpe,
           content = ct,
@@ -196,7 +195,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
           editTime = (m.time max m.editTime) + 1.millis max LocalInstant.Now.toRemote(currentBeDrift)
         )
       case m =>
-        warn(s"Can not update msg: $m")
+        warn(l"Can not update msg: $m")
         m
     }) flatMap {
       case Some((_, m)) => sync.postMessage(m.id, m.convId, m.editTime) map { _ => Some(m) } // using PostMessage sync request to use the same logic for failures and retrying
@@ -214,7 +213,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
       case Some(msg) =>
         sync.postRecalled(convId, msg.id, id) map { _ => Some(msg) }
       case None =>
-        warn(s"could not recall message $convId, $id")
+        warn(l"could not recall message $convId, $id")
         Future successful None
     }
 
@@ -233,14 +232,14 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
       case None => None
     }
 
-  override def setConversationName(id: ConvId, name: String): Future[Option[ConversationData]] = {
-    verbose(s"setConversationName($id, $name)")
+  override def setConversationName(id: ConvId, name: Name): Future[Option[ConversationData]] = {
+    verbose(l"setConversationName($id, $name)")
     convsContent.updateConversationName(id, name) flatMap {
       case Some((_, conv)) if conv.name.contains(name) =>
-        sync.postConversationName(id, conv.name.getOrElse(""))
+        sync.postConversationName(id, conv.name.getOrElse(Name.Empty))
         messages.addRenameConversationMessage(id, selfUserId, name).map(_ => Some(conv))
       case conv =>
-        warn(s"Conversation name could not be changed for: $id, conv: $conv")
+        warn(l"Conversation name could not be changed for: $id, conv: $conv")
         CancellableFuture.successful(None)
     }
   }
@@ -254,7 +253,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
     } yield Option(syncId))
       .recover {
         case NonFatal(e) =>
-          warn(s"Failed to add members: $users to conv: $conv", e)
+          warn(l"Failed to add members: $users to conv: $conv", e)
           Option.empty[SyncId]
       }
   }
@@ -268,7 +267,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
     } yield Some(syncId))
       .recover {
         case NonFatal(e) =>
-          warn(s"Failed to remove member: $user from conv: $conv", e)
+          warn(l"Failed to remove member: $user from conv: $conv", e)
           Option.empty[SyncId]
       }
   }
@@ -281,7 +280,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
     } yield selfActive && (isGroup || isWithService)
 
   override def leaveConversation(conv: ConvId) = {
-    verbose(s"leaveConversation($conv)")
+    verbose(l"leaveConversation($conv)")
     for {
       _ <- convsContent.setConvActive(conv, active = false)
       _ <- removeConversationMember(conv, selfUserId)
@@ -291,7 +290,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
 
   override def clearConversation(id: ConvId): Future[Option[ConversationData]] = convsContent.convById(id) flatMap {
     case Some(conv) if conv.convType == ConversationType.Group || conv.convType == ConversationType.OneToOne =>
-      verbose(s"clearConversation($conv)")
+      verbose(l"clearConversation($conv)")
 
       convsContent.updateConversationCleared(conv.id, conv.lastEventTime) flatMap {
         case Some((_, c)) =>
@@ -301,14 +300,14 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
             _ <- c.cleared.fold(Future.successful({}))(sync.postCleared(c.id, _).map(_ => ()))
           } yield Some(c)
         case None =>
-          verbose("updateConversationCleared did nothing - already cleared")
+          verbose(l"updateConversationCleared did nothing - already cleared")
           Future successful None
       }
     case Some(conv) =>
-      warn(s"conversation of type ${conv.convType} can not be cleared")
+      warn(l"conversation of type ${conv.convType} can not be cleared")
       Future successful None
     case None =>
-      warn(s"conversation to be cleared not found: $id")
+      warn(l"conversation to be cleared not found: $id")
       Future successful None
   }
 
@@ -334,7 +333,7 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
       }
 
     def createFake1To1(tId: TeamId) = {
-      verbose(s"Checking for 1:1 conversation with user: $other")
+      verbose(l"Checking for 1:1 conversation with user: $other")
       (for {
         allConvs   <- this.members.getByUsers(Set(other)).map(_.map(_.convId))
         allMembers <- this.members.getByConvs(allConvs.toSet).map(_.map(m => m.convId -> m.userId))
@@ -342,8 +341,8 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
         convs      <- convStorage.getAll(onlyUs).map(_.flatten)
       } yield {
         if (convs.size > 1)
-          warn(s"Found ${convs.size} available team conversations with user: $other, returning first conversation found")
-        else verbose(s"Found ${convs.size} convs with other user: $other")
+          warn(l"Found ${convs.size} available team conversations with user: $other, returning first conversation found")
+        else verbose(l"Found ${convs.size} convs with other user: $other")
         convs.find(c => c.team.contains(tId) && c.name.isEmpty)
       }).flatMap {
         case Some(conv) => Future.successful(conv)
@@ -361,14 +360,14 @@ class ConversationsUiServiceImpl(selfUserId:      UserId,
     }
   }
 
-  override def createGroupConversation(name: Option[String] = None, members: Set[UserId] = Set.empty, teamOnly: Boolean = false) =
+  override def createGroupConversation(name: Option[Name] = None, members: Set[UserId] = Set.empty, teamOnly: Boolean = false) =
     createAndPostConversation(ConvId(), name, members, teamOnly)
 
-  private def createAndPostConversation(id: ConvId, name: Option[String], members: Set[UserId], teamOnly: Boolean = false) = {
+  private def createAndPostConversation(id: ConvId, name: Option[Name], members: Set[UserId], teamOnly: Boolean = false) = {
     val (ac, ar) = getAccessAndRoleForGroupConv(teamOnly, teamId)
     for {
       conv <- convsContent.createConversationWithMembers(id, generateTempConversationId(members + selfUserId), ConversationType.Group, selfUserId, members, name, access = ac, accessRole = ar)
-      _    = verbose(s"created: $conv")
+      _    = verbose(l"created: $conv")
       _    <- messages.addConversationStartMessage(conv.id, selfUserId, members, name)
       syncId <- sync.postConversation(id, members, conv.name, teamId, ac, ar)
     } yield (conv, syncId)

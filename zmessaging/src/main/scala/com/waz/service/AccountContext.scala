@@ -17,7 +17,8 @@
  */
 package com.waz.service
 
-import com.waz.ZLog.{LogTag, verbose}
+import com.waz.ZLog.LogTag
+import com.waz.log.ZLog2._
 import com.waz.model.UserId
 import com.waz.service.AccountsService.LoggedOut
 import com.waz.service.ZMessaging.accountTag
@@ -32,10 +33,10 @@ class AccountContext(userId: UserId, accounts: AccountsService) extends EventCon
 
   accounts.accountState(userId).on(dispatcher) {
     case LoggedOut =>
-      verbose("Account context stopped")
+      verbose(l"Account context stopped")
       onContextStop()
     case _ =>
-      verbose("Account context started")
+      verbose(l"Account context started")
       onContextStart()
   } (EventContext.Global)
 }

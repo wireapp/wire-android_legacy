@@ -20,13 +20,13 @@ package com.waz.sync.handler
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.Message
-import com.waz.api.impl.ErrorResponse
 import com.waz.content.{ConversationStorage, MessagesStorage}
 import com.waz.model.GenericContent.Cleared
 import com.waz.model._
 import com.waz.service.UserService
 import com.waz.service.conversation.ConversationsContentUpdaterImpl
 import com.waz.sync.SyncResult
+import com.waz.sync.SyncResult.{Failure, Success}
 import com.waz.sync.otr.OtrSyncHandler
 
 import scala.concurrent.Future
@@ -62,21 +62,21 @@ class ClearedSyncHandler(selfUserId:   UserId,
     verbose(s"postCleared($convId, $time)")
 
     def postTime(time: RemoteInstant, archive: Boolean) =
-      convs.get(convId) flatMap {
+      convs.get(convId).flatMap {
         case None =>
-          Future successful SyncResult(ErrorResponse.internalError(s"No conversation found for id: $convId"))
+          Future.successful(Failure(s"No conversation found for id: $convId"))
         case Some(conv) =>
           val msg = GenericMessage(Uid(), Cleared(conv.remoteId, time))
           otrSync.postOtrMessage(ConvId(selfUserId.str), msg) flatMap (_.fold(e => Future.successful(SyncResult(e)), { _ =>
             if (archive) convSync.postConversationState(conv.id, ConversationState(archived = Some(true), archiveTime = Some(time)))
-            else Future.successful(SyncResult.Success)
+            else Future.successful(Success)
           }))
       }
 
     getActualClearInfo(convId, time) flatMap { case (t, archive) =>
       postTime(t, archive) flatMap {
-        case SyncResult.Success =>
-          convsContent.updateConversationCleared(convId, t) map { _ => SyncResult.Success }
+        case Success =>
+          convsContent.updateConversationCleared(convId, t) map { _ => Success }
         case res =>
           Future successful res
       }

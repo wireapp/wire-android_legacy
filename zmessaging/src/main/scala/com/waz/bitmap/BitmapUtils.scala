@@ -23,7 +23,7 @@ import android.graphics.Bitmap.Config
 import android.graphics._
 import android.media.ExifInterface
 import android.renderscript.{Allocation, Element, RenderScript, ScriptIntrinsicBlur}
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.service.ZMessaging
 import com.waz.utils.{IoUtils, returning}
@@ -61,7 +61,7 @@ object BitmapUtils {
   }
   
   def createRoundBitmap(input: Bitmap, width: Int, borderWidth: Int, borderColor: Int): Bitmap = {
-    debug(s"createRoundBitmap($input, $width, $borderWidth)")
+    debug(l"createRoundBitmap($width, $borderWidth)")
 
     val output: Bitmap = Bitmap.createBitmap(width, width, Config.ARGB_8888)
     val canvas: Canvas = new Canvas(output)
@@ -124,7 +124,7 @@ object BitmapUtils {
         case ORIENTATION_FLIP_VERTICAL =>   matrix.setScale(1f, -1f)
         case ORIENTATION_TRANSPOSE =>       matrix.setRotate(90f);  matrix.postScale(-1f, 1f)
         case ORIENTATION_TRANSVERSE =>      matrix.setRotate(-90f); matrix.postScale(-1f, 1f)
-        case _ => error(s"unknown orientation $orientation encountered")
+        case _ => error(l"unknown orientation $orientation encountered")
       }
       val corrected = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth, bitmap.getHeight, matrix, true)
       bitmap.recycle()

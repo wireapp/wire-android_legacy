@@ -17,7 +17,8 @@
  */
 package com.waz.sync.client
 
-import com.waz.ZLog._
+import com.waz.ZLog.LogTag
+import com.waz.log.ZLog2._
 import com.waz.api.EmailCredentials
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.Cancelled
@@ -68,12 +69,12 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
 
   //Only performs safe update - never wipes either the cookie or the token.
   private def updateCredentials(token: Option[AccessToken] = None, cookie: Option[Cookie] = None) = {
-    verbose(s"updateCredentials: $token, $cookie")
+    verbose(l"updateCredentials: $token, $cookie")
     accStorage.update(id, acc => acc.copy(accessToken = if (token.isDefined) token else acc.accessToken, cookie = cookie.getOrElse(acc.cookie)))
   }
 
   private def wipeCredentials(): Future[Unit] = {
-    verbose("wipe credentials")
+    verbose(l"wipe credentials")
     accStorage.remove(id)
   }
 
@@ -85,16 +86,16 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
    * Returns current token if not expired or performs access request. Failing that, the user gets logged out
    */
   override def currentToken() = returning(Serialized.future("login-client") {
-    verbose("currentToken")
+    verbose(l"currentToken")
     token.flatMap {
       case Some(token) if !isExpired(token) =>
-        verbose(s"Non expired token: $token")
+        verbose(l"Non expired token: $token")
         Future.successful(Right(token))
       case token => cookie.flatMap { cookie =>
-        debug(s"Non existent or potentially expired token: $token, will attempt to refresh with cookie: $cookie")
+        debug(l"Non existent or potentially expired token: $token, will attempt to refresh with cookie: $cookie")
         dispatchRequest(client.access(cookie, token)) {
           case Left(resp @ ErrorResponse(ResponseCode.Forbidden | ResponseCode.Unauthorized, message, label)) =>
-            verbose(s"access request failed (label: $label, message: $message), will try login request. currToken: $token, cookie: $cookie, access resp: $resp")
+            verbose(l"access request failed (label: ${showString(label)}, message: ${showString(message)}), will try login request. currToken: $token, cookie: $cookie, access resp: $resp")
             tracking.exception(new RuntimeException(s"Access request failed: msg: $message, label: $label, cookie expired at: ${cookie.expiry} (is valid: ${cookie.isValid}), currToken expired at: ${token.map(_.expiresAt)} (is valid: ${token.exists(_.isValid)})"), null)
             wipeCredentials().map(_ => Left(resp))
         }
@@ -102,15 +103,15 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
     }
   }.recover {
     case LoggedOutException =>
-      warn(s"Request failed as we are logged out")
+      warn(l"Request failed as we are logged out")
       Left(ErrorResponse.Unauthorized)
   })(_.failed.foreach(throw _))
 
   override def onPasswordReset(emailCredentials: Option[EmailCredentials]): ErrorOr[Unit] =
     Serialized.future("login-client") {
-      verbose(s"onPasswordReset: $emailCredentials")
+      verbose(l"onPasswordReset: $emailCredentials")
       cookie.flatMap { cookie =>
-        debug(s"Attempting access request to see if cookie is still valid: $cookie")
+        debug(l"Attempting access request to see if cookie is still valid: $cookie")
         dispatchRequest(client.access(cookie, None)) {
           case Left(resp @ ErrorResponse(ResponseCode.Forbidden | ResponseCode.Unauthorized, _, _)) =>
             emailCredentials match {
@@ -121,7 +122,7 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
                   case Left(err) => Future.successful(Left(err))
                 }
               case None =>
-                verbose(s"Cookie is now invalid, and no credentials were supplied. The user will now be logged out")
+                verbose(l"Cookie is now invalid, and no credentials were supplied. The user will now be logged out")
                 wipeCredentials().map(_ => Left(resp))
             }
         }.map(_.right.map(_ => ()))
@@ -131,20 +132,19 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
   private def dispatchRequest(request: => ErrorOr[LoginResult], retryCount: Int = 0)(handler: ResponseHandler): ErrorOr[AccessToken] =
     request.flatMap(handler.orElse {
       case Right(LoginResult(token, cookie, _)) =>
-        debug(s"receivedAccessToken: '$token'")
+        debug(l"receivedAccessToken: $token")
         updateCredentials(Some(token), cookie).map(_ => Right(token))
 
       case Left(err @ ErrorResponse(Cancelled.code, msg, label)) =>
-        debug(s"request has been cancelled")
+        debug(l"request has been cancelled")
         Future.successful(Left(err))
 
       case Left(err) if retryCount < MaxRetryCount =>
-        info(s"Received error from request: $err, will retry")
+        info(l"Received error from request: $err, will retry")
         dispatchRequest(request, retryCount + 1)(handler)
 
       case Left(err) =>
-        val msg = s"Login request failed after $retryCount retries, last status: $err"
-        error(msg)
+        error(l"Login request failed after $retryCount retries, last status: $err")
         Future.successful(Left(err))
     })
 }
@@ -166,15 +166,11 @@ object AuthenticationManager {
     def isValid = expiry.exists(_.isAfter(Instant.now))
 
     private def find(pref: String) = parts.find(_.contains(pref)).map(_.drop(2))
-
-    override def toString = s"${str.take(10)}, exp: $expiry, isValid: $isValid"
   }
 
   case class AccessToken(accessToken: String, tokenType: String, expiresAt: Instant = Instant.EPOCH) {
     val headers = Map(AccessToken.AuthorizationHeader -> s"$tokenType $accessToken")
     def isValid = expiresAt isAfter clock.instant()
-
-    override def toString = s"${accessToken.take(10)}, exp: $expiresAt, isValid: $isValid"
   }
 
   object AccessToken extends ((String, String, Instant) => AccessToken ){
@@ -215,12 +211,12 @@ class AuthenticationManager2(id: UserId, accStorage: AccountStorage2, client: Lo
 
   //Only performs safe update - never wipes either the cookie or the token.
   private def updateCredentials(token: Option[AccessToken] = None, cookie: Option[Cookie] = None) = {
-    verbose(s"updateCredentials: $token, $cookie")
+    verbose(l"updateCredentials: $token, $cookie")
     accStorage.update(id, acc => acc.copy(accessToken = if (token.isDefined) token else acc.accessToken, cookie = cookie.getOrElse(acc.cookie)))
   }
 
   private def wipeCredentials(): Future[Unit] = {
-    verbose("wipe credentials")
+    verbose(l"wipe credentials")
     accStorage.deleteByKey(id)
   }
 
@@ -232,16 +228,16 @@ class AuthenticationManager2(id: UserId, accStorage: AccountStorage2, client: Lo
     * Returns current token if not expired or performs access request. Failing that, the user gets logged out
     */
   override def currentToken() = returning(Serialized.future("login-client") {
-    verbose("currentToken")
+    verbose(l"currentToken")
     token.flatMap {
       case Some(token) if !isExpired(token) =>
-        verbose(s"Non expired token: $token")
+        verbose(l"Non expired token: $token")
         Future.successful(Right(token))
       case token => cookie.flatMap { cookie =>
-        debug(s"Non existent or potentially expired token: $token, will attempt to refresh with cookie: $cookie")
+        debug(l"Non existent or potentially expired token: $token, will attempt to refresh with cookie: $cookie")
         dispatchRequest(client.access(cookie, token)) {
           case Left(resp @ ErrorResponse(ResponseCode.Forbidden | ResponseCode.Unauthorized, message, label)) =>
-            verbose(s"access request failed (label: $label, message: $message), will try login request. currToken: $token, cookie: $cookie, access resp: $resp")
+            verbose(l"access request failed (label: ${showString(label)}, message: ${showString(message)}, will try login request. currToken: $token, cookie: $cookie, access resp: $resp")
             tracking.exception(new RuntimeException(s"Access request failed: msg: $message, label: $label, cookie expired at: ${cookie.expiry} (is valid: ${cookie.isValid}), currToken expired at: ${token.map(_.expiresAt)} (is valid: ${token.exists(_.isValid)})"), null)
             wipeCredentials().map(_ => Left(resp))
         }
@@ -249,15 +245,15 @@ class AuthenticationManager2(id: UserId, accStorage: AccountStorage2, client: Lo
     }
   }.recover {
     case LoggedOutException =>
-      warn(s"Request failed as we are logged out")
+      warn(l"Request failed as we are logged out")
       Left(ErrorResponse.Unauthorized)
   })(_.failed.foreach(throw _))
 
   override def onPasswordReset(emailCredentials: Option[EmailCredentials]): ErrorOr[Unit] =
     Serialized.future("login-client") {
-      verbose(s"onPasswordReset: $emailCredentials")
+      verbose(l"onPasswordReset: $emailCredentials")
       cookie.flatMap { cookie =>
-        debug(s"Attempting access request to see if cookie is still valid: $cookie")
+        debug(l"Attempting access request to see if cookie is still valid: $cookie")
         dispatchRequest(client.access(cookie, None)) {
           case Left(resp @ ErrorResponse(ResponseCode.Forbidden | ResponseCode.Unauthorized, _, _)) =>
             emailCredentials match {
@@ -268,7 +264,7 @@ class AuthenticationManager2(id: UserId, accStorage: AccountStorage2, client: Lo
                   case Left(err) => Future.successful(Left(err))
                 }
               case None =>
-                verbose(s"Cookie is now invalid, and no credentials were supplied. The user will now be logged out")
+                verbose(l"Cookie is now invalid, and no credentials were supplied. The user will now be logged out")
                 wipeCredentials().map(_ => Left(resp))
             }
         }.map(_.right.map(_ => ()))
@@ -278,20 +274,19 @@ class AuthenticationManager2(id: UserId, accStorage: AccountStorage2, client: Lo
   private def dispatchRequest(request: => ErrorOr[LoginResult], retryCount: Int = 0)(handler: ResponseHandler): ErrorOr[AccessToken] =
     request.flatMap(handler.orElse {
       case Right(LoginResult(token, cookie, _)) =>
-        debug(s"receivedAccessToken: '$token'")
+        debug(l"receivedAccessToken: '$token'")
         updateCredentials(Some(token), cookie).map(_ => Right(token))
 
       case Left(err @ ErrorResponse(Cancelled.code, msg, label)) =>
-        debug(s"request has been cancelled")
+        debug(l"request has been cancelled")
         Future.successful(Left(err))
 
       case Left(err) if retryCount < MaxRetryCount =>
-        info(s"Received error from request: $err, will retry")
+        info(l"Received error from request: $err, will retry")
         dispatchRequest(request, retryCount + 1)(handler)
 
       case Left(err) =>
-        val msg = s"Login request failed after $retryCount retries, last status: $err"
-        error(msg)
+        error(l"Login request failed after $retryCount retries, last status: $err")
         Future.successful(Left(err))
     })
 }

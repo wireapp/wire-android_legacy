@@ -337,7 +337,7 @@ class FoldLeftSignal[A, B](sources: Signal[A]*)(v: B)(f: (B, A) => B) extends Pr
     sources.foldLeft(Option(v))((mv, signal) => for (a <- mv; b <- signal.value) yield f(a, b))
 }
 
-class RefreshingSignal[A, B](loader: => CancellableFuture[A], refreshEvent: EventStream[B]) extends Signal[A] {
+class RefreshingSignal[A](loader: => CancellableFuture[A], refreshEvent: EventStream[_]) extends Signal[A] {
   import RefreshingSignal._
   private val queue = new SerialDispatchQueue(name = "RefreshingSignal")
 
@@ -394,7 +394,7 @@ class PartialUpdateSignal[A, B](source: Signal[A])(select: A => B) extends Proxy
 object RefreshingSignal {
   private implicit val tag: LogTag = "RefreshingSignal"
 
-  def apply[A, B](loader: => Future[A], refreshEvent: EventStream[B]): RefreshingSignal[A, B] = new RefreshingSignal(CancellableFuture.lift(loader), refreshEvent)
+  def apply[A](loader: => Future[A], refreshEvent: EventStream[_]): RefreshingSignal[A] = new RefreshingSignal(CancellableFuture.lift(loader), refreshEvent)
 }
 
 case class ButtonSignal[A](service: Signal[A], buttonState: Signal[Boolean])(onClick: (A, Boolean) => Unit) extends ProxySignal[Boolean](service, buttonState) {

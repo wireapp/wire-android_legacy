@@ -19,11 +19,12 @@ package com.waz.model
 
 import java.util.UUID.randomUUID
 
+import com.waz.DisabledTrackingService
 import com.waz.db._
 import com.waz.model.Contact._
 import com.waz.model.UserData.UserDataDao
 import com.waz.service.SearchKey
-import com.waz.utils.wrappers.{DB}
+import com.waz.utils.wrappers.DB
 import org.robolectric.Robolectric
 import org.scalatest.{FeatureSpec, Ignore, Matchers, RobolectricTests}
 
@@ -78,13 +79,13 @@ class ContactsDaoSpec extends FeatureSpec with Matchers with RobolectricTests {
     coyote.copy(
       emailAddresses = Set(EmailAddress("coyote@wile.me"), EmailAddress("wile.e.coyote@gmail.not"))))
 
-  lazy val meepUser = UserData(UserId("meepuser"), None, "Meep Moop", None, Some(PhoneNumber("123")), searchKey = SearchKey("Meep Moop"), handle = Some(Handle.random))
-  lazy val coyoteUser = UserData(UserId("coyoteuser"), None, "Wile E. Coyote", Some(EmailAddress("wile.e.coyote@gmail.not")), None, searchKey = SearchKey("Wile E. Coyote"), handle = Some(Handle.random))
+  lazy val meepUser = UserData(UserId("meepuser"), None, Name("Meep Moop"), None, Some(PhoneNumber("123")), searchKey = SearchKey("Meep Moop"), handle = Some(Handle.random))
+  lazy val coyoteUser = UserData(UserId("coyoteuser"), None, Name("Wile E. Coyote"), Some(EmailAddress("wile.e.coyote@gmail.not")), None, searchKey = SearchKey("Wile E. Coyote"), handle = Some(Handle.random))
 
   def contact(name: String) = Contact(ContactId(), name, NameSource.StructuredName, name, SearchKey(name), Set.empty, Set.empty)
 
   def withDB(f: DB => Unit): Unit = {
-    val dbHelper = new ZMessagingDB(Robolectric.application, s"dbName-$randomUUID")
+    val dbHelper = new ZMessagingDB(Robolectric.application, s"dbName-$randomUUID", DisabledTrackingService)
     try f(dbHelper.getWritableDatabase) finally dbHelper.close
   }
 }

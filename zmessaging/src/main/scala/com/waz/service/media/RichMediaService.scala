@@ -56,11 +56,9 @@ class RichMediaService(assets:      AssetService,
     prev.content.size != updated.content.size || prev.content.zip(updated.content).exists { case (c1, c2) => c1.content != c2.content && isSyncable(c2) }
   }
 
-  msgsStorage.messageAdded { msgs =>
-    scheduleSyncFor(msgs filter isSyncableMsg)
-  }
+  msgsStorage.onAdded(msgs => scheduleSyncFor(msgs.filter(isSyncableMsg)))
 
-  msgsStorage.messageUpdated { _ foreach {
+  msgsStorage.onUpdated { _ foreach {
     case (prev, updated) =>
       if (isSyncableMsg(updated) && syncableContentChanged(prev, updated)) {
         verbose(s"Updated rich media message: $updated, scheduling sync")

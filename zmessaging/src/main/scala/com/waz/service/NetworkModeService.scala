@@ -24,9 +24,8 @@ import android.os.Build.VERSION_CODES.M
 import android.os.PowerManager
 import android.telephony.TelephonyManager
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.NetworkMode
-import com.waz.threading.Threading
+import com.waz.log.ZLog2._
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
 
@@ -67,7 +66,7 @@ class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle) extend
       case None => NetworkMode.OFFLINE
       case Some(info) => if (info.isConnected) computeMode(info, telephonyManager) else NetworkMode.OFFLINE
     }
-    verbose(s"updateNetworkMode: $mode")
+    verbose(l"updateNetworkMode: $mode")
 
     networkMode ! mode
   }
@@ -81,12 +80,26 @@ class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle) extend
       Option(context.getSystemService(Context.POWER_SERVICE)).map(_.asInstanceOf[PowerManager]).exists(_.isDeviceIdleMode)
     else false
 
-  def isOfflineMode = networkMode.currentValue contains NetworkMode.OFFLINE
-  def isUnknown = networkMode.currentValue contains NetworkMode.UNKNOWN
-  def isOnlineMode = !isOfflineMode && !isUnknown
+  def isOfflineMode =
+    networkMode.currentValue.exists(NetworkModeService.isOfflineMode)
+
+  def isUnknown =
+    networkMode.currentValue.exists(NetworkModeService.isUnknown)
+
+  def isOnlineMode =
+    !isOfflineMode && !isUnknown
 }
 
 object NetworkModeService {
+
+  def isOfflineMode(mode: NetworkMode): Boolean =
+    mode == NetworkMode.OFFLINE
+
+  def isUnknown(mode: NetworkMode): Boolean =
+    mode == NetworkMode.UNKNOWN
+
+  def isOnlineMode(mode: NetworkMode): Boolean =
+    !isOfflineMode(mode) && !isUnknown(mode)
 
   /*
    * This part (the mapping of mobile data network types to the networkMode enum) of the Wire software
@@ -123,7 +136,7 @@ object NetworkModeService {
         case TelephonyManager.NETWORK_TYPE_LTE =>
           NetworkMode._4G
         case _ =>
-          info("Unknown network type, defaulting to Wifi")
+          info(l"Unknown network type, defaulting to Wifi")
           NetworkMode.WIFI
       }
   }.getOrElse(NetworkMode.OFFLINE)

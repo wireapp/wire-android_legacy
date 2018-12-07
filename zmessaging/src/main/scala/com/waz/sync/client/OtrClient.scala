@@ -36,6 +36,7 @@ import com.wire.messages.nano.Otr.ClientEntry
 import org.json.{JSONArray, JSONObject}
 
 import scala.collection.breakOut
+import scala.util.Try
 
 trait OtrClient {
   def loadPreKeys(user: UserId): ErrorOrResponse[Seq[ClientKey]]
@@ -279,7 +280,7 @@ object OtrClient {
     import scala.collection.JavaConverters._
     def unapply(content: ResponseContent): Option[PreKeysResponse] = content match {
       case JsonObjectResponse(js) =>
-        LoggedTry.local {
+        Try {
           js.keys().asInstanceOf[java.util.Iterator[String]].asScala.map { userId =>
             val cs = js.getJSONObject(userId)
             val clients = cs.keys().asInstanceOf[java.util.Iterator[String]].asScala.map { clientId =>
@@ -297,15 +298,15 @@ object OtrClient {
     def client(implicit js: JSONObject) = Client(decodeId[ClientId]('id), 'label, 'model, decodeOptUtcDate('time).map(_.instant), opt[Location]('location), 'address, devType = decodeOptString('class).fold(OtrClientType.PHONE)(OtrClientType.fromDeviceClass))
 
     def unapply(content: ResponseContent): Option[Seq[Client]] = content match {
-      case JsonObjectResponse(js) => LoggedTry(Seq(client(js))).toOption
-      case JsonArrayResponse(arr) => LoggedTry.local(JsonDecoder.array(arr, { (arr, i) => client(arr.getJSONObject(i)) })).toOption
+      case JsonObjectResponse(js) => Try(Seq(client(js))).toOption
+      case JsonArrayResponse(arr) => Try(JsonDecoder.array(arr, { (arr, i) => client(arr.getJSONObject(i)) })).toOption
       case _ => None
     }
   }
 
   object RemainingPreKeysResponse {
     def unapply(content: ResponseContent): Option[Seq[Int]] = content match {
-      case JsonArrayResponse(arr) => LoggedTry.local(JsonDecoder.array(arr, _.getString(_).toInt)).toOption
+      case JsonArrayResponse(arr) => Try(JsonDecoder.array(arr, _.getString(_).toInt)).toOption
       case _ => None
     }
   }

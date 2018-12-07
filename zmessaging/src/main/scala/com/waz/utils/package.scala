@@ -25,6 +25,7 @@ import java.util.concurrent.{TimeUnit, TimeoutException}
 import com.waz.ZLog.LogTag
 import com.waz.api.UpdateListener
 import com.waz.model.{LocalInstant, WireInstant}
+import com.waz.service.tracking.TrackingService
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.wrappers.{URI, URIBuilder}
@@ -42,7 +43,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.language.{higherKinds, implicitConversions}
-import scala.math.{Ordering, abs}
+import scala.math.Ordering
 import scala.util.{Failure, Success, Try}
 import scala.{PartialFunction => =/>}
 
@@ -86,7 +87,6 @@ package object utils {
   }
   def max(d1: Date, d2: Date): Date = if (d2.after(d1)) d2 else d1
   def min(d1: Date, d2: Date): Date = if (d2.after(d1)) d1 else d2
-  def nanoNow = System.nanoTime.nanos
 
   @tailrec
   def compareAndSet[A](ref: AtomicReference[A])(updater: A => A): A = {
@@ -183,13 +183,6 @@ package object utils {
     def fromEpoch = Instant.ofEpochMilli(a.toMillis)
     def asJava = bp.Duration.ofNanos(a.toNanos)
     def elapsedSince(b: bp.Instant): Boolean = b plus a isBefore now
-    def untilNow = {
-      val n = (nanoNow - a).toNanos.toDouble
-      if (abs(n) > 1e9d) s"${n.toDouble / 1e9d} s"
-      else if (abs(n) > 1e6d) s"${n.toDouble / 1e6d} ms"
-      else if (abs(n) > 1e3d) s"${n.toDouble / 1e3d} µs"
-      else s"$n ns"
-    }
     def fromNow(): LocalInstant = LocalInstant.Now + a
   }
 
@@ -242,16 +235,23 @@ package object utils {
   implicit class RichFuture[A](val a: Future[A]) extends AnyVal {
     def flatten[B](implicit executor: ExecutionContext, ev: A <:< Future[B]): Future[B] = a.flatMap(ev)
     def zip[B](f: Future[B])(implicit executor: ExecutionContext) = RichFuture.zip(a, f)
-    def recoverWithLog()(implicit tag: LogTag): Future[Unit] = RichFuture.recoverWithLog(a)
+    def recoverWithLog()(implicit tag: LogTag): Future[Unit] = {
+      val p = Promise[Unit]()
+      a.onComplete {
+        case Success(_) =>
+          p.success(())
+        case Failure(t) =>
+          p.success(())
+          ZLog.error("Future failed", t)
+      }(Threading.Background)
+      p.future
+    }
     def lift: CancellableFuture[A] = CancellableFuture.lift(a)
     def andThenFuture[B](pf: Try[A] =/> Future[B])(implicit ec: ExecutionContext): Future[A] = {
       val p = Promise[A]
       a.onComplete(t => if (pf isDefinedAt t) try pf(t).andThen { case _ => p.complete(t) } catch { case _: Throwable => p.complete(t) } else p.complete(t))
       p.future
     }
-
-    def logFailure()(implicit tag: LogTag): Future[A] =
-      a.andThen { case Failure(cause) => LoggedTry.errorHandler()(implicitly)(cause) }(Threading.Background)
 
     def withTimeout(t: FiniteDuration): Future[A] =
       Future.firstCompletedOf(
@@ -288,30 +288,6 @@ package object utils {
       def processNext(remaining: Seq[A], acc: List[B] = Nil): Future[Seq[B]] =
         if (remaining.isEmpty) Future.successful(acc.reverse)
         else f(remaining.head) flatMap { res => processNext(remaining.tail, res :: acc) }
-
-      processNext(as)
-    }
-
-    def recoverWithLog[A](f: Future[A])(implicit tag: LogTag): Future[Unit] = {
-      val p = Promise[Unit]()
-      f.onComplete {
-        case Success(_) =>
-          p.success(())
-        case Failure(t) =>
-          p.success(())
-          LoggedTry.errorHandler()(implicitly)(t)
-      }(Threading.Background)
-      p.future
-    }
-
-    /**
-     * Process sequentially and ignore results.
-     * Similar to traverseSequential, but doesn't care about the result, and continues on failure.
-     */
-    def processSequential[A, B](as: Seq[A])(f: A => Future[B])(implicit executor: ExecutionContext, tag: LogTag): Future[Unit] = {
-      def processNext(remaining: Seq[A]): Future[Unit] =
-        if (remaining.isEmpty) Future.successful(())
-        else LoggedTry(recoverWithLog(f(remaining.head))).getOrElse(Future.successful(())) flatMap { _ => processNext(remaining.tail) }
 
       processNext(as)
     }

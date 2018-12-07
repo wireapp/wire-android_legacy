@@ -17,6 +17,7 @@
  */
 package com.waz.model
 
+import com.waz.log.ZLog2._
 import com.waz.model.AssetMetaData.Image
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetMetaData.Image.Tag.{Medium, Preview}
@@ -29,7 +30,7 @@ import scala.util.Try
 import com.waz.model.UserInfo.{SSOId, Service}
 
 case class UserInfo(id:           UserId,
-                    name:         Option[String]          = None,
+                    name:         Option[Name]            = None,
                     accentId:     Option[Int]             = None,
                     email:        Option[EmailAddress]    = None,
                     phone:        Option[PhoneNumber]     = None,
@@ -163,11 +164,9 @@ object UserInfo {
     }
   }
 
-//  implicit lazy val ContentEncoder: ContentEncoder[UserInfo] = JsonContentEncoder.map { (info: UserInfo) =>
-//    JsonEncoder { o =>
-//      info.name.foreach(o.put("name", _))
-//      info.accentId.foreach(o.put("accent_id", _))
-//      info.picture.foreach(ps => o.put("assets", encodeAsset(ps)))
-//    }
-//  }
+  implicit val UserInfoShow: LogShow[UserInfo] =
+    LogShow.createFrom { u =>
+      import u._
+      l" UserInfo: id: $id | email: $email: | phone: $phone: | picture: $picture: | deleted: $deleted: | handle: $handle: | expiresAt: $expiresAt:"
+    }
 }

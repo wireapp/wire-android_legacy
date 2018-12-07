@@ -67,6 +67,7 @@ object Asset {
       details = rawAsset.details,
       convId = rawAsset.convId
     )
+
 }
 
 sealed trait AssetDetails

@@ -18,8 +18,9 @@
 package com.waz.model
 
 import MuteSet._
+import com.waz.log.ZLog2.SafeToLog
 
-case class MuteSet(private val status: Set[MuteMask]) {
+case class MuteSet(private val status: Set[MuteMask]) extends SafeToLog {
   def reverse: MuteSet = MuteSet(MuteSet.AllMuted.status -- status)
 
   def toInt: Int =

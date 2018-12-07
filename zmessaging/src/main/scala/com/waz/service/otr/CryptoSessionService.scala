@@ -17,69 +17,71 @@
  */
 package com.waz.service.otr
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.log.ZLog2._
+import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.push.PushNotificationEventsStorage.PlainWriter
 import com.waz.threading.Threading
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.events.{AggregatingSignal, EventStream}
-import com.waz.utils.{LoggedTry, Serialized, returning}
+import com.waz.utils.{Serialized, returning}
 import com.wire.cryptobox.{CryptoBox, CryptoSession, PreKey}
 
 import scala.concurrent.Future
+import scala.util.Try
 
 class CryptoSessionService(cryptoBox: CryptoBoxService) {
 
   implicit val dis = Threading.Background
 
-  val onCreate = EventStream[String]()
-  val onCreateFromMessage = EventStream[String]()
+  val onCreate = EventStream[SessionId]()
+  val onCreateFromMessage = EventStream[SessionId]()
 
-  private def dispatch[A](id: String)(f: Option[CryptoBox] => A) =
+  private def dispatch[A](id: SessionId)(f: Option[CryptoBox] => A) =
     Serialized.future(id){cryptoBox.cryptoBox.map(f)}
 
-  private def dispatchFut[A](id: String)(f: Option[CryptoBox] => Future[A]) =
+  private def dispatchFut[A](id: SessionId)(f: Option[CryptoBox] => Future[A]) =
     Serialized.future(id){cryptoBox.cryptoBox.flatMap(f)}
 
-  def getOrCreateSession(id: String, key: PreKey) = dispatch(id) {
+  def getOrCreateSession(id: SessionId, key: PreKey) = dispatch(id) {
     case None => None
     case Some(cb) =>
-      verbose(s"getOrCreateSession($id)")
-      def createSession() = returning(cb.initSessionFromPreKey(id, key))(_ => onCreate ! id)
+      verbose(l"getOrCreateSession($id)")
+      def createSession() = returning(cb.initSessionFromPreKey(id.toString, key))(_ => onCreate ! id)
 
       loadSession(cb, id).getOrElse(createSession())
   }
 
-  private def loadSession(cb: CryptoBox, id: String): Option[CryptoSession] =
-    LoggedTry(Option(cb.tryGetSession(id))).getOrElse {
-      error("session loading failed unexpectedly, will delete session file")
-      cb.deleteSession(id)
+  private def loadSession(cb: CryptoBox, id: SessionId): Option[CryptoSession] =
+    Try(Option(cb.tryGetSession(id.toString))).getOrElse {
+      error(l"session loading failed unexpectedly, will delete session file")
+      cb.deleteSession(id.toString)
       None
     }
 
-  def deleteSession(id: String) = dispatch(id) { cb =>
-    verbose(s"deleteSession($id)")
-    cb foreach (_.deleteSession(id))
+  def deleteSession(id: SessionId) = dispatch(id) { cb =>
+    verbose(l"deleteSession($id)")
+    cb foreach (_.deleteSession(id.toString))
   }
 
-  def getSession(id: String) = dispatch(id) { cb =>
-    verbose(s"getSession($id)")
+  def getSession(id: SessionId) = dispatch(id) { cb =>
+    verbose(l"getSession($id)")
     cb.flatMap(loadSession(_, id))
   }
 
-  def withSession[A](id: String)(f: CryptoSession => A): Future[Option[A]] = dispatch(id) { cb =>
+  def withSession[A](id: SessionId)(f: CryptoSession => A): Future[Option[A]] = dispatch(id) { cb =>
     cb.flatMap(loadSession(_, id)) map { session =>
       returning(f(session)) { _ => session.save() }
     }
   }
 
-  def decryptMessage(sessionId: String, msg: Array[Byte], eventsWriter: PlainWriter): Future[Unit] = {
+  def decryptMessage(sessionId: SessionId, msg: Array[Byte], eventsWriter: PlainWriter): Future[Unit] = {
     def decrypt(arg: Option[CryptoBox]): (CryptoSession, Array[Byte]) = arg match {
       case None => throw new Exception("CryptoBox missing")
       case Some(cb) =>
-        verbose(s"decryptMessage($sessionId for message: ${msg.length} = ${AESUtils.base64(msg)})")
+        verbose(l"decryptMessage($sessionId for message: ${msg.length} = ${showString(AESUtils.base64(msg))})")
         loadSession(cb, sessionId).fold {
-          val sm = cb.initSessionFromMessage(sessionId, msg)
+          val sm = cb.initSessionFromMessage(sessionId.toString, msg)
           onCreate ! sessionId
           onCreateFromMessage ! sessionId
           (sm.getSession, sm.getMessage)
@@ -92,12 +94,12 @@ class CryptoSessionService(cryptoBox: CryptoBoxService) {
       val (session, plain) = decrypt(opt)
       eventsWriter(plain).map { _ =>
         session.save()
-        verbose(s"decrypted data len: ${plain.length}")
+        verbose(l"decrypted data len: ${plain.length}")
       }
     }
   }
 
-  def remoteFingerprint(sid: String) = {
+  def remoteFingerprint(sid: SessionId) = {
     def fingerprint = withSession(sid)(_.getRemoteFingerprint)
     val stream = onCreate.filter(_ == sid).mapAsync(_ => fingerprint)
 

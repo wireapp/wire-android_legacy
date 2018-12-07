@@ -18,7 +18,7 @@
 package com.waz.service
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.content._
 import com.waz.model.AccountData.Password
 import com.waz.model.UserData.ConnectionStatus
@@ -73,7 +73,7 @@ trait UserService {
   def updateHandle(handle: Handle): ErrorOr[Unit]
 
   //These self user properties should always succeed given no fatal errors, so we update locally and create sync jobs
-  def updateName(name: String): Future[Unit]
+  def updateName(name: Name): Future[Unit]
   def updateAccentColor(color: AccentColor): Future[Unit]
   def updateAvailability(availability: Availability): Future[Unit]
 
@@ -104,7 +104,7 @@ class UserServiceImpl(selfUserId:        UserId,
   for {
     shouldSync <- shouldSyncUsers()
   } if (shouldSync) {
-    verbose("Syncing user data to get team ids")
+    verbose(l"Syncing user data to get team ids")
     usersStorage.list()
       .flatMap(users => sync.syncUsers(users.map(_.id).toSet - selfUserId))
       .flatMap(_ => shouldSyncUsers := false)
@@ -162,11 +162,11 @@ class UserServiceImpl(selfUserId:        UserId,
 
   override def getOrCreateUser(id: UserId) = usersStorage.getOrElseUpdate(id, {
     sync.syncUsers(Set(id))
-    UserData(id, None, DefaultUserName, None, None, connection = ConnectionStatus.Unconnected, searchKey = SearchKey(DefaultUserName), handle = None)
+    UserData(id, None, Name.Empty, None, None, connection = ConnectionStatus.Unconnected, searchKey = SearchKey.Empty, handle = None)
   })
 
   override def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[RemoteInstant] = None, message: Option[String] = None) =
-    usersStorage.update(id, { user => returning(user.updateConnectionStatus(status, time, message))(u => verbose(s"updateConnectionStatus($u)")) }) map {
+    usersStorage.update(id, { user => returning(user.updateConnectionStatus(status, time, message))(u => verbose(l"updateConnectionStatus($u)")) }) map {
       case Some((prev, updated)) if prev != updated => Some(updated)
       case _ => None
     }
@@ -185,7 +185,7 @@ class UserServiceImpl(selfUserId:        UserId,
         val v2profilePic = info.mediumPicture.filter(_.convId.isDefined)
 
         v2profilePic.fold(Future.successful(())){ pic =>
-          verbose("User has v2 picture - re-uploading as v3")
+          verbose(l"User has v2 picture - re-uploading as v3")
           for {
             _ <- sync.postSelfPicture(v2profilePic.map(_.id))
             _ <- assetsStorage.updateAsset(pic.id, _.copy(convId = None)) //mark assets as v3
@@ -193,7 +193,7 @@ class UserServiceImpl(selfUserId:        UserId,
           } yield (())
         }.flatMap (_ => updateSyncedUsers(Seq(info)) map { _.headOption })
       case Left(err) =>
-        error(s"loadSelf() failed: $err")
+        error(l"loadSelf() failed: $err")
         Future.successful(None)
     }
   }
@@ -216,12 +216,12 @@ class UserServiceImpl(selfUserId:        UserId,
       val offset = LocalInstant.Now - olderThan
       val existing = found.filter(u => !u.isConnected && (u.teamId.isEmpty || u.teamId != teamId) && u.syncTimestamp.forall(_.isBefore(offset)))
       val toSync = newIds ++ existing.map(_.id)
-      verbose(s"syncIfNeeded for users; new: (${newIds.size}) + existing: (${existing.size}) = all: (${toSync.size})")
+      verbose(l"syncIfNeeded for users; new: (${newIds.size}) + existing: (${existing.size}) = all: (${toSync.size})")
       if (toSync.nonEmpty) sync.syncUsers(toSync).map(Some(_))(Threading.Background) else Future.successful(None)
     }
 
   override def updateSyncedUsers(users: Seq[UserInfo], syncTime: LocalInstant = LocalInstant.Now): Future[Set[UserData]] = {
-    verbose(s"update synced ${users.size} users")
+    verbose(l"update synced ${users.size} users")
     assets.updateAssets(users.flatMap(_.picture.getOrElse(Seq.empty[AssetData]))).flatMap { _ =>
       def updateOrCreate(info: UserInfo): Option[UserData] => UserData = {
         case Some(user: UserData) =>
@@ -235,7 +235,7 @@ class UserServiceImpl(selfUserId:        UserId,
 
   //TODO - remove and find a better flow for the settings
   override def setEmail(email: EmailAddress, password: Password) = {
-    verbose(s"setEmail: $email, password: $password")
+    verbose(l"setEmail: $email, password: $password")
     credentialsClient.updateEmail(email).future.flatMap {
       case Right(_) => setPassword(password)
       case Left(e) => Future.successful(Left(e))
@@ -243,17 +243,17 @@ class UserServiceImpl(selfUserId:        UserId,
   }
 
   override def updateEmail(email: EmailAddress) = {
-    verbose(s"updateEmail: $email")
+    verbose(l"updateEmail: $email")
     credentialsClient.updateEmail(email).future
   }
 
   override def updatePhone(phone: PhoneNumber) = {
-    verbose(s"updatePhone: $phone")
+    verbose(l"updatePhone: $phone")
     credentialsClient.updatePhone(phone).future
   }
 
   override def clearPhone(): ErrorOr[Unit] = {
-    verbose(s"clearPhone")
+    verbose(l"clearPhone")
     for {
       resp <- credentialsClient.clearPhone().future
       _    <- resp.mapFuture(_ => usersStorage.update(selfUserId, _.copy(phone = None)).map(_ => {}))
@@ -261,7 +261,7 @@ class UserServiceImpl(selfUserId:        UserId,
   }
 
   override def changePassword(newPassword: Password, currentPassword: Password) = {
-    verbose(s"changePassword: $newPassword, $currentPassword")
+    verbose(l"changePassword: $newPassword, $currentPassword")
     credentialsClient.updatePassword(newPassword, Some(currentPassword)).future.flatMap {
       case Left(err) => Future.successful(Left(err))
       case Right(_)  => accsStorage.update(selfUserId, _.copy(password = Some(newPassword))).map(_ => Right({}))
@@ -269,7 +269,7 @@ class UserServiceImpl(selfUserId:        UserId,
   }
 
   override def setPassword(password: Password) = {
-    verbose(s"setPassword: $password")
+    verbose(l"setPassword: $password")
     credentialsClient.updatePassword(password, None).future.flatMap {
       case Left(err) => Future.successful(Left(err))
       case Right(_)  => accsStorage.update(selfUserId, _.copy(password = Some(password))).map(_ => Right({}))
@@ -277,30 +277,28 @@ class UserServiceImpl(selfUserId:        UserId,
   }
 
   override def updateHandle(handle: Handle) = {
-    verbose(s"updateHandle: $handle")
+    verbose(l"updateHandle: $handle")
     credentialsClient.updateHandle(handle).future.flatMap {
       case Right(_) => usersStorage.update(selfUserId, _.copy(handle = Some(handle))).map(_ => Right({}))
       case Left(err) => Future.successful(Left(err))
     }
   }
 
-  override def updateName(name: String) = {
-    verbose(s"updateName: $name")
+  override def updateName(name: Name) = {
+    verbose(l"updateName: $name")
     updateAndSync(_.copy(name = name), _ => sync.postSelfName(name))
   }
 
   override def updateAccentColor(color: AccentColor) = {
-    verbose(s"updateAccentColor: $color")
+    verbose(l"updateAccentColor: $color")
     updateAndSync(_.copy(accent = color.id), _ => sync.postSelfUser(UserInfo(selfUserId, accentId = Some(color.id))))
   }
 
   override def updateAvailability(availability: Availability) = {
-    verbose(s"updateAvailability($availability)")
     updateAndSync(_.copy(availability = availability), _ => sync.postAvailability(availability)).map(_ => {})
   }
 
   override def storeAvailabilities(availabilities: Map[UserId, Availability]) = {
-    verbose(s"storeAvailabilities($availabilities)")
     usersStorage.updateAll2(availabilities.keySet, u => availabilities.get(u.id).fold(u)(av => u.copy(availability = av)))
   }
 
@@ -319,7 +317,6 @@ class UserServiceImpl(selfUserId:        UserId,
 }
 
 object UserService {
-  val DefaultUserName: String = ""
 
   val SyncIfOlderThan = 24.hours
 
@@ -348,7 +345,7 @@ class ExpiredUsersService(push:         PushService,
     members.getByUsers(Set(m._1)).map(_.isEmpty).map {
       case true =>
         timers.get(m._1).foreach { t =>
-          verbose(s"Cancelled timer for user: ${m._1}")
+          verbose(l"Cancelled timer for user: ${m._1}")
           t.cancel()
         }
         timers -= m._1
@@ -364,9 +361,9 @@ class ExpiredUsersService(push:         PushService,
       val woTimer = wireless.filter(u => (wireless.map(_.id) -- timers.keySet).contains(u.id))
       woTimer.foreach { u =>
         val delay = LocalInstant.Now.toRemote(drift).remainingUntil(u.expiresAt.get + 10.seconds)
-        verbose(s"Creating timer to remove user: ${u.id}:${u.name} in $delay")
+        verbose(l"Creating timer to remove user: ${u.id}:${u.name} in $delay")
         timers += u.id -> CancellableFuture.delay(delay).map { _ =>
-          verbose(s"Wireless user ${u.id}:${u.name} is expired, informing BE")
+          verbose(l"Wireless user ${u.id}:${u.name} is expired, informing BE")
           sync.syncUsers(Set(u.id))
           timers -= u.id
         }

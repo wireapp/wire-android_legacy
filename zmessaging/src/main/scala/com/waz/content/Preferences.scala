@@ -19,20 +19,21 @@ package com.waz.content
 
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.content.{Context, SharedPreferences}
-import com.waz.ZLog._
+import com.waz.ZLog.{LogTag, logTagFor}
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.content.Preferences.{PrefKey, Preference}
+import com.waz.log.ZLog2._
 import com.waz.media.manager.context.IntensityLevel
 import com.waz.model.KeyValueData.KeyValueDataDao
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.AccountManager.ClientRegistrationState
+import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.sync.client.OAuth2Client.RefreshToken
 import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.utils.{CachedStorageImpl, JsonDecoder, JsonEncoder, Serialized, TrimmingLruCache, returning}
-import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 
@@ -66,9 +67,9 @@ object Preferences {
 
     import Threading.Implicits.Background
 
-    def apply():          Future[A]    = prefs.getValue(key).map { v => verbose(s"Getting $key: $v")(prefs.logTag); v }
+    def apply():          Future[A]    = prefs.getValue(key).map { v => verbose(l"Getting $key: value: ???")(prefs.logTag); v } //TODO get LogShow for type A
     def update(value: A): Future[Unit] = {
-      verbose(s"Setting $key: $value")(prefs.logTag)
+      verbose(l"Setting $key: value ???")(prefs.logTag) //TODO get LogShow for type A
       prefs.setValue(key, value).map { _ => signal.publish(value, Threading.Background)}
     }
 
@@ -185,11 +186,11 @@ class GlobalPreferences(context: Context, prefs: SharedPreferences) extends Pref
       .foreach {
         case (key, value) =>
           value match {
-            case v: String  => debug(s"Migrating String:  $key: $value"); editor.putString(key, v)
-            case v: Boolean => debug(s"Migrating Boolean: $key: $value"); editor.putBoolean(key, v)
-            case v: Int     => debug(s"Migrating Int:     $key: $value"); editor.putInt(key, v)
-            case v: Long    => debug(s"Migrating Long:    $key: $value"); editor.putLong(key, v)
-            case v => warn(s"Preference $key: $v has unexpected type. Leaving out of migration")
+            case v: String  => editor.putString(key, v)
+            case v: Boolean => editor.putBoolean(key, v)
+            case v: Int     => editor.putInt(key, v)
+            case v: Long    => editor.putLong(key, v)
+            case v => warn(l"Preference ${showString(key)} has unexpected type. Leaving out of migration")
           }
       }
 
@@ -217,7 +218,7 @@ class GlobalPreferences(context: Context, prefs: SharedPreferences) extends Pref
 
       //No need to update the signal. The SharedPreferences Listener will do this for us.
       override def update(value: A) = {
-        verbose(s"Setting $key: $value")
+        verbose(l"Setting $key, value: ???") //TODO get LogShow for type A
         setValue[A](key, value)
       }
 
@@ -295,7 +296,7 @@ class UserPreferences(context: Context, storage: ZmsDatabase) extends CachedStor
   //TODO eventually remove
   def migrateFromGlobal(gPrefs: GlobalPreferences)(implicit ec: ExecutionContext) = {
     list().map(_.map(_.key)).flatMap { currentPrefs =>
-      verbose(s"migrating global prefs to user prefs: $currentPrefs")
+      verbose(l"migrating global prefs to user prefs: ${currentPrefs.map(showString)}")
       import UserPreferences._
 
       val shareContacts = if (!currentPrefs.contains(ShareContacts.str))    setValue(ShareContacts,    gPrefs.getFromPref(GlobalPreferences._ShareContacts))    else Future.successful({})

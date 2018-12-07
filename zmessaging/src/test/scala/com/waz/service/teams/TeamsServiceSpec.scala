@@ -54,11 +54,11 @@ class TeamsServiceSpec extends AndroidFreeSpec {
     (userStorage.onDeleted _).expects().once().returning(userStorageOnDeleted)
 
     val initialTeamMembers = Set(
-      UserData(UserId(), teamId, "user1", handle = Some(Handle()), searchKey = SearchKey.empty),
-      UserData(UserId(), teamId, "user2", handle = Some(Handle()), searchKey = SearchKey.empty)
+      UserData(UserId(), teamId, Name("user1"), handle = Some(Handle()), searchKey = SearchKey.Empty),
+      UserData(UserId(), teamId, Name("user2"), handle = Some(Handle()), searchKey = SearchKey.Empty)
     )
 
-    val newTeamMember = UserData(UserId(), teamId, "user3", handle = Some(Handle()), searchKey = SearchKey.empty)
+    val newTeamMember = UserData(UserId(), teamId, Name("user3"), handle = Some(Handle()), searchKey = SearchKey.Empty)
 
     (userStorage.getByTeam _).expects(Set(teamId).flatten).once().returning(Future.successful(initialTeamMembers))
 
@@ -86,9 +86,9 @@ class TeamsServiceSpec extends AndroidFreeSpec {
     (userStorage.onDeleted _).expects().once().returning(userStorageOnDeleted)
 
 
-    val member1 = UserData(UserId(), teamId, "user1", handle = Some(Handle()), searchKey = SearchKey.simple("user1"))
-    val member2 = UserData(UserId(), teamId, "rick2", handle = Some(Handle()), searchKey = SearchKey.simple("rick2"))
-    val member2Updated = member2.copy(name = "user2", searchKey = SearchKey.simple("user2"))
+    val member1 = UserData(UserId(), teamId, Name("user1"), handle = Some(Handle()), searchKey = SearchKey.simple("user1"))
+    val member2 = UserData(UserId(), teamId, Name("rick2"), handle = Some(Handle()), searchKey = SearchKey.simple("rick2"))
+    val member2Updated = member2.copy(name = Name("user2"), searchKey = SearchKey.simple("user2"))
 
     (userStorage.searchByTeam _).expects(teamId.get, SearchKey.simple("user"), false).once().returning(Future.successful(Set(member1)))
 
@@ -116,11 +116,11 @@ class TeamsServiceSpec extends AndroidFreeSpec {
     (userStorage.onDeleted _).expects().once().returning(userStorageOnDeleted)
 
     val initialTeamMembers = Set(
-      UserData(UserId(), teamId, "user1", handle = Some(Handle()), searchKey = SearchKey.empty),
-      UserData(UserId(), teamId, "user2", handle = Some(Handle()), searchKey = SearchKey.empty)
+      UserData(UserId(), teamId, Name("user1"), handle = Some(Handle()), searchKey = SearchKey.Empty),
+      UserData(UserId(), teamId, Name("user2"), handle = Some(Handle()), searchKey = SearchKey.Empty)
     )
 
-    val newTeamMember = UserData(UserId(), None, "user3", handle = Some(Handle()), searchKey = SearchKey.empty)
+    val newTeamMember = UserData(UserId(), None, Name("user3"), handle = Some(Handle()), searchKey = SearchKey.Empty)
 
     (userStorage.getByTeam _).expects(Set(teamId).flatten).once().returning(Future.successful(initialTeamMembers))
 
@@ -147,9 +147,9 @@ class TeamsServiceSpec extends AndroidFreeSpec {
     (userStorage.onUpdated _).expects().once().returning(userStorageOnUpdated)
     (userStorage.onDeleted _).expects().once().returning(userStorageOnDeleted)
 
-    val constUser = UserData(UserId(), teamId, "user1", handle = Some(Handle()), searchKey = SearchKey.empty)
-    val teamMemberToUpdate = UserData(UserId(), teamId, "user2", handle = Some(Handle()), searchKey = SearchKey.empty)
-    val updatedTeamMember = teamMemberToUpdate.copy(name = "user3")
+    val constUser = UserData(UserId(), teamId, Name("user1"), handle = Some(Handle()), searchKey = SearchKey.Empty)
+    val teamMemberToUpdate = UserData(UserId(), teamId, Name("user2"), handle = Some(Handle()), searchKey = SearchKey.Empty)
+    val updatedTeamMember = teamMemberToUpdate.copy(name = Name("user3"))
 
     val initialTeamMembers = Set(constUser, teamMemberToUpdate)
     val updatedTeamMembers = Set(constUser, updatedTeamMember)

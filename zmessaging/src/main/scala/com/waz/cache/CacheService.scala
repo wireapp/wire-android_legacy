@@ -21,7 +21,7 @@ import java.io._
 import java.lang.System._
 
 import android.content.Context
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.cache.CacheEntryData.CacheEntryDao
 import com.waz.content.Database
 import com.waz.model._
@@ -125,7 +125,7 @@ class CacheServiceImpl(context: Context, storage: Database, cacheStorage: CacheS
     } else {
       Future(addStreamToStorage(IoUtils.copy(in, _), cacheLocation))(execution) flatMap {
         case Success((fileId, path, encKey, len)) =>
-          verbose(s"added stream to storage: ${path.getAbsolutePath}, with key: $encKey")
+          verbose(l"added stream to storage: $path, with key: $encKey")
           add(CacheEntryData(key, timeout = timeout.timeout, path = Some(path), fileId = fileId, encKey = encKey, fileName = name, mimeType = mime, length = Some(len)))
         case Failure(c: CancelException) =>
           Future.failed(c)
@@ -169,7 +169,7 @@ class CacheServiceImpl(context: Context, storage: Database, cacheStorage: CacheS
   }
 
   def move(key: CacheKey, entry: LocalData, mime: Mime = Mime.Unknown, name: Option[String] = None, cacheLocation: Option[File] = None)(implicit timeout: Expiration = CacheService.DefaultExpiryTime) = {
-    verbose(s"move($key, $entry)")
+    verbose(l"move($key)")
 
     def copy() = addStream(key, entry.inputStream, mime, name, cacheLocation, entry.length)
 
@@ -188,7 +188,7 @@ class CacheServiceImpl(context: Context, storage: Database, cacheStorage: CacheS
       case _ =>
         copy()
     }) map { current =>
-      verbose(s"moved $current, file exists: ${current.cacheFile.exists()}, deleting entry: $entry")
+      verbose(l"moved $current, file exists: ${current.cacheFile.exists()}, deleting entry")
       entry.delete()
       current
     }
@@ -205,19 +205,19 @@ class CacheServiceImpl(context: Context, storage: Database, cacheStorage: CacheS
   def cacheDir: File = extCacheDir.getOrElse(intCacheDir)
 
   def getEntry(key: CacheKey): Future[Option[CacheEntry]] = {
-    verbose(s"fileCache getEntry with key $key")
+    verbose(l"fileCache getEntry with key $key")
     cacheStorage.get(key).map {
-      case Some(e) =>  verbose(s"e: $e"); Some(new CacheEntry(e, this))
-      case None => verbose("none"); None
+      case Some(e) =>  verbose(l"e: $e"); Some(new CacheEntry(e, this))
+      case None => verbose(l"none"); None
     }.recover {
-      case e: Throwable => warn("failed", e); None
+      case e: Throwable => warn(l"failed", e); None
     }
   }
 
   def remove(key: CacheKey): Future[Unit] = cacheStorage.remove(key)
 
   def remove(entry: CacheEntry): Future[Unit] = {
-    verbose(s"remove($entry)")
+    verbose(l"remove($entry)")
     cacheStorage.remove(entry.data.key)
   }
 

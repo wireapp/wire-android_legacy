@@ -21,8 +21,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.media.MediaMetadataRetriever._
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.bitmap.BitmapUtils
 import com.waz.cache.{CacheEntry, CacheService, LocalData}
 import com.waz.content.AssetsStorage
@@ -34,7 +34,7 @@ import com.waz.service.images.ImageAssetGenerator
 import com.waz.service.images.ImageAssetGenerator._
 import com.waz.service.images.ImageLoader.Metadata
 import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.{LoggedTry, Serialized}
+import com.waz.utils.Serialized
 import org.threeten.bp
 
 import scala.concurrent.Future
@@ -105,7 +105,7 @@ class MetaDataService(context: Context, cache: CacheService, storage: AssetsStor
 
     lazy val duration = MetaDataRetriever(entry.cacheFile) { r =>
       val str = r.extractMetadata(METADATA_KEY_DURATION)
-      LoggedTry(bp.Duration.ofMillis(str.toLong)).toOption
+      Try(bp.Duration.ofMillis(str.toLong)).toOption
     }.recover{case _ => warn(s"Failed to extract duration for audio asset: ${asset.id}"); None}
 
     asset.metaData match {

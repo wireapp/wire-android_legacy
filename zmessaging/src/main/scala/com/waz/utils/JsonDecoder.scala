@@ -166,6 +166,8 @@ object JsonDecoder {
   def decodeColl[A, B[_]](s: Symbol)(implicit js: JSONObject, dec: JsonDecoder[A], cbf: CanBuild[A, B[A]]): B[A] =
     if (js.has(s.name) && !js.isNull(s.name)) arrayColl[A, B](js.getJSONArray(s.name)) else cbf.apply.result
 
+  implicit def decodeName(s: Symbol)(implicit js: JSONObject): Name = Name(js.getString(s.name))
+  implicit def decodeOptName(s: Symbol)(implicit js: JSONObject): Option[Name] = opt(s, js => Name(js.getString(s.name)))
   implicit def decodeEmailAddress(s: Symbol)(implicit js: JSONObject): EmailAddress = EmailAddress(js.getString(s.name))
   implicit def decodeOptEmailAddress(s: Symbol)(implicit js: JSONObject): Option[EmailAddress] = opt(s, js => EmailAddress(js.getString(s.name)))
   implicit def decodePhoneNumber(s: Symbol)(implicit js: JSONObject): PhoneNumber = PhoneNumber(js.getString(s.name))

@@ -19,6 +19,7 @@ package com.waz.service.push
 
 import java.io.IOException
 
+import com.waz.DisabledTrackingService
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NetworkMode
 import com.waz.content.{AccountStorage, GlobalPreferences}
@@ -56,7 +57,7 @@ class PushTokenServiceSpec extends AndroidFreeSpec {
       (google.isGooglePlayServicesAvailable _).expects().anyNumberOfTimes().returning(googlePlayAvailable)
       (networkService.networkMode _).expects.anyNumberOfTimes().returning(networkMode)
 
-      new GlobalTokenServiceImpl(google, prefs, networkService)
+      new GlobalTokenServiceImpl(google, prefs, networkService, tracking)
     }
 
     scenario("Fetches token on init if GCM available") {

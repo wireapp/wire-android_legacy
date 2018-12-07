@@ -20,7 +20,7 @@ package com.waz.db
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.cache.CacheEntryData.CacheEntryDao
 import com.waz.content.ZmsDatabase
 import com.waz.db.Col._
@@ -30,12 +30,13 @@ import com.waz.model.AccountData.AccountDataDao
 import com.waz.model.TeamData.TeamDataDoa
 import com.waz.model.otr.ClientId
 import com.waz.model.{AccountId, UserId}
+import com.waz.service.tracking.TrackingService
 import com.waz.utils.wrappers.DB
 import com.waz.utils.{JsonDecoder, JsonEncoder, Resource}
 import com.waz.sync.client.AuthenticationManager.AccessToken
 
-class ZGlobalDB(context: Context, dbNameSuffix: String = "")
-  extends DaoDB(context.getApplicationContext, DbName + dbNameSuffix, null, DbVersion, daos, Migrations.migrations(context)) {
+class ZGlobalDB(context: Context, dbNameSuffix: String = "", tracking: TrackingService)
+  extends DaoDB(context.getApplicationContext, DbName + dbNameSuffix, null, DbVersion, daos, Migrations.migrations(context), tracking) {
 
   override def onUpgrade(db: SQLiteDatabase, from: Int, to: Int): Unit = {
     if (from < 5) clearAllData(db)
@@ -43,7 +44,7 @@ class ZGlobalDB(context: Context, dbNameSuffix: String = "")
   }
 
   def clearAllData(db: SQLiteDatabase) = {
-    debug("wiping global db...")
+    debug(l"wiping global db...")
     dropAllTables(db)
     onCreate(db)
   }

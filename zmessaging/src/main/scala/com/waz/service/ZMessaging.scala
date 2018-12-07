@@ -40,7 +40,6 @@ import com.waz.sync._
 import com.waz.sync.client._
 import com.waz.sync.handler._
 import com.waz.sync.otr.{OtrClientsSyncHandler, OtrClientsSyncHandlerImpl, OtrSyncHandler, OtrSyncHandlerImpl}
-import com.waz.sync.queue.{SyncContentUpdater, SyncContentUpdaterImpl}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.ui.UiModule
 import com.waz.utils.Locales
@@ -58,7 +57,7 @@ class ZMessagingFactory(global: GlobalModule) {
 
   implicit val tracking = global.trackingService
 
-  def baseStorage(userId: UserId) = new StorageModule(global.context, userId, global.prefs)
+  def baseStorage(userId: UserId) = new StorageModule(global.context, userId, global.prefs, global.trackingService)
 
   def auth(userId: UserId) = new AuthenticationManager(userId, global.accountsStorage, global.loginClient, tracking)
 
@@ -70,8 +69,8 @@ class ZMessagingFactory(global: GlobalModule) {
   def zmessaging(teamId: Option[TeamId], clientId: ClientId, accountManager: AccountManager, storage: StorageModule, cryptoBox: CryptoBoxService) = wire[ZMessaging]
 }
 
-class StorageModule(context: Context, val userId: UserId, globalPreferences: GlobalPreferences) {
-  lazy val db                                         = new ZmsDatabase(userId, context)
+class StorageModule(context: Context, val userId: UserId, globalPreferences: GlobalPreferences, tracking: TrackingService) {
+  lazy val db                                         = new ZmsDatabase(userId, context, tracking)
   lazy val userPrefs                                  = UserPreferences.apply(context, db, globalPreferences)
   lazy val usersStorage:      UsersStorage            = wire[UsersStorageImpl]
   lazy val otrClientsStorage: OtrClientsStorage       = wire[OtrClientsStorageImpl]
@@ -104,10 +103,9 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   implicit lazy val evContext = account.accountContext
 
   lazy val sync:              SyncServiceHandle       = wire[AndroidSyncServiceHandle]
-  lazy val syncHandler:       AccountSyncHandler      = new AccountSyncHandler(this)
+  lazy val syncRequests:      SyncRequestService      = global.syncRequests
+
   lazy val otrClientsService: OtrClientsService       = wire[OtrClientsService]
-  lazy val syncContent:       SyncContentUpdater      = wire[SyncContentUpdaterImpl]
-  lazy val syncRequests:      SyncRequestService      = wire[SyncRequestServiceImpl]
   lazy val otrClientsSync:    OtrClientsSyncHandler   = wire[OtrClientsSyncHandlerImpl]
   lazy val otrClient:         OtrClientImpl           = account.otrClient
   lazy val credentialsClient: CredentialsUpdateClientImpl = account.credentialsClient
@@ -287,7 +285,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
 
     // services listening on lifecycle verified login events
     contacts
-    syncRequests
 
     // services listening for storage updates
     richmedia
@@ -324,15 +321,16 @@ object ZMessaging { self =>
 
   private[waz] var context: Context = _
 
-  private var prefs:     GlobalPreferences = _
-  private var googleApi: GoogleApi = _
-  private var backend:   BackendConfig = BackendConfig.StagingBackend
-  private var base64:    Base64 = _
+  private var prefs:        GlobalPreferences = _
+  private var googleApi:    GoogleApi = _
+  private var backend:      BackendConfig = BackendConfig.StagingBackend
+  private var base64:       Base64 = _
+  private var syncRequests: SyncRequestService = _
 
   //var for tests - and set here so that it is globally available without the need for DI
   var clock = Clock.systemUTC()
 
-  private lazy val _global: GlobalModule = new GlobalModuleImpl(context, backend, prefs, googleApi, base64)
+  private lazy val _global: GlobalModule = new GlobalModuleImpl(context, backend, prefs, googleApi, base64, syncRequests)
   private lazy val ui: UiModule = new UiModule(_global)
 
   //Try to avoid using these - map from the futures instead.
@@ -349,7 +347,12 @@ object ZMessaging { self =>
   def currentBeDrift = beDrift.currentValue.getOrElse(Duration.ZERO)
 
   //TODO - we should probably just request the entire GlobalModule from the UI here
-  def onCreate(context: Context, beConfig: BackendConfig, prefs: GlobalPreferences, googleApi: GoogleApi, base64: Base64) = {
+  def onCreate(context:      Context,
+               beConfig:     BackendConfig,
+               prefs:        GlobalPreferences,
+               googleApi:    GoogleApi,
+               base64:       Base64,
+               syncRequests: SyncRequestService) = {
     Threading.assertUiThread()
 
     if (this.currentUi == null) {
@@ -358,6 +361,7 @@ object ZMessaging { self =>
       this.prefs = prefs
       this.googleApi = googleApi
       this.base64 = base64
+      this.syncRequests = syncRequests
       currentUi = ui
       currentGlobal = _global
       currentAccounts = currentGlobal.accountsService
@@ -370,20 +374,4 @@ object ZMessaging { self =>
       } // "preload"... - this should be very fast, normally, but slows down to 10 to 20 seconds when multidexed...
     }
   }
-
-  // should be called on low memory events
-  def onTrimMemory(level: Int): CancellableFuture[Unit] = level match {
-    case ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN |
-         ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW |
-         ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL =>
-      TrackingService.exception(new RuntimeException(s"onTrimMemory($level)"), null)
-      Threading.Background {
-        currentGlobal.cache.deleteExpired()
-        currentGlobal.imageCache.clear()
-      }
-    case _ => CancellableFuture.successful {}
-  }
-
-
-
 }

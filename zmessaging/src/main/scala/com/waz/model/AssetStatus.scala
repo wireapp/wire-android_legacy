@@ -18,10 +18,11 @@
 package com.waz.model
 
 import com.waz.api
+import com.waz.log.ZLog2.SafeToLog
 import com.waz.utils.{EnumCodec, JsonDecoder, JsonEncoder}
 import org.json.{JSONException, JSONObject}
 
-sealed abstract class AssetStatus(val status: api.AssetStatus){
+sealed abstract class AssetStatus(val status: api.AssetStatus) extends SafeToLog {
   override def hashCode(): Int = status.hashCode()
 
   override def equals(obj: scala.Any): Boolean = obj match {

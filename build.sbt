@@ -8,7 +8,7 @@ import sbt._
 
 import scala.util.Random
 
-val MajorVersion = "133"
+val MajorVersion = "134"
 val MinorVersion = "0" // hotfix release
 
 version in ThisBuild := {
@@ -201,9 +201,10 @@ generateDebugMode in macrosupport := {
                   |import scala.reflect.macros.blackbox.Context
                   |
                   |object DebugMode {
+                  |  val isEnabled: Boolean = %b
                   |  def DEBUG(c: Context) = {
                   |    import c.universe._
-                  |    Literal(Constant(%b))
+                  |    Literal(Constant(isEnabled))
                   |  }
                   |}
                 """.stripMargin.format(sys.env.get("BUILD_NUMBER").isEmpty || sys.props.getOrElse("debug", "false").toBoolean)

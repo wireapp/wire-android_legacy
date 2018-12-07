@@ -20,7 +20,7 @@ package com.waz.content
 import android.content.Context
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.UserData.{ConnectionStatus, UserDataDao}
-import com.waz.model.{IntegrationId, TeamId, UserData, UserId}
+import com.waz.model._
 import com.waz.service.SearchKey
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.TrimmingLruCache.Fixed
@@ -33,7 +33,6 @@ import scala.concurrent.Future
 trait UsersStorage extends CachedStorage[UserId, UserData] {
   def getByTeam(team: Set[TeamId]): Future[Set[UserData]]
   def searchByTeam(team: TeamId, prefix: SearchKey, handleOnly: Boolean): Future[Set[UserData]]
-  def removeByTeam(teams: Set[TeamId]): Future[Set[UserData]]
   def listAll(ids: Traversable[UserId]): Future[Vector[UserData]]
   def listSignal(ids: Traversable[UserId]): Signal[Vector[UserData]]
   def listUsersByConnectionStatus(p: Set[ConnectionStatus]): Future[Map[UserId, UserData]]
@@ -42,8 +41,6 @@ trait UsersStorage extends CachedStorage[UserId, UserData] {
   def addOrOverwrite(user: UserData): Future[UserData]
 
   def findUsersForService(id: IntegrationId): Future[Set[UserData]]
-
-  def getContactNameParts: CancellableFuture[Map[UserId, NameParts]]
 }
 
 class UsersStorageImpl(context: Context, storage: ZmsDatabase) extends CachedStorageImpl[UserId, UserData](new TrimmingLruCache(context, Fixed(2000)), storage)(UserDataDao, "UsersStorage_Cached") with UsersStorage {
@@ -64,8 +61,6 @@ class UsersStorageImpl(context: Context, storage: ZmsDatabase) extends CachedSto
     }
     cs
   }
-
-  override def getContactNameParts = contactNameParts.map(_.toMap)
 
   onAdded { users =>
     users foreach { user =>
@@ -96,13 +91,13 @@ class UsersStorageImpl(context: Context, storage: ZmsDatabase) extends CachedSto
 
   def listUsersByConnectionStatus(p: Set[ConnectionStatus]): Future[Map[UserId, UserData]] =
     find[(UserId, UserData), Map[UserId, UserData]](
-      user => p(user.connection),
+      user => p(user.connection) && !user.deleted,
       db   => UserDataDao.findByConnectionStatus(p)(db),
       user => (user.id, user))
 
   def listAcceptedOrPendingUsers: Future[Map[UserId, UserData]] =
     find[(UserId, UserData), Map[UserId, UserData]](
-      user => user.isAcceptedOrPending,
+      user => user.isAcceptedOrPending && !user.deleted,
       db   => UserDataDao.findByConnectionStatus(Set(ConnectionStatus.Accepted, ConnectionStatus.PendingFromOther, ConnectionStatus.PendingFromUser))(db),
       user => (user.id, user))
 
@@ -139,7 +134,7 @@ class UsersStorageImpl(context: Context, storage: ZmsDatabase) extends CachedSto
 
   def updateDisplayNamesWithSameFirst(users: Seq[UserId], cs: mutable.HashMap[UserId, NameParts]): Unit = {
     def setFullName(user: UserId) = update(user, { (u : UserData) => u.copy(displayName = u.name) })
-    def setDisplayName(user: UserId, name: String) = update(user, (_: UserData).copy(displayName = name))
+    def setDisplayName(user: UserId, name: String) = update(user, (_: UserData).copy(displayName = Name(name)))
 
     if (users.isEmpty) CancellableFuture.successful(())
     else if (users.size == 1) {
@@ -161,11 +156,6 @@ class UsersStorageImpl(context: Context, storage: ZmsDatabase) extends CachedSto
 
   override def findUsersForService(id: IntegrationId) =
     find(_.integrationId.contains(id), UserDataDao.findService(id)(_), identity).map(_.toSet)
-
-  override def removeByTeam(teams: Set[TeamId]) = for {
-    members <- getByTeam(teams)
-    _       <- removeAll(members.map(_.id))
-  } yield members
 
   override def searchByTeam(team: TeamId, prefix: SearchKey, handleOnly: Boolean) = storage(UserDataDao.search(prefix, handleOnly, Some(team))(_)).future
 }

@@ -21,9 +21,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 import android.content.Context
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.{Message, MessageFilter}
+import com.waz.log.ZLog2._
 import com.waz.model.ConversationData.UnreadCount
 import com.waz.model.MessageData.{MessageDataDao, MessageEntry}
 import com.waz.model._
@@ -37,16 +37,13 @@ import com.waz.utils.events.{EventStream, Signal, SourceStream}
 
 import scala.collection._
 import scala.concurrent.Future
-import scala.util.Failure
 
 trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
 
-  //def for tests
-  def messageAdded:    EventStream[Seq[MessageData]]
-  def messageUpdated:  EventStream[Seq[(MessageData, MessageData)]]
-  def messageChanged:  EventStream[Seq[MessageData]]
   def onMessageSent:   SourceStream[MessageData]
   def onMessageFailed: SourceStream[(MessageData, ErrorResponse)]
+
+  def onMessagesDeletedInConversation: EventStream[Set[ConvId]]
 
   def delete(msg: MessageData): Future[Unit]
   def deleteAll(conv: ConvId):  Future[Unit]
@@ -96,14 +93,11 @@ class MessagesStorageImpl(context:     Context,
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "MessagesStorage")
 
-  override val messageAdded = onAdded
-  override val messageUpdated = onUpdated
-
-  val messageChanged = EventStream.union(messageAdded, messageUpdated.map(_.map(_._2)))
-
   //For tracking on UI
   val onMessageSent = EventStream[MessageData]()
   val onMessageFailed = EventStream[(MessageData, ErrorResponse)]()
+
+  val onMessagesDeletedInConversation = EventStream[Set[ConvId]]()
 
   private val indexes = new ConcurrentHashMap[ConvId, ConvMessagesIndex]
   private val filteredIndexes = new MultiKeyLruCache[ConvId, MessageFilter, ConvMessagesIndex](MessagesStorage.filteredMessagesCacheSize)
@@ -154,7 +148,7 @@ class MessagesStorageImpl(context:     Context,
 
   convs.onUpdated.on(dispatcher) { _.foreach {
     case (prev, updated) if updated.lastRead != prev.lastRead =>
-      verbose(s"lastRead of conversation ${updated.id} updated to ${updated.lastRead}, will update unread count")
+      verbose(l"lastRead of conversation ${updated.id} updated to ${updated.lastRead}, will update unread count")
       msgsIndex(updated.id).map(_.updateLastRead(updated)).recoverWithLog()
     case _ => // ignore
   } }
@@ -178,7 +172,6 @@ class MessagesStorageImpl(context:     Context,
           }
 
         repliesNotMentionsCount.map { unreadReplies =>
-          verbose(s"unread: ${unread.size}, unread replies: $unreadReplies")
           UnreadCount(
             normal   = unread.count(m => !m.isSystemMessage && m.msgType != Message.Type.KNOCK && !m.hasMentionOf(selfUserId)) - unreadReplies,
             call     = unread.count(_.msgType == Message.Type.MISSED_CALL),
@@ -238,13 +231,14 @@ class MessagesStorageImpl(context:     Context,
       index <- msgsIndex(msg.convId)
       _ <- index.delete(msg)
       _ <- storage.flushWALToDatabase()
+      _ = onMessagesDeletedInConversation ! Set(msg.convId)
     } yield ()
 
   override def remove(id: MessageId): Future[Unit] =
     getMessage(id) flatMap {
       case Some(msg) => delete(msg)
       case None =>
-        warn(s"No message found for: $id")
+        warn(l"No message found for: $id")
         Future.successful(())
     }
 
@@ -258,10 +252,11 @@ class MessagesStorageImpl(context:     Context,
         msgsIndex(msg.convId).flatMap(_.delete(msg)))
       }
       _ <- storage.flushWALToDatabase()
+      _ = onMessagesDeletedInConversation ! msgs.map(_.convId).toSet
     } yield ()
 
   def clear(conv: ConvId, upTo: RemoteInstant): Future[Unit] = {
-    verbose(s"clear($conv, $upTo)")
+    verbose(l"clear($conv, $upTo)")
     for {
       _ <- storage { MessageDataDao.deleteUpTo(conv, upTo)(_) } .future
       _ <- storage { MessageContentIndexDao.deleteUpTo(conv, upTo)(_) } .future
@@ -273,7 +268,7 @@ class MessagesStorageImpl(context:     Context,
   }
 
   override def deleteAll(conv: ConvId) = {
-    verbose(s"deleteAll($conv)")
+    verbose(l"deleteAll($conv)")
     for {
       _ <- storage { MessageDataDao.deleteForConv(conv)(_) } .future
       _ <- storage { MessageContentIndexDao.deleteForConv(conv)(_) } .future
@@ -281,6 +276,7 @@ class MessagesStorageImpl(context:     Context,
       _ <- Future(msgsFilteredIndex(conv).foreach(_.delete()))
       _ <- msgsIndex(conv).flatMap(_.delete())
       _ <- storage.flushWALToDatabase()
+      _ = onMessagesDeletedInConversation ! Set(conv)
     } yield ()
   }
 
@@ -290,7 +286,7 @@ class MessagesStorageImpl(context:     Context,
       case 0 => false
       case 1 => true
       case _ =>
-        warn("Found multiple system messages with given timestamp")
+        warn(l"Found multiple system messages with given timestamp")
         true
     }
   }
@@ -309,6 +305,7 @@ trait MessageAndLikesStorage {
   val onUpdate: EventStream[MessageId]
   def apply(ids: Seq[MessageId]): Future[Seq[MessageAndLikes]]
   def getMessageAndLikes(id: MessageId): Future[Option[MessageAndLikes]]
+  def combineWithLikes(msgs: Seq[MessageData]): Future[Seq[MessageAndLikes]]
   def combineWithLikes(msg: MessageData): Future[MessageAndLikes]
   def combine(msg: MessageData, likes: Likes, selfUserId: UserId, quote: Option[MessageData]): MessageAndLikes
   def sortedLikes(likes: Likes, selfUserId: UserId): (IndexedSeq[UserId], Boolean)
@@ -321,7 +318,7 @@ class MessageAndLikesStorageImpl(selfUserId: UserId, messages: MessagesStorage, 
   val onUpdate = EventStream[MessageId]() // TODO: use batching, maybe report new message data instead of just id
 
   messages.onDeleted { ids => ids foreach { onUpdate ! _ } }
-  messages.messageChanged { ms => ms foreach { m => onUpdate ! m.id }}
+  messages.onChanged { ms => ms foreach { m => onUpdate ! m.id }}
   likings.onChanged { _ foreach { l => onUpdate ! l.message } }
 
 
@@ -335,10 +332,14 @@ class MessageAndLikesStorageImpl(selfUserId: UserId, messages: MessagesStorage, 
 
   def getMessageAndLikes(id: MessageId): Future[Option[MessageAndLikes]] = apply(Seq(id)).map(_.headOption)
 
-  override def combineWithLikes(msg: MessageData): Future[MessageAndLikes] = for {
-    likes <- getLikes(Seq(msg))
-    quotes <- getQuotes(Seq(msg))
-  } yield combine(msg, likes.getOrElse(msg.id, Likes.Empty(msg.id)), selfUserId, quotes.get(msg.id).flatten)
+  override def combineWithLikes(msgs: Seq[MessageData]): Future[Seq[MessageAndLikes]] = for {
+    likes <- getLikes(msgs)
+    quotes <- getQuotes(msgs)
+  } yield msgs.map { msg =>
+    combine(msg, likes.getOrElse(msg.id, Likes.Empty(msg.id)), selfUserId, quotes.get(msg.id).flatten)
+  }
+
+  override def combineWithLikes(msg: MessageData): Future[MessageAndLikes] = combineWithLikes(Seq(msg)).map(_.head)
 
   def getQuotes(msgs: Seq[MessageData]): Future[Map[MessageId, Option[MessageData]]] = {
     Future.sequence(msgs.flatMap(m => m.quote.map(m.id -> _).toSeq).map {

@@ -98,7 +98,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
     scenario("connect to user") {
 
       val userToConnectId = UserId("user-id")
-      val userToConnect = UserData(userToConnectId, name = "name", searchKey = SearchKey.simple("name"))
+      val userToConnect = UserData(userToConnectId, name = Name("name"), searchKey = SearchKey.simple("name"))
 
       (users.getOrCreateUser _).expects(userToConnectId).returning(Future.successful(userToConnect))
       (users.updateConnectionStatus _).expects(userToConnectId, PendingFromUser, None, None).returning(Future.successful(Some(userToConnect.copy(connection = PendingFromUser))))
@@ -208,7 +208,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
     (usersStorage.listAll _).expects(*).anyNumberOfTimes().onCall { ids: Traversable[UserId] =>
       Future.successful(
         ids.collect {
-          case id if id == otherUserId => UserData(otherUserId, name = "other-user", searchKey = SearchKey.simple("other-user"))
+          case id if id == otherUserId => UserData(otherUserId, name = Name("other-user"), searchKey = SearchKey.simple("other-user"))
         }.toVector
       )
     }

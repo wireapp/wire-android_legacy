@@ -21,21 +21,17 @@ import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
-import com.waz.ZLog._
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.OtrClientType
-import com.waz.utils.{LoggedTry, returning}
+import com.waz.utils.returning
 
 import scala.util.Try
 
 class MetaDataService(context: Context) {
 
-  lazy val metaData = LoggedTry {
-    import scala.collection.JavaConverters._
+  lazy val metaData = Try {
 
     val ai = context.getPackageManager.getApplicationInfo(context.getPackageName, PackageManager.GET_META_DATA)
     returning(Option(ai.metaData).getOrElse(new Bundle)) { meta =>
-      verbose(s"meta keys: ${meta.keySet().asScala.toSeq}")
     }
   } .getOrElse(new Bundle)
 

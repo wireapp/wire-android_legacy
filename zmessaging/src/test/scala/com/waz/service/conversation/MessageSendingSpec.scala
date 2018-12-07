@@ -37,7 +37,7 @@ class MessageSendingSpec extends AndroidFreeSpec { test =>
   implicit lazy val dispatcher = Threading.Background
 
   lazy val selfUser = UserData("self user")
-  lazy val conv = ConversationData(ConvId(), RConvId(), Some("convName"), selfUser.id, ConversationType.Group)
+  lazy val conv = ConversationData(ConvId(), RConvId(), Some(Name("convName")), selfUser.id, ConversationType.Group)
 
   lazy val assets           = mock[AssetService]
   lazy val users            = mock[UserService]

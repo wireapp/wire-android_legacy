@@ -19,11 +19,11 @@ package com.waz.service.call
 
 import com.sun.jna.Pointer
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.ZLog.LogTag
 import com.waz.log.InternalLog
+import com.waz.log.ZLog2._
 import com.waz.model._
 import com.waz.model.otr.ClientId
-import com.waz.service.call.Avs.WCall
 import com.waz.service.call.Calling._
 import com.waz.threading.SerialDispatchQueue
 import com.waz.utils.jna.{Size_t, Uint32_t}
@@ -71,17 +71,17 @@ class AvsImpl() extends Avs {
           }
         }
       }, null)
-      verbose(s"AVS initialized: $res")
+      verbose(l"AVS initialized: $res")
     }
   }.map(_ => {})
 
   available.onFailure {
     case e: Throwable =>
-      error("Failed to initialise AVS - calling will not work", e)
+      error(l"Failed to initialise AVS - calling will not work", e)
   }
 
   override def registerAccount(cs: CallingServiceImpl) = available.flatMap { _ =>
-    verbose(s"Initialising calling for: ${cs.accountId} and current client: ${cs.clientId}")
+    verbose(l"Initialising calling for: ${cs.accountId} and current client: ${cs.clientId}")
 
     val callingReady = Promise[Unit]()
 
@@ -154,7 +154,7 @@ class AvsImpl() extends Avs {
 
   private def withAvsReturning[A](onSuccess: => A, onFailure: => A): Future[A] = available.map(_ => onSuccess).recover {
     case err =>
-      error("Tried to perform action on avs after it failed to initialise", err)
+      error(l"Tried to perform action on avs after it failed to initialise", err)
       onFailure
   }
 
@@ -205,7 +205,7 @@ object Avs {
   def remoteInstant(uint32_t: Uint32_t) = RemoteInstant.ofEpochMilli(uint32_t.value.toLong * 1000)
 
   def uint32_tTime(instant: Instant) =
-    returning(Uint32_t((instant.toEpochMilli / 1000).toInt))(t => verbose(s"uint32_tTime for $instant = ${t.value}"))
+    returning(Uint32_t((instant.toEpochMilli / 1000).toInt))(t => verbose(l"uint32_tTime for $instant = ${t.value}"))
 
   /**
     * NOTE: All values should be kept up to date as defined in:

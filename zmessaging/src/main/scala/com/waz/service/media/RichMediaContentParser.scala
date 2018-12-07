@@ -25,10 +25,9 @@ import com.waz.ZLog._
 import com.waz.api.Message.Part
 import com.waz.model.{Mention, MessageContent}
 import com.waz.sync.client.{SoundCloudClient, YouTubeClient}
-import com.waz.utils.LoggedTry
 import com.waz.utils.wrappers.URI
 
-import scala.collection.JavaConverters._
+import scala.util.Try
 import scala.util.control.NonFatal
 
 object RichMediaContentParser {
@@ -167,7 +166,7 @@ object RichMediaContentParser {
   }
 
   def parseUriWithScheme(content: String, defaultScheme: String = "https") = {
-    LoggedTry {
+    Try {
       val cleanContent = cleanInvalidEscapes(content)
 
       val u = URI.parse(cleanContent)
