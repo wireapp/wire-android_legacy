@@ -23,7 +23,7 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{ConversationData, GenericMessage, GenericMessageEvent, MemberJoinEvent, _}
 import com.waz.service.EventScheduler.{Interleaved, Parallel, Sequential, Stage}
 import com.waz.service.messages.MessagesService
-import com.waz.service.{EventPipelineImpl, EventScheduler, UserService}
+import com.waz.service.{EventPipeline, EventPipelineImpl, EventScheduler, UserService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.SerialDispatchQueue
@@ -94,8 +94,8 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec {
   lazy val sync       = mock[SyncServiceHandle]
 
   val selfUserId = UserId("user1")
-  val convId = ConvId()
-  val rConvId = RConvId()
+  val convId = ConvId("conv_id1")
+  val rConvId = RConvId("r_conv_id1")
   val convsInStorage = Signal[Map[ConvId, ConversationData]]()
 
   (storage.getByRemoteIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(convId)))
@@ -107,19 +107,26 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec {
   }
 
   (convs.updateLastEvent _).expects(*, *).anyNumberOfTimes.onCall { (convId : ConvId, i: RemoteInstant) =>
-    convsInStorage.head.map { convs =>
-      val conv = convs(convId)
-      val updatedConv = convs(convId).copy(lastEventTime = i)
-      convsInStorage.mutate(_ + (convId -> updatedConv))
-      Some(conv, updatedConv)
+    Future.successful {
+      var prev: ConversationData = null
+      var updated: ConversationData = null
+      convsInStorage.mutate { convs =>
+        prev = convs(convId)
+        updated = convs(convId).copy(lastEventTime = i)
+        convsInStorage.mutate(_ + (convId -> updated))
+        convs + (convId -> updated)
+      }
+      Some(prev, updated)
     }
   }
 
   (storage.updateAll2 _).expects(*, *).anyNumberOfTimes.onCall { (keys: Iterable[ConvId], updater: ConversationData => ConversationData) =>
-    val ids = keys.toSet
-    convsInStorage.head.map(_.filterKeys(ids.contains).map { case (id, c) => id -> (c, updater(c)) }).map { updates =>
-      convsInStorage.mutate {
-        _.map {
+    Future.successful {
+      val ids = keys.toSet
+      var updates: Map[ConvId, (ConversationData, ConversationData)] = null
+      convsInStorage.mutate { convs =>
+        updates = convs.filterKeys(ids.contains).map { case (id, c) => id -> (c, updater(c)) }
+        convs.map {
           case (id, c) if updates.contains(id) => id -> updates(id)._2
           case (id, c) => id -> c
         }
@@ -130,24 +137,24 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec {
 
   (storage.get _).expects(*).anyNumberOfTimes.onCall { id: ConvId => convsInStorage.head.map(_.get(id)) }
 
-  lazy val scheduler: EventScheduler = new EventScheduler(Stage(Sequential)(service.conversationOrderEventsStage))
-  lazy val pipeline = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
+  lazy val pipeline = mock[EventPipeline]
+  (pipeline.apply _).expects(*).anyNumberOfTimes().returning(Future.successful({}))
   lazy val service = new ConversationOrderEventsService(selfUserId, convs, storage, messages, msgStorage, users, sync, pipeline)
 
   scenario("System messages shouldn't change order except it contains self") {
 
-    val conv = ConversationData(convId, rConvId, Some(Name("name")), UserId(), ConversationType.Group, lastEventTime = RemoteInstant.Epoch)
+    val conv = ConversationData(convId, rConvId, Some(Name("name")), UserId("creator"), ConversationType.Group, lastEventTime = RemoteInstant.Epoch)
     convsInStorage ! Map(convId -> conv)
 
     (msgStorage.getMessages _).expects(Vector.empty).once().returns(Future.successful(Seq.empty))
 
     val events = Seq(
-      MemberJoinEvent(rConvId, RemoteInstant.ofEpochMilli(1), UserId(), Seq(selfUserId)),
-      RenameConversationEvent(rConvId, RemoteInstant.ofEpochMilli(2), UserId(), Name("blah")),
-      MemberJoinEvent(rConvId, RemoteInstant.ofEpochMilli(3), UserId(), Seq(UserId("user2"))),
-      MemberLeaveEvent(rConvId, RemoteInstant.ofEpochMilli(4), UserId(), Seq(UserId("user3"))))
+      MemberJoinEvent(rConvId, RemoteInstant.ofEpochMilli(1), UserId("user_who_added_1"), Seq(selfUserId)),
+      RenameConversationEvent(rConvId, RemoteInstant.ofEpochMilli(2), UserId("user_who_added_2"), Name("blah")),
+      MemberJoinEvent(rConvId, RemoteInstant.ofEpochMilli(3), UserId("user_who_added_3"), Seq(UserId("user2"))),
+      MemberLeaveEvent(rConvId, RemoteInstant.ofEpochMilli(4), UserId("user_who_added_4"), Seq(UserId("user3"))))
 
-    result(pipeline.apply(events))
+    result(service.conversationOrderEventsStage.apply(rConvId, events))
     result(storage.get(convId)).map(_.lastEventTime) shouldBe Some(RemoteInstant.ofEpochMilli(1))
   }
 
@@ -173,8 +180,8 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec {
     val events = Seq(
       GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(1), UserId(), GenericMessage.TextMessage("hello", Nil))
     )
-    result(pipeline.apply(events))
 
+    result(service.conversationOrderEventsStage.apply(rConvId, events))
     result(storage.get(convId)).map(_.archived) shouldEqual Some(false)
 
   }
@@ -201,13 +208,13 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec {
     val events1 = Seq(
       GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(1), UserId(), GenericMessage.TextMessage("hello", Nil))
     )
-    result(pipeline.apply(events1))
+    result(service.conversationOrderEventsStage.apply(rConvId, events1))
     result(storage.get(convId)).map(_.archived) shouldEqual Some(true)
 
     val events2 = Seq(
       GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(2), UserId(), GenericMessage.TextMessage("hello @user", Seq(Mention(Some(selfUserId), 6, 11))))
     )
-    result(pipeline.apply(events2))
+    result(service.conversationOrderEventsStage.apply(rConvId, events2))
     result(storage.get(convId)).map(_.archived) shouldEqual Some(false)
   }
 
@@ -239,13 +246,13 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec {
     val events1 = Seq(
       GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(1), UserId(), GenericMessage.TextMessage("hello", Nil))
     )
-    result(pipeline.apply(events1))
+    result(service.conversationOrderEventsStage.apply(rConvId, events1))
     result(storage.get(convId)).map(_.archived) shouldEqual Some(true)
 
     val events2 = Seq(
       GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(2), UserId(), GenericMessage.TextMessage("hello @user", Nil, Nil, Some(Quote(msgId, None))))
     )
-    result(pipeline.apply(events2))
+    result(service.conversationOrderEventsStage.apply(rConvId, events2))
     result(storage.get(convId)).map(_.archived) shouldEqual Some(false)
   }
 
