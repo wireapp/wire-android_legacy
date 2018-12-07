@@ -119,6 +119,7 @@ object OptionsMenu {
     case R.id.message_bottom_menu_item_open_file => WireStyleKit.drawFile
     case R.id.message_bottom_menu_item_reveal => WireStyleKit.drawReveal
     case R.id.message_bottom_menu_item_reply => WireStyleKit.drawReply
+    case R.id.message_bottom_menu_item_details => WireStyleKit.drawView
 
     case R.string.glyph__silence => WireStyleKit.drawMuteAlerts
     case R.string.glyph__notify => WireStyleKit.drawAlerts

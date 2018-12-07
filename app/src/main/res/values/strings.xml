@@ -895,6 +895,7 @@
     <string name="message_bottom_menu_action_reveal">Reveal in conversation</string>
     <string name="message_bottom_menu_action_reply">Reply</string>
     <string name="message_bottom_menu_action_save_ok">Picture saved</string>
+    <string name="message_bottom_menu_action_details">Details</string>
 
     <string name="message_details_title">MESSAGE DETAILS</string>
     <string name="message_liked_title">LIKED</string>
