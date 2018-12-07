@@ -137,6 +137,14 @@
     <string name="content__system__other_renamed_conv">[[%1$s]] renamed the conversation</string>
     <string name="content__system__you_renamed_conv">[[You]] renamed the conversation</string>
 
+    <!-- Read receipts: System messages -->
+    <string name="content__system__read_receipts_on">Read receipts are on</string>
+    <string name="content__system__read_receipts_off">Read receipts are off</string>
+    <string name="content__system__read_receipts_someone_turned_on">[[%1$s]] turned read receipts on for everyone</string>
+    <string name="content__system__read_receipts_someone_turned_off">[[%1$s]] turned read receipts off for everyone</string>
+    <string name="content__system__read_receipts_you_turned_on">[[You]] turned read receipts on for everyone</string>
+    <string name="content__system__read_receipts_you_turned_off">[[You]] turned read receipts off for everyone</string>
+
     <!-- Add people -->
     <string name="content__system__someone_added_people">[[%1$s]] added %2$s to the conversation</string>
     <plurals name="content__system__someone_added_people_with_others">

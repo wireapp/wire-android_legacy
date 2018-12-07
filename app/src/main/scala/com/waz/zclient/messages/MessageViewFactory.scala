@@ -59,6 +59,7 @@ class MessageViewFactory {
         case VideoAsset         => inflate(R.layout.message_video_asset, parent, false)
         case Location           => inflate(R.layout.message_location, parent, false)
         case MemberChange       => inflate(R.layout.message_member_change, parent, false)
+        case ReadReceipts       => inflate(R.layout.message_readreceipts, parent, false)
         case ConnectRequest     => inflate(R.layout.message_connect_request, parent, false)
         case ConversationStart  => inflate(R.layout.message_conversation_start, parent, false)
         case WirelessLink       => inflate(R.layout.message_wireless_link, parent, false)

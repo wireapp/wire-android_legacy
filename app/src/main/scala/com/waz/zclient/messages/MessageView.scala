@@ -249,7 +249,8 @@ object MessageView {
              Rename |
              WirelessLink |
              ConversationStart |
-             MessageTimer => SystemLike
+             MessageTimer |
+             ReadReceipts => SystemLike
         case MsgPart.MissedCall => MissedCall
         case _ => Other
       }
