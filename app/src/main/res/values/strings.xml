@@ -910,7 +910,7 @@
     <string name="message_details_sent">Sent</string>
     <string name="message_details_last_edited">Edited</string>
     <string name="tab_title_read">READ</string>
-    <string name="tab_title_likes">LIKES</string>
+    <string name="tab_title_likes">LIKED</string>
     <string name="messages_reads_turned_off">Read receipts were not on when this message was sent.</string>
     <string name="messages_no_reads">No one has read this message yet.</string>
     <string name="messages_no_likes">No one has liked this message yet.</string>

@@ -49,22 +49,22 @@
     <RelativeLayout
         android:id="@+id/create_conv_options"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/menu_item_height"
+        android:layout_height="@dimen/create_conv_options_height"
         android:paddingStart="@dimen/wire__padding__regular"
         android:paddingEnd="@dimen/wire__padding__regular"
         android:layout_marginTop="@dimen/wire__padding__regular"
         android:layout_marginBottom="@dimen/wire__padding__regular"
-        android:background="@color/light_graphite_24"
-        android:gravity="center_vertical"
-        android:layout_gravity="center_vertical"
+        android:background="?dropdownSeparatorBackgroundColor"
         >
 
         <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:gravity="start|center_vertical"
             android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
             android:orientation="vertical">
+
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:id="@+id/create_conv_options_title"
                 android:text="@string/create_conv_options_title_text"
@@ -79,9 +79,9 @@
                 android:id="@+id/create_conv_options_subtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:w_font="@string/wire__typeface__light"
+                app:w_font="@string/wire__typeface__regular"
                 android:textSize="@dimen/wire__text_size__small"
-                android:textColor="?wirePrimaryTextColor"/>
+                android:textColor="?wireSecondaryTextColor"/>
         </LinearLayout>
 
         <ImageView

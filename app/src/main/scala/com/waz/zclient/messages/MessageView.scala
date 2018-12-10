@@ -180,7 +180,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
   private def shouldShowFooter(mAndL: MessageAndLikes, opts: MsgBindOptions): Boolean = {
     mAndL.likes.nonEmpty ||
       selection.isFocused(mAndL.message.id) ||
-      (opts.isLastSelf && !opts.isGroup) ||
+      opts.isLastSelf ||
       mAndL.message.state == Message.Status.FAILED || mAndL.message.state == Message.Status.FAILED_READ
   }
 

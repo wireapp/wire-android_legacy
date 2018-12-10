@@ -163,5 +163,7 @@
     <attr name="listPrefixColor" format="reference" />
 
     <attr name="selfMentionBackgroundColor" format="color" />
+    
+    <attr name="dropdownSeparatorBackgroundColor" format="color"/>
 
 </resources>

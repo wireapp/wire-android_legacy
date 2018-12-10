@@ -128,9 +128,10 @@
                 android:layout_width="@dimen/empty_likes_reads_text_width"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:textSize="@dimen/wire__text_size__regular_small"
+                android:textSize="@dimen/wire__text_size__regular"
                 android:maxLines="2"
-                android:textColor="?wireSecondaryTextColor"
+                android:textColor="@color/light_graphite_40"
+                app:w_font="@string/wire__typeface__medium"
                 />
         </LinearLayout>
     </FrameLayout>

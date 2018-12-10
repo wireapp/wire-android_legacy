@@ -30,6 +30,7 @@ import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.common.controllers.global.KeyboardController
 import com.waz.zclient.{FragmentHelper, R}
 import com.waz.zclient.common.views.InputBox
 import com.waz.zclient.common.views.InputBox.GroupNameValidator
@@ -141,6 +142,12 @@ class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
     convOptionsSubtitle
   }
 
+  override def onCreate(savedInstanceState: Bundle): Unit = {
+    super.onCreate(savedInstanceState)
+    optionsVisible.onChanged.onUi { _ =>
+      inject[KeyboardController].hideKeyboardIfVisible()
+    }
+  }
 }
 
 object CreateConversationSettingsFragment {

@@ -38,8 +38,7 @@ import com.waz.zclient.pages.main.conversation.ConversationManagerFragment
 import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
 import com.waz.zclient.participants.ParticipantsAdapter
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
-import com.waz.zclient.ui.utils.ColorUtils
-import com.waz.zclient.utils.ContextUtils.getStyledColor
+import com.waz.zclient.utils.ContextUtils.getColor
 import com.waz.zclient.utils.{DateConvertUtils, RichView, ZTimeFormatter}
 import com.waz.zclient.{FragmentHelper, R}
 import org.threeten.bp.{LocalDateTime, ZoneId}
@@ -101,7 +100,7 @@ class LikesAndReadsFragment extends FragmentHelper {
 
   private lazy val emptyListView = returning(view[View](R.id.empty_list_view)) { vh =>
     val emptyListIcon = findById[GenericStyleKitView](R.id.empty_list_icon)
-    emptyListIcon.setColor(ColorUtils.injectAlpha(0.25f, getStyledColor(R.attr.wireSecondaryTextColor)))
+    emptyListIcon.setColor(getColor(R.color.light_graphite_16))
     val emptyListText = findById[TypefaceTextView](R.id.empty_list_text)
 
     viewToDisplay.onUi {
@@ -137,10 +136,16 @@ class LikesAndReadsFragment extends FragmentHelper {
   }
 
   private lazy val tabs = returning(view[TabLayout](R.id.likes_and_reads_tabs)) { vh =>
-    Signal(reads.map(_.size), likes.map(_.size)).onUi { case (r, l) =>
+    Signal(reads.map(_.size), likes.map(_.size)).map {
+      case (r, l) =>
+        val rCountString = if (r == 0) "" else s" ($r)"
+        val lCountString = if (l == 0) "" else s" ($l)"
+        (rCountString, lCountString)
+    }
+      .onUi { case (r, l) =>
       vh.foreach { view =>
-        view.getTabAt(ReadsTab.pos).setText(s"${getString(R.string.tab_title_read)} ($r)")
-        view.getTabAt(LikesTab.pos).setText(s"${getString(R.string.tab_title_likes)} ($l)")
+        view.getTabAt(ReadsTab.pos).setText(s"${getString(R.string.tab_title_read)}$r")
+        view.getTabAt(LikesTab.pos).setText(s"${getString(R.string.tab_title_likes)}$l")
       }
     }
 
