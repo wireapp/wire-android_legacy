@@ -18,45 +18,14 @@
 package com.waz.zclient.preferences
 
 import android.content.Context
-import android.text.format.DateFormat
 import android.util.TypedValue
-import com.waz.model.otr.Client
-import com.waz.zclient.R
 import com.waz.zclient.ui.utils.TextViewUtils
-import com.waz.zclient.utils.{RichClient, StringUtils, ZTimeFormatter}
-import org.threeten.bp.{LocalDateTime, ZoneId}
 
 object DevicesPreferencesUtil {
   private val BOLD_PREFIX = "[["
   private val BOLD_SUFFIX = "]]"
   private val SEPARATOR = ' '
   private val NEW_LINE = '\n'
-
-  def getTitle(context: Context, client: Client): CharSequence =
-    TextViewUtils.getBoldText(context, context.getString(R.string.pref_devices_device_title, StringUtils.capitalise(client.model)))
-
-  def getSummary(context: Context, client: Client, includeActivationSummary: Boolean): CharSequence = {
-    val typedValue  = new TypedValue
-    val a  = context.obtainStyledAttributes(typedValue.data, Array[Int](android.R.attr.textColorPrimary))
-    val highlightColor = a.getColor(0, 0)
-    a.recycle()
-    val sb = new StringBuilder
-    sb.append(context.getString(R.string.pref_devices_device_id, client.displayId))
-    val highlightEnd = sb.length
-    if (includeActivationSummary) {
-      sb.append(NEW_LINE).append(NEW_LINE).append(getActivationSummary(context, client))
-    }
-    TextViewUtils.getBoldHighlightText(context, sb.toString, highlightColor, 0, highlightEnd)
-  }
-
-  private def getActivationSummary(context: Context, client: Client): String = {
-    val now = LocalDateTime.now(ZoneId.systemDefault)
-    val time = client.regTime match {
-      case Some(regTime) => ZTimeFormatter.getSeparatorTime(context, now, LocalDateTime.ofInstant(regTime, ZoneId.systemDefault), DateFormat.is24HourFormat(context), ZoneId.systemDefault, false)
-      case _ => ""
-    }
-    context.getString(R.string.pref_devices_device_activation_summary, time)
-  }
 
   def getFormattedFingerprint(context: Context, fingerprint: String): CharSequence = {
     val typedValue = new TypedValue

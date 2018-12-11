@@ -19,7 +19,6 @@ package com.waz.zclient.messages.parts
 
 import android.content.Context
 import android.graphics.Typeface
-import android.text.format.DateFormat
 import android.util.{AttributeSet, TypedValue}
 import android.view.{View, ViewGroup}
 import android.widget.{LinearLayout, TextView}
@@ -42,11 +41,10 @@ import com.waz.zclient.paintcode.WireStyleKit
 import com.waz.zclient.ui.text.{GlyphTextView, LinkTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils.{getString, getStyledColor}
-import com.waz.zclient.utils.{DateConvertUtils, RichTextView}
+import com.waz.zclient.utils.Time.DateTimeStamp
+import com.waz.zclient.utils.{RichTextView, RichView}
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.zclient.utils.RichView
-import com.waz.zclient.utils.ZTimeFormatter.getSeparatorTime
-import org.threeten.bp.{Instant, LocalDateTime, ZoneId}
+import org.threeten.bp.Instant
 
 abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper with EphemeralPartView {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -104,7 +102,8 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) 
 
   quotedMessage
     .map(_.time.instant)
-    .onUi(setTimestamp)
+    .map(getTimeStamp)
+    .onUi(timestamp.setText)
 
   quotedMessage.map(!_.editTime.isEpoch).onUi { edited =>
     name.setEndCompoundDrawable(if (edited) Some(WireStyleKit.drawEdit) else None, getStyledColor(R.attr.wirePrimaryTextColor))
@@ -112,16 +111,19 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) 
 
   container.onClick(onQuoteClick ! {()})
 
-  private def setTimestamp(instant: Instant) = {
-    val context = getContext
-    val dateStr = getSeparatorTime(context, LocalDateTime.now, DateConvertUtils.asLocalDateTime(instant), DateFormat.is24HourFormat(context), ZoneId.systemDefault, true)
-    timestamp.setText(getString(R.string.quote_timestamp_message, dateStr))
+  private def getTimeStamp(instant: Instant) = {
+    val timestamp = DateTimeStamp(instant)
+    getString(
+      if (timestamp.isSameDay) R.string.quote_timestamp_message_time
+      else R.string.quote_timestamp_message_date,
+      timestamp.string
+    )
   }
 
   override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
 
-    quotedMessage.map(_.time.instant).head.foreach(setTimestamp)(Threading.Ui)
+    quotedMessage.map(_.time.instant).head.foreach(getTimeStamp)(Threading.Ui)
   }
 }
 

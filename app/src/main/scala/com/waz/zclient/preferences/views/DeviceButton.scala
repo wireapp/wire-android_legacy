@@ -19,15 +19,13 @@ package com.waz.zclient.preferences.views
 
 import android.content.Context
 import android.graphics.drawable.Drawable
-import android.support.v4.content.ContextCompat
-import android.text.format.DateFormat
 import android.util.AttributeSet
 import com.waz.model.otr.Client
 import com.waz.zclient.R
 import com.waz.zclient.ui.utils.TextViewUtils
-import com.waz.zclient.utils.ZTimeFormatter
-import org.threeten.bp.{LocalDateTime, ZoneId}
+import com.waz.zclient.utils.ContextUtils.{getDrawable, getString}
 import com.waz.zclient.utils.RichClient
+import com.waz.zclient.utils.Time.TimeStamp
 
 class DeviceButton(context: Context, attrs: AttributeSet, style: Int) extends PictureTextButton(context, attrs, style) {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -43,18 +41,14 @@ class DeviceButton(context: Context, attrs: AttributeSet, style: Int) extends Pi
   private def drawableForClient(client: Client, self: Boolean): Option[Drawable] = {
     if (self)
       None
-    else if (client.isVerified)
-      Option(ContextCompat.getDrawable(context, R.drawable.shield_full))
     else
-      Option(ContextCompat.getDrawable(context, R.drawable.shield_half))
+      Option(getDrawable(if (client.isVerified) R.drawable.shield_full else R.drawable.shield_half))
   }
 
   private def displayId(client: Client): String = {
     val date = client.regTime match {
       case Some(regTime) =>
-        val now = LocalDateTime.now(ZoneId.systemDefault)
-        val time = ZTimeFormatter.getSeparatorTime(context, now, LocalDateTime.ofInstant(regTime, ZoneId.systemDefault), DateFormat.is24HourFormat(context), ZoneId.systemDefault, false)
-        context.getString(R.string.pref_devices_device_activation_subtitle, time)
+        getString(R.string.pref_devices_device_activation_subtitle, TimeStamp(regTime).string)
       case _ =>
         ""
     }

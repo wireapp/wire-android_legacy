@@ -21,7 +21,6 @@ import android.app.{Activity, FragmentTransaction}
 import android.content.DialogInterface.OnClickListener
 import android.content.{ClipData, Context, DialogInterface}
 import android.os.Bundle
-import android.text.format.DateFormat
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, ScrollView, Toast}
@@ -44,9 +43,10 @@ import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichClient, RichView, ViewUtils, ZTimeFormatter}
+import com.waz.zclient.utils.Time.TimeStamp
+import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichClient, RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper, _}
-import org.threeten.bp.{Instant, LocalDateTime, ZoneId}
+import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -105,7 +105,7 @@ class DeviceDetailsViewImpl(context: Context, attrs: AttributeSet, style: Int) e
   }
 
   override def setActivated(regTime: Instant) = {
-    activatedView.setText(getActivationSummary(context, regTime))
+    activatedView.setText(getString(R.string.pref_devices_device_activation_summary, TimeStamp(regTime).string))
     TextViewUtils.boldText(activatedView)
   }
 
@@ -123,12 +123,6 @@ class DeviceDetailsViewImpl(context: Context, attrs: AttributeSet, style: Int) e
     fingerPrintGroup.setVisible(!removeOnly)
     verifiedSwitch.setVisible(!removeOnly)
     resetSessionView.setVisible(!removeOnly)
-  }
-
-  private def getActivationSummary(context: Context, regTime: Instant): String = {
-    val now = LocalDateTime.now(ZoneId.systemDefault)
-    val time = ZTimeFormatter.getSeparatorTime(context, now, LocalDateTime.ofInstant(regTime, ZoneId.systemDefault), DateFormat.is24HourFormat(context), ZoneId.systemDefault, false)
-    context.getString(R.string.pref_devices_device_activation_summary, time)
   }
 
   fingerprintView.onClickEvent{ _ =>

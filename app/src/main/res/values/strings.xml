@@ -695,12 +695,12 @@
     <!--Timestamp formatting -->
     <string name="timestamp__just_now">Just now</string>
     <plurals name="timestamp__x_minutes_ago">
-        <item quantity="zero">%1$d minutes ago</item>
-        <item quantity="one">%1$d minute ago</item>
-        <item quantity="two">%1$d minutes ago</item>
-        <item quantity="few">%1$d minutes ago</item>
-        <item quantity="many">%1$d minutes ago</item>
-        <item quantity="other">%1$d minutes ago</item>
+        <item quantity="zero">%1$s minutes ago</item>
+        <item quantity="one">%1$s minute ago</item>
+        <item quantity="two">%1$s minutes ago</item>
+        <item quantity="few">%1$s minutes ago</item>
+        <item quantity="many">%1$s minutes ago</item>
+        <item quantity="other">%1$s minutes ago</item>
     </plurals>
 
     <!-- http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html -->
@@ -1277,9 +1277,12 @@
     <string name="reply_message_type_asset">ATTACHMENT</string>
     <string name="reply_message_type_unknown">You cannot see this message.</string>
 
-    <string name="quote_timestamp_message">Original message from %s</string>
+    <!--Two identical strings are needed for German translation-->
+    <string name="quote_timestamp_message_time">Original message from %s</string>
+    <string name="quote_timestamp_message_date">Original message from %s</string>
 
     <string name="read_receipts_remotely_enabled_title">You have enabled read receipts</string>
     <string name="read_receipts_remotely_disabled_title">You have disabled read receipts</string>
     <string name="read_receipts_remotely_changed_message">You can change this option in your account settings.</string>
+
 </resources>

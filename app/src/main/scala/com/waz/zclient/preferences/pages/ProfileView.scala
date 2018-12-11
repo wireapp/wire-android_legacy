@@ -22,7 +22,6 @@ import android.content.{Context, DialogInterface, Intent}
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
-import android.text.format.DateFormat
 import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
@@ -45,10 +44,10 @@ import com.waz.zclient.messages.UsersController
 import com.waz.zclient.preferences.views.TextButton
 import com.waz.zclient.tracking.OpenedManageTeam
 import com.waz.zclient.ui.text.TypefaceTextView
-import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage, UserSignal, ZTimeFormatter}
-import com.waz.zclient.views.AvailabilityView
-import org.threeten.bp.{LocalDateTime, ZoneId}
 import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.Time.TimeStamp
+import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage, UserSignal}
+import com.waz.zclient.views.AvailabilityView
 
 trait ProfileView {
   val onDevicesDialogAccept: EventStream[Unit]
@@ -188,14 +187,11 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   }
 
   private def getNewDevicesMessage(devices: Seq[Client]): String = {
-    val now = LocalDateTime.now(ZoneId.systemDefault)
-
     val deviceNames = devices.map { device =>
       val time =
         device.regTime match {
           case Some(regTime) =>
-            ZTimeFormatter.getSeparatorTime(context, now, LocalDateTime.ofInstant(regTime, ZoneId.systemDefault),
-              DateFormat.is24HourFormat(context), ZoneId.systemDefault, false)
+            TimeStamp(regTime).string
           case _ =>
             ""
         }

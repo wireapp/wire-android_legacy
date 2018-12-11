@@ -21,7 +21,6 @@ import android.animation.ValueAnimator
 import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.content.Context
 import android.graphics.{Canvas, Color, Paint}
-import android.text.format.DateFormat
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, RelativeLayout}
@@ -42,10 +41,9 @@ import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx}
-import com.waz.zclient.utils.ZTimeFormatter.getSeparatorTime
+import com.waz.zclient.utils.Time.TimeStamp
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
-import org.threeten.bp.{LocalDateTime, ZoneId}
 
 trait MessageViewPart extends View {
   def tpe: MsgPart
@@ -135,15 +133,11 @@ trait FrameLayoutPart extends MessageViewPart
 
 trait TimeSeparator extends MessageViewPart with ViewHelper {
 
-  val is24HourFormat = DateFormat.is24HourFormat(getContext)
-
   lazy val timeText: TypefaceTextView = findById(R.id.separator__time)
   lazy val unreadDot: UnreadDot = findById(R.id.unread_dot)
 
   val time = Signal[RemoteInstant]()
-  val text = time map { t =>
-    getSeparatorTime(getContext, LocalDateTime.now, DateConvertUtils.asLocalDateTime(t.instant), is24HourFormat, ZoneId.systemDefault, true)
-  }
+  val text = time.map(_.instant).map(TimeStamp(_).string)
 
   text.on(Threading.Ui)(timeText.setTransformedText)
 
