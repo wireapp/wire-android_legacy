@@ -25,11 +25,10 @@ import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.api.Message.Type._
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, SystemMessageView, UsersController}
 import com.waz.zclient.paintcode.ViewWithColor
-import com.waz.zclient.utils.ContextUtils.getString
+import com.waz.zclient.utils.ContextUtils.{getString, getColor}
 import com.waz.zclient.{R, ViewHelper}
 
 class ReadReceiptsPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
@@ -43,7 +42,7 @@ class ReadReceiptsPartView(context: Context, attrs: AttributeSet, style: Int) ex
   inflate(R.layout.message_readreceipts_content)
 
   private lazy val view = returning(findById[SystemMessageView](R.id.message_read_receipts)) {
-    _.setIcon(ViewWithColor(inject[ThemeController].getThemeDependentOptionsTheme.getTextColorPrimary))
+    _.setIcon(ViewWithColor(getColor(R.color.light_graphite)))
   }
 
   private lazy val senderName   = message.map(_.userId).flatMap(inject[UsersController].displayName)

@@ -92,11 +92,13 @@ class SystemMessageView(context: Context, attrs: AttributeSet, style: Int) exten
   def setIconGlyph(glyph: String) = {
     iconView.setBackground(null)
     iconView.setText(glyph)
+    iconView.setTextColor(getColor(R.color.light_graphite))
   }
 
   def setIconGlyph(resId: Int) = {
     iconView.setBackground(null)
     iconView.setText(resId)
+    iconView.setTextColor(getColor(R.color.light_graphite))
   }
 
   override def onDraw(canvas: Canvas): Unit = {

@@ -48,7 +48,7 @@ class CreateConversationController(implicit inj: Injector, ev: EventContext) ext
   val users    = Signal(Set.empty[UserId])
   val integrations = Signal(Set.empty[(ProviderId, IntegrationId)])
   val teamOnly = Signal(true)
-  val readReceipts = Signal(false)
+  val readReceipts = Signal(true)
   val fromScreen = Signal[GroupConversationEvent.Method]()
 
   teamOnly.onChanged {

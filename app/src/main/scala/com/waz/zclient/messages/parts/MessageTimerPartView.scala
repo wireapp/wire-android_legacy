@@ -24,6 +24,7 @@ import com.waz.utils.returning
 import com.waz.zclient.conversation.ConversationController._
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, SystemMessageView, UsersController}
+import com.waz.zclient.paintcode.HourGlassIcon
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 
@@ -37,7 +38,7 @@ class MessageTimerPartView (context: Context, attrs: AttributeSet, style: Int) e
 
   val msgView = returning(findById[SystemMessageView](R.id.message_view))(_.setHasDivider(false))
 
-  msgView.setIconGlyph(R.string.glyph__hourglass)
+  msgView.setIcon(HourGlassIcon(getColor(R.color.light_graphite)))
 
   (for {
     n <- message.map(_.userId).flatMap(inject[UsersController].displayName)

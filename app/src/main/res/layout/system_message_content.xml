@@ -29,11 +29,11 @@
         android:id="@+id/gtv__system_message__icon"
         android:layout_marginStart="@dimen/system_margin_start"
         android:layout_marginEnd="@dimen/system_margin_end"
-        android:layout_width="@dimen/wire__otr__shield__small_width"
+        android:layout_width="@dimen/content__separator__chathead__size"
         android:layout_height="@dimen/wire__otr__shield__small_width"
         android:gravity="center"
         android:layout_gravity="center"
-        android:textColor="?wirePrimaryTextColor"
+        android:textColor="@color/light_graphite"
         />
 
     <com.waz.zclient.common.views.LinkTextView

@@ -411,7 +411,7 @@
     <dimen name="participant__image_shift">-32dp</dimen>
     <dimen name="chathead__margin">26dp</dimen>
     <dimen name="chathead__margin_start">18dp</dimen>
-    <dimen name="system_margin_end">32dp</dimen>
+    <dimen name="system_margin_end">24dp</dimen>
     <dimen name="system_margin_start">24dp</dimen>
     <dimen name="error__image__margin">32dp</dimen>
     <dimen name="profile__image__width_regular">192dp</dimen>
