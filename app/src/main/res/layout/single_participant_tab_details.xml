@@ -106,7 +106,6 @@
             android:layout_marginTop="@dimen/wire__padding__small"
             android:paddingStart="@dimen/wire__padding__regular"
             android:paddingEnd="@dimen/wire__padding__huge"
-            android:text="@string/read_receipts_info_title"
            />
 
         <com.waz.zclient.ui.text.TypefaceTextView

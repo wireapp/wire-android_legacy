@@ -913,6 +913,7 @@
     <string name="tab_title_likes">LIKED</string>
     <string name="messages_reads_turned_off">Read receipts were not on when this message was sent.</string>
     <string name="messages_no_reads">No one has read this message yet.</string>
+    <string name="messages_read_receipts_off">Read receipts were not on when this message was sent.</string>
     <string name="messages_no_likes">No one has liked this message yet.</string>
 
     <string name="message_footer__tap_to_like">Tap to like</string>
@@ -1156,7 +1157,8 @@
     <string name="allow_guests_toggle_info_text">Open this conversation to services and people outside your team.</string>
     <string name="read_receipts_toggle_text">Read receipts</string>
     <string name="read_receipts_toggle_info_text">When this is on, people can see when their messages in this conversation are read.</string>
-    <string name="read_receipts_info_title">YOU HAVE ENABLED READ RECEIPTS</string>
+    <string name="read_receipts_info_title_enabled">YOU HAVE ENABLED READ RECEIPTS</string>
+    <string name="read_receipts_info_title_disabled">YOU HAVE DISABLED READ RECEIPTS</string>
     <string name="read_receipts_info_1">If both sides turn on read receipts, you can see when\nmessages are read.</string>
     <string name="read_receipts_info_2">You can change this option in your account settings.</string>
     <string name="create_conv_options_title_text">Conversation options</string>
