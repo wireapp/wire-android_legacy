@@ -66,7 +66,7 @@ object MessageBottomSheetDialog {
   // all possible actions
   val Actions = {
     import MessageAction._
-    Seq(Copy, OpenFile, Edit, Like, Unlike, Reply, Save, Forward, Delete, DeleteLocal, DeleteGlobal, Reveal, Details)
+    Seq(Copy, OpenFile, Edit, Like, Unlike, Reply, Details, Save, Forward, Delete, DeleteLocal, DeleteGlobal, Reveal)
   }
 
   case class Params(collection: Boolean = false, delCollapsed: Boolean = true)
@@ -222,7 +222,10 @@ object MessageBottomSheetDialog {
     case object Details extends MessageAction(R.id.message_bottom_menu_item_details, R.string.glyph__view, R.string.message_bottom_menu_action_details) {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params): Signal[Boolean] = msg.msgType match {
         case ANY_ASSET | ASSET | AUDIO_ASSET | LOCATION | TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | VIDEO_ASSET if !msg.isEphemeral =>
-          isMemberOfConversation(msg.convId, zms)
+          for {
+            isGroup <- zms.conversations.groupConversation(msg.convId)
+            isMember <- isMemberOfConversation(msg.convId, zms)
+          } yield isGroup && isMember
         case _ =>
           Signal.const(false)
       }
