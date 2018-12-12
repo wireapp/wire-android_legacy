@@ -147,15 +147,16 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   val avatarInfo = for {
     z <- zms
     conv <- conversation
+    isGroup <- z.conversations.groupConversation(conv.id)
     memberIds <- members
     memberSeq <- Signal.sequence(memberIds.map(uid => UserSignal(uid)):_*)
   } yield {
     val opacity =
-      if ((memberIds.isEmpty && conv.convType == ConversationType.Group) || conv.convType == ConversationType.WaitForConnection || !conv.isActive)
+      if ((memberIds.isEmpty && isGroup) || conv.convType == ConversationType.WaitForConnection || !conv.isActive)
         getResourceFloat(R.dimen.conversation_avatar_alpha_inactive)
       else
         getResourceFloat(R.dimen.conversation_avatar_alpha_active)
-    (conv.id, conv.convType, memberSeq.filter(_.id != z.selfUserId), opacity)
+    (conv.id, isGroup, memberSeq.filter(_.id != z.selfUserId), opacity)
   }
 
   def setSubtitle(text: String): Unit = {
@@ -193,19 +194,15 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   }
 
   avatarInfo.on(Threading.Background){
-    case (convId, convType, members, alpha) if conversationData.forall(_.id == convId) =>
-      val cType =
-      if (convType == ConversationType.Group && members.size == 1 && conversationData.exists(_.team.nonEmpty))
-        ConversationType.OneToOne
-      else
-        convType
+    case (convId, isGroup, members, alpha) if conversationData.forall(_.id == convId) =>
+      val cType = if (isGroup) ConversationType.Group else ConversationType.OneToOne
       avatar.setMembers(members.map(_.id), convId, cType)
     case _ =>
       verbose("Outdated avatar info")
   }
   avatarInfo.onUi{
-    case (convId, convType, members, alpha) if conversationData.forall(_.id == convId) =>
-      if (convType == ConversationType.Group && members.size == 1 && conversationData.exists(_.team.nonEmpty)) {
+    case (convId, isGroup, _, alpha) if conversationData.forall(_.id == convId) =>
+      if (!isGroup) {
         avatar.setConversationType(ConversationType.OneToOne)
       }
       avatar.setAlpha(alpha)
