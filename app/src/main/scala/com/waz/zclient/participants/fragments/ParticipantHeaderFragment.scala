@@ -31,7 +31,7 @@ import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.{AddParticipantsFragment, CreateConversationController}
 import com.waz.zclient.participants.ParticipantsController
-import com.waz.zclient.utils.ContextUtils.getColor
+import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx, getDrawable}
 import com.waz.zclient.utils.{ContextUtils, RichView, ViewUtils}
 import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
 
@@ -103,22 +103,46 @@ class ParticipantHeaderFragment extends FragmentHelper {
   }
 
   private lazy val headerReadOnlyTextView = returning(view[TextView](R.id.participants__header)) { vh =>
+    pageTag.flatMap {
+      case Some(GroupParticipantsFragment.Tag | GuestOptionsFragment.Tag) =>
+        Signal.const(getString(R.string.participants_details_header_title))
+      case Some(EphemeralOptionsFragment.Tag) =>
+        Signal.const(getString(R.string.ephemeral_message__options_header))
+      case Some(AddParticipantsFragment.Tag) =>
+        Signal(newConvController.users, newConvController.integrations).map {
+          case (u, i) if u.isEmpty && i.isEmpty => getString(R.string.add_participants_empty_header)
+          case (u, i) => getString(R.string.add_participants_count_header, (u.size + i.size).toString)
+        }
+      case Some(AllGroupParticipantsFragment.Tag) =>
+        Signal.const(getString(R.string.participant_search_title))
+      case _ =>
+        Signal.const(getString(R.string.empty_string))
+    }.onUi(t => vh.foreach { view =>
+      view.setVisible(t.nonEmpty)
+      view.setText(t)
+    })
+  }
 
-    page.map(_.map(_.tag)).flatMap {
-      case Some(GroupParticipantsFragment.Tag |
-                GuestOptionsFragment.Tag) => Signal.const(getString(R.string.participants_details_header_title))
+  private lazy val headerUsername = returning(view[TextView](R.id.participants__header__username)) { vh =>
+    Signal(pageTag, participantsController.otherParticipant).onUi {
+      case (Some(SingleParticipantFragment.Tag), user) =>
+        vh.foreach { view =>
+          view.setVisible(true)
+          view.setText(user.getDisplayName)
+          val shield = if (user.isVerified) Option(getDrawable(R.drawable.shield_full)) else None
 
-      case Some(EphemeralOptionsFragment.Tag) => Signal.const(getString(R.string.ephemeral_message__options_header))
-
-      case Some(AddParticipantsFragment.Tag) => Signal(newConvController.users, newConvController.integrations).map {
-        case (u, i) if u.isEmpty && i.isEmpty => getString(R.string.add_participants_empty_header)
-        case (u, i) => getString(R.string.add_participants_count_header, (u.size + i.size).toString)
-      }
-
-      case Some(AllGroupParticipantsFragment.Tag) => Signal.const(getString(R.string.participant_search_title))
-
-      case _ => Signal.const(getString(R.string.empty_string))
-    }.onUi(t => vh.foreach(_.setText(t)))
+          shield.foreach { sh =>
+            val pushDown = getDimenPx(R.dimen.wire__padding__1)
+            sh.setBounds(0, pushDown, sh.getIntrinsicWidth, sh.getIntrinsicHeight + pushDown)
+            view.setCompoundDrawablePadding(getDimenPx(R.dimen.wire__padding__tiny))
+          }
+          val old = view.getCompoundDrawables
+          view.setCompoundDrawablesRelative(shield.orNull, old(1), old(2), old(3))
+          view.setContentDescription(if (user.isVerified) "verified" else "unverified")
+        }
+      case _ =>
+        vh.foreach(_.setVisible(false))
+    }
   }
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
@@ -146,6 +170,7 @@ class ParticipantHeaderFragment extends FragmentHelper {
 
     toolbar
     headerReadOnlyTextView
+    headerUsername
     closeButton
     confButton
   }

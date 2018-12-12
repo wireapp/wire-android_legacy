@@ -57,31 +57,6 @@ class SingleParticipantFragment extends FragmentHelper {
   private lazy val browserController      = inject[BrowserController]
   private lazy val createConvController   = inject[CreateConversationController]
 
-  private lazy val userNameView = returning(view[TextView](R.id.user_name)) { vh =>
-    participantsController.otherParticipantId.map(_.isDefined).onUi { visible =>
-      vh.foreach(_.setVisible(visible))
-    }
-
-    participantsController.otherParticipant.map(_.getDisplayName).onUi { name =>
-      vh.foreach(_.setText(name))
-    }
-
-    participantsController.otherParticipant.map(_.isVerified).onUi { visible =>
-      vh.foreach { view =>
-        val shield = if (visible) Option(getDrawable(R.drawable.shield_full)) else None
-
-        shield.foreach { sh =>
-          val pushDown = getDimenPx(R.dimen.wire__padding__1)
-          sh.setBounds(0, pushDown, sh.getIntrinsicWidth, sh.getIntrinsicHeight + pushDown)
-          view.setCompoundDrawablePadding(getDimenPx(R.dimen.wire__padding__tiny))
-        }
-        val old = view.getCompoundDrawables
-        view.setCompoundDrawablesRelative(shield.orNull, old(1), old(2), old(3))
-        view.setContentDescription(if (visible) "verified" else "unverified")
-      }
-    }
-  }
-
   private lazy val userHandle = returning(view[TextView](R.id.user_handle)) { vh =>
     val handle = participantsController.otherParticipant.map(_.handle.map(_.string))
 
@@ -173,7 +148,6 @@ class SingleParticipantFragment extends FragmentHelper {
       _ => browserController.openUrl(getString(R.string.url_otr_learn_why))
     }
 
-    userNameView
     userHandle
   }
 
