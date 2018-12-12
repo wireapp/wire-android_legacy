@@ -91,6 +91,8 @@ class LikesAndReadsFragment extends FragmentHelper {
     msg         <- message
   } yield selfUserId == msg.userId
 
+  private lazy val isEphemeral = message.map(_.isEphemeral)
+
   private lazy val closeButton = view[GlyphTextView](R.id.likes_close_button)
 
   private lazy val readsView = returning(view[RecyclerView](R.id.reads_recycler_view)) { vh =>
@@ -205,14 +207,17 @@ class LikesAndReadsFragment extends FragmentHelper {
       rv.setAdapter(new ParticipantsAdapter(likes, showPeopleOnly = true, showArrow = false))
     }
 
-    Signal(screenController.showMessageDetails, isOwnMessage, accountsController.isTeam).head.foreach {
-      case (Some(_), true, true) =>
+    Signal(screenController.showMessageDetails, isOwnMessage, accountsController.isTeam, isEphemeral).head.foreach {
+      case (Some(_), true, true, false) =>
         tabs.foreach(_.setVisible(true))
 
         if (Option(savedInstanceState).isEmpty)
           tabs.foreach(_.getTabAt(Tab(getStringArg(ArgPageToOpen)).pos).select())
         else
           tabs.foreach(_.getTabAt(0).select())
+      case (_, _, _, true) =>
+        tabs.foreach(_.setVisible(false))
+        visibleTab ! ReadsTab
       case _ =>
         tabs.foreach(_.setVisible(false))
         visibleTab ! LikesTab

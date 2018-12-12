@@ -129,7 +129,6 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:textSize="@dimen/wire__text_size__regular"
-                android:maxLines="2"
                 android:textColor="@color/light_graphite_40"
                 app:w_font="@string/wire__typeface__medium"
                 />

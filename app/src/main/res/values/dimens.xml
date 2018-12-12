@@ -972,6 +972,6 @@
     <dimen name="conversation_list__badge__icon_size">14dp</dimen>
 
     <dimen name="empty_likes_reads_icon_size">140dp</dimen>
-    <dimen name="empty_likes_reads_text_width">160dp</dimen>
+    <dimen name="empty_likes_reads_text_width">176dp</dimen>
     <dimen name="create_conv_options_height">64dp</dimen>
 </resources>
