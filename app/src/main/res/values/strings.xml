@@ -1159,7 +1159,7 @@
     <string name="read_receipts_toggle_info_text">When this is on, people can see when their messages in this conversation are read.</string>
     <string name="read_receipts_info_title_enabled">YOU HAVE ENABLED READ RECEIPTS</string>
     <string name="read_receipts_info_title_disabled">YOU HAVE DISABLED READ RECEIPTS</string>
-    <string name="read_receipts_info_1">If both sides turn on read receipts, you can see when\nmessages are read.</string>
+    <string name="read_receipts_info_1">If both sides turn on read receipts, you can see when messages are read.</string>
     <string name="read_receipts_info_2">You can change this option in your account settings.</string>
     <string name="create_conv_options_title_text">Conversation options</string>
     <string name="create_conv_options_subtitle_allow_guests">Allow guests</string>

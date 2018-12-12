@@ -188,6 +188,7 @@
     <dimen name="wire__padding__26">26dp</dimen>
     <dimen name="wire__padding__28">28dp</dimen>
     <dimen name="wire__padding__32">32dp</dimen>
+    <dimen name="wire__padding__50">50dp</dimen>
     <dimen name="wire__padding__regular">16dp</dimen>
     <dimen name="wire__padding__call">18dp</dimen>
     <dimen name="wire__padding__bottom__call">22dp</dimen>

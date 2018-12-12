@@ -112,6 +112,7 @@
             android:id="@+id/read_receipts_info_1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:maxLines="2"
             android:gravity="start"
             app:w_font="@string/wire__typeface__light"
             android:textSize="@dimen/wire__text_size__small"
@@ -119,7 +120,7 @@
             android:layout_marginTop="@dimen/wire__padding__small"
             android:layout_marginBottom="@dimen/wire__padding__small"
             android:paddingStart="@dimen/wire__padding__regular"
-            android:paddingEnd="@dimen/wire__padding__huge"
+            android:paddingEnd="@dimen/wire__padding__50"
             android:text="@string/read_receipts_info_1"
             />
 
