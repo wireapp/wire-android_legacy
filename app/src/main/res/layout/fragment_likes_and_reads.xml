@@ -30,7 +30,6 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:gravity="center"
         android:padding="@dimen/wire__padding__8"
         android:background="?wireBackgroundColor"
         >
@@ -50,6 +49,7 @@
                 android:layout_width="@dimen/wire__icon_button__diameter"
                 android:layout_height="@dimen/wire__icon_button__diameter"
                 android:text="@string/glyph__close"
+                android:layout_centerVertical="true"
                 android:layout_alignParentEnd="true"
                 android:layout_alignEnd="@id/message_details_title"
                 style="?iconButton"
