@@ -225,7 +225,7 @@ object MessageBottomSheetDialog {
           for {
             isGroup <- zms.conversations.groupConversation(msg.convId)
             isMember <- isMemberOfConversation(msg.convId, zms)
-          } yield isGroup && isMember
+          } yield isGroup && isMember && !p.collection
         case _ =>
           Signal.const(false)
       }

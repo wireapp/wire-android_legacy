@@ -46,8 +46,6 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 
-import scala.concurrent.Future
-
 //TODO tracking ?
 class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ClickableViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -215,10 +213,13 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
   def showDetails(fromLikes: Boolean) = {
     import Threading.Implicits.Ui
 
-    convController.currentConvIsGroup.head.flatMap {
-      case false => Future.successful(None)
-      case true => controller.message.map(m => Some(m.id)).head
-    }.foreach {
+    val messageToShow = for {
+      selfId <- zms.map(_.selfUserId).head
+      isGroup <- convController.currentConvIsGroup.head
+      message <- controller.message.head
+    } yield if (isGroup && (!message.isEphemeral || message.userId == selfId)) Some(message.id) else None
+
+    messageToShow.foreach {
       case Some(mId) =>
         screenController.showMessageDetails ! Some(MessageDetailsParams(mId, if (fromLikes) LikesAndReadsFragment.LikesTab else LikesAndReadsFragment.ReadsTab))
       case _ =>
