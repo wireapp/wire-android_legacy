@@ -28,7 +28,6 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.content.{MessagesStorage, ReactionsStorage, ReadReceiptsStorage}
 import com.waz.model.{RemoteInstant, UserData, UserId}
-import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
@@ -48,7 +47,6 @@ class LikesAndReadsFragment extends FragmentHelper {
   import Threading.Implicits.Ui
   implicit def ctx: Context = getActivity
 
-  private lazy val zms                 = inject[Signal[ZMessaging]]
   private lazy val screenController    = inject[ScreenController]
   private lazy val readReceiptsStorage = inject[Signal[ReadReceiptsStorage]]
   private lazy val reactionsStorage    = inject[Signal[ReactionsStorage]]
@@ -133,9 +131,10 @@ class LikesAndReadsFragment extends FragmentHelper {
   }
 
   private lazy val title = returning(view[TypefaceTextView](R.id.message_details_title)) { vh =>
-    Signal(isOwnMessage, accountsController.isTeam).map {
-      case (true, true)  => R.string.message_details_title
-      case _             => R.string.message_liked_title
+    Signal(isOwnMessage, accountsController.isTeam, isEphemeral).map {
+      case (true, true, false)  => R.string.message_details_title
+      case (true, true, true)   => R.string.message_read_title
+      case _                    => R.string.message_liked_title
     }.onUi(resId => vh.foreach(_.setText(resId)))
   }
 

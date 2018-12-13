@@ -907,6 +907,7 @@
 
     <string name="message_details_title">MESSAGE DETAILS</string>
     <string name="message_liked_title">LIKED</string>
+    <string name="message_read_title">READ</string>
     <string name="message_details_sent">Sent</string>
     <string name="message_details_last_edited">Edited</string>
     <string name="tab_title_read">READ</string>
