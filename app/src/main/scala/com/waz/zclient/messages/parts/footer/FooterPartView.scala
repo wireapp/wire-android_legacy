@@ -29,6 +29,7 @@ import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.{FrameLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
+import com.waz.zclient.messages.LikesController._
 import com.waz.model.{MessageContent, MessageId}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
@@ -37,7 +38,7 @@ import com.waz.zclient.common.controllers.ScreenController
 import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
 import com.waz.zclient.conversation.{ConversationController, LikesAndReadsFragment}
 import com.waz.zclient.messages.MessageView.MsgBindOptions
-import com.waz.zclient.messages.parts.footer.FooterPartView.HideAnimator
+import com.waz.zclient.messages.parts.footer.FooterPartView._
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.paintcode.WireStyleKit
 import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
@@ -110,6 +111,8 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
   }
 
   val hideAnim = new HideAnimator(this)
+
+  private val likeButtonVisible = message.map(m => LikeableMessages.contains(m.msgType))
 
   private val likeButton: LikeButton = findById(R.id.like__button)
   private val timeStampAndStatus: TextView = findById(R.id.timestamp_and_status)
@@ -184,7 +187,7 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
     lastMsgId = msgId
   }
 
-  controller.expiring.onUi(likeButton.setGone)
+  Signal(controller.expiring, likeButtonVisible).map { case (e, v) => e || !v }.onUi(likeButton.setGone)
 
   override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {
     super.onLayout(changed, left, top, right, bottom)

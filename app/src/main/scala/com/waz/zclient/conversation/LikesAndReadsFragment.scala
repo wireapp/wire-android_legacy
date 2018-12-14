@@ -32,7 +32,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
-import com.waz.zclient.common.controllers.{ScreenController, UserAccountsController}
+import com.waz.zclient.common.controllers.ScreenController
 import com.waz.zclient.pages.main.conversation.ConversationManagerFragment
 import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
 import com.waz.zclient.participants.ParticipantsAdapter
@@ -40,6 +40,7 @@ import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.utils.ContextUtils.getColor
 import com.waz.zclient.utils.{RichView, ZTimeFormatter}
 import com.waz.zclient.{FragmentHelper, R}
+import com.waz.zclient.messages.LikesController._
 import org.threeten.bp.DateTimeUtils
 
 class LikesAndReadsFragment extends FragmentHelper {
@@ -51,7 +52,6 @@ class LikesAndReadsFragment extends FragmentHelper {
   private lazy val readReceiptsStorage = inject[Signal[ReadReceiptsStorage]]
   private lazy val reactionsStorage    = inject[Signal[ReactionsStorage]]
   private lazy val messagesStorage     = inject[Signal[MessagesStorage]]
-  private lazy val accountsController  = inject[UserAccountsController]
 
   private val visibleTab = Signal[Tab](ReadsTab)
 
@@ -77,11 +77,11 @@ class LikesAndReadsFragment extends FragmentHelper {
       tab       <- visibleTab
       listEmpty <- if (tab == LikesTab) likes.map(_.isEmpty) else reads.map(_.isEmpty)
     } yield (msg.expectsRead.contains(true), tab, listEmpty) match {
-      case (true, ReadsTab, false)  => ReadsTab
-      case (false, ReadsTab, _)     => ReadsOff
-      case (_, ReadsTab, true)      => NoReads
-      case (_, LikesTab, false)     => LikesTab
-      case (_, LikesTab, true)      => NoLikes
+      case (_, ReadsTab, false)    => ReadsTab
+      case (false, ReadsTab, true) => ReadsOff
+      case (_, ReadsTab, true)     => NoReads
+      case (_, LikesTab, false)    => LikesTab
+      case (_, LikesTab, true)     => NoLikes
     }
 
   private lazy val isOwnMessage = for {
@@ -90,6 +90,14 @@ class LikesAndReadsFragment extends FragmentHelper {
   } yield selfUserId == msg.userId
 
   private lazy val isEphemeral = message.map(_.isEphemeral)
+
+  private lazy val isLikeable = message.map(m => LikeableMessages.contains(m.msgType))
+
+  private lazy val detailsCombination = Signal(isOwnMessage, isEphemeral, isLikeable).map {
+    case (true, false, true)                                => ReadsAndLikes
+    case (_, ephemeral, likeable) if ephemeral || !likeable => JustReads
+    case _                                                  => JustLikes
+  }
 
   private lazy val closeButton = view[GlyphTextView](R.id.likes_close_button)
 
@@ -131,10 +139,10 @@ class LikesAndReadsFragment extends FragmentHelper {
   }
 
   private lazy val title = returning(view[TypefaceTextView](R.id.message_details_title)) { vh =>
-    Signal(isOwnMessage, accountsController.isTeam, isEphemeral).map {
-      case (true, true, false)  => R.string.message_details_title
-      case (true, true, true)   => R.string.message_read_title
-      case _                    => R.string.message_liked_title
+    detailsCombination.map {
+      case ReadsAndLikes => R.string.message_details_title
+      case JustReads     => R.string.message_read_title
+      case JustLikes     => R.string.message_liked_title
     }.onUi(resId => vh.foreach(_.setText(resId)))
   }
 
@@ -206,18 +214,18 @@ class LikesAndReadsFragment extends FragmentHelper {
       rv.setAdapter(new ParticipantsAdapter(likes, showPeopleOnly = true, showArrow = false))
     }
 
-    Signal(screenController.showMessageDetails, isOwnMessage, accountsController.isTeam, isEphemeral).head.foreach {
-      case (Some(_), true, true, false) =>
+    detailsCombination.head.foreach {
+      case ReadsAndLikes =>
         tabs.foreach(_.setVisible(true))
 
         if (Option(savedInstanceState).isEmpty)
           tabs.foreach(_.getTabAt(Tab(getStringArg(ArgPageToOpen)).pos).select())
         else
           tabs.foreach(_.getTabAt(0).select())
-      case (_, _, _, true) =>
+      case JustReads =>
         tabs.foreach(_.setVisible(false))
         visibleTab ! ReadsTab
-      case _ =>
+      case JustLikes =>
         tabs.foreach(_.setVisible(false))
         visibleTab ! LikesTab
     }
@@ -274,6 +282,11 @@ object LikesAndReadsFragment {
       case _ => ReadsTab
     }
   }
+
+  sealed trait DetailsCombination
+  case object JustLikes extends DetailsCombination
+  case object JustReads extends DetailsCombination
+  case object ReadsAndLikes extends DetailsCombination
 
   private val ArgPageToOpen: String = "ARG_PAGE_TO_OPEN"
 
