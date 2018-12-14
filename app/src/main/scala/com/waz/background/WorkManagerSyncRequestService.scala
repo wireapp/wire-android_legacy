@@ -91,9 +91,9 @@ class WorkManagerSyncRequestService (implicit inj: Injector, cxt: Context, event
 
     Future {
       (uniqueGroupName.map(n => s"${account.str}--$n") match {
-        case Some(n) => wm.beginUniqueWork(n, ExistingWorkPolicy.APPEND, work).enqueue()
+        case Some(n) => wm.enqueueUniqueWork(n, ExistingWorkPolicy.APPEND, work)
         case None    => wm.enqueue(work)
-      }).get()
+      }).getResult.get()
       verbose(s"$commandTag scheduled successfully")
       SyncId(work.getId.toString)
     }
@@ -106,9 +106,9 @@ class WorkManagerSyncRequestService (implicit inj: Injector, cxt: Context, event
   private var signalRefs = Map.empty[SyncId, Signal[SyncResult]]
   override def await(id: SyncId): Future[SyncResult] = {
     implicit val logTag: LogTag = "WorkManager#await"
-    val signal = new LiveDataSignal(wm.getStatusByIdLiveData(UUID.fromString(id.str)))
+    val signal = new LiveDataSignal(wm.getWorkInfoByIdLiveData(UUID.fromString(id.str)))
       .collect[SyncResult] { case status if status.getState.isFinished =>
-        import androidx.work.State._
+        import androidx.work.WorkInfo.State._
         status.getState match {
           case SUCCEEDED =>
             decodeError(status.getOutputData) match {
@@ -128,13 +128,13 @@ class WorkManagerSyncRequestService (implicit inj: Injector, cxt: Context, event
 
   override def syncState(account: UserId, matchers: Seq[SyncCommand]): Signal[SyncState] = {
     implicit val logTag: LogTag = "WorkManager#syncState"
-    new LiveDataSignal(wm.getStatusesByTagLiveData(account.str))
+    new LiveDataSignal(wm.getWorkInfosByTagLiveData(account.str))
       .map(_.filter(_.getTags.exists(tag => matchers.map(_.name).toSet.contains(tag))))
       .map { statuses =>
         returning {
           if (statuses.isEmpty) SyncState.COMPLETED
           else statuses.map { s =>
-            import State._
+            import androidx.work.WorkInfo.State._
             s.getState match {
               case ENQUEUED |
                    BLOCKED =>
@@ -212,22 +212,20 @@ object WorkManagerSyncRequestService {
       val requestInfo = RequestInfo(getRunAttemptCount, Instant.ofEpochMilli(scheduledTime), network.currentValue)
 
       def onFailure(err: ErrorResponse) = {
-        setOutputData(new Data.Builder()
-            .putBoolean(Failure, true)
-            .putInt(ErrorCode, err.code)
-            .putString(ErrorMessage, err.message)
-            .putString(ErrorLabel, err.label)
-            .build()
-        )
         //we need to return the SUCCESS code so as not to block appended unique work
-        Result.SUCCESS
+        Result.success(new Data.Builder()
+          .putBoolean(Failure, true)
+          .putInt(ErrorCode, err.code)
+          .putString(ErrorMessage, err.message)
+          .putString(ErrorLabel, err.label)
+          .build())
       }
 
       try {
         Await.result(syncHandler(account, request)(requestInfo), SyncJobTimeout) match {
           case SyncResult.Success =>
             verbose(s"$commandTag completed successfully")
-            Result.SUCCESS
+            Result.success()
 
           case SyncResult.Failure(error) =>
             warn(s"$commandTag failed permanently with error: $error")
@@ -243,7 +241,7 @@ object WorkManagerSyncRequestService {
 
           case SyncResult.Retry(error) =>
             warn(s"$commandTag failed non-fatally with $error, retrying...")
-            Result.RETRY
+            Result.retry()
         }
       } catch {
         case e: TimeoutException =>

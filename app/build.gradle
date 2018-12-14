@@ -269,9 +269,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging:17.3.0'
 
     //WorkManager
-    def work_version = "1.0.0-alpha10"
+    def work_version = "1.0.0-alpha13"
     implementation "android.arch.work:work-runtime:$work_version"
-    implementation "android.arch.work:work-firebase:$work_version"
 
     //third party libraries
     implementation 'com.evernote:android-job:1.2.6'
