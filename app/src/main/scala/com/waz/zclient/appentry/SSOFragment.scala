@@ -51,6 +51,7 @@ trait SSOFragment extends FragmentHelper {
       case OnPositiveBtn(input) =>
         ssoService.extractUUID(input).foreach(uuid => verifyCode(uuid))
     }
+
     override def isInputInvalid(input: String): ValidatorResult =
       if (ssoService.isTokenValid(input.trim)) ValidatorResult.Valid
       else ValidatorResult.Invalid()

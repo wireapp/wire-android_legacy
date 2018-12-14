@@ -782,6 +782,7 @@
     <!-- OTR -->
     <string name="otr__remove_device__title">Remove %1$s</string>
     <string name="otr__remove_device__message">Enter your password</string>
+    <string name="otr__remove_device__are_you_sure">Are you sure?</string>
     <string name="otr__remove_device__default">device</string>
     <string name="otr__remove_device__button_delete">OK</string>
     <string name="otr__remove_device__button_cancel">Cancel</string>

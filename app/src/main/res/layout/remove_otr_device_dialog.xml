@@ -30,9 +30,10 @@
     >
 
     <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:overScrollMode="ifContentScrolls"
+        android:id="@+id/remove_otr_device_scrollview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:overScrollMode="ifContentScrolls"
         >
 
         <android.support.design.widget.TextInputLayout

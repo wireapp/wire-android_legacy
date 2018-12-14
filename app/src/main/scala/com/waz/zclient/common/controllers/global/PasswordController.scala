@@ -23,6 +23,8 @@ import com.waz.service.{AccountsService, GlobalModule}
 import com.waz.threading.Threading
 import com.waz.zclient.{Injectable, Injector}
 
+import scala.concurrent.Future
+
 class PasswordController(implicit inj: Injector) extends Injectable {
   import Threading.Implicits.Background
 
@@ -32,10 +34,10 @@ class PasswordController(implicit inj: Injector) extends Injectable {
 
   //The password is never saved in the database, this will just update the in-memory version of the current account
   //so that the password is globally correct.
-  def setPassword(p: Password) =
+  def setPassword(p: Password): Future[Unit] =
     for {
       Some(accountData) <- accounts.activeAccount.head
-      _ <- global.accountsStorage.update(accountData.id, _.copy(password = Some(p)))
+      _                 <- global.accountsStorage.update(accountData.id, _.copy(password = Some(p)))
     } yield {}
 
 }

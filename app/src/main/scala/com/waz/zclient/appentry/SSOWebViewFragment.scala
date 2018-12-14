@@ -70,9 +70,9 @@ class SSOWebViewFragment extends FragmentHelper {
               activity.showFragment(FirstLaunchAfterLoginFragment(userId, ssoHadDB = hadDB), FirstLaunchAfterLoginFragment.Tag)
             case _ =>
               for {
-                am <- accountsService.accountManagers.head.map(_.find(_.userId == userId))
+                am      <- accountsService.accountManagers.head.map(_.find(_.userId == userId))
                 clState <- am.fold2(Future.successful(None), _.getOrRegisterClient().map(_.fold(_ => None, Some(_))))
-                _ <- accountsService.setAccount(Some(userId))
+                _       <- accountsService.setAccount(Some(userId))
               } getActivity.asInstanceOf[AppEntryActivity].onEnterApplication(openSettings = false, clState)
           }
         case Left(error) => showSSOError(error)

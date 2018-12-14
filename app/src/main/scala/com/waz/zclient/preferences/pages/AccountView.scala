@@ -67,8 +67,10 @@ trait AccountView {
   def setPictureDrawable(drawable: Drawable): Unit
   def setAccentDrawable(drawable: Drawable): Unit
   def setDeleteAccountEnabled(enabled: Boolean): Unit
+  def setEmailEnabled(enabled: Boolean): Unit
   def setPhoneNumberEnabled(enabled: Boolean): Unit
   def setReadReceipt(enabled: Boolean): Unit
+  def setResetPasswordEnabled(enabled: Boolean): Unit
 }
 
 class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with AccountView with ViewHelper {
@@ -117,10 +119,13 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setDeleteAccountEnabled(enabled: Boolean) = deleteAccountButton.setVisible(enabled)
 
+  override def setEmailEnabled(enabled: Boolean) = emailButton.setVisible(enabled)
+
   override def setPhoneNumberEnabled(enabled: Boolean) = phoneButton.setVisible(enabled)
 
   override def setReadReceipt(enabled: Boolean) = readReceiptsSwitch.setChecked(enabled, disableListener = true)
 
+  override def setResetPasswordEnabled(enabled: Boolean) = resetPasswordButton.setVisible(enabled)
 }
 
 case class AccountBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
@@ -162,7 +167,8 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   val isPhoneNumberEnabled = for {
     p      <- phone
     isTeam <- isTeam
-  } yield p.isDefined || !isTeam
+    sso    <- accounts.isActiveAccountSSO
+  } yield sso && (p.isDefined || !isTeam)
 
   val selfPicture: Signal[ImageSource] = self.map(_.picture).collect{case Some(pic) => WireImage(pic)}
 
@@ -191,8 +197,11 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   phone.onUi(view.setPhone)
   email.onUi(view.setEmail)
 
-  isTeam.onUi(t => view.setDeleteAccountEnabled(!t))
-
+  Signal(isTeam, accounts.isActiveAccountSSO).map { case (team, sso) => team && sso }.onUi(t => view.setDeleteAccountEnabled(!t))
+  accounts.isActiveAccountSSO.onUi { sso =>
+    view.setEmailEnabled(!sso)
+    view.setResetPasswordEnabled(!sso)
+  }
   isPhoneNumberEnabled.onUi(view.setPhoneNumberEnabled)
 
   view.onNameClick.onUi { _ =>
@@ -311,8 +320,9 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   }
 
   view.onBackupClick.onUi { _ =>
-    email.head.map {
-      case Some(_) => navigator.goTo(BackupExportKey())
+    Signal(accounts.isActiveAccountSSO, email).head.map {
+      case (true, _)        => navigator.goTo(BackupExportKey())
+      case (false, Some(_)) => navigator.goTo(BackupExportKey())
       case _ =>
         showAlertDialog(context,
           R.string.pref_account_backup_warning_title,

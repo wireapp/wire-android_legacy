@@ -233,12 +233,12 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
 
   view.onDeviceRemoved { _ =>
     passwordController.password.head.map {
-      case Some(p) => removeDevice(p)
-      case _ => showRemoveDeviceDialog()
+      case Some(p)       => removeDevice(Some(p))
+      case _                => showRemoveDeviceDialog()
     }
   }
 
-  private def removeDevice(password: Password): Unit = {
+  private def removeDevice(password: Option[Password] = None): Unit = {
     spinnerController.showDimmedSpinner(show = true)
     for {
       am           <- accountManager.head
@@ -246,10 +246,10 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
         case LimitReached => true
         case _ => false
       }
-      _ <- am.deleteClient(clientId, password).map { //TODO use password instead of str
+      _ <- am.deleteClient(clientId, password).map {
         case Right(_) =>
           for {
-            _ <- passwordController.setPassword(password)
+            _ <- password.fold(Future.successful(()))(passwordController.setPassword)
             _ <- if (limitReached) am.getOrRegisterClient() else Future.successful({})
             _ <- Threading.Ui {
               spinnerController.showSpinner(false)
@@ -266,8 +266,8 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
   }
 
   private def showRemoveDeviceDialog(error: Option[String] = None): Unit = {
-    model.head.map { n =>
-      val fragment = returning(RemoveDeviceDialog.newInstance(n, error))(_.onDelete(removeDevice))
+    Signal(accounts.isActiveAccountSSO, model).head.foreach { case (isSSO, name) =>
+      val fragment = returning(RemoveDeviceDialog.newInstance(name, error, isSSO))(_.onDelete(removeDevice))
       context.asInstanceOf[BaseActivity]
         .getSupportFragmentManager
         .beginTransaction

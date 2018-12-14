@@ -43,19 +43,21 @@ class RemoveDeviceDialog extends DialogFragment with FragmentHelper {
   import RemoveDeviceDialog._
   import Threading.Implicits.Ui
 
-  val onDelete = EventStream[Password]()
+  val onDelete = EventStream[Option[Password]]()
 
   private lazy val root = LayoutInflater.from(getActivity).inflate(R.layout.remove_otr_device_dialog, null)
 
-  private def providePassword(pwd: String): Unit = {
-    onDelete ! Password(pwd)
-    for {
-      zms         <- inject[Signal[ZMessaging]].head
-      Some(am)    <- zms.accounts.activeAccountManager.head
-      self        <- am.getSelf
-      Some(email) = self.email
-      _           <- zms.auth.onPasswordReset(Option(EmailCredentials(email, Password(pwd))))
-    } yield ()
+  private def providePassword(password: Option[Password]): Unit = {
+    onDelete ! password
+    password.foreach { pwd =>
+      for {
+        zms         <- inject[Signal[ZMessaging]].head
+        Some(am)    <- zms.accounts.activeAccountManager.head
+        self        <- am.getSelf
+        Some(email) = self.email
+        _           <- zms.auth.onPasswordReset(Option(EmailCredentials(email, pwd)))
+      } yield ()
+    }
     dismiss()
   }
 
@@ -64,7 +66,7 @@ class RemoveDeviceDialog extends DialogFragment with FragmentHelper {
       def onEditorAction(v: TextView, actionId: Int, event: KeyEvent) =
         actionId match {
           case EditorInfo.IME_ACTION_DONE =>
-            providePassword(v.getText.toString)
+            providePassword(Some(Password(v.getText.toString)))
             true
           case _ => false
         }
@@ -77,15 +79,20 @@ class RemoveDeviceDialog extends DialogFragment with FragmentHelper {
     _.onClick(inject[BrowserController].openForgotPasswordPage())
   }
 
+  private lazy val isSSO = getArguments.getBoolean(IsSSOARG)
+
   override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
-    passwordEditText
-    textInputLayout
-    forgotPasswordButton
+    if(isSSO){
+      findById[View](root, R.id.remove_otr_device_scrollview).setVisible(false)
+    }
+    passwordEditText.setVisible(!isSSO)
+    textInputLayout.setVisible(!isSSO)
+    forgotPasswordButton.setVisible(!isSSO)
     Option(getArguments.getString(ErrorArg)).foreach(textInputLayout.setError)
     new AlertDialog.Builder(getActivity)
       .setView(root)
       .setTitle(getString(R.string.otr__remove_device__title, getArguments.getString(NameArg, getString(R.string.otr__remove_device__default))))
-      .setMessage(R.string.otr__remove_device__message)
+      .setMessage(if (isSSO) R.string.otr__remove_device__are_you_sure else R.string.otr__remove_device__message)
       .setPositiveButton(R.string.otr__remove_device__button_delete, null)
       .setNegativeButton(R.string.otr__remove_device__button_cancel, null)
       .create
@@ -95,7 +102,8 @@ class RemoveDeviceDialog extends DialogFragment with FragmentHelper {
     super.onStart()
     Try(getDialog.asInstanceOf[AlertDialog]).toOption.foreach { d =>
       d.getButton(BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-        def onClick(v: View) = providePassword(passwordEditText.getText.toString)
+        def onClick(v: View) =
+          providePassword(if (isSSO) None else Some(Password(passwordEditText.getText.toString)))
       })
     }
   }
@@ -110,12 +118,14 @@ object RemoveDeviceDialog {
   val FragmentTag = RemoveDeviceDialog.getClass.getSimpleName
   private val NameArg  = "ARG_NAME"
   private val ErrorArg = "ARG_ERROR"
+  private val IsSSOARG = "ARG_IS_SSO"
 
-  def newInstance(deviceName: String, error: Option[String]): RemoveDeviceDialog =
+  def newInstance(deviceName: String, error: Option[String], isSSO: Boolean): RemoveDeviceDialog =
     returning(new RemoveDeviceDialog) {
       _.setArguments(returning(new Bundle()) { b =>
         b.putString(NameArg, deviceName)
         error.foreach(b.putString(ErrorArg, _))
+        b.putBoolean(IsSSOARG, isSSO)
       })
     }
 

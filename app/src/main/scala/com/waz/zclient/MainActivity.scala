@@ -182,21 +182,24 @@ class MainActivity extends BaseActivity
           case Right(Registered(_))   =>
             for {
               z            <- zms.head
+              self         <- z.users.selfUser.head
               isLogin      <- z.userPrefs(IsLogin).apply()
               isNewClient  <- z.userPrefs(IsNewClient).apply()
-              email        <- z.users.selfUser.map(_.email).head
-              phone        <- z.users.selfUser.map(_.phone).head
               pendingPw    <- z.userPrefs(PendingPassword).apply()
               pendingEmail <- z.userPrefs(PendingEmail).apply()
-              handle       <- z.users.selfUser.map(_.handle).head
+              ssoLogin     <- accountsService.activeAccount.map(_.exists(_.ssoId.isDefined)).head
             } yield {
               val (f, t) =
-                if (email.isDefined && pendingPw)                 (SetOrRequestPasswordFragment(email.get), SetOrRequestPasswordFragment.Tag)
-                else if (pendingEmail.isDefined)                  (VerifyEmailFragment(pendingEmail.get),   VerifyEmailFragment.Tag)
-                else if (email.isEmpty && isLogin && isNewClient
-                  && phone.isDefined)                             (AddEmailFragment(),                      AddEmailFragment.Tag)
-                else if (handle.isEmpty)                          (SetHandleFragment(),                     SetHandleFragment.Tag)
-                else                                              (new MainPhoneFragment,                   MainPhoneFragment.Tag)
+                if (ssoLogin)  {
+                  if (self.handle.isEmpty)                  (SetHandleFragment(),                          SetHandleFragment.Tag)
+                  else                                      (new MainPhoneFragment,                        MainPhoneFragment.Tag)
+                }
+                else if (self.email.isDefined && pendingPw) (SetOrRequestPasswordFragment(self.email.get), SetOrRequestPasswordFragment.Tag)
+                else if (pendingEmail.isDefined)            (VerifyEmailFragment(pendingEmail.get),        VerifyEmailFragment.Tag)
+                else if (self.email.isEmpty && isLogin && isNewClient && self.phone.isDefined)
+                                                            (AddEmailFragment(),                           AddEmailFragment.Tag)
+                else if (self.handle.isEmpty)               (SetHandleFragment(),                          SetHandleFragment.Tag)
+                else                                        (new MainPhoneFragment,                        MainPhoneFragment.Tag)
               replaceMainFragment(f, t, addToBackStack = false)
             }
 
@@ -205,12 +208,14 @@ class MainActivity extends BaseActivity
               self         <- am.getSelf
               pendingPw    <- am.storage.userPrefs(PendingPassword).apply()
               pendingEmail <- am.storage.userPrefs(PendingEmail).apply()
+              ssoLogin     <- accountsService.activeAccount.map(_.exists(_.ssoId.isDefined)).head
             } yield {
               val (f, t) =
-                if (self.email.isDefined && pendingPw) (SetOrRequestPasswordFragment(self.email.get), SetOrRequestPasswordFragment.Tag)
-                else if (pendingEmail.isDefined)       (VerifyEmailFragment(pendingEmail.get),        VerifyEmailFragment.Tag)
-                else if (self.email.isEmpty)           (AddEmailFragment(),                           AddEmailFragment.Tag)
-                else                                   (OtrDeviceLimitFragment.newInstance,           OtrDeviceLimitFragment.Tag)
+                if (ssoLogin)                               (OtrDeviceLimitFragment.newInstance,           OtrDeviceLimitFragment.Tag)
+                else if (self.email.isDefined && pendingPw) (SetOrRequestPasswordFragment(self.email.get), SetOrRequestPasswordFragment.Tag)
+                else if (pendingEmail.isDefined)            (VerifyEmailFragment(pendingEmail.get),        VerifyEmailFragment.Tag)
+                else if (self.email.isEmpty)                (AddEmailFragment(),                           AddEmailFragment.Tag)
+                else                                        (OtrDeviceLimitFragment.newInstance,           OtrDeviceLimitFragment.Tag)
               replaceMainFragment(f, t, addToBackStack = false)
             }
           case Right(PasswordMissing) =>
