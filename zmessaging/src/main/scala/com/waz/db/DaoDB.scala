@@ -21,11 +21,18 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase.CursorFactory
 import android.database.sqlite.{SQLiteDatabase, SQLiteOpenHelper}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
+import com.waz.log.ZLog2._
+import com.waz.service.tracking.TrackingService
 
 import scala.util.Try
 
-class DaoDB(context: Context, name: String, factory: CursorFactory, version: Int, daos: Seq[BaseDao[_]], migrations: Seq[Migration])
+class DaoDB(context:    Context,
+            name:       String,
+            factory:    CursorFactory,
+            version:    Int,
+            daos:       Seq[BaseDao[_]],
+            migrations: Seq[Migration],
+            tracking:   TrackingService)
   extends SQLiteOpenHelper(context, name, factory, version) {
 
   override def onConfigure(db: SQLiteDatabase): Unit = {
@@ -34,7 +41,7 @@ class DaoDB(context: Context, name: String, factory: CursorFactory, version: Int
     val c = db.rawQuery("PRAGMA secure_delete = true", null)
     Try {
       c.moveToNext()
-      verbose(s"PRAGMA secure_delete set to: ${c.getString(0).toInt == 1}")
+      verbose(l"PRAGMA secure_delete set to: ${c.getString(0).toInt == 1}")
     }
   }
 
@@ -48,7 +55,7 @@ class DaoDB(context: Context, name: String, factory: CursorFactory, version: Int
     val c = db.getOrElse(getWritableDatabase).rawQuery("PRAGMA wal_checkpoint(TRUNCATE)", null)
     Try {
       c.moveToNext()
-      verbose(s"PRAGMA wal_checkpoint performed. Busy?: ${c.getInt(0) == 1}. WAL pages modified: ${c.getInt(1)}. WAL pages moved back: ${c.getInt(2)}")
+      verbose(l"PRAGMA wal_checkpoint performed. Busy?: ${c.getInt(0) == 1}. WAL pages modified: ${c.getInt(1)}. WAL pages moved back: ${c.getInt(2)}")
     }
   }
 
@@ -59,7 +66,7 @@ class DaoDB(context: Context, name: String, factory: CursorFactory, version: Int
   }
 
   override def onUpgrade(db: SQLiteDatabase, from: Int, to: Int): Unit =
-    new Migrations(migrations: _*).migrate(this, from, to)(db)
+    new Migrations(migrations: _*)(tracking).migrate(this, from, to)(db)
 
   def dropAllTables(db: SQLiteDatabase): Unit =
     daos.foreach { dao =>

@@ -17,8 +17,6 @@
  */
 package com.waz.api.impl
 
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.{Subscriber, Subscription, UpdateListener}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -36,7 +34,6 @@ trait UiObservable extends com.waz.api.UiObservable {
 
   protected def notifyChanged(): Unit = {
     Threading.assertUiThread()
-    debug(s"notifyChanged, $this")
     updateListeners.notify(_.updated())
   }
 }

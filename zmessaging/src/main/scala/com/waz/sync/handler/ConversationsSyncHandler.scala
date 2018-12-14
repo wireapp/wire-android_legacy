@@ -17,8 +17,6 @@
  */
 package com.waz.sync.handler
 
-import java.util.Date
-
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.ErrorType
@@ -31,9 +29,11 @@ import com.waz.service.assets.AssetService
 import com.waz.service.conversation.{ConversationOrderEventsService, ConversationsContentUpdaterImpl, ConversationsService}
 import com.waz.service.messages.MessagesService
 import com.waz.sync.SyncResult
+import com.waz.sync.SyncResult.{Retry, Success}
 import com.waz.sync.client.ConversationsClient
+import com.waz.sync.client.ConversationsClient.ConversationInitState
 import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
-import com.waz.threading.{CancellableFuture, Threading}
+import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
 
 import scala.concurrent.Future
@@ -69,7 +69,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       conversationsClient.loadConversations(remoteIds).future flatMap {
         case Right(resps) =>
           debug(s"syncConversations received ${resps.size}")
-          convService.updateConversationsWithDeviceStartMessage(resps).map(_ => SyncResult.Success)
+          convService.updateConversationsWithDeviceStartMessage(resps).map(_ => Success)
         case Left(error) =>
           warn(s"ConversationsClient.syncConversations($ids) failed with error: $error")
           Future.successful(SyncResult(error))
@@ -82,14 +82,19 @@ class ConversationsSyncHandler(selfUserId:          UserId,
         debug(s"syncConversations received ${convs.size}")
         val future = convService.updateConversationsWithDeviceStartMessage(convs)
         if (hasMore) syncConversations(convs.lastOption.map(_.id)).flatMap(res => future.map(_ => res))
-        else future.map(_ => SyncResult.Success)
+        else future.map(_ => Success)
       case Left(error) =>
         warn(s"ConversationsClient.loadConversations($start) failed with error: $error")
-        CancellableFuture.successful(SyncResult(error))
+        Future.successful(SyncResult(error))
     }
 
-  def postConversationName(id: ConvId, name: String): Future[SyncResult] =
+  def postConversationName(id: ConvId, name: Name): Future[SyncResult] =
     postConv(id) { conv => conversationsClient.postName(conv.remoteId, name).future }
+
+  def postConversationReceiptMode(id: ConvId, receiptMode: Int): Future[SyncResult] =
+    withConversation(id) { conv =>
+      conversationsClient.postReceiptMode(conv.remoteId, receiptMode).map(SyncResult(_))
+    }
 
   def postConversationMemberJoin(id: ConvId, members: Set[UserId]): Future[SyncResult] = withConversation(id) { conv =>
     def post(users: Set[UserId]) = conversationsClient.postMemberJoin(conv.remoteId, users).future flatMap {
@@ -99,13 +104,14 @@ class ConversationsSyncHandler(selfUserId:          UserId,
           case "too-many-members" => Some(ErrorType.CANNOT_ADD_USER_TO_FULL_CONVERSATION)
           case _ => None
         }
-        convService.onMemberAddFailed(id, users, errTpe, resp)
-          .map(_ => SyncResult.Failure(Some(resp), shouldRetry = false))
+        convService
+          .onMemberAddFailed(id, users, errTpe, resp)
+          .map(_ => SyncResult(resp))
       case resp =>
         postConvRespHandler(resp)
     }
 
-    Future.traverse(members.grouped(PostMembersLimit))(post) map { _.find(!_.isSuccess).getOrElse(SyncResult.Success) }
+    Future.traverse(members.grouped(PostMembersLimit))(post) map { _.find(_ != Success).getOrElse(Success) }
   }
 
   def postConversationMemberLeave(id: ConvId, user: UserId): Future[SyncResult] =
@@ -117,37 +123,44 @@ class ConversationsSyncHandler(selfUserId:          UserId,
           conversationsClient.postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(event.time))).future flatMap {
             case Right(_) =>
               verbose(s"postConversationState finished")
-              convEvents.handlePostConversationEvent(event).map(_ => SyncResult.Success)
+              convEvents.handlePostConversationEvent(event)
+                .map(_ => Success)
             case Left(error) =>
               Future.successful(SyncResult(error))
           }
         case Right(None) =>
           debug(s"member $user already left, just updating the conversation state")
-          conversationsClient.postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(conv.lastEventTime))).future map { _ => SyncResult.Success }
+          conversationsClient
+            .postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(conv.lastEventTime)))
+            .future
+            .map(_ => Success)
 
         case Left(error) =>
           Future.successful(SyncResult(error))
       }
     }
 
-  def postConversationState(id: ConvId, state: ConversationState): Future[SyncResult] = withConversation(id) { conv =>
-    conversationsClient.postConversationState(conv.remoteId, state).future map (_.fold(SyncResult(_), _ => SyncResult.Success))
-  }
+  def postConversationState(id: ConvId, state: ConversationState): Future[SyncResult] =
+    withConversation(id) { conv =>
+      conversationsClient.postConversationState(conv.remoteId, state).map(SyncResult(_))
+    }
 
-  def postConversation(convId: ConvId, users: Set[UserId], name: Option[String], team: Option[TeamId], access: Set[Access], accessRole: AccessRole): Future[SyncResult] = {
+  def postConversation(convId: ConvId, users: Set[UserId], name: Option[Name], team: Option[TeamId], access: Set[Access], accessRole: AccessRole, receiptMode: Option[Int]): Future[SyncResult] = {
     debug(s"postConversation($convId, $users, $name)")
     val (toCreate, toAdd) = users.splitAt(PostMembersLimit)
-    conversationsClient.postConversation(toCreate, name, team, access, accessRole).future.flatMap {
+    val initState = ConversationInitState(users = toCreate, name = name, team = team, access = access, accessRole = accessRole, receiptMode = receiptMode)
+    conversationsClient.postConversation(initState).future.flatMap {
       case Right(response) =>
         convService.updateConversationsWithDeviceStartMessage(Seq(response)).flatMap { _ =>
           if (toAdd.nonEmpty) postConversationMemberJoin(convId, toAdd)
-          else Future.successful(SyncResult.Success)
+          else Future.successful(Success)
         }
       case Left(resp@ErrorResponse(403, msg, "not-connected")) =>
         warn(s"got error: $resp")
-        errorsService.addErrorWhenActive(ErrorData(ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_UNCONNECTED_USER, resp, convId)) map (_ => SyncResult.Failure(Some(resp), shouldRetry = false))
+        errorsService
+          .addErrorWhenActive(ErrorData(ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_UNCONNECTED_USER, resp, convId))
+          .map(_ => SyncResult(resp))
       case Left(error) =>
-        warn(s"unexpected error: $error")
         Future.successful(SyncResult(error))
     }
   }
@@ -155,37 +168,37 @@ class ConversationsSyncHandler(selfUserId:          UserId,
   def syncConvLink(convId: ConvId): Future[SyncResult] = {
     (for {
       Some(conv) <- convs.convById(convId)
-      resp <- conversationsClient.getLink(conv.remoteId).future
-      res <- resp match {
-        case Right(l) => convStorage.update(conv.id, _.copy(link = l)).map(_ => SyncResult.Success)
+      resp       <- conversationsClient.getLink(conv.remoteId).future
+      res        <- resp match {
+        case Right(l)  => convStorage.update(conv.id, _.copy(link = l)).map(_ => Success)
         case Left(err) => Future.successful(SyncResult(err))
       }
     } yield res)
       .recover {
         case NonFatal(e) =>
-          error("Failed to update conversation link", e)
-          SyncResult.Failure(Some(ErrorResponse.internalError("Failed to update conversation link")), shouldRetry = false)
+          Retry("Failed to update conversation link")
       }
   }
 
   private def postConv(id: ConvId)(post: ConversationData => Future[Either[ErrorResponse, Option[ConversationEvent]]]): Future[SyncResult] =
-    withConversation(id) { post(_) flatMap postConvRespHandler }
+    withConversation(id)(post(_).flatMap(postConvRespHandler))
 
   private val postConvRespHandler: (Either[ErrorResponse, Option[ConversationEvent]] => Future[SyncResult]) = {
     case Right(Some(event)) =>
       event.localTime = LocalInstant.Now
-      convEvents.handlePostConversationEvent(event) map { _ => SyncResult.Success }
+      convEvents
+        .handlePostConversationEvent(event)
+        .map(_ => Success)
     case Right(None) =>
       debug(s"postConv got success response, but no event")
-      Future successful SyncResult.Success
-    case Left(error) => Future successful SyncResult(error)
+      Future.successful(Success)
+    case Left(error) => Future.successful(SyncResult(error))
   }
 
   private def withConversation(id: ConvId)(body: ConversationData => Future[SyncResult]): Future[SyncResult] =
     convs.convById(id) flatMap {
       case Some(conv) => body(conv)
       case _ =>
-        error(s"No conversation found for id: $id")
-        Future.successful(SyncResult.Failure(None, shouldRetry = true)) // XXX: does it make sense to retry ?
+        Future.successful(Retry(s"No conversation found for id: $id")) // XXX: does it make sense to retry ?
     }
 }

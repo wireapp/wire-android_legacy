@@ -19,20 +19,22 @@ package com.waz.service.push
 
 import java.io.IOException
 
-import com.waz.ZLog
-import com.waz.ZLog._
+import com.waz.ZLog.LogTag
 import com.waz.api.NetworkMode
 import com.waz.content.{AccountStorage, GlobalPreferences}
+import com.waz.log.ZLog2._
+import com.waz.model.otr.ClientId
 import com.waz.model.{PushToken, PushTokenRemoveEvent, UserId}
 import com.waz.service.AccountsService.Active
 import com.waz.service.ZMessaging.accountTag
 import com.waz.service._
-import com.waz.service.tracking.TrackingService.exception
+import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
+import com.waz.sync.client.{ErrorOr, PushTokenClient}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.GoogleApi
-import com.waz.utils.{Backoff, ExponentialBackoff, returning}
+import com.waz.utils.{Backoff, ExponentialBackoff, RichEither, returning}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -42,9 +44,11 @@ import scala.util.control.NoStackTrace
   * Responsible for deciding when to generate and register push tokens and whether they should be active at all.
   */
 class PushTokenService(userId:       UserId,
+                       clientId:     ClientId,
                        globalToken:  GlobalTokenService,
                        accounts:     AccountsService,
                        accStorage:   AccountStorage,
+                       client:       PushTokenClient,
                        sync:         SyncServiceHandle)(implicit accountContext: AccountContext) {
 
   implicit lazy val logTag: LogTag = accountTag[PushTokenService](userId)
@@ -77,13 +81,41 @@ class PushTokenService(userId:       UserId,
     case _ => //do nothing
   }
 
+  /**
+    * @return Future(Right(true)) if we had to re-register the token (and thus should also perform a fetch. False
+    *         indicates no need for a fetch
+    */
+  def checkCurrentUserTokens(): ErrorOr[Boolean] =
+    for {
+      res <- client.getPushTokens().future
+      tok <- res.flatMapFuture(ts => userToken.head.map(t => Right((t, ts))))
+      res <- tok match {
+        case Right((Some(localUserToken), backendUserTokens)) =>
+          val backendUserToken = backendUserTokens.find(_.clientId == clientId).map(_.token)
+          if (backendUserToken.contains(localUserToken)) {
+            verbose(l"Current device push token is already registered with the backend")
+            Future.successful(Right(false))
+          }
+          else {
+            verbose(l"Current device push token is not registered with the Backend! Will re-register")
+            //There is no matching push token for this client on the backend, we need to re-register this user with the
+            //current device token. We can do this by wiping the current value saved for this user. The subscription above
+            //will then re-evaluate and re-register the token.
+            accStorage.update(userId, _.copy(pushToken = None)).map(_ => Right(true))
+          }
+
+        case Right(_) => Future.successful(Right(false))
+        case Left(err) => Future.successful(Left(err))
+      }
+    } yield res
+
   def onTokenRegistered(token: PushToken): Future[Unit] = {
-    verbose(s"onTokenRegistered: $userId, $token")
+    verbose(l"onTokenRegistered: $userId, $token")
     (for {
       true <- isLoggedIn.head
       _    <- accStorage.update(userId, _.copy(pushToken = Some(token)))
     } yield {}).recover {
-      case _ => warn("account was not logged in after token sync completed")
+      case _ => warn(l"account was not logged in after token sync completed")
     }
   }
 }
@@ -96,9 +128,10 @@ trait GlobalTokenService {
 
 class GlobalTokenServiceImpl(googleApi: GoogleApi,
                              prefs:     GlobalPreferences,
-                             network:   NetworkModeService) extends GlobalTokenService {
+                             network:   NetworkModeService,
+                             tracking:  TrackingService) extends GlobalTokenService {
   import PushTokenService._
-  import ZLog.ImplicitTag._
+  import com.waz.ZLog.ImplicitTag._
 
   implicit val dispatcher = new SerialDispatchQueue(name = "GlobalTokenService")
   implicit val ev = EventContext.Global
@@ -118,13 +151,13 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
 
   //Specify empty to force remove all tokens, or else only remove if `toRemove` contains the current token.
   override def resetGlobalToken(toRemove: Vector[PushToken] = Vector.empty) = {
-    verbose("resetGlobalToken")
+    verbose(l"resetGlobalToken")
     _currentToken().flatMap {
       case Some(t) if toRemove.contains(t) || toRemove.isEmpty =>
         if (deletingToken.isCompleted) {
           deletingToken = for {
             _ <- retry({
-              verbose("Deleting all push tokens")
+              verbose(l"Deleting all push tokens")
               googleApi.deleteAllPushTokens()
             })
             _ <- _currentToken := None
@@ -136,10 +169,10 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
   }
 
   override def setNewToken() = {
-    verbose("setNewToken")
+    verbose(l"setNewToken")
     if (settingToken.isCompleted) {
       settingToken = for {
-        t <- retry(returning(googleApi.getPushToken)(t => verbose(s"Setting new push token: $t")))
+        t <- retry(returning(googleApi.getPushToken)(t => verbose(l"Setting new push token: $t")))
         _ <- _currentToken := Some(t)
       } yield {}
     }
@@ -149,9 +182,9 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
   private def retry[A](f: => A, attempts: Int = 0): Future[A] = {
     returning(dispatcher(f).future.recoverWith {
       case ex: IOException =>
-        error(s"Failed action on google APIs, probably due to server connectivity error, will retry again", ex)
+        error(l"Failed action on google APIs, probably due to server connectivity error, will retry again", ex)
         for {
-          _ <- if (attempts % logAfterAttempts == 0) exception(new Exception("Too many push token registration attempts") with NoStackTrace, s"Failed to register an FCM push token after $logAfterAttempts attempts") else Future.successful({})
+          _ <- if (attempts % logAfterAttempts == 0) tracking.exception(new Exception("Too many push token registration attempts") with NoStackTrace, s"Failed to register an FCM push token after $logAfterAttempts attempts") else Future.successful({})
           _ <- CancellableFuture.delay(ResetBackoff.delay(attempts)).future
           _ <- network.networkMode.filter(_ != NetworkMode.OFFLINE).head
           t <- retry(f, attempts + 1)

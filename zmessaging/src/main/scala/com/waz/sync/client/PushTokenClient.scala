@@ -30,6 +30,7 @@ import org.json.JSONObject
 trait PushTokenClient {
   def postPushToken(token: PushTokenRegistration): ErrorOrResponse[PushTokenRegistration]
   def deletePushToken(token: String): ErrorOrResponse[Unit]
+  def getPushTokens(): ErrorOrResponse[Seq[PushTokenRegistration]]
 }
 
 class PushTokenClientImpl(implicit
@@ -41,20 +42,26 @@ class PushTokenClientImpl(implicit
   import HttpClient.AutoDerivation._
   import PushTokenClient._
 
-  override def postPushToken(token: PushTokenRegistration): ErrorOrResponse[PushTokenRegistration] = {
+  override def postPushToken(token: PushTokenRegistration) = {
     Request.Post(relativePath = PushesPath, body = token)
       .withResultType[PushTokenRegistration]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
-  override def deletePushToken(token: String): ErrorOrResponse[Unit] = {
+  override def deletePushToken(token: String) = {
     Request.Delete(relativePath = s"$PushesPath/$token")
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
+  override def getPushTokens() = {
+    Request.Get(relativePath = s"$PushesPath")
+      .withResultType[Seq[PushTokenRegistration]]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
 }
 
 object PushTokenClient {
@@ -62,6 +69,12 @@ object PushTokenClient {
 
   case class PushTokenRegistration(token: PushToken, senderId: String, clientId: ClientId, transport: String = "GCM")
   object PushTokenRegistration {
+
+    implicit lazy val DecoderSeq: JsonDecoder[Seq[PushTokenRegistration]] = new JsonDecoder[Seq[PushTokenRegistration]] {
+      import com.waz.utils.JsonDecoder._
+      override def apply(implicit js: JSONObject): Seq[PushTokenRegistration] =
+        array[PushTokenRegistration](js.getJSONArray("tokens"))
+    }
 
     implicit lazy val Decoder: JsonDecoder[PushTokenRegistration] = new JsonDecoder[PushTokenRegistration] {
       import com.waz.utils.JsonDecoder._

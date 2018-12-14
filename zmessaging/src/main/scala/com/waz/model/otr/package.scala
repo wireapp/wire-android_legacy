@@ -17,7 +17,7 @@
  */
 package com.waz.model
 
-import android.util.Base64
+import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import org.json.JSONObject
 import com.wire.cryptobox.PreKey
@@ -27,11 +27,11 @@ package object otr {
   implicit lazy val PreKeyEncoder: JsonEncoder[PreKey] = new JsonEncoder[PreKey] {
     override def apply(v: PreKey): JSONObject = JsonEncoder { o =>
       o.put("id", v.id)
-      o.put("key", Base64.encodeToString(v.data, Base64.NO_WRAP | Base64.NO_CLOSE))
+      o.put("key", AESUtils.base64(v.data))
     }
   }
 
   implicit lazy val PreKeyDecoder: JsonDecoder[PreKey] = new JsonDecoder[PreKey] {
-    override def apply(implicit js: JSONObject): PreKey = new PreKey(js.getInt("id"), Base64.decode(js.getString("key"), Base64.NO_WRAP | Base64.NO_CLOSE))
+    override def apply(implicit js: JSONObject): PreKey = new PreKey(js.getInt("id"), AESUtils.base64(js.getString("key")))
   }
 }

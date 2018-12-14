@@ -18,8 +18,8 @@
 package com.waz.service.conversation
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
-import com.waz.content.ConversationStorage
+import com.waz.log.ZLog2._
+import com.waz.content.{ConversationStorage, MessagesStorage}
 import com.waz.model.GenericContent._
 import com.waz.model._
 import com.waz.service.EventScheduler.Stage
@@ -32,12 +32,13 @@ import com.waz.utils._
 import scala.concurrent.Future
 
 class ConversationOrderEventsService(selfUserId: UserId,
-                                     convs:    ConversationsContentUpdater,
-                                     storage:  ConversationStorage,
-                                     messages: MessagesService,
-                                     users:    UserService,
-                                     sync:     SyncServiceHandle,
-                                     pipeline: EventPipeline) {
+                                     convs:      ConversationsContentUpdater,
+                                     storage:    ConversationStorage,
+                                     messages:   MessagesService,
+                                     msgStorage: MessagesStorage,
+                                     users:      UserService,
+                                     sync:       SyncServiceHandle,
+                                     pipeline:   EventPipeline) {
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationEventsDispatcher")
 
@@ -93,7 +94,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
   }
 
   def handlePostConversationEvent(event: ConversationEvent): Future[Unit] = {
-    debug(s"handlePostConversationEvent($event)")
+    debug(l"handlePostConversationEvent($event)")
     Future.sequence(Seq(
       event match {
         case ev: MessageEvent => pipeline(Seq(ev.withCurrentLocalTime())) // local time is required for the hot knock mechanism
@@ -111,7 +112,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
   private def processConversationOrderEvents(convId: RConvId, es: Seq[ConversationEvent]) =
     if (es.isEmpty) Future.successful(())
     else convs.processConvWithRemoteId(convId, retryAsync = true) { conv =>
-      verbose(s"processConversationOrderEvents($conv, $es)")
+      verbose(l"processConversationOrderEvents($conv, $es)")
       val lastTime = es.maxBy(_.time).time
       val fromSelf = es.filter(_.from == selfUserId)
       val lastRead = if (fromSelf.isEmpty) None else Some(fromSelf.maxBy(_.time).time)
@@ -126,35 +127,45 @@ class ConversationOrderEventsService(selfUserId: UserId,
     }
 
   private def processConversationUnarchiveEvents(convId: RConvId, events: Seq[ConversationEvent]) = {
-    verbose(s"processConversationUnarchiveEvents($convId, ${events.size} events)")
-    def unarchiveTime(es: Traversable[ConversationEvent]) = {
-      val all = es.filter(shouldUnarchive)
-      if (all.isEmpty) None
-      else Some((all.maxBy(_.time).time, all.exists(unarchiveMuted), all.exists(hasMention)))
-    }
-
-    val convs = events.groupBy(_.convId).mapValues(unarchiveTime).filter(_._2.isDefined)
-
-    storage.getByRemoteIds(convs.keys) flatMap { convIds =>
-      storage.updateAll2(convIds, { conv =>
-        convs.get(conv.remoteId).flatten match {
-          case Some((time, unarchiveMuted, hasMention)) if conv.archiveTime.isBefore(time) && (conv.isAllAllowed || unarchiveMuted || (conv.onlyMentionsAllowed && hasMention)) =>
-            conv.copy(archived = false, archiveTime = time)
-          case _ =>
-            conv
-        }
-      })
-    }
+    verbose(l"processConversationUnarchiveEvents($convId, ${events.size} events)")
+    for {
+      convs   <- Future.sequence(events.filter(shouldUnarchive).groupBy(_.convId).map {
+                  case (rId, es) if hasMentions(es) =>
+                    Future.successful(rId -> (es.maxBy(_.time).time, unarchiveMuted(es), true))
+                  case (rId, es) =>
+                    hasSelfQuotes(es).map(hasQuotes => rId -> (es.maxBy(_.time).time, unarchiveMuted(es), hasQuotes))
+                 }).map(_.toMap)
+      convIds <- storage.getByRemoteIds(convs.keys)
+      updates <- storage.updateAll2(convIds, { conv =>
+                   convs.get(conv.remoteId) match {
+                     case Some((time, unarchiveMuted, hasMentionOrQuote)) if conv.archiveTime.isBefore(time) && (conv.isAllAllowed || unarchiveMuted || (conv.onlyMentionsAllowed && hasMentionOrQuote)) =>
+                       conv.copy(archived = false, archiveTime = time)
+                     case _ =>
+                       conv
+                   }
+                 })
+    } yield updates
   }
 
-  private def unarchiveMuted(event: Event): Boolean = event match {
-    case GenericMessageEvent(_, _, _, GenericMessage(_, _: Knock)) => true
-    case _ => false
-  }
+  private def unarchiveMuted(events: Seq[ConversationEvent]): Boolean =
+    events.exists {
+      case GenericMessageEvent(_, _, _, GenericMessage(_, _: Knock)) => true
+      case _ => false
+    }
 
-  private def hasMention(event: Event): Boolean = event match {
-    case GenericMessageEvent(_, _, _, GenericMessage(_, Text(_, mentions, _))) =>
-      mentions.exists(_.userId.contains(selfUserId))
-    case _ => false
+  private def hasMentions(events: Seq[ConversationEvent]): Boolean =
+    events.exists {
+      case GenericMessageEvent(_, _, _, GenericMessage(_, Text(_, mentions, _, _))) =>
+        mentions.exists(_.userId.contains(selfUserId))
+      case _ => false
+    }
+
+  private def hasSelfQuotes(events: Seq[ConversationEvent]): Future[Boolean] = {
+    val originalIds = events.collect {
+      case GenericMessageEvent(_, _, _, GenericMessage(_, Text(_, _, _, Some(Quote(originalId, _))))) => originalId
+    }
+    msgStorage.getMessages(originalIds: _*).map(
+      _.exists(_.exists(_.userId == selfUserId))
+    )
   }
 }

@@ -18,10 +18,11 @@
 package com.waz.content
 
 import android.support.v4.util.LruCache
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.logTime
 import com.waz.content.MessagesCursor.Entry
 import com.waz.db.{CursorIterator, Reader, ReverseCursorIterator}
+import com.waz.log.ZLog2._
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.service.tracking.TrackingService
@@ -29,11 +30,10 @@ import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils._
 import com.waz.utils.events.EventStream
 import com.waz.utils.wrappers.DBCursor
-import org.threeten.bp.Instant
 
 import scala.collection.Searching.{Found, InsertionPoint}
 import scala.concurrent.{Await, Future}
-import scala.util.Success
+import scala.util.{Success, Try}
 
 trait MsgCursor {
   def size: Int
@@ -57,6 +57,7 @@ class MessagesCursor(cursor: DBCursor,
   private implicit val dispatcher = new SerialDispatchQueue(name = "MessagesCursor")
 
   private val messages = new LruCache[MessageId, MessageAndLikes](WindowSize * 2)
+  private val quotes = new LruCache[MessageId, Seq[MessageId]](WindowSize * 2)
   private val windowLoader = new WindowLoader(cursor)
 
   val createTime = LocalInstant.Now //used in UI
@@ -67,17 +68,20 @@ class MessagesCursor(cursor: DBCursor,
 
   private val subs = Seq (
     loader.onUpdate { id =>
-      Option(messages.get(id)) foreach { prev =>
 
-        loader.getMessageAndLikes(id).foreach(_ foreach { mAndL =>
-          messages.put(id, mAndL)
+      val replies = Option(quotes.get(id)).map(qs => qs.map(q => Option(messages.get(q)))).getOrElse(Seq())
+
+      (replies :+ Option(messages.get(id))).flatten.foreach { prev =>
+
+        loader.getMessageAndLikes(prev.message.id).foreach(_ foreach { mAndL =>
+          putMessage(mAndL)
           onUpdate ! (prev, mAndL)
         })
       }
     }
   )
 
-  verbose(s"init(_, $lastReadIndex, $lastReadTime) - lastRead: $lastReadIndex")
+  verbose(l"init(_, $lastReadIndex, $lastReadTime) - lastRead: $lastReadIndex")
 
   override def close(): Unit = {
     Threading.assertUiThread()
@@ -88,7 +92,7 @@ class MessagesCursor(cursor: DBCursor,
   override def finalize(): Unit = Future(if (! cursor.isClosed) cursor.close())
 
   def prefetchById(id: MessageId): Future[Unit] = {
-    verbose(s"prefetchById($id)")
+    verbose(l"prefetchById($id)")
     for {
       m <- loader(Seq(id))
       i <- m.headOption.fold(Future successful lastReadIndex) { d => asyncIndexOf(d.message.time) }
@@ -98,15 +102,15 @@ class MessagesCursor(cursor: DBCursor,
 
   /** will block if message is outside of prefetched window */
   override def indexOf(time: RemoteInstant): Int =
-    returning(LoggedTry(Await.result(asyncIndexOf(time), 10.seconds)).getOrElse(lastReadIndex)) { index =>
-      verbose(s"indexOf($time) = $index, lastReadTime: $lastReadTime")
+    returning(Try(Await.result(asyncIndexOf(time), 10.seconds)).getOrElse(lastReadIndex)) { index =>
+      verbose(l"indexOf($time) = $index, lastReadTime: $lastReadTime")
     }
 
   def asyncIndexOf(time: RemoteInstant, binarySearch: Boolean = false): Future[Int] = {
     def cursorSearch(from: Int, to: Int) = Future {
       logTime(s"time: $time not found in pre-fetched window, had to go through cursor, binarySearch: $binarySearch") {
         val index = if (binarySearch) cursorBinarySearch(time, from, to) else cursorLinearSearch(time, from, to)
-        verbose(s"index in cursor: $index")
+        verbose(l"index in cursor: $index")
         index
       }
     }
@@ -128,13 +132,13 @@ class MessagesCursor(cursor: DBCursor,
 
   def prefetch(window: IndexWindow): Future[Unit] = Future(window.msgs.iterator.filter(m => messages.get(m.id) == null).map(_.id).toVector) flatMap { ids =>
     if (ids.isEmpty) {
-      verbose(s"prefetch at offset ${window.offset} unnecessary")
+      verbose(l"prefetch at offset ${window.offset} unnecessary")
       Future.successful(())
     } else {
       val time = System.nanoTime()
       loader(ids) .map { ms =>
-        ms foreach { m => messages.put(m.message.id, m) }
-        verbose(s"pre-fetched ${ids.size} ids, got ${ms.size} msgs, for window offset: ${window.offset} in: ${(System.nanoTime() - time) / 1000 / 1000f} ms")
+        ms foreach { m => putMessage(m) }
+        verbose(l"pre-fetched ${ids.size} ids, got ${ms.size} msgs, for window offset: ${window.offset} in: ${(System.nanoTime() - time) / 1000 / 1000f} ms")
       } (Threading.Background) // LruCache is thread-safe, this mustn't be blocked by UI processing
     }
   }
@@ -149,7 +153,7 @@ class MessagesCursor(cursor: DBCursor,
 
     windowFuture.value match {
       case Some(Success(result)) => result
-      case _ => logTime(s"loading window for index: $index")(LoggedTry(Await.result(windowFuture, 5.seconds)).getOrElse(new IndexWindow(index, IndexedSeq.empty)))
+      case _ => logTime(s"loading window for index: $index")(Try(Await.result(windowFuture, 5.seconds)).getOrElse(new IndexWindow(index, IndexedSeq.empty)))
     }
   }
 
@@ -162,7 +166,7 @@ class MessagesCursor(cursor: DBCursor,
       MessageAndLikes.Empty
     } else {
       val fetching = if (prevWindow != window) {
-        verbose(s"prefetching at $index, offset: ${window.offset}")
+        verbose(l"prefetching at $index, offset: ${window.offset}")
         prevWindow = window
         prefetch(window)
       } else futureUnit
@@ -171,11 +175,11 @@ class MessagesCursor(cursor: DBCursor,
 
       val msg = messages.get(id)
       if (msg ne null) msg else {
-        logTime("waiting for window to prefetch")(LoggedTry(Await.result(fetching, 5.seconds)))
+        logTime("waiting for window to prefetch")(Try(Await.result(fetching, 5.seconds)))
         Option(messages.get(id)).getOrElse {
           logTime(s"loading message for id: $id, position: $index") {
-            val m = LoggedTry(Await.result(loader(Seq(id)), 500.millis).headOption).toOption.flatten
-            m foreach { messages.put(id, _) }
+            val m = Try(Await.result(loader(Seq(id)), 500.millis).headOption).toOption.flatten
+            m.foreach(putMessage)
             m.getOrElse(MessageAndLikes.Empty)
           }
         }
@@ -209,6 +213,14 @@ class MessagesCursor(cursor: DBCursor,
       case c if c != 0 && from == to => -1
       case c if c > 0 => cursorBinarySearch(time, from, idx)
       case _ => cursorBinarySearch(time, idx + 1, to)
+    }
+  }
+
+  private def putMessage(message: MessageAndLikes) = {
+    messages.put(message.message.id, message)
+    message.quote.foreach { q =>
+      val qs = Option(quotes.get(q.id)).getOrElse(Seq())
+      quotes.put(q.id, qs :+ message.message.id)
     }
   }
 }
@@ -268,11 +280,11 @@ class WindowLoader(cursor: DBCursor)(implicit dispatcher: SerialDispatchQueue) {
       (window.offset + WindowSize < totalCount && index + count > window.offset + WindowSize - WindowMargin)
 
   private def fetchWindow(start: Int, end: Int) = {
-    verbose(s"fetchWindow($start, $end)")
+    verbose(l"fetchWindow($start, $end)")
 
     val items = (start until end) map { pos =>
       if (cursor.moveToPosition(pos)) Entry(cursor) else {
-        error(s"can not move cursor to position: $pos, requested fetchWindow($start, $end)")
+        error(l"can not move cursor to position: $pos, requested fetchWindow($start, $end)")
         Entry.Empty
       }
     }
@@ -295,13 +307,13 @@ class WindowLoader(cursor: DBCursor)(implicit dispatcher: SerialDispatchQueue) {
     require(minCount <= MessagesCursor.WindowSize)
 
     if (shouldRefresh(window, index, minCount)) {
-      verbose(s"shouldRefresh($index) = true   offset: ${window.offset}")
+      verbose(l"shouldRefresh($index) = true   offset: ${window.offset}")
       windowLoading = loadWindow(index, minCount)
     }
 
     if (window.contains(index) && window.contains(index + minCount - 1)) Future.successful(window)
     else {
-      verbose(s"window doesn't contain all: $index - $minCount")
+      verbose(l"window doesn't contain all: $index - $minCount")
       windowLoading
     }
   }

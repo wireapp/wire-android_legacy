@@ -18,7 +18,7 @@
 package com.waz.service.otr
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.api.Verification
 import com.waz.content.UserPreferences.LastSelfClientsSyncRequestedTime
 import com.waz.content._
@@ -54,7 +54,7 @@ class OtrClientsService(selfId:    UserId,
   }
 
   val otrClientsProcessingStage = EventScheduler.Stage[OtrClientEvent] { (convId, events) =>
-    RichFuture.processSequential(events) {
+    RichFuture.traverseSequential(events) {
       case OtrClientAddEvent(client) =>
         for {
           _  <- updateUserClients(selfId, Seq(client))
@@ -91,7 +91,7 @@ class OtrClientsService(selfId:    UserId,
   }
 
   def updateUserClients(user: UserId, clients: Seq[Client], replace: Boolean = false): Future[UserClients] = {
-    verbose(s"updateUserClients($user, $clients, $replace)")
+    verbose(l"updateUserClients($user, $clients, $replace)")
     updateClients(Map(user -> clients), replace).map(_.head)
   }
 
@@ -104,7 +104,7 @@ class OtrClientsService(selfId:    UserId,
       needsSync.nonEmpty && needsSync.exists(_.user == selfId)
     }
 
-    verbose(s"updateUserClients(${ucs.map { case (id, cs) => id -> cs.size }}, $replace)")
+    verbose(l"updateUserClients(${ucs.map { case (id, cs) => id -> cs.size }}, $replace)")
     for {
       updated <- storage.updateClients(ucs, replace)
       _ <- if (needsLocationSync(selfId, updated)) sync.syncClientsLocation() else Future.successful({})
@@ -125,10 +125,10 @@ class OtrClientsService(selfId:    UserId,
       }
     }) flatMap {
       case Some(_) =>
-        verbose(s"clientLabel updated, client: $id, label: $label")
+        verbose(l"clientLabel updated, client: $id")
         sync.postClientLabel(id, label)
       case None =>
-        verbose(s"client label was not updated ($id, $label)")
+        verbose(l"client label was not updated $id")
         Future.successful(())
     }
 
@@ -140,7 +140,7 @@ class OtrClientsService(selfId:    UserId,
   def getSelfClient: Future[Option[Client]] =
     storage.get(selfId).map {
       case Some(cs) =>
-        verbose(s"self clients: $cs, clientId: $clientId")
+        verbose(l"self clients: $cs, clientId: $clientId")
         cs.clients.get(clientId)
       case _ => None
     }

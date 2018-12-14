@@ -21,7 +21,9 @@ import java.io.File
 import java.util.Date
 
 import com.google.protobuf.nano.MessageNano
+import com.waz.db.Col.{blob, text}
 import com.waz.model._
+import com.waz.service.assets2.AssetStorageImpl.Codec
 import com.waz.utils.wrappers.{DBContentValues, DBCursor, DBProgram}
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import org.threeten.bp.Instant
@@ -79,7 +81,7 @@ object Col {
 
   def text(name: Symbol) = Col[String](name.name, "TEXT")
   def text(name: Symbol, modifiers: String) = Col[String](name.name, "TEXT", modifiers)
-  def text[A](name: Symbol, enc: A => String, dec: String => A, modifiers: String = "") = Col[A](name.name, "TEXT")(new DbTranslator[A] {
+  def text[A](name: Symbol, enc: A => String, dec: String => A, modifiers: String = ""): Col[A] = Col[A](name.name, "TEXT")(new DbTranslator[A] {
     override def save(value: A, name: String, values: DBContentValues): Unit = values.put(name, enc(value))
     override def bind(value: A, index: Int, stmt: DBProgram): Unit = stmt.bindString(index, enc(value))
     override def load(cursor: DBCursor, index: Int): A = dec(cursor.getString(index))
@@ -121,5 +123,26 @@ object Col {
   def bool(name: Symbol, modifiers: String = "") = Col[Boolean](name.name, "INTEGER", modifiers)
 
   def file(name: Symbol, modifiers: String = "") = Col[File](name.name, "TEXT", modifiers)
-  def blob(name: Symbol, modifiers: String = "") = Col[Array[Byte]](name.name, "BLOB", modifiers)
+  def blob(name: Symbol, modifiers: String = ""): Col[Array[Byte]] = Col[Array[Byte]](name.name, "BLOB", modifiers)
+}
+
+trait ColumnBuilders[T] {
+
+  def asText[A](extractor: T => A)(name: Symbol, modifiers: String = "")(implicit codec: Codec[A, String]): ColBinder[A, T] =
+    ColBinder(Col.text[A](name, codec.serialize, codec.deserialize, modifiers), extractor)
+
+  def text(extractor: T => String)(name: Symbol, modifiers: String = ""): ColBinder[String, T] =
+    ColBinder(Col.text(name, modifiers), extractor)
+
+  def asTextOpt[A](extractor: T => Option[A])(name: Symbol, modifiers: String = "")(implicit codec: Codec[A, String]): ColBinder[Option[A], T] =
+    ColBinder(Col.opt(Col.text[A](name, codec.serialize, codec.deserialize, modifiers)), extractor)
+
+  def asBlob[A](extractor: T => A)(name: Symbol, modifiers: String = "")(implicit codec: Codec[A, Array[Byte]]): ColBinder[A, T] =
+    ColBinder(Col(name.name, "BLOB")(new DbTranslator[A] {
+      override def save(value: A, name: String, values: DBContentValues): Unit = values.put(name, codec.serialize(value))
+      override def bind(value: A, index: Int, stmt: DBProgram): Unit = stmt.bindBlob(index, codec.serialize(value))
+      override def load(cursor: DBCursor, index: Int): A = codec.deserialize(cursor.getBlob(index))
+      override def literal(value: A): String = codec.serialize(value).mkString(",")
+    }), extractor)
+
 }

@@ -19,9 +19,10 @@ package com.waz.model
 
 import android.content.Context
 import android.graphics.Color
+import com.waz.log.ZLog2.SafeToLog
 import com.waz.model.AccentColor._
 
-case class AccentColor(id: Int, r: Int, g: Int, b: Int, a: Int) {
+case class AccentColor(id: Int, r: Int, g: Int, b: Int, a: Int) extends SafeToLog {
   def this(id: Int, r: Double, g: Double, b: Double, a: Double) = this(id, int(r), int(g), int(b), int(a))
 
   lazy val color = Color.argb(a, r, g, b)

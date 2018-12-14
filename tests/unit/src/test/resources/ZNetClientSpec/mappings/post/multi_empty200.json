@@ -1,9 +1,0 @@
-{
-    "request": {
-        "method": "POST",
-        "url": "/post/multi_empty200"
-    },
-    "response": {
-        "status": 200
-    }
-}

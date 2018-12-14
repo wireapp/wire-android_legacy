@@ -17,9 +17,12 @@
  */
 package com.waz.service.otr
 
-import com.waz.ZLog._
+import com.waz.ZLog
+import com.waz.ZLog.LogTag
+import com.waz.log.ZLog2._
 import com.waz.api.Verification
 import com.waz.content._
+import com.waz.log.ZLog2.SafeToLog
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.UserClients
@@ -58,12 +61,12 @@ class VerificationStateUpdater(selfUserId:        UserId,
   }
 
   clientsStorage.onAdded { ucs =>
-    verbose(s"clientsStorage.onAdded: $ucs")
+    verbose(l"clientsStorage.onAdded: $ucs")
     onClientsChanged(ucs.map { uc => uc.user -> (uc, ClientAdded)} (breakOut))
   }
 
   clientsStorage.onUpdated { updates =>
-    verbose(s"clientsStorage.onUpdated: $updates")
+    verbose(l"clientsStorage.onUpdated: $updates")
     onClientsChanged(updates.map {
       case update @ (_, uc) => uc.user -> (uc, VerificationChange(update))
     } (breakOut))
@@ -96,12 +99,11 @@ class VerificationStateUpdater(selfUserId:        UserId,
         case (_, u) => u.id -> (if (u.isVerified) Other else changes(u.id)._2)
       } (breakOut)
 
-    verbose(s"onClientsChanged: ${changes.values.map(_._1)}")
+    verbose(l"onClientsChanged: ${changes.values.map(_._1)}")
     for {
       updates     <- updateUsers()
       userChanges = collectUserChanges(updates)
       convs       <- Future.traverse(userChanges.keys) { membersStorage.getActiveConvs }
-      _ = verbose(s"onClientsChanged: $convs \n $changes")
       _           <- updateConversations(convs.flatten.toSeq.distinct, userChanges)
     } yield ()
   }
@@ -135,13 +137,13 @@ class VerificationStateUpdater(selfUserId:        UserId,
       conv.copy(verified = state)
     }
 
-    verbose(s"updateConversations: $ids")
+    verbose(l"updateConversations: $ids")
 
     for {
       users     <- convUsers
       usersMap  =  users.filter(_._2.nonEmpty).toMap
       updates   <- convs.updateAll2(usersMap.keys.toSeq, { conv => update(conv, usersMap(conv.id)) })
-      _ = verbose(s"updateConversations: ${users.flatMap(_._2).map(_.map(_.getDisplayName))}")
+      _ = verbose(l"updateConversations: ${users.flatMap(_._2).map(_.map(_.getDisplayName))}")
       flattened = usersMap.map { case (conv, userList) => conv -> userList.flatten }
       _         <- updateProcessor(VerificationStateUpdate(updates, flattened, changes))
     } yield ()
@@ -149,7 +151,7 @@ class VerificationStateUpdater(selfUserId:        UserId,
 }
 
 object VerificationStateUpdater {
-  private implicit val tag: LogTag = logTagFor[VerificationStateUpdater]
+  private implicit val tag: LogTag = ZLog.logTagFor[VerificationStateUpdater]
 
   def serializationKey(userId: UserId) = (userId, "verification-state-update")
 
@@ -159,7 +161,7 @@ object VerificationStateUpdater {
 
   case class VerificationStateUpdate(convUpdates: Seq[(ConversationData, ConversationData)], convUsers: Map[ConvId, Seq[UserData]], changes: Map[UserId, VerificationChange])
 
-  sealed trait VerificationChange
+  sealed trait VerificationChange extends SafeToLog
   case object ClientUnverified extends VerificationChange
   case object ClientAdded extends VerificationChange
   case object MemberAdded extends VerificationChange

@@ -20,20 +20,24 @@ package com.waz.api.impl
 import com.waz.sync.client.{JsonObjectResponse, ResponseContent}
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.znet2.http.HttpClient.CustomErrorConstructor
-import com.waz.znet2.http.{BodyDeserializer, HttpClient, ResponseCode}
+import com.waz.znet2.http.{HttpClient, ResponseCode}
 import org.json.JSONObject
 
 import scala.util.Try
 
 case class ErrorResponse(code: Int, message: String, label: String) extends Throwable {
+
+
+  override def toString: String = s"ErrorResponse(code: $code, message: $message, label: $label)"
+
   /**
     * Returns true if retrying the request will always fail.
     * Non-fatal errors are temporary and retrying the request with the same parameters could eventually succeed.
     */
-  def isFatal = ResponseCode.isFatal(code)
+  def isFatal: Boolean = ResponseCode.isFatal(code)
 
-  // if this error should be reported to hockey
-  def shouldReportError = isFatal && code != ErrorResponse.CancelledCode && code != ErrorResponse.UnverifiedCode
+  // if this error should be reported
+  def shouldReportError: Boolean = isFatal && code != ErrorResponse.CancelledCode && code != ErrorResponse.UnverifiedCode
 }
 
 object ErrorResponse {
@@ -44,6 +48,8 @@ object ErrorResponse {
   val UnverifiedCode = 497
   val TimeoutCode = 599
   val ConnectionErrorCode = 598
+  val RetryCode = 597
+  val ExpiredCode = 596
   val UnauthorizedCode = 401
 
   val InternalError = ErrorResponse(InternalErrorCode, "InternalError", "")
@@ -85,4 +91,10 @@ object ErrorResponse {
   }
 
   def internalError(msg: String) = ErrorResponse(InternalError.code, msg, "internal-error")
+
+  def timeout(msg: String) = ErrorResponse(TimeoutCode, msg, "timeout")
+
+  def expired(msg: String) = ErrorResponse(ExpiredCode, msg, "expired")
+
+
 }

@@ -17,13 +17,14 @@
  */
 package com.waz.sync.handler
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.content.UsersStorage
 import com.waz.model.UserData.ConnectionStatus
-import com.waz.model.UserId
-import com.waz.service.{ConnectionServiceImpl, EventPipeline}
+import com.waz.model.{Name, UserId}
+import com.waz.service.ConnectionServiceImpl
 import com.waz.sync.SyncResult
+import com.waz.sync.SyncResult.{Retry, Success}
 import com.waz.sync.client.ConnectionsClient
 import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
@@ -40,32 +41,33 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
   def syncConnections(): Future[SyncResult] = {
     connectionsClient.loadConnections().future flatMap {
       case Left(error) =>
-        warn("syncConnections failed")
         Future.successful(SyncResult(error))
       case Right(connections) =>
-        connectionService.handleUserConnectionEvents(connections).map(_ => SyncResult.Success)
+        connectionService
+          .handleUserConnectionEvents(connections)
+          .map(_ => Success)
     }
   }
 
-  def postConnection(userId: UserId, name: String, message: String): Future[SyncResult] =
+  def postConnection(userId: UserId, name: Name, message: String): Future[SyncResult] =
     connectionsClient.createConnection(userId, name, message).future flatMap {
       case Right(event) =>
         verbose(s"postConnection($userId) success: $event")
-        connectionService.handleUserConnectionEvents(Seq(event)).map(_ => SyncResult.Success)
-
+        connectionService
+          .handleUserConnectionEvents(Seq(event))
+          .map(_ => Success)
       case Left(error) =>
-        warn("postConnection failed")
         Future.successful(SyncResult(error))
     }
 
   def postConnectionStatus(userId: UserId, status: Option[ConnectionStatus]): Future[SyncResult] = usersStorage.get(userId) flatMap {
-    case Some(user) => connectionsClient.updateConnection(userId, status getOrElse user.connection).future flatMap {
+    case Some(user) => connectionsClient.updateConnection(userId, status getOrElse user.connection).future.flatMap {
       case Right(Some(event)) =>
-        connectionService.handleUserConnectionEvents(Seq(event)).map(_ => SyncResult.Success)
+        connectionService.handleUserConnectionEvents(Seq(event)).map(_ => Success)
 
       case Right(None) =>
         warn("postConnectionStatus was successful, but didn't return an event, no change")
-        Future.successful(SyncResult.Success)
+        Future.successful(Success)
 
       case Left(error) =>
         // FIXME: handle 'bad-conn-update' response, it's possible that there is some race condition and the state that
@@ -75,7 +77,6 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
     }
 
     case None =>
-      error(s"No user found for id: $userId")
-      Future.successful(SyncResult.failed())
+      Future.successful(Retry(s"No user found for id: $userId"))
   }
 }

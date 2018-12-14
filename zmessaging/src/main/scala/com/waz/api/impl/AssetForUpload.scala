@@ -19,8 +19,6 @@ package com.waz.api.impl
 
 import java.io.File
 
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api
 import com.waz.api.Asset.LoadCallback
 import com.waz.api.AudioEffect
@@ -63,17 +61,14 @@ case class AudioAssetForUpload(override val id: AssetId, data: CacheEntry, durat
   override def getDuration: bp.Duration = duration
 
   override def delete(): Unit = {
-    verbose(s"delete() $this")
     data.delete()
   }
 
   override def applyEffect(effect: api.AudioEffect, callback: LoadCallback[api.AudioAssetForUpload]): Unit = {
-    verbose(s"applyEffect($effect) $this")
     fx(effect, data.cacheFile).onComplete {
       case Success(asset) =>
         callback.onLoaded(asset)
       case Failure(cause) =>
-        error("effect application failed", cause)
         callback.onLoadFailed()
     }(Threading.Ui)
   }

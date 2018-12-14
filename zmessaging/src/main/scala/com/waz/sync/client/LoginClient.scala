@@ -20,7 +20,7 @@ package com.waz.sync.client
 import java.util.UUID
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.api.Credentials
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.AccountData.Label
@@ -87,10 +87,10 @@ class LoginClientImpl(tracking: TrackingService)
         tracking.exception(ex, "Unexpected error when trying to log in.")
         Left(ErrorResponse.internalError("Unexpected error when trying to log in: " + ex.getMessage))
     } flatMap { _ =>
-      verbose(s"throttling, delay: $requestDelay")
+      verbose(l"throttling, delay: $requestDelay")
       CancellableFuture.delay(requestDelay).future
     } flatMap { _ =>
-      verbose(s"starting request")
+      verbose(l"starting request")
       lastRequestTime = System.currentTimeMillis()
       request.map {
         case Left(error) =>
@@ -117,7 +117,7 @@ class LoginClientImpl(tracking: TrackingService)
   }
 
   def loginNow(credentials: Credentials): ErrorOr[LoginResult] = {
-    debug(s"trying to login with credentials: $credentials")
+    debug(l"trying to login with credentials: $credentials")
     val label = Label()
     val params = JsonEncoder { o =>
       credentials.addToLoginJson(o)
@@ -209,11 +209,13 @@ object LoginClient {
   def InitiateSSOLoginPath(code: String) = s"/sso/initiate-login/$code"
 
   def getCookieFromHeaders(headers: Headers): Option[Cookie] = headers.get(SetCookie) flatMap {
-    case header @ CookieHeader(cookie) =>
-      verbose(s"parsed cookie from header: $header, cookie: $cookie")
-      Some(AuthenticationManager.Cookie(cookie))
-    case header =>
-      warn(s"Unexpected content for Set-Cookie header: $header")
+    case CookieHeader(cookie) =>
+      Some(returning(AuthenticationManager.Cookie(cookie)) { cookie =>
+        verbose(l"parsed cookie from header, cookie: $cookie")
+      })
+
+    case _ =>
+      warn(l"Unexpected content for Set-Cookie header")
       None
   }
 

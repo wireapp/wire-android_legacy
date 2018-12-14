@@ -19,10 +19,11 @@ package com.waz.content
 
 import android.content.Context
 import com.waz.db.ZGlobalDB
+import com.waz.service.tracking.TrackingService
 import com.waz.threading.{SerialDispatchQueue, Threading}
 
-class GlobalDatabase(context: Context, dbNameSuffix: String = "") extends Database {
+class GlobalDatabase(context: Context, dbNameSuffix: String = "", tracking: TrackingService) extends Database {
 
   override implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(executor = Threading.IOThreadPool, name = "GlobalDatabase")
-  val dbHelper = new ZGlobalDB(context, dbNameSuffix)
+  val dbHelper = new ZGlobalDB(context, dbNameSuffix, tracking)
 }

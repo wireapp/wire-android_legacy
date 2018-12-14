@@ -35,10 +35,9 @@ class UserSearchSyncHandler(userSearch: UserSearchService, client: UserSearchCli
     debug(s"starting sync for: $query")
     client.getContacts(query).future flatMap {
       case Right(results) =>
-        debug(s"searchSync, got: $results")
-        userSearch.updateSearchResults(query, results).map(_ => SyncResult.Success)
+        userSearch.updateSearchResults(query, results)
+          .map(_ => SyncResult.Success)
       case Left(error) =>
-        warn("graphSearch request failed")
         successful(SyncResult(error))
     }
   }
@@ -48,7 +47,6 @@ class UserSearchSyncHandler(userSearch: UserSearchService, client: UserSearchCli
       debug(s"exactMatchHandle, got: $userId for the handle $handle")
       for {
         _ <- usersSyncHandler.syncUsers(userId)
-        _ = debug(s"user with the handle $handle synced")
         _ <- userSearch.updateExactMatch(handle, userId)
       } yield SyncResult.Success
     case Right(None)         => successful(SyncResult.Success)

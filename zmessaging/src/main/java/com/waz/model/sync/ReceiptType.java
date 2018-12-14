@@ -23,7 +23,8 @@ import java.util.Map;
 public enum ReceiptType {
 
     Delivery("delivery"),
-    EphemeralExpired("ephemeral-expired");
+    EphemeralExpired("ephemeral-expired"),
+    Read("read");
 
     public final String name;
 

@@ -32,7 +32,6 @@ class Timeouts {
 
   class Messages {
     def lastReadPostDelay = 15.seconds
-    def sendingTimeout = 30.seconds
     def incomingTimeout = 30.seconds
   }
 

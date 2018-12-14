@@ -25,10 +25,9 @@ import com.waz.ZLog._
 import com.waz.api.Message.Part
 import com.waz.model.{Mention, MessageContent}
 import com.waz.sync.client.{SoundCloudClient, YouTubeClient}
-import com.waz.utils.LoggedTry
 import com.waz.utils.wrappers.URI
 
-import scala.collection.JavaConverters._
+import scala.util.Try
 import scala.util.control.NonFatal
 
 object RichMediaContentParser {
@@ -109,8 +108,6 @@ object RichMediaContentParser {
     }
   }
 
-  def javaSplitContent(content: String) = splitContent(content).asJava
-
   case class GoogleMapsLocation(x: String, y: String, zoom: String)
 
   // XXX: this is to block some messages from being treated as weblinks, one case where we need it is giphy,
@@ -169,7 +166,7 @@ object RichMediaContentParser {
   }
 
   def parseUriWithScheme(content: String, defaultScheme: String = "https") = {
-    LoggedTry {
+    Try {
       val cleanContent = cleanInvalidEscapes(content)
 
       val u = URI.parse(cleanContent)
@@ -186,9 +183,6 @@ object RichMediaContentParser {
 
 class MessageContentBuilder {
   val res = Seq.newBuilder[MessageContent]
-
-  def +=(part: String) =
-    if (part.trim.nonEmpty) res += RichMediaContentParser.textMessageContent(part)
 
   def +=(tpe: Part.Type, part: String) =
     if (part.trim.nonEmpty) res += MessageContent(tpe, part)

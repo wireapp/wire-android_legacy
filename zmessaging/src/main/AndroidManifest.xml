@@ -10,7 +10,6 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application>
-        <service android:name="com.waz.zms.SyncService" />
         <service android:name="com.waz.zms.NotificationsAndroidService" />
 
         <service android:name="com.waz.zms.CallWakeService" android:exported="true" />

@@ -17,7 +17,6 @@
  */
 package com.waz.sync.client
 
-import android.util.Base64
 import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.{OtrClientType, Verification}
@@ -27,6 +26,7 @@ import com.waz.model.{RemoteInstant, UserId}
 import com.waz.sync.client.OtrClient.{ClientKey, MessageResponse}
 import com.waz.sync.otr.OtrSyncHandler.OtrMessage
 import com.waz.utils._
+import com.waz.utils.crypto.AESUtils
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
@@ -36,6 +36,7 @@ import com.wire.messages.nano.Otr.ClientEntry
 import org.json.{JSONArray, JSONObject}
 
 import scala.collection.breakOut
+import scala.util.Try
 
 trait OtrClient {
   def loadPreKeys(user: UserId): ErrorOrResponse[Seq[ClientKey]]
@@ -249,7 +250,7 @@ object OtrClient {
     override def apply(content: EncryptedContent): JSONObject = JsonEncoder { o =>
       content.content foreach { case (user, clients) =>
         o.put(user.str, JsonEncoder { u =>
-          clients foreach { case (c, msg) => u.put(c.str, Base64.encodeToString(msg, Base64.NO_WRAP)) }
+          clients foreach { case (c, msg) => u.put(c.str, AESUtils.base64(msg)) }
         })
       }
     }
@@ -257,7 +258,7 @@ object OtrClient {
 
   implicit lazy val PreKeyDecoder: JsonDecoder[PreKey] = JsonDecoder.lift { implicit js =>
     val keyStr: String = 'key
-    new PreKey('id, Base64.decode(keyStr, Base64.DEFAULT))
+    new PreKey('id, AESUtils.base64(keyStr))
   }
 
   implicit lazy val ClientDecoder: JsonDecoder[ClientKey] = JsonDecoder.lift { implicit js =>
@@ -279,7 +280,7 @@ object OtrClient {
     import scala.collection.JavaConverters._
     def unapply(content: ResponseContent): Option[PreKeysResponse] = content match {
       case JsonObjectResponse(js) =>
-        LoggedTry.local {
+        Try {
           js.keys().asInstanceOf[java.util.Iterator[String]].asScala.map { userId =>
             val cs = js.getJSONObject(userId)
             val clients = cs.keys().asInstanceOf[java.util.Iterator[String]].asScala.map { clientId =>
@@ -297,15 +298,15 @@ object OtrClient {
     def client(implicit js: JSONObject) = Client(decodeId[ClientId]('id), 'label, 'model, decodeOptUtcDate('time).map(_.instant), opt[Location]('location), 'address, devType = decodeOptString('class).fold(OtrClientType.PHONE)(OtrClientType.fromDeviceClass))
 
     def unapply(content: ResponseContent): Option[Seq[Client]] = content match {
-      case JsonObjectResponse(js) => LoggedTry(Seq(client(js))).toOption
-      case JsonArrayResponse(arr) => LoggedTry.local(JsonDecoder.array(arr, { (arr, i) => client(arr.getJSONObject(i)) })).toOption
+      case JsonObjectResponse(js) => Try(Seq(client(js))).toOption
+      case JsonArrayResponse(arr) => Try(JsonDecoder.array(arr, { (arr, i) => client(arr.getJSONObject(i)) })).toOption
       case _ => None
     }
   }
 
   object RemainingPreKeysResponse {
     def unapply(content: ResponseContent): Option[Seq[Int]] = content match {
-      case JsonArrayResponse(arr) => LoggedTry.local(JsonDecoder.array(arr, _.getString(_).toInt)).toOption
+      case JsonArrayResponse(arr) => Try(JsonDecoder.array(arr, _.getString(_).toInt)).toOption
       case _ => None
     }
   }

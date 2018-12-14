@@ -17,12 +17,13 @@
  */
 package com.waz.service
 
-import com.waz.ZLog._
+import com.waz.{ZLog, model}
+import com.waz.ZLog.LogTag
+import com.waz.log.ZLog2._
 import com.waz.model.GenericContent._
 import com.waz.model._
 import com.waz.service.conversation.{ConversationOrderEventsService, ConversationsContentUpdaterImpl}
 import com.waz.service.messages.{MessagesContentUpdater, ReactionsService, ReceiptService}
-import org.threeten.bp.Instant
 
 import scala.concurrent.Future.traverse
 
@@ -34,11 +35,11 @@ class GenericMessageService(selfUserId: UserId,
                             receipts:   ReceiptService,
                             users:      UserService) {
 
-  private implicit val tag: LogTag = logTagFor[GenericMessageService]
+  private implicit val tag: LogTag = ZLog.logTagFor[GenericMessageService]
   import com.waz.threading.Threading.Implicits.Background
 
   val eventProcessingStage = EventScheduler.Stage[GenericMessageEvent] { (_, events) =>
-    verbose(s"got events: ${events.map(_.from)}")
+    verbose(l"got events: ${events.map(_.from)}")
 
     def lastForConv(items: Seq[(RConvId, RemoteInstant)]) = items.groupBy(_._1).map { case (conv, times) => times.maxBy(_._2.toEpochMilli) }
 
@@ -58,13 +59,19 @@ class GenericMessageService(selfUserId: UserId,
       case GenericMessageEvent(_, _, _, GenericMessage(_, MsgDeleted(_, msg))) => msg
     }
 
-    val confirmed = events collect {
-      case GenericMessageEvent(_, _, _, GenericMessage(_, Receipt(msg))) => msg
-    }
+    val confirmed = events.collect {
+      case GenericMessageEvent(_, _, _, GenericMessage(_, DeliveryReceipt(msgs))) => msgs
+    }.flatten
 
     val availabilities = (events collect {
       case GenericMessageEvent(_, _, userId, GenericMessage(_, AvailabilityStatus(available))) => userId -> available
     }).toMap
+
+    val read = events.collect {
+      case GenericMessageEvent(_, time, from, GenericMessage(_, Proto.ReadReceipt(msgs))) => msgs.map { msg =>
+        model.ReadReceipt(msg, from, time)
+      }
+    }.flatten
 
     for {
       _ <- messages.deleteOnUserRequest(deleted)
@@ -75,7 +82,8 @@ class GenericMessageService(selfUserId: UserId,
       _ <- traverse(cleared) { case (remoteId, timestamp) =>
         convs.processConvWithRemoteId(remoteId, retryAsync = true) { conv => convs.updateConversationCleared(conv.id, timestamp) }
       }
-      _ <- receipts.processReceipts(confirmed)
+      _ <- receipts.processDeliveryReceipts(confirmed)
+      _ <- receipts.processReadReceipts(read)
       _ <- users.storeAvailabilities(availabilities)
     } yield ()
   }

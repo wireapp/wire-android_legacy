@@ -20,12 +20,13 @@ package com.waz.content
 import android.content.Context
 import com.waz.db.ZMessagingDB
 import com.waz.model.UserId
+import com.waz.service.tracking.TrackingService
 import com.waz.threading.{SerialDispatchQueue, Threading}
 
 /**
  * Single user storage. Keeps data specific to used user account.
   */
-class ZmsDatabase(user: UserId, context: Context) extends Database {
+class ZmsDatabase(user: UserId, context: Context, tracking: TrackingService) extends Database {
   override implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(executor = Threading.IOThreadPool, name = "ZmsDatabase_" + user.str.substring(24))
-  val dbHelper = new ZMessagingDB(context, user.str)
+  val dbHelper = new ZMessagingDB(context, user.str, tracking)
 }

@@ -19,7 +19,7 @@ package com.waz.service.messages
 
 import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
-import com.waz.content.{Likes, ReactionsStorageImpl}
+import com.waz.content.{Likes, ReactionsStorage, ReactionsStorageImpl}
 import com.waz.model._
 import com.waz.service.UserService
 import com.waz.sync.SyncServiceHandle
@@ -28,7 +28,7 @@ import com.waz.utils._
 
 import scala.concurrent.Future
 
-class ReactionsService(storage: ReactionsStorageImpl, messages: MessagesContentUpdater, sync: SyncServiceHandle, users: UserService, selfUserId: UserId) {
+class ReactionsService(storage: ReactionsStorage, messages: MessagesContentUpdater, sync: SyncServiceHandle, users: UserService, selfUserId: UserId) {
   import Threading.Implicits.Background
 
   def like(conv: ConvId, msg: MessageId): Future[Likes] = addReaction(conv, msg, Liking.Action.Like)
@@ -52,8 +52,8 @@ class ReactionsService(storage: ReactionsStorageImpl, messages: MessagesContentU
   def processReactions(likings: Seq[Liking]): Future[Seq[Likes]] = Future.traverse(likings) { storage.addOrUpdate } // FIXME: use batching
 }
 
-case class MessageAndLikes(message: MessageData, likes: IndexedSeq[UserId], likedBySelf: Boolean)
-object MessageAndLikes extends ((MessageData, IndexedSeq[UserId], Boolean) => MessageAndLikes) {
-  val Empty = MessageAndLikes(MessageData.Empty, Vector.empty, likedBySelf = false)
-  val Deleted = MessageAndLikes(MessageData.Deleted, Vector.empty, likedBySelf = false)
+case class MessageAndLikes(message: MessageData, likes: IndexedSeq[UserId], likedBySelf: Boolean, quote: Option[MessageData])
+object MessageAndLikes extends ((MessageData, IndexedSeq[UserId], Boolean, Option[MessageData]) => MessageAndLikes) {
+  val Empty = MessageAndLikes(MessageData.Empty, Vector.empty, likedBySelf = false, None)
+  val Deleted = MessageAndLikes(MessageData.Deleted, Vector.empty, likedBySelf = false, None)
 }

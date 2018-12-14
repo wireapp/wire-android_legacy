@@ -24,6 +24,7 @@ import com.waz.model.PushToken
 import com.waz.service.BackendConfig
 import com.waz.service.push.PushTokenService
 import com.waz.sync.SyncResult
+import com.waz.sync.SyncResult.Retry
 import com.waz.sync.client.PushTokenClient
 import com.waz.sync.client.PushTokenClient.PushTokenRegistration
 import com.waz.threading.{CancellableFuture, Threading}
@@ -37,14 +38,19 @@ class PushTokenSyncHandler(pushTokenService: PushTokenService, backend: BackendC
   def registerPushToken(token: PushToken): Future[SyncResult] = {
     debug(s"registerPushToken: $token")
     client.postPushToken(PushTokenRegistration(token, backend.pushSenderId, clientId)).future.flatMap {
-      case Right(PushTokenRegistration(`token`, _, `clientId`, _)) => pushTokenService.onTokenRegistered(token).map(_ => SyncResult.Success)
-      case Right(_)  => Future.successful(SyncResult.Failure(None, shouldRetry = false))
-      case Left(err) => Future.successful(SyncResult.Failure(Some(err)))
+      case Right(PushTokenRegistration(`token`, _, `clientId`, _)) =>
+        pushTokenService
+          .onTokenRegistered(token)
+          .map(_ => SyncResult.Success)
+      case Right(_)  =>
+        Future.successful(Retry("Unexpected response"))
+      case Left(err) =>
+        Future.successful(SyncResult(err))
     }
   }
 
   def deleteGcmToken(token: PushToken): CancellableFuture[SyncResult] = {
     debug(s"deleteGcmToken($token)")
-    client.deletePushToken(token.str) map { _.fold(SyncResult(_), _ => SyncResult.Success) }
+    client.deletePushToken(token.str).map(SyncResult(_))
   }
 }

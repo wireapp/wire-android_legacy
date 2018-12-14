@@ -18,7 +18,8 @@
 package com.waz.service.push
 
 import android.content.Context
-import com.waz.ZLog._
+import com.waz.ZLog.LogTag
+import com.waz.log.ZLog2._
 import com.waz.api.NetworkMode.{OFFLINE, UNKNOWN}
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.GlobalPreferences.BackendDrift
@@ -131,7 +132,7 @@ class PushServiceImpl(selfUserId:           UserId,
 
   private def processEncryptedRows() =
     notificationStorage.encryptedEvents.flatMap { rows =>
-      verbose(s"Processing ${rows.size} encrypted rows")
+      verbose(l"Processing ${rows.size} encrypted rows")
       Future.sequence(rows.map { row =>
         if (!isOtrEventJson(row.event)) notificationStorage.setAsDecrypted(row.index)
         else {
@@ -139,11 +140,11 @@ class PushServiceImpl(selfUserId:           UserId,
           val writer = notificationStorage.writeClosure(row.index)
           otrService.decryptStoredOtrEvent(otrEvent, writer).flatMap {
             case Left(Duplicate) =>
-              verbose("Ignoring duplicate message")
+              verbose(l"Ignoring duplicate message")
               notificationStorage.remove(row.index)
             case Left(error) =>
               val e = OtrErrorEvent(otrEvent.convId, otrEvent.time, otrEvent.from, error)
-              verbose(s"Got error when decrypting: ${e.toString}\nOtrError: ${error.toString}")
+              verbose(l"Got error when decrypting: $e")
               notificationStorage.writeError(row.index, e)
             case Right(_) => Future.successful(())
           }
@@ -162,7 +163,7 @@ class PushServiceImpl(selfUserId:           UserId,
       }
 
     notificationStorage.getDecryptedRows().flatMap { rows =>
-      verbose(s"Processing ${rows.size} rows")
+      verbose(l"Processing ${rows.size} rows")
       if (rows.nonEmpty)
         for {
           _ <- pipeline(rows.flatMap(decodeRow))
@@ -218,13 +219,13 @@ class PushServiceImpl(selfUserId:           UserId,
             )
           }
         case Right(LoadNotificationsResult(response, historyLost)) if lastId.isDefined && historyLost =>
-          warn(s"/notifications failed with 404, history lost")
+          warn(l"/notifications failed with 404, history lost")
           futureHistoryResults(response.notifications, response.beTime, historyLost)
         case Left(e @ ErrorResponse(ResponseCode.Unauthorized, _, _)) =>
-          warn(s"Logged out, failing sync request")
+          warn(l"Logged out, failing sync request")
           CancellableFuture.failed(FetchFailedException(e))
         case Left(err) =>
-          warn(s"Request failed due to $err: attempting to load last page (since id: $lastId) again? $withRetries")
+          warn(l"Request failed due to $err: attempting to load last page (since id: $lastId) again? $withRetries")
           if (!withRetries) CancellableFuture.failed(FetchFailedException(err))
           else {
             //We want to retry the download after the backoff is elapsed and the network is available,
@@ -302,7 +303,7 @@ class PushServiceImpl(selfUserId:           UserId,
       }
 
     if (fetchInProgress.isCompleted) {
-      verbose(s"Sync history in response to $source")
+      verbose(l"Sync history in response to $source")
       fetchInProgress = idPref().flatMap(syncHistory)
     }
     fetchInProgress
@@ -320,8 +321,17 @@ object PushService {
 
   var syncHistoryBackoff: Backoff = new ExponentialBackoff(3.second, 15.seconds)
 
-  trait SyncSource
+  sealed trait SyncSource
   case class FetchFromJob(nId: Option[Uid]) extends SyncSource
   case class FetchFromIdle(nId: Option[Uid]) extends SyncSource
   case class WebSocketChange(connected: Boolean) extends SyncSource
+  object ForceSync extends SyncSource
+
+  implicit val SyncSourceLogShow: LogShow[SyncSource] =
+    LogShow.createFrom {
+      case FetchFromJob(nId) => l"FetchFromJob(nId: $nId)"
+      case FetchFromIdle(nId) => l"FetchFromIdle(nId: $nId)"
+      case WebSocketChange(connected) => l"WebSocketChange(connected: $connected)"
+      case ForceSync => l"ForcePush"
+    }
 }

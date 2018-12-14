@@ -18,11 +18,12 @@
 package com.waz.model
 
 import android.webkit.MimeTypeMap
+import com.waz.log.ZLog2.SafeToLog
 import com.waz.utils._
 
 import scala.PartialFunction.cond
 
-case class Mime(str: String) {
+case class Mime(str: String) extends SafeToLog {
 
   lazy val extension = Mime.extensionsMap.getOrElse(this, str.drop(str.indexOf('/') + 1))
   lazy val isEmpty = str.isEmpty

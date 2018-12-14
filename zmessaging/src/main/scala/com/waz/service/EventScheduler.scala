@@ -17,8 +17,9 @@
  */
 package com.waz.service
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.{LogTag, logTagFor}
+import com.waz.log.ZLog2._
 import com.waz.model.{Event, RConvEvent, RConvId}
 import com.waz.threading.Threading
 import com.waz.utils._
@@ -46,7 +47,7 @@ class EventScheduler(layout: EventScheduler.Stage) {
       case s: Stage.Atomic => s.eventTag
       case Stage.Composite(strat: Strategy, _) => strat.getClass.getSimpleName
     }
-    verbose(s"scheduling ${eligible.size} eligible events from total ${events.size}")(s"${logTagFor[Stage]}[$logTag]")
+    verbose(l"scheduling ${eligible.size} eligible events from total ${events.size}")(s"${logTagFor[Stage]}[$logTag]")
 
     if (eligible.isEmpty) NOP else stage match {
       case s: Stage.Atomic =>
@@ -111,7 +112,7 @@ object EventScheduler {
 
       def apply(conv: RConvId, es: Traversable[Event]): Future[Any] = {
         val events: Vector[A] = es.collect { case EligibleEvent(a) if include(a) => a }(breakOut)
-        verbose(s"processing ${events.size} ${if (events.size == 1) "event" else "events"}: ${events.take(10)} ${if (events.size > 10) "..." else ""}")(s"${logTagFor[Stage]}[$eventTag]")
+        verbose(l"processing ${events.size} ${showString(if (events.size == 1) "event" else "events")}: ${events.take(10)} ${showString(if (events.size > 10) "..." else "")}")(s"${logTagFor[Stage]}[$eventTag]")
         processor(conv, events)
       }
     }

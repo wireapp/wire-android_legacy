@@ -19,11 +19,12 @@ package com.waz.znet2
 
 import java.io.{ByteArrayInputStream, InputStream}
 import java.security.MessageDigest
+import java.util.concurrent.TimeUnit
 
-import android.util.Base64
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.threading.CancellableFuture
+import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{ExecutorServiceWrapper, IoUtils, RichOption}
 import com.waz.znet.ServerTrust
 import com.waz.znet2.http.HttpClient.{Progress, ProgressCallback}
@@ -34,6 +35,7 @@ import okhttp3.{CertificatePinner, CipherSuite, ConnectionSpec, Dispatcher, Inte
 import okio.BufferedSink
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -73,24 +75,31 @@ class HttpClientOkHttpImpl(client: OkHttpClient)(implicit protected val ec: Exec
 
 object HttpClientOkHttpImpl {
 
-  def apply(enableLogging: Boolean)(implicit ec: ExecutionContext): HttpClientOkHttpImpl =
+  def apply(enableLogging: Boolean, timeout: Option[FiniteDuration] = None)(implicit ec: ExecutionContext): HttpClientOkHttpImpl =
     new HttpClientOkHttpImpl(
       createOkHttpClient(
         Some(createModernConnectionSpec),
         Some(createCertificatePinner),
-        if (enableLogging) Some(createLoggerInterceptor) else None
+        if (enableLogging) Some(createLoggerInterceptor) else None,
+        timeout
       )
     )
 
   def createOkHttpClient(
       connectionSpec: Option[ConnectionSpec] = None,
       certificatePinner: Option[CertificatePinner] = None,
-      loggerInterceptor: Option[Interceptor] = None
+      loggerInterceptor: Option[Interceptor] = None,
+      timeout: Option[FiniteDuration] = None
   )(implicit ec: ExecutionContext): OkHttpClient = {
     val builder = new OkHttpClient.Builder()
     connectionSpec.foreach(spec => builder.connectionSpecs(List(spec, ConnectionSpec.CLEARTEXT).asJava))
     certificatePinner.foreach(pinner => builder.certificatePinner(pinner))
     loggerInterceptor.foreach(interceptor => builder.addInterceptor(interceptor))
+    timeout.foreach { t =>
+      builder.connectTimeout(t.toMillis, TimeUnit.MILLISECONDS)
+      builder.writeTimeout(t.toMillis, TimeUnit.MILLISECONDS)
+      builder.readTimeout(t.toMillis, TimeUnit.MILLISECONDS)
+    }
 
     builder
       .dispatcher(createDispatcher(ec))
@@ -100,7 +109,7 @@ object HttpClientOkHttpImpl {
   def createCertificatePinner: CertificatePinner = {
     val publicKeySha256 = MessageDigest.getInstance("SHA-256").digest(ServerTrust.WirePublicKey)
     new CertificatePinner.Builder()
-      .add(s"*.${ServerTrust.WireDomain}", "sha256/" + Base64.encodeToString(publicKeySha256, Base64.DEFAULT))
+      .add(s"*.${ServerTrust.WireDomain}", "sha256/" + AESUtils.base64(publicKeySha256))
       .build()
   }
 

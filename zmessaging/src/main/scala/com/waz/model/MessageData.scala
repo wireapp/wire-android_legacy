@@ -17,17 +17,19 @@
  */
 package com.waz.model
 
+import java.nio.ByteBuffer
+import java.nio.charset.Charset
+
 import android.database.DatabaseUtils.queryNumEntries
 import android.database.sqlite.SQLiteQueryBuilder
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
-import com.waz.api
+import com.waz.{api, model}
 import com.waz.api.Message.Type._
 import com.waz.api.{Message, TypeFilter}
 import com.waz.db.Col._
 import com.waz.db.Dao
-import com.waz.model.ConversationData.ConversationDataDao
-import com.waz.model.GenericContent.{Asset, ImageAsset, LinkPreview, Location, MsgEdit, Text}
+import com.waz.log.ZLog2._
+import com.waz.model.GenericContent.{Asset, ImageAsset, Knock, LinkPreview, Location, MsgEdit, Quote, Text}
 import com.waz.model.GenericMessage.{GenericMessageContent, TextMessage}
 import com.waz.model.MessageData.MessageState
 import com.waz.model.messages.media.{MediaAssetData, MediaAssetDataProtocol}
@@ -38,60 +40,71 @@ import com.waz.utils.wrappers.{DB, DBCursor, URI}
 import com.waz.utils.{EnumCodec, JsonDecoder, JsonEncoder, returning}
 import org.json.{JSONArray, JSONObject}
 import org.threeten.bp.Instant.now
-import java.nio.ByteBuffer
-import java.nio.charset.Charset
 
 import scala.collection.breakOut
 import scala.concurrent.duration._
 
-case class MessageData(id:            MessageId              = MessageId(),
-                       convId:        ConvId                 = ConvId(),
-                       msgType:       Message.Type           = Message.Type.TEXT,
-                       userId:        UserId                 = UserId(),
-                       content:       Seq[MessageContent]    = Seq.empty,
-                       protos:        Seq[GenericMessage]    = Seq.empty,
-                       firstMessage:  Boolean                = false,
-                       members:       Set[UserId]            = Set.empty[UserId],
-                       recipient:     Option[UserId]         = None,
-                       email:         Option[String]         = None,
-                       name:          Option[String]         = None,
-                       state:         MessageState           = Message.Status.SENT,
-                       time:          RemoteInstant          = RemoteInstant(now(clock)), //TODO: now is local...
-                       localTime:     LocalInstant           = LocalInstant.Epoch,
-                       editTime:      RemoteInstant          = RemoteInstant.Epoch,
-                       ephemeral:     Option[FiniteDuration] = None,
-                       expiryTime:    Option[LocalInstant]   = None, // local expiration time
-                       expired:       Boolean                = false,
-                       duration:      Option[FiniteDuration] = None //for successful calls and message_timer changes
+case class MessageData(id:                MessageId              = MessageId(),
+                       convId:            ConvId                 = ConvId(),
+                       msgType:           Message.Type           = Message.Type.TEXT,
+                       userId:            UserId                 = UserId(),
+                       content:           Seq[MessageContent]    = Seq.empty,
+                       protos:            Seq[GenericMessage]    = Seq.empty,
+                       firstMessage:      Boolean                = false,
+                       members:           Set[UserId]            = Set.empty[UserId],
+                       recipient:         Option[UserId]         = None,
+                       email:             Option[String]         = None,
+                       name:              Option[Name]           = None,
+                       state:             MessageState           = Message.Status.SENT,
+                       time:              RemoteInstant          = RemoteInstant(now(clock)), //TODO: now is local...
+                       localTime:         LocalInstant           = LocalInstant.Epoch,
+                       editTime:          RemoteInstant          = RemoteInstant.Epoch,
+                       ephemeral:         Option[FiniteDuration] = None,
+                       expiryTime:        Option[LocalInstant]   = None, // local expiration time
+                       expired:           Boolean                = false,
+                       duration:          Option[FiniteDuration] = None, //for successful calls and message_timer changes
+                       quote:             Option[QuoteContent]   = None,
+                       forceReadReceipts: Option[Int]    = None
                       ) {
-
-  override def toString: String =
-    s"""
-       |MessageData:
-       | id:            $id
-       | convId:        $convId
-       | msgType:       $msgType
-       | userId:        $userId
-       | protos:        ${protos.toString().replace("\n", "")}
-       | state:         $state
-       | time:          $time
-       | localTime:     $localTime
-       | editTime:      $editTime
-       | members:       $members
-       | content:       ${content.map(c => (c.content, c.mentions))}
-       | other fields:  $firstMessage, $recipient, $email, $name, $ephemeral, $expiryTime, $expired, $duration
-    """.stripMargin
-
-
   def getContent(index: Int) = {
     if (index == 0) content.headOption.getOrElse(MessageContent.Empty)
     else content.drop(index).headOption.getOrElse(MessageContent.Empty)
   }
 
   lazy val contentString = protos.lastOption match {
-    case Some(TextMessage(ct, _, _)) => ct
+    case Some(TextMessage(ct, _, _, _, _)) => ct
     case _ if msgType == api.Message.Type.RICH_MEDIA => content.map(_.content).mkString(" ")
     case _ => content.headOption.fold("")(_.content)
+  }
+
+  lazy val links: Seq[LinkPreview] = protos.lastOption match {
+    case Some(TextMessage(_, _, links, _, _)) => links
+    case _ => Nil
+  }
+
+  lazy val protoQuote: Option[Quote] = protos.lastOption match {
+    case Some(TextMessage(_, _, _, quote, _)) => quote
+    case _ => None
+  }
+
+  lazy val protoReadReceipts: Option[Boolean] = protos.lastOption.map {
+    case GenericMessage(_, a @ Text(_, _, _, _))     => a.expectsReadConfirmation
+    case GenericMessage(_, a @ Knock())              => a.expectsReadConfirmation
+    case GenericMessage(_, a @ Location(_, _, _, _)) => a.expectsReadConfirmation
+    case GenericMessage(_, a @ Asset(_, _))          => a.expectsReadConfirmation
+    case _ => false
+  }
+
+  lazy val expectsRead: Option[Boolean] = forceReadReceipts.map(_ > 0).orElse(protoReadReceipts)
+
+  // used to create a copy of the message quoting the one that had its msgId changed
+  def replaceQuote(quoteId: MessageId): MessageData = {
+    // we assume that the reply is already valid, so we don't have to update the hash (the old one is invalid)
+    val newProtos = protos.lastOption match {
+      case Some(TextMessage(text, ms, ls, Some(q), rr)) => Seq(TextMessage(text, ms, ls, Some(Quote(quoteId, None)), rr))
+      case _ => protos
+    }
+    copy(quote = Some(QuoteContent(quoteId, validity = true, None)), protos = newProtos)
   }
 
   def assetId = AssetId(id.str)
@@ -101,7 +114,6 @@ case class MessageData(id:            MessageId              = MessageId(),
   def isDeleted = msgType == Message.Type.RECALLED
 
   lazy val mentions = content.flatMap(_.mentions)
-  lazy val hasMentions = mentions.nonEmpty
 
   def hasMentionOf(userId: UserId): Boolean = mentions.exists(_.userId.forall(_ == userId)) // a mention with userId == None is a "mention" of everyone, so it counts
 
@@ -112,7 +124,7 @@ case class MessageData(id:            MessageId              = MessageId(),
     } orElse content.headOption.collect {
       case MessageContent(_, _, _, _, Some(_), w, h, _, _) => Dim2(w, h)
     }
-    verbose(s"dims $dims from protos: $protos")
+    verbose(l"dims $dims")
     dims
   }
 
@@ -127,7 +139,7 @@ case class MessageData(id:            MessageId              = MessageId(),
    *
    */
   def isSystemMessage = msgType match {
-    case RENAME | CONNECT_REQUEST | CONNECT_ACCEPTED | MEMBER_JOIN | MEMBER_LEAVE | MISSED_CALL | SUCCESSFUL_CALL | MESSAGE_TIMER => true
+    case RENAME | CONNECT_REQUEST | CONNECT_ACCEPTED | MEMBER_JOIN | MEMBER_LEAVE | MISSED_CALL | SUCCESSFUL_CALL | MESSAGE_TIMER | READ_RECEIPTS_ON | READ_RECEIPTS_OFF => true
     case _ => false
   }
 
@@ -145,7 +157,7 @@ case class MessageData(id:            MessageId              = MessageId(),
   def adjustMentions(forSending: Boolean): Option[MessageData] =
     if (mentions.isEmpty) None
     else {
-      verbose(s"adjustMentions(forSending = $forSending)")
+      verbose(l"adjustMentions(forSending = $forSending)")
       val newContent =
         if (content.size == 1)
           content.map(_.copy(mentions = MessageData.adjustMentions(content.head.content, mentions, forSending)))
@@ -164,12 +176,12 @@ case class MessageData(id:            MessageId              = MessageId(),
       val newMentions = newContent.flatMap(_.mentions)
 
       val newProto = protos.lastOption match {
-        case Some(GenericMessage(uid, MsgEdit(ref, Text(_, _, links)))) =>
-          GenericMessage(uid, MsgEdit(ref, Text(contentString, newMentions, links)))
-        case Some(GenericMessage(uid, Text(_, _, links))) =>
-          GenericMessage(uid, ephemeral, Text(contentString, newMentions, links))
+        case Some(GenericMessage(uid, MsgEdit(ref, t @ Text(_, _, links, quote)))) =>
+          GenericMessage(uid, MsgEdit(ref, Text(contentString, newMentions, links, quote, t.expectsReadConfirmation)))
+        case Some(GenericMessage(uid, t @ Text(_, _, links, quote))) =>
+          GenericMessage(uid, ephemeral, Text(contentString, newMentions, links, quote, t.expectsReadConfirmation))
         case _ =>
-          GenericMessage(id.uid, ephemeral, Text(contentString, newMentions, Nil))
+          GenericMessage(id.uid, ephemeral, Text(contentString, newMentions, Nil, protoReadReceipts.getOrElse(false)))
       }
 
       if (content == newContent && protos.lastOption.contains(newProto)) None
@@ -189,8 +201,9 @@ case class MessageContent(tpe:        Message.Part.Type,
                          ) {
 
   def contentAsUri: URI = RichMediaContentParser.parseUriWithScheme(content)
-  override def toString: String = s"MessageContent($tpe, ${content.take(4)}..., $richMedia, $openGraph, $asset, $width, $height, $syncNeeded, $mentions)"
 }
+
+case class QuoteContent(message: MessageId, validity: Boolean, hash: Option[Sha256] = None)
 
 object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData], Option[OpenGraphData], Option[AssetId], Int, Int, Boolean, Seq[Mention]) => MessageContent) {
 
@@ -204,9 +217,9 @@ object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData
             asset: Option[AssetId] = None,
             width: Int = 0, height: Int = 0,
             syncNeeded: Boolean = false,
-            mentions: Seq[Mention] = Nil): MessageContent = {
+            mentions: Seq[Mention] = Nil): MessageContent =
     MessageContent(tpe, content, emptyMediaAsset(tpe), openGraph, asset, width, height, syncNeeded, mentions)
-  }
+
 
   def emptyMediaAsset(tpe: Message.Part.Type) =
     if (tpe == Message.Part.Type.SPOTIFY || tpe == Message.Part.Type.SOUNDCLOUD || tpe == Message.Part.Type.YOUTUBE) Some(MediaAssetData.empty(tpe)) else None
@@ -270,10 +283,14 @@ object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData
   }
 }
 
-object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[MessageContent], Seq[GenericMessage], Boolean, Set[UserId], Option[UserId], Option[String], Option[String], Message.Status, RemoteInstant, LocalInstant, RemoteInstant, Option[FiniteDuration], Option[LocalInstant], Boolean, Option[FiniteDuration]) => MessageData) {
+object MessageData extends
+  ((MessageId, ConvId, Message.Type, UserId, Seq[MessageContent], Seq[GenericMessage], Boolean, Set[UserId], Option[UserId],
+    Option[String], Option[Name], Message.Status, RemoteInstant, LocalInstant, RemoteInstant, Option[FiniteDuration],
+    Option[LocalInstant], Boolean, Option[FiniteDuration], Option[QuoteContent], Option[Int]) => MessageData) {
+
   val Empty = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""))
   val Deleted = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""), state = Message.Status.DELETED)
-  val isUserContent = Set(TEXT, TEXT_EMOJI_ONLY, ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, RICH_MEDIA, LOCATION)
+  val isUserContent = Set(TEXT, TEXT_EMOJI_ONLY, ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, RICH_MEDIA, LOCATION, KNOCK)
 
   val EphemeralMessageTypes = Set(TEXT, TEXT_EMOJI_ONLY, KNOCK, ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, RICH_MEDIA, LOCATION)
 
@@ -290,6 +307,8 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     case Message.Type.KNOCK                => "Knock"
     case Message.Type.MEMBER_JOIN          => "MemberJoin"
     case Message.Type.MEMBER_LEAVE         => "MemberLeave"
+    case Message.Type.READ_RECEIPTS_ON     => "ReadReceiptsOn"
+    case Message.Type.READ_RECEIPTS_OFF    => "ReadReceiptsOff"
     case Message.Type.CONNECT_REQUEST      => "ConnectRequest"
     case Message.Type.CONNECT_ACCEPTED     => "ConnectAccepted"
     case Message.Type.RENAME               => "Rename"
@@ -324,7 +343,7 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     val Members = set[UserId]('members, _.mkString(","), _.split(",").filter(!_.isEmpty).map(UserId(_))(breakOut))(_.members)
     val Recipient = opt(id[UserId]('recipient))(_.recipient)
     val Email = opt(text('email))(_.email)
-    val Name = opt(text('name))(_.name)
+    val Name = opt(text[model.Name]('name, _.str, model.Name(_)))(_.name)
     val State = text[MessageState]('msg_state, _.name, Message.Status.valueOf)(_.state)
     val Time = remoteTimestamp('time)(_.time)
     val LocalTime = localTimestamp('local_time)(_.localTime)
@@ -333,10 +352,14 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     val ExpiryTime = opt(localTimestamp('expiry_time))(_.expiryTime)
     val Expired = bool('expired)(_.expired)
     val Duration = opt(finiteDuration('duration))(_.duration)
+    val Quote         = opt(id[MessageId]('quote))(_.quote.map(_.message))
+    val QuoteValidity = bool('quote_validity)(_.quote.exists(_.validity))
+    val ForceReadReceipts = opt(int('force_read_receipts))(_.forceReadReceipts)
 
     override val idCol = Id
 
-    override val table = Table("Messages", Id, Conv, Type, User, Content, Protos, Time, LocalTime, FirstMessage, Members, Recipient, Email, Name, State, ContentSize, EditTime, Ephemeral, ExpiryTime, Expired, Duration)
+    override val table =
+      Table("Messages", Id, Conv, Type, User, Content, Protos, Time, LocalTime, FirstMessage, Members, Recipient, Email, Name, State, ContentSize, EditTime, Ephemeral, ExpiryTime, Expired, Duration, Quote, QuoteValidity, ForceReadReceipts)
 
     override def onCreate(db: DB): Unit = {
       super.onCreate(db)
@@ -344,7 +367,7 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     }
 
     override def apply(implicit cursor: DBCursor): MessageData =
-      MessageData(Id, Conv, Type, User, Content, Protos, FirstMessage, Members, Recipient, Email, Name, State, Time, LocalTime, EditTime, Ephemeral, ExpiryTime, Expired, Duration)
+      MessageData(Id, Conv, Type, User, Content, Protos, FirstMessage, Members, Recipient, Email, Name, State, Time, LocalTime, EditTime, Ephemeral, ExpiryTime, Expired, Duration, Quote.map(QuoteContent(_, QuoteValidity, None)), ForceReadReceipts)
 
     def deleteForConv(id: ConvId)(implicit db: DB) = delete(Conv, id)
 
@@ -397,6 +420,9 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     def findMessagesFrom(conv: ConvId, time: RemoteInstant)(implicit db: DB) =
       iterating(db.query(table.name, null, s"${Conv.name} = '$conv' and ${Time.name} >= ${time.toEpochMilli}", null, null, null, s"${Time.name} ASC"))
 
+    def findMessagesBetween(conv: ConvId, from: RemoteInstant, to: RemoteInstant)(implicit db: DB) =
+      iterating(db.query(table.name, null, s"${Conv.name} = '$conv' and ${Time.name} > ${from.toEpochMilli} and ${Time.name} <= ${to.toEpochMilli}", null, null, null, s"${Time.name} ASC"))
+
     def findExpired(time: LocalInstant = LocalInstant.Now)(implicit db: DB) =
       iterating(db.query(table.name, null, s"${ExpiryTime.name} IS NOT NULL and ${ExpiryTime.name} <= ${time.toEpochMilli}", null, null, null, s"${ExpiryTime.name} ASC"))
 
@@ -412,6 +438,8 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     private val IndexColumns = Array(Id.name, Time.name)
     def msgIndexCursor(conv: ConvId)(implicit db: DB) = db.query(table.name, IndexColumns, s"${Conv.name} = '$conv'", null, null, null, s"${Time.name} ASC")
 
+    def msgCursor(conv: ConvId)(implicit db: DB) = db.query(table.name, null, s"${Conv.name} = '$conv'", null, null, null, s"${Time.name} DESC")
+
     def countAtLeastAsOld(conv: ConvId, time: RemoteInstant)(implicit db: DB) =
       queryNumEntries(db, table.name, s"""${Conv.name} = '${Conv(conv)}' AND ${Time.name} <= ${Time(time)}""")
 
@@ -420,9 +448,10 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
 
     def countSentByType(selfUserId: UserId, tpe: Message.Type)(implicit db: DB) = queryNumEntries(db, table.name, s"${User.name} = '${User(selfUserId)}' AND ${Type.name} = '${Type(tpe)}'")
 
-
     def findByType(conv: ConvId, tpe: Message.Type)(implicit db: DB) =
       iterating(db.query(table.name, null, s"${Conv.name} = '$conv' AND ${Type.name} = '${Type(tpe)}'", null, null, null, s"${Time.name} ASC"))
+
+    def findQuotesOf(msgId: MessageId)(implicit db: DB) = list(db.query(table.name, null, s"${Quote.name} = '$msgId'", null, null, null, null))
 
     def msgIndexCursorFiltered(conv: ConvId, types: Seq[TypeFilter], limit: Option[Int] = None)(implicit db: DB): DBCursor = {
       val builder = new SQLiteQueryBuilder()
@@ -490,21 +519,6 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     }
   }
 
-  private val UTF_16_CHARSET  = Charset.forName("UTF-16")
-
-  private def encode(text: String) = {
-    val bytes = UTF_16_CHARSET.encode(text).array
-
-    if (bytes.length < 3 || bytes.slice(2, bytes.length).forall(_ == 0))
-      Array.empty[Byte]
-    else if (bytes(2) == 0)
-      bytes.slice(2, bytes.lastIndexWhere(_ > 0) + 1)
-    else
-      Array[Byte](0) ++ bytes.slice(2, bytes.lastIndexWhere(_ > 0) + 1)
-  }
-
-  private def decode(array: Array[Byte]) = UTF_16_CHARSET.decode(ByteBuffer.wrap(array)).toString
-
   def adjustMentions(text: String, mentions: Seq[Mention], forSending: Boolean, offset: Int = 0): Seq[Mention] = {
     lazy val textAsUTF16 = encode(text) // optimization: textAsUTF16 is used only for incoming mentions
 
@@ -522,5 +536,20 @@ object MessageData extends ((MessageId, ConvId, Message.Type, UserId, Seq[Messag
     }.sortBy(_.start)
   }
 
+  val UTF_16_CHARSET  = Charset.forName("UTF-16")
 
+  def encode(text: String) = {
+    val bytes = UTF_16_CHARSET.encode(text).array
+
+    if (bytes.length < 3 || bytes.slice(2, bytes.length).forall(_ == 0))
+      Array.empty[Byte]
+    else if (bytes(2) == 0)
+      bytes.slice(2, bytes.lastIndexWhere(_ > 0) + 1)
+    else
+      Array[Byte](0) ++ bytes.slice(2, bytes.lastIndexWhere(_ > 0) + 1)
+  }
+
+  def decode(array: Array[Byte]) = UTF_16_CHARSET.decode(ByteBuffer.wrap(array)).toString
+
+  def readReceiptMode(enabled: Boolean) = if (enabled) Some(1) else Some(0)
 }

@@ -30,13 +30,12 @@ case class NotificationData(id:                NotId             = NotId(),
                             user:              UserId            = UserId(),
                             msgType:           NotificationType  = NotificationType.TEXT,
                             time:              RemoteInstant     = RemoteInstant.Epoch,
-                            userName:          Option[String]    = None,
+                            userName:          Option[Name]      = None,
                             ephemeral:         Boolean           = false,
                             mentions:          Seq[UserId]       = Seq.empty,
                             referencedMessage: Option[MessageId] = None,
-                            hasBeenDisplayed:  Boolean           = false) {
-  override def toString: String = s"NotificationData($id, ${msg.take(4)}..., $conv, $user, $msgType, $time, $userName, $ephemeral, $mentions, $referencedMessage, $hasBeenDisplayed)"
-}
+                            hasBeenDisplayed:  Boolean           = false,
+                            isQuote:           Boolean           = false)
 
 object NotificationData {
 
@@ -45,7 +44,7 @@ object NotificationData {
 
     override def apply(implicit js: JSONObject): NotificationData = NotificationData(NotId('id: String), 'message, 'conv, 'user,
       NotificationCodec.decode('msgType), 'time, 'userName, 'ephemeral,
-      decodeUserIdSeq('mentions), decodeOptId[MessageId]('referencedMessage), 'hasBeenDisplayed)
+      decodeUserIdSeq('mentions), decodeOptId[MessageId]('referencedMessage), 'hasBeenDisplayed, 'isQuote)
   }
 
   implicit lazy val Encoder: JsonEncoder[NotificationData] = new JsonEncoder[NotificationData] {
@@ -61,6 +60,7 @@ object NotificationData {
       v.userName foreach (o.put("userName", _))
       if (v.mentions.nonEmpty) o.put("mentions", JsonEncoder.arrString(v.mentions.map(_.str)))
       v.referencedMessage foreach (o.put("referencedMessage", _))
+      o.put("isQuote", v.isQuote)
     }
   }
 

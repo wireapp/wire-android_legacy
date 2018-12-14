@@ -17,17 +17,17 @@
  */
 package com.waz.sync.client
 
-import java.io.{BufferedOutputStream, FileOutputStream}
+import java.io.{BufferedOutputStream, File, FileOutputStream, InputStream}
 import java.security.{DigestOutputStream, MessageDigest}
 
-import android.util.Base64
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ProgressIndicator.{Callback, ProgressData}
 import com.waz.cache.{CacheEntry, CacheService, Expiration, LocalData}
 import com.waz.model.{Mime, _}
+import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{IoUtils, JsonDecoder, JsonEncoder}
-import com.waz.znet2.http.HttpClient.dsl._
 import com.waz.znet2.http.HttpClient.AutoDerivation._
+import com.waz.znet2.http.HttpClient.dsl._
 import com.waz.znet2.http.HttpClient.{Progress, ProgressCallback}
 import com.waz.znet2.http.MultipartBodyMixed.Part
 import com.waz.znet2.http.Request.UrlCreator
@@ -50,6 +50,7 @@ trait AssetClient {
 
   //TODO Add callback parameter. https://github.com/wireapp/wire-android-sync-engine/issues/378
   def uploadAsset(metadata: Metadata, data: LocalData, mime: Mime): ErrorOrResponse[UploadResponse]
+
 }
 
 class AssetClientImpl(cacheService: CacheService)
@@ -61,8 +62,17 @@ class AssetClientImpl(cacheService: CacheService)
 
   import AssetClient._
 
+  private implicit def fileWithShaBodyDeserializer: RawBodyDeserializer[FileWithSha] =
+    RawBodyDeserializer.create { body =>
+      val tempFile = File.createTempFile("http_client_download", null)
+      val out = new DigestOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)),
+        MessageDigest.getInstance("SHA-256"))
+      IoUtils.copy(body.data(), out)
+      FileWithSha(tempFile, Sha256(out.getMessageDigest.digest()))
+    }
+
   private def cacheEntryBodyDeserializer(key: Option[AESKey], sha: Option[Sha256]): RawBodyDeserializer[CacheEntry] =
-    RawBodyDeserializer.create[CacheEntry] { body =>
+    RawBodyDeserializer.create { body =>
       val entry = cacheService.createManagedFile(key)
       val out = new DigestOutputStream(new BufferedOutputStream(new FileOutputStream(entry.cacheFile)),
                                        MessageDigest.getInstance("SHA-256"))
@@ -106,22 +116,30 @@ class AssetClientImpl(cacheService: CacheService)
   }
 
   override def uploadAsset(metadata: Metadata, data: LocalData, mime: Mime): ErrorOrResponse[UploadResponse] = {
-//    val progressCallback: ProgressCallback = progress => callback(convertProgressData(progress))
     implicit val rawBodySerializer: RawBodySerializer[LocalData] = localDataRawBodySerializer(mime)
     Request
       .Post(
-        relativePath = AssetClient.AssetsV3Path,
+        relativePath = AssetsV3Path,
         body = MultipartBodyMixed(Part(metadata), Part(data, Headers("Content-MD5" -> md5(data))))
       )
-//      .withUploadCallback(progressCallback)
       .withResultType[UploadResponse]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
+  private implicit def RawAssetRawBodySerializer: RawBodySerializer[RawAsset] =
+    RawBodySerializer.create { asset =>
+      RawBody(mediaType = Some(asset.mime.str), asset.data, dataLength = asset.dataLength)
+    }
 }
 
 object AssetClient {
+
+  case class FileWithSha(file: File, sha256: Sha256)
+
+  case class RawAsset(mime: Mime, data: () => InputStream, dataLength: Option[Long])
+
+  case class UploadResponse2(key: RAssetId, expires: Option[Instant], token: Option[AssetToken])
 
   implicit val DefaultExpiryTime: Expiration = 1.hour
 
@@ -155,8 +173,6 @@ object AssetClient {
     }
   }
 
-  def postAssetPath(conv: RConvId) = s"/conversations/$conv/assets"
-
   def getAssetPath(rId: RAssetId, otrKey: Option[AESKey], conv: Option[RConvId]): String =
     (conv, otrKey) match {
       case (None, _)          => s"/assets/v3/${rId.str}"
@@ -167,6 +183,8 @@ object AssetClient {
   /**
     * Computes base64 encoded md5 sum of image data.
     */
-  def md5(data: LocalData): String = Base64.encodeToString(IoUtils.md5(data.inputStream), Base64.NO_WRAP)
+  def md5(data: LocalData): String = md5(data.inputStream)
+
+  def md5(is: InputStream): String = AESUtils.base64(IoUtils.md5(is))
 
 }

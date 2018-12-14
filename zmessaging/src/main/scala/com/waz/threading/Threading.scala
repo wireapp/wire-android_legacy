@@ -23,7 +23,6 @@ import java.util.concurrent.{Executor, ExecutorService, Executors}
 import android.os.{Handler, HandlerThread, Looper}
 import com.waz.ZLog._
 import com.waz.api.ZmsVersion
-import com.waz.service.tracking.TrackingService.exception
 import com.waz.utils.returning
 
 import scala.concurrent.{ExecutionContext, Future, Promise, blocking}
@@ -44,7 +43,7 @@ object Threading {
 
   def executionContext(service: ExecutorService)(implicit tag: LogTag): ExecutionContext = new ExecutionContext {
     override def reportFailure(cause: Throwable): Unit = {
-      exception(cause, "ExecutionContext failed")
+//      exception(cause, "ExecutionContext failed") TODO make threading mockable and then inject tracking
       error(cause.getMessage, cause)
     }
     override def execute(runnable: Runnable): Unit = service.execute(runnable)
@@ -75,7 +74,6 @@ object Threading {
         override def run(): Unit = blocking(runnable.run())
       })
     override def reportFailure(cause: Throwable): Unit = {
-      exception(cause, "BlockingIO ExecutionContext failed")("BlockingIOThreadPool")
       delegate.reportFailure(cause)
     }
   }

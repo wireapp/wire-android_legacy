@@ -18,7 +18,6 @@
 package com.waz.model
 
 
-import android.util.Base64
 import com.google.protobuf.nano.MessageNano
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetMetaData.Loudness
@@ -26,9 +25,10 @@ import com.waz.model.AssetStatus.{DownloadFailed, UploadCancelled, UploadDone, U
 import com.waz.model.nano.Messages
 import com.waz.model.nano.Messages.MessageEdit
 import com.waz.utils._
+import com.waz.utils.crypto.AESUtils
 import com.waz.utils.wrappers.URI
 import org.json.JSONObject
-import org.threeten.bp.{Duration => Dur, Instant}
+import org.threeten.bp.{Duration => Dur}
 
 import scala.collection.breakOut
 import scala.concurrent.duration._
@@ -170,7 +170,7 @@ object GenericContent {
 
     override def set(msg: GenericMessage) = msg.setAsset
 
-    def apply(asset: AssetData, preview: Option[AssetData] = None): Asset = returning(new Messages.Asset) { proto =>
+    def apply(asset: AssetData, preview: Option[AssetData] = None, expectsReadConfirmation: Boolean): Asset = returning(new Messages.Asset) { proto =>
       proto.original = Original(asset)
       preview.foreach(p => proto.preview = Preview(p))
       (asset.status, asset.remoteData) match {
@@ -180,6 +180,7 @@ object GenericContent {
         case (DownloadFailed, Some(data)) => proto.setUploaded(RemoteData(data))
         case _ =>
       }
+      proto.expectsReadConfirmation = expectsReadConfirmation
     }
 
     def unapply(a: Asset): Option[(AssetData, Option[AssetData])] = {
@@ -216,7 +217,7 @@ object GenericContent {
   }
 
   implicit object EphemeralAsset extends EphemeralContent[Asset] {
-    override def set(eph: Ephemeral): (Asset) => Ephemeral = eph.setAsset
+    override def set(eph: Ephemeral): Asset => Ephemeral = eph.setAsset
   }
 
   type ImageAsset = Messages.ImageAsset
@@ -263,6 +264,18 @@ object GenericContent {
       m.start = start
       m.length = length
     }
+  }
+
+  type Quote = Messages.Quote
+
+  object Quote {
+    def apply(id: MessageId, sha256: Option[Sha256]) = returning(new Messages.Quote) { q =>
+      q.quotedMessageId = id.str
+      sha256.foreach(sha => if (sha.bytes.nonEmpty) q.quotedMessageSha256 = sha.bytes)
+    }
+
+    def unapply(quote: Quote): Option[(MessageId, Option[Sha256])] =
+      Some(MessageId(quote.quotedMessageId), Option(quote.quotedMessageSha256).collect { case bytes if bytes.nonEmpty => Sha256.calculate(bytes) })
   }
 
   type LinkPreview = Messages.LinkPreview
@@ -314,12 +327,12 @@ object GenericContent {
     }
 
     implicit object JsDecoder extends JsonDecoder[LinkPreview] {
-      override def apply(implicit js: JSONObject): LinkPreview = Messages.LinkPreview.parseFrom(Base64.decode(js.getString("proto"), Base64.DEFAULT))
+      override def apply(implicit js: JSONObject): LinkPreview = Messages.LinkPreview.parseFrom(AESUtils.base64(js.getString("proto")))
     }
 
     implicit object JsEncoder extends JsonEncoder[LinkPreview] {
       override def apply(v: LinkPreview): JSONObject = JsonEncoder { o =>
-        o.put("proto", Base64.encodeToString(MessageNano.toByteArray(v), Base64.NO_WRAP))
+        o.put("proto", AESUtils.base64(MessageNano.toByteArray(v)))
       }
     }
 
@@ -362,7 +375,7 @@ object GenericContent {
 
   implicit object Knock extends GenericContent[Knock] {
     override def set(msg: GenericMessage) = msg.setKnock
-    def apply() = new Messages.Knock()
+    def apply(expectsReadConfirmation: Boolean) = returning(new Messages.Knock())(_.expectsReadConfirmation = expectsReadConfirmation)
     def unapply(arg: Knock): Boolean = true
   }
 
@@ -375,17 +388,23 @@ object GenericContent {
   implicit object Text extends GenericContent[Text] {
     override def set(msg: GenericMessage) = msg.setText
 
-    def apply(content: String): Text = apply(content, Nil, Nil)
+    def apply(content: String): Text = apply(content, Nil, Nil, None, expectsReadConfirmation = false)
 
-    def apply(content: String, links: Seq[LinkPreview]): Text = apply(content, Nil, links)
+    def apply(content: String, links: Seq[LinkPreview], expectsReadConfirmation: Boolean): Text = apply(content, Nil, links, None, expectsReadConfirmation)
 
-    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview]): Text = returning(new Messages.Text()) { t =>
+    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], expectsReadConfirmation: Boolean): Text = apply(content, mentions, links, None, expectsReadConfirmation)
+
+    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Quote, expectsReadConfirmation: Boolean): Text = apply(content, mentions, links, Some(quote), expectsReadConfirmation)
+
+    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Option[Quote], expectsReadConfirmation: Boolean): Text = returning(new Messages.Text()) { t =>
       t.content = content
       t.mentions = mentions.map { case com.waz.model.Mention(userId, start, length) => GenericContent.Mention(userId, start, length) }(breakOut).toArray
       t.linkPreview = links.toArray
+      t.expectsReadConfirmation = expectsReadConfirmation
+      quote.foreach(q => t.quote = q)
     }
 
-    def unapply(proto: Text): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview])] = {
+    def unapply(proto: Text): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview], Option[Quote])] = {
       val mentions = proto.mentions.map { m =>
         val userId = m.getUserId match {
           case id: String if id.nonEmpty => Option(UserId(id))
@@ -393,7 +412,7 @@ object GenericContent {
         }
         com.waz.model.Mention(userId, m.start, m.length)
       }.toSeq
-      Option((proto.content, mentions, proto.linkPreview.toSeq))
+      Option((proto.content, mentions, proto.linkPreview.toSeq, Option(proto.quote)))
     }
   }
 
@@ -482,11 +501,12 @@ object GenericContent {
   implicit object Location extends GenericContent[Location] {
     override def set(msg: GenericMessage): (Location) => GenericMessage = msg.setLocation
 
-    def apply(lon: Float, lat: Float, name: String, zoom: Int) = returning(new Messages.Location) { p =>
+    def apply(lon: Float, lat: Float, name: String, zoom: Int, expectsReadConfirmation: Boolean) = returning(new Messages.Location) { p =>
       p.longitude = lon
       p.latitude = lat
       p.name = name
       p.zoom = zoom
+      p.expectsReadConfirmation = expectsReadConfirmation
     }
 
     def unapply(l: Location): Option[(Float, Float, Option[String], Option[Int])] =
@@ -499,7 +519,7 @@ object GenericContent {
 
   type Receipt = Messages.Confirmation
 
-  implicit object Receipt extends GenericContent[Receipt] {
+  object DeliveryReceipt extends GenericContent[Receipt] {
     override def set(msg: GenericMessage) = msg.setConfirmation
 
     def apply(msg: MessageId) = returning(new Messages.Confirmation) { c =>
@@ -507,7 +527,36 @@ object GenericContent {
       c.`type` = Messages.Confirmation.DELIVERED
     }
 
-    def unapply(proto: Receipt): Option[MessageId] = if (proto.`type` == Messages.Confirmation.DELIVERED) Some(MessageId(proto.firstMessageId)) else None
+    def apply(msgs: Seq[MessageId]) = returning(new Messages.Confirmation) { c =>
+      c.firstMessageId = msgs.head.str
+      c.moreMessageIds = msgs.map(_.str).tail.toArray
+      c.`type` = Messages.Confirmation.DELIVERED
+    }
+
+    def unapply(proto: Receipt): Option[Seq[MessageId]] = if (proto.`type` == Messages.Confirmation.DELIVERED)
+      Some(Seq(MessageId(proto.firstMessageId)) ++ proto.moreMessageIds.map(MessageId(_)).toSeq)
+    else
+      None
+  }
+
+  object ReadReceipt extends GenericContent[Receipt] {
+    override def set(msg: GenericMessage) = msg.setConfirmation
+
+    def apply(msg: MessageId) = returning(new Messages.Confirmation) { c =>
+      c.firstMessageId = msg.str
+      c.`type` = Messages.Confirmation.READ
+    }
+
+    def apply(msgs: Seq[MessageId]) = returning(new Messages.Confirmation) { c =>
+      c.firstMessageId = msgs.head.str
+      c.moreMessageIds = msgs.map(_.str).tail.toArray
+      c.`type` = Messages.Confirmation.READ
+    }
+
+    def unapply(proto: Receipt): Option[Seq[MessageId]] = if (proto.`type` == Messages.Confirmation.READ)
+      Some(Seq(MessageId(proto.firstMessageId)) ++ proto.moreMessageIds.map(MessageId(_)).toSeq)
+    else
+      None
   }
 
   type External = Messages.External

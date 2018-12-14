@@ -17,15 +17,36 @@
  */
 package com.waz
 
-import android.util.Base64
+import java.nio.ByteBuffer
+import java.nio.charset.Charset
+
 import com.google.protobuf.nano.{CodedInputByteBufferNano, MessageNano}
 import com.waz.model.nano.Messages
+import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{JsonDecoder, JsonEncoder, returning}
 import org.json.JSONObject
-
+import scala.language.implicitConversions
 import scala.concurrent.duration.FiniteDuration
 
 package object model {
+
+  case class Name(str: String) {
+    def length = str.length
+
+    override def toString: String = str
+
+    def isEmpty: Boolean = str.isEmpty
+    def nonEmpty: Boolean = str.nonEmpty
+
+    def substring(beginIndex: Int, endIndex: Int) =
+      Name(str.substring(beginIndex, endIndex))
+  }
+
+  object Name extends (String => Name) {
+    implicit def toNameString(name: Name): String = name.str
+    implicit def fromNameString(str: String): Name = Name(str)
+    val Empty = Name("")
+  }
 
   trait ProtoDecoder[A <: MessageNano] {
     def apply(data: Array[Byte]): A
@@ -91,26 +112,28 @@ package object model {
     object TextMessage {
       import scala.concurrent.duration.DurationInt
 
-      def apply(text: String, mentions: Seq[com.waz.model.Mention]): GenericMessage = GenericMessage(Uid(), Text(text, mentions, Nil))
+      def apply(text: String, mentions: Seq[com.waz.model.Mention], expectsReadConfirmation: Boolean): GenericMessage = GenericMessage(Uid(), Text(text, mentions, Nil, expectsReadConfirmation))
 
-      def apply(text: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview]): GenericMessage = GenericMessage(Uid(), Text(text, mentions, links))
+      def apply(text: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], expectsReadConfirmation: Boolean): GenericMessage = GenericMessage(Uid(), Text(text, mentions, links, expectsReadConfirmation))
 
-      def apply(msg: MessageData): GenericMessage = GenericMessage(msg.id.uid, msg.ephemeral, Text(msg.contentString, msg.content.flatMap(_.mentions), Nil))
+      def apply(text: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Option[Quote], expectsReadConfirmation: Boolean): GenericMessage = GenericMessage(Uid(), Text(text, mentions, links, quote, expectsReadConfirmation))
 
-      def unapply(msg: GenericMessage): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview])] = msg match {
-        case GenericMessage(_, Text(content, mentions, links)) =>
-          Some((content, mentions, links))
-        case GenericMessage(_, Ephemeral(_, Text(content, mentions, links))) =>
-          Some((content, mentions, links))
-        case GenericMessage(_, MsgEdit(_, Text(content, mentions, links))) =>
-          Some((content, mentions, links))
+      def apply(msg: MessageData): GenericMessage = GenericMessage(msg.id.uid, msg.ephemeral, Text(msg.contentString, msg.content.flatMap(_.mentions), Nil, msg.protoQuote, msg.expectsRead.getOrElse(false)))
+
+      def unapply(msg: GenericMessage): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview], Option[Quote], Boolean)] = msg match {
+        case GenericMessage(_, t @ Text(content, mentions, links, quote)) =>
+          Some((content, mentions, links, quote, t.expectsReadConfirmation))
+        case GenericMessage(_, Ephemeral(_, t @ Text(content, mentions, links, quote))) =>
+          Some((content, mentions, links, quote, t.expectsReadConfirmation))
+        case GenericMessage(_, MsgEdit(_, t @ Text(content, mentions, links, quote))) =>
+          Some((content, mentions, links, quote, t.expectsReadConfirmation))
         case _ =>
           None
       }
 
       def updateMentions(msg: GenericMessage, newMentions: Seq[com.waz.model.Mention]): GenericMessage = msg match {
-        case GenericMessage(uid, Text(text, mentions, links)) if mentions != newMentions =>
-          GenericMessage(uid, Text(text, newMentions, links))
+        case GenericMessage(uid, t @ Text(text, mentions, links, quote)) if mentions != newMentions =>
+          GenericMessage(uid, Text(text, newMentions, links, quote, t.expectsReadConfirmation))
         case _ =>
           msg
       }
@@ -125,12 +148,12 @@ package object model {
     }
 
     implicit object JsDecoder extends JsonDecoder[GenericMessage] {
-      override def apply(implicit js: JSONObject): GenericMessage = GenericMessage(Base64.decode(js.getString("proto"), Base64.DEFAULT))
+      override def apply(implicit js: JSONObject): GenericMessage = GenericMessage(AESUtils.base64(js.getString("proto")))
     }
 
     implicit object JsEncoder extends JsonEncoder[GenericMessage] {
       override def apply(v: GenericMessage): JSONObject = JsonEncoder { o =>
-        o.put("proto", Base64.encodeToString(MessageNano.toByteArray(v), Base64.NO_WRAP))
+        o.put("proto", AESUtils.base64(MessageNano.toByteArray(v)))
       }
     }
 

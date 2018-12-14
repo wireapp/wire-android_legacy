@@ -18,7 +18,7 @@
 package com.waz.service
 
 import android.content.Context
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.ErrorType
 import com.waz.content.MessagesStorage
@@ -79,14 +79,14 @@ class ErrorsServiceImpl(userId:    UserId,
     dismissHandler = dismissHandler.orElse(handler)
   }
 
-  def getErrors: Signal[Vector[ErrorData]] = new RefreshingSignal[Vector[ErrorData], Long](CancellableFuture { errors.values.toVector.sortBy(_.time) }, onChanged)
+  def getErrors: Signal[Vector[ErrorData]] = new RefreshingSignal(CancellableFuture(errors.values.toVector.sortBy(_.time)), onChanged)
 
   def dismissError(id: Uid): Future[Unit] =
     storage { ErrorDataDao.getById(id)(_) }
       .future.flatMap {
         case Some(error) => dismissed(error) flatMap { _ => delete(error) }
         case _ =>
-          warn(s"no error found with id: $id")
+          warn(l"no error found with id: $id")
           Future.successful({})
       }
 
@@ -99,7 +99,7 @@ class ErrorsServiceImpl(userId:    UserId,
   }.flatten
 
   private def delete(errors: ErrorData*) = {
-    verbose(s"delete: $errors")
+    verbose(l"delete: ${errors.map(_.id)}")
     errorsStorage.removeAll(errors.map(_.id))
   }
 

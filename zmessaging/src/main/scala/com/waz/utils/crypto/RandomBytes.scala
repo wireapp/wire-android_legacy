@@ -17,10 +17,10 @@
  */
 package com.waz.utils.crypto
 
-import com.waz.ZLog.warn
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.warn
 
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 class RandomBytes {
   RandomBytes.loadLibrary
@@ -48,9 +48,14 @@ class RandomBytes {
 
 object RandomBytes {
 
-  private lazy val loadLibrary = Try {
-    System.loadLibrary("sodium")
-    System.loadLibrary("randombytes")
+  private lazy val loadLibrary: Try[Unit] = {
+    try {
+      System.loadLibrary("sodium")
+      System.loadLibrary("randombytes")
+      Success(())
+    } catch {
+      case error: Throwable => Failure(error)
+    }
   }
 
 }

@@ -19,6 +19,7 @@ package com.waz.db
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
+import com.waz.content.PropertiesDao
 import com.waz.db.ZMessagingDB.{DbVersion, daos, migrations}
 import com.waz.db.migrate._
 import com.waz.model.AddressBook.ContactHashesDao
@@ -35,13 +36,15 @@ import com.waz.model.MessageData.MessageDataDao
 import com.waz.model.MsgDeletion.MsgDeletionDao
 import com.waz.model.NotificationData.NotificationDataDao
 import com.waz.model.PushNotificationEvents.PushNotificationEventsDao
+import com.waz.model.ReadReceipt.ReadReceiptDao
 import com.waz.model.SearchQueryCache.SearchQueryCacheDao
 import com.waz.model.UserData.UserDataDao
 import com.waz.model.otr.UserClients.UserClientsDao
 import com.waz.model.sync.SyncJob.SyncJobDao
 import com.waz.service.push.ReceivedPushData.ReceivedPushDataDao
+import com.waz.service.tracking.TrackingService
 
-class ZMessagingDB(context: Context, dbName: String) extends DaoDB(context.getApplicationContext, dbName, null, DbVersion, daos, migrations) {
+class ZMessagingDB(context: Context, dbName: String, tracking: TrackingService) extends DaoDB(context.getApplicationContext, dbName, null, DbVersion, daos, migrations, tracking) {
 
   override def onUpgrade(db: SQLiteDatabase, from: Int, to: Int): Unit = {
     if (from < 60) {
@@ -52,7 +55,7 @@ class ZMessagingDB(context: Context, dbName: String) extends DaoDB(context.getAp
 }
 
 object ZMessagingDB {
-  val DbVersion = 110
+  val DbVersion = 113
 
   lazy val daos = Seq (
     UserDataDao, SearchQueryCacheDao, AssetDataDao, ConversationDataDao,
@@ -60,7 +63,8 @@ object ZMessagingDB {
     SyncJobDao, NotificationDataDao, ErrorDataDao, ReceivedPushDataDao,
     ContactHashesDao, ContactsOnWireDao, UserClientsDao, LikingDao,
     ContactsDao, EmailAddressesDao, PhoneNumbersDao, MsgDeletionDao,
-    EditHistoryDao, MessageContentIndexDao, PushNotificationEventsDao
+    EditHistoryDao, MessageContentIndexDao, PushNotificationEventsDao,
+    ReadReceiptDao, PropertiesDao
   )
 
   lazy val migrations = Seq(
@@ -257,6 +261,20 @@ object ZMessagingDB {
       db.execSQL("UPDATE ConversationsCopy SET muted_status = 2 WHERE _id in (SELECT _id FROM Conversations WHERE Conversations.muted = 1);") // muted_status == 2 => only mentions are displayed
       db.execSQL("DROP TABLE Conversations;")
       db.execSQL("ALTER TABLE ConversationsCopy RENAME TO Conversations;")
+    },
+    Migration(110, 111) { db =>
+      db.execSQL("ALTER TABLE Messages ADD COLUMN quote TEXT")
+      db.execSQL("ALTER TABLE Messages ADD COLUMN quote_validity INTEGER DEFAULT 0")
+    },
+    Migration(111, 112) { db =>
+      db.execSQL("ALTER TABLE Conversations ADD COLUMN unread_quote_count INTEGER DEFAULT 0")
+    },
+    Migration(112, 113) { db =>
+      db.execSQL("CREATE TABLE ReadReceipts(message_id TEXT, user_id, timestamp INTEGER, PRIMARY KEY (message_id, user_id))")
+      db.execSQL("ALTER TABLE Conversations ADD COLUMN receipt_mode INTEGER DEFAULT 0")
+      db.execSQL("CREATE TABLE Properties(key TEXT PRIMARY KEY, value TEXT)")
+      db.execSQL("ALTER TABLE Messages ADD COLUMN force_read_receipt INTEGER DEFAULT null")
+      db.execSQL("UPDATE KeyValues SET value = 'true' WHERE key = 'should_sync_conversations_1'")
     }
   )
 }

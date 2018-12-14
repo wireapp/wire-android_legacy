@@ -18,17 +18,17 @@
 package com.waz.service.conversation
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.ZLog.LogTag
+import com.waz.log.ZLog2._
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
+import com.waz.model.sync.ReceiptType
 import com.waz.model.{UserId, _}
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
-import com.waz.sync.handler.ConversationsSyncHandler
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
-import com.waz.utils.events.Signal
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NoStackTrace
@@ -44,23 +44,25 @@ trait ConversationsContentUpdater {
   def processConvWithRemoteId[A](remoteId: RConvId, retryAsync: Boolean, retryCount: Int = 0)(processor: ConversationData => Future[A])(implicit tag: LogTag, ec: ExecutionContext): Future[A]
   def updateConversationLastRead(id: ConvId, time: RemoteInstant): Future[Option[(ConversationData, ConversationData)]]
   def updateConversationMuted(conv: ConvId, muted: MuteSet): Future[Option[(ConversationData, ConversationData)]]
-  def updateConversationName(id: ConvId, name: String): Future[Option[(ConversationData, ConversationData)]]
+  def updateConversationName(id: ConvId, name: Name): Future[Option[(ConversationData, ConversationData)]]
   def setConvActive(id: ConvId, active: Boolean): Future[Unit]
   def updateConversationArchived(id: ConvId, archived: Boolean): Future[Option[(ConversationData, ConversationData)]]
   def updateConversationCleared(id: ConvId, time: RemoteInstant): Future[Option[(ConversationData, ConversationData)]]
+  def updateReceiptMode(id: ConvId, receiptMode: Int): Future[Option[(ConversationData, ConversationData)]]
   def updateLastEvent(id: ConvId, time: RemoteInstant): Future[Option[(ConversationData, ConversationData)]]
   def updateConversationState(id: ConvId, state: ConversationState): Future[Option[(ConversationData, ConversationData)]]
   def updateAccessMode(id: ConvId, access: Set[Access], accessRole: Option[AccessRole], link: Option[ConversationData.Link] = None): Future[Option[(ConversationData, ConversationData)]]
 
-  def createConversationWithMembers(convId:     ConvId,
-                                    remoteId:   RConvId,
-                                    convType:   ConversationType,
-                                    creator:    UserId,
-                                    members:    Set[UserId],
-                                    name:       Option[String] = None,
-                                    hidden:     Boolean = false,
-                                    access:     Set[Access] = Set(Access.PRIVATE),
-                                    accessRole: AccessRole = AccessRole.PRIVATE): Future[ConversationData]
+  def createConversationWithMembers(convId: ConvId,
+                                    remoteId: RConvId,
+                                    convType: ConversationType,
+                                    creator: UserId,
+                                    members: Set[UserId],
+                                    name: Option[Name] = None,
+                                    hidden: Boolean = false,
+                                    access: Set[Access] = Set(Access.PRIVATE),
+                                    accessRole: AccessRole = AccessRole.PRIVATE,
+                                    receiptMode: Int = 0): Future[ConversationData]
 }
 
 class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
@@ -76,16 +78,14 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationContentUpdater")
 
-  val conversationsSignal: Signal[ConversationsSet] = storage.convsSignal
-
   val conversationsFuture = Future successful storage
 
-  storage.convUpdated { case (prev, conv) =>
-    if (prev.cleared != conv.cleared) {
-      verbose(s"cleared updated will clear messages, prev: $prev, updated: $conv")
+  storage.onUpdated(_.foreach {
+    case (prev, conv) if prev.cleared != conv.cleared =>
+      verbose(l"cleared updated will clear messages, prev: $prev, updated: $conv")
       conv.cleared.foreach(messagesStorage.clear(conv.id, _).recoverWithLog())
-    }
-  }
+    case _ =>
+  })
 
   private val shouldFixDuplicatedConversations = userPrefs.preference(UserPreferences.FixDuplicatedConversations)
 
@@ -110,7 +110,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
   override def convsByRemoteId(ids: Set[RConvId]): Future[Map[RConvId, ConversationData]] =
     storage.getByRemoteIds2(ids)
 
-  override def updateConversationName(id: ConvId, name: String) = storage.update(id, { conv =>
+  override def updateConversationName(id: ConvId, name: Name) = storage.update(id, { conv =>
       if (conv.convType == ConversationType.Group)
         conv.copy(name = if (name.isEmpty) None else Some(name))
       else
@@ -128,17 +128,21 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
   })
 
   override def updateConversationLastRead(id: ConvId, time: RemoteInstant) = storage.update(id, { conv =>
-    verbose(s"updateConversationLastRead($id, $time)")
+    verbose(l"updateConversationLastRead($id, $time)")
     conv.withLastRead(time)
   })
 
   override def updateConversationCleared(id: ConvId, time: RemoteInstant) = storage.update(id, { conv =>
-    verbose(s"updateConversationCleared($id, $time)")
+    verbose(l"updateConversationCleared($id, $time)")
     conv.withCleared(time).withLastRead(time)
   })
 
+  override def updateReceiptMode(id: ConvId, receiptMode: Int): Future[Option[(ConversationData, ConversationData)]] = storage.update(id, { c =>
+    c.copy(receiptMode = Some(receiptMode))
+  })
+
   override def updateConversationState(id: ConvId, state: ConversationState) = storage.update(id, { conv =>
-    verbose(s"updateConversationState($conv, state: $state)")
+    verbose(l"updateConversationState($conv, state: $state)")
 
     val (archived, archiveTime) = state match {
       case ConversationState(Some(a), Some(t), _, _, _) if t >= conv.archiveTime => (a, t)
@@ -154,11 +158,11 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
   })
 
   override def updateLastEvent(id: ConvId, time: RemoteInstant) = storage.update(id, { conv =>
-    verbose(s"updateLastEvent($conv, $time)")
+    verbose(l"updateLastEvent($conv, $time)")
 
     if (conv.lastEventTime.isAfter(time)) conv
     else {
-      debug(s"updating: $conv, lastEventTime: $time")
+      debug(l"updating: $conv, lastEventTime: $time")
       conv.copy(lastEventTime = conv.lastEventTime max time)
     }
   })
@@ -171,15 +175,16 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
 
   override def setConversationHidden(id: ConvId, hidden: Boolean) = storage.update(id, _.copy(hidden = hidden))
 
-  override def createConversationWithMembers(convId:     ConvId,
-                                             remoteId:   RConvId,
-                                             convType:   ConversationType,
-                                             creator:    UserId,
-                                             members:    Set[UserId],
-                                             name:       Option[String] = None,
-                                             hidden:     Boolean = false,
-                                             access:     Set[Access] = Set(Access.PRIVATE),
-                                             accessRole: AccessRole = AccessRole.PRIVATE) = {
+  override def createConversationWithMembers(convId: ConvId,
+                                             remoteId: RConvId,
+                                             convType: ConversationType,
+                                             creator: UserId,
+                                             members: Set[UserId],
+                                             name: Option[Name] = None,
+                                             hidden: Boolean = false,
+                                             access: Set[Access] = Set(Access.PRIVATE),
+                                             accessRole: AccessRole = AccessRole.PRIVATE,
+                                             receiptMode: Int = 0): Future[ConversationData] = {
     for {
       users <- usersStorage.listAll(members.toSeq)
       conv <- storage.insert(
@@ -193,7 +198,9 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
           hidden        = hidden,
           team          = teamId,
           access        = access,
-          accessRole    = Some(accessRole)))
+          accessRole    = Some(accessRole),
+          receiptMode   = Some(receiptMode)
+        ))
       _ <- membersStorage.add(convId, members + creator)
     } yield conv
   }
@@ -222,10 +229,10 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
         tracking.exception(ex, "No conversation data found")(tag)
         Future.failed(ex)
       case None =>
-        warn(s"No conversation data found for remote id: $remoteId on try: $retryCount")(tag)
+        warn(l"No conversation data found for remote id: $remoteId on try: $retryCount")(tag)
         if (retryAsync) {
           retry()
-          Future.failed(BoxedError(new NoSuchElementException(s"No conversation data found for: $remoteId") with NoStackTrace)) // use BoxedError to avoid sending unnecessary hockey report
+          Future.failed(new NoSuchElementException(s"No conversation data found for: $remoteId"))
         } else
           retry()
     } (ec)
@@ -258,7 +265,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
           case _ => None
         }
       }.toMap
-      _ = verbose(s"fixDuplicatedConversations: (original, updates) pairs: $pairs")
+      _ = verbose(l"fixDuplicatedConversations: (original, updates) pairs: $pairs")
       _ <- Future.sequence(pairs.map { case (origId, updates) =>
         for {
           _ <- Future.sequence(updates.map(updId => moveMessages(updId, origId)))
@@ -269,7 +276,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
           _ <- membersStorage.add(origId, Seq(selfUserId, UserId(origId.str)))
         } yield ()
       })
-    } yield storage.refreshRemoteMap()
+    } yield ()
   }
   
   private def checkMutedStatus(): Future[Unit] =

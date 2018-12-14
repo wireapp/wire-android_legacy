@@ -1,9 +1,0 @@
-{
-    "request": {
-        "method": "GET",
-        "url": "/get/empty200"
-    },
-    "response": {
-        "status": 200
-    }
-}

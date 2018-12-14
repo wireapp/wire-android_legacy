@@ -17,14 +17,13 @@
  */
 package com.waz.service.messages
 
-import java.util.NoSuchElementException
-
-import com.waz.ZLog._
+import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message.Status.DELIVERED
 import com.waz.api.Message.Type._
-import com.waz.content.{ConversationStorage, MessagesStorage}
+import com.waz.content.{ConversationStorage, MessagesStorage, ReadReceiptsStorage}
+import com.waz.log.ZLog2._
 import com.waz.model.sync.ReceiptType
-import com.waz.model.{MessageId, UserId}
+import com.waz.model.{MessageId, ReadReceipt, UserId}
 import com.waz.service.conversation.ConversationsService
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
@@ -33,26 +32,31 @@ import com.waz.utils.events.EventContext
 import scala.concurrent.Future
 import scala.concurrent.Future.successful
 
-class ReceiptService(messages: MessagesStorage, convsStorage: ConversationStorage, sync: SyncServiceHandle, selfUserId: UserId, convsService: ConversationsService) {
+class ReceiptService(messages: MessagesStorage, convsStorage: ConversationStorage, sync: SyncServiceHandle, selfUserId: UserId, convsService: ConversationsService, readReceiptsStorage: ReadReceiptsStorage) {
   import EventContext.Implicits.global
-  import ImplicitTag._
   import Threading.Implicits.Background
 
   messages.onAdded { msgs =>
-    Future.traverse(msgs.iterator.filter(msg => msg.userId != selfUserId && confirmable(msg.msgType))) { msg =>
+    val filteredMessages = msgs.filter(msg => msg.userId != selfUserId && confirmable(msg.msgType)).groupBy(m => (m.convId, m.userId))
+    Future.traverse(filteredMessages) { case ((convId, userId), groupMessages) =>
       for {
-        Some(conv) <- convsStorage.get(msg.convId)
-        false <- convsService.isGroupConversation(conv.id)
-        _ <- sync.postReceipt(msg.convId, msg.id, msg.userId, ReceiptType.Delivery)
+        false <- convsService.isGroupConversation(convId)
+        _ <- sync.postReceipt(convId, groupMessages.map(_.id), userId, ReceiptType.Delivery)
       } yield ()
     }
   }
 
   val confirmable = Set(TEXT, TEXT_EMOJI_ONLY, ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, KNOCK, RICH_MEDIA, HISTORY_LOST, LOCATION)
 
-  def processReceipts(receipts: Seq[MessageId]) =
+  def processDeliveryReceipts(receipts: Seq[MessageId]) =
     if (receipts.nonEmpty) {
-      debug(s"received receipts: $receipts")
+      debug(l"received receipts: $receipts")
       messages.updateAll2(receipts, _.copy(state = DELIVERED))
     } else successful(Seq.empty)
+
+  def processReadReceipts(receipts: Seq[ReadReceipt]): Future[Set[ReadReceipt]] =
+    if (receipts.nonEmpty) {
+      debug(l"received read receipts: $receipts")
+      readReceiptsStorage.insertAll(receipts)
+    } else successful(Set.empty)
 }

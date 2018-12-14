@@ -19,7 +19,7 @@ package com.waz.service.conversation
 
 import com.softwaremill.macwire._
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.api.ErrorType
 import com.waz.api.IConversation.Access
 import com.waz.api.impl.ErrorResponse
@@ -51,6 +51,7 @@ trait ConversationsService {
   def getSelfConversation: Future[Option[ConversationData]]
   def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse]): Future[Unit]
   def setConversationArchived(id: ConvId, archived: Boolean): Future[Option[ConversationData]]
+  def setReceiptMode(id: ConvId, receiptMode: Int): Future[Option[ConversationData]]
   def forceNameUpdate(id: ConvId): Future[Option[(ConversationData, ConversationData)]]
   def onMemberAddFailed(conv: ConvId, users: Set[UserId], error: Option[ErrorType], resp: ErrorResponse): Future[Unit]
   def groupConversation(convId: ConvId): Signal[Boolean]
@@ -85,7 +86,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                                eventScheduler:  => EventScheduler,
                                tracking:        TrackingService,
                                client:          ConversationsClient,
-                               stats:           ConversationsListStateService,
+                               selectedConv:    SelectedConversationService,
                                syncReqService:  SyncRequestService) extends ConversationsService {
 
   private implicit val ev = EventContext.Global
@@ -95,12 +96,12 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   nameUpdater.registerForUpdates()
 
   //On conversation changed, update the state of the access roles as part of migration, then check for a link if necessary
-  stats.selectedConversationId {
+  selectedConv.selectedConversationId {
     case Some(convId) => convsStorage.get(convId).flatMap {
       case Some(conv) if conv.accessRole.isEmpty =>
         for {
           syncId        <- sync.syncConversations(Set(conv.id))
-          _             <- syncReqService.scheduler.await(syncId)
+          _             <- syncReqService.await(syncId)
           Some(updated) <- content.convById(conv.id)
         } yield if (updated.access.contains(Access.CODE)) sync.syncConvLink(conv.id)
 
@@ -110,11 +111,11 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   }
 
   val convStateEventProcessingStage = EventScheduler.Stage[ConversationStateEvent] { (_, events) =>
-    RichFuture.processSequential(events)(processConversationEvent(_, selfUserId))
+    RichFuture.traverseSequential(events)(processConversationEvent(_, selfUserId))
   }
 
   push.onHistoryLost { req =>
-    verbose(s"onSlowSyncNeeded($req)")
+    verbose(l"onSlowSyncNeeded($req)")
     // TODO: this is just very basic implementation creating empty message
     // This should be updated to include information about possibly missed changes
     // this message will be shown rarely (when notifications stream skips data)
@@ -133,7 +134,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0) = ev match {
     case CreateConversationEvent(_, time, from, data) =>
       updateConversations(Seq(data)).flatMap { case (_, created) => Future.traverse(created) { created =>
-        messages.addConversationStartMessage(created.id, from, (data.members + selfUserId).filter(_ != from), created.name, time = Some(time))
+        messages.addConversationStartMessage(created.id, from, (data.members + selfUserId).filter(_ != from), created.name, readReceiptsAllowed = created.readReceiptsAllowed, time = Some(time))
       }}
 
     case ConversationEvent(rConvId, _, _) =>
@@ -149,11 +150,14 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
               for {
                 conv <- convsStorage.insert(ConversationData(ConvId(), rConvId, None, from, ConversationType.Group, lastEventTime = time))
                 ms   <- membersStorage.add(conv.id, from +: members)
+                sId  <- sync.syncConversations(Set(conv.id))
+                _    <- syncReqService.await(sId)
+                Some(conv) <- convsStorage.get(conv.id)
+                _    <- if (conv.receiptMode.exists(_ > 0)) messages.addReceiptModeIsOnMessage(conv.id) else Future.successful(None)
                 _    <- messages.addMemberJoinMessage(conv.id, from, members.toSet)
-                _    <- sync.syncConversations(Set(conv.id))
               } yield {}
             case _ =>
-              warn(s"No conversation data found for event: $ev on try: $retryCount")
+              warn(l"No conversation data found for event: $ev on try: $retryCount")
               content.processConvWithRemoteId(rConvId, retryAsync = true) { processUpdateEvent(_, ev) }
           }
       }
@@ -163,12 +167,19 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case RenameConversationEvent(_, _, _, name) => content.updateConversationName(conv.id, name)
 
     case MemberJoinEvent(_, _, _, userIds, _) =>
-      if (userIds.contains(selfUserId)) sync.syncConversations(Set(conv.id)) //we were re-added to a group and in the meantime might have missed events
+      val selfAdded = userIds.contains(selfUserId)//we were re-added to a group and in the meantime might have missed events
       for {
+        convSync <- if (selfAdded)
+          sync.syncConversations(Set(conv.id)).map(Option(_))
+        else
+          Future.successful(None)
         syncId <- users.syncIfNeeded(userIds.toSet)
-        _ <- syncId.fold(Future.successful(()))(sId => syncReqService.scheduler.await(sId).map(_ => ()))
+        _ <- syncId.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
         _ <- membersStorage.add(conv.id, userIds)
         _ <- if (userIds.contains(selfUserId)) content.setConvActive(conv.id, active = true) else successful(None)
+        _ <- convSync.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
+        Some(conv) <- convsStorage.get(conv.id)
+        _ <- if (selfAdded && conv.receiptMode.exists(_ > 0)) messages.addReceiptModeIsOnMessage(conv.id) else Future.successful(None)
       } yield ()
 
     case MemberLeaveEvent(_, _, _, userIds) =>
@@ -180,7 +191,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case MemberUpdateEvent(_, _, _, state) => content.updateConversationState(conv.id, state)
 
     case ConnectRequestEvent(_, _, from, _, recipient, _, _) =>
-      debug(s"ConnectRequestEvent(from = $from, recipient = $recipient")
+      debug(l"ConnectRequestEvent(from = $from, recipient = $recipient")
       membersStorage.add(conv.id, Set(from, recipient)).flatMap { added =>
         users.syncIfNeeded(added.map(_.userId))
       }
@@ -193,6 +204,9 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
     case ConversationCodeDeleteEvent(_, _, _) =>
       convsStorage.update(conv.id, _.copy(link = None))
+
+    case ConversationReceiptModeEvent(_, _, _, receiptMode) =>
+      content.updateReceiptMode(conv.id, receiptMode = receiptMode)
 
     case MessageTimerEvent(_, time, from, duration) =>
       convsStorage.update(conv.id, _.copy(globalEphemeral = duration))
@@ -207,7 +221,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       case _ =>
         for {
           user  <- usersStorage.get(selfUserId)
-          conv  =  ConversationData(ConvId(selfUserId.str), RConvId(selfUserId.str), None, selfUserId, ConversationType.Self, generatedName = user.map(_.name).getOrElse(""))
+          conv  =  ConversationData(ConvId(selfUserId.str), RConvId(selfUserId.str), None, selfUserId, ConversationType.Self, generatedName = user.map(_.name).getOrElse(Name.Empty))
           saved <- convsStorage.getOrCreate(selfConvId, conv).map(Some(_))
         } yield saved
     }
@@ -222,14 +236,14 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   private def updateConversations(responses: Seq[ConversationResponse]): Future[(Seq[ConversationData], Seq[ConversationData])] = {
 
     def updateConversationData() = {
-      def findExistingId = convsStorage { (convById, remoteMap) =>
-        def byRemoteId(id: RConvId) = returning(remoteMap.get(id).flatMap(convById.get)) { res => verbose(s"byRemoteId($id) - $res")}
+      def findExistingId = convsStorage { convsById =>
+        def byRemoteId(id: RConvId) = convsById.values.find(_.remoteId == id)
 
         responses.map { resp =>
           val newId = if (isOneToOne(resp.convType)) resp.members.find(_ != selfUserId).fold(ConvId())(m => ConvId(m.str)) else ConvId(resp.id.str)
 
           val matching = byRemoteId(resp.id).orElse {
-            convById.get(newId).orElse {
+            convsById.get(newId).orElse {
               if (isOneToOne(resp.convType)) None
               else byRemoteId(ConversationsService.generateTempConversationId(resp.members + selfUserId))
             }
@@ -256,7 +270,9 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
             access          = resp.access,
             accessRole      = resp.accessRole,
             link            = resp.link,
-            globalEphemeral = resp.messageTimer
+            globalEphemeral = resp.messageTimer,
+            receiptMode     = resp.receiptMode
+
           ))(c => if (prev.isEmpty) created += c)
       }
 
@@ -291,6 +307,13 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       Future successful None
   }
 
+  def setReceiptMode(id: ConvId, receiptMode: Int) = content.updateReceiptMode(id, receiptMode).flatMap {
+    case Some((_, conv)) =>
+      sync.postReceiptMode(id, receiptMode).map(_ => Some(conv))
+    case None =>
+      Future successful None
+  }
+
   private def deleteConversation(convId: ConvId) = for {
     _ <- convsStorage.remove(convId)
     _ <- membersStorage.delete(convId)
@@ -298,7 +321,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   } yield ()
 
   def forceNameUpdate(id: ConvId) = {
-    warn(s"forceNameUpdate($id)")
+    warn(l"forceNameUpdate($id)")
     nameUpdater.forceNameUpdate(id)
   }
 
@@ -343,7 +366,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
             else Future.successful(Right {})
         } yield resp).recover {
           case NonFatal(e) =>
-            warn("Unable to set team only mode on conversation", e)
+            warn(l"Unable to set team only mode on conversation", e)
             Left(ErrorResponse.internalError("Unable to set team only mode on conversation"))
         }
     }
@@ -363,7 +386,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     } yield linkResp)
       .recover {
         case NonFatal(e) =>
-          error("Failed to create link", e)
+          error(l"Failed to create link", e)
           Left(ErrorResponse.internalError("Unable to create link for conversation"))
       }
 
@@ -378,7 +401,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     } yield resp)
       .recover {
         case NonFatal(e) =>
-          error("Failed to remove link", e)
+          error(l"Failed to remove link", e)
           Left(ErrorResponse.internalError("Unable to remove link for conversation"))
       }
 
