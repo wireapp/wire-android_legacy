@@ -112,28 +112,28 @@ package object model {
     object TextMessage {
       import scala.concurrent.duration.DurationInt
 
-      def apply(text: String, mentions: Seq[com.waz.model.Mention]): GenericMessage = GenericMessage(Uid(), Text(text, mentions, Nil))
+      def apply(text: String, mentions: Seq[com.waz.model.Mention], expectsReadConfirmation: Boolean): GenericMessage = GenericMessage(Uid(), Text(text, mentions, Nil, expectsReadConfirmation))
 
-      def apply(text: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview]): GenericMessage = GenericMessage(Uid(), Text(text, mentions, links))
+      def apply(text: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], expectsReadConfirmation: Boolean): GenericMessage = GenericMessage(Uid(), Text(text, mentions, links, expectsReadConfirmation))
 
-      def apply(text: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Option[Quote]): GenericMessage = GenericMessage(Uid(), Text(text, mentions, links, quote))
+      def apply(text: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Option[Quote], expectsReadConfirmation: Boolean): GenericMessage = GenericMessage(Uid(), Text(text, mentions, links, quote, expectsReadConfirmation))
 
-      def apply(msg: MessageData): GenericMessage = GenericMessage(msg.id.uid, msg.ephemeral, Text(msg.contentString, msg.content.flatMap(_.mentions), Nil, msg.protoQuote))
+      def apply(msg: MessageData): GenericMessage = GenericMessage(msg.id.uid, msg.ephemeral, Text(msg.contentString, msg.content.flatMap(_.mentions), Nil, msg.protoQuote, msg.expectsRead.getOrElse(false)))
 
-      def unapply(msg: GenericMessage): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview], Option[Quote])] = msg match {
-        case GenericMessage(_, Text(content, mentions, links, quote)) =>
-          Some((content, mentions, links, quote))
-        case GenericMessage(_, Ephemeral(_, Text(content, mentions, links, quote))) =>
-          Some((content, mentions, links, quote))
-        case GenericMessage(_, MsgEdit(_, Text(content, mentions, links, quote))) =>
-          Some((content, mentions, links, quote))
+      def unapply(msg: GenericMessage): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview], Option[Quote], Boolean)] = msg match {
+        case GenericMessage(_, t @ Text(content, mentions, links, quote)) =>
+          Some((content, mentions, links, quote, t.expectsReadConfirmation))
+        case GenericMessage(_, Ephemeral(_, t @ Text(content, mentions, links, quote))) =>
+          Some((content, mentions, links, quote, t.expectsReadConfirmation))
+        case GenericMessage(_, MsgEdit(_, t @ Text(content, mentions, links, quote))) =>
+          Some((content, mentions, links, quote, t.expectsReadConfirmation))
         case _ =>
           None
       }
 
       def updateMentions(msg: GenericMessage, newMentions: Seq[com.waz.model.Mention]): GenericMessage = msg match {
-        case GenericMessage(uid, Text(text, mentions, links, quote)) if mentions != newMentions =>
-          GenericMessage(uid, Text(text, newMentions, links, quote))
+        case GenericMessage(uid, t @ Text(text, mentions, links, quote)) if mentions != newMentions =>
+          GenericMessage(uid, Text(text, newMentions, links, quote, t.expectsReadConfirmation))
         case _ =>
           msg
       }

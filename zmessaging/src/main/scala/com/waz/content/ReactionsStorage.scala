@@ -17,16 +17,14 @@
  */
 package com.waz.content
 
-import android.content.Context
 import com.waz.ZLog._
+import android.content.Context
 import com.waz.model.Liking.{Action, LikingDao}
 import com.waz.model._
-import com.waz.threading.SerialDispatchQueue
+import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.TrimmingLruCache.Fixed
-import com.waz.utils.events.{AggregatingSignal, EventContext}
+import com.waz.utils.events.{AggregatingSignal, EventContext, RefreshingSignal, Signal}
 import com.waz.utils._
-import org.threeten.bp.Instant
-import org.threeten.bp.Instant.EPOCH
 
 import scala.collection.{breakOut, mutable}
 import scala.concurrent.duration._
@@ -34,6 +32,9 @@ import scala.concurrent.Future
 
 trait ReactionsStorage extends CachedStorage[(MessageId, UserId), Liking] {
   def loadAll(msgs: Seq[MessageId]): Future[Vector[Likes]]
+  def addOrUpdate(liking: Liking): Future[Likes]
+  def getLikes(msg: MessageId): Future[Likes]
+  def likes(msg:MessageId): Signal[Likes]
 }
 
 class ReactionsStorageImpl(context: Context, storage: Database) extends CachedStorageImpl[(MessageId, UserId), Liking](new TrimmingLruCache(context, Fixed(MessagesStorage.cacheSize)), storage)(LikingDao, "LikingStorage") with ReactionsStorage {
@@ -69,14 +70,20 @@ class ReactionsStorageImpl(context: Context, storage: Database) extends CachedSt
     updateOrCreateAll2(values.keys, { (id, v) => v.fold(values(id)) { _ max values(id) }})
   }
 
-  def getLikes(msg: MessageId): Future[Likes] = Future {
+  override def getLikes(msg: MessageId): Future[Likes] = Future {
     Option(likesCache.get(msg))
   } flatMap {
     case Some(users) => Future.successful(Likes(msg, users))
     case None => find(_.message == msg, LikingDao.findForMessage(msg)(_), identity) map { updateCache(msg, _) }
   }
 
-  def addOrUpdate(liking: Liking): Future[Likes] = {
+  override def likes(msg: MessageId): Signal[Likes] =
+    new RefreshingSignal[Likes](
+      CancellableFuture.lift(getLikes(msg)),
+      onChanged.map(_.filter(_.message == msg))
+    )
+
+  override def addOrUpdate(liking: Liking): Future[Likes] = {
     if (liking.timestamp.isEpoch) updateOrCreate(liking.id, l => l.copy(timestamp = maxTime.currentValue.getOrElse(l.timestamp) + 1.milli, action = liking.action), liking) // local update
     else updateOrCreate(liking.id, _ max liking, liking)
   }.flatMap(_ => getLikes(liking.message))

@@ -31,8 +31,10 @@ public enum SyncCommand {
     SyncConversation("sync-conv"),
     SyncConvLink("sync-conv-link"),
     SyncSearchQuery("sync-search"),
+    SyncProperties("sync-properties"),
     ExactMatchHandle("exact-match"),
     PostConv("post-conv"),
+    PostConvReceiptMode("post-conv-receipt-mode"),
     PostConvName("post-conv-name"),
     PostConvState("post-conv-state"),
     PostLastRead("post-last-read"),
@@ -67,6 +69,9 @@ public enum SyncCommand {
     PostAssetStatus("post-asset-status"),
     PostOpenGraphMeta("post-og-meta"),
     PostReceipt("post-receipt"),
+    PostBoolProperty("post-bool-property"),
+    PostIntProperty("post-int-property"),
+    PostStringProperty("post-string-property"),
     Unknown("unknown");
 
     public final String name;

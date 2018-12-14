@@ -25,6 +25,7 @@ import com.waz.model.ConversationEvent.ConversationEventDecoder
 import com.waz.model.Event.EventDecoder
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.{Client, ClientId}
+import com.waz.service.PropertyKey
 import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.sync.client.OtrClient
 import com.waz.utils.JsonDecoder._
@@ -66,7 +67,6 @@ object RConvEvent extends (Event => RConvId) {
   }
 }
 case class UserUpdateEvent(user: UserInfo, removeIdentity: Boolean = false) extends UserEvent
-case class UserPropertiesSetEvent(key: String, value: String) extends UserEvent // value is always json string, so maybe we should parse it already (or maybe not)
 case class UserConnectionEvent(convId: RConvId, from: UserId, to: UserId, message: Option[String], status: ConnectionStatus, lastUpdated: RemoteInstant, fromUserName: Option[Name] = None) extends UserEvent with RConvEvent
 case class UserDeleteEvent(user: UserId) extends UserEvent
 case class OtrClientAddEvent(client: Client) extends OtrClientEvent
@@ -120,6 +120,8 @@ case class MemberJoinEvent(convId: RConvId, time: RemoteInstant, from: UserId, u
 case class MemberLeaveEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId]) extends MessageEvent with ConversationStateEvent
 case class MemberUpdateEvent(convId: RConvId, time: RemoteInstant, from: UserId, state: ConversationState) extends ConversationStateEvent
 
+case class ConversationReceiptModeEvent(convId: RConvId, time: RemoteInstant, from: UserId, receiptMode: Int) extends MessageEvent with ConversationStateEvent
+
 case class ConnectRequestEvent(convId: RConvId, time: RemoteInstant, from: UserId, message: String, recipient: UserId, name: Name, email: Option[String]) extends MessageEvent with ConversationStateEvent
 
 case class ConversationAccessEvent(convId: RConvId, time: RemoteInstant, from: UserId, access: Set[Access], accessRole: AccessRole) extends ConversationStateEvent
@@ -132,6 +134,11 @@ sealed trait OtrEvent extends ConversationEvent {
   val ciphertext: Array[Byte]
 }
 case class OtrMessageEvent(convId: RConvId, time: RemoteInstant, from: UserId, sender: ClientId, recipient: ClientId, ciphertext: Array[Byte], externalData: Option[Array[Byte]] = None) extends OtrEvent
+
+sealed trait PropertyEvent extends UserEvent
+
+case class ReadReceiptEnabledPropertyEvent(value: Int) extends PropertyEvent
+case class UnknownPropertyEvent(key: PropertyKey, value: String) extends PropertyEvent
 
 case class ConversationState(archived:    Option[Boolean] = None,
                              archiveTime: Option[RemoteInstant] = None,
@@ -202,10 +209,10 @@ object Event {
         case "user.connection" => connectionEvent(js.getJSONObject("connection"), JsonDecoder.opt('user, _.getJSONObject("user")) flatMap (JsonDecoder.decodeOptName('name)(_)))
         case "user.contact-join" => contactJoinEvent(js.getJSONObject("user"))
         case "user.push-remove" => gcmTokenRemoveEvent(js.getJSONObject("token"))
-        case "user.properties-set" => UserPropertiesSetEvent('key, 'value)
         case "user.delete" => UserDeleteEvent(user = 'id)
         case "user.client-add" => OtrClientAddEvent(OtrClient.ClientsResponse.client(js.getJSONObject("client")))
         case "user.client-remove" => OtrClientRemoveEvent(decodeId[ClientId]('id)(js.getJSONObject("client"), implicitly))
+        case "user.properties-set" => PropertyEvent.Decoder(js)
         case _ =>
           error(l"unhandled event: $js")
           UnknownEvent(js)
@@ -246,6 +253,7 @@ object ConversationEvent {
         case "conversation.access-update"        => ConversationAccessEvent('conversation, time, 'from, decodeAccess('access)(d.get), decodeAccessRole('access_role)(d.get))
         case "conversation.code-update"          => ConversationCodeUpdateEvent('conversation, time, 'from, ConversationData.Link(d.get.getString("uri")))
         case "conversation.code-delete"          => ConversationCodeDeleteEvent('conversation, time, 'from)
+        case "conversation.receipt-mode-update"  => ConversationReceiptModeEvent('conversation, time, 'from, decodeInt('receipt_mode)(d.get))
         case "conversation.message-timer-update" => MessageTimerEvent('conversation, time, 'from, decodeOptLong('message_timer)(d.get).map(EphemeralDuration(_)))
 
           //Note, the following events are not from the backend, but are the result of decrypting and re-encoding conversation.otr-message-add events - hence the different name for `convId
@@ -406,4 +414,16 @@ object OtrClientRemoveEvent {
         json.put("client", new JSONObject().put("id", error.client.toString))
       }
     }
+}
+
+object PropertyEvent {
+  lazy val Decoder: JsonDecoder[PropertyEvent] = new JsonDecoder[PropertyEvent] {
+    override def apply(implicit js: JSONObject): PropertyEvent = {
+      import PropertyKey._
+      decodePropertyKey('key) match {
+        case ReadReceiptsEnabled => ReadReceiptEnabledPropertyEvent('value)
+        case key => UnknownPropertyEvent(key, 'value)
+      }
+    }
+  }
 }

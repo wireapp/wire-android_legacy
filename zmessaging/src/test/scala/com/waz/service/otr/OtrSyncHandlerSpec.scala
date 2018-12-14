@@ -55,7 +55,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
   scenario("Encrypt and send message with no errors") {
 
     val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"))
-    val msg = TextMessage("content", Nil)
+    val msg = TextMessage("content", Nil, expectsReadConfirmation = false)
 
     val otherUser = UserId("other-user-id")
     val otherUsersClient = ClientId("client-id")
@@ -108,7 +108,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
   scenario("Unexpected users and/or clients in missing response should be updated and added to members, and previously encrypted content should be updated") {
 
     val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"))
-    val msg = TextMessage("content", Seq.empty)
+    val msg = TextMessage("content", Seq.empty, expectsReadConfirmation = false)
 
     val otherUser        = UserId("other-user-id")
     val otherUsersClient = ClientId("other-user-client-1")

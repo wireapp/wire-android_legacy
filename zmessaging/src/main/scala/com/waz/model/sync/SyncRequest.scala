@@ -17,13 +17,14 @@
  */
 package com.waz.model.sync
 
-import com.waz.log.ZLog2._
-import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.ZLog.ImplicitTag._
+import com.waz.api.IConversation.{Access, AccessRole}
+import com.waz.log.ZLog2._
 import com.waz.model.AddressBook.AddressBookDecoder
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.ClientId
 import com.waz.model.{AccentColor, Availability, SearchQuery, _}
+import com.waz.service.PropertyKey
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.client.{ConversationsClient, UsersClient}
 import com.waz.sync.queue.SyncJobMerger._
@@ -80,6 +81,7 @@ object SyncRequest {
   case object SyncSelfPermissions extends BaseRequest(Cmd.SyncSelfPermissions)
   case object SyncClientsLocation extends BaseRequest(Cmd.SyncClientLocation)
   case object SyncTeam            extends BaseRequest(Cmd.SyncTeam)
+  case object SyncProperties      extends BaseRequest(Cmd.SyncProperties)
 
   case class SyncTeamMember(userId: UserId) extends BaseRequest(Cmd.SyncTeam) {
     override val mergeKey: Any = (cmd, userId)
@@ -132,13 +134,20 @@ object SyncRequest {
     override val mergeKey: Any = (cmd, availability.id)
   }
 
-  case class PostConv(convId:     ConvId,
-                      users:      Set[UserId],
-                      name:       Option[Name],
-                      team:       Option[TeamId],
-                      access:     Set[Access],
-                      accessRole: AccessRole) extends RequestForConversation(Cmd.PostConv) with Serialized {
+  case class PostConv(convId:       ConvId,
+                      users:        Set[UserId],
+                      name:         Option[Name],
+                      team:         Option[TeamId],
+                      access:       Set[Access],
+                      accessRole:   AccessRole,
+                      receiptMode:  Option[Int]
+                     ) extends RequestForConversation(Cmd.PostConv) with Serialized {
     override def merge(req: SyncRequest) = mergeHelper[PostConv](req)(Merged(_))
+  }
+
+  case class PostConvReceiptMode(convId: ConvId, receiptMode: Int)
+    extends RequestForConversation(Cmd.PostConvReceiptMode) with Serialized {
+    override def merge(req: SyncRequest) = mergeHelper[PostConvReceiptMode](req)(Merged(_))
   }
 
   case class PostConvName(convId: ConvId, name: Name) extends RequestForConversation(Cmd.PostConvName) with Serialized {
@@ -189,8 +198,8 @@ object SyncRequest {
     override def merge(req: SyncRequest) = mergeHelper[PostOpenGraphMeta](req)(r => Merged(PostOpenGraphMeta(convId, messageId, editTime max r.editTime)))
   }
 
-  case class PostReceipt(convId: ConvId, messageId: MessageId, userId: UserId, tpe: ReceiptType) extends RequestForConversation(Cmd.PostReceipt) {
-    override val mergeKey = (cmd, messageId, userId, tpe)
+  case class PostReceipt(convId: ConvId, messages: Seq[MessageId], userId: UserId, tpe: ReceiptType) extends RequestForConversation(Cmd.PostReceipt) {
+    override val mergeKey = (cmd, messages, userId, tpe)
   }
 
   case class PostDeleted(convId: ConvId, messageId: MessageId) extends RequestForConversation(Cmd.PostDeleted) {
@@ -302,6 +311,18 @@ object SyncRequest {
     override val mergeKey = (cmd, convId, user)
   }
 
+  case class PostStringProperty(key: PropertyKey, value: String) extends BaseRequest(Cmd.PostStringProperty) {
+    override def mergeKey: Any = (cmd, key)
+  }
+
+  case class PostBoolProperty(key: PropertyKey, value: Boolean) extends BaseRequest(Cmd.PostBoolProperty) {
+    override def mergeKey: Any = (cmd, key)
+  }
+
+  case class PostIntProperty(key: PropertyKey, value: Int) extends BaseRequest(Cmd.PostIntProperty) {
+    override def mergeKey: Any = (cmd, key)
+  }
+
   private def mergeHelper[A <: SyncRequest : ClassTag](other: SyncRequest)(f: A => MergeResult[A]): MergeResult[A] = other match {
     case req: A if req.mergeKey == other.mergeKey => f(req)
     case _ => Unchanged
@@ -324,8 +345,9 @@ object SyncRequest {
           case Cmd.SyncConvLink              => SyncConvLink('conv)
           case Cmd.SyncSearchQuery           => SyncSearchQuery(SearchQuery.fromCacheKey(decodeString('queryCacheKey)))
           case Cmd.ExactMatchHandle          => ExactMatchHandle(Handle(decodeString('handle)))
-          case Cmd.PostConv                  => PostConv(convId, decodeStringSeq('users).map(UserId(_)).toSet, 'name, 'team, 'access, 'access_role)
+          case Cmd.PostConv                  => PostConv(convId, decodeStringSeq('users).map(UserId(_)).toSet, 'name, 'team, 'access, 'access_role, 'receipt_mode)
           case Cmd.PostConvName              => PostConvName(convId, 'name)
+          case Cmd.PostConvReceiptMode       => PostConvReceiptMode(convId, 'receipt_mode)
           case Cmd.PostConvState             => PostConvState(convId, JsonDecoder[ConversationState]('state))
           case Cmd.PostLastRead              => PostLastRead(convId, 'time)
           case Cmd.PostCleared               => PostCleared(convId, 'time)
@@ -364,7 +386,11 @@ object SyncRequest {
           case Cmd.PostRemoveBot             => PostRemoveBot(decodeId[ConvId]('convId), decodeId[UserId]('botId))
           case Cmd.PostSessionReset          => PostSessionReset(convId, userId, decodeId[ClientId]('client))
           case Cmd.PostOpenGraphMeta         => PostOpenGraphMeta(convId, messageId, 'time)
-          case Cmd.PostReceipt               => PostReceipt(convId, messageId, userId, ReceiptType.fromName('type))
+          case Cmd.PostReceipt               => PostReceipt(convId, decodeMessageIdSeq('messages), userId, ReceiptType.fromName('type))
+          case Cmd.PostBoolProperty          => PostBoolProperty('key, 'value)
+          case Cmd.PostIntProperty           => PostIntProperty('key, 'value)
+          case Cmd.PostStringProperty        => PostStringProperty('key, 'value)
+          case Cmd.SyncProperties            => SyncProperties
           case Cmd.Unknown                   => Unknown
         }
       } catch {
@@ -424,10 +450,10 @@ object SyncRequest {
           putId("message", messageId)
           o.put("time", time.toEpochMilli)
 
-        case PostReceipt(_, messageId, userId, tpe) =>
-          putId("message", messageId)
+        case PostReceipt(_, messages, userId, tpe) =>
+          o.put("messages", arrString(messages.map(_.str)))
           putId("user", userId)
-          o.put("type", tpe)
+          o.put("type", tpe.name)
 
         case PostConnection(_, name, message) =>
           o.put("name", name)
@@ -448,12 +474,14 @@ object SyncRequest {
         case PostTypingState(_, typing) => o.put("typing", typing)
         case PostConvState(_, state) => o.put("state", JsonEncoder.encode(state))
         case PostConvName(_, name) => o.put("name", name)
-        case PostConv(_, users, name, team, access, accessRole) =>
+        case PostConvReceiptMode(_, receiptMode) => o.put("receipt_mode", receiptMode)
+        case PostConv(_, users, name, team, access, accessRole, receiptMode) =>
           o.put("users", arrString(users.map(_.str).toSeq))
           name.foreach(o.put("name", _))
           team.foreach(o.put("team", _))
           o.put("access", JsonEncoder.encodeAccess(access))
           o.put("access_role", JsonEncoder.encodeAccessRole(accessRole))
+          receiptMode.foreach(o.put("receipt_mode", _))
         case PostAddressBook(ab) => o.put("addressBook", JsonEncoder.encode(ab))
         case PostLiking(_, liking) =>
           o.put("liking", JsonEncoder.encode(liking))
@@ -467,8 +495,17 @@ object SyncRequest {
         case SyncPreKeys(user, clients) =>
           o.put("user", user.str)
           o.put("clients", arrString(clients.toSeq map (_.str)))
+        case PostBoolProperty(key, value) =>
+          o.put("key", key)
+          o.put("value", value)
+        case PostIntProperty(key, value) =>
+          o.put("key", key)
+          o.put("value", value)
+        case PostStringProperty(key, value) =>
+          o.put("key", key)
+          o.put("value", value)
         case SyncSelf | SyncTeam | DeleteAccount | SyncConversations | SyncConnections |
-             SyncSelfClients | SyncSelfPermissions | SyncClientsLocation | Unknown => () // nothing to do
+             SyncSelfClients | SyncSelfPermissions | SyncClientsLocation | SyncProperties | Unknown => () // nothing to do
       }
     }
   }

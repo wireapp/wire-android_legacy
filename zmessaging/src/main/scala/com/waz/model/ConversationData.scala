@@ -59,7 +59,9 @@ case class ConversationData(id:                   ConvId                 = ConvI
                             globalEphemeral:      Option[FiniteDuration] = None,
                             access:               Set[Access]            = Set.empty,
                             accessRole:           Option[AccessRole]     = None, //option for migration purposes only - at some point we do a fetch and from that point it will always be defined
-                            link:                 Option[Link]           = None) {
+                            link:                 Option[Link]           = None,
+                            receiptMode:          Option[Int]            = None
+                           ) {
 
   def displayName = if (convType == ConversationType.Group) name.getOrElse(generatedName) else generatedName
 
@@ -103,6 +105,8 @@ case class ConversationData(id:                   ConvId                 = ConvI
   def isAllMuted: Boolean = muted.isAllMuted
 
   def onlyMentionsAllowed: Boolean = muted.onlyMentionsAllowed
+
+  def readReceiptsAllowed: Boolean = team.isDefined && receiptMode.exists(_ > 0)
 }
 
 
@@ -190,6 +194,7 @@ object ConversationData {
     val Link                = opt(text[Link]('link, _.url, v => ConversationData.Link(v)))(_.link)
     val UnreadMentionsCount = int('unread_mentions_count)(_.unreadCount.mentions)
     val UnreadQuotesCount   = int('unread_quote_count)(_.unreadCount.quotes)
+    val ReceiptMode         = opt(int('receipt_mode))(_.receiptMode)
 
     override val idCol = Id
     override val table = Table(
@@ -225,7 +230,8 @@ object ConversationData {
       AccessRole,
       Link,
       UnreadMentionsCount,
-      UnreadQuotesCount
+      UnreadQuotesCount,
+      ReceiptMode
     )
 
     override def apply(implicit cursor: DBCursor): ConversationData =
@@ -256,7 +262,9 @@ object ConversationData {
         GlobalEphemeral,
         Access,
         AccessRole,
-        Link)
+        Link,
+        ReceiptMode
+      )
 
     import com.waz.model.ConversationData.ConversationType._
 

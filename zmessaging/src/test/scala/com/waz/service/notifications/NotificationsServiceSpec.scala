@@ -191,7 +191,7 @@ class NotificationsServiceSpec extends AndroidFreeSpec {
 
     val otherMsgId = MessageId("other msg")
     val otherMsg = MessageData(otherMsgId, conv.id, Message.Type.TEXT, self)
-    val msg = MessageData(MessageId("msg"), conv.id, Message.Type.TEXT, otherUserId, quote = Some(otherMsgId))
+    val msg = MessageData(MessageId("msg"), conv.id, Message.Type.TEXT, otherUserId, quote = Some(QuoteContent(otherMsgId, validity = true)))
 
     (users.get _).expects(otherUserId).anyNumberOfTimes.returning(Future.successful(Some(otherUser)))
     (convs.get _).expects(conv.id).anyNumberOfTimes.returning(Future.successful(Some(conv)))

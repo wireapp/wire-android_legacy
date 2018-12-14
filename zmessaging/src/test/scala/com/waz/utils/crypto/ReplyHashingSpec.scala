@@ -110,8 +110,8 @@ class ReplyHashingSpec extends AndroidFreeSpec {
     scenario("hash locations") {
       val msg1Id = MessageId("msg1")
       val msg2Id = MessageId("msg2")
-      val msg1 = MessageData(id = msg1Id, msgType = Message.Type.LOCATION, time = timestamp1, protos = Seq(GenericMessage(msg1Id.uid, Location(location1._2, location1._1, "", 0))))
-      val msg2 = MessageData(id = msg2Id, msgType = Message.Type.LOCATION, time = timestamp1, protos = Seq(GenericMessage(msg2Id.uid, Location(location2._2, location2._1, "", 0))))
+      val msg1 = MessageData(id = msg1Id, msgType = Message.Type.LOCATION, time = timestamp1, protos = Seq(GenericMessage(msg1Id.uid, Location(location1._2, location1._1, "", 0, expectsReadConfirmation = false))))
+      val msg2 = MessageData(id = msg2Id, msgType = Message.Type.LOCATION, time = timestamp1, protos = Seq(GenericMessage(msg2Id.uid, Location(location2._2, location2._1, "", 0, expectsReadConfirmation = false))))
 
       (assetStorage.getAll _).expects(*).once.returning(Future.successful(Nil))
 
@@ -143,8 +143,8 @@ class ReplyHashingSpec extends AndroidFreeSpec {
       
       val msg1 = MessageData(id = msg1Id, msgType = Message.Type.ASSET, time = timestamp1)
       val msg2 = MessageData(id = msg2Id, msgType = Message.Type.ASSET, time = timestamp2)
-      val msg3 = MessageData(id = msg3Id, msgType = Message.Type.LOCATION, time = timestamp1, protos = Seq(GenericMessage(msg3Id.uid, Location(location1._2, location1._1, "", 0))))
-      val msg4 = MessageData(id = msg4Id, msgType = Message.Type.LOCATION, time = timestamp1, protos = Seq(GenericMessage(msg4Id.uid, Location(location2._2, location2._1, "", 0))))
+      val msg3 = MessageData(id = msg3Id, msgType = Message.Type.LOCATION, time = timestamp1, protos = Seq(GenericMessage(msg3Id.uid, Location(location1._2, location1._1, "", 0, expectsReadConfirmation = false))))
+      val msg4 = MessageData(id = msg4Id, msgType = Message.Type.LOCATION, time = timestamp1, protos = Seq(GenericMessage(msg4Id.uid, Location(location2._2, location2._1, "", 0, expectsReadConfirmation = false))))
       val msg5 = MessageData(id = msg5Id, msgType = Message.Type.TEXT, time = timestamp2, protos = Seq(GenericMessage(msg5Id.uid, Text("This has **markdown**"))))
       val msg6 = MessageData(id = msg6Id, msgType = Message.Type.TEXT, time = timestamp2, protos = Seq(GenericMessage(msg2Id.uid, Text("بغداد"))))
       

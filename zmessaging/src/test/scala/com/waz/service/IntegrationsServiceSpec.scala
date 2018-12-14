@@ -86,7 +86,7 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
     val serviceUserId = UserId("service-user")
 
     (users.findUsersForService _).expects(serviceId).returning(Future.successful(Set.empty))
-    (convsUi.createGroupConversation _).expects(Option.empty[Name], Set.empty[UserId], false).returning(Future.successful(createdConv, createConvSyncId))
+    (convsUi.createGroupConversation _).expects(Option.empty[Name], Set.empty[UserId], false, 0).returning(Future.successful(createdConv, createConvSyncId))
     (srs.await (_: SyncId)).expects(*).twice().returning(Future.successful(SyncResult.Success))
     (sync.postAddBot _).expects(createdConv.id, pId, serviceId).returning(Future.successful(addedBotSyncId))
     (members.getActiveUsers _).expects(createdConv.id).returning(Future.successful(Seq(account1Id, serviceUserId)))
@@ -125,7 +125,7 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
       Future.successful(Seq.empty)
     }
 
-    (convsUi.createGroupConversation _).expects(Option.empty[Name], Set.empty[UserId], false).returning(Future.successful(createdConv, createConvSyncId))
+    (convsUi.createGroupConversation _).expects(Option.empty[Name], Set.empty[UserId], false, 0).returning(Future.successful(createdConv, createConvSyncId))
     (srs.await (_: SyncId)).expects(*).twice().returning(Future.successful(SyncResult.Success))
     (sync.postAddBot _).expects(createdConv.id, pId, serviceId).returning(Future.successful(addedBotSyncId))
     (members.getActiveUsers _).expects(createdConv.id).returning(Future.successful(Seq(account1Id, serviceUserId)))

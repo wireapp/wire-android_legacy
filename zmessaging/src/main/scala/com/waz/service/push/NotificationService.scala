@@ -214,7 +214,7 @@ class NotificationService(context:         Context,
   }
 
   private def buildNotifications(msgs: Seq[MessageData]): Unit =
-    messages.getAll(msgs.filter(!_.hasMentionOf(userId)).flatMap(_.quote)).map { quotes =>
+    messages.getAll(msgs.filter(!_.hasMentionOf(userId)).flatMap(_.quote.map(_.message))).map { quotes =>
       val quoteIds = quotes.flatten.filter(_.userId == userId).map(_.id).toSet
 
       msgs.flatMap(msg =>
@@ -229,7 +229,7 @@ class NotificationService(context:         Context,
             if (msg.time == RemoteInstant.Epoch) msg.localTime.toRemote(drift) else msg.time,
             ephemeral = msg.isEphemeral,
             mentions = msg.mentions.flatMap(_.userId),
-            isQuote = msg.quote.exists(quoteIds)
+            isQuote = msg.quote.map(_.message).exists(quoteIds)
           )
         }
       )

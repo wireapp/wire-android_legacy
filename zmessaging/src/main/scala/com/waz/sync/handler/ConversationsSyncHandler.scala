@@ -31,6 +31,7 @@ import com.waz.service.messages.MessagesService
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.{Retry, Success}
 import com.waz.sync.client.ConversationsClient
+import com.waz.sync.client.ConversationsClient.ConversationInitState
 import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
 import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
@@ -90,6 +91,11 @@ class ConversationsSyncHandler(selfUserId:          UserId,
   def postConversationName(id: ConvId, name: Name): Future[SyncResult] =
     postConv(id) { conv => conversationsClient.postName(conv.remoteId, name).future }
 
+  def postConversationReceiptMode(id: ConvId, receiptMode: Int): Future[SyncResult] =
+    withConversation(id) { conv =>
+      conversationsClient.postReceiptMode(conv.remoteId, receiptMode).map(SyncResult(_))
+    }
+
   def postConversationMemberJoin(id: ConvId, members: Set[UserId]): Future[SyncResult] = withConversation(id) { conv =>
     def post(users: Set[UserId]) = conversationsClient.postMemberJoin(conv.remoteId, users).future flatMap {
       case Left(resp @ ErrorResponse(403, _, label)) =>
@@ -139,10 +145,11 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       conversationsClient.postConversationState(conv.remoteId, state).map(SyncResult(_))
     }
 
-  def postConversation(convId: ConvId, users: Set[UserId], name: Option[Name], team: Option[TeamId], access: Set[Access], accessRole: AccessRole): Future[SyncResult] = {
+  def postConversation(convId: ConvId, users: Set[UserId], name: Option[Name], team: Option[TeamId], access: Set[Access], accessRole: AccessRole, receiptMode: Option[Int]): Future[SyncResult] = {
     debug(s"postConversation($convId, $users, $name)")
     val (toCreate, toAdd) = users.splitAt(PostMembersLimit)
-    conversationsClient.postConversation(toCreate, name, team, access, accessRole).future.flatMap {
+    val initState = ConversationInitState(users = toCreate, name = name, team = team, access = access, accessRole = accessRole, receiptMode = receiptMode)
+    conversationsClient.postConversation(initState).future.flatMap {
       case Right(response) =>
         convService.updateConversationsWithDeviceStartMessage(Seq(response)).flatMap { _ =>
           if (toAdd.nonEmpty) postConversationMemberJoin(convId, toAdd)

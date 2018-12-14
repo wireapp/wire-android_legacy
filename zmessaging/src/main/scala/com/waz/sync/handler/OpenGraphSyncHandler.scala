@@ -80,7 +80,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
                 case Right(links) =>
                   updateLinkPreviews(msg, links, retention) flatMap {
                     case Left(errors) => Future.successful(SyncResult(errors.head))
-                    case Right(TextMessage(_, _, Seq(), _)) =>
+                    case Right(TextMessage(_, _, Seq(), _, _)) =>
                       verbose(s"didn't find any previews in message links: $msg")
                       Future.successful(Success)
                     case Right(proto) =>
@@ -139,7 +139,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
     }
 
     msg.protos.lastOption match {
-      case Some(TextMessage(content, mentions, ps, quote)) =>
+      case Some(TextMessage(content, mentions, ps, quote, rr)) =>
         val previews = if (ps.isEmpty) createEmptyPreviews(content) else ps
 
         RichFuture.traverseSequential(links zip previews) { case (link, preview) => generatePreview(msg.assetId, link.openGraph.get, preview, retention) } flatMap { res =>
@@ -149,7 +149,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
             case (_, p) => p
           }
 
-          val proto = GenericMessage(msg.id.uid, msg.ephemeral, Text(content, mentions, updated, quote))
+          val proto = GenericMessage(msg.id.uid, msg.ephemeral, Text(content, mentions, updated, quote, rr))
 
           updateIfNotEdited(msg, _.copy(protos = Seq(proto))) map { _ => if (errors.isEmpty) Right(proto) else Left(errors) }
         }
@@ -185,7 +185,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
       uploadImage map {
         case Left(error) => Left(error)
         case Right(imageAsset) =>
-          Right(LinkPreview(URI.parse(prev.url), prev.urlOffset, meta.title, meta.description, imageAsset.map(Asset(_)), meta.permanentUrl))
+          Right(LinkPreview(URI.parse(prev.url), prev.urlOffset, meta.title, meta.description, imageAsset.map(Asset(_, None, expectsReadConfirmation = false)), meta.permanentUrl))
       }
   }
 }

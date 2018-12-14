@@ -105,7 +105,7 @@ object Generators {
   implicit lazy val arbMessageContent: Arbitrary[MessageContent] = Arbitrary(resultOf(MessageContent))
   implicit lazy val arbGenericMessage: Arbitrary[GenericMessage] = Arbitrary(for {
     id <- arbitrary[Uid]
-    content = Text("test", Nil, Nil) // TODO: implement actual generator
+    content = Text("test") // TODO: implement actual generator
   } yield GenericMessage(id, content))
 
   implicit lazy val arbMention: Arbitrary[Mention] = Arbitrary(for {
@@ -113,6 +113,14 @@ object Generators {
     start  <- posNum[Int]
     length <- chooseNum(1,10)
   } yield Mention(id, start, length))
+
+  implicit lazy val arbQuoteContent: Arbitrary[QuoteContent] = Arbitrary(for {
+    message <- arbitrary[MessageId]
+    validity <- arbitrary[Boolean]
+    hash <- optGen(arbitrary[Sha256])
+  } yield QuoteContent(message, validity, hash))
+
+  implicit lazy val arbOptQuoteContent: Arbitrary[Option[QuoteContent]] = Arbitrary(optGen(arbitrary[QuoteContent]))
 
   implicit lazy val arbMessageData: Arbitrary[MessageData] = Arbitrary(resultOf(MessageData))
 

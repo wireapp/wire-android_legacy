@@ -91,7 +91,7 @@ class EphemeralMessagesService(selfUserId: UserId,
       for {
         _ <- messages.deleteOnUserRequest(toRemove.map(_.id))
         // recalling message, this informs the sender that message is already expired
-        _ <- Future.traverse(toRemove) { m => sync.postReceipt(m.convId, m.id, m.userId, ReceiptType.EphemeralExpired) }
+        _ <- Future.traverse(toRemove) { m => sync.postReceipt(m.convId, Seq(m.id), m.userId, ReceiptType.EphemeralExpired) }
         _ <- storage.updateAll2(toObfuscate.map(_.id), obfuscate)
       } yield ()
     }
@@ -107,12 +107,12 @@ class EphemeralMessagesService(selfUserId: UserId,
 
     msg.msgType match {
       case TEXT | TEXT_EMOJI_ONLY =>
-        msg.copy(expired = true, content = Nil, protos = Seq(GenericMessage(msg.id.uid, Text(obfuscate(msg.contentString), Nil, msg.links, msg.protoQuote))))
+        msg.copy(expired = true, content = Nil, protos = Seq(GenericMessage(msg.id.uid, Text(obfuscate(msg.contentString), Nil, msg.links, msg.protoQuote, expectsReadConfirmation = false))))
       case RICH_MEDIA =>
         val content = msg.content map { ct =>
           ct.copy(content = obfuscate(ct.content), openGraph = None) //TODO: asset and rich media
         }
-        msg.copy(expired = true, content = content, protos = Seq(GenericMessage(msg.id.uid, Text(obfuscate(msg.contentString), Nil, msg.links, msg.protoQuote)))) // TODO: obfuscate links
+        msg.copy(expired = true, content = content, protos = Seq(GenericMessage(msg.id.uid, Text(obfuscate(msg.contentString), Nil, msg.links, msg.protoQuote, expectsReadConfirmation = false)))) // TODO: obfuscate links
       case VIDEO_ASSET | AUDIO_ASSET =>
         removeSource(msg)
         msg.copy(expired = true)
@@ -120,7 +120,7 @@ class EphemeralMessagesService(selfUserId: UserId,
         msg.copy(expired = true)
       case LOCATION =>
         val (name, zoom) = msg.location.fold(("", 14)) { l => (obfuscate(l.getName), l.getZoom) }
-        msg.copy(expired = true, content = Nil, protos = Seq(GenericMessage(msg.id.uid, Location(0, 0, name, zoom))))
+        msg.copy(expired = true, content = Nil, protos = Seq(GenericMessage(msg.id.uid, Location(0, 0, name, zoom, expectsReadConfirmation = false))))
       case _ =>
         msg.copy(expired = true)
     }

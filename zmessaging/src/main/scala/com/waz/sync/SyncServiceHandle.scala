@@ -61,17 +61,21 @@ trait SyncServiceHandle {
   def postLiking(id: ConvId, liking: Liking): Future[SyncId]
   def postConnection(user: UserId, name: Name, message: String): Future[SyncId]
   def postConnectionStatus(user: UserId, status: ConnectionStatus): Future[SyncId]
+  def postReceiptMode(id: ConvId, receiptMode: Int): Future[SyncId]
   def postConversationName(id: ConvId, name: Name): Future[SyncId]
   def postConversationMemberJoin(id: ConvId, members: Seq[UserId]): Future[SyncId]
   def postConversationMemberLeave(id: ConvId, member: UserId): Future[SyncId]
   def postConversationState(id: ConvId, state: ConversationState): Future[SyncId]
-  def postConversation(id: ConvId, users: Set[UserId], name: Option[Name], team: Option[TeamId], access: Set[Access], accessRole: AccessRole): Future[SyncId]
+  def postConversation(id: ConvId, users: Set[UserId], name: Option[Name], team: Option[TeamId], access: Set[Access], accessRole: AccessRole, receiptMode: Option[Int]): Future[SyncId]
   def postLastRead(id: ConvId, time: RemoteInstant): Future[SyncId]
   def postCleared(id: ConvId, time: RemoteInstant): Future[SyncId]
   def postAddressBook(ab: AddressBook): Future[SyncId]
   def postTypingState(id: ConvId, typing: Boolean): Future[SyncId]
   def postOpenGraphData(conv: ConvId, msg: MessageId, editTime: RemoteInstant): Future[SyncId]
-  def postReceipt(conv: ConvId, message: MessageId, user: UserId, tpe: ReceiptType): Future[SyncId]
+  def postReceipt(conv: ConvId, messages: Seq[MessageId], user: UserId, tpe: ReceiptType): Future[SyncId]
+  def postProperty(key: PropertyKey, value: Boolean): Future[SyncId]
+  def postProperty(key: PropertyKey, value: Int): Future[SyncId]
+  def postProperty(key: PropertyKey, value: String): Future[SyncId]
 
   def registerPush(token: PushToken): Future[SyncId]
   def deletePushToken(token: PushToken): Future[SyncId]
@@ -81,6 +85,7 @@ trait SyncServiceHandle {
   def postClientLabel(id: ClientId, label: String): Future[SyncId]
   def syncClients(user: UserId): Future[SyncId]
   def syncClientsLocation(): Future[SyncId]
+  def syncProperties(): Future[SyncId]
 
   def syncPreKeys(user: UserId, clients: Set[ClientId]): Future[SyncId]
   def postSessionReset(conv: ConvId, user: UserId, client: ClientId): Future[SyncId]
@@ -142,14 +147,19 @@ class AndroidSyncServiceHandle(account: UserId, service: SyncRequestService, tim
   def postConversationState(id: ConvId, state: ConversationState) = addRequest(PostConvState(id, state))
   def postConversationMemberJoin(id: ConvId, members: Seq[UserId]) = addRequest(PostConvJoin(id, members.toSet))
   def postConversationMemberLeave(id: ConvId, member: UserId) = addRequest(PostConvLeave(id, member))
-  def postConversation(id: ConvId, users: Set[UserId], name: Option[Name], team: Option[TeamId], access: Set[Access], accessRole: AccessRole) = addRequest(PostConv(id, users, name, team, access, accessRole))
+  def postConversation(id: ConvId, users: Set[UserId], name: Option[Name], team: Option[TeamId], access: Set[Access], accessRole: AccessRole, receiptMode: Option[Int]): Future[SyncId]
+  = addRequest(PostConv(id, users, name, team, access, accessRole, receiptMode))
+  def postReceiptMode(id: ConvId, receiptMode: Int): Future[SyncId] = addRequest(PostConvReceiptMode(id, receiptMode))
   def postLiking(id: ConvId, liking: Liking): Future[SyncId] = addRequest(PostLiking(id, liking))
   def postLastRead(id: ConvId, time: RemoteInstant) = addRequest(PostLastRead(id, time), priority = Priority.Low, delay = timeouts.messages.lastReadPostDelay)
   def postCleared(id: ConvId, time: RemoteInstant) = addRequest(PostCleared(id, time))
   def postOpenGraphData(conv: ConvId, msg: MessageId, time: RemoteInstant) = addRequest(PostOpenGraphMeta(conv, msg, time), priority = Priority.Low)
-  def postReceipt(conv: ConvId, message: MessageId, user: UserId, tpe: ReceiptType): Future[SyncId] = addRequest(PostReceipt(conv, message, user, tpe), priority = Priority.Optional)
+  def postReceipt(conv: ConvId, messages: Seq[MessageId], user: UserId, tpe: ReceiptType): Future[SyncId] = addRequest(PostReceipt(conv, messages, user, tpe), priority = Priority.Optional)
   def postAddBot(cId: ConvId, pId: ProviderId, iId: IntegrationId) = addRequest(PostAddBot(cId, pId, iId))
   def postRemoveBot(cId: ConvId, botId: UserId) = addRequest(PostRemoveBot(cId, botId))
+  def postProperty(key: PropertyKey, value: Boolean): Future[SyncId] = addRequest(PostBoolProperty(key, value), forceRetry = true)
+  def postProperty(key: PropertyKey, value: Int): Future[SyncId] = addRequest(PostIntProperty(key, value), forceRetry = true)
+  def postProperty(key: PropertyKey, value: String): Future[SyncId] = addRequest(PostStringProperty(key, value), forceRetry = true)
 
   def registerPush(token: PushToken)    = addRequest(RegisterPushToken(token), priority = Priority.High, forceRetry = true)
   def deletePushToken(token: PushToken) = addRequest(DeletePushToken(token), priority = Priority.Low)
@@ -160,17 +170,19 @@ class AndroidSyncServiceHandle(account: UserId, service: SyncRequestService, tim
   def syncClients(user: UserId) = addRequest(SyncClients(user))
   def syncClientsLocation() = addRequest(SyncClientsLocation)
   def syncPreKeys(user: UserId, clients: Set[ClientId]) = addRequest(SyncPreKeys(user, clients))
+  def syncProperties(): Future[SyncId] = addRequest(SyncProperties, forceRetry = true)
 
   def postSessionReset(conv: ConvId, user: UserId, client: ClientId) = addRequest(PostSessionReset(conv, user, client))
 
   override def performFullSync(): Future[Unit] = for {
     id1 <- syncSelfUser()
-    id6 <- syncConnections()
     id2 <- syncSelfClients()
     id3 <- syncSelfPermissions()
     id4 <- syncTeam()
     id5 <- syncConversations()
-    _ <- service.await(Set(id1, id2, id3, id4, id5, id6))
+    id6 <- syncConnections()
+    id7 <- syncProperties()
+    _ <- service.await(Set(id1, id2, id3, id4, id5, id6, id7))
   } yield ()
 }
 
@@ -184,10 +196,9 @@ object SyncHandler {
 }
 
 class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
-  import com.waz.model.sync.SyncRequest._
-
   import SyncHandler._
   import Threading.Implicits.Background
+  import com.waz.model.sync.SyncRequest._
 
   override def apply(accountId: UserId, req: SyncRequest)(implicit reqInfo: RequestInfo): Future[SyncResult] =
     accounts.getZms(accountId).flatMap {
@@ -234,11 +245,16 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case PostAssetStatus(cid, mid, exp, status)              => zms.messagesSync.postAssetStatus(cid, mid, exp, status)
           case PostConvJoin(convId, u)                             => zms.conversationSync.postConversationMemberJoin(convId, u)
           case PostConvLeave(convId, u)                            => zms.conversationSync.postConversationMemberLeave(convId, u)
-          case PostConv(convId, u, name, team, access, accessRole) => zms.conversationSync.postConversation(convId, u, name, team, access, accessRole)
+          case PostConv(convId, u, name, team, access, accessRole, receiptMode) => zms.conversationSync.postConversation(convId, u, name, team, access, accessRole, receiptMode)
           case PostConvName(convId, name)                          => zms.conversationSync.postConversationName(convId, name)
+          case PostConvReceiptMode(convId, receiptMode)            => zms.conversationSync.postConversationReceiptMode(convId, receiptMode)
           case PostConvState(convId, state)                        => zms.conversationSync.postConversationState(convId, state)
           case PostTypingState(convId, ts)                         => zms.typingSync.postTypingState(convId, ts)
           case PostCleared(convId, time)                           => zms.clearedSync.postCleared(convId, time)
+          case PostBoolProperty(key, value)                        => zms.propertiesSyncHandler.postProperty(key, value)
+          case PostIntProperty(key, value)                         => zms.propertiesSyncHandler.postProperty(key, value)
+          case PostStringProperty(key, value)                      => zms.propertiesSyncHandler.postProperty(key, value)
+          case SyncProperties                                      => zms.propertiesSyncHandler.syncProperties
           case Unknown                                             => Future.successful(Failure("Unknown sync request"))
       }
       case None => Future.successful(Failure(s"Account $accountId is not logged in"))

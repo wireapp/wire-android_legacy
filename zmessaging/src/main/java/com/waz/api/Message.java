@@ -42,6 +42,8 @@ public interface Message extends UiObservable {
 
         STARTED_USING_DEVICE, HISTORY_LOST, MESSAGE_TIMER,
 
+        READ_RECEIPTS_ON, READ_RECEIPTS_OFF,
+
         UNKNOWN
     }
 

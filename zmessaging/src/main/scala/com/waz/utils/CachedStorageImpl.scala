@@ -93,19 +93,20 @@ trait ReactiveStorage2[K, V] extends Storage2[K, V] {
   def onRemoved(key: K): EventStream[K] =
     onDeleted.map(_.view.find(_ == key)).collect { case Some(k) => k }
 
-  def optSignal(key: K): Signal[Option[V]] =
-    Signal.wrap(onChanged(key).map(Option(_)).union(onRemoved(key).map(_ => Option.empty[V])))
+  def optSignal(key: K): Signal[Option[V]] ={
+    val changeOrDelete = onChanged(key).map(Option(_)).union(onRemoved(key).map(_ => Option.empty[V]))
+    new AggregatingSignal[Option[V], Option[V]](changeOrDelete, find(key), { (_, v) => v })
+  }
 
   def signal(key: K): Signal[V] =
     optSignal(key).collect { case Some(v) => v }
 }
 
-class DbStorage2[K,V](dao: StorageDao[K,V])
+class DbStorage2[K,V](dao: StorageDao[K,V],
+                      override val keyExtractor: V => K)
                      (implicit
                       override val ec: ExecutionContext,
                       db: DB) extends Storage2[K,V] {
-
-  override val keyExtractor: V => K = dao.idExtractor
 
   override def loadAll(keys: Set[K]): Future[Seq[V]] = Future(dao.getAll(keys))
   override def saveAll(values: Iterable[V]): Future[Unit] = Future(dao.insertOrReplace(values))
@@ -125,8 +126,6 @@ class InMemoryStorage2[K, V](cache: LruCache[K, V],
 class CachedStorage2[K,V](main: Storage2[K,V], cache: Storage2[K,V])
                          (implicit
                           override val ec: ExecutionContext) extends Storage2[K, V] {
-
-  require(main.keyExtractor == cache.keyExtractor)//TODO Think how to make utils explicit
 
   override val keyExtractor: V => K = main.keyExtractor
 

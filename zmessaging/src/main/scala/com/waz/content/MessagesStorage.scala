@@ -35,6 +35,7 @@ import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils._
 import com.waz.utils.events.{EventStream, Signal, SourceStream}
 
+import scala.collection.immutable.Set
 import scala.collection._
 import scala.concurrent.Future
 
@@ -67,6 +68,7 @@ trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
   def countLaterThan(conv: ConvId, time: RemoteInstant): Future[Long]
 
   def findMessagesFrom(conv: ConvId, time: RemoteInstant): Future[IndexedSeq[MessageData]]
+  def findMessagesBetween(conv: ConvId, from: RemoteInstant, to: RemoteInstant): Future[IndexedSeq[MessageData]]
 
   def clear(convId: ConvId, clearTime: RemoteInstant): Future[Unit]
 
@@ -163,10 +165,10 @@ class MessagesStorageImpl(context:     Context,
       msgs.acquire { msgs =>
         val unread = msgs.filter { m => !m.isLocal && m.convId == conv && m.time.isAfter(lastReadTime) && !m.isDeleted && m.userId != selfUserId && m.msgType != Message.Type.UNKNOWN }.toVector
 
-        val repliesNotMentionsCount = getAll(unread.filter(!_.hasMentionOf(selfUserId)).flatMap(_.quote)).map(_.flatten)
+        val repliesNotMentionsCount = getAll(unread.filter(!_.hasMentionOf(selfUserId)).flatMap(_.quote.map(_.message))).map(_.flatten)
           .map { quotes =>
             unread.count { m =>
-              val quote = quotes.find(q => m.quote.contains(q.id))
+              val quote = quotes.find(q => m.quote.map(_.message).contains(q.id))
               quote.exists(_.userId == selfUserId)
             }
           }
@@ -223,6 +225,9 @@ class MessagesStorageImpl(context:     Context,
 
   def findMessagesFrom(conv: ConvId, time: RemoteInstant) =
     find(m => m.convId == conv && !m.time.isBefore(time), MessageDataDao.findMessagesFrom(conv, time)(_), identity)
+
+  def findMessagesBetween(conv: ConvId, from: RemoteInstant, to: RemoteInstant): Future[IndexedSeq[MessageData]] =
+    find(m => !m.isLocal, MessageDataDao.findMessagesBetween(conv, from, to)(_), identity)
 
   override def delete(msg: MessageData) =
     for {
@@ -311,7 +316,7 @@ trait MessageAndLikesStorage {
   def sortedLikes(likes: Likes, selfUserId: UserId): (IndexedSeq[UserId], Boolean)
 }
 
-class MessageAndLikesStorageImpl(selfUserId: UserId, messages: MessagesStorage, likings: ReactionsStorage) extends MessageAndLikesStorage {
+class MessageAndLikesStorageImpl(selfUserId: UserId, messages: => MessagesStorage, likings: ReactionsStorage) extends MessageAndLikesStorage {
   import com.waz.threading.Threading.Implicits.Background
   import com.waz.utils.events.EventContext.Implicits.global
 
@@ -342,7 +347,7 @@ class MessageAndLikesStorageImpl(selfUserId: UserId, messages: MessagesStorage, 
   override def combineWithLikes(msg: MessageData): Future[MessageAndLikes] = combineWithLikes(Seq(msg)).map(_.head)
 
   def getQuotes(msgs: Seq[MessageData]): Future[Map[MessageId, Option[MessageData]]] = {
-    Future.sequence(msgs.flatMap(m => m.quote.map(m.id -> _).toSeq).map {
+    Future.sequence(msgs.flatMap(m => m.quote.map(m.id -> _.message).toSeq).map {
       case (m, q) => messages.getMessage(q).map(m -> _)
     }).map(_.toMap)
   }

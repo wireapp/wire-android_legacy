@@ -57,7 +57,7 @@ class ReplyHashingImpl(storage: AssetsStorage)(implicit base64: Base64) extends 
       otherShas  <- Future.sequence(otherMsgs.map {
                       case m if ReplyHashing.textTypes.contains(m.msgType) =>
                         m.protos.last match {
-                          case TextMessage(content, _, _, _) => Future.successful(m.id -> hashTextReply(content, m.time).sha256())
+                          case TextMessage(content, _, _, _, _) => Future.successful(m.id -> hashTextReply(content, m.time).sha256())
                           case _                             => Future.successful(m.id -> Sha256.Empty) // should not happen
                         }
                       case m if m.msgType == LOCATION =>

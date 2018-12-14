@@ -61,7 +61,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
   }
 
   (replyHashing.hashMessages _).expects(*).anyNumberOfTimes.onCall { msgs: Seq[MessageData] =>
-    Future.successful(msgs.filter(m => m.quote.isDefined && m.quoteHash.isDefined).map(m => m.id -> m.quoteHash.get).toMap)
+    Future.successful(msgs.filter(m => m.quote.isDefined && m.quote.flatMap(_.hash).isDefined).map(m => m.id -> m.quote.flatMap(_.hash).get).toMap)
   }
 
   feature("Push events processing") {
@@ -79,7 +79,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
       }
 
       val processor = getProcessor
-      inside(result(processor.processEvents(conv, Seq(event))).head) {
+      inside(result(processor.processEvents(conv, isGroup = false, Seq(event))).head) {
         case m =>
           m.msgType              shouldEqual TEXT
           m.convId               shouldEqual conv.id
@@ -112,7 +112,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
       }
 
       val processor = getProcessor
-      inside(result(processor.processEvents(conv, Seq(event))).head) {
+      inside(result(processor.processEvents(conv, isGroup = false, Seq(event))).head) {
         case m =>
           m.msgType       shouldEqual MEMBER_JOIN
           m.convId        shouldEqual conv.id
@@ -139,7 +139,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
       val processor = getProcessor
 
       def testRound(event: MessageEvent) =
-        result(processor.processEvents(conv, Seq(event))) shouldEqual Set.empty
+        result(processor.processEvents(conv, isGroup = false, Seq(event))) shouldEqual Set.empty
 
       clock.advance(1.second) //conv will have time EPOCH, needs to be later than that
       testRound(MemberJoinEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded.toSeq))
@@ -174,7 +174,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside {
       }
 
       val processor = getProcessor
-      inside(result(processor.processEvents(conv, Seq(event))).head) { case msg =>
+      inside(result(processor.processEvents(conv, isGroup = false, Seq(event))).head) { case msg =>
         msg.msgType shouldEqual RENAME
         msg.time    shouldEqual event.time
       }

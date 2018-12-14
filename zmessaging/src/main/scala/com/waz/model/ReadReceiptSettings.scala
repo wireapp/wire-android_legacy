@@ -15,32 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.model.sync;
+package com.waz.model
 
-import java.util.HashMap;
-import java.util.Map;
+case class ReadReceiptSettings(selfSettings: Boolean, convSetting: Option[Int])
 
-public enum ReceiptType {
-
-    Delivery("delivery"),
-    EphemeralExpired("ephemeral-expired"),
-    Read("read");
-
-    public final String name;
-
-    ReceiptType(String name) {
-        this.name = name;
-    }
-
-    private static Map<String, ReceiptType> byName = new HashMap<>();
-    static {
-        for (ReceiptType value : ReceiptType.values()) {
-            byName.put(value.name, value);
-        }
-    }
-
-    public static ReceiptType fromName(String name) {
-        ReceiptType result = byName.get(name);
-        return (result == null) ? Delivery : result;
-    }
-}
+object AllDisabled extends ReadReceiptSettings(false, None)

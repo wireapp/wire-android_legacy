@@ -27,6 +27,7 @@ import org.scalatest.{FeatureSpec, Matchers, OptionValues, RobolectricTests}
 import org.threeten.bp.Instant
 import com.waz.testutils.Implicits._
 import com.waz.testutils.Matchers._
+
 import scala.annotation.tailrec
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -144,12 +145,12 @@ class EventSchedulerSpec extends FeatureSpec with Matchers with OptionValues wit
 
   feature("Defining event processing stages") {
     lazy val e1 = RenameConversationEvent(RConvId("R"), RemoteInstant(Instant.now()), UserId("u1"), Name("meep 1"))
-    lazy val e2 = UserPropertiesSetEvent("e2", "u1")
+    lazy val e2 = UnknownPropertyEvent("e2", "u1")
     lazy val e3 = RenameConversationEvent(RConvId("R"), RemoteInstant(Instant.now()), UserId("u2"), Name("meep 2"))
-    lazy val e4 = UserPropertiesSetEvent("e4", "u2")
+    lazy val e4 = UnknownPropertyEvent("e4", "u2")
 
     scenario("Eligibility check")(withFixture { env => import env._
-      lazy val stage = Stage[UserPropertiesSetEvent](append, _.value == "u1")
+      lazy val stage = Stage[UnknownPropertyEvent](append, _.value == "u1")
 
       stage.isEligible(e1) shouldBe false
       stage.isEligible(e2) shouldBe true
@@ -158,7 +159,7 @@ class EventSchedulerSpec extends FeatureSpec with Matchers with OptionValues wit
     })
 
     scenario("Processing only eligible events")(withFixture { env => import env._
-      lazy val stage = Stage[UserPropertiesSetEvent](append, _.value == "u1")
+      lazy val stage = Stage[UnknownPropertyEvent](append, _.value == "u1")
       stage(conv, Vector(e1,e2,e3,e4)).await()
 
       processed.get shouldEqual Seq(e2)
@@ -182,7 +183,7 @@ class EventSchedulerSpec extends FeatureSpec with Matchers with OptionValues wit
 
     class TestStage(name: Symbol) extends Stage.Atomic {
       def isEligible(e: Event) = e match {
-        case e: UserPropertiesSetEvent if e.value.contains(name.name.toLowerCase) => true
+        case e: UnknownPropertyEvent if e.value.contains(name.name.toLowerCase) => true
         case x => false
       }
 
@@ -200,7 +201,7 @@ class EventSchedulerSpec extends FeatureSpec with Matchers with OptionValues wit
     }
 
     def E(es: Symbol*): Vector[Event] = es.zipWithIndex.map {
-      case (user, uid) => new UserPropertiesSetEvent(uid.toString, user.name) {
+      case (user, uid) => new UnknownPropertyEvent(uid.toString, user.name) {
         override def toString = key
       }
     }(breakOut)

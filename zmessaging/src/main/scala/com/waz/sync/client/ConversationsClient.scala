@@ -40,7 +40,6 @@ trait ConversationsClient {
   def loadConversationIds(start: Option[RConvId] = None): ErrorOrResponse[ConversationsResult]
   def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult]
   def loadConversations(ids: Seq[RConvId]): ErrorOrResponse[Seq[ConversationResponse]]
-  def loadConversation(id: RConvId): ErrorOrResponse[ConversationResponse]
   def postName(convId: RConvId, name: Name): ErrorOrResponse[Option[RenameConversationEvent]]
   def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Unit]
   def postMessageTimer(convId: RConvId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit]
@@ -50,8 +49,8 @@ trait ConversationsClient {
   def removeLink(conv: RConvId): ErrorOrResponse[Unit]
   def getLink(conv: RConvId): ErrorOrResponse[Option[Link]]
   def postAccessUpdate(conv: RConvId, access: Set[Access], accessRole: AccessRole): ErrorOrResponse[Unit]
-  //TODO Use case class instead of this parameters list
-  def postConversation(users: Set[UserId], name: Option[Name] = None, team: Option[TeamId], access: Set[Access], accessRole: AccessRole): ErrorOrResponse[ConversationResponse]
+  def postReceiptMode(conv: RConvId, receiptMode: Int): ErrorOrResponse[Unit]
+  def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse]
 }
 
 class ConversationsClientImpl(implicit
@@ -99,13 +98,6 @@ class ConversationsClientImpl(implicit
       .withErrorType[ErrorResponse]
       .executeSafe
       .map(_.map(_.conversations))
-  }
-
-  override def loadConversation(id: RConvId): ErrorOrResponse[ConversationResponse] = {
-    Request.Get(relativePath = s"$ConversationsPath/$id")
-      .withResultType[ConversationsResult]
-      .withErrorType[ErrorResponse]
-      .executeSafe(_.conversations.head)
   }
 
   private implicit val EventsResponseDeserializer: RawBodyDeserializer[List[ConversationEvent]] =
@@ -206,19 +198,22 @@ class ConversationsClientImpl(implicit
       .executeSafe
   }
 
-  def postConversation(users: Set[UserId], name: Option[Name] = None, team: Option[TeamId], access: Set[Access], accessRole: AccessRole): ErrorOrResponse[ConversationResponse] = {
-    debug(s"postConversation($users, $name)")
-    val payload = JsonEncoder { o =>
-      o.put("users", Json(users))
-      name.foreach(o.put("name", _))
-      team.foreach(t => o.put("team", returning(new json.JSONObject()) { o =>
-        o.put("teamid", t.str)
-        o.put("managed", false)
-      }))
-      o.put("access", encodeAccess(access))
-      o.put("access_role", encodeAccessRole(accessRole))
-    }
-    Request.Post(relativePath = ConversationsPath, body = payload)
+  def postReceiptMode(conv: RConvId, receiptMode: Int): ErrorOrResponse[Unit] = {
+    Request
+      .Put(
+        relativePath = receiptModePath(conv),
+        body = Json(
+          "receipt_mode" -> receiptMode
+        )
+      )
+      .withResultType[Unit]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
+
+  def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse] = {
+    debug(s"postConversation(${state.users}, ${state.name})")
+    Request.Post(relativePath = ConversationsPath, body = state)
       .withResultType[ConversationsResult]
       .withErrorType[ErrorResponse]
       .executeSafe(_.conversations.head)
@@ -233,6 +228,30 @@ object ConversationsClient {
   val IdsCountThreshold = 32
 
   def accessUpdatePath(id: RConvId) = s"$ConversationsPath/${id.str}/access"
+  def receiptModePath(id: RConvId) = s"$ConversationsPath/${id.str}/receipt-mode"
+
+  case class ConversationInitState(users: Set[UserId],
+                                   name: Option[Name] = None,
+                                   team: Option[TeamId],
+                                   access: Set[Access],
+                                   accessRole: AccessRole,
+                                   receiptMode: Option[Int])
+
+  object ConversationInitState {
+    implicit lazy val Encoder: JsonEncoder[ConversationInitState] = new JsonEncoder[ConversationInitState] {
+      override def apply(state: ConversationInitState): JSONObject = JsonEncoder { o =>
+        o.put("users", Json(state.users))
+        state.name.foreach(o.put("name", _))
+        state.team.foreach(t => o.put("team", returning(new json.JSONObject()) { o =>
+          o.put("teamid", t.str)
+          o.put("managed", false)
+        }))
+        o.put("access", encodeAccess(state.access))
+        o.put("access_role", encodeAccessRole(state.accessRole))
+        state.receiptMode.foreach(o.put("receipt_mode", _))
+      }
+    }
+  }
 
   case class ConversationResponse(id:           RConvId,
                                   name:         Option[Name],
@@ -247,7 +266,9 @@ object ConversationsClient {
                                   accessRole:   Option[AccessRole],
                                   link:         Option[Link],
                                   messageTimer: Option[FiniteDuration],
-                                  members:      Set[UserId])
+                                  members:      Set[UserId],
+                                  receiptMode:  Option[Int]
+                                 )
 
   object ConversationResponse {
     import com.waz.utils.JsonDecoder._
@@ -273,7 +294,9 @@ object ConversationsClient {
           decodeOptLong('message_timer).map(EphemeralDuration(_)),
           JsonDecoder.arrayColl(members.getJSONArray("others"), { case (arr, i) =>
             UserId(arr.getJSONObject(i).getString("id"))
-          }))
+          }),
+          decodeOptInt('receipt_mode)
+        )
       }
     }
 

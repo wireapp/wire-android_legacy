@@ -38,7 +38,7 @@ trait AssetStorage extends ReactiveStorage2[AssetId, Asset[General]]
 
 class AssetStorageImpl(context: Context, db: DB, ec: ExecutionContext) extends ReactiveStorageImpl2(
   new CachedStorage2[AssetId, Asset[General]](
-    new DbStorage2(AssetDao)(ec, db),
+    new DbStorage2(AssetDao, AssetDao.idExtractor)(ec, db),
     new InMemoryStorage2[AssetId, Asset[General]](new TrimmingLruCache(context, Fixed(8)), AssetDao.idExtractor)(ec)
   )(ec)
 ) with AssetStorage

@@ -84,12 +84,12 @@ class TeamConversationSpec extends AndroidFreeSpec {
       )))
 
       (convsStorage.getAll _).expects(Seq(existingConv.id)).once().returning(Future.successful(Seq(Some(existingConv))))
-      (convsContent.createConversationWithMembers _).expects(*, *, Group, self, Set(otherUserId), None, false, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED).once().onCall {
-        (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, us: Set[UserId], n: Option[Name], hid: Boolean, ac: Set[Access], ar: AccessRole) =>
-          Future.successful(ConversationData(conv, r, n, cr, tpe, team, hidden = hid, access = ac, accessRole = Some(ar)))
+      (convsContent.createConversationWithMembers _).expects(*, *, Group, self, Set(otherUserId), None, false, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED, 0).once().onCall {
+        (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, us: Set[UserId], n: Option[Name], hid: Boolean, ac: Set[Access], ar: AccessRole, rr: Int) =>
+          Future.successful(ConversationData(conv, r, n, cr, tpe, team, hidden = hid, access = ac, accessRole = Some(ar), receiptMode = Some(rr)))
       }
-      (messages.addConversationStartMessage _).expects(*, self, Set(otherUserId), None, None).once().returning(Future.successful(null))
-      (sync.postConversation _).expects(*, Set(otherUserId), None, team, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED).once().returning(Future.successful(null))
+      (messages.addConversationStartMessage _).expects(*, self, Set(otherUserId), None, *, None).once().returning(Future.successful({}))
+      (sync.postConversation _).expects(*, Set(otherUserId), None, team, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED, Some(0)).once().returning(Future.successful(null))
 
       val conv = result(initService.getOrCreateOneToOneConversation(otherUserId))
       conv shouldNot equal(existingConv)
@@ -108,9 +108,9 @@ class TeamConversationSpec extends AndroidFreeSpec {
       (userStorage.get _).expects(otherUserId).twice().returning(Future.successful(Some(otherUser)))
 
       (convsContent.convById _).expects(ConvId("otherUser")).returning(Future.successful(None))
-      (convsContent.createConversationWithMembers _).expects(ConvId("otherUser"), *, Incoming, otherUserId, Set(self), None, true, Set(Access.PRIVATE), AccessRole.PRIVATE).once().onCall {
-        (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, us: Set[UserId], n: Option[Name], hid: Boolean, ac: Set[Access], ar: AccessRole) =>
-          Future.successful(ConversationData(conv, r, n, cr, tpe, team, hidden = hid, access = ac, accessRole = Some(ar)))
+      (convsContent.createConversationWithMembers _).expects(ConvId("otherUser"), *, Incoming, otherUserId, Set(self), None, true, Set(Access.PRIVATE), AccessRole.PRIVATE, 0).once().onCall {
+        (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, us: Set[UserId], n: Option[Name], hid: Boolean, ac: Set[Access], ar: AccessRole, rr: Int) =>
+          Future.successful(ConversationData(conv, r, n, cr, tpe, team, hidden = hid, access = ac, accessRole = Some(ar), receiptMode = Some(rr)))
       }
 
       (messages.addMemberJoinMessage _).expects(ConvId("otherUser"), otherUserId, Set(self), true, false).once().returning(Future.successful(null))
@@ -121,5 +121,5 @@ class TeamConversationSpec extends AndroidFreeSpec {
   }
 
   def initService: ConversationsUiService =
-    new ConversationsUiServiceImpl(self, team, null, userStorage, messages, null, null, members, null, convsContent, convsStorage, null, null, sync, null, null, null, null)
+    new ConversationsUiServiceImpl(self, team, null, userStorage, messages, null, null, members, null, convsContent, convsStorage, null, null, sync, null, null, null, null, null)
 }

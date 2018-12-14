@@ -193,9 +193,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
           time          = if (msg.time.isBefore(prev.time) || prev.isLocal) msg.time else prev.time,
           protos        = prev.protos ++ msg.protos,
           content       = msg.content,
-          quote         = msg.quote,
-          quoteValidity = msg.quoteValidity,
-          quoteHash     = msg.quoteHash
+          quote         = msg.quote
         )
         prev.msgType match {
           case Message.Type.RECALLED => prev // ignore updates to already recalled message

@@ -325,11 +325,13 @@ object PushService {
   case class FetchFromJob(nId: Option[Uid]) extends SyncSource
   case class FetchFromIdle(nId: Option[Uid]) extends SyncSource
   case class WebSocketChange(connected: Boolean) extends SyncSource
+  object ForceSync extends SyncSource
 
   implicit val SyncSourceLogShow: LogShow[SyncSource] =
     LogShow.createFrom {
       case FetchFromJob(nId) => l"FetchFromJob(nId: $nId)"
       case FetchFromIdle(nId) => l"FetchFromIdle(nId: $nId)"
       case WebSocketChange(connected) => l"WebSocketChange(connected: $connected)"
+      case ForceSync => l"ForcePush"
     }
 }

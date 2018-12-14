@@ -45,7 +45,7 @@ object MessageDataMigration {
         forEachRow(db.query("Messages", Array("_id", "hot"), "msg_type = 'Knock'", null, null, null, null)) { c =>
           stmt.clearBindings()
           val id = c.getString(0)
-          val protos = Seq(GenericMessage(Uid(id), Knock()))
+          val protos = Seq(GenericMessage(Uid(id), Knock(false)))
 
           dst.Protos.bind(protos, 1, stmt)
           stmt.bindString(2, id)
@@ -131,7 +131,7 @@ object MessageDataMigration {
         val time = c.getLong(5)
 
         val contentString = protos.lastOption match {
-          case Some(TextMessage(ct, _, _, _)) => ct
+          case Some(TextMessage(ct, _, _, _, _)) => ct
           case _ if msgType == api.Message.Type.RICH_MEDIA => content.map(_.content).mkString(" ")
           case _ => content.headOption.fold("")(_.content)
         }

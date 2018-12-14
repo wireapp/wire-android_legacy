@@ -170,7 +170,7 @@ object GenericContent {
 
     override def set(msg: GenericMessage) = msg.setAsset
 
-    def apply(asset: AssetData, preview: Option[AssetData] = None): Asset = returning(new Messages.Asset) { proto =>
+    def apply(asset: AssetData, preview: Option[AssetData] = None, expectsReadConfirmation: Boolean): Asset = returning(new Messages.Asset) { proto =>
       proto.original = Original(asset)
       preview.foreach(p => proto.preview = Preview(p))
       (asset.status, asset.remoteData) match {
@@ -180,6 +180,7 @@ object GenericContent {
         case (DownloadFailed, Some(data)) => proto.setUploaded(RemoteData(data))
         case _ =>
       }
+      proto.expectsReadConfirmation = expectsReadConfirmation
     }
 
     def unapply(a: Asset): Option[(AssetData, Option[AssetData])] = {
@@ -374,7 +375,7 @@ object GenericContent {
 
   implicit object Knock extends GenericContent[Knock] {
     override def set(msg: GenericMessage) = msg.setKnock
-    def apply() = new Messages.Knock()
+    def apply(expectsReadConfirmation: Boolean) = returning(new Messages.Knock())(_.expectsReadConfirmation = expectsReadConfirmation)
     def unapply(arg: Knock): Boolean = true
   }
 
@@ -387,18 +388,19 @@ object GenericContent {
   implicit object Text extends GenericContent[Text] {
     override def set(msg: GenericMessage) = msg.setText
 
-    def apply(content: String): Text = apply(content, Nil, Nil, None)
+    def apply(content: String): Text = apply(content, Nil, Nil, None, expectsReadConfirmation = false)
 
-    def apply(content: String, links: Seq[LinkPreview]): Text = apply(content, Nil, links, None)
+    def apply(content: String, links: Seq[LinkPreview], expectsReadConfirmation: Boolean): Text = apply(content, Nil, links, None, expectsReadConfirmation)
 
-    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview]): Text = apply(content, mentions, links, None)
+    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], expectsReadConfirmation: Boolean): Text = apply(content, mentions, links, None, expectsReadConfirmation)
 
-    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Quote): Text = apply(content, mentions, links, Some(quote))
+    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Quote, expectsReadConfirmation: Boolean): Text = apply(content, mentions, links, Some(quote), expectsReadConfirmation)
 
-    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Option[Quote]): Text = returning(new Messages.Text()) { t =>
+    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Option[Quote], expectsReadConfirmation: Boolean): Text = returning(new Messages.Text()) { t =>
       t.content = content
       t.mentions = mentions.map { case com.waz.model.Mention(userId, start, length) => GenericContent.Mention(userId, start, length) }(breakOut).toArray
       t.linkPreview = links.toArray
+      t.expectsReadConfirmation = expectsReadConfirmation
       quote.foreach(q => t.quote = q)
     }
 
@@ -499,11 +501,12 @@ object GenericContent {
   implicit object Location extends GenericContent[Location] {
     override def set(msg: GenericMessage): (Location) => GenericMessage = msg.setLocation
 
-    def apply(lon: Float, lat: Float, name: String, zoom: Int) = returning(new Messages.Location) { p =>
+    def apply(lon: Float, lat: Float, name: String, zoom: Int, expectsReadConfirmation: Boolean) = returning(new Messages.Location) { p =>
       p.longitude = lon
       p.latitude = lat
       p.name = name
       p.zoom = zoom
+      p.expectsReadConfirmation = expectsReadConfirmation
     }
 
     def unapply(l: Location): Option[(Float, Float, Option[String], Option[Int])] =
@@ -516,7 +519,7 @@ object GenericContent {
 
   type Receipt = Messages.Confirmation
 
-  implicit object Receipt extends GenericContent[Receipt] {
+  object DeliveryReceipt extends GenericContent[Receipt] {
     override def set(msg: GenericMessage) = msg.setConfirmation
 
     def apply(msg: MessageId) = returning(new Messages.Confirmation) { c =>
@@ -524,7 +527,36 @@ object GenericContent {
       c.`type` = Messages.Confirmation.DELIVERED
     }
 
-    def unapply(proto: Receipt): Option[MessageId] = if (proto.`type` == Messages.Confirmation.DELIVERED) Some(MessageId(proto.firstMessageId)) else None
+    def apply(msgs: Seq[MessageId]) = returning(new Messages.Confirmation) { c =>
+      c.firstMessageId = msgs.head.str
+      c.moreMessageIds = msgs.map(_.str).tail.toArray
+      c.`type` = Messages.Confirmation.DELIVERED
+    }
+
+    def unapply(proto: Receipt): Option[Seq[MessageId]] = if (proto.`type` == Messages.Confirmation.DELIVERED)
+      Some(Seq(MessageId(proto.firstMessageId)) ++ proto.moreMessageIds.map(MessageId(_)).toSeq)
+    else
+      None
+  }
+
+  object ReadReceipt extends GenericContent[Receipt] {
+    override def set(msg: GenericMessage) = msg.setConfirmation
+
+    def apply(msg: MessageId) = returning(new Messages.Confirmation) { c =>
+      c.firstMessageId = msg.str
+      c.`type` = Messages.Confirmation.READ
+    }
+
+    def apply(msgs: Seq[MessageId]) = returning(new Messages.Confirmation) { c =>
+      c.firstMessageId = msgs.head.str
+      c.moreMessageIds = msgs.map(_.str).tail.toArray
+      c.`type` = Messages.Confirmation.READ
+    }
+
+    def unapply(proto: Receipt): Option[Seq[MessageId]] = if (proto.`type` == Messages.Confirmation.READ)
+      Some(Seq(MessageId(proto.firstMessageId)) ++ proto.moreMessageIds.map(MessageId(_)).toSeq)
+    else
+      None
   }
 
   type External = Messages.External

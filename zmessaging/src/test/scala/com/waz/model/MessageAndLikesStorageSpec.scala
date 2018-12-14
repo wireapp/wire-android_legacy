@@ -32,7 +32,7 @@ class MessageAndLikesStorageSpec extends AndroidFreeSpec {
     val messages = Map(
       MessageId("1") -> MessageData(MessageId("1")),
       MessageId("2") -> MessageData(MessageId("2")),
-      MessageId("3") -> MessageData(MessageId("3"), quote = Some(MessageId("2")))
+      MessageId("3") -> MessageData(MessageId("3"), quote = Some(QuoteContent(MessageId("2"), validity = true)))
     )
 
     val likes = Map(

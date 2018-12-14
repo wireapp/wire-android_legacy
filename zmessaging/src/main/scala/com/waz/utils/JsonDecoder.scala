@@ -26,6 +26,7 @@ import com.waz.model.AssetMetaData.Loudness
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.ClientId
+import com.waz.service.PropertyKey
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.wrappers.URI
 import org.json.{JSONArray, JSONObject}
@@ -198,6 +199,7 @@ object JsonDecoder {
   implicit def decodeHandle(s: Symbol)(implicit js: JSONObject): Handle = Handle(js.getString(s.name))
   implicit def decodeInvitationId(s: Symbol)(implicit js: JSONObject): InvitationId = InvitationId(js.getString(s.name))
   implicit def decodeMessage(s: Symbol)(implicit js: JSONObject): GenericMessage = GenericMessage(AESUtils.base64(decodeString(s)))
+  implicit def decodeMessageIdSeq(s: Symbol)(implicit js: JSONObject): Seq[MessageId] = array[MessageId](s)({ (arr, i) => MessageId(arr.getString(i)) })
 
   implicit def decodeId[A](s: Symbol)(implicit js: JSONObject, id: Id[A]): A = id.decode(js.getString(s.name))
 
@@ -211,4 +213,6 @@ object JsonDecoder {
   implicit def decodeOptLink(s: Symbol)(implicit js: JSONObject): Option[ConversationData.Link] = opt(s, js => ConversationData.Link(js.getString(s.name)))
 
   implicit def decodeConvType(s: Symbol)(implicit js: JSONObject): ConversationType = ConversationType(js.getInt(s.name))
+
+  implicit def decodePropertyKey(s: Symbol)(implicit js: JSONObject): PropertyKey = PropertyKey(js.getString(s.name))
 }
