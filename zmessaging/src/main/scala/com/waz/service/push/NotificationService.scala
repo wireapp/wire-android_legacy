@@ -17,374 +17,248 @@
  */
 package com.waz.service.push
 
-import android.app.AlarmManager
-import android.content.Context
-import com.waz.ZLog
 import com.waz.ZLog.LogTag
-import com.waz.log.ZLog2._
 import com.waz.api.Message
 import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.NotificationsHandler.NotificationType._
 import com.waz.content._
-import com.waz.model.ConversationData.ConversationType
-import com.waz.model.GenericContent.LastRead
+import com.waz.log.ZLog2._
+import com.waz.model.GenericContent.{MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
-import com.waz.service.ZMessaging.{accountTag, clock}
+import com.waz.service.ZMessaging.accountTag
 import com.waz.service._
-import com.waz.service.push.NotificationService.NotificationInfo
-import com.waz.threading.SerialDispatchQueue
-import com.waz.utils.events.{AggregatingSignal, EventStream, Signal}
-import com.waz.utils.{RichInstant, _}
-import com.waz.zms.NotificationsAndroidService
-import com.waz.zms.NotificationsAndroidService.{checkNotificationsIntent, checkNotificationsTimeout}
-import org.threeten.bp.Instant
-import org.threeten.bp
+import com.waz.threading.Threading
+import com.waz.utils._
+import com.waz.utils.events.{EventContext, Signal}
+import org.threeten.bp.Clock
 
-import scala.collection.breakOut
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
-trait GlobalNotificationsService {
-  //To be set by the UI
-  val notificationsSourceVisible = Signal(Map[UserId, Set[ConvId]]())
-
-  def groupedNotifications: Signal[Map[UserId, (Boolean, Seq[NotificationInfo])]]
-
-  def markAsDisplayed(userId: UserId, nots: Seq[NotId]): Future[Any]
-}
-
-class GlobalNotificationsServiceImpl extends GlobalNotificationsService {
-
-  import ZLog.ImplicitTag.implicitLogTag
-  import com.waz.threading.Threading.Implicits.Background
-
-  lazy val groupedNotifications: Signal[Map[UserId, (Boolean, Seq[NotificationInfo])]] = //Boolean = shouldBeSilent
-    Option(ZMessaging.currentAccounts) match {
-      case Some(accountsService) =>
-        accountsService.zmsInstances.flatMap { zs =>
-          verbose(l"zmsInstances count: ${zs.size}")
-          val seq = zs.map { z =>
-            val service = z.notifications
-            val notifications = service.notifications
-            val shouldBeSilent = service.otherDeviceActiveTime.map { t =>
-              val timeDiff = clock.instant.toEpochMilli - t.toEpochMilli
-              verbose(l"otherDeviceActiveTime: $t, current time: ${clock.instant}, timeDiff: ${timeDiff.millis.toSeconds}")(service.logTag)
-              timeDiff < NotificationsAndroidService.checkNotificationsTimeout.toMillis
-            }
-
-            for {
-              silent <- shouldBeSilent.orElse(Signal.const(false))
-              nots <- notifications
-            } yield {
-              verbose(l"groupedNotifications for account: ${z.selfUserId} -> (silent: $silent, notsCount: ${nots.size})")
-              z.selfUserId -> (silent, nots)
-            }
-          }.toSeq
-
-          Signal.sequence(seq: _*).map(_.toMap)
-        }
-      case None =>
-        error(l"No AccountsService available")
-        Signal.empty
-    }
-
-  def markAsDisplayed(userId: UserId, nots: Seq[NotId]): Future[Any] = {
-    Option(ZMessaging.currentAccounts) match {
-      case Some(accountsService) =>
-        accountsService.getZms(userId).flatMap {
-          case Some(zms) => zms.notifications.markAsDisplayed(nots)
-          case None      => Future.successful({})
-        }
-      case None =>
-        error(l"No AccountsService available")
-        Future.successful({})
-    }
-  }
-}
-
-class NotificationService(context:         Context,
-                          userId:          UserId,
-                          messages:        MessagesStorage,
-                          lifeCycle:       UiLifeCycle,
-                          storage:         NotificationStorage,
-                          usersStorage:    UsersStorage,
-                          convs:           ConversationStorage,
-                          members:         MembersStorage,
-                          reactionStorage: ReactionsStorage,
-                          userPrefs:       UserPreferences,
-                          pushService:     PushService,
-                          globalNots:      GlobalNotificationsService) {
-
-  import NotificationService._
-  import com.waz.utils.events.EventContext.Implicits.global
-
-  private implicit val dispatcher = new SerialDispatchQueue(name = "NotificationService")
-  implicit lazy val logTag: LogTag = accountTag[NotificationService](userId)
-
-  val alarmService = Option(context) match {
-    case Some(c) => Some(c.getSystemService(Context.ALARM_SERVICE).asInstanceOf[AlarmManager])
-    case _ =>
-      warn(l"No context, could not start alarm service")
-      None
-  }
-
-  //For UI to decide if it should make sounds or not
-  val otherDeviceActiveTime = Signal(Instant.EPOCH)
-
-  val notifications = storage.contents.map(_.values.toIndexedSeq.sorted).flatMap { d => Signal.future(createNotifications(d)) }
-
-  val lastReadProcessingStage = EventScheduler.Stage[GenericMessageEvent] { (convId, events) =>
-    events.foreach {
-      case GenericMessageEvent(_, _, _, GenericMessage(_, LastRead(conv, time))) =>
-        otherDeviceActiveTime ! clock.instant
-        alarmService.foreach(_.set(AlarmManager.RTC, (clock.instant + checkNotificationsTimeout).toEpochMilli, checkNotificationsIntent(userId, context)))
-      case _ =>
-    }
-    Future.successful(())
-  }
-
-  globalNots.notificationsSourceVisible { sources =>
-    sources.get(userId).foreach { convs =>
-      removeNotifications(nd => convs.contains(nd.conv))
-    }
-  }
-
-  def markAsDisplayed(ns: Seq[NotId]) = storage.updateAll2(ns, n => n.copy(hasBeenDisplayed = true))
-
-  val notificationEventsStage = EventScheduler.Stage[Event]({ (c, events) =>
-    add(events collect {
-      case ev @ UserConnectionEvent(_, _, userId, msg, ConnectionStatus.PendingFromOther, time, name) =>
-        NotificationData(NotId(CONNECT_REQUEST, userId), msg.getOrElse(""), ConvId(userId.str), userId, CONNECT_REQUEST, time, userName = name)
-      case ev @ UserConnectionEvent(_, _, userId, _, ConnectionStatus.Accepted, time, name) =>
-        NotificationData(NotId(CONNECT_ACCEPTED, userId), "", ConvId(userId.str), userId, CONNECT_ACCEPTED, time = time, userName = name)
-      case ContactJoinEvent(userId, _) =>
-        verbose(l"ContactJoinEvent")
-        NotificationData(NotId(CONTACT_JOIN, userId), "", ConvId(userId.str), userId, CONTACT_JOIN)
-    })
-  })
+/**
+  * A trait representing some controller responsible for displaying notifications in the UI. It is expected that this
+  * controller is a global singleton
+  */
+trait NotificationUiController {
+  /**
+    * A call to the UI telling it that it has notifications to display. This needs to be a future so that we can wait
+    * for the displaying of notifications before finishing the event processing pipeline. Upon completion of the future,
+    * we can also mark these notifications as displayed.
+    * @return a Future that should enclose the display of notifications to the UI
+    */
+  def onNotificationsChanged(accountId: UserId, ns: Set[NotificationData]): Future[Unit]
 
   /**
-    * Map containing lastRead time for every conversation.
-    * For muted conversations lastRead is always set to Instant.MAX,
-    * we don't want to show notifications for muted conversations.
+    * To be called by the UI when any conversations in a given account are visible to the user. When visible, the user
+    * should see in some way that they have notifications for that conversation, so we can automatically dismiss the
+    * notifications for them.
     */
-  private val lastReadMap = {
-    def convLastRead(c: ConversationData) = if (c.isAllMuted) RemoteInstant.Max else c.lastRead
-
-    val timeUpdates = EventStream.union(
-      convs.onAdded,
-      convs.onUpdated map { _ collect { case (prev, conv) if convLastRead(prev) != convLastRead(conv) => conv } }
-    ) filter(_.nonEmpty)
-
-    def loadAll() = convs.list().map(_.map(c => c.id -> convLastRead(c)).toMap)
-
-    def update(times: Map[ConvId, RemoteInstant], updates: Seq[ConversationData]) =
-      times ++ updates.map(c => c.id -> convLastRead(c))(breakOut)
-
-    new AggregatingSignal(timeUpdates, loadAll(), update)
-  }
-
-  lastReadMap.throttle(ClearThrottling) { lrMap =>
-    removeNotifications { n =>
-      val lastRead = lrMap.getOrElse(n.conv, RemoteInstant.Epoch)
-      val removeIf = !lastRead.isBefore(n.time)
-      verbose(l"Removing notif(${n.id}) if lastRead: $lastRead is not before n.time: ${n.time}?: $removeIf")
-      removeIf
-    }
-  }
-
-  messages.onAdded { msgs => buildNotifications(msgs) }
-
-  messages.onUpdated { updates =>
-    // add notification when message sending fails
-    val failedMsgs = updates collect {
-      case (prev, msg) if prev.state != msg.state && msg.state == Message.Status.FAILED => msg
-    }
-    if (failedMsgs.nonEmpty) {
-      storage.insertAll(failedMsgs map { msg => NotificationData(NotId(msg.id), msg.contentString, msg.convId, msg.userId, MESSAGE_SENDING_FAILED) })
-    }
-
-    // add notifications for uploaded assets
-    val updatedAssets = updates collect {
-      case (prev, msg) if msg.state == Message.Status.SENT && msg.msgType == Message.Type.ANY_ASSET => msg
-    }
-
-    buildNotifications(updatedAssets)
-  }
-
-  private def buildNotifications(msgs: Seq[MessageData]): Unit =
-    messages.getAll(msgs.filter(!_.hasMentionOf(userId)).flatMap(_.quote.map(_.message))).map { quotes =>
-      val quoteIds = quotes.flatten.filter(_.userId == userId).map(_.id).toSet
-
-      msgs.flatMap(msg =>
-        mapMessageType(msg.msgType, msg.protos, msg.members, msg.userId).map { tp =>
-          val drift: bp.Duration = pushService.beDrift.currentValue.getOrElse(Duration.Zero)
-
-          NotificationData(
-            NotId(msg.id),
-            if (msg.isEphemeral) "" else msg.contentString, msg.convId,
-            msg.userId,
-            tp,
-            if (msg.time == RemoteInstant.Epoch) msg.localTime.toRemote(drift) else msg.time,
-            ephemeral = msg.isEphemeral,
-            mentions = msg.mentions.flatMap(_.userId),
-            isQuote = msg.quote.map(_.message).exists(quoteIds)
-          )
-        }
-      )
-
-    }.foreach(add)
-
-
-  messages.onDeleted { ids =>
-    storage.removeAll(ids.map(NotId(_)))
-  }
-
-  reactionStorage.onChanged { reactions =>
-    val reactionsFromOthers = reactions.filterNot(_.user == userId)
-
-    messages.getAll(reactionsFromOthers.map(_.message)).flatMap { msgs =>
-      val convsByMsg = msgs.iterator.flatten.by[MessageId, Map](_.id).mapValues(_.convId)
-      val myMsgs = msgs.collect { case Some(m) if m.userId == userId => m.id }(breakOut): Set[MessageId]
-      val rs = reactionsFromOthers.filter(r => myMsgs contains r.message).sortBy(_.timestamp)
-      val (toRemove, toAdd) = rs.foldLeft((Set.empty[(MessageId, UserId)], Map.empty[(MessageId, UserId), Liking])) {
-        case ((rs, as), r @ Liking(m, u, t, Liking.Action.Like))  => (rs - r.id, as + (r.id -> r))
-        case ((rs, as), r @ Liking(m, u, t, Liking.Action.Unlike)) => (rs + r.id, as - r.id)
-      }
-
-      storage.removeAll(toRemove.map(NotId(_))).flatMap { _ =>
-        add(toAdd.valuesIterator.map(r => NotificationData(NotId(r.id), "", convsByMsg.getOrElse(r.message, ConvId(r.user.str)), r.user, LIKE, time = r.timestamp, referencedMessage = Some(r.message))).toVector)
-      }
-    }
-  }
-
-  reactionStorage.onDeleted { ids =>
-    storage.removeAll(ids.map(NotId(_)))
-  }
-
-  def removeNotifications(filter: NotificationData => Boolean = (_: NotificationData) => true) = {
-    storage.contents.head flatMap { data =>
-      val toRemove = data collect {
-        case (id, n) if filter(n) => id
-      }
-      storage.removeAll(toRemove)
-    }
-  }
-
-  private def add(notifications: Seq[NotificationData]) =
-    for {
-      lrMap <- lastReadMap.head
-      notificationSourceVisible <- globalNots.notificationsSourceVisible.head
-      res <- storage.insertAll(notifications filter { n =>
-        //Filter notifications for those coming from other users, and that have come after the last-read time for their respective conversations.
-        //Note that for muted conversations, the last-read time is set to Instant.MAX, so they can never come after.
-        val lastRead = lrMap.get(n.conv)
-        val sourceVisible = notificationSourceVisible.get(userId).exists(_.contains(n.conv))
-        val filter = n.user != userId && lastRead.forall(_.isBefore(n.time)) && !sourceVisible
-        verbose(l"Inserting notif(${n.id}) if conv lastRead: $lastRead isBefore ${n.time}?: $filter")
-
-        filter
-      })
-      _ = if (res.nonEmpty) verbose(l"inserted: ${res.size} notifications")
-    } yield res
-
-  private def createNotifications(ns: Seq[NotificationData]): Future[Seq[NotificationInfo]] = {
-    verbose(l"createNotifications: ${ns.size}")
-    Future.traverse(ns) { data =>
-      verbose(l"processing notif: $data")
-      usersStorage.get(data.user).flatMap { user =>
-        val userName = user.map(_.getDisplayName).filterNot(_.isEmpty).orElse(data.userName)
-        val userPicture = user.flatMap(_.picture)
-
-        data.msgType match {
-          case CONNECT_REQUEST | CONNECT_ACCEPTED =>
-            Future.successful(Option(NotificationInfo(data.id, data.msgType, data.time, data.msg, data.conv, convName = userName,
-              userName = userName, userPicture = userPicture, isEphemeral = data.ephemeral, hasBeenDisplayed = data.hasBeenDisplayed)))
-          case _ =>
-            for {
-              msg  <- data.referencedMessage.fold2(Future.successful(None), messages.getMessage)
-              conv <- convs.get(data.conv)
-              membersCount <- conv.fold2(Future.successful(0), c => members.getByConv(c.id).map(_.map(_.userId).size))
-            } yield {
-              val (notificationData, maybeLikedContent) =
-                if (data.msgType == LIKE) (data.copy(msg = msg.fold("")(_.contentString)), msg.map { m =>
-                  m.msgType match {
-                    case Message.Type.ASSET => LikedContent.PICTURE
-                    case Message.Type.TEXT | Message.Type.TEXT_EMOJI_ONLY => LikedContent.TEXT_OR_URL
-                    case _ => LikedContent.OTHER
-                  }
-                })
-                else (data, None)
-
-              val groupConv = if (!conv.exists(_.team.isDefined)) conv.exists(_.convType == ConversationType.Group)
-              else membersCount > 2
-              verbose(l"processing notif complete: ${notificationData.id}")
-              val hasMention = data.mentions.contains(userId)
-              if (conv.exists(_.muted.onlyMentionsAllowed) && !hasMention && !data.isQuote) {
-                Option.empty[NotificationInfo]
-              } else {
-                Some(NotificationInfo(
-                  notificationData.id,
-                  notificationData.msgType,
-                  notificationData.time,
-                  notificationData.msg,
-                  notificationData.conv,
-                  convName         = conv.map(_.displayName),
-                  userName         = userName,
-                  userPicture      = userPicture,
-                  isEphemeral      = data.ephemeral,
-                  isGroupConv      = groupConv,
-                  isUserMentioned  = hasMention,
-                  likedContent     = maybeLikedContent,
-                  hasBeenDisplayed = data.hasBeenDisplayed,
-                  isQuote          = data.isQuote))
-              }
-            }
-        }
-      }
-    }.map(_.flatten)
-  }
+  def notificationsSourceVisible: Signal[Map[UserId, Set[ConvId]]]
 }
 
-object NotificationService {
+class NotificationService(selfUserId:      UserId,
+                          messages:        MessagesStorage,
+                          storage:         NotificationStorage,
+                          convs:           ConversationStorage,
+                          pushService:     PushService,
+                          uiController:    NotificationUiController,
+                          clock:           Clock) {
 
-  //var for tests
-  var ClearThrottling = 3.seconds
+  import Threading.Implicits.Background
+  implicit lazy val logTag: LogTag = accountTag[NotificationService](selfUserId)
 
-  case class NotificationInfo(id: NotId,
-                              tpe: NotificationType,
-                              time: RemoteInstant,
-                              message: String,
-                              convId: ConvId,
-                              convName: Option[Name]             = None,
-                              userName: Option[Name]             = None,
-                              userPicture: Option[AssetId]       = None,
-                              isGroupConv: Boolean               = false,
-                              isUserMentioned: Boolean           = false,
-                              isEphemeral: Boolean               = false,
-                              likedContent: Option[LikedContent] = None,
-                              hasBeenDisplayed: Boolean          = false,
-                              isQuote: Boolean                   = false
-  )
+  uiController.notificationsSourceVisible { sources =>
+    sources.get(selfUserId).map(Some(_)).foreach(dismissNotifications)
+  } (EventContext.Global) //TODO account event context
 
-  def mapMessageType(mTpe: Message.Type, protos: Seq[GenericMessage], members: Set[UserId], sender: UserId): Option[NotificationType] = {
-    import Message.Type._
-    mTpe match {
-      case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA => Some(NotificationType.TEXT)
-      case KNOCK        => Some(NotificationType.KNOCK)
-      case ASSET        => Some(NotificationType.ASSET)
-      case LOCATION     => Some(NotificationType.LOCATION)
-      case RENAME       => Some(NotificationType.RENAME)
-      case MISSED_CALL  => Some(NotificationType.MISSED_CALL)
-      case ANY_ASSET    => Some(NotificationType.ANY_ASSET)
-      case AUDIO_ASSET  => Some(NotificationType.AUDIO_ASSET)
-      case VIDEO_ASSET  => Some(NotificationType.VIDEO_ASSET)
-      case MEMBER_JOIN  =>
-        if (members == Set(sender)) None // ignoring auto-generated member join event when user accepts connection
-        else Some(NotificationType.MEMBER_JOIN)
-      case MEMBER_LEAVE => Some(NotificationType.MEMBER_LEAVE)
-      case _ => None
+  /**
+    * Removes all notifications that are being displayed for the given set of input conversations and updates the UI
+    * with all remaining notifications
+    *
+    * @param forConvs the conversations for which to remove notifications, or None if all notifications should be cleared.
+    */
+  def dismissNotifications(forConvs: Option[Set[ConvId]] = None): Future[Unit] = {
+    verbose(l"dismissNotifications: $forConvs")
+    for {
+      nots <- storage.list().map(_.toSet)
+      toRemove = forConvs match {
+        case None        => nots
+        case Some(convs) => nots.filter(n => convs.contains(n.conv))
+      }
+      _ <- storage.removeAll(toRemove.map(_.id))
+      _ <- pushNotificationsToUi()
+    } yield {}
+  }
+
+  val messageNotificationEventsStage = EventScheduler.Stage[ConversationEvent]({ (c, events) =>
+    if (events.nonEmpty) {
+      for {
+        (undoneLikes, likes) <- getReactionChanges(events)
+        currentNotifications <- storage.list().map(_.toSet)
+        msgNotifications     <- getMessageNotifications(c, events)
+
+        (afterEditsApplied, beforeEditsApplied) = applyEdits(currentNotifications ++ msgNotifications, events)
+
+        deleted = events.collect {
+          case GenericMessageEvent(_, _, _, GenericMessage(_, MsgDeleted(_, msg))) => NotId(msg)
+          case GenericMessageEvent(_, _, _, GenericMessage(_, MsgRecall(msg)))     => NotId(msg)
+        }.toSet
+
+        toShow = (afterEditsApplied ++ likes).filterNot(n => (undoneLikes ++ deleted).contains(n.id))
+        toRemove = undoneLikes ++ beforeEditsApplied ++ deleted
+        _ <- storage.removeAll(toRemove)
+        _ <- storage.insertAll(toShow)
+        _ <- pushNotificationsToUi()
+      } yield {}
+    } else Future.successful({})
+  })
+
+  val connectionNotificationEventStage = EventScheduler.Stage[Event]({ (_, events) =>
+    if (events.nonEmpty) {
+      val toShow = events.collect {
+        case UserConnectionEvent(_, _, userId, msg, ConnectionStatus.PendingFromOther, time, name) =>
+          NotificationData(NotId(CONNECT_REQUEST, userId), msg.getOrElse(""), ConvId(userId.str), userId, CONNECT_REQUEST, time)
+        case UserConnectionEvent(_, _, userId, _, ConnectionStatus.Accepted, time, name) =>
+          NotificationData(NotId(CONNECT_ACCEPTED, userId), "", ConvId(userId.str), userId, CONNECT_ACCEPTED, time)
+        case ContactJoinEvent(userId, _) =>
+          verbose(l"ContactJoinEvent")
+          NotificationData(NotId(CONTACT_JOIN, userId), "", ConvId(userId.str), userId, CONTACT_JOIN)
+      }
+
+      for {
+        _ <- storage.insertAll(toShow)
+        _ <- pushNotificationsToUi()
+      } yield {}
+    } else Future.successful({})
+  })
+
+  private def pushNotificationsToUi(): Future[Unit] = {
+    verbose(l"pushNotificationsToUi")
+    for {
+      toShow         <- storage.list().map(_.toSet)
+      drift          <- pushService.beDrift.head
+      notificationSourceVisible <- uiController.notificationsSourceVisible.head
+      convs <- convs.getAll(toShow.map(_.conv)).map(_.collect { case Some(c) => c.id -> c }.toMap)
+      (filteredShow, seen) = toShow.partition { n =>
+        //Filter notifications for those coming from other users, and that have come after the last-read time.
+        //Note that for muted conversations, the last-read time is set to Instant.MAX, so they can never come after.
+        n.user != selfUserId &&
+          convs(n.conv).lastRead.isBefore(n.time) &&
+          convs(n.conv).cleared.forall(_.isBefore(n.time)) &&
+          !notificationSourceVisible.get(selfUserId).exists(_.contains(n.conv))
+      }
+      _ <- uiController.onNotificationsChanged(selfUserId, filteredShow)
+      _ <- storage.insertAll(filteredShow.map(_.copy(hasBeenDisplayed = true)))
+      _ <- storage.removeAll(seen.map(_.id))
+    } yield {}
+  }
+
+  private def getMessageNotifications(rConvId: RConvId, events: Vector[Event]) = {
+    val eventTimes = events.collect { case e: ConversationEvent => e.time }
+    if (eventTimes.nonEmpty) {
+      for {
+        Some(conv) <- convs.getByRemoteId(rConvId)
+        drift      <- pushService.beDrift.head
+        msgs       <- messages.findMessagesFrom(conv.id, eventTimes.min).map(_.filterNot(_.userId == selfUserId))
+        quoteIds   <- messages
+          .getAll(msgs.filter(!_.hasMentionOf(selfUserId)).flatMap(_.quote.map(_.message)))
+          .map(_.flatten.filter(_.userId == selfUserId).map(_.id).toSet)
+      } yield {
+        msgs.flatMap { msg =>
+
+          import Message.Type._
+
+          val tpe = msg.msgType match {
+            case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA => Some(NotificationType.TEXT)
+            case KNOCK        => Some(NotificationType.KNOCK)
+            case ASSET        => Some(NotificationType.ASSET)
+            case LOCATION     => Some(NotificationType.LOCATION)
+            case RENAME       => Some(NotificationType.RENAME)
+            case MISSED_CALL  => Some(NotificationType.MISSED_CALL)
+            case ANY_ASSET    => Some(NotificationType.ANY_ASSET)
+            case AUDIO_ASSET  => Some(NotificationType.AUDIO_ASSET)
+            case VIDEO_ASSET  => Some(NotificationType.VIDEO_ASSET)
+            case MEMBER_JOIN  =>
+              if (msg.members == Set(msg.userId)) None // ignoring auto-generated member join event when user accepts connection
+              else Some(NotificationType.MEMBER_JOIN)
+            case MEMBER_LEAVE => Some(NotificationType.MEMBER_LEAVE)
+            case _ => None
+          }
+
+          tpe.map { tp =>
+            NotificationData(
+              id              = NotId(msg.id),
+              msg             = if (msg.isEphemeral) "" else msg.contentString, msg.convId,
+              user            = msg.userId,
+              msgType         = tp,
+              //TODO do we ever get RemoteInstant.Epoch?
+              time            = if (msg.time == RemoteInstant.Epoch) msg.localTime.toRemote(drift) else msg.time,
+              ephemeral       = msg.isEphemeral,
+              isSelfMentioned = msg.mentions.flatMap(_.userId).contains(selfUserId),
+              isReply         = msg.quote.map(_.message).exists(quoteIds(_))
+            )
+          }
+        }.toSet
+      }
+    } else Future.successful(Set.empty[NotificationData])
+  }
+
+  private def applyEdits(currentNotifications: Set[NotificationData], events: Vector[Event]) = {
+    val edits = events
+      .collect { case GenericMessageEvent(_, _, _, GenericMessage(newId, MsgEdit(id, Text(msg, _, _, _)))) => (id, (newId, msg)) }
+      .toMap
+
+    val (afterEditsApplied, beforeEditsApplied) = edits.foldLeft((currentNotifications.map(n => (n.id, n)).toMap, Set.empty[NotId])) {
+      case ((edited, toRemove), (oldId, (newId, newContent))) =>
+        edited.get(NotId(oldId.str)) match {
+          case Some(toBeEdited) =>
+            val newNotId = NotId(newId.str)
+            val updated = toBeEdited.copy(id = newNotId, msg = newContent)
+
+            ((edited - toBeEdited.id) + (newNotId -> updated), toRemove + toBeEdited.id)
+
+          case _ => (edited, toRemove)
+        }
+    }
+
+    (afterEditsApplied.values.toSet, beforeEditsApplied)
+  }
+
+  private def getReactionChanges(events: Vector[Event]) = {
+    val reactions = events.collect {
+      case GenericMessageEvent(_, time, from, GenericMessage(_, Reaction(msg, action))) if from != selfUserId => Liking(msg, from, time, action)
+    }
+
+    messages.getAll(reactions.map(_.message).toSet).map(_.flatten).map { msgs =>
+
+      val msgsById = msgs.map(m => m.id -> m).toMap
+      val convsByMsg = msgs.iterator.by[MessageId, Map](_.id).mapValues(_.convId)
+      val myMsgs = msgs.collect { case m if m.userId == selfUserId => m.id }.toSet
+
+      val (toRemove, toAdd) =
+        reactions
+          .groupBy(r => (r.message, r.user))
+          .collect { case ((messageId, _), likeUnlikeEvents) if myMsgs.contains(messageId) && likeUnlikeEvents.nonEmpty => likeUnlikeEvents.maxBy(_.timestamp) }
+          .toSet
+          .partition(_.action == Liking.Action.Unlike)
+
+      (toRemove.map(r => NotId(r.id)), toAdd.map { r =>
+        val msg = msgsById(r.message)
+        NotificationData(
+          id        = NotId(r.id),
+          msg       = msg.contentString,
+          conv      = convsByMsg(r.message),
+          user      = r.user,
+          msgType   = LIKE,
+          time      = r.timestamp,
+          likedContent = Some(msg.msgType match {
+            case Message.Type.ASSET           => LikedContent.PICTURE
+            case Message.Type.TEXT |
+                 Message.Type.TEXT_EMOJI_ONLY => LikedContent.TEXT_OR_URL
+            case _                            => LikedContent.OTHER
+          })
+        )
+      })
     }
   }
 }

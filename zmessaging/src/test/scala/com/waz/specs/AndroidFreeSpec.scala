@@ -45,8 +45,11 @@ object FutureAwaitSyntax {
 
 trait FutureAwaitSyntax {
   import FutureAwaitSyntax._
+
+  @deprecated("await does not fail tests if the provided future fails! Better to just always use result and discard the return value")
   def await(future: Future[_])(implicit duration: FiniteDuration = DefaultTimeout): Unit =
     Await.ready(future, duration)
+
   def result[A](future: Future[A])(implicit duration: FiniteDuration = DefaultTimeout): A =
     Await.result(future, duration)
 }
@@ -106,7 +109,6 @@ abstract class AndroidFreeSpec extends ZMockSpec { this: Suite =>
   implicit val accountContext = new AccountContext(account1Id, accounts)
 
   override protected def beforeEach() = {
-    super.beforeEach()
     clock.reset()
   }
 

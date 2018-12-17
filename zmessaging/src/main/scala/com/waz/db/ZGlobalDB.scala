@@ -20,20 +20,20 @@ package com.waz.db
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
 import com.waz.cache.CacheEntryData.CacheEntryDao
 import com.waz.content.ZmsDatabase
 import com.waz.db.Col._
 import com.waz.db.ZGlobalDB.{DbName, DbVersion, Migrations, daos}
 import com.waz.db.migrate.AccountDataMigration
+import com.waz.log.ZLog2._
 import com.waz.model.AccountData.AccountDataDao
 import com.waz.model.TeamData.TeamDataDoa
 import com.waz.model.otr.ClientId
 import com.waz.model.{AccountId, UserId}
 import com.waz.service.tracking.TrackingService
+import com.waz.sync.client.AuthenticationManager.AccessToken
 import com.waz.utils.wrappers.DB
 import com.waz.utils.{JsonDecoder, JsonEncoder, Resource}
-import com.waz.sync.client.AuthenticationManager.AccessToken
 
 class ZGlobalDB(context: Context, dbNameSuffix: String = "", tracking: TrackingService)
   extends DaoDB(context.getApplicationContext, DbName + dbNameSuffix, null, DbVersion, daos, Migrations.migrations(context), tracking) {

@@ -60,7 +60,7 @@ object ZMessagingDB {
   lazy val daos = Seq (
     UserDataDao, SearchQueryCacheDao, AssetDataDao, ConversationDataDao,
     ConversationMemberDataDao, MessageDataDao, KeyValueDataDao,
-    SyncJobDao, NotificationDataDao, ErrorDataDao, ReceivedPushDataDao,
+    SyncJobDao, ErrorDataDao, NotificationDataDao, ReceivedPushDataDao,
     ContactHashesDao, ContactsOnWireDao, UserClientsDao, LikingDao,
     ContactsDao, EmailAddressesDao, PhoneNumbersDao, MsgDeletionDao,
     EditHistoryDao, MessageContentIndexDao, PushNotificationEventsDao,
