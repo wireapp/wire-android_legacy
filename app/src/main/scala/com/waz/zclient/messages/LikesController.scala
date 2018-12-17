@@ -24,6 +24,7 @@ import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message.Type._
+import com.waz.model.MessageData
 
 class LikesController(implicit ec: EventContext, injector: Injector) extends Injectable {
 
@@ -49,4 +50,6 @@ class LikesController(implicit ec: EventContext, injector: Injector) extends Inj
 
 object LikesController {
   val LikeableMessages = Set(TEXT, TEXT_EMOJI_ONLY, ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, RICH_MEDIA, LOCATION)
+
+  def isLikeable(m: MessageData): Boolean = LikeableMessages.contains(m.msgType)
 }

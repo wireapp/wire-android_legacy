@@ -24,9 +24,7 @@ import android.text.InputFilter.LengthFilter
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, TextView}
 import android.widget.CompoundButton.OnCheckedChangeListener
-import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
-import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
@@ -42,7 +40,6 @@ import com.waz.zclient.utils.RichView
 class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
   private lazy val createConversationController = inject[CreateConversationController]
   private lazy val userAccountsController       = inject[UserAccountsController]
-  private lazy val zms                          = inject[Signal[ZMessaging]]
 
   private lazy val inputBox = view[InputBox](R.id.input_box)
 
@@ -56,10 +53,7 @@ class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
 
   private lazy val readReceiptsToggle  = returning(view[SwitchCompat](R.id.read_receipts_toggle)) { vh =>
     findById[ImageView](R.id.read_receipts_icon).setImageDrawable(ViewWithColor(getStyledColor(R.attr.wirePrimaryTextColor)))
-    zms.flatMap(_.propertiesService.readReceiptsEnabled).onUi { readReceiptsEnabled =>
-      createConversationController.readReceipts ! readReceiptsEnabled
-      vh.foreach(_.setChecked(readReceiptsEnabled))
-    }
+    vh.foreach(_.setChecked(true))
 
     vh.foreach(_.setOnCheckedChangeListener(new OnCheckedChangeListener {
       override def onCheckedChanged(buttonView: CompoundButton, readReceiptsEnabled: Boolean): Unit =
@@ -151,5 +145,5 @@ class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
 }
 
 object CreateConversationSettingsFragment {
-  val Tag = ZLog.ImplicitTag.implicitLogTag
+  val Tag = implicitLogTag
 }

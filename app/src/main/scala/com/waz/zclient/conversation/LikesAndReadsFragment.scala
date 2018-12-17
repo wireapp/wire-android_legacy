@@ -25,14 +25,16 @@ import android.support.design.widget.TabLayout.OnTabSelectedListener
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
+import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.content.{MessagesStorage, ReactionsStorage, ReadReceiptsStorage}
-import com.waz.model.{RemoteInstant, UserData, UserId}
+import com.waz.model.{MessageData, RemoteInstant, UserData, UserId}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
-import com.waz.zclient.common.controllers.ScreenController
+import com.waz.zclient.common.controllers.{ScreenController, UserAccountsController}
+import com.waz.zclient.messages.LikesController
 import com.waz.zclient.pages.main.conversation.ConversationManagerFragment
 import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
 import com.waz.zclient.participants.ParticipantsAdapter
@@ -40,7 +42,6 @@ import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.utils.ContextUtils.getColor
 import com.waz.zclient.utils.{RichView, ZTimeFormatter}
 import com.waz.zclient.{FragmentHelper, R}
-import com.waz.zclient.messages.LikesController._
 import org.threeten.bp.DateTimeUtils
 
 class LikesAndReadsFragment extends FragmentHelper {
@@ -52,6 +53,7 @@ class LikesAndReadsFragment extends FragmentHelper {
   private lazy val readReceiptsStorage = inject[Signal[ReadReceiptsStorage]]
   private lazy val reactionsStorage    = inject[Signal[ReactionsStorage]]
   private lazy val messagesStorage     = inject[Signal[MessagesStorage]]
+  private lazy val accountsController  = inject[UserAccountsController]
 
   private val visibleTab = Signal[Tab](ReadsTab)
 
@@ -91,27 +93,25 @@ class LikesAndReadsFragment extends FragmentHelper {
 
   private lazy val isEphemeral = message.map(_.isEphemeral)
 
-  private lazy val isLikeable = message.map(m => LikeableMessages.contains(m.msgType))
+  private lazy val isLikeable = message.map(LikesController.isLikeable)
 
-  private lazy val detailsCombination = Signal(isOwnMessage, isEphemeral, isLikeable).map {
-    case (true, false, true)                                => ReadsAndLikes
-    case (_, ephemeral, likeable) if ephemeral || !likeable => JustReads
-    case _                                                  => JustLikes
+  private lazy val detailsCombination = Signal(message, isOwnMessage, accountsController.isTeam).map {
+    case (msg, isOwn, isTeam) => LikesAndReadsFragment.detailsCombination(msg, isOwn, isTeam)
   }
 
   private lazy val closeButton = view[GlyphTextView](R.id.likes_close_button)
 
   private lazy val readsView = returning(view[RecyclerView](R.id.reads_recycler_view)) { vh =>
-    viewToDisplay.onUi {
-      case ReadsTab => vh.foreach(_.setVisible(true))
-      case _        => vh.foreach(_.setVisible(false))
+    Signal(viewToDisplay, detailsCombination).onUi {
+      case (ReadsTab, JustReads | ReadsAndLikes) => vh.foreach(_.setVisible(true))
+      case _ => vh.foreach(_.setVisible(false))
     }
   }
 
   private lazy val likesView = returning(view[RecyclerView](R.id.likes_recycler_view)) { vh =>
-    viewToDisplay.onUi {
-      case LikesTab => vh.foreach(_.setVisible(true))
-      case _        => vh.foreach(_.setVisible(false))
+    Signal(viewToDisplay, detailsCombination).onUi {
+      case (LikesTab, JustLikes | ReadsAndLikes) => vh.foreach(_.setVisible(true))
+      case _ => vh.foreach(_.setVisible(false))
     }
   }
 
@@ -120,16 +120,16 @@ class LikesAndReadsFragment extends FragmentHelper {
     emptyListIcon.setColor(getColor(R.color.light_graphite_16))
     val emptyListText = findById[TypefaceTextView](R.id.empty_list_text)
 
-    viewToDisplay.onUi {
-      case NoReads =>
+    Signal(viewToDisplay, detailsCombination).onUi {
+      case (NoReads, JustReads | ReadsAndLikes) =>
         vh.foreach(_.setVisible(true))
         emptyListIcon.setOnDraw(WireStyleKit.drawView)
         emptyListText.setText(R.string.messages_no_reads)
-      case ReadsOff =>
+      case (ReadsOff, JustReads | ReadsAndLikes) =>
         vh.foreach(_.setVisible(true))
         emptyListIcon.setOnDraw(WireStyleKit.drawView)
         emptyListText.setText(R.string.messages_reads_turned_off)
-      case NoLikes =>
+      case (NoLikes, JustLikes | ReadsAndLikes) =>
         vh.foreach(_.setVisible(true))
         emptyListIcon.setOnDraw(WireStyleKit.drawLike)
         emptyListText.setText(R.string.messages_no_likes)
@@ -140,10 +140,14 @@ class LikesAndReadsFragment extends FragmentHelper {
 
   private lazy val title = returning(view[TypefaceTextView](R.id.message_details_title)) { vh =>
     detailsCombination.map {
-      case ReadsAndLikes => R.string.message_details_title
-      case JustReads     => R.string.message_read_title
-      case JustLikes     => R.string.message_liked_title
-    }.onUi(resId => vh.foreach(_.setText(resId)))
+      case ReadsAndLikes => Some(R.string.message_details_title)
+      case JustReads     => Some(R.string.message_read_title)
+      case JustLikes     => Some(R.string.message_liked_title)
+      case NoDetails     => None
+    }.onUi {
+      case Some(resId) => vh.foreach(_.setText(resId))
+      case None =>
+    }
   }
 
   private lazy val timestamp = returning(view[TypefaceTextView](R.id.message_timestamp)) { vh =>
@@ -228,6 +232,9 @@ class LikesAndReadsFragment extends FragmentHelper {
       case JustLikes =>
         tabs.foreach(_.setVisible(false))
         visibleTab ! LikesTab
+      case NoDetails =>
+        ZLog.error("NoDetails chosen as the details combination - the fragment should not be opened at all")
+        tabs.foreach(_.setVisible(false))
     }
 
     closeButton.foreach(_.setOnClickListener(new OnClickListener {
@@ -235,9 +242,9 @@ class LikesAndReadsFragment extends FragmentHelper {
     }))
 
     (for {
-      receipts    <- readReceiptsStorage
+      receipts        <- readReceiptsStorage
       Some(msgParams) <- screenController.showMessageDetails
-      rs          <- receipts.receipts(msgParams.messageId)
+      rs              <- receipts.receipts(msgParams.messageId)
     } yield rs.map(r => r.user -> r.timestamp).toMap).onUi {
       readTimestamps = _
     }
@@ -287,6 +294,7 @@ object LikesAndReadsFragment {
   case object JustLikes extends DetailsCombination
   case object JustReads extends DetailsCombination
   case object ReadsAndLikes extends DetailsCombination
+  case object NoDetails extends DetailsCombination
 
   private val ArgPageToOpen: String = "ARG_PAGE_TO_OPEN"
 
@@ -296,5 +304,13 @@ object LikesAndReadsFragment {
         _.putString(ArgPageToOpen, tabToOpen.str)
       })
     }
+
+  def detailsCombination(message: MessageData, isOwnMessage: Boolean, isTeam: Boolean): DetailsCombination =
+    (isOwnMessage, !message.isEphemeral && LikesController.isLikeable(message), isTeam) match {
+      case (true, true, true)  => ReadsAndLikes
+      case (true, false, true) => JustReads
+      case (_, true, _)        => JustLikes
+      case _                   => NoDetails
+  }
 }
 

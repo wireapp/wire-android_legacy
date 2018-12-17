@@ -34,7 +34,7 @@ import com.waz.model.{MessageContent, MessageId}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.zclient.common.controllers.ScreenController
+import com.waz.zclient.common.controllers.{ScreenController, UserAccountsController}
 import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
 import com.waz.zclient.conversation.{ConversationController, LikesAndReadsFragment}
 import com.waz.zclient.messages.MessageView.MsgBindOptions
@@ -54,8 +54,9 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
 
   override val tpe: MsgPart = MsgPart.Footer
 
-  private lazy val convController = inject[ConversationController]
-  private lazy val screenController = inject[ScreenController]
+  private lazy val convController     = inject[ConversationController]
+  private lazy val screenController   = inject[ScreenController]
+  private lazy val accountsController = inject[UserAccountsController]
 
   inflate(R.layout.message_footer_content)
 
@@ -217,10 +218,15 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
     import Threading.Implicits.Ui
 
     val messageToShow = for {
-      selfId <- zms.map(_.selfUserId).head
+      selfId  <- zms.map(_.selfUserId).head
+      isTeam  <- accountsController.isTeam.head
       isGroup <- convController.currentConvIsGroup.head
       message <- controller.message.head
-    } yield if (isGroup && (!message.isEphemeral || message.userId == selfId)) Some(message.id) else None
+    } yield
+      if (
+        isGroup &&
+        LikesAndReadsFragment.detailsCombination(message, message.userId == selfId, isTeam) != LikesAndReadsFragment.NoDetails
+      ) Some(message.id) else None
 
     messageToShow.foreach {
       case Some(mId) =>
