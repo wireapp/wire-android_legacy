@@ -40,7 +40,7 @@ import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
 import com.waz.zclient.preferences.dialogs._
-import com.waz.zclient.preferences.views.{EditNameDialog, PictureTextButton, TextButton}
+import com.waz.zclient.preferences.views.{EditNameDialog, PictureTextButton, SwitchPreference, TextButton}
 import com.waz.zclient.ui.utils.TextViewUtils._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils._
@@ -58,6 +58,7 @@ trait AccountView {
   val onDeleteClick:        EventStream[Unit]
   val onBackupClick:        EventStream[Unit]
   val onDataUsageClick:     EventStream[Unit]
+  val onReadReceiptSwitch:  EventStream[Boolean]
 
   def setName(name: String): Unit
   def setHandle(handle: String): Unit
@@ -67,6 +68,7 @@ trait AccountView {
   def setAccentDrawable(drawable: Drawable): Unit
   def setDeleteAccountEnabled(enabled: Boolean): Unit
   def setPhoneNumberEnabled(enabled: Boolean): Unit
+  def setReadReceipt(enabled: Boolean): Unit
 }
 
 class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with AccountView with ViewHelper {
@@ -86,6 +88,7 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   val deleteAccountButton = findById[TextButton](R.id.preferences_account_delete)
   val backupButton        = findById[TextButton](R.id.preferences_backup)
   val dataUsageButton     = findById[TextButton](R.id.preferences_data_usage_permissions)
+  val readReceiptsSwitch  = findById[SwitchPreference](R.id.preferences_account_read_receipts)
 
   override val onNameClick          = nameButton.onClickEvent.map(_ => ())
   override val onHandleClick        = handleButton.onClickEvent.map(_ => ())
@@ -98,6 +101,7 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   override val onDeleteClick        = deleteAccountButton.onClickEvent.map(_ => ())
   override val onBackupClick        = backupButton.onClickEvent.map(_ => ())
   override val onDataUsageClick     = dataUsageButton.onClickEvent.map(_ => ())
+  override val onReadReceiptSwitch  = readReceiptsSwitch.onCheckedChange
 
   override def setName(name: String) = nameButton.setTitle(name)
 
@@ -114,6 +118,8 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   override def setDeleteAccountEnabled(enabled: Boolean) = deleteAccountButton.setVisible(enabled)
 
   override def setPhoneNumberEnabled(enabled: Boolean) = phoneButton.setVisible(enabled)
+
+  override def setReadReceipt(enabled: Boolean) = readReceiptsSwitch.setChecked(enabled, disableListener = true)
 
 }
 
@@ -330,5 +336,11 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
       .add(f, tag)
       .addToBackStack(tag)
       .commit
+  }
+
+  zms.flatMap(_.propertiesService.readReceiptsEnabled).onUi(view.setReadReceipt)
+
+  view.onReadReceiptSwitch { enabled =>
+    zms.head.flatMap(_.propertiesService.setReadReceiptsEnabled(enabled))(Threading.Background)
   }
 }

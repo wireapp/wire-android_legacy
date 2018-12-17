@@ -46,19 +46,80 @@
         android:layout_marginBottom="@dimen/wire__padding__24"
         android:text="@string/call_info_text"/>
 
-    <FrameLayout
+    <RelativeLayout
+        android:id="@+id/create_conv_options"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/create_conv_options_height"
+        android:paddingStart="@dimen/wire__padding__regular"
+        android:paddingEnd="@dimen/wire__padding__regular"
+        android:layout_marginTop="@dimen/wire__padding__regular"
+        android:layout_marginBottom="@dimen/wire__padding__regular"
+        android:background="?dropdownSeparatorBackgroundColor"
+        >
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="start|center_vertical"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:orientation="vertical">
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/create_conv_options_title"
+                android:text="@string/create_conv_options_title_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:w_font="@string/wire__typeface__light"
+                android:textSize="@dimen/wire__text_size__regular"
+                android:textColor="?wirePrimaryTextColor"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/create_conv_options_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:w_font="@string/wire__typeface__regular"
+                android:textSize="@dimen/wire__text_size__small"
+                android:textColor="?wireSecondaryTextColor"/>
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/create_conv_options_icon"
+            android:layout_width="@dimen/next_indicator_size"
+            android:layout_height="@dimen/next_indicator_size"
+            android:gravity="end|center_vertical"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="@dimen/wire__padding__small"
+            android:layout_marginEnd="@dimen/wire__padding__small"
+            />
+    </RelativeLayout>
+
+    <LinearLayout
         android:id="@+id/guest_toggle_row"
         style="?wireBackground"
         android:layout_width="match_parent"
         android:layout_height="@dimen/menu_item_height"
         android:paddingStart="@dimen/wire__padding__regular"
         android:paddingEnd="@dimen/wire__padding__regular"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="@dimen/wire__padding__8"
+        android:layout_marginBottom="@dimen/wire__padding__8"
         android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/allow_guests_icon"
+            android:layout_width="@dimen/guest_options_icon_size"
+            android:layout_height="@dimen/guest_options_icon_size"
+            android:layout_marginStart="@dimen/wire__padding__regular"
+            android:layout_marginEnd="@dimen/wire__padding__regular"
+            />
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/allow_guests_title"
             android:text="@string/allow_guests_toggle_text"
-            android:layout_gravity="start|center_vertical"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:w_font="@string/wire__typeface__light"
@@ -67,11 +128,12 @@
 
         <android.support.v7.widget.SwitchCompat
             android:id="@+id/guest_toggle"
-            android:layout_gravity="end|center_vertical"
+            android:gravity="end"
+            android:layout_weight="1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
-    </FrameLayout>
+    </LinearLayout>
 
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/guest_toggle_description"
@@ -80,9 +142,61 @@
         android:paddingStart="@dimen/wire__padding__regular"
         android:paddingEnd="@dimen/wire__padding__regular"
         android:layout_marginTop="@dimen/wire__padding__regular"
+        android:layout_marginBottom="@dimen/wire__padding__regular"
         android:text="@string/allow_guests_toggle_info_text"
         app:w_font="@string/wire__typeface__light"
         android:textSize="@dimen/wire__text_size__small"
         android:textColor="?wireSecondaryTextColor"/>
 
+    <LinearLayout
+        android:id="@+id/read_receipts_toggle_row"
+        style="?wireBackground"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/menu_item_height"
+        android:paddingStart="@dimen/wire__padding__regular"
+        android:paddingEnd="@dimen/wire__padding__regular"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="@dimen/wire__padding__8"
+        android:layout_marginBottom="@dimen/wire__padding__8"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/read_receipts_icon"
+            android:layout_width="@dimen/guest_options_icon_size"
+            android:layout_height="@dimen/guest_options_icon_size"
+            android:layout_marginStart="@dimen/wire__padding__regular"
+            android:layout_marginEnd="@dimen/wire__padding__regular"
+            />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/read_receipts_title"
+            android:text="@string/read_receipts_toggle_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:w_font="@string/wire__typeface__light"
+            android:textSize="@dimen/wire__text_size__regular"
+            android:textColor="?wirePrimaryTextColor"/>
+
+        <android.support.v7.widget.SwitchCompat
+            android:id="@+id/read_receipts_toggle"
+            android:gravity="end"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/read_receipts_toggle_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/wire__padding__regular"
+        android:paddingEnd="@dimen/wire__padding__regular"
+        android:layout_marginTop="@dimen/wire__padding__regular"
+        android:layout_marginBottom="@dimen/wire__padding__regular"
+        android:text="@string/read_receipts_toggle_info_text"
+        app:w_font="@string/wire__typeface__light"
+        android:textSize="@dimen/wire__text_size__small"
+        android:textColor="?wireSecondaryTextColor"/>
 </LinearLayout>

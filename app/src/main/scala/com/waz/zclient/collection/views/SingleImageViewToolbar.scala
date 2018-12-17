@@ -20,8 +20,7 @@ package com.waz.zclient.collection.views
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.LinearLayout
-import com.waz.model.Liking
-import com.waz.service.ZMessaging
+import com.waz.model.{Liking, UserId}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.collection.controllers.CollectionController
@@ -34,6 +33,7 @@ import com.waz.zclient.{R, ViewHelper}
 import com.waz.ZLog.ImplicitTag._
 import MessageAction._
 import android.view.View
+import com.waz.content.ReactionsStorage
 
 class SingleImageViewToolbar(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -43,7 +43,8 @@ class SingleImageViewToolbar(context: Context, attrs: AttributeSet, style: Int) 
 
   inflate(R.layout.single_image_view_toolbar_layout)
 
-  private lazy val zms = inject[Signal[ZMessaging]]
+  private lazy val selfUserId = inject[Signal[UserId]]
+  private lazy val reactionsStorage = inject[Signal[ReactionsStorage]]
   private lazy val messageActionsController = inject[MessageActionsController]
   private lazy val collectionController = inject[CollectionController]
 
@@ -60,17 +61,16 @@ class SingleImageViewToolbar(context: Context, attrs: AttributeSet, style: Int) 
   }
 
   (for {
-    self <- zms.map(_.selfUserId)
+    self <- selfUserId
     msg <- message
   } yield msg.ephemeral.isEmpty || msg.userId == self).onUi { visible =>
     downloadButton.getParent.asInstanceOf[View].setVisible(visible)
   }
 
-  val likedBySelf = collectionController.focusedItem flatMap {
-    case Some(m) => zms.flatMap { z =>
-      z.reactionsStorage.signal((m.id, z.selfUserId)).map(_.action == Liking.like).orElse(Signal const false)
-    }
-    case None => Signal.const(false)
+  val likedBySelf = Signal(collectionController.focusedItem, selfUserId, reactionsStorage) flatMap {
+    case (Some(m), self, reactions) =>
+      reactions.signal((m.id, self)).map(_.action == Liking.like).orElse(Signal const false)
+    case _ => Signal.const(false)
   }
 
   likedBySelf.map(if (_) R.string.glyph__liked else R.string.glyph__like).on(Threading.Ui)(likeButton.setText)

@@ -21,7 +21,7 @@ ext {
     playServicesVersion = '15.0.1'
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
     stethoVersion = '1.5.0'
-    zMessagingDevVersion = "134.2188@aar"
+    zMessagingDevVersion = "135.2190"
     paging_version = "1.0.0"
     // Release version number must be like this X.0(.Y)
     zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '134.1.500@aar'
@@ -269,9 +269,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging:17.3.0'
 
     //WorkManager
-    def work_version = "1.0.0-alpha10"
+    def work_version = "1.0.0-alpha13"
     implementation "android.arch.work:work-runtime:$work_version"
-    implementation "android.arch.work:work-firebase:$work_version"
 
     //third party libraries
     implementation 'com.evernote:android-job:1.2.6'

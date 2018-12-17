@@ -50,6 +50,7 @@
     <item name="message_bottom_menu_item_open_file" type="id" />
     <item name="message_bottom_menu_item_reveal" type="id" />
     <item name="message_bottom_menu_item_reply" type="id" />
+    <item name="message_bottom_menu_item_details" type="id" />
 
     <item name="emoji_keyboard_item" type="id" />
 
@@ -62,6 +63,7 @@
     <item name="guest_options" type="id" />
     <item name="timed_messages_options" type="id" />
     <item name="notifications_options" type="id" />
+    <item name="read_receipts_options" type="id" />
 
     <item name="create_group_button" type="id"/>
     <item name="create_guest_room_button" type="id"/>

@@ -18,20 +18,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<merge xmlns:android="http://schemas.android.com/apk/res/android"
-       xmlns:app="http://schemas.android.com/apk/res-auto"
-    >
-
-    <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/like__description"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:gravity="center_vertical"
-        android:textColor="@color/text__secondary_light"
-        android:textSize="@dimen/wire__text_size__small"
-        android:maxLines="1"
-        app:w_font="@string/wire__typeface__light"
-        android:layout_weight="1"
-        />
-
-</merge>
+<com.waz.zclient.messages.parts.ReadReceiptsPartView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:baselineAligned="false"
+    />

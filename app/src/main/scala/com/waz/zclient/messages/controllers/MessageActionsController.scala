@@ -34,9 +34,11 @@ import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
+import com.waz.zclient.common.controllers.ScreenController
+import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
 import com.waz.zclient.common.controllers.global.KeyboardController
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
-import com.waz.zclient.conversation.ReplyController
+import com.waz.zclient.conversation.{LikesAndReadsFragment, ReplyController}
 import com.waz.zclient.messages.MessageBottomSheetDialog
 import com.waz.zclient.messages.MessageBottomSheetDialog.{MessageAction, Params}
 import com.waz.zclient.notifications.controllers.ImageNotificationsController
@@ -60,6 +62,7 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
   private lazy val permissions          = inject[PermissionsService]
   private lazy val imageNotifications   = inject[ImageNotificationsController]
   private lazy val replyController      = inject[ReplyController]
+  private lazy val screenController = inject[ScreenController]
 
   private val zms = inject[Signal[ZMessaging]]
 
@@ -87,6 +90,7 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
     case (MessageAction.Unlike, msg) =>
       zms.head.flatMap(_.reactions.unlike(msg.convId, msg.id))
     case (MessageAction.Reply, message)             => replyMessage(message)
+    case (MessageAction.Details, message)           => showDetails(message)
     case _ => // should be handled somewhere else
   }
 
@@ -146,6 +150,8 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
     }
 
   private def replyMessage(data: MessageData): Unit = replyController.replyToMessage(data.id, data.convId)
+
+  private def showDetails(data: MessageData): Unit = screenController.showMessageDetails ! Some(MessageDetailsParams(data.id, LikesAndReadsFragment.LikesTab))
 
   private def showDeleteDialog(title: Int)(onSuccess: => Unit) =
     new AlertDialog.Builder(context)

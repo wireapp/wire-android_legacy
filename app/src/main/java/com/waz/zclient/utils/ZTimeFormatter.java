@@ -102,10 +102,6 @@ public class ZTimeFormatter {
         return getSingleMessageTime(context, DateConvertUtils.asLocalDateTime(date), false);
     }
 
-    public static String getSingleMessageTime(Context context, LocalDateTime date) {
-        return getSingleMessageTime(context, date, false);
-    }
-
     private static String getSingleMessageTime(Context context, LocalDateTime date, boolean defaultLocale) {
         boolean is24HourFormat = DateFormat.is24HourFormat(context);
         Resources resources = defaultLocale ? getEnglishResources(context) : context.getResources();
@@ -120,6 +116,32 @@ public class ZTimeFormatter {
 
             if (!defaultLocale) {
                 return getSingleMessageTime(context, date, true);
+            } else {
+                return "";
+            }
+        }
+    }
+
+    public static String getSingleMessageDateTime(Context context, Date date) {
+        return getSingleMessageDateTime(context, DateConvertUtils.asLocalDateTime(date), false);
+    }
+
+    private static String getSingleMessageDateTime(Context context, LocalDateTime date, boolean defaultLocale) {
+        Resources resources = defaultLocale ? getEnglishResources(context) : context.getResources();
+
+        boolean is24HourFormat = DateFormat.is24HourFormat(context);
+        final String time = is24HourFormat ? resources.getString(R.string.timestamp_pattern__24h_format) :
+                resources.getString(R.string.timestamp_pattern__12h_format);
+
+        final String pattern = resources.getString(R.string.timestamp_pattern__date_and_time__with_year_no_weekday, time);
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
+            return formatter.format(date.atZone(ZoneId.systemDefault()));
+        } catch (Exception e) {
+            Timber.e(e);
+
+            if (!defaultLocale) {
+                return getSingleMessageDateTime(context, date, true);
             } else {
                 return "";
             }

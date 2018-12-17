@@ -48,6 +48,7 @@ class CreateConversationController(implicit inj: Injector, ev: EventContext) ext
   val users    = Signal(Set.empty[UserId])
   val integrations = Signal(Set.empty[(ProviderId, IntegrationId)])
   val teamOnly = Signal(true)
+  val readReceipts = Signal(true)
   val fromScreen = Signal[GroupConversationEvent.Method]()
 
   teamOnly.onChanged {
@@ -85,16 +86,16 @@ class CreateConversationController(implicit inj: Injector, ev: EventContext) ext
       userIds             <- users.head
       integrationIds      <- integrations.head
       shouldFullConv      <- inject[GlobalPreferences].preference(ShouldCreateFullConversation).apply()
-      _ = verbose(s"creating conv with ${userIds.size} users, ${integrationIds.size} bots, and shouldFullConv == $shouldFullConv")
       userIds             <-
         if (userIds.isEmpty && integrationIds.isEmpty && shouldFullConv) {
           z.usersStorage.list().map(
             _.filter(u => (u.isConnected || (u.teamId.isDefined && u.teamId == z.teamId)) && u.id != z.selfUserId).map(_.id).toSet.take(ConversationController.MaxParticipants - 1)
           )
         } else Future.successful(userIds)
-      _ = verbose(s"creating conv with ${userIds.size} users and ${integrationIds.size} bots")
       teamOnly            <- teamOnly.head
-      conv                <- conversationController.createGroupConversation(Some(name.trim), userIds, teamOnly)
+      readReceipts        <- readReceipts.head
+      _ = verbose(s"creating conv with  ${userIds.size} users, ${integrationIds.size} bots, shouldFullConv $shouldFullConv, teamOnly $teamOnly and readReceipts $readReceipts")
+      conv                <- conversationController.createGroupConversation(Some(name.trim), userIds, teamOnly, readReceipts)
       _                   <- Future.sequence(integrationIds.map { case (pId, iId) => integrationsService.head.flatMap(_.addBotToConversation(conv.id, pId, iId)) })
       from                <- fromScreen.head
       (guests, nonGuests) <- z.usersStorage.getAll(userIds).map(_.flatten.partition(_.isGuest(z.teamId)))

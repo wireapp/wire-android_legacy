@@ -2,7 +2,7 @@
 
 buildscript {
 
-    ext.kotlinVersion = '1.2.71'
+    ext.kotlinVersion = '1.3.10'
 
     repositories {
         maven {
@@ -18,7 +18,7 @@ buildscript {
         classpath 'com.jakewharton.hugo:hugo-plugin:1.2.1'
         classpath 'com.mutualmobile.gradle.plugins:dexinfo:0.1.2'
         classpath 'com.wire:gradle-android-scala-plugin:1.5.0'
-        classpath 'com.google.gms:google-services:3.2.0'
+        classpath 'com.google.gms:google-services:3.1.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
     }
 }

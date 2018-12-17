@@ -18,10 +18,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<com.waz.zclient.common.views.ChatheadView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    app:show_border="false"
-    android:layout_marginEnd="@dimen/wire__padding__small"
-    android:layout_width="@dimen/content__footer__chathead__size"
-    android:layout_height="@dimen/content__footer__chathead__size" />
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+
+    <com.waz.zclient.messages.SystemMessageView
+        android:id="@+id/message_read_receipts"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:baselineAligned="false"
+        android:orientation="horizontal"
+        android:layout_marginBottom="@dimen/wire__padding__small" />
+
+</merge>
+

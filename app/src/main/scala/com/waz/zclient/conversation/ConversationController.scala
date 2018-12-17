@@ -23,7 +23,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api
 import com.waz.api.{AssetForUpload, IConversation, Verification}
-import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
+import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.Client
@@ -181,9 +181,22 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   def setCurrentConvName(name: String): Future[Unit] =
     for {
-      id <- currentConvId.head
-      _  <- convsUi.head.flatMap(_.setConversationName(id, name))
-    } yield {}
+      service     <- convsUi.head
+      id          <- currentConvId.head
+      currentName <- currentConv.map(_.displayName).head
+    } yield {
+      val newName = Name(name)
+      if (newName != currentName) service.setConversationName(id, newName)
+    }
+
+  def setCurrentConvReadReceipts(readReceiptsEnabled: Boolean): Future[Unit] =
+    for {
+      service             <- convsUi.head
+      id                  <- currentConvId.head
+      currentReadReceipts <- currentConv.map(_.readReceiptsAllowed).head
+    } yield
+      if (currentReadReceipts != readReceiptsEnabled)
+        service.setReceiptMode(id, if (readReceiptsEnabled) 1 else 0)
 
   def addMembers(id: ConvId, users: Set[UserId]): Future[Unit] =
     convsUi.head.flatMap(_.addConversationMembers(id, users)).map(_ => {})
@@ -220,10 +233,10 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     if (alsoLeave) leave(id).flatMap(_ => clear(id)) else clear(id)
   }
 
-  def createGuestRoom(): Future[ConversationData] = createGroupConversation(Some(context.getString(R.string.guest_room_name)), Set(), false)
+  def createGuestRoom(): Future[ConversationData] = createGroupConversation(Some(context.getString(R.string.guest_room_name)), Set(), false, false)
 
-  def createGroupConversation(name: Option[Name], users: Set[UserId], teamOnly: Boolean): Future[ConversationData] =
-    convsUi.head.flatMap(_.createGroupConversation(name, users, teamOnly)).map(_._1)
+  def createGroupConversation(name: Option[Name], users: Set[UserId], teamOnly: Boolean, readReceipts: Boolean): Future[ConversationData] =
+    convsUi.head.flatMap(_.createGroupConversation(name, users, teamOnly, if (readReceipts) 1 else 0)).map(_._1)
 
   def withCurrentConvName(callback: Callback[String]): Unit = currentConvName.head.foreach(callback.callback)(Threading.Ui)
 
@@ -238,7 +251,6 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def removeConvChangedCallback(callback: Callback[ConversationChange]): Unit = convChangedCallbackSet -= callback
 
   convChanged.onUi { ev => convChangedCallbackSet.foreach(callback => callback.callback(ev)) }
-
 
   object messages {
 

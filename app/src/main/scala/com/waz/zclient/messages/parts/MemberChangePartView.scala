@@ -58,7 +58,7 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) ex
 
   val iconGlyph: Signal[Either[Int, Drawable]] = message map { msg =>
     msg.msgType match {
-      case Message.Type.MEMBER_JOIN if msg.firstMessage => Right(ConversationIcon(R.color.background_graphite))
+      case Message.Type.MEMBER_JOIN if msg.firstMessage => Right(ConversationIcon(R.color.light_graphite))
       case Message.Type.MEMBER_JOIN =>                     Left(R.string.glyph__plus)
       case _ =>                                            Left(R.string.glyph__minus)
     }

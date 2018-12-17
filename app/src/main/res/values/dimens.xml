@@ -188,6 +188,7 @@
     <dimen name="wire__padding__26">26dp</dimen>
     <dimen name="wire__padding__28">28dp</dimen>
     <dimen name="wire__padding__32">32dp</dimen>
+    <dimen name="wire__padding__50">50dp</dimen>
     <dimen name="wire__padding__regular">16dp</dimen>
     <dimen name="wire__padding__call">18dp</dimen>
     <dimen name="wire__padding__bottom__call">22dp</dimen>
@@ -411,7 +412,7 @@
     <dimen name="participant__image_shift">-32dp</dimen>
     <dimen name="chathead__margin">26dp</dimen>
     <dimen name="chathead__margin_start">18dp</dimen>
-    <dimen name="system_margin_end">32dp</dimen>
+    <dimen name="system_margin_end">24dp</dimen>
     <dimen name="system_margin_start">24dp</dimen>
     <dimen name="error__image__margin">32dp</dimen>
     <dimen name="profile__image__width_regular">192dp</dimen>
@@ -969,4 +970,8 @@
     <dimen name="user_part_view_bot_size">12dp</dimen>
     <dimen name="mentions_chathead_size">32dp</dimen>
     <dimen name="conversation_list__badge__icon_size">14dp</dimen>
+
+    <dimen name="empty_likes_reads_icon_size">140dp</dimen>
+    <dimen name="empty_likes_reads_text_width">224dp</dimen>
+    <dimen name="create_conv_options_height">64dp</dimen>
 </resources>
