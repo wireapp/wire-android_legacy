@@ -273,7 +273,7 @@ object ZMessagingDB {
       db.execSQL("CREATE TABLE ReadReceipts(message_id TEXT, user_id, timestamp INTEGER, PRIMARY KEY (message_id, user_id))")
       db.execSQL("ALTER TABLE Conversations ADD COLUMN receipt_mode INTEGER DEFAULT 0")
       db.execSQL("CREATE TABLE Properties(key TEXT PRIMARY KEY, value TEXT)")
-      db.execSQL("ALTER TABLE Messages ADD COLUMN force_read_receipt INTEGER DEFAULT null")
+      db.execSQL("ALTER TABLE Messages ADD COLUMN force_read_receipts INTEGER DEFAULT null")
       db.execSQL("UPDATE KeyValues SET value = 'true' WHERE key = 'should_sync_conversations_1'")
     }
   )
