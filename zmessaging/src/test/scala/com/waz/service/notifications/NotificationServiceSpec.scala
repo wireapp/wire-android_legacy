@@ -98,6 +98,54 @@ class NotificationServiceSpec extends AndroidFreeSpec {
       result(service.messageNotificationEventsStage(rConvId, Vector(event)))
     }
 
+    scenario("Notifications are only pushed to UI for conversations with correct mute states") {
+      val rConvId = RConvId("conv")
+      val rConvId2 = RConvId("conv2")
+      val conv = ConversationData(ConvId("conv"), rConvId, muted = MuteSet.AllMuted)
+      val conv2 = ConversationData(ConvId("conv2"), rConvId2, muted = MuteSet.OnlyMentionsAllowed)
+
+      val lastEventTime = RemoteInstant.apply(clock.instant())
+
+      //prefil notification storage
+      val previousNots = Set(
+        NotificationData(hasBeenDisplayed = true, conv = conv.id, time = lastEventTime),
+        NotificationData(hasBeenDisplayed = true, conv = conv2.id, time = lastEventTime),
+        NotificationData(hasBeenDisplayed = true, conv = conv2.id, time = lastEventTime, isReply = true),
+        NotificationData(hasBeenDisplayed = true, conv = conv2.id, time = lastEventTime, isSelfMentioned = true)
+      )
+      storedNotifications ! previousNots
+
+      val content = TextMessage("abc")
+      val from = UserId("User1")
+      val event = GenericMessageEvent(rConvId, lastEventTime, from, content)
+
+      (convs.getByRemoteId _).expects(rConvId).once().returning(Future.successful(Some(conv)))
+      (convs.getAll _).expects(*).once().returning(Future.successful(Seq(Some(conv), Some(conv2))))
+
+      (messages.getAll _).expects(*).twice().returning(Future.successful(Seq.empty))
+      (messages.findMessagesFrom _).expects(conv.id, lastEventTime).returning(Future.successful(
+        IndexedSeq(
+          MessageData(
+            MessageId(content.messageId),
+            conv.id,
+            msgType = Message.Type.TEXT,
+            protos = Seq(content),
+            userId = from,
+            time   = lastEventTime
+          )
+        )
+      ))
+
+      (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
+        nots.size shouldEqual 2
+        Future.successful({})
+      }
+
+      val service = getService()
+
+      result(service.messageNotificationEventsStage(rConvId, Vector(event)))
+    }
+
     scenario("Previous notifications that have not been dismissed are passed with notifications from new events") {
 
       val rConvId = RConvId("conv")

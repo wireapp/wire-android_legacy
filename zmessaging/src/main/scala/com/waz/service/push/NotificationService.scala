@@ -135,18 +135,18 @@ class NotificationService(selfUserId:      UserId,
   private def pushNotificationsToUi(): Future[Unit] = {
     verbose(l"pushNotificationsToUi")
     for {
-      toShow         <- storage.list().map(_.toSet)
-      drift          <- pushService.beDrift.head
+      toShow <- storage.list().map(_.toSet)
       notificationSourceVisible <- uiController.notificationsSourceVisible.head
       convs <- convs.getAll(toShow.map(_.conv)).map(_.collect { case Some(c) => c.id -> c }.toMap)
       (filteredShow, seen) = toShow.partition { n =>
-        //Filter notifications for those coming from other users, and that have come after the last-read time.
-        //Note that for muted conversations, the last-read time is set to Instant.MAX, so they can never come after.
+        val conv = convs(n.conv)
         n.user != selfUserId &&
-          convs(n.conv).lastRead.isBefore(n.time) &&
-          convs(n.conv).cleared.forall(_.isBefore(n.time)) &&
+          (conv.muted.isAllAllowed || (conv.muted.onlyMentionsAllowed && (n.isSelfMentioned || n.isReply))) &&
+          conv.lastRead.isBefore(n.time) &&
+          conv.cleared.forall(_.isBefore(n.time)) &&
           !notificationSourceVisible.get(selfUserId).exists(_.contains(n.conv))
       }
+      _ = verbose(l"filteredShow: $filteredShow, seen: $seen")
       _ <- uiController.onNotificationsChanged(selfUserId, filteredShow)
       _ <- storage.insertAll(filteredShow.map(_.copy(hasBeenDisplayed = true)))
       _ <- storage.removeAll(seen.map(_.id))
