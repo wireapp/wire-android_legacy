@@ -21,6 +21,7 @@ import java.io.{File, FileNotFoundException, FileOutputStream, IOException}
 
 import android.app.{Notification, NotificationChannel, NotificationChannelGroup, NotificationManager}
 import android.content.{ContentValues, Context}
+import android.database.sqlite.SQLiteException
 import android.graphics.{Color, Typeface}
 import android.net.Uri
 import android.os.{Build, Environment}
@@ -30,7 +31,7 @@ import android.support.v4.app.{NotificationCompat, RemoteInput}
 import android.text.style.{ForegroundColorSpan, StyleSpan}
 import android.text.{SpannableString, Spanned}
 import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.ZLog.{verbose, warn}
+import com.waz.ZLog.{verbose, warn, error}
 import com.waz.content.Preferences.PrefKey
 import com.waz.content.UserPreferences
 import com.waz.model.{ConvId, UserId}
@@ -376,6 +377,8 @@ object NotificationManagerWrapper {
     def getNotificationChannel(channelId: String) = notificationManager.getNotificationChannel(channelId)
 
     private def addToExternalNotificationFolder(rawId: Int, name: String) = {
+      val uri = MediaStore.Audio.Media.INTERNAL_CONTENT_URI
+      val query = s"${MediaStore.MediaColumns.DATA} LIKE '%$name%'"
       try {
         val fIn = cxt.getResources.openRawResource(rawId)
         val size = fIn.available
@@ -404,18 +407,28 @@ object NotificationManagerWrapper {
         contentValues.put(MediaStore.Audio.AudioColumns.IS_NOTIFICATION, true)
         contentValues.put(MediaStore.Audio.AudioColumns.IS_ALARM, true)
         contentValues.put(MediaStore.Audio.AudioColumns.IS_MUSIC, false)
-        val uri = MediaStore.Audio.Media.INTERNAL_CONTENT_URI
 
-        val query = cxt.getContentResolver.query(uri, null, s"${MediaStore.MediaColumns.DATA} LIKE '%$name%'", null, null)
-        if (query.getCount == 0) {
-          cxt.getContentResolver.insert(uri, contentValues)
+        // TODO: On some devices (Redmi 6A, Xperia X Compact) the query causes SQLiteException.
+        // test on one of these devices and find out why.
+        val cursor = try {
+          Option(cxt.getContentResolver.query(uri, null, query, null, null))
+        } catch {
+          case ex: SQLiteException =>
+            error(s"query to access the media store failed; uri: $uri, query: $query", ex)
+            None
         }
-        query.close()
+
+        if (cursor.forall(_.getCount == 0)) cxt.getContentResolver.insert(uri, contentValues)
+        cursor.foreach(_.close())
 
         true
       } catch {
-        case _: FileNotFoundException => false
-        case _: IOException => false
+        case ex: FileNotFoundException =>
+          error(s"query to access the media store failed; uri: $uri, query: $query", ex)
+          false
+        case ex: IOException =>
+          error(s"query to access the media store failed; uri: $uri, query: $query", ex)
+          false
       }
     }
 
