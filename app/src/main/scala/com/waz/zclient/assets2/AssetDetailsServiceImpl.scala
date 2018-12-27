@@ -31,7 +31,7 @@ import com.waz.bitmap.video.{MediaCodecHelper, TrackDecoder}
 import com.waz.model.{Dim2, Mime}
 import com.waz.service.assets.AudioLevels
 import com.waz.service.assets.AudioLevels.{TrackInfo, loudnessOverview}
-import com.waz.service.assets2.{ImageTag, _}
+import com.waz.service.assets2._
 import com.waz.utils.{IoUtils, _}
 import com.waz.zclient.assets2.MetadataExtractionUtils._
 import org.threeten.bp
@@ -46,13 +46,13 @@ class AssetDetailsServiceImpl(uriHelper: UriHelper)
   import AssetDetailsServiceImpl._
 
   override def extract(mime: Mime, content: CanExtractMetadata): Future[AssetDetails] = {
-    if (Mime.Image.supported.contains(mime)) extractForImage(content, Medium)
+    if (Mime.Image.supported.contains(mime)) extractForImage(content)
     else if (Mime.Video.supported.contains(mime)) extractForVideo(asSource(content))
     else if (Mime.Audio.supported.contains(mime)) extractForAudio(asSource(content))
     else Future.successful(BlobDetails)
   }
 
-  private def extractForImage(content: CanExtractMetadata, tag: ImageTag): Future[ImageDetails] =
+  private def extractForImage(content: CanExtractMetadata): Future[ImageDetails] =
     for {
       is <- content match {
         case Content.File(_, file) => Future.successful(new FileInputStream(file))
@@ -68,7 +68,7 @@ class AssetDetailsServiceImpl(uriHelper: UriHelper)
         else if (opts.outHeight == -1)
           Future.failed(new IllegalArgumentException("can not extract image height"))
         else
-          Future.successful(ImageDetails(Dim2(opts.outWidth, opts.outHeight), tag))
+          Future.successful(ImageDetails(Dim2(opts.outWidth, opts.outHeight)))
       }
     } yield details
 
@@ -127,7 +127,7 @@ class AssetDetailsServiceImpl(uriHelper: UriHelper)
         loudnessOverview(numBars, rmsOfBuffers) // select RMS peaks and convert to an intuitive scale
       }
 
-      overview.acquire(levels => Loudness(levels))
+      overview.acquire(levels => Loudness(levels.map(_.toByte)))
     } match {
       case Success(res) => Right(res)
       case Failure(err) =>

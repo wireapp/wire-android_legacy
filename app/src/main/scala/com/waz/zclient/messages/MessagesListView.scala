@@ -27,6 +27,7 @@ import android.view.WindowManager
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.{AssetStatus, Message}
+import com.waz.utils._
 import com.waz.model.{ConvId, Dim2, MessageData}
 import com.waz.service.assets2.AssetStatus
 import com.waz.service.messages.MessageAndLikes
@@ -198,7 +199,7 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesPagedListAdapte
         case msg if msg.isAssetMessage && msg.state == Message.Status.SENT =>
           // received asset message is considered read when its asset is available,
           // this is especially needed for ephemeral messages, only start the counter when message is downloaded
-          assets.assetStatusSignal(msg.assetId.get) flatMap {
+          msg.assetId.fold2(Signal.empty, assets.assetStatusSignal) flatMap {
             case (AssetStatus.Done, _) if msg.msgType == Message.Type.ASSET =>
               // image assets are considered read only once fully downloaded
               Signal const msg
