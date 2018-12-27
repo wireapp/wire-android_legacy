@@ -38,13 +38,14 @@ import java.io.InputStream
 import java.security.MessageDigest
 
 import android.content.Context
-import com.bumptech.glide.load.{Key, Options}
 import com.bumptech.glide.load.model.ModelLoader
 import com.bumptech.glide.load.model.ModelLoader.LoadData
-import com.waz.ZLog._
+import com.bumptech.glide.load.{Key, Options}
 import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.ZLog._
 import com.waz.model.AssetId
-import com.waz.service.assets2.AssetService
+import com.waz.service.ZMessaging
+import com.waz.utils.events.Signal
 import com.waz.zclient.Injector
 import com.waz.zclient.glide._
 
@@ -63,11 +64,11 @@ class AssetRequestModelLoader(implicit context: Context, inj: Injector) extends 
   override def handles(model: AssetRequest): Boolean = true
 }
 
-class Asset2RequestModelLoader(assetService: AssetService) extends ModelLoader[Asset2Request, InputStream] {
+class Asset2RequestModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[Asset2Request, InputStream] {
   override def buildLoadData(model: Asset2Request, width: Int, height: Int, options: Options): ModelLoader.LoadData[InputStream] = {
     val key = AssetKey(model.assetId, width, height, options)
     verbose(s"key: $key")
-    new LoadData[InputStream](key, new Asset2DataFetcher(model, assetService))
+    new LoadData[InputStream](key, new Asset2DataFetcher(model, zms))
   }
 
   override def handles(model: Asset2Request): Boolean = true

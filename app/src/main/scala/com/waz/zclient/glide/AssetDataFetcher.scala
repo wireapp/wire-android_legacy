@@ -23,12 +23,13 @@ import android.content.Context
 import com.bumptech.glide.Priority
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.data.DataFetcher
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.ZLog._
+import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapResult.{BitmapLoaded, LoadingFailed}
-import com.waz.service.assets2.AssetService
 import com.waz.threading.CancellableFuture
 import com.waz.ui.MemoryImageCache.BitmapRequest.Regular
+import com.waz.utils.events.Signal
 import com.waz.utils.wrappers.AndroidBitmap
 import com.waz.zclient.common.views.ImageController
 import com.waz.zclient.{Injectable, Injector}
@@ -82,7 +83,8 @@ class AssetDataFetcher(request: AssetRequest, width: Int)(implicit context: Cont
   override def getDataSource: DataSource = DataSource.REMOTE
 }
 
-class Asset2DataFetcher(request: Asset2Request, assetService: AssetService) extends DataFetcher[InputStream] {
+class Asset2DataFetcher(request: Asset2Request, zms: Signal[ZMessaging]) extends DataFetcher[InputStream] {
+  import com.waz.threading.Threading.Implicits.Background
 
   @volatile
   private var currentData: Option[CancellableFuture[InputStream]] = None
@@ -90,7 +92,7 @@ class Asset2DataFetcher(request: Asset2Request, assetService: AssetService) exte
   override def loadData(priority: Priority, callback: DataFetcher.DataCallback[_ >: InputStream]): Unit = {
     verbose(s"Load asset $request")
 
-    val data = assetService.loadContentById(request.assetId)
+    val data = CancellableFuture.lift(zms.head).flatMap(_.assetService.loadContentById(request.assetId))
     currentData.foreach(_.cancel())
     currentData = Some(data)
 
