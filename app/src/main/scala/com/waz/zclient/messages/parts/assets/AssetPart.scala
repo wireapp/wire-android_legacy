@@ -51,7 +51,7 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper with Ephemer
     case _ => throw new Exception("Unexpected AssetPart view type - ensure you define the content layout and an id for the content for the part")
   }(self))
 
-  val assetId = message.map(_.assetId.get)
+  val assetId = message.map(_.assetId).collect { case Some(id) => id }
   val asset = controller.assetSignal(assetId)
   val assetStatus = controller.assetStatusSignal(assetId)
   val deliveryState = DeliveryState(message, assetStatus.map(_._1))

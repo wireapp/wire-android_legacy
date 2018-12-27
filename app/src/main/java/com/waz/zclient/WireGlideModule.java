@@ -24,7 +24,9 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.Registry;
 import com.bumptech.glide.annotation.GlideModule;
 import com.bumptech.glide.module.AppGlideModule;
+import com.waz.zclient.glide.Asset2Request;
 import com.waz.zclient.glide.AssetRequest;
+import com.waz.zclient.glide.loaders.Asset2RequestModelLoaderFactory;
 import com.waz.zclient.glide.loaders.AssetRequestModelLoaderFactory;
 
 import java.io.InputStream;
@@ -34,5 +36,6 @@ public class WireGlideModule extends AppGlideModule {
     @Override
     public void registerComponents(@NonNull Context context, @NonNull Glide glide, @NonNull Registry registry) {
         registry.prepend(AssetRequest.class, InputStream.class, new AssetRequestModelLoaderFactory(context));
+        registry.prepend(Asset2Request.class, InputStream.class, new Asset2RequestModelLoaderFactory(context));
     }
 }
