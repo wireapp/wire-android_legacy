@@ -19,10 +19,12 @@ package com.waz.zclient.utils
 
 import android.content.Context
 import android.text.format.DateFormat
+import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.log.ZLog2._
 import com.waz.zclient.R
 import com.waz.zclient.utils.ContextUtils.{getQuantityString, getString}
 import org.threeten.bp.format.DateTimeFormatter
-import org.threeten.bp.{Duration, Instant, LocalDateTime, ZoneId}
+import org.threeten.bp.{DateTimeException, _}
 
 object Time {
 
@@ -48,10 +50,25 @@ object Time {
     }
 
     protected def timePattern(implicit context: Context): String =
-      ResString(if (DateFormat.is24HourFormat(context)) R.string.timestamp_pattern__24h_format else R.string.timestamp_pattern__12h_format).resolve
+      getString(if (DateFormat.is24HourFormat(context)) R.string.timestamp_pattern__24h_format else R.string.timestamp_pattern__12h_format)
   }
 
   object DateTimeStamp {
+    lazy val defaultDateFormatter = DateTimeFormatter.ofPattern("MMM d, HH:mm")
+    lazy val defaultTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
+    def format(pattern: String, localTime: LocalDateTime, formatter: DateTimeFormatter): String =
+      try {
+        DateTimeFormatter.ofPattern(pattern).format(localTime)
+      } catch {
+        case ex: IllegalArgumentException =>
+          error(l"Invalid pattern ${showString(pattern)}", ex)
+          formatter.format(localTime)
+        case ex: DateTimeException =>
+          error(l"Wrong pattern ${showString(pattern)} for local date time ${showString(localTime.toString)}", ex)
+          formatter.format(localTime)
+      }
+
     def apply(time: Instant, showWeekday: Boolean = true, now: LocalDateTime = LocalDateTime.now()): DateTimeStamp = {
       val localTime = LocalDateTime.ofInstant(time, ZoneId.systemDefault())
       val isSameDay = now.toLocalDate.atStartOfDay.isBefore(localTime)
@@ -61,9 +78,10 @@ object Time {
     }
   }
 
+  import DateTimeStamp._
+
   case class SameDayTimeStamp(localTime: LocalDateTime) extends DateTimeStamp {
-    override def string(implicit context: Context): String =
-      DateTimeFormatter.ofPattern(timePattern).format(localTime)
+    override def string(implicit context: Context): String = format(timePattern, localTime, defaultTimeFormatter)
   }
 
   object SameDayTimeStamp {
@@ -73,17 +91,14 @@ object Time {
 
   case class FullTimeStamp(localTime: LocalDateTime, showWeekday: Boolean) extends DateTimeStamp {
     override def string(implicit context: Context): String = {
+      val datePatternRes = (LocalDateTime.now().getYear == localTime.getYear, showWeekday) match {
+        case (true, true)   => R.string.timestamp_pattern__date_and_time__no_year
+        case (true, false)  => R.string.timestamp_pattern__date_and_time__no_year_no_weekday
+        case (false, true)  => R.string.timestamp_pattern__date_and_time__with_year
+        case (false, false) => R.string.timestamp_pattern__date_and_time__with_year_no_weekday
+      }
 
-      val isThisYear = LocalDateTime.now().getYear == localTime.getYear
-
-      val datePattern =
-        if (isThisYear)
-          if (showWeekday) getString(R.string.timestamp_pattern__date_and_time__no_year, timePattern)
-          else getString(R.string.timestamp_pattern__date_and_time__no_year_no_weekday, timePattern)
-        else if (showWeekday) getString(R.string.timestamp_pattern__date_and_time__with_year, timePattern)
-        else getString(R.string.timestamp_pattern__date_and_time__with_year_no_weekday, timePattern)
-
-      DateTimeFormatter.ofPattern(datePattern).format(localTime)
+      format(getString(datePatternRes, timePattern), localTime, defaultDateFormatter)
     }
   }
 
