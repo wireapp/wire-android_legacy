@@ -27,7 +27,7 @@ import com.google.android.gms.common.{ConnectionResult, GoogleApiAvailability}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NetworkMode
 import com.waz.content.{GlobalPreferences, UserPreferences}
-import com.waz.model.{ConvExpiry, Mention, MessageData}
+import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
@@ -48,6 +48,7 @@ import com.waz.zclient.views.DraftMap
 import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.collection.immutable.ListSet
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) extends Injectable {
@@ -195,6 +196,8 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
     case false => // ignore
   }
 
+  private val msgBeingSendInConv = Signal(Set.empty[ConvId])
+
   def submit(msg: String, mentions: Seq[Mention] = Nil): Boolean = {
     if (isEditingMessage.currentValue.contains(true)) {
       onApproveEditMessage()
@@ -202,14 +205,25 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
     }
     else if (TextUtils.isEmpty(msg.trim)) false
     else {
-      replyController.currentReplyContent.head.map(_.map(_.message.id)).foreach { quote =>
-        conversationController.sendMessage(msg, mentions, quote).foreach { m =>
-          m.foreach { msg =>
-            onMessageSent ! msg
-            cursorCallback.foreach(_.onMessageSent(msg))
-            replyController.clearMessage(msg.convId)
+      (for {
+        convId <- conv.map(_.id).head
+        inMBS  =  msgBeingSendInConv.map(_.contains(convId)).currentValue
+        quote  <- replyController.currentReplyContent.map(_.map(_.message.id)).head
+      } yield (convId, quote, inMBS)).foreach {
+        case (convId, quote, Some(false))  =>
+          msgBeingSendInConv.mutate(_ + convId)
+          conversationController.sendMessage(msg, mentions, quote).foreach { m =>
+            m.foreach { msg =>
+              onMessageSent ! msg
+              cursorCallback.foreach(_.onMessageSent(msg))
+              replyController.clearMessage(msg.convId)
+
+              Future {
+                msgBeingSendInConv.mutate(_ - msg.convId)
+              }
+            }
           }
-        }
+        case _ =>
       }
       true
     }
