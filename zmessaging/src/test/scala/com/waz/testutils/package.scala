@@ -191,10 +191,8 @@ package object testutils {
   }
 
 
-  implicit class RichStorage[K, V](storage: CachedStorageImpl[K, V]) {
-    def deleteAll() = storage.list() flatMap { vs =>
-      storage.removeAll(vs.map(storage.dao.idExtractor))
-    }
+  implicit class RichStorage[K, V <: com.waz.utils.Identifiable[K]](storage: CachedStorageImpl[K, V]) {
+    def deleteAll() = storage.list().flatMap { vs => storage.removeAll(vs.map(_.id)) }
   }
 
   def randomPhoneNumber = PhoneNumber("+0" + (Random.nextInt(9) + 1).toString + Array.fill(13)(Random.nextInt(10)).mkString)

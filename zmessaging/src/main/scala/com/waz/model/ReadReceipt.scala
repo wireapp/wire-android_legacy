@@ -18,11 +18,11 @@
 package com.waz.model
 import com.waz.db.Col.{id, remoteTimestamp}
 import com.waz.db.{Dao2, Table}
-import com.waz.utils.Managed
+import com.waz.utils.{Identifiable, Managed}
 import com.waz.utils.wrappers.{DB, DBCursor}
 
-case class ReadReceipt(message: MessageId, user: UserId, timestamp: RemoteInstant) {
-  lazy val id: ReadReceipt.Id = (message, user)
+case class ReadReceipt(message: MessageId, user: UserId, timestamp: RemoteInstant) extends Identifiable[ReadReceipt.Id] {
+  override val id: ReadReceipt.Id = (message, user)
 }
 
 object ReadReceipt {

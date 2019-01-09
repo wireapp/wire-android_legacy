@@ -23,18 +23,18 @@ import com.waz.api.ErrorType
 import com.waz.api.impl.ErrorResponse
 import com.waz.db.Col._
 import com.waz.db.Dao
+import com.waz.utils.Identifiable
 import com.waz.utils.wrappers.{DB, DBCursor}
 
-case class ErrorData(id: Uid,
-                     errType: ErrorType,
-                     users: Seq[UserId] = Nil,
-                     messages: Seq[MessageId] = Nil,
-                     convId: Option[ConvId] = None,
-                     responseCode: Int = 0,
+case class ErrorData(override val id: Uid,
+                     errType:         ErrorType,
+                     users:           Seq[UserId] = Nil,
+                     messages:        Seq[MessageId] = Nil,
+                     convId:          Option[ConvId] = None,
+                     responseCode:    Int = 0,
                      responseMessage: String = "",
-                     responseLabel: String = "",
-                     time: Date = new Date) {
-}
+                     responseLabel:   String = "",
+                     time: Date = new Date) extends Identifiable[Uid]
 
 object ErrorData {
 

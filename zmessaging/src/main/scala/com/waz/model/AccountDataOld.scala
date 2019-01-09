@@ -28,7 +28,7 @@ import com.waz.sync.client.AuthenticationManager
 import com.waz.utils.Locales.currentLocaleOrdering
 import com.waz.utils.scrypt.SCrypt
 import com.waz.utils.wrappers.{DB, DBContentValues, DBCursor, DBProgram}
-import com.waz.utils.{JsonDecoder, JsonEncoder}
+import com.waz.utils.{Identifiable, JsonDecoder, JsonEncoder}
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.utils.crypto.AESUtils
 import org.json.JSONObject
@@ -41,12 +41,13 @@ import scala.collection.mutable
   *
   * Any information that needs to be deregistered can be kept here (e.g., de-registered cookies, tokens, clients etc)
   */
-case class AccountData(id:           UserId              = UserId(),
-                       teamId:       Option[TeamId]      = None,
-                       cookie:       Cookie              = Cookie(""), //defaults for tests
-                       accessToken:  Option[AccessToken] = None,
-                       pushToken:    Option[PushToken]   = None,
-                       password:     Option[Password]    = None) { //password never saved to database
+case class AccountData(override val id: UserId              = UserId(),
+                       teamId:          Option[TeamId]      = None,
+                       cookie:          Cookie              = Cookie(""), //defaults for tests
+                       accessToken:     Option[AccessToken] = None,
+                       pushToken:       Option[PushToken]   = None,
+                       password:        Option[Password]    = None        //password never saved to database
+                      ) extends Identifiable[UserId] {
 
   override def toString: String =
     s"""AccountData:
@@ -98,7 +99,7 @@ object AccountData {
 /**
  * This account data needs to be maintained for migration purposes - it can be deleted after a while (1 year?)
  */
-case class AccountDataOld(id:              AccountId                       = AccountId(),
+case class AccountDataOld(override val id: AccountId                       = AccountId(),
                           teamId:          TriTeamId                       = Left({}),
                           pendingTeamName: Option[String]                  = None,
                           email:           Option[EmailAddress]            = None,
@@ -120,7 +121,7 @@ case class AccountDataOld(id:              AccountId                       = Acc
                           firstLogin:      Boolean                         = true,
                           private val _selfPermissions: Long      = 0,
                           private val _copyPermissions: Long      = 0
-                      ) {
+                      ) extends Identifiable[AccountId] {
 
   override def toString: String =
     s"""AccountData:

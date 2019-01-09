@@ -25,7 +25,7 @@ import com.waz.db.Dao
 import com.waz.model.{Id, UserId}
 import com.waz.utils.crypto.ZSecureRandom
 import com.waz.utils.wrappers.{DB, DBCursor}
-import com.waz.utils.{JsonDecoder, JsonEncoder}
+import com.waz.utils.{Identifiable, JsonDecoder, JsonEncoder}
 import org.json.JSONObject
 import org.threeten.bp.Instant
 
@@ -138,7 +138,8 @@ object Client {
   }
 }
 
-case class UserClients(user: UserId, clients: Map[ClientId, Client]) {
+case class UserClients(user: UserId, clients: Map[ClientId, Client]) extends Identifiable[UserId] {
+  override val id: UserId = user
   def -(clientId: ClientId) = UserClients(user, clients - clientId)
 }
 

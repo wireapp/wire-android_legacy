@@ -26,7 +26,7 @@ import com.waz.model.Uid
 import com.waz.service.push.ReceivedPushData.ReceivedPushDataDao
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils.wrappers.DBCursor
-import com.waz.utils.{CachedStorage, CachedStorageImpl, JsonDecoder, JsonEncoder, TrimmingLruCache, returning}
+import com.waz.utils.{CachedStorage, CachedStorageImpl, Identifiable, JsonDecoder, JsonEncoder, TrimmingLruCache, returning}
 import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 
@@ -41,13 +41,13 @@ class ReceivedPushStorageImpl(context: Context, storage: Database)
   * @param receivedAt instant the push notification was received
   * @param toFetch time elapsed until we successfully fetched the notification
   */
-case class ReceivedPushData(id:              Uid, //for notifications where we don't get the id, we will generate a random one for storage's sake
+case class ReceivedPushData(override val id: Uid, //for notifications where we don't get the id, we will generate a random one for storage's sake
                             sinceSent:       Duration,
                             receivedAt:      Instant,
                             networkMode:     NetworkMode,
                             networkOperator: String,
                             isDeviceIdle:    Boolean,
-                            toFetch:         Option[Duration] = None)
+                            toFetch:         Option[Duration] = None) extends Identifiable[Uid]
 
 object ReceivedPushData {
 

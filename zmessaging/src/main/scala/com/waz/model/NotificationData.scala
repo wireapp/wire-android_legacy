@@ -22,10 +22,10 @@ import com.waz.api.NotificationsHandler.NotificationType.LikedContent
 import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.utils.wrappers.DBCursor
-import com.waz.utils.{EnumCodec, JsonDecoder, JsonEncoder}
+import com.waz.utils.{EnumCodec, Identifiable, JsonDecoder, JsonEncoder}
 import org.json.JSONObject
 
-case class NotificationData(id:                NotId                = NotId(),
+case class NotificationData(override val id:   NotId                = NotId(),
                             msg:               String               = "",
                             conv:              ConvId               = ConvId(),
                             user:              UserId               = UserId(),
@@ -35,8 +35,7 @@ case class NotificationData(id:                NotId                = NotId(),
                             isSelfMentioned:   Boolean              = false,
                             likedContent:      Option[LikedContent] = None,
                             isReply:           Boolean              = false,
-                            hasBeenDisplayed:  Boolean              = false) {
-}
+                            hasBeenDisplayed:  Boolean              = false) extends Identifiable[NotId]
 
 object NotificationData {
 

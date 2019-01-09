@@ -30,7 +30,7 @@ import org.json.JSONObject
 
 import scala.concurrent.duration._
 
-case class UserData(id:                    UserId,
+case class UserData(override val id:       UserId,
                     teamId:                Option[TeamId]        = None,
                     name:                  Name,
                     email:                 Option[EmailAddress]  = None,
@@ -52,7 +52,7 @@ case class UserData(id:                    UserId,
                     handle:                Option[Handle]        = None,
                     providerId:            Option[ProviderId]    = None,
                     integrationId:         Option[IntegrationId] = None,
-                    expiresAt:             Option[RemoteInstant] = None) {
+                    expiresAt:             Option[RemoteInstant] = None) extends Identifiable[UserId] {
 
   def isConnected = ConnectionStatus.isConnected(connection)
   def hasEmailOrPhone = email.isDefined || phone.isDefined

@@ -37,16 +37,16 @@ abstract class StorageSpec(storageCreator: () => Storage2[Int, TestObject]) exte
     scenario("Save and load values without preserving the order") {
       for {
         _ <- storage.saveAll(values)
-        keys = values.map(keyExtractor)
+        keys = values.map(_.id)
         loaded <- storage.loadAll(keys)
-      } yield loaded.map(keyExtractor).toSet shouldBe keys
+      } yield loaded.map(_.id).toSet shouldBe keys
     }
 
     scenario("Save and load one value") {
       val value = values.head
       for {
         _ <- storage.save(value)
-        loaded <- storage.find(keyExtractor(value))
+        loaded <- storage.find(value.id)
       } yield loaded shouldBe Some(value)
     }
 
@@ -59,14 +59,14 @@ abstract class StorageSpec(storageCreator: () => Storage2[Int, TestObject]) exte
     scenario("In case if not all requested values are not in storage, return values that are in storage") {
       for {
         _ <- storage.saveAll(values.tail)
-        loaded <- storage.loadAll(values.map(keyExtractor))
+        loaded <- storage.loadAll(values.map(_.id))
       } yield loaded.size shouldBe values.size - 1
     }
 
     scenario("Delete values by keys") {
       for {
         _ <- storage.saveAll(values)
-        keys = values.map(keyExtractor)
+        keys = values.map(_.id)
         _ <- storage.deleteAllByKey(keys)
         loaded <- storage.loadAll(keys)
       } yield loaded.size shouldBe 0
@@ -76,8 +76,8 @@ abstract class StorageSpec(storageCreator: () => Storage2[Int, TestObject]) exte
       val value = values.head
       for {
         _ <- storage.save(value)
-        _ <- storage.deleteByKey(keyExtractor(value))
-        loaded <- storage.find(keyExtractor(value))
+        _ <- storage.deleteByKey(value.id)
+        loaded <- storage.find(value.id)
       } yield loaded shouldBe None
     }
 
@@ -85,7 +85,7 @@ abstract class StorageSpec(storageCreator: () => Storage2[Int, TestObject]) exte
       for {
         _ <- storage.saveAll(values)
         _ <- storage.deleteAll(values)
-        keys = values.map(keyExtractor)
+        keys = values.map(_.id)
         loaded <- storage.loadAll(keys)
       } yield loaded.size shouldBe 0
     }
@@ -95,7 +95,7 @@ abstract class StorageSpec(storageCreator: () => Storage2[Int, TestObject]) exte
       for {
         _ <- storage.save(value)
         _ <- storage.delete(value)
-        loaded <- storage.find(keyExtractor(value))
+        loaded <- storage.find(value.id)
       } yield loaded shouldBe None
     }
 
@@ -103,7 +103,7 @@ abstract class StorageSpec(storageCreator: () => Storage2[Int, TestObject]) exte
       val oldValue = values.head
       for {
         _ <- storage.save(oldValue)
-        key = keyExtractor(oldValue)
+        key = oldValue.id
         changedValue = oldValue.copy(title = "changed title")
         Some((previous, current)) <- storage.update(key, _ => changedValue)
         Some(currentFromStorage) <- storage.find(key)
@@ -116,8 +116,8 @@ abstract class StorageSpec(storageCreator: () => Storage2[Int, TestObject]) exte
     scenario("Do not update anything and return None if value is not in the storage") {
       val notStoredValue = values.head
       for {
-        updatingResult <- storage.update(keyExtractor(notStoredValue), _.copy(title = "changed title"))
-        loadedFromStorage <- storage.find(keyExtractor(notStoredValue))
+        updatingResult <- storage.update(notStoredValue.id, _.copy(title = "changed title"))
+        loadedFromStorage <- storage.find(notStoredValue.id)
       } yield {
         loadedFromStorage shouldBe None
         updatingResult shouldBe None
@@ -128,6 +128,6 @@ abstract class StorageSpec(storageCreator: () => Storage2[Int, TestObject]) exte
 
 }
 
-class InMemoryStorageSpec extends StorageSpec(() => new InMemoryStorage2(new LruCache(1000), keyExtractor))
-class CachedStorageBasicSpec extends StorageSpec(() => new CachedStorage2(new UnlimitedInMemoryStorage(keyExtractor), new UnlimitedInMemoryStorage(keyExtractor)))
-class UnlimitedInMemoryStorageSpec extends StorageSpec(() => new UnlimitedInMemoryStorage(keyExtractor))
+class InMemoryStorageSpec extends StorageSpec(() => new InMemoryStorage2(new LruCache(1000)))
+class CachedStorageBasicSpec extends StorageSpec(() => new CachedStorage2(new UnlimitedInMemoryStorage, new UnlimitedInMemoryStorage))
+class UnlimitedInMemoryStorageSpec extends StorageSpec(() => new UnlimitedInMemoryStorage)

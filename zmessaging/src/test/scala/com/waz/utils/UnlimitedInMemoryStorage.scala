@@ -22,13 +22,11 @@ import java.util.concurrent.ConcurrentHashMap
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class UnlimitedInMemoryStorage[K,V](override val keyExtractor: V => K)
-                                   (implicit
-                                    override val ec: ExecutionContext) extends Storage2[K, V] {
+class UnlimitedInMemoryStorage[K, V <: Identifiable[K]](implicit override val ec: ExecutionContext) extends Storage2[K, V] {
 
   private val map: ConcurrentHashMap[K,V] = new concurrent.ConcurrentHashMap[K, V]()
 
   override def loadAll(keys: Set[K]): Future[Seq[V]] = Future(keys.toSeq.flatMap(k => Option(map.get(k))))
-  override def saveAll(values: Iterable[V]): Future[Unit] = Future(values.map(v => map.put(keyExtractor(v), v)))
+  override def saveAll(values: Iterable[V]): Future[Unit] = Future(values.map(v => map.put(v.id, v)))
   override def deleteAllByKey(keys: Set[K]): Future[Unit] = Future(keys.map(map.remove))
 }

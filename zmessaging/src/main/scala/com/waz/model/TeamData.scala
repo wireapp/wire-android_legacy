@@ -19,15 +19,15 @@ package com.waz.model
 
 import com.waz.db.Dao
 import com.waz.model
-import com.waz.utils.JsonDecoder
+import com.waz.utils.{Identifiable, JsonDecoder}
 import com.waz.utils.wrappers.DBCursor
 import org.json.JSONObject
 
-case class TeamData(id:      TeamId,
-                    name:    Name,
-                    creator: UserId,
-                    icon:    Option[RAssetId] = None,
-                    iconKey: Option[AESKey]  = None)
+case class TeamData(override val id: TeamId,
+                    name:            Name,
+                    creator:         UserId,
+                    icon:            Option[RAssetId] = None,
+                    iconKey:         Option[AESKey]  = None) extends Identifiable[TeamId]
 
 object TeamData {
 

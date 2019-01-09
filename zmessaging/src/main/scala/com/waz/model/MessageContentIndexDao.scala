@@ -21,9 +21,12 @@ import com.waz.ZLog._
 import com.waz.api.{ContentSearchQuery, Message}
 import com.waz.db.Col._
 import com.waz.db.Dao
+import com.waz.utils.Identifiable
 import com.waz.utils.wrappers.{DB, DBCursor}
 
-case class MessageContentIndexEntry(messageId: MessageId, convId: ConvId, content: String, time: RemoteInstant)
+case class MessageContentIndexEntry(messageId: MessageId, convId: ConvId, content: String, time: RemoteInstant) extends Identifiable[MessageId] {
+  override val id: MessageId = messageId
+}
 
 object MessageContentIndexDao extends Dao[MessageContentIndexEntry, MessageId] {
   import MessageContentIndex._

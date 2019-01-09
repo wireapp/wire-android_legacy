@@ -26,7 +26,7 @@ import com.waz.db.Dao
 import com.waz.db.DbTranslator.FileTranslator
 import com.waz.log.ZLog2.LogShow
 import com.waz.model._
-import com.waz.utils.returning
+import com.waz.utils.{Identifiable, returning}
 import com.waz.utils.wrappers.{DB, DBCursor}
 
 case class CacheEntryData(key:      CacheKey,
@@ -38,7 +38,9 @@ case class CacheEntryData(key:      CacheKey,
                           fileName: Option[String]      = None,
                           mimeType: Mime                = Mime.Unknown,
                           fileId:   Uid                 = Uid(),
-                          length:   Option[Long]        = None)
+                          length:   Option[Long]        = None) extends Identifiable[CacheKey] {
+  override val id: CacheKey = key
+}
 
 object CacheEntryData {
 

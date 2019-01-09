@@ -20,11 +20,14 @@ package com.waz.model
 import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.utils.wrappers.{DB, DBCursor}
-import com.waz.utils.{JsonDecoder, JsonEncoder}
+import com.waz.utils.{Identifiable, JsonDecoder, JsonEncoder}
 import org.json.JSONArray
 import org.threeten.bp.Instant
 
 case class SearchQueryCache(query: SearchQuery, timestamp: Instant, entries: Option[Vector[UserId]])
+extends Identifiable[SearchQuery] {
+  override val id: SearchQuery = query
+}
 
 object SearchQueryCache {
   implicit object SearchQueryCacheDao extends Dao[SearchQueryCache, SearchQuery] {
