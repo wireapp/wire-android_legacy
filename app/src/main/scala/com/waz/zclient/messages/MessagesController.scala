@@ -29,6 +29,7 @@ import com.waz.zclient.pages.main.conversationpager.controller.{ISlidingPaneCont
 import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.{Injectable, Injector, WireContext}
 import com.waz.utils.RichWireInstant
+import scala.concurrent.duration._
 
 class MessagesController()(implicit injector: Injector, cxt: WireContext, ev: EventContext) extends Injectable {
 import com.waz.threading.Threading.Implicits.Background
@@ -93,13 +94,24 @@ import scala.concurrent.Future
 
   def isLastSelf(id: MessageId) = lastSelfMessage.currentValue.exists(_.id == id)
 
+  // Throttling to avoid too many requests for read receipts.
+  // Ideally the sync service would do the merge but the new WorkManager doesn't allow that yet.
+  private val lastReadMessages = Signal(Map[ConvId, MessageData]())
+
+  lastReadMessages.throttle(2.seconds) { messages =>
+    messages.foreach { case (conv, msg) =>
+      zms.head.foreach(_.convsUi.setLastRead(conv, msg))
+    }
+    lastReadMessages ! Map()
+  }
 
   def onMessageRead(msg: MessageData) = {
     if (msg.isEphemeral && !msg.expired)
         zms.head.foreach(_.ephemeral.onMessageRead(msg.id))
 
-    if (msg.time isAfter lastReadTime)
-      zms.head.foreach(_.convsUi.setLastRead(msg.convId, msg))
+    lastReadMessages.mutate { messages =>
+      messages + (msg.convId -> messages.get(msg.convId).fold(msg)(m => if (m.time isAfter msg.time) m else msg))
+    }
 
     if (msg.state == Message.Status.FAILED)
       zms.head.foreach(_.messages.markMessageRead(msg.convId, msg.id))
