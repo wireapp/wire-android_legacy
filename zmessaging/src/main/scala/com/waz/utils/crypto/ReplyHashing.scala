@@ -39,7 +39,7 @@ trait ReplyHashing {
   class MissingAssetException(message: String) extends Exception(message)
 }
 
-class ReplyHashingImpl(storage: AssetsStorage)(implicit base64: Base64) extends ReplyHashing {
+class ReplyHashingImpl(storage: AssetsStorage) extends ReplyHashing {
 
   import com.waz.threading.Threading.Implicits.Background
 
@@ -51,37 +51,37 @@ class ReplyHashingImpl(storage: AssetsStorage)(implicit base64: Base64) extends 
       assets     <- storage.getAll(assetMsgs.map(_.assetId))
       assetPairs =  assetMsgs.map(m => m -> assets.find(_.exists(_.id == m.assetId)).flatMap(_.flatMap(_.remoteId)))
       assetShas  <- Future.sequence(assetPairs.map {
-                      case (m, Some(rId)) => Future.successful(m.id -> hashAsset(rId, m.time).sha256())
+                      case (m, Some(rId)) => Future.successful(m.id -> hashAsset(rId, m.time))
                       case (m, None)      => Future.failed(new MissingAssetException(s"Failed to find asset with id ${m.assetId}"))
                     })
       otherShas  <- Future.sequence(otherMsgs.map {
                       case m if ReplyHashing.textTypes.contains(m.msgType) =>
                         m.protos.last match {
-                          case TextMessage(content, _, _, _, _) => Future.successful(m.id -> hashTextReply(content, m.time).sha256())
+                          case TextMessage(content, _, _, _, _) => Future.successful(m.id -> hashTextReply(content, m.time))
                           case _                             => Future.successful(m.id -> Sha256.Empty) // should not happen
                         }
                       case m if m.msgType == LOCATION =>
-                        Future.successful(m.id -> hashLocation(m.location.get.getLatitude, m.location.get.getLongitude, m.time).sha256())
+                        Future.successful(m.id -> hashLocation(m.location.get.getLatitude, m.location.get.getLongitude, m.time))
                       case m =>
                         Future.failed(new IllegalArgumentException(s"Cannot hash illegal reply to message type: ${m.msgType}"))
                     })
     } yield (assetShas ++ otherShas).toMap
   }
 
-  protected[crypto] def hashAsset(assetId: RAssetId, timestamp: RemoteInstant): Sha256Inj = hashTextReply(assetId.str, timestamp)
+  protected[crypto] def hashAsset(assetId: RAssetId, timestamp: RemoteInstant): Sha256 = hashTextReply(assetId.str, timestamp)
 
-  protected[crypto] def hashTextReply(content: String, timestamp: RemoteInstant): Sha256Inj = {
+  protected[crypto] def hashTextReply(content: String, timestamp: RemoteInstant): Sha256 = {
     val bytes =
       "\uFEFF".getBytes("UTF-16BE") ++ content.getBytes("UTF-16BE") ++ timestamp.toEpochSec.getBytes
-    returning(Sha256Inj.calculate(bytes)) { sha =>
+    returning(Sha256.calculate(bytes)) { sha =>
       verbose(s"hashTextReply($content, $timestamp): ${sha.hexString}")
     }
   }
 
-  protected[crypto] def hashLocation(lat: Float, lng: Float, timestamp: RemoteInstant): Sha256Inj = {
+  protected[crypto] def hashLocation(lat: Float, lng: Float, timestamp: RemoteInstant): Sha256 = {
     val latNorm: Long = round(lat*1000).toLong
     val lngNorm: Long = round(lng*1000).toLong
-    Sha256Inj.calculate(ByteBuffer.allocate(BYTES * 2).putLong(latNorm).putLong(lngNorm).array() ++ timestamp.toEpochSec.getBytes)
+    Sha256.calculate(ByteBuffer.allocate(BYTES * 2).putLong(latNorm).putLong(lngNorm).array() ++ timestamp.toEpochSec.getBytes)
   }
 
   private implicit class RichLong(l: Long) {
