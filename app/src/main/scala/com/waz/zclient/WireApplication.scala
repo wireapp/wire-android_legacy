@@ -51,6 +51,7 @@ import com.waz.services.gps.GoogleApiImpl
 import com.waz.services.websocket.WebSocketController
 import com.waz.sync.{SyncHandler, SyncRequestService}
 import com.waz.threading.Threading
+import com.waz.utils.SafeBase64
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.GoogleApi
 import com.waz.zclient.appentry.controllers.{CreateTeamController, InvitationsController}
@@ -83,7 +84,7 @@ import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.preferences.PreferencesController
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
-import com.waz.zclient.utils.{AndroidBase64, BackStackNavigator, BackendPicker, Callback, ExternalFileSharing, LocalThumbnailCache, SafeLoggingEnabled, UiStorage}
+import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendPicker, Callback, ExternalFileSharing, LocalThumbnailCache, SafeLoggingEnabled, UiStorage}
 import com.waz.zclient.views.DraftMap
 import javax.net.ssl.SSLContext
 import org.threeten.bp.Clock
@@ -338,11 +339,13 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
   override def onCreate(): Unit = {
     super.onCreate()
 
+    SafeBase64.setDelegate(new AndroidBase64Delegate)
+
     if (!SafeLoggingEnabled) {
       InternalLog.add(new AndroidLogOutput(showSafeOnly = SafeLoggingEnabled))
       InternalLog.add(new BufferedLogOutput(baseDir = getApplicationContext.getApplicationInfo.dataDir, showSafeOnly = SafeLoggingEnabled))
     }
-    
+
     verbose("onCreate")
 
     enableTLS12OnOldDevices()
@@ -365,14 +368,12 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     val prefs = GlobalPreferences(this)
     val googleApi = GoogleApiImpl(this, backend, prefs)
-    val base64 = new AndroidBase64()
 
     ZMessaging.onCreate(
       this,
       backend,
       prefs,
       googleApi,
-      base64,
       null, //TODO: Use sync engine's version for now
       inject[MessageNotificationsController]
     )
