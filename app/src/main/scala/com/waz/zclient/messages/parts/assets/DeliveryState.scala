@@ -21,7 +21,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.Message
 import com.waz.model._
-import com.waz.service.assets2.{AssetDownloadStatus, AssetStatus, AssetUploadStatus}
+import com.waz.service.assets2.{DownloadAssetStatus, AssetStatus, UploadAssetStatus}
 import com.waz.utils.events.Signal
 
 
@@ -49,16 +49,16 @@ object DeliveryState {
 
   private def apply(as: AssetStatus, ms: Message.Status): DeliveryState = {
     val res = (as, ms) match {
-      case (AssetUploadStatus.Cancelled, _) => Cancelled
-      case (AssetUploadStatus.Failed, _) => UploadFailed
-      case (AssetDownloadStatus.Failed, _) => DownloadFailed
-      case (AssetUploadStatus.NotStarted | AssetUploadStatus.InProgress, mState) =>
+      case (UploadAssetStatus.Cancelled, _) => Cancelled
+      case (UploadAssetStatus.Failed, _) => UploadFailed
+      case (DownloadAssetStatus.Failed, _) => DownloadFailed
+      case (UploadAssetStatus.NotStarted | UploadAssetStatus.InProgress, mState) =>
         mState match {
           case Message.Status.FAILED => UploadFailed
           case Message.Status.SENT => OtherUploading
           case _ => Uploading
         }
-      case (AssetDownloadStatus.InProgress, _) => Downloading
+      case (DownloadAssetStatus.InProgress, _) => Downloading
       case (AssetStatus.Done, _) => Complete
       case _ => Unknown
     }

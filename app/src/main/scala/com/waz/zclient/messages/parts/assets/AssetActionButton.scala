@@ -26,7 +26,7 @@ import android.util.AttributeSet
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.MessageData
 import com.waz.service.ZMessaging
-import com.waz.service.assets2.{AssetDownloadStatus, AssetUploadStatus}
+import com.waz.service.assets2.{DownloadAssetStatus, UploadAssetStatus}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.AssetsController
@@ -89,7 +89,7 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
   drawable.on(Threading.Ui) { setBackground }
 
   assetStatus.on(Threading.Ui) {
-    case (AssetUploadStatus.InProgress | AssetDownloadStatus.InProgress, Some(progress)) =>
+    case (UploadAssetStatus.InProgress | DownloadAssetStatus.InProgress, Some(progress)) =>
       progress.total match {
         case Some(total) => setProgress(if (total > 0) progress.progress.toFloat / total.toFloat else 0)
         case _ => startEndlessProgress()
