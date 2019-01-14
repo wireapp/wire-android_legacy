@@ -40,9 +40,8 @@ class AssetStorageTest extends GeneralStorageTest(AssetDao)(
       size = 225,
       convId = None,
       preview = None,
-      details = ImageDetails(Dim2(1,2), Medium),
-      mime = Mime.Unknown,
-      messageId = None
+      details = ImageDetails(Dim2(1,2)),
+      mime = Mime.Unknown
     )
 //    Asset(
 //      id = AssetId(),
