@@ -110,22 +110,22 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     assetStatusSignal(Signal.const(assetId))
 
   def downloadProgress(idGeneral: AssetIdGeneral): Signal[Progress] = idGeneral match {
-    case id: InProgressAssetId => assets.flatMap(_.downloadProgress(id))
+    case id: DownloadAssetId => assets.flatMap(_.downloadProgress(id))
     case _ => Signal.empty
   }
 
   def uploadProgress(idGeneral: AssetIdGeneral): Signal[Progress] = idGeneral match {
-    case id: RawAssetId => assets.flatMap(_.uploadProgress(id))
+    case id: UploadAssetId => assets.flatMap(_.uploadProgress(id))
     case _ => Signal.empty
   }
 
   def cancelUpload(idGeneral: AssetIdGeneral): Unit = idGeneral match {
-    case id: RawAssetId => assets.currentValue.foreach(_.cancelUpload(id))
+    case id: UploadAssetId => assets.currentValue.foreach(_.cancelUpload(id))
     case _ => ()
   }
 
   def cancelDownload(idGeneral: AssetIdGeneral): Unit = idGeneral match {
-    case id: InProgressAssetId => assets.currentValue.foreach(_.cancelDownload(id))
+    case id: DownloadAssetId => assets.currentValue.foreach(_.cancelDownload(id))
     case _ => ()
   }
 
