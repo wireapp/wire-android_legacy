@@ -40,6 +40,7 @@ import com.waz.sync._
 import com.waz.sync.client._
 import com.waz.sync.handler._
 import com.waz.sync.otr.{OtrClientsSyncHandler, OtrClientsSyncHandlerImpl, OtrSyncHandler, OtrSyncHandlerImpl}
+import com.waz.sync.queue.{SyncContentUpdater, SyncContentUpdaterImpl}
 import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.ui.UiModule
 import com.waz.utils.Locales
@@ -107,7 +108,8 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   implicit lazy val evContext = account.accountContext
 
   lazy val sync:              SyncServiceHandle       = wire[AndroidSyncServiceHandle]
-  lazy val syncRequests:      SyncRequestService      = global.syncRequests
+  lazy val syncRequests:      SyncRequestService      = wire[SyncRequestServiceImpl]
+  lazy val syncContent:       SyncContentUpdater      = wire[SyncContentUpdaterImpl]
 
   lazy val otrClientsService: OtrClientsService       = wire[OtrClientsService]
   lazy val otrClientsSync:    OtrClientsSyncHandler   = wire[OtrClientsSyncHandlerImpl]
@@ -144,6 +146,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   def mediamanager      = global.mediaManager
   def notifcationsUi    = global.notificationsUi
   def tracking          = global.trackingService
+  def syncHandler = global.syncHandler
 
   def db                = storage.db
   def userPrefs         = storage.userPrefs
