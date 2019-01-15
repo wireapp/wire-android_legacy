@@ -222,15 +222,21 @@ class UserServiceImpl(selfUserId:        UserId,
 
   override def updateSyncedUsers(users: Seq[UserInfo], syncTime: LocalInstant = LocalInstant.Now): Future[Set[UserData]] = {
     verbose(l"update synced ${users.size} users")
-    assets.updateAssets(users.flatMap(_.picture.getOrElse(Seq.empty[AssetData]))).flatMap { _ =>
-      def updateOrCreate(info: UserInfo): Option[UserData] => UserData = {
-        case Some(user: UserData) =>
-          user.updated(info).copy(syncTimestamp = Some(syncTime), connection = if (selfUserId == info.id) ConnectionStatus.Self else user.connection)
-        case None =>
-          UserData(info).copy(syncTimestamp = Some(syncTime), connection = if (selfUserId == info.id) ConnectionStatus.Self else ConnectionStatus.Unconnected)
-      }
-      usersStorage.updateOrCreateAll(users.map { info => info.id -> updateOrCreate(info) }(breakOut))
+    def updateOrCreate(info: UserInfo): Option[UserData] => UserData = {
+      case Some(user: UserData) =>
+        user.updated(info).copy(syncTimestamp = Some(syncTime), connection = if (selfUserId == info.id) ConnectionStatus.Self else user.connection)
+      case None =>
+        UserData(info).copy(syncTimestamp = Some(syncTime), connection = if (selfUserId == info.id) ConnectionStatus.Self else ConnectionStatus.Unconnected)
     }
+
+    for {
+      _       <- users.find(_.id == selfUserId) match {
+                   case Some(info) if info.ssoId.isDefined => accsStorage.update(info.id, _.copy(ssoId = info.ssoId))
+                   case _ => Future.successful(Option.empty[(AccountData, AccountData)])
+                 }
+      _       <- assets.updateAssets(users.flatMap(_.picture.getOrElse(Seq.empty[AssetData])))
+      updated <- usersStorage.updateOrCreateAll(users.map(info => info.id -> updateOrCreate(info))(breakOut))
+    } yield updated
   }
 
   //TODO - remove and find a better flow for the settings

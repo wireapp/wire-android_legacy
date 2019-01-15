@@ -45,7 +45,7 @@ trait OtrClient {
   def loadClients(): ErrorOrResponse[Seq[Client]]
   def loadClients(user: UserId): ErrorOrResponse[Seq[Client]]
   def loadRemainingPreKeys(id: ClientId): ErrorOrResponse[Seq[Int]]
-  def deleteClient(id: ClientId, password: Password): ErrorOrResponse[Unit]
+  def deleteClient(id: ClientId, password: Option[Password]): ErrorOrResponse[Unit]
   def postClient(userId: UserId, client: Client, lastKey: PreKey, keys: Seq[PreKey], password: Option[Password]): ErrorOrResponse[Client]
   def postClientLabel(id: ClientId, label: String): ErrorOrResponse[Unit]
   def updateKeys(id: ClientId, prekeys: Option[Seq[PreKey]] = None, lastKey: Option[PreKey] = None, sigKey: Option[SignalingKey] = None): ErrorOrResponse[Unit]
@@ -125,13 +125,11 @@ class OtrClientImpl(implicit
       .executeSafe
   }
 
-  override def deleteClient(id: ClientId, password: Password): ErrorOrResponse[Unit] = {
-    val data = JsonEncoder { o => o.put("password", password.str) }
-    Request.Delete(relativePath = clientPath(id), body = data)
-      .withResultType[Unit]
-      .withErrorType[ErrorResponse]
-      .executeSafe
-  }
+  override def deleteClient(id: ClientId, password: Option[Password]): ErrorOrResponse[Unit] =
+    Request.Delete(
+      relativePath = clientPath(id),
+      body = JsonEncoder { o => password.foreach(pwd => o.put("password", pwd.str)) }
+    ).withResultType[Unit].withErrorType[ErrorResponse].executeSafe
 
   override def postClient(userId: UserId, client: Client, lastKey: PreKey, keys: Seq[PreKey], password: Option[Password]): ErrorOrResponse[Client] = {
     val data = JsonEncoder { o =>
@@ -145,6 +143,7 @@ class OtrClientImpl(implicit
       o.put("cookie", userId.str)
       password.map(_.str).foreach(o.put("password", _))
     }
+
     Request.Post(relativePath = clientsPath, body = data)
       .withResultType[Client]
       .withErrorType[ErrorResponse]

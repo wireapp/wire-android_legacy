@@ -41,12 +41,14 @@ import scala.collection.mutable
   *
   * Any information that needs to be deregistered can be kept here (e.g., de-registered cookies, tokens, clients etc)
   */
-case class AccountData(override val id: UserId              = UserId(),
-                       teamId:          Option[TeamId]      = None,
-                       cookie:          Cookie              = Cookie(""), //defaults for tests
-                       accessToken:     Option[AccessToken] = None,
-                       pushToken:       Option[PushToken]   = None,
-                       password:        Option[Password]    = None        //password never saved to database
+
+case class AccountData(id:           UserId              = UserId(),
+                       teamId:       Option[TeamId]      = None,
+                       cookie:       Cookie              = Cookie(""), //defaults for tests
+                       accessToken:  Option[AccessToken] = None,
+                       pushToken:    Option[PushToken]   = None,
+                       password:     Option[Password]    = None,
+                       ssoId:        Option[SSOId]       = None           //password never saved to database
                       ) extends Identifiable[UserId] {
 
   override def toString: String =
@@ -57,6 +59,7 @@ case class AccountData(override val id: UserId              = UserId(),
        | accessToken:     $accessToken
        | registeredPush:  $pushToken
        | password:        $password
+       | ssoId:           $ssoId
     """.stripMargin
 }
 
@@ -88,11 +91,12 @@ object AccountData {
     val Cookie         = text[Cookie]('cookie, _.str, AuthenticationManager.Cookie)(_.cookie)
     val Token          = opt(text[AccessToken]('access_token, JsonEncoder.encodeString[AccessToken], JsonDecoder.decode[AccessToken]))(_.accessToken)
     val RegisteredPush = opt(id[PushToken]('registered_push))(_.pushToken)
+    val SSOId          = opt(json[SSOId]('sso_id))(_.ssoId)
 
     override val idCol = Id
-    override val table = Table("ActiveAccounts", Id, TeamId, Cookie, Token, RegisteredPush)
+    override val table = Table("ActiveAccounts", Id, TeamId, Cookie, Token, RegisteredPush, SSOId)
 
-    override def apply(implicit cursor: DBCursor): AccountData = AccountData(Id, TeamId, Cookie, Token, RegisteredPush)
+    override def apply(implicit cursor: DBCursor): AccountData = AccountData(Id, TeamId, Cookie, Token, RegisteredPush, None, SSOId)
   }
 }
 

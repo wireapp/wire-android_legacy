@@ -22,12 +22,12 @@ import com.waz.model.AssetMetaData.Image
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetMetaData.Image.Tag.{Medium, Preview}
 import com.waz.model.AssetStatus.UploadDone
+import com.waz.model.UserInfo.Service
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import org.json
 import org.json.{JSONArray, JSONObject}
 
 import scala.util.Try
-import com.waz.model.UserInfo.{SSOId, Service}
 
 case class UserInfo(id:           UserId,
                     name:         Option[Name]            = None,
@@ -54,19 +54,10 @@ object UserInfo {
 
   case class Service(id: IntegrationId, provider: ProviderId)
 
-  case class SSOId(subject: String, tenant: String)
-
   def decodeService(s: Symbol)(implicit js: JSONObject): Service = Service(decodeId[IntegrationId]('id), decodeId[ProviderId]('provider))
-
-  def decodeSSOId(s: Symbol)(implicit js: JSONObject): SSOId = SSOId(decodeString('subject), decodeString('tenant))
 
   def decodeOptService(s: Symbol)(implicit js: JSONObject): Option[Service] = decodeOptObject(s) match {
     case Some(serviceJs) => Option(decodeService(s)(serviceJs))
-    case _ => None
-  }
-
-  def decodeOptSSOId(s: Symbol)(implicit js: JSONObject): Option[SSOId] = decodeOptObject(s) match {
-    case Some(ssoId) => Option(decodeSSOId(s)(ssoId))
     case _ => None
   }
 
@@ -121,10 +112,11 @@ object UserInfo {
       //prefer v3 ("assets") over v2 ("picture") - this will prevent unnecessary uploading of v3 if a v2 also exists.
       val pic = getAssets.orElse(getPicture(id)).toSeq
       val privateMode = decodeOptBoolean('privateMode)
+      val ssoId = SSOId.decodeOptSSOId('sso_id)
       UserInfo(
         id, 'name, accentId, 'email, 'phone, Some(pic), decodeOptString('tracking_id) map (TrackingId(_)),
         deleted = 'deleted, handle = 'handle, privateMode = privateMode, service = decodeOptService('service),
-        'team, decodeOptISORemoteInstant('expires_at), ssoId = decodeOptSSOId('sso_id))
+        'team, decodeOptISORemoteInstant('expires_at), ssoId = ssoId)
     }
   }
 
@@ -167,6 +159,6 @@ object UserInfo {
   implicit val UserInfoShow: LogShow[UserInfo] =
     LogShow.createFrom { u =>
       import u._
-      l" UserInfo: id: $id | email: $email: | phone: $phone: | picture: $picture: | deleted: $deleted: | handle: $handle: | expiresAt: $expiresAt:"
+      l" UserInfo: id: $id | email: $email: | phone: $phone: | picture: $picture: | deleted: $deleted: | handle: $handle: | expiresAt: $expiresAt: | ssoId: $ssoId"
     }
 }

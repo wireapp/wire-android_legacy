@@ -52,7 +52,7 @@ class ZGlobalDB(context: Context, dbNameSuffix: String = "", tracking: TrackingS
 
 object ZGlobalDB {
   val DbName = "ZGlobal.db"
-  val DbVersion = 22
+  val DbVersion = 23
 
   lazy val daos = Seq(AccountDataDao, CacheEntryDao, TeamDataDoa)
 
@@ -88,6 +88,9 @@ object ZGlobalDB {
       },
       Migration(21, 22) { db =>
         db.execSQL("CREATE TABLE IF NOT EXISTS ActiveAccounts (_id TEXT PRIMARY KEY, team_id TEXT, cookie TEXT NOT NULL, access_token TEXT, registered_push TEXT)")
+      },
+      Migration(22, 23) { db =>
+        db.execSQL("ALTER TABLE ActiveAccounts ADD COLUMN sso_id TEXT DEFAULT NULL")
       }
     )
 
