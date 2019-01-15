@@ -18,7 +18,6 @@
 package com.waz.service
 
 import android.content.Context
-import android.os.Build
 import android.telephony.TelephonyManager
 import com.github.ghik.silencer.silent
 import com.google.i18n.phonenumbers.PhoneNumberUtil
@@ -49,8 +48,7 @@ class PhoneNumberServiceImpl(context: Context) extends PhoneNumberService{
   private val qaShortcutRegex = "^\\+0\\d+$".r
 
   @silent def getLocale(context: Context): Option[String] =
-    Option(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) context.getResources.getConfiguration.getLocales.get(0).getCountry
-    else context.getResources.getConfiguration.locale.getCountry)
+    Option(context.getResources.getConfiguration.locale.getCountry)
 
   def myPhoneNumber: Future[Option[PhoneNumber]] =
     Try(telephonyManager.getLine1Number).toOption.flatMap(Option(_)).filter(_.nonEmpty).map(PhoneNumber).map(normalize) match {
