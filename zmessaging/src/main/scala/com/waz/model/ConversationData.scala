@@ -33,7 +33,7 @@ import org.json.JSONArray
 
 import scala.concurrent.duration._
 
-case class ConversationData(id:                   ConvId                 = ConvId(),
+case class ConversationData(override val id:      ConvId                 = ConvId(),
                             remoteId:             RConvId                = RConvId(),
                             name:                 Option[Name]           = None,
                             creator:              UserId                 = UserId(),
@@ -61,7 +61,7 @@ case class ConversationData(id:                   ConvId                 = ConvI
                             accessRole:           Option[AccessRole]     = None, //option for migration purposes only - at some point we do a fetch and from that point it will always be defined
                             link:                 Option[Link]           = None,
                             receiptMode:          Option[Int]            = None
-                           ) {
+                           ) extends Identifiable[ConvId] {
 
   def displayName = if (convType == ConversationType.Group) name.getOrElse(generatedName) else generatedName
 
@@ -113,7 +113,9 @@ case class ConversationData(id:                   ConvId                 = ConvI
 /**
  * Conversation user binding.
  */
-case class ConversationMemberData(userId: UserId, convId: ConvId)
+case class ConversationMemberData(userId: UserId, convId: ConvId) extends Identifiable[(UserId, ConvId)] {
+  override val id: (UserId, ConvId) = (userId, convId)
+}
 
 object ConversationData {
 

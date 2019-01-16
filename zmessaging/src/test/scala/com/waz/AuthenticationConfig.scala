@@ -61,7 +61,7 @@ object AuthenticationConfig {
       accessToken = Some(loginResult.accessToken)
     )
 
-    val accountStorage = new UnlimitedInMemoryStorage[UserId, AccountData](_.id) with AccountStorage2
+    val accountStorage = new UnlimitedInMemoryStorage[UserId, AccountData] with AccountStorage2
     Await.ready(accountStorage.save(testAccountData), 1.minute)
 
     new AuthenticationManager2(userInfo.id, accountStorage, LoginClient, DisabledTrackingService)

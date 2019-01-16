@@ -135,7 +135,7 @@ object BackupManager {
 
         verbose(s"database export finished: ${zipFile.getAbsolutePath} . Data contains: ${zipFile.length} bytes")
       }
-    } mapFailureIfNot[BackupError] UnknownBackupError.apply
+    }.mapFailureIfNot[BackupError](UnknownBackupError.apply)
 
   def importDatabase(userId: UserId, exportFile: File, targetDir: File, currentDbVersion: Int = BackupMetadata.currentDbVersion): Try[File] =
     Try {
@@ -163,7 +163,7 @@ object BackupManager {
           IoUtils.copy(zip.getInputStream(dbEntry), dbFile)
         }
       }
-    } mapFailureIfNot[BackupError] UnknownBackupError.apply
+    }.mapFailureIfNot[BackupError](UnknownBackupError.apply)
 
 
 }

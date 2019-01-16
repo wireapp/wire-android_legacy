@@ -18,7 +18,6 @@
 package com.waz.utils
 
 object StorageTestData {
-  case class TestObject(id: Int, title: String)
+  case class TestObject(override val id: Int, title: String) extends Identifiable[Int]
   val values: Set[TestObject] = (1 to 50).map(i => TestObject(id = i, title = s"test object $i")).toSet
-  val keyExtractor: TestObject => Int = _.id
 }

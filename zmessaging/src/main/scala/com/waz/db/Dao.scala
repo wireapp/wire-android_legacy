@@ -39,7 +39,6 @@ abstract class Dao[T, A] extends DaoIdOps[T] {
 
   protected def idColumns(id: IdCols): IndexedSeq[Column[_]] = Vector(id)
   protected def idValueSplitter(v: IdVals): Array[String] = Array(idCol(v))
-  def idExtractor(item: T): IdVals = idCol.extractor(item)
 
   override def getAll(ids: Set[A])(implicit db: DB): Vector[T] =
     if (ids.isEmpty) Vector.empty
@@ -52,7 +51,6 @@ abstract class Dao2[T, A, B] extends DaoIdOps[T] {
 
   protected def idColumns(id: IdCols): IndexedSeq[Column[_]] = Vector(id._1, id._2)
   protected def idValueSplitter(v: IdVals): Array[String] = Array(idCol._1.col.sqlLiteral(v._1), idCol._2.col.sqlLiteral(v._2))
-  def idExtractor(item: T): IdVals = (idCol._1.extractor(item), idCol._2.extractor(item))
 }
 
 abstract class Dao3[T, A, B, C] extends DaoIdOps[T] {
@@ -61,7 +59,6 @@ abstract class Dao3[T, A, B, C] extends DaoIdOps[T] {
 
   protected def idColumns(id: IdCols): IndexedSeq[Column[_]] = Vector(id._1, id._2, id._3)
   protected def idValueSplitter(v: IdVals): Array[String] = Array(idCol._1.col.sqlLiteral(v._1), idCol._2.col.sqlLiteral(v._2), idCol._3.col.sqlLiteral(v._3))
-  def idExtractor(item: T): IdVals = (idCol._1.extractor(item), idCol._2.extractor(item), idCol._3.extractor(item))
 }
 
 abstract class DaoIdOps[T] extends BaseDao[T] {
@@ -70,7 +67,6 @@ abstract class DaoIdOps[T] extends BaseDao[T] {
 
   protected def idColumns(id: IdCols): IndexedSeq[Column[_]]
   protected def idValueSplitter(v: IdVals): Array[String]
-  def idExtractor(item: T): IdVals
 
   val idCol: IdCols
 
@@ -99,8 +95,6 @@ abstract class DaoIdOps[T] extends BaseDao[T] {
       }
     }
   }
-
-  def update(item: T)(f: T => T)(implicit db: DB): Option[T] = updateById(idExtractor(item))(f)
 
   def updateById(id: IdVals)(f: T => T)(implicit db: DB): Option[T] = getById(id).map(it => insertOrReplace(f(it)))
 

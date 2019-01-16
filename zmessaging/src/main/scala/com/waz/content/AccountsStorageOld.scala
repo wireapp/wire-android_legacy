@@ -18,7 +18,6 @@
 package com.waz.content
 
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.AccountData.AccountDataDao
 import com.waz.model.AccountDataOld.AccountDataOldDao
 import com.waz.model._
@@ -31,8 +30,8 @@ import scala.concurrent.ExecutionContext
 trait AccountStorage2 extends Storage2[UserId, AccountData]
 class AccountStorageImpl2(context: Context, db: DB, ec: ExecutionContext)
   extends CachedStorage2[UserId, AccountData](
-    new DbStorage2(AccountDataDao, AccountDataDao.idExtractor)(ec, db),
-    new InMemoryStorage2[UserId, AccountData](new TrimmingLruCache(context, Fixed(8)), AccountDataDao.idExtractor)(ec)
+    new DbStorage2(AccountDataDao)(ec, db),
+    new InMemoryStorage2[UserId, AccountData](new TrimmingLruCache(context, Fixed(8)))(ec)
   )(ec) with AccountStorage2
 
 trait AccountStorage extends CachedStorage[UserId, AccountData]

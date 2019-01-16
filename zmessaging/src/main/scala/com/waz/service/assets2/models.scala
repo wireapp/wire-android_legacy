@@ -22,11 +22,12 @@ import java.net.URI
 import com.waz.cache2.CacheService.Encryption
 import com.waz.model._
 import com.waz.sync.client.AssetClient2.Retention
+import com.waz.utils.Identifiable
 import org.threeten.bp.Duration
 
 //TODO Maybe we can remove encryption here
 case class RawAsset[+T <: AssetDetails](
-    id: AssetId,
+    override val id: AssetId,
     uri: URI,
     sha: Sha256,
     mime: Mime,
@@ -36,10 +37,10 @@ case class RawAsset[+T <: AssetDetails](
     encryption: Encryption,
     details: T,
     @deprecated convId: Option[RConvId]
-)
+) extends Identifiable[AssetId]
 
 case class Asset[+T <: AssetDetails](
-    id: AssetId,
+    override val id: AssetId,
     token: Option[AssetToken], //all not public assets should have an AssetToken
     sha: Sha256,
     encryption: Encryption,
@@ -47,7 +48,7 @@ case class Asset[+T <: AssetDetails](
     preview: Option[AssetId],
     details: T,
     @deprecated convId: Option[RConvId]
-)
+) extends Identifiable[AssetId]
 
 object Asset {
   type General = AssetDetails

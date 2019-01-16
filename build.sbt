@@ -8,8 +8,8 @@ import sbt._
 
 import scala.util.Random
 
-val MajorVersion = "137"
-val MinorVersion = "1" // hotfix release
+val MajorVersion = "138"
+val MinorVersion = "0" // hotfix release
 
 version in ThisBuild := {
   val jobName = sys.env.get("JOB_NAME")

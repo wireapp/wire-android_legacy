@@ -19,9 +19,12 @@ package com.waz.model
 
 import com.waz.db.Col._
 import com.waz.db.Dao
+import com.waz.utils.Identifiable
 import com.waz.utils.wrappers.DBCursor
 
-case class KeyValueData(key: String, value: String)
+case class KeyValueData(key: String, value: String) extends Identifiable[String] {
+  override val id: String = key
+}
 
 object KeyValueData {
 

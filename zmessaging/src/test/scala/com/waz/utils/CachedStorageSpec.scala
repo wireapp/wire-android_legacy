@@ -31,10 +31,7 @@ class CachedStorageSpec extends ZIntegrationMockSpec {
   feature("CachedStorage specific features") {
 
     scenario("Load, when values exist in cache, return that values and do not touch main storage") {
-      val keys = values.map(keyExtractor)
-
-      (cache.keyExtractor _).expects().anyNumberOfTimes().returns(keyExtractor)
-      (main.keyExtractor _).expects().anyNumberOfTimes().returns(keyExtractor)
+      val keys = values.map(_.id)
 
       (cache.loadAll _)
         .expects(where { keys: Set[Int] => keys.size == values.size })
@@ -46,15 +43,12 @@ class CachedStorageSpec extends ZIntegrationMockSpec {
       for {
         loaded <- cachedStorage.loadAll(keys)
       } yield {
-        loaded.map(keyExtractor).toSet shouldBe keys
+        loaded.map(_.id).toSet shouldBe keys
       }
     }
 
     scenario("Load, when values do not exist in cache, return that values from the main storage and put them in cache") {
-      val keys = values.map(keyExtractor)
-
-      (cache.keyExtractor _).expects().anyNumberOfTimes().returns(keyExtractor)
-      (main.keyExtractor _).expects().anyNumberOfTimes().returns(keyExtractor)
+      val keys = values.map(_.id)
 
       (cache.loadAll _)
         .expects(where { keys: Set[Int] => keys.size == values.size })
@@ -74,15 +68,12 @@ class CachedStorageSpec extends ZIntegrationMockSpec {
       for {
         loaded <- cachedStorage.loadAll(keys)
       } yield {
-        loaded.map(keyExtractor).toSet shouldBe keys
+        loaded.map(_.id).toSet shouldBe keys
       }
     }
 
     scenario("Should remove all values from cache and from main on delete") {
-      val keys = values.map(keyExtractor)
-
-      (cache.keyExtractor _).expects().anyNumberOfTimes().returns(keyExtractor)
-      (main.keyExtractor _).expects().anyNumberOfTimes().returns(keyExtractor)
+      val keys = values.map(_.id)
 
       (cache.deleteAllByKey _)
         .expects(where { keys: Set[Int] => keys.size == values.size })
@@ -100,9 +91,6 @@ class CachedStorageSpec extends ZIntegrationMockSpec {
     }
 
     scenario("Should save all values in cache and in main on save") {
-      (cache.keyExtractor _).expects().anyNumberOfTimes().returns(keyExtractor)
-      (main.keyExtractor _).expects().anyNumberOfTimes().returns(keyExtractor)
-
       (cache.saveAll _)
         .expects(where { xs: Iterable[TestObject] => xs.size == values.size })
         .once()

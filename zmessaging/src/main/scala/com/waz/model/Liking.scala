@@ -22,12 +22,11 @@ import com.waz.db.Col._
 import com.waz.db.{Dao2, Reader, iteratingWithReader}
 import com.waz.utils.JsonEncoder.encodeInstant
 import com.waz.utils.wrappers.{DB, DBCursor}
-import com.waz.utils.{JsonDecoder, JsonEncoder}
-import com.waz.utils.RichWireInstant
+import com.waz.utils.{Identifiable, JsonDecoder, JsonEncoder, RichWireInstant}
 import org.json.JSONObject
 
-case class Liking(message: MessageId, user: UserId, timestamp: RemoteInstant, action: Liking.Action) {
-  lazy val id: Liking.Id = (message, user)
+case class Liking(message: MessageId, user: UserId, timestamp: RemoteInstant, action: Liking.Action) extends Identifiable[Liking.Id] {
+  override val id: Liking.Id = (message, user)
 
   def max(other: Liking) =
     if (other.message == message && other.user == user && other.timestamp.isAfter(timestamp)) other else this

@@ -37,14 +37,14 @@ import com.waz.service.ZMessaging.clock
 import com.waz.service.media.{MessageContentBuilder, RichMediaContentParser}
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
 import com.waz.utils.wrappers.{DB, DBCursor, URI}
-import com.waz.utils.{EnumCodec, JsonDecoder, JsonEncoder, returning}
+import com.waz.utils.{EnumCodec, Identifiable, JsonDecoder, JsonEncoder, returning}
 import org.json.{JSONArray, JSONObject}
 import org.threeten.bp.Instant.now
 
 import scala.collection.breakOut
 import scala.concurrent.duration._
 
-case class MessageData(id:                MessageId              = MessageId(),
+case class MessageData(override val id:   MessageId              = MessageId(),
                        convId:            ConvId                 = ConvId(),
                        msgType:           Message.Type           = Message.Type.TEXT,
                        userId:            UserId                 = UserId(),
@@ -65,7 +65,7 @@ case class MessageData(id:                MessageId              = MessageId(),
                        duration:          Option[FiniteDuration] = None, //for successful calls and message_timer changes
                        quote:             Option[QuoteContent]   = None,
                        forceReadReceipts: Option[Int]    = None
-                      ) {
+                      ) extends Identifiable[MessageId] {
   def getContent(index: Int) = {
     if (index == 0) content.headOption.getOrElse(MessageContent.Empty)
     else content.drop(index).headOption.getOrElse(MessageContent.Empty)

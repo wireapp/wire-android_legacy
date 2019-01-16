@@ -35,28 +35,28 @@ import org.threeten.bp.Duration
 
 import scala.util.Try
 
-case class AssetData(id:          AssetId               = AssetId(),
-                     mime:        Mime                  = Mime.Unknown,
-                     sizeInBytes: Long                  = 0L,
-                     status:      AssetStatus           = AssetStatus.UploadNotStarted,
-                     remoteId:    Option[RAssetId]      = None,
-                     token:       Option[AssetToken]    = None,
-                     otrKey:      Option[AESKey]        = None,
-                     sha:         Option[Sha256]        = None,
-                     encryption:  Option[EncryptionAlgorithm] = None,
-                     name:        Option[String]        = None,
-                     previewId:   Option[AssetId]       = None,
-                     metaData:    Option[AssetMetaData] = None,
-                     source:      Option[URI]           = None,
-                     proxyPath:   Option[String]        = None,
+case class AssetData(override val id: AssetId               = AssetId(),
+                     mime:            Mime                  = Mime.Unknown,
+                     sizeInBytes:     Long                  = 0L,
+                     status:          AssetStatus           = AssetStatus.UploadNotStarted,
+                     remoteId:        Option[RAssetId]      = None,
+                     token:           Option[AssetToken]    = None,
+                     otrKey:          Option[AESKey]        = None,
+                     sha:             Option[Sha256]        = None,
+                     encryption:      Option[EncryptionAlgorithm] = None,
+                     name:            Option[String]        = None,
+                     previewId:       Option[AssetId]       = None,
+                     metaData:        Option[AssetMetaData] = None,
+                     source:          Option[URI]           = None,
+                     proxyPath:       Option[String]        = None,
                      //TODO remove v2 attributes when transition period is over
-                     convId:      Option[RConvId]       = None,
+                     convId:          Option[RConvId]       = None,
                      //data only used for temporary caching and legacy reasons - shouldn't be stored in AssetsStorage where possible
-                     data:        Option[Array[Byte]]   = None,
-                     v2ProfileId: Option[RAssetId]      = None,
+                     data:            Option[Array[Byte]]   = None,
+                     v2ProfileId:     Option[RAssetId]      = None,
                      //TODO remove after v2 transtion period (eases database migration)
-                     assetType:   Option[AssetType]     = None
-                    ) {
+                     assetType:       Option[AssetType]     = None
+                    ) extends Identifiable[AssetId] {
 
   import AssetData._
 

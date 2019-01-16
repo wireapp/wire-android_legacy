@@ -19,6 +19,7 @@ package com.waz.model
 
 import com.waz.db.Dao
 import com.waz.db.Col._
+import com.waz.utils.Identifiable
 import com.waz.utils.wrappers.{DB, DBCursor}
 import org.json
 import org.json.JSONObject
@@ -53,4 +54,6 @@ case class PushNotificationEvent(pushId:    Uid,
                                  decrypted: Boolean = false,
                                  event:     JSONObject,
                                  plain:     Option[Array[Byte]] = None,
-                                 transient: Boolean)
+                                 transient: Boolean) extends Identifiable[Int] {
+  override val id: Int = index
+}

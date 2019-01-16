@@ -19,11 +19,13 @@ package com.waz.model
 
 import com.waz.db.Col._
 import com.waz.db.Dao
+import com.waz.utils.Identifiable
 import com.waz.utils.wrappers.{DB, DBCursor}
 import org.threeten.bp.Instant
 
-
-case class EditHistory(originalId: MessageId, updatedId: MessageId, time: RemoteInstant)
+case class EditHistory(originalId: MessageId, updatedId: MessageId, time: RemoteInstant) extends Identifiable[MessageId] {
+  override val id: MessageId = originalId
+}
 
 object EditHistory {
 

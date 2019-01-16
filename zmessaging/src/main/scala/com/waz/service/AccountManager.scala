@@ -200,18 +200,21 @@ class AccountManager(val userId:   UserId,
   //Note: this method should only be externally called from tests and debug preferences. User `registerClient` for all normal flows.
   def registerNewClient(): ErrorOr[ClientRegistrationState] = {
     for {
-      pw       <- account.map(_.password).head
+      account  <- account.head
       client   <- cryptoBox.createClient()
       resp <- client match {
         case None => Future.successful(Left(internalError("CryptoBox missing")))
         case Some((c, lastKey, keys)) =>
-          otrClient.postClient(userId, c, lastKey, keys, pw).future.flatMap {
+          otrClient.postClient(userId, c, lastKey, keys, if (account.ssoId.isEmpty) account.password else None).future.flatMap {
             case Right(cl) =>
+              verbose(l"new client: $cl")
               for {
                 _    <- userPrefs(ClientRegVersion) := ZmsVersion.ZMS_MAJOR_VERSION
                 _    <- clientsStorage.updateClients(Map(userId -> Seq(c.copy(id = cl.id).updated(cl))))
               } yield Right(Registered(cl.id))
-            case Left(ErrorResponse(ResponseCode.Forbidden, _, "missing-auth"))     => Future.successful(Right(PasswordMissing))
+            case Left(ErrorResponse(ResponseCode.Forbidden, _, "missing-auth"))     =>
+              verbose(l"missing auth")
+              Future.successful(Right(PasswordMissing))
             case Left(ErrorResponse(ResponseCode.Forbidden, _, "too-many-clients")) => Future.successful(Right(LimitReached))
             case Left(error)                                                  => Future.successful(Left(error))
           }
@@ -219,7 +222,7 @@ class AccountManager(val userId:   UserId,
     } yield resp
   }
 
-  def deleteClient(id: ClientId, password: Password): ErrorOr[Unit] =
+  def deleteClient(id: ClientId, password: Option[Password]): ErrorOr[Unit] =
     clientsStorage.get(userId).flatMap {
       case Some(cs) if cs.clients.contains(id) =>
         otrClient.deleteClient(id, password).future.flatMap {

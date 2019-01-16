@@ -19,6 +19,7 @@ package com.waz.service
 
 import java.io.File
 
+import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.log.ZLog2._
 import com.waz.api.impl.ErrorResponse
@@ -74,6 +75,7 @@ trait AccountsService {
 
   def loginEmail(validEmail: String, validPassword: String): ErrorOr[UserId] = login(EmailCredentials(EmailAddress(validEmail), Password(validPassword)))
   def loginPhone(phone: String, code: String) = login(PhoneCredentials(PhoneNumber(phone), ConfirmationCode(code)))
+  def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, (HasOtherClients, HadDB)]]
   def login(loginCredentials: Credentials): ErrorOr[UserId]
 
   def register(registerCredentials: Credentials, name: Name, teamName: Option[Name] = None): ErrorOr[Option[AccountManager]]
@@ -95,12 +97,11 @@ trait AccountsService {
 
   def activeAccountId:      Signal[Option[UserId]]
   def activeAccount:        Signal[Option[AccountData]]
+  def isActiveAccountSSO:   Signal[Boolean] = activeAccount.map(_.exists(_.ssoId.isDefined))
   def activeAccountManager: Signal[Option[AccountManager]]
   def activeZms:            Signal[Option[ZMessaging]]
 
   def loginClient: LoginClient
-
-  def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, (HasOtherClients, HadDB)]]
 }
 
 object AccountsService {
@@ -446,30 +447,39 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
 
   private def addAccountEntry(user: UserInfo, cookie: Cookie, token: Option[AccessToken], credentials: Option[Credentials]): Future[Unit] = {
     verbose(l"addAccountEntry: $user, $cookie, $token, $credentials")
-    storage
-      .flatMap(_.updateOrCreate(user.id, _.copy(cookie = cookie, accessToken = token, password = credentials.flatMap(_.maybePassword)), AccountData(user.id, user.teamId, cookie, token, password = credentials.flatMap(_.maybePassword))))
-      .map(_ => {})
+    storage.flatMap(
+      _.updateOrCreate(
+        user.id,
+        _.copy(
+          cookie = cookie,
+          accessToken = token,
+          password = credentials.flatMap(_.maybePassword),
+          ssoId = user.ssoId
+        ),
+        AccountData(user.id, user.teamId, cookie, token, password = credentials.flatMap(_.maybePassword), ssoId = user.ssoId)
+      )
+    ).map(_ => {})
   }
 
   override def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, (HasOtherClients, HadDB)]] = {
-    verbose(l"SSO login: $userId $cookie")
+    verbose(l"login: $userId $cookie")
     loginClient.access(cookie, None).flatMap {
       case Right(loginResult) =>
         loginClient.getSelfUserInfo(loginResult.accessToken).flatMap {
           case Right(userInfo) =>
             for {
-              _  <- addAccountEntry(userInfo, cookie, Some(loginResult.accessToken), None)
-              hadDb = context.getDatabasePath(userId.str).exists()
-              am <- createAccountManager(userId, None, isLogin = Some(true), initialUser = Some(userInfo))
-              r  <- am.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.otrClient.loadClients().future.mapRight(cs => (cs.nonEmpty, hadDb)))
-              _  = r.fold(_ => (), res => if (!res._1) am.foreach(_.addUnsplashPicture()))
+              _     <- addAccountEntry(userInfo, cookie, Some(loginResult.accessToken), None)
+              hadDb =  context.getDatabasePath(userId.str).exists()
+              am    <- createAccountManager(userId, None, isLogin = Some(true), initialUser = Some(userInfo))
+              r     <- am.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.otrClient.loadClients().future.mapRight(cs => (cs.nonEmpty, hadDb)))
+              _     =  r.fold(_ => (), res => if (!res._1) am.foreach(_.addUnsplashPicture()))
             } yield r
           case Left(error) =>
-            verbose(l"SSO login - Get self error: $error")
+            verbose(l"login - Get self error: $error")
             Future.successful(Left(error))
         }
       case Left(error) =>
-        verbose(l"SSO login - access error: $error")
+        verbose(l"login - access error: $error")
         Future.successful(Left(error))
     }
   }
