@@ -22,7 +22,6 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
 import com.waz.api.Message.Status
 import com.waz.model.{LocalInstant, MessageData, ReadReceipt}
-import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.service.messages.{MessageAndLikes, MessagesService}
 import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.threading.CancellableFuture
@@ -108,6 +107,7 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
     selfUserId  <- signals.selfUserId
     convId      <- conv.map(_.id)
     isGroup     <- conversationController.groupConversation(convId)
+    isTeamConv  <- conv.map(_.team.nonEmpty)
     msg         <- message
     timeout     <- ephemeralTimeout
     reads       <- readReceiptsStorage.flatMap(_.receipts(msg.id))
@@ -117,8 +117,8 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
     val editedTimestamp = SameDayTimeStamp(msg.editTime.instant).string
     val finalTimestamp = if (msg.editTime.isEpoch) timestamp else getString(R.string.message_footer__status__edited, editedTimestamp)
     timeout match {
-      case Some(t)                          => ephemeralTimeoutString(timestamp, t, isGroup, reads)
-      case None if selfUserId == msg.userId => statusString(finalTimestamp, msg, isGroup, isOffline, reads)
+      case Some(t)                          => ephemeralTimeoutString(timestamp, t, isGroup, reads, isTeamConv)
+      case None if selfUserId == msg.userId => statusString(finalTimestamp, msg, isGroup, isOffline, reads, isTeamConv)
       case None                             => timestamp
     }
   }
@@ -141,10 +141,10 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
 
   def onLikeClicked() = messageAndLikes.head.map { likesController.onLikeButtonClicked ! _ }
 
-  private def timestampAndReads(timestamp: String, isGroup: Boolean, reads: Seq[ReadReceipt]): Option[String] = {
-    if (reads.nonEmpty && isGroup) {
+  private def timestampAndReads(timestamp: String, isGroup: Boolean, reads: Seq[ReadReceipt], isTeamConv: Boolean): Option[String] = {
+    if (reads.nonEmpty && isGroup && isTeamConv) {
       Some(getString(R.string.message_footer__status__read_group, timestamp, reads.size.toString))
-    } else if (reads.nonEmpty){
+    } else if (reads.nonEmpty && !isGroup){
       val readTimestampString = SameDayTimeStamp(reads.head.timestamp.instant).string
       Some(getString(R.string.message_footer__status__read, timestamp, readTimestampString))
     } else {
@@ -152,8 +152,8 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
     }
   }
 
-  private def statusString(timestamp: String, m: MessageData, isGroup: Boolean, isOffline: Boolean, reads: Seq[ReadReceipt]) = {
-    timestampAndReads(timestamp, isGroup, reads)
+  private def statusString(timestamp: String, m: MessageData, isGroup: Boolean, isOffline: Boolean, reads: Seq[ReadReceipt], isTeamConv: Boolean) = {
+    timestampAndReads(timestamp, isGroup, reads, isTeamConv)
       .getOrElse(m.state match {
         case Status.PENDING if isOffline => getString(R.string.message_footer__status__waiting_for_connection)
         case Status.PENDING              => getString(R.string.message_footer__status__sending)
@@ -167,7 +167,7 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
       })
   }
 
-  private def ephemeralTimeoutString(timestamp: String, remaining: FiniteDuration, isGroup: Boolean, reads: Seq[ReadReceipt]) = {
+  private def ephemeralTimeoutString(timestamp: String, remaining: FiniteDuration, isGroup: Boolean, reads: Seq[ReadReceipt], isTeamConv: Boolean) = {
 
     def unitString(resId: Int, quantity: Long) =
       getQuantityString(resId, quantity.toInt, quantity.toString)
@@ -190,6 +190,6 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
       else if (remaining > 1.minute) getString(R.string.ephemeral_message_footer_single_unit, minutes)
       else                           getString(R.string.ephemeral_message_footer_single_unit, seconds)
 
-    s"${timestampAndReads(timestamp, isGroup, reads).getOrElse(timestamp)} \u30FB $remainingTimeStamp"
+    s"${timestampAndReads(timestamp, isGroup, reads, isTeamConv).getOrElse(timestamp)} \u30FB $remainingTimeStamp"
   }
 }
