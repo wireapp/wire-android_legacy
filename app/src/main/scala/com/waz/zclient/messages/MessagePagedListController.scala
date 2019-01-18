@@ -72,12 +72,12 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
       zms.messagesStorage.onMessagesDeletedInConversation.map(_.contains(convId)),
       zms.messagesStorage.onAdded.map(_.exists(_.convId == convId)),
       zms.messagesStorage.onUpdated.map(_.exists { case (prev, updated) =>
-        updated.convId == convId &&  MessagesPagedListAdapter.areMessageContentsTheSame(prev, updated)
+        updated.convId == convId &&  !MessagesPagedListAdapter.areMessageContentsTheSame(prev, updated)
       }),
       new FutureEventStream(zms.reactionsStorage.onChanged.map(_.map(_.message)), { msgs: Seq[MessageId] =>
         zms.messagesStorage.getMessages(msgs: _*).map(_.flatten.exists(_.convId == convId))
       })
-    ).filter(identity(_))
+    ).filter(identity)
   }
 
   lazy val pagedListData: Signal[(MessageAdapterData, PagedListWrapper[MessageAndLikes], Option[MessageId])] = for {
