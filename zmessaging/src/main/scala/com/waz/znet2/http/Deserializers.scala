@@ -120,7 +120,7 @@ trait AutoDerivationRulesForDeserializers {
   implicit def objectFromCirceJsonRawBodyDeserializer[T](implicit d: Decoder[T]): RawBodyDeserializer[T] =
     CirceJsonRawBodyDeserializer.map(json => d.decodeJson(json) match {
       case Right(result) => result
-      case Left(error) => throw new IllegalArgumentException(error.message)
+      case Left(error) => throw new IllegalArgumentException(s"${error.message} ${error.history}")
     })
 
   implicit def optionBodyDeserializerFrom[T](implicit d: RawBodyDeserializer[T]): BodyDeserializer[Option[T]] =

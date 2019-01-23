@@ -46,7 +46,7 @@ trait TeamsService {
 
   def onTeamSynced(team: TeamData, members: Map[UserId, PermissionsMasks]): Future[Unit]
 
-  def onMemberSynced(userId: UserId, permissions: PermissionsMasks): Future[Unit]
+  def onMemberSynced(userId: UserId, permissions: Option[PermissionsMasks]): Future[Unit]
 
   def guests: Signal[Set[UserId]]
 }
@@ -154,7 +154,7 @@ class TeamsServiceImpl(selfUser:           UserId,
 
     for {
       _ <- teamStorage.insert(team)
-      _ <- selfPermissions.fold(Future.successful({}))(onMemberSynced(selfUser, _))
+      _ <- selfPermissions.fold(Future.successful(()))(perm => onMemberSynced(selfUser, Some(perm)))
       oldMembers <- userStorage.getByTeam(Set(team.id))
       _ <- userStorage.updateAll2(oldMembers.map(_.id) -- memberIds, _.copy(deleted = true))
       _ <- sync.syncUsers(memberIds).flatMap(syncRequestService.await)
@@ -162,14 +162,14 @@ class TeamsServiceImpl(selfUser:           UserId,
     } yield {}
   }
 
-  override def onMemberSynced(userId: UserId, permissions: PermissionsMasks) = {
+  override def onMemberSynced(userId: UserId, permissions: Option[PermissionsMasks]) = {
     import UserPreferences._
-    if (userId == selfUser)
+    if (userId == selfUser && permissions.nonEmpty)
       for {
-        _ <- userPrefs(SelfPermissions) := permissions._1
-        _ <- userPrefs(CopyPermissions) := permissions._2
-      } yield {}
-    else Future.successful({})
+        _ <- userPrefs(SelfPermissions) := permissions.get._1
+        _ <- userPrefs(CopyPermissions) := permissions.get._2
+      } yield ()
+    else Future.successful(())
   }
 
   private def onTeamUpdated(id: TeamId, name: Option[Name], icon: Option[RAssetId], iconKey: Option[AESKey]) = {

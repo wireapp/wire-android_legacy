@@ -76,12 +76,17 @@ class TeamsSyncHandlerImpl(userId:    UserId,
     teamId match {
       case Some(t) =>
         client.getPermissions(t, userId).future.flatMap {
-          case Right((self, copy)) =>
+          case Right(Some((self, copy))) =>
             for {
               _ <- userPrefs(SelfPermissions) := self
               _ <- userPrefs(CopyPermissions) := copy
             } yield SyncResult.Success
-          case Left(err) => Future.successful(SyncResult(err))
+          case Right(None) =>
+            //it should never happen
+            //TODO Replace with custom exception after assets refactoring
+            Future.successful(SyncResult(new RuntimeException(s"Permissions for $userId not found.")))
+          case Left(err) =>
+            Future.successful(SyncResult(err))
         }
       case None => Future.successful(SyncResult.Success) // no team - nothing to do
     }

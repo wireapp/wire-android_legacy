@@ -18,7 +18,7 @@
 package com.waz.utils
 import java.net.URL
 
-import com.waz.model.RAssetId
+import com.waz.model.{RAssetId, UserId}
 import io.circe.generic.AutoDerivation
 import io.circe.{Decoder, Encoder}
 import org.threeten.bp.Duration
@@ -32,5 +32,6 @@ trait CirceJSONSupport extends AutoDerivation {
   implicit def DurationEncoder: Encoder[Duration] = Encoder[Long].contramap(_.toMillis)
 
   implicit def RAssetIdDecoder: Decoder[RAssetId] = Decoder[String].map(RAssetId.apply)
+  implicit def UserIdDecoder: Decoder[UserId] = Decoder[String].map(UserId.apply)
 
 }
