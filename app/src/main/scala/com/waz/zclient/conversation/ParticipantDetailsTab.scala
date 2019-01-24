@@ -66,10 +66,10 @@ class ParticipantDetailsTab(val context: Context, callback: FooterMenuCallback, 
   private val leftActionStrings = for {
     isWireless     <- participantsController.otherParticipant.map(_.expiresAt.isDefined)
     isGroupOrBot   <- participantsController.isGroupOrBot
-    hasPermissions <- userAccountsController.hasCreateConvPermission
+    isPartner      <- userAccountsController.isPartner
   } yield if (isWireless) {
     (R.string.empty_string, R.string.empty_string)
-  } else if (hasPermissions && !isGroupOrBot) {
+  } else if (!isPartner && !isGroupOrBot) {
     (R.string.glyph__add_people, R.string.conversation__action__create_group)
   } else {
     (R.string.glyph__conversation, R.string.empty_string)
