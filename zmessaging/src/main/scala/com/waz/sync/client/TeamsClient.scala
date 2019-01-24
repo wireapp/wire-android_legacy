@@ -30,7 +30,7 @@ import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
 import scala.util.Try
 
 trait TeamsClient {
-  def getTeamMembers(id: TeamId): ErrorOrResponse[Map[UserId, PermissionsMasks]]
+  def getTeamMembers(id: TeamId): ErrorOrResponse[Map[UserId, Option[PermissionsMasks]]]
   def getTeamData(id: TeamId): ErrorOrResponse[TeamData]
 
   def getPermissions(teamId: TeamId, userId: UserId): ErrorOrResponse[Option[PermissionsMasks]]
@@ -50,13 +50,13 @@ class TeamsClientImpl(implicit
   private implicit val errorResponseDeserializer: RawBodyDeserializer[ErrorResponse] =
     objectFromCirceJsonRawBodyDeserializer[ErrorResponse]
 
-  override def getTeamMembers(id: TeamId): ErrorOrResponse[Map[UserId, PermissionsMasks]] = {
+  override def getTeamMembers(id: TeamId): ErrorOrResponse[Map[UserId, Option[PermissionsMasks]]] = {
     Request.Get(relativePath = teamMembersPath(id))
       .withResultType[TeamMembers]
       .withErrorType[ErrorResponse]
       .executeSafe { response =>
         response.members
-          .collect { case TeamMember(userId, Some(permissions)) => userId -> createPermissionsMasks(permissions) }
+          .map(member => member.user -> member.permissions.map(createPermissionsMasks))
           .toMap
       }
   }

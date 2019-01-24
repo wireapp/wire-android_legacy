@@ -44,7 +44,7 @@ trait TeamsService {
 
   val selfTeam: Signal[Option[TeamData]]
 
-  def onTeamSynced(team: TeamData, members: Map[UserId, PermissionsMasks]): Future[Unit]
+  def onTeamSynced(team: TeamData, members: Map[UserId, Option[PermissionsMasks]]): Future[Unit]
 
   def onMemberSynced(userId: UserId, permissions: Option[PermissionsMasks]): Future[Unit]
 
@@ -146,7 +146,7 @@ class TeamsServiceImpl(selfUser:           UserId,
     }
   }
 
-  override def onTeamSynced(team: TeamData, members: Map[UserId, PermissionsMasks]) = {
+  override def onTeamSynced(team: TeamData, members: Map[UserId, Option[PermissionsMasks]]) = {
     verbose(l"onTeamSynced: team: $team \nmembers: $members")
 
     val memberIds = members.keys.toSet
@@ -154,7 +154,7 @@ class TeamsServiceImpl(selfUser:           UserId,
 
     for {
       _ <- teamStorage.insert(team)
-      _ <- selfPermissions.fold(Future.successful(()))(perm => onMemberSynced(selfUser, Some(perm)))
+      _ <- selfPermissions.fold(Future.successful(()))(perm => onMemberSynced(selfUser, perm))
       oldMembers <- userStorage.getByTeam(Set(team.id))
       _ <- userStorage.updateAll2(oldMembers.map(_.id) -- memberIds, _.copy(deleted = true))
       _ <- sync.syncUsers(memberIds).flatMap(syncRequestService.await)
