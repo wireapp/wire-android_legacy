@@ -19,10 +19,14 @@ package com.waz.service
 
 import com.waz.service.BackendConfig.FirebaseOptions
 import com.waz.utils.wrappers.URI
+import com.waz.znet.ServerTrust
 
-case class BackendConfig(baseUrl: URI, websocketUrl: String, firebaseOptions: FirebaseOptions, environment: String) {
+case class BackendConfig(baseUrl: URI, websocketUrl: String, firebaseOptions: FirebaseOptions, environment: String, pin: CertificatePin = ServerTrust.wirePin) {
   val pushSenderId = firebaseOptions.pushSenderId
 }
+
+//cert is expected to be base64-encoded
+case class CertificatePin(domain: String, cert: Array[Byte])
 
 object BackendConfig {
 
