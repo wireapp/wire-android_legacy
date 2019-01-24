@@ -114,7 +114,7 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
     }
 
     (if (!showPeopleOnly) List(Right(if (canChangeSettings) ConversationName else ConversationNameReadOnly)) else Nil) :::
-    (if (convActive && tId.isDefined && !showPeopleOnly && canChangeSettings) List(Right(Notifications))
+    (if (convActive && tId.isDefined && !showPeopleOnly) List(Right(Notifications))
     else Nil
       ) :::
     (if (convActive && !areWeAGuest && !showPeopleOnly && canChangeSettings) List(Right(EphemeralOptions))
