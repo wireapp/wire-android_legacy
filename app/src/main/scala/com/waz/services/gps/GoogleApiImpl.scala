@@ -31,7 +31,7 @@ import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences.GPSErrorDialogShowCount
 import com.waz.model.PushToken
 import com.waz.service.BackendConfig
-import com.waz.service.BackendConfig.FirebaseOptions
+import com.waz.service.FirebaseOptions
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.utils.wrappers.GoogleApi
