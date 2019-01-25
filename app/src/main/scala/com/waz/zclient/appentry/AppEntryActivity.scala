@@ -116,18 +116,15 @@ class AppEntryActivity extends BaseActivity {
 
     closeButton.onClick(abortAddAccount())
 
-    verbose(s"EY 0");
-
     withFragmentOpt(AppLaunchFragment.Tag) {
       case Some(_) =>
-        verbose(s"EY there is a fragment, account creation enabled: ${BuildConfig.ACCOUNT_CREATION_ENABLED}")
       case None =>
-        verbose(s"EY there is no fragment, account creation enabled: ${BuildConfig.ACCOUNT_CREATION_ENABLED}")
         Option(getIntent.getExtras).map(_.getInt(MethodArg)) match {
-          case Some(LoginArgVal) => verbose(s"EY 1"); showFragment(SignInFragment(), SignInFragment.Tag, animated = false)
-          case Some(CreateTeamArgVal) => verbose(s"EY 2"); showFragment(TeamNameFragment(), TeamNameFragment.Tag, animated = false)
-          case _ if !BuildConfig.ACCOUNT_CREATION_ENABLED => verbose(s"EY 3"); showFragment(SignInFragment(SignInFragment.SignInOnlyLogin), SignInFragment.Tag, animated = false)
-          case _ => verbose(s"EY 4"); showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
+          case Some(LoginArgVal) => showFragment(SignInFragment(), SignInFragment.Tag, animated = false)
+          case Some(CreateTeamArgVal) => showFragment(TeamNameFragment(), TeamNameFragment.Tag, animated = false)
+          case _ if !BuildConfig.ACCOUNT_CREATION_ENABLED =>
+            showFragment(SignInFragment(SignInFragment.SignInOnlyLogin), SignInFragment.Tag, animated = false)
+          case _ => showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
       }
     }
 

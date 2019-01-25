@@ -1,4 +1,6 @@
 import groovy.json.JsonSlurper
+import org.ajoberstar.grgit.Grgit
+import org.ajoberstar.grgit.Credentials
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
@@ -71,15 +73,32 @@ ext {
     targetCompatibilityVersion = JavaVersion.VERSION_1_8
 
     // directory where customization files live
-    customDir = "$rootDir/custom"
-    repoDir = "$customDir/repo"
-    customConfig = new File("$customDir/custom.json")
     wireConfig = new File("$rootDir/default.json")
     isCleanTask = gradle.startParameter.taskNames.contains("clean")
 
+    customFolder = System.getenv("CUSTOM_FOLDER") ?: ''
+    customRepository = System.getenv("CUSTOM_REPOSITORY") ?: ''
+    token = System.getenv("API_TOKEN") ?: ''
+
+    repoDir = "$rootDir/custom"
+    customDir = repoDir
+    if (!customFolder.isEmpty()) {
+        customDir = customDir + '/' + customFolder
+    }
+    customConfig = file("$customDir/custom.json")
+
+    def repo = file(repoDir)
+    if (repo.exists()) {
+        delete repo
+    }
+
     def slurper = new JsonSlurper()
     config = null
-    if(customConfig.exists()) {
+
+    if (!customRepository.isEmpty() && !token.isEmpty()) {
+        credentials = new Credentials(token, '')
+        Grgit.clone(dir: repoDir, uri: customRepository, credentials: credentials)
+        project.logger.info("Cloned $repoDir to $customRepository")
         config = slurper.parseText(customConfig.text)
     } else {
         config = slurper.parseText(wireConfig.text)
