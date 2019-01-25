@@ -12,7 +12,7 @@ repositories {
 }
 
 ext {
-    majorVersion = "3.25."
+    majorVersion = "3.26."
 
     scalaMajorVersion = '2.11'
     scalaVersion = scalaMajorVersion + '.12'
@@ -24,7 +24,7 @@ ext {
     zMessagingDevVersion = "138.2214"
     paging_version = "1.0.0"
     // Release version number must be like this X.0(.Y)
-    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '138.0.509@aar'
+    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '139.0.510@aar'
 
     avsVersion = '4.7.158@aar'
     avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
