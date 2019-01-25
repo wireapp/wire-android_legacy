@@ -259,9 +259,9 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
 
   //create account managers for all logged in accounts on app start, or initialise the signal to an empty set
   for {
-    ids <- storage.flatMap(_.list().map(_.map(_.id).toSet))
-    _   <- Future.sequence(ids.map(createAccountManager(_, None, None)))
-  } yield Serialized.future(AccountManagersKey)(Future[Unit](accountManagers.mutateOrDefault(identity, Set.empty[AccountManager])))
+    ids      <- storage.flatMap(_.list().map(_.map(_.id).toSet))
+    managers <- Future.sequence(ids.map(createAccountManager(_, None, None)))
+  } yield Serialized.future(AccountManagersKey)(Future[Unit](accountManagers ! managers.flatten))
 
   override def createAccountManager(userId: UserId, importDbFile: Option[File], isLogin: Option[Boolean], initialUser: Option[UserInfo] = None) = Serialized.future(AccountManagersKey) {
     async {
@@ -288,7 +288,9 @@ class AccountsServiceImpl(val global: GlobalModule) extends AccountsService {
         if (account.isEmpty) warn(l"No logged in account for user: $userId, not creating account manager")
         account.map { acc =>
           val newManager = new AccountManager(userId, acc.teamId, global, this, startedJustAfterBackup = importDbFile.nonEmpty, user, isLogin)
-          accountManagers.mutateOrDefault(_ + newManager, Set(newManager))
+          if (isLogin.isDefined) {
+            accountManagers.mutateOrDefault(_ + newManager, Set(newManager))
+          }
           newManager
         }
       }
