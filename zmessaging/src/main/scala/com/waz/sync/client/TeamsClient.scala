@@ -22,61 +22,65 @@ import com.waz.ZLog.warn
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.AccountDataOld.PermissionsMasks
 import com.waz.model._
-import com.waz.utils.JsonDecoder
+import com.waz.utils.{CirceJSONSupport, JsonDecoder}
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
-import org.json.JSONObject
 
 import scala.util.Try
 
 trait TeamsClient {
-  def getTeamMembers(id: TeamId): ErrorOrResponse[Map[UserId, PermissionsMasks]]
+  def getTeamMembers(id: TeamId): ErrorOrResponse[Map[UserId, Option[PermissionsMasks]]]
   def getTeamData(id: TeamId): ErrorOrResponse[TeamData]
 
-  def getPermissions(teamId: TeamId, userId: UserId): ErrorOrResponse[PermissionsMasks]
+  def getPermissions(teamId: TeamId, userId: UserId): ErrorOrResponse[Option[PermissionsMasks]]
 }
 
 class TeamsClientImpl(implicit
                       urlCreator: UrlCreator,
                       httpClient: HttpClient,
-                      authRequestInterceptor: AuthRequestInterceptor) extends TeamsClient {
+                      authRequestInterceptor: AuthRequestInterceptor) extends TeamsClient with CirceJSONSupport {
 
-  import HttpClient.dsl._
   import HttpClient.AutoDerivation._
+  import HttpClient.dsl._
   import TeamsClient._
+  import com.waz.threading.Threading.Implicits.Background
 
-  private implicit val teamMembersDeserializer: RawBodyDeserializer[Map[UserId, PermissionsMasks]] =
-    RawBodyDeserializer[JSONObject].map(json => TeamMembersResponse.unapply(JsonObjectResponse(json)).get)
+  //TODO Remove after assets refactoring
+  private implicit val errorResponseDeserializer: RawBodyDeserializer[ErrorResponse] =
+    objectFromCirceJsonRawBodyDeserializer[ErrorResponse]
 
-  private implicit val teamDataDeserializer: RawBodyDeserializer[TeamData] = {
-    import TeamData.TeamBindingDecoder
-    RawBodyDeserializer[(TeamData, Boolean)].map(_._1)
-  }
-
-  private implicit val permissionsMasksDeserializer: RawBodyDeserializer[PermissionsMasks] =
-    RawBodyDeserializer[(UserId, PermissionsMasks)].map(_._2)
-
-  override def getTeamMembers(id: TeamId): ErrorOrResponse[Map[UserId, PermissionsMasks]] = {
+  override def getTeamMembers(id: TeamId): ErrorOrResponse[Map[UserId, Option[PermissionsMasks]]] = {
     Request.Get(relativePath = teamMembersPath(id))
-      .withResultType[Map[UserId, PermissionsMasks]]
+      .withResultType[TeamMembers]
       .withErrorType[ErrorResponse]
-      .executeSafe
+      .executeSafe { response =>
+        response.members
+          .map(member => member.user -> member.permissions.map(createPermissionsMasks))
+          .toMap
+      }
   }
 
   override def getTeamData(id: TeamId): ErrorOrResponse[TeamData] = {
+    implicit val deserializer: RawBodyDeserializer[TeamData] = teamDataDeserializer
+
     Request.Get(relativePath = teamPath(id))
       .withResultType[TeamData]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
-  override def getPermissions(teamId: TeamId, userId: UserId): ErrorOrResponse[PermissionsMasks] = {
+  override def getPermissions(teamId: TeamId, userId: UserId): ErrorOrResponse[Option[PermissionsMasks]] = {
     Request.Get(relativePath = memberPath(teamId, userId))
-      .withResultType[PermissionsMasks]
+      .withResultType[TeamMember]
       .withErrorType[ErrorResponse]
-      .executeSafe
+      .executeSafe { response =>
+        response.permissions.map(createPermissionsMasks)
+      }
   }
+
+  private def createPermissionsMasks(permissions: Permissions): PermissionsMasks =
+    (permissions.self, permissions.copy)
 
 }
 
@@ -95,6 +99,7 @@ object TeamsClient {
 
   case class TeamBindingResponse(teams: Seq[(TeamData, Boolean)], hasMore: Boolean)
 
+  //TODO Remove after assets refactoring
   object TeamBindingResponse {
     def unapply(response: ResponseContent): Option[(Seq[(TeamData, Boolean)], Boolean)] =
       response match {
@@ -106,20 +111,16 @@ object TeamsClient {
       }
   }
 
-  implicit lazy val TeamMemberDecoder: JsonDecoder[(UserId, PermissionsMasks)] = JsonDecoder.lift { implicit js =>
-    (decodeId[UserId]('user), (decodeInt('self)('permissions), decodeInt('copy)('permissions)))
-  }
+  case class TeamMembers(members: Seq[TeamMember])
 
-  object TeamMembersResponse {
-    def unapply(response: ResponseContent): Option[Map[UserId, PermissionsMasks]] = {
-      response match {
-        case JsonObjectResponse(js) if js.has("members") =>
-          Try(decodeSet('members)(js, TeamMemberDecoder)).toOption.map(_.toMap)
-        case _ =>
-          warn(s"Unexpected response: $response")
-          None
-      }
-    }
+  case class TeamMember(user: UserId, permissions: Option[Permissions])
+
+  case class Permissions(self: Long, copy: Long)
+
+  //TODO Remove after assets refactoring
+  val teamDataDeserializer: RawBodyDeserializer[TeamData] = {
+    import HttpClient.AutoDerivation._
+    RawBodyDeserializer[(TeamData, Boolean)].map(_._1)
   }
 
 }

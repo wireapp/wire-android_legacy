@@ -20,11 +20,10 @@ package com.waz.utils.crypto
 import java.io._
 import java.security.{DigestInputStream, DigestOutputStream, MessageDigest}
 
-import android.util.Base64
 import javax.crypto.{BadPaddingException, Cipher, CipherInputStream, CipherOutputStream}
 import javax.crypto.spec.{IvParameterSpec, SecretKeySpec}
 import com.waz.model.{AESKey, Sha256}
-import com.waz.utils.{IoUtils, returning}
+import com.waz.utils.{SafeBase64, IoUtils, returning}
 
 /**
   * Utils for symmetric encryption.
@@ -35,9 +34,8 @@ object AESUtils {
 
   lazy val randomBytes = new RandomBytes()
 
-  //TODO Remove usage of android Base64 class
-  def base64(key: Array[Byte]): String = Base64.encodeToString(key, Base64.NO_WRAP | Base64.NO_CLOSE)
-  def base64(key: String): Array[Byte] = Base64.decode(key, Base64.NO_WRAP | Base64.NO_CLOSE)
+  def base64(key: Array[Byte]): String = SafeBase64.encode(key)
+  def base64(key: String): Array[Byte] = SafeBase64.decode(key).get
 
   def randomKey(): AESKey = AESKey(randomBytes(32))
   def randomKey128(): AESKey = AESKey(randomBytes(16))

@@ -44,7 +44,6 @@ class ReplyHashingSpec extends AndroidFreeSpec {
   private val rt = RemoteInstant.Epoch
 
   val assetStorage = mock[AssetsStorage]
-  val base64 = new JVMBase64
 
   feature("hashing of quoted messages") {
 
@@ -167,7 +166,7 @@ class ReplyHashingSpec extends AndroidFreeSpec {
     }
   }
 
-  private def getReplyHashing = new ReplyHashingImpl(assetStorage)(base64)
+  private def getReplyHashing = new ReplyHashingImpl(assetStorage)
 
-  private def hexString(sha: Sha256) = String.format("%02X", new BigInteger(1, base64.decode(sha.str))).toLowerCase
+  private def hexString(sha: Sha256) = String.format("%02X", new BigInteger(1, AESUtils.base64(sha.str))).toLowerCase
 }

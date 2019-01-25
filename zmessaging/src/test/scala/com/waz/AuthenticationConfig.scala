@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package com.waz
-import com.waz.api.EmailCredentials
+import com.waz.api.{Credentials, EmailCredentials}
 import com.waz.content.AccountStorage2
 import com.waz.model.AccountData.Password
 import com.waz.model.{AccountData, EmailAddress, UserId}
@@ -31,9 +31,9 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-object AuthenticationConfig {
+trait AuthenticationConfig {
 
-  val testEmailCredentials = EmailCredentials(EmailAddress("mykhailo+5@wire.com"), Password("123456789"))
+  val testCredentials: Credentials = EmailCredentials(EmailAddress("mykhailo+5@wire.com"), Password("123456789"))
 
   val BackendUrl: String = "https://staging-nginz-https.zinfra.io"
 
@@ -44,7 +44,7 @@ object AuthenticationConfig {
   private val LoginClient: LoginClient = new LoginClientImpl(DisabledTrackingService)
 
   lazy val AuthenticationManager: AuthenticationManager2 = {
-    val loginResult = Await.result(LoginClient.login(testEmailCredentials), 1.minute) match {
+    val loginResult = Await.result(LoginClient.login(testCredentials), 1.minute) match {
       case Right(result) => result
       case Left(errResponse) => throw errResponse
     }

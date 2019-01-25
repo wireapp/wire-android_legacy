@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
+import com.waz.service.CertificatePin
 import com.waz.threading.CancellableFuture
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{ExecutorServiceWrapper, IoUtils, RichOption}
@@ -75,11 +76,11 @@ class HttpClientOkHttpImpl(client: OkHttpClient)(implicit protected val ec: Exec
 
 object HttpClientOkHttpImpl {
 
-  def apply(enableLogging: Boolean, timeout: Option[FiniteDuration] = None)(implicit ec: ExecutionContext): HttpClientOkHttpImpl =
+  def apply(enableLogging: Boolean, timeout: Option[FiniteDuration] = None, pin: CertificatePin = ServerTrust.wirePin)(implicit ec: ExecutionContext): HttpClientOkHttpImpl =
     new HttpClientOkHttpImpl(
       createOkHttpClient(
         Some(createModernConnectionSpec),
-        Some(createCertificatePinner),
+        Some(createCertificatePinner(pin)),
         if (enableLogging) Some(createLoggerInterceptor) else None,
         timeout
       )
@@ -106,10 +107,10 @@ object HttpClientOkHttpImpl {
       .build()
   }
 
-  def createCertificatePinner: CertificatePinner = {
-    val publicKeySha256 = MessageDigest.getInstance("SHA-256").digest(ServerTrust.WirePublicKey)
+  def createCertificatePinner(pin: CertificatePin): CertificatePinner = {
+    val publicKeySha256 = MessageDigest.getInstance("SHA-256").digest(pin.cert)
     new CertificatePinner.Builder()
-      .add(s"*.${ServerTrust.WireDomain}", "sha256/" + AESUtils.base64(publicKeySha256))
+      .add(pin.domain, "sha256/" + AESUtils.base64(publicKeySha256))
       .build()
   }
 

@@ -19,7 +19,7 @@ package com.waz.sync.client
 
 import java.io.ByteArrayInputStream
 
-import com.waz.ZIntegrationSpec
+import com.waz.{AuthenticationConfig, ZIntegrationSpec}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
 import com.waz.api.impl.ErrorResponse
@@ -33,8 +33,7 @@ import com.waz.utils.returning
 import scala.util.Random
 
 //TODO Think about tests resources cleanup
-class AssetClient2Spec extends ZIntegrationSpec {
-  import com.waz.AuthenticationConfig._
+class AssetClient2Spec extends ZIntegrationSpec with AuthenticationConfig {
 
   private lazy val assetClient = new AssetClient2Impl()
   private val testAssetContent = returning(Array.ofDim[Byte](1024))(Random.nextBytes)
