@@ -66,11 +66,14 @@ class ParticipantDetailsTab(val context: Context, callback: FooterMenuCallback, 
   private val leftActionStrings = for {
     isWireless     <- participantsController.otherParticipant.map(_.expiresAt.isDefined)
     isGroupOrBot   <- participantsController.isGroupOrBot
+    canCreateConv  <- userAccountsController.hasCreateConvPermission
     isPartner      <- userAccountsController.isPartner
   } yield if (isWireless) {
     (R.string.empty_string, R.string.empty_string)
-  } else if (!isPartner && !isGroupOrBot) {
+  } else if (!isPartner && !isGroupOrBot && canCreateConv) {
     (R.string.glyph__add_people, R.string.conversation__action__create_group)
+  } else if (isPartner && !isGroupOrBot) {
+    (R.string.empty_string, R.string.empty_string)
   } else {
     (R.string.glyph__conversation, R.string.empty_string)
   }
@@ -104,24 +107,6 @@ class ParticipantDetailsTab(val context: Context, callback: FooterMenuCallback, 
 
   participantsController.isGroupOrBot.flatMap {
     case false => userAccountsController.hasCreateConvPermission.map {
-      case true => R.string.glyph__add_people
-      case _    => R.string.empty_string
-    }
-    case _ => Signal.const(R.string.glyph__conversation)
-  }.map(getString)
-   .onUi(footerMenu.setLeftActionText)
-
-  participantsController.isGroupOrBot.flatMap {
-    case false => userAccountsController.hasCreateConvPermission.zip(userAccountsController.isPartner).map {
-      case (true, false) => R.string.conversation__action__create_group
-      case _             => R.string.empty_string
-    }
-    case _ => Signal.const(R.string.empty_string)
-  }.map(getString)
-   .onUi(footerMenu.setLeftActionLabelText)
-
-  participantsController.isGroupOrBot.flatMap {
-    case false => userAccountsController.hasCreateConvPermission.map {
       case true => R.string.glyph__more
       case _    => R.string.empty_string
     }
@@ -133,8 +118,8 @@ class ParticipantDetailsTab(val context: Context, callback: FooterMenuCallback, 
    .onUi(footerMenu.setRightActionText)
 
   leftActionStrings.onUi { case (icon, text) =>
-      footerMenu.setLeftActionText(getString(icon))
-      footerMenu.setLeftActionLabelText(getString(text))
+    footerMenu.setLeftActionText(getString(icon))
+    footerMenu.setLeftActionLabelText(getString(text))
   }
 
   private lazy val readReceiptsInfoTitle = findById[TypefaceTextView](R.id.read_receipts_info_title)
