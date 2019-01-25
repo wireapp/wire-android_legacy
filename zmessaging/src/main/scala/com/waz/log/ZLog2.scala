@@ -27,7 +27,7 @@ import com.waz.content.Preferences.PrefKey
 import com.waz.log.InternalLog.LogLevel.{Debug, Error, Info, Verbose, Warn}
 import com.waz.model.AccountData.Password
 import com.waz.model.GenericContent.Location
-import com.waz.model._
+import com.waz.model.{SSOId, _}
 import com.waz.model.otr.{Client, ClientId, UserClients}
 import com.waz.model.sync.ReceiptType
 import com.waz.service.{PlaybackRoute, PropertyKey}
@@ -244,6 +244,8 @@ object ZLog2 {
     implicit val PropertyKeyLogShow: LogShow[PropertyKey] = logShowWithToString
     implicit val ReadReceiptSettingsShow: LogShow[ReadReceiptSettings] = logShowWithToString
 
+    implicit val SSOIdShow: LogShow[SSOId] = create(id => s"SSOId(subject: ${sha2(id.subject)}, tenant:${sha2(id.tenant)})")
+
     implicit val RawAssetInputLogShow: LogShow[RawAssetInput] =
       createFrom {
         case UriInput(uri)                => l"UriInput($uri)"
@@ -349,6 +351,19 @@ object ZLog2 {
            |  startTime: $startTime | joinedTime: $joinedTime | estabTime: $estabTime | endTime: $endTime
            |  endReason: ${endReason.map(r => showString(reasonString(r)))} | wasVideoToggled: $wasVideoToggled | hasOutstandingMsg: ${outstandingMsg.isDefined})
         """.stripMargin
+      }
+
+    implicit val AccountDataLogShow: LogShow[AccountData] =
+      LogShow.createFrom { u =>
+        import u._
+        l"""AccountData(
+           | id: $id
+           | teamId: $teamId
+           | cookie: $cookie
+           | accessToken: $accessToken
+           | pushToken: $pushToken
+           | password: $password
+           | ssoId: $ssoId)"""
       }
 
     //Events

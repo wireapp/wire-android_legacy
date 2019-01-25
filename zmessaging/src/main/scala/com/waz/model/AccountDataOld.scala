@@ -47,8 +47,8 @@ case class AccountData(id:           UserId              = UserId(),
                        cookie:       Cookie              = Cookie(""), //defaults for tests
                        accessToken:  Option[AccessToken] = None,
                        pushToken:    Option[PushToken]   = None,
-                       password:     Option[Password]    = None,
-                       ssoId:        Option[SSOId]       = None           //password never saved to database
+                       password:     Option[Password]    = None, //password never saved to database
+                       ssoId:        Option[SSOId]       = None
                       ) extends Identifiable[UserId] {
 
   override def toString: String =

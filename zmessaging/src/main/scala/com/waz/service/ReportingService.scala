@@ -22,6 +22,7 @@ import java.util.concurrent.CountDownLatch
 
 import android.content.Context
 import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.api.ZmsVersion
 import com.waz.cache.{CacheService, Expiration}
 import com.waz.content.GlobalPreferences.PushToken
@@ -104,9 +105,12 @@ class GlobalReportingService(context: Context, cache: CacheService, metadata: Me
   })
 
   val ZUsersReporter = Reporter("ZUsers", { writer =>
-    writer.println(s"current: ${ZMessaging.currentAccounts.activeAccount.currentValue}")
+    val current = ZMessaging.currentAccounts.activeAccount.currentValue.flatten
+    writer.println(l"current: $current".buildMessageSafe)
     storage.list() map { all =>
-      all foreach { u => writer.println(u.toString) }
+      all.filter(!current.contains(_)).foreach { u =>
+        writer.println(l"$u".buildMessageSafe)
+      }
     }
   })
 
