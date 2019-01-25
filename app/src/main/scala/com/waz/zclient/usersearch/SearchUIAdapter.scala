@@ -82,7 +82,7 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)
       currentUser = curUser
 
       res match {
-        case (SearchUserListState.Users(search)) =>
+        case SearchUserListState.Users(search) =>
           topUsers         = search.top
           localResults     = search.local
           conversations    = search.convs
@@ -185,7 +185,7 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)
         if (currentUserIsAdmin && !noServices) addManageServicesButton()
         addIntegrations()
       } else {
-        if (filter.currentValue.forall(_.isEmpty)){
+        if (filter.currentValue.forall(_.isEmpty) && !userAccountsController.isPartner.currentValue.get){
           addGroupCreationButton()
           addGuestRoomCreationButton()
         }
@@ -194,7 +194,7 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)
         addConnections()
       }
     } else  {
-      if (filter.currentValue.forall(_.isEmpty))
+      if (filter.currentValue.forall(_.isEmpty) && !userAccountsController.isPartner.currentValue.get)
         addGroupCreationButton()
       addTopPeople()
       addContacts()

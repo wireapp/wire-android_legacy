@@ -103,8 +103,9 @@ object MessagesPagedListAdapter {
   }
 
   def areMessageContentsTheSame(prev: MessageData, updated: MessageData): Boolean = {
-    updated.contentString != prev.contentString &&
-      updated.expired != prev.expired &&
-      updated.imageDimensions != prev.imageDimensions
+    updated.contentString == prev.contentString &&
+      updated.expired == prev.expired &&
+      updated.imageDimensions == prev.imageDimensions &&
+      updated.content.find(_.openGraph.nonEmpty) == prev.content.find(_.openGraph.nonEmpty)
   }
 }

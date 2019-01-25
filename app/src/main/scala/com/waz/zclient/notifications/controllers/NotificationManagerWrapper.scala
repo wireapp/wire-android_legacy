@@ -376,61 +376,57 @@ object NotificationManagerWrapper {
 
     def getNotificationChannel(channelId: String) = notificationManager.getNotificationChannel(channelId)
 
-    private def addToExternalNotificationFolder(rawId: Int, name: String) = {
-      val uri = MediaStore.Audio.Media.INTERNAL_CONTENT_URI
-      val query = s"${MediaStore.MediaColumns.DATA} LIKE '%$name%'"
-      try {
-        val fIn = cxt.getResources.openRawResource(rawId)
-        val size = fIn.available
-        val buffer = new Array[Byte](size)
-        fIn.read(buffer)
-        fIn.close()
+    private def addToExternalNotificationFolder(rawId: Int, name: String) =
+      Option(cxt.getExternalFilesDir(Environment.DIRECTORY_NOTIFICATIONS)).foreach { dir =>
+        val uri      = MediaStore.Audio.Media.INTERNAL_CONTENT_URI
+        val query    = s"${MediaStore.MediaColumns.DATA} LIKE '%$name%'"
+        val toneFile = new File(s"${dir.getAbsolutePath}/$name.ogg")
+        if (toneFile.exists()) {
+          val contentValues = returning(new ContentValues) { values =>
+            values.put(MediaStore.MediaColumns.DATA, toneFile.getAbsolutePath)
+            values.put(MediaStore.MediaColumns.TITLE, name)
+            values.put(MediaStore.MediaColumns.MIME_TYPE, "audio/ogg")
+            values.put(MediaStore.MediaColumns.SIZE, toneFile.length.toInt.asInstanceOf[Integer])
+            values.put(MediaStore.Audio.AudioColumns.IS_RINGTONE, true)
+            values.put(MediaStore.Audio.AudioColumns.IS_NOTIFICATION, true)
+            values.put(MediaStore.Audio.AudioColumns.IS_ALARM, true)
+            values.put(MediaStore.Audio.AudioColumns.IS_MUSIC, false)
+          }
 
-        val filename = s"/$name.ogg"
-        val path = cxt.getExternalFilesDir(Environment.DIRECTORY_NOTIFICATIONS).getAbsolutePath
+          try {
+            val fIn = cxt.getResources.openRawResource(rawId)
+            val buffer = new Array[Byte](fIn.available)
+            fIn.read(buffer)
+            fIn.close()
 
-        val save = new FileOutputStream(path + filename)
-        save.write(buffer)
-        save.flush()
-        save.close()
+            returning(new FileOutputStream(toneFile)) { fOut =>
+              fOut.write(buffer)
+              fOut.flush()
+              fOut.close()
+            }
 
-        val toneFile = new File(path + filename)
-        val length = toneFile.length.toInt.asInstanceOf[Integer]
+            // TODO: On some devices (Redmi 6A, Xperia X Compact) the query causes SQLiteException.
+            // test on one of these devices and find out why.
+            val cursor = try {
+              Option(cxt.getContentResolver.query(uri, null, query, null, null))
+            } catch {
+              case ex: SQLiteException =>
+                error(s"query to access the media store failed; uri: $uri, query: $query", ex)
+                None
+            }
 
-        val contentValues = new ContentValues()
-
-        contentValues.put(MediaStore.MediaColumns.DATA, toneFile.getAbsolutePath)
-        contentValues.put(MediaStore.MediaColumns.TITLE, name)
-        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "audio/ogg")
-        contentValues.put(MediaStore.MediaColumns.SIZE, length)
-        contentValues.put(MediaStore.Audio.AudioColumns.IS_RINGTONE, true)
-        contentValues.put(MediaStore.Audio.AudioColumns.IS_NOTIFICATION, true)
-        contentValues.put(MediaStore.Audio.AudioColumns.IS_ALARM, true)
-        contentValues.put(MediaStore.Audio.AudioColumns.IS_MUSIC, false)
-
-        // TODO: On some devices (Redmi 6A, Xperia X Compact) the query causes SQLiteException.
-        // test on one of these devices and find out why.
-        val cursor = try {
-          Option(cxt.getContentResolver.query(uri, null, query, null, null))
-        } catch {
-          case ex: SQLiteException =>
-            error(s"query to access the media store failed; uri: $uri, query: $query", ex)
-            None
+            if (cursor.forall(_.getCount == 0)) cxt.getContentResolver.insert(uri, contentValues)
+            cursor.foreach(_.close())
+          } catch {
+            case ex: FileNotFoundException =>
+              error(s"File not found: ${toneFile.getAbsolutePath}")
+            case ex: IOException =>
+              error(s"query to access the media store failed; uri: $uri, query: $query", ex)
+          }
+        } else {
+          error(s"File not found: ${toneFile.getAbsolutePath}")
         }
-
-        if (cursor.forall(_.getCount == 0)) cxt.getContentResolver.insert(uri, contentValues)
-        cursor.foreach(_.close())
-
-        true
-      } catch {
-        case ex: FileNotFoundException =>
-          error(s"query to access the media store failed; uri: $uri, query: $query", ex)
-          false
-        case ex: IOException =>
-          error(s"query to access the media store failed; uri: $uri, query: $query", ex)
-          false
       }
-    }
 
     override def cancelNotifications(ids: Set[Int]): Unit = {
       verbose(s"cancel: $ids")

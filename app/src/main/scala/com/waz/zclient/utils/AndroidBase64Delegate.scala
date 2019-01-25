@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2018 Wire Swiss GmbH
+ * Copyright (C) 2019 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,12 +18,11 @@
 package com.waz.zclient.utils
 
 import android.util.Base64
-import com.waz.utils.crypto
+import com.waz.utils.SafeBase64
 
-class AndroidBase64 extends crypto.Base64 {
+import scala.util.Try
 
-  private val flags = Base64.NO_WRAP | Base64.NO_CLOSE
-
-  override def encode(key: Array[Byte]): String = Base64.encodeToString(key, flags)
-  override def decode(key: String): Array[Byte] = Base64.decode(key, flags)
+class AndroidBase64Delegate extends SafeBase64.Delegate {
+  override def encode(bytes: Array[Byte]): String = Base64.encodeToString(bytes, Base64.NO_WRAP | Base64.NO_CLOSE)
+  override def decode(base64: String): Try[Array[Byte]] = Try { Base64.decode(base64, Base64.DEFAULT) }
 }
