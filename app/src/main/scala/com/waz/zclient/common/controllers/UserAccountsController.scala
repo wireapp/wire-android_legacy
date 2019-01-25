@@ -18,6 +18,7 @@
 package com.waz.zclient.common.controllers
 
 import android.content.Context
+import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.SelfPermissions
@@ -64,15 +65,26 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
   lazy val selfPermissions =
     prefs
       .flatMap(_.apply(SelfPermissions).signal)
-      .map(AccountDataOld.decodeBitmask)
+      .map { bitmask =>
+        debug(s"Self permissions bitmask: $bitmask")
+        AccountDataOld.decodeBitmask(bitmask)
+      }
 
   lazy val isAdmin: Signal[Boolean] =
     selfPermissions.map(ps => AdminPermissions.subsetOf(ps))
+
+  lazy val isPartner: Signal[Boolean] =
+    selfPermissions
+      .map(ps => PartnerPermissions.subsetOf(ps) && PartnerPermissions.size == ps.size)
+      .orElse(Signal.const(false))
 
   lazy val hasCreateConvPermission: Signal[Boolean] = teamId.flatMap {
     case Some(_) => selfPermissions.map(_.contains(CreateConversation))
     case  _ => Signal.const(true)
   }
+
+  lazy val hasChangeGroupSettingsPermission: Signal[Boolean] =
+    isPartner.map(!_)
 
   def hasAddConversationMemberPermission(convId: ConvId): Signal[Boolean] =
     hasConvPermission(convId, AddConversationMember)
@@ -137,4 +149,5 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
 object UserAccountsController {
   import AccountDataOld.Permission._
   val AdminPermissions: Set[Permission] = Permission.values -- Set(GetBilling, SetBilling, DeleteTeam)
+  val PartnerPermissions: Set[Permission] = Set(CreateConversation, GetTeamConversations)
 }
