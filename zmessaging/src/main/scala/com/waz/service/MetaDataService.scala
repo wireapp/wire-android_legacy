@@ -59,6 +59,8 @@ class MetaDataService(context: Context) {
     s"$MANUFACTURER $MODEL"
   }
 
+  lazy val androidVersion = android.os.Build.VERSION.RELEASE
+
   lazy val localBluetoothName =
     Try(Option(BluetoothAdapter.getDefaultAdapter.getName).getOrElse("")).getOrElse("")
 

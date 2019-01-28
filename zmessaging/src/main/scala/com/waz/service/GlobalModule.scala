@@ -34,16 +34,17 @@ import com.waz.service.downloads._
 import com.waz.service.images.{ImageLoader, ImageLoaderImpl}
 import com.waz.service.push._
 import com.waz.service.tracking.{TrackingService, TrackingServiceImpl}
-import com.waz.sync.{AccountSyncHandler, SyncHandler, SyncRequestService}
 import com.waz.sync.client._
+import com.waz.sync.{AccountSyncHandler, SyncHandler, SyncRequestService}
 import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache
 import com.waz.ui.MemoryImageCache.{Entry, Key}
 import com.waz.utils.Cache
 import com.waz.utils.wrappers.{Context, GoogleApi}
-import com.waz.znet2.HttpClientOkHttpImpl
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RequestInterceptor}
+import com.waz.znet2.{HttpClientOkHttpImpl, OkHttpUserAgentInterceptor}
+import okhttp3.Interceptor
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -108,6 +109,7 @@ class GlobalModuleImpl(val context:                 AContext,
                        val googleApi:               GoogleApi,
                        val syncRequests:            SyncRequestService,
                        val notificationsUi: NotificationUiController) extends GlobalModule { global =>
+
   //trigger initialization of Firebase in onCreate - should prevent problems with Firebase setup
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
   val network:                  DefaultNetworkModeService        = wire[DefaultNetworkModeService]
@@ -142,8 +144,9 @@ class GlobalModuleImpl(val context:                 AContext,
   lazy val regClient:           RegistrationClient               = new RegistrationClientImpl()(urlCreator, httpClient)
 
   lazy val urlCreator:          UrlCreator                       = UrlCreator.simpleAppender(backend.baseUrl.toString)
-  implicit lazy val httpClient: HttpClient                       = HttpClientOkHttpImpl(enableLogging = ZmsVersion.DEBUG, pin = backend.pin)(Threading.BlockingIO)
-  lazy val httpClientForLongRunning: HttpClient                  = HttpClientOkHttpImpl(enableLogging = ZmsVersion.DEBUG, timeout = Some(30.seconds), pin = backend.pin)(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
+  private val customUserAgentHttpInterceptor: Interceptor        = new OkHttpUserAgentInterceptor(metadata)
+  implicit lazy val httpClient: HttpClient                       = HttpClientOkHttpImpl(enableLogging = ZmsVersion.DEBUG, pin = backend.pin, customUserAgentInterceptor = Some(customUserAgentHttpInterceptor))(Threading.BlockingIO)
+  lazy val httpClientForLongRunning: HttpClient                  = HttpClientOkHttpImpl(enableLogging = ZmsVersion.DEBUG, timeout = Some(30.seconds), pin = backend.pin, customUserAgentInterceptor = Some(customUserAgentHttpInterceptor))(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
 
   implicit lazy val requestInterceptor: RequestInterceptor       = RequestInterceptor.identity
 
