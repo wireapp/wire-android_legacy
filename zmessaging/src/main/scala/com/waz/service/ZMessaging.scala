@@ -111,7 +111,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val syncRequests:      SyncRequestService      = wire[SyncRequestServiceImpl]
   lazy val syncContent:       SyncContentUpdater      = wire[SyncContentUpdaterImpl]
 
-  lazy val otrClientsService: OtrClientsService       = wire[OtrClientsService]
+  lazy val otrClientsService: OtrClientsService       = wire[OtrClientsServiceImpl]
   lazy val otrClientsSync:    OtrClientsSyncHandler   = wire[OtrClientsSyncHandlerImpl]
   lazy val otrClient:         OtrClientImpl           = account.otrClient
   lazy val credentialsClient: CredentialsUpdateClientImpl = account.credentialsClient

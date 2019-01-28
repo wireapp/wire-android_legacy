@@ -25,6 +25,7 @@ import com.waz.content._
 import com.waz.model._
 import com.waz.model.otr.{Client, ClientId, UserClients}
 import com.waz.service.AccountsService.Active
+import com.waz.service.EventScheduler.Stage
 import com.waz.service._
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.OtrClient
@@ -35,25 +36,45 @@ import scala.collection.immutable.Map
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class OtrClientsService(selfId:    UserId,
-                        clientId:  ClientId,
-                        netClient: OtrClient,
-                        userPrefs: UserPreferences,
-                        storage:   OtrClientsStorage,
-                        sync:      SyncServiceHandle,
-                        accounts:  AccountsService) {
+
+trait OtrClientsService {
+
+  val lastSelfClientsSyncPref: Preferences.Preference[Long]
+  val otrClientsProcessingStage: Stage.Atomic
+
+  def requestSyncIfNeeded(retryInterval: FiniteDuration = 7.days): Unit
+  def getClient(id: UserId, client: ClientId): Future[Option[Client]]
+  def getOrCreateClient(id: UserId, client: ClientId): Future[Client]
+  def updateUserClients(user: UserId, clients: Seq[Client], replace: Boolean = false): Future[UserClients]
+  def updateClients(ucs: Map[UserId, Seq[Client]], replace: Boolean = false): Future[Set[UserClients]]
+  def onCurrentClientRemoved(): Future[Option[(UserClients, UserClients)]]
+  def removeClients(user: UserId, clients: Seq[ClientId]): Future[Option[(UserClients, UserClients)]]
+  def updateClientLabel(id: ClientId, label: String): Future[Option[SyncId]]
+  def selfClient: Signal[Client]
+  def getSelfClient: Future[Option[Client]]
+  def updateUnknownToUnverified(userId: UserId): Future[Unit]
+}
+
+
+class OtrClientsServiceImpl(selfId:    UserId,
+                            clientId:  ClientId,
+                            netClient: OtrClient,
+                            userPrefs: UserPreferences,
+                            storage:   OtrClientsStorage,
+                            sync:      SyncServiceHandle,
+                            accounts:  AccountsService) extends OtrClientsService {
 
   import com.waz.threading.Threading.Implicits.Background
   import com.waz.utils.events.EventContext.Implicits.global
 
-  lazy val lastSelfClientsSyncPref = userPrefs.preference(LastSelfClientsSyncRequestedTime)
+  override lazy val lastSelfClientsSyncPref: Preferences.Preference[Long] = userPrefs.preference(LastSelfClientsSyncRequestedTime)
 
   accounts.accountState(selfId) {
     case _: Active => requestSyncIfNeeded()
     case _ =>
   }
 
-  val otrClientsProcessingStage = EventScheduler.Stage[OtrClientEvent] { (convId, events) =>
+  override val otrClientsProcessingStage: Stage.Atomic = EventScheduler.Stage[OtrClientEvent] { (convId, events) =>
     RichFuture.traverseSequential(events) {
       case OtrClientAddEvent(client) =>
         for {
@@ -65,7 +86,7 @@ class OtrClientsService(selfId:    UserId,
     }
   }
 
-  def requestSyncIfNeeded(retryInterval: FiniteDuration = 7.days) =
+  override def requestSyncIfNeeded(retryInterval: FiniteDuration = 7.days): Unit =
     getSelfClient.zip(lastSelfClientsSyncPref()) flatMap {
       case (Some(c), t) if t > System.currentTimeMillis() - retryInterval.toMillis => Future.successful(())
       case _ =>
@@ -74,9 +95,9 @@ class OtrClientsService(selfId:    UserId,
         }
     }
 
-  def getClient(id: UserId, client: ClientId) = storage.get(id) map { _.flatMap(_.clients.get(client)) }
+  override def getClient(id: UserId, client: ClientId): Future[Option[Client]] = storage.get(id) map { _.flatMap(_.clients.get(client)) }
 
-  def getOrCreateClient(id: UserId, client: ClientId) = {
+  override def getOrCreateClient(id: UserId, client: ClientId): Future[Client] = {
     storage.get(id) flatMap {
       case Some(uc) if uc.clients.contains(client) => Future.successful(uc.clients(client))
       case _ =>
@@ -90,12 +111,12 @@ class OtrClientsService(selfId:    UserId,
     }
   }
 
-  def updateUserClients(user: UserId, clients: Seq[Client], replace: Boolean = false): Future[UserClients] = {
+  override def updateUserClients(user: UserId, clients: Seq[Client], replace: Boolean = false): Future[UserClients] = {
     verbose(l"updateUserClients($user, $clients, $replace)")
     updateClients(Map(user -> clients), replace).map(_.head)
   }
 
-  def updateClients(ucs: Map[UserId, Seq[Client]], replace: Boolean = false): Future[Set[UserClients]] = {
+  override def updateClients(ucs: Map[UserId, Seq[Client]], replace: Boolean = false): Future[Set[UserClients]] = {
 
     // request clients location sync if some location has no name
     // location will be present only for self clients, but let's check that just to be explicit
@@ -111,14 +132,14 @@ class OtrClientsService(selfId:    UserId,
     } yield updated
   }
 
-  def onCurrentClientRemoved() = storage.update(selfId, _ - clientId)
+  def onCurrentClientRemoved(): Future[Option[(UserClients, UserClients)]] = storage.update(selfId, _ - clientId)
 
-  def removeClients(user: UserId, clients: Seq[ClientId]) =
+  override def removeClients(user: UserId, clients: Seq[ClientId]): Future[Option[(UserClients, UserClients)]] =
     storage.update(user, { cs =>
       cs.copy(clients = cs.clients -- clients)
     })
 
-  def updateClientLabel(id: ClientId, label: String) =
+  override def updateClientLabel(id: ClientId, label: String): Future[Option[SyncId]] =
     storage.update(selfId, { cs =>
       cs.clients.get(id).fold(cs) { client =>
         cs.copy(clients = cs.clients.updated(id, client.copy(label = label)))
@@ -126,18 +147,18 @@ class OtrClientsService(selfId:    UserId,
     }) flatMap {
       case Some(_) =>
         verbose(l"clientLabel updated, client: $id")
-        sync.postClientLabel(id, label)
+        sync.postClientLabel(id, label).map(Option(_))
       case None =>
         verbose(l"client label was not updated $id")
-        Future.successful(())
+        Future.successful(Option.empty[SyncId])
     }
 
-  def selfClient = for {
+  override def selfClient: Signal[Client] = for {
     uc <- storage.signal(selfId)
     res <- Signal.const(uc.clients.get(clientId)).collect { case Some(c) => c }
   } yield res
 
-  def getSelfClient: Future[Option[Client]] =
+  override def getSelfClient: Future[Option[Client]] =
     storage.get(selfId).map {
       case Some(cs) =>
         verbose(l"self clients: $cs, clientId: $clientId")
@@ -145,7 +166,7 @@ class OtrClientsService(selfId:    UserId,
       case _ => None
     }
 
-  def updateUnknownToUnverified(userId: UserId): Future[Unit] =
+  override def updateUnknownToUnverified(userId: UserId): Future[Unit] =
     storage.update(userId, { uc =>
       uc.copy(clients = uc.clients.map{ client =>
         if (client._2.verified == Verification.UNKNOWN)
