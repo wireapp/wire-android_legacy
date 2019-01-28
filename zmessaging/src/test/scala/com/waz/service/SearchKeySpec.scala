@@ -23,7 +23,8 @@ import org.scalatest.prop.{GeneratorDrivenPropertyChecks, TableDrivenPropertyChe
 
 import scala.language.postfixOps
 
-@Ignore class SearchKeySpec extends FeatureSpec with GeneratorDrivenPropertyChecks with TableDrivenPropertyChecks with Matchers with RobolectricTests {
+//TODO: Remove Robolectric dependencies
+class SearchKeySpec extends FeatureSpec with GeneratorDrivenPropertyChecks with TableDrivenPropertyChecks with Matchers with RobolectricTests {
   feature("Search key normalization") {
     scenario("building search keys from known examples") {
       val examples = Table(
@@ -65,9 +66,9 @@ import scala.language.postfixOps
       val phrases = Set("a fantastic phrase", "fan art", "something a fan drew", "infanity if fuch a ftupid fing", "that was infantile")
       val prefix = SearchKey(" fÄN ")
 
-      phrases map SearchKey filter (phrase => prefix isAtTheStartOfAnyWordIn phrase) map (_ asciiRepresentation) should contain theSameElementsAs(Seq(
+      phrases map SearchKey filter (phrase => prefix isAtTheStartOfAnyWordIn phrase) map (_ asciiRepresentation) should contain theSameElementsAs Seq(
         "a fantastic phrase", "fan art", "something a fan drew"
-      ))
+      )
     }
 
     scenario("the empty string always matches") {

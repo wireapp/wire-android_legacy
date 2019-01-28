@@ -22,7 +22,7 @@ import java.io.{File, FileOutputStream, OutputStream}
 
 import org.scalatest.{FeatureSpec, Ignore, Matchers}
 
-@Ignore class IoUtilsSpec extends FeatureSpec with Matchers {
+class IoUtilsSpec extends FeatureSpec with Matchers {
   scenario("Copy from stream to file") {
     val target = returning(createTempFile("meep", ".gif"))(_.deleteOnExit())
     val size = IoUtils.copy(getClass.getResourceAsStream("/gifs/artifacts1.gif"), target)

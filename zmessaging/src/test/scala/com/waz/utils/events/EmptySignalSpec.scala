@@ -17,11 +17,10 @@
  */
 package com.waz.utils.events
 
-import com.waz.RobolectricUtils
 import org.scalatest._
 import com.waz.ZLog.ImplicitTag._
 
-@Ignore class EmptySignalSpec extends FeatureSpec with Matchers with OptionValues with BeforeAndAfter with RobolectricTests with RobolectricUtils  {
+class EmptySignalSpec extends FeatureSpec with Matchers with OptionValues with BeforeAndAfter {
 
   implicit val ec: EventContext = EventContext.Global
 

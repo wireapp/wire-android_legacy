@@ -19,19 +19,19 @@ package com.waz.utils
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.waz.RobolectricUtils
 import com.waz.model._
+import com.waz.specs.AndroidFreeSpec
 import com.waz.testutils.DefaultPatienceConfig
 import com.waz.threading.CancellableFuture
+import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{FeatureSpec, Ignore, Matchers, RobolectricTests}
 import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.Random
 
-@Ignore class SerialProcessingQueueSpec extends FeatureSpec with Matchers with RobolectricTests with RobolectricUtils with ScalaFutures with DefaultPatienceConfig {
+class SerialProcessingQueueSpec extends AndroidFreeSpec with Matchers with ScalaFutures with DefaultPatienceConfig {
   import com.waz.threading.Threading.Implicits.Background
 
   feature("Grouped event processing queue") {
@@ -84,33 +84,38 @@ import scala.util.Random
 
     scenario("process first items immediately") {
       queue.enqueue(Seq(1, 2, 3))
-      withDelay {
+      withDelay( {
         processedCount.get() shouldEqual 3
-      } (500.millis)
+      }, 500.millis)
     }
 
     scenario("throttle next processing") {
       queue ! 4
-      awaitUi(500.millis)
-      processedCount.get() shouldEqual 3
-      withDelay {
-        processedCount.get() shouldEqual 4
-      }
+      withDelay({
+        processedCount.get() shouldEqual 3
+        withDelay {
+          processedCount.get() shouldEqual 4
+        }
+      }, 500.millis)
     }
 
     scenario("flush queue") {
       queue.enqueue(Seq(5, 6))
-      queue.flush().futureValue
-      processedCount.get() shouldEqual 6
+      queue.flush()
+      withDelay({
+        processedCount.get() shouldEqual 6
+      }, 2.seconds)
+
     }
 
     scenario("throttle following processing") {
       queue ! 7
-      awaitUi(500.millis)
-      processedCount.get() shouldEqual 6
-      withDelay {
-        processedCount.get() shouldEqual 7
-      }
+      withDelay({
+        processedCount.get() shouldEqual 6
+        withDelay {
+          processedCount.get() shouldEqual 7
+        }
+      }, 500.millis)
     }
   }
 

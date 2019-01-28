@@ -19,7 +19,7 @@ package com.waz.utils.events
 
 import org.scalatest._
 
-@Ignore class MapSignalSpec extends FeatureSpec with Matchers with BeforeAndAfter with RobolectricTests {
+class MapSignalSpec extends FeatureSpec with Matchers with BeforeAndAfter {
 
   implicit val ec: EventContext = EventContext.Global
 

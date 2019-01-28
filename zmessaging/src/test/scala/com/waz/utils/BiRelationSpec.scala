@@ -22,7 +22,7 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{FeatureSpec, Ignore, Matchers}
 
-@Ignore class BiRelationSpec extends FeatureSpec with Matchers with GeneratorDrivenPropertyChecks {
+class BiRelationSpec extends FeatureSpec with Matchers with GeneratorDrivenPropertyChecks {
 
   scenario("Adding and removing single pairs") {
     val a = BiRelation.empty[Int, String]
