@@ -195,6 +195,7 @@ android {
             buildConfigField 'String',  'FIREBASE_API_KEY',           "\"$config.firebaseApiKey\""
             buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
+            buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
         }
 
         candidate {
@@ -216,6 +217,7 @@ android {
             buildConfigField 'String',  'FIREBASE_API_KEY',           "\"$config.firebaseApiKey\""
             buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
+            buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
         }
 
         prod {
@@ -236,6 +238,7 @@ android {
             buildConfigField 'String',  'FIREBASE_API_KEY',           "\"$config.firebaseApiKey\""
             buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
+            buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
         }
 
         internal {
@@ -257,6 +260,7 @@ android {
             buildConfigField 'String',  'FIREBASE_API_KEY',           "\"$config.firebaseApiKey\""
             buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
+            buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
         }
 
         experimental {
@@ -278,6 +282,7 @@ android {
             buildConfigField 'String',  'FIREBASE_API_KEY',           "\"$config.firebaseApiKey\""
             buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
+            buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
         }
     }
 
