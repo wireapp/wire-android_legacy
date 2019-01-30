@@ -34,6 +34,7 @@ import android.widget.{TextView, Toast}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.api.Message
+import com.waz.content.MessagesStorage
 import com.waz.content.UserPreferences.DownloadImagesAlways
 import com.waz.model._
 import com.waz.permissions.PermissionsService
@@ -41,7 +42,7 @@ import com.waz.service.ZMessaging
 import com.waz.service.assets.GlobalRecordAndPlayService
 import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, UnauthenticatedContent}
 import com.waz.service.assets2.Asset.{Audio, General, Image, Video}
-import com.waz.service.assets2.{Asset, AssetService, AssetStatus, GeneralAsset}
+import com.waz.service.assets2.{AssetStatus, _}
 import com.waz.service.messages.MessagesService
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
@@ -71,6 +72,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   val assets: Signal[AssetService] = zms.map(_.assetService)
   val permissions: Signal[PermissionsService] = zms.map(_.permissions)
   val messages: Signal[MessagesService] = zms.map(_.messages)
+  val messagesStorage: Signal[MessagesStorage] = zms.map(_.messagesStorage)
 
   lazy val messageActionsController: MessageActionsController = inject[MessageActionsController]
   lazy val singleImage: ISingleImageController = inject[ISingleImageController]
@@ -91,6 +93,15 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
       case Some(id) => openFile(id)
       case _ =>
     }
+
+  def assetSignal(assetId: AssetIdGeneral): Signal[GeneralAsset] =
+    for {
+      a <- assets
+      status <- a.assetSignal(assetId)
+    } yield status
+
+  def assetSignal(assetId: Option[AssetIdGeneral]): Signal[Option[GeneralAsset]] =
+    assetId.fold(Signal.const(Option.empty[GeneralAsset]))(aid => assetSignal(aid).map(Option(_)))
 
   def assetSignal(assetId: Signal[AssetIdGeneral]): Signal[GeneralAsset] =
     for {

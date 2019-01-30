@@ -35,7 +35,6 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{NoAutowiring, Signal, SourceSignal}
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.controllers.drawing.IDrawingController.DrawingMethod
-import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.glide.GlideBuilder
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.parts.assets.ImageLayoutAssetPart
@@ -71,7 +70,7 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends F
   onClicked { _ => message.head.map(assets.showSingleImage(_, this))(Threading.Ui) }
 
   message.map(_.assetId).collect { case Some(id: AssetId) => id }.onUi(
-    GlideBuilder.forAsset(_)
+    GlideBuilder(_)
       .addListener(new RequestListener[Drawable] {
         override def onLoadFailed(e: GlideException, model: scala.Any, target: Target[Drawable], isFirstResource: Boolean): Boolean = {
           noWifi ! e.getCauses.contains(DownloadOnWifiOnlyException)

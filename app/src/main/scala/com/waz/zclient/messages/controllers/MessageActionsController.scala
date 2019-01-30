@@ -25,16 +25,15 @@ import android.support.v7.app.AlertDialog
 import android.widget.Toast
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model._
+import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.assets2.Asset.Image
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.CancellableFuture
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, EventStream, Signal}
-import com.waz.utils.wrappers.{AndroidURIUtil, URI}
-import com.waz.zclient.common.controllers.ScreenController
+import com.waz.zclient.common.controllers.{AssetsController, ScreenController}
 import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
-import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.common.controllers.global.KeyboardController
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
 import com.waz.zclient.conversation.{LikesAndReadsFragment, ReplyController}

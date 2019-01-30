@@ -19,71 +19,58 @@ package com.waz.zclient.glide
 
 import java.io.InputStream
 
-import android.content.Context
 import com.bumptech.glide.Priority
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.data.DataFetcher
 import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.ZLog._
 import com.waz.service.ZMessaging
-import com.waz.service.assets.AssetService.BitmapResult.{BitmapLoaded, LoadingFailed}
 import com.waz.threading.CancellableFuture
-import com.waz.ui.MemoryImageCache.BitmapRequest.Regular
 import com.waz.utils.events.Signal
-import com.waz.utils.wrappers.AndroidBitmap
-import com.waz.zclient.common.views.ImageController
-import com.waz.zclient.{Injectable, Injector}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 
 
-class AssetDataFetcher(request: AssetRequest, width: Int)(implicit context: Context, inj: Injector) extends DataFetcher[InputStream] with Injectable {
+//TODO: These two are basically the same, merge them somehow
 
-  private lazy val imageController = inject[ImageController]
+class ImageAssetFetcher(request: ImageAssetRequest, zms: Signal[ZMessaging]) extends DataFetcher[InputStream] {
+  import com.waz.threading.Threading.Implicits.Background
 
-  private lazy val bitmapSignal = (request match {
-    case AssetIdRequest(assetId) => imageController.imageSignal(assetId, Regular(width), forceDownload = true)
-    case AssetDataRequest(assetData) => imageController.imageSignal(assetData, Regular(width), forceDownload = true)
-  }).collect {
-    case BitmapLoaded(AndroidBitmap(bm), _) => Right(bm)
-    case LoadingFailed(e: Exception) => Left(e)
-  }.disableAutowiring()
+  @volatile
+  private var currentData: Option[CancellableFuture[InputStream]] = None
 
   override def loadData(priority: Priority, callback: DataFetcher.DataCallback[_ >: InputStream]): Unit = {
+    verbose(s"Load asset $request")
 
-    verbose(s"loadData $request")
+    val data = CancellableFuture.lift(zms.head).flatMap(_.assetService.loadContent(request.asset))
+    currentData.foreach(_.cancel())
+    currentData = Some(data)
 
-    Await.result(bitmapSignal.head, Duration.Inf) match {
-      case Left(e) =>
-        verbose(s"bitmapSignal failed $request")
-        callback.onLoadFailed(e)
-      case Right(bmp) =>
-        verbose(s"bitmapSignal success $request")
-
-        import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
-
-        import android.graphics.Bitmap.CompressFormat
-
-        val bos = new ByteArrayOutputStream()
-        bmp.compress(CompressFormat.PNG, 0 , bos)
-        val bitmapData = bos.toByteArray
-        val is = new ByteArrayInputStream(bitmapData)
+    Try { Await.result(data, Duration.Inf) } match {
+      case Failure(err) =>
+        verbose(s"Asset loading failed $request, ${err.getMessage}")
+        callback.onLoadFailed(new RuntimeException(s"Fetcher. Asset loading failed: ${err.getMessage}"))
+      case Success(is) =>
+        verbose(s"Asset loaded $request")
         callback.onDataReady(is)
     }
   }
 
-  override def cleanup(): Unit = {}
+  override def cleanup(): Unit = ()
 
-  override def cancel(): Unit = {}
+  override def cancel(): Unit = {
+    currentData.foreach(_.cancel())
+    currentData = None
+  }
 
   override def getDataClass: Class[InputStream] = classOf[InputStream]
 
   override def getDataSource: DataSource = DataSource.REMOTE
 }
 
-class Asset2DataFetcher(request: Asset2Request, zms: Signal[ZMessaging]) extends DataFetcher[InputStream] {
+class AssetIdFetcher(request: AssetIdRequest, zms: Signal[ZMessaging]) extends DataFetcher[InputStream] {
   import com.waz.threading.Threading.Implicits.Background
 
   @volatile
