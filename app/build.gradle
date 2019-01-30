@@ -326,7 +326,10 @@ dependencies {
 
     //wire libraries:
     implementation "com.wire:audio-notifications:$audioVersion"
-    implementation 'com.wire:wiretranslations:1.+'
+    //don't include wire translations for custom builds
+    if (customRepository.isEmpty() || token.isEmpty()) {
+        implementation 'com.wire:wiretranslations:1.+'
+    }
 
     // TODO  Nasty hack to be able to build add only one wire-core flavor to the build
 
