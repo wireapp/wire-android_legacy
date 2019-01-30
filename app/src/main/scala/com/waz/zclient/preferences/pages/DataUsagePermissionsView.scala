@@ -23,6 +23,7 @@ import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
+import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.service.AccountManager
 import com.waz.threading.Threading
@@ -33,6 +34,7 @@ import com.waz.zclient.tracking.GlobalTrackingController.analyticsPrefKey
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.{BackStackKey, ContextUtils}
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.BuildConfig
 
 class DataUsagePermissionsView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -46,42 +48,46 @@ class DataUsagePermissionsView(context: Context, attrs: AttributeSet, style: Int
 
   val analyticsSwitch = returning(findById[SwitchPreference](R.id.preferences_send_anonymous_data)) { v =>
 
-    def setAnalyticsSwitchEnabled(enabled: Boolean) = {
-      v.setEnabled(enabled)
-      v.setAlpha(if (enabled) 1.0f else 0.5f)
-    }
-
-    v.setPreference(analyticsPrefKey, global = true)
-    v.pref.flatMap(_.signal).onChanged {
-      case true  => tracking.optIn()
-      case false => tracking.optOut()
+    if (BuildConfig.SUBMIT_CRASH_REPORTS) {
+      v.setPreference(analyticsPrefKey, global = true)
+      v.pref.flatMap(_.signal).onChanged {
+        case true  => tracking.optIn()
+        case false => tracking.optOut()
+      }
+    } else {
+      v.setVisibility(View.GONE)
     }
   }
 
   val receiveNewsAndOffersSwitch = returning(findById[SwitchPreference](R.id.preferences_receive_news_and_offers)) { v =>
 
-    def setReceivingNewsAndOffersSwitchEnabled(enabled: Boolean) = {
-      v.setEnabled(enabled)
-      v.setAlpha(if (enabled) 1.0f else 0.5f)
-    }
+    if (BuildConfig.ALLOW_MARKETING_COMMUNICATION) {
 
-    setReceivingNewsAndOffersSwitchEnabled(false)
-    am.head.flatMap(_.hasMarketingConsent).foreach { isSet =>
-      v.setChecked(isSet, disableListener = true)
-      setReceivingNewsAndOffersSwitchEnabled(true)
+      def setReceivingNewsAndOffersSwitchEnabled(enabled: Boolean) = {
+        v.setEnabled(enabled)
+        v.setAlpha(if (enabled) 1.0f else 0.5f)
+      }
 
-      v.onCheckedChange.onUi { set =>
-        setReceivingNewsAndOffersSwitchEnabled(false)
-        am.head.flatMap(_.setMarketingConsent(Some(set))).foreach { resp =>
-          resp match {
-            case Right(_) => //
-            case Left(_)  =>
-              v.setChecked(!set, disableListener = true) //set switch back to whatever it was
-              ContextUtils.showGenericErrorDialog()
+      setReceivingNewsAndOffersSwitchEnabled(false)
+      am.head.flatMap(_.hasMarketingConsent).foreach { isSet =>
+        v.setChecked(isSet, disableListener = true)
+        setReceivingNewsAndOffersSwitchEnabled(true)
+
+        v.onCheckedChange.onUi { set =>
+          setReceivingNewsAndOffersSwitchEnabled(false)
+          am.head.flatMap(_.setMarketingConsent(Some(set))).foreach { resp =>
+            resp match {
+              case Right(_) => //
+              case Left(_)  =>
+                v.setChecked(!set, disableListener = true) //set switch back to whatever it was
+                ContextUtils.showGenericErrorDialog()
+            }
+            setReceivingNewsAndOffersSwitchEnabled(true)
           }
-          setReceivingNewsAndOffersSwitchEnabled(true)
         }
       }
+    } else {
+      v.setVisibility(View.GONE)
     }
   }
 

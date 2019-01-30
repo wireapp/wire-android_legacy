@@ -86,7 +86,8 @@ class MainPhoneFragment extends FragmentHelper
     true <- inject[GlobalModule].prefs(GlobalPreferences.ShowMarketingConsentDialog).apply()
     am   <- am.head
     showAnalyticsPopup <- am.userPrefs(CrashesAndAnalyticsRequestShown).apply().map {
-      previouslyShown => !previouslyShown && BuildConfig.SUBMIT_CRASH_REPORTS
+      previouslyShown =>
+        !previouslyShown && BuildConfig.SUBMIT_CRASH_REPORTS
     }
     // Show "Help make wire better" popup
     _ <- if (!showAnalyticsPopup) Future.successful({}) else

@@ -42,9 +42,11 @@ import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
 import com.waz.zclient.preferences.dialogs._
 import com.waz.zclient.preferences.views.{EditNameDialog, PictureTextButton, SwitchPreference, TextButton}
 import com.waz.zclient.ui.utils.TextViewUtils._
+import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils._
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage}
+import com.waz.zclient.BuildConfig
 
 trait AccountView {
   val onNameClick:          EventStream[Unit]
@@ -91,6 +93,13 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   val backupButton        = findById[TextButton](R.id.preferences_backup)
   val dataUsageButton     = findById[TextButton](R.id.preferences_data_usage_permissions)
   val readReceiptsSwitch  = findById[SwitchPreference](R.id.preferences_account_read_receipts)
+  val personalInformationHeaderLabel = findById[TypefaceTextView](R.id.preference_personal_information_header)
+
+  // Hide data usage section if there is nothing to show in there
+  val showPersonalInformationSection = BuildConfig.SUBMIT_CRASH_REPORTS || BuildConfig.ALLOW_MARKETING_COMMUNICATION
+  dataUsageButton.setVisible(showPersonalInformationSection)
+  personalInformationHeaderLabel.setVisible(showPersonalInformationSection)
+
 
   override val onNameClick          = nameButton.onClickEvent.map(_ => ())
   override val onHandleClick        = handleButton.onClickEvent.map(_ => ())
