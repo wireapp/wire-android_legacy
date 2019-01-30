@@ -26,7 +26,7 @@ import android.util.AttributeSet
 import android.view.WindowManager
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
-import com.waz.api.{AssetStatus, Message}
+import com.waz.api.Message
 import com.waz.utils._
 import com.waz.model.{ConvId, Dim2, MessageData}
 import com.waz.service.assets2.AssetStatus

@@ -60,7 +60,7 @@ import com.waz.zclient.messages.parts.assets.FileAssetPartView
 import com.waz.zclient.messages.parts.{EphemeralPartView, WebLinkPartView}
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.utils.Time.TimeStamp
-import com.waz.zclient.utils.{RichView, ViewUtils, _}
+import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{R, ViewHelper}
 
 trait CollectionItemView extends ViewHelper with EphemeralPartView {

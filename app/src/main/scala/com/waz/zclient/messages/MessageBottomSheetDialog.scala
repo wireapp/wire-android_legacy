@@ -19,18 +19,11 @@
 package com.waz.zclient.messages
 
 import android.content.Context
-import com.waz.api.{AssetStatus, Message}
-import com.waz.model._
-import com.waz.service.ZMessaging
-import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
-import android.os.Bundle
-import android.support.design.widget.BottomSheetDialog
-import android.view.{View, ViewGroup}
-import android.widget.{LinearLayout, RelativeLayout, TextView}
 import com.waz.api.Message
 import com.waz.model._
+import com.waz.service.ZMessaging
 import com.waz.service.assets2.AssetStatus
-import com.waz.threading.Threading
+import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.messages.MessageBottomSheetDialog.{Actions, MessageAction, Params}
 import com.waz.zclient.messages.controllers.MessageActionsController

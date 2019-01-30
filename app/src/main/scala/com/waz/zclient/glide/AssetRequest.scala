@@ -17,10 +17,9 @@
  */
 package com.waz.zclient.glide
 
-import com.waz.model.{AssetData, AssetId}
+import com.waz.model.AssetId
+import com.waz.service.assets2.{Asset, ImageDetails}
 
 sealed trait AssetRequest
 case class AssetIdRequest(assetId: AssetId) extends AssetRequest
-case class AssetDataRequest(assetData: AssetData) extends AssetRequest
-
-case class Asset2Request(assetId: AssetId)
+case class ImageAssetRequest(asset: Asset[ImageDetails]) extends AssetRequest

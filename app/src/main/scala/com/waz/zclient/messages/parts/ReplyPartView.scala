@@ -27,6 +27,8 @@ import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
 import com.waz.model._
+import com.waz.service.assets2.Asset
+import com.waz.service.assets2.Asset.General
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events._
@@ -77,10 +79,11 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) 
   container.setBackground(new ReplyBackgroundDrawable(getStyledColor(R.attr.replyBorderColor), getStyledColor(R.attr.wireBackgroundCollection)))
 
   protected val quotedMessage: SourceSignal[MessageData] with NoAutowiring = Signal[MessageData]()
-  protected val quotedAsset: Signal[Option[AssetData]] =
-    quotedMessage.map(_.assetId).flatMap(assetsController.assetSignal).collect {
-      case (asset, _) => Option(asset)
-    }.orElse(Signal.const(Option.empty[AssetData]))
+  protected val quotedAsset: Signal[Option[Asset[General]]] =
+    quotedMessage.map(_.assetId).flatMap(assetsController.assetSignal).map {
+      case Some(x: Asset[General]) => Some(x)
+      case _ => None
+    }
 
   def setQuote(quotedMessage: MessageData): Unit = {
     ZLog.verbose(s"setQuote: $quotedMessage")
@@ -205,7 +208,7 @@ class FileReplyPartView(context: Context, attrs: AttributeSet, style: Int) exten
 
   private lazy val textView = findById[TypefaceTextView](R.id.text)
 
-  quotedAsset.map(_.flatMap(_.name).getOrElse("")).onUi(textView.setText)
+  quotedAsset.map(_.map(_.name).getOrElse("")).onUi(textView.setText)
   textView.setStartCompoundDrawable(Some(WireStyleKit.drawFile), getStyledColor(R.attr.wirePrimaryTextColor))
 }
 
@@ -218,7 +221,7 @@ class VideoReplyPartView(context: Context, attrs: AttributeSet, style: Int) exte
   private val imageView = findById[ImageView](R.id.image)
   private val imageIcon = findById[GlyphTextView](R.id.image_icon)
 
-  quotedAsset.map(_.flatMap(_.previewId)).onUi {
+  quotedAsset.map(_.flatMap(_.preview)).onUi {
     case Some(aid: AssetId) => GlideBuilder(aid).apply(new RequestOptions().centerInside()).into(imageView)
     case _ => WireGlide().clear(imageView)
   }

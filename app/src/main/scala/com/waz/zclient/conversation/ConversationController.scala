@@ -32,7 +32,7 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.Client
 import com.waz.service.assets2.{Content, ContentForUpload, UriHelper}
-import com.waz.service.conversation.{SelectedConversationService, ConversationsService, ConversationsUiService}
+import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.utils.{Serialized, returning, _}
@@ -45,7 +45,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R}
 import org.threeten.bp.Instant
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class ConversationController(implicit injector: Injector, context: Context, ec: EventContext) extends Injectable {
@@ -157,9 +157,9 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def loadClients(userId: UserId): Future[Seq[Client]] =
     otrClientsStorage.head.flatMap(_.getClients(userId)) // TODO: move to SE maybe?
 
-    def sendMessage(text: String, mentions: Seq[Mention] = Nil, quote: Option[MessageId] = None): Future[Option[MessageData]] = {
+    def sendMessage(text: String, mentions: Seq[Mention] = Nil, quote: Option[MessageId] = None, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]] = {
       convsUiwithCurrentConv({(ui, id) =>
-        quote.fold2(ui.sendTextMessage(id, text, mentions), ui.sendReplyMessage(_, text, mentions))
+        quote.fold2(ui.sendTextMessage(id, text, mentions, exp), ui.sendReplyMessage(_, text, mentions, exp))
       })
     }
 

@@ -24,10 +24,10 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.Registry;
 import com.bumptech.glide.annotation.GlideModule;
 import com.bumptech.glide.module.AppGlideModule;
-import com.waz.zclient.glide.Asset2Request;
-import com.waz.zclient.glide.AssetRequest;
-import com.waz.zclient.glide.loaders.Asset2RequestModelLoaderFactory;
-import com.waz.zclient.glide.loaders.AssetRequestModelLoaderFactory;
+import com.waz.zclient.glide.AssetIdRequest;
+import com.waz.zclient.glide.ImageAssetRequest;
+import com.waz.zclient.glide.loaders.AssetIdRequestModelLoaderFactory;
+import com.waz.zclient.glide.loaders.ImageAssetRequestModelLoaderFactory;
 
 import java.io.InputStream;
 
@@ -35,7 +35,7 @@ import java.io.InputStream;
 public class WireGlideModule extends AppGlideModule {
     @Override
     public void registerComponents(@NonNull Context context, @NonNull Glide glide, @NonNull Registry registry) {
-        registry.prepend(AssetRequest.class, InputStream.class, new AssetRequestModelLoaderFactory(context));
-        registry.prepend(Asset2Request.class, InputStream.class, new Asset2RequestModelLoaderFactory(context));
+        registry.prepend(ImageAssetRequest.class, InputStream.class, new ImageAssetRequestModelLoaderFactory(context));
+        registry.prepend(AssetIdRequest.class, InputStream.class, new AssetIdRequestModelLoaderFactory(context));
     }
 }
