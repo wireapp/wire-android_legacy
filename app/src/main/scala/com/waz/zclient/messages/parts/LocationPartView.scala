@@ -29,9 +29,6 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.messages.{ClickableViewPart, HighlightViewPart, MsgPart}
-import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.glide._
-import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.{R, ViewHelper}
 
 class LocationPartView(context: Context, attrs: AttributeSet, style: Int)

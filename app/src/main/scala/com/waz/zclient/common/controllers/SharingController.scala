@@ -53,7 +53,7 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
       sendEvent ! (content, convs, expiration)
       content match {
         case TextContent(t) =>
-          conversationController.sendMessage(t, List.empty, Some(expiration))
+          conversationController.sendMessage(t, List.empty, None, Some(expiration))
         case uriContent =>
           Future.traverse(uriContent.uris) { uriWrapper =>
             val uri = URIWrapper.toJava(uriWrapper)

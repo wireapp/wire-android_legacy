@@ -37,7 +37,6 @@ package com.waz.zclient.glide.loaders
 import java.io.InputStream
 import java.security.MessageDigest
 
-import android.content.Context
 import com.bumptech.glide.load.model.ModelLoader
 import com.bumptech.glide.load.model.ModelLoader.LoadData
 import com.bumptech.glide.load.{Key, Options}
@@ -46,32 +45,26 @@ import com.waz.ZLog._
 import com.waz.model.AssetId
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
-import com.waz.zclient.Injector
 import com.waz.zclient.glide._
 
-class AssetRequestModelLoader(implicit context: Context, inj: Injector) extends ModelLoader[AssetRequest, InputStream] {
-  override def buildLoadData(model: AssetRequest, width: Int, height: Int, options: Options): ModelLoader.LoadData[InputStream] = {
-    val aId = model match {
-      case AssetDataRequest(data) => data.id
-      case AssetIdRequest(id) => id
-    }
-    val key = AssetKey(aId, width, height, options)
-
+class ImageAssetRequestModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[ImageAssetRequest, InputStream] {
+  override def buildLoadData(model: ImageAssetRequest, width: Int, height: Int, options: Options): ModelLoader.LoadData[InputStream] = {
+    val key = AssetKey(model.asset.id, width, height, options)
     verbose(s"key: $key")
-    new LoadData[InputStream](key, new AssetDataFetcher(model, width))
+    new LoadData[InputStream](key, new ImageAssetFetcher(model, zms))
   }
 
-  override def handles(model: AssetRequest): Boolean = true
+  override def handles(model: ImageAssetRequest): Boolean = true
 }
 
-class Asset2RequestModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[Asset2Request, InputStream] {
-  override def buildLoadData(model: Asset2Request, width: Int, height: Int, options: Options): ModelLoader.LoadData[InputStream] = {
+class AssetIdRequestModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[AssetIdRequest, InputStream] {
+  override def buildLoadData(model: AssetIdRequest, width: Int, height: Int, options: Options): ModelLoader.LoadData[InputStream] = {
     val key = AssetKey(model.assetId, width, height, options)
     verbose(s"key: $key")
-    new LoadData[InputStream](key, new Asset2DataFetcher(model, zms))
+    new LoadData[InputStream](key, new AssetIdFetcher(model, zms))
   }
 
-  override def handles(model: Asset2Request): Boolean = true
+  override def handles(model: AssetIdRequest): Boolean = true
 }
 
 case class AssetKey(assetId: AssetId, width: Int, height: Int, options: Options) extends Key {

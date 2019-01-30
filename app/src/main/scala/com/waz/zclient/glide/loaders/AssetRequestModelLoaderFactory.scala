@@ -23,22 +23,24 @@ import android.content.Context
 import com.bumptech.glide.load.model.{ModelLoader, ModelLoaderFactory, MultiModelLoaderFactory}
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
-import com.waz.zclient.glide.{Asset2Request, AssetRequest}
+import com.waz.zclient.glide.{AssetIdRequest, ImageAssetRequest}
 import com.waz.zclient.{Injectable, Injector, WireContext}
 
-class AssetRequestModelLoaderFactory(context: Context) extends ModelLoaderFactory[AssetRequest, InputStream] {
-  override def build(multiFactory: MultiModelLoaderFactory): ModelLoader[AssetRequest, InputStream] = {
-    new AssetRequestModelLoader()(context, context.asInstanceOf[WireContext].injector)
+class ImageAssetRequestModelLoaderFactory(context: Context) extends ModelLoaderFactory[ImageAssetRequest, InputStream] with Injectable {
+  private implicit val injector: Injector = context.asInstanceOf[WireContext].injector
+
+  override def build(multiFactory: MultiModelLoaderFactory): ModelLoader[ImageAssetRequest, InputStream] = {
+    new ImageAssetRequestModelLoader(inject[Signal[ZMessaging]])
   }
 
   override def teardown(): Unit = {}
 }
 
-class Asset2RequestModelLoaderFactory(context: Context) extends ModelLoaderFactory[Asset2Request, InputStream] with Injectable {
+class AssetIdRequestModelLoaderFactory(context: Context) extends ModelLoaderFactory[AssetIdRequest, InputStream] with Injectable {
   private implicit val injector: Injector = context.asInstanceOf[WireContext].injector
 
-  override def build(multiFactory: MultiModelLoaderFactory): ModelLoader[Asset2Request, InputStream] = {
-    new Asset2RequestModelLoader(inject[Signal[ZMessaging]])
+  override def build(multiFactory: MultiModelLoaderFactory): ModelLoader[AssetIdRequest, InputStream] = {
+    new AssetIdRequestModelLoader(inject[Signal[ZMessaging]])
   }
 
   override def teardown(): Unit = {}
