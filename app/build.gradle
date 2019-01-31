@@ -85,8 +85,15 @@ task copyCustomResources(type: Copy) {
     copy {
         from file(repoDir + '/strings/strings.xml') into file(targetResFolder + '/values')
     }
-}
 
+    config.languages.each { code ->
+        def targetStringDir = "$targetResFolder/values-$code"
+        copy {
+            mkdir targetStringDir
+            from file("$customDir/strings/$code/strings.xml") into file(targetStringDir)
+        }
+    }
+}
 
 android {
     //Trigger the licenseFormat task at least once in any compile phase
@@ -285,7 +292,10 @@ dependencies {
 
     //wire libraries:
     implementation "com.wire:audio-notifications:$audioVersion"
-    implementation 'com.wire:wiretranslations:1.+'
+    //don't include wire translations for custom builds
+    if (customRepository.isEmpty() || token.isEmpty()) {
+        implementation 'com.wire:wiretranslations:1.+'
+    }
 
     // TODO  Nasty hack to be able to build add only one wire-core flavor to the build
 
