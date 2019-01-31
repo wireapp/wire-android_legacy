@@ -47,24 +47,14 @@ import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
 import com.waz.zclient.glide._
 
-class ImageAssetRequestModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[ImageAssetRequest, InputStream] {
-  override def buildLoadData(model: ImageAssetRequest, width: Int, height: Int, options: Options): ModelLoader.LoadData[InputStream] = {
-    val key = AssetKey(model.asset.id, width, height, options)
+class AssetRequestModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[AssetRequest, InputStream] {
+  override def buildLoadData(model: AssetRequest, width: Int, height: Int, options: Options): ModelLoader.LoadData[InputStream] = {
+    val key = AssetKey(model.assetId, width, height, options)
     verbose(s"key: $key")
     new LoadData[InputStream](key, new ImageAssetFetcher(model, zms))
   }
 
-  override def handles(model: ImageAssetRequest): Boolean = true
-}
-
-class AssetIdRequestModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[AssetIdRequest, InputStream] {
-  override def buildLoadData(model: AssetIdRequest, width: Int, height: Int, options: Options): ModelLoader.LoadData[InputStream] = {
-    val key = AssetKey(model.assetId, width, height, options)
-    verbose(s"key: $key")
-    new LoadData[InputStream](key, new AssetIdFetcher(model, zms))
-  }
-
-  override def handles(model: AssetIdRequest): Boolean = true
+  override def handles(model: AssetRequest): Boolean = true
 }
 
 case class AssetKey(assetId: AssetId, width: Int, height: Int, options: Options) extends Key {

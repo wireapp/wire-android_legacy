@@ -27,8 +27,9 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.target.Target
 import com.bumptech.glide.request.{RequestListener, RequestOptions}
+import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
-import com.waz.model.{AssetId, MessageContent}
+import com.waz.model.{AssetId, MessageContent, UploadAssetId}
 import com.waz.service.downloads.AssetLoader.DownloadOnWifiOnlyException
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
@@ -69,23 +70,32 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends F
 
   onClicked { _ => message.head.map(assets.showSingleImage(_, this))(Threading.Ui) }
 
-  message.map(_.assetId).collect { case Some(id: AssetId) => id }.onUi(
-    GlideBuilder(_)
-      .addListener(new RequestListener[Drawable] {
+  message.map(_.assetId).onUi { aId =>
+    ZLog.verbose(s"message asset id => $aId")
+
+    val builder = aId.collect {
+      case a: AssetId => GlideBuilder(a)
+      case a: UploadAssetId => GlideBuilder(a)
+    }
+    builder.foreach {
+      _.addListener(new RequestListener[Drawable] {
         override def onLoadFailed(e: GlideException, model: scala.Any, target: Target[Drawable], isFirstResource: Boolean): Boolean = {
           noWifi ! e.getCauses.contains(DownloadOnWifiOnlyException)
+          ZLog.verbose(s"onLoadFailed $aId")
           false
         }
 
         override def onResourceReady(resource: Drawable, model: scala.Any, target: Target[Drawable], dataSource: DataSource, isFirstResource: Boolean): Boolean = {
           noWifi ! false
+          ZLog.verbose(s"onResourceReady $aId")
           false
         }
       })
-      .apply(new RequestOptions().fitCenter())
-      .transition(DrawableTransitionOptions.withCrossFade())
-      .into(imageView)
-  )
+        .apply(new RequestOptions().fitCenter())
+        .transition(DrawableTransitionOptions.withCrossFade())
+        .into(imageView)
+    }
+  }
 
   override def onInflated(): Unit = {}
 }

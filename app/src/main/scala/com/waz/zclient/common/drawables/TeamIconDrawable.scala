@@ -89,7 +89,9 @@ class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: 
   val bmp = for{
     z <- zms
     asset <- assetId.flatMap {
-      case Some(aId) => z.assetsStorage.signal(aId).map(Option(_))
+      case Some(aId) =>
+        Signal.const(Option.empty[AssetData])
+        //z.assetsStorage.signal(aId).map(Option(_)) //TODO: Use new assets engine
       case _ => Signal.const(Option.empty[AssetData])
     }
     b <- bounds
