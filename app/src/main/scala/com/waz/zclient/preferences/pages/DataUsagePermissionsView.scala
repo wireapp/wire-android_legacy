@@ -75,11 +75,9 @@ class DataUsagePermissionsView(context: Context, attrs: AttributeSet, style: Int
         v.onCheckedChange.onUi { set =>
           setReceivingNewsAndOffersSwitchEnabled(false)
           am.head.flatMap(_.setMarketingConsent(Some(set))).foreach { resp =>
-            resp match {
-              case Right(_) => //
-              case Left(_)  =>
-                v.setChecked(!set, disableListener = true) //set switch back to whatever it was
-                ContextUtils.showGenericErrorDialog()
+            if (resp.isLeft) {
+              v.setChecked(!set, disableListener = true) //set switch back to whatever it was
+              ContextUtils.showGenericErrorDialog()
             }
             setReceivingNewsAndOffersSwitchEnabled(true)
           }
