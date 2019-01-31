@@ -197,6 +197,7 @@ android {
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
             buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
             buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
+            buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
         }
 
         candidate {
@@ -220,6 +221,7 @@ android {
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
             buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
             buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
+            buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
         }
 
         prod {
@@ -242,6 +244,7 @@ android {
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
             buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
             buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
+            buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
         }
 
         internal {
@@ -265,6 +268,7 @@ android {
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
             buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
             buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
+            buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
         }
 
         experimental {
@@ -288,6 +292,7 @@ android {
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
             buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
             buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
+            buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
         }
     }
 
