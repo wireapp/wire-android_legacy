@@ -196,6 +196,7 @@ android {
             buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
             buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
+            buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
         }
 
         candidate {
@@ -218,6 +219,7 @@ android {
             buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
             buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
+            buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
         }
 
         prod {
@@ -239,6 +241,7 @@ android {
             buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
             buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
+            buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
         }
 
         internal {
@@ -261,6 +264,7 @@ android {
             buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
             buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
+            buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
         }
 
         experimental {
@@ -283,6 +287,7 @@ android {
             buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
             buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
+            buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
         }
     }
 
