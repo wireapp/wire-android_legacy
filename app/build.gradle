@@ -115,6 +115,20 @@ android {
         versionName majorVersion + android.defaultConfig.versionCode
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
+
+        buildConfigField 'Integer', 'MAX_ACCOUNTS',               "$config.maxAccounts"
+        buildConfigField 'String',  'BACKEND_URL',                "\"$config.backendUrl\""
+        buildConfigField 'String',  'WEBSOCKET_URL',              "\"$config.websocketUrl\""
+        buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',   "$config.allow_account_creation"
+        buildConfigField 'String',  'SUPPORT_EMAIL',              "\"$config.supportEmail\""
+        buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',    "\"$config.pushSenderId\""
+        buildConfigField 'String',  'FIREBASE_APP_ID',            "\"$config.firebaseAppId\""
+        buildConfigField 'String',  'FIREBASE_API_KEY',           "\"$config.firebaseApiKey\""
+        buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
+        buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
+        buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
+        buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
+        buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
     }
 
     packagingOptions {
@@ -192,19 +206,6 @@ android {
                                     sharedUserId           : "",
                                     internal_features      : "true"]
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
-            buildConfigField 'Integer', 'MAX_ACCOUNTS',               "$config.maxAccounts"
-            buildConfigField 'String',  'BACKEND_URL',                "\"$config.backendUrl\""
-            buildConfigField 'String',  'WEBSOCKET_URL',              "\"$config.websocketUrl\""
-            buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',   "$config.allow_account_creation"
-            buildConfigField 'String',  'SUPPORT_EMAIL',              "\"$config.supportEmail\""
-            buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',    "\"$config.pushSenderId\""
-            buildConfigField 'String',  'FIREBASE_APP_ID',            "\"$config.firebaseAppId\""
-            buildConfigField 'String',  'FIREBASE_API_KEY',           "\"$config.firebaseApiKey\""
-            buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
-            buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
-            buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
-            buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
-            buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
         }
 
         candidate {
@@ -216,19 +217,6 @@ android {
                                     internal_features      : "false"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
-            buildConfigField 'Integer', 'MAX_ACCOUNTS',               "$config.maxAccounts"
-            buildConfigField 'String',  'BACKEND_URL',                "\"$config.backendUrl\""
-            buildConfigField 'String',  'WEBSOCKET_URL',              "\"$config.websocketUrl\""
-            buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',   "$config.allow_account_creation"
-            buildConfigField 'String',  'SUPPORT_EMAIL',              "\"$config.supportEmail\""
-            buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',    "\"$config.pushSenderId\""
-            buildConfigField 'String',  'FIREBASE_APP_ID',            "\"$config.firebaseAppId\""
-            buildConfigField 'String',  'FIREBASE_API_KEY',           "\"$config.firebaseApiKey\""
-            buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
-            buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
-            buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
-            buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
-            buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
         }
 
         prod {
@@ -239,19 +227,6 @@ android {
                                     internal_features      : "false"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
-            buildConfigField 'Integer', 'MAX_ACCOUNTS',               "$config.maxAccounts"
-            buildConfigField 'String',  'BACKEND_URL',                "\"$config.backendUrl\""
-            buildConfigField 'String',  'WEBSOCKET_URL',              "\"$config.websocketUrl\""
-            buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',   "$config.allow_account_creation"
-            buildConfigField 'String',  'SUPPORT_EMAIL',              "\"$config.supportEmail\""
-            buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',    "\"$config.pushSenderId\""
-            buildConfigField 'String',  'FIREBASE_APP_ID',            "\"$config.firebaseAppId\""
-            buildConfigField 'String',  'FIREBASE_API_KEY',           "\"$config.firebaseApiKey\""
-            buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
-            buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
-            buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
-            buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
-            buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
         }
 
         internal {
@@ -263,19 +238,6 @@ android {
                                     internal_features: "true"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
-            buildConfigField 'Integer', 'MAX_ACCOUNTS',               "$config.maxAccounts"
-            buildConfigField 'String',  'BACKEND_URL',                "\"$config.backendUrl\""
-            buildConfigField 'String',  'WEBSOCKET_URL',              "\"$config.websocketUrl\""
-            buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',   "$config.allow_account_creation"
-            buildConfigField 'String',  'SUPPORT_EMAIL',              "\"$config.supportEmail\""
-            buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',    "\"$config.pushSenderId\""
-            buildConfigField 'String',  'FIREBASE_APP_ID',            "\"$config.firebaseAppId\""
-            buildConfigField 'String',  'FIREBASE_API_KEY',           "\"$config.firebaseApiKey\""
-            buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
-            buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
-            buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
-            buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
-            buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
         }
 
         experimental {
@@ -287,19 +249,6 @@ android {
                                     internal_features      : "true"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
-            buildConfigField 'Integer', 'MAX_ACCOUNTS',               "$config.maxAccounts"
-            buildConfigField 'String',  'BACKEND_URL',                "\"$config.backendUrl\""
-            buildConfigField 'String',  'WEBSOCKET_URL',              "\"$config.websocketUrl\""
-            buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',   "$config.allow_account_creation"
-            buildConfigField 'String',  'SUPPORT_EMAIL',              "\"$config.supportEmail\""
-            buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',    "\"$config.pushSenderId\""
-            buildConfigField 'String',  'FIREBASE_APP_ID',            "\"$config.firebaseAppId\""
-            buildConfigField 'String',  'FIREBASE_API_KEY',           "\"$config.firebaseApiKey\""
-            buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
-            buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
-            buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
-            buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
-            buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
         }
     }
 
