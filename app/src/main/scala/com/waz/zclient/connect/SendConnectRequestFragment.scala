@@ -170,7 +170,7 @@ class SendConnectRequestFragment extends BaseFragment[SendConnectRequestFragment
     guestIndicatorIcon
 
     user.map(_.picture).collect { case Some(p) => p }.onUi { id =>
-      imageViewProfile.foreach(GlideBuilder(id).apply(new RequestOptions().circleCrop()).into(_))
+      imageViewProfile.foreach(GlideBuilder.fromPublicAsset(id).apply(new RequestOptions().circleCrop()).into(_))
     }
 
     val backgroundContainer = findById[View](R.id.background_container)

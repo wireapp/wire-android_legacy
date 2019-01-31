@@ -165,7 +165,7 @@ object ChatHeadView {
 
     def glideRequest(implicit context: Context): RequestBuilder[Drawable] = {
       val request = assetId match {
-        case Some(id) => GlideBuilder(id)
+        case Some(id) => GlideBuilder.fromPublicAsset(id)
         case _ => GlideBuilder(placeholder)
       }
       val requestOptions = new RequestOptions()

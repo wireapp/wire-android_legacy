@@ -122,7 +122,7 @@ class PendingConnectRequestFragment extends BaseFragment[PendingConnectRequestFr
     userHandleView
 
     user.map(_.picture).collect { case Some(p) => p }.onUi { id =>
-      imageViewProfile.foreach(GlideBuilder(id).apply(new RequestOptions().circleCrop()).into(_))
+      imageViewProfile.foreach(GlideBuilder.fromPublicAsset(id).apply(new RequestOptions().circleCrop()).into(_))
     }
 
     userNameView.foreach { v =>

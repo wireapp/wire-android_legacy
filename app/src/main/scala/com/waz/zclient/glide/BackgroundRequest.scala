@@ -36,7 +36,7 @@ object BackgroundRequest {
       new ScaleTransformation(ScaleValue),
       new BlurTransformation(),
       new DarkenTransformation(148, 2f))
-    GlideBuilder(assetId).apply(opt).transition(DrawableTransitionOptions.withCrossFade())
+    GlideBuilder.fromPublicAsset(assetId).apply(opt).transition(DrawableTransitionOptions.withCrossFade())
   }
 
 

@@ -23,24 +23,14 @@ import android.content.Context
 import com.bumptech.glide.load.model.{ModelLoader, ModelLoaderFactory, MultiModelLoaderFactory}
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
-import com.waz.zclient.glide.{AssetIdRequest, ImageAssetRequest}
+import com.waz.zclient.glide.AssetRequest
 import com.waz.zclient.{Injectable, Injector, WireContext}
 
-class ImageAssetRequestModelLoaderFactory(context: Context) extends ModelLoaderFactory[ImageAssetRequest, InputStream] with Injectable {
+class AssetRequestModelLoaderFactory(context: Context) extends ModelLoaderFactory[AssetRequest, InputStream] with Injectable {
   private implicit val injector: Injector = context.asInstanceOf[WireContext].injector
 
-  override def build(multiFactory: MultiModelLoaderFactory): ModelLoader[ImageAssetRequest, InputStream] = {
-    new ImageAssetRequestModelLoader(inject[Signal[ZMessaging]])
-  }
-
-  override def teardown(): Unit = {}
-}
-
-class AssetIdRequestModelLoaderFactory(context: Context) extends ModelLoaderFactory[AssetIdRequest, InputStream] with Injectable {
-  private implicit val injector: Injector = context.asInstanceOf[WireContext].injector
-
-  override def build(multiFactory: MultiModelLoaderFactory): ModelLoader[AssetIdRequest, InputStream] = {
-    new AssetIdRequestModelLoader(inject[Signal[ZMessaging]])
+  override def build(multiFactory: MultiModelLoaderFactory): ModelLoader[AssetRequest, InputStream] = {
+    new AssetRequestModelLoader(inject[Signal[ZMessaging]])
   }
 
   override def teardown(): Unit = {}

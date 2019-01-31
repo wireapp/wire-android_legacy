@@ -33,9 +33,7 @@ import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 
 
-//TODO: These two are basically the same, merge them somehow
-
-class ImageAssetFetcher(request: ImageAssetRequest, zms: Signal[ZMessaging]) extends DataFetcher[InputStream] {
+class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging]) extends DataFetcher[InputStream] {
   import com.waz.threading.Threading.Implicits.Background
 
   @volatile
@@ -44,42 +42,14 @@ class ImageAssetFetcher(request: ImageAssetRequest, zms: Signal[ZMessaging]) ext
   override def loadData(priority: Priority, callback: DataFetcher.DataCallback[_ >: InputStream]): Unit = {
     verbose(s"Load asset $request")
 
-    val data = CancellableFuture.lift(zms.head).flatMap(_.assetService.loadContent(request.asset))
-    currentData.foreach(_.cancel())
-    currentData = Some(data)
-
-    Try { Await.result(data, Duration.Inf) } match {
-      case Failure(err) =>
-        verbose(s"Asset loading failed $request, ${err.getMessage}")
-        callback.onLoadFailed(new RuntimeException(s"Fetcher. Asset loading failed: ${err.getMessage}"))
-      case Success(is) =>
-        verbose(s"Asset loaded $request")
-        callback.onDataReady(is)
+    val data = CancellableFuture.lift(zms.head).flatMap { zms =>
+      request match {
+        case AssetIdRequest(assetId) => zms.assetService.loadContentById(assetId)
+        case ImageAssetRequest(asset) => zms.assetService.loadContent(asset)
+        case PublicAssetIdRequest(assetId) => zms.assetService.loadPublicContentById(assetId, None, None)
+        case UploadAssetIdRequest(uploadAssetId) => zms.assetService.loadUploadContentById(uploadAssetId, None)
+      }
     }
-  }
-
-  override def cleanup(): Unit = ()
-
-  override def cancel(): Unit = {
-    currentData.foreach(_.cancel())
-    currentData = None
-  }
-
-  override def getDataClass: Class[InputStream] = classOf[InputStream]
-
-  override def getDataSource: DataSource = DataSource.REMOTE
-}
-
-class AssetIdFetcher(request: AssetIdRequest, zms: Signal[ZMessaging]) extends DataFetcher[InputStream] {
-  import com.waz.threading.Threading.Implicits.Background
-
-  @volatile
-  private var currentData: Option[CancellableFuture[InputStream]] = None
-
-  override def loadData(priority: Priority, callback: DataFetcher.DataCallback[_ >: InputStream]): Unit = {
-    verbose(s"Load asset $request")
-
-    val data = CancellableFuture.lift(zms.head).flatMap(_.assetService.loadContentById(request.assetId))
     currentData.foreach(_.cancel())
     currentData = Some(data)
 
