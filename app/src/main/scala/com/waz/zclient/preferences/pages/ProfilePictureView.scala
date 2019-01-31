@@ -52,7 +52,7 @@ class ProfilePictureViewImpl(context: Context, attrs: AttributeSet, style: Int) 
     }
   })
 
-  override def setPictureId(assetId: AssetId) = GlideBuilder(assetId).into(image)
+  override def setPictureId(assetId: AssetId) = GlideBuilder.fromPublicAsset(assetId).into(image)
 }
 
 case class ProfilePictureBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {

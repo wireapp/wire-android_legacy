@@ -22,12 +22,10 @@ import android.graphics.Bitmap
 import android.support.v4.app.NotificationCompat
 import com.waz.ZLog._
 import com.waz.bitmap.BitmapUtils
-import com.waz.model.{AssetData, AssetId}
+import com.waz.model.AssetId
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapResult
-import com.waz.service.images.BitmapSignal
 import com.waz.threading.Threading
-import com.waz.ui.MemoryImageCache.BitmapRequest.Single
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.URI
 import com.waz.zclient.utils.ContextUtils._
@@ -61,8 +59,7 @@ class ImageNotificationsController(implicit cxt: WireContext, eventContext: Even
   zms.zip(savedImageId).flatMap {
     case (zms, Some(imageId)) =>
       zms.assetsStorage.signal(imageId).flatMap {
-        case data@AssetData.IsImage() => BitmapSignal(zms, data, Single(getDimenPx(R.dimen.notification__image_saving__image_width)))
-        case _ => Signal.empty[BitmapResult]
+        case _ => Signal.empty[BitmapResult] //TODO: Use new asset engine
       }
     case _ => Signal.empty[BitmapResult]
   }.zip(savedImageUri).on(Threading.Ui) {

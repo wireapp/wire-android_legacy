@@ -117,7 +117,7 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   override def setPictureId(assetId: AssetId) = {
 
     //TODO: maybe create a util for this?
-    GlideBuilder(assetId)
+    GlideBuilder.fromPublicAsset(assetId)
       .apply(new RequestOptions().centerCrop())
       .into(new CustomViewTarget[View, Drawable](pictureButton) {
       override def onResourceCleared(placeholder: Drawable): Unit =

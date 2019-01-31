@@ -137,7 +137,7 @@ class BlockedUserProfileFragment extends BaseFragment[BlockedUserProfileFragment
     userNameView
     userUsernameView
     pictureSignal.onUi { id =>
-      profileImageView.foreach(GlideBuilder(id)
+      profileImageView.foreach(GlideBuilder.fromPublicAsset(id)
         .apply(new RequestOptions().centerCrop())
         .into(_))
     }

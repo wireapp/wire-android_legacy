@@ -117,7 +117,7 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   override def setHandle(handle: String): Unit = userHandleText.setText(handle)
 
   override def setProfilePictureAssetId(assetId: AssetId): Unit =
-    GlideBuilder(assetId)
+    GlideBuilder.fromPublicAsset(assetId)
       .apply(new RequestOptions().circleCrop())
       .into(userPicture)
 

@@ -167,12 +167,6 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
       .create()
       .show()
 
-  private def getAsset(assetId: AssetId) = for {
-    z <- zms.head
-    asset <- z.assets.getAssetData(assetId)
-    uri <- z.assets.getContentUri(assetId)
-  } yield (asset, uri)
-
 
   private def forwardMessage(message: MessageData): Unit = message.assetId match {
     case Some(id: AssetId) => forwardAssetMessage(id)
