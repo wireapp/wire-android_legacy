@@ -23,7 +23,6 @@ import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
-import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.service.AccountManager
 import com.waz.threading.Threading
