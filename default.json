@@ -13,6 +13,7 @@
   "firebaseApiKey": "AIzaSyBdYVv2f-Y7JJmHVmDNCKgWvX6Isa8rAGA",
   "submitCrashReports": true,
   "allowMarketingCommunication": true,
+  "allowChangeOfEmail": true,
   "certificatePin" : {
       "domain": "*.wire.com",
       "certificate" : [
