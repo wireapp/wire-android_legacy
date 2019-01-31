@@ -84,8 +84,15 @@ task copyCustomResources(type: Copy) {
         from file(customDir + '/strings/strings.xml') into file(targetResFolder + '/values')
         from file(customDir + '/strings/strings_no_translate.xml') into file(targetResFolder + '/values')
     }
-}
 
+    config.languages.each { code ->
+        def targetStringDir = "$targetResFolder/values-$code"
+        copy {
+            mkdir targetStringDir
+            from file("$customDir/strings/$code/strings.xml") into file(targetStringDir)
+        }
+    }
+}
 
 android {
     //Trigger the licenseFormat task at least once in any compile phase
@@ -198,6 +205,7 @@ android {
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
             buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
             buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
+            buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
         }
 
         candidate {
@@ -223,6 +231,7 @@ android {
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
             buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
             buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
+            buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
         }
 
         prod {
@@ -247,6 +256,7 @@ android {
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
             buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
             buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
+            buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
         }
 
         internal {
@@ -272,6 +282,7 @@ android {
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
             buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
             buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
+            buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
         }
 
         experimental {
@@ -297,6 +308,7 @@ android {
             buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
             buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
             buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
+            buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
         }
     }
 
@@ -340,7 +352,10 @@ dependencies {
 
     //wire libraries:
     implementation "com.wire:audio-notifications:$audioVersion"
-    implementation 'com.wire:wiretranslations:1.+'
+    //don't include wire translations for custom builds
+    if (customRepository.isEmpty() || token.isEmpty()) {
+        implementation 'com.wire:wiretranslations:1.+'
+    }
 
     // TODO  Nasty hack to be able to build add only one wire-core flavor to the build
 

@@ -226,7 +226,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
     } (Threading.Ui)
   }
 
-  view.onEmailClick.onUi { _ =>
+  view.onEmailClick.filter( _ => BuildConfig.ALLOW_CHANGE_OF_EMAIL).onUi { _ =>
     import Threading.Implicits.Ui
     accounts.activeAccountManager.head.map(_.foreach(_.hasPassword().foreach {
       case Left(ex) => val (h, b) = DialogErrorMessage.genericError(ex.code)

@@ -15,6 +15,7 @@
   "allowMarketingCommunication": true,
   "enableBlacklist": true,
   "blacklistHost": "https://clientblacklist.wire.com/prod/android",
+  "allowChangeOfEmail": true,
   "certificatePin" : {
       "domain": "*.wire.com",
       "certificate" : [
