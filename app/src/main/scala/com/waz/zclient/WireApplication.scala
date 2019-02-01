@@ -354,7 +354,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     new BackendPicker(this).withBackend(new Callback[BackendConfig]() {
       def callback(be: BackendConfig) = ensureInitialized(be)
-    })
+    }, Backend.ProdBackend)
   }
 
   def ensureInitialized(backend: BackendConfig) = {

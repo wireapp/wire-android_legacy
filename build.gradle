@@ -1,3 +1,7 @@
+import groovy.json.JsonSlurper
+import org.ajoberstar.grgit.Grgit
+import org.ajoberstar.grgit.Credentials
+
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
@@ -20,6 +24,7 @@ buildscript {
         classpath 'com.wire:gradle-android-scala-plugin:1.5.0'
         classpath 'com.google.gms:google-services:3.1.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+        classpath 'org.ajoberstar.grgit:grgit-core:3.0.0'
     }
 }
 
@@ -39,10 +44,6 @@ allprojects {
         google()
         jcenter()
     }
-}
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
 }
 
 task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
@@ -70,6 +71,38 @@ ext {
     buildToolsVersion = '28.0.3'
     sourceCompatibilityVersion = JavaVersion.VERSION_1_8
     targetCompatibilityVersion = JavaVersion.VERSION_1_8
+
+    // directory where customization files live
+    wireConfig = new File("$rootDir/default.json")
+    isCleanTask = gradle.startParameter.taskNames.contains("clean")
+
+    customFolder = System.getenv("CUSTOM_FOLDER") ?: ''
+    customRepository = System.getenv("CUSTOM_REPOSITORY") ?: ''
+    token = System.getenv("API_TOKEN") ?: ''
+
+    repoDir = "$rootDir/custom"
+    customDir = repoDir
+    if (!customFolder.isEmpty()) {
+        customDir = customDir + '/' + customFolder
+    }
+    customConfig = file("$customDir/custom.json")
+
+    def repo = file(repoDir)
+    if (repo.exists()) {
+        delete repo
+    }
+
+    def slurper = new JsonSlurper()
+    config = null
+
+    if (!customRepository.isEmpty() && !token.isEmpty()) {
+        credentials = new Credentials(token, '')
+        Grgit.clone(dir: repoDir, uri: customRepository, credentials: credentials)
+        project.logger.info("Cloned $repoDir to $customRepository")
+        config = slurper.parseText(customConfig.text)
+    } else {
+        config = slurper.parseText(wireConfig.text)
+    }
 }
 
 allprojects {
@@ -160,6 +193,15 @@ task ci(dependsOn: [
         }
     }
 }
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+    def repo = file(repoDir)
+    if (repo.exists()) {
+        delete repo
+    }
+}
+
 
 class Issue {
     File file

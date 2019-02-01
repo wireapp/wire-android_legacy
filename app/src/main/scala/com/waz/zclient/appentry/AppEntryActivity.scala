@@ -27,7 +27,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.service.AccountManager.ClientRegistrationState
-import com.waz.service.{AccountsService, ZMessaging}
+import com.waz.service.AccountsService
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.SpinnerController.{Hide, Show}
@@ -92,12 +92,7 @@ class AppEntryActivity extends BaseActivity {
     }.onUi(t => v.setText(t))
   }
 
-  ZMessaging.currentGlobal.blacklist.upToDate.onUi {
-    case false =>
-      startActivity(new Intent(this, classOf[ForceUpdateActivity]))
-      finish()
-    case _ =>
-  }
+  ForceUpdateActivity.checkBlacklist(this)
 
   override def onBackPressed(): Unit = {
     getSupportFragmentManager.getFragments.asScala.find {
@@ -122,6 +117,8 @@ class AppEntryActivity extends BaseActivity {
         Option(getIntent.getExtras).map(_.getInt(MethodArg)) match {
           case Some(LoginArgVal) => showFragment(SignInFragment(), SignInFragment.Tag, animated = false)
           case Some(CreateTeamArgVal) => showFragment(TeamNameFragment(), TeamNameFragment.Tag, animated = false)
+          case _ if !BuildConfig.ACCOUNT_CREATION_ENABLED =>
+            showFragment(SignInFragment(SignInFragment.SignInOnlyLogin), SignInFragment.Tag, animated = false)
           case _ => showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
       }
     }

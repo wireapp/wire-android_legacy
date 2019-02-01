@@ -55,7 +55,7 @@ class BaseActivity extends AppCompatActivity
 
   def injectJava[T](cls: Class[T]) = inject[T](reflect.Manifest.classType(cls), injector)
 
-  override protected def onCreate(savedInstanceState: Bundle) = {
+  override protected def onCreate(savedInstanceState: Bundle): Unit = {
     verbose(s"onCreate")
     super.onCreate(savedInstanceState)
     setTheme(getBaseTheme)

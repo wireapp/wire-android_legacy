@@ -48,6 +48,7 @@ import com.waz.zclient.tracking.GlobalTrackingController.analyticsPrefKey
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.menus.ConfirmationMenu
 import com.waz.zclient.{ErrorsController, FragmentHelper, OnBackPressedListener, R}
+import com.waz.zclient.BuildConfig
 
 import scala.concurrent.Future
 
@@ -84,8 +85,12 @@ class MainPhoneFragment extends FragmentHelper
   lazy val consentDialogFuture = for {
     true <- inject[GlobalModule].prefs(GlobalPreferences.ShowMarketingConsentDialog).apply()
     am   <- am.head
-    analyticsShown <- am.userPrefs(CrashesAndAnalyticsRequestShown).apply()
-    _ <- if (analyticsShown) Future.successful({}) else
+    showAnalyticsPopup <- am.userPrefs(CrashesAndAnalyticsRequestShown).apply().map {
+      previouslyShown =>
+        !previouslyShown && BuildConfig.SUBMIT_CRASH_REPORTS
+    }
+    // Show "Help make wire better" popup
+    _ <- if (!showAnalyticsPopup) Future.successful({}) else
       showConfirmationDialog(
         getString(R.string.crashes_and_analytics_request_title),
         getString(R.string.crashes_and_analytics_request_body),
@@ -101,6 +106,7 @@ class MainPhoneFragment extends FragmentHelper
         }
       }
     askMarketingConsentAgain <- am.userPrefs(UserPreferences.AskMarketingConsentAgain).apply()
+    // Show marketing consent popup
     _ <- if (!askMarketingConsentAgain) Future.successful({}) else
       showConfirmationDialogWithNeutralButton(
         R.string.receive_news_and_offers_request_title,

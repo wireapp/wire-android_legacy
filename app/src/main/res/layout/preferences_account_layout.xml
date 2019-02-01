@@ -117,6 +117,7 @@
                 />
 
             <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/preference_personal_information_header"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 android:text="@string/pref_account_personal_information_category_title"

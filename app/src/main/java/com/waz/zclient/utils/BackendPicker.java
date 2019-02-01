@@ -28,6 +28,8 @@ import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import com.waz.service.BackendConfig;
 import com.waz.zclient.BuildConfig;
+import com.waz.zclient.Backend;
+
 import timber.log.Timber;
 
 import java.util.NoSuchElementException;
@@ -37,37 +39,37 @@ public class BackendPicker {
     private static final String CUSTOM_BACKEND_PREFERENCE = "custom_backend_pref";
     private final Context context;
 
-    private final String[] backends = new String[] {
-            BackendConfig.StagingBackend().environment(),
-            BackendConfig.ProdBackend().environment()
-    };
-
     public BackendPicker(Context context) {
         this.context = context;
     }
 
-    public void withBackend(Activity activity, final Callback<BackendConfig> callback) {
+    public void withBackend(Activity activity, final Callback<BackendConfig> callback, BackendConfig prodBackend) {
         if (shouldShowBackendPicker()) {
-            showDialog(activity, callback);
+            showDialog(prodBackend, activity, callback);
         } else {
-            callback.callback(BackendConfig.ProdBackend());
+            callback.callback(prodBackend);
         }
     }
 
-    public void withBackend(final Callback<BackendConfig> callback) {
-        BackendConfig be = getBackendConfig();
+    public void withBackend(final Callback<BackendConfig> callback, BackendConfig prodBackend) {
+        BackendConfig be = getBackendConfig(prodBackend);
         if (be != null) {
             callback.callback(be);
         }
     }
 
-    private void showDialog(Activity activity, final Callback<BackendConfig> callback) {
+    private void showDialog(BackendConfig prod, Activity activity, final Callback<BackendConfig> callback) {
+        final String[] backends = new String[] {
+            Backend.StagingBackend().environment(),
+            prod.environment()
+        };
+
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setTitle("Select Backend");
         builder.setItems(backends, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                BackendConfig be = BackendConfig.byName().apply(backends[which]);
+                BackendConfig be = Backend.byName().apply(backends[which]);
                 saveBackendConfig(be);
                 callback.callback(be);
             }
@@ -84,13 +86,16 @@ public class BackendPicker {
     }
 
     @Nullable
-    private BackendConfig getBackendConfig() {
-        return BuildConfig.DEVELOPER_FEATURES_ENABLED ? getCustomBackend() : BackendConfig.ProdBackend();
+    private BackendConfig getBackendConfig(BackendConfig prodBackend) {
+        return BuildConfig.DEVELOPER_FEATURES_ENABLED ? getCustomBackend() : prodBackend;
     }
 
     @SuppressLint("CommitPrefEdits") // lint not seeing commit
     private void saveBackendConfig(BackendConfig backend) {
-        PreferenceManager.getDefaultSharedPreferences(context).edit().putString(CUSTOM_BACKEND_PREFERENCE, backend.environment()).commit();
+        PreferenceManager.getDefaultSharedPreferences(context)
+            .edit()
+            .putString(CUSTOM_BACKEND_PREFERENCE, backend.environment())
+            .commit();
     }
 
     @Nullable
@@ -99,7 +104,7 @@ public class BackendPicker {
         String backend = prefs.getString(CUSTOM_BACKEND_PREFERENCE, null);
         if (backend != null) {
             try {
-                return BackendConfig.byName().apply(backend);
+                return Backend.byName().apply(backend);
             } catch (NoSuchElementException ex) {
                 Timber.w("Could not find backend with name: %s", backend);
             }
