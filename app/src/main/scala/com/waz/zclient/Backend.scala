@@ -23,7 +23,6 @@ import com.waz.utils.wrappers.URI
 
 object Backend {
 
-
   private val certBytes = SafeBase64.decode(BuildConfig.CERTIFICATE_PIN_BYTES).get
   private val certPin = CertificatePin(BuildConfig.CERTIFICATE_PIN_DOMAIN, certBytes)
 

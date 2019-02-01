@@ -105,6 +105,8 @@ android {
     compileSdkVersion = 27
     buildToolsVersion = '28.0.3'
 
+    String certPinBytes = config.certificatePin.certificate.join()
+
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
