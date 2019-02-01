@@ -88,7 +88,7 @@ class ProfileAccountTab(val context: Context, val attrs: AttributeSet, val defSt
   private val picture = teamAndUser.map{
     case (user, Some(team)) =>
       // TODO use team icon when ready
-      Option.empty[AssetId]
+      Option.empty[PublicAssetId]
     case (user, _) =>
       user.picture
   }

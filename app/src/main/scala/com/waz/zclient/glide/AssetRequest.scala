@@ -17,17 +17,21 @@
  */
 package com.waz.zclient.glide
 
-import com.waz.model.{AssetId, UploadAssetId}
+import com.waz.model._
 import com.waz.service.assets2.{Asset, ImageDetails}
 
 sealed trait AssetRequest {
-  val assetId: AssetId
+  val key: String
 }
-case class AssetIdRequest(assetId: AssetId) extends AssetRequest
-case class PublicAssetIdRequest(assetId: AssetId) extends AssetRequest
+case class AssetIdRequest(assetId: AssetId) extends AssetRequest {
+  override val key: String = assetId.str
+}
+case class PublicAssetIdRequest(assetId: PublicAssetId) extends AssetRequest {
+  override val key: String = assetId.str
+}
 case class ImageAssetRequest(asset: Asset[ImageDetails]) extends AssetRequest {
-  override val assetId: AssetId = asset.id
+  override val key: String = asset.id.str
 }
-case class UploadAssetIdRequest(uploadAssetId: UploadAssetId) extends AssetRequest{
-  override val assetId: AssetId = AssetId(uploadAssetId.str) //TODO: ??
+case class UploadAssetIdRequest(assetId: UploadAssetId) extends AssetRequest {
+  override val key: String = assetId.str
 }

@@ -103,7 +103,7 @@ class IntegrationDetailsFragment extends FragmentHelper {
       val placeholder = ServicePlaceholderDrawable(getDimenPx(R.dimen.wire__padding__regular))
       assetId match {
         case Some(id) =>
-          GlideBuilder.fromPublicAsset(id)
+          GlideBuilder.apply(id)
             .apply(new RequestOptions().placeholder(placeholder).transforms(new IntegrationBackgroundCrop()))
             .into(iv)
         case _ =>
