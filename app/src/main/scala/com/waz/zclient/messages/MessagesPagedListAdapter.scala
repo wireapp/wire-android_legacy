@@ -99,7 +99,7 @@ object MessagesPagedListAdapter {
   val MessageDataDiffCallback: DiffUtil.ItemCallback[MessageAndLikes] = new DiffUtil.ItemCallback[MessageAndLikes] {
     override def areItemsTheSame(o: MessageAndLikes, n: MessageAndLikes): Boolean = n.message.id == o.message.id
     override def areContentsTheSame(o: MessageAndLikes, n: MessageAndLikes): Boolean =
-      areMessageContentsTheSame(o.message, n.message)
+      areMessageAndLikesTheSame(o, n)
   }
 
   def areMessageContentsTheSame(prev: MessageData, updated: MessageData): Boolean = {
@@ -107,5 +107,11 @@ object MessagesPagedListAdapter {
       updated.expired == prev.expired &&
       updated.imageDimensions == prev.imageDimensions &&
       updated.content.find(_.openGraph.nonEmpty) == prev.content.find(_.openGraph.nonEmpty)
+  }
+
+  def areMessageAndLikesTheSame(prev: MessageAndLikes, updated: MessageAndLikes): Boolean = {
+    areMessageContentsTheSame(prev.message, updated.message) &&
+    prev.likes.toSet == updated.likes.toSet &&
+    prev.quote == updated.quote
   }
 }

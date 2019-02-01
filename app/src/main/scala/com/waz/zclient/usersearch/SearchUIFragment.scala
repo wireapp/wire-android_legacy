@@ -264,7 +264,10 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
       override def onTabReselected(tab: TabLayout.Tab): Unit = {}
     })
 
-    userAccountsController.isTeam.head.foreach(tabs.setVisible)(Threading.Ui)
+    (for {
+      isTeam <- userAccountsController.isTeam
+      isPartner <- userAccountsController.isPartner
+    } yield isTeam && !isPartner).onUi(tabs.setVisible)
 
     adapter.filter ! ""
 
