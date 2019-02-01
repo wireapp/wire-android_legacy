@@ -30,7 +30,7 @@ import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.content.UserPreferences
 import com.waz.model.otr.Client
-import com.waz.model.{AccentColor, AccountDataOld, AssetId, Availability}
+import com.waz.model._
 import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
@@ -58,7 +58,7 @@ trait ProfileView {
   def setUserName(name: String): Unit
   def setAvailability(visible: Boolean, availability: Availability): Unit
   def setHandle(handle: String): Unit
-  def setProfilePictureAssetId(assetId: AssetId): Unit
+  def setProfilePictureAssetId(assetId: PublicAssetId): Unit
   def setAccentColor(color: Int): Unit
   def setTeamName(name: Option[String]): Unit
   def showNewDevicesDialog(devices: Seq[Client]): Unit
@@ -124,8 +124,8 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setHandle(handle: String): Unit = userHandleText.setText(handle)
 
-  override def setProfilePictureAssetId(assetId: AssetId): Unit =
-    GlideBuilder.fromPublicAsset(assetId)
+  override def setProfilePictureAssetId(assetId: PublicAssetId): Unit =
+    GlideBuilder.apply(assetId)
       .apply(new RequestOptions().circleCrop())
       .into(userPicture)
 

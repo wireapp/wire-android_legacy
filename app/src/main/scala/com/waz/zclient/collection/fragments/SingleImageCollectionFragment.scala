@@ -191,7 +191,7 @@ object SingleImageCollectionFragment {
     })
 
     def setAsset(assetId: AssetId): Unit =
-      GlideBuilder.fromPublicAsset(assetId)(getContext)
+      GlideBuilder.apply(assetId)(getContext)
         .apply(new RequestOptions().fitCenter().placeholder(new ColorDrawable(Color.TRANSPARENT)))
         .transition(DrawableTransitionOptions.withCrossFade())
         .into(this)

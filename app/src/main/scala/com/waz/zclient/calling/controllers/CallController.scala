@@ -24,7 +24,7 @@ import com.waz.ZLog._
 import com.waz.api.Verification
 import com.waz.avs.VideoPreview
 import com.waz.content.GlobalPreferences
-import com.waz.model.{AssetId, LocalInstant, UserData, UserId}
+import com.waz.model._
 import com.waz.service.ZMessaging.clock
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
@@ -497,7 +497,7 @@ private class GSMManager(callActive: Signal[Boolean])(implicit inject: Injector,
 
 object CallController {
   case class CallParticipantInfo(userId: UserId,
-                                 assetId: Option[AssetId],
+                                 assetId: Option[PublicAssetId],
                                  displayName: String,
                                  isGuest: Boolean,
                                  isVerified: Boolean,
