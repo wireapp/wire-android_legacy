@@ -332,7 +332,7 @@ object ZMessaging { self =>
 
   private var prefs:           GlobalPreferences = _
   private var googleApi:       GoogleApi = _
-  private var backend:         BackendConfig = BackendConfig.StagingBackend
+  private var backend:         BackendConfig = _
   private var syncRequests:    SyncRequestService = _
   private var notificationsUi: NotificationUiController = _
 

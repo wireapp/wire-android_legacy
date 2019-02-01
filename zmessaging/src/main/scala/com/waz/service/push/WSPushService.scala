@@ -62,7 +62,7 @@ object WSPushServiceImpl {
             ev: AccountContext): WSPushServiceImpl = {
 
     val requestCreator = (token: AccessToken) => {
-      val uri = URI.parse(backend.websocketUrl).buildUpon.appendQueryParameter("client", clientId.str).build
+      val uri = backend.websocketUrl.buildUpon.appendQueryParameter("client", clientId.str).build
       val headers = token.headers ++ Map(
         "Accept-Encoding" -> "identity", // XXX: this is a hack for Backend In The Box problem: 'Accept-Encoding: gzip' header causes 500
         "User-Agent" -> client.userAgent()
