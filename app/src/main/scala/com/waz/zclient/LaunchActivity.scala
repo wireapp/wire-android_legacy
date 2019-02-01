@@ -41,7 +41,7 @@ class LaunchActivity extends BaseActivity {
           case _       => startSignUp()
         } (Threading.Ui)
       }
-    }, WireApplication.prodBackend)
+    }, Backend.ProdBackend)
   }
 
   //Can't call super from within anonymous class

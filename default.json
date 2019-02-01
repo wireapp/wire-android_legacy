@@ -13,6 +13,8 @@
   "firebaseApiKey": "AIzaSyBdYVv2f-Y7JJmHVmDNCKgWvX6Isa8rAGA",
   "submitCrashReports": true,
   "allowMarketingCommunication": true,
+  "enableBlacklist": true,
+  "blacklistHost": "https://clientblacklist.wire.com/prod/android",
   "allowChangeOfEmail": true,
   "certificatePin" : {
       "domain": "*.wire.com",

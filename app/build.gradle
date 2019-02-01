@@ -1,5 +1,3 @@
-import groovy.json.JsonSlurper
-
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'jp.leafytree.android-scala'
@@ -24,7 +22,7 @@ ext {
     playServicesVersion = '15.0.1'
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
     stethoVersion = '1.5.0'
-    zMessagingDevVersion = "138.672-PR"
+    zMessagingDevVersion = "139.681-PR"
     paging_version = "1.0.0"
     // Release version number must be like this X.0(.Y)
     zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '138.0.509@aar'
@@ -83,7 +81,8 @@ task copyCustomResources(type: Copy) {
             }
 
     copy {
-        from file(repoDir + '/strings/strings.xml') into file(targetResFolder + '/values')
+        from file(customDir + '/strings/strings.xml') into file(targetResFolder + '/values')
+        from file(customDir + '/strings/strings_no_translate.xml') into file(targetResFolder + '/values')
     }
 
     config.languages.each { code ->
@@ -124,6 +123,8 @@ android {
         buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',    "\"$config.pushSenderId\""
         buildConfigField 'String',  'FIREBASE_APP_ID',            "\"$config.firebaseAppId\""
         buildConfigField 'String',  'FIREBASE_API_KEY',           "\"$config.firebaseApiKey\""
+        buildConfigField 'boolean', 'ENABLE_BLACKLIST',           "$config.enableBlacklist"
+        buildConfigField 'String',  'BLACKLIST_HOST',             "\"$config.blacklistHost\""
         buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
         buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$certPinBytes\""
         buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"

@@ -22,6 +22,7 @@ import android.net.Uri
 import com.waz.api.MessageContent.Location
 import com.waz.model.MessageId
 import com.waz.service.BackendConfig
+import com.waz.zclient.Backend.StagingBackend
 import com.waz.utils.events.EventStream
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
 import com.waz.zclient.utils.ContextUtils._
@@ -52,9 +53,9 @@ class BrowserController(implicit context: Context, injector: Injector) extends I
     Option(IntentUtils.getGoogleMapsIntent(context, location.getLatitude, location.getLongitude, location.getZoom, location.getName)) foreach { context.startActivity }
 
   def openForgotPasswordPage(): Try[Unit] =
-    openUrl(getString(if (beConfig == BackendConfig.StagingBackend) R.string.url_password_reset_staging else R.string.url_password_reset))
+    openUrl(getString(if (beConfig == StagingBackend) R.string.url_password_reset_staging else R.string.url_password_reset))
 
   def openManageTeamsPage(): Try[Unit] =
-    openUrl(getString(if (beConfig == BackendConfig.StagingBackend) R.string.url_manage_services_staging else R.string.url_manage_services))
+    openUrl(getString(if (beConfig == StagingBackend) R.string.url_manage_services_staging else R.string.url_manage_services))
 
 }

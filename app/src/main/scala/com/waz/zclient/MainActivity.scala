@@ -133,12 +133,7 @@ class MainActivity extends BaseActivity
       case _ =>
     }
 
-    ZMessaging.currentGlobal.blacklist.upToDate.head.map {
-      case false =>
-        startActivity(new Intent(getApplicationContext, classOf[ForceUpdateActivity]))
-        finish()
-      case _ => //
-    } (Threading.Ui)
+    ForceUpdateActivity.checkBlacklist(this)
 
     val loadingIndicator = findViewById[LoadingIndicatorView](R.id.progress_spinner)
 
