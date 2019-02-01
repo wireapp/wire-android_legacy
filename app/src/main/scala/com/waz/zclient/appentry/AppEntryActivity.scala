@@ -92,7 +92,7 @@ class AppEntryActivity extends BaseActivity {
     }.onUi(t => v.setText(t))
   }
 
-  MainActivity.checkBlacklist(this)
+  ForceUpdateActivity.checkBlacklist(this)
 
   override def onBackPressed(): Unit = {
     getSupportFragmentManager.getFragments.asScala.find {

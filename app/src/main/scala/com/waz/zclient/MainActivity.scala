@@ -17,7 +17,6 @@
  */
 package com.waz.zclient
 
-import android.app.Activity
 import android.content.Intent
 import android.content.Intent._
 import android.content.res.Configuration
@@ -33,7 +32,7 @@ import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, Pas
 import com.waz.service.ZMessaging.clock
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.{EventContext, Signal}
+import com.waz.utils.events.Signal
 import com.waz.utils.{RichInstant, returning}
 import com.waz.zclient.Intents._
 import com.waz.zclient.SpinnerController.{Hide, Show}
@@ -134,7 +133,7 @@ class MainActivity extends BaseActivity
       case _ =>
     }
 
-    MainActivity.checkBlacklist(this)
+    ForceUpdateActivity.checkBlacklist(this)
 
     val loadingIndicator = findViewById[LoadingIndicatorView](R.id.progress_spinner)
 
@@ -451,11 +450,5 @@ object MainActivity {
   private def isSlideAnimation(oldTag: Option[String], newTag: String) = oldTag.fold(false) { old =>
     slideAnimations.contains((old, newTag)) || slideAnimations.contains((newTag, old))
   }
-
-  def checkBlacklist(activity: Activity)(implicit ecxt: EventContext): Unit =
-    ZMessaging.currentGlobal.blacklist.upToDate.ifFalse.filter(_ => BuildConfig.ENABLE_BLACKLIST).onUi { _ =>
-      activity.startActivity(new Intent(activity.getApplicationContext, classOf[ForceUpdateActivity]))
-      activity.finish()
-    }
 }
 
