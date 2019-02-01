@@ -31,7 +31,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.waz.ZLog.ImplicitTag._
-import com.waz.model.{AccentColor, AssetId, EmailAddress, PhoneNumber}
+import com.waz.model._
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
@@ -65,7 +65,7 @@ trait AccountView {
   def setHandle(handle: String): Unit
   def setEmail(email: Option[EmailAddress]): Unit
   def setPhone(phone: Option[PhoneNumber]): Unit
-  def setPictureId(assetId: AssetId): Unit
+  def setPictureId(assetId: PublicAssetId): Unit
   def setAccentDrawable(drawable: Drawable): Unit
   def setDeleteAccountEnabled(enabled: Boolean): Unit
   def setEmailEnabled(enabled: Boolean): Unit
@@ -114,10 +114,10 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setPhone(phone: Option[PhoneNumber]) = phoneButton.setTitle(phone.map(_.str).getOrElse(getString(R.string.pref_account_add_phone_title)))
 
-  override def setPictureId(assetId: AssetId) = {
+  override def setPictureId(assetId: PublicAssetId) = {
 
     //TODO: maybe create a util for this?
-    GlideBuilder.fromPublicAsset(assetId)
+    GlideBuilder.apply(assetId)
       .apply(new RequestOptions().centerCrop())
       .into(new CustomViewTarget[View, Drawable](pictureButton) {
       override def onResourceCleared(placeholder: Drawable): Unit =

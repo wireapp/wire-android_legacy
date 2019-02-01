@@ -42,14 +42,13 @@ import com.bumptech.glide.load.model.ModelLoader.LoadData
 import com.bumptech.glide.load.{Key, Options}
 import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.ZLog._
-import com.waz.model.AssetId
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
 import com.waz.zclient.glide._
 
 class AssetRequestModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[AssetRequest, InputStream] {
   override def buildLoadData(model: AssetRequest, width: Int, height: Int, options: Options): ModelLoader.LoadData[InputStream] = {
-    val key = AssetKey(model.assetId, width, height, options)
+    val key = AssetKey(model.key, width, height, options)
     verbose(s"key: $key")
     new LoadData[InputStream](key, new ImageAssetFetcher(model, zms))
   }
@@ -57,19 +56,19 @@ class AssetRequestModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[Asset
   override def handles(model: AssetRequest): Boolean = true
 }
 
-case class AssetKey(assetId: AssetId, width: Int, height: Int, options: Options) extends Key {
+case class AssetKey(key: String, width: Int, height: Int, options: Options) extends Key {
 
   override def hashCode(): Int = toString.hashCode
 
   override def equals(obj: scala.Any): Boolean = {
     obj match {
       case ak: AssetKey =>
-        ak.assetId == assetId && ak.width == width && ak.height == height && ak.options.eq(options)
+        ak.key == key && ak.width == width && ak.height == height && ak.options.eq(options)
       case _ => false
     }
   }
 
-  override def toString: String = s"${assetId.str}-$width-$height-$options"
+  override def toString: String = s"$key-$width-$height-$options"
 
   override def updateDiskCacheKey(messageDigest: MessageDigest): Unit = {
     messageDigest.update(toString.getBytes(Key.CHARSET))
