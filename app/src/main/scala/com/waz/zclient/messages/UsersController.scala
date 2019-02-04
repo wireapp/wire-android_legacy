@@ -64,7 +64,7 @@ class UsersController(implicit injector: Injector, context: Context) extends Inj
 
   def displayName(id: UserId): Signal[DisplayName] = zMessaging.flatMap { zms =>
     if (zms.selfUserId == id) Signal const Me
-    else user(id).map(u => Other(u.getDisplayName))
+    else user(id).map(u => Other(if (u.deleted) getString(R.string.default_deleted_username) else u.getDisplayName))
   }
 
   lazy val availabilityVisible: Signal[Boolean] = for {

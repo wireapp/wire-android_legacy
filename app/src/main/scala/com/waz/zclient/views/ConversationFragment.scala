@@ -224,6 +224,10 @@ class ConversationFragment extends FragmentHelper {
       id.foreach(toolbar.inflateMenu)
     }
 
+    participantsController.otherParticipantExists.onUi { showToolbarGlyph =>
+      findById[View](R.id.conversation_toolbar__glyph_linedown).setVisible(showToolbarGlyph)
+    }
+
     convChange.onUi {
       case ConversationChange(from, Some(to), _) =>
         CancellableFuture.delay(getInt(R.integer.framework_animation_duration_short).millis).map { _ =>
@@ -341,9 +345,12 @@ class ConversationFragment extends FragmentHelper {
     super.onStart()
 
     toolbar.setOnClickListener(new View.OnClickListener() {
-      override def onClick(v: View): Unit = {
-        participantsController.onShowParticipants ! None
-      }
+      override def onClick(v: View): Unit =
+        participantsController.otherParticipantExists.head.foreach {
+          case true =>
+            participantsController.onShowParticipants ! None
+          case _ =>
+        }
     })
 
     toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {

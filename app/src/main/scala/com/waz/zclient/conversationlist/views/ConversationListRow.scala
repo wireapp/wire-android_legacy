@@ -103,9 +103,10 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     if (conv.displayName.isEmpty) {
       // This hack was in the UiModule Conversation implementation
       // XXX: this is a hack for some random errors, sometimes conv has empty name which is never updated
-      zms.head foreach {_.conversations.forceNameUpdate(conv.id) }
-    }
-    conv.displayName
+      zms.head.foreach {_.conversations.forceNameUpdate(conv.id) }
+      Name(getString(R.string.default_deleted_username))
+    } else
+      conv.displayName
   }
 
   val userTyping = for {
@@ -233,7 +234,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   def setConversation(conversationData: ConversationData): Unit = if (this.conversationData.forall(_.id != conversationData.id)) {
     this.conversationData = Some(conversationData)
-    title.setText(conversationData.displayName)
+    title.setText(if (conversationData.displayName.str.nonEmpty) conversationData.displayName.str else getString(R.string.default_deleted_username))
 
     badge.setStatus(ConversationBadge.Empty)
     subtitle.setText("")

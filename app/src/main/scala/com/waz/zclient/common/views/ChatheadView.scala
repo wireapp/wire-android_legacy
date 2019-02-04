@@ -265,7 +265,7 @@ protected class ChatheadController(val setSelectable:            Boolean        
                                    val defaultBackgroundColor:   ColorVal       = ColorVal(Color.GRAY),
                                    val showWaitingForConnection: Boolean        = true,
                                    val grayscaleOnUnconnected:   Boolean        = true)
-                                  (implicit inj: Injector, eventContext: EventContext) extends Injectable {
+                                  (implicit inj: Injector, eventContext: EventContext, context: Context) extends Injectable {
 
   val zMessaging = inject[Signal[ZMessaging]]
 
@@ -350,6 +350,11 @@ protected class ChatheadController(val setSelectable:            Boolean        
     case _          => false
   }
 
+  val isDeleted = chatheadInfo.map {
+    case Some(info) => info.isDeleted
+    case _ => true
+  }
+
   val bitmapResult = (for {
     (assetId, zmsOpt) <- assetIdAndZms
     zMessaging        <- zmsOpt.fold(zMessaging)(Signal.const)
@@ -357,13 +362,14 @@ protected class ChatheadController(val setSelectable:            Boolean        
     borderWidth       <- borderWidth
     accentColor       <- accentColor
     isBot             <- isBot
-  } yield (zMessaging, assetId, viewWidth, borderWidth, accentColor, isBot)).flatMap[BitmapResult] {
-    case (zms, Some(id), width, bWidth, bColor, bot) if width > 0 => zms.assetsStorage.signal(id).flatMap {
+    isDeleted         <- isDeleted
+  } yield (zMessaging, assetId, viewWidth, borderWidth, accentColor, isBot, isDeleted)).flatMap[BitmapResult] {
+    case (zms, Some(id), width, bWidth, bColor, bot, false) if width > 0 => zms.assetsStorage.signal(id).flatMap {
       case data@AssetData.IsImage() if isRound && !bot => BitmapSignal(zms, data, Round(width, bWidth, bColor.value))
       case data@AssetData.IsImage() => BitmapSignal(zms, data, Single(width))
       case _ => Signal.empty[BitmapResult]
     }
-    case (_, aid, width, _, _, _) => Signal.const(BitmapResult.Empty)
+    case (_, aid, width, _, _, _, _) => Signal.const(BitmapResult.Empty)
   }
 
   val bitmap = bitmapResult.flatMap[Option[Bitmap]] {
@@ -395,24 +401,25 @@ protected class ChatheadController(val setSelectable:            Boolean        
                              assetId: Option[AssetId] = None,
                              selectable: Boolean = false,
                              isBot: Boolean = false,
+                             isDeleted: Boolean = false,
                              zms: Option[ZMessaging] = None
                             )
 
   object ChatheadDetails {
-    def apply(user: UserData, isTeamMember: Boolean): ChatheadDetails = apply(user, isTeamMember, None)
 
-    def apply(user: UserData, isTeamMember: Boolean, zms: Option[ZMessaging]): ChatheadDetails = {
+    def apply(user: UserData, isTeamMember: Boolean, zms: Option[ZMessaging])(implicit context: Context): ChatheadDetails = {
       val knownUser = user.isConnected || user.isSelf
 
       ChatheadDetails(
         accentColor = ColorVal(AccentColor(user.accent).color),
         connectionStatus = user.connection,
-        initials = NameParts.parseFrom(user.name).initials,
+        initials = NameParts.parseFrom(if (user.deleted) getString(R.string.default_deleted_username) else user.name).initials,
         knownUser = knownUser,
         grayScale = !(user.isConnected || user.isSelf || isTeamMember),
         assetId = user.picture,
         selectable = knownUser || isTeamMember,
         isBot = user.isWireBot,
+        isDeleted = user.deleted,
         zms = zms
       )
     }

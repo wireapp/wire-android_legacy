@@ -851,6 +851,8 @@
     <string name="all_archived__header">Everything archived</string>
     <string name="no_conversation_in_list__message">Start a conversation or create a group.</string>
 
+    <string name="default_deleted_username">Default</string>
+
     <string name="cursor__type_a_message">TYPE A MESSAGE</string>
     <string name="cursor__ephemeral_message">TIMED MESSAGE</string>
     <string name="tooltip_record">Record Video</string>
