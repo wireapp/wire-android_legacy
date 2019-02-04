@@ -55,7 +55,7 @@ trait ProfileView {
   def setUserName(name: String): Unit
   def setAvailability(visible: Boolean, availability: Availability): Unit
   def setHandle(handle: String): Unit
-  def setProfilePictureAssetId(assetId: PublicAssetId): Unit
+  def setProfilePictureAssetId(assetId: AssetIdGeneral): Unit
   def setAccentColor(color: Int): Unit
   def setTeamName(name: Option[String]): Unit
   def showNewDevicesDialog(devices: Seq[Client]): Unit
@@ -116,7 +116,7 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setHandle(handle: String): Unit = userHandleText.setText(handle)
 
-  override def setProfilePictureAssetId(assetId: PublicAssetId): Unit =
+  override def setProfilePictureAssetId(assetId: AssetIdGeneral): Unit =
     GlideBuilder.apply(assetId)
       .apply(new RequestOptions().circleCrop())
       .into(userPicture)

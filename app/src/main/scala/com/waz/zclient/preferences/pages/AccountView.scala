@@ -65,7 +65,7 @@ trait AccountView {
   def setHandle(handle: String): Unit
   def setEmail(email: Option[EmailAddress]): Unit
   def setPhone(phone: Option[PhoneNumber]): Unit
-  def setPictureId(assetId: PublicAssetId): Unit
+  def setPictureId(assetId: AssetIdGeneral): Unit
   def setAccentDrawable(drawable: Drawable): Unit
   def setDeleteAccountEnabled(enabled: Boolean): Unit
   def setEmailEnabled(enabled: Boolean): Unit
@@ -114,9 +114,8 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setPhone(phone: Option[PhoneNumber]) = phoneButton.setTitle(phone.map(_.str).getOrElse(getString(R.string.pref_account_add_phone_title)))
 
-  override def setPictureId(assetId: PublicAssetId) = {
+  override def setPictureId(assetId: AssetIdGeneral) = {
 
-    //TODO: maybe create a util for this?
     GlideBuilder.apply(assetId)
       .apply(new RequestOptions().centerCrop())
       .into(new CustomViewTarget[View, Drawable](pictureButton) {

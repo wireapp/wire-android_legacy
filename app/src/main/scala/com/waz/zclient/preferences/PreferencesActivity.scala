@@ -180,10 +180,9 @@ class PreferencesActivity extends BaseActivity
   //TODO do we need to check internet connectivity here?
   override def onBitmapSelected(input: Content, cameraContext: CameraContext): Unit =
     if (cameraContext == CameraContext.SETTINGS) {
-      //FIXME
-//      inject[Signal[ZMessaging]].head.map { zms =>
-//        zms.users.updateSelfPicture(input)
-//      } (Threading.Background)
+      zms.head.map { zms =>
+        zms.users.updateSelfPicture(input)
+      } (Threading.Background)
       getSupportFragmentManager.popBackStack(CameraFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
     }
 

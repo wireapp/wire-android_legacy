@@ -23,6 +23,18 @@ import com.waz.service.assets2.{Asset, ImageDetails}
 sealed trait AssetRequest {
   val key: String
 }
+
+object AssetRequest {
+  def apply(assetIdGeneral: AssetIdGeneral): AssetRequest = {
+    assetIdGeneral match {
+      case a: PublicAssetId => PublicAssetIdRequest(a)
+      case a: UploadAssetId => UploadAssetIdRequest(a)
+      case a: AssetId => AssetIdRequest(a)
+      case _ => EmptyRequest()
+    }
+  }
+}
+
 case class AssetIdRequest(assetId: AssetId) extends AssetRequest {
   override val key: String = assetId.str
 }
@@ -34,4 +46,7 @@ case class ImageAssetRequest(asset: Asset[ImageDetails]) extends AssetRequest {
 }
 case class UploadAssetIdRequest(assetId: UploadAssetId) extends AssetRequest {
   override val key: String = assetId.str
+}
+case class EmptyRequest() extends AssetRequest {
+  override val key: String = ""
 }

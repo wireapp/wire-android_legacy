@@ -22,13 +22,13 @@ import android.graphics._
 import android.graphics.drawable.Drawable
 import com.bumptech.glide.request.RequestOptions
 import com.waz.ZLog
-import com.waz.model.PublicAssetId
+import com.waz.model.AssetIdGeneral
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.drawables.TeamIconDrawable._
-import com.waz.zclient.glide.{PublicAssetIdRequest, WireGlide}
+import com.waz.zclient.glide.{AssetRequest, WireGlide}
 import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.Future
@@ -83,7 +83,7 @@ class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: 
   val borderPath = new Path()
   val matrix = new Matrix()
 
-  val assetId = Signal(Option.empty[PublicAssetId])
+  val assetId = Signal(Option.empty[AssetIdGeneral])
   val bounds = Signal[Rect]()
   val zms = inject[Signal[ZMessaging]]
 
@@ -95,7 +95,7 @@ class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: 
         Threading.Background {
           Option(WireGlide()
             .asBitmap()
-            .load(PublicAssetIdRequest(aId))
+            .load(AssetRequest(aId))
             .apply(new RequestOptions().circleCrop())
             .submit(b.width, b.height)
             .get())

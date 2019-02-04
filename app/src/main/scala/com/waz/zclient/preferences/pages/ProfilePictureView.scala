@@ -23,7 +23,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
 import android.widget.{ImageView, LinearLayout}
-import com.waz.model.PublicAssetId
+import com.waz.model.AssetIdGeneral
 import com.waz.service.ZMessaging
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.common.views.GlyphButton
@@ -34,7 +34,7 @@ import com.waz.zclient.utils.{BackStackKey, UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 
 trait ProfilePictureView {
-    def setPictureId(assetId: PublicAssetId): Unit
+    def setPictureId(assetId: AssetIdGeneral): Unit
 }
 
 class ProfilePictureViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ProfilePictureView with ViewHelper{
@@ -52,7 +52,7 @@ class ProfilePictureViewImpl(context: Context, attrs: AttributeSet, style: Int) 
     }
   })
 
-  override def setPictureId(assetId: PublicAssetId) = GlideBuilder.apply(assetId).into(image)
+  override def setPictureId(assetId: AssetIdGeneral) = GlideBuilder.apply(assetId).into(image)
 }
 
 case class ProfilePictureBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
@@ -78,7 +78,7 @@ class ProfilePictureViewController(view: ProfilePictureView)(implicit inj: Injec
   val image = for {
     zms <- zms
     self <- UserSignal(zms.selfUserId)
-    image <- self.picture.fold(Signal.empty[PublicAssetId])(Signal(_))
+    image <- self.picture.fold(Signal.empty[AssetIdGeneral])(Signal(_))
   } yield image
 
   image.onUi { id =>

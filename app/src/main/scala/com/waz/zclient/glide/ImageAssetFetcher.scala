@@ -24,6 +24,7 @@ import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.data.DataFetcher
 import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.ZLog._
+import com.waz.model.errors.NotSupportedError
 import com.waz.service.ZMessaging
 import com.waz.threading.CancellableFuture
 import com.waz.utils.events.Signal
@@ -48,6 +49,7 @@ class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging]) extends 
         case ImageAssetRequest(asset) => zms.assetService.loadContent(asset)
         case PublicAssetIdRequest(assetId) => zms.assetService.loadPublicContentById(assetId, None, None)
         case UploadAssetIdRequest(uploadAssetId) => zms.assetService.loadUploadContentById(uploadAssetId, None)
+        case _ => CancellableFuture.failed(NotSupportedError("Unsupported image request"))
       }
     }
     currentData.foreach(_.cancel())
