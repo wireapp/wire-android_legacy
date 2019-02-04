@@ -38,7 +38,7 @@ import com.waz.zclient.Intents._
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.calling.controllers.CallStartController
-import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
+import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController, PasswordController}
 import com.waz.zclient.common.controllers.{SharingController, UserAccountsController}
 import com.waz.zclient.controllers.navigation.{NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
@@ -80,6 +80,7 @@ class MainActivity extends BaseActivity
   lazy val conversationController   = inject[ConversationController]
   lazy val userAccountsController   = inject[UserAccountsController]
   lazy val spinnerController        = inject[SpinnerController]
+  lazy val passwordController       = inject[PasswordController]
 
   override def onAttachedToWindow() = {
     super.onAttachedToWindow()
@@ -176,6 +177,7 @@ class MainActivity extends BaseActivity
         am.getOrRegisterClient().map {
           case Right(Registered(_))   =>
             for {
+              _            <- passwordController.setPassword(None)
               z            <- zms.head
               self         <- z.users.selfUser.head
               isLogin      <- z.userPrefs(IsLogin).apply()
