@@ -62,5 +62,5 @@ class BlurTransformation extends BitmapTransformation {
 
 object BlurTransformation {
   val BlurRadius = 25
-  val BlurPasses = 6
+  val BlurPasses = 12
 }
