@@ -118,7 +118,6 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
         convsUi      <- convsUi.head
         conv         <- getConversation(id)
         _            <- if (conv.exists(_.archived)) convsUi.setConversationArchived(id, archived = false) else Future.successful(Option.empty[ConversationData])
-        _            <- convsUi.setConversationArchived(id, archived = false)
         _            <- selectedConv.selectConversation(convId)
       } yield { // catches changes coming from UI
         verbose(s"changing conversation from $oldId to $convId, requester: $requester")
