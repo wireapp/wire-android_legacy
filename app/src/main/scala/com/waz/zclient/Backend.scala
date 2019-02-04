@@ -18,11 +18,12 @@
 package com.waz.zclient
 
 import com.waz.service.{BackendConfig, CertificatePin, FirebaseOptions}
+import com.waz.utils.SafeBase64
 import com.waz.utils.wrappers.URI
 
 object Backend {
 
-  private val certBytes = BuildConfig.CERTIFICATE_PIN_BYTES.split(",").map(b => Integer.parseInt(b.trim.drop(2), 16).toByte)
+  private val certBytes = SafeBase64.decode(BuildConfig.CERTIFICATE_PIN_BYTES).get
   private val certPin = CertificatePin(BuildConfig.CERTIFICATE_PIN_DOMAIN, certBytes)
 
   private val blacklistHostStaging = URI.parse(s"https://clientblacklist.wire.com/staging/android")
