@@ -497,7 +497,7 @@ private class GSMManager(callActive: Signal[Boolean])(implicit inject: Injector,
 
 object CallController {
   case class CallParticipantInfo(userId: UserId,
-                                 assetId: Option[PublicAssetId],
+                                 assetId: Option[AssetIdGeneral],
                                  displayName: String,
                                  isGuest: Boolean,
                                  isVerified: Boolean,

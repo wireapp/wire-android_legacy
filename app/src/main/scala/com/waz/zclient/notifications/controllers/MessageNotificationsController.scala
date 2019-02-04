@@ -42,7 +42,7 @@ import com.waz.zclient.common.controllers.SoundController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.navigation.Page
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.glide.{PublicAssetIdRequest, WireGlide}
+import com.waz.zclient.glide.{AssetRequest, WireGlide}
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.utils.ContextUtils.{getInt, getIntArray}
 import com.waz.zclient.utils.{ResString, RingtoneUtils}
@@ -356,7 +356,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
                 Threading.Background {
                   Option(WireGlide()
                     .asBitmap()
-                    .load(PublicAssetIdRequest(aId))
+                    .load(AssetRequest(aId))
                     .apply(new RequestOptions().circleCrop())
                     .submit(128, 128)
                     .get())

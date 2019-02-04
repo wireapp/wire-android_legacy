@@ -23,7 +23,7 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import com.bumptech.glide.{Glide, RequestBuilder, RequestManager}
-import com.waz.model.{AssetId, PublicAssetId, UploadAssetId}
+import com.waz.model.AssetIdGeneral
 import com.waz.service.assets2.{Asset, ImageDetails}
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
 
@@ -33,14 +33,11 @@ object WireGlide {
 
 object GlideBuilder {
   def apply(drawable: Drawable)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(drawable)
-  def apply(assetId: AssetId)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(AssetIdRequest(assetId))
   def apply(asset: Asset[ImageDetails])(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(ImageAssetRequest(asset))
   def apply(assetRequest: AssetRequest)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(assetRequest)
   def apply(uri: Uri)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(uri)
   def apply(uri: URI)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(AndroidURIUtil.unwrap(uri))
   def apply(url: URL)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(Uri.parse(url.toString))
   def apply(assetId: PublicAssetIdRequest)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(assetId)
-  def apply(uploadAssetId: UploadAssetId)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(UploadAssetIdRequest(uploadAssetId))
-  def apply(assetId: PublicAssetId)(implicit context: Context): RequestBuilder[Drawable] =
-    WireGlide().load(PublicAssetIdRequest(assetId))
+  def apply(assetId: AssetIdGeneral)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(AssetRequest(assetId))
 }
