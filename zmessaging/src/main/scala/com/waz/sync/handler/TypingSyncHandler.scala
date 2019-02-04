@@ -29,18 +29,16 @@ import com.waz.threading.Threading
 import com.waz.utils._
 
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
 class TypingSyncHandler(client:        TypingClient,
                         convs:         ConversationsContentUpdaterImpl,
                         typingService: TypingService,
                         timeouts:      Timeouts) {
 
-  import TypingSyncHandler._
   import Threading.Implicits.Background
 
   def postTypingState(convId: ConvId, typing: Boolean)(implicit info: RequestInfo): Future[SyncResult] =
-    if (TypingIndicatorTimeout.elapsedSince(info.requestStart))
+    if (timeouts.typing.refreshDelay.elapsedSince(info.requestStart))
       Future.successful(SyncResult.Failure(expired("Typing indicator request no longer valid")))
     else convs.convById(convId).flatMap {
       case Some(conv) =>
@@ -52,8 +50,4 @@ class TypingSyncHandler(client:        TypingClient,
       case None =>
         Future.successful(Failure(s"conversation not found: $convId"))
     }
-}
-
-object TypingSyncHandler {
-  val TypingIndicatorTimeout = 45.seconds
 }
