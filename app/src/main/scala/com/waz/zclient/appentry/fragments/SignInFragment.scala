@@ -305,12 +305,10 @@ class SignInFragment extends SSOFragment
     }
   }
 
-
   override def onResume() = {
     super.onResume()
     countryController.addObserver(this)
   }
-
 
   override def onPause() = {
     super.onPause()
@@ -426,7 +424,7 @@ object SignInFragment {
 
   def apply() = new SignInFragment
 
-  def apply(signInMethod: SignInMethod): SignInFragment = {
+  def apply(signInMethod: SignInMethod): SignInFragment =
     returning(new SignInFragment()) {
       _.setArguments(returning(new Bundle) { b =>
           b.putString(SignTypeArg, signInMethod.signType.str)
@@ -434,7 +432,6 @@ object SignInFragment {
           b.putBoolean(OnlyLoginArg, signInMethod.onlyLogin)
       })
     }
-  }
 
   val Tag = logTagFor[SignInFragment]
 
@@ -451,6 +448,7 @@ object SignInFragment {
   object Phone extends InputType { override val str = "Phone" }
 
   case class SignInMethod(signType: SignType, inputType: InputType = Email, onlyLogin: Boolean = false)
+
   val SignInOnlyLogin = SignInMethod(Login, Email, onlyLogin = true)
 }
 
