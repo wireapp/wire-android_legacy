@@ -23,18 +23,12 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.graphics.{Canvas, ColorFilter, Paint, PixelFormat}
 import android.util.AttributeSet
-import com.waz.ZLog.ImplicitTag._
-import com.waz.model.MessageData
-import com.waz.service.ZMessaging
-import com.waz.service.assets2.{DownloadAssetStatus, UploadAssetStatus}
+import com.waz.service.assets2.{AssetStatus, DownloadAssetStatus, UploadAssetStatus}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
-import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.messages.parts.assets.DeliveryState._
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.RichView
 import com.waz.zclient.views.GlyphProgressView
 import com.waz.zclient.{R, ViewHelper}
 
@@ -43,70 +37,32 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
   def this(context: Context) = this(context, null, 0)
 
   private val isFileType = withStyledAttributes(attrs, R.styleable.AssetActionButton) { _.getBoolean(R.styleable.AssetActionButton_isFileType, false) }
-
-  val zms = inject[Signal[ZMessaging]]
-  val assets = inject[AssetsController]
-  val message = Signal[MessageData]()
-  val accentController = inject[AccentColorController]
-
-  val assetId = message.map(_.assetId).collect { case Some(id) => id }
-  val asset = assets.assetSignal(assetId)
-  val assetStatus = assets.assetStatusSignal(assetId)
-  val deliveryState = DeliveryState(message, assetStatus.map(_._1))
-
-  val isPlaying = Signal(false)
+  private val accentController = inject[AccentColorController]
 
   val onClicked = EventStream[DeliveryState]
 
   private val normalButtonDrawable = getDrawable(R.drawable.selector__icon_button__background__video_message)
   private val errorButtonDrawable = getDrawable(R.drawable.selector__icon_button__background__video_message__error)
-  private val onCompletedDrawable = if (isFileType) new FileDrawable(asset.map(_.mime.extension)) else normalButtonDrawable
+  private def onCompletedDrawable(ext: String) = if (isFileType) new FileDrawable(Signal.const(ext)) else normalButtonDrawable
+
+  def setStatus(status: AssetStatus, extension: String, playing: Boolean): Unit = {
+    val (icon, drawable) = status match {
+      case DownloadAssetStatus.InProgress | UploadAssetStatus.InProgress => (R.string.glyph__close, normalButtonDrawable)
+      case DownloadAssetStatus.Failed | DownloadAssetStatus.Cancelled =>    (R.string.glyph__redo, errorButtonDrawable)
+      case UploadAssetStatus.Failed | UploadAssetStatus.Cancelled =>        (R.string.glyph__redo, errorButtonDrawable)
+      case AssetStatus.Done if playing =>                                   (R.string.glyph__pause, onCompletedDrawable(extension))
+      case AssetStatus.Done if !playing =>                                  (R.string.glyph__play, onCompletedDrawable(extension))
+      case _ =>                                                             (0, null)
+    }
+
+    setBackground(drawable)
+    setText(icon match {
+      case 0 => ""
+      case r => getString(r)
+    })
+  }
 
   accentController.accentColor.map(_.color).on(Threading.Ui)(setProgressColor)
-
-  private val text = deliveryState flatMap {
-    case Complete if !isFileType  =>
-      isPlaying map {
-        case true => R.string.glyph__pause
-        case false => R.string.glyph__play
-      }
-    case Uploading | Downloading  => Signal const R.string.glyph__close
-    case _: Failed | Cancelled    => Signal const R.string.glyph__redo
-    case _                        => Signal const 0
-  } map {
-    case 0 => ""
-    case resId => getString(resId)
-  }
-
-  private val drawable = deliveryState.map {
-    case Complete                 => onCompletedDrawable
-    case Uploading | Downloading  => normalButtonDrawable
-    case _: Failed | Cancelled    => errorButtonDrawable
-    case _                        => null
-  }
-
-  text.on(Threading.Ui) { setText }
-  drawable.on(Threading.Ui) { setBackground }
-
-  assetStatus.on(Threading.Ui) {
-    case (UploadAssetStatus.InProgress | DownloadAssetStatus.InProgress, Some(progress)) =>
-      progress.total match {
-        case Some(total) => setProgress(if (total > 0) progress.progress.toFloat / total.toFloat else 0)
-        case _ => startEndlessProgress()
-      }
-    case _ => clearProgress()
-  }
-
-  this.onClick {
-    deliveryState.currentValue.foreach { onClicked ! _ }
-  }
-
-  onClicked {
-    case UploadFailed => message.currentValue.foreach(assets.retry)
-    case Uploading    => message.currentValue.foreach(m => assets.cancelUpload(m.assetId.get))
-    case Downloading  => message.currentValue.foreach(m => assets.cancelDownload(m.assetId.get))
-    case _ => // do nothing, individual view parts will handle what happens when in the Completed state.
-  }
 }
 
 protected class FileDrawable(ext: Signal[String])(implicit context: Context, cxt: EventContext) extends Drawable {
