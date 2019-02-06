@@ -247,6 +247,8 @@ object WireApplication {
 
     bind [ClipboardUtils]       to new ClipboardUtils(ctx)
     bind [ExternalFileSharing]  to new ExternalFileSharing(ctx)
+
+    bind [UriHelper] to new AndroidUriHelper(ctx)
   }
 
   def controllers(implicit ctx: WireContext) = new Module {
@@ -370,8 +372,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     val googleApi = GoogleApiImpl(this, backend, prefs)
 
     val assets2Module = new Assets2Module {
-      override def uriHelper: UriHelper =
-        new AndroidUriHelper(getApplicationContext)
+      override def uriHelper: UriHelper = inject[UriHelper]
       override def assetDetailsService: AssetDetailsService =
         new AssetDetailsServiceImpl(uriHelper)(getApplicationContext, Threading.BlockingIO)
       override def assetPreviewService: AssetPreviewService =
