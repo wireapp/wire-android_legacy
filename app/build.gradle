@@ -118,7 +118,7 @@ android {
         buildConfigField 'String',  'WEBSOCKET_URL',              "\"$config.websocketUrl\""
         buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',   "$config.allow_account_creation"
         buildConfigField 'String',  'SUPPORT_EMAIL',              "\"$config.supportEmail\""
-        buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',    "\"$config.pushSenderId\""
+        buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',    "\"$config.firebasePushSenderId\""
         buildConfigField 'String',  'FIREBASE_APP_ID',            "\"$config.firebaseAppId\""
         buildConfigField 'String',  'FIREBASE_API_KEY',           "\"$config.firebaseApiKey\""
         buildConfigField 'boolean', 'ENABLE_BLACKLIST',           "$config.enableBlacklist"
