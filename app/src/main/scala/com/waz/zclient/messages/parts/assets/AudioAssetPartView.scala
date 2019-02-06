@@ -27,6 +27,8 @@ import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
 import com.waz.zclient.utils.RichSeekBar
 import org.threeten.bp.Duration
 import com.waz.ZLog.ImplicitTag._
+import com.waz.service.assets2.AssetStatus
+import com.waz.zclient.utils.RichView
 
 class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style) with PlayableAsset with FileLayoutAssetPart with HighlightViewPart {
@@ -47,7 +49,7 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
 
   val isPlaying = playControls.flatMap(_.isPlaying)
 
-  isPlaying { assetActionButton.isPlaying ! _ }
+  //isPlaying { assetActionButton.isPlaying ! _ }
 
 //  (for {
 //    pl <- isPlaying
@@ -57,8 +59,12 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
 //      if (pl) controller.onAudioPlayed ! a
 //  }
 
-  assetActionButton.onClicked.filter(state => state == DeliveryState.Complete || state == DeliveryState.DownloadFailed) { _ =>
-    playControls.currentValue.foreach(_.playOrPause())
+  assetActionButton.onClick {
+    assetStatus.map(_._1).currentValue match {
+      case Some(AssetStatus.Done) =>
+        playControls.currentValue.foreach(_.playOrPause())
+      case _ =>
+    }
   }
 
   completed.on(Threading.Ui) { progressBar.setEnabled }

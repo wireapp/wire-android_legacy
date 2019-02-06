@@ -32,6 +32,7 @@ import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
 import com.waz.zclient.messages.parts.assets.DeliveryState._
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.RichView
 
 class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style) with ActionableAssetPart with FileLayoutAssetPart with HighlightViewPart { self =>
@@ -75,8 +76,12 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int)
 
   text.on(Threading.Ui)(fileInfoView.setText)
 
-  assetActionButton.onClicked.filter(state => state == DeliveryState.Complete || state == DeliveryState.DownloadFailed) { _ =>
-    asset.currentValue.foreach { a => controller.openFile(a.id) }
+  assetActionButton.onClick {
+    assetStatus.map(_._1).currentValue match {
+      case Some(AssetStatus.Done) =>
+        asset.currentValue.foreach { a => controller.openFile(a.id) }
+      case _ =>
+    }
   }
 }
 

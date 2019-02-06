@@ -120,6 +120,20 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   def assetStatusSignal(assetId: AssetIdGeneral): Signal[(AssetStatus, Option[Progress])] =
     assetStatusSignal(Signal.const(assetId))
 
+  def assetPreviewId(assetId: Signal[AssetIdGeneral]): Signal[Option[AssetIdGeneral]] =
+    assetSignal(assetId).map {
+      case u: UploadAsset[_] => u.preview match {
+        case RawPreviewUploaded(aId) => Option(aId)
+        case RawPreviewNotUploaded(aId) => Option(aId)
+        case _ => Option.empty[AssetIdGeneral]
+      }
+      case a: Asset[_] => a.preview
+      case _ => Option.empty[AssetIdGeneral]
+    }
+
+  def assetPreviewId(assetId: AssetIdGeneral): Signal[Option[AssetIdGeneral]] =
+    assetPreviewId(Signal.const(assetId))
+
   def downloadProgress(idGeneral: AssetIdGeneral): Signal[Progress] = idGeneral match {
     case id: DownloadAssetId => assets.flatMap(_.downloadProgress(id))
     case _ => Signal.empty

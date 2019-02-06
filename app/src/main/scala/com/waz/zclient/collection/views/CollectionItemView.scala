@@ -188,11 +188,12 @@ class CollectionFileAssetPartView(context: Context, attrs: AttributeSet, style: 
     import Threading.Implicits.Ui
     for {
       false <- expired.head
-      ds <- deliveryState.head
-    } assetActionButton.onClicked ! ds
+    } assetActionButton.callOnClick()
   }
 
-  assetActionButton.onClicked(_ => onClicked ! (()))
+  assetActionButton.callOnClick()
+
+  assetActionButton.onClick(onClicked ! (()))
   setWillNotDraw(true)
 }
 

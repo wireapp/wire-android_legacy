@@ -18,19 +18,14 @@
 package com.waz.zclient.messages.parts
 
 import android.content.Context
-import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.{FrameLayout, ImageView, LinearLayout}
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
-import com.bumptech.glide.request.target.Target
-import com.bumptech.glide.request.{RequestListener, RequestOptions}
+import com.bumptech.glide.request.RequestOptions
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
-import com.waz.model.{AssetId, MessageContent, UploadAssetId}
-import com.waz.service.downloads.AssetLoader.DownloadOnWifiOnlyException
+import com.waz.model.{AssetId, MessageContent}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{NoAutowiring, Signal, SourceSignal}
@@ -73,24 +68,8 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends F
   message.map(_.assetId).onUi { aId =>
     ZLog.verbose(s"message asset id => $aId")
 
-    val builder = aId.collect {
-      case a: AssetId => GlideBuilder(a)
-      case a: UploadAssetId => GlideBuilder(a)
-    }
-    builder.foreach {
-      _.addListener(new RequestListener[Drawable] {
-        override def onLoadFailed(e: GlideException, model: scala.Any, target: Target[Drawable], isFirstResource: Boolean): Boolean = {
-          noWifi ! e.getCauses.contains(DownloadOnWifiOnlyException)
-          ZLog.verbose(s"onLoadFailed $aId")
-          false
-        }
-
-        override def onResourceReady(resource: Drawable, model: scala.Any, target: Target[Drawable], dataSource: DataSource, isFirstResource: Boolean): Boolean = {
-          noWifi ! false
-          ZLog.verbose(s"onResourceReady $aId")
-          false
-        }
-      })
+    aId.foreach { a =>
+      GlideBuilder(a)
         .apply(new RequestOptions().fitCenter())
         .transition(DrawableTransitionOptions.withCrossFade())
         .into(imageView)

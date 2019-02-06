@@ -17,13 +17,13 @@
  */
 package com.waz.zclient.messages.parts.assets
 
-import android.graphics.drawable.Drawable
 import android.view.View.OnLayoutChangeListener
 import android.view.{View, ViewGroup}
 import android.widget.{FrameLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.{Dim2, MessageContent}
 import com.waz.service.assets2.Asset.{Audio, Video}
+import com.waz.service.assets2._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -57,6 +57,7 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper with Ephemer
   val deliveryState = DeliveryState(message, assetStatus.map(_._1))
   val completed = deliveryState.map(_ == DeliveryState.Complete)
   val accentColorController = inject[AccentColorController]
+  val previewAssetId = controller.assetPreviewId(assetId)
   protected val showDots: Signal[Boolean] = deliveryState.map(state => state == OtherUploading)
 
   lazy val assetBackground = new AssetBackground(showDots, expired, accentColorController.accentColor)
@@ -75,9 +76,25 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper with Ephemer
 trait ActionableAssetPart extends AssetPart {
   protected val assetActionButton: AssetActionButton = findById(R.id.action_button)
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
-    super.set(msg, part, opts)
-    assetActionButton.message.publish(msg.message, Threading.Ui)
+  assetStatus.map(_._1).onUi { s =>
+    assetActionButton.setStatus(s, "", playing = false)
+  }
+
+  assetStatus.onUi {
+    case (AssetStatus.Done, _) => assetActionButton.clearProgress()
+    case (UploadAssetStatus.InProgress | DownloadAssetStatus.InProgress, Some(p)) =>
+      val progress = p.total.map(t => p.progress.toFloat / t.toFloat).getOrElse(0f)
+      assetActionButton.setProgress(progress)
+    case _ => assetActionButton.clearProgress()
+  }
+
+  assetActionButton.onClick {
+    assetStatus.map(_._1).currentValue.foreach {
+      case UploadAssetStatus.Failed => message.currentValue.foreach(controller.retry)
+      case UploadAssetStatus.InProgress => message.currentValue.foreach(m => controller.cancelUpload(m.assetId.get))
+      case DownloadAssetStatus.InProgress => message.currentValue.foreach(m => controller.cancelDownload(m.assetId.get))
+      case _ => // do nothing, individual view parts will handle what happens when in the Completed state.
+    }
   }
 }
 
@@ -110,10 +127,15 @@ trait FileLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
 trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
   import ImageLayoutAssetPart._
 
-  protected val imageDim = message.map(_.imageDimensions).collect { case Some(d) => d}
   protected val maxWidth = Signal[Int]()
   protected val maxHeight = Signal[Int]()
   override protected val showDots = deliveryState.map(state => state == OtherUploading || state == Downloading)
+
+  protected val imageDim = asset.map(_.details).map {
+    case ImageDetails(dim: Dim2) => dim
+    case VideoDetails(dim: Dim2, _) => dim
+    case _ => Dim2(0, 0)
+  }
 
   val forceDownload = this match {
     case _: ImagePartView => false
@@ -127,10 +149,7 @@ trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
     })
   }
 
-  hideContent.flatMap {
-    case true => Signal.const[Drawable](assetBackground)
-    case _ => Signal.const[Drawable](assetBackground)//TODO: is this needed?
-  }.onUi(imageContainer.setBackground)
+  imageContainer.setBackground(assetBackground)
 
   val displaySize = for {
     maxW <- maxWidth
@@ -169,7 +188,7 @@ trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
     Dim2(dW, _) <- displaySize
   } yield
     if (dW >= maxW) Offset.Empty
-    else Offset(0, 0, maxW - dW, 0)
+    else Offset((maxW - dW) / 2, 0, (maxW - dW) / 2, 0)
 
   padding.onUi { p =>
     assetBackground.padding ! p

@@ -20,12 +20,14 @@ package com.waz.zclient.messages.parts.assets
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
-import android.widget.FrameLayout
+import android.widget.{FrameLayout, ImageView}
 import com.waz.threading.Threading
 import com.waz.zclient.R
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
 import com.waz.zclient.utils.RichView
 import com.waz.ZLog.ImplicitTag._
+import com.waz.service.assets2.AssetStatus
+import com.waz.zclient.glide.{GlideBuilder, WireGlide}
 
 class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style) with PlayableAsset with ImageLayoutAssetPart with HighlightViewPart {
@@ -35,23 +37,24 @@ class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   override val tpe: MsgPart = MsgPart.VideoAsset
 
   private val controls = findById[View](R.id.controls)
+  private val image = findById[ImageView](R.id.image)
 
   hideContent.map(!_).on(Threading.Ui)(controls.setVisible)
 
-  //TODO
-  /*
-  imageDrawable.state.map {
-    case Loaded(_, _, _) => getColor(R.color.white)
-    case _ => getColor(R.color.black)
-  }.on(Threading.Ui)(durationView.setTextColor)
-  */
+  previewAssetId.onUi {
+    case Some(aId) =>
+      GlideBuilder(aId).into(image)
+    case _ => WireGlide().clear(image)
+  }
 
-  asset.disableAutowiring()
+   assetActionButton.onClick {
+     if (assetStatus.map(_._1).currentValue.contains(AssetStatus.Done)) {
+       asset.head.foreach(a => controller.openFile(a.id))(Threading.Ui)
+     }
+  }
 
-  assetActionButton.onClicked.filter(_ == DeliveryState.Complete) { _ =>
-    asset.currentValue foreach { case a =>
-      controller.openFile(a.id)
-    }
+  padding.onUi { p =>
+    durationView.setMargin(p.l, p.t, p.r, p.b)
   }
 
   override def onInflated(): Unit = {}
