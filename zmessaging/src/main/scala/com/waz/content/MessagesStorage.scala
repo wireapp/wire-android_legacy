@@ -269,6 +269,7 @@ class MessagesStorageImpl(context:     Context,
       _ <- Future(msgsFilteredIndex(conv).foreach(_.delete(upTo)))
       _ <- msgsIndex(conv).flatMap(_.delete(upTo))
       _ <- storage.flushWALToDatabase()
+      _ =  onMessagesDeletedInConversation ! Set(conv)
     } yield ()
   }
 
