@@ -81,11 +81,15 @@ trait ActionableAssetPart extends AssetPart {
   }
 
   assetStatus.onUi {
-    case (AssetStatus.Done, _) => assetActionButton.clearProgress()
+    case (AssetStatus.Done, _) =>
+      assetActionButton.clearProgress()
+    case (DownloadAssetStatus.InProgress, _) =>
+      assetActionButton.startEndlessProgress()
     case (UploadAssetStatus.InProgress | DownloadAssetStatus.InProgress, Some(p)) =>
       val progress = p.total.map(t => p.progress.toFloat / t.toFloat).getOrElse(0f)
       assetActionButton.setProgress(progress)
-    case _ => assetActionButton.clearProgress()
+    case _ =>
+      assetActionButton.clearProgress()
   }
 
   assetActionButton.onClick {

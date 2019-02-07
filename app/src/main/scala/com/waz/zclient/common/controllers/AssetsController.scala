@@ -127,6 +127,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
         case RawPreviewNotUploaded(aId) => Option(aId)
         case _ => Option.empty[AssetIdGeneral]
       }
+      case d: DownloadAsset => d.preview
       case a: Asset[_] => a.preview
       case _ => Option.empty[AssetIdGeneral]
     }
