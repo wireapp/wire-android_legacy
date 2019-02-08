@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.conversation.toolbar
 
-import android.Manifest.permission.RECORD_AUDIO
+import android.Manifest.permission.{RECORD_AUDIO, WRITE_EXTERNAL_STORAGE}
 import android.animation.{ObjectAnimator, ValueAnimator}
 import android.app.Activity
 import android.content.{Context, DialogInterface}
@@ -218,14 +218,14 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
   }
 
   def show() = {
-    permissions.permissions(ListSet(RECORD_AUDIO)).map(_.headOption.exists(_.granted)).head.map {
+    permissions.permissions(ListSet(RECORD_AUDIO, WRITE_EXTERNAL_STORAGE)).map(_.headOption.exists(_.granted)).head.map {
       case true =>
         setVisibility(VISIBLE)
         slideControlState ! Recording
         inject[SoundController].shortVibrate()
         record()
       case false =>
-        permissions.requestAllPermissions(ListSet(RECORD_AUDIO)).map {
+        permissions.requestAllPermissions(ListSet(RECORD_AUDIO, WRITE_EXTERNAL_STORAGE)).map {
           case false =>
             showToast(R.string.audio_message_error__missing_audio_permissions)
           case _ =>
