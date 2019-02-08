@@ -37,7 +37,7 @@ class LikeDetailsView(context: Context, attrs: AttributeSet, style: Int) extends
   private val description: TextView = findById(R.id.like__description)
 
   def init(controller: FooterViewController): Unit = {
-    val likedBy = controller.messageAndLikes.map(_.likes.sortBy(_.str))
+    val likedBy = controller.messageAndLikes.map(_.likes)
 
     def getDisplayNameString(ids: Seq[UserId]): Signal[String] = {
       if (ids.size > 3)
