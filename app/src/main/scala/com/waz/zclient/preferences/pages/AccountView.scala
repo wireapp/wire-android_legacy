@@ -174,10 +174,8 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   val email = self.map(_.email)
 
   val isPhoneNumberEnabled = for {
-    p      <- phone
     isTeam <- isTeam
-    sso    <- accounts.isActiveAccountSSO
-  } yield !sso && (p.isDefined || !isTeam)
+  } yield !isTeam
 
   val selfPicture: Signal[ImageSource] = self.map(_.picture).collect{case Some(pic) => WireImage(pic)}
 
