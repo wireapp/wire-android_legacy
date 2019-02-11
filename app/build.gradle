@@ -205,6 +205,7 @@ android {
                                     sharedUserId           : "",
                                     internal_features      : "true"]
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
+            buildConfigField 'boolean', 'FORCE_ENABLE_LOGGING',        'true'
         }
 
         candidate {
@@ -216,6 +217,7 @@ android {
                                     internal_features      : "false"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
+            buildConfigField 'boolean', 'FORCE_ENABLE_LOGGING',        "$config.forceEnableLogging"
         }
 
         prod {
@@ -226,6 +228,7 @@ android {
                                     internal_features      : "false"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
+            buildConfigField 'boolean', 'FORCE_ENABLE_LOGGING',        "$config.forceEnableLogging"
         }
 
         internal {
@@ -237,6 +240,7 @@ android {
                                     internal_features: "true"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
+            buildConfigField 'boolean', 'FORCE_ENABLE_LOGGING',        'true'
         }
 
         experimental {
@@ -248,6 +252,7 @@ android {
                                     internal_features      : "true"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
+            buildConfigField 'boolean', 'FORCE_ENABLE_LOGGING',        'true'
         }
     }
 

@@ -265,14 +265,7 @@ package object utils {
       } mkString " "
   }
 
-  val DevId          = "com.waz.zclient.dev"
-  val CandidateId    = "com.wire.candidate"
-  val ProdId         = "com.wire"
-  val InternalId     = "com.wire.internal"
-  val ExperimentalId = "com.wire.x"
-
-  val IsProd: Boolean = Set(ProdId, CandidateId).exists(BuildConfig.APPLICATION_ID.contains)
-  val SafeLoggingEnabled: Boolean = Set(ProdId, CandidateId, InternalId).exists(BuildConfig.APPLICATION_ID.contains)
+  val SafeLoggingEnabled: Boolean = BuildConfig.FORCE_ENABLE_LOGGING
 
   def format(className: String, oneLiner: Boolean, fields: (String, Option[Any])*): String = {
     val fieldsIt = fields.collect { case (key, Some(value)) => key -> value.toString }.toList.iterator
