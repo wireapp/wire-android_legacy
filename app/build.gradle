@@ -128,6 +128,7 @@ android {
         buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
         buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
         buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
+        buildConfigField 'boolean', 'FORCE_ENABLE_LOGGING',        "$config.forceEnableLogging"
     }
 
     packagingOptions {
