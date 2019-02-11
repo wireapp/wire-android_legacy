@@ -192,7 +192,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   val selfPicture: Signal[ImageSource] = self.map(_.picture).collect{case Some(pic) => WireImage(pic)}
 
   //TODO: Replace with flag coming from self
-  private val accountIsLocked = Signal.const(true)
+  private val accountIsLocked = Signal.const(false)
 
   accountIsLocked.onUi { locked =>
     view.setAccountLocked(locked)
