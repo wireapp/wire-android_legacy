@@ -22,6 +22,7 @@
 }
 
 -keep class scala.collection.SeqLike { public java.lang.String toString(); }
+-keepclassmembers class * { public java.lang.String toString(); }
 -keep class scala.concurrent.forkjoin.** { *; }
 -keep class org.webrtc.** { *; }
 -keep class com.waz.call.FlowManager { *; }
