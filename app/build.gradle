@@ -218,8 +218,8 @@ android {
                                     internal_features      : "false"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        'false'
-            buildConfigField 'boolean', 'SAFE_LOGGING',     'false'
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$config.loggingEnabled"
+            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
 
         prod {
@@ -230,8 +230,8 @@ android {
                                     internal_features      : "false"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        'false'
-            buildConfigField 'boolean', 'SAFE_LOGGING',     'false'
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        "true"
+            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
 
         internal {
@@ -243,8 +243,8 @@ android {
                                     internal_features: "true"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        'false'
-            buildConfigField 'boolean', 'SAFE_LOGGING',     'false'
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
+            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
 
         experimental {
@@ -256,8 +256,8 @@ android {
                                     internal_features      : "true"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        'false'
-            buildConfigField 'boolean', 'SAFE_LOGGING',     'false'
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
+            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
     }
 
