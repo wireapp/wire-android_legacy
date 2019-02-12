@@ -20,31 +20,45 @@ package com.waz.zclient.assets2
 import java.io.{InputStream, OutputStream}
 
 import android.graphics.{Bitmap, BitmapFactory}
-import com.waz.model.{Dim2, Mime}
 import com.waz.model.errors.FailedExpectationsError
+import com.waz.model.{Dim2, Mime}
 import com.waz.service.assets2.ImageRecoder
 import com.waz.utils.IoUtils
 
 class AndroidImageRecoder extends ImageRecoder {
 
-  def recode(dim: Dim2, targetMime: Mime, scaleTo: Int, source: InputStream, target: OutputStream): Unit = {
+  override def recode(dim: Dim2, targetMime: Mime, scaleTo: Int, source: () => InputStream, target: () => OutputStream): Unit = {
     val compressFormat = targetMime match {
       case Mime.Image.Jpg => Bitmap.CompressFormat.JPEG
       case Mime.Image.Png => Bitmap.CompressFormat.PNG
       case mime => throw FailedExpectationsError(s"We do not expect $mime as target mime.")
     }
 
-    IoUtils.withResources(source, target) { (in, out) =>
-      // Determine how much to scale down the image
-      val scaleFactor = Math.min(dim.width / scaleTo, dim.height / scaleTo)
+    // Determine how much to scale down the image
+    val scaleFactor = Math.max(dim.width / scaleTo, dim.height / scaleTo)
 
-      val opts = new BitmapFactory.Options()
-      opts.inJustDecodeBounds = false
-      opts.inSampleSize = scaleFactor
+    val opts = new BitmapFactory.Options()
+    opts.inJustDecodeBounds = false
+    opts.inSampleSize = scaleFactor
 
-      val resized = BitmapFactory.decodeStream(in, null, opts)
-      resized.compress(compressFormat, 75, out)
+    if (scaleFactor <= 1) {
+      val resizingSuccessful = IoUtils.withResource(source()) { in =>
+        val resized = BitmapFactory.decodeStream(in, null, opts)
+        val success = resized != null
+        if (success) IoUtils.withResource(target())(resized.compress(compressFormat, 75, _))
+        success
+      }
+      //TODO What should we do in this case?
+//      if (!resizingSuccessful) {
+//        IoUtils.withResources(source(), target())(IoUtils.copy)
+//      }
+    } else {
+      IoUtils.withResources(source(), target()) { (in, out) =>
+        val resized = BitmapFactory.decodeStream(in, null, opts)
+        resized.compress(compressFormat, 75, out)
+      }
     }
+
   }
 
 }

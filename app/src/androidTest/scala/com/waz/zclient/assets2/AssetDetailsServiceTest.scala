@@ -32,6 +32,8 @@ import com.waz.zclient.TestUtils._
 import com.waz.zclient.dev.test.R
 import org.junit.Test
 import org.junit.runner.RunWith
+import android.Manifest
+import org.junit.Rule
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -41,9 +43,6 @@ class AssetDetailsServiceTest {
 
   val uriHelper = new AndroidUriHelper(getContext)
   val detailsService = new AssetDetailsServiceImpl(uriHelper)(getContext, global)
-
-  import android.Manifest
-  import org.junit.Rule
 
   @Rule
   def permissions: GrantPermissionRule =
