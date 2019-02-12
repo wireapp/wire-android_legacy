@@ -66,6 +66,5 @@ class AssetStorageTest extends GeneralStorageTest(AssetDao)(
 //      preview = None,
 //      details = VideoDetails(Dim2(1,2), Duration.ofDays(1))
 //    )
-  ),
-  idExtractor = _.id
+  )
 )
