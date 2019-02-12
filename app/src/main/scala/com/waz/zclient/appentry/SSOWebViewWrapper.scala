@@ -53,7 +53,7 @@ class SSOWebViewWrapper(webView: WebView, backendHost: String) {
 
     override def shouldOverrideUrlLoading(view: WebView, url: LogTag): Boolean = {
       verbose(s"shouldOverrideUrlLoading: $url")
-      parseURL(url).fold (false){ result =>
+      parseURL(url).fold(false) { result =>
         loginPromise.tryComplete(Success(result))
         true
       }
@@ -61,6 +61,7 @@ class SSOWebViewWrapper(webView: WebView, backendHost: String) {
   })
 
   def loginWithCode(code: String): Future[SSOResponse] = {
+    verbose(s"loginWithCode $code")
     loginPromise.tryComplete(Success(Left(-1)))
     loginPromise = Promise[SSOResponse]()
 
@@ -98,6 +99,7 @@ object SSOWebViewWrapper {
     "insufficient-permissions" -> 10)
 
   def parseURL(url: String): Option[SSOResponse] = {
+    verbose(s"parseURL $url")
     val uri = URI.parse(url)
 
     if (uri.getScheme.equals(ResponseSchema)) {

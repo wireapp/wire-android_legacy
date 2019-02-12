@@ -101,6 +101,19 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.VIEW" />
             </intent-filter>
+
+            <intent-filter>
+                <data
+                    android:host="start-sso"
+                    android:scheme="wire"
+                    />
+
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.VIEW" />
+            </intent-filter>
         </activity>
 
         <activity

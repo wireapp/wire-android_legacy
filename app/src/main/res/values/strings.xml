@@ -1265,6 +1265,9 @@
     <string name="sso_signin_wrong_code_title">Invalid code</string>
     <string name="sso_signin_wrong_code_message">Please verify your company SSO access code and try again.</string>
 
+    <string name="sso_signin_max_accounts_title">Two accounts active</string>
+    <string name="sso_signin_max_accounts_message">You can only be logged in with two accounts at once. Log out from one to add another.</string>
+
     <string name="participant_search_hint">SEARCH FOR NAMES</string>
     <string name="participant_search_title">PEOPLE</string>
     <string name="generic_service_warning">Services have access to the content of this conversation</string>

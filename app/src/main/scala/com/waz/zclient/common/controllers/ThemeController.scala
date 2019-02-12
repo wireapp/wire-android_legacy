@@ -36,16 +36,14 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class ThemeController(implicit injector: Injector, context: Context, ec: EventContext) extends Injectable {
-  private val am = inject[Signal[AccountManager]]
-
   import Threading.Implicits.Background
 
   val optionsDarkTheme:  OptionsTheme = new OptionsDarkTheme(context)
   val optionsLightTheme: OptionsTheme = new OptionsLightTheme(context)
 
-  val darkThemePref = am.map(_.userPrefs.preference(DarkTheme))
+  lazy val darkThemePref = inject[Signal[AccountManager]].map(_.userPrefs.preference(DarkTheme))
 
-  val darkThemeSet = darkThemePref.flatMap(_.signal).disableAutowiring()
+  lazy val darkThemeSet = darkThemePref.flatMap(_.signal).disableAutowiring()
 
   def setDarkTheme(active: Boolean) =
     darkThemePref.head.flatMap(_ := active)
