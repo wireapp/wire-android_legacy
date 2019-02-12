@@ -21,8 +21,9 @@
    *** get*();
 }
 
--keep class scala.collection.SeqLike { public java.lang.String toString(); }
+# Needed for logging
 -keepclassmembers class * { public java.lang.String toString(); }
+
 -keep class scala.concurrent.forkjoin.** { *; }
 -keep class org.webrtc.** { *; }
 -keep class com.waz.call.FlowManager { *; }
