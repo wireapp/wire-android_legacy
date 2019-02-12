@@ -50,6 +50,7 @@ class RawAssetStorageTest extends GeneralStorageTest(UploadAssetDao)(
   entities = Set(
     UploadAsset(
       id = UploadAssetId(),
+      md5 = MD5(Array.emptyByteArray),
       sha = Sha256("ad34da34"),
       encryption = NoEncryption,
       encryptionSalt = None,
@@ -93,6 +94,5 @@ class RawAssetStorageTest extends GeneralStorageTest(UploadAssetDao)(
 //      details = VideoDetails(Dim2(1,2), Duration.ofDays(1)),
 //      assetId = None
 //    )
-  ),
-  idExtractor = _.id
+  )
 )

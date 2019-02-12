@@ -20,7 +20,8 @@ package com.waz.zclient.storage
 import android.content.Context
 import android.support.test.InstrumentationRegistry
 import com.waz.db.{Dao, DaoDB}
-import com.waz.utils.DbStorage2
+import com.waz.service.tracking.DummyTrackingService
+import com.waz.utils.{DbStorage2, Identifiable}
 import com.waz.utils.wrappers.DB
 import com.waz.zclient.TestUtils.asyncTest
 import org.junit.{After, Before, Test}
@@ -30,11 +31,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object GeneralStorageTest {
 
   class TestSingleDaoDb(context: Context, databaseName: String, dao: Dao[_, _])
-    extends DaoDB(context, databaseName, null, 1, Seq(dao), migrations = Seq.empty)
+    extends DaoDB(context, databaseName, null, 1, Seq(dao), migrations = Seq.empty, new DummyTrackingService())
 
 }
 
-abstract class GeneralStorageTest[Entity, Id](dao: Dao[Entity, Id])(entities: Set[Entity], idExtractor: Entity => Id) {
+abstract class GeneralStorageTest[Id, Entity <: Identifiable[Id]](dao: Dao[Entity, Id])(entities: Set[Entity]) {
   import com.waz.zclient.storage.GeneralStorageTest._
 
   val DatabaseName = "test_db"
@@ -46,7 +47,7 @@ abstract class GeneralStorageTest[Entity, Id](dao: Dao[Entity, Id])(entities: Se
   def initializeDB(): Unit = {
     val context = InstrumentationRegistry.getTargetContext
     testDB = new TestSingleDaoDb(context, DatabaseName, dao).getWritableDatabase
-    storage = new DbStorage2(dao)(global, testDB)
+    storage = new DbStorage2[Id, Entity](dao)(global, testDB)
   }
 
   @After
@@ -60,7 +61,7 @@ abstract class GeneralStorageTest[Entity, Id](dao: Dao[Entity, Id])(entities: Se
   def testWriteRead(): Unit = asyncTest {
     for {
       _ <- storage.saveAll(entities)
-      ids = entities.map(idExtractor)
+      ids = entities.map(_.id)
       res <- storage.loadAll(ids)
     } yield {
       val loaded = res.toSet
