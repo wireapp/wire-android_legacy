@@ -49,6 +49,11 @@ class MessagesServiceSpec extends AndroidFreeSpec {
   val replyHashing =  mock[ReplyHashing]
   val prefs =         new TestGlobalPreferences()
 
+  def getService = {
+    val updater = new MessagesContentUpdater(storage, convsStorage, deletions, prefs)
+    new MessagesServiceImpl(selfUserId, None, replyHashing, storage, updater, edits, convs, network, members, users, sync)
+  }
+
   scenario("Add local memberJoinEvent with no previous member change events") {
 
     val service = getService
@@ -211,8 +216,66 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     editedMessage.map(_.contentString) should be (Some("stuff"))
   }
 
-  def getService = {
-    val updater = new MessagesContentUpdater(storage, convsStorage, deletions, prefs)
-    new MessagesServiceImpl(selfUserId, None, replyHashing, storage, updater, edits, convs, network, members, users, sync)
+  scenario("Add new rename conversation message") {
+    // Given
+    val service = getService
+    val convId = ConvId()
+    val fromUserId = UserId()
+    val (oldName, newName) = (Name("Bleep!"), Name("Quack!"))
+
+    // There is a conversation
+    val conv = ConversationData(convId, RConvId(), Some(oldName))
+    (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(conv)))
+
+    // There is a normal message but not a rename message
+    val lastMsg = MessageData(MessageId(), convId, TEXT, fromUserId, time = RemoteInstant(clock.instant()))
+    (storage.getLastMessage _).expects(convId).once().returning(Future.successful(Some(lastMsg)))
+    (storage.lastLocalMessage _).expects(convId, RENAME).once().returning(Future.successful(None))
+    (storage.addMessage _).expects(*).once().onCall { msg: MessageData => Future.successful(msg)}
+
+    // When
+    val result = Await.result(service.addRenameConversationMessage(convId, fromUserId, newName), 1.second)
+
+    // Then
+    result match {
+      case None => fail()
+      case Some(msgData) =>
+        msgData.convId shouldBe convId
+        msgData.msgType shouldBe RENAME
+        msgData.name shouldBe Some(newName)
+    }
+  }
+
+  scenario("Update rename conversation message") {
+    // Given
+    val service = getService
+    val convId = ConvId()
+    val fromUserId = UserId()
+    val (oldName, newName) = (Name("Bleep!"), Name("Quack!"))
+    val msgId = MessageId()
+
+    // There is a conversation
+    val conv = ConversationData(convId, RConvId(), Some(oldName))
+    (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(conv)))
+
+    // There is already a rename message
+    val lastMsg = MessageData(msgId, convId, RENAME, fromUserId, name = Some(oldName), time = RemoteInstant(clock.instant()))
+    (storage.lastLocalMessage _).expects(convId, RENAME).once().returning(Future.successful(Some(lastMsg)))
+
+    // Update this message with the new name
+    (storage.update _).expects(msgId, *).once().returning(Future.successful(Some((lastMsg, lastMsg.copy(name = Some(newName))))))
+
+    // When
+    val result = Await.result(service.addRenameConversationMessage(convId, fromUserId, newName), 1.second)
+
+    // Then
+    result match {
+      case None => fail()
+      case Some(msgData) =>
+        msgData.convId shouldBe convId
+        msgData.id shouldBe msgId
+        msgData.msgType shouldBe RENAME
+        msgData.name shouldBe Some(newName)
+    }
   }
 }
