@@ -73,6 +73,7 @@ trait AccountView {
   def setPhoneNumberEnabled(enabled: Boolean): Unit
   def setReadReceipt(enabled: Boolean): Unit
   def setResetPasswordEnabled(enabled: Boolean): Unit
+  def setAccountLocked(locked: Boolean): Unit
 }
 
 class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with AccountView with ViewHelper {
@@ -135,6 +136,15 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   override def setReadReceipt(enabled: Boolean) = readReceiptsSwitch.setChecked(enabled, disableListener = true)
 
   override def setResetPasswordEnabled(enabled: Boolean) = resetPasswordButton.setVisible(enabled)
+
+  override def setAccountLocked(locked: Boolean): Unit = {
+    nameButton.setEnabled(!locked)
+    handleButton.setEnabled(!locked)
+    emailButton.setEnabled(!locked)
+    phoneButton.setEnabled(!locked)
+    pictureButton.setEnabled(!locked)
+    colorButton.setEnabled(!locked)
+  }
 }
 
 case class AccountBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
@@ -176,6 +186,13 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   val isPhoneNumberEnabled = isTeam.map(!_)
 
   val selfPicture: Signal[ImageSource] = self.map(_.picture).collect{case Some(pic) => WireImage(pic)}
+
+  //TODO: Replace with flag coming from self
+  private val accountIsLocked = Signal.const(false)
+
+  accountIsLocked.onUi { locked =>
+    view.setAccountLocked(locked)
+  }
 
   view.setPictureDrawable(new ImageAssetDrawable(selfPicture, scaleType = ScaleType.CenterInside, request = RequestBuilder.Round))
 
