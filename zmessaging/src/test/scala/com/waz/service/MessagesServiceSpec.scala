@@ -234,16 +234,12 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     (storage.addMessage _).expects(*).once().onCall { msg: MessageData => Future.successful(msg)}
 
     // When
-    val result = Await.result(service.addRenameConversationMessage(convId, fromUserId, newName), 1.second)
+    val actual = result(service.addRenameConversationMessage(convId, fromUserId, newName)) map { msg =>
+      (msg.convId, msg.msgType, msg.name)
+    }
 
     // Then
-    result match {
-      case None => fail()
-      case Some(msgData) =>
-        msgData.convId shouldBe convId
-        msgData.msgType shouldBe RENAME
-        msgData.name shouldBe Some(newName)
-    }
+    actual shouldBe Some((convId, RENAME, Some(newName)))
   }
 
   scenario("Update rename conversation message") {
@@ -266,16 +262,11 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     (storage.update _).expects(msgId, *).once().returning(Future.successful(Some((lastMsg, lastMsg.copy(name = Some(newName))))))
 
     // When
-    val result = Await.result(service.addRenameConversationMessage(convId, fromUserId, newName), 1.second)
+    val actual = result(service.addRenameConversationMessage(convId, fromUserId, newName)) map { msg =>
+      (msg.id, msg.convId, msg.msgType, msg.name)
+    }
 
     // Then
-    result match {
-      case None => fail()
-      case Some(msgData) =>
-        msgData.convId shouldBe convId
-        msgData.id shouldBe msgId
-        msgData.msgType shouldBe RENAME
-        msgData.name shouldBe Some(newName)
-    }
+    actual shouldBe Some((msgId, convId, RENAME, Some(newName)))
   }
 }
