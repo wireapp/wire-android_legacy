@@ -17,7 +17,6 @@
  */
 package com.waz.zclient.assets2
 
-import java.io.FileInputStream
 import java.nio.ByteOrder
 import java.util.Locale
 
@@ -54,10 +53,7 @@ class AssetDetailsServiceImpl(uriHelper: UriHelper)
 
   private def extractForImage(content: CanExtractMetadata): Future[ImageDetails] =
     for {
-      is <- content match {
-        case Content.File(_, file) => Future.successful(new FileInputStream(file))
-        case Content.Uri(uri) => Future.fromTry(uriHelper.openInputStream(uri))
-      }
+      is <- Future.fromTry(content.openInputStream(uriHelper))
       details <- IoUtils.withResource(is) { _ =>
         val opts = new BitmapFactory.Options
         opts.inJustDecodeBounds = true
