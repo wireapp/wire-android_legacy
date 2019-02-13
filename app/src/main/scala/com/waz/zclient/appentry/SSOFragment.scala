@@ -102,10 +102,6 @@ trait SSOFragment extends FragmentHelper {
       .show(getChildFragmentManager, SSODialogTag)
   }
 
-  protected def cancelSSODialog(): Unit = {
-    findChildFragment[InputDialog](SSODialogTag).foreach(_.dismissAllowingStateLoss())
-  }
-
   protected def verifyInput(input: String): Future[Unit] =
     ssoService.extractUUID(input).fold(Future.successful(())) { token =>
       onVerifyingToken(true)
