@@ -17,6 +17,8 @@
  */
 package com.waz.zclient.messages.controllers
 
+import java.io.File
+
 import android.app.{Activity, ProgressDialog}
 import android.content.DialogInterface.OnDismissListener
 import android.content._
@@ -42,6 +44,7 @@ import com.waz.zclient.messages.MessageBottomSheetDialog.{MessageAction, Params}
 import com.waz.zclient.notifications.controllers.ImageNotificationsController
 import com.waz.zclient.participants.OptionsMenu
 import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.ExternalFileSharing
 import com.waz.zclient.{ClipboardUtils, Injectable, Injector, R}
 
 import scala.concurrent.Future
@@ -60,6 +63,7 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
   private lazy val imageNotifications   = inject[ImageNotificationsController]
   private lazy val replyController      = inject[ReplyController]
   private lazy val screenController = inject[ScreenController]
+  private lazy val externalFileSharing = inject[ExternalFileSharing]
 
   private lazy val assetsController     = inject[AssetsController]
 
@@ -181,23 +185,29 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
       getString(R.string.conversation__action_mode__fwd__dialog__title),
       getString(R.string.conversation__action_mode__fwd__dialog__message), true, true, null)
 
+    def getSharedFilename(assetId: AssetId, mime: Mime): String =
+      s"${sha2(assetId.str).take(6)}.${mime.extension}"
+
     (for {
       assets <- zms.head.map(_.assetService)
       asset <- assets.getAsset(id)
-    } yield asset) onComplete {
+      is <- assets.loadContent(asset)
+      file = new File(context.getExternalCacheDir, getSharedFilename(asset.id, asset.mime))
+      _ = IoUtils.copy(is, file)
+      _ = is.close()
+    } yield (asset, file)) onComplete {
 
-      case Success(asset) =>
+      case Success((asset, file)) =>
         dialog.dismiss()
         val mime =
           if (asset.mime.str.equals("text/plain"))
             "text/*"
           else if (asset.mime == Mime.Unknown)
-          //TODO: should be fixed on file receiver side
             Mime.Default.str
           else
             asset.mime.str
         intentBuilder.setType(mime)
-        intentBuilder.addStream(AssetsController.createAndroidAssetUri(id))
+        intentBuilder.addStream(externalFileSharing.getUriForFile(file))
         intentBuilder.startChooser()
 
       case Failure(err) =>
