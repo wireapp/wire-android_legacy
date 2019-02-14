@@ -74,6 +74,7 @@
                     />
 
                 <com.waz.zclient.ui.text.GlyphTextView
+                    android:id="@+id/conversation_toolbar__glyph_linedown"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/glyph__linedown"

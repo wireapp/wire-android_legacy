@@ -27,7 +27,8 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.service.AccountManager.ClientRegistrationState
-import com.waz.service.{AccountsService, ZMessaging}
+import com.waz.service.AccountsService
+import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.SpinnerController.{Hide, Show}
@@ -40,6 +41,7 @@ import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
+import com.waz.zclient.common.controllers.UserAccountsController
 
 import scala.collection.JavaConverters._
 
@@ -70,6 +72,7 @@ class AppEntryActivity extends BaseActivity {
   private lazy val countryController: CountryController = new CountryController(this)
   private lazy val invitesController = inject[InvitationsController]
   private lazy val spinnerController  = inject[SpinnerController]
+  private lazy val userAccountsController = inject[UserAccountsController]
   private var createdFromSavedInstance: Boolean = false
   private var isPaused: Boolean = false
 
@@ -77,12 +80,21 @@ class AppEntryActivity extends BaseActivity {
   private lazy val attachedFragment = Signal[String]()
 
   private lazy val closeButton = returning(ViewUtils.getView(this, R.id.close_button).asInstanceOf[GlyphTextView]) { v =>
+    val fragmentTags = Set(
+      SignInFragment.Tag,
+      FirstLaunchAfterLoginFragment.Tag,
+      VerifyEmailWithCodeFragment.Tag,
+      VerifyPhoneFragment.Tag,
+      CountryDialogFragment.TAG,
+      PhoneSetNameFragment.Tag,
+      InviteToTeamFragment.Tag
+    )
+
     Signal(accountsService.zmsInstances.map(_.nonEmpty), attachedFragment).map {
-      case (false, _) => View.GONE
-      case (true, fragment) if Set(SignInFragment.Tag, FirstLaunchAfterLoginFragment.Tag, VerifyEmailWithCodeFragment.Tag,
-          VerifyPhoneFragment.Tag, CountryDialogFragment.TAG, PhoneSetNameFragment.Tag, InviteToTeamFragment.Tag).contains(fragment) => View.GONE
-      case _ => View.VISIBLE
-    }.onUi(v.setVisibility(_))
+      case (false, _)                                          => View.GONE
+      case (true, fragment) if fragmentTags.contains(fragment) => View.GONE
+      case _                                                   => View.VISIBLE
+    }.onUi(v.setVisibility)
   }
 
   private lazy val skipButton = returning(findById[TypefaceTextView](R.id.skip_button)) { v =>
@@ -92,12 +104,7 @@ class AppEntryActivity extends BaseActivity {
     }.onUi(t => v.setText(t))
   }
 
-  ZMessaging.currentGlobal.blacklist.upToDate.onUi {
-    case false =>
-      startActivity(new Intent(this, classOf[ForceUpdateActivity]))
-      finish()
-    case _ =>
-  }
+  ForceUpdateActivity.checkBlacklist(this)
 
   override def onBackPressed(): Unit = {
     getSupportFragmentManager.getFragments.asScala.find {
@@ -116,15 +123,7 @@ class AppEntryActivity extends BaseActivity {
 
     closeButton.onClick(abortAddAccount())
 
-    withFragmentOpt(AppLaunchFragment.Tag) {
-      case Some(_) =>
-      case None =>
-        Option(getIntent.getExtras).map(_.getInt(MethodArg)) match {
-          case Some(LoginArgVal) => showFragment(SignInFragment(), SignInFragment.Tag, animated = false)
-          case Some(CreateTeamArgVal) => showFragment(TeamNameFragment(), TeamNameFragment.Tag, animated = false)
-          case _ => showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
-      }
-    }
+    showFragment()
 
     skipButton.setVisibility(View.GONE)
     getSupportFragmentManager.addOnBackStackChangedListener(new OnBackStackChangedListener {
@@ -143,6 +142,24 @@ class AppEntryActivity extends BaseActivity {
       case Hide(_) => progressView.hide()
     }
   }
+
+  private def showFragment(): Unit = withFragmentOpt(AppLaunchFragment.Tag) {
+    case Some(_) =>
+    case None =>
+      userAccountsController.ssoToken.head.foreach {
+        // if the SSO token is present we use it to log in the user
+        case Some(_) =>                    showFragment(SignInFragment(), SignInFragment.Tag, animated = false)
+        case _ =>
+          Option(getIntent.getExtras).map(_.getInt(MethodArg)) match {
+            case Some(LoginArgVal) =>      showFragment(SignInFragment(), SignInFragment.Tag, animated = false)
+            case Some(CreateTeamArgVal) => showFragment(TeamNameFragment(), TeamNameFragment.Tag, animated = false)
+            case _ if !BuildConfig.ACCOUNT_CREATION_ENABLED =>
+              showFragment(SignInFragment(SignInFragment.SignInOnlyLogin), SignInFragment.Tag, animated = false)
+            case _ =>                      showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
+          }
+      }(Threading.Ui)
+  }
+
 
   override def onAttachFragment(fragment: Fragment): Unit = {
     super.onAttachFragment(fragment)

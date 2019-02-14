@@ -39,13 +39,24 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
   import Threading.Implicits.Ui
   import UserAccountsController._
 
-  private implicit val uiStorage = inject[UiStorage]
-  val zms             = inject[Signal[ZMessaging]]
-  val accountsService = inject[AccountsService]
-  val prefs           = inject[Signal[UserPreferences]]
+  private implicit val uiStorage   = inject[UiStorage]
+  private lazy val zms             = inject[Signal[ZMessaging]]
+  private lazy val accountsService = inject[AccountsService]
+  private lazy val prefs           = inject[Signal[UserPreferences]]
+  private lazy val convCtrl        = inject[ConversationController]
 
-  val accounts = accountsService.accountManagers.map(_.toSeq.sortBy(acc => (acc.teamId.isDefined, acc.userId.str)))
-  val convCtrl = inject[ConversationController]
+  lazy val accounts = accountsService.accountManagers.map(_.toSeq.sortBy(acc => (acc.teamId.isDefined, acc.userId.str)))
+
+  private var numberOfLoggedInAccounts = 0
+
+  val onAllLoggedOut = Signal(false)
+
+  accounts.map(_.size).onUi { accsNumber =>
+    onAllLoggedOut ! (accsNumber == 0 && numberOfLoggedInAccounts > 0)
+    numberOfLoggedInAccounts = accsNumber
+  }
+
+  val ssoToken = Signal(Option.empty[String])
 
   lazy val currentUser = for {
     zms     <- zms

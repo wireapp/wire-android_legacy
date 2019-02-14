@@ -19,6 +19,7 @@ package com.waz.zclient.messages
 
 import android.content.Context
 import android.graphics.Rect
+import android.os.Build
 import android.util.AttributeSet
 import android.view.View.MeasureSpec
 import android.view.ViewGroup.{LayoutParams, MarginLayoutParams}
@@ -93,30 +94,37 @@ abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: I
     factory.recycle(view)
   }
 
+  private def measureChildWithMargins(child: View, parentWidthMeasureSpec: Int, parentHeightMeasureSpec: Int): Unit =
+    if (Build.VERSION.SDK_INT == Build.VERSION_CODES.N) { // Android 7.0 may throw an exception here in rare cases
+      try {
+        measureChildWithMargins(child, parentWidthMeasureSpec, 0, parentHeightMeasureSpec, 0)
+      } catch {
+        case ex: ArrayIndexOutOfBoundsException =>
+          error(s"Measure error, parentWidthMeasureSpec: $parentWidthMeasureSpec, parentHeightMeasureSpec: $parentHeightMeasureSpec", ex)
+      }
+    } else
+      measureChildWithMargins(child, parentWidthMeasureSpec, 0, parentHeightMeasureSpec, 0)
+
   override def onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int): Unit = {
-    val w = View.getDefaultSize(getSuggestedMinimumWidth, widthMeasureSpec)
     var h = getPaddingTop + getPaddingBottom
     separatorHeight = 0
-    listParts foreach { v =>
-      if (v.getVisibility != View.GONE) {
-        measureChildWithMargins(v, widthMeasureSpec, 0, heightMeasureSpec, 0)
-        val m = getMargin(v.getLayoutParams)
-        h += v.getMeasuredHeight + m.top + m.bottom
+    listParts.filter(_.getVisibility != View.GONE).foreach { v =>
+      measureChildWithMargins(v, widthMeasureSpec, heightMeasureSpec)
+      val m = getMargin(v.getLayoutParams)
+      val additionalHeight = v.getMeasuredHeight + m.top + m.bottom
+      h += additionalHeight
 
-        if (v.tpe.isInstanceOf[SeparatorPart])
-          separatorHeight += v.getMeasuredHeight + m.top + m.bottom
-      }
+      if (v.tpe.isInstanceOf[SeparatorPart]) separatorHeight += additionalHeight
     }
 
-    val hSpec = MeasureSpec.makeMeasureSpec(h - separatorHeight, MeasureSpec.AT_MOST)
-    frameParts foreach { v =>
-      if (v.getVisibility != View.GONE) {
-        measureChildWithMargins(v, widthMeasureSpec, 0, hSpec, 0)
-        h = math.max(h, v.getMeasuredHeight + separatorHeight + getPaddingTop + getPaddingBottom)
-      }
+    lazy val hSpec = MeasureSpec.makeMeasureSpec(h - separatorHeight, MeasureSpec.AT_MOST)
+    lazy val additionalSeparatorHeight = separatorHeight + getPaddingTop + getPaddingBottom
+    frameParts.filter(_.getVisibility != View.GONE).foreach { v =>
+      measureChildWithMargins(v, widthMeasureSpec, hSpec)
+      h = math.max(h, v.getMeasuredHeight + additionalSeparatorHeight)
     }
 
-    setMeasuredDimension(w, h)
+    setMeasuredDimension(View.getDefaultSize(getSuggestedMinimumWidth, widthMeasureSpec), h)
   }
 
   override def onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int): Unit = {

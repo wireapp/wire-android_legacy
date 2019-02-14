@@ -28,6 +28,7 @@ import com.waz.model.otr.Client
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
+import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.preferences.views.DeviceButton
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator}
@@ -96,6 +97,7 @@ case class DevicesBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
 case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: EventContext) extends Injectable {
   val zms = inject[Signal[Option[ZMessaging]]]
   val accounts = inject[AccountsService]
+  val passwordController = inject[PasswordController]
 
   val otherClients = for {
     Some(am)      <- accounts.activeAccountManager
@@ -120,6 +122,7 @@ case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: 
   def onViewClose(): Unit = {
     implicit val ec = Threading.Background
     for {
+      _         <- passwordController.setPassword(None)
       Some(zms) <- zms.head
       _         <- zms.otrClientsService.updateUnknownToUnverified(zms.selfUserId)
     } ()

@@ -49,6 +49,9 @@ import com.waz.zclient.utils.Time.TimeStamp
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage, UserSignal}
 import com.waz.zclient.views.AvailabilityView
 
+import ProfileViewController.MaxAccountsCount
+import BuildConfig.ACCOUNT_CREATION_ENABLED
+
 trait ProfileView {
   val onDevicesDialogAccept: EventStream[Unit]
   val onManageTeamClick: EventStream[Unit]
@@ -95,8 +98,13 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   teamButton.setVisible(false)
   teamDivider.setVisible(false)
 
-  newTeamButton.onClickEvent.on(Threading.Ui) { _ =>
-    new ProfileBottomSheetDialog(context, R.style.message__bottom_sheet__base).show()
+  if(MaxAccountsCount > 1 && ACCOUNT_CREATION_ENABLED) {
+    newTeamButton.setVisible(true)
+    newTeamButton.onClickEvent.on(Threading.Ui) { _ =>
+      new ProfileBottomSheetDialog(context, R.style.message__bottom_sheet__base).show()
+    }
+  } else {
+    newTeamButton.setVisible(false)
   }
 
   settingsButton.onClickEvent.on(Threading.Ui) { _ =>
@@ -304,11 +312,14 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
     .map(_.contains(AccountDataOld.Permission.AddTeamMember))
     .onUi(view.setManageTeamEnabled)
 
-  ZMessaging.currentAccounts.accountsWithManagers.map(_.size < MaxAccountsCount).onUi(view.setAddAccountEnabled)
+
+  if (ACCOUNT_CREATION_ENABLED) {
+    ZMessaging.currentAccounts.accountsWithManagers.map(_.size < MaxAccountsCount).onUi(view.setAddAccountEnabled)
+  }
 
   view.onManageTeamClick { _ => tracking.track(OpenedManageTeam(), currentUser.currentValue) }
 }
 
 object ProfileViewController {
-  val MaxAccountsCount = 2
+  val MaxAccountsCount = BuildConfig.MAX_ACCOUNTS
 }

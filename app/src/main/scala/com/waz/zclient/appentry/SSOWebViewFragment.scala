@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.appentry
 
+import android.content.DialogInterface
 import android.os.Bundle
 import android.support.v7.widget.Toolbar
 import android.view.View.OnClickListener
@@ -35,7 +36,7 @@ import com.waz.zclient.appentry.fragments.FirstLaunchAfterLoginFragment
 import com.waz.zclient.utils.{ContextUtils, ViewUtils}
 import com.waz.zclient.{FragmentHelper, R}
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 
 class SSOWebViewFragment extends FragmentHelper {
 
@@ -75,7 +76,21 @@ class SSOWebViewFragment extends FragmentHelper {
                 _       <- accountsService.setAccount(Some(userId))
               } getActivity.asInstanceOf[AppEntryActivity].onEnterApplication(openSettings = false, clState)
           }
-        case Left(error) => showSSOError(error)
+        case Left(error) =>
+          val errorRead = Promise[Unit]()
+          ViewUtils.showAlertDialog(
+            getActivity,
+            getString(R.string.sso_signin_error_title),
+            getString(R.string.sso_signin_error_message, error.toString),
+            getString(android.R.string.ok),
+            new DialogInterface.OnClickListener {
+              def onClick(dialog: DialogInterface, which: Int): Unit = {
+                getFragmentManager.popBackStack()
+                errorRead.success({})
+              }
+            },
+            true)
+          errorRead.future
       }
     }
 
@@ -85,14 +100,6 @@ class SSOWebViewFragment extends FragmentHelper {
     })
 
   }
-
-  def showSSOError(code: Int): Future[Unit] =
-    Future.successful({
-      val title = getString(R.string.sso_signin_error_title)
-      val message = getString(R.string.sso_signin_error_message, code.toString)
-      val ok = getString(android.R.string.ok)
-      ViewUtils.showAlertDialog(getActivity, title, message, ok, null, true)
-    })
 
   override def onBackPressed(): Boolean = {
     if (webView.map(_.canGoBack).getOrElse(false))

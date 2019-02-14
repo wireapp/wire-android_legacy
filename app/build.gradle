@@ -5,6 +5,7 @@ apply plugin: 'hugo'
 apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
 apply from: 'config/quality.gradle'
 
+
 repositories {
     flatDir {
         dirs 'libs'
@@ -12,7 +13,7 @@ repositories {
 }
 
 ext {
-    majorVersion = "3.26."
+    majorVersion = "3.27."
 
     scalaMajorVersion = '2.11'
     scalaVersion = scalaMajorVersion + '.12'
@@ -21,10 +22,10 @@ ext {
     playServicesVersion = '15.0.1'
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
     stethoVersion = '1.5.0'
-    zMessagingDevVersion = "138.2214"
+    zMessagingDevVersion = "139.2227"
     paging_version = "1.0.0"
     // Release version number must be like this X.0(.Y)
-    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '139.0.510@aar'
+    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '140.0.511@aar'
 
     avsVersion = '4.7.158@aar'
     avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
@@ -32,7 +33,7 @@ ext {
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '4.8.14@aar'
+    customAvsVersion = '4.9.9@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
@@ -42,11 +43,64 @@ if (project.file('user.gradle').exists()) {
     apply from: "user.gradle"
 }
 
+task copyCustomResources(type: Copy) {
+    if (!customConfig.exists() || gradle.startParameter.taskNames.contains("clean")) {
+        return
+    }
+
+    def iconFolder = (config.iconFolder ?: 'icons')
+    def targetResFolder = "$rootDir/app/src/main/res"
+    def iconSubfolders = [
+            'ldpi': 'drawable-ldpi',
+            'mdpi': 'drawable-mdpi',
+            'hdpi': 'drawable-hdpi',
+            'xhdpi': 'drawable-xhdpi',
+            'xxhdpi': 'drawable-xxhdpi',
+            'xxxhdpi': 'drawable-xxxhdpi'
+    ]
+
+    def resources = [
+            "ic_launcher_wire.png" : (config.launcherIcon ?: '')
+    ]
+
+    resources.findAll { targetFileName, sourceFileName -> !sourceFileName.empty }
+            .collectEntries { targetFileName, sourceFileName ->
+                iconSubfolders.collectEntries { sourceSub, targetSub ->
+                    [(customDir + '/' + iconFolder + '/' + sourceSub + '/' + sourceFileName) : [(targetResFolder + '/' + targetSub),  targetFileName]]
+                }
+            }
+            .each { sourcePath, targetPath ->
+                def source = file(sourcePath)
+                assert source.exists()
+                copy {
+                    from source
+                    rename { String filename -> return targetPath[1] }
+                    into file(targetPath[0])
+                }
+                project.logger.info("Copied $sourcePath to ${targetPath[0]}/${targetPath[1]}")
+            }
+
+    copy {
+        from file(customDir + '/strings/strings.xml') into file(targetResFolder + '/values')
+        from file(customDir + '/strings/strings_no_translate.xml') into file(targetResFolder + '/values')
+    }
+
+    config.languages.each { code ->
+        def targetStringDir = "$targetResFolder/values-$code"
+        copy {
+            mkdir targetStringDir
+            from file("$customDir/strings/$code/strings.xml") into file(targetStringDir)
+        }
+    }
+}
+
 android {
     //Trigger the licenseFormat task at least once in any compile phase
     applicationVariants.all { variant ->
         variant.javaCompiler.dependsOn(rootProject.licenseFormat)
     }
+
+    preBuild.dependsOn(copyCustomResources)
 
     compileSdkVersion = 27
     buildToolsVersion = '28.0.3'
@@ -58,6 +112,22 @@ android {
         versionName majorVersion + android.defaultConfig.versionCode
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
+
+        buildConfigField 'Integer', 'MAX_ACCOUNTS',               "$config.maxAccounts"
+        buildConfigField 'String',  'BACKEND_URL',                "\"$config.backendUrl\""
+        buildConfigField 'String',  'WEBSOCKET_URL',              "\"$config.websocketUrl\""
+        buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',   "$config.allow_account_creation"
+        buildConfigField 'String',  'SUPPORT_EMAIL',              "\"$config.supportEmail\""
+        buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',    "\"$config.firebasePushSenderId\""
+        buildConfigField 'String',  'FIREBASE_APP_ID',            "\"$config.firebaseAppId\""
+        buildConfigField 'String',  'FIREBASE_API_KEY',           "\"$config.firebaseApiKey\""
+        buildConfigField 'boolean', 'ENABLE_BLACKLIST',           "$config.enableBlacklist"
+        buildConfigField 'String',  'BLACKLIST_HOST',             "\"$config.blacklistHost\""
+        buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
+        buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$config.certificatePin.certificate\""
+        buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
+        buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
+        buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
     }
 
     packagingOptions {
@@ -134,8 +204,9 @@ android {
                                     applicationIcon        : "@drawable/ic_launcher_wire_dev",
                                     sharedUserId           : "",
                                     internal_features      : "true"]
-
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
+            buildConfigField 'boolean', 'SAFE_LOGGING',     'false'
         }
 
         candidate {
@@ -146,17 +217,21 @@ android {
                                     sharedUserId           : "",
                                     internal_features      : "false"]
 
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$config.loggingEnabled"
+            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
 
         prod {
-            applicationId "com.wire"
-            manifestPlaceholders = [applicationLabel       : "@string/app_name",
+            applicationId config.applicationId
+            manifestPlaceholders = [applicationLabel       : config.appName,
                                     applicationIcon        : "@drawable/ic_launcher_wire",
-                                    sharedUserId           : "com.waz.userid",
+                                    sharedUserId           : config.userId,
                                     internal_features      : "false"]
 
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'false'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        "true"
+            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
 
         internal {
@@ -168,6 +243,8 @@ android {
                                     internal_features: "true"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
+            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
 
         experimental {
@@ -178,7 +255,9 @@ android {
                                     sharedUserId           : "",
                                     internal_features      : "true"]
 
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
+            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
     }
 
@@ -205,6 +284,7 @@ android {
         exclude 'APK_LICENSE.txt'
         exclude 'LICENSE.txt'
     }
+
 }
 
 dexinfo {
@@ -221,7 +301,10 @@ dependencies {
 
     //wire libraries:
     implementation "com.wire:audio-notifications:$audioVersion"
-    implementation 'com.wire:wiretranslations:1.+'
+    //don't include wire translations for custom builds
+    if (customRepository.isEmpty() || token.isEmpty()) {
+        implementation 'com.wire:wiretranslations:1.+'
+    }
 
     // TODO  Nasty hack to be able to build add only one wire-core flavor to the build
 

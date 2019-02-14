@@ -84,7 +84,7 @@ import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.preferences.PreferencesController
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
-import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendPicker, Callback, ExternalFileSharing, LocalThumbnailCache, SafeLoggingEnabled, UiStorage}
+import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendPicker, Callback, ExternalFileSharing, LocalThumbnailCache, UiStorage}
 import com.waz.zclient.views.DraftMap
 import javax.net.ssl.SSLContext
 import org.threeten.bp.Clock
@@ -341,9 +341,10 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     SafeBase64.setDelegate(new AndroidBase64Delegate)
 
-    if (!SafeLoggingEnabled) {
-      InternalLog.add(new AndroidLogOutput(showSafeOnly = SafeLoggingEnabled))
-      InternalLog.add(new BufferedLogOutput(baseDir = getApplicationContext.getApplicationInfo.dataDir, showSafeOnly = SafeLoggingEnabled))
+    if (BuildConfig.LOGGING_ENABLED) {
+      InternalLog.add(new AndroidLogOutput(showSafeOnly = BuildConfig.SAFE_LOGGING))
+      InternalLog.add(new BufferedLogOutput(baseDir = getApplicationContext.getApplicationInfo.dataDir,
+        showSafeOnly = BuildConfig.SAFE_LOGGING))
     }
 
     verbose("onCreate")
@@ -354,7 +355,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     new BackendPicker(this).withBackend(new Callback[BackendConfig]() {
       def callback(be: BackendConfig) = ensureInitialized(be)
-    })
+    }, Backend.ProdBackend)
   }
 
   def ensureInitialized(backend: BackendConfig) = {

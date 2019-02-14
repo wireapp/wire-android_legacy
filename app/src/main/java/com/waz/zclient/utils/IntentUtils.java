@@ -90,7 +90,7 @@ public class IntentUtils {
         if (BuildConfig.DEVELOPER_FEATURES_ENABLED) {
             to = new String[]{"android@wire.com"};
         } else {
-            to = new String[]{"support@wire.com"};
+            to = new String[]{BuildConfig.SUPPORT_EMAIL};
         }
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         intent.putExtra(Intent.EXTRA_EMAIL, to);

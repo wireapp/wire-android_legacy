@@ -72,12 +72,14 @@ class AboutView(context: Context, attrs: AttributeSet, style: Int) extends Linea
 
   def getVersion(implicit context: Context): String = {
     val md = inject[MetaDataService]
+    val translationId = getResources.getIdentifier("wiretranslations_version", "string", context.getPackageName)
+    val translationLibVersion = if(translationId == 0) "n/a" else getString(translationId)
     s"""
       |Version:             ${md.versionName} (${md.appVersion}
       |Sync Engine:         ${ZmsVersion.ZMS_VERSION}
       |AVS:                 ${getString(R.string.avs_version)}
       |Audio-notifications: ${getString(R.string.audio_notifications_version)}
-      |Translations:        ${getString(R.string.wiretranslations_version)}
+      |Translations:        $translationLibVersion
       |Locale:              $getLocale
     """.stripMargin
   }

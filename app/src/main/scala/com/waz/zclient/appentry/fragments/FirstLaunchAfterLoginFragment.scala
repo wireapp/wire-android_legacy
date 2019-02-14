@@ -52,7 +52,6 @@ object FirstLaunchAfterLoginFragment {
   val UserIdArg = "user_id_arg"
   val SSOHadDBArg = "sso_had_db_arg"
 
-  def apply(): Fragment = new FirstLaunchAfterLoginFragment
   def apply(userId: UserId, ssoHadDB: Boolean = true): Fragment = returning(new FirstLaunchAfterLoginFragment) { f =>
     val bundle = new Bundle()
     bundle.putString(UserIdArg, userId.str)

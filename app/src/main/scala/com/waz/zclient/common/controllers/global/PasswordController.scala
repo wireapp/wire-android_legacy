@@ -19,25 +19,32 @@ package com.waz.zclient.common.controllers.global
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.AccountData.Password
-import com.waz.service.{AccountsService, GlobalModule}
+import com.waz.service.{AccountsService, GlobalModule, UiLifeCycle}
 import com.waz.threading.Threading
+import com.waz.utils.events.EventContext
 import com.waz.zclient.{Injectable, Injector}
 
 import scala.concurrent.Future
 
-class PasswordController(implicit inj: Injector) extends Injectable {
+class PasswordController(implicit inj: Injector, ec: EventContext) extends Injectable {
   import Threading.Implicits.Background
 
   val accounts = inject[AccountsService]
   val global   = inject[GlobalModule]
   val password = accounts.activeAccount.map(_.flatMap(_.password)).disableAutowiring()
+  val lifecycle = inject[UiLifeCycle]
 
   //The password is never saved in the database, this will just update the in-memory version of the current account
   //so that the password is globally correct.
-  def setPassword(p: Password): Future[Unit] =
+  def setPassword(p: Password): Future[Unit] = setPassword(Some(p))
+  def setPassword(p: Option[Password]): Future[Unit] =
     for {
       Some(accountData) <- accounts.activeAccount.head
-      _                 <- global.accountsStorage.update(accountData.id, _.copy(password = Some(p)))
+      _                 <- global.accountsStorage.update(accountData.id, _.copy(password = p))
     } yield {}
 
+  lifecycle.uiActive.onUi{
+    case false => setPassword(None)
+    case _ =>
+  }
 }

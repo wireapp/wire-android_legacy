@@ -66,6 +66,13 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
     user     <- z.usersStorage.signal(id)
   } yield user
 
+  lazy val otherParticipantExists = for {
+    z            <- zms
+    groupOrBot   <- isGroupOrBot
+    userId       <- if (groupOrBot) Signal.const(Option.empty[UserId]) else otherParticipantId
+    participant  <- userId.fold(Signal.const(Option.empty[UserData]))(id => z.usersStorage.optSignal(id))
+  } yield groupOrBot || participant.exists(!_.deleted)
+
   lazy val isWithBot = for {
     z       <- zms
     others  <- otherParticipants

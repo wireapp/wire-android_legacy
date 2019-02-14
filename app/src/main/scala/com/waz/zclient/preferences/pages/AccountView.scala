@@ -42,9 +42,11 @@ import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
 import com.waz.zclient.preferences.dialogs._
 import com.waz.zclient.preferences.views.{EditNameDialog, PictureTextButton, SwitchPreference, TextButton}
 import com.waz.zclient.ui.utils.TextViewUtils._
+import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils._
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage}
+import com.waz.zclient.BuildConfig
 
 trait AccountView {
   val onNameClick:          EventStream[Unit]
@@ -71,6 +73,7 @@ trait AccountView {
   def setPhoneNumberEnabled(enabled: Boolean): Unit
   def setReadReceipt(enabled: Boolean): Unit
   def setResetPasswordEnabled(enabled: Boolean): Unit
+  def setAccountLocked(locked: Boolean): Unit
 }
 
 class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with AccountView with ViewHelper {
@@ -91,6 +94,14 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   val backupButton        = findById[TextButton](R.id.preferences_backup)
   val dataUsageButton     = findById[TextButton](R.id.preferences_data_usage_permissions)
   val readReceiptsSwitch  = findById[SwitchPreference](R.id.preferences_account_read_receipts)
+  val personalInformationHeaderLabel = findById[TypefaceTextView](R.id.preference_personal_information_header)
+  val appearanceHeader = findById[TypefaceTextView](R.id.preferences_account_appearance_header)
+
+  // Hide data usage section if there is nothing to show in there
+  val showPersonalInformationSection = BuildConfig.SUBMIT_CRASH_REPORTS || BuildConfig.ALLOW_MARKETING_COMMUNICATION
+  dataUsageButton.setVisible(showPersonalInformationSection)
+  personalInformationHeaderLabel.setVisible(showPersonalInformationSection)
+
 
   override val onNameClick          = nameButton.onClickEvent.map(_ => ())
   override val onHandleClick        = handleButton.onClickEvent.map(_ => ())
@@ -126,6 +137,18 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   override def setReadReceipt(enabled: Boolean) = readReceiptsSwitch.setChecked(enabled, disableListener = true)
 
   override def setResetPasswordEnabled(enabled: Boolean) = resetPasswordButton.setVisible(enabled)
+
+  override def setAccountLocked(locked: Boolean): Unit = {
+    nameButton.setEnabled(!locked)
+    handleButton.setEnabled(!locked)
+    emailButton.setEnabled(!locked)
+    phoneButton.setEnabled(!locked)
+    pictureButton.setEnabled(!locked)
+    colorButton.setEnabled(!locked)
+    appearanceHeader.setVisible(!locked)
+    pictureButton.setVisible(!locked)
+    colorButton.setVisible(!locked)
+  }
 }
 
 case class AccountBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
@@ -164,13 +187,15 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   val phone = self.map(_.phone)
   val email = self.map(_.email)
 
-  val isPhoneNumberEnabled = for {
-    p      <- phone
-    isTeam <- isTeam
-    sso    <- accounts.isActiveAccountSSO
-  } yield sso && (p.isDefined || !isTeam)
+  val isPhoneNumberEnabled = isTeam.map(!_)
 
   val selfPicture: Signal[ImageSource] = self.map(_.picture).collect{case Some(pic) => WireImage(pic)}
+
+  private val accountIsLocked: Signal[Boolean] = self.map(_.isReadOnlyProfile)
+
+  accountIsLocked.onUi { locked =>
+    view.setAccountLocked(locked)
+  }
 
   view.setPictureDrawable(new ImageAssetDrawable(selfPicture, scaleType = ScaleType.CenterInside, request = RequestBuilder.Round))
 
@@ -217,7 +242,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
     } (Threading.Ui)
   }
 
-  view.onEmailClick.onUi { _ =>
+  view.onEmailClick.filter( _ => BuildConfig.ALLOW_CHANGE_OF_EMAIL).onUi { _ =>
     import Threading.Implicits.Ui
     accounts.activeAccountManager.head.map(_.foreach(_.hasPassword().foreach {
       case Left(ex) => val (h, b) = DialogErrorMessage.genericError(ex.code)

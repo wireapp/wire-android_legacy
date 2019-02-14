@@ -57,7 +57,7 @@ class CreateConversationController(implicit inj: Injector, ev: EventContext) ext
         z   <- zms.head
         ids <- users.head
         us  <- z.usersStorage.listAll(ids).map(_.toSet)
-      } yield users.mutate(_ -- us.filter(_.isGuest(z.teamId)).map(_.id))
+      } yield users.mutate(_ -- us.filter(u => u.isGuest(z.teamId) || u.deleted).map(_.id))
     case false => //
   }
 

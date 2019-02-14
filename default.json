@@ -1,0 +1,24 @@
+{
+  "maxAccounts": 2,
+  "applicationId": "com.wire",
+  "userId": "com.waz.userid",
+  "_comment": "appName must match the value of 'app_name' in strings.xml",
+  "appName": "Wire",
+  "backendUrl": "https://prod-nginz-https.wire.com",
+  "websocketUrl": "https://prod-nginz-ssl.wire.com/await",
+  "allow_account_creation": true,
+  "supportEmail": "support@wire.com",
+  "firebasePushSenderId": "782078216207",
+  "firebaseAppId": "1:782078216207:android:d3db2443512d2055",
+  "firebaseApiKey": "AIzaSyBdYVv2f-Y7JJmHVmDNCKgWvX6Isa8rAGA",
+  "submitCrashReports": true,
+  "allowMarketingCommunication": true,
+  "enableBlacklist": true,
+  "blacklistHost": "https://clientblacklist.wire.com/prod/android",
+  "allowChangeOfEmail": true,
+  "certificatePin" : {
+      "domain": "*.wire.com",
+      "certificate" : "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAreYzBWuvnVKYfgNNX3dVjUnqIVtl4XqQnCcY6m/sWM15TTK0bo9FKnMxNAPtDzB6ViRvpZsKEefX8pi15Jcs4uZiuZ81ISV1bqxtpsjJ56Yjeme99Dca5ck35pThYuK6jZ8vG6pJiY9mRY9nGadid4qWL7uwAeoInx2mOM7HepCCh2NOXd+EjQ4sBsfgb+kWrcVQmBzvLHPUDoykm/m+BvL2eJ1njPNiM/GoeXbmIW1WM3ifucYJoD9g+V5NfHfANrVu2w4YcLDad0C85Nb8U1sgFNkrgOqzhd/1xHok1uOyjoeLTIHHYkryvbBEmdl6v+f2J1EM0+Fj9vseI2TYrQIDAQAB"
+  },
+  "loggingEnabled": false
+}
