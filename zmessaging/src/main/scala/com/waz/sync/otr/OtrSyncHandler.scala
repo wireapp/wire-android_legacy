@@ -95,7 +95,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
             clientsSyncHandler.syncSessions(missing).flatMap { err =>
               if (err.isDefined)
                 error(s"syncSessions for missing clients failed: $err")
-              encryptAndSend(msg, external, retries, content)
+              encryptAndSend(msg, external, retries + 1, content)
             }
           case _: MessageResponse.Failure =>
             successful(Left(internalError(s"postEncryptedMessage/broadcastMessage failed with missing clients after several retries")))

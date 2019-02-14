@@ -22,7 +22,7 @@ import java.io.Closeable
 
 import org.scalatest.{FeatureSpec, Ignore, Inspectors, Matchers}
 
-@Ignore class ManagedSpec extends FeatureSpec with Matchers with Inspectors {
+class ManagedSpec extends FeatureSpec with Matchers with Inspectors {
 
   feature("Lazy evaluation") {
     scenario("Creation")(new Fixture {

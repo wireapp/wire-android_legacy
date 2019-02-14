@@ -172,7 +172,7 @@ abstract class AndroidFreeSpec extends ZMockSpec { this: Suite =>
     !tasksRemaining
   }
 
-  def withDelay[T](body: => T, delay: FiniteDuration = 100.millis)(implicit ec: ExecutionContext) = CancellableFuture.delayed(delay)(body)
+  def withDelay[T](body: => T, delay: FiniteDuration = 300.millis)(implicit ec: ExecutionContext) = CancellableFuture.delayed(delay)(body)
 }
 
 object AndroidFreeSpec {

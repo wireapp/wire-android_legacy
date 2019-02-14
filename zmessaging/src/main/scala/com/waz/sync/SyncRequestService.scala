@@ -79,8 +79,10 @@ class SyncRequestServiceImpl(accountId: UserId,
                           forceRetry: Boolean        = false,
                           delay:      FiniteDuration = Duration.Zero) = {
     val timestamp = SyncJob.timestamp
-    val startTime = if (delay == Duration.Zero) 0 else timestamp + delay.toMillis
-    content.addSyncJob(SyncJob(SyncId(), req, dependsOn.toSet, priority = priority, timestamp = timestamp, startTime = startTime), forceRetry).map(_.id)
+    content.addSyncJob(
+      SyncJob(SyncId(), req, dependsOn.toSet, priority = priority, timestamp = timestamp, startTime = SyncJob.timestamp + delay.toMillis),
+      forceRetry
+    ).map(_.id)
   }
 
   override def await(ids: Set[SyncId]): Future[Set[SyncResult]] =

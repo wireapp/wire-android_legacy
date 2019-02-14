@@ -17,15 +17,16 @@
  */
 package com.waz.utils.events
 
-import com.waz.RobolectricUtils
 import com.waz.testutils.Implicits._
 import com.waz.testutils.Matchers._
 import org.scalatest._
-import org.threeten.bp.Instant, Instant.now
+import org.threeten.bp.Instant
+import Instant.now
+import com.waz.specs.AndroidFreeSpec
 
 import scala.concurrent.duration._
 
-@Ignore class ClockSignalSpec extends FeatureSpec with Matchers with OptionValues with RobolectricTests with RobolectricUtils {
+class ClockSignalSpec extends AndroidFreeSpec with Matchers with OptionValues {
 
   implicit val tolerance = 100.millis.tolerance
 
@@ -35,13 +36,13 @@ import scala.concurrent.duration._
     val v1 = signal.value
     v1 should beRoughly(now)
 
-    idle(200.millis)
+    clock.advance(200.millis)
     signal.value shouldEqual v1
 
     val sub1 = signal.sink
     sub1.current should beRoughly(now)
 
-    idle(200.millis)
+    clock.advance(200.millis)
     signal.value should beRoughly(now)
     sub1.current should beRoughly(now)
 
@@ -50,7 +51,7 @@ import scala.concurrent.duration._
     val v2 = signal.value
     val v3 = sub1.current
 
-    idle(200.millis)
+    clock.advance(200.millis)
 
     signal.value shouldEqual v2
     sub1.current shouldEqual v3
@@ -59,7 +60,7 @@ import scala.concurrent.duration._
     sub1.current shouldEqual v3
     sub2.current should beRoughly(now)
 
-    idle(200.millis)
+    clock.advance(200.millis)
     signal.value should beRoughly(now)
     sub1.current shouldEqual v3
     sub2.current should beRoughly(now)

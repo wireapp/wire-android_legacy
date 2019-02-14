@@ -15,16 +15,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.service
+package com.waz.model
 
-import com.waz.utils.wrappers.URI
-import com.waz.znet.ServerTrust
+import com.waz.utils.JsonDecoder.decodeOptString
+import org.json.JSONObject
 
-case class BackendConfig(baseUrl: URI, websocketUrl: URI, firebaseOptions: FirebaseOptions, environment: String, pin: CertificatePin = ServerTrust.wirePin, blacklistHost: URI) {
-  val pushSenderId = firebaseOptions.pushSenderId
+object ManagedBy {
+
+  def apply(s: String): ManagedBy = s match {
+    case "wire" => Wire
+    case "scim" => SCIM
+    case u => Unknown(u)
+  }
+
+  sealed trait ManagedBy
+  final case object Wire extends ManagedBy {
+    override def toString: String = "wire"
+  }
+  final case object SCIM extends ManagedBy {
+    override def toString: String = "scim"
+  }
+  final case class Unknown(str: String) extends ManagedBy {
+    override def toString: String = str
+  }
+
+  def decodeOptManagedBy(s: Symbol)(implicit js: JSONObject): Option[ManagedBy] = decodeOptString(s).map(ManagedBy(_))
 }
 
-//cert is expected to be base64-encoded
-case class CertificatePin(domain: String, cert: Array[Byte])
-
-case class FirebaseOptions(pushSenderId: String, appId: String, apiKey: String)

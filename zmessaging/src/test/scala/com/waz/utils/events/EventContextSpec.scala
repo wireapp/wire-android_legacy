@@ -20,7 +20,7 @@ package com.waz.utils.events
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest._
 
-@Ignore class EventContextSpec extends FeatureSpec with Matchers with BeforeAndAfter with TableDrivenPropertyChecks with RobolectricTests { test =>
+class EventContextSpec extends FeatureSpec with Matchers with BeforeAndAfter with TableDrivenPropertyChecks { test =>
   var received = Seq[Int]()
   val capture = (value: Int) => received = received :+ value
 

@@ -47,6 +47,4 @@ object SSOId {
       o.put("tenant", ssoId.tenant)
     }
   }
-
-  implicit val SSOIdLogShow: LogShow[SSOId] = LogShow.create(ssoId => s"$ssoId")
 }

@@ -111,7 +111,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val syncRequests:      SyncRequestService      = wire[SyncRequestServiceImpl]
   lazy val syncContent:       SyncContentUpdater      = wire[SyncContentUpdaterImpl]
 
-  lazy val otrClientsService: OtrClientsService       = wire[OtrClientsService]
+  lazy val otrClientsService: OtrClientsService       = wire[OtrClientsServiceImpl]
   lazy val otrClientsSync:    OtrClientsSyncHandler   = wire[OtrClientsSyncHandlerImpl]
   lazy val otrClient:         OtrClientImpl           = account.otrClient
   lazy val credentialsClient: CredentialsUpdateClientImpl = account.credentialsClient
@@ -332,7 +332,7 @@ object ZMessaging { self =>
 
   private var prefs:           GlobalPreferences = _
   private var googleApi:       GoogleApi = _
-  private var backend:         BackendConfig = BackendConfig.StagingBackend
+  private var backend:         BackendConfig = _
   private var syncRequests:    SyncRequestService = _
   private var notificationsUi: NotificationUiController = _
 

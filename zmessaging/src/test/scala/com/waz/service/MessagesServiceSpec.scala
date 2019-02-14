@@ -21,6 +21,7 @@ import com.waz.api.Message
 import com.waz.api.Message.Status
 import com.waz.api.Message.Type._
 import com.waz.content._
+import com.waz.model.GenericContent.{MsgEdit, Text}
 import com.waz.model._
 import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.messages.{MessagesContentUpdater, MessagesServiceImpl}
@@ -30,7 +31,7 @@ import com.waz.testutils.TestGlobalPreferences
 import com.waz.threading.Threading
 import com.waz.utils.crypto.ReplyHashing
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 class MessagesServiceSpec extends AndroidFreeSpec {
@@ -47,6 +48,11 @@ class MessagesServiceSpec extends AndroidFreeSpec {
   val users =         mock[UsersStorage]
   val replyHashing =  mock[ReplyHashing]
   val prefs =         new TestGlobalPreferences()
+
+  def getService = {
+    val updater = new MessagesContentUpdater(storage, convsStorage, deletions, prefs)
+    new MessagesServiceImpl(selfUserId, None, replyHashing, storage, updater, edits, convs, network, members, users, sync)
+  }
 
   scenario("Add local memberJoinEvent with no previous member change events") {
 
@@ -106,8 +112,161 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     result(quote) shouldEqual ("bbb", Some(originalMsgId))
   }
 
-  def getService = {
-    val updater = new MessagesContentUpdater(storage, convsStorage, deletions, prefs)
-    new MessagesServiceImpl(selfUserId, None, replyHashing, storage, updater, edits, convs, network, members, users, sync)
+  scenario("Recall a message") {
+    val service = getService
+
+    val now = RemoteInstant(clock.instant())
+    val convId = ConvId()
+    val messageId = MessageId()
+
+    val msg = MessageData(messageId, convId, TEXT, selfUserId)
+    val deletion = MsgDeletion(messageId, now.instant)
+
+    (storage.getMessage _).expects(messageId).returning(Future.successful(Some(msg)))
+    (deletions.insertAll _).expects(Seq(deletion)).returning(Future.successful(Set(deletion)))
+    (storage.removeAll _).expects(Seq(messageId)).returning(Future.successful(()))
+
+    val recalledMessage = Await.result(service.recallMessage(convId, messageId, selfUserId, time = now), 1.second)
+
+    recalledMessage.map(_.msgType) should be (Some(Message.Type.RECALLED))
+  }
+
+  scenario("Recall a message from the wrong conversations") {
+    val service = getService
+
+    val now = RemoteInstant(clock.instant())
+    val convId = ConvId("123")
+    val convId2 = ConvId("456")
+    val messageId = MessageId()
+
+    val msg = MessageData(messageId, convId, TEXT, selfUserId)
+
+    (storage.getMessage _).expects(messageId).returning(Future.successful(Some(msg)))
+
+    val recalledMessage = Await.result(service.recallMessage(convId2, messageId, selfUserId, time = now), 1.second)
+
+    recalledMessage should be (None)
+  }
+
+  scenario("Recall ephemeral message") {
+    val service = getService
+
+    val now = RemoteInstant(clock.instant())
+    val convId = ConvId()
+    val messageId = MessageId()
+
+    val msg = MessageData(messageId, convId, TEXT, selfUserId, ephemeral = Some(5.seconds))
+    val deletion = MsgDeletion(messageId, now.instant)
+
+    (storage.getMessage _).expects(messageId).returning(Future.successful(Some(msg)))
+    (deletions.insertAll _).expects(Seq(deletion)).returning(Future.successful(Set(deletion)))
+    (storage.removeAll _).expects(Seq(messageId)).returning(Future.successful(()))
+
+    val recalledMessage = Await.result(service.recallMessage(convId, messageId, selfUserId, time = now), 1.second)
+
+    recalledMessage.map(_.msgType) should be (Some(Message.Type.RECALLED))
+  }
+
+  scenario("Recall another user's message should fail") {
+    val service = getService
+
+    val now = RemoteInstant(clock.instant())
+    val convId = ConvId()
+    val messageId = MessageId()
+    val userId = UserId()
+
+    val msg = MessageData(messageId, convId, TEXT, selfUserId)
+
+    (storage.getMessage _).expects(messageId).returning(Future.successful(Some(msg)))
+
+    val recalledMessage = Await.result(service.recallMessage(convId, messageId, userId, time = now), 1.second)
+
+    recalledMessage should be (None)
+  }
+
+  scenario("Edit a message") {
+    val service = getService
+
+    val now = RemoteInstant(clock.instant())
+    val convId = ConvId()
+    val messageId = MessageId()
+    val messageId2 = MessageId()
+
+    val msg = MessageData(messageId, convId, TEXT, selfUserId)
+    val edit = GenericMessage(Uid(messageId2.str), MsgEdit(messageId, Text("stuff")))
+    val editHistory = EditHistory(messageId, messageId2, now)
+
+    (storage.getMessage _).expects(messageId).returning(Future.successful(Some(msg)))
+    (edits.insert _).expects(editHistory).returning(Future.successful(editHistory))
+    (deletions.getAll _).expects(Seq(messageId2)).returning(Future.successful(Seq(None)))
+    (storage.updateOrCreateAll _).expects(*).onCall{ updaters: Map[MessageId, Option[MessageData] => MessageData] =>
+      Future.successful(updaters.get(messageId2).map(f => f(Some(msg))).toSet)
+    }
+    (storage.findQuotesOf _).expects(*).returning(Future.successful(Seq()))
+    (storage.updateAll2 _).expects(*, *).onCall { (keys, updater) =>
+      Future.successful(Seq((msg, updater(msg))))
+    }
+    (deletions.insertAll _).expects(*).onCall { all: Traversable[MsgDeletion] =>
+      Future.successful(all.toSet)
+    }
+    (storage.removeAll _).expects(*).returning(Future.successful(()))
+
+    val editedMessage = Await.result(service.applyMessageEdit(convId, selfUserId, time = now, edit), 1.second)
+
+    editedMessage.map(_.contentString) should be (Some("stuff"))
+  }
+
+  scenario("Add new rename conversation message") {
+    // Given
+    val service = getService
+    val convId = ConvId()
+    val fromUserId = UserId()
+    val (oldName, newName) = (Name("Bleep!"), Name("Quack!"))
+
+    // There is a conversation
+    val conv = ConversationData(convId, RConvId(), Some(oldName))
+    (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(conv)))
+
+    // There is a normal message but not a rename message
+    val lastMsg = MessageData(MessageId(), convId, TEXT, fromUserId, time = RemoteInstant(clock.instant()))
+    (storage.getLastMessage _).expects(convId).once().returning(Future.successful(Some(lastMsg)))
+    (storage.lastLocalMessage _).expects(convId, RENAME).once().returning(Future.successful(None))
+    (storage.addMessage _).expects(*).once().onCall { msg: MessageData => Future.successful(msg)}
+
+    // When
+    val actual = result(service.addRenameConversationMessage(convId, fromUserId, newName)) map { msg =>
+      (msg.convId, msg.msgType, msg.name)
+    }
+
+    // Then
+    actual shouldBe Some((convId, RENAME, Some(newName)))
+  }
+
+  scenario("Update rename conversation message") {
+    // Given
+    val service = getService
+    val convId = ConvId()
+    val fromUserId = UserId()
+    val (oldName, newName) = (Name("Bleep!"), Name("Quack!"))
+    val msgId = MessageId()
+
+    // There is a conversation
+    val conv = ConversationData(convId, RConvId(), Some(oldName))
+    (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(conv)))
+
+    // There is already a rename message
+    val lastMsg = MessageData(msgId, convId, RENAME, fromUserId, name = Some(oldName), time = RemoteInstant(clock.instant()))
+    (storage.lastLocalMessage _).expects(convId, RENAME).once().returning(Future.successful(Some(lastMsg)))
+
+    // Update this message with the new name
+    (storage.update _).expects(msgId, *).once().returning(Future.successful(Some((lastMsg, lastMsg.copy(name = Some(newName))))))
+
+    // When
+    val actual = result(service.addRenameConversationMessage(convId, fromUserId, newName)) map { msg =>
+      (msg.id, msg.convId, msg.msgType, msg.name)
+    }
+
+    // Then
+    actual shouldBe Some((msgId, convId, RENAME, Some(newName)))
   }
 }

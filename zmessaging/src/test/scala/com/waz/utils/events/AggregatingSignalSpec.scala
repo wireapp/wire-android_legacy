@@ -17,14 +17,14 @@
  */
 package com.waz.utils.events
 
-import com.waz.RobolectricUtils
+import com.waz.specs.AndroidFreeSpec
 import org.scalatest._
 
 import scala.concurrent.Promise
 import scala.concurrent.duration._
 
-@Ignore class AggregatingSignalSpec extends FeatureSpec with Matchers with OptionValues with BeforeAndAfter with RobolectricTests with RobolectricUtils {
-  implicit val ec: EventContext = EventContext.Global
+@Ignore class AggregatingSignalSpec extends AndroidFreeSpec with Matchers with OptionValues with BeforeAndAfter {
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   feature("Aggregating incremental updates to an initial value") {
     scenario("new aggregator, no subscribers")(withAggregator { env => import env._
@@ -66,17 +66,17 @@ import scala.concurrent.duration._
       publisher ! "moop"
       publisher ! "eek"
 
-      awaitUi(333.millis)
+      withDelay({
+        sub.value shouldBe None
+        aggregator.value shouldBe None
 
-      sub.value shouldBe None
-      aggregator.value shouldBe None
+        publisher ! "!"
+        finishLoading()
+        publisher ! "supercalifragilisticexpialidocious"
 
-      publisher ! "!"
-      finishLoading()
-      publisher ! "supercalifragilisticexpialidocious"
-
-      withDelay { sub.value.value shouldBe Seq(42, 4, 4, 3, 1, 34) }
-      aggregator.value.value shouldBe Seq(42, 4, 4, 3, 1, 34)
+        withDelay { sub.value.value shouldBe Seq(42, 4, 4, 3, 1, 34) }
+        aggregator.value.value shouldBe Seq(42, 4, 4, 3, 1, 34)
+      }, 333.millis)
     })
 
     scenario("reload on re-wire")(withAggregator { env => import env._

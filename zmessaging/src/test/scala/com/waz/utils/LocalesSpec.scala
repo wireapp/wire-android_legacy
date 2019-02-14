@@ -21,7 +21,7 @@ import java.util.Locale
 
 import org.scalatest._
 
-@Ignore class LocalesSpec extends FeatureSpec with Matchers with Inspectors with OptionValues with RobolectricTests {
+@Ignore class LocalesSpec extends FeatureSpec with Matchers with Inspectors with OptionValues {
   feature("BCP-47-compliant language tags") {
     scenario("Built-in") {
       lazy val bcp47 = AndroidLanguageTags.create("LocalesSpec")

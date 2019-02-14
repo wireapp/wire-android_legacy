@@ -23,7 +23,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.{Uid, UserId}
 import com.waz.service.push.WSPushServiceImpl.RequestCreator
-import com.waz.specs.ZMockSpec
+import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.AuthenticationManager.AccessToken
 import com.waz.sync.client.{AccessTokenProvider, JsonObjectResponse, PushNotificationEncoded}
 import com.waz.utils.events.{EventStream, SourceStream}
@@ -37,10 +37,8 @@ import org.scalatest.Ignore
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-@Ignore
-class WSPushServiceSpec extends ZMockSpec {
 
-  import com.waz.utils.events.EventContext.Implicits.global
+@Ignore class WSPushServiceSpec extends AndroidFreeSpec {
 
   private val accessTokenProvider = mock[AccessTokenProvider]
   private val webSocketFactory = mock[WebSocketFactory]
@@ -69,11 +67,13 @@ class WSPushServiceSpec extends ZMockSpec {
       val service = createWSPushService()
       service.activate()
 
-      Thread.sleep(1000)
+      Thread.sleep(500)
       fakeWebSocketEvents ! SocketEvent.Opened(webSocket)
 
-      noException shouldBe thrownBy { await(service.connected.ifTrue.head) }
+      noException shouldBe thrownBy { result(service.connected.ifTrue.head) }
       service.deactivate()
+
+      Thread.sleep(500)
 
       service.connected.currentValue shouldBe Some(false)
     }
@@ -89,7 +89,7 @@ class WSPushServiceSpec extends ZMockSpec {
       Thread.sleep(1000)
       fakeWebSocketEvents ! SocketEvent.Opened(webSocket)
 
-      noException shouldBe thrownBy { await(service.connected.ifTrue.head) }
+      noException shouldBe thrownBy { result(service.connected.ifTrue.head) }
     }
 
     scenario("When web socket closed should become unconnected and retry to connect.") {
@@ -151,6 +151,8 @@ class WSPushServiceSpec extends ZMockSpec {
       }
 
       fakeWebSocketEvents ! SocketEvent.Message(webSocket, responseContent)
+
+      Thread.sleep(500)
 
       gotNotification shouldBe true
 

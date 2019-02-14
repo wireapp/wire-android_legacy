@@ -20,12 +20,13 @@ import com.waz.api.{Credentials, EmailCredentials}
 import com.waz.content.AccountStorage2
 import com.waz.model.AccountData.Password
 import com.waz.model.{AccountData, EmailAddress, UserId}
+import com.waz.service.MetaDataService
 import com.waz.service.assets2.UriHelper
 import com.waz.sync.client.{AuthenticationManager2, LoginClient, LoginClientImpl}
 import com.waz.utils.{TestUriHelper, UnlimitedInMemoryStorage}
 import com.waz.znet2.http.HttpClient
 import com.waz.znet2.http.Request.UrlCreator
-import com.waz.znet2.{AuthRequestInterceptor2, HttpClientOkHttpImpl}
+import com.waz.znet2.{AuthRequestInterceptor2, HttpClientOkHttpImpl, OkHttpUserAgentInterceptor}
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global

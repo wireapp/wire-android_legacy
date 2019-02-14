@@ -227,7 +227,7 @@ class MessagesStorageImpl(context:     Context,
     find(m => m.convId == conv && !m.time.isBefore(time), MessageDataDao.findMessagesFrom(conv, time)(_), identity)
 
   def findMessagesBetween(conv: ConvId, from: RemoteInstant, to: RemoteInstant): Future[IndexedSeq[MessageData]] =
-    find(m => !m.isLocal, MessageDataDao.findMessagesBetween(conv, from, to)(_), identity)
+    find(m => !m.isLocal && m.time.isAfter(from) && (m.time.isBefore(to) || m.time == to), MessageDataDao.findMessagesBetween(conv, from, to)(_), identity)
 
   override def delete(msg: MessageData) =
     for {
@@ -269,6 +269,7 @@ class MessagesStorageImpl(context:     Context,
       _ <- Future(msgsFilteredIndex(conv).foreach(_.delete(upTo)))
       _ <- msgsIndex(conv).flatMap(_.delete(upTo))
       _ <- storage.flushWALToDatabase()
+      _ =  onMessagesDeletedInConversation ! Set(conv)
     } yield ()
   }
 

@@ -21,9 +21,11 @@ import com.waz.{AuthenticationConfig, ZIntegrationSpec}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
 import com.waz.utils.RichSeq
+import org.scalatest.Ignore
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
+@Ignore
 class GiphyClient2Spec extends ZIntegrationSpec with AuthenticationConfig {
 
   private lazy val giphyClient = new GiphyClientImpl2()

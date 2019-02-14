@@ -24,7 +24,7 @@ import org.scalatest.{BeforeAndAfter, FeatureSpec, Ignore, Matchers}
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
-@Ignore class SequenceWindowBufferSpec extends FeatureSpec with Matchers with BeforeAndAfter with GeneratorDrivenPropertyChecks {
+class SequenceWindowBufferSpec extends FeatureSpec with Matchers with BeforeAndAfter with GeneratorDrivenPropertyChecks {
 
   val windows = ListBuffer[(Long, Long)]()
 

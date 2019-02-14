@@ -15,15 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.utils.events
+package com.waz.znet2
 
-import org.scalatest.{FeatureSpec, Ignore, Matchers, RobolectricTests}
+import com.waz.service.MetaDataService
+import okhttp3.{Interceptor, Response}
 
-@Ignore class UiEventSourceSpec extends FeatureSpec with Matchers with RobolectricTests {
+class OkHttpUserAgentInterceptor(metadata: MetaDataService) extends Interceptor {
 
-  scenario("with UiEventSource should replace executionContext") {
-    val signal = new Signal[Boolean](Some(false)) with UiEventSource
+  private val WireUserAgent = {
+    val androidVersion = metadata.androidVersion
+    val wireVersion = metadata.versionName
+    val okHttpDefaultUserAgent = okhttp3.internal.Version.userAgent()
 
-    signal.executionContext shouldEqual Some(Events.UiExecutionContext)
+    s"Android $androidVersion / Wire $wireVersion / HttpLibrary $okHttpDefaultUserAgent"
   }
+
+  override def intercept(chain: Interceptor.Chain): Response = {
+    val request = chain.request.newBuilder.header("User-Agent", WireUserAgent).build
+    chain.proceed(request)
+  }
+
 }

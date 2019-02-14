@@ -130,7 +130,13 @@ class MessagesSyncHandler(selfUserId: UserId,
                 case _ =>
                   Future.successful({})
               }
-              result <- SyncResult(error) match {
+              syncResult = error match {
+                case ErrorResponse(ErrorResponse.ConnectionErrorCode, _, _) =>
+                  Failure.apply(error)
+                case _ =>
+                  SyncResult(error)
+              }
+              result <- syncResult match {
                 case r: SyncResult.Failure =>
                   service
                     .messageDeliveryFailed(convId, msg, error)

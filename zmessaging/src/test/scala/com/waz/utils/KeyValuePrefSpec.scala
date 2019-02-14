@@ -25,7 +25,7 @@ import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{FeatureSpec, Ignore, Matchers}
 import org.threeten.bp.Instant
 
-@Ignore class KeyValuePrefSpec extends FeatureSpec with Matchers with GeneratorDrivenPropertyChecks {
+class KeyValuePrefSpec extends FeatureSpec with Matchers with GeneratorDrivenPropertyChecks {
 
   feature("key value serialization") {
     scenario("boolean serialization") {

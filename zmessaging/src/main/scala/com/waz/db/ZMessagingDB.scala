@@ -55,7 +55,7 @@ class ZMessagingDB(context: Context, dbName: String, tracking: TrackingService) 
 }
 
 object ZMessagingDB {
-  val DbVersion = 113
+  val DbVersion = 114
 
   lazy val daos = Seq (
     UserDataDao, SearchQueryCacheDao, AssetDataDao, ConversationDataDao,
@@ -275,6 +275,9 @@ object ZMessagingDB {
       db.execSQL("CREATE TABLE Properties(key TEXT PRIMARY KEY, value TEXT)")
       db.execSQL("ALTER TABLE Messages ADD COLUMN force_read_receipts INTEGER DEFAULT null")
       db.execSQL("UPDATE KeyValues SET value = 'true' WHERE key = 'should_sync_conversations_1'")
+    },
+    Migration(113, 114) { db =>
+      db.execSQL("ALTER TABLE Users ADD COLUMN managed_by TEXT DEFAULT null")
     }
   )
 }
