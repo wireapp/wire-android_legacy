@@ -95,6 +95,7 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   val dataUsageButton     = findById[TextButton](R.id.preferences_data_usage_permissions)
   val readReceiptsSwitch  = findById[SwitchPreference](R.id.preferences_account_read_receipts)
   val personalInformationHeaderLabel = findById[TypefaceTextView](R.id.preference_personal_information_header)
+  val appearanceHeader = findById[TypefaceTextView](R.id.preferences_account_appearance_header)
 
   // Hide data usage section if there is nothing to show in there
   val showPersonalInformationSection = BuildConfig.SUBMIT_CRASH_REPORTS || BuildConfig.ALLOW_MARKETING_COMMUNICATION
@@ -144,6 +145,9 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     phoneButton.setEnabled(!locked)
     pictureButton.setEnabled(!locked)
     colorButton.setEnabled(!locked)
+    appearanceHeader.setVisible(!locked)
+    pictureButton.setVisible(!locked)
+    colorButton.setVisible(!locked)
   }
 }
 
@@ -187,8 +191,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
 
   val selfPicture: Signal[ImageSource] = self.map(_.picture).collect{case Some(pic) => WireImage(pic)}
 
-  //TODO: Replace with flag coming from self
-  private val accountIsLocked = Signal.const(false)
+  private val accountIsLocked: Signal[Boolean] = self.map(_.isReadOnlyProfile)
 
   accountIsLocked.onUi { locked =>
     view.setAccountLocked(locked)
