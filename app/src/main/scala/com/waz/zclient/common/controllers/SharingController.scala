@@ -21,14 +21,13 @@ import android.app.Activity
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.ConvId
 import com.waz.threading.SerialDispatchQueue
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.zclient.Intents._
 import com.waz.zclient.common.controllers.SharingController._
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.{Injectable, Injector, WireContext}
 
-import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
@@ -41,8 +40,6 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
   val ephemeralExpiration = Signal(Option.empty[FiniteDuration])
   val conversationController = inject[ConversationController]
 
-  val sendEvent = EventStream[(SharableContent, Seq[ConvId], Option[FiniteDuration])]()
-
   def onContentShared(activity: Activity, convs: Seq[ConvId]): Unit = {
     targetConvs ! convs
     Option(activity).foreach(_.startActivity(SharingIntent(wContext)))
@@ -50,14 +47,13 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
 
   def sendContent(activity: Activity): Future[Seq[ConvId]] = {
     def send(content: SharableContent, convs: Seq[ConvId], expiration: Option[FiniteDuration]) = {
-      sendEvent ! (content, convs, expiration)
       content match {
         case TextContent(t) =>
           conversationController.sendMessage(t, List.empty, None, Some(expiration))
         case uriContent =>
           Future.traverse(uriContent.uris) { uriWrapper =>
             val uri = URIWrapper.toJava(uriWrapper)
-            conversationController.sendAssetMessage(uri, activity, Some(expiration))
+            conversationController.sendAssetMessage(uri, activity, Some(expiration), convs)
           }
       }
     }
@@ -84,12 +80,6 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
 
   def publishTextContent(text: String): Unit =
     this.sharableContent ! Some(TextContent(text))
-
-  def publishImageContent(uris: java.util.List[URIWrapper]): Unit =
-    this.sharableContent ! Some(ImageContent(uris.asScala))
-
-  def publishFileContent(uris: java.util.List[URIWrapper]): Unit =
-    this.sharableContent ! Some(FileContent(uris.asScala))
 }
 
 object SharingController {
