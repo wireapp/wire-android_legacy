@@ -18,6 +18,7 @@
 package com.waz.zclient.sharing
 
 import android.content.Context
+import android.net.Uri
 import android.os.Bundle
 import android.support.v4.content.ContextCompat
 import android.support.v7.widget.RecyclerView.ViewHolder
@@ -29,6 +30,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.LinearLayout.LayoutParams
 import android.widget.TextView.OnEditorActionListener
 import android.widget._
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.ContentUriAssetForUpload
@@ -38,14 +40,13 @@ import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events._
 import com.waz.utils.{RichWireInstant, returning}
-import com.waz.utils.wrappers.AndroidURIUtil
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent, TextContent}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.controllers.{AssetsController, SharingController}
 import com.waz.zclient.common.views._
 import com.waz.zclient.cursor.{EphemeralLayout, EphemeralTimerButton}
-import com.waz.zclient.glide.GlideBuilder
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.messages.{MessagesController, UsersController}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.{ColorUtils, KeyboardUtils}
@@ -133,8 +134,8 @@ class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener 
 
           case ImageContent(uris) =>
             returning(inflater.inflate(R.layout.share_preview_image, layout).findViewById[ImageView](R.id.image_content)) { imagePreview =>
-              GlideBuilder(AndroidURIUtil.unwrap(uris.head))
-                .apply(new RequestOptions().centerCrop())
+              WireGlide().load(Uri.parse(uris.head.toString))
+                .apply(new RequestOptions().centerCrop().skipMemoryCache(true).diskCacheStrategy(DiskCacheStrategy.NONE))
                 .into(imagePreview)
             }
 
