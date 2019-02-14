@@ -21,6 +21,7 @@ import com.waz.api.Verification
 import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.model
+import com.waz.model.ManagedBy.ManagedBy
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.service.SearchKey
 import com.waz.sync.client.UserSearchClient.UserSearchEntry
@@ -52,7 +53,8 @@ case class UserData(override val id:       UserId,
                     handle:                Option[Handle]        = None,
                     providerId:            Option[ProviderId]    = None,
                     integrationId:         Option[IntegrationId] = None,
-                    expiresAt:             Option[RemoteInstant] = None) extends Identifiable[UserId] {
+                    expiresAt:             Option[RemoteInstant] = None,
+                    managedBy:             Option[ManagedBy]     = None) extends Identifiable[UserId] {
 
   def isConnected = ConnectionStatus.isConnected(connection)
   def hasEmailOrPhone = email.isDefined || phone.isDefined
@@ -60,6 +62,7 @@ case class UserData(override val id:       UserId,
   def isAcceptedOrPending = connection == ConnectionStatus.Accepted || connection == ConnectionStatus.PendingFromOther || connection == ConnectionStatus.PendingFromUser
   def isVerified = verified == Verification.VERIFIED
   def isAutoConnect = isConnected && ! isSelf && connectionMessage.isEmpty
+  def isReadOnlyProfile = managedBy.exists(_ != ManagedBy.Wire) //if none or "Wire", then it's not read only.
   lazy val isWireBot = integrationId.nonEmpty
 
   def getDisplayName = if (displayName.isEmpty) name else displayName
@@ -81,7 +84,8 @@ case class UserData(override val id:       UserId,
     providerId = user.service.map(_.provider),
     integrationId = user.service.map(_.id),
     expiresAt = user.expiresAt,
-    teamId = user.teamId.orElse(teamId)
+    teamId = user.teamId.orElse(teamId),
+    managedBy = user.managedBy.orElse(managedBy)
   )
 
   def updated(user: UserSearchEntry): UserData = copy(
@@ -179,7 +183,8 @@ object UserData {
       syncTimestamp = decodeOptLocalInstant('syncTimestamp), 'displayName, Verification.valueOf('verified), deleted = 'deleted,
       availability = Availability(decodeInt('activityStatus)), handle = decodeOptHandle('handle),
       providerId = decodeOptId[ProviderId]('providerId), integrationId = decodeOptId[IntegrationId]('integrationId),
-      expiresAt = decodeOptISOInstant('expires_at).map(RemoteInstant(_))
+      expiresAt = decodeOptISOInstant('expires_at).map(RemoteInstant(_)),
+      managedBy = ManagedBy.decodeOptManagedBy('managed_by)
     )
   }
 
@@ -207,6 +212,7 @@ object UserData {
       v.providerId.foreach { pId => o.put("providerId", pId.str) }
       v.integrationId.foreach { iId => o.put("integrationId", iId.str) }
       v.expiresAt.foreach(v => o.put("expires_at", v))
+      v.managedBy.foreach(o.put("managed_by", _))
     }
   }
 
@@ -234,16 +240,17 @@ object UserData {
     val ProviderId = opt(id[ProviderId]('provider_id))(_.providerId)
     val IntegrationId = opt(id[IntegrationId]('integration_id))(_.integrationId)
     val ExpiresAt = opt(remoteTimestamp('expires_at))(_.expiresAt)
+    val Managed = opt(text[ManagedBy]('managed_by, _.toString, ManagedBy(_)))(_.managedBy)
 
     override val idCol = Id
     override val table = Table(
       "Users", Id, TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn, ConnTime, ConnMessage,
-      Conversation, Rel, Timestamp, DisplayName, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId, ExpiresAt
+      Conversation, Rel, Timestamp, DisplayName, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId, ExpiresAt, Managed
     )
 
     override def apply(implicit cursor: DBCursor): UserData = new UserData(
       Id, TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn, RemoteInstant.ofEpochMilli(ConnTime.getTime), ConnMessage,
-      Conversation, Rel, Timestamp, DisplayName, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId, ExpiresAt
+      Conversation, Rel, Timestamp, DisplayName, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId, ExpiresAt, Managed
     )
 
     override def onCreate(db: DB): Unit = {

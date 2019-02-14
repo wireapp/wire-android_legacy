@@ -27,6 +27,7 @@ import com.waz.content.Preferences.PrefKey
 import com.waz.log.InternalLog.LogLevel.{Debug, Error, Info, Verbose, Warn}
 import com.waz.model.AccountData.Password
 import com.waz.model.GenericContent.Location
+import com.waz.model.ManagedBy.ManagedBy
 import com.waz.model.{SSOId, _}
 import com.waz.model.otr.{Client, ClientId, UserClients}
 import com.waz.model.sync.ReceiptType
@@ -245,6 +246,7 @@ object ZLog2 {
     implicit val ReadReceiptSettingsShow: LogShow[ReadReceiptSettings] = logShowWithToString
 
     implicit val SSOIdShow: LogShow[SSOId] = create(id => s"SSOId(subject: ${sha2(id.subject)}, tenant:${sha2(id.tenant)})")
+    implicit val ManagedByShow: LogShow[ManagedBy] = create(id => s"ManagedBy($id)")
 
     implicit val RawAssetInputLogShow: LogShow[RawAssetInput] =
       createFrom {

@@ -22,6 +22,7 @@ import com.waz.model.AssetMetaData.Image
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetMetaData.Image.Tag.{Medium, Preview}
 import com.waz.model.AssetStatus.UploadDone
+import com.waz.model.ManagedBy.ManagedBy
 import com.waz.model.UserInfo.Service
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import org.json
@@ -42,7 +43,8 @@ case class UserInfo(id:           UserId,
                     service:      Option[Service]         = None,
                     teamId:       Option[TeamId]          = None,
                     expiresAt:    Option[RemoteInstant]   = None,
-                    ssoId:        Option[SSOId]           = None
+                    ssoId:        Option[SSOId]           = None,
+                    managedBy:    Option[ManagedBy]       = None
                    ) {
   //TODO Dean - this will actually prevent deleting profile pictures, since the empty seq will be mapped to a None,
   //And so in UserData, the current picture will be used instead...
@@ -113,10 +115,11 @@ object UserInfo {
       val pic = getAssets.orElse(getPicture(id)).toSeq
       val privateMode = decodeOptBoolean('privateMode)
       val ssoId = SSOId.decodeOptSSOId('sso_id)
+      val managedBy = ManagedBy.decodeOptManagedBy('managed_by)
       UserInfo(
         id, 'name, accentId, 'email, 'phone, Some(pic), decodeOptString('tracking_id) map (TrackingId(_)),
         deleted = 'deleted, handle = 'handle, privateMode = privateMode, service = decodeOptService('service),
-        'team, decodeOptISORemoteInstant('expires_at), ssoId = ssoId)
+        'team, decodeOptISORemoteInstant('expires_at), ssoId = ssoId, managedBy = managedBy)
     }
   }
 
@@ -153,12 +156,13 @@ object UserInfo {
       info.handle.foreach(h => o.put("handle", h.string))
       info.trackingId.foreach(id => o.put("tracking_id", id.str))
       info.picture.foreach(ps => o.put("assets", encodeAsset(ps)))
+      info.managedBy.foreach(m => o.put("managed_by", m.toString))
     }
   }
 
   implicit val UserInfoShow: LogShow[UserInfo] =
     LogShow.createFrom { u =>
       import u._
-      l" UserInfo: id: $id | email: $email: | phone: $phone: | picture: $picture: | deleted: $deleted: | handle: $handle: | expiresAt: $expiresAt: | ssoId: $ssoId"
+      l" UserInfo: id: $id | email: $email: | phone: $phone: | picture: $picture: | deleted: $deleted: | handle: $handle: | expiresAt: $expiresAt: | ssoId: $ssoId | managedBy: $managedBy"
     }
 }
