@@ -249,6 +249,8 @@ object WireApplication {
     bind [ExternalFileSharing]  to new ExternalFileSharing(ctx)
 
     bind [UriHelper] to new AndroidUriHelper(ctx)
+
+    bind[MediaRecorderController] to new MediaRecorderControllerImpl(ctx)
   }
 
   def controllers(implicit ctx: WireContext) = new Module {

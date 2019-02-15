@@ -20,7 +20,7 @@ package com.waz.zclient.conversation.toolbar
 import android.Manifest.permission.{RECORD_AUDIO, WRITE_EXTERNAL_STORAGE}
 import android.animation.{ObjectAnimator, ValueAnimator}
 import android.app.Activity
-import android.content.{Context, DialogInterface}
+import android.content.Context
 import android.graphics.LightingColorFilter
 import android.graphics.drawable.LayerDrawable
 import android.util.AttributeSet
@@ -28,24 +28,23 @@ import android.view.View.{GONE, INVISIBLE, VISIBLE}
 import android.view.{LayoutInflater, MotionEvent, View, WindowManager}
 import android.widget.{FrameLayout, SeekBar, TextView}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.api.PlaybackControls
-import com.waz.model.{AESKey, AssetId}
+import com.waz.model.{AssetId, Mime}
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
-import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, RecordingCancelled, RecordingSuccessful}
+import com.waz.service.assets.GlobalRecordAndPlayService.AssetMediaKey
 import com.waz.service.assets2.{Content, ContentForUpload}
-import com.waz.threading.CancellableFuture.CancelException
 import com.waz.threading.Threading
 import com.waz.utils.events.{ClockSignal, Signal}
+import com.waz.utils.wrappers.URI
 import com.waz.utils.{RichThreetenBPDuration, returning}
+import com.waz.zclient.common.controllers.AssetsController.PlaybackControls
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.common.controllers.{SoundController, ThemeController}
+import com.waz.zclient.common.controllers.{MediaRecorderController, SoundController, ThemeController}
 import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.core.api.scala.ModelObserver
 import com.waz.zclient.ui.utils.CursorUtils
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{RichView, StringUtils, ViewUtils}
+import com.waz.zclient.utils.{RichView, StringUtils}
 import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.Duration.between
 import org.threeten.bp.Instant.now
@@ -53,8 +52,6 @@ import org.threeten.bp.{Duration, Instant}
 
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
-import scala.concurrent.duration._
-import scala.util.control.NonFatal
 
 class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends FrameLayout(context, attrs, defStyleAttr) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -63,7 +60,8 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
 
   LayoutInflater.from(getContext).inflate(R.layout.audio_quick_record_controls, this, true)
 
-  lazy val recordingService = ZMessaging.currentGlobal.recordingAndPlayback
+  lazy val recordAndPlay = inject[Signal[ZMessaging]].map(_.global.recordingAndPlayback)
+  lazy val recordingController = inject[MediaRecorderController]
   lazy val permissions      = inject[PermissionsService]
   lazy val layoutController = inject[IGlobalLayoutController]
   lazy val convController   = inject[ConversationController]
@@ -74,16 +72,9 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
   private var currentAssetKey = Option.empty[AssetMediaKey]
   private val startTime = Signal(Option.empty[Instant])
 
-  //TODO remove playback controls
-  private var playbackControls = Option.empty[PlaybackControls]
-  private val playbackControlsModelObserver = new ModelObserver[PlaybackControls]() {
-    override def updated(model: PlaybackControls): Unit = {
-      if (model.isPlaying) bottomButtonTextView.setText(R.string.glyph__pause)
-      else bottomButtonTextView.setText(R.string.glyph__play)
-      recordingSeekBar.setMax(model.getDuration.toMillis.toInt)
-      recordingSeekBar.setProgress(model.getPlayhead.toMillis.toInt)
-    }
-  }
+  import Threading.Implicits.Background
+
+  private val playbackControls = Signal[PlaybackControls]()
 
   val actionUpMinY = getDimenPx(R.dimen.audio_message_recording__slide_control__height) - 2 *
     getDimenPx(R.dimen.audio_message_recording__slide_control__width) - getDimenPx(R.dimen.wire__padding__8)
@@ -98,20 +89,21 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
   private val timerTextView                    = findById[TextView](R.id.recording__duration)
 
   returning(findById[View](R.id.bottom_button_container))(_.onClick {
-    playbackControls.foreach {
-      case ctrls if ctrls.isPlaying => ctrls.stop()
-      case ctrls => ctrls.play()
-    }
+    playbackControls.currentValue.foreach { _.playOrPause() }
   })
 
   returning(findById[View](R.id.send_button_container))(_.onClick {
-    playbackControls.filter(_.isPlaying).foreach(_.stop())
+    playbackControls.currentValue.foreach { pc =>
+      if (pc.isPlaying.currentValue.contains(true)) pc.playOrPause()
+    }
     currentAudio.foreach(sendAudioAsset)
   })
 
   private val cancelButton = returning(findById[View](R.id.cancel_button_container))(_.onClick {
     if (!slideControlState.currentValue.contains(Recording)) {
-      playbackControls.filter(_.isPlaying).foreach(_.stop())
+      playbackControls.currentValue.foreach { pc =>
+        if (pc.isPlaying.currentValue.contains(true)) pc.playOrPause()
+      }
       hide()
     }
   })
@@ -120,7 +112,7 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     v.setVisibility(GONE)
     v.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
       override def onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) =
-        playbackControls.filter(_ => fromUser).foreach(_.setPlayhead(Duration.ofMillis(progress)))
+        playbackControls.head.foreach(_.setPlayHead(Duration.ofMillis(progress)))
 
       override def onStartTrackingTouch(seekBar: SeekBar) = {}
       override def onStopTrackingTouch(seekBar: SeekBar) = {}
@@ -167,9 +159,10 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     case _         => None
   }.map(_.map(getString)).onUi(_.foreach(hintTextView.setText))
 
-  slideControlState.map {
-    case Recording => Some(R.string.glyph__microphone_on)
-    case Preview   => Some(R.string.glyph__play)
+  Signal(slideControlState, playbackControls.flatMap(_.isPlaying).orElse(Signal.const(false))).map {
+    case (Recording, _) => Some(R.string.glyph__microphone_on)
+    case (Preview, false)   => Some(R.string.glyph__play)
+    case (Preview, true)   => Some(R.string.glyph__pause)
     case _         => None
   }.map(_.map(getString)).onUi(_.foreach(bottomButtonTextView.setText))
 
@@ -181,7 +174,7 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
 
   slideControlState.map {
     case Recording => Some(GONE)
-    case Preview   => Some(VISIBLE)
+    case Preview   => Some(GONE)
     case _         => None
   }.onUi(_.foreach(recordingSeekBar.setVisibility))
 
@@ -192,13 +185,15 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     case Preview   =>
       stopRecordingIndicator()
       startTime ! None
+    case SendFromRecording =>
+      currentAudio.foreach(sendAudioAsset)
     case _ =>
   }
 
-  startTime.flatMap[Option[Duration]] {
+  startTime.flatMap {
     case Some(start) =>
       ClockSignal(Duration.ofSeconds(1).asScala).map(_ => Some(between(start, now)))
-    case _ => Signal.const(None)
+    case _ => playbackControls.flatMap(_.playHead).map(Some(_))
   }.map {
     case Some(d) => StringUtils.formatTimeMilliSeconds(d.toMillis)
     case _       => ""
@@ -206,9 +201,7 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
 
   def hide() = {
     setVisibility(INVISIBLE)
-    playbackControlsModelObserver.clear()
-    playbackControls = None
-    currentAssetKey.foreach(recordingService.cancelRecording)
+    recordingController.cancelRecording()
     currentAssetKey = None
     currentAudio = None
     startTime ! None
@@ -246,44 +239,8 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
       val key = AssetMediaKey(AssetId())
       currentAssetKey = Some(key)
       setWakeLock(true)
-      recordingService.record(key, 25.minutes).flatMap { case (start, futureAsset) =>
-        startTime ! Some(start)
-        futureAsset.map {
-          case RecordingSuccessful(audio, lengthLimitReached) =>
-            val content = ContentForUpload(s"audio_message_${AESKey().str}", Content.File(audio.mime, audio.file))
-            if (lengthLimitReached) {
-              ViewUtils.showAlertDialog(
-                getContext,
-                R.string.audio_message__recording__limit_reached__title,
-                R.string.audio_message__recording__limit_reached__message,
-                R.string.audio_message__recording__limit_reached__confirmation,
-                R.string.confirmation_menu__cancel,
-                new DialogInterface.OnClickListener() {
-                  override def onClick(dialogInterface: DialogInterface, i: Int) =
-                    sendAudioAsset(content)
-                },
-                null)
-            } else slideControlState.currentValue match {
-              case Some(SendFromRecording) =>
-                sendAudioAsset(content)
-              case _ =>
-                currentAudio = Some(content)
-                playbackControls = Some(returning(audio.getPlaybackControls) { ctrls =>
-                  playbackControlsModelObserver.setAndUpdate(ctrls)
-                })
-            }
-          case RecordingCancelled => throw new CancelException("Recording cancelled")
-        } (Threading.Ui)
-      }(Threading.Ui)
-      .andThen { case e =>
-        setWakeLock(false)
-        e
-      }(Threading.Ui)
-      .onFailure {
-      case NonFatal(_) =>
-        playbackControlsModelObserver.clear()
-        playbackControls = None
-      } (Threading.Ui)
+      recordingController.startRecording()
+      startTime ! Some(Instant.now)
   }
 
   private def sendAudioAsset(content: ContentForUpload): Future[Unit] =
@@ -298,11 +255,23 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
            MotionEvent.ACTION_OUTSIDE |
            MotionEvent.ACTION_UP =>
         currentAssetKey.foreach { key =>
+
+          recordingController.stopRecording()
+
+          val content = ContentForUpload(s"recording-${System.currentTimeMillis}",
+            Content.File(Mime.Audio.MP4, recordingController.getFile))
+
+          currentAudio = Some(content)
+
+          playbackControls !
+            new PlaybackControls(key.id, URI.fromFile(recordingController.getFile), recordAndPlay)
+
+          setWakeLock(false)
+
           slideControlState.mutate {
             case Recording => Preview
             case st => st
           }
-          recordingService.stopRecording(key)
         }
       case _ => //
     }

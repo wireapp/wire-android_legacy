@@ -46,23 +46,12 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
 
   duration.map(_.getOrElse(Duration.ZERO).toMillis.toInt).on(Threading.Ui)(progressBar.setMax)
   playControls.flatMap(_.playHead).map(_.toMillis.toInt).on(Threading.Ui)(progressBar.setProgress)
-
-  val isPlaying = playControls.flatMap(_.isPlaying)
-
-  //isPlaying { assetActionButton.isPlaying ! _ }
-
-//  (for {
-//    pl <- isPlaying
-//    a <- asset
-//  } yield (pl, a)).onChanged {
-//    case (pl, a) =>
-//      if (pl) controller.onAudioPlayed ! a
-//  }
+  playControls.flatMap(_.isPlaying) (isPlaying ! _)
 
   assetActionButton.onClick {
     assetStatus.map(_._1).currentValue match {
       case Some(AssetStatus.Done) =>
-        playControls.currentValue.foreach(_.playOrPause())
+        playControls.head.foreach(_.playOrPause())(Threading.Background)
       case _ =>
     }
   }
