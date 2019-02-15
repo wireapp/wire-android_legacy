@@ -145,8 +145,9 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     case _ => Signal.empty
   }
 
-  def cancelUpload(idGeneral: AssetIdGeneral): Unit = idGeneral match {
-    case id: UploadAssetId => assets.currentValue.foreach(_.cancelUpload(id))
+  def cancelUpload(idGeneral: AssetIdGeneral, message: MessageData): Unit = idGeneral match {
+    case id: UploadAssetId =>
+      assets.currentValue.foreach(_.cancelUpload(id, message))
     case _ => ()
   }
 
