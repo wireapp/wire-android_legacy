@@ -95,9 +95,7 @@ class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
 
   override def onViewCreated(v: View, savedInstanceState: Bundle): Unit = {
 
-    callInfo.foreach { view =>
-        userAccountsController.isTeam.onUi(vis => view.setVisible(vis))
-    }
+    callInfo
     guestsToggleRow
     guestsToggleDesc
     readReceiptsToggleRow
@@ -121,7 +119,6 @@ class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
     readReceiptsToggle
 
     convOptions.foreach { view =>
-      userAccountsController.isTeam.onUi(vis => view.setVisible(vis))
       view.onClick {
         optionsVisible.mutate(!_)
       }
@@ -129,7 +126,6 @@ class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
 
     convOptionsArrow.foreach { view =>
       view.setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40))
-      optionsVisible.map(if (_) -1.0f else 1.0f).onUi(turn => view.setRotation(turn * 90.0f))
     }
 
     convOptionsSubtitle
@@ -140,6 +136,9 @@ class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
     optionsVisible.onChanged.onUi { _ =>
       inject[KeyboardController].hideKeyboardIfVisible()
     }
+    userAccountsController.isTeam.onUi(vis => convOptions.foreach(_.setVisible(vis)))
+    optionsVisible.map(if (_) -1.0f else 1.0f).onUi(turn => convOptionsArrow.foreach(_.setRotation(turn * 90.0f)))
+    userAccountsController.isTeam.onUi(vis => callInfo.foreach(_.setVisible(vis)))
   }
 }
 
