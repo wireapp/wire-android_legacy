@@ -76,8 +76,10 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper with Ephemer
 trait ActionableAssetPart extends AssetPart {
   protected val assetActionButton: AssetActionButton = findById(R.id.action_button)
 
-  assetStatus.map(_._1).onUi { s =>
-    assetActionButton.setStatus(s, "", playing = false)
+  val isPlaying = Signal(false)
+
+  Signal(assetStatus.map(_._1), isPlaying).onUi { case (s, p) =>
+    assetActionButton.setStatus(s, "", playing = p)
   }
 
   assetStatus.onUi {

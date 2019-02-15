@@ -40,13 +40,13 @@ import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.assets.GlobalRecordAndPlayService
-import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, UnauthenticatedContent}
+import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, MediaKey, UnauthenticatedContent}
 import com.waz.service.assets2.Asset.{Audio, General, Image, Video}
 import com.waz.service.assets2.{AssetStatus, _}
 import com.waz.service.messages.MessagesService
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
-import com.waz.utils.wrappers.{AndroidURIUtil, URI => URIWrapper}
+import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.utils.{IoUtils, returning}
 import com.waz.zclient.controllers.drawing.IDrawingController.DrawingMethod
 import com.waz.zclient.controllers.singleimage.ISingleImageController
@@ -158,9 +158,24 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   def retry(m: MessageData) =
     if (m.state == Message.Status.FAILED || m.state == Message.Status.FAILED_READ) messages.currentValue.foreach(_.retryMessageSending(m.convId, m.id))
 
-  def getPlaybackControls(asset: Signal[GeneralAsset]): Signal[PlaybackControls] = asset.flatMap { a =>
-    (a.details, a.id) match {
-      case (_: Audio, id: AssetId) => Signal.const(new PlaybackControls(id, controller))
+    def getPlaybackControls(asset: Signal[GeneralAsset]): Signal[PlaybackControls] = asset.flatMap { a =>
+    (a.details, a) match {
+      case (_: Audio, audioAsset: Asset[_]) =>
+
+        val file = new File(context.getCacheDir, s"${audioAsset.id.str}.mp4")
+        Signal.future((if (!file.exists()) {
+          file.createNewFile()
+          assets.head.flatMap(_.loadContent(audioAsset)).map { is =>
+            val os = new FileOutputStream(file)
+            IoUtils.copy(is, os)
+            is.close()
+          }
+        } else {
+          Future.successful(())
+        }).map { _ =>
+          new PlaybackControls(audioAsset.id, URIWrapper.fromFile(file),
+            zms.map(_.global.recordingAndPlayback))
+        })
       case _ => Signal.empty[PlaybackControls]
     }
   }
@@ -312,18 +327,17 @@ object AssetsController {
     }
   }
 
-  class PlaybackControls(assetId: AssetId, controller: AssetsController) {
-    val rAndP = controller.zms.map(_.global.recordingAndPlayback)
+  class PlaybackControls(assetId: AssetId, fileUri: URIWrapper, rAndP: Signal[GlobalRecordAndPlayService]) {
 
     val isPlaying = rAndP.flatMap(rP => rP.isPlaying(AssetMediaKey(assetId)))
     val playHead = rAndP.flatMap(rP => rP.playhead(AssetMediaKey(assetId)))
 
-    private def rPAction(f: (GlobalRecordAndPlayService, AssetMediaKey, Content, Boolean) => Unit): Unit = {
+    private def rPAction(f: (GlobalRecordAndPlayService, MediaKey, Content, Boolean) => Unit): Unit = {
       for {
         rP <- rAndP.currentValue
         isPlaying <- isPlaying.currentValue
       } {
-        f(rP, AssetMediaKey(assetId), UnauthenticatedContent(AndroidURIUtil.parse(createAssetUri(assetId).toString)), isPlaying)
+        f(rP, AssetMediaKey(assetId), UnauthenticatedContent(fileUri), isPlaying)
       }
     }
 

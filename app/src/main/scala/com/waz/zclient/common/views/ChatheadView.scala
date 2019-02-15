@@ -154,7 +154,7 @@ object ChatHeadView {
   }
   type CropShape = CropShape.Value
 
-  case class ChatHeadViewOptions(assetId: Option[AssetId],
+  case class ChatHeadViewOptions(assetId: Option[AssetIdGeneral],
                                  backgroundColor: Int,
                                  grayScale: Boolean,
                                  initials: String,
@@ -165,7 +165,8 @@ object ChatHeadView {
 
     def glideRequest(implicit context: Context): RequestBuilder[Drawable] = {
       val request = assetId match {
-        case Some(id) => GlideBuilder(id)
+        case Some(id: PublicAssetId) => GlideBuilder.apply(id)
+        case Some(id: AssetId) => GlideBuilder.apply(id)
         case _ => GlideBuilder(placeholder)
       }
       val requestOptions = new RequestOptions()
