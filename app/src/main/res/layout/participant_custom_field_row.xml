@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/wire__padding__2"
+    >
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/custom_field_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:w_font="@string/wire__typeface__light"
+            android:textSize="@dimen/wire__text_size__small"
+            android:textColor="?wireSecondaryTextColor"
+            android:layout_marginStart="@dimen/wire__padding__regular"
+            android:layout_marginEnd="@dimen/wire__padding__regular"
+            android:paddingTop="@dimen/wire__padding__4"
+            android:background="@color/white"
+            />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/custom_field_value"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="?wirePrimaryTextColor"
+            android:textSize="@dimen/wire__text_size__regular"
+            app:w_font="@string/wire__typeface__regular"
+            android:layout_marginStart="@dimen/wire__padding__regular"
+            android:layout_marginEnd="@dimen/wire__padding__regular"
+            android:paddingBottom="@dimen/wire__padding__4"
+            android:background="@color/white"
+            />
+</LinearLayout>

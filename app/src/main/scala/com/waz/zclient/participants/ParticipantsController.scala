@@ -106,6 +106,9 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
     currentConv <- conv
   } yield currentConv.team.isDefined && currentConv.team == currentUser.teamId
 
+  def isUserGuest(userTeamId: Option[TeamId]): Future[Boolean] =
+    conv.head.map { currentConv => currentConv.team.isDefined && currentConv.team != userTeamId }
+
   def selectParticipant(userId: UserId): Unit = selectedParticipant ! Some(userId)
 
   def unselectParticipant(): Unit = selectedParticipant ! None
