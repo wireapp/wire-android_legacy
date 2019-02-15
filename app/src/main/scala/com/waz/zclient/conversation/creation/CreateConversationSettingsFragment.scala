@@ -42,14 +42,10 @@ class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
   private lazy val userAccountsController       = inject[UserAccountsController]
 
   private lazy val inputBox = view[InputBox](R.id.input_box)
-
-  private lazy val guestsToggle = returning(view[SwitchCompat](R.id.guest_toggle)) { vh =>
-    findById[ImageView](R.id.allow_guests_icon).setImageDrawable(GuestIconWithColor(getStyledColor(R.attr.wirePrimaryTextColor)))
-    createConversationController.teamOnly.currentValue.foreach(teamOnly => vh.foreach(_.setChecked(!teamOnly)))
-    vh.foreach(_.setOnCheckedChangeListener(new OnCheckedChangeListener {
-      override def onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean): Unit = createConversationController.teamOnly ! !isChecked
-    }))
-  }
+  private lazy val guestsToggle = view[SwitchCompat](R.id.guest_toggle)
+  private lazy val convOptions = view[View](R.id.create_conv_options)
+  private lazy val convOptionsArrow = view[ImageView](R.id.create_conv_options_icon)
+  private lazy val callInfo = view[TextView](R.id.call_info)
 
   private lazy val readReceiptsToggle  = returning(view[SwitchCompat](R.id.read_receipts_toggle)) { vh =>
     findById[ImageView](R.id.read_receipts_icon).setImageDrawable(ViewWithColor(getStyledColor(R.attr.wirePrimaryTextColor)))
@@ -77,21 +73,6 @@ class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
 
   private val optionsVisible = Signal(false)
 
-  private lazy val convOptions = returning(view[View](R.id.create_conv_options)) { vh =>
-    userAccountsController.isTeam.onUi(vis => vh.foreach(_.setVisible(vis)))
-    vh.foreach(_.onClick {
-      optionsVisible.mutate(!_)
-    })
-  }
-
-  private lazy val convOptionsArrow = returning(view[ImageView](R.id.create_conv_options_icon)) { vh =>
-    vh.foreach(_.setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40)))
-    optionsVisible.map(if (_) -1.0f else 1.0f).onUi(turn => vh.foreach(_.setRotation(turn * 90.0f)))
-  }
-
-  private lazy val callInfo = returning(view[TextView](R.id.call_info)){ vh =>
-    userAccountsController.isTeam.onUi(vis => vh.foreach(_.setVisible(vis)))
-  }
 
   private lazy val guestsToggleRow = returning(view[View](R.id.guest_toggle_row)) { vh =>
     Signal(optionsVisible, userAccountsController.isTeam).onUi { case (opt, vis) => vh.foreach(_.setVisible(opt && vis)) }
@@ -128,11 +109,25 @@ class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
       box.errorLayout.setVisible(false)
     }
 
-    guestsToggle
+    guestsToggle.foreach { view =>
+      findById[ImageView](R.id.allow_guests_icon).setImageDrawable(GuestIconWithColor(getStyledColor(R.attr.wirePrimaryTextColor)))
+      createConversationController.teamOnly.currentValue.foreach(teamOnly => view.setChecked(!teamOnly))
+      view.setOnCheckedChangeListener(new OnCheckedChangeListener {
+        override def onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean): Unit = createConversationController.teamOnly ! !isChecked
+      })
+    }
     readReceiptsToggle
 
-    convOptions
-    convOptionsArrow
+    convOptions.foreach { view =>
+      view.onClick {
+        optionsVisible.mutate(!_)
+      }
+    }
+
+    convOptionsArrow.foreach { view =>
+      view.setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40))
+    }
+
     convOptionsSubtitle
   }
 
@@ -141,6 +136,9 @@ class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
     optionsVisible.onChanged.onUi { _ =>
       inject[KeyboardController].hideKeyboardIfVisible()
     }
+    userAccountsController.isTeam.onUi(vis => convOptions.foreach(_.setVisible(vis)))
+    optionsVisible.map(if (_) -1.0f else 1.0f).onUi(turn => convOptionsArrow.foreach(_.setRotation(turn * 90.0f)))
+    userAccountsController.isTeam.onUi(vis => callInfo.foreach(_.setVisible(vis)))
   }
 }
 
