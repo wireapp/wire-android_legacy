@@ -107,7 +107,7 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends 
     case (msg, text, color, isMe) => setTextWithLink(text, color.color) {
       (msg.msgType, isMe) match {
         case (OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED, true)  => screenController.openOtrDevicePreferences()
-        case (OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED, false) => participantsController.onShowParticipants ! Some(SingleParticipantFragment.TagDevices)
+        case (OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED, false) => participantsController.onShowParticipants ! Some(SingleParticipantFragment.DevicesTab.str)
         case (STARTED_USING_DEVICE, _)                  => screenController.openOtrDevicePreferences()
         case (OTR_ERROR, _)                             => browserController.openUrl(AndroidURIUtil parse getString(R.string.url_otr_decryption_error_1))
         case (OTR_IDENTITY_CHANGED, _)                  => browserController.openUrl(AndroidURIUtil parse getString(R.string.url_otr_decryption_error_2))

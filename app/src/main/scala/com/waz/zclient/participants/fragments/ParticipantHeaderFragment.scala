@@ -99,7 +99,7 @@ class ParticipantHeaderFragment extends FragmentHelper {
 
   private lazy val closeButton = returning(view[TextView](R.id.close_button)) { vh =>
     addingUsers.map(!_).onUi(vis => vh.foreach(_.setVisible(vis)))
-    vh.onClick(_ => participantsController.onHideParticipants ! true)
+    vh.onClick(_ => participantsController.onShowAnimations ! true)
   }
 
   private lazy val headerReadOnlyTextView = returning(view[TextView](R.id.participants__header)) { vh =>

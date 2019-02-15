@@ -190,7 +190,7 @@ class IntegrationDetailsFragment extends FragmentHelper {
   //TODO - move navigation logic out of this fragment
   def close(): Boolean =
   if (isRemovingFromConv) {
-    inject[ParticipantsController].onHideParticipants ! true
+    inject[ParticipantsController].onShowAnimations ! true
     true
   } else {
     Option(getFragmentManager).foreach { fm =>

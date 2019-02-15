@@ -790,7 +790,7 @@ class ConversationFragment extends FragmentHelper {
           override def onHideAnimationEnd(confirmed: Boolean, cancelled: Boolean, checkboxIsSelected: Boolean): Unit =
             if (!confirmed && !cancelled) {
               if (onlySelfChanged) getContext.startActivity(ShowDevicesIntent(getActivity))
-              else participantsController.onShowParticipants ! Some(SingleParticipantFragment.TagDevices)
+              else participantsController.onShowParticipants ! Some(SingleParticipantFragment.DevicesTab.str)
             }
 
           override def negativeButtonClicked(): Unit = {}
