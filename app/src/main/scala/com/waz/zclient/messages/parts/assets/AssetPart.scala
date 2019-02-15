@@ -97,7 +97,7 @@ trait ActionableAssetPart extends AssetPart {
   assetActionButton.onClick {
     assetStatus.map(_._1).currentValue.foreach {
       case UploadAssetStatus.Failed => message.currentValue.foreach(controller.retry)
-      case UploadAssetStatus.InProgress => message.currentValue.foreach(m => controller.cancelUpload(m.assetId.get))
+      case UploadAssetStatus.InProgress => message.currentValue.foreach(m => controller.cancelUpload(m.assetId.get, m))
       case DownloadAssetStatus.InProgress => message.currentValue.foreach(m => controller.cancelDownload(m.assetId.get))
       case _ => // do nothing, individual view parts will handle what happens when in the Completed state.
     }
