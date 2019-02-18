@@ -25,7 +25,7 @@ import android.graphics.LightingColorFilter
 import android.graphics.drawable.LayerDrawable
 import android.util.AttributeSet
 import android.view.View.{GONE, INVISIBLE, VISIBLE}
-import android.view.{LayoutInflater, MotionEvent, View}
+import android.view.{LayoutInflater, MotionEvent, View, WindowManager}
 import android.widget.{FrameLayout, SeekBar, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.{AudioAssetForUpload, PlaybackControls}
@@ -231,9 +231,19 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     } (Threading.Ui)
   }
 
+  private def setWakeLock(enabled: Boolean): Unit = {
+    val activity: Activity = this.getContext.asInstanceOf[Activity]
+    if(enabled) {
+      activity.getWindow.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    } else {
+      activity.getWindow.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+  }
+
   private def record() = {
       val key = AssetMediaKey(AssetId())
       currentAssetKey = Some(key)
+      setWakeLock(true)
       recordingService.record(key, 25.minutes).flatMap { case (start, futureAsset) =>
         startTime ! Some(start)
         futureAsset.map {
@@ -260,10 +270,15 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
             }
           case RecordingCancelled => throw new CancelException("Recording cancelled")
         } (Threading.Ui)
-      }(Threading.Ui).onFailure {
-        case NonFatal(_) =>
-          playbackControlsModelObserver.clear()
-          playbackControls = None
+      }(Threading.Ui)
+      .andThen { case e =>
+        setWakeLock(false)
+        e
+      }(Threading.Ui)
+      .onFailure {
+      case NonFatal(_) =>
+        playbackControlsModelObserver.clear()
+        playbackControls = None
       } (Threading.Ui)
   }
 
