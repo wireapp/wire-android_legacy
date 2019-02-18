@@ -26,7 +26,7 @@ import com.waz.zclient.R
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
 import com.waz.zclient.utils.RichView
 import com.waz.ZLog.ImplicitTag._
-import com.waz.service.assets2.{ DownloadAssetStatus, UploadAssetStatus}
+import com.waz.service.assets2.{AssetStatus, DownloadAssetStatus, UploadAssetStatus}
 import com.waz.zclient.glide.{GlideBuilder, WireGlide}
 
 class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
@@ -47,19 +47,13 @@ class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
     case _ => WireGlide().clear(image)
   }
 
-  //TODO Return it back
-//   assetActionButton.onClick {
-//     if (assetStatus.map(_._1).currentValue.contains(AssetStatus.Done)) {
-//       asset.head.foreach(a => controller.openFile(a.id))(Threading.Ui)
-//     }
-//  }
-
   assetActionButton.onClick {
     assetStatus.map(_._1).currentValue.foreach {
       case UploadAssetStatus.Failed => message.currentValue.foreach(controller.retry)
       case UploadAssetStatus.InProgress => message.currentValue.foreach(m => controller.cancelUpload(m.assetId.get, m))
       case DownloadAssetStatus.InProgress => message.currentValue.foreach(m => controller.cancelDownload(m.assetId.get))
-      case _ => // do nothing, individual view parts will handle what happens when in the Completed state.
+      case AssetStatus.Done => asset.head.foreach(a => controller.openFile(a.id))(Threading.Ui)
+      case _ =>
     }
   }
 
