@@ -47,7 +47,7 @@ import com.waz.service.messages.MessagesService
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.utils.wrappers.{URI => URIWrapper}
-import com.waz.utils.{IoUtils, returning}
+import com.waz.utils.{IoUtils, returning, sha2}
 import com.waz.zclient.controllers.drawing.IDrawingController.DrawingMethod
 import com.waz.zclient.controllers.singleimage.ISingleImageController
 import com.waz.zclient.drawing.DrawingFragment.Sketch
@@ -56,6 +56,7 @@ import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.notifications.controllers.ImageNotificationsController
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.ExternalFileSharing
 import com.waz.zclient.{Injectable, Injector, R}
 import com.waz.znet2.http.HttpClient.Progress
 import org.threeten.bp.Duration
@@ -78,6 +79,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   lazy val singleImage: ISingleImageController = inject[ISingleImageController]
   lazy val screenController: ScreenController = inject[ScreenController]
   lazy val imageNotifications: ImageNotificationsController = inject[ImageNotificationsController]
+  private lazy val externalFileSharing = inject[ExternalFileSharing]
 
   //TODO make a preference controller for handling UI preferences in conjunction with SE preferences
   val downloadsAlwaysEnabled =
@@ -195,13 +197,13 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
   def openFile(idGeneral: AssetIdGeneral): Unit = idGeneral match {
     case id: AssetId =>
-      assets.head.flatMap(_.getAsset(id)).foreach { asset =>
+
+      assetForSharing(id).foreach { case AssetForShare(asset, file) =>
         asset.details match {
           case _: Video =>
-            //onVideoPlayed ! asset
-            context.startActivity(getOpenFileIntent(createAndroidAssetUri(id), asset.mime.orDefault.str))
+            context.startActivity(getOpenFileIntent(externalFileSharing.getUriForFile(file), asset.mime.orDefault.str))
           case _ =>
-            showOpenFileDialog(createAndroidAssetUri(id), asset)
+            showOpenFileDialog(externalFileSharing.getUriForFile(file), asset)
         }
       }
     case _ =>
@@ -299,20 +301,29 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     }(Threading.Ui)
   }
 
+  def assetForSharing(id: AssetId): Future[AssetForShare] = {
+
+    def getSharedFilename(asset: Asset[General]): String =
+      if (asset.name.nonEmpty)
+        asset.name
+      else
+        s"${sha2(asset.id.str).take(6)}.${asset.mime.extension}"
+
+    for {
+      assets <- zms.head.map(_.assetService)
+      asset <- assets.getAsset(id)
+      is <- assets.loadContent(asset)
+      file = new File(context.getExternalCacheDir, getSharedFilename(asset))
+      _ = IoUtils.copy(is, file)
+      _ = is.close()
+    } yield AssetForShare(asset, file)
+  }
+
 }
 
 object AssetsController {
 
-  val UriAssetAuthority = "WireAsset"
-
-  def createAssetUri(assetId: AssetId): URI = URI.create(createAndroidAssetUri(assetId).toString)
-
-  def createAndroidAssetUri(assetId: AssetId): Uri = {
-    new Uri.Builder()
-      .authority(UriAssetAuthority)
-      .appendPath(assetId.str)
-      .build()
-  }
+  case class AssetForShare(asset: Asset[General], file: File)
 
   def getTargetFile(asset: Asset[General], directory: File): File = {
     def file(prefix: String = "") = new File(
