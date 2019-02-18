@@ -17,8 +17,6 @@
  */
 package com.waz.zclient.messages.controllers
 
-import java.io.File
-
 import android.app.{Activity, ProgressDialog}
 import android.content.DialogInterface.OnDismissListener
 import android.content._
@@ -34,6 +32,7 @@ import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.CancellableFuture
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.waz.zclient.common.controllers.AssetsController.AssetForShare
 import com.waz.zclient.common.controllers.{AssetsController, ScreenController}
 import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
 import com.waz.zclient.common.controllers.global.KeyboardController
@@ -185,19 +184,9 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
       getString(R.string.conversation__action_mode__fwd__dialog__title),
       getString(R.string.conversation__action_mode__fwd__dialog__message), true, true, null)
 
-    def getSharedFilename(assetId: AssetId, mime: Mime): String =
-      s"${sha2(assetId.str).take(6)}.${mime.extension}"
+    assetsController.assetForSharing(id).onComplete {
 
-    (for {
-      assets <- zms.head.map(_.assetService)
-      asset <- assets.getAsset(id)
-      is <- assets.loadContent(asset)
-      file = new File(context.getExternalCacheDir, getSharedFilename(asset.id, asset.mime))
-      _ = IoUtils.copy(is, file)
-      _ = is.close()
-    } yield (asset, file)) onComplete {
-
-      case Success((asset, file)) =>
+      case Success(AssetForShare(asset, file)) =>
         dialog.dismiss()
         val mime =
           if (asset.mime.str.equals("text/plain"))
