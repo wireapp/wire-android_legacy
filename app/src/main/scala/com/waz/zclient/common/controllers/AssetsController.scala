@@ -18,7 +18,6 @@
 package com.waz.zclient.common.controllers
 
 import java.io.{File, FileOutputStream}
-import java.net.URI
 
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.app.DownloadManager
