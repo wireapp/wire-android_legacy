@@ -23,20 +23,20 @@ import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
-import com.waz.model.AssetIdGeneral
+import com.waz.model.UserData.Picture
 import com.waz.zclient.glide.transformations.{BlurTransformation, DarkenTransformation, ScaleTransformation}
 
 object BackgroundRequest {
 
   val ScaleValue = 1.4f
 
-  def apply(assetId: AssetIdGeneral)(implicit context: Context): RequestBuilder[Drawable] = {
+  def apply(picture: Picture)(implicit context: Context): RequestBuilder[Drawable] = {
     val opt = new RequestOptions()
     opt.transforms(new CenterCrop(),
       new ScaleTransformation(ScaleValue),
       new BlurTransformation(),
       new DarkenTransformation(148, 2f))
 
-    GlideBuilder.apply(assetId).apply(opt).transition(DrawableTransitionOptions.withCrossFade())
+    GlideBuilder.apply(picture).apply(opt).transition(DrawableTransitionOptions.withCrossFade())
   }
 }
