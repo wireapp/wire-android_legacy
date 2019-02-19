@@ -25,7 +25,8 @@ import android.widget.{FrameLayout, ImageView, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
 import com.waz.avs.{VideoPreview, VideoRenderer}
-import com.waz.model.{AssetIdGeneral, UserId}
+import com.waz.model.UserData.Picture
+import com.waz.model.UserId
 import com.waz.service.call.Avs.VideoState
 import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils.events.Signal
@@ -45,7 +46,7 @@ abstract class UserVideoView(context: Context, val userId: UserId) extends Frame
 
   inflate(R.layout.video_call_info_view)
 
-  private val pictureId: Signal[AssetIdGeneral] = for {
+  private val pictureId: Signal[Picture] = for {
     z             <- controller.callingZms
     Some(picture) <- z.usersStorage.signal(userId).map(_.picture)
   } yield picture

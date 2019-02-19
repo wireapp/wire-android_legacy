@@ -31,6 +31,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.waz.ZLog.ImplicitTag._
+import com.waz.model.UserData.Picture
 import com.waz.model._
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
@@ -68,7 +69,7 @@ trait AccountView {
   def setHandle(handle: String): Unit
   def setEmail(email: Option[EmailAddress]): Unit
   def setPhone(phone: Option[PhoneNumber]): Unit
-  def setPictureId(assetId: AssetIdGeneral): Unit
+  def setPicture(picture: Picture): Unit
   def setAccentDrawable(drawable: Drawable): Unit
   def setDeleteAccountEnabled(enabled: Boolean): Unit
   def setEmailEnabled(enabled: Boolean): Unit
@@ -126,9 +127,8 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setPhone(phone: Option[PhoneNumber]) = phoneButton.setTitle(phone.map(_.str).getOrElse(getString(R.string.pref_account_add_phone_title)))
 
-  override def setPictureId(assetId: AssetIdGeneral) = {
-
-    GlideBuilder.apply(assetId)
+  override def setPicture(picture: Picture) = {
+    GlideBuilder.apply(picture)
       .apply(new RequestOptions().centerCrop())
       .into(new CustomViewTarget[View, Drawable](pictureButton) {
       override def onResourceCleared(placeholder: Drawable): Unit =
@@ -212,8 +212,8 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
     view.setAccountLocked(locked)
   }
 
-  self.map(_.picture).collect{case Some(pic) => pic}.onUi { id =>
-    view.setPictureId(id)
+  self.map(_.picture).collect { case Some(pic) => pic}.onUi { id =>
+    view.setPicture(id)
   }
 
   self.onUi { self =>

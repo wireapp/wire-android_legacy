@@ -20,7 +20,7 @@ package com.waz.zclient.common.views
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.ImageView
-import com.waz.model.AssetIdGeneral
+import com.waz.model.UserData.Picture
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
 import com.waz.zclient.ViewHelper
@@ -32,7 +32,7 @@ class BackgroundImageView(val context: Context, val attrs: AttributeSet, val def
 
   private val zms = inject[Signal[ZMessaging]]
 
-  val pictureId: Signal[AssetIdGeneral] = for {
+  val pictureId: Signal[Picture] = for {
     z <- zms
     Some(picture) <- z.users.selfUser.map(_.picture)
   } yield picture
