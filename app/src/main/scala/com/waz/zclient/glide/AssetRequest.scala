@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.glide
 
+import com.waz.model.UserData.Picture
 import com.waz.model._
 import com.waz.service.assets2.{Asset, ImageDetails}
 
@@ -27,18 +28,21 @@ sealed trait AssetRequest {
 object AssetRequest {
   def apply(assetIdGeneral: AssetIdGeneral): AssetRequest = {
     assetIdGeneral match {
-      case a: PublicAssetId => PublicAssetIdRequest(a)
       case a: UploadAssetId => UploadAssetIdRequest(a)
       case a: AssetId => AssetIdRequest(a)
       case _ => EmptyRequest()
     }
+  }
+  def apply(picture: Picture): AssetRequest = picture match {
+    case Picture.Uploaded(assetId) => PublicAssetIdRequest(assetId)
+    case Picture.NotUploaded(assetId) => UploadAssetIdRequest(assetId)
   }
 }
 
 case class AssetIdRequest(assetId: AssetId) extends AssetRequest {
   override val key: String = assetId.str
 }
-case class PublicAssetIdRequest(assetId: PublicAssetId) extends AssetRequest {
+case class PublicAssetIdRequest(assetId: AssetId) extends AssetRequest {
   override val key: String = assetId.str
 }
 case class ImageAssetRequest(asset: Asset[ImageDetails]) extends AssetRequest {

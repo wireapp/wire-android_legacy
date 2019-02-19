@@ -29,6 +29,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.content.UserPreferences
+import com.waz.model.UserData.Picture
 import com.waz.model.otr.Client
 import com.waz.model._
 import com.waz.service.tracking.TrackingService
@@ -55,7 +56,7 @@ trait ProfileView {
   def setUserName(name: String): Unit
   def setAvailability(visible: Boolean, availability: Availability): Unit
   def setHandle(handle: String): Unit
-  def setProfilePictureAssetId(assetId: AssetIdGeneral): Unit
+  def setProfilePicture(picture: Picture): Unit
   def setAccentColor(color: Int): Unit
   def setTeamName(name: Option[String]): Unit
   def showNewDevicesDialog(devices: Seq[Client]): Unit
@@ -116,8 +117,8 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setHandle(handle: String): Unit = userHandleText.setText(handle)
 
-  override def setProfilePictureAssetId(assetId: AssetIdGeneral): Unit =
-    GlideBuilder.apply(assetId)
+  override def setProfilePicture(picture: Picture): Unit =
+    GlideBuilder.apply(picture)
       .apply(new RequestOptions().circleCrop())
       .into(userPicture)
 
@@ -247,9 +248,7 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
 
   val team = zms.flatMap(_.teams.selfTeam)
 
-  self.map(_.picture).collect{ case Some(pic) => pic }.onUi { id =>
-    view.setProfilePictureAssetId(id)
-  }
+  self.map(_.picture).collect { case Some(pic) => pic }.onUi { view.setProfilePicture }
 
   val incomingClients = for {
     z       <- zms

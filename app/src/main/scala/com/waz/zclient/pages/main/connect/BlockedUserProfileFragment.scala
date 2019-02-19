@@ -25,7 +25,8 @@ import android.widget.{ImageView, LinearLayout}
 import com.bumptech.glide.request.RequestOptions
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.model.{AssetIdGeneral, ConvId, UserId}
+import com.waz.model.UserData.Picture
+import com.waz.model.{ConvId, UserId}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -78,7 +79,7 @@ class BlockedUserProfileFragment extends BaseFragment[BlockedUserProfileFragment
     user <- zms.usersStorage.signal(userId)
   } yield user
 
-  private lazy val pictureSignal: Signal[AssetIdGeneral] = user.map(_.picture).collect { case Some(pic) => pic }
+  private lazy val pictureSignal: Signal[Picture] = user.map(_.picture).collect { case Some(pic) => pic }
 
   private var userRequester = Option.empty[UserRequester]
   private var isShowingFooterMenu = true
