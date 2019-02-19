@@ -352,11 +352,11 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
             bitmap <- for {
               bmp <- assetId.fold {
                 Future.successful(Option.empty[android.graphics.Bitmap])
-              } { aId =>
+              } { picture =>
                 Threading.Background {
                   Option(WireGlide()
                     .asBitmap()
-                    .load(AssetRequest(aId))
+                    .load(AssetRequest(picture))
                     .apply(new RequestOptions().circleCrop())
                     .submit(128, 128)
                     .get())

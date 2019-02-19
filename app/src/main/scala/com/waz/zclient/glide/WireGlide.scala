@@ -24,6 +24,7 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import com.bumptech.glide.{Glide, RequestBuilder, RequestManager}
 import com.waz.model.AssetIdGeneral
+import com.waz.model.UserData.Picture
 import com.waz.service.assets2.{Asset, ImageDetails}
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
 
@@ -39,5 +40,7 @@ object GlideBuilder {
   def apply(uri: URI)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(AndroidURIUtil.unwrap(uri))
   def apply(url: URL)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(Uri.parse(url.toString))
   def apply(assetId: PublicAssetIdRequest)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(assetId)
+
   def apply(assetId: AssetIdGeneral)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(AssetRequest(assetId))
+  def apply(picture: Picture)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(AssetRequest(picture))
 }
