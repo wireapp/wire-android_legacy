@@ -30,14 +30,14 @@ import scala.concurrent.{ExecutionContext, Future}
 class AssetPreviewServiceImpl(implicit context: Context, ec: ExecutionContext) extends AssetPreviewService {
   import MetadataExtractionUtils._
 
-  override def extractPreview(rawAsset: UploadAsset[General], content: CanExtractMetadata): Future[Content] = {
+  override def extractPreview(rawAsset: UploadAsset[General], content: PreparedContent): Future[Content] = {
     rawAsset.details match {
       case _: Video => extractVideoPreview(rawAsset, content)
       case _ => Future.failed(NotSupportedError(s"Preview extraction for $rawAsset not supported"))
     }
   }
 
-  def extractVideoPreview(uploadAsset: UploadAsset[General], content: CanExtractMetadata): Future[Content] = {
+  def extractVideoPreview(uploadAsset: UploadAsset[General], content: PreparedContent): Future[Content] = {
     Future(asSource(content)).flatMap { source =>
       createMetadataRetriever(source).acquire { retriever =>
         Option(retriever.getFrameAtTime(-1L, OPTION_CLOSEST_SYNC)) match {

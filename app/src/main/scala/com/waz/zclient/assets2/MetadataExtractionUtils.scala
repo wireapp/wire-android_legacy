@@ -23,7 +23,7 @@ import java.net.URI
 import android.content.Context
 import android.media.{MediaExtractor, MediaMetadataRetriever}
 import android.net.Uri
-import com.waz.service.assets2.{CanExtractMetadata, Content}
+import com.waz.service.assets2.{Content, PreparedContent}
 import com.waz.utils._
 
 import scala.util.Try
@@ -32,7 +32,7 @@ object MetadataExtractionUtils {
 
   type Source = Either[URI, File]
 
-  def asSource(content: CanExtractMetadata): Source = content match {
+  def asSource(content: PreparedContent): Source = content match {
     case Content.File(_, file) => Right(file)
     case Content.Uri(uri) => Left(uri)
   }
