@@ -83,7 +83,7 @@ case class UserData(override val id:       UserId,
     },
     providerId = user.service.map(_.provider),
     integrationId = user.service.map(_.id),
-    expiresAt = user.expiresAt,
+    expiresAt = user.expiresAt.orElse(expiresAt),
     teamId = user.teamId.orElse(teamId),
     managedBy = user.managedBy.orElse(managedBy)
   )
@@ -168,10 +168,7 @@ object UserData {
 
   def apply(user: UserInfo): UserData = apply(user, withSearchKey = true)
 
-  def apply(user: UserInfo, withSearchKey: Boolean): UserData =
-    UserData(user.id, None, user.name.getOrElse(Name.Empty), user.email, user.phone, user.trackingId, user.mediumPicture.map(_.id),
-      user.accentId.getOrElse(AccentColor.defaultColor.id), SearchKey(if (withSearchKey) user.name.getOrElse(Name.Empty).str else ""), deleted = user.deleted,
-      handle = user.handle, providerId = user.service.map(_.provider), integrationId = user.service.map(_.id))
+  def apply(user: UserInfo, withSearchKey: Boolean): UserData = UserData(user.id, user.name.getOrElse(Name.Empty)).updated(user, withSearchKey)
 
   implicit lazy val Decoder: JsonDecoder[UserData] = new JsonDecoder[UserData] {
     import JsonDecoder._
