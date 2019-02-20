@@ -26,7 +26,7 @@ sealed trait AssetRequest {
 }
 
 object AssetRequest {
-  def apply(assetIdGeneral: AssetIdGeneral): AssetRequest = {
+  def apply(assetIdGeneral: GeneralAssetId): AssetRequest = {
     assetIdGeneral match {
       case a: UploadAssetId => UploadAssetIdRequest(a)
       case a: AssetId => AssetIdRequest(a)

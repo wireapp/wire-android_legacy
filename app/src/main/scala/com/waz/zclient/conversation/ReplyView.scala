@@ -26,7 +26,7 @@ import android.widget._
 import com.bumptech.glide.load.resource.bitmap.{CenterCrop, RoundedCorners}
 import com.bumptech.glide.request.RequestOptions
 import com.waz.api.Message.Type
-import com.waz.model.{AssetId, AssetIdGeneral, MessageData}
+import com.waz.model.{AssetId, GeneralAssetId, MessageData}
 import com.waz.service.assets2.{Asset, GeneralAsset}
 import com.waz.utils.returning
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
@@ -91,7 +91,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
     senderText.setEndCompoundDrawable(if (edited) Some(WireStyleKit.drawEdit) else None, getStyledColor(R.attr.wirePrimaryTextColor))
   }
 
-  private def set(text: String, bold: Boolean, drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit], imageAsset: Option[AssetIdGeneral]): Unit = {
+  private def set(text: String, bold: Boolean, drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit], imageAsset: Option[GeneralAssetId]): Unit = {
     contentText.setText(text)
     if (bold){
       contentText.setTypeface(TypefaceUtils.getTypeface(getString(R.string.wire__typeface__medium)))

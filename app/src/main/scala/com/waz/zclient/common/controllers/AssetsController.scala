@@ -95,64 +95,64 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
       case _ =>
     }
 
-  def assetSignal(assetId: AssetIdGeneral): Signal[GeneralAsset] =
+  def assetSignal(assetId: GeneralAssetId): Signal[GeneralAsset] =
     for {
       a <- assets
       status <- a.assetSignal(assetId)
     } yield status
 
-  def assetSignal(assetId: Option[AssetIdGeneral]): Signal[Option[GeneralAsset]] =
+  def assetSignal(assetId: Option[GeneralAssetId]): Signal[Option[GeneralAsset]] =
     assetId.fold(Signal.const(Option.empty[GeneralAsset]))(aid => assetSignal(aid).map(Option(_)))
 
-  def assetSignal(assetId: Signal[AssetIdGeneral]): Signal[GeneralAsset] =
+  def assetSignal(assetId: Signal[GeneralAssetId]): Signal[GeneralAsset] =
     for {
       a <- assets
       id <- assetId
       status <- a.assetSignal(id)
     } yield status
 
-  def assetStatusSignal(assetId: Signal[AssetIdGeneral]): Signal[(AssetStatus, Option[Progress])] =
+  def assetStatusSignal(assetId: Signal[GeneralAssetId]): Signal[(AssetStatus, Option[Progress])] =
     for {
       a <- assets
       id <- assetId
       status <- a.assetStatusSignal(id)
     } yield status
 
-  def assetStatusSignal(assetId: AssetIdGeneral): Signal[(AssetStatus, Option[Progress])] =
+  def assetStatusSignal(assetId: GeneralAssetId): Signal[(AssetStatus, Option[Progress])] =
     assetStatusSignal(Signal.const(assetId))
 
-  def assetPreviewId(assetId: Signal[AssetIdGeneral]): Signal[Option[AssetIdGeneral]] =
+  def assetPreviewId(assetId: Signal[GeneralAssetId]): Signal[Option[GeneralAssetId]] =
     assetSignal(assetId).map {
       case u: UploadAsset[_] => u.preview match {
-        case RawPreviewUploaded(aId) => Option(aId)
-        case RawPreviewNotUploaded(aId) => Option(aId)
-        case _ => Option.empty[AssetIdGeneral]
+        case Preview.Uploaded(aId) => Option(aId)
+        case Preview.NotUploaded(aId) => Option(aId)
+        case _ => Option.empty[GeneralAssetId]
       }
       case d: DownloadAsset => d.preview
       case a: Asset[_] => a.preview
-      case _ => Option.empty[AssetIdGeneral]
+      case _ => Option.empty[GeneralAssetId]
     }
 
-  def assetPreviewId(assetId: AssetIdGeneral): Signal[Option[AssetIdGeneral]] =
+  def assetPreviewId(assetId: GeneralAssetId): Signal[Option[GeneralAssetId]] =
     assetPreviewId(Signal.const(assetId))
 
-  def downloadProgress(idGeneral: AssetIdGeneral): Signal[Progress] = idGeneral match {
+  def downloadProgress(idGeneral: GeneralAssetId): Signal[Progress] = idGeneral match {
     case id: DownloadAssetId => assets.flatMap(_.downloadProgress(id))
     case _ => Signal.empty
   }
 
-  def uploadProgress(idGeneral: AssetIdGeneral): Signal[Progress] = idGeneral match {
+  def uploadProgress(idGeneral: GeneralAssetId): Signal[Progress] = idGeneral match {
     case id: UploadAssetId => assets.flatMap(_.uploadProgress(id))
     case _ => Signal.empty
   }
 
-  def cancelUpload(idGeneral: AssetIdGeneral, message: MessageData): Unit = idGeneral match {
+  def cancelUpload(idGeneral: GeneralAssetId, message: MessageData): Unit = idGeneral match {
     case id: UploadAssetId =>
       assets.currentValue.foreach(_.cancelUpload(id, message))
     case _ => ()
   }
 
-  def cancelDownload(idGeneral: AssetIdGeneral): Unit = idGeneral match {
+  def cancelDownload(idGeneral: GeneralAssetId): Unit = idGeneral match {
     case id: DownloadAssetId => assets.currentValue.foreach(_.cancelDownload(id))
     case _ => ()
   }
@@ -194,7 +194,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   def openDrawingFragment(id: AssetId, drawingMethod: DrawingMethod): Unit =
     screenController.showSketch ! Sketch.asset(id, drawingMethod)
 
-  def openFile(idGeneral: AssetIdGeneral): Unit = idGeneral match {
+  def openFile(idGeneral: GeneralAssetId): Unit = idGeneral match {
     case id: AssetId =>
 
       assetForSharing(id).foreach { case AssetForShare(asset, file) =>
