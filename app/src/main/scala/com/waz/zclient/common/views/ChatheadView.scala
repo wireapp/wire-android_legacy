@@ -28,7 +28,7 @@ import com.bumptech.glide.load.resource.bitmap.{CenterCrop, CircleCrop}
 import com.bumptech.glide.request.RequestOptions
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.model.UserData.ConnectionStatus
+import com.waz.model.UserData.{ConnectionStatus, Picture}
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
@@ -92,7 +92,7 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
   def setInfo(options: ChatHeadViewOptions): Unit = {
     ZLog.verbose(s"will set options: $options")
 
-    if (options.assetId.isEmpty) {
+    if (options.picture.isEmpty) {
       WireGlide().clear(this)
       setImageDrawable(options.placeholder)
     } else {
@@ -101,8 +101,14 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
   }
 
   private def optionsForIntegration(integration: IntegrationData, attributes: Attributes): ChatHeadViewOptions = {
-    val initials = NameParts.parseFrom(integration.name).initials
-    ChatHeadViewOptions(integration.asset, attributes.defaultBackground, grayScale = false, initials, cropShape = Some(CropShape.RoundRect), None)
+    ChatHeadViewOptions(
+      integration.asset.map(Picture.Uploaded),
+      attributes.defaultBackground,
+      grayScale = false,
+      NameParts.parseFrom(integration.name).initials,
+      cropShape = Some(CropShape.RoundRect),
+      None
+    )
   }
 
   private def optionsForUser(user: UserData, teamMember: Boolean, attributes: Attributes): ChatHeadViewOptions = {
@@ -154,7 +160,7 @@ object ChatHeadView {
   }
   type CropShape = CropShape.Value
 
-  case class ChatHeadViewOptions(assetId: Option[AssetIdGeneral],
+  case class ChatHeadViewOptions(picture: Option[Picture],
                                  backgroundColor: Int,
                                  grayScale: Boolean,
                                  initials: String,
@@ -164,9 +170,8 @@ object ChatHeadView {
     def placeholder(implicit context: Context) = new ChatHeadViewPlaceholder(backgroundColor, initials, cropShape = cropShape, reversedColors = cropShape.isEmpty)
 
     def glideRequest(implicit context: Context): RequestBuilder[Drawable] = {
-      val request = assetId match {
-        case Some(id: PublicAssetId) => GlideBuilder.apply(id)
-        case Some(id: AssetId) => GlideBuilder.apply(id)
+      val request = picture match {
+        case Some(p) => GlideBuilder.apply(p)
         case _ => GlideBuilder(placeholder)
       }
       val requestOptions = new RequestOptions()
