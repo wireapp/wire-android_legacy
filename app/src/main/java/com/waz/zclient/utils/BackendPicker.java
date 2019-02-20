@@ -36,7 +36,7 @@ import java.util.NoSuchElementException;
 
 public class BackendPicker {
 
-    private static final String CUSTOM_BACKEND_PREFERENCE = "custom_backend_pref";
+    public static final String CUSTOM_BACKEND_PREFERENCE = "custom_backend_pref";
     private final Context context;
 
     public BackendPicker(Context context) {
@@ -47,7 +47,7 @@ public class BackendPicker {
         if (shouldShowBackendPicker()) {
             showDialog(prodBackend, activity, callback);
         } else {
-            callback.callback(prodBackend);
+            callback.callback(getBackendConfig(prodBackend));
         }
     }
 
