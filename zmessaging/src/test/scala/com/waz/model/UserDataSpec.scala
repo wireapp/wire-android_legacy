@@ -17,6 +17,7 @@
  */
 package com.waz.model
 
+import com.waz.model.UserInfo.Service
 import com.waz.specs.AndroidFreeSpec
 
 class UserDataSpec extends AndroidFreeSpec {
@@ -32,7 +33,10 @@ class UserDataSpec extends AndroidFreeSpec {
     false,
     Some(Handle("atticus")),
     Some(false),
-    None, // ignoring services for now
+    Some(Service(
+      IntegrationId("f0f83af0-c7d3-42b7-ab8b-7fc137ee7173"),
+      ProviderId("148668b1-e393-419d-b4ab-bf021e300262"))
+    ),
     Some(TeamId("7d49b132-03b2-4124-bb18-9388577a6bb2")),
     Some(RemoteInstant.ofEpochSec(10000)),
     Some(SSOId("foo", "bar")),
@@ -52,6 +56,9 @@ class UserDataSpec extends AndroidFreeSpec {
       data.accent.shouldEqual(referenceInfo.accentId.get)
       data.email.shouldEqual(referenceInfo.email)
       data.phone.shouldEqual(referenceInfo.phone)
+      data.trackingId.shouldEqual(referenceInfo.trackingId)
+      data.providerId.shouldEqual(referenceInfo.service.map(_.provider))
+      data.integrationId.shouldEqual(referenceInfo.service.map(_.id))
       data.handle.shouldEqual(referenceInfo.handle)
       data.deleted.shouldEqual(referenceInfo.deleted)
       data.teamId.shouldEqual(referenceInfo.teamId)
@@ -74,6 +81,9 @@ class UserDataSpec extends AndroidFreeSpec {
       data.accent.shouldEqual(referenceInfo.accentId.get)
       data.email.shouldEqual(referenceInfo.email)
       data.phone.shouldEqual(referenceInfo.phone)
+      data.trackingId.shouldEqual(referenceInfo.trackingId)
+      data.providerId.shouldEqual(referenceInfo.service.map(_.provider))
+      data.integrationId.shouldEqual(referenceInfo.service.map(_.id))
       data.handle.shouldEqual(referenceInfo.handle)
       data.deleted.shouldEqual(referenceInfo.deleted)
       data.teamId.shouldEqual(referenceInfo.teamId)

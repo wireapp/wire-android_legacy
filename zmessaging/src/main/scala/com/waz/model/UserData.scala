@@ -81,8 +81,8 @@ case class UserData(override val id:       UserId,
       case Some(h) if !h.toString.isEmpty => Some(h)
       case _ => handle
     },
-    providerId = user.service.map(_.provider),
-    integrationId = user.service.map(_.id),
+    providerId = user.service.map(_.provider).orElse(providerId),
+    integrationId = user.service.map(_.id).orElse(integrationId),
     expiresAt = user.expiresAt.orElse(expiresAt),
     teamId = user.teamId.orElse(teamId),
     managedBy = user.managedBy.orElse(managedBy)
