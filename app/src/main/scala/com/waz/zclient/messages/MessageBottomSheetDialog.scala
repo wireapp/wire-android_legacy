@@ -78,7 +78,7 @@ object MessageBottomSheetDialog {
   def isMemberOfConversation(conv: ConvId, zms: ZMessaging) =
     zms.membersStorage.optSignal((zms.selfUserId, conv)) map (_.isDefined)
 
-  def isAssetDataReady(assetId: AssetIdGeneral, assets: AssetsController): Signal[Boolean] =
+  def isAssetDataReady(assetId: GeneralAssetId, assets: AssetsController): Signal[Boolean] =
     assets.assetStatusSignal(assetId) map {
       case (AssetStatus.Done, _) => true
       case _ => false

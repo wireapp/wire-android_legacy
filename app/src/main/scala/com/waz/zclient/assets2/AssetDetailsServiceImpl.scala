@@ -44,14 +44,14 @@ class AssetDetailsServiceImpl(uriHelper: UriHelper)
                              (implicit context: Context, ec: ExecutionContext) extends AssetDetailsService {
   import AssetDetailsServiceImpl._
 
-  override def extract(mime: Mime, content: CanExtractMetadata): Future[AssetDetails] = {
+  override def extract(mime: Mime, content: PreparedContent): Future[AssetDetails] = {
     if (Mime.Image.supported.contains(mime)) extractForImage(content)
     else if (Mime.Video.supported.contains(mime)) extractForVideo(asSource(content))
     else if (Mime.Audio.supported.contains(mime)) extractForAudio(asSource(content))
     else Future.successful(BlobDetails)
   }
 
-  private def extractForImage(content: CanExtractMetadata): Future[ImageDetails] =
+  private def extractForImage(content: PreparedContent): Future[ImageDetails] =
     for {
       is <- Future.fromTry(content.openInputStream(uriHelper))
       details <- IoUtils.withResource(is) { _ =>
