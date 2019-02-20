@@ -20,6 +20,7 @@ package com.waz.zclient.qa
 
 import android.app.Activity
 import android.content.{BroadcastReceiver, Context, Intent}
+import android.preference.PreferenceManager
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.verbose
 import com.waz.content.GlobalPreferences._
@@ -31,7 +32,8 @@ import com.waz.zclient.controllers.userpreferences.IUserPreferencesController._
 import com.waz.zclient.controllers.userpreferences.UserPreferencesController
 import com.waz.zclient.controllers.userpreferences.UserPreferencesController._
 import com.waz.zclient.tracking.GlobalTrackingController
-import com.waz.zclient.{BuildConfig, WireApplication}
+import com.waz.zclient.utils.BackendPicker
+import com.waz.zclient.{Backend, BuildConfig, WireApplication}
 
 /**
   * to test, fire an intent using:
@@ -93,6 +95,11 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver {
             setResultData("")
             setResultCode(Activity.RESULT_CANCELED)
         }
+      case SELECT_STAGING_BE =>
+        PreferenceManager.getDefaultSharedPreferences(context)
+          .edit
+          .putString(BackendPicker.CUSTOM_BACKEND_PREFERENCE, Backend.StagingBackend.environment)
+          .commit
       case _ =>
         setResultData("Unknown Intent!")
         setResultCode(Activity.RESULT_CANCELED)
@@ -116,6 +123,7 @@ object AbstractPreferenceReceiver {
   private val TRACKING_ID_INTENT       = packageName + ".intent.action.TRACKING_ID"
   private val FULL_CONVERSATION_INTENT = packageName + ".intent.action.FULL_CONVERSATION_INTENT"
   private val HIDE_GDPR_POPUPS         = packageName + ".intent.action.HIDE_GDPR_POPUPS"
+  private val SELECT_STAGING_BE        = packageName + ".intent.action.SELECT_STAGING_BE"
 
   private lazy val DeveloperAnalyticsEnabled = PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED")
 }
