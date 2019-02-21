@@ -762,7 +762,7 @@ class ConversationFragment extends FragmentHelper {
       (for {
         self <- inject[UserAccountsController].currentUser.head
         members <- convController.loadMembers(convId)
-        unverifiedUsers = (members ++ self.map(Seq(_)).getOrElse(Nil)).filter { !_.isVerified }
+        unverifiedUsers = members.filter { !_.isVerified }
         unverifiedDevices <-
           if (unverifiedUsers.size == 1) Future.sequence(unverifiedUsers.map(u => convController.loadClients(u.id).map(_.filter(!_.isVerified)))).map(_.flatten.size)
           else Future.successful(0) // in other cases we don't need this number
@@ -770,14 +770,14 @@ class ConversationFragment extends FragmentHelper {
 
         val unverifiedNames = unverifiedUsers.map { u =>
           if (self.map(_.id).contains(u.id)) getString(R.string.conversation_degraded_confirmation__header__you)
-          else u.displayName
+          else u.displayName.str
         }
 
         val header =
           if (unverifiedUsers.isEmpty) getString(R.string.conversation__degraded_confirmation__header__someone)
           else if (unverifiedUsers.size == 1)
             getQuantityString(R.plurals.conversation__degraded_confirmation__header__single_user, unverifiedDevices, unverifiedNames.head)
-          else getString(R.string.conversation__degraded_confirmation__header__multiple_user, unverifiedNames.mkString(","))
+          else getString(R.string.conversation__degraded_confirmation__header__multiple_user, unverifiedNames.tail.mkString(","), unverifiedNames.head)
 
         val onlySelfChanged = unverifiedUsers.size == 1 && self.map(_.id).contains(unverifiedUsers.head.id)
 
