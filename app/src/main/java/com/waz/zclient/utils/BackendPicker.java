@@ -58,7 +58,7 @@ public class BackendPicker {
         }
     }
 
-    private void showDialog(BackendConfig prod, Activity activity, final Callback<BackendConfig> callback) {
+    private void showDialog(final BackendConfig prod, Activity activity, final Callback<BackendConfig> callback) {
         final String[] backends = new String[] {
             Backend.StagingBackend().environment(),
             prod.environment()
@@ -75,14 +75,35 @@ public class BackendPicker {
             }
         });
         builder.setCancelable(false);
-        builder.create().show();
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        SharedPreferences.OnSharedPreferenceChangeListener listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                if (key.equals(CUSTOM_BACKEND_PREFERENCE)) {
+                    BackendConfig be = getBackendConfig(prod);
+                    if (be != null) {
+                        callback.callback(be);
+                        prefs().unregisterOnSharedPreferenceChangeListener(this);
+                    }
+                }
+            }
+        };
+
+        prefs().registerOnSharedPreferenceChangeListener(listener);
+    }
+
+    private SharedPreferences prefs() {
+        return PreferenceManager.getDefaultSharedPreferences(context);
     }
 
     private boolean shouldShowBackendPicker() {
         if (!BuildConfig.DEVELOPER_FEATURES_ENABLED) {
             return false;
         }
-        return !PreferenceManager.getDefaultSharedPreferences(context).contains(CUSTOM_BACKEND_PREFERENCE);
+        return !prefs().contains(CUSTOM_BACKEND_PREFERENCE);
     }
 
     @Nullable
@@ -92,7 +113,7 @@ public class BackendPicker {
 
     @SuppressLint("CommitPrefEdits") // lint not seeing commit
     private void saveBackendConfig(BackendConfig backend) {
-        PreferenceManager.getDefaultSharedPreferences(context)
+        prefs()
             .edit()
             .putString(CUSTOM_BACKEND_PREFERENCE, backend.environment())
             .commit();
@@ -100,8 +121,7 @@ public class BackendPicker {
 
     @Nullable
     private BackendConfig getCustomBackend() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String backend = prefs.getString(CUSTOM_BACKEND_PREFERENCE, null);
+        String backend = prefs().getString(CUSTOM_BACKEND_PREFERENCE, null);
         if (backend != null) {
             try {
                 return Backend.byName().apply(backend);
