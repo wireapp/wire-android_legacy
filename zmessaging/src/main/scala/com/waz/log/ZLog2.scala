@@ -31,7 +31,7 @@ import com.waz.model.ManagedBy.ManagedBy
 import com.waz.model.{SSOId, _}
 import com.waz.model.otr.{Client, ClientId, UserClients}
 import com.waz.model.sync.ReceiptType
-import com.waz.service.{PlaybackRoute, PropertyKey}
+import com.waz.service.PropertyKey
 import com.waz.service.assets.AssetService.RawAssetInput
 import com.waz.service.assets.AssetService.RawAssetInput.{BitmapInput, ByteInput, UriInput, WireAssetInput}
 import com.waz.service.call.Avs.AvsClosedReason.reasonString
@@ -55,13 +55,14 @@ object ZLog2 {
   trait LogShow[-T] {
     def showSafe(value: T): String
     def showUnsafe(value: T): String = showSafe(value)
+
+    def contramap[B](f: B => T): LogShow[B] = LogShow.create[B](f andThen showSafe, f andThen showUnsafe)
   }
 
   //Used to mark traits that are safe to print their natural toString implementation
   trait SafeToLog
   object SafeToLog {
-    implicit val SafeToLogLogShow: LogShow[SafeToLog] =
-      LogShow.logShowWithToString
+    implicit val SafeToLogLogShow: LogShow[SafeToLog] = LogShow.logShowWithToString
   }
 
 
@@ -144,6 +145,8 @@ object ZLog2 {
 
     implicit val Sha256LogShow: LogShow[Sha256] = create(_.hexString, _.str)
 
+    implicit val enumShow: LogShow[Enum[_]] = LogShow.create((enumValue: Enum[_]) => enumValue.name())
+
     implicit val JSONObjectLogShow:  LogShow[JSONObject] = logShowWithHash
 
     //TODO how much of a file/uri can we show in prod?
@@ -153,66 +156,40 @@ object ZLog2 {
     implicit val UriLogShow:  LogShow[URI]  = create(_ => "<uri>", _.toString)
     implicit val WUriLogShow: LogShow[wrappers.URI] = create(_ => "<uri>", _.toString)
 
-    //collections
-    private val TakeOnly = 3
-
-    //TODO, why doesn't it work just to define the LogShow[Traversable[T]]?
-    private def safeFromTraversable[T: LogShow](m: Traversable[T]): String = {
-      if (m.isEmpty) m.toString()
-      else {
-        val rem = m.size - TakeOnly
-        val end = if (rem > 0) s" and $rem other elements..." else ""
-        m.map(implicitly[LogShow[T]].showSafe).take(TakeOnly).mkString("", ", ", end)
+    implicit def traversableShow[T](implicit show: LogShow[T]): LogShow[Traversable[T]] = {
+      def createString(xs: Traversable[T], toString: T => String, elemsToPrint: Int = 3): String = {
+        val end = if (xs.size > elemsToPrint) s" and ${xs.size - elemsToPrint} other elements..." else ""
+        xs.take(elemsToPrint).mkString("", ", ", end)
       }
-    }
 
-    private def unsafeFromTraversable[T: LogShow](m: Traversable[T]): String = {
-      if (m.isEmpty) m.toString()
-      else {
-        val rem = m.size - TakeOnly
-        val end = if (rem > 0) s" and $rem other elements..." else ""
-        m.map(implicitly[LogShow[T]].showUnsafe).take(TakeOnly).mkString("", ", ", end)
-      }
+      create(
+        (xs: Traversable[T]) => createString(xs, show.showSafe),
+        (xs: Traversable[T]) => createString(xs, show.showUnsafe)
+      )
     }
-
-    implicit def traversableShow[T: LogShow]: LogShow[Traversable[T]] =
-      create(safeFromTraversable(_), unsafeFromTraversable(_))
 
     implicit def arrayShow[T: LogShow]: LogShow[Array[T]] =
-      create(safeFromTraversable(_), unsafeFromTraversable(_))
+      LogShow[Traversable[T]].contramap(_.toTraversable)
 
     implicit def listSetShow[T: LogShow]: LogShow[ListSet[T]] =
-      create(safeFromTraversable(_), unsafeFromTraversable(_))
+      LogShow[Traversable[T]].contramap(_.toTraversable)
 
-//    implicit def mapShow[A: LogShow, B: LogShow]: LogShow[Map[A, B]] =
-//      create(fromTraversable(_))
+    implicit def optionShow[T](implicit show: LogShow[T]): LogShow[Option[T]] =
+      create(_.map(show.showSafe).toString, _.map(show.showUnsafe).toString)
 
-    implicit def optionShow[T: LogShow]: LogShow[Option[T]] =
-      create(_.map(implicitly[LogShow[T]].showSafe).toString, _.map(implicitly[LogShow[T]].showUnsafe).toString)
+    implicit def tryShow[T](implicit show: LogShow[T]): LogShow[Try[T]] =
+      create(_.map(show.showSafe).toString, _.map(show.showUnsafe).toString)
 
-    implicit def tryShow[T: LogShow]: LogShow[Try[T]] =
-      create(_.map(implicitly[LogShow[T]].showSafe).toString, _.map(implicitly[LogShow[T]].showUnsafe).toString)
-
-    implicit def tuple2Show[A: LogShow, B: LogShow]: LogShow[(A, B)] =
+    implicit def tuple2Show[A,B](implicit showA: LogShow[A], showB: LogShow[B]): LogShow[(A,B)] =
       create(
-        t => (implicitly[LogShow[A]].showSafe(t._1), implicitly[LogShow[B]].showSafe(t._2)).toString(),
-        t => (implicitly[LogShow[A]].showUnsafe(t._1), implicitly[LogShow[B]].showUnsafe(t._2)).toString())
+        t => (showA.showSafe(t._1), showB.showSafe(t._2)).toString(),
+        t => (showA.showUnsafe(t._1), showB.showUnsafe(t._2)).toString())
 
-    implicit def tuple3Show[A: LogShow, B: LogShow, C: LogShow]: LogShow[(A, B, C)] =
+    implicit def tuple3Show[A,B,C](implicit showA: LogShow[A], showB: LogShow[B], showC: LogShow[C]): LogShow[(A,B,C)] =
       create(
-        t => (implicitly[LogShow[A]].showSafe(t._1), implicitly[LogShow[B]].showSafe(t._2), implicitly[LogShow[C]].showSafe(t._3)).toString(),
-        t => (implicitly[LogShow[A]].showUnsafe(t._1), implicitly[LogShow[B]].showUnsafe(t._2), implicitly[LogShow[C]].showUnsafe(t._3)).toString()
+        t => (showA.showSafe(t._1), showB.showSafe(t._2), showC.showSafe(t._3)).toString(),
+        t => (showA.showUnsafe(t._1), showB.showUnsafe(t._2), showC.showUnsafe(t._3)).toString()
       )
-
-    //TODO figure out a generic LogShow for Enums, most will be safe to log:
-    implicit val NetworkModeShow:           LogShow[NetworkMode]                           = LogShow.create(_.name())
-    implicit val MessageTypeLogShow:        LogShow[Message.Type]                          = LogShow.create(_.name())
-    implicit val MessageContentTypeLogShow: LogShow[Message.Part.Type]                     = LogShow.create(_.name())
-    implicit val MessageStateLogShow:       LogShow[MessageData.MessageState]              = LogShow.create(_.name())
-    implicit val ConvStateLogShow:          LogShow[IConversation.Type]                    = LogShow.create(_.name())
-    implicit val PlaybackRouteLogShow:      LogShow[PlaybackRoute]                         = LogShow.create(_.name())
-    implicit val VerificationLogShow:       LogShow[Verification]                          = LogShow.create(_.name())
-    implicit val NotificationTypeLogShow:   LogShow[NotificationsHandler.NotificationType] = LogShow.create(_.name())
 
     //wire types
     implicit val UidShow:        LogShow[Uid]        = logShowWithHash
