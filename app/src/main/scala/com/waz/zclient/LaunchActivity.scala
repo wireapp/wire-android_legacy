@@ -19,6 +19,7 @@
 package com.waz.zclient
 
 import android.content.Intent
+import android.support.v7.app.AppCompatActivity
 import com.waz.ZLog.ImplicitTag._
 import com.waz.service.{AccountsService, BackendConfig}
 import com.waz.threading.Threading
@@ -26,14 +27,13 @@ import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.utils.{BackendPicker, Callback}
 
 
-class LaunchActivity extends BaseActivity {
-  override def getBaseTheme = R.style.Theme_Dark
+class LaunchActivity extends AppCompatActivity with ActivityHelper {
 
-  override def onBaseActivityStart() = {
+  override def onStart() = {
+    super.onStart()
     new BackendPicker(getApplicationContext).withBackend(this, new Callback[BackendConfig]() {
       override def callback(be: BackendConfig) = {
         getApplication.asInstanceOf[WireApplication].ensureInitialized(be)
-        superOnBaseActivityStart()
 
         //TODO - could this be racing with setting the active account?
         inject[AccountsService].activeAccountId.head.map {
@@ -43,12 +43,6 @@ class LaunchActivity extends BaseActivity {
       }
     }, Backend.ProdBackend)
   }
-
-  //Can't call super from within anonymous class
-  private def superOnBaseActivityStart() = super.onBaseActivityStart()
-
-  //No need for onBaseActivityResume in this instance of Activity
-  override def onBaseActivityResume(): Unit = {}
 
   override protected def onNewIntent(intent: Intent) = {
     super.onNewIntent(intent)

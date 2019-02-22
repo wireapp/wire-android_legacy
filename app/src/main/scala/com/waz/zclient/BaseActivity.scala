@@ -71,7 +71,7 @@ class BaseActivity extends AppCompatActivity
     getControllerFactory.setActivity(this)
     ZMessaging.currentUi.onStart()
     inject[UiLifeCycle].acquireUi()
-    if (!this.isInstanceOf[LaunchActivity]) permissions.registerProvider(this)
+    permissions.registerProvider(this)
     Option(ViewUtils.getContentView(getWindow)).foreach(getControllerFactory.setGlobalLayout)
   }
 
