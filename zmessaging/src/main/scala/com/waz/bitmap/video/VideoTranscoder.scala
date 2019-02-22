@@ -81,7 +81,7 @@ object VideoTranscoder {
 
   type MediaCodecIterator = Iterator[CodecResponse]
 
-  sealed trait CodecResponse
+  sealed trait CodecResponse extends SafeToLog
   object CodecResponse {
     case object TryAgain extends CodecResponse
     case class FormatChanged(format: MediaFormat) extends CodecResponse

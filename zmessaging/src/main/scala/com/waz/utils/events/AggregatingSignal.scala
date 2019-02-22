@@ -20,7 +20,7 @@ package com.waz.utils.events
 import java.util.concurrent.atomic.AtomicReference
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.threading.Threading
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -46,9 +46,9 @@ class AggregatingSignal[A, B](source: EventStream[A], load: => Future[B], f: (B,
         }
       case Failure(ex) if loadId.get eq id =>
         valueMonitor.synchronized(stash = Vector.empty)
-        error("load failed", ex)
+        error(l"load failed", ex)
       case _ =>
-        verbose("delegate is no longer the current one, discarding loaded value")
+        verbose(l"delegate is no longer the current one, discarding loaded value")
     } (context)
   }
 

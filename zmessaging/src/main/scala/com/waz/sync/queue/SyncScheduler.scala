@@ -20,8 +20,8 @@ package com.waz.sync.queue
 import java.io.PrintWriter
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.NetworkMode
+import com.waz.log.ZLog2._
 import com.waz.model.sync.SyncJob
 import com.waz.model.{ConvId, SyncId, UserId}
 import com.waz.service.AccountsService.{Active, LoggedOut}
@@ -102,14 +102,14 @@ class SyncSchedulerImpl(accountId:   UserId,
   override def report(pw: PrintWriter) = reportString.map(pw.println)
 
   private def execute(job: SyncJob): Unit = {
-    verbose(s"execute($job)")
+    verbose(l"execute($job)")
     val future = executor(job)
     executions += job.id -> future
     executionsCount.mutate(_ + 1)
     future onComplete { res =>
       executions -= job.id
       executionsCount.mutate(_ - 1)
-      verbose(s"job completed: $job, res: $res")
+      verbose(l"job completed: $job, res: $res")
       res.failed.foreach(t => t.printStackTrace())
     }
   }
@@ -125,14 +125,14 @@ class SyncSchedulerImpl(accountId:   UserId,
   }
 
   override def withConv[A](job: SyncJob, conv: ConvId)(f: ConvLock => Future[A]) = {
-    verbose(s"withConv($job, $conv)")
+    verbose(l"withConv($job, $conv)")
     countWaiting(job.id, getStartTime(job)) { queue.acquire(conv) } flatMap { lock =>
       Try(f(lock)).recover { case t => Future.failed[A](t) }.get.andThen { case _ => lock.release() }
     }
   }
 
   override def awaitPreconditions[A](job: SyncJob)(f: => Future[A]) = {
-    verbose(s"awaitPreconditions($job)")
+    verbose(l"awaitPreconditions($job)")
 
     val entry = new WaitEntry(job)
     waitEntries.put(job.id, entry)
@@ -177,7 +177,7 @@ class SyncSchedulerImpl(accountId:   UserId,
     def onOnline() = if (job.offline) delayFuture.cancel()
     def onUpdated(updated: SyncJob): Unit = {
       job = updated
-      verbose(s"job updated: $job, should update delay and/or priority")
+      verbose(l"job updated: $job, should update delay and/or priority")
       delayFuture = setup(updated)
     }
 

@@ -24,6 +24,7 @@ import java.util.concurrent.{TimeUnit, TimeoutException}
 
 import com.waz.ZLog.LogTag
 import com.waz.api.UpdateListener
+import com.waz.log.ZLog2._
 import com.waz.model.{LocalInstant, WireInstant}
 import com.waz.service.tracking.TrackingService
 import com.waz.threading.{CancellableFuture, Threading}
@@ -242,7 +243,7 @@ package object utils {
           p.success(())
         case Failure(t) =>
           p.success(())
-          ZLog.error("Future failed", t)
+          error(l"Future failed", t)
       }(Threading.Background)
       p.future
     }

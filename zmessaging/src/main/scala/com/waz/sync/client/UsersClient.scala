@@ -18,8 +18,8 @@
 package com.waz.sync.client
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
+import com.waz.log.ZLog2._
 import com.waz.model._
 import com.waz.service.tracking.TrackingService.NoReporting
 import com.waz.threading.{CancellableFuture, Threading}
@@ -75,7 +75,7 @@ class UsersClientImpl(implicit
   }
 
   override def updateSelf(info: UserInfo): ErrorOrResponse[Unit] = {
-    debug(s"updateSelf: $info, picture: ${info.picture}")
+    debug(l"updateSelf: $info, picture: ${info.picture}")
     Request.Put(relativePath = SelfPath, body = info)
       .withResultType[Unit]
       .withErrorType[ErrorResponse]

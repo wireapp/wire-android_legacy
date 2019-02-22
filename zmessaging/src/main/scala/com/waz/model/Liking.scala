@@ -20,6 +20,7 @@ package com.waz.model
 import android.database.DatabaseUtils.{sqlEscapeString => escape}
 import com.waz.db.Col._
 import com.waz.db.{Dao2, Reader, iteratingWithReader}
+import com.waz.log.ZLog2.SafeToLog
 import com.waz.utils.JsonEncoder.encodeInstant
 import com.waz.utils.wrappers.{DB, DBCursor}
 import com.waz.utils.{Identifiable, JsonDecoder, JsonEncoder, RichWireInstant}
@@ -38,7 +39,7 @@ object Liking {
   def like: Action = Action.Like
   def unlike: Action = Action.Unlike
 
-  @SerialVersionUID(1L) sealed abstract class Action(val serial: Int) extends Serializable
+  @SerialVersionUID(1L) sealed abstract class Action(val serial: Int) extends Serializable with SafeToLog
 
   object Action {
     case object Unlike extends Action(0)

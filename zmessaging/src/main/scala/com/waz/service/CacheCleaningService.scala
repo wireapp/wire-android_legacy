@@ -20,10 +20,10 @@ package com.waz.service
 import java.lang.System._
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.cache.CacheService
 import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences.LastCacheCleanup
+import com.waz.log.ZLog2._
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.EventContext
 
@@ -40,7 +40,7 @@ class CacheCleaningService(cache: CacheService, prefs: GlobalPreferences) {
   def requestDeletionOfExpiredCacheEntries(): Future[Unit] = {
     prefs.preference(LastCacheCleanup).mutate { lastSync =>
       if ((currentTimeMillis() - lastSync).millis > CleanupInterval) {
-        debug("at least one week expired since last cache cleaning, cleaning now...")
+        debug(l"at least one week expired since last cache cleaning, cleaning now...")
         cache.deleteExpired()
         currentTimeMillis()
       } else {

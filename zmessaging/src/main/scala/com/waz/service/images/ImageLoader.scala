@@ -29,6 +29,7 @@ import com.waz.ZLog._
 import com.waz.bitmap.gif.{Gif, GifReader}
 import com.waz.bitmap.{BitmapDecoder, BitmapUtils}
 import com.waz.cache.{CacheEntry, CacheService, LocalData}
+import com.waz.log.ZLog2.SafeToLog
 import com.waz.model.AssetData.IsImage
 import com.waz.model.{Mime, _}
 import com.waz.permissions.PermissionsService
@@ -271,7 +272,7 @@ class ImageLoaderImpl(context:                  Context,
 object ImageLoader {
 
   //TODO if orientation could be useful ever to other clients, we might want to merge with AssetMetaData.Image
-  case class Metadata(width: Int, height: Int, mimeType: String, orientation: Int = ExifInterface.ORIENTATION_UNDEFINED) {
+  case class Metadata(width: Int, height: Int, mimeType: String, orientation: Int = ExifInterface.ORIENTATION_UNDEFINED) extends SafeToLog {
     def isRotated: Boolean = orientation != ExifInterface.ORIENTATION_NORMAL && orientation != ExifInterface.ORIENTATION_UNDEFINED
 
     def withOrientation(orientation: Int) = {

@@ -18,7 +18,7 @@
 package com.waz.content
 
 import android.content.Context
-import com.waz.ZLog.verbose
+import com.waz.log.ZLog2._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Verification
 import com.waz.model.UserId
@@ -69,7 +69,7 @@ class OtrClientsStorageImpl(userId: UserId, context: Context, storage: Database)
         UserClients(user, clients.map(c => c.id -> c)(breakOut))
     }
 
-    verbose(s"updateClients: $ucs, replace = $replace")
+    verbose(l"updateClients: $ucs, replace = $replace")
 
     updateOrCreateAll(ucs.map { case (u, cs) => u -> updateOrCreate(u, cs) } (breakOut))
   }

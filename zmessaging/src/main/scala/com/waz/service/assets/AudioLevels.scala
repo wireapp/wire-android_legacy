@@ -23,9 +23,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import android.content.Context
 import android.media.{MediaCodec, MediaExtractor, MediaFormat}
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.bitmap.video.{MediaCodecHelper, TrackDecoder}
+import com.waz.log.ZLog2._
 import com.waz.model.AssetMetaData.Loudness
 import com.waz.model.Mime
 import com.waz.threading.CancellableFuture.{CancelException, DefaultCancelException}
@@ -49,7 +49,7 @@ case class AudioLevels(context: Context) {
   private def createPCMAudioOverview(content: URI, numBars: Int): CancellableFuture[Option[Loudness]] =
     ContentURIs.queryContentUriMetaData(context, content).map(_.size).lift.flatMap {
       case None =>
-        warn(s"cannot generate preview: no length available for $content")
+        warn(l"cannot generate preview: no length available for $content")
         CancellableFuture.successful(None)
       case Some(length) =>
         val samples = length / SizeOf.SHORT
@@ -73,7 +73,7 @@ case class AudioLevels(context: Context) {
         }(Threading.BlockingIO).recover {
           case c: CancelException => throw c
           case NonFatal(cause) =>
-            error("PCM overview generation failed", cause)
+            error(l"PCM overview generation failed", cause)
             None
         })(_.onCancelled(cancelRequested.set(true)))
     }
@@ -103,15 +103,15 @@ case class AudioLevels(context: Context) {
     }(Threading.BlockingIO).recover {
       case c: CancelException => throw c
       case NonFatal(cause) =>
-        error("overview generation failed", cause)
+        error(l"overview generation failed", cause)
         None
     })(_.onCancelled(cancelRequested.set(true)))
   }
 
   private def extractAudioTrackInfo(extractor: MediaExtractor, content: URI): TrackInfo = {
-    debug(s"data source: $content")
+    debug(l"data source: $content")
     extractor.setDataSource(context, URI.unwrap(content), null)
-    debug(s"track count: ${extractor.getTrackCount}")
+    debug(l"track count: ${extractor.getTrackCount}")
 
     val audioTrack = Iterator.range(0, extractor.getTrackCount).map { n =>
       val fmt = extractor.getTrackFormat(n)
@@ -132,7 +132,7 @@ case class AudioLevels(context: Context) {
     val duration = get(MediaFormat.KEY_DURATION, _.getLong)
     val samples = duration.toDouble * 1E-6d * samplingRate.toDouble
 
-    returning(TrackInfo(trackNum, format, mime, samplingRate, channels, duration.micros, samples))(ti => debug(s"audio track: $ti"))
+    returning(TrackInfo(trackNum, format, mime, samplingRate, channels, duration.micros, samples))(ti => debug(l"audio track: $ti"))
   }
 
   private def audioDecoder(info: TrackInfo): MediaCodec = returning(MediaCodec.createDecoderByType(info.mime)) { mc =>
@@ -141,7 +141,7 @@ case class AudioLevels(context: Context) {
 }
 
 object AudioLevels {
-  case class TrackInfo(index: Int, format: MediaFormat, mime: String, samplingRate: Int, channels: Int, duration: FiniteDuration, samples: Double)
+  case class TrackInfo(index: Int, format: MediaFormat, mime: String, samplingRate: Int, channels: Int, duration: FiniteDuration, samples: Double) extends SafeToLog
 
   def loudnessOverview(buckets: Int, rmsOfBuffers: Array[Double]): Vector[Float] = {
     val windowLength = max(1, rmsOfBuffers.length / buckets)

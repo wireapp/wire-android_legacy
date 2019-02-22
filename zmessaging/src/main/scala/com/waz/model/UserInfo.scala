@@ -160,9 +160,4 @@ object UserInfo {
     }
   }
 
-  implicit val UserInfoShow: LogShow[UserInfo] =
-    LogShow.createFrom { u =>
-      import u._
-      l" UserInfo: id: $id | email: $email: | phone: $phone: | picture: $picture: | deleted: $deleted: | handle: $handle: | expiresAt: $expiresAt: | ssoId: $ssoId | managedBy: $managedBy"
-    }
 }

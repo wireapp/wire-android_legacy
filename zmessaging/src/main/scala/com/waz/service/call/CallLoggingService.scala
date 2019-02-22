@@ -18,7 +18,7 @@
 package com.waz.service.call
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.{verbose, warn}
+import com.waz.log.ZLog2._
 import com.waz.model.{ConvId, LocalInstant, UserId}
 import com.waz.service.call.Avs.AvsClosedReason._
 import com.waz.service.call.CallInfo.CallState._
@@ -44,7 +44,7 @@ class CallLoggingService(selfUserId:  UserId,
     */
   calling.calls.onPartialUpdate(_.keySet) { calls =>
     val ids = calls.keySet
-    verbose(s"Listening to calls: $ids")
+    verbose(l"Listening to calls: $ids")
 
     val prevIds = subscribedConvs
     val toCreate = ids -- prevIds
@@ -78,14 +78,14 @@ class CallLoggingService(selfUserId:  UserId,
     if (!call.endReason.contains(AnsweredElsewhere))
       (call.prevState, call.estabTime) match {
         case (_, None) =>
-          verbose("Call was never successfully established - mark as missed call")
+          verbose(l"Call was never successfully established - mark as missed call")
           messages.addMissedCallMessage(call.convId, call.caller, nowTime)
         case (_, Some(est)) =>
           val duration = est.remainingUntil(endTime)
-          verbose(s"Had a call of duration: ${duration.toSeconds} seconds, save duration as a message")
+          verbose(l"Had a call of duration: ${duration.toSeconds} seconds, save duration as a message")
           messages.addSuccessfulCallMessage(call.convId, call.caller, est.toRemote(drift), duration)
         case _ =>
-          warn(s"unexpected call state: ${call.state}")
+          warn(l"unexpected call state: ${call.state}")
       }
   }
 }

@@ -19,8 +19,8 @@ package com.waz.utils.events
 
 import java.util.UUID.randomUUID
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.log.ZLog2._
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Events.Subscriber
 import com.waz.utils.{Serialized, returning}
@@ -136,7 +136,7 @@ class FutureEventStream[E, V](source: EventStream[E], f: E => Future[V]) extends
     Serialized.future(key)(f(event).andThen {
       case Success(v) => dispatch(v, sourceContext)
       case Failure(t: NoSuchElementException) => // do nothing to allow Future.filter/collect
-      case Failure(t) => error("async map failed", t)
+      case Failure(t) => error(l"async map failed", t)
     }(sourceContext.orElse(executionContext).getOrElse(Threading.Background)))
 }
 

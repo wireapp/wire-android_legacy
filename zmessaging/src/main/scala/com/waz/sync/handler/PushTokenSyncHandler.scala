@@ -17,8 +17,8 @@
  */
 package com.waz.sync.handler
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.log.ZLog2._
 import com.waz.model.otr.ClientId
 import com.waz.model.PushToken
 import com.waz.service.BackendConfig
@@ -36,7 +36,7 @@ class PushTokenSyncHandler(pushTokenService: PushTokenService, backend: BackendC
   import Threading.Implicits.Background
 
   def registerPushToken(token: PushToken): Future[SyncResult] = {
-    debug(s"registerPushToken: $token")
+    debug(l"registerPushToken: $token")
     client.postPushToken(PushTokenRegistration(token, backend.pushSenderId, clientId)).future.flatMap {
       case Right(PushTokenRegistration(`token`, _, `clientId`, _)) =>
         pushTokenService
@@ -50,7 +50,7 @@ class PushTokenSyncHandler(pushTokenService: PushTokenService, backend: BackendC
   }
 
   def deleteGcmToken(token: PushToken): CancellableFuture[SyncResult] = {
-    debug(s"deleteGcmToken($token)")
+    debug(l"deleteGcmToken($token)")
     client.deletePushToken(token.str).map(SyncResult(_))
   }
 }

@@ -18,7 +18,7 @@
 package com.waz.sync.handler
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.model.AddressBook
 import com.waz.service._
 import com.waz.service.tracking.TrackingService
@@ -32,7 +32,7 @@ class AddressBookSyncHandler(contacts: ContactsServiceImpl, client: AddressBookC
 
   import Threading.Implicits.Background
   def postAddressBook(ab: AddressBook): Future[SyncResult] = {
-    verbose(s"postAddressBook()")
+    verbose(l"postAddressBook()")
     if (ab == AddressBook.Empty) Future.successful(SyncResult.Success)
     else {
       // TODO: post incremental changes only - once backend supports that

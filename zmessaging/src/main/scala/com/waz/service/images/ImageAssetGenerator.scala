@@ -19,7 +19,7 @@ package com.waz.service.images
 
 import android.content.Context
 import android.graphics.{Bitmap => ABitmap}
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.bitmap.BitmapUtils.Mime
 import com.waz.bitmap.{BitmapDecoder, BitmapUtils}
@@ -51,7 +51,7 @@ class ImageAssetGenerator(context: Context, cache: CacheService, loader: ImageLo
     * asset data. So be sure that it is not used for another asset, as it will be overridden.
     **/
   def generateWireAsset(asset: AssetData, profilePicture: Boolean): CancellableFuture[AssetData] = {
-    verbose(s"generateWireAsset: $asset, profilePicture?: $profilePicture")
+    verbose(l"generateWireAsset: $asset, profilePicture?: $profilePicture")
     loader.loadRawImageData(asset) flatMap {
       case Some(data) =>
         loader.getImageMetadata(data) flatMap { meta => generateAssetData(asset, Left(data), meta, if (profilePicture) SelfOptions else ImageOptions) }
@@ -74,13 +74,13 @@ class ImageAssetGenerator(context: Context, cache: CacheService, loader: ImageLo
   def generateAssetData(asset: AssetData, input: Either[LocalData, ABitmap], meta: Metadata, co: CompressionOptions): CancellableFuture[AssetData] = {
     generateImageData(asset, co, input, meta) flatMap {
       case (file, m) =>
-        verbose(s"generated image, size: ${input.fold(_.length, _.getByteCount)}, meta: $m")
+        verbose(l"generated image, size: ${input.fold(_.length, _.getByteCount)}, meta: $m")
         if (shouldRecode(file, m, co)) recode(asset.id, file, co, m)
         else CancellableFuture.successful((file, m))
     } map {
       case (file, m) =>
         val size = file.length
-        verbose(s"final image, size: $size, meta: $m")
+        verbose(l"final image, size: $size, meta: $m")
 
         asset.copy(
           mime = com.waz.model.Mime(m.mimeType),
@@ -100,10 +100,10 @@ class ImageAssetGenerator(context: Context, cache: CacheService, loader: ImageLo
       imageCache.reserve(asset.id, options.req, memoryNeeded)
       input.fold(ld => bitmapLoader(() => ld.inputStream, sampleSize, meta.orientation).map(Bitmap.toAndroid), CancellableFuture.successful) map { image =>
         if (crop) {
-          verbose(s"cropping to $w")
+          verbose(l"cropping to $w")
           BitmapUtils.cropRect(image, w)
         } else if (image.getWidth > w) {
-          verbose(s"scaling to $w, $h")
+          verbose(l"scaling to $w, $h")
           BitmapUtils.scale(image, w, h)
         } else image
       }
@@ -111,9 +111,9 @@ class ImageAssetGenerator(context: Context, cache: CacheService, loader: ImageLo
 
     def generateScaled(): CancellableFuture[(CacheEntry, Metadata)] = {
       val (w, h) = options.calculateScaledSize(meta.width, meta.height)
-      verbose(s"calculated scaled size: ($w, $h) for $meta and $options")
+      verbose(l"calculated scaled size: ($w, $h) for $meta and $options")
       loadScaled(w, h, options.cropToSquare) flatMap { image =>
-        verbose(s"loaded scaled: (${image.getWidth}, ${image.getHeight})")
+        verbose(l"loaded scaled: (${image.getWidth}, ${image.getHeight})")
         save(image)
       }
     }
@@ -151,7 +151,7 @@ class ImageAssetGenerator(context: Context, cache: CacheService, loader: ImageLo
   }
 
   private def recode(id: AssetId, file: CacheEntry, options: CompressionOptions, meta: Metadata) = {
-    verbose(s"recode asset $id with opts: $options")
+    verbose(l"recode asset $id with opts: $options")
 
     def load = {
       imageCache.reserve(id, options.req, meta.width, if (meta.isRotated) 2 * meta.height else meta.height)
@@ -187,7 +187,13 @@ object ImageAssetGenerator {
   val SelfOptions  = MediumProfileOptions
 }
 
-case class CompressionOptions(byteCount: Int, dimension: Int, quality: Int, forceLossy: Boolean, cropToSquare: Boolean, req: BitmapRequest, recodeMimes: Set[String] = CompressionOptions.DefaultRecodeMimes) {
+case class CompressionOptions(byteCount: Int,
+                              dimension: Int,
+                              quality: Int,
+                              forceLossy: Boolean,
+                              cropToSquare: Boolean,
+                              req: BitmapRequest,
+                              recodeMimes: Set[String] = CompressionOptions.DefaultRecodeMimes) extends SafeToLog {
 
   val maxPixelCount = 1.3 * dimension * dimension
 

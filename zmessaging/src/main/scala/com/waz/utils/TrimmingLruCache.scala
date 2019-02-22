@@ -21,7 +21,7 @@ import android.app.ActivityManager
 import android.content.res.Configuration
 import android.content.{ComponentCallbacks2, Context}
 import android.support.v4.util.LruCache
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.TrimmingLruCache.CacheSize
 
@@ -76,7 +76,7 @@ trait AutoTrimming extends ComponentCallbacks2 { self: LruCache[_, _] =>
   override def onTrimMemory(level: Int): Unit =
     TrimFactors.collectFirst { case (l, factor) if l >= level =>
       val trimmedSize = (factor * maxSize()).toInt
-      verbose(s"onTrimMemory($level) - trimToSize: $trimmedSize")
+      verbose(l"onTrimMemory($level) - trimToSize: $trimmedSize")
       trimToSize(trimmedSize)
       System.gc()
     }

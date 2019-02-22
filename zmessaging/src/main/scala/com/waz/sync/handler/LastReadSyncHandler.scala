@@ -18,7 +18,7 @@
 package com.waz.sync.handler
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.content.ConversationStorage
 import com.waz.model.GenericContent.LastRead
 import com.waz.model._
@@ -34,7 +34,7 @@ class LastReadSyncHandler(selfUserId: UserId, convs: ConversationStorage, metada
   import com.waz.threading.Threading.Implicits.Background
 
   def postLastRead(convId: ConvId, time: RemoteInstant): Future[SyncResult] = {
-    verbose(s"postLastRead($convId, $time)")
+    verbose(l"postLastRead($convId, $time)")
 
     convs.get(convId).flatMap {
       case Some(conv) if conv.lastRead.isAfter(time) => // no need to send this msg as lastRead was already advanced

@@ -23,7 +23,7 @@ import com.github.ghik.silencer.silent
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.google.i18n.phonenumbers.Phonenumber.{PhoneNumber => GooglePhoneNumber}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.model.PhoneNumber
 import com.waz.threading.SerialDispatchQueue
 
@@ -69,7 +69,7 @@ class PhoneNumberServiceImpl(context: Context) extends PhoneNumberService{
         Some(PhoneNumber(util.format(number, PhoneNumberUtil.PhoneNumberFormat.E164)))
       } catch {
         case ex: Throwable =>
-          debug(s"phone number normalization failed for $phone ($defaultRegion): ${ex.getMessage}")
+          debug(l"phone number normalization failed for $phone (${redactedString(defaultRegion)}): ${showString(ex.getMessage)}")
           None
       }
   }

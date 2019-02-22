@@ -17,10 +17,13 @@
  */
 package com.waz.model
 
+import com.waz.log.ZLog2.SafeToLog
 import com.waz.utils.JsonDecoder
 import org.json.JSONObject
 
-case class VersionBlacklist(oldestAccepted: Int = 0, blacklisted: Seq[Int] = Seq.empty)
+case class VersionBlacklist(oldestAccepted: Int = 0, blacklisted: Seq[Int] = Seq.empty) extends SafeToLog {
+  override def toString: String = s"VersionBlacklist(oldestAccepted: $oldestAccepted, blacklisted: $blacklisted)"
+}
 
 object VersionBlacklist {
   import JsonDecoder._

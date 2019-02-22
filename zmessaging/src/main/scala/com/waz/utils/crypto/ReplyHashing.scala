@@ -21,8 +21,8 @@ import java.nio.ByteBuffer
 
 import com.waz.content.AssetsStorage
 import com.waz.model._
-import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.ZLog.verbose
+import com.waz.ZLog.ImplicitTag._
+import com.waz.log.ZLog2._
 import com.waz.model.GenericMessage.TextMessage
 import com.waz.utils.returning
 
@@ -74,7 +74,7 @@ class ReplyHashingImpl(storage: AssetsStorage) extends ReplyHashing {
     val bytes =
       "\uFEFF".getBytes("UTF-16BE") ++ content.getBytes("UTF-16BE") ++ timestamp.toEpochSec.getBytes
     returning(Sha256.calculate(bytes)) { sha =>
-      verbose(s"hashTextReply($content, $timestamp): ${sha.hexString}")
+      verbose(l"hashTextReply(${redactedString(content)}, $timestamp): $sha")
     }
   }
 

@@ -20,6 +20,7 @@ package com.waz.service.assets2
 import java.net.URI
 
 import com.waz.cache2.CacheService.Encryption
+import com.waz.log.ZLog2.SafeToLog
 import com.waz.model._
 import com.waz.sync.client.AssetClient2.Retention
 import com.waz.utils.Identifiable
@@ -71,15 +72,15 @@ object Asset {
 
 }
 
-sealed trait AssetDetails
-case object BlobDetails                                                                 extends AssetDetails
-case class ImageDetails(dimensions: Dim2, tag: ImageTag)                                extends AssetDetails
-case class AudioDetails(duration: Duration, loudness: Loudness)                         extends AssetDetails
-case class VideoDetails(dimensions: Dim2, duration: Duration) extends AssetDetails
+sealed trait AssetDetails                                       extends SafeToLog
+case object BlobDetails                                         extends AssetDetails
+case class ImageDetails(dimensions: Dim2, tag: ImageTag)        extends AssetDetails
+case class AudioDetails(duration: Duration, loudness: Loudness) extends AssetDetails
+case class VideoDetails(dimensions: Dim2, duration: Duration)   extends AssetDetails
 
-sealed trait ImageTag
-case object Preview extends ImageTag
-case object Medium  extends ImageTag
-case object Empty   extends ImageTag
+sealed trait ImageTag extends SafeToLog
+case object Preview   extends ImageTag
+case object Medium    extends ImageTag
+case object Empty     extends ImageTag
 
 case class Loudness(levels: Vector[Float])

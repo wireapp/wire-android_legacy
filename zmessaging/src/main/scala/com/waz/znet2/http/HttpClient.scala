@@ -18,7 +18,7 @@
 package com.waz.znet2.http
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.error
+import com.waz.log.ZLog2._
 import com.waz.threading.CancellableFuture
 import com.waz.znet2.http.HttpClient._
 import com.waz.znet2.http.Request.QueryParameter
@@ -186,7 +186,7 @@ trait HttpClient {
   )(implicit rs: RequestSerializer[T]): CancellableFuture[Request[Body]] =
     CancellableFuture(rs.serialize(request)).recoverWith {
       case err =>
-        error("Error while serializing request.", err)
+        error(l"Error while serializing request.", err)
         CancellableFuture.failed(EncodingError(err))
     }
 
@@ -195,7 +195,7 @@ trait HttpClient {
   )(implicit rd: ResponseDeserializer[T]): CancellableFuture[T] =
     CancellableFuture(rd.deserialize(response)).recoverWith {
       case err =>
-        error("Error while deserializing response.", err)
+        error(l"Error while deserializing response.", err)
         //we already have tried to deserialize response body, so it may be broken.
         CancellableFuture.failed(DecodingError(err, response.copy(body = EmptyBodyImpl)))
     }
@@ -215,7 +215,7 @@ trait HttpClient {
       .recoverWith {
         case err: HttpClientError => CancellableFuture.failed(err)
         case err =>
-          error("Unexpected error.", err)
+          error(l"Unexpected error.", err)
           CancellableFuture.failed(UnknownError(err))
       }
 
@@ -238,7 +238,7 @@ trait HttpClient {
       .recoverWith {
         case err: HttpClientError => CancellableFuture.failed(err)
         case err =>
-          error("Unexpected error.", err)
+          error(l"Unexpected error.", err)
           CancellableFuture.failed(UnknownError(err))
       }
 
@@ -259,7 +259,7 @@ trait HttpClient {
       .recover {
         case err: HttpClientError => Left(implicitly[CustomErrorConstructor[E]].constructFrom(err))
         case err =>
-          error("Unexpected error.", err)
+          error(l"Unexpected error.", err)
           Left(implicitly[CustomErrorConstructor[E]].constructFrom(UnknownError(err)))
       }
 

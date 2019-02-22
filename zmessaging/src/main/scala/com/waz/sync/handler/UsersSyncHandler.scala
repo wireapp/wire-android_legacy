@@ -17,7 +17,7 @@
  */
 package com.waz.sync.handler
 
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.UsersStorage
@@ -89,7 +89,7 @@ class UsersSyncHandler(assetSync: AssetSyncHandler,
     }
 
   def postAvailability(availability: Availability): Future[SyncResult] = {
-    verbose(s"postAvailability($availability)")
+    verbose(l"postAvailability($availability)")
     otrSync.broadcastMessage(GenericMessage(Uid(), GenericContent.AvailabilityStatus(availability)))
       .map(SyncResult(_))
   }

@@ -18,7 +18,7 @@
 package com.waz.sync.handler
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.content.UsersStorage
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.{Name, UserId}
@@ -52,7 +52,7 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
   def postConnection(userId: UserId, name: Name, message: String): Future[SyncResult] =
     connectionsClient.createConnection(userId, name, message).future flatMap {
       case Right(event) =>
-        verbose(s"postConnection($userId) success: $event")
+        verbose(l"postConnection($userId) success: $event")
         connectionService
           .handleUserConnectionEvents(Seq(event))
           .map(_ => Success)
@@ -66,7 +66,7 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
         connectionService.handleUserConnectionEvents(Seq(event)).map(_ => Success)
 
       case Right(None) =>
-        warn("postConnectionStatus was successful, but didn't return an event, no change")
+        warn(l"postConnectionStatus was successful, but didn't return an event, no change")
         Future.successful(Success)
 
       case Left(error) =>

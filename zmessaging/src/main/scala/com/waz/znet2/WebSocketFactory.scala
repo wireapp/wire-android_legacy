@@ -17,7 +17,7 @@
  */
 package com.waz.znet2
 
-import com.waz.ZLog.{info, warn}
+import com.waz.log.ZLog2._
 import com.waz.sync.client.{JsonObjectResponse, ResponseContent, StringResponse, BinaryResponse}
 import com.waz.utils.events.EventStream
 import com.waz.znet2.WebSocketFactory.SocketEvent
@@ -67,34 +67,34 @@ object OkHttpWebSocketFactory extends WebSocketFactory {
         val socket = okHttpClient.newWebSocket(convertHttpRequest(request), new WebSocketListener {
 
           override def onOpen(webSocket: OkWebSocket, response: OkResponse): Unit = {
-            info("WebSocket connection has been opened")
+            info(l"WebSocket connection has been opened")
             publish(SocketEvent.Opened(new OkHttpWebSocket(webSocket)))
           }
 
           override def onMessage(webSocket: OkWebSocket, text: String): Unit = {
-            info("WebSocket received a text message.")
+            info(l"WebSocket received a text message.")
             val content = Try(JsonObjectResponse(new JSONObject(text))).getOrElse(StringResponse(text))
             publish(SocketEvent.Message(new OkHttpWebSocket(webSocket), content))
           }
 
           override def onMessage(webSocket: OkWebSocket, bytes: ByteString): Unit = {
-            info("WebSocket received a bytes message.")
+            info(l"WebSocket received a bytes message.")
             val content = Try(JsonObjectResponse(new JSONObject(bytes.utf8()))).getOrElse(BinaryResponse(bytes.toByteArray, ""))
             publish(SocketEvent.Message(new OkHttpWebSocket(webSocket), content))
           }
 
           override def onClosing(webSocket: OkWebSocket, code: Int, reason: String): Unit = {
-            info("WebSocket connection is going to be closed")
+            info(l"WebSocket connection is going to be closed")
             publish(SocketEvent.Closing(new OkHttpWebSocket(webSocket), code, reason))
           }
 
           override def onClosed(webSocket: OkWebSocket, code: Int, reason: String): Unit = {
-            info("WebSocket connection has been closed")
+            info(l"WebSocket connection has been closed")
             publish(SocketEvent.Closed(new OkHttpWebSocket(webSocket)))
           }
 
           override def onFailure(webSocket: OkWebSocket, ex: Throwable, response: okhttp3.Response): Unit = {
-            warn(s"WebSocket connection has been failed: ${ex.getMessage}")
+            warn(l"WebSocket connection has been failed.", ex)
             publish(SocketEvent.Closed(new OkHttpWebSocket(webSocket), Some(ex)))
           }
         })
@@ -103,7 +103,7 @@ object OkHttpWebSocketFactory extends WebSocketFactory {
       }
 
       override protected def onUnwire(): Unit = {
-        info("Cancelling websocket.")
+        info(l"Cancelling websocket.")
         socket.foreach(_.cancel())
       }
     }

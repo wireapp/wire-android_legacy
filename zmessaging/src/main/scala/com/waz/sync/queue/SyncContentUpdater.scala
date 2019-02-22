@@ -18,9 +18,9 @@
 package com.waz.sync.queue
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.SyncState
 import com.waz.content._
+import com.waz.log.ZLog2._
 import com.waz.model.SyncId
 import com.waz.model.sync.SyncJob.SyncJobDao
 import com.waz.model.sync._
@@ -62,7 +62,7 @@ class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater {
     // make sure no job is loaded with Syncing state, this could happen if app is killed while syncing
     jobs map { job =>
       if (job.state == SyncState.SYNCING) {
-        verbose(s"found job in state: SYNCING on initial load: $job")
+        verbose(l"found job in state: SYNCING on initial load: $job")
         job.copy(state = SyncState.WAITING)
       } else job
     }
@@ -123,18 +123,18 @@ class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater {
 
     def onAdded(added: SyncJob) = {
       assert(added.id == job.id)
-      verbose(s"addRequest: $job, added: $added")
+      verbose(l"addRequest: $job, added: $added")
       added
     }
 
     def onMerged(merged: SyncJob) = {
-      verbose(s"addRequest: $job, merged: $merged")
+      verbose(l"addRequest: $job, merged: $merged")
       if (forceRetry) merged.copy(attempts = 0, startTime = math.min(merged.startTime, job.startTime))
       else merged
     }
 
     val toSave = merge(job, syncStorage) match {
-      case Unchanged => error("Unexpected result from SyncJobMerger"); job
+      case Unchanged => error(l"Unexpected result from SyncJobMerger"); job
       case Updated(added) => onAdded(added)
       case Merged(merged) => onMerged(merged)
     }

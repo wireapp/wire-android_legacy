@@ -20,7 +20,7 @@ package com.waz.cache
 import java.io.File
 
 import android.content.Context
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.cache.CacheEntryData.CacheEntryDao
 import com.waz.cache.CacheStorage.EntryCache
@@ -49,7 +49,7 @@ class CacheStorageImpl(storage: Database, context: Context) extends CachedStorag
 
   val fileCleanupQueue = new SerialProcessingQueue[(File, Uid)]({ entries =>
     Future {
-      verbose(s"deleting cache files: $entries")
+      verbose(l"deleting cache files: $entries")
       entries foreach { case (path, uid) => entryFile(path, uid).delete() }
     } (Threading.IO)
   }, "CacheFileCleanupQueue")

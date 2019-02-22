@@ -23,8 +23,8 @@ import java.util.Locale
 import java.util.zip.{ZipFile, ZipOutputStream}
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.db.ZMessagingDB
+import com.waz.log.ZLog2._
 import com.waz.model.UserId
 import com.waz.model.otr.ClientId
 import com.waz.service.BackupManager.InvalidBackup.{DbEntryNotFound, MetadataEntryNotFound}
@@ -126,14 +126,14 @@ object BackupManager {
 
           val walFileName = getDbWalFileName(userId)
           val walFile = new File(databaseDir, walFileName)
-          verbose(s"WAL file: ${walFile.getAbsolutePath} exists: ${walFile.exists}, length: ${if (walFile.exists) walFile.length else 0}")
+          verbose(l"WAL file: $walFile exists: ${walFile.exists}, length: ${if (walFile.exists) walFile.length else 0}")
 
           if (walFile.exists) withResource(new BufferedInputStream(new FileInputStream(walFile))) {
             IoUtils.writeZipEntry(_, zip, walFileName)
           }
         }
 
-        verbose(s"database export finished: ${zipFile.getAbsolutePath} . Data contains: ${zipFile.length} bytes")
+        verbose(l"database export finished: $zipFile . Data contains: ${zipFile.length} bytes")
       }
     }.mapFailureIfNot[BackupError](UnknownBackupError.apply)
 

@@ -17,8 +17,8 @@
  */
 package com.waz.content
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.log.ZLog2._
 import com.waz.model.SyncId
 import com.waz.model.sync.SyncJob
 import com.waz.model.sync.SyncJob.SyncJobDao
@@ -64,7 +64,7 @@ class SyncStorage(db: Database, jobs: Seq[SyncJob]) {
   jobsMap ++= jobs map { job => job.id -> job }
 
   def add(job: SyncJob): SyncJob = {
-    verbose(s"add($job)")
+    verbose(l"add($job)")
     jobsMap.get(job.id) match {
       case Some(prev) => update(prev, job)
       case None =>
@@ -77,7 +77,7 @@ class SyncStorage(db: Database, jobs: Seq[SyncJob]) {
   def get(id: SyncId): Option[SyncJob] = jobsMap.get(id)
 
   def remove(id: SyncId) = {
-    verbose(s"remove($id)")
+    verbose(l"remove($id)")
     jobsMap.remove(id) foreach { onRemoved ! _ }
     saveQueue ! id
   }
@@ -103,7 +103,7 @@ class SyncStorage(db: Database, jobs: Seq[SyncJob]) {
   }
 
   private def save(job: SyncJob) = {
-    verbose(s"save($job)")
+    verbose(l"save($job)")
     jobsMap.put(job.id, job)
     saveQueue ! job.id
   }

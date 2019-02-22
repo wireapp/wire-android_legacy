@@ -23,13 +23,13 @@ import android.content.{BroadcastReceiver, Context, Intent, IntentFilter}
 import android.media.AudioManager
 import android.telephony.TelephonyManager
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api
 import com.waz.api.ErrorType._
 import com.waz.api.impl.AudioAssetForUpload
 import com.waz.api.{AudioEffect, ErrorType}
 import com.waz.audioeffect.{AudioEffect => AVSEffect}
 import com.waz.cache.{CacheEntry, CacheService, Expiration}
+import com.waz.log.ZLog2._
 import com.waz.model._
 import com.waz.service.AccountsService.InForeground
 import com.waz.service.assets.AudioLevels.peakLoudness
@@ -127,7 +127,7 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context) {
       case Playing(player, `key`) =>
         player.release().recoverWithLog().map(_ => Next(Idle, Some(Error(s"error during playback $key: $msg", None, Some(PLAYBACK_FAILURE)))))
       case other =>
-        warn(s"Received playback error signal (key = $key, msg: $msg) but state = $other")
+        warn(l"Received playback error signal (key = $key, msg: ${Error(msg)}) but state = $other")
         successful(KeepCurrent())
     } (s"error during playback $key", Some(PLAYBACK_FAILURE))
   }
@@ -157,13 +157,13 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context) {
   def setPlayhead(key: MediaKey, content: Content, playhead: bp.Duration): Future[State] = {
     def seek(maybePlayer: Option[Player] = None) =
       maybePlayer.fold2(Player(content, Observe(key)), successful).flatMap { player =>
-        player.repositionPlayhead(playhead).map(_ => returning(player)(_ => verbose(s"repositioned playhead: $playhead"))).andThenFuture {
+        player.repositionPlayhead(playhead).map(_ => returning(player)(_ => verbose(l"repositioned playhead: $playhead"))).andThenFuture {
           case Failure(cause) => if (maybePlayer.isEmpty) player.release() else successful(())
        }
       }
 
     def releaseOngoingAndSeek(res: Either[Recording, Player], ongoing: MediaKey) = {
-      verbose(s"releasing $ongoing to seek $key to $playhead")
+      verbose(l"releasing $ongoing to seek $key to $playhead")
       res.fold(rec => cancelOngoingRecording(rec), _.release())
     }.flatMap(_ => seek().map(p => Next(Paused(p, key, MediaPointer(content, playhead))))).recover {
       case NonFatal(cause) => Next(Idle, Some(Error(s"cannot seek $key to $playhead after stopping $ongoing", Some(cause))))
@@ -209,21 +209,21 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context) {
   def record(key: AssetMediaKey, maxAllowedDuration: FiniteDuration): Future[(Instant, Future[RecordingResult])] = {
     def record(): Future[Next] = withAudioFocus() {
       cache.createForFile(CacheKey.fromAssetId(key.id), Mime.Audio.PCM, cacheLocation = Some(saveDir))(recordingExpiration) map { entry =>
-        verbose(s"started recording in entry: $entry")
+        verbose(l"started recording in entry: $entry")
         val promisedAsset = Promise[RecordingResult]
         withCleanupOnFailure {
           val start = Instant.now
           val recorder = startRecording(entry.cacheFile, maxAllowedDuration)
 
           recorder.onLengthLimitReached {
-            verbose(s"recording $key reached the file size limit")
+            verbose(l"recording $key reached the file size limit")
             stopRecording(key)
           }
 
           recorder.onError { cause =>
             transition {
               case Recording(recorder, `key`, _, _, promisedAsset) =>
-                error(s"recording $key failed", cause)
+                error(l"recording $key failed", cause)
                 promisedAsset.tryFailure(cause)
                 abandonAudioFocus()
                 Next(Idle)
@@ -242,7 +242,7 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context) {
     }
 
     def releaseOngoingAndRecord(res: Either[Recording, Player], ongoing: MediaKey) = {
-      verbose(s"releasing $ongoing to start recording $key")
+      verbose(l"releasing $ongoing to start recording $key")
       res.fold(rec => cancelOngoingRecording(rec), _.release())
     }.flatMap(_ => record()).recover {
       case NonFatal(cause) => Next(Idle, Some(Error(s"cannot start recording $key after stopping $ongoing", Some(cause), Some(RECORDING_FAILURE))))
@@ -265,7 +265,7 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context) {
     case rec @ Recording(recorder, `key`, start, entry, promisedAsset) =>
       recorder.stopRecording() map { cause =>
         if (entry.cacheFile.exists) {
-          verbose(s"stop recording: passing asset with data entry: ${entry.data}, is it encrypted?: ${entry.data.encKey} bytes at $key")
+          verbose(l"stop recording: passing asset with data entry: ${entry.data}, is it encrypted?: ${entry.data.encKey} bytes at $key")
           promisedAsset.trySuccess(RecordingSuccessful(AudioAssetForUpload(key.id, entry, PCM.durationFromByteCount(entry.length), applyAudioEffect _), cause == PCMRecorder.LengthLimitReached))
         }
         else promisedAsset.tryFailure(new FileNotFoundException(s"audio file does not exist after recording: ${entry}"))
@@ -334,7 +334,7 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context) {
         intent.getStringExtra(TelephonyManager.EXTRA_STATE) != TelephonyManager.EXTRA_STATE_RINGING
 
       if (! isIgnoredPhoneStateTransition) {
-        verbose(s"interruption broadcast: ${intent.getAction}")
+        verbose(l"interruption broadcast: ${showString(intent.getAction)}")
         AudioFocusListener.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS)
       }
     }
@@ -349,20 +349,20 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context) {
   object AudioFocusListener extends AudioManager.OnAudioFocusChangeListener {
     override def onAudioFocusChange(focusChange: Int): Unit = focusChange match {
       case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT =>
-        verbose("audio focus lost (transient)")
+        verbose(l"audio focus lost (transient)")
         transitionF {
           case Playing(player, key)             => pauseTransition(key, player, true)
           case rec @ Recording(_, key, _, _, _) => cancelOngoingRecording(rec).map(_ => Next(Idle))
           case other                            => successful(KeepCurrent())
         }(s"error while handling transient audio focus loss")
       case AudioManager.AUDIOFOCUS_GAIN =>
-        verbose("audio focus gained")
+        verbose(l"audio focus gained")
         transitionF {
           case Paused(player, key, _, true) => playOrResumeTransition(key, Right(player))
           case other                        => successful(KeepCurrent())
         }(s"error while handling audio focus gain")
       case AudioManager.AUDIOFOCUS_LOSS =>
-        verbose("audio focus lost")
+        verbose(l"audio focus lost")
         abandonAudioFocus()
         transitionF {
           case Playing(player, key)             => pauseTransition(key, player, false)
@@ -370,7 +370,7 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context) {
           case other                            => successful(KeepCurrent())
         }(s"error while handling transient audio focus loss")
       case other =>
-        warn(s"unknown audio focus change: $other")
+        warn(l"unknown audio focus change: $other")
     }
     override val toString: String = s"AudioFocusListener-${Uid().str}"
   }
@@ -405,12 +405,12 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context) {
   private def applyState: Transition => State = { t =>
     t.changedState.foreach { next =>
       stateSource.mutate { current =>
-        verbose(s"transition: $current -> $next")
+        verbose(l"transition: $current -> $next")
         next
       }
     }
     t.error.foreach { err =>
-      err.cause.fold(error(err.message))(c => error(err.message, c))
+      err.cause.fold(error(l"$err"))(c => error(l"$err", c))
       onError ! err
     }
     t.changedState.orElse(stateSource.currentValue).getOrElse(Idle)

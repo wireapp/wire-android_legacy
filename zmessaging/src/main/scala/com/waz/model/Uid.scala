@@ -22,6 +22,7 @@ import java.util.UUID
 
 import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.NotificationsHandler.NotificationType._
+import com.waz.log.ZLog2.SafeToLog
 import com.waz.utils.crypto.ZSecureRandom
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{JsonDecoder, JsonEncoder}
@@ -199,7 +200,7 @@ object RConvId {
   }
 }
 
-case class SyncId(str: String) {
+case class SyncId(str: String) extends SafeToLog {
   override def toString: String = str
 }
 

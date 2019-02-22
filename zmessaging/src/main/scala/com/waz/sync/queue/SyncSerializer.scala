@@ -19,8 +19,9 @@ package com.waz.sync.queue
 
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
-import com.waz.ZLog._
+import com.waz.ZLog.LogTag
 import com.waz.ZLog.ImplicitTag._
+import com.waz.log.ZLog2._
 import com.waz.model.ConvId
 import com.waz.model.sync.SyncJob.Priority
 import com.waz.threading.SerialDispatchQueue
@@ -62,7 +63,7 @@ class SyncSerializer {
   }
 
   def acquire(priority: Int): Future[Unit] = {
-    verbose(s"acquire($priority), running: $runningJobs")
+    verbose(l"acquire($priority), running: $runningJobs")
     val handle = new PriorityHandle(priority)
     Future {
       queue += handle
@@ -72,7 +73,7 @@ class SyncSerializer {
   }
 
   def release(): Unit = Future {
-    verbose(s"release, running: $runningJobs")
+    verbose(l"release, running: $runningJobs")
     runningJobs -= 1
     processQueue()
   }
@@ -85,7 +86,7 @@ class SyncSerializer {
   }
 
   def acquire(res: ConvId): Future[ConvLock] = {
-    verbose(s"acquire($res)")
+    verbose(l"acquire($res)")
     val handle = new ConvHandle(res)
     Future {
       convQueue :+= handle
@@ -95,7 +96,7 @@ class SyncSerializer {
   }
 
   def release(r: ConvId): Unit = Future {
-    verbose(s"release($r)")
+    verbose(l"release($r)")
     convs -= r
     processConvQueue()
   }
