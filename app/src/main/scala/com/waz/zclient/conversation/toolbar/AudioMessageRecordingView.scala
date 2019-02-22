@@ -186,6 +186,7 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
       stopRecordingIndicator()
       startTime ! None
     case SendFromRecording =>
+      stopRecordingIndicator()
       currentAudio.foreach(sendAudioAsset)
     case _ =>
   }
@@ -247,31 +248,33 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     convController.sendAssetMessage(content, getContext.asInstanceOf[Activity], None).map(_ => hide())(Threading.Ui)
 
   def onMotionEventFromAudioMessageButton(motionEvent: MotionEvent) = {
+
+    def stopRecording() = currentAssetKey.foreach { key =>
+      setWakeLock(false)
+      recordingController.stopRecording()
+      val content = ContentForUpload(s"recording-${System.currentTimeMillis}",
+        Content.File(Mime.Audio.MP4, recordingController.getFile))
+      currentAudio = Some(content)
+      playbackControls !
+        new PlaybackControls(key.id, URI.fromFile(recordingController.getFile), recordAndPlay)
+    }
+
     motionEvent.getAction match {
       case MotionEvent.ACTION_MOVE =>
-        if (slidUpToSend(motionEvent)) slideControlState ! SendFromRecording
-        else slideControlState ! Recording
+        if (slidUpToSend(motionEvent)) {
+          slideControlState ! SendFromRecording
+          stopRecording()
+        } else {
+          slideControlState ! Recording
+        }
       case MotionEvent.ACTION_CANCEL |
            MotionEvent.ACTION_OUTSIDE |
            MotionEvent.ACTION_UP =>
-        currentAssetKey.foreach { key =>
 
-          recordingController.stopRecording()
-
-          val content = ContentForUpload(s"recording-${System.currentTimeMillis}",
-            Content.File(Mime.Audio.MP4, recordingController.getFile))
-
-          currentAudio = Some(content)
-
-          playbackControls !
-            new PlaybackControls(key.id, URI.fromFile(recordingController.getFile), recordAndPlay)
-
-          setWakeLock(false)
-
-          slideControlState.mutate {
-            case Recording => Preview
-            case st => st
-          }
+        stopRecording()
+        slideControlState.mutate {
+          case Recording => Preview
+          case st => st
         }
       case _ => //
     }
