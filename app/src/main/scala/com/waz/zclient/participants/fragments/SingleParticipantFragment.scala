@@ -175,7 +175,8 @@ class SingleParticipantFragment extends FragmentHelper {
       createPerm <- userAccountsController.hasCreateConvPermission
       convId     <- participantsController.conv.map(_.id)
       remPerm    <- userAccountsController.hasRemoveConversationMemberPermission(convId)
-    } yield createPerm || remPerm).map {
+      isGuest    <- participantsController.isCurrentUserGuest
+    } yield (createPerm || remPerm) && !isGuest).map {
       case true => R.string.glyph__more
       case _    => R.string.empty_string
     }.map(getString).onUi(text => vh.foreach(_.setRightActionText(text)))
@@ -200,13 +201,14 @@ class SingleParticipantFragment extends FragmentHelper {
       view.setLayoutManager(new LinearLayoutManager(ctx))
 
       (for {
-        zms         <- inject[Signal[ZMessaging]].head
-        user        <- participantsController.otherParticipant.head
-        _           <- zms.users.syncIfNeeded(Set(user.id))
-        isGuest     = !user.isWireBot && user.isGuest(zms.teamId)
-        isDarkTheme <- inject[ThemeController].darkThemeSet.head
-      } yield (user.id, isGuest, isDarkTheme)).foreach {
-        case (userId, isGuest, isDarkTheme) =>
+        zms                <- inject[Signal[ZMessaging]].head
+        user               <- participantsController.otherParticipant.head
+        _                  <- zms.users.syncIfNeeded(Set(user.id))
+        isGuest            = !user.isWireBot && user.isGuest(zms.teamId)
+        isDarkTheme        <- inject[ThemeController].darkThemeSet.head
+        isCurrentUserGuest <- participantsController.isCurrentUserGuest.head
+      } yield (user.id, isGuest, isDarkTheme, isCurrentUserGuest)).foreach {
+        case (userId, isGuest, isDarkTheme, isCurrentUserGuest) =>
           val adapter = new SingleParticipantAdapter(userId, isGuest, isDarkTheme)
           Signal(
             participantsController.otherParticipant.map(_.fields),
@@ -214,8 +216,8 @@ class SingleParticipantFragment extends FragmentHelper {
             timerText,
             readReceipts
           ).onUi {
-            case (fields, av, tt, rr) if !isGuest => adapter.set(fields, av, tt, rr)
-            case (_, av, tt, rr)                  => adapter.set(Seq.empty, av, tt, rr)
+            case (fields, av, tt, rr) if !isCurrentUserGuest => adapter.set(fields, av, tt, rr)
+            case (_, av, tt, rr)                             => adapter.set(Seq.empty, av, tt, rr)
           }
           view.setAdapter(adapter)
       }
