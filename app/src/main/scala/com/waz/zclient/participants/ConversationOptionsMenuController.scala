@@ -26,6 +26,7 @@ import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events._
 import com.waz.zclient.calling.controllers.CallStartController
+import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
@@ -83,12 +84,14 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
   } yield members.contains(zms.selfUserId)
 
   val optionItems: Signal[Seq[MenuItem]] = for {
-    zms           <- zMessaging
-    Some(conv)    <- conv
-    isGroup       <- isGroup
-    connectStatus <- otherUser.map(_.map(_.connection))
-    teamMember    <- otherUser.map(_.exists(u => u.teamId.nonEmpty && u.teamId == zms.teamId))
-    isBot         <- otherUser.map(_.exists(_.isWireBot))
+    teamId              <- zMessaging.map(_.teamId)
+    Some(conv)          <- conv
+    isGroup             <- isGroup
+    connectStatus       <- otherUser.map(_.map(_.connection))
+    teamMember          <- otherUser.map(_.exists(u => u.teamId.nonEmpty && u.teamId == teamId))
+    isBot               <- otherUser.map(_.exists(_.isWireBot))
+    removePerm          <- inject[UserAccountsController].hasRemoveConversationMemberPermission(convId)
+    selectedParticipant <- participantsController.selectedParticipant
   } yield {
     import com.waz.api.User.ConnectionStatus._
 
@@ -99,10 +102,12 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
         builder ++= Set(LeaveOnly, LeaveAndDelete)
       case Mode.Deleting(_) =>
         builder ++= Set(DeleteOnly, DeleteAndLeave)
+      case Mode.Normal(_) if isGroup && selectedParticipant.isDefined =>
+        if (removePerm) builder += RemoveMember
       case Mode.Normal(_) =>
 
         def notifications: MenuItem =
-          if (zms.teamId.isDefined)
+          if (teamId.isDefined)
             Notifications
           else if (conv.muted.isAllAllowed)
             Mute
@@ -113,7 +118,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
 
         if (isGroup) {
           if (conv.isActive) builder += Leave
-          if (mode.inConversationList || zms.teamId.isEmpty) builder += notifications
+          if (mode.inConversationList || teamId.isEmpty) builder += notifications
           builder += Delete
         } else {
           if (teamMember || connectStatus.contains(ACCEPTED) || isBot) {
@@ -138,7 +143,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
           convController.archive(cId, archive = true)
           if (!mode.inConversationList) CancellableFuture.delay(getInt(R.integer.framework_animation_duration_medium).millis).map { _ =>
             navController.setVisiblePage(Page.CONVERSATION_LIST, tag)
-            participantsController.onHideParticipants ! true
+            participantsController.onShowAnimations ! true
           }
         case Mute   => convController.setMuted(cId, muted = MuteSet.AllMuted)
         case Unmute   => convController.setMuted(cId, muted = MuteSet.AllAllowed)
@@ -148,6 +153,11 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
         case Delete    => deleteConversation(cId)
         case Block     => user.map(_.id).foreach(showBlockConfirmation(cId, _))
         case Unblock   => user.map(_.id).foreach(uId => zMessaging.head.flatMap(_.connection.unblockConnection(uId)))
+        case RemoveMember =>
+          participantsController.otherParticipantId.head.foreach {
+            case Some(userId) => participantsController.showRemoveConfirmation(userId)
+            case None =>
+          }
         case Call      => callConversation(cId)
         case Picture   => takePictureInConversation(cId)
         case _ =>
@@ -243,23 +253,23 @@ object ConversationOptionsMenuController {
     case class Leaving(inConversationList: Boolean) extends Mode
   }
 
-  object Mute      extends BaseMenuItem(R.string.conversation__action__silence, Some(R.string.glyph__silence))
-  object Unmute    extends BaseMenuItem(R.string.conversation__action__unsilence, Some(R.string.glyph__notify))
-  object Picture   extends BaseMenuItem(R.string.conversation__action__picture, Some(R.string.glyph__camera))
-  object Call      extends BaseMenuItem(R.string.conversation__action__call, Some(R.string.glyph__call))
-  object Notifications    extends BaseMenuItem(R.string.conversation__action__notifications, Some(R.string.glyph__notify))
-  object Archive   extends BaseMenuItem(R.string.conversation__action__archive, Some(R.string.glyph__archive))
-  object Unarchive extends BaseMenuItem(R.string.conversation__action__unarchive, Some(R.string.glyph__archive))
-  object Delete    extends BaseMenuItem(R.string.conversation__action__delete, Some(R.string.glyph__delete_me))
-  object Leave     extends BaseMenuItem(R.string.conversation__action__leave, Some(R.string.glyph__leave))
-  object Block     extends BaseMenuItem(R.string.conversation__action__block, Some(R.string.glyph__block))
-  object Unblock   extends BaseMenuItem(R.string.conversation__action__unblock, Some(R.string.glyph__block))
+  object Mute           extends BaseMenuItem(R.string.conversation__action__silence, Some(R.string.glyph__silence))
+  object Unmute         extends BaseMenuItem(R.string.conversation__action__unsilence, Some(R.string.glyph__notify))
+  object Picture        extends BaseMenuItem(R.string.conversation__action__picture, Some(R.string.glyph__camera))
+  object Call           extends BaseMenuItem(R.string.conversation__action__call, Some(R.string.glyph__call))
+  object Notifications  extends BaseMenuItem(R.string.conversation__action__notifications, Some(R.string.glyph__notify))
+  object Archive        extends BaseMenuItem(R.string.conversation__action__archive, Some(R.string.glyph__archive))
+  object Unarchive      extends BaseMenuItem(R.string.conversation__action__unarchive, Some(R.string.glyph__archive))
+  object Delete         extends BaseMenuItem(R.string.conversation__action__delete, Some(R.string.glyph__delete_me))
+  object Leave          extends BaseMenuItem(R.string.conversation__action__leave, Some(R.string.glyph__leave))
+  object Block          extends BaseMenuItem(R.string.conversation__action__block, Some(R.string.glyph__block))
+  object Unblock        extends BaseMenuItem(R.string.conversation__action__unblock, Some(R.string.glyph__block))
+  object RemoveMember   extends BaseMenuItem(R.string.conversation__action__remove_member, Some(R.string.glyph__delete_me)) // TODO: the minus glyph?
 
   object LeaveOnly      extends BaseMenuItem(R.string.conversation__action__leave_only, Some(R.string.empty_string))
   object LeaveAndDelete extends BaseMenuItem(R.string.conversation__action__leave_and_delete, Some(R.string.empty_string))
   object DeleteOnly     extends BaseMenuItem(R.string.conversation__action__delete_only, Some(R.string.empty_string))
   object DeleteAndLeave extends BaseMenuItem(R.string.conversation__action__delete_and_leave, Some(R.string.empty_string))
 
-  val OrderSeq = Seq(Mute, Unmute, Notifications, Archive, Unarchive, Delete, Leave, Block, Unblock, LeaveOnly, LeaveAndDelete, DeleteOnly, DeleteAndLeave)
-
+  val OrderSeq = Seq(Mute, Unmute, Notifications, Archive, Unarchive, Delete, Leave, Block, Unblock, RemoveMember, LeaveOnly, LeaveAndDelete, DeleteOnly, DeleteAndLeave)
 }

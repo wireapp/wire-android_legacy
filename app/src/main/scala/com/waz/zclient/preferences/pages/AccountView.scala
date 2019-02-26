@@ -47,6 +47,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils._
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage}
 import com.waz.zclient.BuildConfig
+import com.waz.zclient.common.controllers.UserAccountsController
 
 trait AccountView {
   val onNameClick:          EventStream[Unit]
@@ -373,7 +374,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
       .commit
   }
 
-  zms.flatMap(_.propertiesService.readReceiptsEnabled).onUi(view.setReadReceipt)
+  inject[UserAccountsController].readReceiptsEnabled.onUi(view.setReadReceipt)
 
   view.onReadReceiptSwitch { enabled =>
     zms.head.flatMap(_.propertiesService.setReadReceiptsEnabled(enabled))(Threading.Background)

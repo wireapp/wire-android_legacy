@@ -97,6 +97,8 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
   lazy val hasChangeGroupSettingsPermission: Signal[Boolean] =
     isPartner.map(!_)
 
+  lazy val readReceiptsEnabled: Signal[Boolean] = zms.flatMap(_.propertiesService.readReceiptsEnabled)
+
   def hasAddConversationMemberPermission(convId: ConvId): Signal[Boolean] =
     hasConvPermission(convId, AddConversationMember)
 

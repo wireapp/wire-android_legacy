@@ -286,7 +286,7 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
   private val dialogInfo: Signal[Option[DialogInfo]] = for {
     clients <- incomingClients
     rrChanged <- userPrefs.flatMap(_(UserPreferences.ReadReceiptsRemotelyChanged).signal)
-    currentRR <- zms.flatMap(_.propertiesService.readReceiptsEnabled)
+    currentRR <- usersAccounts.readReceiptsEnabled
   } yield if (clients.nonEmpty)
       Some(Left(clients))
     else if (rrChanged)

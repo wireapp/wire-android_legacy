@@ -152,6 +152,7 @@ class BlockedUserProfileFragment extends BaseFragment[BlockedUserProfileFragment
         menu.setCallback(new FooterMenuCallback() {
           override def onLeftActionClicked(): Unit = toggleUnblockAndFooterMenu(false)
           override def onRightActionClicked(): Unit = getContainer.showRemoveConfirmation(userId)
+
         })
       }
       cancelButton.foreach { btn =>

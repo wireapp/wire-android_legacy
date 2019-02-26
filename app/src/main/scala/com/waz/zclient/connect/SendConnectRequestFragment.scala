@@ -45,7 +45,7 @@ import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.views.ZetaButton
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{GuestUtils, StringUtils, RichView}
+import com.waz.zclient.utils.{GuestUtils, RichView, StringUtils}
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.zclient.{FragmentHelper, R}
 import org.threeten.bp.Instant
@@ -191,12 +191,14 @@ class SendConnectRequestFragment extends BaseFragment[SendConnectRequestFragment
 
     footerMenu.foreach(_.setCallback(new FooterMenuCallback {
       override def onLeftActionClicked(): Unit = user.map(_.expiresAt.isDefined).head.foreach {
-        case false => showConnectButtonInsteadOfFooterMenu()
+        case false =>
+          showConnectButtonInsteadOfFooterMenu()
         case _ =>
       }
 
       override def onRightActionClicked(): Unit = removeConvMemberFeatureEnabled.head foreach {
-        case true => getContainer.showRemoveConfirmation(userToConnectId)
+        case true =>
+          getContainer.showRemoveConfirmation(userToConnectId)
         case _ =>
       }
     }))

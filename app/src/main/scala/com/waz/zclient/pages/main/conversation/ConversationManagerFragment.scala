@@ -106,7 +106,7 @@ class ConversationManagerFragment extends FragmentHelper
 
         screenController.showMessageDetails ! None
 
-        participantsController.onHideParticipants ! false
+        participantsController.onShowAnimations ! false
       } else if (!change.noChange) {
         collectionController.closeCollection()
       }
@@ -130,7 +130,7 @@ class ConversationManagerFragment extends FragmentHelper
       showFragment(ParticipantFragment.newInstance(user), ParticipantFragment.TAG)
     }
 
-    subs += participantsController.onHideParticipants.onUi { withAnimations =>
+    subs += participantsController.onShowAnimations.onUi { withAnimations =>
       navigationController.setRightPage(Page.MESSAGE_STREAM, ConversationManagerFragment.Tag)
 
       if (withAnimations)

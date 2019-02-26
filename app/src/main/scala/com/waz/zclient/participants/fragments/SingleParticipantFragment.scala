@@ -20,24 +20,29 @@ package com.waz.zclient.participants.fragments
 import android.content.Context
 import android.os.Bundle
 import android.support.annotation.Nullable
-import android.support.v4.view.ViewPager
+import android.support.design.widget.TabLayout
+import android.support.design.widget.TabLayout.OnTabSelectedListener
+import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
+import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils._
+import com.waz.utils.events.{ClockSignal, Signal}
 import com.waz.zclient.common.controllers.{BrowserController, ThemeController, UserAccountsController}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.CreateConversationController
+import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
-import com.waz.zclient.participants.{ParticipantOtrDeviceAdapter, ParticipantsController, TabbedParticipantPagerAdapter}
-import com.waz.zclient.ui.views.tab.TabIndicatorLayout
-import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{RichView, StringUtils}
-import com.waz.zclient.views.menus.FooterMenuCallback
+import com.waz.zclient.participants.{ParticipantOtrDeviceAdapter, ParticipantsController}
+import com.waz.zclient.utils.{GuestUtils, RichView, StringUtils}
+import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.zclient.{FragmentHelper, R}
+import org.threeten.bp.Instant
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 class SingleParticipantFragment extends FragmentHelper {
   import Threading.Implicits.Ui
@@ -45,30 +50,142 @@ class SingleParticipantFragment extends FragmentHelper {
 
   import SingleParticipantFragment._
 
-  private lazy val participantOtrDeviceAdapter = new ParticipantOtrDeviceAdapter
-
-  private lazy val viewPager = view[ViewPager](R.id.vp_single_participant_viewpager)
-
-  private lazy val convController         = inject[ConversationController]
   private lazy val participantsController = inject[ParticipantsController]
-  private lazy val themeController        = inject[ThemeController]
-  private lazy val screenController       = inject[IConversationScreenController]
   private lazy val userAccountsController = inject[UserAccountsController]
-  private lazy val browserController      = inject[BrowserController]
-  private lazy val createConvController   = inject[CreateConversationController]
+
+  private val visibleTab = Signal[SingleParticipantFragment.Tab](DetailsTab)
+
+  private lazy val tabs = returning(view[TabLayout](R.id.details_and_devices_tabs)) {
+    _.foreach {
+      _.addOnTabSelectedListener(new OnTabSelectedListener {
+        override def onTabSelected(tab: TabLayout.Tab): Unit = {
+          visibleTab ! SingleParticipantFragment.Tab.tabs.find(_.pos == tab.getPosition).getOrElse(DetailsTab)
+        }
+
+        override def onTabUnselected(tab: TabLayout.Tab): Unit = {}
+        override def onTabReselected(tab: TabLayout.Tab): Unit = {}
+      })
+    }
+  }
+
+  private lazy val availability = {
+    val usersController = inject[UsersController]
+
+    val availabilityVisible = Signal(participantsController.otherParticipant.map(_.expiresAt.isDefined), usersController.availabilityVisible).map {
+      case (true, _)         => false
+      case (_, isTeamMember) => isTeamMember
+    }
+
+    val availabilityStatus = for {
+      Some(uId) <- participantsController.otherParticipantId
+      av        <- usersController.availability(uId)
+    } yield av
+
+    Signal(availabilityVisible, availabilityStatus).map {
+      case (true, status) => Some(status)
+      case (false, _)     => None
+    }
+  }
+
+  private lazy val timerText = for {
+    expires <- participantsController.otherParticipant.map(_.expiresAt)
+    clock   <- if (expires.isDefined) ClockSignal(5.minutes) else Signal.const(Instant.EPOCH)
+  } yield expires match {
+    case Some(expiresAt) => Some(GuestUtils.timeRemainingString(expiresAt.instant, clock))
+    case _               => None
+  }
+
+  private lazy val readReceipts = Signal(userAccountsController.isTeam, userAccountsController.readReceiptsEnabled).map {
+    case (true, true)  => Some(getString(R.string.read_receipts_info_title_enabled))
+    case (true, false) => Some(getString(R.string.read_receipts_info_title_disabled))
+    case _             => None
+  }
+
+  private lazy val devicesView = returning( view[RecyclerView](R.id.devices_recycler_view) ) { vh =>
+    visibleTab.onUi {
+      case DevicesTab => vh.foreach(_.setVisible(true))
+      case _          => vh.foreach(_.setVisible(false))
+    }
+  }
+
+  private lazy val detailsView = returning( view[RecyclerView](R.id.details_recycler_view) ) { vh =>
+    visibleTab.onUi {
+      case DetailsTab => vh.foreach(_.setVisible(true))
+      case _          => vh.foreach(_.setVisible(false))
+    }
+  }
 
   private lazy val userHandle = returning(view[TextView](R.id.user_handle)) { vh =>
-    val handle = participantsController.otherParticipant.map(_.handle.map(_.string))
+    participantsController.otherParticipant.map(_.handle.map(_.string)).onUi {
+      case Some(h) =>
+        vh.foreach { view =>
+          view.setText(StringUtils.formatHandle(h))
+          view.setVisible(true)
+        }
+      case None =>
+        vh.foreach(_.setVisible(false))
+    }
+  }
 
-    handle
-      .map(_.isDefined)
-      .onUi(vis => vh.foreach(_.setVisible(vis)))
+  private lazy val footerCallback = new FooterMenuCallback {
+    override def onLeftActionClicked(): Unit =
+      participantsController.otherParticipant.map(_.expiresAt.isDefined).head.foreach {
+        case false => participantsController.isGroup.head.flatMap {
+          case false => userAccountsController.hasCreateConvPermission.head.map {
+            case true => inject[CreateConversationController].onShowCreateConversation ! true
+            case _ =>
+          }
+          case _ => Future.successful {
+            participantsController.onShowAnimations ! true
+            participantsController.otherParticipantId.head.foreach {
+              case Some(userId) =>
+                inject[IConversationScreenController].hideUser()
+                userAccountsController.getOrCreateAndOpenConvFor(userId)
+              case _ =>
+            }
+          }
+        }
+        case _ =>
+      }
 
-    handle
-      .map {
-        case Some(h) => StringUtils.formatHandle(h)
-        case _       => ""
-      }.onUi(str => vh.foreach(_.setText(str)))
+    override def onRightActionClicked(): Unit =
+      inject[ConversationController].currentConv.head.foreach { conv =>
+        if (conv.isActive)
+          inject[IConversationScreenController].showConversationMenu(false, conv.id)
+      }
+  }
+
+  private lazy val leftActionStrings = for {
+    isWireless     <- participantsController.otherParticipant.map(_.expiresAt.isDefined)
+    isGroupOrBot   <- participantsController.isGroupOrBot
+    canCreateConv  <- userAccountsController.hasCreateConvPermission
+    isPartner      <- userAccountsController.isPartner
+  } yield if (isWireless) {
+    (R.string.empty_string, R.string.empty_string)
+  } else if (!isPartner && !isGroupOrBot && canCreateConv) {
+    (R.string.glyph__add_people, R.string.conversation__action__create_group)
+  } else if (isPartner && !isGroupOrBot) {
+    (R.string.empty_string, R.string.empty_string)
+  } else {
+    (R.string.glyph__conversation, R.string.conversation__action__open_conversation)
+  }
+
+  private lazy val footerMenu = returning( view[FooterMenu](R.id.fm__footer) ) { vh =>
+    (for {
+      createPerm <- userAccountsController.hasCreateConvPermission
+      convId     <- participantsController.conv.map(_.id)
+      remPerm    <- userAccountsController.hasRemoveConversationMemberPermission(convId)
+    } yield createPerm || remPerm).map {
+      case true => R.string.glyph__more
+      case _    => R.string.empty_string
+    }.map(getString).onUi(text => vh.foreach(_.setRightActionText(text)))
+
+    leftActionStrings.onUi { case (icon, text) =>
+      vh.foreach { menu =>
+        menu.setLeftActionText(getString(icon))
+        menu.setLeftActionLabelText(getString(text))
+      }
+    }
   }
 
   override def onCreateView(inflater: LayoutInflater, viewGroup: ViewGroup, savedInstanceState: Bundle): View =
@@ -77,78 +194,61 @@ class SingleParticipantFragment extends FragmentHelper {
   override def onViewCreated(v: View, @Nullable savedInstanceState: Bundle): Unit = {
     super.onViewCreated(v, savedInstanceState)
 
-    viewPager.foreach { pager =>
-      pager.setAdapter(new TabbedParticipantPagerAdapter(
-        participantOtrDeviceAdapter,
-        new FooterMenuCallback {
-          override def onLeftActionClicked(): Unit =
-            participantsController.otherParticipant.map(_.expiresAt.isDefined).head.foreach {
-              case false => participantsController.isGroup.head.flatMap {
-                case false => userAccountsController.hasCreateConvPermission.head.map {
-                  case true => createConvController.onShowCreateConversation ! true
-                  case _ => //
-                }
-                case _ => Future.successful {
-                  participantsController.onHideParticipants ! true
-                  participantsController.otherParticipantId.head.foreach {
-                    case Some(userId) =>
-                      screenController.hideUser()
-                      userAccountsController.getOrCreateAndOpenConvFor(userId)
-                    case _ =>
-                  }
-                }
-              }
-              case _ =>
-            }
+    userHandle
 
-          override def onRightActionClicked(): Unit =
-            (for {
-              isGroup <- participantsController.isGroup.head
-              convId  <- convController.currentConvId.head
-            } yield (isGroup, convId)).flatMap {
-              case (false, convId) => Future.successful(screenController.showConversationMenu(false, convId))
-              case (true,  convId) => userAccountsController.hasRemoveConversationMemberPermission(convId).head.flatMap {
-                case true =>
-                  participantsController.otherParticipantId.head.map {
-                    case Some(userId) => participantsController.showRemoveConfirmation(userId)
-                    case _ => //
-                  }
-                case _ => Future.successful({})
-              }
-            }
-        },
-        () => slideFragmentInFromRight(new NotificationsOptionsFragment(), NotificationsOptionsFragment.Tag)
-      ))
+    detailsView.foreach { view =>
+      view.setLayoutManager(new LinearLayoutManager(ctx))
 
-      val tabIndicatorLayout = findById[TabIndicatorLayout](v, R.id.til_single_participant_tabs)
-      tabIndicatorLayout.setPrimaryColor(getColorWithTheme(if (themeController.isDarkTheme) R.color.text__secondary_dark else R.color.text__secondary_light))
-      tabIndicatorLayout.setViewPager(pager)
-    }
-
-    if (Option(savedInstanceState).isEmpty) viewPager.foreach { pager =>
-      pager.setCurrentItem(getStringArg(ArgPageToOpen) match {
-        case Some(TagDevices) => 1
-        case _                => 0
-      })
-
-    }
-
-    participantOtrDeviceAdapter.onClientClick.onUi { client =>
-      participantsController.otherParticipantId.head.foreach {
-        case Some(userId) =>
-          Option(getParentFragment).foreach {
-            case f: ParticipantFragment => f.showOtrClient(userId, client.id)
-            case _ =>
+      (for {
+        zms         <- inject[Signal[ZMessaging]].head
+        user        <- participantsController.otherParticipant.head
+        _           <- zms.users.syncIfNeeded(Set(user.id))
+        isGuest     = !user.isWireBot && user.isGuest(zms.teamId)
+        isDarkTheme <- inject[ThemeController].darkThemeSet.head
+      } yield (user.id, isGuest, isDarkTheme)).foreach {
+        case (userId, isGuest, isDarkTheme) =>
+          val adapter = new SingleParticipantAdapter(userId, isGuest, isDarkTheme)
+          Signal(
+            participantsController.otherParticipant.map(_.fields),
+            availability,
+            timerText,
+            readReceipts
+          ).onUi {
+            case (fields, av, tt, rr) if !isGuest => adapter.set(fields, av, tt, rr)
+            case (_, av, tt, rr)                  => adapter.set(Seq.empty, av, tt, rr)
           }
-        case _ =>
+          view.setAdapter(adapter)
       }
     }
 
-    participantOtrDeviceAdapter.onHeaderClick {
-      _ => browserController.openUrl(getString(R.string.url_otr_learn_why))
+    devicesView.foreach { view =>
+      val participantOtrDeviceAdapter = returning(new ParticipantOtrDeviceAdapter) { adapter =>
+        adapter.onClientClick.onUi { client =>
+          participantsController.otherParticipantId.head.foreach {
+            case Some(userId) =>
+              Option(getParentFragment).foreach {
+                case f: ParticipantFragment => f.showOtrClient(userId, client.id)
+                case _ =>
+              }
+            case _ =>
+          }
+        }
+
+        adapter.onHeaderClick {
+          _ => inject[BrowserController].openUrl(getString(R.string.url_otr_learn_why))
+        }
+      }
+      view.setLayoutManager(new LinearLayoutManager(ctx))
+      view.setHasFixedSize(true)
+      view.setAdapter(participantOtrDeviceAdapter)
+      view.setPaddingBottomRes(R.dimen.participants__otr_device__padding_bottom)
+      view.setClipToPadding(false)
     }
 
-    userHandle
+    footerMenu.foreach(_.setCallback(footerCallback))
+
+    val tab = Option(savedInstanceState).fold[Tab](DetailsTab)(_ => Tab(getStringArg(TabToOpen)))
+    tabs.foreach(_.getTabAt(tab.pos).select())
   }
 
   override def onBackPressed(): Boolean = {
@@ -159,15 +259,37 @@ class SingleParticipantFragment extends FragmentHelper {
 
 object SingleParticipantFragment {
   val Tag: String = classOf[SingleParticipantFragment].getName
-  val TagDevices: String = s"${classOf[SingleParticipantFragment].getName}/devices"
 
-  private val ArgPageToOpen: String = "ARG_PAGE_TO_OPEN"
+  sealed trait Tab {
+    val str: String
+    val pos: Int
+  }
 
-  def newInstance(pageToOpen: Option[String] = None): SingleParticipantFragment =
+  case object DetailsTab extends Tab {
+    override val str: String = s"${classOf[SingleParticipantFragment].getName}/details"
+    override val pos: Int = 0
+  }
+
+  case object DevicesTab extends Tab {
+    override val str: String = s"${classOf[SingleParticipantFragment].getName}/devices"
+    override val pos: Int = 1
+  }
+
+  object Tab {
+    val tabs = List[Tab](DetailsTab, DevicesTab)
+    def apply(str: Option[String] = None): Tab = str match {
+      case Some(DevicesTab.str) => DevicesTab
+      case _ => DetailsTab
+    }
+  }
+
+  private val TabToOpen: String = "TAB_TO_OPEN"
+
+  def newInstance(tabToOpen: Option[String] = None): SingleParticipantFragment =
     returning(new SingleParticipantFragment) { f =>
-      pageToOpen.foreach { p =>
+      tabToOpen.foreach { t =>
         f.setArguments(returning(new Bundle){
-          _.putString(ArgPageToOpen, p)
+          _.putString(TabToOpen, t)
         })
       }
     }

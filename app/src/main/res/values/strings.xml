@@ -243,6 +243,7 @@
     <string name="conversation__action__unarchive">Unarchive</string>
     <string name="conversation__action__add_participants">ADD PARTICIPANTS</string>
     <string name="conversation__action__create_group">CREATE GROUP</string>
+    <string name="conversation__action__open_conversation">OPEN CONVERSATION</string>
     <string name="conversation__action__notifications">Notifications…</string>
     <string name="conversation__action__silence">Mute</string>
     <string name="conversation__action__unsilence">Unmute</string>
@@ -251,6 +252,7 @@
     <string name="conversation__action__picture">Picture</string>
     <string name="conversation__action__block">Block…</string>
     <string name="conversation__action__unblock">Unblock</string>
+    <string name="conversation__action__remove_member">Remove…</string>
 
     <string name="conversation__action__leave_and_delete">\tLeave and delete content</string>
     <string name="conversation__action__leave_only">\tLeave group</string>
@@ -799,8 +801,9 @@
     <string name="otr__participant__device_class__phone">Phone</string>
     <string name="otr__participant__device_class__tablet">Tablet</string>
     <string name="otr__participant__device_class__desktop">Desktop computer</string>
-    <string name="otr__participant__tab_details">Details</string>
-    <string name="otr__participant__tab_devices">Devices</string>
+    <string name="otr__participant__tab_details">DETAILS</string>
+    <string name="otr__participant__tab_devices">DEVICES</string>
+    <string name="otr__participant__information">INFORMATION</string>
     <string name="otr__participant__single_device__my_fingerprint_link">Show my device fingerprint</string>
     <string name="otr__participant__single_device__reset_session_link">Reset session</string>
     <string name="otr__participant__my_device__description">Your device fingerprint</string>
