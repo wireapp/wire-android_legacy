@@ -263,7 +263,7 @@ object SyncRequest {
 
     override def toString = s"SyncUser(${users.size} users: ${users.take(5)}...)"
 
-    override def merge(req: SyncRequest) = mergeHelper[SyncUser](req) { other =>
+    override def merge(req: SyncRequest): MergeResult[SyncRequest.SyncUser] = mergeHelper[SyncUser](req) { other =>
       if (other.users.subsetOf(users)) Merged(this)
       else {
         val union = users ++ other.users

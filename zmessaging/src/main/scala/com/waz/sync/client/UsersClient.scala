@@ -35,6 +35,7 @@ import scala.util.Right
 trait UsersClient {
   def loadUsers(ids: Seq[UserId]): ErrorOrResponse[Seq[UserInfo]]
   def loadSelf(): ErrorOrResponse[UserInfo]
+  def loadRichInfo(user: UserId): ErrorOrResponse[Seq[UserField]]
   def updateSelf(info: UserInfo): ErrorOrResponse[Unit]
   def deleteAccount(password: Option[String] = None): ErrorOr[Unit]
   def setSearchable(searchable: Boolean): ErrorOrResponse[Unit]
@@ -74,6 +75,13 @@ class UsersClientImpl(implicit
       .executeSafe
   }
 
+  override def loadRichInfo(user: UserId): ErrorOrResponse[Seq[UserField]] = {
+    Request.Get(relativePath = RichInfoPath(user))
+      .withResultType[Seq[UserField]]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
+
   override def updateSelf(info: UserInfo): ErrorOrResponse[Unit] = {
     debug(l"updateSelf: $info, picture: ${info.picture}")
     Request.Put(relativePath = SelfPath, body = info)
@@ -102,6 +110,7 @@ class UsersClientImpl(implicit
 object UsersClient {
   val UsersPath = "/users"
   val SelfPath = "/self"
+  def RichInfoPath(user: UserId) = s"$UsersPath/${user.str}/rich-info"
   val ConnectionsPath = "/self/connections"
   val SearchablePath = "/self/searchable"
   val IdsCountThreshold = 64

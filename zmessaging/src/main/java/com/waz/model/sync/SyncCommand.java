@@ -22,6 +22,7 @@ import java.util.Map;
 
 public enum SyncCommand {
     SyncUser("sync-user"),
+    SyncRichInfo("sync-rich-info"),
     SyncSelf("sync-self"),
     DeleteAccount("delete-account"),
     SyncConversations("sync-convs"),

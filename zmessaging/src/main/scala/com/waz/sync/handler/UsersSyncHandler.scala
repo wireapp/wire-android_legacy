@@ -44,14 +44,15 @@ class UsersSyncHandler(assetSync: AssetSyncHandler,
   import Threading.Implicits.Background
   private implicit val ec = EventContext.Global
 
-  def syncUsers(ids: UserId*): Future[SyncResult] = usersClient.loadUsers(ids).future flatMap {
-    case Right(users) =>
-      userService
-        .updateSyncedUsers(users)
-        .map(_ => SyncResult.Success)
-    case Left(error) =>
-      Future.successful(SyncResult(error))
-  }
+  def syncUsers(ids: UserId*): Future[SyncResult] =
+    usersClient.loadUsers(ids).future flatMap {
+      case Right(users) =>
+        userService
+          .updateSyncedUsers(users)
+          .map(_ => SyncResult.Success)
+      case Left(error) =>
+        Future.successful(SyncResult(error))
+    }
 
   def syncSelfUser(): Future[SyncResult] = usersClient.loadSelf().future flatMap {
     case Right(user) =>

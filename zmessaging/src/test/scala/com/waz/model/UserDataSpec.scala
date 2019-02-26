@@ -40,7 +40,8 @@ class UserDataSpec extends AndroidFreeSpec {
     Some(TeamId("7d49b132-03b2-4124-bb18-9388577a6bb2")),
     Some(RemoteInstant.ofEpochSec(10000)),
     Some(SSOId("foo", "bar")),
-    Some(ManagedBy("wire"))
+    Some(ManagedBy("wire")),
+    Some(Seq(UserField("Department", "Sales & Marketing"), UserField("Favourite color", "Blue")))
   )
 
   feature("Update from user info") {
@@ -64,6 +65,7 @@ class UserDataSpec extends AndroidFreeSpec {
       data.teamId.shouldEqual(referenceInfo.teamId)
       data.expiresAt.shouldEqual(referenceInfo.expiresAt)
       data.managedBy.shouldEqual(referenceInfo.managedBy)
+      data.fields.shouldEqual(referenceInfo.fields.get)
     }
 
     scenario("Updating with empty UserInfo preserves data") {
@@ -89,6 +91,7 @@ class UserDataSpec extends AndroidFreeSpec {
       data.teamId.shouldEqual(referenceInfo.teamId)
       data.expiresAt.shouldEqual(referenceInfo.expiresAt)
       data.managedBy.shouldEqual(referenceInfo.managedBy)
+      data.fields.shouldEqual(referenceInfo.fields.get)
     }
   }
 }

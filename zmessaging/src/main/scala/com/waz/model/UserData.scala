@@ -23,6 +23,7 @@ import com.waz.db.Dao
 import com.waz.model
 import com.waz.model.ManagedBy.ManagedBy
 import com.waz.model.UserData.ConnectionStatus
+import com.waz.model.UserField._
 import com.waz.service.SearchKey
 import com.waz.sync.client.UserSearchClient.UserSearchEntry
 import com.waz.utils._
@@ -32,29 +33,30 @@ import org.json.JSONObject
 import scala.concurrent.duration._
 
 case class UserData(override val id:       UserId,
-                    teamId:                Option[TeamId]        = None,
+                    teamId:                Option[TeamId]         = None,
                     name:                  Name,
-                    email:                 Option[EmailAddress]  = None,
-                    phone:                 Option[PhoneNumber]   = None,
-                    trackingId:            Option[TrackingId]    = None,
-                    picture:               Option[AssetId]       = None,
-                    accent:                Int                   = 0, // accent color id
+                    email:                 Option[EmailAddress]   = None,
+                    phone:                 Option[PhoneNumber]    = None,
+                    trackingId:            Option[TrackingId]     = None,
+                    picture:               Option[AssetId]        = None,
+                    accent:                Int                    = 0, // accent color id
                     searchKey:             SearchKey,
-                    connection:            ConnectionStatus      = ConnectionStatus.Unconnected,
-                    connectionLastUpdated: RemoteInstant         = RemoteInstant.Epoch, // server side timestamp of last connection update
-                    connectionMessage:     Option[String]        = None, // incoming connection request message
-                    conversation:          Option[RConvId]       = None, // remote conversation id with this contact (one-to-one)
-                    relation:              Relation              = Relation.Other, //unused - remove in future migration
-                    syncTimestamp:         Option[LocalInstant]  = None,
-                    displayName:           Name                  = Name.Empty,
-                    verified:              Verification          = Verification.UNKNOWN, // user is verified if he has any otr client, and all his clients are verified
-                    deleted:               Boolean               = false,
-                    availability:          Availability          = Availability.None,
-                    handle:                Option[Handle]        = None,
-                    providerId:            Option[ProviderId]    = None,
-                    integrationId:         Option[IntegrationId] = None,
-                    expiresAt:             Option[RemoteInstant] = None,
-                    managedBy:             Option[ManagedBy]     = None) extends Identifiable[UserId] {
+                    connection:            ConnectionStatus       = ConnectionStatus.Unconnected,
+                    connectionLastUpdated: RemoteInstant          = RemoteInstant.Epoch, // server side timestamp of last connection update
+                    connectionMessage:     Option[String]         = None, // incoming connection request message
+                    conversation:          Option[RConvId]        = None, // remote conversation id with this contact (one-to-one)
+                    relation:              Relation               = Relation.Other, //unused - remove in future migration
+                    syncTimestamp:         Option[LocalInstant]   = None,
+                    displayName:           Name                   = Name.Empty,
+                    verified:              Verification           = Verification.UNKNOWN, // user is verified if he has any otr client, and all his clients are verified
+                    deleted:               Boolean                = false,
+                    availability:          Availability           = Availability.None,
+                    handle:                Option[Handle]         = None,
+                    providerId:            Option[ProviderId]     = None,
+                    integrationId:         Option[IntegrationId]  = None,
+                    expiresAt:             Option[RemoteInstant]  = None,
+                    managedBy:             Option[ManagedBy]      = None,
+                    fields:                Seq[UserField]         = Seq.empty) extends Identifiable[UserId] {
 
   def isConnected = ConnectionStatus.isConnected(connection)
   def hasEmailOrPhone = email.isDefined || phone.isDefined
@@ -85,7 +87,8 @@ case class UserData(override val id:       UserId,
     integrationId = user.service.map(_.id).orElse(integrationId),
     expiresAt = user.expiresAt.orElse(expiresAt),
     teamId = user.teamId.orElse(teamId),
-    managedBy = user.managedBy.orElse(managedBy)
+    managedBy = user.managedBy.orElse(managedBy),
+    fields = user.fields.getOrElse(fields)
   )
 
   def updated(user: UserSearchEntry): UserData = copy(
@@ -181,7 +184,8 @@ object UserData {
       availability = Availability(decodeInt('activityStatus)), handle = decodeOptHandle('handle),
       providerId = decodeOptId[ProviderId]('providerId), integrationId = decodeOptId[IntegrationId]('integrationId),
       expiresAt = decodeOptISOInstant('expires_at).map(RemoteInstant(_)),
-      managedBy = ManagedBy.decodeOptManagedBy('managed_by)
+      managedBy = ManagedBy.decodeOptManagedBy('managed_by),
+      fields = UserField.decodeUserFields('fields)
     )
   }
 
@@ -210,6 +214,7 @@ object UserData {
       v.integrationId.foreach { iId => o.put("integrationId", iId.str) }
       v.expiresAt.foreach(v => o.put("expires_at", v))
       v.managedBy.foreach(o.put("managed_by", _))
+      o.put("fields", JsonEncoder.arr(v.fields))
     }
   }
 
@@ -238,6 +243,7 @@ object UserData {
     val IntegrationId = opt(id[IntegrationId]('integration_id))(_.integrationId)
     val ExpiresAt = opt(remoteTimestamp('expires_at))(_.expiresAt)
     val Managed = opt(text[ManagedBy]('managed_by, _.toString, ManagedBy(_)))(_.managedBy)
+    val Fields = json[Seq[UserField]]('fields)(UserField.userFieldsDecoder, UserField.userFieldsEncoder)(_.fields)
 
     override val idCol = Id
     override val table = Table(

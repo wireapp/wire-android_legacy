@@ -41,6 +41,7 @@ import scala.collection.breakOut
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Right
+import scala.util.control.NonFatal
 
 
 trait UserService {
@@ -57,6 +58,7 @@ trait UserService {
   def syncIfNeeded(userIds: Set[UserId], olderThan: FiniteDuration = SyncIfOlderThan): Future[Option[SyncId]]
   def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[RemoteInstant] = None, message: Option[String] = None): Future[Option[UserData]]
   def updateUsers(entries: Seq[UserSearchEntry]): Future[Set[UserData]]
+  def syncRichInfoNowForUser(id: UserId): Future[Option[UserData]]
   def acceptedOrBlockedUsers: Signal[Map[UserId, UserData]]
 
   def updateSyncedUsers(users: Seq[UserInfo], timestamp: LocalInstant = LocalInstant.Now): Future[Set[UserData]]
@@ -176,6 +178,15 @@ class UserServiceImpl(selfUserId:        UserId,
   override def updateUsers(entries: Seq[UserSearchEntry]) = {
     def updateOrAdd(entry: UserSearchEntry) = (_: Option[UserData]).fold(UserData(entry))(_.updated(entry))
     usersStorage.updateOrCreateAll(entries.map(entry => entry.id -> updateOrAdd(entry)).toMap)
+  }
+
+  override def syncRichInfoNowForUser(id: UserId): Future[Option[UserData]] = Serialized.future("syncRichInfoNow", id) {
+    usersClient.loadRichInfo(id).future.flatMap {
+      case Right(f) =>
+          updateUserData(id, u => u.copy(fields = f))
+          .map(_.map(_._2))
+      case Left(error) => Future.failed(error)
+    }
   }
 
   def syncSelfNow: Future[Option[UserData]] = Serialized.future("syncSelfNow", selfUserId) {
