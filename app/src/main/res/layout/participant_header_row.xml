@@ -108,7 +108,7 @@
         android:layout_marginTop="@dimen/wire__padding__8"
         android:paddingStart="@dimen/wire__padding__regular"
         android:paddingEnd="@dimen/wire__padding__regular"
-        android:paddingBottom="@dimen/wire__padding__small"
+        android:paddingBottom="@dimen/wire__padding__4"
         android:visibility="gone"
         />
 </LinearLayout>

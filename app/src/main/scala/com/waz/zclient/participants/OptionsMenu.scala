@@ -129,6 +129,7 @@ object OptionsMenu {
     case R.string.glyph__delete_me => WireStyleKit.drawDeleteforme
     case R.string.glyph__leave => WireStyleKit.drawLeave
     case R.string.glyph__block => WireStyleKit.drawBlock
+    case R.string.glyph__minus => WireStyleKit.drawRemove
 
     case _ => (_, _, _, _) => ()
   }
