@@ -23,7 +23,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingTop="@dimen/wire__padding__large"
+    >
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/read_receipts_info_title"

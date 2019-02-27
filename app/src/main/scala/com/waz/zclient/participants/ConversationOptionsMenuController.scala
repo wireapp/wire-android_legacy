@@ -265,7 +265,7 @@ object ConversationOptionsMenuController {
   object Leave          extends BaseMenuItem(R.string.conversation__action__leave, Some(R.string.glyph__leave))
   object Block          extends BaseMenuItem(R.string.conversation__action__block, Some(R.string.glyph__block))
   object Unblock        extends BaseMenuItem(R.string.conversation__action__unblock, Some(R.string.glyph__block))
-  object RemoveMember   extends BaseMenuItem(R.string.conversation__action__remove_member, Some(R.string.glyph__delete_me)) // TODO: the minus glyph?
+  object RemoveMember   extends BaseMenuItem(R.string.conversation__action__remove_member, Some(R.string.glyph__minus))
 
   object LeaveOnly      extends BaseMenuItem(R.string.conversation__action__leave_only, Some(R.string.empty_string))
   object LeaveAndDelete extends BaseMenuItem(R.string.conversation__action__leave_and_delete, Some(R.string.empty_string))
