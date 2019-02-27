@@ -26,6 +26,7 @@ import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.verbose
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils._
@@ -203,8 +204,9 @@ class SingleParticipantFragment extends FragmentHelper {
       (for {
         zms                <- inject[Signal[ZMessaging]].head
         user               <- participantsController.otherParticipant.head
-        _                  <- zms.users.syncIfNeeded(Set(user.id))
         isGuest            = !user.isWireBot && user.isGuest(zms.teamId)
+                             // if the user is from our team we ask the backend for the rich profile (but we don't wait for it)
+        _                  = if (zms.teamId.isDefined && !isGuest) zms.users.syncRichInfoNowForUser(user.id) else Future.successful(())
         isDarkTheme        <- inject[ThemeController].darkThemeSet.head
         isCurrentUserGuest <- participantsController.isCurrentUserGuest.head
       } yield (user.id, isGuest, isDarkTheme, isCurrentUserGuest)).foreach {
@@ -216,8 +218,12 @@ class SingleParticipantFragment extends FragmentHelper {
             timerText,
             readReceipts
           ).onUi {
-            case (fields, av, tt, rr) if !isCurrentUserGuest => adapter.set(fields, av, tt, rr)
-            case (_, av, tt, rr)                             => adapter.set(Seq.empty, av, tt, rr)
+            case (fields, av, tt, rr) if !isCurrentUserGuest =>
+              verbose(s"fields: $fields")
+              adapter.set(fields, av, tt, rr)
+            case (_, av, tt, rr)                             =>
+              verbose(s"fields is None because the current user is guest")
+              adapter.set(Seq.empty, av, tt, rr)
           }
           view.setAdapter(adapter)
       }
