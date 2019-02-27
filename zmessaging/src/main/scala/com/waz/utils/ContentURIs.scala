@@ -20,7 +20,7 @@ package com.waz.utils
 import android.content.Context
 import android.provider.OpenableColumns._
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.model.Mime
 import com.waz.threading.Threading
 import com.waz.utils.wrappers.URI
@@ -35,7 +35,7 @@ object ContentURIs {
     def mimeFromExtension = Option(uri.getLastPathSegment).map(Mime.fromFileName).filterNot(_.isEmpty)
     def mime = mimeFromResolver orElse mimeFromExtension getOrElse Mime.Default
 
-    verbose(s"queryContentUriInfo($uri) - mimeFromResolver: $mimeFromResolver, mimeFromExtension: $mimeFromExtension")
+    verbose(l"queryContentUriInfo($uri) - mimeFromResolver: $mimeFromResolver, mimeFromExtension: $mimeFromExtension")
 
     def nameFromUri = Option(uri.getLastPathSegment).filterNot(_.isEmpty)
 

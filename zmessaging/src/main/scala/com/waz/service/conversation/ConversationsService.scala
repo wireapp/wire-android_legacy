@@ -181,9 +181,16 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         _ <- if (selfAdded && conv.receiptMode.exists(_ > 0)) messages.addReceiptModeIsOnMessage(conv.id) else Future.successful(None)
       } yield ()
 
-    case MemberLeaveEvent(_, _, _, userIds) =>
+    case MemberLeaveEvent(_, time, from, userIds) =>
       membersStorage.remove(conv.id, userIds) flatMap { _ =>
-        if (userIds.contains(selfUserId)) content.setConvActive(conv.id, active = false)
+        if (userIds.contains(selfUserId)) {
+          content.setConvActive(conv.id, active = false).map { _ =>
+            // if the user removed themselves from another device, archived on this device
+            if (from.equals(selfUserId) && userIds.contains(selfUserId)) {
+              content.updateConversationState(conv.id, ConversationState(Some(true), Some(time)))
+            }
+          }
+        }
         else successful(())
       }
 

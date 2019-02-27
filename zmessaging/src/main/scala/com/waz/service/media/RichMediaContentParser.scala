@@ -21,8 +21,8 @@ import java.net.URLDecoder
 
 import android.util.Patterns
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.Message.Part
+import com.waz.log.ZLog2._
 import com.waz.model.{Mention, MessageContent}
 import com.waz.sync.client.{SoundCloudClient, YouTubeClient}
 import com.waz.utils.wrappers.URI
@@ -103,7 +103,7 @@ object RichMediaContentParser {
       res.result()
     } catch {
       case e: Throwable =>
-        error("got error while parsing message content", e)
+        error(l"got error while parsing message content", e)
         Seq(MessageContent(TEXT, content))
     }
   }

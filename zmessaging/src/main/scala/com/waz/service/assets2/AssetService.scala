@@ -21,7 +21,7 @@ import java.io.InputStream
 import java.net.URI
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.cache2.CacheService
 import com.waz.model.errors._
 import com.waz.model.{AssetId, Mime}
@@ -60,7 +60,7 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
   protected def cacheKey(asset: Asset[General]): String = asset.id.str
 
   private def loadFromBackend(asset: Asset[General], callback: Option[ProgressCallback]): CancellableFuture[InputStream] = {
-    verbose(s"Load asset content from backend. $asset")
+    verbose(l"Load asset content from backend. $asset")
     assetClient.loadAssetContent(asset, callback).flatMap {
       case Left(err) if err.code == ResponseCode.NotFound =>
         cache
@@ -79,23 +79,23 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
   }
 
   private def loadFromCache(asset: Asset[General], callback: Option[ProgressCallback]): CancellableFuture[InputStream] = {
-    verbose(s"Load asset content from cache. $asset")
+    verbose(l"Load asset content from cache. $asset")
     cache.get(cacheKey(asset))(asset.encryption)
       .recoverWith { case err =>
-        verbose(s"Can not load asset content from cache. $err")
+        verbose(l"Can not load asset content from cache. $err")
         Future.failed(err)
       }
       .toCancellable
   }
 
   private def loadFromFileSystem(asset: Asset[General], callback: Option[ProgressCallback]): CancellableFuture[InputStream] = {
-    verbose(s"Load asset content from file system. $asset")
+    verbose(l"Load asset content from file system. $asset")
     lazy val emptyUriError = new NoSuchElementException("Asset does not have local source property.")
     Future { asset.localSource.map(uriHelper.openInputStream).getOrElse(Failure(throw emptyUriError)) }
       .flatMap(Future.fromTry)
       .recoverWith { case err =>
-        debug(s"Can not load content from file system. $err")
-        verbose(s"Clearing local source asset property. $asset")
+        debug(l"Can not load content from file system. $err")
+        verbose(l"Clearing local source asset property. $asset")
         assetsStorage.save(asset.copy(localSource = None)).flatMap(_ => Future.failed(err))
       }
       .toCancellable
@@ -126,7 +126,7 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
         val asset = Asset(AssetId(response.rId.str), response.token, rawAsset)
         assetsStorage.save(asset).map(_ => asset).toCancellable
       case Left(err) =>
-        verbose(s"Error while uploading asset: $err")
+        verbose(l"Error while uploading asset: $err")
         CancellableFuture.failed(NetworkError(err))
     }
   }

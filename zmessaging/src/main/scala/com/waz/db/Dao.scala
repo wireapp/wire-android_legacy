@@ -17,8 +17,8 @@
  */
 package com.waz.db
 
-import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
+import com.waz.log.ZLog2._
 import com.waz.utils.wrappers.{DB, DBContentValues, DBCursor}
 import com.waz.utils.{Managed, returning}
 
@@ -163,7 +163,7 @@ abstract class BaseDao[T] extends Reader[T] {
   final implicit def columnToValue[A](col: Column[A])(implicit cursor: DBCursor): A = {
     val index = cursor.getColumnIndex(col.name)
     if (index < 0) {
-      ZLog.error(s"getColumnIndex returned $index for column: ${col.name}, cursor columns: ${cursor.getColumnNames.mkString(",")}")
+      error(l"getColumnIndex returned $index for column: ${showString(col.name)}, cursor columns: ${showString(cursor.getColumnNames.mkString(","))}")
     }
     col.load(cursor, index)
   }

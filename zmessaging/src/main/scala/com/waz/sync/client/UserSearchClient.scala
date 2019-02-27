@@ -18,8 +18,8 @@
 package com.waz.sync.client
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
+import com.waz.log.ZLog2._
 import com.waz.model.SearchQuery.{Recommended, RecommendedHandle, TopPeople}
 import com.waz.model._
 import com.waz.sync.client.UserSearchClient.{DefaultLimit, UserSearchEntry}
@@ -51,11 +51,11 @@ class UserSearchClientImpl(implicit
     RawBodyDeserializer[JSONObject].map(json => UserSearchResponse.unapply(JsonObjectResponse(json)).get)
 
   override def getContacts(query: SearchQuery, limit: Int = DefaultLimit): ErrorOrResponse[Seq[UserSearchEntry]] = {
-    debug(s"graphSearch('$query', $limit)")
+    debug(l"graphSearch('$query', $limit)")
 
     //TODO Get rid of this
     if (query.isInstanceOf[TopPeople.type]) {
-      warn("A request to /search/top was made - this is now only handled locally")
+      warn(l"A request to /search/top was made - this is now only handled locally")
       CancellableFuture.successful(Right(Seq.empty))
     }
 
@@ -117,7 +117,7 @@ object UserSearchClient {
         try {
           Some(JsonDecoder.array[Option[UserSearchEntry]](js.getJSONArray("documents")).flatten)
         } catch {
-          case NonFatal(ex) => warn(s"parsing failed", ex)
+          case NonFatal(ex) => warn(l"parsing failed", ex)
             None
         }
       case _ => None

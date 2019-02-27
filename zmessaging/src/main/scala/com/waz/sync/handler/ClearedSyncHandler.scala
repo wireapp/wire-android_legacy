@@ -18,7 +18,7 @@
 package com.waz.sync.handler
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.api.Message
 import com.waz.content.{ConversationStorage, MessagesStorage}
 import com.waz.model.GenericContent.Cleared
@@ -48,18 +48,18 @@ class ClearedSyncHandler(selfUserId:   UserId,
   // (but we need to first send them to get that info).
   private[sync] def getActualClearInfo(convId: ConvId, time: RemoteInstant) =
     msgs.findMessagesFrom(convId, time) map { ms =>
-      verbose(s"getActualClearInfo, messages from clear time: $ms")
+      verbose(l"getActualClearInfo, messages from clear time: $ms")
 
       val sentMessages = ms.takeWhile(m => m.time == time || m.userId == selfUserId && m.state == Message.Status.SENT)
       val t = sentMessages.lastOption.fold(time)(_.time)
       val archive = sentMessages.length == ms.length // archive only if there is no new or incoming message
 
-      verbose(s"getActualClearInfo = ($t, $archive)")
+      verbose(l"getActualClearInfo = ($t, $archive)")
       (t, archive)
     }
 
   def postCleared(convId: ConvId, time: RemoteInstant): Future[SyncResult] = {
-    verbose(s"postCleared($convId, $time)")
+    verbose(l"postCleared($convId, $time)")
 
     def postTime(time: RemoteInstant, archive: Boolean) =
       convs.get(convId).flatMap {

@@ -22,10 +22,10 @@ import java.io.File
 import android.annotation.TargetApi
 import android.content.Context
 import android.media.{MediaCodec, MediaExtractor, MediaFormat, MediaMuxer}
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.bitmap.video.VideoTranscoder.CodecResponse.{CodecBuffer, FormatChanged, TryAgain}
 import com.waz.bitmap.video.VideoTranscoder.{MediaCodecIterator, OutputWriter}
+import com.waz.log.ZLog2._
 import com.waz.utils.{Cleanup, Managed, returning}
 
 
@@ -102,14 +102,14 @@ class MuxerWriter(muxer: MediaMuxer, sources: MediaCodecIterator*) extends Outpu
                 s.positionMs = info.presentationTimeUs / 1000
               }
               frame.release()
-            case st => error(s"unexpected state: $st")
+            case st => error(l"unexpected state: $st")
           }
         case s @ SourceWithTrack(source, None, _) if source.hasNext && !started =>
           source.next() match {
             case TryAgain =>
             case FormatChanged(format) =>
               s.track = Some(muxer.addTrack(format))
-            case st => error(s"unexpected state: $st")
+            case st => error(l"unexpected state: $st")
           }
         case _ => // ignore
       }

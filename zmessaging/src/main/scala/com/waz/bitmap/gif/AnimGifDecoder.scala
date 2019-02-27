@@ -18,8 +18,8 @@
 package com.waz.bitmap.gif
 
 import android.graphics.Bitmap
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.log.ZLog2._
 
 import scala.concurrent.duration.Duration
 
@@ -64,7 +64,7 @@ class AnimGifDecoder(gif: Gif) {
    * Will decode next frame pixels, but not modify current frame image yet.
    */
   def advanceNextFrame(): Unit = {
-    if (frameDirty) warn(s"should call getCurrentFrame before advancing to next frame")
+    if (frameDirty) warn(l"should call getCurrentFrame before advancing to next frame")
     if (!frameDirty && advance()) {
       val frame = gif.frames(frameIndex)
       if (frameIndex == 0) decoder.clear()

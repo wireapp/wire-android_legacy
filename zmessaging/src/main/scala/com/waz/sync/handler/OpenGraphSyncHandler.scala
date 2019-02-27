@@ -18,7 +18,7 @@
 package com.waz.sync.handler
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.api.Message
 import com.waz.api.Message.Part
 import com.waz.api.impl.ErrorResponse
@@ -61,13 +61,13 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
       case None =>
         Future.successful(Failure(s"No message found with id: $msgId"))
       case Some(msg) if msg.msgType != Message.Type.RICH_MEDIA =>
-        debug(s"postMessageMeta, message is not RICH_MEDIA: $msg")
+        debug(l"postMessageMeta, message is not RICH_MEDIA: $msg")
         Future.successful(Success)
       case Some(msg) if msg.content.forall(_.tpe != Part.Type.WEB_LINK) =>
-        verbose(s"postMessageMeta, no WEB_LINK found in msg: $msg")
+        verbose(l"postMessageMeta, no WEB_LINK found in msg: $msg")
         Future.successful(Success)
       case Some(msg) if msg.editTime != editTime =>
-        verbose(s"postMessageMeta, message has already been edited: $msg")
+        verbose(l"postMessageMeta, message has already been edited: $msg")
         Future.successful(Success)
       case Some(msg) =>
         convs.get(convId) flatMap {
@@ -81,10 +81,10 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
                   updateLinkPreviews(msg, links, retention) flatMap {
                     case Left(errors) => Future.successful(SyncResult(errors.head))
                     case Right(TextMessage(_, _, Seq(), _, _)) =>
-                      verbose(s"didn't find any previews in message links: $msg")
+                      verbose(l"didn't find any previews in message links: $msg")
                       Future.successful(Success)
                     case Right(proto) =>
-                      verbose(s"updated link previews: $proto")
+                      verbose(l"updated link previews: $proto")
                       otrSync
                         .postOtrMessage(conv.id, proto)
                         .map(SyncResult(_))
@@ -117,8 +117,8 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
         case (_, p) => p
       }
 
-      verbose(s"loaded open graph data: $res")
-      if (errors.nonEmpty) error(s"open graph loading failed: $errors")
+      verbose(l"loaded open graph data: ${res.collect { case Right(p) => p}}")
+      if (errors.nonEmpty) error(l"open graph loading failed: $errors")
 
       updateIfNotEdited(msg, _.copy(content = parts)) map { _ =>
         if (errors.isEmpty) Right(parts.filter(_.tpe == Part.Type.WEB_LINK))

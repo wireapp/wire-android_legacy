@@ -44,7 +44,8 @@ case class UserInfo(id:           UserId,
                     teamId:       Option[TeamId]          = None,
                     expiresAt:    Option[RemoteInstant]   = None,
                     ssoId:        Option[SSOId]           = None,
-                    managedBy:    Option[ManagedBy]       = None
+                    managedBy:    Option[ManagedBy]       = None,
+                    fields:       Option[Seq[UserField]]  = None
                    ) {
   //TODO Dean - this will actually prevent deleting profile pictures, since the empty seq will be mapped to a None,
   //And so in UserData, the current picture will be used instead...
@@ -116,10 +117,11 @@ object UserInfo {
       val privateMode = decodeOptBoolean('privateMode)
       val ssoId = SSOId.decodeOptSSOId('sso_id)
       val managedBy = ManagedBy.decodeOptManagedBy('managed_by)
+      val fields = UserField.decodeOptUserFields('fields)
       UserInfo(
         id, 'name, accentId, 'email, 'phone, Some(pic), decodeOptString('tracking_id) map (TrackingId(_)),
         deleted = 'deleted, handle = 'handle, privateMode = privateMode, service = decodeOptService('service),
-        'team, decodeOptISORemoteInstant('expires_at), ssoId = ssoId, managedBy = managedBy)
+        'team, decodeOptISORemoteInstant('expires_at), ssoId = ssoId, managedBy = managedBy, fields = fields)
     }
   }
 
@@ -160,9 +162,4 @@ object UserInfo {
     }
   }
 
-  implicit val UserInfoShow: LogShow[UserInfo] =
-    LogShow.createFrom { u =>
-      import u._
-      l" UserInfo: id: $id | email: $email: | phone: $phone: | picture: $picture: | deleted: $deleted: | handle: $handle: | expiresAt: $expiresAt: | ssoId: $ssoId | managedBy: $managedBy"
-    }
 }

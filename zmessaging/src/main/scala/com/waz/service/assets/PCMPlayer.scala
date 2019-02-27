@@ -25,8 +25,8 @@ import java.nio.ByteOrder.LITTLE_ENDIAN
 import android.media.AudioManager.STREAM_MUSIC
 import android.media.AudioTrack
 import android.media.AudioTrack.{MODE_STREAM, OnPlaybackPositionUpdateListener, getMinBufferSize}
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.log.ZLog2._
 import com.waz.service.assets.GlobalRecordAndPlayService.{MediaPointer, PCMContent}
 import com.waz.threading.{SerialDispatchQueue, Threading}
 import libcore.io.SizeOf
@@ -119,11 +119,11 @@ class PCMPlayer private (content: PCMContent, track: AudioTrack, totalSamples: L
     @volatile private var playing = false
 
     setUncaughtExceptionHandler(new UncaughtExceptionHandler {
-      override def uncaughtException(thread: Thread, cause: Throwable): Unit = error(s"scooping [$thread] stopped due to exception", cause)
+      override def uncaughtException(thread: Thread, cause: Throwable): Unit = error(l"scooping [$thread] stopped due to exception", cause)
     })
 
     override def run: Unit = {
-      verbose("scooping started")
+      verbose(l"scooping started")
       playing = true
       scoop()
     }
@@ -151,14 +151,14 @@ class PCMPlayer private (content: PCMContent, track: AudioTrack, totalSamples: L
         }
         scoop()
       }
-    } else verbose("scooping stopped")
+    } else verbose(l"scooping stopped")
   }
 }
 
 object PCMPlayer {
   def apply(content: PCMContent, observer: Player.Observer): Future[PCMPlayer] = Threading.BackgroundHandler.map { handler =>
     val track = new AudioTrack(STREAM_MUSIC, PCM.sampleRate, PCM.outputChannelConfig, PCM.sampleFormat, playerBufferSize, MODE_STREAM)
-    verbose(s"created audio track; buffer size: $playerBufferSize")
+    verbose(l"created audio track; buffer size: $playerBufferSize")
     val totalSamples = content.file.length / SizeOf.SHORT
 
     track.setNotificationMarkerPosition(totalSamples.toInt)
@@ -166,7 +166,7 @@ object PCMPlayer {
     track.setPlaybackPositionUpdateListener(new OnPlaybackPositionUpdateListener {
       override def onPeriodicNotification(t: AudioTrack): Unit = ()
       override def onMarkerReached(t: AudioTrack): Unit = {
-        verbose(s"EOF reached: $content")
+        verbose(l"EOF reached: $content")
         observer.onCompletion()
       }
     }, handler)

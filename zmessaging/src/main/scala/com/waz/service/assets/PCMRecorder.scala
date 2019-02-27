@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 import android.media.AudioRecord
 import android.media.AudioRecord._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.threading.Threading
 import com.waz.threading.Threading.BlockingIO
@@ -55,7 +55,7 @@ object PCMRecorder {
     val maxAmplitude = new AtomicReference[Short](0)
     @volatile var completionRequest = Option.empty[CompletionCause]
 
-    verbose(s"created new audio recorder (buffer size: $recorderBufferSize)")
+    verbose(l"created new audio recorder (buffer size: $recorderBufferSize)")
 
     def extremumOf(a: Short, b: Short) = if (abs(a.toInt) > abs(b.toInt)) a else b
 
@@ -91,20 +91,20 @@ object PCMRecorder {
           }
 
         recorder.startRecording()
-        verbose("audio recording started")
+        verbose(l"audio recording started")
         returning(scoop(0L)) { cause =>
           recorder.stop()
-          verbose(s"audio recording stopped: $cause")
+          verbose(l"audio recording stopped: $cause")
         }
       }(BlockingIO).flatMap { cause =>
         writer.finish()
         writer.completion.map(_ => cause)
       }.andThenFuture { case Failure(cause) =>
-        error(s"audio recording (to $destination) failed", cause)
+        error(l"audio recording (to $destination) failed", cause)
         writer.finish()
         writer.completion
       }.andThen { case _ =>
-        verbose("releasing audio recorder")
+        verbose(l"releasing audio recorder")
         recorder.release()
       }
 
@@ -135,7 +135,7 @@ object PCMRecorder {
   val recorderBufferSize = max(1 << 16, recorderMinBufferSize)
   val readBufferSize = 1 << 13
 
-  sealed trait CompletionCause
+  sealed trait CompletionCause extends SafeToLog
   case object StoppedByUser extends CompletionCause
   case object Cancelled extends CompletionCause
   case object LengthLimitReached extends CompletionCause

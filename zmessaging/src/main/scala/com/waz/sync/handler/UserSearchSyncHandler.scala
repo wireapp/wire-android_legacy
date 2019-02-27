@@ -17,8 +17,8 @@
  */
 package com.waz.sync.handler
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.log.ZLog2._
 import com.waz.model.{Handle, SearchQuery}
 import com.waz.service.UserSearchService
 import com.waz.sync.SyncResult
@@ -32,7 +32,7 @@ class UserSearchSyncHandler(userSearch: UserSearchService, client: UserSearchCli
   import Threading.Implicits.Background
 
   def syncSearchQuery(query: SearchQuery): Future[SyncResult] = {
-    debug(s"starting sync for: $query")
+    debug(l"starting sync for: $query")
     client.getContacts(query).future flatMap {
       case Right(results) =>
         userSearch.updateSearchResults(query, results)
@@ -44,7 +44,7 @@ class UserSearchSyncHandler(userSearch: UserSearchService, client: UserSearchCli
 
   def exactMatchHandle(handle: Handle): Future[SyncResult] = client.exactMatchHandle(handle).future.flatMap {
     case Right(Some(userId)) =>
-      debug(s"exactMatchHandle, got: $userId for the handle $handle")
+      debug(l"exactMatchHandle, got: $userId for the handle $handle")
       for {
         _ <- usersSyncHandler.syncUsers(userId)
         _ <- userSearch.updateExactMatch(handle, userId)

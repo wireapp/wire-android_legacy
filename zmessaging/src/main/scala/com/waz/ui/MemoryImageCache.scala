@@ -17,8 +17,8 @@
  */
 package com.waz.ui
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.log.ZLog2._
 import com.waz.model.AssetId
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.ui.MemoryImageCache.BitmapRequest
@@ -63,10 +63,10 @@ class MemoryImageCacheImpl(lru: Cache[MemoryImageCache.Key, MemoryImageCache.Ent
   override def apply(id: AssetId, req: BitmapRequest, imgWidth: Int, load: => CancellableFuture[Bitmap]): CancellableFuture[Bitmap] =
     get(id, req, imgWidth) match {
       case Some(bitmap) =>
-        verbose(s"found bitmap for req: $req")
+        verbose(l"found bitmap for req: $req")
         CancellableFuture.successful(bitmap)
       case None =>
-        verbose(s"no bitmap for req: $req, loading...")
+        verbose(l"no bitmap for req: $req, loading...")
         val future = load
         future.onSuccess {
           case EmptyBitmap => // ignore
@@ -100,7 +100,7 @@ object MemoryImageCache {
       override def sizeOf(id: Key, value: Entry): Int = value.size
     }
 
-  sealed trait BitmapRequest {
+  sealed trait BitmapRequest extends SafeToLog {
     val width: Int
     val mirror: Boolean = false
   }

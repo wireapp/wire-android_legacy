@@ -18,7 +18,7 @@
 package com.waz.service.messages
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.api.Message
 import com.waz.content.{MessagesStorage, ZmsDatabase}
 import com.waz.model.AssetStatus.{UploadDone, UploadFailed}
@@ -75,7 +75,7 @@ class EphemeralMessagesService(selfUserId: UserId,
   }
 
   private def removeExpired() = Serialized.future(this, "removeExpired") {
-    verbose(s"removeExpired")
+    verbose(l"removeExpired")
     nextExpiryTime ! LocalInstant.Max
     db.read { implicit db =>
       val time = LocalInstant.Now
@@ -99,7 +99,7 @@ class EphemeralMessagesService(selfUserId: UserId,
 
   private def obfuscate(msg: MessageData): MessageData = {
     import Message.Type._
-    verbose(s"obfuscate($msg)")
+    verbose(l"obfuscate($msg)")
 
     def obfuscate(text: String) = text.map { c =>
       if (c.isWhitespace) c else randomChars.next

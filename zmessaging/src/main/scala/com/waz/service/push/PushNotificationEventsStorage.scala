@@ -18,9 +18,9 @@
 package com.waz.service.push
 
 import android.content.Context
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.content.Database
+import com.waz.log.ZLog2._
 import com.waz.model.PushNotificationEvents.PushNotificationEventsDao
 import com.waz.model._
 import com.waz.model.otr.ClientId
@@ -79,7 +79,7 @@ class PushNotificationEventsStorageImpl(context: Context, storage: Database, cli
     def isOtrEventForUs(obj: JSONObject): Boolean = {
       returning(!obj.getString("type").startsWith("conversation.otr") || obj.getJSONObject("data").getString("recipient").equals(clientId.str)) { ret =>
         if (!ret) {
-          verbose(s"Skipping otr event not intended for us: $obj")
+          verbose(l"Skipping otr event not intended for us: $obj")
         }
       }
     }

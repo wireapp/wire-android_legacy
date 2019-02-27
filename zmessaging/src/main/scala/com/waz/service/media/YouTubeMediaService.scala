@@ -17,9 +17,9 @@
  */
 package com.waz.service.media
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
+import com.waz.log.ZLog2._
 import com.waz.model._
 import com.waz.model.messages.media.MediaAssetData
 import com.waz.model.messages.media.MediaAssetData.MediaWithImages
@@ -39,21 +39,21 @@ class YouTubeMediaService(client: YouTubeClient, assets: AssetService) {
       case Some(vId) =>
         client.loadVideo(vId) flatMap {
           case Right(MediaWithImages(media, images)) =>
-            verbose(s"got youtube track: $media, images: $images")
+            verbose(l"got youtube track: $media, images: $images")
             assets.updateAssets(images.to[Vector]) map { _ =>
               Right(content.copy(tpe = Message.Part.Type.YOUTUBE, richMedia = Some(media)))
             }
 
           case Left(error) if error.isFatal =>
-            warn(s"snippet loading for ${content.content} failed fatally: $error, switching back to text")
+            warn(l"snippet loading for ${redactedString(content.content)} failed fatally: $error, switching back to text")
             Future successful Right(content.copy(tpe = Message.Part.Type.TEXT, richMedia = None))
 
           case Left(error) =>
-            warn(s"snippet loading failed: $error")
+            warn(l"snippet loading failed: $error")
             Future successful Left(error)
         }
       case None =>
-        warn(s"no video id found in message: $content")
+        warn(l"no video id found in message: $content")
         Future.successful(Right(content.copy(tpe = Message.Part.Type.TEXT, richMedia = None)))
     }
   }

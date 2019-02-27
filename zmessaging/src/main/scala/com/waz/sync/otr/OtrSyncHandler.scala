@@ -18,12 +18,12 @@
 package com.waz.sync.otr
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.Verification
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.internalError
 import com.waz.cache.LocalData
 import com.waz.content.{ConversationStorage, MembersStorage, UsersStorage}
+import com.waz.log.ZLog2._
 import com.waz.model.AssetData.RemoteData
 import com.waz.model._
 import com.waz.model.otr.ClientId
@@ -82,7 +82,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
           if (content.estimatedSize < MaxContentSize)
             msgClient.postMessage(conv.remoteId, OtrMessage(selfClientId, content, external, nativePush), ignoreMissing = retries > 1, recipients).future
           else {
-            verbose(s"Message content too big, will post as External. Estimated size: ${content.estimatedSize}")
+            verbose(l"Message content too big, will post as External. Estimated size: ${content.estimatedSize}")
             val key = AESKey()
             val (sha, data) = AESUtils.encrypt(key, GenericMessage.toByteArray(msg))
             val newMessage  = GenericMessage(Uid(msg.messageId), Proto.External(key, sha))
@@ -94,7 +94,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
           case MessageResponse.Failure(ClientMismatch(_, missing, _, _)) if retries < 3 =>
             clientsSyncHandler.syncSessions(missing).flatMap { err =>
               if (err.isDefined)
-                error(s"syncSessions for missing clients failed: $err")
+                error(l"syncSessions for missing clients failed: $err")
               encryptAndSend(msg, external, retries + 1, content)
             }
           case _: MessageResponse.Failure =>
@@ -122,7 +122,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       } yield acceptedOrBlocked.keySet ++ myTeamIds
 
       broadcastRecipients.flatMap { recp =>
-        verbose(s"recipients: $recp")
+        verbose(l"recipients: $recp")
         for {
           content <- service.encryptForUsers(recp, message, useFakeOnError = retry > 0, previous)
           r <- otrClient.broadcastMessage(OtrMessage(selfClientId, content), ignoreMissing = retry > 1, recp).future
@@ -144,14 +144,14 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
             clientsSyncHandler.syncSessions(missing).flatMap {
               case None => fn()
               case Some(err) if retry < 3 =>
-                error(s"syncSessions for missing clients failed: $err")
+                error(l"syncSessions for missing clients failed: $err")
                 fn()
               case Some(err) =>
                 successful(Left(err))
             }
         }
       case Left(err) =>
-        error(s"postOtrMessage failed with error: $err")
+        error(l"postOtrMessage failed with error: $err")
         successful(Left(err))
     }
 

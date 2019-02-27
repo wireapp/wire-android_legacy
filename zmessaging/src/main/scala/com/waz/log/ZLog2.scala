@@ -19,25 +19,33 @@ package com.waz.log
 
 import java.io.File
 import java.net.URI
+import java.util.Locale
 
 import android.net.Uri
 import com.waz.ZLog.LogTag
+import com.waz.api.impl.ErrorResponse
 import com.waz.api.{MessageContent => _, _}
+import com.waz.cache2.CacheService.{AES_CBC_Encryption, Encryption, NoEncryption}
 import com.waz.content.Preferences.PrefKey
 import com.waz.log.InternalLog.LogLevel.{Debug, Error, Info, Verbose, Warn}
 import com.waz.model.AccountData.Password
 import com.waz.model.GenericContent.Location
 import com.waz.model.ManagedBy.ManagedBy
+import com.waz.model.messages.media.{ArtistData, TrackData}
 import com.waz.model.{SSOId, _}
 import com.waz.model.otr.{Client, ClientId, UserClients}
-import com.waz.model.sync.ReceiptType
-import com.waz.service.{PlaybackRoute, PropertyKey}
+import com.waz.model.sync.{ReceiptType,SyncCommand, SyncJob, SyncRequest}
+import com.waz.service.PropertyKey
 import com.waz.service.assets.AssetService.RawAssetInput
 import com.waz.service.assets.AssetService.RawAssetInput.{BitmapInput, ByteInput, UriInput, WireAssetInput}
+import com.waz.service.assets.{GlobalRecordAndPlayService, Player}
+import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Idle, PCMContent, Paused, Playing, Recording, UnauthenticatedContent, UriMediaKey}
+import com.waz.service.assets2.{Asset, AssetDetails}
 import com.waz.service.call.Avs.AvsClosedReason.reasonString
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo
 import com.waz.service.otr.OtrService.SessionId
+import com.waz.sync.SyncResult
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.utils.{sha2, wrappers}
 import org.json.JSONObject
@@ -55,13 +63,14 @@ object ZLog2 {
   trait LogShow[-T] {
     def showSafe(value: T): String
     def showUnsafe(value: T): String = showSafe(value)
+
+    def contramap[B](f: B => T): LogShow[B] = LogShow.create[B](f andThen showSafe, f andThen showUnsafe)
   }
 
   //Used to mark traits that are safe to print their natural toString implementation
   trait SafeToLog
   object SafeToLog {
-    implicit val SafeToLogLogShow: LogShow[SafeToLog] =
-      LogShow.logShowWithToString
+    implicit val SafeToLogLogShow: LogShow[SafeToLog] = LogShow.logShowWithToString
   }
 
 
@@ -142,7 +151,11 @@ object ZLog2 {
     implicit val ThrowableShow:      LogShow[Throwable]      = logShowWithToString
     implicit val ShowStringLogShow:  LogShow[ShowString]     = logShowWithToString
 
+    implicit val RedactedStringShow: LogShow[RedactedString] = create(_ => "<redacted>", _.value)
+
     implicit val Sha256LogShow: LogShow[Sha256] = create(_.hexString, _.str)
+
+    implicit val enumShow: LogShow[Enum[_]] = LogShow.create((enumValue: Enum[_]) => enumValue.name())
 
     implicit val JSONObjectLogShow:  LogShow[JSONObject] = logShowWithHash
 
@@ -153,66 +166,40 @@ object ZLog2 {
     implicit val UriLogShow:  LogShow[URI]  = create(_ => "<uri>", _.toString)
     implicit val WUriLogShow: LogShow[wrappers.URI] = create(_ => "<uri>", _.toString)
 
-    //collections
-    private val TakeOnly = 3
-
-    //TODO, why doesn't it work just to define the LogShow[Traversable[T]]?
-    private def safeFromTraversable[T: LogShow](m: Traversable[T]): String = {
-      if (m.isEmpty) m.toString()
-      else {
-        val rem = m.size - TakeOnly
-        val end = if (rem > 0) s" and $rem other elements..." else ""
-        m.map(implicitly[LogShow[T]].showSafe).take(TakeOnly).mkString("", ", ", end)
+    implicit def traversableShow[T](implicit show: LogShow[T]): LogShow[Traversable[T]] = {
+      def createString(xs: Traversable[T], toString: T => String, elemsToPrint: Int = 3): String = {
+        val end = if (xs.size > elemsToPrint) s" and ${xs.size - elemsToPrint} other elements..." else ""
+        xs.take(elemsToPrint).mkString("", ", ", end)
       }
-    }
 
-    private def unsafeFromTraversable[T: LogShow](m: Traversable[T]): String = {
-      if (m.isEmpty) m.toString()
-      else {
-        val rem = m.size - TakeOnly
-        val end = if (rem > 0) s" and $rem other elements..." else ""
-        m.map(implicitly[LogShow[T]].showUnsafe).take(TakeOnly).mkString("", ", ", end)
-      }
+      create(
+        (xs: Traversable[T]) => createString(xs, show.showSafe),
+        (xs: Traversable[T]) => createString(xs, show.showUnsafe)
+      )
     }
-
-    implicit def traversableShow[T: LogShow]: LogShow[Traversable[T]] =
-      create(safeFromTraversable(_), unsafeFromTraversable(_))
 
     implicit def arrayShow[T: LogShow]: LogShow[Array[T]] =
-      create(safeFromTraversable(_), unsafeFromTraversable(_))
+      LogShow[Traversable[T]].contramap(_.toTraversable)
 
     implicit def listSetShow[T: LogShow]: LogShow[ListSet[T]] =
-      create(safeFromTraversable(_), unsafeFromTraversable(_))
+      LogShow[Traversable[T]].contramap(_.toTraversable)
 
-//    implicit def mapShow[A: LogShow, B: LogShow]: LogShow[Map[A, B]] =
-//      create(fromTraversable(_))
+    implicit def optionShow[T](implicit show: LogShow[T]): LogShow[Option[T]] =
+      create(_.map(show.showSafe).toString, _.map(show.showUnsafe).toString)
 
-    implicit def optionShow[T: LogShow]: LogShow[Option[T]] =
-      create(_.map(implicitly[LogShow[T]].showSafe).toString, _.map(implicitly[LogShow[T]].showUnsafe).toString)
+    implicit def tryShow[T](implicit show: LogShow[T]): LogShow[Try[T]] =
+      create(_.map(show.showSafe).toString, _.map(show.showUnsafe).toString)
 
-    implicit def tryShow[T: LogShow]: LogShow[Try[T]] =
-      create(_.map(implicitly[LogShow[T]].showSafe).toString, _.map(implicitly[LogShow[T]].showUnsafe).toString)
-
-    implicit def tuple2Show[A: LogShow, B: LogShow]: LogShow[(A, B)] =
+    implicit def tuple2Show[A,B](implicit showA: LogShow[A], showB: LogShow[B]): LogShow[(A,B)] =
       create(
-        t => (implicitly[LogShow[A]].showSafe(t._1), implicitly[LogShow[B]].showSafe(t._2)).toString(),
-        t => (implicitly[LogShow[A]].showUnsafe(t._1), implicitly[LogShow[B]].showUnsafe(t._2)).toString())
+        t => (showA.showSafe(t._1), showB.showSafe(t._2)).toString(),
+        t => (showA.showUnsafe(t._1), showB.showUnsafe(t._2)).toString())
 
-    implicit def tuple3Show[A: LogShow, B: LogShow, C: LogShow]: LogShow[(A, B, C)] =
+    implicit def tuple3Show[A,B,C](implicit showA: LogShow[A], showB: LogShow[B], showC: LogShow[C]): LogShow[(A,B,C)] =
       create(
-        t => (implicitly[LogShow[A]].showSafe(t._1), implicitly[LogShow[B]].showSafe(t._2), implicitly[LogShow[C]].showSafe(t._3)).toString(),
-        t => (implicitly[LogShow[A]].showUnsafe(t._1), implicitly[LogShow[B]].showUnsafe(t._2), implicitly[LogShow[C]].showUnsafe(t._3)).toString()
+        t => (showA.showSafe(t._1), showB.showSafe(t._2), showC.showSafe(t._3)).toString(),
+        t => (showA.showUnsafe(t._1), showB.showUnsafe(t._2), showC.showUnsafe(t._3)).toString()
       )
-
-    //TODO figure out a generic LogShow for Enums, most will be safe to log:
-    implicit val NetworkModeShow:           LogShow[NetworkMode]                           = LogShow.create(_.name())
-    implicit val MessageTypeLogShow:        LogShow[Message.Type]                          = LogShow.create(_.name())
-    implicit val MessageContentTypeLogShow: LogShow[Message.Part.Type]                     = LogShow.create(_.name())
-    implicit val MessageStateLogShow:       LogShow[MessageData.MessageState]              = LogShow.create(_.name())
-    implicit val ConvStateLogShow:          LogShow[IConversation.Type]                    = LogShow.create(_.name())
-    implicit val PlaybackRouteLogShow:      LogShow[PlaybackRoute]                         = LogShow.create(_.name())
-    implicit val VerificationLogShow:       LogShow[Verification]                          = LogShow.create(_.name())
-    implicit val NotificationTypeLogShow:   LogShow[NotificationsHandler.NotificationType] = LogShow.create(_.name())
 
     //wire types
     implicit val UidShow:        LogShow[Uid]        = logShowWithHash
@@ -263,6 +250,12 @@ object ZLog2 {
         case HandleCredentials(handle, password)     => l"HandleCredentials($handle, $password)"
       }
 
+    implicit val EncryptionShow: LogShow[Encryption] =
+      LogShow.createFrom {
+        case NoEncryption => l"NoEncryption"
+        case AES_CBC_Encryption(key) => l"AES_CBC_Encryption($key)"
+      }
+
     implicit val CookieShow: LogShow[Cookie] = create(
       c => s"Cookie(${c.str.take(10)}, exp: ${c.expiry}, isValid: ${c.isValid})",
       c => s"Cookie(${c.str}, exp: ${c.expiry}, isValid: ${c.isValid})"
@@ -294,7 +287,6 @@ object ZLog2 {
         l"MessageData(id: $id | convId: $convId | msgType: $msgType | userId: $userId | state: $state | time: $time | localTime: $localTime)"
       }
 
-
     implicit val MessageContentLogShow: LogShow[MessageContent] =
       LogShow.createFrom { m =>
         import m._
@@ -305,6 +297,12 @@ object ZLog2 {
       LogShow.createFrom { u =>
         import u._
         l"UserData(id: $id | teamId: $teamId | name: $name | displayName: $displayName | email: $email | phone: $phone | handle: $handle | deleted: $deleted)"
+      }
+
+    implicit val UserInfoLogShow: LogShow[UserInfo] =
+      LogShow.createFrom { u =>
+        import u._
+        l"UserInfo: id: $id | email: $email: | phone: $phone: | picture: $picture: | deleted: $deleted: | handle: $handle: | expiresAt: $expiresAt: | ssoId: $ssoId | managedBy: $managedBy"
       }
 
     implicit val ConvDataLogShow: LogShow[ConversationData] =
@@ -319,13 +317,42 @@ object ZLog2 {
         l"Mention(userId: $userId, start: $start, length: $length)"
       }
 
+    implicit val AssetLogShow: LogShow[Asset[AssetDetails]] =
+      LogShow.createFrom { a =>
+        import a._
+        l"Asset(id: $id | token: $token | sha: $sha | encryption: $encryption | localSource: $localSource | preview: $preview | details: $details | convId: $convId)"
+      }
+
     implicit val AssetDataLogShow: LogShow[AssetData] =
       LogShow.createFrom { c =>
         import c._
         l"""
-           |AssetData: id: $id | mime: $mime | sizeInBytes: $sizeInBytes | status: $status | source: $source
-           |  rId: $remoteId| token: $token | otrKey: $otrKey | preview: $previewId
+           |AssetData(id: $id | mime: $mime | sizeInBytes: $sizeInBytes | status: $status | source: $source
+           |  rId: $remoteId | token: $token | otrKey: $otrKey | preview: $previewId)
         """.stripMargin
+      }
+
+    implicit val TrackDataLogShow: LogShow[TrackData] =
+      LogShow.createFrom { d =>
+        import d._
+        l"""
+            |TrackData(
+            | provider: $provider,
+            | title: ${redactedString(title)},
+            | artist: $artist,
+            | linkUrl: ${new URI(linkUrl)},
+            | artwork: $artwork,
+            | duration: $duration,
+            | streamable: $streamable,
+            | streamUrl: ${streamUrl.map(new URI(_))},
+            | previewUrl: ${previewUrl.map(new URI(_))},
+            | expires: $expires)
+          """.stripMargin
+      }
+
+    implicit val ArtistDataLogShow: LogShow[ArtistData] =
+      LogShow.createFrom { d =>
+        l"ArtistData(name: ${redactedString(d.name)}, avatar: ${d.avatar})"
       }
 
     implicit val NotificationDataLogShow: LogShow[NotificationData] =
@@ -343,6 +370,7 @@ object ZLog2 {
       }
 
     implicit val VideoStateLogShow: LogShow[VideoState] = logShowWithToString
+
     implicit val CallInfoLogShow: LogShow[CallInfo] =
       LogShow.createFrom { n =>
         import n._
@@ -368,8 +396,79 @@ object ZLog2 {
            | ssoId: $ssoId)"""
       }
 
+    implicit val ErrorResponseLogShow: LogShow[ErrorResponse] = LogShow.create(_.toString)
+
+    // Global Record and Play Service
+
+    implicit val StateLogShow: LogShow[GlobalRecordAndPlayService.State] =
+      LogShow.createFrom {
+        case Idle => l"Idle"
+        case Playing(player, key) => l"Playing(player: $player, key: $key)"
+        case Paused(player, key, playhead, transient) => l"Paused(player: $player, key: $key, playhead: $playhead, transient: $transient)"
+        case Recording(_, key, start, entry, promisedAsset) => l"Recording(key: $key, start: $start, entry: $entry)"
+      }
+
+    implicit val PlayerLogShow: LogShow[Player] = LogShow.create(_.getClass.getName)
+
+    implicit val MediaKeyLogShow: LogShow[GlobalRecordAndPlayService.MediaKey] =
+      LogShow.createFrom {
+        case AssetMediaKey(id) => l"AssetMediaKey(id: $id)"
+        case UriMediaKey(uri) => l"UriMediaKey(uri: $uri)"
+      }
+
+    implicit val ErrorLogShow: LogShow[GlobalRecordAndPlayService.Error] =
+      LogShow.create { e =>
+        s"Error(message: ${e.message})"
+      }
+
+    implicit val MediaPointerLogShow: LogShow[GlobalRecordAndPlayService.MediaPointer] =
+      LogShow.createFrom { p =>
+        l"MediaPointer(content: ${p.content}, playhead: ${p.playhead})"
+      }
+
+    implicit val ContentLogShow: LogShow[GlobalRecordAndPlayService.Content] =
+      LogShow.createFrom {
+        case UnauthenticatedContent(uri) => l"UnauthenticatedContent(uri: $uri)"
+        case PCMContent(file) => l"PCMContent(file: $file)"
+      }
+
+    // Sync Job
+
+    implicit val SyncJobLogShow: LogShow[SyncJob] =
+      LogShow.createFrom { j =>
+        import j._
+        l"""SyncJob(
+            | id: $id
+            | request: $request
+            | dependsOn: $dependsOn
+            | priority: $priority
+            | timestamp: $timestamp
+            | startTime: $startTime
+            | attempts: $attempts
+            | offline: $offline
+            | state: $state
+            | error: ${j.error})""".stripMargin
+      }
+
+    implicit val SyncRequestLogShow: LogShow[SyncRequest] =
+      LogShow.createFrom { r =>
+        l"SyncRequest(cmd: ${r.cmd})"
+      }
+
+    implicit val SyncResultLogShow: LogShow[SyncResult] =
+      LogShow.createFrom {
+        case SyncResult.Success => l"Success"
+        case SyncResult.Failure(error) => l"Failure(error: $error)"
+        case SyncResult.Retry(error) => l"Retry(error: $error)"
+      }
+
+    implicit val SyncCommandLogShow: LogShow[SyncCommand] = LogShow.create(_.name())
+    implicit val SyncStateLogShow: LogShow[SyncState] = LogShow.create(_.name())
+
     //Events
+
     implicit val EventLogShow: LogShow[Event] = logShowWithHash
+
     implicit val OtrErrorLogShow: LogShow[OtrError] =
       LogShow.createFrom {
         case Duplicate => l"Duplicate"
@@ -377,6 +476,7 @@ object ZLog2 {
         case IdentityChangedError(from, sender) => l"IdentityChangedError(from: $from | sender: $sender)"
         case UnknownOtrErrorEvent(json) => l"UnknownOtrErrorEvent(json: $json)"
       }
+
     implicit val OtrErrorEventLogShow: LogShow[OtrErrorEvent] =
       LogShow.createFrom { e =>
         import e._
@@ -384,6 +484,7 @@ object ZLog2 {
       }
 
     //Protos
+
     implicit val GenericMessageLogShow: LogShow[GenericMessage] = LogShow.create { m =>
       m.getContentCase
       s"GenericMessage(messageId: ${sha2(m.messageId)} | contentCase: ${m.getContentCase})"
@@ -397,7 +498,18 @@ object ZLog2 {
     }
 
     implicit val ReceiptType: LogShow[ReceiptType] = logShowWithToString
+
+    // System Types
+
+    implicit val ThreadLogShow: LogShow[Thread] =
+      LogShow.create { t =>
+        import t._
+        s"Thread(id: $getId, name: $getName, priority: $getPriority, state: $getState)"
+      }
+
+    implicit val LocaleLogShow: LogShow[Locale] = logShowWithHash
   }
+
 
   trait CanBeShown {
     def showSafe: String
@@ -445,7 +557,10 @@ object ZLog2 {
     override def toString: LogTag = value
   }
 
+  // Use to hide string content only in public logs.
+  class RedactedString(val value: String)
+
 //  @deprecated("Only for legacy support. Will be removed after migration", " ")
   def showString(str: String): ShowString = new ShowString(str)
-
+  def redactedString(str: String): RedactedString = new RedactedString(str)
 }

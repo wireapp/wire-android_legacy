@@ -17,10 +17,10 @@
  */
 package com.waz.service
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences._
+import com.waz.log.ZLog2._
 import com.waz.model.VersionBlacklist
 import com.waz.sync.client.VersionBlacklistClient
 import com.waz.threading.Threading
@@ -58,12 +58,15 @@ class VersionBlacklistService(metadata: MetaDataService, prefs: GlobalPreference
   }
 
   def syncVersionBlackList() = client.loadVersionBlacklist().future flatMap { blacklist =>
-    debug(s"Retrieved version blacklist: $blacklist")
-    updateBlacklist(blacklist.right.getOrElse(VersionBlacklist()))
+    updateBlacklist({
+      val list = blacklist.right.getOrElse(VersionBlacklist())
+      debug(l"Retrieved version blacklist: $list")
+      list
+    })
   }
 
   def updateBlacklist(blacklist: VersionBlacklist): Future[Unit] = {
-    verbose(s"app Version: $appVersion, blacklist: $blacklist")
+    verbose(l"app Version: $appVersion, blacklist: $blacklist")
     for {
       _ <- upToDatePref := (appVersion >= blacklist.oldestAccepted && !blacklist.blacklisted.contains(appVersion))
       _ <- lastUpToDateSync := System.currentTimeMillis

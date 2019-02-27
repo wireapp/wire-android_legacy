@@ -22,10 +22,10 @@ import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.media.MediaMetadataRetriever._
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.bitmap.BitmapUtils
 import com.waz.cache.{CacheEntry, CacheService, LocalData}
 import com.waz.content.AssetsStorage
+import com.waz.log.ZLog2._
 import com.waz.content.WireContentProvider.CacheUri
 import com.waz.model.AssetMetaData.Image.Tag.Medium
 import com.waz.model.AssetMetaData.{Audio, Empty}
@@ -48,14 +48,14 @@ class MetaDataService(context: Context, cache: CacheService, storage: AssetsStor
   def loadMetaData(asset: AssetData, data: LocalData): CancellableFuture[Option[AssetMetaData]] = {
     def load(entry: CacheEntry) = {
       asset.mime match {
-        case Mime.Video() => AssetMetaData.Video(entry.cacheFile).map {_.fold({ msg => error(msg); None }, Some(_))}
+        case Mime.Video() => AssetMetaData.Video(entry.cacheFile).map {_.fold({ msg => error(l"${showString(msg)}"); None }, Some(_))}
         case Mime.Audio() => audioMetaData(asset, entry)
         case Mime.Image() => Future {AssetMetaData.Image(entry.cacheFile)}(Threading.IO)
         case _ => Future successful Some(Empty)
       }
     }.recover {
       case ex =>
-        warn(s"failed to get metadata for asset: ${asset.id}", ex)
+        warn(l"failed to get metadata for asset: ${asset.id}", ex)
         None
     }
     withCacheEntry(data, load)
@@ -69,7 +69,7 @@ class MetaDataService(context: Context, cache: CacheService, storage: AssetsStor
           MetaDataRetriever(entry.cacheFile)(loadPreview).flatMap(createVideoPreview).flatMap {
             case Some(prev) => storage.mergeOrCreateAsset(prev)
             case _ =>
-              verbose(s"Failed to create video preview for asset: $asset.id")
+              verbose(l"Failed to create video preview for asset: ${asset.id}")
               Future.successful(None)
         }
         case _ => //possible plans to add previews for other types (images, pdfs etc?)
@@ -77,7 +77,7 @@ class MetaDataService(context: Context, cache: CacheService, storage: AssetsStor
       }
     }.recover {
       case ex =>
-        warn(s"failed to get preview for asset: ${asset.id}", ex)
+        warn(l"failed to get preview for asset: ${asset.id}", ex)
         None
     }
 
@@ -88,7 +88,7 @@ class MetaDataService(context: Context, cache: CacheService, storage: AssetsStor
     data match {
       case entry: CacheEntry if entry.data.encKey.isEmpty => CancellableFuture lift load(entry)
       case _ =>
-        warn("loading data from stream (encrypted cache, or generic local data) this is slow, please avoid that")
+        warn(l"loading data from stream (encrypted cache, or generic local data) this is slow, please avoid that")
         for {
           entry <- CancellableFuture lift cache.addStream(CacheKey(), data.inputStream, cacheLocation = Some(cache.intCacheDir))(10.minutes)
           res <- CancellableFuture lift load(entry)
@@ -101,12 +101,12 @@ class MetaDataService(context: Context, cache: CacheService, storage: AssetsStor
 
   private def audioMetaData(asset: AssetData, entry: CacheEntry): Future[Option[Audio]] = {
     lazy val loudness = AudioLevels(context).createAudioOverview(CacheUri(entry.data, context), asset.mime)
-      .recover{case _ => warn(s"Failed to genate loudness levels for audio asset: ${asset.id}"); None}.future
+      .recover{case _ => warn(l"Failed to generate loudness levels for audio asset: ${asset.id}"); None}.future
 
     lazy val duration = MetaDataRetriever(entry.cacheFile) { r =>
       val str = r.extractMetadata(METADATA_KEY_DURATION)
       Try(bp.Duration.ofMillis(str.toLong)).toOption
-    }.recover{case _ => warn(s"Failed to extract duration for audio asset: ${asset.id}"); None}
+    }.recover{case _ => warn(l"Failed to extract duration for audio asset: ${asset.id}"); None}
 
     asset.metaData match {
       case Some(meta@AssetMetaData.Audio(_, Some(_))) => Future successful Some(meta) //nothing to do

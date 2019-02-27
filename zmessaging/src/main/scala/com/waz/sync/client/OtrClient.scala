@@ -17,9 +17,10 @@
  */
 package com.waz.sync.client
 
-import com.waz.ZLog._
+import com.waz.ZLog.{LogTag, logTagFor}
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.{OtrClientType, Verification}
+import com.waz.log.ZLog2._
 import com.waz.model.AccountData.Password
 import com.waz.model.otr._
 import com.waz.model.{RemoteInstant, UserId}
@@ -97,7 +98,7 @@ class OtrClientImpl(implicit
         o.put(u.str, JsonEncoder.arrString(cs.map(_.str)))
       }
     }
-    verbose(s"loadPreKeys: $users")
+    verbose(l"loadPreKeys: $users")
     Request.Post(relativePath = prekeysPath, body = data)
       .withResultType[PreKeysResponse]
       .withErrorType[ErrorResponse]

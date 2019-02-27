@@ -17,7 +17,9 @@
  */
 package com.waz.model
 
-sealed trait Availability { val id: Int }
+import com.waz.log.ZLog2.SafeToLog
+
+sealed trait Availability extends SafeToLog { val id: Int }
 
 object Availability {
   case object None      extends Availability { override val id = 0 }

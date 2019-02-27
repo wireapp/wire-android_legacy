@@ -17,7 +17,7 @@
  */
 package com.waz.service.media
 
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.{MediaProvider, Message}
@@ -61,13 +61,13 @@ class RichMediaService(assets:      AssetService,
   msgsStorage.onUpdated { _ foreach {
     case (prev, updated) =>
       if (isSyncableMsg(updated) && syncableContentChanged(prev, updated)) {
-        verbose(s"Updated rich media message: $updated, scheduling sync")
+        verbose(l"Updated rich media message: $updated, scheduling sync")
         sync.syncRichMedia(updated.id)
       }
   } }
 
   private def scheduleSyncFor(ms: Seq[MessageData]) = if (ms.nonEmpty) {
-    verbose(s"Scheduling sync for added rich media messages: $ms")
+    verbose(l"Scheduling sync for added rich media messages: $ms")
 
     msgsStorage.updateAll2(ms.map(_.id), m => m.copy(content = m.content map (c => c.copy(syncNeeded = isSyncable(c))))) map { _ =>
       Future.traverse(ms) { m => sync.syncRichMedia(m.id) }
@@ -88,7 +88,7 @@ class RichMediaService(assets:      AssetService,
           results.collect { case Left(error) => error }
         }
       case None =>
-        error(s"No message data found with id: $id")
+        error(l"No message data found with id: $id")
         Future.successful(Seq(ErrorResponse.InternalError))
     }
   }
@@ -103,7 +103,7 @@ class RichMediaService(assets:      AssetService,
     case MediaProvider.YOUTUBE    => youTube.prepareStreaming(media)
     case MediaProvider.SOUNDCLOUD => soundCloud.prepareStreaming(media)
     case other =>
-      warn(s"Unable to prepare streaming for rich media from $other.")
+      warn(l"Unable to prepare streaming for rich media from $other.")
       Future.successful(Right(Vector.empty))
   }
 }

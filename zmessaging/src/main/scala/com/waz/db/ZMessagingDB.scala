@@ -278,6 +278,9 @@ object ZMessagingDB {
     },
     Migration(113, 114) { db =>
       db.execSQL("ALTER TABLE Users ADD COLUMN managed_by TEXT DEFAULT null")
+    },
+    Migration(114, 115) { db =>
+      db.execSQL("ALTER TABLE Users ADD COLUMN fields TEXT DEFAULT null")
     }
   )
 }

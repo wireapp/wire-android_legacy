@@ -18,9 +18,9 @@
 package com.waz.service.conversation
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.content.GlobalPreferences.BackendDrift
 import com.waz.content.{ConversationStorage, GlobalPreferences}
+import com.waz.log.ZLog2._
 import com.waz.model._
 import com.waz.service.AccountsService.InForeground
 import com.waz.service.ZMessaging.clock
@@ -68,7 +68,7 @@ class TypingService(userId:        UserId,
     if (isRecent(e, beDrift)) {
       conversations.getByRemoteId(e.convId) map {
         case Some(conv) => setUserTyping(conv.id, e.from, e.time.toLocal(beDrift), e.isTyping)
-        case None => warn(s"Conversation ${e.convId} not found, ignoring.")
+        case None => warn(l"Conversation ${e.convId} not found, ignoring.")
       }
     } else {
       Future.successful(())

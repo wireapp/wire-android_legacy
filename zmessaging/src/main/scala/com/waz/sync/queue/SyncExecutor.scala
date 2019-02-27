@@ -18,9 +18,9 @@
 package com.waz.sync.queue
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.SyncState
 import com.waz.api.impl.ErrorResponse
+import com.waz.log.ZLog2._
 import com.waz.model.UserId
 import com.waz.model.sync.SyncJob
 import com.waz.model.sync.SyncRequest.Serialized
@@ -66,7 +66,7 @@ class SyncExecutor(account:     UserId,
   }
 
   private def execute(job: SyncJob): Future[SyncResult] = {
-    verbose(s"executeJob: $job")
+    verbose(l"executeJob: $job")
     val future = content.updateSyncJob(job.id)(job => job.copy(attempts = job.attempts + 1, state = SyncState.SYNCING, error = None, offline = !network.isOnlineMode))
       .flatMap {
         case None => Future.successful(SyncResult(ErrorResponse.internalError(s"Could not update job: $job")))
@@ -91,21 +91,21 @@ class SyncExecutor(account:     UserId,
 
     result match {
       case Success =>
-        debug(s"SyncRequest: $job completed successfully")
+        debug(l"SyncRequest: $job completed successfully")
         content.removeSyncJob(job.id).map(_ => result)
       case res@SyncResult.Failure(error) =>
-        warn(s"SyncRequest: $job, failed permanently with error: $error")
+        warn(l"SyncRequest: $job, failed permanently with error: $error")
         if (error.shouldReportError) {
           tracking.exception(new RuntimeException(s"Request ${job.request.cmd} failed permanently with error: ${error.code}") with NoStackTrace, s"Got fatal error, dropping request: $job\n error: $error")
         }
         content.removeSyncJob(job.id).map(_ => res)
       case Retry(error) =>
-        warn(s"SyncRequest: $job, failed with error: $error")
+        warn(l"SyncRequest: $job, failed with error: $error")
         if (job.attempts > MaxSyncAttempts) {
           tracking.exception(new RuntimeException(s"Request ${job.request.cmd} failed with error: ${error.code}") with NoStackTrace, s"MaxSyncAttempts exceeded, dropping request: $job\n error: $error")
           content.removeSyncJob(job.id).map(_ => SyncResult.Failure(error))
         } else {
-          verbose(s"will schedule retry for: $job, $job")
+          verbose(l"will schedule retry for: $job")
           val nextTryTime = System.currentTimeMillis() + SyncExecutor.failureDelay(job)
           content
             .updateSyncJob(job.id)(job => job.copy(state = SyncState.FAILED, startTime = nextTryTime, error = Some(error), offline = job.offline || !network.isOnlineMode))

@@ -18,7 +18,7 @@
 package com.waz.sync.handler
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.api.ErrorType
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.impl.ErrorResponse
@@ -64,14 +64,14 @@ class ConversationsSyncHandler(selfUserId:          UserId,
     Future.sequence(ids.map(convs.convById)).flatMap { convs =>
       val remoteIds = convs.collect { case Some(conv) => conv.remoteId }
 
-      if (remoteIds.size != convs.size) error(s"syncConversations($ids) - some conversations were not found in local db, skipping")
+      if (remoteIds.size != convs.size) error(l"syncConversations($ids) - some conversations were not found in local db, skipping")
 
       conversationsClient.loadConversations(remoteIds).future flatMap {
         case Right(resps) =>
-          debug(s"syncConversations received ${resps.size}")
+          debug(l"syncConversations received ${resps.size}")
           convService.updateConversationsWithDeviceStartMessage(resps).map(_ => Success)
         case Left(error) =>
-          warn(s"ConversationsClient.syncConversations($ids) failed with error: $error")
+          warn(l"ConversationsClient.syncConversations($ids) failed with error: $error")
           Future.successful(SyncResult(error))
       }
     }
@@ -79,12 +79,12 @@ class ConversationsSyncHandler(selfUserId:          UserId,
   def syncConversations(start: Option[RConvId] = None): Future[SyncResult] =
     conversationsClient.loadConversations(start).future flatMap {
       case Right(ConversationsResult(convs, hasMore)) =>
-        debug(s"syncConversations received ${convs.size}")
+        debug(l"syncConversations received ${convs.size}")
         val future = convService.updateConversationsWithDeviceStartMessage(convs)
         if (hasMore) syncConversations(convs.lastOption.map(_.id)).flatMap(res => future.map(_ => res))
         else future.map(_ => Success)
       case Left(error) =>
-        warn(s"ConversationsClient.loadConversations($start) failed with error: $error")
+        warn(l"ConversationsClient.loadConversations($start) failed with error: $error")
         Future.successful(SyncResult(error))
     }
 
@@ -122,14 +122,14 @@ class ConversationsSyncHandler(selfUserId:          UserId,
           event.localTime = LocalInstant.Now
           conversationsClient.postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(event.time))).future flatMap {
             case Right(_) =>
-              verbose(s"postConversationState finished")
+              verbose(l"postConversationState finished")
               convEvents.handlePostConversationEvent(event)
                 .map(_ => Success)
             case Left(error) =>
               Future.successful(SyncResult(error))
           }
         case Right(None) =>
-          debug(s"member $user already left, just updating the conversation state")
+          debug(l"member $user already left, just updating the conversation state")
           conversationsClient
             .postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(conv.lastEventTime)))
             .future
@@ -146,7 +146,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
     }
 
   def postConversation(convId: ConvId, users: Set[UserId], name: Option[Name], team: Option[TeamId], access: Set[Access], accessRole: AccessRole, receiptMode: Option[Int]): Future[SyncResult] = {
-    debug(s"postConversation($convId, $users, $name)")
+    debug(l"postConversation($convId, $users, $name)")
     val (toCreate, toAdd) = users.splitAt(PostMembersLimit)
     val initState = ConversationInitState(users = toCreate, name = name, team = team, access = access, accessRole = accessRole, receiptMode = receiptMode)
     conversationsClient.postConversation(initState).future.flatMap {
@@ -156,7 +156,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
           else Future.successful(Success)
         }
       case Left(resp@ErrorResponse(403, msg, "not-connected")) =>
-        warn(s"got error: $resp")
+        warn(l"got error: $resp")
         errorsService
           .addErrorWhenActive(ErrorData(ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_UNCONNECTED_USER, resp, convId))
           .map(_ => SyncResult(resp))
@@ -190,7 +190,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
         .handlePostConversationEvent(event)
         .map(_ => Success)
     case Right(None) =>
-      debug(s"postConv got success response, but no event")
+      debug(l"postConv got success response, but no event")
       Future.successful(Success)
     case Left(error) => Future.successful(SyncResult(error))
   }

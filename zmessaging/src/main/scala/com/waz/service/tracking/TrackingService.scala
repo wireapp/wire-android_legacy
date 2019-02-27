@@ -18,7 +18,8 @@
 package com.waz.service.tracking
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.ZLog.LogTag
+import com.waz.log.ZLog2._
 import com.waz.model._
 import com.waz.service.call.CallInfo
 import com.waz.service.call.CallInfo.CallState._
@@ -151,7 +152,7 @@ class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: Zm
       case (Some(_), SelfConnected)    => Some("established")
       case (Some(_), Ended)            => Some("ended")
       case _ =>
-        warn(s"Unexpected call state change: ${info.prevState} => ${info.state}, not tracking")
+        warn(l"Unexpected call state change: ${info.prevState} => ${info.state}, not tracking")
         None
     }).fold(Future.successful({})) { eventName =>
 

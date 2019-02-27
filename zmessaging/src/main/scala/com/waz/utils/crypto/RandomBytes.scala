@@ -18,7 +18,7 @@
 package com.waz.utils.crypto
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.warn
+import com.waz.log.ZLog2._
 
 import scala.util.{Failure, Success, Try}
 
@@ -36,7 +36,7 @@ class RandomBytes {
     RandomBytes.loadLibrary match {
       case Success(_) => randomBytes(buffer, count)
       case _ =>
-        warn(s"Libsodium failed to generate $count random bytes. Falling back to SecureRandom")
+        warn(l"Libsodium failed to generate $count random bytes. Falling back to SecureRandom")
         ZSecureRandom.nextBytes(buffer)
     }
     buffer

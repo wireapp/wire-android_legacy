@@ -19,8 +19,8 @@ package com.waz.bitmap
 
 import java.io.InputStream
 import android.media.ExifInterface
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.log.ZLog2._
 
 import scala.util.control.NonFatal
 
@@ -57,7 +57,7 @@ object ExifOrientation {
         case Seq(0x4d, 0x4d, 0, 0x2a) => true
         case Seq(0x49, 0x49, 0x2a, 0) => false
         case mark =>
-          verbose(s"tag mark: ${mark.map(_.toHexString)}")
+          verbose(l"tag mark: ${mark.map(n => showString(n.toHexString))}")
           return 0
       }
 
@@ -95,7 +95,7 @@ object ExifOrientation {
     0
   } catch {
     case NonFatal(e) =>
-      warn(s"Extracting exif orientation failed", e)
+      warn(l"Extracting exif orientation failed", e)
       ExifInterface.ORIENTATION_UNDEFINED
   }
 }
