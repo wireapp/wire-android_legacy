@@ -125,7 +125,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
         } else {
           if (teamMember || connectStatus.contains(ACCEPTED) || isBot) {
             builder ++= Set(notifications, Delete)
-            if (currentConv.isDefined && !teamMember && connectStatus.contains(ACCEPTED)) builder += Block
+            if (!mode.inConversationList && !teamMember && connectStatus.contains(ACCEPTED)) builder += Block
           }
           else if (connectStatus.contains(PENDING_FROM_USER)) builder += Block
         }
