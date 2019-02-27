@@ -92,6 +92,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
     isBot               <- otherUser.map(_.exists(_.isWireBot))
     removePerm          <- inject[UserAccountsController].hasRemoveConversationMemberPermission(convId)
     isGuest             <- participantsController.isCurrentUserGuest
+    currentConv         <- convController.currentConvOpt
     selectedParticipant <- participantsController.selectedParticipant
   } yield {
     import com.waz.api.User.ConnectionStatus._
@@ -104,7 +105,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
       case Mode.Deleting(_) =>
         builder ++= Set(DeleteOnly, DeleteAndLeave)
       case Mode.Normal(_) if isGroup && selectedParticipant.isDefined =>
-        if (removePerm && !isGuest) builder += RemoveMember
+        if (removePerm && currentConv.isDefined && !isGuest) builder += RemoveMember
       case Mode.Normal(_) =>
 
         def notifications: MenuItem =
@@ -124,7 +125,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
         } else {
           if (teamMember || connectStatus.contains(ACCEPTED) || isBot) {
             builder ++= Set(notifications, Delete)
-            if (!teamMember && connectStatus.contains(ACCEPTED)) builder += Block
+            if (currentConv.isDefined && !teamMember && connectStatus.contains(ACCEPTED)) builder += Block
           }
           else if (connectStatus.contains(PENDING_FROM_USER)) builder += Block
         }

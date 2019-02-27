@@ -97,8 +97,8 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
   lazy val isCurrentUserGuest: Signal[Boolean] = for {
     z           <- zms
     currentUser <- UserSignal(z.selfUserId)
-    currentConv <- conv
-  } yield currentConv.team.isDefined && currentConv.team != currentUser.teamId
+    currentConvTeam <- convController.currentConvOpt.map(_.flatMap(_.team))
+  } yield currentConvTeam.isDefined && currentConvTeam != currentUser.teamId
 
   lazy val currentUserBelongsToConversationTeam: Signal[Boolean] = for {
     z           <- zms
