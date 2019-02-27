@@ -171,12 +171,14 @@ class SingleParticipantFragment extends FragmentHelper {
   }
 
   private lazy val footerMenu = returning( view[FooterMenu](R.id.fm__footer) ) { vh =>
+    // TODO: merge this logic with ConversationOptionsMenuController
     (for {
       createPerm <- userAccountsController.hasCreateConvPermission
       convId     <- participantsController.conv.map(_.id)
       remPerm    <- userAccountsController.hasRemoveConversationMemberPermission(convId)
       isGuest    <- participantsController.isCurrentUserGuest
-    } yield (createPerm || remPerm) && !isGuest).map {
+      isPartner  <- userAccountsController.isPartner
+    } yield (createPerm || remPerm) && !isGuest && !isPartner).map {
       case true => R.string.glyph__more
       case _    => R.string.empty_string
     }.map(getString).onUi(text => vh.foreach(_.setRightActionText(text)))
