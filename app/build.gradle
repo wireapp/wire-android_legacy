@@ -13,7 +13,7 @@ repositories {
 }
 
 ext {
-    majorVersion = "3.27."
+    majorVersion = "3.28."
 
     scalaMajorVersion = '2.11'
     scalaVersion = scalaMajorVersion + '.12'
