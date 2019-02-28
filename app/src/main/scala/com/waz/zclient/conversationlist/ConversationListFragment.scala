@@ -310,10 +310,10 @@ class NormalConversationFragment extends ConversationListFragment {
       }
     }
     listActionsView.foreach(_.animate().alpha(1f).setDuration(500))
-    loadingListView.foreach(_.animate().alpha(0f).setDuration(500).withEndAction(new Runnable {
+    loadingListView.foreach(v => v.animate().alpha(0f).setDuration(500).withEndAction(new Runnable {
       override def run() = {
         if (NormalConversationFragment.this != null)
-          loadingListView.foreach(_.setVisibility(GONE))
+          v.setVisibility(GONE)
       }
     }))
 
