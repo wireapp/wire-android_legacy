@@ -178,8 +178,9 @@ class SingleParticipantFragment extends FragmentHelper {
       convId     <- participantsController.conv.map(_.id)
       remPerm    <- userAccountsController.hasRemoveConversationMemberPermission(convId)
       isGuest    <- participantsController.isCurrentUserGuest
+      isGroup    <- participantsController.isGroup
       isPartner  <- userAccountsController.isPartner
-    } yield (createPerm || remPerm) && !isGuest && !isPartner).map {
+    } yield (createPerm || remPerm) && !isGuest && (!isGroup || !isPartner)).map {
       case true => R.string.glyph__more
       case _    => R.string.empty_string
     }.map(getString).onUi(text => vh.foreach(_.setRightActionText(text)))
@@ -206,13 +207,13 @@ class SingleParticipantFragment extends FragmentHelper {
       (for {
         zms                <- inject[Signal[ZMessaging]].head
         user               <- participantsController.otherParticipant.head
-        isGuest            = !user.isWireBot && user.isGuest(zms.teamId)
-                             // if the user is from our team we ask the backend for the rich profile (but we don't wait for it)
-        _                  = if (zms.teamId.isDefined && !isGuest) zms.users.syncRichInfoNowForUser(user.id) else Future.successful(())
+        isGuest            =  !user.isWireBot && user.isGuest(zms.teamId)
+        isTeamTheSame      =  !user.isWireBot && user.teamId == zms.teamId && zms.teamId.isDefined
+                              // if the user is from our team we ask the backend for the rich profile (but we don't wait for it)
+        _                  =  if (isTeamTheSame) zms.users.syncRichInfoNowForUser(user.id) else Future.successful(())
         isDarkTheme        <- inject[ThemeController].darkThemeSet.head
-        isCurrentUserGuest <- participantsController.isCurrentUserGuest.head
-      } yield (user.id, isGuest, isDarkTheme, isCurrentUserGuest)).foreach {
-        case (userId, isGuest, isDarkTheme, isCurrentUserGuest) =>
+      } yield (user.id, isGuest, isDarkTheme, isTeamTheSame)).foreach {
+        case (userId, isGuest, isDarkTheme, isTeamTheSame) =>
           val adapter = new SingleParticipantAdapter(userId, isGuest, isDarkTheme)
           Signal(
             participantsController.otherParticipant.map(_.fields),
@@ -220,11 +221,11 @@ class SingleParticipantFragment extends FragmentHelper {
             timerText,
             readReceipts
           ).onUi {
-            case (fields, av, tt, rr) if !isCurrentUserGuest =>
+            case (fields, av, tt, rr) if isTeamTheSame =>
               verbose(s"fields: $fields")
               adapter.set(fields, av, tt, rr)
-            case (_, av, tt, rr)                             =>
-              verbose(s"fields is None because the current user is guest")
+            case (_, av, tt, rr) =>
+              verbose(s"fields is None because the team of both users are different")
               adapter.set(Seq.empty, av, tt, rr)
           }
           view.setAdapter(adapter)
