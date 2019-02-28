@@ -23,6 +23,7 @@ import android.support.v7.widget.Toolbar
 import android.view._
 import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
+import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.ManagerFragment.Page
@@ -43,14 +44,14 @@ class ParticipantHeaderFragment extends FragmentHelper {
   private lazy val newConvController      = inject[CreateConversationController]
   private lazy val accentColor            = inject[AccentColorController].accentColor.map(_.color)
 
-  lazy val page = Option(getParentFragment) match {
+  private lazy val page = Option(getParentFragment) match {
     case Some(f: ManagerFragment) => f.currentContent
     case _                        => Signal.const(Option.empty[Page])
   }
 
-  lazy val pageTag = page.map(_.map(_.tag))
+  private lazy val pageTag = page.map(_.map(_.tag))
 
-  lazy val addingUsers = pageTag.map(_.contains(AddParticipantsFragment.Tag))
+  private lazy val addingUsers = pageTag.map(_.contains(AddParticipantsFragment.Tag))
 
   private lazy val toolbar = returning(view[Toolbar](R.id.t__participants__toolbar)) { vh =>
     (for {
@@ -124,22 +125,24 @@ class ParticipantHeaderFragment extends FragmentHelper {
   }
 
   private lazy val headerUsername = returning(view[TextView](R.id.participants__header__username)) { vh =>
-    Signal(pageTag, participantsController.otherParticipant).onUi {
-      case (Some(SingleParticipantFragment.Tag), user) =>
-        vh.foreach { view =>
-          view.setVisible(true)
-          view.setText(user.getDisplayName)
-          val shield = if (user.isVerified) Option(getDrawable(R.drawable.shield_full)) else None
+    pageTag.onUi {
+      case Some(SingleParticipantFragment.Tag) =>
+        participantsController.otherParticipant.head.foreach { user =>
+          vh.foreach { view =>
+            view.setVisible(true)
+            view.setText(user.getDisplayName)
+            val shield = if (user.isVerified) Option(getDrawable(R.drawable.shield_full)) else None
 
-          shield.foreach { sh =>
-            val pushDown = getDimenPx(R.dimen.wire__padding__1)
-            sh.setBounds(0, pushDown, sh.getIntrinsicWidth, sh.getIntrinsicHeight + pushDown)
-            view.setCompoundDrawablePadding(getDimenPx(R.dimen.wire__padding__tiny))
+            shield.foreach { sh =>
+              val pushDown = getDimenPx(R.dimen.wire__padding__1)
+              sh.setBounds(0, pushDown, sh.getIntrinsicWidth, sh.getIntrinsicHeight + pushDown)
+              view.setCompoundDrawablePadding(getDimenPx(R.dimen.wire__padding__tiny))
+            }
+            val old = view.getCompoundDrawables
+            view.setCompoundDrawablesRelative(shield.orNull, old(1), old(2), old(3))
+            view.setContentDescription(if (user.isVerified) "verified" else "unverified")
           }
-          val old = view.getCompoundDrawables
-          view.setCompoundDrawablesRelative(shield.orNull, old(1), old(2), old(3))
-          view.setContentDescription(if (user.isVerified) "verified" else "unverified")
-        }
+        }(Threading.Ui)
       case _ =>
         vh.foreach(_.setVisible(false))
     }
