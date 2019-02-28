@@ -238,7 +238,6 @@ class ParticipantFragment extends ManagerFragment
       isTeamMember <- userAccountsController.isTeamMember(userId).head
     } userOpt match {
       case Some(user) if user.connection == ACCEPTED || user.expiresAt.isDefined || isTeamMember =>
-        participantsController.selectParticipant(userId)
         openUserProfileFragment(SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
 
       case Some(user) if user.connection == PENDING_FROM_OTHER || user.connection == PENDING_FROM_USER || user.connection == IGNORED =>
