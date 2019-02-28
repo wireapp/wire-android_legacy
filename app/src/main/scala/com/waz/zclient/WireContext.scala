@@ -416,13 +416,9 @@ class ViewHolder[T <: View](id: Int, finder: ViewFinder) {
   def get: T = view.getOrElse { returning(finder.findById[T](id)) { t => view = Some(t) } }
 
   @inline
-  def opt: Option[T] = view match {
-    case t@Some(_) => t
-    case None =>
-      if (finder != null) {
-        returning(Option(finder.findById[T](id))) { view = _}
-      } else None
-  }
+  def opt: Option[T] =
+    if(finder != null) Option(get)
+    else None
 
   def clear() =
     view = Option.empty
