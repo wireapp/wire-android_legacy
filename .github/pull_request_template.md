@@ -12,6 +12,10 @@ _Briefly describe the causes behind the issues. This could be helpful to underst
 
 _Briefly describe the solutions you have implemented for the issues explained above._
 
+### Testing
+
+_Briefly describe how this change was tested and if applicable the exact steps taken to verify that it works as expected._
+
 ## Notes
 
 _Specify here any other facts that you think are important for this issue. (Optional)_
