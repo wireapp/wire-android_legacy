@@ -28,9 +28,10 @@ import android.view._
 import android.view.animation.Animation
 import android.widget.{AbsListView, FrameLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.ZLog.LogTag
 import com.waz.api.{AudioAssetForUpload, AudioEffect, ErrorType}
 import com.waz.content.GlobalPreferences
+import com.waz.log.ZLog2._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{AccentColor, MessageContent => _, _}
 import com.waz.permissions.PermissionsService
@@ -632,7 +633,7 @@ class ConversationFragment extends FragmentHelper {
             }
         }))
       case _ =>
-        verbose(s"openExtendedCursor(unknown)")
+        verbose(l"openExtendedCursor(unknown)")
     }
 
 
@@ -752,7 +753,7 @@ class ConversationFragment extends FragmentHelper {
     case ErrorType.CANNOT_SEND_MESSAGE_TO_UNVERIFIED_CONVERSATION =>
       err.convId.foreach(onErrorCanNotSentMessageToUnverifiedConversation(err, _))
     case errType =>
-      error(s"Unhandled onSyncError: $errType")
+      error(l"Unhandled onSyncError: $errType")
   }
 
   private def onErrorCanNotSentMessageToUnverifiedConversation(err: ErrorData, convId: ConvId) =
