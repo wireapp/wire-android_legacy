@@ -22,7 +22,7 @@ import android.support.v7.widget.RecyclerView
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
+import com.waz.log.ZLog2._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.{AccountsService, ZMessaging}
@@ -55,7 +55,7 @@ extends RecyclerView.Adapter[QuickReplyContentAdapter.ViewHolder] with Injectabl
 
   cursor.on(Threading.Ui) { case (c, tpe) =>
     if (!messages.contains(c)) {
-      verbose(s"cursor changed: ${c.count}")
+      verbose(l"cursor changed: ${c.count}")
       unreadIndex = c.lastReadIndex + 1
       messages.foreach(_.close())
       messages = Some(c)
