@@ -31,8 +31,8 @@ import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
 import android.widget._
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.content.UserPreferences
+import com.waz.log.ZLog2._
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.permissions.PermissionsService
@@ -352,7 +352,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
 
   override def onConversationClicked(conversationData: ConversationData): Unit = {
     keyboard.hideKeyboardIfVisible()
-    verbose(s"onConversationClicked(${conversationData.id})")
+    verbose(l"onConversationClicked(${conversationData.id})")
     conversationController.selectConv(Some(conversationData.id), ConversationChangeRequester.START_CONVERSATION)
   }
 
@@ -436,7 +436,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
 
   override def onIntegrationClicked(data: IntegrationData): Unit = {
     keyboard.hideKeyboardIfVisible()
-    verbose(s"onIntegrationClicked(${data.id})")
+    verbose(l"onIntegrationClicked(${data.id})")
 
     import IntegrationDetailsFragment._
     getFragmentManager.beginTransaction
