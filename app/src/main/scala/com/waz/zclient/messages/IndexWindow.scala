@@ -18,10 +18,10 @@
 
 package com.waz.zclient.messages
 
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.content.MessagesCursor
 import com.waz.content.MessagesCursor.Entry
+import com.waz.log.ZLog2._
 import com.waz.model.MessageData
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.utils._
@@ -58,7 +58,7 @@ class IndexWindow(cursor: RecyclerCursor, notifier: RecyclerNotifier, size: Int 
     val size = c.size
     if (size != totalCount) {
       totalCount = size
-      error("MessagesCursor size has changed unexpectedly, will notify data set change.")
+      error(l"MessagesCursor size has changed unexpectedly, will notify data set change.")
       notifier.notifyDataSetChanged()
     }
   }
@@ -74,10 +74,10 @@ class IndexWindow(cursor: RecyclerCursor, notifier: RecyclerNotifier, size: Int 
   def onUpdated(prev: MessageData, current: MessageData) =
     search(Entry(current)) match {
       case Found(pos) =>
-        verbose(s"found, notifying adapter at pos: ${offset + pos}")
+        verbose(l"found, notifying adapter at pos: ${offset + pos}")
         notifier.notifyItemRangeChanged(offset + pos, 1)
       case _ =>
-        verbose("no need to notify about changes outside of window")
+        verbose(l"no need to notify about changes outside of window")
     }
 
   /**
