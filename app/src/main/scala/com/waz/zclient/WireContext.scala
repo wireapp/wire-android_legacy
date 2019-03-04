@@ -30,7 +30,8 @@ import android.view.View.OnClickListener
 import android.view.animation.{AlphaAnimation, Animation, AnimationUtils}
 import android.view.{LayoutInflater, View, ViewGroup, ViewStub}
 import android.widget.TextView
-import com.waz.ZLog._
+import com.waz.ZLog.{LogTag, logTagFor}
+import com.waz.log.ZLog2._
 import com.waz.utils.events._
 import com.waz.utils.returning
 import com.waz.zclient.FragmentHelper.getNextAnimationDuration
@@ -102,7 +103,7 @@ object ViewHelper {
       case e: Throwable =>
         var cause = e
         while (cause.getCause != null) cause = cause.getCause
-        error("inflate failed with root cause:", cause)
+        error(l"inflate failed with root cause:", cause)
         throw e
     }
 
@@ -235,7 +236,7 @@ trait FragmentHelper extends Fragment with OnBackPressedListener with ViewFinder
     Option(getArguments).map(_.getBoolean(key, default)).getOrElse(default)
 
   override def onBackPressed(): Boolean = {
-    verbose(s"onBackPressed")(getClass.getSimpleName)
+    verbose(l"onBackPressed")(getClass.getSimpleName)
     false
   }
 
