@@ -23,7 +23,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.GridLayout
 import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.ZLog.verbose
+import com.waz.log.ZLog2._
 import com.waz.permissions.PermissionsService
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.CallInfo.CallState.{SelfCalling, SelfConnected, SelfJoining}
@@ -57,7 +57,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   val onButtonClick: SourceStream[Unit] = EventStream[Unit]
 
   controller.callStateOpt.onUi { state =>
-    verbose(s"callStateOpt: $state")
+    verbose(l"callStateOpt: $state")
   }
 
   private val isVideoBeingSent = controller.videoSendState.map(p => !Set(Stopped, NoCameraPermission).contains(p))
