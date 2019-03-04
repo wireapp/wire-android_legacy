@@ -20,10 +20,10 @@ package com.waz.zclient.conversation
 import android.app.Activity
 import android.content.Context
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api
 import com.waz.api.{AssetForUpload, IConversation, Verification}
 import com.waz.content._
+import com.waz.log.ZLog2._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.Client
@@ -105,7 +105,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     conversations(_.forceNameUpdate(convId))
     conversations.head.foreach(_.forceNameUpdate(convId))
     if (!lastConvId.contains(convId)) { // to only catch changes coming from SE (we assume it's an account switch)
-      verbose(s"a conversation change bypassed selectConv: last = $lastConvId, current = $convId")
+      verbose(l"a conversation change bypassed selectConv: last = $lastConvId, current = $convId")
       convChanged ! ConversationChange(from = lastConvId, to = Option(convId), requester = ConversationChangeRequester.ACCOUNT_CHANGE)
       lastConvId = Option(convId)
     }
@@ -124,7 +124,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
         _            <- if (conv.exists(_.archived)) convsUi.setConversationArchived(id, archived = false) else Future.successful(Option.empty[ConversationData])
         _            <- selectedConv.selectConversation(convId)
       } yield { // catches changes coming from UI
-        verbose(s"changing conversation from $oldId to $convId, requester: $requester")
+        verbose(l"changing conversation from $oldId to $convId, requester: $requester")
         convChanged ! ConversationChange(from = oldId, to = convId, requester = requester)
       }
   }
@@ -285,7 +285,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
       * Switches current msg focus state to/from given msg.
       */
     def toggleFocused(id: MessageId) = {
-      verbose(s"toggleFocused($id)")
+      verbose(l"toggleFocused($id)")
       focused mutate {
         case Some(`id`) => None
         case _ => Some(id)
@@ -312,7 +312,7 @@ object ConversationController {
         conv.convType != IConversation.Type.ONE_TO_ONE &&
         conv.convType != IConversation.Type.WAIT_FOR_CONNECTION &&
         conv.convType != IConversation.Type.INCOMING_CONNECTION)
-      error(s"unexpected call, most likely UI error", new UnsupportedOperationException(s"Can't get other participant for: ${conv.convType} conversation"))
+      error(l"unexpected call, most likely UI error", new UnsupportedOperationException(s"Can't get other participant for: ${conv.convType} conversation"))
     UserId(conv.id.str) // one-to-one conversation has the same id as the other user, so we can access it directly
   }
 
