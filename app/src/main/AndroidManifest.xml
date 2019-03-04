@@ -92,7 +92,7 @@
             <intent-filter>
                 <data
                     android:host="password-reset-successful"
-                    android:scheme="wire"
+                    android:scheme="${customURLScheme}"
                     />
 
                 <action android:name="android.intent.action.VIEW" />
@@ -105,7 +105,7 @@
             <intent-filter>
                 <data
                     android:host="start-sso"
-                    android:scheme="wire"
+                    android:scheme="${customURLScheme}"
                     />
 
                 <action android:name="android.intent.action.VIEW" />
@@ -179,7 +179,7 @@
 
             <intent-filter>
                 <data android:host="email-verified"
-                      android:scheme="wire" />
+                      android:scheme="${customURLScheme}" />
 
                 <action android:name="android.intent.action.VIEW" />
 
@@ -191,7 +191,7 @@
             <intent-filter>
                 <data
                     android:host="connect"
-                    android:scheme="wire"
+                    android:scheme="${customURLScheme}"
                     />
 
                 <action android:name="android.intent.action.VIEW" />
