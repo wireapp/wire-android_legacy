@@ -21,7 +21,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.{FrameLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.threading.Threading
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
@@ -52,7 +52,7 @@ class LikeButton(context: Context, attrs: AttributeSet, style: Int) extends Fram
     }
 
     likeButtonConstant onClick {
-      verbose("Like button clicked")
+      verbose(l"Like button clicked")
       controller.onLikeClicked()
     }
   }
