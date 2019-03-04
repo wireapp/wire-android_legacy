@@ -230,7 +230,7 @@ android {
                                     internal_features      : "false"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        "true"
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$config.loggingEnabled"
             buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
 
