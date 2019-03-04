@@ -25,7 +25,7 @@ import android.support.annotation.Nullable
 import android.support.v4.app.Fragment
 import android.view._
 import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.ZLog.verbose
+import com.waz.log.ZLog2._
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.CallState
 import com.waz.utils.events.Subscription
@@ -110,7 +110,7 @@ class ControlsFragment extends FragmentHelper {
 
     callingControls.foreach(controls =>
       subs += controls.onButtonClick.onUi { _ =>
-        verbose("button clicked")
+        verbose(l"button clicked")
         controller.controlsClick(true)
       }
     )
