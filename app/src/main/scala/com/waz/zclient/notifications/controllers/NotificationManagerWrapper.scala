@@ -31,9 +31,9 @@ import android.support.v4.app.{NotificationCompat, RemoteInput}
 import android.text.style.{ForegroundColorSpan, StyleSpan}
 import android.text.{SpannableString, Spanned}
 import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.ZLog.{verbose, warn, error}
 import com.waz.content.Preferences.PrefKey
 import com.waz.content.UserPreferences
+import com.waz.log.ZLog2._
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.AccountsService
 import com.waz.services.notifications.NotificationsHandlerService
@@ -362,7 +362,7 @@ object NotificationManagerWrapper {
     }
 
     def showNotification(id: Int, notificationProps: NotificationProps) = {
-      verbose(s"build: $id")
+      verbose(l"build: $id")
       notificationManager.notify(id, notificationProps.build())
     }
 
@@ -370,7 +370,7 @@ object NotificationManagerWrapper {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
         notificationManager.getActiveNotifications.toSeq.map(_.getId)
       else {
-        warn(s"Tried to access method getActiveNotifications from api level: ${Build.VERSION.SDK_INT}")
+        warn(l"Tried to access method getActiveNotifications from api level: ${Build.VERSION.SDK_INT}")
         Seq.empty
       }
 
@@ -411,7 +411,7 @@ object NotificationManagerWrapper {
               Option(cxt.getContentResolver.query(uri, null, query, null, null))
             } catch {
               case ex: SQLiteException =>
-                error(s"query to access the media store failed; uri: $uri, query: $query", ex)
+                error(l"query to access the media store failed; uri: $uri, query: ${redactedString(query)}", ex)
                 None
             }
 
@@ -419,17 +419,17 @@ object NotificationManagerWrapper {
             cursor.foreach(_.close())
           } catch {
             case ex: FileNotFoundException =>
-              error(s"File not found: ${toneFile.getAbsolutePath}")
+              error(l"File not found: $toneFile")
             case ex: IOException =>
-              error(s"query to access the media store failed; uri: $uri, query: $query", ex)
+              error(l"query to access the media store failed; uri: $uri, query: ${redactedString(query)}", ex)
           }
         } else {
-          error(s"File not found: ${toneFile.getAbsolutePath}")
+          error(l"File not found: $toneFile")
         }
       }
 
     override def cancelNotifications(ids: Set[Int]): Unit = {
-      verbose(s"cancel: $ids")
+      verbose(l"cancel: $ids")
       ids.foreach(notificationManager.cancel)
     }
   }
