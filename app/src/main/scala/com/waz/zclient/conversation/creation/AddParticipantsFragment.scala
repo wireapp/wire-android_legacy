@@ -28,7 +28,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{ImageView, TextView}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
+import com.waz.log.ZLog2._
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.tracking.{OpenSelectParticipants, TrackingService}
@@ -108,7 +108,7 @@ class AddParticipantsFragment extends FragmentHelper {
         isTeamAccount      <- inject[UserAccountsController].isTeam
         isTeamOnlyConv     <- inject[ConversationController].currentConvIsTeamOnly
         currentUserInTeam  <- inject[ParticipantsController].currentUserBelongsToConversationTeam
-        _ = verbose(s"should the tabs be visible: (is team account: $isTeamAccount, team only: $isTeamOnlyConv, in team: $currentUserInTeam)")
+        _ = verbose(l"should the tabs be visible: (is team account: $isTeamAccount, team only: $isTeamOnlyConv, in team: $currentUserInTeam)")
       } yield isTeamAccount && !isTeamOnlyConv && currentUserInTeam)
         .onUi(tabs.setVisible)
     }
