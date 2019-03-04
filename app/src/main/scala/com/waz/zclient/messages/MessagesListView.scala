@@ -24,9 +24,9 @@ import android.support.v7.widget.RecyclerView.{OnScrollListener, ViewHolder}
 import android.support.v7.widget.{DefaultItemAnimator, LinearLayoutManager, RecyclerView}
 import android.util.AttributeSet
 import android.view.WindowManager
-import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.{AssetStatus, Message}
+import com.waz.log.ZLog2._
 import com.waz.model.{ConvId, Dim2, MessageData}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
@@ -97,7 +97,7 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
   }
 
   viewDim.onUi { dim =>
-    ZLog.verbose(s"viewDim($dim)")
+    verbose(l"viewDim($dim)")
     adapter.listDim = dim
     adapter.notifyDataSetChanged()
   }
