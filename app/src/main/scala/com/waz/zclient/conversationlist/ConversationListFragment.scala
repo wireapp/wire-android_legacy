@@ -26,8 +26,8 @@ import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{ImageView, LinearLayout}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.content.UserPreferences
+import com.waz.log.ZLog2._
 import com.waz.model.ConversationData.ConversationType._
 import com.waz.model._
 import com.waz.service.{AccountsService, ZMessaging}
@@ -83,7 +83,7 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
     }
 
     a.onConversationClick { conv =>
-      verbose(s"handleItemClick, switching conv to $conv")
+      verbose(l"handleItemClick, switching conv to $conv")
       conversationController.selectConv(Option(conv), ConversationChangeRequester.CONVERSATION_LIST)
     }
 
