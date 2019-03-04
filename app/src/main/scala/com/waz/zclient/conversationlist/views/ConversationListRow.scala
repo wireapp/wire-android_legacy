@@ -25,8 +25,8 @@ import android.view.{View, ViewGroup}
 import android.widget.FrameLayout
 import android.widget.LinearLayout.LayoutParams
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.api.Message
+import com.waz.log.ZLog2._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.ZMessaging
@@ -184,14 +184,14 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     case (convId, text) if conversationData.forall(_.id == convId) =>
       setSubtitle(text)
     case _ =>
-      verbose("Outdated conversation subtitle")
+      verbose(l"Outdated conversation subtitle")
     }
 
   badgeInfo.onUi {
     case (convId, status) if conversationData.forall(_.id == convId) =>
       badge.setStatus(status)
     case _ =>
-      verbose("Outdated badge status")
+      verbose(l"Outdated badge status")
   }
 
   avatarInfo.on(Threading.Background){
@@ -199,7 +199,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
       val cType = if (isGroup) ConversationType.Group else ConversationType.OneToOne
       avatar.setMembers(members.map(_.id), convId, cType)
     case _ =>
-      verbose("Outdated avatar info")
+      verbose(l"Outdated avatar info")
   }
   avatarInfo.onUi{
     case (convId, isGroup, _, alpha) if conversationData.forall(_.id == convId) =>
@@ -208,7 +208,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
       }
       avatar.setAlpha(alpha)
     case _ =>
-      verbose("Outdated avatar info")
+      verbose(l"Outdated avatar info")
   }
 
   badge.onClickEvent {
