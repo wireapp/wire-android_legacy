@@ -19,8 +19,8 @@ package com.waz.zclient.appentry
 
 import android.os.Bundle
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.api.impl.ErrorResponse
+import com.waz.log.ZLog2._
 import com.waz.service.SSOService
 import com.waz.zclient.InputDialog.{Event, OnNegativeBtn, OnPositiveBtn, ValidatorResult}
 import com.waz.zclient._
@@ -46,7 +46,7 @@ trait SSOFragment extends FragmentHelper {
 
   private lazy val dialogStaff = new InputDialog.Listener with InputDialog.InputValidator {
     override def onDialogEvent(event: Event): Unit = event match {
-      case OnNegativeBtn        => verbose("Negative")
+      case OnNegativeBtn        => verbose(l"Negative")
       case OnPositiveBtn(input) => verifyInput(input)
     }
 
