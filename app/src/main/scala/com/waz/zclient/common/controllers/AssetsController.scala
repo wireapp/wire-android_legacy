@@ -26,9 +26,9 @@ import android.util.TypedValue
 import android.view.{Gravity, View}
 import android.widget.{TextView, Toast}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.Message
 import com.waz.content.UserPreferences.DownloadImagesAlways
+import com.waz.log.ZLog2._
 import com.waz.model.{AssetData, AssetId, MessageData, Mime}
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.RawAssetInput.WireAssetInput
@@ -104,7 +104,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   // display full screen image for given message
   def showSingleImage(msg: MessageData, container: View) =
     if (!(msg.isEphemeral && msg.expired)) {
-      verbose(s"message loaded, opening single image for ${msg.id}")
+      verbose(l"message loaded, opening single image for ${msg.id}")
       singleImage.setViewReferences(container)
       singleImage.showSingleImage(msg.id.str)
     }
