@@ -20,7 +20,7 @@ package com.waz.zclient.messages
 import android.view.{View, ViewGroup}
 import android.widget.LinearLayout
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
+import com.waz.log.ZLog2._
 import com.waz.zclient.R
 import com.waz.zclient.ViewHelper._
 
@@ -35,13 +35,13 @@ class MessageViewFactory {
   private val viewCache = new mutable.HashMap[Int, mutable.Stack[View]]
 
   def recycle(part: MessageViewPart): Unit = {
-    verbose(s"recycling part: ${part.tpe}")
+    verbose(l"recycling part: ${part.tpe}")
     cache.getOrElseUpdate(part.tpe, new mutable.Stack[MessageViewPart]()).push(part)
   }
 
   def get(tpe: MsgPart, parent: ViewGroup): MessageViewPart = {
     cache.get(tpe).flatMap(s => if(s.isEmpty) None else Some(s.pop())).getOrElse {
-      verbose(s"there was no cached $tpe, building a new one")
+      verbose(l"there was no cached $tpe, building a new one")
       import MsgPart._
       tpe match {
         case User               => inflate(R.layout.message_user, parent, false)
@@ -85,7 +85,7 @@ class MessageViewFactory {
   }
 
   def recycle(view: View, resId: Int): Unit = {
-    verbose(s"recycling view: $resId")
+    verbose(l"recycling view: $resId")
     viewCache.getOrElseUpdate(resId, new mutable.Stack[View]()).push(view)
   }
 
