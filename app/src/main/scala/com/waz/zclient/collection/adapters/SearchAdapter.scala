@@ -22,8 +22,8 @@ import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.RecyclerView.ViewHolder
 import android.view.ViewGroup
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.{ContentSearchQuery, MessageFilter}
+import com.waz.log.ZLog2._
 import com.waz.model.ConvId
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
@@ -62,7 +62,7 @@ class SearchAdapter()(implicit context: Context, injector: Injector, eventContex
 
   cursorLoader.on(Threading.Ui) { c =>
     if (!messages.contains(c)) {
-      verbose(s"cursor changed: ${c.count}")
+      verbose(l"cursor changed: ${c.count}")
       messages.foreach(_.close())
       messages = Some(c)
       convId = c.conv
