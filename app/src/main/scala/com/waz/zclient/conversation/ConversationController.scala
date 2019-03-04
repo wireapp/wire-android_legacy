@@ -35,6 +35,7 @@ import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{Serialized, returning, _}
 import com.waz.zclient.conversation.ConversationController.ConversationChange
+import com.waz.zclient.conversationlist.ConversationListAdapter.Normal
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.utils.Callback
@@ -215,10 +216,18 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
       currentConvId.head.map { id => if (id == convId) setCurrentConversationToNext(ConversationChangeRequester.LEAVE_CONVERSATION) }
     }
 
-  def setCurrentConversationToNext(requester: ConversationChangeRequester): Future[Unit] =
-    currentConvId.head
-      .flatMap { id => convListController.nextConversation(id) }
-      .flatMap { convId => selectConv(convId, requester) }
+  def setCurrentConversationToNext(requester: ConversationChangeRequester): Future[Unit] = {
+    def nextConversation(convId: ConvId): Future[Option[ConvId]] =
+      convListController.conversationListData(Normal).head.map {
+        case (_, regular, _) => regular.lift(regular.indexWhere(_.id == convId) + 1).map(_.id)
+      } (Threading.Background)
+
+    for {
+      currentConvId <- currentConvId.head
+      nextConvId    <- nextConversation(currentConvId)
+      _             <- selectConv(nextConvId, requester)
+    } yield ()
+  }
 
   def archive(convId: ConvId, archive: Boolean): Unit = {
     convsUi.head.flatMap(_.setConversationArchived(convId, archive))
