@@ -22,22 +22,22 @@ import java.util.concurrent.Executor
 import android.arch.paging.PagedList
 import android.content.Context
 import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.log.ZLog2._
 import com.waz.model.MessageData.MessageDataDao
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
+import com.waz.threading.Threading.Implicits.Background
 import com.waz.utils.events._
+import com.waz.utils.returning
 import com.waz.utils.wrappers.DBCursor
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.messages.MessagePagedListController._
+import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.{Injectable, Injector}
-import Threading.Implicits.Background
 
 import scala.concurrent.{ExecutionContext, Future}
-import MessagePagedListController._
-import com.waz.ZLog
-import com.waz.utils.returning
-import com.waz.zclient.messages.controllers.MessageActionsController
 
 class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt: Context) extends Injectable {
 
@@ -86,7 +86,7 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
     isGroup                 <- Signal.future(z.conversations.isGroupConversation(cId))
     canHaveLink             = isGroup && cTeam.exists(z.teamId.contains(_)) && !teamOnly
     cursor                  <- RefreshingSignal(loadCursor(cId), cursorRefreshEvent(z, cId))
-    _ = ZLog.verbose("cursor changed")
+    _ = verbose(l"cursor changed")
     list                    = PagedListWrapper(getPagedList(cursor))
     lastRead                <- convController.currentConv.map(_.lastRead)
     messageToReveal         <- messageActionsController.messageToReveal.map(_.map(_.id))
