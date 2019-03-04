@@ -32,12 +32,12 @@ import android.telephony.TelephonyManager
 import com.evernote.android.job.{JobCreator, JobManager}
 import com.google.android.gms.security.ProviderInstaller
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.api.NetworkMode
 import com.waz.background.WorkManagerSyncRequestService
 import com.waz.content._
 import com.waz.jobs.PushTokenCheckJob
 import com.waz.log.{AndroidLogOutput, BufferedLogOutput, InternalLog}
+import com.waz.log.ZLog2._
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service._
@@ -103,7 +103,7 @@ object WireApplication {
 
   lazy val Global = new Module {
 
-    verbose("Global module created!!")
+    verbose(l"Global module created!!")
 
     implicit lazy val ctx:          WireApplication = WireApplication.APP_INSTANCE
     implicit lazy val wContext:     WireContext     = ctx
@@ -331,7 +331,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
         sslContext.createSSLEngine
       } catch {
         case NonFatal(error) =>
-          verbose(s"Error while enabling TLS 1.2 on old device. $error")
+          verbose(l"Error while enabling TLS 1.2 on old device. $error")
       }
     }
   }
@@ -347,7 +347,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
         showSafeOnly = BuildConfig.SAFE_LOGGING))
     }
 
-    verbose("onCreate")
+    verbose(l"onCreate")
 
     enableTLS12OnOldDevices()
 
