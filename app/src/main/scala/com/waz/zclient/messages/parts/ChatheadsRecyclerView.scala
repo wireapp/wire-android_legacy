@@ -18,8 +18,8 @@
 package com.waz.zclient.messages.parts
 
 import android.view.ViewGroup
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.log.ZLog2._
 import com.waz.model.UserId
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
@@ -34,7 +34,7 @@ trait ChatheadsRecyclerView extends ViewGroup with ViewHelper {
   val users = Signal[Seq[UserId]]()
 
   users { ids =>
-    verbose(s"user id: $ids")
+    verbose(l"user id: $ids")
     if (getChildCount > ids.length) {
       for (i <- ids.length until getChildCount) cache.recycle(getChildAt(i), chatHeadResId)
       removeViewsInLayout(ids.length, getChildCount - ids.length)
