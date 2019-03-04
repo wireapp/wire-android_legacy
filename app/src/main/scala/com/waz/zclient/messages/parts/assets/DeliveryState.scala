@@ -18,15 +18,15 @@
 package com.waz.zclient.messages.parts.assets
 
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api
 import com.waz.api.AssetStatus._
 import com.waz.api.Message
+import com.waz.log.ZLog2._
 import com.waz.model._
 import com.waz.utils.events.Signal
 
 
-sealed trait DeliveryState
+sealed trait DeliveryState extends SafeToLog
 
 object DeliveryState {
 
@@ -63,7 +63,7 @@ object DeliveryState {
       case (UPLOAD_DONE | DOWNLOAD_DONE, _) => Complete
       case _ => Unknown
     }
-    verbose(s"Mapping Asset.Status: $as, and Message.Status $ms to DeliveryState: $res")
+    verbose(l"Mapping Asset.Status: $as, and Message.Status $ms to DeliveryState: $res")
     res
   }
 
