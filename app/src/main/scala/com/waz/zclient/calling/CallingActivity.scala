@@ -21,7 +21,7 @@ import android.content.{Context, Intent}
 import android.os.{Build, Bundle}
 import android.view.WindowManager
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.threading.Threading
 import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
@@ -33,7 +33,7 @@ class CallingActivity extends BaseActivity {
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
-    verbose("Creating CallingActivity")
+    verbose(l"Creating CallingActivity")
 
     setContentView(R.layout.calling_layout)
     getSupportFragmentManager
@@ -42,7 +42,7 @@ class CallingActivity extends BaseActivity {
       .commit
 
     controller.isCallActive.filter(_ == false).onUi { _ =>
-      verbose("call no longer exists, finishing activity")
+      verbose(l"call no longer exists, finishing activity")
       finish()
     }
   }
@@ -61,7 +61,7 @@ class CallingActivity extends BaseActivity {
   }
 
   override def onBackPressed() = {
-    verbose("onBackPressed")
+    verbose(l"onBackPressed")
 
     Option(getSupportFragmentManager.findFragmentById(R.id.calling_layout)).foreach {
       case f: OnBackPressedListener if f.onBackPressed() => //
