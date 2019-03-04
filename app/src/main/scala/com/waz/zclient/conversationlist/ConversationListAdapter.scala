@@ -21,7 +21,7 @@ import android.support.v7.widget.RecyclerView
 import android.view.View.OnLongClickListener
 import android.view.{View, ViewGroup}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.utils.events.{EventContext, EventStream, Signal}
@@ -50,7 +50,7 @@ class ConversationListAdapter(implicit injector: Injector, eventContext: EventCo
   def setData(convs: Seq[ConversationData], incoming: (Seq[ConversationData], Seq[UserId])): Unit = {
     _conversations = convs
     _incomingRequests = incoming
-    verbose(s"Conversation list updated => conversations: ${convs.size}, requests: ${incoming._2.size}")
+    verbose(l"Conversation list updated => conversations: ${convs.size}, requests: ${incoming._2.size}")
     notifyDataSetChanged()
   }
 
@@ -72,7 +72,7 @@ class ConversationListAdapter(implicit injector: Injector, eventContext: EventCo
     holder match {
       case normalViewHolder: NormalConversationRowViewHolder =>
         getItem(position).fold {
-          error(s"Conversation not found at position: $position")
+          error(l"Conversation not found at position: $position")
         } { item =>
           normalViewHolder.bind(item)
         }
