@@ -24,7 +24,7 @@ import android.util.AttributeSet
 import android.view.View.OnTouchListener
 import android.view.{MotionEvent, View}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.model.Dim2
 import com.waz.utils.events.Signal
 import com.waz.zclient.ViewHelper
@@ -59,7 +59,7 @@ class CollectionRecyclerView(context: Context, attrs: AttributeSet, style: Int) 
     addItemDecoration(collectionItemDecorator)
 
     scrollController.onScroll { case Scroll(pos, smooth) =>
-      verbose(s"Scrolling to pos: $pos, smooth: $smooth")
+      verbose(l"Scrolling to pos: $pos, smooth: $smooth")
       val scrollTo = math.min(adapter.getItemCount - 1, pos)
       if (smooth) {
         val current = layoutManager.findFirstVisibleItemPosition()
