@@ -25,7 +25,7 @@ import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, ViewGroup}
 import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
+import com.waz.log.ZLog2._
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.tracking.ContributionEvent
 import com.waz.service.tracking.ContributionEvent.Action
@@ -92,13 +92,13 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
   var subscriptions = Seq.empty[com.waz.utils.events.Subscription]
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
-    verbose("onCreateView")
+    verbose(l"onCreateView")
     inflater.inflate(R.layout.layout_quick_reply, container, false)
   }
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
-    verbose("onViewCreated")
+    verbose(l"onViewCreated")
 
     val name: TypefaceTextView         = findById(R.id.ttv__quick_reply__name)
     val counter: TypefaceTextView      = findById(R.id.ttv__quick_reply__counter)
@@ -171,7 +171,7 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
 
   override def onResume(): Unit = {
     super.onResume()
-    verbose("onResume")
+    verbose(l"onResume")
     message.postDelayed(new Runnable() {
       override def run(): Unit = {
         Option(message) foreach { msg =>
