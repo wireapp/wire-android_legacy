@@ -176,7 +176,10 @@ class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, la
 }
 
 object ScrollController {
-  case class Scroll(pos: Int, smooth: Boolean, force: Boolean = false)
+  case class Scroll(pos: Int, smooth: Boolean, force: Boolean = false) extends SafeToLog {
+    override def toString: String = s"Scroll(pos: $pos, smooth: $smooth, force: $force)"
+  }
+
   def BottomScroll(smooth: Boolean, force: Boolean = false) = Scroll(LastMessageIndex, smooth, force)
   val LastMessageIndex: Int = 0
 }
