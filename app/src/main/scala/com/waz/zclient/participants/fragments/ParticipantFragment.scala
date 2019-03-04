@@ -24,7 +24,7 @@ import android.support.v4.app.Fragment
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.threading.Threading
@@ -144,7 +144,7 @@ class ParticipantFragment extends ManagerFragment
       case _ =>
         withContentFragment {
           case _ if screenController.isShowingUser =>
-            verbose(s"onBackPressed with screenController.isShowingUser")
+            verbose(l"onBackPressed with screenController.isShowingUser")
             screenController.hideUser()
             participantsController.unselectParticipant()
             true
@@ -154,7 +154,7 @@ class ParticipantFragment extends ManagerFragment
             else getChildFragmentManager.popBackStack()
             true
           case _ =>
-            warn("OnBackPressed was not handled anywhere")
+            warn(l"OnBackPressed was not handled anywhere")
             false
         }
     }
@@ -215,7 +215,7 @@ class ParticipantFragment extends ManagerFragment
   }
 
   private def showUser(userId: UserId): Unit = {
-    verbose(s"onShowUser($userId)")
+    verbose(l"onShowUser($userId)")
     convScreenController.showUser(userId)
     participantsController.selectParticipant(userId)
 
@@ -268,7 +268,7 @@ class ParticipantFragment extends ManagerFragment
 
   override def onAcceptedConnectRequest(userId: UserId): Unit = {
     screenController.hideUser()
-    verbose(s"onAcceptedConnectRequest $userId")
+    verbose(l"onAcceptedConnectRequest $userId")
     userAccountsController.getConversationId(userId).flatMap { convId =>
       convController.selectConv(convId, ConversationChangeRequester.START_CONVERSATION)
     }
@@ -276,7 +276,7 @@ class ParticipantFragment extends ManagerFragment
 
   override def onUnblockedUser(restoredConversationWithUser: ConvId): Unit = {
     screenController.hideUser()
-    verbose(s"onUnblockedUser $restoredConversationWithUser")
+    verbose(l"onUnblockedUser $restoredConversationWithUser")
     convController.selectConv(restoredConversationWithUser, ConversationChangeRequester.START_CONVERSATION)
   }
 
