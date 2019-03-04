@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.participants
 
+import com.waz.log.ZLog2.SafeToLog
 import com.waz.utils.events.{SourceStream, _}
 import com.waz.zclient.R
 import com.waz.zclient.participants.OptionsMenuController._
@@ -29,13 +30,18 @@ trait OptionsMenuController {
 }
 
 object OptionsMenuController {
-  trait MenuItem {
+  trait MenuItem extends SafeToLog {
     val titleId: Int
     val iconId: Option[Int]
     val colorId: Option[Int]
   }
 
-  case class BaseMenuItem(titleId: Int, iconId: Option[Int] = None, colorId: Option[Int] = Some(R.color.graphite)) extends MenuItem
+  case class BaseMenuItem(titleId: Int,
+                          iconId: Option[Int] = None,
+                          colorId: Option[Int] = Some(R.color.graphite)) extends MenuItem {
+
+    override def toString: String = this.getClass.getSimpleName
+  }
 }
 
 class BaseOptionsMenuController(options: Seq[MenuItem], titleString: Option[String]) extends OptionsMenuController {
