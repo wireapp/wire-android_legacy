@@ -21,7 +21,7 @@ package com.waz.zclient.messages
 import android.arch.paging.PagedList
 import android.support.v7.widget.RecyclerView
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
+import com.waz.log.ZLog2._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.events.{EventContext, EventStream, SourceStream}
 import ScrollController._
@@ -93,19 +93,19 @@ class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, la
   onScroll.onUi(processScroll)
 
   def reset(unreadPos: Int): Unit = {
-    verbose(s"reset $unreadPos")
+    verbose(l"reset $unreadPos")
     queuedScroll = None
     onListLoaded ! unreadPos
   }
 
   def onPagedListChanged(): Unit = {
-    verbose(s"onPagedListChanged")
+    verbose(l"onPagedListChanged")
     queuedScroll.foreach(processScroll)
   }
 
   def onPagedListReplaced(pl: PagedList[MessageAndLikes]): Unit = {
     val newCount = pl.getDataSource.asInstanceOf[MessageDataSource].totalCount
-    verbose(s"onPagedListReplaced $newCount, $previousCount")
+    verbose(l"onPagedListReplaced $newCount, $previousCount")
     if (previousCount.exists(_ < newCount)) {
       onMessageAdded ! newCount - previousCount.getOrElse(0)
     } else {
@@ -124,7 +124,7 @@ class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, la
       .foreach(_.loadAround(pos))
 
   private def processScroll(s: Scroll): Unit = {
-    verbose(s"Scrolling to: $s")
+    verbose(l"Scrolling to: $s")
     if (queuedScroll.forall(!_.force)) {
       queuedScroll = Some(s)
     }
@@ -164,12 +164,12 @@ class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, la
   private def startDragging(): Unit = {
     dragging = true
     queuedScroll = None
-    verbose(s"startDragging")
+    verbose(l"startDragging")
   }
 
   private def stopDragging(): Unit = {
     dragging = false
-    verbose(s"stopDragging")
+    verbose(l"stopDragging")
   }
 
   private def shouldScrollToBottom: Boolean = queuedScroll.isEmpty && !dragging && adapter.unreadIsLast
