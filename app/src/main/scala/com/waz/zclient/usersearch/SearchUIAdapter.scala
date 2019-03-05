@@ -23,7 +23,7 @@ import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
+import com.waz.log.ZLog2._
 import com.waz.model._
 import com.waz.utils.events.EventContext
 import com.waz.utils.returning
@@ -39,6 +39,7 @@ import com.waz.zclient.usersearch.SearchUIAdapter.TopUsersViewHolder.TopUserAdap
 import com.waz.zclient.usersearch.views.SearchResultConversationRowView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{ResColor, RichView, ViewUtils}
+import com.waz.zclient.utils.UILogShow._
 
 class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)
                      (implicit injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[RecyclerView.ViewHolder] with Injectable {
@@ -76,7 +77,7 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)
   } yield (curUser, team, isAdmin, res)).onUi {
     case (curUser, team, isAdmin, res) =>
 
-      verbose(res.toString)
+      verbose(l"Search user list state: $res")
       this.team = team
       currentUserIsAdmin = isAdmin
       currentUser = curUser
