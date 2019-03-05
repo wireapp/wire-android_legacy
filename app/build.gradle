@@ -112,6 +112,7 @@ android {
         versionName majorVersion + android.defaultConfig.versionCode
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
+        manifestPlaceholders = [customURLScheme: config.custom_url_scheme]
 
         buildConfigField 'Integer', 'MAX_ACCOUNTS',               "$config.maxAccounts"
         buildConfigField 'String',  'BACKEND_URL',                "\"$config.backendUrl\""
