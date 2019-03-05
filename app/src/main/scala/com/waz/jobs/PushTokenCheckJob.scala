@@ -20,13 +20,14 @@ package com.waz.jobs
 import com.evernote.android.job.Job.Result
 import com.evernote.android.job.util.support.PersistableBundleCompat
 import com.evernote.android.job._
-import com.waz.ZLog.{error, verbose}
 import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.log.ZLog2._
 import com.waz.model.UserId
 import com.waz.service.ZMessaging
 import com.waz.services.fcm.FetchJob
 import com.waz.threading.Threading
 import com.waz.utils.returning
+import com.waz.zclient.utils.UILogShow._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -60,7 +61,7 @@ class PushTokenCheckJob extends Job {
           Await.result(res, 1.minute) //Give the job a long time to complete
         } catch {
           case NonFatal(e) =>
-            error("PushTokenCheckJob failed", e)
+            error(l"PushTokenCheckJob failed", e)
             Result.RESCHEDULE
         }
 
@@ -88,11 +89,11 @@ object PushTokenCheckJob {
     val manager = JobManager.instance()
     val currentJobs = manager.getAllJobsForTag(tag).asScala.toSet
     val currentJob = returning(currentJobs.find(!_.isFinished)) { j =>
-      verbose(s"currentJob: $j")
+      verbose(l"currentJob: $j")
     }
 
     val hasPendingRequest = returning(manager.getAllJobRequestsForTag(tag).asScala.toSet) { v =>
-      if (v.size > 1) error(s"Shouldn't be more than one fetch job for account: $userId")
+      if (v.size > 1) error(l"Shouldn't be more than one fetch job for account: $userId")
     }.nonEmpty
 
     if (!(hasPendingRequest || currentJob.isDefined)) {
