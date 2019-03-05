@@ -19,6 +19,7 @@ package com.waz.zclient.utils
 
 import com.evernote.android.job.Job
 import com.waz.log.ZLog2._
+import com.waz.zclient.search.SearchController.SearchUserListState
 
 /**
   * A collection of implicit `LogShow` instances for UI types.
@@ -26,4 +27,16 @@ import com.waz.log.ZLog2._
 object UILogShow {
 
   implicit val JobLogShow: LogShow[Job] = LogShow.logShowWithHash
+
+  implicit val SearchUserListStateLogShow: LogShow[SearchUserListState] =
+    LogShow.createFrom {
+      case SearchUserListState.NoUsers => l"NoUsers"
+      case SearchUserListState.NoUsersFound => l"NoUsersFound"
+      case SearchUserListState.Users(us) => l"Users(us: $us)"
+      case SearchUserListState.NoServices => l"NoServices"
+      case SearchUserListState.NoServicesFound => l"NoServicesFound"
+      case SearchUserListState.LoadingServices => l"LoadingServices"
+      case SearchUserListState.Services(ss) => l"Services(ss: $ss)"
+      case SearchUserListState.Error(err) => l"Error(err: $err)"
+    }
 }
