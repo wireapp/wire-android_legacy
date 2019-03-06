@@ -50,10 +50,6 @@ class ReplyController(implicit injector: Injector, context: Context, ec: EventCo
     sender      <- usersController.user(msg.userId)
     asset       <- assetsController.assetSignal(msg.assetId)
   } yield Option(ReplyContent(msg, asset, sender.getDisplayName))).orElse(Signal.const(None))
-//    Some(msg)   <- messagesController.getMessage(msgId)
-//    sender      <- usersController.user(msg.userId)
-//    asset       <- assetsController.assetSignal(msg.assetId).map(a => Option(a._1)).orElse(Signal.const(Option.empty[AssetData]))
-//  } yield Option(ReplyContent(msg, asset, sender.getDisplayName))).orElse(Signal.const(None))
 
   messagesService.flatMap(ms => Signal.wrap(ms.msgEdited)) { case (from, to) =>
     replyData.mutate { data =>
