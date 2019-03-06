@@ -56,12 +56,6 @@ class UsersController(implicit injector: Injector, context: Context) extends Inj
     user <- userId.fold(Signal.const(Option.empty[UserData]))(uId => user(uId).map(Some(_)))
   } yield user
 
-  def displayNameStringIncludingSelf(id: UserId): Signal[String] =
-    for {
-      zms <- zMessaging
-      user <- user(id)
-    } yield user.getDisplayName
-
   def displayName(id: UserId): Signal[DisplayName] = zMessaging.flatMap { zms =>
     if (zms.selfUserId == id) Signal const Me
     else user(id).map(u => Other(if (u.deleted) getString(R.string.default_deleted_username) else u.getDisplayName))
