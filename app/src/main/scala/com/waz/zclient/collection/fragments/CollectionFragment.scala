@@ -28,8 +28,9 @@ import android.view._
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{EditText, TextView}
-import com.waz.ZLog._
+import com.waz.ZLog.{LogTag, logTagFor}
 import com.waz.api.{ContentSearchQuery, Message}
+import com.waz.log.ZLog2._
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.collection.adapters.CollectionAdapter.AdapterState
@@ -153,7 +154,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
         try{
           super.onLayoutChildren(recycler, state)
         } catch {
-          case ioob: IndexOutOfBoundsException => error("IOOB caught") //XXX: I don't think this is needed anymore
+          case ioob: IndexOutOfBoundsException => error(l"IOOB caught") //XXX: I don't think this is needed anymore
         }
 
       }
