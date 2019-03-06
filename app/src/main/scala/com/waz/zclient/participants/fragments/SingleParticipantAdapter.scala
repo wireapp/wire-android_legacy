@@ -23,7 +23,7 @@ import android.support.v7.widget.RecyclerView.ViewHolder
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{ImageView, LinearLayout, TextView}
 import com.waz.model.{Availability, UserField, UserId}
-import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.paintcode.GuestIcon
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils._
@@ -91,7 +91,7 @@ object SingleParticipantAdapter {
   val Footer = 2
 
   case class ParticipantHeaderRowViewHolder(view: View) extends ViewHolder(view) {
-    private lazy val imageView           = view.findViewById[ChatheadView](R.id.chathead)
+    private lazy val imageView           = view.findViewById[ChatHeadView](R.id.chathead)
     private lazy val guestIndication     = view.findViewById[LinearLayout](R.id.guest_indicator)
     private lazy val userAvailability    = view.findViewById[ShowAvailabilityView](R.id.availability)
     private lazy val guestIndicatorTimer = view.findViewById[TypefaceTextView](R.id.expiration_time)
@@ -109,7 +109,7 @@ object SingleParticipantAdapter {
             )(implicit context: Context): Unit = {
       this.userId = Some(userId)
 
-      imageView.setUserId(userId)
+      imageView.loadUser(userId)
       guestIndication.setVisible(isGuest)
 
       val color = if (isDarkTheme) R.color.wire__text_color_primary_dark_selector else R.color.wire__text_color_primary_light_selector
