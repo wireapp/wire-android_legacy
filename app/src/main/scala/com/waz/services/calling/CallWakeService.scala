@@ -18,14 +18,15 @@
 package com.waz.services.calling
 
 import android.content.{Context, Intent => AIntent}
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.log.ZLog2._
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.ZMessaging
 import com.waz.services.{FutureService, ZMessagingService}
 import com.waz.utils.events.EventContext
 import com.waz.utils.returning
 import com.waz.utils.wrappers.Intent
+import com.waz.zclient.utils.UILogShow._
 
 import scala.concurrent.Future
 
@@ -37,10 +38,10 @@ class CallWakeService extends FutureService with ZMessagingService {
   implicit val ec = EventContext.Global
 
   override protected def onIntent(intent: AIntent, id: Int): Future[Any] = onZmsIntent(intent) { implicit zms =>
-    debug(s"onIntent $intent")
+    debug(l"onIntent $intent")
     if (intent != null && intent.hasExtra(ConvIdExtra)) {
       implicit val convId = ConvId(intent.getStringExtra(ConvIdExtra))
-      debug(s"convId: $convId")
+      debug(l"convId: $convId")
 
       intent.getAction match {
         case ActionJoin          => join(withVideo = false)
@@ -49,7 +50,7 @@ class CallWakeService extends FutureService with ZMessagingService {
         case _                   => Future.successful({})
       }
     } else {
-      error("missing intent extras")
+      error(l"missing intent extras")
       Future.successful({})
     }
   }
