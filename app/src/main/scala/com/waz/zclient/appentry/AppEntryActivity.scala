@@ -148,7 +148,7 @@ class AppEntryActivity extends BaseActivity {
     case None =>
       userAccountsController.ssoToken.head.foreach {
         // if the SSO token is present we use it to log in the user
-        case Some(_) =>                    showFragment(SignInFragment(), SignInFragment.Tag, animated = false)
+        case Some(_) =>                    showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
         case _ =>
           Option(getIntent.getExtras).map(_.getInt(MethodArg)) match {
             case Some(LoginArgVal) =>      showFragment(SignInFragment(), SignInFragment.Tag, animated = false)

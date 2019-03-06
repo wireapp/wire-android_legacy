@@ -32,15 +32,18 @@ import com.waz.utils._
 import com.waz.utils.wrappers.URI
 import com.waz.zclient.appentry.DialogErrorMessage.EmailError
 import com.waz.zclient.appentry.SSOWebViewFragment._
+import com.waz.zclient.appentry.SSOWebViewWrapper.SSOResponse
 import com.waz.zclient.appentry.fragments.FirstLaunchAfterLoginFragment
+import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.utils.{ContextUtils, ViewUtils}
 import com.waz.zclient.{FragmentHelper, R}
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Future
 
 class SSOWebViewFragment extends FragmentHelper {
+  import Threading.Implicits.Ui
 
-  private lazy val accountsService = inject[AccountsService]
+  private lazy val accountsService  = inject[AccountsService]
 
   private lazy val webView = view[WebView](R.id.web_view)
 
@@ -50,48 +53,15 @@ class SSOWebViewFragment extends FragmentHelper {
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     val toolbar = view.findViewById[Toolbar](R.id.toolbar)
-
     val title = view.findViewById[TextView](R.id.title)
-
-    val code = getArguments.getString(SSOCode)
 
     webView.foreach { webView =>
       val webViewWrapper = new SSOWebViewWrapper(webView, ZMessaging.currentGlobal.backend.baseUrl.toString)
       webViewWrapper.onUrlChanged.onUi { url =>
         title.setText(Option(URI.parse(url).getHost).getOrElse(""))
       }
-      import Threading.Implicits.Ui
 
-      webViewWrapper.loginWithCode(code).flatMap {
-        case Right((cookie, userId)) =>
-          accountsService.ssoLogin(userId, cookie).map {
-            case Left(error) =>
-              ContextUtils.showErrorDialog(EmailError(error))
-            case Right((true, hadDB)) =>
-              activity.showFragment(FirstLaunchAfterLoginFragment(userId, ssoHadDB = hadDB), FirstLaunchAfterLoginFragment.Tag)
-            case _ =>
-              for {
-                am      <- accountsService.accountManagers.head.map(_.find(_.userId == userId))
-                clState <- am.fold2(Future.successful(None), _.getOrRegisterClient().map(_.fold(_ => None, Some(_))))
-                _       <- accountsService.setAccount(Some(userId))
-              } getActivity.asInstanceOf[AppEntryActivity].onEnterApplication(openSettings = false, clState)
-          }
-        case Left(error) =>
-          val errorRead = Promise[Unit]()
-          ViewUtils.showAlertDialog(
-            getActivity,
-            getString(R.string.sso_signin_error_title),
-            getString(R.string.sso_signin_error_message, error.toString),
-            getString(android.R.string.ok),
-            new DialogInterface.OnClickListener {
-              def onClick(dialog: DialogInterface, which: Int): Unit = {
-                getFragmentManager.popBackStack()
-                errorRead.success({})
-              }
-            },
-            true)
-          errorRead.future
-      }
+      webViewWrapper.loginWithCode(getArguments.getString(SSOCode)).foreach(ssoResponse)
     }
 
     toolbar.setNavigationIcon(R.drawable.action_back_dark)
@@ -101,11 +71,40 @@ class SSOWebViewFragment extends FragmentHelper {
 
   }
 
+  private def ssoResponse(loginResult: SSOResponse) = loginResult match {
+    case Right((cookie, userId)) =>
+      accountsService.ssoLogin(userId, cookie).map {
+        case Left(error) =>
+          ContextUtils.showErrorDialog(EmailError(error))
+        case Right((true, hadDB)) =>
+          activity.showFragment(FirstLaunchAfterLoginFragment(userId, ssoHadDB = hadDB), FirstLaunchAfterLoginFragment.Tag)
+        case _ =>
+          for {
+            am      <- accountsService.accountManagers.head.map(_.find(_.userId == userId))
+            clState <- am.fold2(Future.successful(None), _.getOrRegisterClient().map(_.fold(_ => None, Some(_))))
+            _       <- accountsService.setAccount(Some(userId))
+          } getActivity.asInstanceOf[AppEntryActivity].onEnterApplication(openSettings = false, clState)
+      }
+    case Left(error) =>
+      ViewUtils.showAlertDialog(
+        getActivity,
+        getString(R.string.sso_signin_error_title),
+        getString(R.string.sso_signin_error_message, error.toString),
+        getString(android.R.string.ok),
+        new DialogInterface.OnClickListener {
+          def onClick(dialog: DialogInterface, which: Int): Unit = {
+            getFragmentManager.popBackStack()
+          }
+        },
+        true)
+  }
+
   override def onBackPressed(): Boolean = {
-    if (webView.map(_.canGoBack).getOrElse(false))
-      webView.foreach(_.goBack())
-    else
+    if (webView.map(_.canGoBack).getOrElse(false)) webView.foreach(_.goBack())
+    else {
+      inject[UserAccountsController].ssoToken ! None
       getFragmentManager.popBackStack()
+    }
     true
   }
 

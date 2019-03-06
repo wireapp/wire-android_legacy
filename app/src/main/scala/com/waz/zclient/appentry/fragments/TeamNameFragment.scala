@@ -59,7 +59,7 @@ case class TeamNameFragment() extends CreateTeamFragment with SSOFragment {
   private def openUrl(id: Int): Unit =
     context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(context.getString(id))))
 
-  override protected def onSSOConfirm(code: String): Unit = showFragment(SSOWebViewFragment.newInstance(code.toString), SSOWebViewFragment.Tag)
+  override protected def onSSOConfirm(code: String): Unit = showFragment(SSOWebViewFragment.newInstance(code), SSOWebViewFragment.Tag)
 }
 
 object TeamNameFragment {
