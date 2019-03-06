@@ -21,8 +21,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.IConversation.Type
+import com.waz.log.ZLog2._
 import com.waz.model.UserId
 import com.waz.threading.Threading
 import com.waz.zclient.common.controllers.UserAccountsController
@@ -69,7 +69,7 @@ class SecondPageFragment extends FragmentHelper
   }
 
   private def open(tag: String, other: Option[UserId]): Unit = {
-    info(s"open ($tag, $other)")
+    info(l"open (${showString(tag)}, $other)")
     val (fragment, page) = (tag, other) match {
       case (ConnectRequestFragment.Tag, Some(userId)) =>
         (ConnectRequestFragment.newInstance(userId), Page.CONNECT_REQUEST_INBOX)
@@ -132,14 +132,14 @@ class SecondPageFragment extends FragmentHelper
   }
 
   override def onAcceptedConnectRequest(userId: UserId): Unit = {
-    info(s"onAcceptedConnectRequest $userId")
+    info(l"onAcceptedConnectRequest $userId")
     userAccountsController.getConversationId(userId).flatMap { convId =>
       conversationController.selectConv(convId, ConversationChangeRequester.CONVERSATION_LIST)
     }
   }
 
   override def dismissInboxFragment(): Unit = {
-    info("dismissInboxFragment")
+    info(l"dismissInboxFragment")
     navigationController.setVisiblePage(Page.CONVERSATION_LIST, Tag)
   }
 
