@@ -23,7 +23,7 @@ import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{CompoundButton, TextView}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.error
+import com.waz.log.ZLog2._
 import com.waz.api.Verification
 import com.waz.model.UserId
 import com.waz.model.otr.ClientId
@@ -202,7 +202,7 @@ class SingleOtrClientFragment extends FragmentHelper {
                 }
               })
           case Retry(_) =>
-            error("Awaiting a sync job should not return Retry")//TODO return ErrorOr[Unit] from await?
+            error(l"Awaiting a sync job should not return Retry")//TODO return ErrorOr[Unit] from await?
         }
       } (Threading.Ui)
     case _ =>
