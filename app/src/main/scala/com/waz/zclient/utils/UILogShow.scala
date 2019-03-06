@@ -22,6 +22,7 @@ import com.evernote.android.job.Job
 import com.waz.avs.VideoPreview
 import com.waz.log.ZLog2._
 import com.waz.zclient.Intents.RichIntent
+import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.UsersController.DisplayName
 import com.waz.zclient.search.SearchController.SearchUserListState
 
@@ -72,4 +73,21 @@ object UILogShow {
     }
 
   implicit val VideoPreviewLogSow: LogShow[VideoPreview] = LogShow.logShowWithHash
+
+  implicit val MsgBindOptionsLogShow: LogShow[MsgBindOptions] =
+    LogShow.createFrom { o =>
+      l"""
+         |MsgBindOptions(
+         |  position: ${o.position},
+         |  isSelf: ${o.isSelf},
+         |  isLast: ${o.isLast},
+         |  isLastSelf: ${o.isLastSelf},
+         |  isFirstUnread: ${o.isFirstUnread},
+         |  listDimensions: ${o.listDimensions},
+         |  isGroup: ${o.isGroup},
+         |  teamId: ${o.teamId},
+         |  canHaveLink: ${o.canHaveLink},
+         |  selfId: ${o.selfId})
+       """.stripMargin
+    }
 }
