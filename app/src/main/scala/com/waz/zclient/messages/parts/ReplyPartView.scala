@@ -22,9 +22,9 @@ import android.graphics.Typeface
 import android.util.{AttributeSet, TypedValue}
 import android.view.{View, ViewGroup}
 import android.widget.{LinearLayout, TextView}
-import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
+import com.waz.log.ZLog2._
 import com.waz.model.{AssetData, MessageContent, MessageData, Name}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
@@ -84,7 +84,7 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) 
     }.orElse(Signal.const(Option.empty[AssetData]))
 
   def setQuote(quotedMessage: MessageData): Unit = {
-    ZLog.verbose(s"setQuote: $quotedMessage")
+    verbose(l"setQuote: $quotedMessage")
     this.quotedMessage ! quotedMessage
   }
 
