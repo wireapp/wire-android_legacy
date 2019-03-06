@@ -26,7 +26,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.service.{UiLifeCycle, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
@@ -80,7 +80,7 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int) extend
           spinnerController.hideSpinner()
         }
       case Failure(err) =>
-        error("Error while exporting database", err)
+        error(l"Error while exporting database", err)
         ViewUtils.showAlertDialog(getContext, R.string.export_generic_error_title, R.string.export_generic_error_text, android.R.string.ok, null, true)
     }
 
