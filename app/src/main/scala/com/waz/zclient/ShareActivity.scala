@@ -28,7 +28,7 @@ import android.provider.DocumentsContract._
 import android.provider.MediaStore
 import android.support.v4.app.ShareCompat
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.{verbose, warn}
+import com.waz.log.ZLog2._
 import com.waz.permissions.PermissionsService
 import com.waz.service.AccountsService
 import com.waz.threading.Threading
@@ -41,6 +41,7 @@ import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.confirmation.TwoButtonConfirmationCallback
 import com.waz.zclient.sharing.ShareToMultipleFragment
 import com.waz.zclient.views.menus.ConfirmationMenu
+import com.waz.zclient.utils.UILogShow._
 
 import scala.collection.immutable.ListSet
 import scala.util.control.NonFatal
@@ -92,7 +93,7 @@ class ShareActivity extends BaseActivity with ActivityHelper {
     inject[PermissionsService].requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
       case true =>
         val intent = getIntent
-        verbose(s"$intent")
+        verbose(l"$intent")
         val ir = ShareCompat.IntentReader.from(this)
         if (!ir.isShareIntent) finish()
         else {
@@ -165,14 +166,14 @@ object ShareActivity {
         case _ if isDocumentUri(context, uri) =>
           getDocumentPath(context, uri).orElse(default)
         case _ =>
-          warn(s"Unrecognised authority for uri: $uri")
+          warn(l"Unrecognised authority for uri: $uri")
           None
       }).orElse(default)
     } else
       (uri.getScheme.toLowerCase match {
         case "content" => getDocumentPath(context, uri).orElse(default)
         case _ =>
-          warn(s"Unreachable content: $uri")
+          warn(l"Unreachable content: $uri")
           default
       }).flatMap { u =>
         //filter out attempts to trick us into sending application/sensitive data
@@ -205,7 +206,7 @@ object ShareActivity {
         if (c.moveToFirst) Option(c.getString(c.getColumnIndexOrThrow(column))) else None
       } catch {
         case NonFatal(e) =>
-          warn("Unable to get data column", e)
+          warn(l"Unable to get data column", e)
           None
       }
     })(_ => cursor.foreach(_.close()))
