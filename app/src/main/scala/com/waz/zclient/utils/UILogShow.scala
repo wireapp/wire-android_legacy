@@ -19,6 +19,7 @@ package com.waz.zclient.utils
 
 import com.evernote.android.job.Job
 import com.waz.log.ZLog2._
+import com.waz.zclient.messages.UsersController.DisplayName
 import com.waz.zclient.search.SearchController.SearchUserListState
 
 /**
@@ -38,5 +39,11 @@ object UILogShow {
       case SearchUserListState.LoadingServices => l"LoadingServices"
       case SearchUserListState.Services(ss) => l"Services(ss: $ss)"
       case SearchUserListState.Error(err) => l"Error(err: $err)"
+    }
+
+  implicit val DisplayNameLogShow: LogShow[DisplayName] =
+    LogShow.createFrom {
+      case DisplayName.Me => l"Me"
+      case DisplayName.Other(name) => l"Other(name: ${redactedString(name)})"
     }
 }
