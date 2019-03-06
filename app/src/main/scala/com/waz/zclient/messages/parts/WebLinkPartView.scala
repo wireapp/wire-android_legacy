@@ -22,8 +22,8 @@ import android.support.v7.widget.CardView
 import android.util.AttributeSet
 import android.widget.{ImageView, TextView}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.Message.Part
+import com.waz.log.ZLog2._
 import com.waz.model.GenericContent.LinkPreview
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
@@ -117,7 +117,7 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
-    verbose(s"set $part")
+    verbose(l"set $part")
     part foreach { content ! _ }
   }
 }
