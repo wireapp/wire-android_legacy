@@ -20,9 +20,9 @@ package com.waz.zclient.messages
 import android.arch.paging.PositionalDataSource
 import android.content.Context
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.content.MessageAndLikesStorage
 import com.waz.db.{CursorIterator, Reader}
+import com.waz.log.ZLog2._
 import com.waz.model.MessageData.MessageDataDao
 import com.waz.model.{MessageData, MessageId, RemoteInstant}
 import com.waz.service.messages.MessageAndLikes
@@ -77,7 +77,7 @@ class MessageDataSource(val cursor: Option[DBCursor])(implicit inj: Injector, ec
       case Success(data) =>
         callback.onResult(data.asJava)
       case Failure(e) =>
-        error(e.getMessage)
+        error(l"loadRange error:", e)
     }
   }
 
