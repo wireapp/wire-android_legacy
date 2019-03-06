@@ -22,11 +22,11 @@ import android.app.Activity
 import android.content.{BroadcastReceiver, Context, Intent}
 import android.preference.PreferenceManager
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.content.GlobalPreferences._
 import com.waz.content.Preferences.PrefKey
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.content.UserPreferences._
+import com.waz.log.ZLog2._
 import com.waz.service.ZMessaging
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController._
 import com.waz.zclient.controllers.userpreferences.UserPreferencesController
@@ -59,7 +59,7 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver {
   }
 
   override def onReceive(context: Context, intent: Intent) = {
-    verbose(s"onReceive: ${intent.getAction}")
+    verbose(l"onReceive: ${redactedString(intent.getAction)}")
     intent.getAction match {
       case AUTO_ANSWER_CALL_INTENT =>
         setGlobalPref(AutoAnswerCallPrefKey, intent.getBooleanExtra(AUTO_ANSWER_CALL_INTENT_EXTRA_KEY, false))
