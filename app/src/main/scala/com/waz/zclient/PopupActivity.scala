@@ -22,12 +22,13 @@ import android.os.Bundle
 import android.support.v7.widget.Toolbar
 import android.view.View
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.{error, verbose}
+import com.waz.log.ZLog2._
 import com.waz.utils.returning
 import com.waz.zclient.Intents._
 import com.waz.zclient.quickreply.QuickReplyFragment
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.{ContextUtils, ViewUtils}
+import com.waz.zclient.utils.UILogShow._
 
 class PopupActivity extends BaseActivity with ActivityHelper { self =>
 
@@ -35,7 +36,7 @@ class PopupActivity extends BaseActivity with ActivityHelper { self =>
 
   override def onCreate(savedInstanceState: Bundle) = {
     super.onCreate(savedInstanceState)
-    verbose(s"onCreate: ${getIntent.log}")
+    verbose(l"onCreate: ${RichIntent(getIntent)}")
     ViewUtils.unlockOrientation(this)
     setContentView(R.layout.popup_reply)
     returning(findById[Toolbar](R.id.toolbar)) { toolbar =>
@@ -66,7 +67,7 @@ class PopupActivity extends BaseActivity with ActivityHelper { self =>
     (intent.accountId, intent.convId) match {
       case (Some(acc), Some(conv)) =>
         getSupportFragmentManager.beginTransaction.replace(R.id.fl__quick_reply__container, QuickReplyFragment.newInstance(acc, conv)).commit
-      case _ => error("Unknown account or conversation id - can't show QuickReplyFragment")
+      case _ => error(l"Unknown account or conversation id - can't show QuickReplyFragment")
     }
   }
 
