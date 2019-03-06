@@ -20,6 +20,7 @@ package com.waz.zclient.utils
 import android.content.Intent
 import com.evernote.android.job.Job
 import com.waz.log.ZLog2._
+import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.messages.UsersController.DisplayName
 import com.waz.zclient.search.SearchController.SearchUserListState
 
@@ -28,9 +29,28 @@ import com.waz.zclient.search.SearchController.SearchUserListState
   */
 object UILogShow {
 
-  implicit val IntentLogShow: LogShow[Intent] = LogShow.logShowWithHash
 
   implicit val JobLogShow: LogShow[Job] = LogShow.logShowWithHash
+
+  implicit val IntentLogShow: LogShow[Intent] = LogShow.logShowWithHash
+
+  implicit val RichIntentLogShow: LogShow[RichIntent] =
+    LogShow.createFrom { i =>
+      l"""
+         |Intent(
+         |  action:           ${redactedString(i.intent.getAction)}
+         |  flags:            ${redactedString(i.intent.getFlags.toString)}
+         |  extras:           ${redactedString(i.intent.getExtras.toString)}
+         |  categories:       ${redactedString(i.intent.getCategories.toString)}
+         |  data:             ${redactedString(i.intent.getDataString)}
+         |  fromNotification: ${i.fromNotification}
+         |  fromSharing:      ${i.intent.fromSharing}
+         |  startCall:        ${i.intent.startCall}
+         |  accountId:        ${i.accountId}
+         |  convId:           ${i.convId}
+         |  page:             ${i.page.map(redactedString)})
+       """.stripMargin
+    }
 
   implicit val SearchUserListStateLogShow: LogShow[SearchUserListState] =
     LogShow.createFrom {
