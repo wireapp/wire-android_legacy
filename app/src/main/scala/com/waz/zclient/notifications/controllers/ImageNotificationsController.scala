@@ -20,8 +20,9 @@ package com.waz.zclient.notifications.controllers
 import android.app.NotificationManager
 import android.graphics.Bitmap
 import android.support.v4.app.NotificationCompat
-import com.waz.ZLog._
+import com.waz.ZLog.{LogTag, logTagFor}
 import com.waz.bitmap.BitmapUtils
+import com.waz.log.ZLog2._
 import com.waz.model.{AssetData, AssetId}
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapResult
@@ -90,11 +91,11 @@ class ImageNotificationsController(implicit cxt: WireContext, eventContext: Even
     def showNotification() = notManager.notify(ZETA_SAVE_IMAGE_NOTIFICATION_ID, builder.build())
 
     Try(showNotification()).recover { case e =>
-      error(s"Notify failed: try without bitmap. Error: $e")
+      error(l"Notify failed: try without bitmap. Error: $e")
       builder.setLargeIcon(null)
       try showNotification()
       catch {
-        case e: Throwable => error("second display attempt failed, aborting", e)
+        case e: Throwable => error(l"second display attempt failed, aborting", e)
       }
     }
   }
