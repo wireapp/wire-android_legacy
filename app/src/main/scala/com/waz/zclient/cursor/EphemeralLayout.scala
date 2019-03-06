@@ -22,8 +22,8 @@ import android.support.v7.view.ContextThemeWrapper
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, NumberPicker}
-import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
+import com.waz.log.ZLog2._
 import com.waz.utils.events.{EventStream, Subscription}
 import com.waz.zclient.conversation.ConversationController._
 import com.waz.zclient.utils.ContextUtils._
@@ -65,7 +65,7 @@ class EphemeralLayout(context: Context, attrs: AttributeSet, defStyleAttr: Int) 
       f.set(numberPicker, getDrawable(R.drawable.number_picker_divider))
     } catch {
       case t: Throwable =>
-        ZLog.error("Something went wrong", t)
+        error(l"Something went wrong", t)
     }
     addView(numberPicker)
   }
