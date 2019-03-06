@@ -19,6 +19,7 @@ package com.waz.zclient.utils
 
 import android.content.Intent
 import com.evernote.android.job.Job
+import com.waz.avs.VideoPreview
 import com.waz.log.ZLog2._
 import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.messages.UsersController.DisplayName
@@ -69,4 +70,6 @@ object UILogShow {
       case DisplayName.Me => l"Me"
       case DisplayName.Other(name) => l"Other(name: ${redactedString(name)})"
     }
+
+  implicit val VideoPreviewLogSow: LogShow[VideoPreview] = LogShow.logShowWithHash
 }
