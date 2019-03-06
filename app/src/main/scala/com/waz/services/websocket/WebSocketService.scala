@@ -24,14 +24,15 @@ import android.content.{BroadcastReceiver, Context, Intent}
 import android.os.{Build, IBinder}
 import android.support.v4.app.NotificationCompat
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.content.GlobalPreferences.{PushEnabledKey, WsForegroundKey}
 import com.waz.jobs.PushTokenCheckJob
+import com.waz.log.ZLog2._
 import com.waz.service.AccountsService.InForeground
 import com.waz.service.{AccountsService, GlobalModule, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
+import com.waz.zclient.utils.UILogShow._
 import com.waz.zclient._
 
 class WebSocketController(implicit inj: Injector) extends Injectable {
@@ -93,7 +94,7 @@ class OnBootAndUpdateBroadcastReceiver extends BroadcastReceiver {
 
   override def onReceive(context: Context, intent: Intent): Unit = {
     this.context = context
-    verbose(s"onReceive $intent")
+    verbose(l"onReceive $intent")
 
     accounts.zmsInstances.head.foreach { zs =>
       zs.map(_.selfUserId).foreach(PushTokenCheckJob(_))
@@ -102,13 +103,13 @@ class OnBootAndUpdateBroadcastReceiver extends BroadcastReceiver {
 
     controller.serviceInForeground.head.foreach {
       case true =>
-        verbose("startForegroundService")
+        verbose(l"startForegroundService")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
           context.startForegroundService(new Intent(context, classOf[WebSocketService]))
         else
           WebSocketService(context)
       case false =>
-        verbose("foreground service not needed, will wait for application to start service if necessary")
+        verbose(l"foreground service not needed, will wait for application to start service if necessary")
     } (Threading.Ui)
   }
 }
@@ -131,11 +132,11 @@ class WebSocketService extends ServiceHelper {
   private lazy val webSocketActiveSubscription =
     controller.accountWebsocketStates {
       case (zmsWithWSActive, zmsWithWSInactive) =>
-        verbose(s"zmsWithWSActive: ${zmsWithWSActive.map(_.selfUserId)}, zmsWithWSInactive: ${zmsWithWSInactive.map(_.selfUserId)}")
+        verbose(l"zmsWithWSActive: ${zmsWithWSActive.map(_.selfUserId)}, zmsWithWSInactive: ${zmsWithWSInactive.map(_.selfUserId)}")
         zmsWithWSActive.foreach(_.wsPushService.activate())
         zmsWithWSInactive.foreach(_.wsPushService.deactivate())
         if (zmsWithWSActive.isEmpty) {
-          verbose("stopping")
+          verbose(l"stopping")
           stopSelf()
         }
     }
@@ -143,11 +144,11 @@ class WebSocketService extends ServiceHelper {
   private lazy val appInForegroundSubscription =
     controller.notificationTitleRes {
       case None =>
-        verbose("stopForeground")
+        verbose(l"stopForeground")
         stopForeground(true)
 
       case Some(title) =>
-        verbose("startForeground")
+        verbose(l"startForeground")
         createNotificationChannel()
         startForeground(WebSocketService.ForegroundId,
           new NotificationCompat.Builder(this, ForegroundNotificationChannelId)
@@ -165,7 +166,7 @@ class WebSocketService extends ServiceHelper {
   override def onBind(intent: content.Intent): IBinder = null
 
   override def onStartCommand(intent: Intent, flags: Int, startId: Int): Int = {
-    verbose(s"onStartCommand($intent, $startId)")
+    verbose(l"onStartCommand($intent, $startId)")
     webSocketActiveSubscription
     appInForegroundSubscription
 
