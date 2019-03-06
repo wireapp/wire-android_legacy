@@ -19,8 +19,9 @@
 package com.waz.zclient.appentry
 
 import android.webkit.{WebView, WebViewClient}
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog.LogTag
+import com.waz.log.ZLog2._
 import com.waz.model.UserId
 import com.waz.sync.client.AuthenticationManager.Cookie
 import com.waz.sync.client.LoginClient
@@ -48,11 +49,11 @@ class SSOWebViewWrapper(webView: WebView, backendHost: String) {
         Option(URI.parse(title).getHost).filter(_.nonEmpty).getOrElse(title)
       }
       onUrlChanged ! url
-      verbose(s"onPageFinished: $url")
+      verbose(l"onPageFinished: ${redactedString(url)}")
     }
 
     override def shouldOverrideUrlLoading(view: WebView, url: LogTag): Boolean = {
-      verbose(s"shouldOverrideUrlLoading: $url")
+      verbose(l"shouldOverrideUrlLoading: ${redactedString(url)}")
       parseURL(url).fold(false) { result =>
         loginPromise.tryComplete(Success(result))
         true
@@ -61,7 +62,7 @@ class SSOWebViewWrapper(webView: WebView, backendHost: String) {
   })
 
   def loginWithCode(code: String): Future[SSOResponse] = {
-    verbose(s"loginWithCode $code")
+    verbose(l"loginWithCode ${redactedString(code)}")
     loginPromise.tryComplete(Success(Left(-1)))
     loginPromise = Promise[SSOResponse]()
 
@@ -99,7 +100,7 @@ object SSOWebViewWrapper {
     "insufficient-permissions" -> 10)
 
   def parseURL(url: String): Option[SSOResponse] = {
-    verbose(s"parseURL $url")
+    verbose(l"parseURL ${redactedString(url)}")
     val uri = URI.parse(url)
 
     if (uri.getScheme.equals(ResponseSchema)) {
