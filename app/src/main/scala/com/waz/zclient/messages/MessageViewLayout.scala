@@ -26,13 +26,14 @@ import android.view.ViewGroup.{LayoutParams, MarginLayoutParams}
 import android.view.{Gravity, View, ViewGroup}
 import android.widget.FrameLayout
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.model.MessageContent
 import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.events.EventContext
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MessageViewLayout.PartDesc
 import com.waz.zclient.messages.parts.ReplyPartView
+import com.waz.zclient.utils.UILogShow._
 
 abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: Int) extends ViewGroup(context, attrs, style) {
   protected val factory: MessageViewFactory
@@ -46,7 +47,7 @@ abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: I
   setClipChildren(false)
 
   protected def setParts(msg: MessageAndLikes, parts: Seq[PartDesc], opts: MsgBindOptions, adapter: MessagesPagedListAdapter)(implicit ec: EventContext): Unit = {
-    verbose(s"setParts: opts: $opts, parts: ${parts.map(_.tpe)}")
+    verbose(l"setParts: opts: $opts, parts: ${parts.map(_.tpe)}")
 
     // recycle views in reverse order, recycled views are stored in a Stack, this way we will get the same views back if parts are the same
     // XXX: once views get bigger, we may need to optimise this, we don't need to remove views that will get reused, currently this seems to be fast enough
@@ -100,7 +101,7 @@ abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: I
         measureChildWithMargins(child, parentWidthMeasureSpec, 0, parentHeightMeasureSpec, 0)
       } catch {
         case ex: ArrayIndexOutOfBoundsException =>
-          error(s"Measure error, parentWidthMeasureSpec: $parentWidthMeasureSpec, parentHeightMeasureSpec: $parentHeightMeasureSpec", ex)
+          error(l"Measure error, parentWidthMeasureSpec: $parentWidthMeasureSpec, parentHeightMeasureSpec: $parentHeightMeasureSpec", ex)
       }
     } else
       measureChildWithMargins(child, parentWidthMeasureSpec, 0, parentHeightMeasureSpec, 0)
