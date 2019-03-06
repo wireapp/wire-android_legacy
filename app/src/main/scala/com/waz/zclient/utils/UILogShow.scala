@@ -23,6 +23,7 @@ import com.waz.avs.VideoPreview
 import com.waz.log.ZLog2._
 import com.waz.service.tracking.TrackingEvent
 import com.waz.zclient.Intents.RichIntent
+import com.waz.zclient.collection.controllers.CollectionController.ContentType
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.UsersController.DisplayName
 import com.waz.zclient.search.SearchController.SearchUserListState
@@ -99,5 +100,10 @@ object UILogShow {
          |  name: ${redactedString(e.name)},
          |  properties: ${e.props})
        """.stripMargin
+    }
+
+  implicit val ContentTypeLogShow: LogShow[ContentType] =
+    LogShow.createFrom { t =>
+      l"ContentType(msgTypes: ${t.msgTypes}, typeFilter: ${t.typeFilter})"
     }
 }
