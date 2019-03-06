@@ -22,10 +22,10 @@ import android.content.Intent.{ACTION_VIEW, FLAG_ACTIVITY_NEW_TASK}
 import android.content.{Context, DialogInterface, Intent}
 import android.net.Uri
 import android.support.v7.app.AlertDialog
-import com.waz.ZLog.error
+import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.log.ZLog2._
 import com.waz.utils.returning
 import com.waz.zclient.R
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 import scala.concurrent.{Future, Promise}
 
 object AppEntryDialogs {
@@ -84,7 +84,7 @@ object AppEntryDialogs {
       context.startActivity(browserIntent)
     }
     catch {
-      case _: Exception => error(s"Failed to open URL: $url")
+      case _: Exception => error(l"Failed to open URL: ${redactedString(url)}")
     }
   }
 }
