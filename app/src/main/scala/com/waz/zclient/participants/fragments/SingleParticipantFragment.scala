@@ -26,7 +26,7 @@ import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
+import com.waz.log.ZLog2._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils._
@@ -222,10 +222,10 @@ class SingleParticipantFragment extends FragmentHelper {
             readReceipts
           ).onUi {
             case (fields, av, tt, rr) if isTeamTheSame =>
-              verbose(s"fields: $fields")
+              verbose(l"fields: $fields")
               adapter.set(fields, av, tt, rr)
             case (_, av, tt, rr) =>
-              verbose(s"fields is None because the team of both users are different")
+              verbose(l"fields is None because the team of both users are different")
               adapter.set(Seq.empty, av, tt, rr)
           }
           view.setAdapter(adapter)
