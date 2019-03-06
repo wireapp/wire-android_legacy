@@ -137,16 +137,19 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
 
   private val convState = otherUser.map(other => (convId, other))
 
+  private def switchToConversationList() =
+    if (!mode.inConversationList) CancellableFuture.delay(getInt(R.integer.framework_animation_duration_medium).millis).map { _ =>
+      navController.setVisiblePage(Page.CONVERSATION_LIST, tag)
+      participantsController.onShowAnimations ! true
+    }
+
   (new EventStreamWithAuxSignal(onMenuItemClicked, convState)) {
     case (item, Some((cId, user))) =>
       verbose(s"onMenuItemClicked: item: $item, conv: $cId, user: $user")
       item match {
         case Archive   =>
           convController.archive(cId, archive = true)
-          if (!mode.inConversationList) CancellableFuture.delay(getInt(R.integer.framework_animation_duration_medium).millis).map { _ =>
-            navController.setVisiblePage(Page.CONVERSATION_LIST, tag)
-            participantsController.onShowAnimations ! true
-          }
+          switchToConversationList()
         case Mute   => convController.setMuted(cId, muted = MuteSet.AllMuted)
         case Unmute   => convController.setMuted(cId, muted = MuteSet.AllAllowed)
         case Unarchive => convController.archive(cId, archive = false)
@@ -173,10 +176,16 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
       .setTitle(R.string.confirmation_menu__meta_remove)
       .setMessage(R.string.confirmation_menu__meta_remove_text)
       .setPositiveButton(R.string.conversation__action__leave_only, new DialogInterface.OnClickListener {
-        override def onClick(dialog: DialogInterface, which: Int): Unit = convController.leave(convId)
+        override def onClick(dialog: DialogInterface, which: Int): Unit = {
+          convController.leave(convId)
+          switchToConversationList()
+        }
       }).setNegativeButton(R.string.conversation__action__leave_and_delete, new DialogInterface.OnClickListener {
-        override def onClick(dialog: DialogInterface, which: Int): Unit = convController.delete(convId, alsoLeave = true)
-      }).create
+      override def onClick(dialog: DialogInterface, which: Int): Unit = {
+        convController.delete(convId, alsoLeave = true)
+        switchToConversationList()
+      }
+    }).create
     dialog.show()
   }
 
@@ -192,7 +201,10 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
           })
         if (isGroup && isMember) {
           dialogBuilder.setNegativeButton(R.string.conversation__action__delete_and_leave, new DialogInterface.OnClickListener {
-            override def onClick(dialog: DialogInterface, which: Int): Unit = convController.delete(convId, alsoLeave = true)
+            override def onClick(dialog: DialogInterface, which: Int): Unit = {
+              convController.delete(convId, alsoLeave = true)
+              switchToConversationList()
+            }
           })
         }
         dialogBuilder.create.show()
