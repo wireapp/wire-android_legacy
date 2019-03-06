@@ -24,8 +24,8 @@ import android.support.v4.app.FragmentManager.OnBackStackChangedListener
 import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.view.View
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.content.Preferences.Preference.PrefCodec
+import com.waz.log.ZLog2._
 import com.waz.service.AccountManager.ClientRegistrationState
 import com.waz.service.AccountsService
 import com.waz.threading.Threading
@@ -177,7 +177,7 @@ class AppEntryActivity extends BaseActivity {
   }
 
   override protected def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {
-    info(s"OnActivity result: $requestCode, $resultCode")
+    info(l"OnActivity result: $requestCode, $resultCode")
     super.onActivityResult(requestCode, resultCode, data)
     getSupportFragmentManager.findFragmentById(R.id.fl_main_content).onActivityResult(requestCode, resultCode, data)
   }
