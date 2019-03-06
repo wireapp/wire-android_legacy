@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.utils
 
+import android.content.Intent
 import com.evernote.android.job.Job
 import com.waz.log.ZLog2._
 import com.waz.zclient.messages.UsersController.DisplayName
@@ -26,6 +27,8 @@ import com.waz.zclient.search.SearchController.SearchUserListState
   * A collection of implicit `LogShow` instances for UI types.
   */
 object UILogShow {
+
+  implicit val IntentLogShow: LogShow[Intent] = LogShow.logShowWithHash
 
   implicit val JobLogShow: LogShow[Job] = LogShow.logShowWithHash
 
