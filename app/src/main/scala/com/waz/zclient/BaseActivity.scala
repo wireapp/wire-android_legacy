@@ -24,8 +24,8 @@ import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.log.InternalLog
+import com.waz.log.ZLog2._
 import com.waz.permissions.PermissionsService
 import com.waz.permissions.PermissionsService.{Permission, PermissionProvider}
 import com.waz.service.{UiLifeCycle, ZMessaging}
@@ -36,6 +36,7 @@ import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.IControllerFactory
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.ViewUtils
+import com.waz.zclient.utils.UILogShow._
 
 import scala.collection.breakOut
 import scala.collection.immutable.ListSet
@@ -56,13 +57,13 @@ class BaseActivity extends AppCompatActivity
   def injectJava[T](cls: Class[T]) = inject[T](reflect.Manifest.classType(cls), injector)
 
   override protected def onCreate(savedInstanceState: Bundle): Unit = {
-    verbose(s"onCreate")
+    verbose(l"onCreate")
     super.onCreate(savedInstanceState)
     setTheme(getBaseTheme)
   }
 
   override def onStart(): Unit = {
-    verbose(s"onStart")
+    verbose(l"onStart")
     super.onStart()
     onBaseActivityStart()
   }
@@ -76,7 +77,7 @@ class BaseActivity extends AppCompatActivity
   }
 
   override protected def onResume(): Unit = {
-    verbose(s"onResume")
+    verbose(l"onResume")
     super.onResume()
     onBaseActivityResume()
   }
@@ -87,34 +88,34 @@ class BaseActivity extends AppCompatActivity
     } (Threading.Ui)
 
   override protected def onResumeFragments(): Unit = {
-    verbose("onResumeFragments")
+    verbose(l"onResumeFragments")
     super.onResumeFragments()
   }
 
   override def onWindowFocusChanged(hasFocus: Boolean): Unit = {
-    verbose(s"onWindowFocusChanged: $hasFocus")
+    verbose(l"onWindowFocusChanged: $hasFocus")
   }
 
   def getBaseTheme: Int = themeController.forceLoadDarkTheme
 
   override protected def onActivityResult(requestCode: Int, resultCode: Int, data: Intent) = {
-    verbose(s"onActivityResult: requestCode: $requestCode, resultCode: $resultCode, data: $data")
+    verbose(l"onActivityResult: requestCode: $requestCode, resultCode: $resultCode, data: $data")
     super.onActivityResult(requestCode, resultCode, data)
     permissions.registerProvider(this)
   }
 
   override protected def onPause(): Unit = {
-    verbose(s"onPause")
+    verbose(l"onPause")
     super.onPause()
   }
 
   override protected def onSaveInstanceState(outState: Bundle): Unit = {
-    verbose("onSaveInstanceState")
+    verbose(l"onSaveInstanceState")
     super.onSaveInstanceState(outState)
   }
 
   override def onStop() = {
-    verbose(s"onStop")
+    verbose(l"onStop")
     ZMessaging.currentUi.onPause()
     inject[UiLifeCycle].releaseUi()
     InternalLog.flush()
@@ -122,7 +123,7 @@ class BaseActivity extends AppCompatActivity
   }
 
   override def onDestroy() = {
-    verbose(s"onDestroy")
+    verbose(l"onDestroy")
     globalTrackingController.flushEvents()
     permissions.unregisterProvider(this)
     super.onDestroy()
@@ -131,18 +132,18 @@ class BaseActivity extends AppCompatActivity
   def getControllerFactory: IControllerFactory = ZApplication.from(this).getControllerFactory
 
   override def requestPermissions(ps: ListSet[Permission]) = {
-    verbose(s"requestPermissions: $ps")
+    verbose(l"requestPermissions: $ps")
     ActivityCompat.requestPermissions(this, ps.map(_.key).toArray, PermissionsRequestId)
   }
 
   override def hasPermissions(ps: ListSet[Permission]) = ps.map { p =>
     returning(p.copy(granted = ContextCompat.checkSelfPermission(this, p.key) == PackageManager.PERMISSION_GRANTED)) { p =>
-      verbose(s"hasPermission: $p")
+      verbose(l"hasPermission: $p")
     }
   }
 
   override def onRequestPermissionsResult(requestCode: Int, keys: Array[String], grantResults: Array[Int]): Unit = {
-    verbose(s"onRequestPermissionsResult: $requestCode, ${keys.toSet}, ${grantResults.toSet.map((r: Int) => r == PackageManager.PERMISSION_GRANTED)}")
+    verbose(l"onRequestPermissionsResult: $requestCode, ${keys.toSet.map(redactedString)}, ${grantResults.toSet.map((r: Int) => r == PackageManager.PERMISSION_GRANTED)}")
     if (requestCode == PermissionsRequestId) {
       val ps = hasPermissions(keys.map(Permission(_))(breakOut))
       //if we somehow call requestPermissions twice, ps will be empty - so don't send results back to PermissionsService, as it will probably be for the wrong request.
