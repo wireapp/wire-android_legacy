@@ -30,7 +30,7 @@ import android.view.animation.AnimationUtils
 import android.view.{LayoutInflater, View, ViewGroup, WindowManager}
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.warn
+import com.waz.log.ZLog2._
 import com.waz.model.Handle
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -128,7 +128,7 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
                     dismiss()
 
                   case Left(err) =>
-                    warn(s"Failed to update username: $err")
+                    warn(l"Failed to update username: $err")
                     setErrorMessage(R.string.pref__account_action__dialog__change_username__error_unknown)
                     enableEditing()
                 }
