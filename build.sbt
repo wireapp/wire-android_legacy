@@ -12,23 +12,27 @@ val MajorVersion = "141"
 val MinorVersion = "0" // hotfix release
 
 lazy val buildType =
-  sys.props.getOrElse("build_type", "dev").toLowerCase match {
+  sys.props.getOrElse("build_type", "local").toLowerCase match {
     case "dev" => "dev"
     case "release" => "release"
     case "pr" => "pr"
+    case "local" => "local"
     case t => throw new MessageOnlyException(s"Invalid build type: '$t', " +
       s"set the sbt flag -Dbuild_type to either 'dev', 'release' or 'pr'. ")
   }
+
 lazy val buildNumber = sys.props.getOrElse("build_number", "0")
 lazy val isRelease = buildType == "release"
+lazy val isDev = buildType == "dev"
 lazy val isPR = buildType == "pr"
 lazy val isDebug = !isRelease
 
 version in ThisBuild := {
   val fullVersion = MajorVersion + "." + MinorVersion + "." + buildNumber
   if (isRelease) fullVersion
+  else if (isDev) fullVersion + "-DEV"
   else if (isPR) fullVersion + "-PR"
-  else fullVersion + "-DEV"
+  else fullVersion + "-SNAPSHOT"
 }
 
 crossPaths in ThisBuild := false
