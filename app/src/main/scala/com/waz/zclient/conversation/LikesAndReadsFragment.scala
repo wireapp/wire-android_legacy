@@ -25,9 +25,9 @@ import android.support.design.widget.TabLayout.OnTabSelectedListener
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.content.{MessagesStorage, ReactionsStorage, ReadReceiptsStorage}
+import com.waz.log.ZLog2._
 import com.waz.model.{MessageData, RemoteInstant, UserData, UserId}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -232,7 +232,7 @@ class LikesAndReadsFragment extends FragmentHelper {
         tabs.foreach(_.setVisible(false))
         visibleTab ! LikesTab
       case NoDetails =>
-        ZLog.error("NoDetails chosen as the details combination - the fragment should not be opened at all")
+        error(l"NoDetails chosen as the details combination - the fragment should not be opened at all")
         tabs.foreach(_.setVisible(false))
     }
 
