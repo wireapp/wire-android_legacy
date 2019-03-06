@@ -27,8 +27,9 @@ import android.transition._
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, ImageView, LinearLayout}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.ZLog.logTagFor
 import com.waz.api.impl.ErrorResponse
+import com.waz.log.ZLog2._
 import com.waz.model.{EmailAddress, PhoneNumber}
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
@@ -381,7 +382,7 @@ class SignInFragment extends SSOFragment
               activity.showFragment(VerifyPhoneFragment(phone.str, login = isLogin), VerifyPhoneFragment.Tag)
             }
           case SignInMethod(_, _, true) =>
-            error(s"Invalid sign in state")
+            error(l"Invalid sign in state")
             Future.successful({})
           case _ => throw new NotImplementedError("Only login with email works right now") //TODO
         }
