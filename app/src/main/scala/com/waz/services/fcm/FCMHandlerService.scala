@@ -19,7 +19,7 @@ package com.waz.services.fcm
 
 import com.google.firebase.messaging.{FirebaseMessagingService, RemoteMessage}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.{info, verbose, warn}
+import com.waz.log.ZLog2._
 import com.waz.model.{Uid, UserId}
 import com.waz.service.AccountsService.InForeground
 import com.waz.service.ZMessaging.clock
@@ -48,7 +48,7 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
 
   override def onNewToken(s: String): Unit = {
     ZMessaging.globalModule.map {
-      info(s"onNewToken: $s")
+      info(l"onNewToken: ${redactedString(s)}")
       _.tokenService.setNewToken()
     } (Threading.Background)
   }
@@ -62,7 +62,7 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
     import FCMHandlerService._
 
     Option(remoteMessage.getData).map(_.asScala.toMap).foreach { data =>
-      verbose(s"onMessageReceived with data: $data")
+      verbose(l"onMessageReceived with data: ${redactedString(data.toString())}")
       Option(ZMessaging.currentGlobal) match {
         case Some(glob) if glob.backend.pushSenderId == remoteMessage.getFrom =>
           data.get(UserKey).map(UserId) match {
@@ -73,24 +73,24 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
                     accounts.getZms(acc).flatMap {
                       case Some(zms) => FCMHandler(zms, data, Instant.ofEpochMilli(remoteMessage.getSentTime))
                       case _ =>
-                        warn("Couldn't instantiate zms instance")
+                        warn(l"Couldn't instantiate zms instance")
                         Future.successful({})
                     }
                   case _ =>
-                    warn("Could not find target account for notification")
+                    warn(l"Could not find target account for notification")
                     Future.successful({})
                 }
               }
             case _ =>
-              warn(UserKeyMissingMsg)
+              warn(l"User key missing msg: ${redactedString(UserKeyMissingMsg)}")
               tracking.exception(new Exception(UserKeyMissingMsg), UserKeyMissingMsg)
               Future.successful({})
           }
         case Some(_) =>
-          warn(s"Received FCM notification from unknown sender: ${remoteMessage.getFrom}. Ignoring...")
+          warn(l"Received FCM notification from unknown sender: ${redactedString(remoteMessage.getFrom)}. Ignoring...")
           Future.successful({})
         case _ =>
-          warn("No ZMessaging global available - calling too early")
+          warn(l"No ZMessaging global available - calling too early")
           Future.successful({})
       }
     }
@@ -102,7 +102,7 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
     *
     * Since we have our own missing notification tracking on websocket, we should be able to ignore this.
     */
-  override def onDeletedMessages() = warn("onDeleteMessages")
+  override def onDeletedMessages() = warn(l"onDeleteMessages")
 }
 
 object FCMHandlerService {
@@ -124,7 +124,7 @@ object FCMHandlerService {
           addNotificationToProcess(Some(nId))
 
         case _ =>
-          warn(s"Unexpected notification, sync anyway")
+          warn(l"Unexpected notification, sync anyway")
           addNotificationToProcess(None)
       }
     }
