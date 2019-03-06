@@ -22,9 +22,9 @@ import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.api.Message
 import com.waz.api.Message.Type.MEMBER_JOIN
+import com.waz.log.ZLog2._
 import com.waz.model.MessageContent
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
@@ -36,6 +36,7 @@ import com.waz.zclient.paintcode.ConversationIcon
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
+import com.waz.zclient.utils.UILogShow._
 import com.waz.zclient.{R, ViewHelper}
 
 class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
@@ -112,7 +113,7 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) ex
       case (MEMBER_LEAVE, Other(name), _)                                                  => getString(R.string.content__system__other_removed_other, name, namesListString)
 
       case _ =>
-        verbose(s"Unexpected system message format: (${msg.msgType} from $displayName with ${msg.members.toSeq})")
+        verbose(l"Unexpected system message format: (${msg.msgType} from $displayName with ${msg.members.toSeq})")
         ""
     }
   }
