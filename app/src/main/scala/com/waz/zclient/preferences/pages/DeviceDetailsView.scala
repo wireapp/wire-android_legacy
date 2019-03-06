@@ -25,8 +25,8 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, ScrollView, Toast}
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
+import com.waz.log.ZLog2._
 import com.waz.model.AccountData.Password
 import com.waz.model.ConvId
 import com.waz.model.otr.ClientId
@@ -224,10 +224,10 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
     }.map {
       case SyncResult.Success      => view.showToast(R.string.otr__reset_session__message_ok)
       case SyncResult.Failure(err) =>
-        warn(s"session reset failed: $err")
+        warn(l"session reset failed: $err")
         view.showDialog(R.string.otr__reset_session__message_fail, R.string.otr__reset_session__button_ok, R.string.otr__reset_session__button_fail, onPos = resetSession())
       case SyncResult.Retry(err)   =>
-        error(s"Await sync result shouldn't return retry: $err")
+        error(l"Await sync result shouldn't return retry: $err")
     }(Threading.Ui)
   }
 
