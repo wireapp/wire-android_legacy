@@ -26,8 +26,8 @@ import android.util.{AttributeSet, TypedValue}
 import android.view.View
 import android.widget.LinearLayout
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.info
 import com.waz.api.{ContentSearchQuery, Message}
+import com.waz.log.ZLog2._
 import com.waz.model.{Mention, MessageContent, MessageData}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.service.tracking.TrackingService
@@ -95,7 +95,7 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int)
       textView.setTransformedText(text)
     } catch {
       case ex: ArrayIndexOutOfBoundsException =>
-        info(s"Error while transforming text link. text: $text")
+        info(l"Error while transforming text link. text: ${redactedString(text)}")
         if (BuildConfig.FLAVOR == "internal") throw ex
     }
 
@@ -103,7 +103,7 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int)
       textView.markdown()
     } catch {
       case ex: ArrayIndexOutOfBoundsException =>
-        info(s"Error on markdown. text: $text")
+        info(l"Error on markdown. text: ${redactedString(text)}")
         if (BuildConfig.FLAVOR == "internal") throw ex
     }
   }
