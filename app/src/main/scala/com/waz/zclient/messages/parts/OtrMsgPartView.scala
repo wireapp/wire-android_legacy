@@ -20,7 +20,7 @@ package com.waz.zclient.messages.parts
 import android.content.Context
 import android.util.AttributeSet
 import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.ZLog2._
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
 import com.waz.utils.wrappers.AndroidURIUtil
@@ -112,7 +112,7 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends 
         case (OTR_ERROR, _)                             => browserController.openUrl(AndroidURIUtil parse getString(R.string.url_otr_decryption_error_1))
         case (OTR_IDENTITY_CHANGED, _)                  => browserController.openUrl(AndroidURIUtil parse getString(R.string.url_otr_decryption_error_2))
         case _ =>
-          info(s"unhandled help link click for $msg")
+          info(l"unhandled help link click for $msg")
       }
     }
   }
