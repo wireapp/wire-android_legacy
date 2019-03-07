@@ -18,10 +18,10 @@
 package com.waz.zclient.common.controllers
 
 import android.content.Context
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.SelfPermissions
+import com.waz.log.ZLog2._
 import com.waz.model.AccountDataOld.Permission
 import com.waz.model.AccountDataOld.Permission._
 import com.waz.model.{AccountDataOld, _}
@@ -77,7 +77,7 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
     prefs
       .flatMap(_.apply(SelfPermissions).signal)
       .map { bitmask =>
-        debug(s"Self permissions bitmask: $bitmask")
+        debug(l"Self permissions bitmask: $bitmask")
         AccountDataOld.decodeBitmask(bitmask)
       }
 
