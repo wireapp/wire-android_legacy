@@ -18,13 +18,13 @@
 package com.waz.zclient.common.controllers
 
 import android.content.Context
-import com.waz.ZLog._
 import com.waz.ZLog.ImplicitTag._
+import com.waz.ZLog._
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.SelfPermissions
-import com.waz.model.AccountDataOld.Permission
-import com.waz.model.AccountDataOld.Permission._
-import com.waz.model.{AccountDataOld, _}
+import com.waz.model.UserPermissions.Permission._
+import com.waz.model.UserPermissions._
+import com.waz.model._
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
@@ -37,7 +37,6 @@ import scala.concurrent.Future
 
 class UserAccountsController(implicit injector: Injector, context: Context, ec: EventContext) extends Injectable {
   import Threading.Implicits.Ui
-  import UserAccountsController._
 
   private implicit val uiStorage   = inject[UiStorage]
   private lazy val zms             = inject[Signal[ZMessaging]]
@@ -78,11 +77,11 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
       .flatMap(_.apply(SelfPermissions).signal)
       .map { bitmask =>
         debug(s"Self permissions bitmask: $bitmask")
-        AccountDataOld.decodeBitmask(bitmask)
+        decodeBitmask(bitmask)
       }
 
   lazy val isAdmin: Signal[Boolean] =
-    selfPermissions.map(ps => AdminPermissions.subsetOf(ps))
+    selfPermissions.map(AdminPermissions.subsetOf)
 
   lazy val isPartner: Signal[Boolean] =
     selfPermissions
@@ -105,7 +104,7 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
   def hasRemoveConversationMemberPermission(convId: ConvId): Signal[Boolean] =
     hasConvPermission(convId, RemoveConversationMember)
 
-  private def hasConvPermission(convId: ConvId, toCheck: AccountDataOld.Permission): Signal[Boolean] = {
+  private def hasConvPermission(convId: ConvId, toCheck: Permission): Signal[Boolean] = {
     for {
       z    <- zms
       conv <- z.convsStorage.signal(convId)
@@ -146,21 +145,15 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
       tId <- teamId.head
       ps  <- selfPermissions.head
       conv <- ConversationSignal(cId).head
-    } yield tId == conv.team && ps.contains(AccountDataOld.Permission.RemoveConversationMember)
+    } yield tId == conv.team && ps.contains(RemoveConversationMember)
   }
 
   def hasPermissionToAddService: Future[Boolean] = {
     for {
       tId <- teamId.head
       ps  <- selfPermissions.head
-    } yield tId.isDefined && ps.contains(AccountDataOld.Permission.AddConversationMember)
+    } yield tId.isDefined && ps.contains(AddConversationMember)
   }
 
 
-}
-
-object UserAccountsController {
-  import AccountDataOld.Permission._
-  val AdminPermissions: Set[Permission] = Permission.values -- Set(GetBilling, SetBilling, DeleteTeam)
-  val PartnerPermissions: Set[Permission] = Set(CreateConversation, GetTeamConversations)
 }
