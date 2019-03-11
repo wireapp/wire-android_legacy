@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.participants
 
-import com.waz.log.ZLog2.SafeToLog
+import com.waz.log.LogShow.SafeToLog
 import com.waz.utils.events.{SourceStream, _}
 import com.waz.zclient.R
 import com.waz.zclient.participants.OptionsMenuController._
