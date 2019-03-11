@@ -18,22 +18,21 @@
 package com.waz.services.calling
 
 import android.content.{Context, Intent => AIntent}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.ZMessaging
 import com.waz.services.{FutureService, ZMessagingService}
 import com.waz.utils.events.EventContext
 import com.waz.utils.returning
 import com.waz.utils.wrappers.Intent
-import com.waz.zclient.log.LogShowInstancesUI._
+import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
 
 /**
   * Background service waking up the calling service if a user performs an action via call notifications.
   */
-class CallWakeService extends FutureService with ZMessagingService {
+class CallWakeService extends FutureService with ZMessagingService with DerivedLogTag {
   import CallWakeService._
   implicit val ec = EventContext.Global
 
