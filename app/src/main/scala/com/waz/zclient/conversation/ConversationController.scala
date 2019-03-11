@@ -19,11 +19,10 @@ package com.waz.zclient.conversation
 
 import android.app.Activity
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api
 import com.waz.api.{AssetForUpload, IConversation, Verification}
 import com.waz.content._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.Client
@@ -37,6 +36,7 @@ import com.waz.utils.{Serialized, returning, _}
 import com.waz.zclient.conversation.ConversationController.ConversationChange
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.Callback
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R}
@@ -45,7 +45,9 @@ import org.threeten.bp.Instant
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class ConversationController(implicit injector: Injector, context: Context, ec: EventContext) extends Injectable {
+class ConversationController(implicit injector: Injector, context: Context, ec: EventContext)
+  extends Injectable with DerivedLogTag {
+  
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationController")
 
   private lazy val selectedConv      = inject[Signal[SelectedConversationService]]
