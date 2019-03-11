@@ -28,9 +28,7 @@ import android.text.{Editable, TextWatcher}
 import android.view.View.OnClickListener
 import android.view.animation.AnimationUtils
 import android.view.{LayoutInflater, View, ViewGroup, WindowManager}
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Handle
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -38,10 +36,11 @@ import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.zclient.{FragmentHelper, R}
+import com.waz.zclient.log.LogUI._
 
 import scala.util.Try
 
-class ChangeHandleFragment extends DialogFragment with FragmentHelper {
+class ChangeHandleFragment extends DialogFragment with FragmentHelper with DerivedLogTag {
   import ChangeHandleFragment._
   import Threading.Implicits.Ui
 
