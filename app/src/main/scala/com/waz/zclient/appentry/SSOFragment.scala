@@ -18,14 +18,14 @@
 package com.waz.zclient.appentry
 
 import android.os.Bundle
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.ErrorResponse
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.SSOService
 import com.waz.zclient.InputDialog.{Event, OnNegativeBtn, OnPositiveBtn, ValidatorResult}
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.GenericDialogErrorMessage
 import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 
 import scala.concurrent.Future
@@ -34,7 +34,7 @@ object SSOFragment {
   val SSODialogTag = "SSO_DIALOG"
 }
 
-trait SSOFragment extends FragmentHelper {
+trait SSOFragment extends FragmentHelper with DerivedLogTag {
 
   import SSOFragment._
   import com.waz.threading.Threading.Implicits.Ui
