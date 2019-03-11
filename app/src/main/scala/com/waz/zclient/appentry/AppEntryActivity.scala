@@ -23,9 +23,7 @@ import android.os.Bundle
 import android.support.v4.app.FragmentManager.OnBackStackChangedListener
 import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.view.View
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.Preferences.Preference.PrefCodec
-import com.waz.log.ZLog2._
 import com.waz.service.AccountManager.ClientRegistrationState
 import com.waz.service.AccountsService
 import com.waz.threading.Threading
@@ -36,6 +34,7 @@ import com.waz.zclient._
 import com.waz.zclient.appentry.AppEntryActivity._
 import com.waz.zclient.appentry.controllers.InvitationsController
 import com.waz.zclient.appentry.fragments.{TeamNameFragment, _}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.newreg.fragments.country.CountryController
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.KeyboardUtils
