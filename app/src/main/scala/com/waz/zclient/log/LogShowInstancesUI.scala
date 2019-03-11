@@ -15,15 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.utils
+package com.waz.zclient.log
 
 import android.content.Intent
 import com.evernote.android.job.Job
 import com.waz.avs.VideoPreview
-import com.waz.log.ZLog2._
+import com.waz.log.LogShow
 import com.waz.service.tracking.TrackingEvent
 import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.collection.controllers.CollectionController.ContentType
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.UsersController.DisplayName
 import com.waz.zclient.search.SearchController.SearchUserListState
@@ -31,9 +32,8 @@ import com.waz.zclient.search.SearchController.SearchUserListState
 /**
   * A collection of implicit `LogShow` instances for UI types.
   */
-object UILogShow {
-
-
+trait LogShowInstancesUI {
+  
   implicit val JobLogShow: LogShow[Job] = LogShow.logShowWithHash
 
   implicit val IntentLogShow: LogShow[Intent] = LogShow.logShowWithHash
