@@ -27,7 +27,7 @@ import com.waz.model.UserId
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.WakeLockImpl
-import com.waz.zclient.utils.UILogShow._
+import com.waz.zclient.log.LogShowInstancesUI._
 
 import scala.concurrent.Future
 import scala.util.control.NoStackTrace

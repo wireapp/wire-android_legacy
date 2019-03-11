@@ -36,7 +36,7 @@ import com.waz.zclient.paintcode.ConversationIcon
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.utils.UILogShow._
+import com.waz.zclient.log.LogShowInstancesUI._
 import com.waz.zclient.{R, ViewHelper}
 
 class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {

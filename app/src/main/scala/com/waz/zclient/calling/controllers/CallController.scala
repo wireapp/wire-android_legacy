@@ -40,7 +40,7 @@ import com.waz.zclient.common.controllers.{SoundController, ThemeController}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DeprecationUtils
-import com.waz.zclient.utils.UILogShow._
+import com.waz.zclient.log.LogShowInstancesUI._
 import com.waz.zclient.{Injectable, Injector, R, WireContext}
 import org.threeten.bp.Instant
 

@@ -29,7 +29,7 @@ import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, SystemMessageView, UsersController}
 import com.waz.zclient.paintcode.ViewWithColor
 import com.waz.zclient.utils.ContextUtils.{getString, getColor}
-import com.waz.zclient.utils.UILogShow._
+import com.waz.zclient.log.LogShowInstancesUI._
 import com.waz.zclient.{R, ViewHelper}
 
 class ReadReceiptsPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {

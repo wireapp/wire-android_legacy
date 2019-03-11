@@ -26,7 +26,7 @@ import com.waz.services.{FutureService, ZMessagingService}
 import com.waz.utils.events.EventContext
 import com.waz.utils.returning
 import com.waz.utils.wrappers.Intent
-import com.waz.zclient.utils.UILogShow._
+import com.waz.zclient.log.LogShowInstancesUI._
 
 import scala.concurrent.Future
 

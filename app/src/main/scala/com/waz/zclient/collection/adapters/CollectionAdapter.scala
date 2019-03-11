@@ -43,7 +43,7 @@ import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.ui.utils.ResourceUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils
-import com.waz.zclient.utils.UILogShow._
+import com.waz.zclient.log.LogShowInstancesUI._
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 import org.threeten.bp._
 import org.threeten.bp.temporal.ChronoUnit

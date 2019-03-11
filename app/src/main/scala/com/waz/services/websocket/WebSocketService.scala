@@ -32,7 +32,7 @@ import com.waz.service.{AccountsService, GlobalModule, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.zclient.utils.UILogShow._
+import com.waz.zclient.log.LogShowInstancesUI._
 import com.waz.zclient._
 
 class WebSocketController(implicit inj: Injector) extends Injectable {

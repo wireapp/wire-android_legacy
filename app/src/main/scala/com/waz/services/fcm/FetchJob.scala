@@ -28,7 +28,7 @@ import com.waz.service.ZMessaging
 import com.waz.service.push.PushService.FetchFromJob
 import com.waz.threading.Threading
 import com.waz.utils.returning
-import com.waz.zclient.utils.UILogShow._
+import com.waz.zclient.log.LogShowInstancesUI._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._

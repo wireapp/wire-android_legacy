@@ -41,7 +41,7 @@ import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.confirmation.TwoButtonConfirmationCallback
 import com.waz.zclient.sharing.ShareToMultipleFragment
 import com.waz.zclient.views.menus.ConfirmationMenu
-import com.waz.zclient.utils.UILogShow._
+import com.waz.zclient.log.LogShowInstancesUI._
 
 import scala.collection.immutable.ListSet
 import scala.util.control.NonFatal

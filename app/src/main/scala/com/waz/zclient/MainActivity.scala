@@ -53,7 +53,7 @@ import com.waz.zclient.tracking.UiTrackingController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.StringUtils.TextDrawing
 import com.waz.zclient.utils.{Emojis, IntentUtils, ViewUtils}
-import com.waz.zclient.utils.UILogShow._
+import com.waz.zclient.log.LogShowInstancesUI._
 import com.waz.zclient.views.LoadingIndicatorView
 
 import scala.collection.JavaConverters._

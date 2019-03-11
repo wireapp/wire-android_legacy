@@ -39,7 +39,7 @@ import com.waz.zclient.usersearch.SearchUIAdapter.TopUsersViewHolder.TopUserAdap
 import com.waz.zclient.usersearch.views.SearchResultConversationRowView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{ResColor, RichView, ViewUtils}
-import com.waz.zclient.utils.UILogShow._
+import com.waz.zclient.log.LogShowInstancesUI._
 
 class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)
                      (implicit injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[RecyclerView.ViewHolder] with Injectable {

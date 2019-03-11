@@ -36,7 +36,7 @@ import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.IControllerFactory
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.ViewUtils
-import com.waz.zclient.utils.UILogShow._
+import com.waz.zclient.log.LogShowInstancesUI._
 
 import scala.collection.breakOut
 import scala.collection.immutable.ListSet

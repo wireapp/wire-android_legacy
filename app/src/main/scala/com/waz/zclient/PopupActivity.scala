@@ -28,7 +28,7 @@ import com.waz.zclient.Intents._
 import com.waz.zclient.quickreply.QuickReplyFragment
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.{ContextUtils, ViewUtils}
-import com.waz.zclient.utils.UILogShow._
+import com.waz.zclient.log.LogShowInstancesUI._
 
 class PopupActivity extends BaseActivity with ActivityHelper { self =>
 

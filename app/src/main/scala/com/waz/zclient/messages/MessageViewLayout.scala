@@ -33,7 +33,7 @@ import com.waz.utils.events.EventContext
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MessageViewLayout.PartDesc
 import com.waz.zclient.messages.parts.ReplyPartView
-import com.waz.zclient.utils.UILogShow._
+import com.waz.zclient.log.LogShowInstancesUI._
 
 abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: Int) extends ViewGroup(context, attrs, style) {
   protected val factory: MessageViewFactory
