@@ -23,9 +23,7 @@ import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.InternalLog
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService
 import com.waz.permissions.PermissionsService.{Permission, PermissionProvider}
 import com.waz.service.{UiLifeCycle, ZMessaging}
@@ -36,7 +34,7 @@ import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.IControllerFactory
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.ViewUtils
-import com.waz.zclient.log.LogShowInstancesUI._
+import com.waz.zclient.log.LogUI._
 
 import scala.collection.breakOut
 import scala.collection.immutable.ListSet
@@ -46,7 +44,8 @@ import scala.concurrent.duration._
 class BaseActivity extends AppCompatActivity
   with ServiceContainer
   with ActivityHelper
-  with PermissionProvider {
+  with PermissionProvider
+  with DerivedLogTag {
 
   import BaseActivity._
 
