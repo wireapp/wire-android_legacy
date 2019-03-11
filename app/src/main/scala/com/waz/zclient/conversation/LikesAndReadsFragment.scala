@@ -25,9 +25,7 @@ import android.support.design.widget.TabLayout.OnTabSelectedListener
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.content.{MessagesStorage, ReactionsStorage, ReadReceiptsStorage}
-import com.waz.log.ZLog2._
 import com.waz.model.{MessageData, RemoteInstant, UserData, UserId}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -35,6 +33,7 @@ import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
 import com.waz.zclient.common.controllers.ScreenController
 import com.waz.zclient.messages.LikesController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversation.ConversationManagerFragment
 import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
 import com.waz.zclient.participants.ParticipantsAdapter
@@ -258,7 +257,6 @@ class LikesAndReadsFragment extends FragmentHelper {
 }
 
 object LikesAndReadsFragment {
-  val Tag = implicitLogTag
 
   sealed trait ViewToDisplay
 
