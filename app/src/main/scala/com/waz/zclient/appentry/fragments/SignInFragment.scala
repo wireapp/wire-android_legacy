@@ -26,10 +26,9 @@ import android.support.v4.content.ContextCompat
 import android.transition._
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, ImageView, LinearLayout}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog.logTagFor
 import com.waz.api.impl.ErrorResponse
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{EmailAddress, PhoneNumber}
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
@@ -45,6 +44,7 @@ import com.waz.zclient.newreg.fragments.country.{Country, CountryController}
 import com.waz.zclient.newreg.views.PhoneConfirmationButton
 import com.waz.zclient.pages.main.profile.validator.{EmailValidator, NameValidator, PasswordValidator}
 import com.waz.zclient.pages.main.profile.views.GuidedEditText
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.tracking.{GlobalTrackingController, SignUpScreenEvent}
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceEditText, TypefaceTextView}
 import com.waz.zclient.ui.utils.{KeyboardUtils, TextViewUtils}
@@ -55,9 +55,11 @@ import com.waz.zclient.utils._
 
 import scala.concurrent.Future
 
-class SignInFragment extends SSOFragment
+class SignInFragment
+  extends SSOFragment
   with View.OnClickListener
-  with CountryController.Observer {
+  with CountryController.Observer
+  with DerivedLogTag {
 
   implicit def context: Context = getActivity
 
