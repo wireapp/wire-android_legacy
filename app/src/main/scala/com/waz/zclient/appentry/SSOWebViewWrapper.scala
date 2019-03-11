@@ -19,21 +19,20 @@
 package com.waz.zclient.appentry
 
 import android.webkit.{WebView, WebViewClient}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.LogTag
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserId
 import com.waz.sync.client.AuthenticationManager.Cookie
 import com.waz.sync.client.LoginClient
 import com.waz.utils.events.EventStream
 import com.waz.utils.wrappers.URI
 import com.waz.zclient.appentry.SSOWebViewWrapper._
+import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Success
 
 
-class SSOWebViewWrapper(webView: WebView, backendHost: String) {
+class SSOWebViewWrapper(webView: WebView, backendHost: String) extends DerivedLogTag {
 
   private var loginPromise = Promise[SSOResponse]()
 
@@ -52,7 +51,7 @@ class SSOWebViewWrapper(webView: WebView, backendHost: String) {
       verbose(l"onPageFinished: ${redactedString(url)}")
     }
 
-    override def shouldOverrideUrlLoading(view: WebView, url: LogTag): Boolean = {
+    override def shouldOverrideUrlLoading(view: WebView, url: String): Boolean = {
       verbose(l"shouldOverrideUrlLoading: ${redactedString(url)}")
       parseURL(url).fold(false) { result =>
         loginPromise.tryComplete(Success(result))
@@ -78,7 +77,7 @@ class SSOWebViewWrapper(webView: WebView, backendHost: String) {
   }
 }
 
-object SSOWebViewWrapper {
+object SSOWebViewWrapper extends DerivedLogTag {
 
   val ResponseSchema = "wire"
   val CookieQuery = "cookie"
