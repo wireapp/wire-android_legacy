@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.common.controllers.global
 
-import com.waz.ZLog.ImplicitTag._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.service.{AccountsService, GlobalModule, UiLifeCycle}
 import com.waz.threading.Threading
@@ -26,7 +26,9 @@ import com.waz.zclient.{Injectable, Injector}
 
 import scala.concurrent.Future
 
-class PasswordController(implicit inj: Injector, ec: EventContext) extends Injectable {
+class PasswordController(implicit inj: Injector, ec: EventContext)
+  extends Injectable with DerivedLogTag {
+
   import Threading.Implicits.Background
 
   val accounts = inject[AccountsService]
