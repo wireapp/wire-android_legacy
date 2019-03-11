@@ -23,10 +23,8 @@ import android.content
 import android.graphics.{Bitmap, Color}
 import android.os.Build
 import android.support.v4.app.NotificationCompat
-import com.waz.ZLog.ImplicitTag._
 import com.waz.bitmap.BitmapUtils
 import com.waz.content.UserPreferences
-import com.waz.log.ZLog2._
 import com.waz.model.{ConvId, LocalInstant, Name, UserId}
 import com.waz.service.assets.AssetService.BitmapResult.BitmapLoaded
 import com.waz.service.call.CallInfo
@@ -43,6 +41,7 @@ import com.waz.zclient.Intents.{CallIntent, OpenCallingScreen}
 import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.views.ImageController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{IncomingCallNotificationsChannelId, OngoingNotificationsChannelId}
 import com.waz.zclient.utils.ContextUtils.{getString, _}
 import com.waz.zclient.utils.RingtoneUtils
