@@ -28,7 +28,6 @@ import android.text.{Editable, TextWatcher}
 import android.view.View.OnClickListener
 import android.view.animation.AnimationUtils
 import android.view.{LayoutInflater, View, ViewGroup, WindowManager}
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Handle
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -40,7 +39,7 @@ import com.waz.zclient.log.LogUI._
 
 import scala.util.Try
 
-class ChangeHandleFragment extends DialogFragment with FragmentHelper with DerivedLogTag {
+class ChangeHandleFragment extends DialogFragment with FragmentHelper {
   import ChangeHandleFragment._
   import Threading.Implicits.Ui
 

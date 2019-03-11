@@ -23,7 +23,6 @@ import android.support.v4.app.FragmentManager
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.content.UserPreferences.CrashesAndAnalyticsRequestShown
 import com.waz.content.{GlobalPreferences, UserPreferences}
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ErrorData, Uid}
 import com.waz.service.{AccountManager, GlobalModule, ZMessaging}
 import com.waz.threading.Threading
@@ -58,8 +57,7 @@ class MainPhoneFragment extends FragmentHelper
   with SingleImageObserver
   with ConfirmationObserver
   with CollectionsObserver
-  with ConfirmationFragment.Container
-  with DerivedLogTag {
+  with ConfirmationFragment.Container {
 
   import MainPhoneFragment._
   import Threading.Implicits.Ui

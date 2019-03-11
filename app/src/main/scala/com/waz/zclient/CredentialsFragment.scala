@@ -25,7 +25,6 @@ import com.waz.api.EmailCredentials
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.{PendingEmail, PendingPassword}
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.model.EmailAddress
 import com.waz.service.AccountManager.ClientRegistrationState.LimitReached
@@ -91,7 +90,7 @@ object CredentialsFragment {
   }
 }
 
-class AddEmailFragment extends CredentialsFragment with DerivedLogTag {
+class AddEmailFragment extends CredentialsFragment {
   import Threading.Implicits.Ui
 
   lazy val emailValidator = EmailValidator.newInstance()
@@ -170,7 +169,7 @@ object AddEmailFragment {
 }
 
 
-class VerifyEmailFragment extends CredentialsFragment with DerivedLogTag {
+class VerifyEmailFragment extends CredentialsFragment {
 
   import com.waz.threading.Threading.Implicits.Ui
 
@@ -248,7 +247,7 @@ object VerifyEmailFragment {
     CredentialsFragment(new VerifyEmailFragment(), hasPassword, Some(email))
 }
 
-class SetOrRequestPasswordFragment extends CredentialsFragment with DerivedLogTag {
+class SetOrRequestPasswordFragment extends CredentialsFragment {
 
   lazy val passwordController = inject[PasswordController]
   lazy val password = Signal(Option.empty[Password])

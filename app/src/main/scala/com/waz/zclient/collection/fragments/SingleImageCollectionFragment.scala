@@ -55,8 +55,7 @@ import scala.concurrent.Future
 class SingleImageCollectionFragment
   extends BaseFragment[CollectionFragment.Container]
     with FragmentHelper
-    with OnBackPressedListener
-    with DerivedLogTag {
+    with OnBackPressedListener {
 
   import Threading.Implicits.Ui
 

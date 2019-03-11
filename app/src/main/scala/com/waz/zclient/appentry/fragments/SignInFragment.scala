@@ -28,7 +28,6 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, ImageView, LinearLayout}
 import com.waz.ZLog.logTagFor
 import com.waz.api.impl.ErrorResponse
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{EmailAddress, PhoneNumber}
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
@@ -58,8 +57,7 @@ import scala.concurrent.Future
 class SignInFragment
   extends SSOFragment
   with View.OnClickListener
-  with CountryController.Observer
-  with DerivedLogTag {
+  with CountryController.Observer {
 
   implicit def context: Context = getActivity
 

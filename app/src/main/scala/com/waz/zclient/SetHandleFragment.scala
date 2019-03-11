@@ -25,7 +25,6 @@ import android.graphics.Color
 import android.os.Bundle
 import android.support.annotation.Nullable
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Handle
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -56,8 +55,7 @@ object SetHandleFragment {
 
 }
 
-class SetHandleFragment extends BaseFragment[SetHandleFragment.Container]
-  with FragmentHelper with DerivedLogTag {
+class SetHandleFragment extends BaseFragment[SetHandleFragment.Container] with FragmentHelper {
 
   import Threading.Implicits.Ui
 

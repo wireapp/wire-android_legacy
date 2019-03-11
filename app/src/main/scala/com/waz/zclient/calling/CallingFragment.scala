@@ -135,7 +135,7 @@ class OtherVideoView(context: Context, userId: UserId) extends UserVideoView(con
   })
 }
 
-class CallingFragment extends FragmentHelper with DerivedLogTag {
+class CallingFragment extends FragmentHelper {
 
   private lazy val controller       = inject[CallController]
   private lazy val themeController  = inject[ThemeController]

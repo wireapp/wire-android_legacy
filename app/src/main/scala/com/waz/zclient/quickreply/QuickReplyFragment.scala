@@ -24,7 +24,6 @@ import android.text.TextUtils
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, ViewGroup}
 import android.widget.TextView
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.tracking.ContributionEvent
 import com.waz.service.tracking.ContributionEvent.Action
@@ -54,7 +53,7 @@ object QuickReplyFragment {
   }
 }
 
-class QuickReplyFragment extends Fragment with FragmentHelper with DerivedLogTag {
+class QuickReplyFragment extends Fragment with FragmentHelper {
   import QuickReplyFragment._
   import com.waz.threading.Threading.Implicits.Ui
 

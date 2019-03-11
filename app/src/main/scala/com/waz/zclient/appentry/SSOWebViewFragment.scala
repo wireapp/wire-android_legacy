@@ -24,7 +24,6 @@ import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.webkit.WebView
 import android.widget.TextView
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils._
@@ -37,7 +36,7 @@ import com.waz.zclient.{FragmentHelper, R}
 
 import scala.concurrent.{Future, Promise}
 
-class SSOWebViewFragment extends FragmentHelper with DerivedLogTag {
+class SSOWebViewFragment extends FragmentHelper {
 
   private lazy val accountsService = inject[AccountsService]
 

@@ -23,7 +23,6 @@ import android.os.Bundle
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.ImageView
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserId
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -53,9 +52,7 @@ import org.threeten.bp.Instant
 import scala.concurrent.duration._
 
 class SendConnectRequestFragment
-  extends BaseFragment[SendConnectRequestFragment.Container]
-    with FragmentHelper
-    with DerivedLogTag {
+  extends BaseFragment[SendConnectRequestFragment.Container] with FragmentHelper {
 
   import SendConnectRequestFragment._
   import Threading.Implicits.Ui

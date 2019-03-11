@@ -19,7 +19,6 @@ package com.waz.zclient.appentry
 
 import android.os.Bundle
 import com.waz.api.impl.ErrorResponse
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.SSOService
 import com.waz.zclient.InputDialog.{Event, OnNegativeBtn, OnPositiveBtn, ValidatorResult}
 import com.waz.zclient._
@@ -34,7 +33,7 @@ object SSOFragment {
   val SSODialogTag = "SSO_DIALOG"
 }
 
-trait SSOFragment extends FragmentHelper with DerivedLogTag {
+trait SSOFragment extends FragmentHelper {
 
   import SSOFragment._
   import com.waz.threading.Threading.Implicits.Ui
