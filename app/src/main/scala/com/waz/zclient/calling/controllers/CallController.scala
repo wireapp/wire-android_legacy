@@ -23,6 +23,7 @@ import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Verification
 import com.waz.avs.VideoPreview
 import com.waz.content.GlobalPreferences
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.ZLog2._
 import com.waz.model.{AssetId, LocalInstant, UserData, UserId}
 import com.waz.service.ZMessaging.clock
@@ -38,15 +39,16 @@ import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.{SoundController, ThemeController}
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DeprecationUtils
-import com.waz.zclient.log.LogShowInstancesUI._
 import com.waz.zclient.{Injectable, Injector, R, WireContext}
 import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
 
-class CallController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext) extends Injectable {
+class CallController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext)
+  extends Injectable with DerivedLogTag {
 
   import Threading.Implicits.Background
   import VideoState._
@@ -449,7 +451,9 @@ private class ScreenManager(implicit injector: Injector) extends Injectable {
   }
 }
 
-private class GSMManager(callActive: Signal[Boolean])(implicit inject: Injector, ec: EventContext) extends Injectable {
+private class GSMManager(callActive: Signal[Boolean])(implicit inject: Injector, ec: EventContext)
+  extends Injectable with DerivedLogTag {
+  
   private lazy val telephonyManager = inject[TelephonyManager]
 
   private var listening = false
