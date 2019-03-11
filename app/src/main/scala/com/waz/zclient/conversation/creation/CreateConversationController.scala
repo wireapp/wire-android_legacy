@@ -17,21 +17,23 @@
  */
 package com.waz.zclient.conversation.creation
 
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences.ShouldCreateFullConversation
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, IntegrationId, ProviderId, UserId}
 import com.waz.service.tracking._
 import com.waz.service.{IntegrationsService, ZMessaging}
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.UiStorage
 import com.waz.zclient.{Injectable, Injector}
 
 import scala.concurrent.Future
 
-class CreateConversationController(implicit inj: Injector, ev: EventContext) extends Injectable {
+class CreateConversationController(implicit inj: Injector, ev: EventContext)
+  extends Injectable with DerivedLogTag  {
+
   import com.waz.threading.Threading.Implicits.Background
 
   lazy val onShowCreateConversation = EventStream[Boolean]()
