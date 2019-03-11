@@ -43,7 +43,6 @@ class Timeouts {
   }
 
   class GraphSearch {
-    def cacheRefreshInterval = 1.minute // time after which the search results should be synced again
     def cacheExpiryTime = 7.days // time after which the cache expires (results are considered invalid, and will be ignored)
     def localSearchDelay = 1.second // time after which we will return local search results if no result is available from backend
     def topPeopleMessageInterval = 30.days //top people will be sorted by the number of messages exchanged since this time

@@ -22,7 +22,8 @@ import com.waz.ZLog._
 import com.waz.db.Col._
 import com.waz.db.{Col, Dao, DbTranslator}
 import com.waz.model.AccountData.Password
-import com.waz.model.AccountDataOld.{PermissionsMasks, TriTeamId}
+import com.waz.model.AccountDataOld.TriTeamId
+import com.waz.model.UserPermissions.PermissionsMasks
 import com.waz.model.otr.ClientId
 import com.waz.sync.client.AuthenticationManager
 import com.waz.utils.Locales.currentLocaleOrdering
@@ -152,8 +153,8 @@ case class AccountDataOld(override val id: AccountId                       = Acc
     """.stripMargin
 
 
-  lazy val selfPermissions = AccountDataOld.decodeBitmask(_selfPermissions)
-  lazy val copyPermissions = AccountDataOld.decodeBitmask(_copyPermissions)
+  lazy val selfPermissions = UserPermissions.decodeBitmask(_selfPermissions)
+  lazy val copyPermissions = UserPermissions.decodeBitmask(_copyPermissions)
 
   /**
     * A pending phone that matches the current phone signifies the user is trying to login. In this case, they're account
@@ -229,47 +230,9 @@ object AccountDataOld {
   //Left is undefined, Right(None) is no team, Right(Some()) is a team
   type TriTeamId = Either[Unit, Option[TeamId]]
 
-  type PermissionsMasks = (Long, Long) //self and copy permissions
-
   def apply(email: EmailAddress, password: String): AccountDataOld = {
     val id = AccountId()
     AccountDataOld(id, Left({}), email = Some(email), password = Some(password), phone = None, handle = None)
-  }
-
-  //TODO move to AccountData, and ensure they are copied across in migration...
-  type Permission = Permission.Value
-  object Permission extends Enumeration {
-    val
-    CreateConversation,         // 0x001
-    DeleteConversation,         // 0x002
-    AddTeamMember,              // 0x004
-    RemoveTeamMember,           // 0x008
-    AddConversationMember,      // 0x010
-    RemoveConversationMember,   // 0x020
-    GetBilling,                 // 0x040
-    SetBilling,                 // 0x080
-    SetTeamData,                // 0x100
-    GetMemberPermissions,       // 0x200
-    GetTeamConversations,       // 0x400
-    DeleteTeam,                 // 0x800
-    SetMemberPermissions        // 0x1000
-    = Value
-  }
-
-  def decodeBitmask(mask: Long): Set[Permission] = {
-    val builder = new mutable.SetBuilder[Permission, Set[Permission]](Set.empty)
-    (0 until Permission.values.size).map(math.pow(2, _).toInt).zipWithIndex.foreach {
-      case (one, pos) => if ((mask & one) != 0) builder += Permission(pos)
-    }
-    builder.result()
-  }
-
-  def encodeBitmask(ps: Set[Permission]): Long = {
-    var mask = 0L
-    (0 until Permission.values.size).map(math.pow(2, _).toLong).zipWithIndex.foreach {
-      case (m, i) => if (ps.contains(Permission(i))) mask = mask | m
-    }
-    mask
   }
 
   def computeHash(id: AccountId, password: String) =

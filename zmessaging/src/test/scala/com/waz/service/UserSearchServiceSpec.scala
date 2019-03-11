@@ -26,6 +26,7 @@ import com.waz.service.conversation.{ConversationsService, ConversationsUiServic
 import com.waz.service.teams.TeamsService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
+import com.waz.testutils.TestUserPreferences
 import com.waz.utils.Managed
 import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.utils.wrappers.DB
@@ -37,8 +38,10 @@ import scala.concurrent.Future
 
 class UserSearchServiceSpec extends AndroidFreeSpec {
 
-  val selfId          = UserId()
-  val teamId          = Option.empty[TeamId]
+  val selfId            = UserId()
+  val emptyTeamId       = Option.empty[TeamId]
+  val teamId            = Option(TeamId("59bbc94c-2618-491a-8dba-cf6f94c65873"))
+  val partnerPermissions: Long = 1025
 
   val queryCacheStorage = mock[SearchQueryCacheStorage]
   val userService       = mock[UserService]
@@ -51,12 +54,13 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
   val convsStorage      = mock[ConversationStorage]
   val convs             = mock[ConversationsService]
   val timeouts          = new Timeouts
+  val userPrefs         = new TestUserPreferences
 
   lazy val users = Map(
     id('a) -> UserData(id('a), "other user 1"),
     id('b) -> UserData(id('b), "other user 2"),
     id('c) -> UserData(id('c), "some name"),
-    id('d) -> UserData(id('d), "related user 1").copy(relation = Relation.Second),
+    id('d) -> UserData(id('d), "related user 1").copy(relation = Relation.Second), // TODO: relation does not exists anymore, can be removed!
     id('e) -> UserData(id('e), "related user 2").copy(relation = Relation.Second),
     id('f) -> UserData(id('f), "other related").copy(relation = Relation.Third),
     id('g) -> UserData(id('g), "friend user 1").copy(connection = ConnectionStatus.ACCEPTED),
@@ -72,8 +76,25 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
     id('q) -> UserData(id('q), "James gjohnjones"),
     id('r) -> UserData(id('r), "Liv Boeree").copy(handle = Some(Handle("testjohntest"))),
     id('s) -> UserData(id('s), "blah").copy(handle = Some(Handle("mores"))),
-    id('t) -> UserData(id('t), "test handle").copy(handle = Some(Handle("smoresare")))
+    id('t) -> UserData(id('t), "test handle").copy(handle = Some(Handle("smoresare"))),
+    id('pp1) -> UserData(id('pp1), "Partner 1").copy(
+      permissions = (partnerPermissions, partnerPermissions),
+      teamId = teamId,
+      handle = Some(Handle("pp1"))
+    ),
+    id('mm1) -> UserData(id('mm1), "Member 1").copy(teamId = teamId, handle = Some(Handle("mm1"))),
+    id('mm2) -> UserData(id('mm2), "Member 2").copy(teamId = teamId, handle = Some(Handle("mm2")))
   )
+
+  // Mock search in team
+  (teamsService.searchTeamMembers _).expects(*, *).anyNumberOfTimes().onCall { (query, handleOnly) =>
+    Signal.const(
+      users
+        .filter(u => u._2.teamId == teamId)
+        .filter(_._2.matchesQuery(query, handleOnly))
+        .map(_._2).toSet
+    )
+  }
 
   scenario("search conversation with token starting with query") {
 
@@ -83,7 +104,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
     (membersStorage.activeMembers _).expects(*).anyNumberOfTimes().returning(Signal.const(convMembers))
     (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
 
-    val res = getService.mentionsSearchUsersInConversation(ConvId("123"),"rod")
+    val res = getService(false).mentionsSearchUsersInConversation(ConvId("123"),"rod")
     result(res.filter(_.size == 1).head)
   }
 
@@ -95,7 +116,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
     (membersStorage.activeMembers _).expects(*).anyNumberOfTimes().returning(Signal.const(convMembers))
     (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
 
-    val res = getService.mentionsSearchUsersInConversation(ConvId("123"),"bjo")
+    val res = getService(false).mentionsSearchUsersInConversation(ConvId("123"),"bjo")
     result(res.filter(_.size == 1).head)
   }
 
@@ -107,7 +128,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
     (membersStorage.activeMembers _).expects(*).anyNumberOfTimes().returning(Signal.const(convMembers))
     (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
 
-    val res = getService.mentionsSearchUsersInConversation(ConvId("123"),"rn")
+    val res = getService(false).mentionsSearchUsersInConversation(ConvId("123"),"rn")
     result(res.filter{u => println(u.map(_.displayName));u.size == 1}.head)
   }
 
@@ -119,7 +140,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
     (membersStorage.activeMembers _).expects(*).anyNumberOfTimes().returning(Signal.const(convMembers))
     (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
 
-    val res = getService.mentionsSearchUsersInConversation(ConvId("123"),"mores")
+    val res = getService(false).mentionsSearchUsersInConversation(ConvId("123"),"mores")
     result(res.filter(_.size == 2).head)
   }
 
@@ -131,7 +152,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
     (membersStorage.activeMembers _).expects(*).anyNumberOfTimes().returning(Signal.const(convMembers))
     (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
 
-    val res = getService.mentionsSearchUsersInConversation(ConvId("123"),"smores")
+    val res = getService(false).mentionsSearchUsersInConversation(ConvId("123"),"smores")
     result(res.filter(_.size == 1).head)
   }
 
@@ -144,7 +165,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
     (membersStorage.activeMembers _).expects(*).anyNumberOfTimes().returning(Signal.const(convMembers))
     (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
 
-    val res = getService.mentionsSearchUsersInConversation(ConvId("123"),"john")
+    val res = getService(false).mentionsSearchUsersInConversation(ConvId("123"),"john")
 
     result(res.filter(_.equals(correctOrder)).head)
   }
@@ -186,7 +207,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
     querySignal ! Some(firstQueryCache)
     result(querySignal.filter(_.contains(firstQueryCache)).head)
     
-    val resSignal = getService.searchUserData(Recommended(prefix)).map(_.map(_.id)).disableAutowiring()
+    val resSignal = getService(false).searchUserData(Recommended(prefix)).map(_.map(_.id)).disableAutowiring()
 
     result(querySignal.filter(_.contains(secondQueryCache)).head)
 
@@ -223,7 +244,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
       (userService.acceptedOrBlockedUsers _).expects().returns(Signal.const(Map.empty[UserId, UserData]))
       (messagesStorage.countLaterThan _).expects(*, *).repeated(3).returning(Future.successful(1L))
 
-      val res = getService.search("").map(_.top.map(_.id).toSet)
+      val res = getService(false).search("").map(_.top.map(_.id).toSet)
 
       result(res.filter(_ == expected).head)
     }
@@ -255,7 +276,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
 
       (usersStorage.listSignal _).expects(*).never()
 
-      val res = getService.search("fr").map(_.local.map(_.id).toSet)
+      val res = getService(false).search("fr").map(_.local.map(_.id).toSet)
 
       result(res.filter(_ == expected).head)
     }
@@ -287,38 +308,216 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
 
      (usersStorage.listSignal _).expects(expected.toVector).once().returning(Signal.const(expected.map(users).toVector))
 
-      val res = getService.search("ot").map(_.dir.map(_.id).toSet)
+      val res = getService(false).search("ot").map(_.dir.map(_.id).toSet)
 
       result(res.filter(_.nonEmpty).head)
     }
   }
 
-  scenario("search conversation people") {
+  feature("search Inside the team") {
 
-    val convMembers = Set(id('a), id('b))
+    def mockServicesForTeam(query: String,
+                            conversationMembers: Set[UserId] = Set(),
+                            connectedUsers: Set[UserId] = Set()
+                           ): Unit = {
+      val convId = ConvId("e7969e91-366d-4ec5-9d85-4e8a4f9d53e6")
+      val searchQuery = Recommended(query)
 
-    (queryCacheStorage.deleteBefore _).expects(*).anyNumberOfTimes().returning(Future.successful[Unit]({}))
-    (membersStorage.activeMembers _).expects(*).anyNumberOfTimes().returning(Signal.const(convMembers))
-    (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
+      val querySignal = new SourceSignal[Option[SearchQueryCache]]()
+      val queryCache = SearchQueryCache(searchQuery, Instant.now, Some(Vector.empty[UserId]))
 
-    val res = getService.searchUsersInConversation(ConvId("123"),"1")
-    result(res.filter(_.size == 1).head)
+      (queryCacheStorage.deleteBefore _).expects(*).anyNumberOfTimes().returning(Future.successful[Unit]({}))
+      (queryCacheStorage.optSignal _).expects(searchQuery).once().returning(querySignal)
+
+      (usersStorage.find(_: UserData => Boolean, _: DB => Managed[TraversableOnce[UserData]], _: UserData => UserData)(_: CanBuild[UserData, Vector[UserData]]))
+        .expects(*, *, *, *).once().returning(Future.successful(Vector.empty[UserData]))
+      (userService.acceptedOrBlockedUsers _).expects().once().returning(Signal.const(connectedUsers.map(k => (k -> users(k))).toMap))
+
+      (convsStorage.findGroupConversations _).expects(*, *, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
+      (queryCacheStorage.updateOrCreate _).expects(*, *, *).once().returning(Future.successful(queryCache))
+
+      (membersStorage.getByUsers _).expects(*).anyNumberOfTimes().onCall { ids: Set[UserId] =>
+        Future.successful(ids.filter(i => conversationMembers.contains(i)).map(ConversationMemberData(_, convId)).toIndexedSeq)
+      }
+
+      (sync.syncSearchQuery _).expects(*).once().onCall { _: SearchQuery =>
+        Future.successful[SyncId] {
+          querySignal ! Some(queryCache)
+          result(querySignal.filter(_.contains(queryCache)).head)
+          SyncId()
+        }
+      }
+    }
+
+    scenario("as a member, search partners that are not in a conversation with me") {
+      // GIVEN
+      mockServicesForTeam(query = "Partner", conversationMembers = ids('a, 'mm1))
+
+      // WHEN
+      val res = result(getService(true).search("Partner").map(_.local.map(_.id).toSet).head)
+
+      // THEN
+      res shouldBe ids()
+    }
+
+    scenario("as a member, search partners that are in a conversation with me") {
+
+      // GIVEN
+      mockServicesForTeam(query = "Partner", conversationMembers = ids('pp1, 'k, 'mm1))
+
+      // WHEN
+      val res = result(getService(true).search("Partner").map(_.local.map(_.id).toSet).head)
+
+      // THEN
+      res shouldBe ids('pp1)
+
+      // AFTER
+    }
+
+    scenario("as a member, search partners that are not in a conversation with me by exact handle") {
+
+      // GIVEN
+      mockServicesForTeam(query = "pp1", conversationMembers = ids('k, 'a, 'mm1))
+
+      // WHEN
+      val res = result(getService(true).search("pp1").map(_.local.map(_.id).toSet).head)
+
+      // THEN
+      res shouldBe ids('pp1)
+    }
+
+    scenario("as a member, search team members whether they are in a conversation with me or not") {
+
+      // GIVEN
+      mockServicesForTeam(query = "Member", conversationMembers = ids('mm2, 'pp1))
+
+      // WHEN
+      val res = result(getService(true).search("Member").map(_.local.map(_.id).toSet).head)
+
+      // THEN
+      res shouldBe ids('mm1, 'mm2)
+    }
+
+    scenario("as a member, search connected guests whether they are in a conversation with me or not") {
+
+      // GIVEN
+      mockServicesForTeam(query = "related", conversationMembers = ids('mm2, 'pp1, 'e), connectedUsers = ids('d, 'e))
+
+      // WHEN
+      val res = result(getService(true).search("related").map(_.local.map(_.id).toSet).head)
+
+      // THEN
+      res shouldBe ids('d, 'e)
+    }
+
+    scenario("as a member, search not connected guests") {
+
+      // GIVEN
+      mockServicesForTeam(query = "related", conversationMembers = ids('mm2, 'pp1, 'e))
+
+      // WHEN
+      val res = result(getService(true).search("related").map(_.local.map(_.id).toSet).head)
+
+      // THEN
+      res shouldBe ids()
+    }
+
+    scenario("as a partner, search team members that are not in a conversation with me") {
+
+      // GIVEN
+      userPrefs.setValue(UserPreferences.SelfPermissions, partnerPermissions)
+      mockServicesForTeam(query = "Member", conversationMembers = ids('pp1, 'k))
+
+      // WHEN
+      val res = result(getService(true).search("Member").map(_.local.map(_.id).toSet).head)
+
+      // THEN
+      res shouldBe ids()
+    }
+
+    scenario("as a partner, search team members that are in a conversation with me") {
+
+      // GIVEN
+      userPrefs.setValue(UserPreferences.SelfPermissions, partnerPermissions)
+      mockServicesForTeam(query = "Member", conversationMembers = ids('mm1, 'k))
+
+      // WHEN
+      val res = result(getService(true).search("Member").map(_.local.map(_.id).toSet).head)
+
+      // THEN
+      res shouldBe ids('mm1)
+    }
+
+    scenario("as a partner, search partners that are in a conversation with me") {
+
+      // GIVEN
+      userPrefs.setValue(UserPreferences.SelfPermissions, partnerPermissions)
+      mockServicesForTeam(query = "Partner", conversationMembers = Set(id('pp1)))
+
+      // WHEN
+      val res = result(getService(true).search("Partner").map(_.local.map(_.id).toSet).head)
+
+      // THEN
+      res shouldBe ids('pp1)
+    }
+
+    scenario("as a partner, search partners that are not in a conversation with me") {
+
+      // GIVEN
+      userPrefs.setValue(UserPreferences.SelfPermissions, partnerPermissions)
+      mockServicesForTeam(query = "Partner", conversationMembers = Set(id('mm1)))
+
+      // WHEN
+      val res = result(getService(true).search("Partner").map(_.local.map(_.id).toSet).head)
+
+      // THEN
+      res shouldBe ids()
+    }
+
+    scenario("as a partner, search connected guests whether they are in a conversation with me or not") {
+
+      // GIVEN
+      userPrefs.setValue(UserPreferences.SelfPermissions, partnerPermissions)
+      mockServicesForTeam(query = "related", conversationMembers = ids('mm2, 'pp1, 'e), connectedUsers = ids('d, 'e))
+
+      // WHEN
+      val res = result(getService(true).search("related").map(_.local.map(_.id).toSet).head)
+
+      // THEN
+      res shouldBe ids('e)
+    }
+
+    scenario("as a partner, search not connected guests") {
+
+      // GIVEN
+      userPrefs.setValue(UserPreferences.SelfPermissions, partnerPermissions)
+      mockServicesForTeam(query = "related", conversationMembers = ids('mm2, 'pp1, 'e))
+
+      // WHEN
+      val res = result(getService(true).search("related").map(_.local.map(_.id).toSet).head)
+
+      // THEN
+      res shouldBe ids()
+    }
   }
 
-  scenario("search conversation people who aren't connected") {
-
-    val convMembers = Set(id('a), id('b), id('k))
-
-    (queryCacheStorage.deleteBefore _).expects(*).anyNumberOfTimes().returning(Future.successful[Unit]({}))
-    (membersStorage.activeMembers _).expects(*).anyNumberOfTimes().returning(Signal.const(convMembers))
-    (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
-
-    val res = getService.searchUsersInConversation(ConvId("123"),"unconnected")
-    result(res.filter(_.size == 1).head)
-  }
-
-  def getService = {
-    new UserSearchService(selfId, queryCacheStorage, teamId, userService, usersStorage, teamsService, membersStorage, timeouts, sync, messagesStorage, convsStorage, convsUi, convs)
+  def getService(inTeam: Boolean) = {
+    new UserSearchService(
+      selfId,
+      queryCacheStorage,
+      if (inTeam) teamId else emptyTeamId,
+      userService,
+      usersStorage,
+      teamsService,
+      membersStorage,
+      timeouts,
+      sync,
+      messagesStorage,
+      convsStorage,
+      convsUi,
+      convs,
+      userPrefs
+    )
   }
 
 }

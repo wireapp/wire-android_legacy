@@ -23,6 +23,7 @@ import com.waz.service.teams.TeamsService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncResult
 import com.waz.sync.client.TeamsClient
+import com.waz.sync.client.TeamsClient.{Permissions, TeamMember}
 import com.waz.testutils.TestUserPreferences
 import com.waz.threading.CancellableFuture
 
@@ -41,9 +42,9 @@ class TeamsSyncHandlerSpec extends AndroidFreeSpec {
       val teamId = TeamId()
       val teams = Seq((teamId, true))
       val teamData = TeamData(teamId, "name", UserId())
-      val members = Map(
-        UserId() -> Some(0L, 0L),
-        UserId() -> Some(0L, 0L)
+      val members = Seq(
+        TeamMember(UserId(), Option(Permissions(0L, 0L)), None),
+        TeamMember(UserId(), Option(Permissions(0L, 0L)), None)
       )
 
       (client.getTeamData(_: TeamId)).expects(teamId).once().returning(CancellableFuture.successful(Right(teamData)))

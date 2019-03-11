@@ -17,8 +17,8 @@
  */
 package com.waz.sync.client
 
-import com.waz.model.AccountDataOld._
-import com.waz.model.AccountDataOld.Permission._
+import com.waz.model.UserPermissions._
+import com.waz.model.UserPermissions.Permission._
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.TeamsClient.TeamMembers
 import com.waz.utils.CirceJSONSupport

@@ -24,13 +24,13 @@ import com.waz.utils.Locales
 case class Handle(string: String) extends AnyVal {
   override def toString : String = string
 
-  def startsWithQuery(query: String): Boolean = {
-     string.startsWith(Handle.stripSymbol(query).toLowerCase)
-  }
+  def startsWithQuery(query: String): Boolean =
+    query.nonEmpty && string.startsWith(Handle.stripSymbol(query).toLowerCase)
+  
 
-  def exactMatchQuery(query: String): Boolean = {
+  def exactMatchQuery(query: String): Boolean =
     string == Handle.stripSymbol(query).toLowerCase
-  }
+
 
   def withSymbol: String = if (string.startsWith("@")) string else s"@$string"
 }

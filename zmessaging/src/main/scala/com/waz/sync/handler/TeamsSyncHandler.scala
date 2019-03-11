@@ -61,10 +61,10 @@ class TeamsSyncHandlerImpl(userId:    UserId,
 
   override def syncMember(uId: UserId) = teamId match {
     case Some(tId) =>
-      client.getPermissions(tId, uId).future.flatMap {
-        case Right(p) =>
+      client.getTeamMember(tId, uId).future.flatMap {
+        case Right(member) =>
           service
-            .onMemberSynced(uId, p)
+            .onMemberSynced(member)
             .map(_ => SyncResult.Success)
         case Left(e) =>
           Future.successful(SyncResult(e))

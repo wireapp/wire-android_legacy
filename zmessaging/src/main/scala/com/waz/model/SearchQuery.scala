@@ -17,8 +17,16 @@
  */
 package com.waz.model
 
+import com.waz.model.SearchQuery.{Recommended, RecommendedHandle}
+
 sealed trait SearchQuery {
   def cacheKey: String
+
+  def filter: String = this match {
+    case Recommended(str)       => str
+    case RecommendedHandle(str) => str
+    case _                      => ""
+  }
 }
 
 object SearchQuery {
