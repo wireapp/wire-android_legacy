@@ -20,8 +20,7 @@ package com.waz.zclient.conversationlist
 import android.support.v7.widget.RecyclerView
 import android.view.View.OnLongClickListener
 import android.view.{View, ViewGroup}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.utils.events.{EventContext, EventStream, Signal}
@@ -29,10 +28,14 @@ import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversationlist.ConversationListAdapter._
 import com.waz.zclient.conversationlist.views.{IncomingConversationListRow, NormalConversationListRow}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 
-class ConversationListAdapter(implicit injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[ConversationRowViewHolder] with Injectable {
+class ConversationListAdapter(implicit injector: Injector, eventContext: EventContext)
+  extends RecyclerView.Adapter[ConversationRowViewHolder]
+    with Injectable
+    with DerivedLogTag {
 
   setHasStableIds(true)
 
