@@ -30,7 +30,7 @@ import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.content.UserPreferences
 import com.waz.model.otr.Client
-import com.waz.model.{AccentColor, AccountDataOld, Availability}
+import com.waz.model.{AccentColor, Availability, UserPermissions}
 import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
@@ -48,7 +48,6 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.Time.TimeStamp
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage, UserSignal}
 import com.waz.zclient.views.AvailabilityView
-
 import ProfileViewController.MaxAccountsCount
 import BuildConfig.ACCOUNT_CREATION_ENABLED
 
@@ -309,7 +308,7 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
   }
 
   usersAccounts.selfPermissions
-    .map(_.contains(AccountDataOld.Permission.AddTeamMember))
+    .map(_.contains(UserPermissions.Permission.AddTeamMember))
     .onUi(view.setManageTeamEnabled)
 
 
