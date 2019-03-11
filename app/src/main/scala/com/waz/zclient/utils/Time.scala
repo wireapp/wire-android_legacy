@@ -19,9 +19,9 @@ package com.waz.zclient.utils
 
 import android.content.Context
 import android.text.format.DateFormat
-import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.zclient.R
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils.{getQuantityString, getString}
 import org.threeten.bp.format.DateTimeFormatter
 import org.threeten.bp.{DateTimeException, _}
@@ -53,7 +53,7 @@ object Time {
       getString(if (DateFormat.is24HourFormat(context)) R.string.timestamp_pattern__24h_format else R.string.timestamp_pattern__12h_format)
   }
 
-  object DateTimeStamp {
+  object DateTimeStamp extends DerivedLogTag {
     lazy val defaultDateFormatter = DateTimeFormatter.ofPattern("MMM d, HH:mm")
     lazy val defaultTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
