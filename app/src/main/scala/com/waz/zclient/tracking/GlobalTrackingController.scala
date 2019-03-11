@@ -20,12 +20,11 @@ package com.waz.zclient.tracking
 
 import android.content.Context
 import android.renderscript.RSRuntimeException
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.LogTag
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.Preferences.PrefKey
 import com.waz.content.{GlobalPreferences, UsersStorage}
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
 import com.waz.service.ZMessaging
@@ -37,14 +36,15 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient._
 import com.waz.zclient.appentry.fragments.SignInFragment
 import com.waz.zclient.appentry.fragments.SignInFragment.{InputType, SignInMethod}
-import com.waz.zclient.log.LogShowInstancesUI._
+import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
 import scala.concurrent.Future._
 import scala.concurrent.duration._
 import scala.util.Try
 
-class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext) extends Injectable {
+class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext)
+  extends Injectable with DerivedLogTag {
 
   import GlobalTrackingController._
 
