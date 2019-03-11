@@ -21,8 +21,7 @@ import java.util.concurrent.Executor
 
 import android.arch.paging.PagedList
 import android.content.Context
-import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageData.MessageDataDao
 import com.waz.model._
 import com.waz.service.ZMessaging
@@ -39,7 +38,8 @@ import com.waz.zclient.{Injectable, Injector}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt: Context) extends Injectable {
+class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt: Context)
+  extends Injectable with DerivedLogTag {
 
   private val zms = inject[Signal[ZMessaging]]
   private val convController = inject[ConversationController]
