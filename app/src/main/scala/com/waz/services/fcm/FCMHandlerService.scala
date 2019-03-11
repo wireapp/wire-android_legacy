@@ -18,8 +18,7 @@
 package com.waz.services.fcm
 
 import com.google.firebase.messaging.{FirebaseMessagingService, RemoteMessage}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Uid, UserId}
 import com.waz.service.AccountsService.InForeground
 import com.waz.service.ZMessaging.clock
@@ -29,6 +28,7 @@ import com.waz.service.{AccountsService, NetworkModeService, ZMessaging}
 import com.waz.services.ZMessagingService
 import com.waz.threading.Threading
 import com.waz.utils.{JsonDecoder, RichInstant, Serialized}
+import com.waz.zclient.log.LogUI._
 import org.json
 import org.threeten.bp.Instant
 
@@ -39,7 +39,7 @@ import scala.util.Try
 /**
   * For more information, see: https://firebase.google.com/docs/cloud-messaging/android/receive
   */
-class FCMHandlerService extends FirebaseMessagingService with ZMessagingService {
+class FCMHandlerService extends FirebaseMessagingService with ZMessagingService with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
   lazy val pushSenderId = ZMessaging.currentGlobal.backend.pushSenderId
@@ -114,7 +114,7 @@ object FCMHandlerService {
                    push:           PushService,
                    network:        NetworkModeService,
                    receivedPushes: ReceivedPushStorage,
-                   sentTime:       Instant) {
+                   sentTime:       Instant) extends DerivedLogTag {
 
     import com.waz.threading.Threading.Implicits.Background
 
