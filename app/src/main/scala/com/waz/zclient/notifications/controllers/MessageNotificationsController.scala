@@ -25,12 +25,11 @@ import android.os.Build
 import android.support.annotation.RawRes
 import android.support.v4.app.NotificationCompat
 import android.text.TextUtils
-import com.waz.log.ZLog2._
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.NotificationsHandler.NotificationType._
 import com.waz.bitmap.BitmapUtils
 import com.waz.content._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.images.ImageLoader
 import com.waz.service.push.NotificationUiController
@@ -44,6 +43,7 @@ import com.waz.zclient.common.controllers.SoundController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.navigation.Page
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.utils.ContextUtils.{getInt, getIntArray, toPx}
 import com.waz.zclient.utils.{ResString, RingtoneUtils}
@@ -54,7 +54,10 @@ import scala.concurrent.duration._
 
 class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_INT > Build.VERSION_CODES.M,
                                      applicationId: String = BuildConfig.APPLICATION_ID)
-                                    (implicit inj: Injector, cxt: Context, eventContext: EventContext) extends Injectable with NotificationUiController {
+                                    (implicit inj: Injector, cxt: Context, eventContext: EventContext)
+  extends Injectable
+    with NotificationUiController
+    with DerivedLogTag {
 
   import MessageNotificationsController._
   import Threading.Implicits.Background
