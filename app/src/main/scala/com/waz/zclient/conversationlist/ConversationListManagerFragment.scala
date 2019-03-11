@@ -22,9 +22,7 @@ import android.os.Bundle
 import android.support.v4.app.{Fragment, FragmentManager}
 import android.view.{LayoutInflater, ViewGroup}
 import android.widget.FrameLayout
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.SyncState._
-import com.waz.log.ZLog2._
 import com.waz.model._
 import com.waz.model.sync.SyncCommand._
 import com.waz.service.ZMessaging
@@ -39,6 +37,7 @@ import com.waz.zclient.controllers.confirmation._
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
