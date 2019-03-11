@@ -23,8 +23,7 @@ import android.support.v7.widget.{GridLayoutManager, LinearLayoutManager, Recycl
 import android.util.AttributeSet
 import android.view.View.OnTouchListener
 import android.view.{MotionEvent, View}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Dim2
 import com.waz.utils.events.Signal
 import com.waz.zclient.ViewHelper
@@ -33,9 +32,12 @@ import com.waz.zclient.collection.adapters.CollectionAdapter
 import com.waz.zclient.collection.controllers.CollectionScrollController.Scroll
 import com.waz.zclient.collection.controllers.{CollectionController, CollectionScrollController}
 import com.waz.zclient.collection.fragments.CollectionFragment
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversation.collections.CollectionItemDecorator
 
-class CollectionRecyclerView(context: Context, attrs: AttributeSet, style: Int) extends RecyclerView(context, attrs, style) with ViewHelper {
+class CollectionRecyclerView(context: Context, attrs: AttributeSet, style: Int)
+  extends RecyclerView(context, attrs, style) with ViewHelper with DerivedLogTag {
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
