@@ -31,6 +31,7 @@ import android.view.animation.{AlphaAnimation, Animation, AnimationUtils}
 import android.view.{LayoutInflater, View, ViewGroup, ViewStub}
 import android.widget.TextView
 import com.waz.ZLog.{LogTag, logTagFor}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.ZLog2._
 import com.waz.utils.events._
 import com.waz.utils.returning
@@ -131,7 +132,13 @@ trait ServiceHelper extends Service with Injectable with WireContext with EventC
 
 
 
-trait FragmentHelper extends Fragment with OnBackPressedListener with ViewFinder with EventContext with Injectable {
+trait FragmentHelper
+  extends Fragment
+    with OnBackPressedListener 
+    with ViewFinder
+    with EventContext
+    with Injectable
+    with DerivedLogTag {
 
   implicit def currentAndroidContext: Context = getContext
   lazy implicit val injector: Injector = getActivity.asInstanceOf[WireContext].injector
