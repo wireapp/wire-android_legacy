@@ -21,18 +21,17 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import android.support.v4.content.WakefulBroadcastReceiver
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserId
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.WakeLockImpl
-import com.waz.zclient.log.LogShowInstancesUI._
+import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
 import scala.util.control.NoStackTrace
 
-abstract class FutureService extends Service {
+abstract class FutureService extends Service with DerivedLogTag {
 
   protected lazy val wakeLock = new WakeLockImpl(getApplicationContext)
 
@@ -60,7 +59,7 @@ abstract class FutureService extends Service {
   }
 }
 
-trait ZMessagingService extends Service {
+trait ZMessagingService extends Service with DerivedLogTag {
   import Threading.Implicits.Background
   import ZMessagingService._
 
