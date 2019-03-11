@@ -18,24 +18,25 @@
 package com.waz.zclient.appentry.controllers
 
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.ErrorResponse
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.EmailAddress
 import com.waz.service.AccountsService
 import com.waz.service.tracking.TrackingService
-import com.waz.service.tracking.TrackingService._
 import com.waz.sync.client.InvitationClient.ConfirmedTeamInvitation
 import com.waz.threading.CancellableFuture
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.appentry.controllers.InvitationsController._
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.tracking.TeamInviteSent
 import com.waz.zclient.{Injectable, Injector}
 
 import scala.collection.immutable.ListMap
 import scala.concurrent.Future
 
-class InvitationsController(implicit inj: Injector, eventContext: EventContext, context: Context) extends Injectable {
+class InvitationsController(implicit inj: Injector, eventContext: EventContext, context: Context)
+  extends Injectable with DerivedLogTag {
 
   private lazy val accountsService      = inject[AccountsService]
   private lazy val createTeamController = inject[CreateTeamController]
