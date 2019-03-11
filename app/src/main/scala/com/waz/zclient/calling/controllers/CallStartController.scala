@@ -18,10 +18,8 @@
 package com.waz.zclient.calling.controllers
 
 import android.Manifest.permission._
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NetworkMode
 import com.waz.content.GlobalPreferences.AutoAnswerCallPrefKey
-import com.waz.log.ZLog2._
 import com.waz.model.{ConvId, UserId}
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
@@ -29,6 +27,7 @@ import com.waz.service.call.CallInfo.CallState
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient._
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils.{getString, showConfirmationDialog, showErrorDialog, showPermissionsErrorDialog}
 import com.waz.zclient.utils.PhoneUtils
 import com.waz.zclient.utils.PhoneUtils.PhoneState
