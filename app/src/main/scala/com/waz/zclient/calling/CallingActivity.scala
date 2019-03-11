@@ -20,11 +20,11 @@ package com.waz.zclient.calling
 import android.content.{Context, Intent}
 import android.os.{Build, Bundle}
 import android.view.WindowManager
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading
 import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.DeprecationUtils
 
 class CallingActivity extends BaseActivity {
@@ -82,7 +82,7 @@ class CallingActivity extends BaseActivity {
   override def getBaseTheme: Int = R.style.Theme_Calling
 }
 
-object CallingActivity extends Injectable {
+object CallingActivity extends Injectable with DerivedLogTag {
 
   def start(context: Context): Unit = {
     val intent = new Intent(context, classOf[CallingActivity])
