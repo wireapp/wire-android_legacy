@@ -21,11 +21,11 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.EmailCredentials
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.{PendingEmail, PendingPassword}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.model.EmailAddress
 import com.waz.service.AccountManager.ClientRegistrationState.LimitReached
@@ -91,7 +91,7 @@ object CredentialsFragment {
   }
 }
 
-class AddEmailFragment extends CredentialsFragment {
+class AddEmailFragment extends CredentialsFragment with DerivedLogTag {
   import Threading.Implicits.Ui
 
   lazy val emailValidator = EmailValidator.newInstance()
@@ -164,14 +164,13 @@ class AddEmailFragment extends CredentialsFragment {
 }
 
 object AddEmailFragment {
-  val Tag = implicitLogTag
 
   def apply(hasPassword: Boolean = false): AddEmailFragment =
     CredentialsFragment(new AddEmailFragment(), hasPassword)
 }
 
 
-class VerifyEmailFragment extends CredentialsFragment {
+class VerifyEmailFragment extends CredentialsFragment with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Ui
 
@@ -245,13 +244,11 @@ class VerifyEmailFragment extends CredentialsFragment {
 
 object VerifyEmailFragment {
 
-  val Tag = implicitLogTag
-
   def apply(email: EmailAddress, hasPassword: Boolean = false): VerifyEmailFragment =
     CredentialsFragment(new VerifyEmailFragment(), hasPassword, Some(email))
 }
 
-class SetOrRequestPasswordFragment extends CredentialsFragment {
+class SetOrRequestPasswordFragment extends CredentialsFragment with DerivedLogTag {
 
   lazy val passwordController = inject[PasswordController]
   lazy val password = Signal(Option.empty[Password])
