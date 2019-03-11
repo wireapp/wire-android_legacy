@@ -23,9 +23,8 @@ import android.os.Bundle
 import android.support.v7.widget.{CardView, GridLayout}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, ImageView, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.avs.{VideoPreview, VideoRenderer}
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Dim2, UserId}
 import com.waz.service.call.Avs.VideoState
 import com.waz.threading.{SerialDispatchQueue, Threading}
@@ -35,6 +34,7 @@ import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.controllers.{ThemeController, ThemeControllingFrameLayout}
 import com.waz.zclient.common.views.BackgroundDrawable
 import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
@@ -102,7 +102,9 @@ abstract class UserVideoView(context: Context, val userId: UserId) extends Frame
   val shouldShowInfo: Signal[Boolean]
 }
 
-class SelfVideoView(context: Context, userId: UserId) extends UserVideoView(context, userId) {
+class SelfVideoView(context: Context, userId: UserId)
+  extends UserVideoView(context, userId) with DerivedLogTag {
+
   protected val muteIcon = returning(findById[GenericStyleKitView](R.id.mute_icon)) { icon =>
     icon.setOnDraw(WireStyleKit.drawMute)
   }
@@ -133,7 +135,7 @@ class OtherVideoView(context: Context, userId: UserId) extends UserVideoView(con
   })
 }
 
-class CallingFragment extends FragmentHelper {
+class CallingFragment extends FragmentHelper with DerivedLogTag {
 
   private lazy val controller       = inject[CallController]
   private lazy val themeController  = inject[ThemeController]
