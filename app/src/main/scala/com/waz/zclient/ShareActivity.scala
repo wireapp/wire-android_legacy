@@ -27,8 +27,7 @@ import android.os.{Build, Bundle, Environment}
 import android.provider.DocumentsContract._
 import android.provider.MediaStore
 import android.support.v4.app.ShareCompat
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService
 import com.waz.service.AccountsService
 import com.waz.threading.Threading
@@ -39,9 +38,9 @@ import com.waz.zclient.common.controllers.SharingController
 import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.confirmation.TwoButtonConfirmationCallback
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.sharing.ShareToMultipleFragment
 import com.waz.zclient.views.menus.ConfirmationMenu
-import com.waz.zclient.log.LogShowInstancesUI._
 
 import scala.collection.immutable.ListSet
 import scala.util.control.NonFatal
@@ -119,7 +118,7 @@ class ShareActivity extends BaseActivity with ActivityHelper {
 
 }
 
-object ShareActivity {
+object ShareActivity extends DerivedLogTag {
 
   /*
    * This part (the methods getPath and getDataColumn) of the Wire software are based heavily off of code posted in this
