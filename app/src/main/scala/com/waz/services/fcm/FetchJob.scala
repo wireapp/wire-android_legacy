@@ -20,22 +20,21 @@ package com.waz.services.fcm
 import com.evernote.android.job.Job.Result
 import com.evernote.android.job.util.support.PersistableBundleCompat
 import com.evernote.android.job.{Job, JobManager, JobRequest}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Uid, UserId}
 import com.waz.service.AccountsService.InBackground
 import com.waz.service.ZMessaging
 import com.waz.service.push.PushService.FetchFromJob
 import com.waz.threading.Threading
 import com.waz.utils.returning
-import com.waz.zclient.log.LogShowInstancesUI._
+import com.waz.zclient.log.LogUI._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 
-class FetchJob extends Job {
+class FetchJob extends Job with DerivedLogTag {
 
   import FetchJob._
   import Threading.Implicits.Background
@@ -70,7 +69,7 @@ class FetchJob extends Job {
   }
 }
 
-object FetchJob {
+object FetchJob extends DerivedLogTag {
 
   val Tag = "FetchJob"
   val AccountExtra = "accounts"
