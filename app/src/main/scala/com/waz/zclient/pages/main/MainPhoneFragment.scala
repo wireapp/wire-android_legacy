@@ -21,11 +21,9 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.v4.app.FragmentManager
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.UserPreferences.CrashesAndAnalyticsRequestShown
 import com.waz.content.{GlobalPreferences, UserPreferences}
-import com.waz.log.ZLog2
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ErrorData, Uid}
 import com.waz.service.{AccountManager, GlobalModule, ZMessaging}
 import com.waz.threading.Threading
@@ -41,6 +39,7 @@ import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.controllers.singleimage.{ISingleImageController, SingleImageObserver}
 import com.waz.zclient.conversation.{ConversationController, ImageFragment}
 import com.waz.zclient.giphy.GiphySharingPreviewFragment
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversationlist.ConfirmationFragment
 import com.waz.zclient.pages.main.conversationpager.ConversationPagerFragment
@@ -59,7 +58,8 @@ class MainPhoneFragment extends FragmentHelper
   with SingleImageObserver
   with ConfirmationObserver
   with CollectionsObserver
-  with ConfirmationFragment.Container {
+  with ConfirmationFragment.Container
+  with DerivedLogTag {
 
   import MainPhoneFragment._
   import Threading.Implicits.Ui
