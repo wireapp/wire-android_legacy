@@ -24,9 +24,7 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.{Color, Paint, PixelFormat}
 import android.os.{Build, Bundle}
 import android.support.v4.app.{Fragment, FragmentTransaction}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.UserPreferences._
-import com.waz.log.ZLog2._
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
 import com.waz.service.ZMessaging.clock
@@ -44,6 +42,7 @@ import com.waz.zclient.controllers.navigation.{NavigationControllerObserver, Pag
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.fragments.ConnectivityFragment
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.pages.startup.UpdateFragment
@@ -53,7 +52,6 @@ import com.waz.zclient.tracking.UiTrackingController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.StringUtils.TextDrawing
 import com.waz.zclient.utils.{Emojis, IntentUtils, ViewUtils}
-import com.waz.zclient.log.LogShowInstancesUI._
 import com.waz.zclient.views.LoadingIndicatorView
 
 import scala.collection.JavaConverters._
