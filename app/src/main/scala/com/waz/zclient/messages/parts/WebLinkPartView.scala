@@ -21,9 +21,8 @@ import android.content.Context
 import android.support.v7.widget.CardView
 import android.util.AttributeSet
 import android.widget.{ImageView, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message.Part
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.GenericContent.LinkPreview
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
@@ -32,6 +31,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views.ProgressDotsDrawable
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.utils._
@@ -40,7 +40,13 @@ import com.waz.zclient.common.views.ImageController.{DataImage, ImageUri}
 import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.{R, ViewHelper}
 
-class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends CardView(context, attrs, style) with ClickableViewPart with ViewHelper with EphemeralPartView {
+class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int)
+  extends CardView(context, attrs, style)
+    with ClickableViewPart
+    with ViewHelper
+    with EphemeralPartView
+    with DerivedLogTag {
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
