@@ -22,13 +22,14 @@ import android.content.Intent.{ACTION_VIEW, FLAG_ACTIVITY_NEW_TASK}
 import android.content.{Context, DialogInterface, Intent}
 import android.net.Uri
 import android.support.v7.app.AlertDialog
-import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.returning
 import com.waz.zclient.R
+import com.waz.zclient.log.LogUI._
+
 import scala.concurrent.{Future, Promise}
 
-object AppEntryDialogs {
+object AppEntryDialogs extends DerivedLogTag {
   def showTermsAndConditions(context: Context): Future[Boolean] = {
     val dialogResult = Promise[Boolean]()
     val dialog = new AlertDialog.Builder(context)
