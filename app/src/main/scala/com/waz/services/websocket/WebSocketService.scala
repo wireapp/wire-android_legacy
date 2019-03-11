@@ -23,17 +23,16 @@ import android.content
 import android.content.{BroadcastReceiver, Context, Intent}
 import android.os.{Build, IBinder}
 import android.support.v4.app.NotificationCompat
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.GlobalPreferences.{PushEnabledKey, WsForegroundKey}
 import com.waz.jobs.PushTokenCheckJob
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountsService.InForeground
 import com.waz.service.{AccountsService, GlobalModule, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.zclient.log.LogShowInstancesUI._
 import com.waz.zclient._
+import com.waz.zclient.log.LogUI._
 
 class WebSocketController(implicit inj: Injector) extends Injectable {
   private lazy val global   = inject[GlobalModule]
@@ -79,7 +78,7 @@ class WebSocketController(implicit inj: Injector) extends Injectable {
 /**
   * Receiver called on boot or when app is updated.
   */
-class OnBootAndUpdateBroadcastReceiver extends BroadcastReceiver {
+class OnBootAndUpdateBroadcastReceiver extends BroadcastReceiver with DerivedLogTag {
 
   private var context: Context = _
 
@@ -118,7 +117,7 @@ class OnBootAndUpdateBroadcastReceiver extends BroadcastReceiver {
 /**
   * Service keeping the process running as long as web socket should be connected.
   */
-class WebSocketService extends ServiceHelper {
+class WebSocketService extends ServiceHelper with DerivedLogTag {
 
   import WebSocketService._
 
