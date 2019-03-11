@@ -21,14 +21,12 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.v7.widget.Toolbar
 import android.view.View
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
 import com.waz.utils.returning
 import com.waz.zclient.Intents._
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.quickreply.QuickReplyFragment
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.{ContextUtils, ViewUtils}
-import com.waz.zclient.log.LogShowInstancesUI._
 
 class PopupActivity extends BaseActivity with ActivityHelper { self =>
 
