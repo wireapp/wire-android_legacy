@@ -20,14 +20,15 @@ package com.waz.zclient.common.controllers.global
 import android.app.Activity
 import android.graphics.Rect
 import android.view.{View, ViewTreeObserver}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, WireContext}
+import com.waz.zclient.log.LogUI._
 
-class KeyboardController(implicit inj: Injector, cxt: WireContext, ec: EventContext) extends ViewTreeObserver.OnGlobalLayoutListener with Injectable {
+class KeyboardController(implicit inj: Injector, cxt: WireContext, ec: EventContext)
+  extends ViewTreeObserver.OnGlobalLayoutListener with Injectable with DerivedLogTag {
 
   val isKeyboardVisible = Signal(false)
   isKeyboardVisible(v => verbose(l"Keyboard visible: $v"))
