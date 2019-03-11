@@ -25,20 +25,21 @@ import com.google.android.gms.common.ConnectionResult.{SERVICE_VERSION_UPDATE_RE
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.firebase.FirebaseApp
 import com.google.firebase.iid.FirebaseInstanceId
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences.GPSErrorDialogShowCount
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.PushToken
 import com.waz.service.BackendConfig
 import com.waz.service.FirebaseOptions
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.utils.wrappers.GoogleApi
+import com.waz.zclient.log.LogUI._
 
 import scala.util.Try
 
-class GoogleApiImpl private (context: Context, beConfig: BackendConfig, prefs: GlobalPreferences) extends GoogleApi {
+class GoogleApiImpl private (context: Context, beConfig: BackendConfig, prefs: GlobalPreferences)
+  extends GoogleApi with DerivedLogTag {
 
   import GoogleApiImpl._
 
