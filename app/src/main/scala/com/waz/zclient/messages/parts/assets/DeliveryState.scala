@@ -17,18 +17,19 @@
  */
 package com.waz.zclient.messages.parts.assets
 
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api
 import com.waz.api.AssetStatus._
 import com.waz.api.Message
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogShow.SafeToLog
 import com.waz.model._
 import com.waz.utils.events.Signal
+import com.waz.zclient.log.LogUI._
 
 
 sealed trait DeliveryState extends SafeToLog
 
-object DeliveryState {
+object DeliveryState extends DerivedLogTag {
 
   case object Complete extends DeliveryState
 
