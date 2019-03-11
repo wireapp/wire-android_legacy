@@ -19,12 +19,12 @@ package com.waz.zclient
 
 import android.content.ClipboardManager.OnPrimaryClipChangedListener
 import android.content.{ClipData, ClipboardManager, Context}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.events.EventStream
 import com.waz.utils.returning
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.zclient.log.LogUI._
 
-class ClipboardUtils(context: Context) {
+class ClipboardUtils(context: Context) extends DerivedLogTag {
 
   private lazy val clipboardManager: ClipboardManager =
     context.getSystemService(Context.CLIPBOARD_SERVICE).asInstanceOf[ClipboardManager]
