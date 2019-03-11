@@ -19,12 +19,10 @@ package com.waz.zclient.calling.controllers
 
 import android.os.PowerManager
 import android.telephony.{PhoneStateListener, TelephonyManager}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Verification
 import com.waz.avs.VideoPreview
 import com.waz.content.GlobalPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.log.ZLog2._
 import com.waz.model.{AssetId, LocalInstant, UserData, UserId}
 import com.waz.service.ZMessaging.clock
 import com.waz.service.call.Avs.VideoState
@@ -404,7 +402,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   }.disableAutowiring()
 }
 
-private class ScreenManager(implicit injector: Injector) extends Injectable {
+private class ScreenManager(implicit injector: Injector) extends Injectable with DerivedLogTag {
 
   private val TAG = "CALLING_WAKE_LOCK"
 
