@@ -24,8 +24,7 @@ import android.text.TextUtils
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, ViewGroup}
 import android.widget.TextView
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.tracking.ContributionEvent
 import com.waz.service.tracking.ContributionEvent.Action
@@ -34,6 +33,7 @@ import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.SharingController
 import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.popup.ViewPagerLikeLayoutManager
 import com.waz.zclient.ui.text.{TypefaceEditText, TypefaceTextView}
 import com.waz.zclient.ui.utils.KeyboardUtils
@@ -54,7 +54,7 @@ object QuickReplyFragment {
   }
 }
 
-class QuickReplyFragment extends Fragment with FragmentHelper {
+class QuickReplyFragment extends Fragment with FragmentHelper with DerivedLogTag {
   import QuickReplyFragment._
   import com.waz.threading.Threading.Implicits.Ui
 
