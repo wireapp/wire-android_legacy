@@ -18,10 +18,9 @@
 package com.waz.zclient.common.controllers
 
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.SelfPermissions
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountDataOld.Permission
 import com.waz.model.AccountDataOld.Permission._
 import com.waz.model.{AccountDataOld, _}
@@ -32,10 +31,13 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.utils.{ConversationSignal, UiStorage}
 import com.waz.zclient.{Injectable, Injector}
+import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
 
-class UserAccountsController(implicit injector: Injector, context: Context, ec: EventContext) extends Injectable {
+class UserAccountsController(implicit injector: Injector, context: Context, ec: EventContext)
+  extends Injectable with DerivedLogTag {
+  
   import Threading.Implicits.Ui
   import UserAccountsController._
 
