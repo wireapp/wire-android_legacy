@@ -18,7 +18,7 @@
 package com.waz.zclient.messages
 
 import com.waz.api.Message
-import com.waz.log.ZLog2.SafeToLog
+import com.waz.log.LogShow.SafeToLog
 
 sealed trait MsgPart extends SafeToLog
 sealed trait SeparatorPart extends MsgPart
