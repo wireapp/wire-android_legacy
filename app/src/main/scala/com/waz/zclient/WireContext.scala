@@ -146,6 +146,8 @@ trait FragmentHelper
 
   private var views: List[ViewHolder[_]] = Nil
 
+  val Tag: String = getClass.getSimpleName
+
   @SuppressLint(Array("com.waz.ViewUtils"))
   def findById[V <: View](id: Int) = {
     val res = getView.findViewById[V](id)
