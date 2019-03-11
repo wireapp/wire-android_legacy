@@ -31,13 +31,12 @@ import android.support.v4.app.{FragmentActivity, FragmentManager}
 import android.telephony.TelephonyManager
 import com.evernote.android.job.{JobCreator, JobManager}
 import com.google.android.gms.security.ProviderInstaller
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NetworkMode
 import com.waz.background.WorkManagerSyncRequestService
 import com.waz.content._
 import com.waz.jobs.PushTokenCheckJob
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.{AndroidLogOutput, BufferedLogOutput, InternalLog}
-import com.waz.log.ZLog2._
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service._
@@ -74,6 +73,7 @@ import com.waz.zclient.conversation.{ConversationController, ReplyController}
 import com.waz.zclient.conversation.creation.CreateConversationController
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.cursor.CursorController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.{MessageActionsController, NavigationController}
 import com.waz.zclient.messages.{LikesController, MessagePagedListController, MessageViewFactory, MessagesController, UsersController}
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.AndroidNotificationsManager
@@ -92,7 +92,7 @@ import org.threeten.bp.Clock
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-object WireApplication {
+object WireApplication extends DerivedLogTag {
   var APP_INSTANCE: WireApplication = _
 
   type AccountToImageLoader = (UserId) => Future[Option[ImageLoader]]
