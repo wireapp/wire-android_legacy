@@ -25,8 +25,6 @@ import android.support.design.widget.TabLayout.OnTabSelectedListener
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils._
@@ -34,6 +32,7 @@ import com.waz.utils.events.{ClockSignal, Signal}
 import com.waz.zclient.common.controllers.{BrowserController, ThemeController, UserAccountsController}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.CreateConversationController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.participants.{ParticipantOtrDeviceAdapter, ParticipantsController}
