@@ -20,14 +20,16 @@ package com.waz.zclient.messages
 
 import android.arch.paging.PagedList
 import android.support.v7.widget.RecyclerView
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.events.{EventContext, EventStream, SourceStream}
+import com.waz.zclient.log.LogUI._
 import ScrollController._
 import android.support.v7.widget.RecyclerView.OnScrollListener
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogShow.SafeToLog
 
-class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, layoutManager: MessagesListLayoutManager)(implicit ec: EventContext) {
+class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, layoutManager: MessagesListLayoutManager)(implicit ec: EventContext)
+  extends DerivedLogTag {
 
   private var lastVisiblePosition = 0
   private var dragging = false
