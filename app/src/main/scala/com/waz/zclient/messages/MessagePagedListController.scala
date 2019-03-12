@@ -32,6 +32,7 @@ import com.waz.utils.events._
 import com.waz.utils.returning
 import com.waz.utils.wrappers.DBCursor
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessagePagedListController._
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.{Injectable, Injector}
