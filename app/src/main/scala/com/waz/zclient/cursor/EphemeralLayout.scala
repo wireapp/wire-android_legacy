@@ -22,10 +22,9 @@ import android.support.v7.view.ContextThemeWrapper
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, NumberPicker}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
 import com.waz.utils.events.{EventStream, Subscription}
 import com.waz.zclient.conversation.ConversationController._
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 
