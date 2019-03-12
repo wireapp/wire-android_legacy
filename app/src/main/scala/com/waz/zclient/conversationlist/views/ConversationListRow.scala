@@ -24,9 +24,8 @@ import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.FrameLayout
 import android.widget.LinearLayout.LayoutParams
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.ZMessaging
@@ -42,6 +41,7 @@ import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.conversationlist.views.ConversationBadge.OngoingCall
 import com.waz.zclient.conversationlist.views.ConversationListRow._
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
 import com.waz.zclient.pages.main.conversationlist.views.listview.SwipeListView
 import com.waz.zclient.pages.main.conversationlist.views.row.MenuIndicatorView
@@ -58,11 +58,14 @@ import scala.collection.Set
 
 trait ConversationListRow extends FrameLayout
 
-class NormalConversationListRow(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style)
+class NormalConversationListRow(context: Context, attrs: AttributeSet, style: Int)
+  extends FrameLayout(context, attrs, style)
     with ConversationListRow
     with ViewHelper
     with SwipeListView.SwipeListRow
-    with MoveToAnimateable {
+    with MoveToAnimateable
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
