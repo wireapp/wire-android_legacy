@@ -258,6 +258,8 @@ class LikesAndReadsFragment extends FragmentHelper {
 
 object LikesAndReadsFragment {
 
+  val Tag: String = getClass.getSimpleName
+
   sealed trait ViewToDisplay
 
   case object NoReads  extends ViewToDisplay
