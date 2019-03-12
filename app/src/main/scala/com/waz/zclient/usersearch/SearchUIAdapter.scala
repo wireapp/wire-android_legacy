@@ -22,8 +22,7 @@ import android.graphics.Rect
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.utils.events.EventContext
 import com.waz.utils.returning
@@ -31,6 +30,7 @@ import com.waz.zclient._
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.views.{SingleUserRowView, TopUserChathead}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.paintcode.{CreateGroupIcon, GuestIcon, ManageServicesIcon}
 import com.waz.zclient.search.SearchController
 import com.waz.zclient.search.SearchController.{SearchUserListState, Tab}
@@ -39,10 +39,11 @@ import com.waz.zclient.usersearch.SearchUIAdapter.TopUsersViewHolder.TopUserAdap
 import com.waz.zclient.usersearch.views.SearchResultConversationRowView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{ResColor, RichView, ViewUtils}
-import com.waz.zclient.log.LogShowInstancesUI._
 
-class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)
-                     (implicit injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[RecyclerView.ViewHolder] with Injectable {
+class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit injector: Injector, eventContext: EventContext)
+  extends RecyclerView.Adapter[RecyclerView.ViewHolder]
+    with Injectable
+    with DerivedLogTag {
 
   import SearchUIAdapter._
 
