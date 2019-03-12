@@ -238,7 +238,7 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
 
 object ChangeHandleFragment {
 
-  val Tag: String = ZLog.ImplicitTag.implicitLogTag
+  val Tag: String = getClass.getSimpleName
 
   private val ArgCancelEnabled = "ARG_CANCEL_ENABLED"
   private val ArgHandle        = "ARG_HANDLE"
