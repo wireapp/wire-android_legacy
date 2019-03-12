@@ -19,6 +19,7 @@
 package com.waz.zclient.appentry
 
 import android.webkit.{WebView, WebViewClient}
+import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserId
 import com.waz.sync.client.AuthenticationManager.Cookie
@@ -77,7 +78,10 @@ class SSOWebViewWrapper(webView: WebView, backendHost: String) extends DerivedLo
   }
 }
 
-object SSOWebViewWrapper extends DerivedLogTag {
+object SSOWebViewWrapper {
+
+  // TODO: Investigate why we can't derive the log tag.
+  private implicit val logTag: LogTag = LogTag[SSOWebViewWrapper.type]
 
   val ResponseSchema = "wire"
   val CookieQuery = "cookie"

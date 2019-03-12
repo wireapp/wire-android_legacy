@@ -25,6 +25,7 @@ import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{LinearLayout, TextView}
 import com.waz.api.{Message, MessageFilter}
+import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
@@ -363,7 +364,10 @@ object Header {
   val subYesterday = HeaderId(HeaderType.Yesterday)
 }
 
-object CollectionAdapter extends DerivedLogTag {
+object CollectionAdapter {
+
+  // TODO: Investigate why we can derive the log tag.
+  private implicit val logTag: LogTag = LogTag[CollectionAdapter.type]
   
   val VIEW_TYPE_IMAGE = 0
   val VIEW_TYPE_FILE = 1
