@@ -300,7 +300,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   }
 }
 
-object ConversationController {
+object ConversationController extends DerivedLogTag {
   val ARCHIVE_DELAY = 500.millis
   val MaxParticipants: Int = 300
 
