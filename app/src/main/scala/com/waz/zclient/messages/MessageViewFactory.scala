@@ -19,14 +19,14 @@ package com.waz.zclient.messages
 
 import android.view.{View, ViewGroup}
 import android.widget.LinearLayout
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.zclient.R
 import com.waz.zclient.ViewHelper._
+import com.waz.zclient.log.LogUI._
 
 import scala.collection.mutable
 
-class MessageViewFactory {
+class MessageViewFactory extends DerivedLogTag {
 
   val DefaultLayoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
 
