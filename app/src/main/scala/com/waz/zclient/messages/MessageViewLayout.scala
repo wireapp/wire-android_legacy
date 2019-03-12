@@ -25,17 +25,18 @@ import android.view.View.MeasureSpec
 import android.view.ViewGroup.{LayoutParams, MarginLayoutParams}
 import android.view.{Gravity, View, ViewGroup}
 import android.widget.FrameLayout
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageContent
 import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.events.EventContext
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MessageViewLayout.PartDesc
 import com.waz.zclient.messages.parts.ReplyPartView
-import com.waz.zclient.log.LogShowInstancesUI._
 
-abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: Int) extends ViewGroup(context, attrs, style) {
+abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: Int)
+  extends ViewGroup(context, attrs, style) with DerivedLogTag {
+  
   protected val factory: MessageViewFactory
 
   protected var listParts = Seq.empty[MessageViewPart]
