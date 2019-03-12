@@ -21,7 +21,6 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.{FrameLayout, LinearLayout}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.MessageContent
 import com.waz.service.downloads.AssetLoader.DownloadOnWifiOnlyException
 import com.waz.service.messages.MessageAndLikes
