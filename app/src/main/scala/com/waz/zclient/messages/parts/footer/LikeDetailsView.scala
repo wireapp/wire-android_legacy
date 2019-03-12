@@ -20,7 +20,6 @@ package com.waz.zclient.messages.parts.footer
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.UserId
 import com.waz.utils.events.Signal
 import com.waz.zclient.utils.ContextUtils._
