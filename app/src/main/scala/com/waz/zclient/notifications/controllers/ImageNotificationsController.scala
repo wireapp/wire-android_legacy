@@ -20,9 +20,8 @@ package com.waz.zclient.notifications.controllers
 import android.app.NotificationManager
 import android.graphics.Bitmap
 import android.support.v4.app.NotificationCompat
-import com.waz.ZLog.{LogTag, logTagFor}
 import com.waz.bitmap.BitmapUtils
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{AssetData, AssetId}
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapResult
@@ -31,13 +30,15 @@ import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache.BitmapRequest.Single
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.URI
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.IntentUtils._
 import com.waz.zclient.{Injectable, Injector, R, WireContext}
 
 import scala.util.Try
 
-class ImageNotificationsController(implicit cxt: WireContext, eventContext: EventContext, inj: Injector) extends Injectable {
+class ImageNotificationsController(implicit cxt: WireContext, eventContext: EventContext, inj: Injector)
+  extends Injectable with DerivedLogTag {
 
   import ImageNotificationsController._
 
@@ -101,8 +102,7 @@ class ImageNotificationsController(implicit cxt: WireContext, eventContext: Even
   }
 }
 
-object ImageNotificationsController {
+object ImageNotificationsController extends DerivedLogTag {
   val largeIconSizeDp = 64
   val ZETA_SAVE_IMAGE_NOTIFICATION_ID: Int = 1339274
-  private implicit val tag: LogTag = logTagFor[ImageNotificationsController]
 }
