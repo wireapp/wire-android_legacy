@@ -19,8 +19,7 @@ package com.waz.zclient.participants
 
 import android.content.{Context, DialogInterface}
 import android.support.v7.app.AlertDialog
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
@@ -31,6 +30,7 @@ import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.messages.UsersController.DisplayName.Other
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
@@ -42,7 +42,11 @@ import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.duration._
 
-class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit injector: Injector, context: Context, ec: EventContext) extends OptionsMenuController with Injectable {
+class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit injector: Injector, context: Context, ec: EventContext)
+  extends OptionsMenuController
+    with Injectable
+    with DerivedLogTag {
+  
   import Threading.Implicits.Ui
 
   private val zMessaging             = inject[Signal[ZMessaging]]
