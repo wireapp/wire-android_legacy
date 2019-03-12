@@ -26,7 +26,6 @@ import android.support.v7.app.AlertDialog
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, WindowManager}
 import android.widget.{EditText, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.AccountData.Password
 import com.waz.model.EmailAddress
 import com.waz.service.{UserService, ZMessaging}
