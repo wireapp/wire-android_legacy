@@ -38,7 +38,6 @@ import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
 import com.waz.utils._
 import com.waz.zclient.utils._
 import com.waz.zclient.ui.text.GlyphTextView
-import com.waz.ZLog.ImplicitTag._
 import com.waz.zclient.common.controllers.BrowserController
 
 class SoundMediaPartView(context: Context, attrs: AttributeSet, style: Int)
