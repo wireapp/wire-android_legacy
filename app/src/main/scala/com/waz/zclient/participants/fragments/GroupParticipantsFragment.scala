@@ -23,7 +23,6 @@ import android.os.Bundle
 import android.support.annotation.Nullable
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NetworkMode
 import com.waz.model.{UserData, UserId}
 import com.waz.service.{IntegrationsService, NetworkModeService}
