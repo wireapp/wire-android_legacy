@@ -112,7 +112,8 @@ class SSOWebViewFragment extends FragmentHelper {
 }
 
 object SSOWebViewFragment {
-  
+
+  val Tag: String = getClass.getSimpleName
   val SSOCode = "SSO_CODE"
 
   def newInstance(code: String): SSOWebViewFragment = {
