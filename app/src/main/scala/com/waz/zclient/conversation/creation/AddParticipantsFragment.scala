@@ -27,8 +27,7 @@ import android.view._
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{ImageView, TextView}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.tracking.{OpenSelectParticipants, TrackingService}
@@ -41,6 +40,7 @@ import com.waz.zclient.common.controllers.global.KeyboardController
 import com.waz.zclient.common.controllers.{BrowserController, ThemeController, UserAccountsController}
 import com.waz.zclient.common.views.{PickableElement, SingleUserRowView}
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.paintcode.ManageServicesIcon
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.search.SearchController
@@ -218,7 +218,7 @@ class AddParticipantsFragment extends FragmentHelper {
 object AddParticipantsFragment {
 
   val ShowKeyboardThreshold = 10
-  val Tag = implicitLogTag
+  val Tag: String = getClass.getSimpleName
 
   private case class Pickable(id : String, name: String) extends PickableElement
 }
@@ -226,7 +226,10 @@ object AddParticipantsFragment {
 case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
                                   servicesSelected: SourceSignal[Set[(ProviderId, IntegrationId)]])
                                  (implicit context: Context, eventContext: EventContext, injector: Injector)
-  extends RecyclerView.Adapter[SelectableRowViewHolder] with Injectable {
+  extends RecyclerView.Adapter[SelectableRowViewHolder]
+    with Injectable
+    with DerivedLogTag {
+  
   import AddParticipantsAdapter._
 
   private implicit val ctx = context
