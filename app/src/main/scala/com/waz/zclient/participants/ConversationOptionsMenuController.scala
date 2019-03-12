@@ -141,7 +141,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
 
   private val convState = otherUser.map(other => (convId, other))
 
-  (new EventStreamWithAuxSignal(onMenuItemClicked, convState)) {
+  new EventStreamWithAuxSignal(onMenuItemClicked, convState).apply {
     case (item, Some((cId, user))) =>
       verbose(l"onMenuItemClicked: item: $item, conv: $cId, user: $user")
       item match {
