@@ -38,6 +38,7 @@ import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.controllers.singleimage.{ISingleImageController, SingleImageObserver}
 import com.waz.zclient.conversation.{ConversationController, ImageFragment}
 import com.waz.zclient.giphy.GiphySharingPreviewFragment
+import com.waz.zclient.log.LogUI
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversationlist.ConfirmationFragment
@@ -211,7 +212,6 @@ class MainPhoneFragment extends FragmentHelper
 
   private def handleSyncError(error: ErrorData): Unit = {
     import ConfirmationFragment._
-    import com.waz.ZLog.ImplicitTag._
     import com.waz.api.ErrorType._
 
     def getGroupErrorMessage: Future[String] = {
@@ -255,13 +255,13 @@ class MainPhoneFragment extends FragmentHelper
            CANNOT_CALL_CONVERSATION_WITH_TOO_MANY_MEMBERS |
            CANNOT_SEND_VIDEO |
            PLAYBACK_FAILURE =>
-       ZLog2.error(l"Unexpected error ${error.errType}")
+       LogUI.error(l"Unexpected error ${error.errType}")
       case CANNOT_SEND_MESSAGE_TO_UNVERIFIED_CONVERSATION |
            RECORDING_FAILURE |
            CANNOT_SEND_ASSET_FILE_NOT_FOUND |
            CANNOT_SEND_ASSET_TOO_LARGE => // Handled in ConversationFragment
       case _ =>
-        ZLog2.error(l"Unexpected error ${error.errType}")
+        LogUI..error(l"Unexpected error ${error.errType}")
     }
   }
 
