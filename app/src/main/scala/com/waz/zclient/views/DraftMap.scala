@@ -17,16 +17,17 @@
  */
 package com.waz.zclient.views
 
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, Mention}
 import com.waz.utils.events.Signal
 import com.waz.zclient.{Injectable, Injector}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.cursor.CursorText
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class DraftMap(implicit injector: Injector) extends Injectable {
+class DraftMap(implicit injector: Injector) extends Injectable with DerivedLogTag {
+  
   private val drafts = Signal(Map.empty[ConvId, CursorText])
   private lazy val conversationController = inject[ConversationController]
 
