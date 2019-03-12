@@ -24,9 +24,8 @@ import android.util.AttributeSet
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{LinearLayout, TextView}
-import com.waz.ZLog.{LogTag, logTagFor}
 import com.waz.api.{Message, MessageFilter}
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -37,20 +36,21 @@ import com.waz.zclient.collection.controllers.CollectionController._
 import com.waz.zclient.collection.controllers._
 import com.waz.zclient.collection.views._
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.RecyclerCursor
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.ui.utils.ResourceUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils
-import com.waz.zclient.log.LogShowInstancesUI._
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 import org.threeten.bp._
 import org.threeten.bp.temporal.ChronoUnit
 
-class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[ViewHolder] with Injectable { adapter =>
-
-  private implicit val tag: LogTag = logTagFor[CollectionAdapter]
+class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, injector: Injector, eventContext: EventContext)
+  extends RecyclerView.Adapter[ViewHolder]
+    with Injectable
+    with DerivedLogTag { adapter =>
 
   private val zms = inject[Signal[ZMessaging]]
   private val convController = inject[ConversationController]
@@ -387,7 +387,10 @@ object CollectionAdapter {
     LayoutInflater.from(context).inflate(R.layout.row_collection_header, this, true)
   }
 
-  class CollectionRecyclerNotifier(contentType: ContentType, adapter: CollectionAdapter) extends RecyclerNotifier{
+  class CollectionRecyclerNotifier(contentType: ContentType, adapter: CollectionAdapter)
+    extends RecyclerNotifier
+      with DerivedLogTag {
+    
     override def notifyDataSetChanged(): Unit = {
       if (adapter.contentMode.currentValue.contains(contentType)) {
         debug(l"Will notifyDataSetChanged. contentType: $contentType, current mode is: ${adapter.contentMode.currentValue}")
