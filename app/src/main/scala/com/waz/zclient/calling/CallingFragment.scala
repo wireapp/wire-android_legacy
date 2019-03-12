@@ -262,6 +262,6 @@ class CallingFragment extends FragmentHelper {
 }
 
 object CallingFragment {
-  val Tag = implicitLogTag
+  val Tag: String = getClass.getSimpleName
   def apply(): CallingFragment = new CallingFragment()
 }
