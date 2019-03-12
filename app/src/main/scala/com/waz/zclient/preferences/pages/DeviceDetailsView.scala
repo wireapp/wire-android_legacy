@@ -24,9 +24,8 @@ import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, ScrollView, Toast}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.ErrorResponse
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.model.ConvId
 import com.waz.model.otr.ClientId
@@ -37,6 +36,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.global.{ClientsController, PasswordController}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.preferences.DevicesPreferencesUtil
 import com.waz.zclient.preferences.dialogs.RemoveDeviceDialog
 import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
@@ -177,7 +177,9 @@ object DeviceDetailsBackStackKey {
   }
 }
 
-case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: ClientId)(implicit inj: Injector, ec: EventContext, context: Context) extends Injectable {
+case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: ClientId)(implicit inj: Injector, ec: EventContext, context: Context)
+  extends Injectable with DerivedLogTag {
+  
   import Threading.Implicits.Background
 
   val zms                = inject[Signal[ZMessaging]]
