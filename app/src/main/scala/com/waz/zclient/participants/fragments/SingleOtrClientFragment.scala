@@ -22,8 +22,6 @@ import android.content.{ClipData, ClipboardManager, Context, DialogInterface}
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{CompoundButton, TextView}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
 import com.waz.api.Verification
 import com.waz.model.UserId
 import com.waz.model.otr.ClientId
@@ -35,6 +33,7 @@ import com.waz.zclient.Intents.ShowDevicesIntent
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.controllers.global.ClientsController.getDeviceClassName
 import com.waz.zclient.common.controllers.global.{AccentColorController, ClientsController}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.ui.text.TypefaceTextView
