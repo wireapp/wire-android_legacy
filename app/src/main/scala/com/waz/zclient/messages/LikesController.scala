@@ -22,11 +22,12 @@ import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.{Injectable, Injector}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message.Type._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageData
 
-class LikesController(implicit ec: EventContext, injector: Injector) extends Injectable {
+class LikesController(implicit ec: EventContext, injector: Injector)
+  extends Injectable with DerivedLogTag {
 
   val zms = inject[Signal[ZMessaging]]
   val reactions = zms.map(_.reactions)
