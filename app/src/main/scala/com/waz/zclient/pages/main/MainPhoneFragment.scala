@@ -261,7 +261,7 @@ class MainPhoneFragment extends FragmentHelper
            CANNOT_SEND_ASSET_FILE_NOT_FOUND |
            CANNOT_SEND_ASSET_TOO_LARGE => // Handled in ConversationFragment
       case _ =>
-        LogUI..error(l"Unexpected error ${error.errType}")
+        LogUI.error(l"Unexpected error ${error.errType}")
     }
   }
 
