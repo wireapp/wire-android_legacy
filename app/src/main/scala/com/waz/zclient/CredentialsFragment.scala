@@ -164,6 +164,8 @@ class AddEmailFragment extends CredentialsFragment {
 
 object AddEmailFragment {
 
+  val Tag: String = getClass.getSimpleName
+
   def apply(hasPassword: Boolean = false): AddEmailFragment =
     CredentialsFragment(new AddEmailFragment(), hasPassword)
 }
@@ -242,6 +244,8 @@ class VerifyEmailFragment extends CredentialsFragment {
 }
 
 object VerifyEmailFragment {
+
+  val Tag: String = getClass.getSimpleName
 
   def apply(email: EmailAddress, hasPassword: Boolean = false): VerifyEmailFragment =
     CredentialsFragment(new VerifyEmailFragment(), hasPassword, Some(email))
@@ -338,7 +342,8 @@ class SetOrRequestPasswordFragment extends CredentialsFragment {
 }
 
 object SetOrRequestPasswordFragment {
-  val Tag = implicitLogTag
+
+  val Tag: String = getClass.getSimpleName
 
   def apply(email: EmailAddress, hasPassword: Boolean = false): SetOrRequestPasswordFragment =
     CredentialsFragment(new SetOrRequestPasswordFragment(), hasPassword, Some(email))
