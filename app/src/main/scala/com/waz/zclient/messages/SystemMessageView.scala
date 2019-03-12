@@ -23,7 +23,6 @@ import android.graphics.{Canvas, Paint}
 import android.util.AttributeSet
 import android.view.View
 import android.widget.RelativeLayout
-import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.returning
 import com.waz.zclient.common.views.LinkTextView
 import com.waz.zclient.ui.text.GlyphTextView
