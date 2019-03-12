@@ -28,9 +28,7 @@ import android.view._
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{EditText, TextView}
-import com.waz.ZLog.{LogTag, logTagFor}
 import com.waz.api.{ContentSearchQuery, Message}
-import com.waz.log.ZLog2._
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.collection.adapters.CollectionAdapter.AdapterState
@@ -39,6 +37,7 @@ import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.collection.controllers.CollectionController.AllContent
 import com.waz.zclient.collection.views.CollectionRecyclerView
 import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageBottomSheetDialog.MessageAction
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.pages.BaseFragment
@@ -52,9 +51,7 @@ import org.threeten.bp.{LocalDateTime, ZoneId}
 class CollectionFragment extends BaseFragment[CollectionFragment.Container] with FragmentHelper {
 
   private implicit lazy val context: Context = getContext
-
-  private implicit val tag: LogTag = logTagFor[CollectionFragment]
-
+  
   lazy val controller = inject[CollectionController]
   lazy val messageActionsController = inject[MessageActionsController]
   lazy val accentColorController = inject[AccentColorController]
