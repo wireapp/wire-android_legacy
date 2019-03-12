@@ -28,7 +28,6 @@ import com.waz.threading.CancellableFuture
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.appentry.controllers.InvitationsController._
-import com.waz.zclient.log.LogUI._
 import com.waz.zclient.tracking.TeamInviteSent
 import com.waz.zclient.{Injectable, Injector}
 
@@ -37,6 +36,8 @@ import scala.concurrent.Future
 
 class InvitationsController(implicit inj: Injector, eventContext: EventContext, context: Context)
   extends Injectable with DerivedLogTag {
+
+  import com.waz.service.tracking.TrackingService.dispatcher
 
   private lazy val accountsService      = inject[AccountsService]
   private lazy val createTeamController = inject[CreateTeamController]
