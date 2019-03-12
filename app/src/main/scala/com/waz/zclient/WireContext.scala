@@ -30,21 +30,20 @@ import android.view.View.OnClickListener
 import android.view.animation.{AlphaAnimation, Animation, AnimationUtils}
 import android.view.{LayoutInflater, View, ViewGroup, ViewStub}
 import android.widget.TextView
-import com.waz.ZLog.{LogTag, logTagFor}
+import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.log.ZLog2._
 import com.waz.utils.events._
 import com.waz.utils.returning
 import com.waz.zclient.FragmentHelper.getNextAnimationDuration
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.CallController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.utils.{ContextUtils, RichView}
 
 import scala.language.implicitConversions
 
-object WireContext {
-  private implicit val tag: LogTag = logTagFor[WireContext]
+object WireContext extends DerivedLogTag {
 
   implicit def apply(context: Context): WireContext = context match {
     case ctx: WireContext => ctx
@@ -88,7 +87,7 @@ trait ViewHelper extends View with ViewFinder with Injectable with ViewEventCont
   @SuppressLint(Array("com.waz.ViewUtils"))
   def findById[V <: View](id: Int): V = findViewById(id).asInstanceOf[V]
 
-  def inflate(layoutResId: Int, group: ViewGroup = ViewHelper.viewGroup(this), addToParent: Boolean = true)(implicit tag: LogTag = "ViewHelper") =
+  def inflate(layoutResId: Int, group: ViewGroup = ViewHelper.viewGroup(this), addToParent: Boolean = true)(implicit tag: LogTag = LogTag("ViewHelper")) =
     ViewHelper.inflate[View](layoutResId, group, addToParent)
 }
 
@@ -129,7 +128,6 @@ trait ServiceHelper extends Service with Injectable with WireContext with EventC
     onContextDestroy()
   }
 }
-
 
 
 trait FragmentHelper
@@ -243,7 +241,7 @@ trait FragmentHelper
     Option(getArguments).map(_.getBoolean(key, default)).getOrElse(default)
 
   override def onBackPressed(): Boolean = {
-    verbose(l"onBackPressed")(getClass.getSimpleName)
+    verbose(l"onBackPressed")(LogTag(getClass.getSimpleName))
     false
   }
 
