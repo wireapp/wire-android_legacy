@@ -23,7 +23,6 @@ import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{FrameLayout, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NetworkMode
 import com.waz.model.{AssetId, Dim2}
 import com.waz.service.NetworkModeService
