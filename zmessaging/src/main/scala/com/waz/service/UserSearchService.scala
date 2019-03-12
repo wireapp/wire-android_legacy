@@ -264,25 +264,20 @@ class UserSearchService(selfUserId:           UserId,
   }
 
   def updateSearchResults(query: SearchQuery, results: Seq[UserSearchEntry]) = {
+
     def updating(ids: Vector[UserId])(cached: SearchQueryCache) =
       cached.copy(query, clock.instant(), if (ids.nonEmpty || cached.entries.isEmpty) Some(ids) else cached.entries)
 
     val ids = results.map(_.id)(breakOut): Vector[UserId]
 
     for {
-      userData    <- usersStorage.listAll(ids)
-      filteredIds <- filterForPartner(query.filter, userData).map(_.map(_.id).toSet)
-      updated     <- userService.updateUsers(results.filter(r => filteredIds.contains(r.id)))
-      _           <- userService.syncIfNeeded(filteredIds, Duration.Zero)
-      _           <- queryCache.updateOrCreate(query, updating(filteredIds.toVector), SearchQueryCache(query, clock.instant(), Some(filteredIds.toVector)))
+      updated <- userService.updateUsers(results)
+      _       <- userService.syncIfNeeded(updated.map(_.id), Duration.Zero)
+      _       <- queryCache.updateOrCreate(query, updating(ids), SearchQueryCache(query, clock.instant(), Some(ids)))
     } yield ()
 
-    query match {
-      case Recommended(handle) if handle.length > 1 && !results.map(_.handle).exists(_.exactMatchQuery(handle)) =>
-        sync.exactMatchHandle(Handle(Handle.stripSymbol(handle)))
-      case RecommendedHandle(handle) if !results.map(_.handle).exists(_.exactMatchQuery(handle)) =>
-        sync.exactMatchHandle(Handle(Handle.stripSymbol(handle)))
-      case _ =>
+    if (!results.map(_.handle).exists(_.exactMatchQuery(query.filter))) {
+      sync.exactMatchHandle(Handle(query.filter))
     }
 
     Future.successful({})
