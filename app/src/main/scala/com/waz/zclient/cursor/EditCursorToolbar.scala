@@ -38,15 +38,17 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{FrameLayout, TextView}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading
 import com.waz.zclient.ViewHelper
 import com.waz.zclient.R
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
-import com.waz.ZLog.ImplicitTag._
 
 class EditCursorToolbar(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
-    extends FrameLayout(context, attrs, defStyleAttr) with ViewHelper {
+  extends FrameLayout(context, attrs, defStyleAttr)
+    with ViewHelper
+    with DerivedLogTag {
 
   def this(context: Context, attrs: AttributeSet) { this(context, attrs, 0) }
   def this(context: Context) { this(context, null) }
