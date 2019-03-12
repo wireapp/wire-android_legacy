@@ -87,11 +87,17 @@ class UserSearchService(selfUserId:           UserId,
     isPartner.flatMap {
       case true if teamId.isDefined =>
         verbose(s"filterForPartner1 Q: $query, RES: ${searchResults.map(_.getDisplayName)}) with partner = true and teamId")
-        knownUsers.map(knownUsersIds => searchResults.filter(u => knownUsersIds.contains(u.id)))
+        for {
+          Some(self)    <- userService.getSelfUser
+          filteredUsers <- knownUsers.map(knownUsersIds =>
+                             searchResults.filter(u => self.createdBy.contains(u.id) || knownUsersIds.contains(u.id))
+                           )
+        } yield filteredUsers
       case false if teamId.isDefined =>
         verbose(s"filterForPartner2 Q: $query, RES: ${searchResults.map(_.getDisplayName)}) with partner = false and teamId")
         knownUsers.map { knownUsersIds =>
           searchResults.filter { u =>
+            u.createdBy.contains(selfUserId) ||
             knownUsersIds.contains(u.id) ||
               u.teamId != teamId ||
               (u.teamId == teamId && !u.isPartner(teamId)) ||
