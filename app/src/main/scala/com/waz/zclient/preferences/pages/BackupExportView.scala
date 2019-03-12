@@ -25,12 +25,12 @@ import android.support.v4.app.ShareCompat
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{UiLifeCycle, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.views.MenuRowButton
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.preferences.pages.BackupExportView._
 import com.waz.zclient.utils.{BackStackKey, ContextUtils, ExternalFileSharing, ViewUtils}
 import com.waz.zclient.{BuildConfig, R, SpinnerController, ViewHelper}
@@ -39,7 +39,11 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-class BackupExportView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
+class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
+  extends LinearLayout(context, attrs, style)
+    with ViewHelper
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
