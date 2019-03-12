@@ -38,7 +38,6 @@ import android.text.TextUtils
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, WindowManager}
 import android.widget.{EditText, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.PhoneNumber
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
