@@ -21,14 +21,19 @@ import android.content.Context
 import android.content.res.TypedArray
 import android.support.v7.widget.AppCompatTextView
 import android.util.AttributeSet
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.{ThemeController, ThemedView}
 import com.waz.zclient.ui.text.ThemedTextView._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.ZLog.ImplicitTag._
 
-class ThemedTextView(val context: Context, val attrs: AttributeSet, val defStyle: Int) extends AppCompatTextView(context, attrs, defStyle) with ViewHelper with ThemedView {
+class ThemedTextView(val context: Context, val attrs: AttributeSet, val defStyle: Int)
+  extends AppCompatTextView(context, attrs, defStyle)
+    with ViewHelper
+    with ThemedView
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 
