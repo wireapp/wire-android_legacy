@@ -18,11 +18,11 @@
 
 package com.waz.zclient.messages
 
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.MessagesCursor
 import com.waz.content.MessagesCursor.Entry
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageData
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.utils._
 
@@ -39,7 +39,9 @@ import scala.collection.mutable.ArrayBuffer
   * RecyclerView only cares about notifications for visible elements, so it's enough to
   * keep a small window around current position, and ignore changes outside of it.
   */
-class IndexWindow(cursor: RecyclerCursor, notifier: RecyclerNotifier, size: Int = 100) {
+class IndexWindow(cursor: RecyclerCursor, notifier: RecyclerNotifier, size: Int = 100)
+  extends DerivedLogTag {
+  
   import IndexWindow._
 
   private val ord = implicitly[Ordering[Entry]]
