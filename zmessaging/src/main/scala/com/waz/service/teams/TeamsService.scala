@@ -166,21 +166,20 @@ class TeamsServiceImpl(selfUser:           UserId,
   }
 
   override def onMemberSynced(member: TeamMember) = member match {
-    case TeamMember(userId, Some(permissions), _) if userId == selfUser =>
-      import UserPreferences._
-      for {
-        _ <- userPrefs(SelfPermissions) := permissions.self
-        _ <- userPrefs(CopyPermissions) := permissions.copy
-      } yield ()
+    case TeamMember(userId, permissions, createdBy) =>
 
-    case TeamMember(userId, permissions, createdBy) if userId != selfUser =>
+      if (userId == selfUser) permissions.foreach { ps =>
+        import UserPreferences._
+        for {
+          _ <- userPrefs(SelfPermissions) := ps.self
+          _ <- userPrefs(CopyPermissions) := ps.copy
+        } yield ()
+      }
+
       userStorage
         .update(userId, _.copy(permissions = permissions.fold((0L, 0L))(p => (p.self, p.copy)), createdBy = createdBy))
         .map(_ => ())
-
-    case _ => Future.successful(()) // selfUser but with no permission info - don't update
   }
-
 
   private def onTeamUpdated(id: TeamId, name: Option[Name], icon: Option[RAssetId], iconKey: Option[AESKey]) = {
     verbose(l"onTeamUpdated: $id, name: $name, icon: $icon, iconKey: $iconKey")

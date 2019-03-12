@@ -26,12 +26,20 @@ import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.testutils.TestUserPreferences
 import com.waz.utils.events.EventStream
 import com.waz.ZLog.ImplicitTag._
+import com.waz.content.UserPreferences.{CopyPermissions, SelfPermissions}
+import com.waz.sync.client.TeamsClient
+import com.waz.sync.client.TeamsClient.TeamMember
 
+import scala.collection.breakOut
 import scala.concurrent.Future
 
 class TeamsServiceSpec extends AndroidFreeSpec {
 
-  val selfUser =     UserId()
+
+  def id(s: Symbol) = UserId(s.toString)
+  def ids(s: Symbol*) = s.map(id)(breakOut).toSet
+
+  val selfUser =     id('me)
   val teamId =       Some(TeamId())
   val teamStorage =  mock[TeamsStorage]
   val accStorage =   mock[AccountsStorageOld]
@@ -42,6 +50,8 @@ class TeamsServiceSpec extends AndroidFreeSpec {
   val sync =         mock[SyncServiceHandle]
   val syncRequests = mock[SyncRequestService]
   val userPrefs =    new TestUserPreferences
+
+  (sync.syncTeam _).stubs(*).returning(Future.successful(SyncId()))
 
   scenario("Complete team members signal updates on member add and remove") {
     val userStorageOnAdded    = EventStream[Seq[UserData]]()
@@ -163,6 +173,64 @@ class TeamsServiceSpec extends AndroidFreeSpec {
 
     userStorageOnUpdated ! Seq((teamMemberToUpdate, updatedTeamMember))
     result(res.filter(_ == updatedTeamMembers).head)
+  }
+
+  scenario("Member sync stores permissions and created by") {
+
+    // GIVEN
+    val createdBy = id('creator)
+    val permissions = TeamsClient.Permissions(123, 890)
+    val userData = UserData(selfUser, teamId, Name("user1"), handle = Some(Handle()), searchKey = SearchKey.Empty)
+    val service = createService
+    val teamMember = TeamMember(selfUser, Some(permissions), Some(createdBy))
+
+    // EXPECT
+    val expectedUserData = userData.copy(permissions = (permissions.self, permissions.copy), createdBy = Some(createdBy))
+    var receivedUserData: UserData = null
+    (userStorage.update _).expects(selfUser, *).atLeastOnce().onCall {
+      (_, transform) =>
+        val transformed = transform.apply(userData)
+        receivedUserData = transformed
+        Future.successful(Some(userData, transformed))
+    }
+
+    // WHEN
+    service.onMemberSynced(teamMember)
+
+    // THEN
+    receivedUserData shouldEqual expectedUserData
+  }
+
+  scenario("Member sync stores self permissions if self user") {
+
+    // GIVEN
+    val permissions = TeamsClient.Permissions(123, 890)
+    val service = createService
+    val teamMember = TeamMember(selfUser, Some(permissions), null)
+    (userStorage.update _).stubs(selfUser, *).returning(Future.successful(null))
+
+    // WHEN
+    service.onMemberSynced(teamMember)
+
+    // THEN
+    result(userPrefs(SelfPermissions).apply()) shouldEqual permissions.self
+    result(userPrefs(CopyPermissions).apply()) shouldEqual permissions.copy
+  }
+
+  scenario("Member sync does no stores self permissions if not self user") {
+
+    // GIVEN
+    val permissions = TeamsClient.Permissions(123, 890)
+    val service = createService
+    val teamMember = TeamMember(id('who), Some(permissions), null)
+    (userStorage.update _).stubs(*, *).returning(Future.successful(null))
+
+    // WHEN
+    service.onMemberSynced(teamMember)
+
+    // THEN
+    result(userPrefs(SelfPermissions).apply()) shouldEqual 0
+    result(userPrefs(CopyPermissions).apply()) shouldEqual 0
   }
 
   def createService = {
