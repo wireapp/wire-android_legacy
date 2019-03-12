@@ -19,10 +19,9 @@ package com.waz.zclient.messages
 
 import android.arch.paging.PositionalDataSource
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.MessageAndLikesStorage
 import com.waz.db.{CursorIterator, Reader}
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageData.MessageDataDao
 import com.waz.model.{MessageData, MessageId, RemoteInstant}
 import com.waz.service.messages.MessageAndLikes
@@ -37,7 +36,10 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-class MessageDataSource(val cursor: Option[DBCursor])(implicit inj: Injector, ec: EventContext, cxt: Context) extends PositionalDataSource[MessageAndLikes] with Injectable {
+class MessageDataSource(val cursor: Option[DBCursor])(implicit inj: Injector, ec: EventContext, cxt: Context)
+  extends PositionalDataSource[MessageAndLikes]
+    with Injectable
+    with DerivedLogTag {
 
   private val messageAndLikesStorage = inject[Signal[MessageAndLikesStorage]]
 
