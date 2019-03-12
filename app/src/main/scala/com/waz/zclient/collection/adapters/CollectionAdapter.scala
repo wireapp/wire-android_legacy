@@ -363,10 +363,8 @@ object Header {
   val subYesterday = HeaderId(HeaderType.Yesterday)
 }
 
-object CollectionAdapter {
-
-  private implicit val tag: LogTag = logTagFor[CollectionAdapter]
-
+object CollectionAdapter extends DerivedLogTag {
+  
   val VIEW_TYPE_IMAGE = 0
   val VIEW_TYPE_FILE = 1
   val VIEW_TYPE_LINK_PREVIEW = 2
