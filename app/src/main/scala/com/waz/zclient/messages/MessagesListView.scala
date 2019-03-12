@@ -164,7 +164,10 @@ object MessagesListView {
   case class UnreadIndex(index: Int) extends AnyVal
 }
 
-case class MessageViewHolder(view: MessageView, adapter: MessagesPagedListAdapter)(implicit ec: EventContext, inj: Injector) extends RecyclerView.ViewHolder(view) with Injectable {
+case class MessageViewHolder(view: MessageView, adapter: MessagesPagedListAdapter)(implicit ec: EventContext, inj: Injector)
+  extends RecyclerView.ViewHolder(view)
+    with Injectable
+    with DerivedLogTag {
 
   private val selection = inject[ConversationController].messages
   private val msgsController = inject[MessagesController]
