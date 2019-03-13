@@ -101,7 +101,10 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
   val onMessageEdited = EventStream[MessageData]()
   val onEphemeralExpirationSelected = EventStream[Option[FiniteDuration]]()
 
-  val sendButtonEnabled: Signal[Boolean] = zms.map(_.userPrefs).flatMap(_.preference(UserPreferences.SendButtonEnabled).signal)
+  val sendButtonEnabled: Signal[Boolean] = for {
+    sendPref <- zms.map(_.userPrefs).flatMap(_.preference(UserPreferences.SendButtonEnabled).signal)
+    emoji <- emojiKeyboardVisible
+  } yield emoji || sendPref
 
   val enteredTextEmpty = enteredText.map(_._1.isEmpty).orElse(Signal const true)
   val sendButtonVisible = Signal(emojiKeyboardVisible, enteredTextEmpty, sendButtonEnabled, isEditingMessage) map {
