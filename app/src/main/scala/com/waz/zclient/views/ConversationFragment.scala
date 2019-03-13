@@ -770,7 +770,7 @@ class ConversationFragment extends FragmentHelper {
 
         val unverifiedNames = unverifiedUsers.map { u =>
           if (self.map(_.id).contains(u.id)) getString(R.string.conversation_degraded_confirmation__header__you)
-          else u.displayName.str
+          else u.getDisplayName.str
         }
 
         val header =
