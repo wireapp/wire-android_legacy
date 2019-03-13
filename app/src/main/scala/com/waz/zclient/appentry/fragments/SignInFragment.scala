@@ -26,7 +26,6 @@ import android.support.v4.content.ContextCompat
 import android.transition._
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, ImageView, LinearLayout}
-import com.waz.ZLog.logTagFor
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.{EmailAddress, PhoneNumber}
 import com.waz.service.{AccountsService, ZMessaging}
@@ -434,7 +433,7 @@ object SignInFragment {
       })
     }
 
-  val Tag = logTagFor[SignInFragment]
+  val Tag: String = getClass.getSimpleName
 
   sealed trait SignType{
     val str: String
