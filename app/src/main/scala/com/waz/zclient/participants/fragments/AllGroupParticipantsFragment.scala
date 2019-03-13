@@ -20,7 +20,6 @@ package com.waz.zclient.participants.fragments
 import android.os.Bundle
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.views.PickableElement
@@ -59,6 +58,6 @@ class AllGroupParticipantsFragment extends FragmentHelper {
 }
 
 object AllGroupParticipantsFragment {
-  val Tag = implicitLogTag
+  val Tag: String = getClass.getSimpleName
 }
 
