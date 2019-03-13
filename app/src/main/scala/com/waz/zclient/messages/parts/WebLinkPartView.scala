@@ -95,7 +95,7 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
   private val dotsDrawable = new ProgressDotsDrawable
 
   image.map (_.map{
-    case Left(ad) => GlideBuilder(ad.id)
+    case Left(asset) => GlideBuilder(AssetId(asset.remoteId.get.str))
     case Right(uri) => GlideBuilder(uri)
   }).onUi {
     case Some(request) =>
