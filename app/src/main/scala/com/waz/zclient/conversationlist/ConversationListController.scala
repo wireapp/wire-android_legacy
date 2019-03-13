@@ -84,11 +84,6 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     val incoming = if (listMode == Normal) (incomingConvs, members.flatten) else (Seq(), Seq())
     (z.selfUserId, regular, incoming)
   }
-
-  def nextConversation(convId: ConvId): Future[Option[ConvId]] =
-    conversationListData(Normal).head.map {
-      case (_, regular, _) => regular.lift(regular.indexWhere(_.id == convId) + 1).map(_.id)
-    } (Threading.Background)
 }
 
 object ConversationListController {

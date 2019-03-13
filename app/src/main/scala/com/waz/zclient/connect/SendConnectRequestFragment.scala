@@ -39,6 +39,7 @@ import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.connect.UserProfileContainer
 import com.waz.zclient.pages.main.participants.ProfileAnimation
+import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.paintcode.GuestIcon
 import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.ui.text.TypefaceTextView
@@ -215,6 +216,11 @@ class SendConnectRequestFragment
       connectButton.setVisibility(View.VISIBLE)
       connectButton.fadeIn(FiniteDuration(getInt(R.integer.framework_animation_duration_long), MILLISECONDS))
     }
+  }
+
+  override def onBackPressed(): Boolean = {
+    inject[IPickUserController].hideUserProfile()
+    true
   }
 }
 

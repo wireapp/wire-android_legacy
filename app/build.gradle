@@ -22,10 +22,10 @@ ext {
     playServicesVersion = '15.0.1'
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
     stethoVersion = '1.5.0'
-    zMessagingDevVersion = "141.0.0-DEV"
+    zMessagingDevVersion = "141.0.0-SNAPSHOT"
     paging_version = "1.0.0"
     // Release version number must be like this X.0(.Y)
-    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '141.0.518@aar'
+    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '141.0.2251@aar'
 
     avsVersion = '4.8.163@aar'
     avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
@@ -112,6 +112,7 @@ android {
         versionName majorVersion + android.defaultConfig.versionCode
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
+        manifestPlaceholders = [customURLScheme: config.custom_url_scheme]
 
         buildConfigField 'Integer', 'MAX_ACCOUNTS',               "$config.maxAccounts"
         buildConfigField 'String',  'BACKEND_URL',                "\"$config.backendUrl\""
@@ -230,7 +231,7 @@ android {
                                     internal_features      : "false"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        "true"
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$config.loggingEnabled"
             buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
 

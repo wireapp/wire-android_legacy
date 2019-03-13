@@ -20,13 +20,13 @@ package com.waz.zclient.messages.parts.footer
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
-import com.waz.model.UserId
+import com.waz.content.{ReactionsStorage, UsersStorage}
+import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.events.Signal
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 
 class LikeDetailsView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
-
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -35,22 +35,19 @@ class LikeDetailsView(context: Context, attrs: AttributeSet, style: Int) extends
 
   private val description: TextView = findById(R.id.like__description)
 
-  def init(controller: FooterViewController): Unit = {
-    val likedBy = controller.messageAndLikes.map(_.likes)
-
-    def getDisplayNameString(ids: Seq[UserId]): Signal[String] = {
-      if (ids.size > 3)
-        Signal.const(getQuantityString(R.plurals.message_footer__number_of_likes, ids.size, Integer.valueOf(ids.size)))
-      else
-        Signal.sequence(ids map { controller.signals.displayNameStringIncludingSelf } :_*).map { names =>
-          if (names.isEmpty) getString(R.string.message_footer__tap_to_like)
-          else names.mkString(", ")
-        }
-    }
-
-    val displayText = likedBy.flatMap(getDisplayNameString)
-
-    displayText.onUi(description.setText)
-  }
+  def init(controller: FooterViewController): Unit =
+    controller.messageAndLikes.flatMap {
+        case MessageAndLikes(_, likes, _, _) if likes.isEmpty =>
+          Signal.const(getString(R.string.message_footer__tap_to_like))
+        case MessageAndLikes(_, likes, _, _) if likes.size > 3 =>
+          Signal.const(getQuantityString(R.plurals.message_footer__number_of_likes, likes.size, Integer.valueOf(likes.size)))
+        case MessageAndLikes(msg, _, _, _) =>
+          for {
+            reactionsStorage <- inject[Signal[ReactionsStorage]]
+            likers           <- reactionsStorage.likes(msg.id).map(_.likers)
+            usersStorage     <- inject[Signal[UsersStorage]]
+            users            <- usersStorage.listSignal(likers.keys)
+          } yield users.sortBy(u => likers(u.id)).map(_.getDisplayName).mkString(", ")
+    }.onUi(description.setText)
 }
 

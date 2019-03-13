@@ -28,7 +28,7 @@ import android.view.View.OnClickListener
 import android.widget.{ImageView, LinearLayout}
 import com.waz.content.UserPreferences
 import com.waz.model.otr.Client
-import com.waz.model.{AccentColor, AccountDataOld, Availability}
+import com.waz.model.{AccentColor, Availability, UserPermissions}
 import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
@@ -309,7 +309,7 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
   }
 
   usersAccounts.selfPermissions
-    .map(_.contains(AccountDataOld.Permission.AddTeamMember))
+    .map(_.contains(UserPermissions.Permission.AddTeamMember))
     .onUi(view.setManageTeamEnabled)
 
 
