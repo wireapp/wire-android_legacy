@@ -223,7 +223,10 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   phone.onUi(view.setPhone)
   email.onUi(view.setEmail)
 
-  Signal(isTeam, accounts.isActiveAccountSSO).map { case (team, sso) => team && sso }.onUi(t => view.setDeleteAccountEnabled(!t))
+  Signal(isTeam, accounts.isActiveAccountSSO)
+    .map { case (team, sso) => team || sso }
+    .onUi(t => view.setDeleteAccountEnabled(!t))
+
   accounts.isActiveAccountSSO.onUi { sso =>
     view.setEmailEnabled(!sso)
     view.setResetPasswordEnabled(!sso)
