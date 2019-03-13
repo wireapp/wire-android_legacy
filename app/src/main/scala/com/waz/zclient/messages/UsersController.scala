@@ -93,14 +93,12 @@ class UsersController(implicit injector: Injector, context: Context) extends Inj
     } yield msg.members.size == 1 && msg.members.contains(zms.selfUserId)
   }
 
-  def getMemberNames(members: Set[UserId]): Signal[Seq[DisplayName]] = Signal.sequence(members.toSeq.sortBy(_.str).map(displayName): _*)
+  def getMemberNames(members: Set[UserId]): Signal[Seq[DisplayName]] = Signal.sequence(members.toSeq.map(displayName): _*)
 
   def getMemberNamesSplit(members: Set[UserId], self: UserId): Signal[MemberNamesSplit] =
     for {
-      names <- getMemberNames(members).map(_.collect { case o @ Other(_) => o })
-      shorten = names.size > MaxStringMembers
-      main = if (shorten) names.take(MaxStringMembers - 2) else names
-      others = names.diff(main)
+      names          <- getMemberNames(members).map(_.collect { case o @ Other(_) => o }.sortBy(_.name))
+      (main, others) =  if (names.size > MaxStringMembers) names.splitAt(MaxStringMembers - 2) else (names, Seq.empty)
     } yield MemberNamesSplit(main, others, members.contains(self))
 
   def membersNamesString(membersNames: Seq[DisplayName], separateLast: Boolean = true, boldNames: Boolean = false): String = {

@@ -258,8 +258,11 @@ class SingleParticipantFragment extends FragmentHelper {
 
     footerMenu.foreach(_.setCallback(footerCallback))
 
-    val tab = Option(savedInstanceState).fold[Tab](DetailsTab)(_ => Tab(getStringArg(TabToOpen)))
-    tabs.foreach(_.getTabAt(tab.pos).select())
+    if (Option(savedInstanceState).isEmpty) {
+      val tab = Tab(getStringArg(TabToOpen))
+      visibleTab ! tab
+      tabs.foreach(_.getTabAt(tab.pos).select())
+    }
   }
 
   override def onBackPressed(): Boolean = {
