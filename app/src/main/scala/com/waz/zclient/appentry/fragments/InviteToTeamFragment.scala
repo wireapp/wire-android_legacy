@@ -23,7 +23,6 @@ import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.text.InputType
 import android.view.View
 import android.view.View.OnLayoutChangeListener
-import com.waz.ZLog
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.{ConnectionErrorCode, Forbidden, InternalErrorCode}
 import com.waz.model.EmailAddress
@@ -114,6 +113,6 @@ case class InviteToTeamFragment() extends CreateTeamFragment {
 }
 
 object InviteToTeamFragment {
-  val Tag = ZLog.ImplicitTag.implicitLogTag
+  val Tag: String = getClass.getSimpleName
   trait Container
 }
