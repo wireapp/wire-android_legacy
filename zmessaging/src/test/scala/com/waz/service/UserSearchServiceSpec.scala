@@ -79,6 +79,8 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
     id('r) -> UserData(id('r), "Liv Boeree").copy(handle = Some(Handle("testjohntest"))),
     id('s) -> UserData(id('s), "blah").copy(handle = Some(Handle("mores"))),
     id('t) -> UserData(id('t), "test handle").copy(handle = Some(Handle("smoresare"))),
+    id('u) -> UserData(id('u), "Wireless").copy(expiresAt = Some(RemoteInstant.ofEpochMilli(12345L))),
+    id('v) -> UserData(id('v), "Wireful"),
     id('pp1) -> UserData(id('pp1), "Partner 1").copy(
       permissions = (partnerPermissions, partnerPermissions),
       teamId = teamId,
@@ -673,6 +675,21 @@ class UserSearchServiceSpec extends AndroidFreeSpec {
       // THEN
       res shouldBe ids('aa2)
 
+    }
+
+    scenario("do not return wireless guests as results") {
+      // GIVEN
+      val preparedSearch = prepareTestSearch(
+        query = "Wire",
+        selfId = id('aa1),
+        connectedUsers = ids('u, 'v)
+      )
+
+      // WHEN
+      val res = result(preparedSearch.perform())
+
+      // THEN
+      res shouldBe ids('v) // the user 'u also has the username starting with Wire, but is wireless
     }
   }
 

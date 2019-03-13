@@ -242,7 +242,7 @@ class UserSearchService(selfUserId:           UserId,
         dir <-
           if (shouldShowDirectorySearch)
             searchUserData(query)
-              .map(_.filter(!_.isWireBot))
+              .map(_.filter(u => !u.isWireBot && u.expiresAt.isEmpty))
               .map(sortUsers(_, filter, isHandle, symbolStripped))
           else Signal.const(IndexedSeq.empty)
         exact <- exactMatchUser
