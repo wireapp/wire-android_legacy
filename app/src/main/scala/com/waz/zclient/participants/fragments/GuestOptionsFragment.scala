@@ -23,7 +23,6 @@ import android.support.v4.app.ShareCompat
 import android.support.v7.widget.SwitchCompat
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{CompoundButton, FrameLayout, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.service.ZMessaging
 import com.waz.service.tracking.{TrackingEvent, TrackingService}
 import com.waz.threading.Threading
@@ -253,5 +252,5 @@ class GuestOptionsFragment extends FragmentHelper {
 }
 
 object GuestOptionsFragment {
-  val Tag = implicitLogTag
+  val Tag: String = getClass.getSimpleName
 }
