@@ -20,8 +20,8 @@ package com.waz.zclient.messages
 import android.content.Context
 import android.util.AttributeSet
 import android.view.{HapticFeedbackConstants, ViewGroup}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.RichOption
@@ -187,7 +187,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
   def getFooter = listParts.lastOption.collect { case footer: FooterPartView => footer }
 }
 
-object MessageView {
+object MessageView extends DerivedLogTag {
 
   import Message.Type._
 

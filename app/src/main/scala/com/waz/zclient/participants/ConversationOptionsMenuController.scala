@@ -19,8 +19,7 @@ package com.waz.zclient.participants
 
 import android.content.{Context, DialogInterface}
 import android.support.v7.app.AlertDialog
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
@@ -31,6 +30,7 @@ import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.messages.UsersController.DisplayName.Other
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
@@ -42,7 +42,11 @@ import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.duration._
 
-class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit injector: Injector, context: Context, ec: EventContext) extends OptionsMenuController with Injectable {
+class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit injector: Injector, context: Context, ec: EventContext)
+  extends OptionsMenuController
+    with Injectable
+    with DerivedLogTag {
+  
   import Threading.Implicits.Ui
 
   private val zMessaging             = inject[Signal[ZMessaging]]
@@ -143,9 +147,9 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
       participantsController.onShowAnimations ! true
     }
 
-  (new EventStreamWithAuxSignal(onMenuItemClicked, convState)) {
+  new EventStreamWithAuxSignal(onMenuItemClicked, convState).apply {
     case (item, Some((cId, user))) =>
-      verbose(s"onMenuItemClicked: item: $item, conv: $cId, user: $user")
+      verbose(l"onMenuItemClicked: item: $item, conv: $cId, user: $user")
       item match {
         case Archive   =>
           convController.archive(cId, archive = true)
@@ -238,21 +242,21 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
     }(Threading.Ui)
 
   private def callConversation(convId: ConvId) = {
-    verbose(s"callConversation $convId")
+    verbose(l"callConversation $convId")
     convController.selectConv(convId, ConversationChangeRequester.CONVERSATION_LIST).map { _ =>
       callingController.startCallInCurrentConv(withVideo = false)
     }
   }
 
   private def takePictureInConversation(convId: ConvId) = {
-    verbose(s"sendPictureToConversation $convId")
+    verbose(l"sendPictureToConversation $convId")
     convController.selectConv(convId, ConversationChangeRequester.CONVERSATION_LIST).map { _ =>
       cameraController.openCamera(CameraContext.MESSAGE)
     }
   }
 
   override def finalize(): Unit = {
-    verbose("finalized!")
+    verbose(l"finalized!")
   }
 }
 

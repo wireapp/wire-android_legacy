@@ -28,7 +28,7 @@ import android.view._
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{EditText, LinearLayout, TextView}
-import com.waz.ZLog.ImplicitTag._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.UserSearchService
 import com.waz.threading.Threading
@@ -52,7 +52,9 @@ import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{ClipboardUtils, R, ViewHelper}
 
 class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
-    extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
+  extends LinearLayout(context, attrs, defStyleAttr)
+    with ViewHelper
+    with DerivedLogTag {
 
   def this(context: Context, attrs: AttributeSet) { this(context, attrs, 0) }
   def this(context: Context) { this(context, null) }

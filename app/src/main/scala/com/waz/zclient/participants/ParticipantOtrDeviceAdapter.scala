@@ -25,8 +25,8 @@ import android.support.annotation.StringRes
 import android.support.v7.widget.RecyclerView
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{ImageView, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.{OtrClientType, Verification}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.Client
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -38,7 +38,10 @@ import com.waz.zclient.utils.{RichClient, RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R}
 
 class ParticipantOtrDeviceAdapter(implicit context: Context, injector: Injector, eventContext: EventContext)
-  extends RecyclerView.Adapter[ParticipantOtrDeviceAdapter.ViewHolder] with Injectable {
+  extends RecyclerView.Adapter[ParticipantOtrDeviceAdapter.ViewHolder]
+    with Injectable
+    with DerivedLogTag {
+  
   import ParticipantOtrDeviceAdapter._
   import Threading.Implicits.Background
 

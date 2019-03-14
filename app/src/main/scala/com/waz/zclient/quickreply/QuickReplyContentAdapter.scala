@@ -21,13 +21,13 @@ import android.content.Context
 import android.support.v7.widget.RecyclerView
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.RecyclerCursor
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.zclient.ui.utils.TextViewUtils
@@ -35,7 +35,9 @@ import com.waz.zclient.utils.{StringUtils, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R}
 
 class QuickReplyContentAdapter(context: Context, accountId: UserId, convId: ConvId)(implicit inj: Injector, evc: EventContext)
-extends RecyclerView.Adapter[QuickReplyContentAdapter.ViewHolder] with Injectable { adapter =>
+  extends RecyclerView.Adapter[QuickReplyContentAdapter.ViewHolder]
+    with Injectable
+    with DerivedLogTag { adapter =>
 
   import QuickReplyContentAdapter._
 
@@ -55,7 +57,7 @@ extends RecyclerView.Adapter[QuickReplyContentAdapter.ViewHolder] with Injectabl
 
   cursor.on(Threading.Ui) { case (c, tpe) =>
     if (!messages.contains(c)) {
-      verbose(s"cursor changed: ${c.count}")
+      verbose(l"cursor changed: ${c.count}")
       unreadIndex = c.lastReadIndex + 1
       messages.foreach(_.close())
       messages = Some(c)

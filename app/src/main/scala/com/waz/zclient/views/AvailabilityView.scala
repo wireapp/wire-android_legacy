@@ -29,7 +29,6 @@ import com.waz.model.Availability
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.ui.text.{GlyphTextView, TextTransform, TypefaceTextView}
 import com.waz.zclient.{DialogHelper, R, ViewHelper}
-import com.waz.ZLog.ImplicitTag._
 import android.graphics.{Bitmap, Canvas, Color}
 import com.waz.zclient.paintcode.WireStyleKit
 import com.waz.zclient.tracking.AvailabilityChanged

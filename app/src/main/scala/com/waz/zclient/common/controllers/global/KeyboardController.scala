@@ -20,20 +20,21 @@ package com.waz.zclient.common.controllers.global
 import android.app.Activity
 import android.graphics.Rect
 import android.view.{View, ViewTreeObserver}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, WireContext}
+import com.waz.zclient.log.LogUI._
 
-class KeyboardController(implicit inj: Injector, cxt: WireContext, ec: EventContext) extends ViewTreeObserver.OnGlobalLayoutListener with Injectable {
+class KeyboardController(implicit inj: Injector, cxt: WireContext, ec: EventContext)
+  extends ViewTreeObserver.OnGlobalLayoutListener with Injectable with DerivedLogTag {
 
   val isKeyboardVisible = Signal(false)
-  isKeyboardVisible(v => verbose(s"Keyboard visible: $v"))
+  isKeyboardVisible(v => verbose(l"Keyboard visible: $v"))
 
   val keyboardHeight = Signal(0)
-  keyboardHeight(h => verbose(s"Keyboard height: $h"))
+  keyboardHeight(h => verbose(l"Keyboard height: $h"))
 
   private val rootLayout = cxt match {
     case c: Activity => Some(c.getWindow.getDecorView.findViewById(android.R.id.content).asInstanceOf[View])

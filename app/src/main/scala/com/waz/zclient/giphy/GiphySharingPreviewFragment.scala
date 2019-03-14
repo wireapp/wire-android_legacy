@@ -22,7 +22,6 @@ import android.support.v7.widget.{RecyclerView, StaggeredGridLayoutManager, Tool
 import android.text.TextUtils
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{EditText, ImageView, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.AssetData
 import com.waz.service.images.BitmapSignal
 import com.waz.service.tracking.ContributionEvent

@@ -23,7 +23,6 @@ import android.content.DialogInterface
 import android.content.DialogInterface.OnShowListener
 import android.os.Bundle
 import android.text.TextUtils
-import com.waz.ZLog.ImplicitTag._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -92,7 +91,7 @@ class EditNameDialog extends BaseDialogFragment[Container] with FragmentHelper {
 }
 
 object EditNameDialog {
-  val Tag = implicitLogTag
+  val Tag: String = getClass.getSimpleName
   trait Container
 
   private val NameArg = "NameArg"

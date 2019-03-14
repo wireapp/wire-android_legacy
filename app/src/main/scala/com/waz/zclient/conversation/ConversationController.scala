@@ -19,11 +19,10 @@ package com.waz.zclient.conversation
 
 import android.app.Activity
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api
 import com.waz.api.{AssetForUpload, IConversation, Verification}
 import com.waz.content._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.Client
@@ -38,6 +37,7 @@ import com.waz.zclient.conversation.ConversationController.ConversationChange
 import com.waz.zclient.conversationlist.ConversationListAdapter.Normal
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.Callback
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R}
@@ -46,7 +46,9 @@ import org.threeten.bp.Instant
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class ConversationController(implicit injector: Injector, context: Context, ec: EventContext) extends Injectable {
+class ConversationController(implicit injector: Injector, context: Context, ec: EventContext)
+  extends Injectable with DerivedLogTag {
+  
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationController")
 
   private lazy val selectedConv      = inject[Signal[SelectedConversationService]]
@@ -106,7 +108,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     conversations(_.forceNameUpdate(convId))
     conversations.head.foreach(_.forceNameUpdate(convId))
     if (!lastConvId.contains(convId)) { // to only catch changes coming from SE (we assume it's an account switch)
-      verbose(s"a conversation change bypassed selectConv: last = $lastConvId, current = $convId")
+      verbose(l"a conversation change bypassed selectConv: last = $lastConvId, current = $convId")
       convChanged ! ConversationChange(from = lastConvId, to = Option(convId), requester = ConversationChangeRequester.ACCOUNT_CHANGE)
       lastConvId = Option(convId)
     }
@@ -125,7 +127,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
         _            <- if (conv.exists(_.archived)) convsUi.setConversationArchived(id, archived = false) else Future.successful(Option.empty[ConversationData])
         _            <- selectedConv.selectConversation(convId)
       } yield { // catches changes coming from UI
-        verbose(s"changing conversation from $oldId to $convId, requester: $requester")
+        verbose(l"changing conversation from $oldId to $convId, requester: $requester")
         convChanged ! ConversationChange(from = oldId, to = convId, requester = requester)
       }
   }
@@ -294,7 +296,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
       * Switches current msg focus state to/from given msg.
       */
     def toggleFocused(id: MessageId) = {
-      verbose(s"toggleFocused($id)")
+      verbose(l"toggleFocused($id)")
       focused mutate {
         case Some(`id`) => None
         case _ => Some(id)
@@ -307,7 +309,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   }
 }
 
-object ConversationController {
+object ConversationController extends DerivedLogTag {
   val ARCHIVE_DELAY = 500.millis
   val MaxParticipants: Int = 300
 
@@ -321,7 +323,7 @@ object ConversationController {
         conv.convType != IConversation.Type.ONE_TO_ONE &&
         conv.convType != IConversation.Type.WAIT_FOR_CONNECTION &&
         conv.convType != IConversation.Type.INCOMING_CONNECTION)
-      error(s"unexpected call, most likely UI error", new UnsupportedOperationException(s"Can't get other participant for: ${conv.convType} conversation"))
+      error(l"unexpected call, most likely UI error", new UnsupportedOperationException(s"Can't get other participant for: ${conv.convType} conversation"))
     UserId(conv.id.str) // one-to-one conversation has the same id as the other user, so we can access it directly
   }
 

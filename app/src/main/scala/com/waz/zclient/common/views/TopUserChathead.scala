@@ -22,7 +22,7 @@ import android.content.res.TypedArray
 import android.util.AttributeSet
 import android.view.{Gravity, View}
 import android.widget.{ImageView, LinearLayout}
-import com.waz.ZLog
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Availability, UserData}
 import com.waz.zclient.ui.text.{TextTransform, TypefaceTextView}
 import com.waz.zclient.utils.ContextUtils._
@@ -30,11 +30,13 @@ import com.waz.zclient.utils.{ContextUtils, RichView}
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
 
-class TopUserChathead(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
+class TopUserChathead(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
+  extends LinearLayout(context, attrs, defStyleAttr)
+    with ViewHelper
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
-
-  implicit val logTag = ZLog.logTagFor[TopUserChathead]
 
   inflate(R.layout.top_user_chathead, this)
 

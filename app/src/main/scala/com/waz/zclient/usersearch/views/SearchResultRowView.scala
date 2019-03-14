@@ -21,8 +21,8 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.LinearLayout
-import com.waz.ZLog._
 import com.waz.api.ContentSearchQuery
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -43,13 +43,16 @@ trait SearchResultRowView extends MessageViewPart with ViewHelper {
   val searchedQuery = Signal[ContentSearchQuery]()
 }
 
-class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with SearchResultRowView{
+class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
+  extends LinearLayout(context, attrs, style)
+    with SearchResultRowView
+    with DerivedLogTag {
+
   import TextSearchResultRowView._
   import Threading.Implicits.Ui
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
-
-  private implicit val tag: LogTag = logTagFor[TextSearchResultRowView]
+  
   override val tpe: MsgPart = Text
 
   inflate(R.layout.search_text_result_row)

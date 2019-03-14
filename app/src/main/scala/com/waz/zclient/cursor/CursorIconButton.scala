@@ -40,7 +40,7 @@ import android.graphics.drawable.{Drawable, StateListDrawable}
 import android.support.v4.content.res.ResourcesCompat
 import android.util.AttributeSet
 import android.view.{HapticFeedbackConstants, MotionEvent, View}
-import com.waz.ZLog.ImplicitTag._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccentColor
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -53,7 +53,11 @@ import com.waz.zclient.ui.views.FilledCircularBackgroundDrawable
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 
-class CursorIconButton(context: Context, attrs: AttributeSet, defStyleAttr: Int) extends GenericStyleKitView(context, attrs, defStyleAttr) with ViewHelper {
+class CursorIconButton(context: Context, attrs: AttributeSet, defStyleAttr: Int)
+  extends GenericStyleKitView(context, attrs, defStyleAttr)
+    with ViewHelper
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) { this(context, attrs, 0) }
   def this(context: Context) { this(context, null) }
 

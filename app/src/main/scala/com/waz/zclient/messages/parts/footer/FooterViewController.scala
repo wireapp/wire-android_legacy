@@ -18,9 +18,9 @@
 package com.waz.zclient.messages.parts.footer
 
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
 import com.waz.api.Message.Status
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{LocalInstant, MessageData, ReadReceipt}
 import com.waz.service.messages.{MessageAndLikes, MessagesService}
 import com.waz.service.{NetworkModeService, ZMessaging}
@@ -41,7 +41,9 @@ import scala.concurrent.duration._
 /**
   * Be warned - the timestamp/footer logic and when to display what has more edges than a tetrahedron.
   */
-class FooterViewController(implicit inj: Injector, context: Context, ec: EventContext) extends Injectable {
+class FooterViewController(implicit inj: Injector, context: Context, ec: EventContext)
+  extends Injectable with DerivedLogTag {
+  
   import com.waz.threading.Threading.Implicits.Ui
 
   val accents                = inject[AccentColorController]

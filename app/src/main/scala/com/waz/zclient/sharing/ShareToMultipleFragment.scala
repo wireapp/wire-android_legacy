@@ -29,8 +29,8 @@ import android.view.inputmethod.EditorInfo
 import android.widget.LinearLayout.LayoutParams
 import android.widget.TextView.OnEditorActionListener
 import android.widget._
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.ContentUriAssetForUpload
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{MessageContent => _, _}
@@ -45,7 +45,7 @@ import com.waz.zclient.common.controllers.{AssetsController, SharingController}
 import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.common.views.ImageController.DataImage
 import com.waz.zclient.common.views._
-import com.waz.zclient.cursor.{EphemeralTimerButton, EphemeralLayout}
+import com.waz.zclient.cursor.{EphemeralLayout, EphemeralTimerButton}
 import com.waz.zclient.messages.{MessagesController, UsersController}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.{ColorUtils, KeyboardUtils}
@@ -259,7 +259,11 @@ case class PickableConversation(conversationData: ConversationData) extends Pick
   override def name = conversationData.displayName
 }
 
-class ShareToMultipleAdapter(context: Context, filter: Signal[String])(implicit injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[RecyclerView.ViewHolder] with Injectable {
+class ShareToMultipleAdapter(context: Context, filter: Signal[String])(implicit injector: Injector, eventContext: EventContext)
+  extends RecyclerView.Adapter[RecyclerView.ViewHolder]
+    with Injectable
+    with DerivedLogTag {
+
   setHasStableIds(true)
   lazy val zms = inject[Signal[ZMessaging]]
   lazy val conversations = for{
@@ -314,7 +318,11 @@ class ShareToMultipleAdapter(context: Context, filter: Signal[String])(implicit 
   override def getItemViewType(position: Int): Int = 1
 }
 
-case class SelectableConversationRowViewHolder(view: SelectableConversationRow)(implicit eventContext: EventContext, injector: Injector) extends RecyclerView.ViewHolder(view) with Injectable{
+case class SelectableConversationRowViewHolder(view: SelectableConversationRow)(implicit eventContext: EventContext, injector: Injector)
+  extends RecyclerView.ViewHolder(view)
+    with Injectable
+    with DerivedLogTag {
+  
   lazy val zms = inject[Signal[ZMessaging]]
 
   val conversationId = Signal[ConvId]()

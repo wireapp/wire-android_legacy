@@ -22,7 +22,7 @@ import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.RecyclerView.ViewHolder
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.ImageView
-import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.events._
 import com.waz.zclient.ViewHelper.inflate
 import com.waz.zclient.calling.controllers.CallController
@@ -36,7 +36,10 @@ import com.waz.zclient.utils.ContextUtils.{getColor, getDrawable, getString}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{Injectable, Injector, R}
 
-class CallParticipantsAdapter(implicit context: Context, eventContext: EventContext, inj: Injector) extends RecyclerView.Adapter[ViewHolder] with Injectable {
+class CallParticipantsAdapter(implicit context: Context, eventContext: EventContext, inj: Injector)
+  extends RecyclerView.Adapter[ViewHolder]
+    with Injectable
+    with DerivedLogTag {
 
   import CallParticipantsAdapter._
 

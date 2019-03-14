@@ -26,7 +26,6 @@ import com.waz.zclient.R
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
 import com.waz.zclient.utils.RichSeekBar
 import org.threeten.bp.Duration
-import com.waz.ZLog.ImplicitTag._
 
 class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style) with PlayableAsset with FileLayoutAssetPart with HighlightViewPart {

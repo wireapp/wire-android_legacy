@@ -23,10 +23,10 @@ import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.GlobalPreferences._
 import com.waz.content.UserPreferences.LastStableNotification
 import com.waz.jobs.PushTokenCheckJob
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.model.Uid
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
@@ -44,7 +44,12 @@ import scala.concurrent.Future
 
 trait DevSettingsView
 
-class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with DevSettingsView with ViewHelper {
+class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
+  extends LinearLayout(context, attrs, style)
+    with DevSettingsView
+    with ViewHelper
+    with DerivedLogTag {
+  
   import com.waz.threading.Threading.Implicits.Ui
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)

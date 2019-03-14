@@ -27,8 +27,6 @@ import android.text.TextUtils
 import android.view._
 import android.view.animation.Animation
 import android.widget.{AbsListView, FrameLayout, TextView}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.{AudioAssetForUpload, AudioEffect, ErrorType}
 import com.waz.content.GlobalPreferences
 import com.waz.model.ConversationData.ConversationType
@@ -59,6 +57,7 @@ import com.waz.zclient.conversation.ConversationController.ConversationChange
 import com.waz.zclient.conversation.toolbar.AudioMessageRecordingView
 import com.waz.zclient.cursor._
 import com.waz.zclient.drawing.DrawingFragment.Sketch
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.{MessagesController, MessagesListView}
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
 import com.waz.zclient.pages.extendedcursor.emoji.EmojiKeyboardLayout
@@ -477,7 +476,7 @@ class ConversationFragment extends FragmentHelper {
   private def inflateCollectionIcon(): Unit = {
     leftMenu.getMenu.clear()
 
-    val searchInProgress = collectionController.contentSearchQuery.currentValue("").get.originalString.nonEmpty
+    val searchInProgress = collectionController.contentSearchQuery.currentValue.get.originalString.nonEmpty
 
     getActivity.getMenuInflater.inflate(
       if (searchInProgress) R.menu.conversation_header_menu_collection_searching
@@ -581,7 +580,7 @@ class ConversationFragment extends FragmentHelper {
       case ExtendedCursorContainer.Type.NONE =>
       case ExtendedCursorContainer.Type.EMOJIS =>
         extendedCursorContainer.foreach(_.openEmojis(userPreferencesController.getRecentEmojis, userPreferencesController.getUnsupportedEmojis, new EmojiKeyboardLayout.Callback {
-          override def onEmojiSelected(emoji: LogTag) = {
+          override def onEmojiSelected(emoji: String) = {
             cursorView.foreach(_.insertText(emoji))
             userPreferencesController.addRecentEmoji(emoji)
           }
@@ -632,7 +631,7 @@ class ConversationFragment extends FragmentHelper {
             }
         }))
       case _ =>
-        verbose(s"openExtendedCursor(unknown)")
+        verbose(l"openExtendedCursor(unknown)")
     }
 
 
@@ -752,7 +751,7 @@ class ConversationFragment extends FragmentHelper {
     case ErrorType.CANNOT_SEND_MESSAGE_TO_UNVERIFIED_CONVERSATION =>
       err.convId.foreach(onErrorCanNotSentMessageToUnverifiedConversation(err, _))
     case errType =>
-      error(s"Unhandled onSyncError: $errType")
+      error(l"Unhandled onSyncError: $errType")
   }
 
   private def onErrorCanNotSentMessageToUnverifiedConversation(err: ErrorData, convId: ConvId) =

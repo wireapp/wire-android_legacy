@@ -25,20 +25,21 @@ import com.google.android.gms.common.ConnectionResult.{SERVICE_VERSION_UPDATE_RE
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.firebase.FirebaseApp
 import com.google.firebase.iid.FirebaseInstanceId
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.{info, warn}
 import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences.GPSErrorDialogShowCount
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.PushToken
 import com.waz.service.BackendConfig
 import com.waz.service.FirebaseOptions
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.utils.wrappers.GoogleApi
+import com.waz.zclient.log.LogUI._
 
 import scala.util.Try
 
-class GoogleApiImpl private (context: Context, beConfig: BackendConfig, prefs: GlobalPreferences) extends GoogleApi {
+class GoogleApiImpl private (context: Context, beConfig: BackendConfig, prefs: GlobalPreferences)
+  extends GoogleApi with DerivedLogTag {
 
   import GoogleApiImpl._
 
@@ -52,20 +53,20 @@ class GoogleApiImpl private (context: Context, beConfig: BackendConfig, prefs: G
 
   override def checkGooglePlayServicesAvailable(activity: Activity) = api.isGooglePlayServicesAvailable(activity) match {
     case SUCCESS =>
-      info("Google Play Services available")
+      info(l"Google Play Services available")
       isGooglePlayServicesAvailable ! true
     case SERVICE_VERSION_UPDATE_REQUIRED if prefs.getFromPref(GPSErrorDialogShowCount) <= MaxErrorDialogShowCount =>
-      info(s"Google Play Services requires update - prompting user")
+      info(l"Google Play Services requires update - prompting user")
       prefs.preference(GPSErrorDialogShowCount).mutate(_ + 1)
       api.getErrorDialog(activity, SERVICE_VERSION_UPDATE_REQUIRED, RequestGooglePlayServices).show()
     case code =>
       isGooglePlayServicesAvailable ! false
-      warn(s"Google Play Services not available: error code: $code")
+      warn(l"Google Play Services not available: error code: $code")
   }
 
   override def onActivityResult(requestCode: Int, resultCode: Int) = requestCode match {
     case RequestGooglePlayServices =>
-      info(s"Google Play Services request completed, result: $resultCode")
+      info(l"Google Play Services request completed, result: $resultCode")
       //It's quite natural for the user to click the back button after updating GPS, which results in a ACTIVITY_CANCELLED
       //result code. So just check if the services are available again on any result.
       isGooglePlayServicesAvailable ! isGPSAvailable

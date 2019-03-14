@@ -25,8 +25,8 @@ import android.graphics.{Canvas, Color, Paint}
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, RelativeLayout}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
@@ -72,7 +72,7 @@ trait MessageViewPart extends View {
   *
   * Check the message view as well - it has further filtering on which views
   */
-trait ClickableViewPart extends MessageViewPart with ViewHelper {
+trait ClickableViewPart extends MessageViewPart with ViewHelper with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Ui
   val zms = inject[Signal[ZMessaging]]
   val likes = inject[LikesController]
@@ -167,7 +167,11 @@ class SeparatorViewLarge(context: Context, attrs: AttributeSet, style: Int) exte
 
 }
 
-class UnreadDot(context: Context, attrs: AttributeSet, style: Int) extends View(context, attrs, style) with ViewHelper {
+class UnreadDot(context: Context, attrs: AttributeSet, style: Int)
+  extends View(context, attrs, style)
+    with ViewHelper
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 

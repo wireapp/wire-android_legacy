@@ -22,7 +22,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
 import android.widget.{FrameLayout, ImageView}
-import com.waz.ZLog
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Availability, IntegrationData, UserData}
 import com.waz.service.ZMessaging
 import com.waz.utils.NameParts
@@ -39,10 +39,11 @@ import com.waz.zclient.utils.{RichView, UiStorage, UserSignal}
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
 
-abstract class ConversationListTopToolbar(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends FrameLayout(context, attrs, defStyleAttr) with ViewHelper {
-
-  private implicit val logTag = ZLog.logTagFor[ConversationListTopToolbar]
-
+abstract class ConversationListTopToolbar(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
+  extends FrameLayout(context, attrs, defStyleAttr)
+    with ViewHelper
+    with DerivedLogTag {
+  
   inflate(R.layout.view_conv_list_top)
 
   val buttonContainer = findById[View](R.id.button_container)

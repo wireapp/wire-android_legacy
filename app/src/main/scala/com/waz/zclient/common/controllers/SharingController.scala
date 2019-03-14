@@ -18,7 +18,7 @@
 package com.waz.zclient.common.controllers
 
 import android.app.Activity
-import com.waz.ZLog.ImplicitTag._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConvId
 import com.waz.service.assets.AssetService.RawAssetInput.UriInput
 import com.waz.service.conversation.ConversationsUiService
@@ -34,7 +34,8 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
-class SharingController(implicit injector: Injector, wContext: WireContext, eventContext: EventContext) extends Injectable{
+class SharingController(implicit injector: Injector, wContext: WireContext, eventContext: EventContext)
+  extends Injectable with DerivedLogTag {
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "SharingController")
 

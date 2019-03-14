@@ -21,7 +21,6 @@ package com.waz.zclient.appentry.fragments
 import android.app.Activity
 import android.os.Bundle
 import android.view.View
-import com.waz.ZLog
 import com.waz.content.GlobalPreferences
 import com.waz.model.{ConfirmationCode, EmailAddress}
 import com.waz.service.GlobalModule
@@ -118,5 +117,5 @@ case class VerifyTeamEmailFragment() extends CreateTeamFragment{
 }
 
 object VerifyTeamEmailFragment {
-  val Tag: String = ZLog.ImplicitTag.implicitLogTag
+  val Tag: String = getClass.getSimpleName
 }

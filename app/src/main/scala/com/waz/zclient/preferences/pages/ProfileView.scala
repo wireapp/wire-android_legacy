@@ -26,8 +26,6 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
 import android.widget.{ImageView, LinearLayout}
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.UserPreferences
 import com.waz.model.otr.Client
 import com.waz.model.{AccentColor, Availability, UserPermissions}
@@ -50,6 +48,7 @@ import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, String
 import com.waz.zclient.views.AvailabilityView
 import ProfileViewController.MaxAccountsCount
 import BuildConfig.ACCOUNT_CREATION_ENABLED
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 
 trait ProfileView {
   val onDevicesDialogAccept: EventStream[Unit]
@@ -212,7 +211,7 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
 }
 object ProfileView {
-  val Tag = ZLog.logTagFor[ProfileView]
+  val Tag: String = getClass.getSimpleName
 }
 
 case class ProfileBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
@@ -232,7 +231,9 @@ case class ProfileBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
   }
 }
 
-class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: EventContext) extends Injectable {
+class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: EventContext)
+  extends Injectable with DerivedLogTag {
+  
   import ProfileViewController._
 
   implicit val uiStorage = inject[UiStorage]

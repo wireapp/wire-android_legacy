@@ -20,7 +20,7 @@ package com.waz.zclient.giphy
 import android.graphics.drawable.ColorDrawable
 import android.support.v7.widget.RecyclerView
 import android.view.{View, ViewGroup}
-import com.waz.ZLog.ImplicitTag._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AssetData
 import com.waz.service.assets.AssetService.BitmapResult
 import com.waz.ui.MemoryImageCache.BitmapRequest
@@ -80,7 +80,8 @@ object GiphyGridViewAdapter {
 class GiphyGridViewAdapter(val scrollGifCallback: ScrollGifCallback,
                            val assetLoader: AssetLoader)
                           (implicit val ec: EventContext, injector: Injector)
-  extends RecyclerView.Adapter[GiphyGridViewAdapter.ViewHolder] {
+  extends RecyclerView.Adapter[GiphyGridViewAdapter.ViewHolder]
+    with DerivedLogTag {
 
   import GiphyGridViewAdapter._
 

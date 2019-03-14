@@ -33,7 +33,7 @@ import com.waz.zclient.{FragmentHelper, R}
 object VerifyEmailPreferencesFragment {
 
   val ARG_EMAIL: String = "ARG_EMAIL"
-  val Tag: String = com.waz.ZLog.ImplicitTag.implicitLogTag
+  val Tag: String = getClass.getSimpleName
 
   def apply(email: EmailAddress): VerifyEmailPreferencesFragment = {
     val fragment = new VerifyEmailPreferencesFragment

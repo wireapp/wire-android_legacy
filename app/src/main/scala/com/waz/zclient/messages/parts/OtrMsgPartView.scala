@@ -19,13 +19,13 @@ package com.waz.zclient.messages.parts
 
 import android.content.Context
 import android.util.AttributeSet
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
 import com.waz.utils.wrappers.AndroidURIUtil
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.controllers.{BrowserController, ScreenController}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, SystemMessageView, UsersController}
 import com.waz.zclient.participants.ParticipantsController
@@ -33,7 +33,12 @@ import com.waz.zclient.participants.fragments.SingleParticipantFragment
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 
-class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends SystemMessageView(context, attrs, style) with MessageViewPart with ViewHelper {
+class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
+  extends SystemMessageView(context, attrs, style)
+    with MessageViewPart
+    with ViewHelper
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -112,7 +117,7 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends 
         case (OTR_ERROR, _)                             => browserController.openUrl(AndroidURIUtil parse getString(R.string.url_otr_decryption_error_1))
         case (OTR_IDENTITY_CHANGED, _)                  => browserController.openUrl(AndroidURIUtil parse getString(R.string.url_otr_decryption_error_2))
         case _ =>
-          info(s"unhandled help link click for $msg")
+          info(l"unhandled help link click for $msg")
       }
     }
   }

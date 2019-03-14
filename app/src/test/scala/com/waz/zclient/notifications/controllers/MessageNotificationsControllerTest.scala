@@ -20,10 +20,10 @@ package com.waz.zclient.notifications.controllers
 
 import java.util.concurrent.TimeUnit
 
-import com.waz.ZLog.verbose
 import com.waz.api.IConversation
 import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.content._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.conversation.{ConversationsListStateService, ConversationsService, ConversationsUiService}
 import com.waz.service.images.ImageLoader
@@ -39,6 +39,7 @@ import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.utils.ResString
 import com.waz.zclient.utils.ResString.{AnyRefArgs, StringArgs}
@@ -51,8 +52,8 @@ import scala.collection.immutable.SortedSet
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class MessageNotificationsControllerTest extends AndroidFreeSpec { this: Suite =>
-  import com.waz.ZLog.ImplicitTag.implicitLogTag
+class MessageNotificationsControllerTest
+  extends AndroidFreeSpec with DerivedLogTag { this: Suite =>
 
   implicit val context: WireContext = null
 
@@ -217,13 +218,13 @@ class MessageNotificationsControllerTest extends AndroidFreeSpec { this: Suite =
     controller = new MessageNotificationsController(bundleEnabled = bundleEnabled, applicationId = "")
 
     controller.notificationsToCancel { ids =>
-      verbose(s"nots to cancel: $ids")
+      verbose(l"nots to cancel: $ids")
       notsToCancel.mutate(_ ++ ids)
     }
 
     controller.notificationToBuild {
       case (id, props) =>
-        verbose(s"NEW PROPS: $id -> $props")
+        verbose(l"NEW PROPS: $id -> $props")
         notsInManager.mutate(_ + (id -> props))
     }
 

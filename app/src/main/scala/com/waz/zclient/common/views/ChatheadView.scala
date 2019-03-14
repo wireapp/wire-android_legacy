@@ -24,10 +24,10 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.View.MeasureSpec
 import android.view.View.MeasureSpec.{EXACTLY, makeMeasureSpec}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.User
 import com.waz.api.User.ConnectionStatus
 import com.waz.api.User.ConnectionStatus._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccentColor
 import com.waz.model.{AssetData, UserData, UserId, _}
 import com.waz.service.ZMessaging
@@ -44,7 +44,10 @@ import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 
-class ChatheadView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends View(context, attrs, defStyleAttr) with ViewHelper {
+class ChatheadView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
+  extends View(context, attrs, defStyleAttr)
+    with ViewHelper
+    with DerivedLogTag {
 
   import ChatheadView._
 

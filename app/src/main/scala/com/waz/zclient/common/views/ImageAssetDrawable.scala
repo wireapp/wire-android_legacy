@@ -21,8 +21,8 @@ import android.animation.ValueAnimator
 import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.graphics._
 import android.graphics.drawable.Drawable
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.UserPreferences
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AssetData.{IsImage, IsVideo}
 import com.waz.model.AssetMetaData.Image.Tag.Medium
 import com.waz.model._
@@ -47,7 +47,10 @@ class ImageAssetDrawable(src: Signal[ImageSource],
                          background: Option[Drawable] = None,
                          animate: Boolean = true,
                          forceDownload: Boolean = true)
-                        (implicit inj: Injector, eventContext: EventContext) extends Drawable with Injectable {
+                        (implicit inj: Injector, eventContext: EventContext)
+  extends Drawable
+    with Injectable
+    with DerivedLogTag {
 
   val images = inject[ImageController]
 

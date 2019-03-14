@@ -23,10 +23,10 @@ import java.util.concurrent.{TimeUnit, TimeoutException}
 import android.arch.lifecycle.{LiveData, Observer}
 import android.content.Context
 import androidx.work._
-import com.waz.ZLog._
 import com.waz.api.SyncState
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.internalError
+import com.waz.log.BasicLogging.LogTag
 import com.waz.model.sync.SyncJob.Priority
 import com.waz.model.sync.{SyncCommand, SyncRequest}
 import com.waz.model.{SyncId, UserId}
@@ -38,6 +38,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.{RichInstant, returning}
 import com.waz.zclient.{Injectable, Injector, WireContext}
+import com.waz.zclient.log.LogUI._
 import org.json.JSONObject
 import org.threeten.bp.{Clock, Instant}
 
@@ -46,7 +47,8 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.control.{NoStackTrace, NonFatal}
 
-class WorkManagerSyncRequestService (implicit inj: Injector, cxt: Context, eventContext: EventContext) extends SyncRequestService with Injectable {
+class WorkManagerSyncRequestService (implicit inj: Injector, cxt: Context, eventContext: EventContext)
+  extends SyncRequestService with Injectable {
 
   import WorkManagerSyncRequestService._
   import com.waz.threading.Threading.Implicits.Background
@@ -87,14 +89,14 @@ class WorkManagerSyncRequestService (implicit inj: Injector, cxt: Context, event
 
     implicit val logTag: LogTag = jobLogTag(account)
     val commandTag = commandId(req.cmd, work.getId)
-    verbose(s"$commandTag scheduling...")
+    verbose(l"${showString(commandTag)} scheduling...")
 
     Future {
       (uniqueGroupName.map(n => s"${account.str}--$n") match {
         case Some(n) => wm.enqueueUniqueWork(n, ExistingWorkPolicy.APPEND, work)
         case None    => wm.enqueue(work)
       }).getResult.get()
-      verbose(s"$commandTag scheduled successfully")
+      verbose(l"${showString(commandTag)} scheduled successfully")
       SyncId(work.getId.toString)
     }
   }
@@ -105,7 +107,7 @@ class WorkManagerSyncRequestService (implicit inj: Injector, cxt: Context, event
   @volatile
   private var signalRefs = Map.empty[SyncId, Signal[SyncResult]]
   override def await(id: SyncId): Future[SyncResult] = {
-    implicit val logTag: LogTag = "WorkManager#await"
+    implicit val logTag: LogTag = LogTag("WorkManager#await")
     val signal = new LiveDataSignal(wm.getWorkInfoByIdLiveData(UUID.fromString(id.str)))
       .collect[SyncResult] { case status if status.getState.isFinished =>
         import androidx.work.WorkInfo.State._
@@ -127,7 +129,7 @@ class WorkManagerSyncRequestService (implicit inj: Injector, cxt: Context, event
   }
 
   override def syncState(account: UserId, matchers: Seq[SyncCommand]): Signal[SyncState] = {
-    implicit val logTag: LogTag = "WorkManager#syncState"
+    implicit val logTag: LogTag = LogTag("WorkManager#syncState")
     new LiveDataSignal(wm.getWorkInfosByTagLiveData(account.str))
       .map(_.filter(_.getTags.exists(tag => matchers.map(_.name).toSet.contains(tag))))
       .map { statuses =>
@@ -152,14 +154,14 @@ class WorkManagerSyncRequestService (implicit inj: Injector, cxt: Context, event
                 SyncState.COMPLETED
             }
           }.minBy(_.ordinal())
-        }(s => verbose(s"matchers: $matchers => state: $s"))
+        }(s => verbose(l"matchers: $matchers => state: $s"))
       }
   }
 }
 
 object WorkManagerSyncRequestService {
 
-  def jobLogTag(acc: UserId): LogTag = s"WorkManager:${acc.str.take(8)}"
+  def jobLogTag(acc: UserId): LogTag = LogTag(s"WorkManager:${acc.str.take(8)}")
   def commandId(cmd: SyncCommand, id: UUID): String = commandId(cmd.name, id)
   def commandId(cmdName: String, id: UUID): String = s"$cmdName (jobId: ${id.toString.take(8)}...) =>"
 
@@ -206,7 +208,7 @@ object WorkManagerSyncRequestService {
 
       implicit val logTag: LogTag = jobLogTag(account)
       val commandTag = commandId(cmd, getId)
-      verbose(s"$commandTag doWork")
+      verbose(l"${showString(commandTag)} doWork")
 
       val syncHandler = inject[SyncHandler]
       val requestInfo = RequestInfo(getRunAttemptCount, Instant.ofEpochMilli(scheduledTime), network.currentValue)
@@ -224,33 +226,33 @@ object WorkManagerSyncRequestService {
       try {
         Await.result(syncHandler(account, request)(requestInfo), SyncJobTimeout) match {
           case SyncResult.Success =>
-            verbose(s"$commandTag completed successfully")
+            verbose(l"${showString(commandTag)} completed successfully")
             Result.success()
 
           case SyncResult.Failure(error) =>
-            warn(s"$commandTag failed permanently with error: $error")
+            warn(l"${showString(commandTag)} failed permanently with error: $error")
             if (error.shouldReportError) {
               tracking.exception(new RuntimeException(s"$commandTag failed permanently with error: $error") with NoStackTrace, s"Got fatal error, dropping request: ${request.cmd}\n error: $error")
             }
             onFailure(error)
 
           case SyncResult.Retry(error) if getRunAttemptCount > MaxSyncAttempts =>
-            warn(s"$commandTag failed more than the maximum $MaxSyncAttempts times, final time was with error: $error")
+            warn(l"${showString(commandTag)} failed more than the maximum $MaxSyncAttempts times, final time was with error: $error")
             tracking.exception(new RuntimeException(s"$commandTag failed more than the maximum $MaxSyncAttempts times, final time was with error: $error") with NoStackTrace, s"$MaxSyncAttempts attempts exceeded, dropping request: ${request.cmd}\n error: $error")
             onFailure(error)
 
           case SyncResult.Retry(error) =>
-            warn(s"$commandTag failed non-fatally with $error, retrying...")
+            warn(l"${showString(commandTag)} failed non-fatally with $error, retrying...")
             Result.retry()
         }
       } catch {
         case e: TimeoutException =>
-          error(s"$commandTag doWork timed out after $SyncJobTimeout, the job seems to be blocked", e)
+          error(l"${showString(commandTag)} doWork timed out after $SyncJobTimeout, the job seems to be blocked", e)
           tracking.exception(e, s"$commandTag timed out after $SyncJobTimeout")
           onFailure(ErrorResponse.timeout(s"$logTag $commandTag timed out after $SyncJobTimeout, aborting"))
 
         case NonFatal(e) =>
-          error(s"$commandTag failed unexpectedly", e)
+          error(l"${showString(commandTag)} failed unexpectedly", e)
           tracking.exception(e, s"$commandTag failed unexpectedly")
           onFailure(internalError(e.getMessage))
       }

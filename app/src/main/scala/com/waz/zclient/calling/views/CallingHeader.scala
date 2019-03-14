@@ -20,7 +20,6 @@ package com.waz.zclient.calling.views
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.views.GlyphButton
 import com.waz.zclient.utils.ContextUtils.getString

@@ -24,8 +24,6 @@ import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.webkit.WebView
 import android.widget.TextView
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag._
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils._
@@ -113,8 +111,8 @@ class SSOWebViewFragment extends FragmentHelper {
 }
 
 object SSOWebViewFragment {
-  val Tag: String = ZLog.ImplicitTag.implicitLogTag
 
+  val Tag: String = getClass.getSimpleName
   val SSOCode = "SSO_CODE"
 
   def newInstance(code: String): SSOWebViewFragment = {

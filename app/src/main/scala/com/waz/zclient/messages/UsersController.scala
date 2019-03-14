@@ -18,8 +18,8 @@
 package com.waz.zclient.messages
 
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.MembersStorage
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType.isOneToOne
 import com.waz.model._
 import com.waz.service.ZMessaging
@@ -34,7 +34,8 @@ import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.Future
 
-class UsersController(implicit injector: Injector, context: Context) extends Injectable {
+class UsersController(implicit injector: Injector, context: Context)
+  extends Injectable with DerivedLogTag {
 
   private val zMessaging = inject[Signal[ZMessaging]]
   private val tracking   = inject[TrackingService]

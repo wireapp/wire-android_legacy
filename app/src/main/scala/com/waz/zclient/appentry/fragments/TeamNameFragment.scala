@@ -22,7 +22,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import com.waz.ZLog
 import com.waz.zclient._
 import com.waz.zclient.appentry.{CreateTeamFragment, SSOFragment, SSOWebViewFragment}
 import com.waz.zclient.common.views.InputBox
@@ -63,5 +62,5 @@ case class TeamNameFragment() extends CreateTeamFragment with SSOFragment {
 }
 
 object TeamNameFragment {
-  val Tag: String = ZLog.ImplicitTag.implicitLogTag
+  val Tag: String = getClass.getSimpleName
 }

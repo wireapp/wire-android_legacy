@@ -21,30 +21,30 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import android.support.v4.content.WakefulBroadcastReceiver
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserId
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.WakeLockImpl
+import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
 import scala.util.control.NoStackTrace
 
-abstract class FutureService extends Service {
+abstract class FutureService extends Service with DerivedLogTag {
 
   protected lazy val wakeLock = new WakeLockImpl(getApplicationContext)
 
   override def onBind(intent: Intent): IBinder = null
 
   override def onStartCommand(intent: Intent, flags: Int, startId: Int): Int = wakeLock {
-    debug(s"onStartCommand: $startId, intent: $intent")
+    debug(l"onStartCommand: $startId, intent: $intent")
     Option(intent) foreach WakefulBroadcastReceiver.completeWakefulIntent
 
     val future =
       if (intent == null) Future.successful({})
       else wakeLock async {
-        onIntent(intent, startId).recover { case ex => error("onIntent failed", ex) } (Threading.Background)
+        onIntent(intent, startId).recover { case ex => error(l"onIntent failed", ex) } (Threading.Background)
       }
     future.onComplete { _ => onComplete(startId) }(Threading.Ui)
 
@@ -54,12 +54,12 @@ abstract class FutureService extends Service {
   protected def onIntent(intent: Intent, id: Int): Future[Any]
 
   protected def onComplete(startId: Int): Unit = {
-    debug(s"onCompleted: $startId")
+    debug(l"onCompleted: $startId")
     stopSelf(startId)
   }
 }
 
-trait ZMessagingService extends Service {
+trait ZMessagingService extends Service with DerivedLogTag {
   import Threading.Implicits.Background
   import ZMessagingService._
 
@@ -71,11 +71,11 @@ trait ZMessagingService extends Service {
       accounts.getZms(userId) flatMap {
         case Some(acc) => execute(acc)
         case None =>
-          error(s"zmessaging not available")
+          error(l"zmessaging not available")
           Future.failed(NoAccountException(userId))
       }
     } else {
-      error("intent has no ZUserId extra")
+      error(l"intent has no ZUserId extra")
       Future.failed(InvalidIntentException)
     }
 }

@@ -15,22 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package com.waz.zclient.log
 
-package com.waz.zclient
+import com.waz.log.{BasicLogging, LogShowInstancesSE}
 
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.Uid
-import com.waz.service.ZMessaging
-import com.waz.utils.events.Signal
-
-import scala.concurrent.Future
-
-class ErrorsController(implicit inj: Injector) extends Injectable with DerivedLogTag {
-  import com.waz.threading.Threading.Implicits.Background
-
-  private val zms = inject[Signal[ZMessaging]]
-
-  def dismissSyncError(errorId: Uid): Future[Unit] =
-    zms.map(_.errors).head.flatMap(_.dismissError(errorId))
-
-}
+object LogUI extends BasicLogging with LogShowInstancesSE with LogShowInstancesUI

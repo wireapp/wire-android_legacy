@@ -22,7 +22,7 @@ import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, ImageView, TextView}
-import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Name
 import com.waz.service.assets.AssetService.RawAssetInput
 import com.waz.service.assets.AssetService.RawAssetInput.{ByteInput, UriInput}
@@ -39,7 +39,12 @@ import com.waz.zclient.ui.theme.OptionsDarkTheme
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
 
-class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ViewHelper with ConfirmationMenuListener {
+class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int)
+  extends FrameLayout(context, attrs, style)
+    with ViewHelper
+    with ConfirmationMenuListener
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 

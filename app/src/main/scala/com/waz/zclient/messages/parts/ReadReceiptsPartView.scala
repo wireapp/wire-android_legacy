@@ -20,18 +20,23 @@ package com.waz.zclient.messages.parts
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.LinearLayout
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.api.Message.Type._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, SystemMessageView, UsersController}
 import com.waz.zclient.paintcode.ViewWithColor
-import com.waz.zclient.utils.ContextUtils.{getString, getColor}
+import com.waz.zclient.utils.ContextUtils.{getColor, getString}
 import com.waz.zclient.{R, ViewHelper}
 
-class ReadReceiptsPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
+class ReadReceiptsPartView(context: Context, attrs: AttributeSet, style: Int)
+  extends LinearLayout(context, attrs, style)
+    with MessageViewPart
+    with ViewHelper
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -57,7 +62,7 @@ class ReadReceiptsPartView(context: Context, attrs: AttributeSet, style: Int) ex
     case (Other(name), READ_RECEIPTS_ON,  false) => getString(R.string.content__system__read_receipts_someone_turned_on, name)
     case (Other(name), READ_RECEIPTS_OFF, false) => getString(R.string.content__system__read_receipts_someone_turned_off, name)
     case (name, t, first) =>
-     ZLog.error(s"Unable to create text for name $name and msgType $t, and first message $first")
+     error(l"Unable to create text for name $name and msgType $t, and first message $first")
       ""
   }.onUi { view.setText }
 }
