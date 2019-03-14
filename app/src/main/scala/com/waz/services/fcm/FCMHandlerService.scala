@@ -23,7 +23,7 @@ import com.waz.model.{Uid, UserId}
 import com.waz.service.AccountsService.InForeground
 import com.waz.service.ZMessaging.clock
 import com.waz.service.push.PushService.FetchFromIdle
-import com.waz.service.push.{PushService, ReceivedPushData, ReceivedPushStorage}
+import com.waz.service.push._
 import com.waz.service.{AccountsService, NetworkModeService, ZMessaging}
 import com.waz.services.ZMessagingService
 import com.waz.threading.Threading
@@ -114,6 +114,7 @@ object FCMHandlerService {
                    push:           PushService,
                    network:        NetworkModeService,
                    receivedPushes: ReceivedPushStorage,
+                   fcmPushes:      FCMNotificationsRepository,
                    sentTime:       Instant) extends DerivedLogTag {
 
     import com.waz.threading.Threading.Implicits.Background
@@ -147,6 +148,14 @@ object FCMHandlerService {
               idle
             )).map(_ => {})
         }
+        _ <- nId.fold(Future.successful({})) { nId =>
+          fcmPushes.insert(
+            FCMNotification(
+              nId,
+              now,
+              FCMNotification.Pushed
+            )).map(_ => {})
+        }
 
         /**
           * Warning: Here we want to trigger a direct fetch if we are in doze mode - when we get an FCM in doze mode, it is
@@ -163,7 +172,8 @@ object FCMHandlerService {
 
   object FCMHandler {
     def apply(zms: ZMessaging, data: Map[String, String], sentTime: Instant): Future[Unit] =
-      new FCMHandler(zms.selfUserId, zms.accounts, zms.push, zms.network, zms.receivedPushStorage, sentTime).handleMessage(data)
+      new FCMHandler(zms.selfUserId, zms.accounts, zms.push, zms.network, zms.receivedPushStorage,
+        zms.fcmNotifications, sentTime).handleMessage(data)
   }
 
   val DataKey = "data"
