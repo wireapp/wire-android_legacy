@@ -26,6 +26,8 @@ import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.utils.returning
 import com.waz.zclient.utils.media.{AudioEncoder, AudioSource, OutputFormat}
 
+import scala.util.Try
+
 trait MediaRecorderController {
   def startRecording(): Unit
   def stopRecording(): Unit
@@ -70,8 +72,10 @@ class MediaRecorderControllerImpl(context: Context) extends MediaRecorderControl
 
   override def stopRecording(): Unit = {
     recorder.foreach { r =>
-      r.stop()
-      r.release()
+      Try {
+        r.stop()
+        r.release()
+      }
     }
     recorder = None
   }
