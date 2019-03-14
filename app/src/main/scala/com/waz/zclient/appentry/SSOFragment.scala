@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.appentry
 
+import android.app.FragmentManager
 import android.os.Bundle
 import com.waz.api.impl.ErrorResponse
 import com.waz.service.SSOService
@@ -34,7 +35,6 @@ object SSOFragment {
 }
 
 trait SSOFragment extends FragmentHelper {
-
   import SSOFragment._
   import com.waz.threading.Threading.Implicits.Ui
 
@@ -109,7 +109,8 @@ trait SSOFragment extends FragmentHelper {
         import ErrorResponse._
         result match {
           case Right(true) =>
-            Future.successful(onSSOConfirm(token.toString))
+            getFragmentManager.popBackStack(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+            Future.successful(activity.showFragment(SSOWebViewFragment.newInstance(token.toString), SSOWebViewFragment.Tag))
           case Right(false) =>
             showErrorDialog(R.string.sso_signin_wrong_code_title, R.string.sso_signin_wrong_code_message)
           case Left(ErrorResponse(ConnectionErrorCode | TimeoutCode, _, _)) =>
@@ -120,8 +121,7 @@ trait SSOFragment extends FragmentHelper {
       }
     }
 
-
-  protected def onSSOConfirm(code: String): Unit
+  protected def activity: AppEntryActivity
 
   protected def onVerifyingToken(verifying: Boolean): Unit = spinner.showSpinner(verifying)
 
