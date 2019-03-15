@@ -38,6 +38,7 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.connect.UserProfileContainer
+import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.pages.main.participants.ProfileAnimation
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.paintcode.GuestIcon
@@ -98,7 +99,7 @@ class SendConnectRequestFragment
       }
     }
     removeConvMemberFeatureEnabled.map {
-      case true => getString(R.string.glyph__minus)
+      case true => getString(R.string.glyph__more)
       case _ => ""
     }.onUi(text => vh.foreach(_.setRightActionText(text)))
   }
@@ -196,9 +197,12 @@ class SendConnectRequestFragment
         case _ =>
       }
 
-      override def onRightActionClicked(): Unit = removeConvMemberFeatureEnabled.head foreach {
+      override def onRightActionClicked(): Unit = removeConvMemberFeatureEnabled.head.foreach {
         case true =>
-          getContainer.showRemoveConfirmation(userToConnectId)
+          inject[ConversationController].currentConv.head.foreach { conv =>
+            if (conv.isActive)
+              inject[IConversationScreenController].showConversationMenu(false, conv.id)
+          }
         case _ =>
       }
     }))
