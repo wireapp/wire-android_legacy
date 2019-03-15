@@ -23,21 +23,23 @@ import android.graphics.drawable.ColorDrawable
 import android.support.v4.view.ViewPager.OnPageChangeListener
 import android.support.v4.view.{PagerAdapter, ViewPager}
 import android.util.AttributeSet
+import android.view.View.OnLongClickListener
 import android.view.ViewGroup.LayoutParams
 import android.view.{View, ViewGroup}
 import com.waz.api.MessageFilter
-import com.waz.model.MessageData
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{AssetId, MessageData}
 import com.waz.service.ZMessaging
+import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.waz.utils.events.{EventContext, EventStream, Signal, SourceSignal}
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.collection.controllers.CollectionController.{AllContent, ContentType, Images}
-import com.waz.zclient.collection.fragments.SingleImageCollectionFragment.SwipeImageView
 import com.waz.zclient.messages.RecyclerCursor
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
+import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.pages.main.conversationpager.CustomPagerTransformer
+import com.waz.zclient.views.images.TouchImageView
 import com.waz.zclient.{Injectable, Injector, ViewHelper}
 
 import scala.collection.mutable

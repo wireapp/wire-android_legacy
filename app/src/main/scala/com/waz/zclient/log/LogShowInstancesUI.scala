@@ -24,6 +24,7 @@ import com.waz.log.LogShow
 import com.waz.service.tracking.TrackingEvent
 import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.collection.controllers.CollectionController.ContentType
+import com.waz.zclient.glide.AssetRequest
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.UsersController.DisplayName
@@ -33,7 +34,10 @@ import com.waz.zclient.search.SearchController.SearchUserListState
   * A collection of implicit `LogShow` instances for UI types.
   */
 trait LogShowInstancesUI {
-  
+  import LogShow._
+
+  implicit val AssetRequestLogShow: LogShow[AssetRequest] = logShowWithHash
+
   implicit val JobLogShow: LogShow[Job] = LogShow.logShowWithHash
 
   implicit val IntentLogShow: LogShow[Intent] = LogShow.logShowWithHash

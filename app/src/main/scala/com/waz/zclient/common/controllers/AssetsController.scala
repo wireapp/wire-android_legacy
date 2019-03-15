@@ -34,7 +34,6 @@ import com.waz.api.Message
 import com.waz.content.MessagesStorage
 import com.waz.content.UserPreferences.DownloadImagesAlways
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AssetData, AssetId, MessageData, Mime}
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
@@ -341,7 +340,7 @@ object AssetsController {
     }
   }
 
-  class PlaybackControls(assetId: AssetId, fileUri: URIWrapper, rAndP: Signal[GlobalRecordAndPlayService]) with DerivedLogTag {
+  class PlaybackControls(assetId: AssetId, fileUri: URIWrapper, rAndP: Signal[GlobalRecordAndPlayService]) extends DerivedLogTag {
 
     val isPlaying = rAndP.flatMap(rP => rP.isPlaying(AssetMediaKey(assetId)))
     val playHead = rAndP.flatMap(rP => rP.playhead(AssetMediaKey(assetId)))

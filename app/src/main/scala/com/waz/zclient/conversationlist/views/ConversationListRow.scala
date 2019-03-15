@@ -199,14 +199,14 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   }
 
   avatarInfo.on(Threading.Background){
-    case (convId, isGroup, members, alpha) if conversationData.forall(_.id == convId) =>
+    case (convId, isGroup, members, alpha, selfTeam) if conversationData.forall(_.id == convId) =>
       val cType = if (isGroup) ConversationType.Group else ConversationType.OneToOne
-      avatar.setMembers(members.map(_.id), convId, cType)
+      avatar.setMembers(members, convId, cType, selfTeam)
     case _ =>
       verbose(l"Outdated avatar info")
   }
   avatarInfo.onUi{
-    case (convId, isGroup, _, alpha) if conversationData.forall(_.id == convId) =>
+    case (convId, isGroup, _, alpha, _) if conversationData.forall(_.id == convId) =>
       if (!isGroup) {
         avatar.setConversationType(ConversationType.OneToOne)
       }

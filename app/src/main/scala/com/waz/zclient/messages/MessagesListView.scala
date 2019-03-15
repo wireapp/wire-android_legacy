@@ -24,10 +24,11 @@ import android.support.v7.widget.RecyclerView.{OnScrollListener, ViewHolder}
 import android.support.v7.widget.{DefaultItemAnimator, LinearLayoutManager, RecyclerView}
 import android.util.AttributeSet
 import android.view.WindowManager
-import com.waz.api.{AssetStatus, Message}
+import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, Dim2, MessageData}
 import com.waz.service.assets2.AssetStatus
+import com.waz.utils._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}

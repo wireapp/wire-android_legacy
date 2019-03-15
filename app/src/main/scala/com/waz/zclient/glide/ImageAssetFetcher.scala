@@ -22,26 +22,28 @@ import java.io.InputStream
 import com.bumptech.glide.Priority
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.data.DataFetcher
-import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.ZLog._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.errors.NotSupportedError
 import com.waz.service.ZMessaging
 import com.waz.threading.CancellableFuture
 import com.waz.utils.events.Signal
+import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 
 
-class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging]) extends DataFetcher[InputStream] {
+class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
+  extends DataFetcher[InputStream] with DerivedLogTag {
+
   import com.waz.threading.Threading.Implicits.Background
 
   @volatile
   private var currentData: Option[CancellableFuture[InputStream]] = None
 
   override def loadData(priority: Priority, callback: DataFetcher.DataCallback[_ >: InputStream]): Unit = {
-    verbose(s"Load asset $request")
+    verbose(l"Load asset $request")
 
     val data = CancellableFuture.lift(zms.head).flatMap { zms =>
       request match {
@@ -57,10 +59,10 @@ class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging]) extends 
 
     Try { Await.result(data, Duration.Inf) } match {
       case Failure(err) =>
-        verbose(s"Asset loading failed $request, $err ${err.getMessage}")
+        verbose(l"Asset loading failed $request, $err ${err.getMessage}")
         callback.onLoadFailed(new RuntimeException(s"Fetcher. Asset loading failed: ${err.getMessage}"))
       case Success(is) =>
-        verbose(s"Asset loaded $request")
+        verbose(l"Asset loaded $request")
         callback.onDataReady(is)
     }
   }

@@ -28,17 +28,17 @@ import android.widget.FrameLayout
 import android.widget.FrameLayout.LayoutParams
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{ConvId, TeamId, UserData}
-import com.waz.zclient.common.views.ChatHeadView
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.views.ChatHeadView
-import com.waz.zclient.common.views.ImageController.{ImageSource, NoImage}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{R, ViewHelper}
 
 import scala.collection.mutable.ArrayBuffer
 
-class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ViewHelper {
+class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int)
+  extends FrameLayout(context, attrs, style) with ViewHelper {
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
