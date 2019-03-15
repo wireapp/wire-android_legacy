@@ -40,7 +40,7 @@ class TopUserChathead(val context: Context, val attrs: AttributeSet, val defStyl
 
   inflate(R.layout.top_user_chathead, this)
 
-  private val chathead = findById[ChatheadView](R.id.cv__chathead)
+  private val chathead = findById[ChatHeadView](R.id.cv__chathead)
   private val footer = findById[TypefaceTextView](R.id.ttv__text_view)
   private val icon = findById[ImageView](R.id.iv__availability_icon)
 

@@ -28,7 +28,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.collection.controllers.{CollectionController, CollectionUtils}
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.messages.MessageBottomSheetDialog.MessageAction
 import com.waz.zclient.messages.MsgPart.Text
 import com.waz.zclient.messages.controllers.MessageActionsController
@@ -67,7 +67,7 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
 
   lazy val contentTextView = ViewUtils.getView(this, R.id.message_content).asInstanceOf[TypefaceTextView]
   lazy val infoTextView = ViewUtils.getView(this, R.id.message_info).asInstanceOf[TypefaceTextView]
-  lazy val chatheadView = ViewUtils.getView(this, R.id.chathead).asInstanceOf[ChatheadView]
+  lazy val chatheadView = ViewUtils.getView(this, R.id.chathead).asInstanceOf[ChatHeadView]
   lazy val resultsCount = ViewUtils.getView(this, R.id.search_result_count).asInstanceOf[TypefaceTextView]
 
   val contentSignal = for{

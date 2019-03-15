@@ -44,12 +44,12 @@ import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 
-class ChatheadView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
+class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends View(context, attrs, defStyleAttr)
     with ViewHelper
     with DerivedLogTag {
 
-  import ChatheadView._
+  import ChatHeadView._
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
@@ -60,25 +60,25 @@ class ChatheadView(val context: Context, val attrs: AttributeSet, val defStyleAt
   private val grayScaleColor    = getColor(R.color.chathead__non_connected)
   private val overlayColor      = getColor(R.color.text__secondary_light)
 
-  private val a = context.getTheme.obtainStyledAttributes(attrs, R.styleable.ChatheadView, 0, 0)
+  private val a = context.getTheme.obtainStyledAttributes(attrs, R.styleable.ChatHeadView, 0, 0)
 
-  private val ctrl = new ChatheadController(
-    a.getBoolean(R.styleable.ChatheadView_isSelectable, false),
-    a.getBoolean(R.styleable.ChatheadView_show_border, true),
+  private val ctrl = new ChatHeadController(
+    a.getBoolean(R.styleable.ChatHeadView_isSelectable, false),
+    a.getBoolean(R.styleable.ChatHeadView_show_border, true),
     Some(Border(
       getDimen(R.dimen.chathead__min_size_large_border).toInt,
       getDimen(R.dimen.chathead__border_width).toInt,
       getDimen(R.dimen.chathead__large_border_width).toInt)),
     ColorVal(overlayColor),
-    a.getBoolean(R.styleable.ChatheadView_is_round, true),
-    ColorVal(a.getColor(R.styleable.ChatheadView_default_background, Color.GRAY)),
-    a.getBoolean(R.styleable.ChatheadView_show_waiting, true),
-    a.getBoolean(R.styleable.ChatheadView_gray_on_unconnected, true)
+    a.getBoolean(R.styleable.ChatHeadView_is_round, true),
+    ColorVal(a.getColor(R.styleable.ChatHeadView_default_background, Color.GRAY)),
+    a.getBoolean(R.styleable.ChatHeadView_show_waiting, true),
+    a.getBoolean(R.styleable.ChatHeadView_gray_on_unconnected, true)
   )
-  private val allowIcon                       = a.getBoolean(R.styleable.ChatheadView_allow_icon, true)
-  private val swapBackgroundAndInitialsColors = a.getBoolean(R.styleable.ChatheadView_swap_background_and_initial_colors, false)
-  private val iconFontSize                    = a.getDimensionPixelSize(R.styleable.ChatheadView_glyph_size, getResources.getDimensionPixelSize(R.dimen.chathead__picker__glyph__font_size))
-  private val initialsFontSize                = a.getDimensionPixelSize(R.styleable.ChatheadView_initials_font_size, defaultInitialFontSize)
+  private val allowIcon                       = a.getBoolean(R.styleable.ChatHeadView_allow_icon, true)
+  private val swapBackgroundAndInitialsColors = a.getBoolean(R.styleable.ChatHeadView_swap_background_and_initial_colors, false)
+  private val iconFontSize                    = a.getDimensionPixelSize(R.styleable.ChatHeadView_glyph_size, getResources.getDimensionPixelSize(R.dimen.chathead__picker__glyph__font_size))
+  private val initialsFontSize                = a.getDimensionPixelSize(R.styleable.ChatHeadView_initials_font_size, defaultInitialFontSize)
   a.recycle()
 
   private val initialsTextPaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG)) { p =>
@@ -251,7 +251,7 @@ class ChatheadView(val context: Context, val attrs: AttributeSet, val defStyleAt
   }
 }
 
-object ChatheadView {
+object ChatHeadView {
 
   private val selectedUserGlyphId: Int = R.string.glyph__check
   private val pendingUserGlyphId: Int = R.string.glyph__clock
@@ -260,7 +260,7 @@ object ChatheadView {
   private val defaultInitialFontSize = -1
 }
 
-protected class ChatheadController(val setSelectable:            Boolean        = false,
+protected class ChatHeadController(val setSelectable:            Boolean        = false,
                                    val showBorder:               Boolean        = true,
                                    val border:                   Option[Border] = None,
                                    val contactBackgroundColor:   ColorVal       = ColorVal(Color.GRAY),
@@ -284,14 +284,14 @@ protected class ChatheadController(val setSelectable:            Boolean        
   def setIntegration(integration: IntegrationData): Unit =
     Option(integration).fold(throw new IllegalArgumentException("IntegrationDetails should not be null"))(i => assignInfo ! Some(AssignDetails(i)))
 
-  val chatheadInfo: Signal[Option[ChatheadDetails]] = assignInfo.flatMap {
+  val chatheadInfo: Signal[Option[ChatHeadDetails]] = assignInfo.flatMap {
     case Some(AssignDetails(_, Some(integration), _)) =>
-      Signal.const(Some(ChatheadDetails(integration)))
+      Signal.const(Some(ChatHeadDetails(integration)))
     case Some(AssignDetails(Some(userId), _, zms)) =>
       for {
         z  <- zms.fold(zMessaging)(Signal.const)
         ud <- z.usersStorage.signal(userId)
-      } yield Some(ChatheadDetails(ud, z.teamId.isDefined && z.teamId == ud.teamId, zms = Some(z)))
+      } yield Some(ChatHeadDetails(ud, z.teamId.isDefined && z.teamId == ud.teamId, zms = Some(z)))
     case _ =>
       Signal.const(None)
   }
@@ -394,7 +394,7 @@ protected class ChatheadController(val setSelectable:            Boolean        
     def apply(integration: IntegrationData): AssignDetails = AssignDetails(None, Some(integration), None)
   }
 
-  case class ChatheadDetails(accentColor: ColorVal = contactBackgroundColor,
+  case class ChatHeadDetails(accentColor: ColorVal = contactBackgroundColor,
                              connectionStatus: User.ConnectionStatus = UNCONNECTED,
                              teamMember: Boolean = false,
                              hasBeenInvited: Boolean = false,
@@ -408,12 +408,12 @@ protected class ChatheadController(val setSelectable:            Boolean        
                              zms: Option[ZMessaging] = None
                             )
 
-  object ChatheadDetails {
+  object ChatHeadDetails {
 
-    def apply(user: UserData, isTeamMember: Boolean, zms: Option[ZMessaging])(implicit context: Context): ChatheadDetails = {
+    def apply(user: UserData, isTeamMember: Boolean, zms: Option[ZMessaging])(implicit context: Context): ChatHeadDetails = {
       val knownUser = user.isConnected || user.isSelf
 
-      ChatheadDetails(
+      ChatHeadDetails(
         accentColor = ColorVal(AccentColor(user.accent).color),
         connectionStatus = user.connection,
         initials = NameParts.parseFrom(if (user.deleted) getString(R.string.default_deleted_username) else user.name).initials,
@@ -427,8 +427,8 @@ protected class ChatheadController(val setSelectable:            Boolean        
       )
     }
 
-    def apply(integration: IntegrationData): ChatheadDetails =
-      ChatheadDetails(
+    def apply(integration: IntegrationData): ChatHeadDetails =
+      ChatHeadDetails(
         initials = NameParts.parseFrom(integration.name).initials,
         assetId = integration.asset,
         isBot = true
