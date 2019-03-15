@@ -30,7 +30,7 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/wire__padding__24"/>
 
-    <com.waz.zclient.common.views.ChatheadView
+    <com.waz.zclient.common.views.ChatHeadView
         android:id="@+id/chathead"
         android:layout_width="@dimen/profile__image__width"
         android:layout_height="@dimen/profile__image__height"

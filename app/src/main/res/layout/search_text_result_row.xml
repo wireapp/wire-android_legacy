@@ -22,7 +22,7 @@
        xmlns:app="http://schemas.android.com/apk/res-auto"
     >
 
-    <com.waz.zclient.common.views.ChatheadView
+    <com.waz.zclient.common.views.ChatHeadView
         android:id="@+id/chathead"
         app:show_border="false"
         android:layout_width="@dimen/search__chathead__size"
