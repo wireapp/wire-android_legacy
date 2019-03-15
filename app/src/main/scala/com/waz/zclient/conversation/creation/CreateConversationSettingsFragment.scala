@@ -24,7 +24,6 @@ import android.text.InputFilter.LengthFilter
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, TextView}
 import android.widget.CompoundButton.OnCheckedChangeListener
-import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
@@ -143,5 +142,5 @@ class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
 }
 
 object CreateConversationSettingsFragment {
-  val Tag = implicitLogTag
+  val Tag: String = getClass.getSimpleName
 }

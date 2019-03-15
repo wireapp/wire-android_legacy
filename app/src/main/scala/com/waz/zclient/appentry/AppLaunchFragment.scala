@@ -20,14 +20,14 @@ package com.waz.zclient.appentry
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.LinearLayout
-import com.waz.ZLog
 import com.waz.zclient.R
 import com.waz.zclient.appentry.fragments.SignInFragment._
 import com.waz.zclient.appentry.fragments.{SignInFragment, TeamNameFragment}
 import com.waz.zclient.utils.{LayoutSpec, RichView}
 
 object AppLaunchFragment {
-  val Tag: String = ZLog.ImplicitTag.implicitLogTag
+
+  val Tag: String = getClass.getSimpleName
 
   def apply(): AppLaunchFragment = new AppLaunchFragment()
 }

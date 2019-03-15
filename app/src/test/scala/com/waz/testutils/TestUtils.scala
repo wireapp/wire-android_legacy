@@ -19,7 +19,6 @@ package com.waz.testutils
 
 import java.util.concurrent.{CountDownLatch, TimeUnit, TimeoutException}
 
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.WireContext

@@ -23,9 +23,8 @@ import android.util.{AttributeSet, TypedValue}
 import android.view.{View, ViewGroup}
 import android.widget.{ImageView, LinearLayout, TextView}
 import com.bumptech.glide.request.RequestOptions
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.assets2.Asset
 import com.waz.service.assets2.Asset.General
@@ -35,6 +34,7 @@ import com.waz.utils.events._
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
 import com.waz.zclient.glide.{GlideBuilder, WireGlide}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MsgPart._
 import com.waz.zclient.messages._
@@ -47,7 +47,12 @@ import com.waz.zclient.utils.{RichTextView, RichView}
 import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.Instant
 
-abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper with EphemeralPartView {
+abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
+  extends LinearLayout(context, attrs, style)
+    with ViewHelper
+    with EphemeralPartView
+    with DerivedLogTag {
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -86,7 +91,7 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int) 
     }
 
   def setQuote(quotedMessage: MessageData): Unit = {
-    ZLog.verbose(s"setQuote: $quotedMessage")
+    verbose(l"setQuote: $quotedMessage")
     this.quotedMessage ! quotedMessage
   }
 

@@ -24,7 +24,6 @@ import android.text.format.Formatter
 import android.util.AttributeSet
 import android.view.View
 import android.widget._
-import com.waz.ZLog.ImplicitTag._
 import com.waz.service.assets2.AssetStatus
 import com.waz.threading.Threading
 import com.waz.zclient.R

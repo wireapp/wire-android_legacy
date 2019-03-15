@@ -29,8 +29,8 @@ import android.view.ViewGroup.LayoutParams
 import android.view._
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.MessageFilter
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{AssetId, MessageData}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -52,7 +52,11 @@ import com.waz.zclient.views.images.TouchImageView
 import scala.collection.mutable
 import scala.concurrent.Future
 
-class SingleImageCollectionFragment extends BaseFragment[CollectionFragment.Container] with FragmentHelper with OnBackPressedListener {
+class SingleImageCollectionFragment
+  extends BaseFragment[CollectionFragment.Container]
+    with FragmentHelper
+    with OnBackPressedListener {
+
   import Threading.Implicits.Ui
 
   lazy val zms = inject[Signal[ZMessaging]]
@@ -167,7 +171,12 @@ object SingleImageCollectionFragment {
     override def getCount: Int = recyclerCursor.fold(0)(_.count)
   }
 
-  class SwipeImageView(context: Context, attrs: AttributeSet, style: Int)(implicit injector: Injector, ev: EventContext) extends TouchImageView(context, attrs, style) with Injectable{
+  class SwipeImageView(context: Context, attrs: AttributeSet, style: Int)
+                      (implicit injector: Injector, ev: EventContext)
+    extends TouchImageView(context, attrs, style)
+      with Injectable
+      with DerivedLogTag {
+
     def this(context: Context, attrs: AttributeSet)(implicit injector: Injector, ev: EventContext) = this(context, attrs, 0)
     def this(context: Context)(implicit injector: Injector, ev: EventContext) = this(context, null, 0)
 

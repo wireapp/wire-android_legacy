@@ -29,6 +29,9 @@ import android.widget.FrameLayout.LayoutParams
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{ConvId, TeamId, UserData}
 import com.waz.zclient.common.views.ChatHeadView
+import com.waz.utils.events.Signal
+import com.waz.zclient.common.views.ChatHeadView
+import com.waz.zclient.common.views.ImageController.{ImageSource, NoImage}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{R, ViewHelper}
@@ -52,6 +55,8 @@ class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int)
   private val avatarSingle = ViewUtils.getView(this, R.id.avatar_single).asInstanceOf[ChatHeadView]
   private val avatarGroup = ViewUtils.getView(this, R.id.avatar_group).asInstanceOf[View]
   private val avatarGroupSingle = ViewUtils.getView(this, R.id.conversation_avatar_single_group).asInstanceOf[ChatHeadView]
+
+  private val imageSources = Seq.fill(4)(Signal[ImageSource]())
 
   private val chatheads = Seq(avatarStartTop, avatarEndTop, avatarStartBottom, avatarEndBottom)
 

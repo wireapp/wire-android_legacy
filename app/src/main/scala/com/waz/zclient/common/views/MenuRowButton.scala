@@ -23,7 +23,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
 import android.widget.{ProgressBar, RelativeLayout}
-import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.{R, ViewHelper}
@@ -32,7 +32,10 @@ import com.waz.zclient.utils.ContextUtils
 
 import scala.concurrent.Future
 
-class MenuRowButton(context: Context, attrs: AttributeSet, style: Int) extends RelativeLayout(context, attrs, style) {
+class MenuRowButton(context: Context, attrs: AttributeSet, style: Int)
+  extends RelativeLayout(context, attrs, style)
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 

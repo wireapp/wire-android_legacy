@@ -20,7 +20,6 @@ package com.waz.zclient.calling.views
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.FrameLayout
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.service.call.CallInfo.CallState.{OtherCalling, SelfConnected}
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.zclient.calling.controllers.CallController

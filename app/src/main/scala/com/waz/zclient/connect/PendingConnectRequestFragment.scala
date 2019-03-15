@@ -23,7 +23,6 @@ import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.ImageView
 import com.bumptech.glide.request.RequestOptions
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.User.ConnectionStatus
 import com.waz.model.UserId
 import com.waz.service.ZMessaging

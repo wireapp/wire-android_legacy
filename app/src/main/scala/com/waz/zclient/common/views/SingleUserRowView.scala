@@ -24,7 +24,6 @@ import android.util.AttributeSet
 import android.view.{Gravity, View, ViewGroup}
 import android.view.View.OnClickListener
 import android.widget.{CompoundButton, ImageView, LinearLayout, RelativeLayout}
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.model.{Availability, IntegrationData, TeamId, UserData}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning

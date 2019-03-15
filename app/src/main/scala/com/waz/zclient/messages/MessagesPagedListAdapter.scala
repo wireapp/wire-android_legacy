@@ -20,7 +20,7 @@ package com.waz.zclient.messages
 import android.arch.paging.{PagedList, PagedListAdapter}
 import android.support.v7.util.DiffUtil
 import android.view.ViewGroup
-import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
@@ -28,7 +28,10 @@ import com.waz.zclient.{Injectable, Injector}
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MessagesPagedListAdapter._
 
-class MessagesPagedListAdapter()(implicit ec: EventContext, inj: Injector) extends PagedListAdapter[MessageAndLikes, MessageViewHolder](MessageDataDiffCallback) with Injectable {
+class MessagesPagedListAdapter()(implicit ec: EventContext, inj: Injector)
+  extends PagedListAdapter[MessageAndLikes, MessageViewHolder](MessageDataDiffCallback)
+    with Injectable
+    with DerivedLogTag {
 
   private lazy val listController = inject[MessagesController]
   var convInfo: MessageAdapterData = MessageAdapterData.Empty
@@ -91,8 +94,6 @@ class MessagesPagedListAdapter()(implicit ec: EventContext, inj: Injector) exten
       ephemerals.mutate(_ - m.id)
     }
   }
-
-
 }
 
 object MessagesPagedListAdapter {

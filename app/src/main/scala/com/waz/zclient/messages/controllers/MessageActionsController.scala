@@ -23,8 +23,9 @@ import android.content._
 import android.support.v4.app.ShareCompat
 import android.support.v7.app.AlertDialog
 import android.widget.Toast
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model._
+import com.waz.api.Message
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.assets2.Asset.Image
@@ -50,7 +51,9 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-class MessageActionsController(implicit injector: Injector, ctx: Context, ec: EventContext) extends Injectable {
+class MessageActionsController(implicit injector: Injector, ctx: Context, ec: EventContext)
+  extends Injectable with DerivedLogTag {
+
   import MessageActionsController._
   import com.waz.threading.Threading.Implicits.Ui
 

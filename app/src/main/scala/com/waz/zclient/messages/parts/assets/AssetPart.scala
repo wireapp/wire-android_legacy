@@ -20,10 +20,10 @@ package com.waz.zclient.messages.parts.assets
 import android.view.View.OnLayoutChangeListener
 import android.view.{View, ViewGroup}
 import android.widget.{FrameLayout, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.{Dim2, MessageContent}
 import com.waz.service.assets2.Asset.{Audio, Video}
 import com.waz.service.assets2._
+import com.waz.model.{AssetData, Dim2, MessageContent}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal

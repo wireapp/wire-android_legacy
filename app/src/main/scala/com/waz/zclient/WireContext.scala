@@ -30,19 +30,20 @@ import android.view.View.OnClickListener
 import android.view.animation.{AlphaAnimation, Animation, AnimationUtils}
 import android.view.{LayoutInflater, View, ViewGroup, ViewStub}
 import android.widget.TextView
-import com.waz.ZLog._
+import com.waz.log.BasicLogging.LogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.events._
 import com.waz.utils.returning
 import com.waz.zclient.FragmentHelper.getNextAnimationDuration
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.CallController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.utils.{ContextUtils, RichView}
 
 import scala.language.implicitConversions
 
-object WireContext {
-  private implicit val tag: LogTag = logTagFor[WireContext]
+object WireContext extends DerivedLogTag {
 
   implicit def apply(context: Context): WireContext = context match {
     case ctx: WireContext => ctx
@@ -86,7 +87,7 @@ trait ViewHelper extends View with ViewFinder with Injectable with ViewEventCont
   @SuppressLint(Array("com.waz.ViewUtils"))
   def findById[V <: View](id: Int): V = findViewById(id).asInstanceOf[V]
 
-  def inflate(layoutResId: Int, group: ViewGroup = ViewHelper.viewGroup(this), addToParent: Boolean = true)(implicit tag: LogTag = "ViewHelper") =
+  def inflate(layoutResId: Int, group: ViewGroup = ViewHelper.viewGroup(this), addToParent: Boolean = true)(implicit tag: LogTag = LogTag("ViewHelper")) =
     ViewHelper.inflate[View](layoutResId, group, addToParent)
 }
 
@@ -102,7 +103,7 @@ object ViewHelper {
       case e: Throwable =>
         var cause = e
         while (cause.getCause != null) cause = cause.getCause
-        error("inflate failed with root cause:", cause)
+        error(l"inflate failed with root cause:", cause)
         throw e
     }
 
@@ -129,8 +130,13 @@ trait ServiceHelper extends Service with Injectable with WireContext with EventC
 }
 
 
-
-trait FragmentHelper extends Fragment with OnBackPressedListener with ViewFinder with EventContext with Injectable {
+trait FragmentHelper
+  extends Fragment
+    with OnBackPressedListener 
+    with ViewFinder
+    with EventContext
+    with Injectable
+    with DerivedLogTag {
 
   implicit def currentAndroidContext: Context = getContext
   lazy implicit val injector: Injector = getActivity.asInstanceOf[WireContext].injector
@@ -235,7 +241,7 @@ trait FragmentHelper extends Fragment with OnBackPressedListener with ViewFinder
     Option(getArguments).map(_.getBoolean(key, default)).getOrElse(default)
 
   override def onBackPressed(): Boolean = {
-    verbose(s"onBackPressed")(getClass.getSimpleName)
+    verbose(l"onBackPressed")(LogTag(getClass.getSimpleName))
     false
   }
 

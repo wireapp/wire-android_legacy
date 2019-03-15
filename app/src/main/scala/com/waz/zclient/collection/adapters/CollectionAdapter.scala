@@ -24,8 +24,9 @@ import android.util.AttributeSet
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{LinearLayout, TextView}
-import com.waz.ZLog._
 import com.waz.api.{Message, MessageFilter}
+import com.waz.log.BasicLogging.LogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -36,6 +37,7 @@ import com.waz.zclient.collection.controllers.CollectionController._
 import com.waz.zclient.collection.controllers._
 import com.waz.zclient.collection.views._
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.RecyclerCursor
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.zclient.ui.text.GlyphTextView
@@ -46,9 +48,10 @@ import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 import org.threeten.bp._
 import org.threeten.bp.temporal.ChronoUnit
 
-class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[ViewHolder] with Injectable { adapter =>
-
-  private implicit val tag: LogTag = logTagFor[CollectionAdapter]
+class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, injector: Injector, eventContext: EventContext)
+  extends RecyclerView.Adapter[ViewHolder]
+    with Injectable
+    with DerivedLogTag { adapter =>
 
   private val zms = inject[Signal[ZMessaging]]
   private val convController = inject[ConversationController]
@@ -81,12 +84,12 @@ class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, inject
       _ <- rc.countSignal
     } yield rc
 
-    debug(s"Started loading for: ${contentType.toString}")
+    debug(l"Started loading for: $contentType")
     cursor.on(Threading.Ui) { c =>
       if (!collectionCursors(contentType).contains(c)) {
         collectionCursors(contentType).foreach(_.close())
         collectionCursors(contentType) = Some(c)
-        debug(s"Cursor loaded for: ${contentType.toString}, current mode is: ${contentMode.currentValue.toString}")
+        debug(l"Cursor loaded for: $contentType, current mode is: ${contentMode.currentValue}")
         notifier.notifyDataSetChanged()
       }
     }
@@ -195,7 +198,7 @@ class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, inject
       case CollectionAdapter.VIEW_TYPE_SIMPLE_LINK =>
         ViewHelper.inflate[CollectionNormalItemView](R.layout.collection_simple_link, parent, addToParent = false)
       case _ =>
-        returning(null.asInstanceOf[CollectionNormalItemView])(_ => error(s"Unexpected ViewType: $viewType"))
+        returning(null.asInstanceOf[CollectionNormalItemView])(_ => error(l"Unexpected ViewType: $viewType"))
     }
   }
 
@@ -363,8 +366,9 @@ object Header {
 
 object CollectionAdapter {
 
-  private implicit val tag: LogTag = logTagFor[CollectionAdapter]
-
+  // TODO: Investigate why we can derive the log tag.
+  private implicit val logTag: LogTag = LogTag[CollectionAdapter.type]
+  
   val VIEW_TYPE_IMAGE = 0
   val VIEW_TYPE_FILE = 1
   val VIEW_TYPE_LINK_PREVIEW = 2
@@ -385,30 +389,33 @@ object CollectionAdapter {
     LayoutInflater.from(context).inflate(R.layout.row_collection_header, this, true)
   }
 
-  class CollectionRecyclerNotifier(contentType: ContentType, adapter: CollectionAdapter) extends RecyclerNotifier{
+  class CollectionRecyclerNotifier(contentType: ContentType, adapter: CollectionAdapter)
+    extends RecyclerNotifier
+      with DerivedLogTag {
+    
     override def notifyDataSetChanged(): Unit = {
       if (adapter.contentMode.currentValue.contains(contentType)) {
-        debug(s"Will notifyDataSetChanged. contentType: ${contentType.toString}, current mode is: ${adapter.contentMode.currentValue.toString}")
+        debug(l"Will notifyDataSetChanged. contentType: $contentType, current mode is: ${adapter.contentMode.currentValue}")
           adapter.notifyDataSetChanged()
       }
     }
 
     override def notifyItemRangeInserted(index: Int, length: Int): Unit = {
       if (adapter.contentMode.currentValue.contains(contentType)) {
-        debug(s"Will notifyItemRangeInserted. contentType: ${contentType.toString}, current mode is: ${adapter.contentMode.currentValue.toString}")
+        debug(l"Will notifyItemRangeInserted. contentType: $contentType, current mode is: ${adapter.contentMode.currentValue}")
         adapter.notifyItemRangeInserted(index, length)
       }
     }
 
     override def notifyItemRangeChanged(index: Int, length: Int): Unit =
       if (adapter.contentMode.currentValue.contains(contentType)) {
-        debug(s"Will notifyItemRangeChanged. contentType: ${contentType.toString}, current mode is: ${adapter.contentMode.currentValue.toString}")
+        debug(l"Will notifyItemRangeChanged. contentType: $contentType, current mode is: ${adapter.contentMode.currentValue}")
         adapter.notifyItemRangeChanged(index, length)
       }
 
     override def notifyItemRangeRemoved(pos: Int, count: Int): Unit =
       if (adapter.contentMode.currentValue.contains(contentType)) {
-        debug(s"Will notifyItemRangeRemoved. contentType: ${contentType.toString}, current mode is: ${adapter.contentMode.currentValue.toString}")
+        debug(l"Will notifyItemRangeRemoved. contentType: $contentType, current mode is: ${adapter.contentMode.currentValue}")
         adapter.notifyItemRangeRemoved(pos, count)
       }
   }

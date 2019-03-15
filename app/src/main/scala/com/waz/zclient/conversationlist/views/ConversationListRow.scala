@@ -24,9 +24,8 @@ import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.FrameLayout
 import android.widget.LinearLayout.LayoutParams
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.api.Message
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.ZMessaging
@@ -42,6 +41,7 @@ import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.conversationlist.views.ConversationBadge.OngoingCall
 import com.waz.zclient.conversationlist.views.ConversationListRow._
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
 import com.waz.zclient.pages.main.conversationlist.views.listview.SwipeListView
 import com.waz.zclient.pages.main.conversationlist.views.row.MenuIndicatorView
@@ -58,12 +58,14 @@ import scala.collection.Set
 
 trait ConversationListRow extends FrameLayout
 
-//TODO: Reduce all the logic in this view
-class NormalConversationListRow(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style)
+class NormalConversationListRow(context: Context, attrs: AttributeSet, style: Int)
+  extends FrameLayout(context, attrs, style)
     with ConversationListRow
     with ViewHelper
     with SwipeListView.SwipeListRow
-    with MoveToAnimateable {
+    with MoveToAnimateable
+    with DerivedLogTag {
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -186,22 +188,31 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     case (convId, text) if conversationData.forall(_.id == convId) =>
       setSubtitle(text)
     case _ =>
-      verbose("Outdated conversation subtitle")
+      verbose(l"Outdated conversation subtitle")
     }
 
   badgeInfo.onUi {
     case (convId, status) if conversationData.forall(_.id == convId) =>
       badge.setStatus(status)
     case _ =>
-      verbose("Outdated badge status")
+      verbose(l"Outdated badge status")
   }
 
-  avatarInfo.on(Threading.Ui){
-    case (convId, isGroup, membersSeq, alpha, selfTeam) if conversationData.forall(_.id == convId) =>
-      avatar.setMembers(membersSeq, convId, isGroup, selfTeam)
+  avatarInfo.on(Threading.Background){
+    case (convId, isGroup, members, alpha) if conversationData.forall(_.id == convId) =>
+      val cType = if (isGroup) ConversationType.Group else ConversationType.OneToOne
+      avatar.setMembers(members.map(_.id), convId, cType)
+    case _ =>
+      verbose(l"Outdated avatar info")
+  }
+  avatarInfo.onUi{
+    case (convId, isGroup, _, alpha) if conversationData.forall(_.id == convId) =>
+      if (!isGroup) {
+        avatar.setConversationType(ConversationType.OneToOne)
+      }
       avatar.setAlpha(alpha)
     case _ =>
-      verbose("Outdated avatar info")
+      verbose(l"Outdated avatar info")
   }
 
   badge.onClickEvent {

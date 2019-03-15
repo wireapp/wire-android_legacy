@@ -27,8 +27,10 @@ import android.util.AttributeSet
 import android.view.View.{GONE, INVISIBLE, VISIBLE}
 import android.view.{LayoutInflater, MotionEvent, View, WindowManager}
 import android.widget.{FrameLayout, SeekBar, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.{AssetId, Mime}
+import com.waz.api.{AudioAssetForUpload, PlaybackControls}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.AssetId
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.assets.GlobalRecordAndPlayService.AssetMediaKey
@@ -53,7 +55,11 @@ import org.threeten.bp.{Duration, Instant}
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 
-class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends FrameLayout(context, attrs, defStyleAttr) with ViewHelper {
+class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
+  extends FrameLayout(context, attrs, defStyleAttr)
+    with ViewHelper
+    with DerivedLogTag {
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
   import AudioMessageRecordingView._

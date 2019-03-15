@@ -30,8 +30,6 @@ import android.view.animation.Animation
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
 import android.widget._
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.content.UserPreferences
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
@@ -52,6 +50,7 @@ import com.waz.zclient.conversation.creation.{CreateConversationController, Crea
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.integrations.IntegrationDetailsFragment
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode
@@ -162,11 +161,11 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
   private lazy val emptyListButton = returning(view[RelativeLayout](R.id.empty_list_button)) { v =>
     (for {
       zms <- zms
-      permissions <- userAccountsController.selfPermissions.orElse(Signal.const(Set.empty[AccountDataOld.Permission]))
+      permissions <- userAccountsController.selfPermissions.orElse(Signal.const(Set.empty[UserPermissions.Permission]))
       members <- zms.teams.searchTeamMembers().orElse(Signal.const(Set.empty[UserData]))
       searching <- adapter.filter.map(_.nonEmpty)
      } yield
-       zms.teamId.nonEmpty && permissions(AccountDataOld.Permission.AddTeamMember) && !members.exists(_.id != zms.selfUserId) && !searching
+       zms.teamId.nonEmpty && permissions(UserPermissions.Permission.AddTeamMember) && !members.exists(_.id != zms.selfUserId) && !searching
     ).onUi(visible => v.foreach(_.setVisible(visible)))
   }
 
@@ -352,7 +351,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
 
   override def onConversationClicked(conversationData: ConversationData): Unit = {
     keyboard.hideKeyboardIfVisible()
-    verbose(s"onConversationClicked(${conversationData.id})")
+    verbose(l"onConversationClicked(${conversationData.id})")
     conversationController.selectConv(Some(conversationData.id), ConversationChangeRequester.START_CONVERSATION)
   }
 
@@ -436,7 +435,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
 
   override def onIntegrationClicked(data: IntegrationData): Unit = {
     keyboard.hideKeyboardIfVisible()
-    verbose(s"onIntegrationClicked(${data.id})")
+    verbose(l"onIntegrationClicked(${data.id})")
 
     import IntegrationDetailsFragment._
     getFragmentManager.beginTransaction

@@ -23,14 +23,15 @@ import com.waz.utils.events.{EventContext, Signal, SourceSignal}
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.messages.{MessagesController, UsersController}
 import com.waz.zclient.{Injectable, Injector}
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.content.MessagesStorage
 import com.waz.service.assets2.GeneralAsset
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.messages.MessagesService
 
 import scala.concurrent.Future
 
-class ReplyController(implicit injector: Injector, context: Context, ec: EventContext) extends Injectable {
+class ReplyController(implicit injector: Injector, context: Context, ec: EventContext)
+  extends Injectable with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 

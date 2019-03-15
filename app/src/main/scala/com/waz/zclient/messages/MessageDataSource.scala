@@ -19,16 +19,16 @@ package com.waz.zclient.messages
 
 import android.arch.paging.PositionalDataSource
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.content.MessageAndLikesStorage
 import com.waz.db.{CursorIterator, Reader}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageData.MessageDataDao
 import com.waz.model.{MessageData, MessageId, RemoteInstant}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading.Implicits.Background
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.DBCursor
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageDataSource.{MessageEntry, MessageEntryReader}
 import com.waz.zclient.{Injectable, Injector}
 
@@ -37,7 +37,10 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-class MessageDataSource(val cursor: Option[DBCursor])(implicit inj: Injector, ec: EventContext, cxt: Context) extends PositionalDataSource[MessageAndLikes] with Injectable {
+class MessageDataSource(val cursor: Option[DBCursor])(implicit inj: Injector, ec: EventContext, cxt: Context)
+  extends PositionalDataSource[MessageAndLikes]
+    with Injectable
+    with DerivedLogTag {
 
   private val messageAndLikesStorage = inject[Signal[MessageAndLikesStorage]]
 
@@ -77,7 +80,7 @@ class MessageDataSource(val cursor: Option[DBCursor])(implicit inj: Injector, ec
       case Success(data) =>
         callback.onResult(data.asJava)
       case Failure(e) =>
-        error(e.getMessage)
+        error(l"loadRange error:", e)
     }
   }
 

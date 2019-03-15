@@ -20,20 +20,20 @@ package com.waz.jobs
 import com.evernote.android.job.Job.Result
 import com.evernote.android.job.util.support.PersistableBundleCompat
 import com.evernote.android.job._
-import com.waz.ZLog.{error, verbose}
-import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserId
 import com.waz.service.ZMessaging
 import com.waz.services.fcm.FetchJob
 import com.waz.threading.Threading
 import com.waz.utils.returning
+import com.waz.zclient.log.LogUI._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 
-class PushTokenCheckJob extends Job {
+class PushTokenCheckJob extends Job with DerivedLogTag {
 
   import PushTokenCheckJob._
   import Threading.Implicits.Background
@@ -60,7 +60,7 @@ class PushTokenCheckJob extends Job {
           Await.result(res, 1.minute) //Give the job a long time to complete
         } catch {
           case NonFatal(e) =>
-            error("PushTokenCheckJob failed", e)
+            error(l"PushTokenCheckJob failed", e)
             Result.RESCHEDULE
         }
 
@@ -69,7 +69,7 @@ class PushTokenCheckJob extends Job {
   }
 }
 
-object PushTokenCheckJob {
+object PushTokenCheckJob extends DerivedLogTag {
   val Tag = "PushTokenCheckJob"
   val AccountExtra = "accounts"
 
@@ -88,11 +88,11 @@ object PushTokenCheckJob {
     val manager = JobManager.instance()
     val currentJobs = manager.getAllJobsForTag(tag).asScala.toSet
     val currentJob = returning(currentJobs.find(!_.isFinished)) { j =>
-      verbose(s"currentJob: $j")
+      verbose(l"currentJob: $j")
     }
 
     val hasPendingRequest = returning(manager.getAllJobRequestsForTag(tag).asScala.toSet) { v =>
-      if (v.size > 1) error(s"Shouldn't be more than one fetch job for account: $userId")
+      if (v.size > 1) error(l"Shouldn't be more than one fetch job for account: $userId")
     }.nonEmpty
 
     if (!(hasPendingRequest || currentJob.isDefined)) {

@@ -26,7 +26,6 @@ import com.waz.zclient.R
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
 import com.waz.zclient.utils.RichSeekBar
 import org.threeten.bp.Duration
-import com.waz.ZLog.ImplicitTag._
 import com.waz.service.assets2.AssetStatus
 import com.waz.zclient.utils.RichView
 

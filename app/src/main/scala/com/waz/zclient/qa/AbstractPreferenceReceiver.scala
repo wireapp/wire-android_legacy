@@ -21,16 +21,16 @@ package com.waz.zclient.qa
 import android.app.Activity
 import android.content.{BroadcastReceiver, Context, Intent}
 import android.preference.PreferenceManager
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.content.GlobalPreferences._
 import com.waz.content.Preferences.PrefKey
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.content.UserPreferences._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController._
 import com.waz.zclient.controllers.userpreferences.UserPreferencesController
 import com.waz.zclient.controllers.userpreferences.UserPreferencesController._
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.BackendPicker
 import com.waz.zclient.{Backend, BuildConfig, WireApplication}
@@ -39,7 +39,7 @@ import com.waz.zclient.{Backend, BuildConfig, WireApplication}
   * to test, fire an intent using:
   * adb shell am broadcast -a com.waz.zclient.dev.intent.action.ENABLE_TRACKING
   */
-trait AbstractPreferenceReceiver extends BroadcastReceiver {
+trait AbstractPreferenceReceiver extends BroadcastReceiver with DerivedLogTag {
 
   import AbstractPreferenceReceiver._
   import com.waz.threading.Threading.Implicits.Background
@@ -59,7 +59,7 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver {
   }
 
   override def onReceive(context: Context, intent: Intent) = {
-    verbose(s"onReceive: ${intent.getAction}")
+    verbose(l"onReceive: ${redactedString(intent.getAction)}")
     intent.getAction match {
       case AUTO_ANSWER_CALL_INTENT =>
         setGlobalPref(AutoAnswerCallPrefKey, intent.getBooleanExtra(AUTO_ANSWER_CALL_INTENT_EXTRA_KEY, false))

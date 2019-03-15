@@ -30,7 +30,6 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils.{getStyledDrawable, _}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventStream, RefreshingSignal, Signal}
 import com.waz.zclient.common.controllers.ThemeController.Theme

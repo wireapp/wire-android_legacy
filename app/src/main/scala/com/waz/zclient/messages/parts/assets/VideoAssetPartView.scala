@@ -25,7 +25,6 @@ import com.waz.threading.Threading
 import com.waz.zclient.R
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
 import com.waz.zclient.utils.RichView
-import com.waz.ZLog.ImplicitTag._
 import com.waz.service.assets2.{AssetStatus, DownloadAssetStatus, UploadAssetStatus}
 import com.waz.zclient.glide.{GlideBuilder, WireGlide}
 

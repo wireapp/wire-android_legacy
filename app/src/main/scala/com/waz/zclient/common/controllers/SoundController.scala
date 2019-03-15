@@ -22,15 +22,16 @@ import android.media.AudioManager
 import android.net.Uri
 import android.os.Vibrator
 import android.text.TextUtils
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.{LogTag, error, verbose}
 import com.waz.content.UserPreferences
+import com.waz.log.BasicLogging.LogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.media.manager.MediaManager
 import com.waz.media.manager.context.IntensityLevel
 import com.waz.model.UserId
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{DeprecationUtils, RingtoneUtils}
 import com.waz.zclient.utils.RingtoneUtils.{getUriForRawId, isDefaultValue}
@@ -69,7 +70,8 @@ trait SoundController {
 
 //TODO Dean - would be nice to change these unit methods to listeners on signals from the classes that could trigger sounds.
 //For that, however, we would need more signals in the app, and hence more scala classes...
-class SoundControllerImpl(implicit inj: Injector, cxt: Context) extends SoundController with Injectable {
+class SoundControllerImpl(implicit inj: Injector, cxt: Context)
+  extends SoundController with Injectable with DerivedLogTag {
 
   private implicit val ev = EventContext.Implicits.global
   private implicit val ec = Threading.Background
@@ -205,7 +207,7 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context) extends SoundCon
     */
   private def setMediaPlaying(resourceId: Int, play: Boolean = true) = _mediaManager.foreach { mm =>
     val resName = getResEntryName(resourceId)
-    verbose(s"setMediaPlaying: $resName, play: $play")
+    verbose(l"setMediaPlaying: ${redactedString(resName)}, play: $play")
     if (play) mm.playMedia(resName) else mm.stopMedia(resName)
   }
 
@@ -240,7 +242,7 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context) extends SoundCon
       }
     }
     catch {
-      case e: Exception => error(s"Could not set custom uri: $uri", e)
+      case e: Exception => error(l"Could not set custom uri: ${redactedString(uri)}", e)
     }
   }
 }

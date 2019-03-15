@@ -18,7 +18,7 @@
 package com.waz.zclient.participants
 
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -33,7 +33,8 @@ import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.Future
 
-class ParticipantsController(implicit injector: Injector, context: Context, ec: EventContext) extends Injectable {
+class ParticipantsController(implicit injector: Injector, context: Context, ec: EventContext)
+  extends Injectable with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 

@@ -19,13 +19,13 @@ package com.waz.zclient.calling.controllers
 
 import android.os.PowerManager
 import android.telephony.{PhoneStateListener, TelephonyManager}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.Verification
 import com.waz.avs.VideoPreview
 import com.waz.content.GlobalPreferences
 import com.waz.model.UserData.Picture
 import com.waz.model._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.{AssetId, LocalInstant, UserData, UserId}
 import com.waz.service.ZMessaging.clock
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
@@ -39,6 +39,7 @@ import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.{SoundController, ThemeController}
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DeprecationUtils
 import com.waz.zclient.{Injectable, Injector, R, WireContext}
@@ -46,7 +47,8 @@ import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
 
-class CallController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext) extends Injectable {
+class CallController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext)
+  extends Injectable with DerivedLogTag {
 
   import Threading.Implicits.Background
   import VideoState._
@@ -204,9 +206,6 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
   private lazy val lastControlsClick = Signal[(Boolean, Instant)]() //true = show controls and set timer, false = hide controls
 
-  import com.waz.ZLog.ImplicitTag.implicitLogTag
-  import com.waz.ZLog.verbose
-
   lazy val controlsVisible =
     (for {
       true         <- isVideoCall
@@ -219,17 +218,17 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   def controlsClick(show: Boolean): Unit = lastControlsClick ! (show, clock.instant())
 
   def leaveCall(): Unit = {
-    verbose(s"leaveCall")
+    verbose(l"leaveCall")
     updateCall { case (call, cs) => cs.endCall(call.convId, skipTerminating = true) }
   }
 
   def toggleMuted(): Unit = {
-    verbose(s"toggleMuted")
+    verbose(l"toggleMuted")
     updateCall { case (call, cs) => cs.setCallMuted(!call.muted) }
   }
 
   def toggleVideo(): Unit = {
-    verbose(s"toggleVideo")
+    verbose(l"toggleVideo")
     updateCall { case (call, cs) =>
       import VideoState._
       cs.setVideoSendState(call.convId, if (call.videoSendState != Started) Started else Stopped)
@@ -237,7 +236,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   }
 
   def setVideoPause(pause: Boolean): Unit = {
-    verbose(s"setVideoPause: $pause")
+    verbose(l"setVideoPause: $pause")
     updateCall { case (call, cs) =>
       import VideoState._
       if (call.isVideoCall) {
@@ -341,7 +340,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
   def setVideoPreview(view: Option[VideoPreview]): Unit =
     flowManager.head.foreach { fm =>
-      verbose(s"Setting VideoPreview on Flowmanager, view: $view")
+      verbose(l"Setting VideoPreview on Flowmanager, view: $view")
       fm.setVideoPreview(view.orNull)
     } (Threading.Ui)
 
@@ -390,7 +389,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     }
 
   def stateMessageText(userId: UserId): Signal[Option[String]] = Signal(callState, cameraFailed, allVideoReceiveStates.map(_.getOrElse(userId, Unknown))).map { vs =>
-    verbose(s"Message Text: $vs")
+    verbose(l"Message Text: (callstate: ${vs._1}, cameraFailed: ${vs._2}, videoState: ${vs._3}")
     (vs match {
       case (SelfCalling,   true, _)                  => Some(R.string.calling__self_preview_unavailable_long)
       case (SelfConnected, _,    BadConnection)      => Some(R.string.ongoing__poor_connection_message)
@@ -405,7 +404,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   }.disableAutowiring()
 }
 
-private class ScreenManager(implicit injector: Injector) extends Injectable {
+private class ScreenManager(implicit injector: Injector) extends Injectable with DerivedLogTag {
 
   private val TAG = "CALLING_WAKE_LOCK"
 
@@ -438,21 +437,23 @@ private class ScreenManager(implicit injector: Injector) extends Injectable {
     else PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK
     releaseWakeLock()
     wakeLock = powerManager.map(_.newWakeLock(flags, TAG))
-    verbose(s"Creating wakelock")
+    verbose(l"Creating wakelock")
     wakeLock.foreach(_.acquire())
-    verbose(s"Acquiring wakelock")
+    verbose(l"Acquiring wakelock")
   }
 
   def releaseWakeLock() = {
     for (wl <- wakeLock if wl.isHeld) {
       wl.release()
-      verbose(s"Releasing wakelock")
+      verbose(l"Releasing wakelock")
     }
     wakeLock = None
   }
 }
 
-private class GSMManager(callActive: Signal[Boolean])(implicit inject: Injector, ec: EventContext) extends Injectable {
+private class GSMManager(callActive: Signal[Boolean])(implicit inject: Injector, ec: EventContext)
+  extends Injectable with DerivedLogTag {
+
   private lazy val telephonyManager = inject[TelephonyManager]
 
   private var listening = false
@@ -466,7 +467,7 @@ private class GSMManager(callActive: Signal[Boolean])(implicit inject: Injector,
         case CALL_STATE_OFFHOOK => "offhook"
       }
 
-      info(s"GSM call state changed: $stateStr")
+      info(l"GSM call state changed: ${redactedString(stateStr)}")
       if (state == CALL_STATE_OFFHOOK) dropWireCalls()
     }
   }
@@ -475,20 +476,20 @@ private class GSMManager(callActive: Signal[Boolean])(implicit inject: Injector,
     case false => stopListening()
     case true =>
       if (telephonyManager.getCallState == TelephonyManager.CALL_STATE_OFFHOOK) {
-        info(s"GSM call in progress, leaving voice channels or v3 call")
+        info(l"GSM call in progress, leaving voice channels or v3 call")
         dropWireCalls()
       }
       else startListening()
   }
 
   private def startListening() = if (!listening) {
-    info("startListening")
+    info(l"startListening")
     telephonyManager.listen(listener, PhoneStateListener.LISTEN_CALL_STATE)
     listening = true
   }
 
   private def stopListening() = if (listening) {
-    info("stopListening")
+    info(l"stopListening")
     telephonyManager.listen(listener, PhoneStateListener.LISTEN_NONE)
     listening = false
   }

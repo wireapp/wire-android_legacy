@@ -19,8 +19,7 @@ package com.waz.zclient.participants
 
 import android.content.{Context, DialogInterface}
 import android.support.v7.app.AlertDialog
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
@@ -31,6 +30,7 @@ import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.messages.UsersController.DisplayName.Other
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
@@ -42,7 +42,11 @@ import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.duration._
 
-class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit injector: Injector, context: Context, ec: EventContext) extends OptionsMenuController with Injectable {
+class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit injector: Injector, context: Context, ec: EventContext)
+  extends OptionsMenuController
+    with Injectable
+    with DerivedLogTag {
+  
   import Threading.Implicits.Ui
 
   private val zMessaging             = inject[Signal[ZMessaging]]
@@ -137,16 +141,19 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
 
   private val convState = otherUser.map(other => (convId, other))
 
-  (new EventStreamWithAuxSignal(onMenuItemClicked, convState)) {
+  private def switchToConversationList() =
+    if (!mode.inConversationList) CancellableFuture.delay(getInt(R.integer.framework_animation_duration_medium).millis).map { _ =>
+      navController.setVisiblePage(Page.CONVERSATION_LIST, tag)
+      participantsController.onShowAnimations ! true
+    }
+
+  new EventStreamWithAuxSignal(onMenuItemClicked, convState).apply {
     case (item, Some((cId, user))) =>
-      verbose(s"onMenuItemClicked: item: $item, conv: $cId, user: $user")
+      verbose(l"onMenuItemClicked: item: $item, conv: $cId, user: $user")
       item match {
         case Archive   =>
           convController.archive(cId, archive = true)
-          if (!mode.inConversationList) CancellableFuture.delay(getInt(R.integer.framework_animation_duration_medium).millis).map { _ =>
-            navController.setVisiblePage(Page.CONVERSATION_LIST, tag)
-            participantsController.onShowAnimations ! true
-          }
+          switchToConversationList()
         case Mute   => convController.setMuted(cId, muted = MuteSet.AllMuted)
         case Unmute   => convController.setMuted(cId, muted = MuteSet.AllAllowed)
         case Unarchive => convController.archive(cId, archive = false)
@@ -173,10 +180,16 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
       .setTitle(R.string.confirmation_menu__meta_remove)
       .setMessage(R.string.confirmation_menu__meta_remove_text)
       .setPositiveButton(R.string.conversation__action__leave_only, new DialogInterface.OnClickListener {
-        override def onClick(dialog: DialogInterface, which: Int): Unit = convController.leave(convId)
+        override def onClick(dialog: DialogInterface, which: Int): Unit = {
+          convController.leave(convId)
+          switchToConversationList()
+        }
       }).setNegativeButton(R.string.conversation__action__leave_and_delete, new DialogInterface.OnClickListener {
-        override def onClick(dialog: DialogInterface, which: Int): Unit = convController.delete(convId, alsoLeave = true)
-      }).create
+      override def onClick(dialog: DialogInterface, which: Int): Unit = {
+        convController.delete(convId, alsoLeave = true)
+        switchToConversationList()
+      }
+    }).create
     dialog.show()
   }
 
@@ -192,7 +205,10 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
           })
         if (isGroup && isMember) {
           dialogBuilder.setNegativeButton(R.string.conversation__action__delete_and_leave, new DialogInterface.OnClickListener {
-            override def onClick(dialog: DialogInterface, which: Int): Unit = convController.delete(convId, alsoLeave = true)
+            override def onClick(dialog: DialogInterface, which: Int): Unit = {
+              convController.delete(convId, alsoLeave = true)
+              switchToConversationList()
+            }
           })
         }
         dialogBuilder.create.show()
@@ -226,21 +242,21 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
     }(Threading.Ui)
 
   private def callConversation(convId: ConvId) = {
-    verbose(s"callConversation $convId")
+    verbose(l"callConversation $convId")
     convController.selectConv(convId, ConversationChangeRequester.CONVERSATION_LIST).map { _ =>
       callingController.startCallInCurrentConv(withVideo = false)
     }
   }
 
   private def takePictureInConversation(convId: ConvId) = {
-    verbose(s"sendPictureToConversation $convId")
+    verbose(l"sendPictureToConversation $convId")
     convController.selectConv(convId, ConversationChangeRequester.CONVERSATION_LIST).map { _ =>
       cameraController.openCamera(CameraContext.MESSAGE)
     }
   }
 
   override def finalize(): Unit = {
-    verbose("finalized!")
+    verbose(l"finalized!")
   }
 }
 

@@ -24,7 +24,6 @@ import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.ImageView
 import com.bumptech.glide.request.RequestOptions
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.UserId
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -39,6 +38,7 @@ import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.connect.UserProfileContainer
 import com.waz.zclient.pages.main.participants.ProfileAnimation
+import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.paintcode.GuestIcon
 import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.ui.text.TypefaceTextView
@@ -51,8 +51,8 @@ import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
 
-class SendConnectRequestFragment extends BaseFragment[SendConnectRequestFragment.Container]
-  with FragmentHelper {
+class SendConnectRequestFragment
+  extends BaseFragment[SendConnectRequestFragment.Container] with FragmentHelper {
 
   import SendConnectRequestFragment._
   import Threading.Implicits.Ui
@@ -212,6 +212,11 @@ class SendConnectRequestFragment extends BaseFragment[SendConnectRequestFragment
       connectButton.setVisibility(View.VISIBLE)
       connectButton.fadeIn(FiniteDuration(getInt(R.integer.framework_animation_duration_long), MILLISECONDS))
     }
+  }
+
+  override def onBackPressed(): Boolean = {
+    inject[IPickUserController].hideUserProfile()
+    true
   }
 }
 

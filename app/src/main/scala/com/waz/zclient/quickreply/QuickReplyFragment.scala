@@ -24,8 +24,6 @@ import android.text.TextUtils
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, ViewGroup}
 import android.widget.TextView
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.tracking.ContributionEvent
 import com.waz.service.tracking.ContributionEvent.Action
@@ -34,6 +32,7 @@ import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.SharingController
 import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.popup.ViewPagerLikeLayoutManager
 import com.waz.zclient.ui.text.{TypefaceEditText, TypefaceTextView}
 import com.waz.zclient.ui.utils.KeyboardUtils
@@ -92,13 +91,13 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
   var subscriptions = Seq.empty[com.waz.utils.events.Subscription]
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
-    verbose("onCreateView")
+    verbose(l"onCreateView")
     inflater.inflate(R.layout.layout_quick_reply, container, false)
   }
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
-    verbose("onViewCreated")
+    verbose(l"onViewCreated")
 
     val name: TypefaceTextView         = findById(R.id.ttv__quick_reply__name)
     val counter: TypefaceTextView      = findById(R.id.ttv__quick_reply__counter)
@@ -171,7 +170,7 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
 
   override def onResume(): Unit = {
     super.onResume()
-    verbose("onResume")
+    verbose(l"onResume")
     message.postDelayed(new Runnable() {
       override def run(): Unit = {
         Option(message) foreach { msg =>

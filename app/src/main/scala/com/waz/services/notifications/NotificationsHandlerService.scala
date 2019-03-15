@@ -20,20 +20,20 @@ package com.waz.services.notifications
 import android.app.{NotificationManager, PendingIntent}
 import android.content.{Context, Intent}
 import android.support.v4.app.RemoteInput
-import com.waz.ZLog.ImplicitTag._
-import com.waz.log.ZLog2._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.ZMessaging
 import com.waz.services.FutureService
 import com.waz.threading.Threading
 import com.waz.utils.{TimedWakeLock, returning}
 import com.waz.zclient.ServiceHelper
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.notifications.controllers.MessageNotificationsController.toNotificationConvId
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class NotificationsHandlerService extends FutureService with ServiceHelper {
+class NotificationsHandlerService extends FutureService with ServiceHelper with DerivedLogTag {
 
   import NotificationsHandlerService._
   import Threading.Implicits.Background

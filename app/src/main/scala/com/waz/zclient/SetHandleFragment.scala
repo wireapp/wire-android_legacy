@@ -25,8 +25,6 @@ import android.graphics.Color
 import android.os.Bundle
 import android.support.annotation.Nullable
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.Handle
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -35,6 +33,7 @@ import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.TextViewUtils
@@ -144,7 +143,7 @@ class SetHandleFragment extends BaseFragment[SetHandleFragment.Container] with F
   }
 
   def onValidUsernameGenerated(generatedUsername: String) = {
-    ZLog.verbose(s"onValidUsernameGenerated $generatedUsername")
+    verbose(l"onValidUsernameGenerated ${redactedString(generatedUsername)}")
     suggestedUsername = generatedUsername
     usernameTextView.foreach { usernameTextView =>
       usernameTextView.setText(StringUtils.formatHandle(suggestedUsername))

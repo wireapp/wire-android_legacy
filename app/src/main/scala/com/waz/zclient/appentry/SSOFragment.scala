@@ -18,14 +18,13 @@
 package com.waz.zclient.appentry
 
 import android.os.Bundle
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.api.impl.ErrorResponse
 import com.waz.service.SSOService
 import com.waz.zclient.InputDialog.{Event, OnNegativeBtn, OnPositiveBtn, ValidatorResult}
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.GenericDialogErrorMessage
 import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 
 import scala.concurrent.Future
@@ -46,7 +45,7 @@ trait SSOFragment extends FragmentHelper {
 
   private lazy val dialogStaff = new InputDialog.Listener with InputDialog.InputValidator {
     override def onDialogEvent(event: Event): Unit = event match {
-      case OnNegativeBtn        => verbose("Negative")
+      case OnNegativeBtn        => verbose(l"Negative")
       case OnPositiveBtn(input) => verifyInput(input)
     }
 
@@ -100,10 +99,6 @@ trait SSOFragment extends FragmentHelper {
       .setListener(dialogStaff)
       .setValidator(dialogStaff)
       .show(getChildFragmentManager, SSODialogTag)
-  }
-
-  protected def cancelSSODialog(): Unit = {
-    findChildFragment[InputDialog](SSODialogTag).foreach(_.dismissAllowingStateLoss())
   }
 
   protected def verifyInput(input: String): Future[Unit] =

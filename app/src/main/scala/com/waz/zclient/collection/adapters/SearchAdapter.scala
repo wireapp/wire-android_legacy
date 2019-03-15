@@ -21,9 +21,8 @@ import android.content.Context
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.RecyclerView.ViewHolder
 import android.view.ViewGroup
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.{ContentSearchQuery, MessageFilter}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConvId
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
@@ -32,6 +31,7 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.RecyclerCursor
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.zclient.usersearch.views.{SearchResultRowView, TextSearchResultRowView}
@@ -40,7 +40,8 @@ import com.waz.zclient.{Injectable, Injector}
 /*
 TODO: some of this stuff is duplicated from MessagesListAdapter. Maybe there's a possibility of some refactoring and create a 'base adapter' for messageCursors
  */
-class SearchAdapter()(implicit context: Context, injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[ViewHolder] with Injectable { adapter =>
+class SearchAdapter()(implicit context: Context, injector: Injector, eventContext: EventContext)
+  extends RecyclerView.Adapter[ViewHolder] with Injectable with DerivedLogTag { adapter =>
 
   val zms = inject[Signal[ZMessaging]]
   val contentSearchQuery = inject[CollectionController].contentSearchQuery
@@ -62,7 +63,7 @@ class SearchAdapter()(implicit context: Context, injector: Injector, eventContex
 
   cursorLoader.on(Threading.Ui) { c =>
     if (!messages.contains(c)) {
-      verbose(s"cursor changed: ${c.count}")
+      verbose(l"cursor changed: ${c.count}")
       messages.foreach(_.close())
       messages = Some(c)
       convId = c.conv

@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2019 Wire Swiss GmbH
+ * Copyright (C) 2018 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,23 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/**
-  * Wire
-  * Copyright (C) 2018 Wire Swiss GmbH
-  *
-  * This program is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 3 of the License, or
-  * (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  */
 package com.waz.zclient.collection.views
 
 import android.content.Context
@@ -42,6 +25,8 @@ import android.util.AttributeSet
 import android.view.HapticFeedbackConstants
 import android.view.View.OnClickListener
 import android.webkit.URLUtil
+import android.widget.TextView
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import android.widget.{ImageView, TextView}
 import com.bumptech.glide.load.resource.bitmap.{CenterCrop, RoundedCorners}
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
@@ -63,7 +48,7 @@ import com.waz.zclient.utils.Time.TimeStamp
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{R, ViewHelper}
 
-trait CollectionItemView extends ViewHelper with EphemeralPartView {
+trait CollectionItemView extends ViewHelper with EphemeralPartView with DerivedLogTag {
   protected lazy val civZms = inject[Signal[ZMessaging]]
   protected lazy val messageActions = inject[MessageActionsController]
   protected lazy val collectionController = inject[CollectionController]

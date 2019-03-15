@@ -74,7 +74,7 @@ class SearchController(implicit inj: Injector, eventContext: EventContext) exten
   lazy val searchUserOrServices: Signal[SearchUserListState] = {
     import SearchUserListState._
     for {
-      filter  <- filter
+      filter  <- filter.throttle(500.millis)
       tab     <- tab
       res     <- tab match {
         case Tab.People =>
@@ -83,10 +83,7 @@ class SearchController(implicit inj: Injector, eventContext: EventContext) exten
             results     <- search.search(filter)
           } yield
           //TODO make isEmpty method on SE?
-            if (results.convs.isEmpty &&
-              results.local.isEmpty &&
-              results.top.isEmpty &&
-              results.dir.isEmpty)
+            if (results.isEmpty)
               if (filter.isEmpty) NoUsers else NoUsersFound
             else Users(results)
         case Tab.Services =>

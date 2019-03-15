@@ -24,8 +24,6 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.{Color, Paint, PixelFormat}
 import android.os.{Build, Bundle}
 import android.support.v4.app.{Fragment, FragmentTransaction}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.{error, info, verbose, warn}
 import com.waz.content.UserPreferences._
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
@@ -44,6 +42,7 @@ import com.waz.zclient.controllers.navigation.{NavigationControllerObserver, Pag
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.fragments.ConnectivityFragment
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.pages.startup.UpdateFragment
@@ -116,7 +115,7 @@ class MainActivity extends BaseActivity
 
     themeController.darkThemeSet.onUi {
       case theme if theme != currentlyDarkTheme =>
-        info("restartActivity")
+        info(l"restartActivity")
         finish()
         startActivity(getIntent)
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
@@ -170,7 +169,7 @@ class MainActivity extends BaseActivity
   }
 
   def startFirstFragment(): Unit = {
-    verbose(s"startFirstFragment, intent: ${getIntent.log}")
+    verbose(l"startFirstFragment, intent: $getIntent")
 
     val ssoToken = getIntent.ssoToken match {
       case None => Future.successful(None)
@@ -250,11 +249,11 @@ class MainActivity extends BaseActivity
                   else                             (AddEmailFragment(hasPassword = true), AddEmailFragment.Tag)
                 replaceMainFragment(f, t, addToBackStack = false)
               }
-            case Right(Unregistered) => warn("This shouldn't happen, going back to sign in..."); Future.successful(openSignUpPage(None))
+            case Right(Unregistered) => warn(l"This shouldn't happen, going back to sign in..."); Future.successful(openSignUpPage(None))
             case Left(_) => showGenericErrorDialog()
           }
         case _ =>
-          warn("No logged in account, sending to Sign in")
+          warn(l"No logged in account, sending to Sign in")
           Future.successful(openSignUpPage(token))
       }
     }
@@ -269,7 +268,7 @@ class MainActivity extends BaseActivity
       case _: AddEmailFragment             => Some(AddEmailFragment.Tag)
       case _ => None
     }
-    verbose(s"replaceMainFragment: $oldTag -> $newTag")
+    verbose(l"replaceMainFragment: ${oldTag.map(redactedString)} -> ${redactedString(newTag)}")
 
     val (in, out) = (MainActivity.isSlideAnimation(oldTag, newTag), reverse) match {
       case (true, true)  => (R.anim.fragment_animation_second_page_slide_in_from_left_no_alpha, R.anim.fragment_animation_second_page_slide_out_to_right_no_alpha)
@@ -330,7 +329,7 @@ class MainActivity extends BaseActivity
 
   override protected def onNewIntent(intent: Intent) = {
     super.onNewIntent(intent)
-    verbose(s"onNewIntent: $intent")
+    verbose(l"onNewIntent: $intent")
 
     if (IntentUtils.isPasswordResetIntent(intent)) onPasswordWasReset()
 
@@ -353,11 +352,11 @@ class MainActivity extends BaseActivity
     } yield {}
 
   def handleIntent(intent: Intent) = {
-    verbose(s"handleIntent: ${intent.log}")
+    verbose(l"handleIntent: ${RichIntent(intent)}")
 
     def switchConversation(convId: ConvId, call: Boolean = false) =
       CancellableFuture.delay(750.millis).map { _ =>
-        verbose(s"setting conversation: $convId")
+        verbose(l"setting conversation: $convId")
         conversationController.selectConv(convId, ConversationChangeRequester.INTENT).foreach { _ =>
           if (call)
             for {
@@ -374,7 +373,7 @@ class MainActivity extends BaseActivity
 
     intent match {
       case NotificationIntent(accountId, convId, startCall) =>
-        verbose(s"notification intent, accountId=$accountId, convId=$convId")
+        verbose(l"notification intent, accountId: $accountId, convId: $convId")
         val switchAccount = {
           accountsService.activeAccount.head.flatMap {
             case Some(acc) if intent.accountId.contains(acc.id) => Future.successful(false)
@@ -391,9 +390,9 @@ class MainActivity extends BaseActivity
 
         try {
           val t = clock.instant()
-          if (Await.result(switchAccount, 2.seconds)) verbose(s"Account switched before resuming activity lifecycle. Took ${t.until(clock.instant()).toMillis} ms")
+          if (Await.result(switchAccount, 2.seconds)) verbose(l"Account switched before resuming activity lifecycle. Took ${t.until(clock.instant()).toMillis} ms")
         } catch {
-          case NonFatal(e) => error("Failed to switch accounts", e)
+          case NonFatal(e) => error(l"Failed to switch accounts", e)
         }
 
       case SharingIntent() =>
@@ -408,7 +407,7 @@ class MainActivity extends BaseActivity
         case Intents.Page.Settings =>
           startActivityForResult(PreferencesActivity.getDefaultIntent(this), PreferencesActivity.SwitchAccountCode)
           clearIntent()
-        case _ => error(s"Unknown page: $page - ignoring intent")
+        case _ => error(l"Unknown page: ${redactedString(page)} - ignoring intent")
       }
 
       case _ => setIntent(intent)
@@ -419,7 +418,7 @@ class MainActivity extends BaseActivity
     getControllerFactory.getGlobalLayoutController.setSoftInputModeForPage(page)
 
   def onInviteRequestSent(conversation: String) = {
-    info(s"onInviteRequestSent($conversation)")
+    info(l"onInviteRequestSent(${redactedString(conversation)})")
     conversationController.selectConv(Option(new ConvId(conversation)), ConversationChangeRequester.INVITE)
   }
 

@@ -21,7 +21,6 @@ import android.graphics.Color
 import android.os.Bundle
 import android.support.v7.widget.Toolbar
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.CallParticipantsView
@@ -74,5 +73,5 @@ object CallParticipantsFragment {
 
   def apply(): CallParticipantsFragment = new CallParticipantsFragment()
 
-  val Tag = implicitLogTag
+  val Tag: String = getClass.getSimpleName
 }

@@ -25,8 +25,6 @@ import android.text.{Spannable, SpannableString, SpannableStringBuilder}
 import android.util.{AttributeSet, TypedValue}
 import android.view.View
 import android.widget.LinearLayout
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.info
 import com.waz.api.{ContentSearchQuery, Message}
 import com.waz.model.{Mention, MessageContent, MessageData}
 import com.waz.service.messages.MessageAndLikes
@@ -35,6 +33,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.collection.controllers.{CollectionController, CollectionUtils}
 import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{ClickableViewPart, HighlightViewPart, MsgPart}
 import com.waz.zclient.ui.text.LinkTextView
@@ -95,7 +94,7 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int)
       textView.setTransformedText(text)
     } catch {
       case ex: ArrayIndexOutOfBoundsException =>
-        info(s"Error while transforming text link. text: $text")
+        info(l"Error while transforming text link. text: ${redactedString(text)}")
         if (BuildConfig.FLAVOR == "internal") throw ex
     }
 
@@ -103,7 +102,7 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int)
       textView.markdown()
     } catch {
       case ex: ArrayIndexOutOfBoundsException =>
-        info(s"Error on markdown. text: $text")
+        info(l"Error on markdown. text: ${redactedString(text)}")
         if (BuildConfig.FLAVOR == "internal") throw ex
     }
   }

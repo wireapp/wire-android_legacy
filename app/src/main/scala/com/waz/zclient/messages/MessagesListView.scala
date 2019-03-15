@@ -24,10 +24,8 @@ import android.support.v7.widget.RecyclerView.{OnScrollListener, ViewHolder}
 import android.support.v7.widget.{DefaultItemAnimator, LinearLayoutManager, RecyclerView}
 import android.util.AttributeSet
 import android.view.WindowManager
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag._
-import com.waz.api.Message
-import com.waz.utils._
+import com.waz.api.{AssetStatus, Message}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, Dim2, MessageData}
 import com.waz.service.assets2.AssetStatus
 import com.waz.service.messages.MessageAndLikes
@@ -37,12 +35,15 @@ import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.{Injectable, Injector, ViewHelper}
 
-class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extends RecyclerView(context, attrs, style) with ViewHelper {
+class MessagesListView(context: Context, attrs: AttributeSet, style: Int)
+  extends RecyclerView(context, attrs, style) with ViewHelper with DerivedLogTag {
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -99,7 +100,7 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int) extend
   }
 
   viewDim.onUi { dim =>
-    ZLog.verbose(s"viewDim($dim)")
+    verbose(l"viewDim($dim)")
     adapter.listDim = dim
     adapter.notifyDataSetChanged()
   }
@@ -164,7 +165,10 @@ object MessagesListView {
   case class UnreadIndex(index: Int) extends AnyVal
 }
 
-case class MessageViewHolder(view: MessageView, adapter: MessagesPagedListAdapter)(implicit ec: EventContext, inj: Injector) extends RecyclerView.ViewHolder(view) with Injectable {
+case class MessageViewHolder(view: MessageView, adapter: MessagesPagedListAdapter)(implicit ec: EventContext, inj: Injector)
+  extends RecyclerView.ViewHolder(view)
+    with Injectable
+    with DerivedLogTag {
 
   private val selection = inject[ConversationController].messages
   private val msgsController = inject[MessagesController]

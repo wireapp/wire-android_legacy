@@ -25,8 +25,9 @@ import android.content.Context
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.{AndroidJUnit4, AndroidJUnitRunner}
 import androidx.work.testing.WorkManagerTestInitHelper
-import com.waz.ZLog.ImplicitTag._
+import androidx.work.test.WorkManagerTestInitHelper
 import com.waz.api.{NetworkMode, SyncState}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.{AndroidLogOutput, InternalLog}
 import com.waz.model.sync.SyncRequest
 import com.waz.model.sync.SyncRequest.SyncSelf
@@ -48,7 +49,7 @@ import scala.concurrent.{Await, ExecutionContext, Future, Promise}
 import scala.ref.WeakReference
 
 @RunWith(classOf[AndroidJUnit4])
-class WorkManagerSyncRequestServiceSpec {
+class WorkManagerSyncRequestServiceSpec extends DerivedLogTag {
 
   implicit val ec: ExecutionContext = Threading.Background
 

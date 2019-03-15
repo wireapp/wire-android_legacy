@@ -22,8 +22,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.GridLayout
-import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.ZLog.verbose
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.CallInfo.CallState.{SelfCalling, SelfConnected, SelfJoining}
@@ -32,6 +31,7 @@ import com.waz.utils.events.{EventStream, Signal, SourceStream}
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.CallControlButtonView.ButtonColor
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.paintcode._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
@@ -41,7 +41,9 @@ import scala.async.Async._
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 
-class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends GridLayout(context, attrs, defStyleAttr) with ViewHelper {
+class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
+  extends GridLayout(context, attrs, defStyleAttr) with ViewHelper with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 
@@ -57,7 +59,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   val onButtonClick: SourceStream[Unit] = EventStream[Unit]
 
   controller.callStateOpt.onUi { state =>
-    verbose(s"callStateOpt: $state")
+    verbose(l"callStateOpt: $state")
   }
 
   private val isVideoBeingSent = controller.videoSendState.map(p => !Set(Stopped, NoCameraPermission).contains(p))

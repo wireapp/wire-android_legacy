@@ -25,8 +25,6 @@ import android.support.design.widget.TabLayout.OnTabSelectedListener
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils._
@@ -34,6 +32,7 @@ import com.waz.utils.events.{ClockSignal, Signal}
 import com.waz.zclient.common.controllers.{BrowserController, ThemeController, UserAccountsController}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.CreateConversationController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.participants.{ParticipantOtrDeviceAdapter, ParticipantsController}
@@ -222,10 +221,10 @@ class SingleParticipantFragment extends FragmentHelper {
             readReceipts
           ).onUi {
             case (fields, av, tt, rr) if isTeamTheSame =>
-              verbose(s"fields: $fields")
+              verbose(l"fields: $fields")
               adapter.set(fields, av, tt, rr)
             case (_, av, tt, rr) =>
-              verbose(s"fields is None because the team of both users are different")
+              verbose(l"fields is None because the team of both users are different")
               adapter.set(Seq.empty, av, tt, rr)
           }
           view.setAdapter(adapter)
@@ -258,8 +257,11 @@ class SingleParticipantFragment extends FragmentHelper {
 
     footerMenu.foreach(_.setCallback(footerCallback))
 
-    val tab = Option(savedInstanceState).fold[Tab](DetailsTab)(_ => Tab(getStringArg(TabToOpen)))
-    tabs.foreach(_.getTabAt(tab.pos).select())
+    if (Option(savedInstanceState).isEmpty) {
+      val tab = Tab(getStringArg(TabToOpen))
+      visibleTab ! tab
+      tabs.foreach(_.getTabAt(tab.pos).select())
+    }
   }
 
   override def onBackPressed(): Boolean = {

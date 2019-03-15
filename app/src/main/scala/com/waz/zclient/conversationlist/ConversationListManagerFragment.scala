@@ -22,8 +22,6 @@ import android.os.Bundle
 import android.support.v4.app.{Fragment, FragmentManager}
 import android.view.{LayoutInflater, ViewGroup}
 import android.widget.FrameLayout
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.api.SyncState._
 import com.waz.model._
 import com.waz.model.sync.SyncCommand._
@@ -39,6 +37,7 @@ import com.waz.zclient.controllers.confirmation._
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
@@ -310,7 +309,7 @@ class ConversationListManagerFragment extends Fragment
   }
 
   override def showIncomingPendingConnectRequest(conv: ConvId) = {
-    verbose(s"showIncomingPendingConnectRequest $conv")
+    verbose(l"showIncomingPendingConnectRequest $conv")
     pickUserController.hidePickUser()
     convController.selectConv(conv, ConversationChangeRequester.INBOX) //todo stop doing this!!!
   }
@@ -385,7 +384,7 @@ class ConversationListManagerFragment extends Fragment
   }
 
   override def onAcceptedConnectRequest(userId: UserId) = {
-    verbose(s"onAcceptedConnectRequest $userId")
+    verbose(l"onAcceptedConnectRequest $userId")
     userAccountsController.getConversationId(userId).flatMap { convId =>
       convController.selectConv(convId, ConversationChangeRequester.START_CONVERSATION)
     }
@@ -393,7 +392,7 @@ class ConversationListManagerFragment extends Fragment
 
   override def onUnblockedUser(restoredConversationWithUser: ConvId) = {
     pickUserController.hideUserProfile()
-    verbose(s"onUnblockedUser $restoredConversationWithUser")
+    verbose(l"onUnblockedUser $restoredConversationWithUser")
     convController.selectConv(restoredConversationWithUser, ConversationChangeRequester.START_CONVERSATION)
   }
 

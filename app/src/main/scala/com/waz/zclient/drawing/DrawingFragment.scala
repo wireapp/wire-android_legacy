@@ -29,7 +29,6 @@ import android.view._
 import android.widget.{FrameLayout, TextView}
 import cats.data.OptionT
 import cats.instances.future._
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.MemoryImageCache
 import com.waz.model._
 import com.waz.permissions.PermissionsService

@@ -20,7 +20,7 @@ package com.waz.zclient
 
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
-import com.waz.ZLog.ImplicitTag._
+import com.waz.log.BasicLogging.LogTag
 import com.waz.service.{AccountsService, BackendConfig}
 import com.waz.threading.Threading
 import com.waz.zclient.appentry.AppEntryActivity
@@ -36,7 +36,7 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper {
         getApplication.asInstanceOf[WireApplication].ensureInitialized(be)
 
         //TODO - could this be racing with setting the active account?
-        inject[AccountsService].activeAccountId.head.map {
+        inject[AccountsService].activeAccountId.head(LogTag("BackendPicker")).map {
           case Some(_) => startMain()
           case _       => startSignUp()
         } (Threading.Ui)

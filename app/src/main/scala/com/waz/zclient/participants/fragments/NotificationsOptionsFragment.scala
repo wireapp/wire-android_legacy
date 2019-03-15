@@ -20,7 +20,6 @@ package com.waz.zclient.participants.fragments
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{LinearLayout, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.returning
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.participants.NotificationsOptionsMenuController
@@ -77,5 +76,5 @@ class NotificationsOptionsFragment extends FragmentHelper {
 }
 
 object NotificationsOptionsFragment {
-  val Tag = implicitLogTag
+  val Tag: String = getClass.getSimpleName
 }

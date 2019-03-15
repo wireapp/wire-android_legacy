@@ -18,8 +18,6 @@
 package com.waz.zclient.calling.controllers
 
 import android.Manifest.permission._
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.{verbose, warn}
 import com.waz.api.NetworkMode
 import com.waz.content.GlobalPreferences.AutoAnswerCallPrefKey
 import com.waz.model.{ConvId, UserId}
@@ -29,6 +27,7 @@ import com.waz.service.call.CallInfo.CallState
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient._
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils.{getString, showConfirmationDialog, showErrorDialog, showPermissionsErrorDialog}
 import com.waz.zclient.utils.PhoneUtils
 import com.waz.zclient.utils.PhoneUtils.PhoneState
@@ -60,18 +59,18 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
       _          <- startCall(zms.selfUserId, conv, withVideo, forceOption)
     } yield {})
       .recover {
-        case NonFatal(e) => warn("Failed to start call", e)
+        case NonFatal(e) => warn(l"Failed to start call", e)
       }
   }
 
   def acceptCall(): Future[Unit] =
     currentCallOpt.head.flatMap {
       case Some(call) => startCall(call.account, call.convId)
-      case None => Future.successful(warn("No active call to accept..."))
+      case None => Future.successful(warn(l"No active call to accept..."))
     }
 
   def startCall(account: UserId, conv: ConvId, withVideo: Boolean = false, forceOption: Boolean = false): Future[Unit] = {
-    verbose(s"startCall: account: $account, conv: $conv")
+    verbose(l"startCall: account: $account, conv: $conv")
     if (PhoneUtils.getPhoneState(cxt) != PhoneState.IDLE)
       showErrorDialog(R.string.calling__cannot_start__title, R.string.calling__cannot_start__message)
     else {
@@ -83,7 +82,7 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
         ongoingCalls      <- newCallZms.calling.joinableCalls.head
         acceptingCall     =  curCall.exists(c => c.convId == conv && c.account == account) //the call we're trying to start is the same as the current one
         isJoiningCall     =  ongoingCalls.contains(conv) //the call we're trying to start is ongoing in the background (note, this will also contain the incoming call)
-        _                 =  verbose(s"accepting? $acceptingCall, isJoiningCall?: $isJoiningCall, curCall: $curCall")
+        _                 =  verbose(l"accepting? $acceptingCall, isJoiningCall?: $isJoiningCall, curCall: $curCall")
         (true, canceled)  <- (curCallZms, curCall) match { //End any active call if it is not the one we're trying to join, confirm with the user before ending. Only proceed on confirmed
           case (Some(z), Some(c)) if !acceptingCall =>
             showConfirmationDialog(
@@ -98,7 +97,7 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
         }
         curWithVideo      <- if (curCall.isDefined && !canceled && !forceOption) isVideoCall.head //ignore withVideo flag if call is incoming
                              else Future.successful(withVideo)
-        _                 = verbose(s"curWithVideo: $curWithVideo")
+        _                 = verbose(l"curWithVideo: $curWithVideo")
         true              <-
           networkMode.head.flatMap {        //check network state, proceed if okay
             case NetworkMode.OFFLINE              => showErrorDialog(R.string.alert_dialog__no_network__header, R.string.calling__call_drop__message).map(_ => false)
@@ -124,7 +123,7 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
           ).flatMap(_ => if (curCall.isDefined) newCallZms.calling.endCall(newCallConv.id) else Future.successful({}))
       } yield {}
     }.recover {
-      case NonFatal(e) => warn("Failed to start call", e)
+      case NonFatal(e) => warn(l"Failed to start call", e)
     }
   }
 }

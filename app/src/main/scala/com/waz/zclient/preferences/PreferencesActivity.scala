@@ -29,7 +29,6 @@ import android.support.v4.app.Fragment
 import android.support.v7.widget.Toolbar
 import android.view.{MenuItem, View, ViewGroup}
 import android.widget._
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.UserPreferences
 import com.waz.service.assets2.Content
 import com.waz.service.{AccountsService, ZMessaging}

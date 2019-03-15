@@ -30,11 +30,11 @@ import android.text.TextUtils
 import android.util.TypedValue
 import android.view.{Gravity, View}
 import android.widget.{TextView, Toast}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.Message
 import com.waz.content.MessagesStorage
 import com.waz.content.UserPreferences.DownloadImagesAlways
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.{AssetData, AssetId, MessageData, Mime}
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
@@ -50,6 +50,7 @@ import com.waz.utils.{IoUtils, returning, sha2}
 import com.waz.zclient.controllers.drawing.IDrawingController.DrawingMethod
 import com.waz.zclient.controllers.singleimage.ISingleImageController
 import com.waz.zclient.drawing.DrawingFragment.Sketch
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageBottomSheetDialog.MessageAction
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.notifications.controllers.ImageNotificationsController
@@ -64,7 +65,9 @@ import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 import scala.util.Success
 
-class AssetsController(implicit context: Context, inj: Injector, ec: EventContext) extends Injectable { controller =>
+class AssetsController(implicit context: Context, inj: Injector, ec: EventContext)
+  extends Injectable with DerivedLogTag { controller =>
+
   import AssetsController._
   import Threading.Implicits.Ui
 
@@ -185,7 +188,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   // display full screen image for given message
   def showSingleImage(msg: MessageData, container: View) =
     if (!(msg.isEphemeral && msg.expired)) {
-      verbose(s"message loaded, opening single image for ${msg.id}")
+      verbose(l"message loaded, opening single image for ${msg.id}")
       singleImage.setViewReferences(container)
       singleImage.showSingleImage(msg.id.str)
     }
@@ -338,7 +341,7 @@ object AssetsController {
     }
   }
 
-  class PlaybackControls(assetId: AssetId, fileUri: URIWrapper, rAndP: Signal[GlobalRecordAndPlayService]) {
+  class PlaybackControls(assetId: AssetId, fileUri: URIWrapper, rAndP: Signal[GlobalRecordAndPlayService]) with DerivedLogTag {
 
     val isPlaying = rAndP.flatMap(rP => rP.isPlaying(AssetMediaKey(assetId)))
     val playHead = rAndP.flatMap(rP => rP.playhead(AssetMediaKey(assetId)))

@@ -21,7 +21,6 @@ import android.app.Activity
 import android.os.Bundle
 import android.text.InputType
 import android.view.View
-import com.waz.ZLog
 import com.waz.api.EmailCredentials
 import com.waz.model.AccountData.Password
 import com.waz.model.{ConfirmationCode, EmailAddress}
@@ -78,5 +77,5 @@ case class SetTeamPasswordFragment() extends CreateTeamFragment {
 }
 
 object SetTeamPasswordFragment {
-  val Tag: String = ZLog.ImplicitTag.implicitLogTag
+  val Tag: String = getClass.getSimpleName
 }

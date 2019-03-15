@@ -24,6 +24,8 @@ import android.view.View
 import android.widget.{FrameLayout, ImageView, TextView}
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.Dim2
+import com.waz.api.NetworkMode
+import com.waz.model.{AssetId, Dim2}
 import com.waz.service.NetworkModeService
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -60,45 +62,7 @@ class LocationPartView(context: Context, attrs: AttributeSet, style: Int)
   private val imageSize = Signal[Dim2]()
 
   val name = message.map(_.location.fold("")(_.getName))
-//  val image = for {
-//    msg <- message
-//    dim <- imageSize if dim.width > 0
-//  } yield
-//    msg.location.fold2[AssetRequest](AssetIdRequest(msg.assetId), { loc =>
-//      AssetDataRequest(GoogleMapsMediaService.mapImageAsset(AssetId(s"${msg.assetId.str}_${dim.width}_${dim.height}"), loc, dim)) // use dimensions in id, to avoid caching images with different sizes
-//    })
-//
-//  Signal(image, ephemeralColorDrawable).onUi {
-//    case (_, Some(drawable)) =>
-//      WireGlide().clear(imageContainer)
-//      imageView.setImageDrawable(drawable)
-//    case (request, _) =>
-//      GlideBuilder(request).into(imageView)
-//  }
-//
-//  val showPin = expired.map(!_)
-//  showPin.onUi(pinView.setVisible(_))
 
-/*
-
-  val loadingFailed = imageDrawable.state.map {
-    case State.Failed(_, _) => true
-    case _ => false
-  } .orElse(Signal const false)
-
-  val imageLoaded = imageDrawable.state.map {
-    case State.Loaded(_, _, _) => true
-    case _ => false
-  } .orElse(Signal const false)
-
-  val showPlaceholder = expired flatMap {
-    case true => Signal const false
-    case false =>
-      loadingFailed.zip(network.networkMode) map { case (failed, mode) => failed && mode == NetworkMode.OFFLINE }
-  }
-
-  showPlaceholder.on(Threading.Ui) { placeholder.setVisible }
-*/
   registerEphemeral(tvName)
 
   name { tvName.setText }

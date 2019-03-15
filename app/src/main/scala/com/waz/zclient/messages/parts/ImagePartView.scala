@@ -26,6 +26,9 @@ import com.bumptech.glide.request.RequestOptions
 import com.waz.ZLog
 import com.waz.ZLog.ImplicitTag._
 import com.waz.model.{AssetId, MessageContent}
+import android.widget.{FrameLayout, LinearLayout}
+import com.waz.model.MessageContent
+import com.waz.service.downloads.AssetLoader.DownloadOnWifiOnlyException
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{NoAutowiring, Signal, SourceSignal}

@@ -23,6 +23,8 @@ import android.graphics.drawable.Drawable
 import com.bumptech.glide.request.RequestOptions
 import com.waz.ZLog
 import com.waz.model.UserData.Picture
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.{AssetData, AssetId}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
@@ -38,8 +40,10 @@ object TeamIconDrawable {
   val UserCorners = 0
 }
 
-class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: Context) extends Drawable with Injectable {
-  private implicit val tag = ZLog.logTagFor[TeamIconDrawable]
+class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: Context)
+  extends Drawable
+    with Injectable
+    with DerivedLogTag {
 
   var text = ""
   var corners = UserCorners

@@ -24,13 +24,12 @@ import android.os.Bundle
 import android.support.annotation.Nullable
 import android.support.v4.app.Fragment
 import android.view._
-import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.ZLog.verbose
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.CallState
 import com.waz.utils.events.Subscription
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.{CallingHeader, CallingMiddleLayout, ControlsView}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, MainActivity, R}
@@ -110,7 +109,7 @@ class ControlsFragment extends FragmentHelper {
 
     callingControls.foreach(controls =>
       subs += controls.onButtonClick.onUi { _ =>
-        verbose("button clicked")
+        verbose(l"button clicked")
         controller.controlsClick(true)
       }
     )

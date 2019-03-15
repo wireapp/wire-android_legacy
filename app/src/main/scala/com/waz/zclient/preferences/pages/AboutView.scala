@@ -24,8 +24,8 @@ import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.ZmsVersion
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{MetaDataService, ZMessaging}
 import com.waz.utils.events.Signal
 import com.waz.zclient.preferences.pages.AboutView._
@@ -34,7 +34,11 @@ import com.waz.zclient.utils.BackStackKey
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 
-class AboutView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
+class AboutView(context: Context, attrs: AttributeSet, style: Int)
+  extends LinearLayout(context, attrs, style)
+    with ViewHelper
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
