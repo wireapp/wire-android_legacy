@@ -23,12 +23,9 @@ import android.view.{View, ViewGroup}
 import android.widget.{FrameLayout, ImageView, LinearLayout}
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag._
+import com.waz.zclient.log.LogUI._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{AssetId, MessageContent}
-import android.widget.{FrameLayout, LinearLayout}
-import com.waz.model.MessageContent
-import com.waz.service.downloads.AssetLoader.DownloadOnWifiOnlyException
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{NoAutowiring, Signal, SourceSignal}
@@ -41,7 +38,12 @@ import com.waz.zclient.messages.{HighlightViewPart, MessageViewPart, MsgPart}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
 
-class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ImageLayoutAssetPart with HighlightViewPart {
+class ImagePartView(context: Context, attrs: AttributeSet, style: Int)
+  extends FrameLayout(context, attrs, style)
+    with ImageLayoutAssetPart
+    with HighlightViewPart
+    with DerivedLogTag {
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -69,7 +71,7 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends F
   onClicked { _ => message.head.map(assets.showSingleImage(_, this))(Threading.Ui) }
 
   message.map(_.assetId).onUi { aId =>
-    ZLog.verbose(s"message asset id => $aId")
+    verbose(l"message asset id => $aId")
 
     aId.foreach { a =>
       GlideBuilder(a)

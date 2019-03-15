@@ -59,8 +59,8 @@ class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
 
     Try { Await.result(data, Duration.Inf) } match {
       case Failure(err) =>
-        verbose(l"Asset loading failed $request, $err ${err.getMessage}")
-        callback.onLoadFailed(new RuntimeException(s"Fetcher. Asset loading failed: ${err.getMessage}"))
+        verbose(l"Asset loading failed $request, $err")
+        callback.onLoadFailed(new RuntimeException(s"Fetcher. Asset loading failed: $err"))
       case Success(is) =>
         verbose(l"Asset loaded $request")
         callback.onDataReady(is)

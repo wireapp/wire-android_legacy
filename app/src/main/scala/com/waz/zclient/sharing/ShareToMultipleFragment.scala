@@ -34,7 +34,6 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
 import com.waz.api.impl.ContentUriAssetForUpload
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{MessageContent => _, _}
 import com.waz.service.{AccountsService, ZMessaging}

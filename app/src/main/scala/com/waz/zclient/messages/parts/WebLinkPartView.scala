@@ -26,8 +26,6 @@ import android.util.AttributeSet
 import android.widget.{ImageView, TextView}
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.ImageViewTarget
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.Message.Part
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.GenericContent.LinkPreview

@@ -27,7 +27,6 @@ import android.util.AttributeSet
 import android.view.View.{GONE, INVISIBLE, VISIBLE}
 import android.view.{LayoutInflater, MotionEvent, View, WindowManager}
 import android.widget.{FrameLayout, SeekBar, TextView}
-import com.waz.api.PlaybackControls
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{AssetId, Mime}
 import com.waz.permissions.PermissionsService

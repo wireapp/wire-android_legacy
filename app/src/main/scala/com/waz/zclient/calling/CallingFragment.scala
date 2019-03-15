@@ -24,7 +24,6 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, ImageView, TextView}
 import com.waz.avs.{VideoPreview, VideoRenderer}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{Dim2, UserId}
 import com.waz.model.UserData.Picture
 import com.waz.model.UserId
 import com.waz.service.call.Avs.VideoState
@@ -33,8 +32,6 @@ import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.controllers.{ThemeController, ThemeControllingFrameLayout}
-import com.waz.zclient.common.views.BackgroundDrawable
-import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.glide.BackgroundRequest
 import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}

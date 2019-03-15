@@ -23,14 +23,10 @@ import android.app.Activity
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api
-import com.waz.api.{AssetForUpload, IConversation, Verification}
-import com.waz.content._
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.api.{IConversation, Verification}
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.Client

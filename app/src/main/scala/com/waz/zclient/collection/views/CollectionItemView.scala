@@ -25,13 +25,11 @@ import android.util.AttributeSet
 import android.view.HapticFeedbackConstants
 import android.view.View.OnClickListener
 import android.webkit.URLUtil
-import android.widget.TextView
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import android.widget.{ImageView, TextView}
 import com.bumptech.glide.load.resource.bitmap.{CenterCrop, RoundedCorners}
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
-import com.waz.ZLog.ImplicitTag._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading

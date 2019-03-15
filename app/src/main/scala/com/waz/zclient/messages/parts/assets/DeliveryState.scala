@@ -17,8 +17,6 @@
  */
 package com.waz.zclient.messages.parts.assets
 
-import com.waz.api
-import com.waz.api.AssetStatus._
 import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow.SafeToLog

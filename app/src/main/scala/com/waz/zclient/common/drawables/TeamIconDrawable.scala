@@ -21,10 +21,8 @@ import android.content.Context
 import android.graphics._
 import android.graphics.drawable.Drawable
 import com.bumptech.glide.request.RequestOptions
-import com.waz.ZLog
 import com.waz.model.UserData.Picture
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AssetData, AssetId}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}

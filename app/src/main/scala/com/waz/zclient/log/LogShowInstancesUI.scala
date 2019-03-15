@@ -25,6 +25,7 @@ import com.waz.service.tracking.TrackingEvent
 import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.collection.controllers.CollectionController.ContentType
 import com.waz.zclient.glide.AssetRequest
+import com.waz.zclient.glide.loaders.AssetKey
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.UsersController.DisplayName
@@ -37,6 +38,7 @@ trait LogShowInstancesUI {
   import LogShow._
 
   implicit val AssetRequestLogShow: LogShow[AssetRequest] = logShowWithHash
+  implicit val AssetKeyLogShow: LogShow[AssetKey] = logShowWithHash
 
   implicit val JobLogShow: LogShow[Job] = LogShow.logShowWithHash
 

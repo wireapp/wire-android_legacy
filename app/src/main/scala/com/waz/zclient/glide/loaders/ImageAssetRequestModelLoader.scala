@@ -40,16 +40,18 @@ import java.security.MessageDigest
 import com.bumptech.glide.load.model.ModelLoader
 import com.bumptech.glide.load.model.ModelLoader.LoadData
 import com.bumptech.glide.load.{Key, Options}
-import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.ZLog._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
 import com.waz.zclient.glide._
+import com.waz.zclient.log.LogUI._
 
-class AssetRequestModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[AssetRequest, InputStream] {
+class AssetRequestModelLoader(zms: Signal[ZMessaging])
+  extends ModelLoader[AssetRequest, InputStream] with DerivedLogTag {
+
   override def buildLoadData(model: AssetRequest, width: Int, height: Int, options: Options): ModelLoader.LoadData[InputStream] = {
     val key = AssetKey(model.key, width, height, options)
-    verbose(s"key: $key")
+    verbose(l"key: $key")
     new LoadData[InputStream](key, new ImageAssetFetcher(model, zms))
   }
 

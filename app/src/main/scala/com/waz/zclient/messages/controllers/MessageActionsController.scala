@@ -23,9 +23,8 @@ import android.content._
 import android.support.v4.app.ShareCompat
 import android.support.v7.app.AlertDialog
 import android.widget.Toast
-import com.waz.model._
-import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.assets2.Asset.Image
@@ -34,9 +33,9 @@ import com.waz.threading.CancellableFuture
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.AssetsController.AssetForShare
-import com.waz.zclient.common.controllers.{AssetsController, ScreenController}
 import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
 import com.waz.zclient.common.controllers.global.KeyboardController
+import com.waz.zclient.common.controllers.{AssetsController, ScreenController}
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
 import com.waz.zclient.conversation.{LikesAndReadsFragment, ReplyController}
 import com.waz.zclient.messages.MessageBottomSheetDialog

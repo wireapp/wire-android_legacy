@@ -22,10 +22,7 @@ import android.graphics.Canvas
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{FrameLayout, ImageView, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.Dim2
-import com.waz.api.NetworkMode
-import com.waz.model.{AssetId, Dim2}
 import com.waz.service.NetworkModeService
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal

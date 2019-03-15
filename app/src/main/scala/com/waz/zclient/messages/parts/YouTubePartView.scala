@@ -25,7 +25,6 @@ import android.widget.{LinearLayout, RelativeLayout, TextView}
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.{Message, NetworkMode}
 import com.waz.model.MessageContent
 import com.waz.model.messages.media.MediaAssetData
