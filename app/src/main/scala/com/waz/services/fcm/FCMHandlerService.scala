@@ -113,7 +113,6 @@ object FCMHandlerService {
                    accounts:       AccountsService,
                    push:           PushService,
                    network:        NetworkModeService,
-                   receivedPushes: ReceivedPushStorage,
                    fcmPushes:      FCMNotificationsRepository,
                    sentTime:       Instant) extends DerivedLogTag {
 
@@ -134,20 +133,8 @@ object FCMHandlerService {
       for {
         false <- accounts.accountState(userId).map(_ == InForeground).head
         drift <- push.beDrift.head
-        nw    <- network.networkMode.head
         now   = clock.instant + drift
         idle  = network.isDeviceIdleMode
-        _ <- nId.fold(Future.successful({})) { nId =>
-          receivedPushes.insert(
-            ReceivedPushData(
-              nId,
-              sentTime.until(now),
-              now,
-              nw,
-              network.getNetworkOperatorName,
-              idle
-            )).map(_ => {})
-        }
         _ <- nId match {
           case Some(n) => fcmPushes.insert(FCMNotification(n, now, FCMNotification.Pushed))
           case _ => Future.successful(())
@@ -168,8 +155,8 @@ object FCMHandlerService {
 
   object FCMHandler {
     def apply(zms: ZMessaging, data: Map[String, String], sentTime: Instant): Future[Unit] =
-      new FCMHandler(zms.selfUserId, zms.accounts, zms.push, zms.network, zms.receivedPushStorage,
-        zms.fcmNotifications, sentTime).handleMessage(data)
+      new FCMHandler(zms.selfUserId, zms.accounts, zms.push, zms.network, zms.fcmNotifications,
+        sentTime).handleMessage(data)
   }
 
   val DataKey = "data"

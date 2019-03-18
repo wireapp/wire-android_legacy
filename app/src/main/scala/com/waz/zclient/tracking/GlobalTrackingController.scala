@@ -31,7 +31,6 @@ import com.waz.service.ZMessaging
 import com.waz.service.tracking.TrackingService.NoReporting
 import com.waz.service.tracking._
 import com.waz.threading.{SerialDispatchQueue, Threading}
-import com.waz.utils.RichThreetenBPDuration
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient._
 import com.waz.zclient.appentry.fragments.SignInFragment
@@ -40,7 +39,6 @@ import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
 import scala.concurrent.Future._
-import scala.concurrent.duration._
 import scala.util.Try
 
 class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext)
@@ -87,8 +85,6 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
           }
         case e: LoggedOutEvent if e.reason == LoggedOutEvent.InvalidCredentials =>
           //This event type is trigged a lot, so disable for now
-        case e: ReceivedPushEvent if e.p.toFetch.forall(_.asScala < 10.seconds) =>
-        //don't track - there are a lot of these events! We want to keep the event count lower
         case e@ExceptionEvent(_, _, description, Some(throwable)) =>
           error(l"description: ${redactedString(description)}", throwable)(e.tag)
           isTrackingEnabled.head.map {
