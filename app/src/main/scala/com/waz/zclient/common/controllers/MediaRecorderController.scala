@@ -21,10 +21,10 @@ import java.io.File
 
 import android.media.MediaRecorder
 import android.content.Context
-import com.waz.ZLog._
-import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.returning
 import com.waz.zclient.utils.media.{AudioEncoder, AudioSource, OutputFormat}
+import com.waz.zclient.log.LogUI._
 
 import scala.util.Try
 
@@ -37,7 +37,8 @@ trait MediaRecorderController {
   def getFile: File
 }
 
-class MediaRecorderControllerImpl(context: Context) extends MediaRecorderController {
+class MediaRecorderControllerImpl(context: Context)
+  extends MediaRecorderController with DerivedLogTag {
 
   var recorder = Option.empty[MediaRecorder]
   lazy val file = new File(context.getCacheDir, "record_temp.mp4")
@@ -62,7 +63,7 @@ class MediaRecorderControllerImpl(context: Context) extends MediaRecorderControl
       rec.prepare()
     } catch {
       case e: Throwable =>
-        verbose(s"Failed to prepare recorder ${e.getMessage}") //TODO: Abort?
+        verbose(l"Failed to prepare recorder ${showString(e.getMessage)}") //TODO: Abort?
     }
 
     rec.start()

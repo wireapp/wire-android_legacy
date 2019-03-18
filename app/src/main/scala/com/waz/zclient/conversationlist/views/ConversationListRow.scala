@@ -199,9 +199,8 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   }
 
   avatarInfo.on(Threading.Background){
-    case (convId, isGroup, members, alpha, selfTeam) if conversationData.forall(_.id == convId) =>
-      val cType = if (isGroup) ConversationType.Group else ConversationType.OneToOne
-      avatar.setMembers(members, convId, cType, selfTeam)
+    case (convId, isGroup, members, _, selfTeam) if conversationData.forall(_.id == convId) =>
+      avatar.setMembers(members, convId, isGroup, selfTeam)
     case _ =>
       verbose(l"Outdated avatar info")
   }

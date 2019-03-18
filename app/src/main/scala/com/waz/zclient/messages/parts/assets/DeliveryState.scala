@@ -23,7 +23,7 @@ import com.waz.log.LogShow.SafeToLog
 import com.waz.model._
 import com.waz.service.assets2.{DownloadAssetStatus, AssetStatus, UploadAssetStatus}
 import com.waz.utils.events.Signal
-import com.waz.zclient.log.LogUI._
+import com.waz.log.LogSE._
 
 
 sealed trait DeliveryState extends SafeToLog

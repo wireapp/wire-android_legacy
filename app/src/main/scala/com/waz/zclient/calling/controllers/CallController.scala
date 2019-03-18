@@ -25,7 +25,7 @@ import com.waz.content.GlobalPreferences
 import com.waz.model.UserData.Picture
 import com.waz.model._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AssetId, LocalInstant, UserData, UserId}
+import com.waz.model.{LocalInstant, UserData, UserId}
 import com.waz.service.ZMessaging.clock
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}

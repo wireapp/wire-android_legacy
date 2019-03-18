@@ -43,8 +43,7 @@ import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.load.Transformation
 import com.bumptech.glide.load.resource.bitmap.{CenterCrop, CircleCrop}
 import com.bumptech.glide.request.RequestOptions
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserData.{ConnectionStatus, Picture}
 import com.waz.model._
 import com.waz.service.ZMessaging
@@ -56,9 +55,10 @@ import com.waz.zclient.glide.{GlideBuilder, WireGlide}
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils.{getColor, getString}
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.log.LogUI._
 
 class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
-  extends ImageView(context, attrs, defStyleAttr) with ViewHelper {
+  extends ImageView(context, attrs, defStyleAttr) with ViewHelper with DerivedLogTag {
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
@@ -109,7 +109,7 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
     setInfo(optionsForIntegration(integration, attributes))
 
   def setInfo(options: ChatHeadViewOptions): Unit = {
-    ZLog.verbose(s"will set options: $options")
+    verbose(l"will set options: $options")
 
     if (options.picture.isEmpty) {
       WireGlide().clear(this)

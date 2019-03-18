@@ -23,23 +23,19 @@ import android.graphics.drawable.ColorDrawable
 import android.support.v4.view.ViewPager.OnPageChangeListener
 import android.support.v4.view.{PagerAdapter, ViewPager}
 import android.util.AttributeSet
-import android.view.View.OnLongClickListener
 import android.view.ViewGroup.LayoutParams
 import android.view.{View, ViewGroup}
 import com.waz.api.MessageFilter
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AssetId, MessageData}
+import com.waz.model.MessageData
 import com.waz.service.ZMessaging
-import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, EventStream, Signal, SourceSignal}
+import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.collection.controllers.CollectionController.{AllContent, ContentType, Images}
+import com.waz.zclient.collection.fragments.SingleImageCollectionFragment.SwipeImageView
 import com.waz.zclient.messages.RecyclerCursor
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
-import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.pages.main.conversationpager.CustomPagerTransformer
-import com.waz.zclient.views.images.TouchImageView
 import com.waz.zclient.{Injectable, Injector, ViewHelper}
 
 import scala.collection.mutable
@@ -162,7 +158,6 @@ class ImageSwipeAdapter(context: Context)(implicit injector: Injector, ev: Event
     val imageView = if (discardedImages.nonEmpty) discardedImages.dequeue() else new SwipeImageView(context)
     imageView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
     imageView.setImageDrawable(new ColorDrawable(Color.TRANSPARENT))
-    imageView.setPosition(position)
     container.addView(imageView)
     getItem(position).foreach { messageData => imageView.setMessageData(messageData) }
     imageView
@@ -183,56 +178,3 @@ class ImageSwipeAdapter(context: Context)(implicit injector: Injector, ev: Event
 
   override def getCount: Int = recyclerCursor.fold(0)(_.count)
 }
-
-class SwipeImageView(context: Context, attrs: AttributeSet, style: Int)
-  extends TouchImageView(context, attrs, style)
-    with ViewHelper
-    with DerivedLogTag {
-
-  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
-  def this(context: Context) = this(context, null, 0)
-
-  lazy val zms = inject[Signal[ZMessaging]]
-  lazy val messageActions = inject[MessageActionsController]
-
-  private val messageData: SourceSignal[MessageData] = Signal[MessageData]()
-  private val onLayoutChanged = EventStream[Unit]()
-
-  private val messageAndLikes = zms.zip(messageData).flatMap {
-    case (z, md) => Signal.future(z.msgAndLikes.combineWithLikes(md))
-    case _ => Signal[MessageAndLikes]()
-  }
-
-  messageAndLikes.disableAutowiring()
-
-  messageData.on(Threading.Ui){
-    md => setAsset(md.assetId)
-  }
-
-  onLayoutChanged.on(Threading.Ui){
-    _ => messageData.currentValue.foreach(md => setAsset(md.assetId))
-  }
-
-  setOnLongClickListener(new OnLongClickListener {
-    override def onLongClick(v: View): Boolean = {
-      messageAndLikes.currentValue.foreach(messageActions.showDialog(_, fromCollection = true))
-      true
-    }
-  })
-
-  private def setAsset(assetId: AssetId): Unit = {
-    val assetDrawable = new ImageAssetDrawable(Signal(WireImage(assetId)), scaleType = ImageAssetDrawable.ScaleType.CenterInside)
-    setImageDrawable(assetDrawable)
-  }
-
-  override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {
-    super.onLayout(changed, left, top, right, bottom)
-    onLayoutChanged ! (())
-  }
-
-  def setMessageData(messageData: MessageData): Unit = {
-    this.messageData ! messageData
-  }
-
-}
-

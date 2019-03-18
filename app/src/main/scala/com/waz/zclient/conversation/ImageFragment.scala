@@ -23,7 +23,6 @@ import android.support.v4.app.Fragment
 import android.support.v7.widget.Toolbar
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.{FrameLayout, ImageView}
 import com.waz.content.{MessagesStorage, ReactionsStorage}
 import com.waz.model.{AssetId, Liking, MessageId, UserId}
 import com.waz.service.ZMessaging

@@ -24,6 +24,7 @@ import com.waz.log.LogShow
 import com.waz.service.tracking.TrackingEvent
 import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.collection.controllers.CollectionController.ContentType
+import com.waz.zclient.common.views.ChatHeadView.{ChatHeadViewOptions, CropShape, OverlayIcon}
 import com.waz.zclient.glide.AssetRequest
 import com.waz.zclient.glide.loaders.AssetKey
 import com.waz.zclient.log.LogUI._
@@ -111,5 +112,20 @@ trait LogShowInstancesUI {
   implicit val ContentTypeLogShow: LogShow[ContentType] =
     LogShow.createFrom { t =>
       l"ContentType(msgTypes: ${t.msgTypes}, typeFilter: ${t.typeFilter})"
+    }
+
+  implicit val CropShapeLogShow: LogShow[CropShape] =
+    LogShow.createFrom(c => l"${showString(c.toString)}")
+
+  implicit val OverlayIconLogShow: LogShow[OverlayIcon] =
+    LogShow.createFrom(o => l"${showString(o.toString)}")
+
+  implicit val ChatHeadViewOptionsLogShow: LogShow[ChatHeadViewOptions] =
+    LogShow.createFrom { c =>
+      import c._
+      l"""ChatHeadViewOptions(picture: $picture, backgroundColor: $backgroundColor,
+          | grayScale: $grayScale, initials: ${showString(initials)}, cropShape: $cropShape,
+          | icon: $icon)
+       """.stripMargin
     }
 }

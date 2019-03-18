@@ -24,15 +24,15 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever.{METADATA_KEY_DURATION, METADATA_KEY_VIDEO_HEIGHT, METADATA_KEY_VIDEO_ROTATION, METADATA_KEY_VIDEO_WIDTH}
 import android.media._
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.bitmap.video.{MediaCodecHelper, TrackDecoder}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Dim2, Mime}
 import com.waz.service.assets.AudioLevels
 import com.waz.service.assets.AudioLevels.{TrackInfo, loudnessOverview}
 import com.waz.service.assets2._
 import com.waz.utils.{IoUtils, _}
 import com.waz.zclient.assets2.MetadataExtractionUtils._
+import com.waz.zclient.log.LogUI._
 import org.threeten.bp
 
 import scala.concurrent.duration._
@@ -41,7 +41,9 @@ import scala.math.round
 import scala.util.{Failure, Success, Try}
 
 class AssetDetailsServiceImpl(uriHelper: UriHelper)
-                             (implicit context: Context, ec: ExecutionContext) extends AssetDetailsService {
+                             (implicit context: Context, ec: ExecutionContext)
+  extends AssetDetailsService with DerivedLogTag {
+
   import AssetDetailsServiceImpl._
 
   override def extract(mime: Mime, content: PreparedContent): Future[AssetDetails] = {
@@ -127,13 +129,13 @@ class AssetDetailsServiceImpl(uriHelper: UriHelper)
     } match {
       case Success(res) => Right(res)
       case Failure(err) =>
-        verbose(s"Error while audio levels extraction: $err")
+        verbose(l"Error while audio levels extraction: $err")
         Left("can not extract audio levels")
     }
 
   private def extractAudioTrackInfo(extractor: MediaExtractor, source: Source): TrackInfo = {
-    debug(s"data source: $source")
-    debug(s"track count: ${extractor.getTrackCount}")
+    debug(l"data source: $source")
+    debug(l"track count: ${extractor.getTrackCount}")
 
     val audioTrack = Iterator.range(0, extractor.getTrackCount).map { n =>
       val fmt = extractor.getTrackFormat(n)
@@ -156,7 +158,7 @@ class AssetDetailsServiceImpl(uriHelper: UriHelper)
     val duration = get(MediaFormat.KEY_DURATION, _.getLong)
     val samples = duration.toDouble * 1E-6d * samplingRate.toDouble
 
-    returning(TrackInfo(trackNum, format, mime, samplingRate, channels, duration.micros, samples))(ti => debug(s"audio track: $ti"))
+    returning(TrackInfo(trackNum, format, mime, samplingRate, channels, duration.micros, samples))(ti => debug(l"audio track: $ti"))
   }
 
 }

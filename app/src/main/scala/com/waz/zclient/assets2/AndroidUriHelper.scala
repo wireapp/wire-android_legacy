@@ -24,15 +24,15 @@ import android.content.{ContentResolver, Context}
 import android.database.Cursor
 import android.net.Uri
 import android.provider.OpenableColumns
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Mime
 import com.waz.service.assets2.UriHelper
-import com.waz.ZLog._
-import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.Managed
+import com.waz.zclient.log.LogUI._
 
 import scala.util.Try
 
-class AndroidUriHelper(context: Context) extends UriHelper {
+class AndroidUriHelper(context: Context) extends UriHelper with DerivedLogTag {
 
   private def androidUri(uri: URI): Uri = Uri.parse(uri.toString)
 
@@ -50,7 +50,7 @@ class AndroidUriHelper(context: Context) extends UriHelper {
   }
 
   override def extractSize(uri: URI): Try[Long] = Try {
-    debug(s"Extracting size for $uri")
+    debug(l"Extracting size for $uri")
 
     if (uri.getScheme == ContentResolver.SCHEME_FILE) {
       val file = new File(uri.getPath)
@@ -64,7 +64,7 @@ class AndroidUriHelper(context: Context) extends UriHelper {
   }
 
   override def extractFileName(uri: URI): Try[String] = Try {
-    debug(s"Extracting file name for $uri")
+    debug(l"Extracting file name for $uri")
 
     if (uri.getScheme == ContentResolver.SCHEME_FILE) {
       val file = new File(uri.getPath)

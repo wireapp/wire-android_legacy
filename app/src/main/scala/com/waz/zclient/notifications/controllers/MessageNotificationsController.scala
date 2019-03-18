@@ -26,7 +26,6 @@ import android.support.annotation.RawRes
 import android.support.v4.app.NotificationCompat
 import android.text.TextUtils
 import com.bumptech.glide.request.RequestOptions
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.NotificationsHandler.NotificationType._
 import com.waz.content._

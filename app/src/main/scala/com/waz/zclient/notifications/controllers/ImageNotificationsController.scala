@@ -22,7 +22,6 @@ import android.graphics.Bitmap
 import android.support.v4.app.NotificationCompat
 import com.waz.bitmap.BitmapUtils
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AssetData, AssetId}
 import com.waz.model.AssetId
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapResult
