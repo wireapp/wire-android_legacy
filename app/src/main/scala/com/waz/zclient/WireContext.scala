@@ -240,6 +240,9 @@ trait FragmentHelper
   def getBooleanArg(key: String, default: Boolean = false): Boolean =
     Option(getArguments).map(_.getBoolean(key, default)).getOrElse(default)
 
+  def getIntArg(key: String): Option[Int] =
+    Option(getArguments).flatMap(a => Option(a.getInt(key)))
+
   override def onBackPressed(): Boolean = {
     verbose(l"onBackPressed")(LogTag(getClass.getSimpleName))
     false

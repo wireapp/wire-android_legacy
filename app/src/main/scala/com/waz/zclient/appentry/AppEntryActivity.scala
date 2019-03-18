@@ -149,17 +149,13 @@ class AppEntryActivity extends BaseActivity {
   // If this is the case, in `onResume` we can pop back the stack and show the new fragment.
   override def onResume(): Unit = {
     super.onResume()
-    withFragmentOpt(AppLaunchFragment.Tag) {
-      case Some(f: AppLaunchFragment) =>
-        // if the SSO token is present we use it to log in the user
-        userAccountsController.ssoToken.head.foreach {
-          case Some(_) =>
-            getFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-            showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
-          case _ =>
-        }(Threading.Ui)
+    // if the SSO token is present we use it to log in the user
+    userAccountsController.ssoToken.head.foreach {
+      case Some(_) =>
+        getFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
       case _ =>
-    }
+    }(Threading.Ui)
   }
 
   private def showFragment(): Unit = withFragmentOpt(AppLaunchFragment.Tag) {
