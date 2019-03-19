@@ -149,12 +149,7 @@ object FCMHandlerService {
             )).map(_ => {})
         }
         _ <- nId match {
-          case Some(n) => fcmPushes.insert(
-            FCMNotification(
-              n,
-              now,
-              FCMNotification.Pushed
-            )).map(_ => {})
+          case Some(n) => fcmPushes.insert(FCMNotification(n, now, FCMNotification.Pushed))
           case _ => Future.successful(())
         }
 
