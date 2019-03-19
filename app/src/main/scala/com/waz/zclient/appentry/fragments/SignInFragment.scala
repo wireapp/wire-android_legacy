@@ -33,9 +33,9 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient._
-import com.waz.zclient.appentry.{AppEntryActivity, SSOFragment, SSOWebViewFragment}
 import com.waz.zclient.appentry.DialogErrorMessage.{EmailError, PhoneError}
 import com.waz.zclient.appentry.fragments.SignInFragment._
+import com.waz.zclient.appentry.{AppEntryActivity, SSOFragment}
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.newreg.fragments.TabPages
 import com.waz.zclient.newreg.fragments.country.{Country, CountryController}
@@ -411,9 +411,7 @@ class SignInFragment
       false
     }
 
-  override protected def onSSOConfirm(code: String): Unit = activity.showFragment(SSOWebViewFragment.newInstance(code.toString), SSOWebViewFragment.Tag)
-
-  def activity = getActivity.asInstanceOf[AppEntryActivity]
+  override protected def activity: AppEntryActivity = getActivity.asInstanceOf[AppEntryActivity]
 }
 
 object SignInFragment {
