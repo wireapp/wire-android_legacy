@@ -28,7 +28,7 @@ import com.waz.content.UserPreferences._
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
 import com.waz.service.ZMessaging.clock
-import com.waz.service.{AccountManager, AccountsService, SSOService, ZMessaging}
+import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import com.waz.utils.{RichInstant, returning}
@@ -155,122 +155,96 @@ class MainActivity extends BaseActivity
     if (!getControllerFactory.getUserPreferencesController.hasCheckedForUnsupportedEmojis(Emojis.VERSION))
       Future(checkForUnsupportedEmojis())(Threading.Background)
 
-    DeepLink(getIntent) match {
-      case None =>
-        verbose(l"DeepLink was not found. Starting the normal flow.")
-        startFirstFragment()
-      case Some(link) =>
-        verbose(l"DeepLink was detected $link. Trying to open it...")
-        if (deepLinkService.openDeepLink(link)) verbose(l"DeepLink was opened.")
-        else {
-          verbose(l"DeepLink can not be opened. Failing back to the normal flow.")
-          startFirstFragment()
-        }
+    (DeepLink(getIntent) match {
+      case Some(DeepLink.SSOLogin(token)) => deepLinkService.validateSSOLogin(token)
+      case _ => Future.successful(None)
+    }).foreach {
+      case Some(token) => openSignUpPage(Some(token))
+      case None => startFirstFragment()
     }
   }
 
   override protected def onResume() = {
     super.onResume()
-
     Option(ZMessaging.currentGlobal).foreach(_.googleApi.checkGooglePlayServicesAvailable(this))
   }
 
-  private def openSignUpPage(ssoToken: Option[String]): Unit = {
+  private def openSignUpPage(ssoToken: Option[String] = None): Unit = {
+    verbose(l"openSignUpPage(${showString(ssoToken.getOrElse("None"))})")
     userAccountsController.ssoToken ! ssoToken
     startActivity(new Intent(getApplicationContext, classOf[AppEntryActivity]))
     finish()
   }
 
-  def startFirstFragment(): Unit = {
-    verbose(l"startFirstFragment, intent: $getIntent")
 
-    val ssoToken = getIntent.ssoToken match {
-      case None => Future.successful(None)
-      case Some(token) =>
-        getIntent.clearSSOToken()
-        if(!inject[SSOService].isTokenValid(token.trim)) {
-          showErrorDialog(R.string.sso_signin_wrong_code_title, R.string.sso_signin_wrong_code_message).map(_ => None)
-        } else {
-          accountsService.accountsWithManagers.head.flatMap {
-            case accounts if accounts.size < BuildConfig.MAX_ACCOUNTS => Future.successful(Some(token))
-            case _ =>
-              showErrorDialog(R.string.sso_signin_max_accounts_title, R.string.sso_signin_max_accounts_message).map(_ => None)
-          }
-        }
-    }
-
-    ssoToken.foreach { token =>
-      account.head.flatMap {
-        case Some(am) =>
-          am.getOrRegisterClient().map {
-            case Right(Registered(_)) if token.isEmpty =>
-              for {
-                _             <- passwordController.setPassword(None)
-                z             <- zms.head
-                self          <- z.users.selfUser.head
-                isLogin       <- z.userPrefs(IsLogin).apply()
-                isNewClient   <- z.userPrefs(IsNewClient).apply()
-                pendingPw     <- z.userPrefs(PendingPassword).apply()
-                pendingEmail  <- z.userPrefs(PendingEmail).apply()
-                ssoLogin      <- accountsService.activeAccount.map(_.exists(_.ssoId.isDefined)).head
-              } yield {
-                  val (f, t) =
-                    if (ssoLogin) {
-                      if (self.handle.isEmpty)                  (SetHandleFragment(), SetHandleFragment.Tag)
-                      else                                      (new MainPhoneFragment, MainPhoneFragment.Tag)
-                    }
-                    else if (self.email.isDefined && pendingPw) (SetOrRequestPasswordFragment(self.email.get), SetOrRequestPasswordFragment.Tag)
-                    else if (pendingEmail.isDefined)            (VerifyEmailFragment(pendingEmail.get), VerifyEmailFragment.Tag)
-                    else if (self.email.isEmpty && isLogin && isNewClient && self.phone.isDefined)
-                                                                (AddEmailFragment(), AddEmailFragment.Tag)
-                    else if (self.handle.isEmpty)               (SetHandleFragment(), SetHandleFragment.Tag)
-                    else                                        (new MainPhoneFragment, MainPhoneFragment.Tag)
-                  replaceMainFragment(f, t, addToBackStack = false)
-              }
-
-            case Right(LimitReached) =>
-              for {
-                self         <- am.getSelf
-                pendingPw    <- am.storage.userPrefs(PendingPassword).apply()
-                pendingEmail <- am.storage.userPrefs(PendingEmail).apply()
-                ssoLogin     <- accountsService.activeAccount.map(_.exists(_.ssoId.isDefined)).head
-              } yield {
-                val (f, t) =
-                  if (ssoLogin)                               (OtrDeviceLimitFragment.newInstance, OtrDeviceLimitFragment.Tag)
-                  else if (self.email.isDefined && pendingPw) (SetOrRequestPasswordFragment(self.email.get), SetOrRequestPasswordFragment.Tag)
-                  else if (pendingEmail.isDefined)            (VerifyEmailFragment(pendingEmail.get), VerifyEmailFragment.Tag)
-                  else if (self.email.isEmpty)                (AddEmailFragment(), AddEmailFragment.Tag)
-                  else                                        (OtrDeviceLimitFragment.newInstance, OtrDeviceLimitFragment.Tag)
-                replaceMainFragment(f, t, addToBackStack = false)
-              }
-
-            case Right(Registered(_)) if token.isDefined => Future.successful(openSignUpPage(token))
-
-            case Right(PasswordMissing) =>
-              for {
-                self         <- am.getSelf
-                pendingEmail <- am.storage.userPrefs(PendingEmail).apply()
-                ssoLogin     <- accountsService.activeAccount.map(_.exists(_.ssoId.isDefined)).head
-              } {
+  def startFirstFragment(): Unit =
+    account.head.flatMap {
+      case Some(am) =>
+        am.getOrRegisterClient().map {
+          case Right(Registered(_)) =>
+            for {
+              _             <- passwordController.setPassword(None)
+              z             <- zms.head
+              self          <- z.users.selfUser.head
+              isLogin       <- z.userPrefs(IsLogin).apply()
+              isNewClient   <- z.userPrefs(IsNewClient).apply()
+              pendingPw     <- z.userPrefs(PendingPassword).apply()
+              pendingEmail  <- z.userPrefs(PendingEmail).apply()
+              ssoLogin      <- accountsService.activeAccount.map(_.exists(_.ssoId.isDefined)).head
+            } yield {
                 val (f, t) =
                   if (ssoLogin) {
-                    if (self.handle.isEmpty)       (SetHandleFragment(), SetHandleFragment.Tag)
-                    else                           (new MainPhoneFragment, MainPhoneFragment.Tag)
+                    if (self.handle.isEmpty)                  (SetHandleFragment(), SetHandleFragment.Tag)
+                    else                                      (new MainPhoneFragment, MainPhoneFragment.Tag)
                   }
-                  else if (self.email.isDefined)   (SetOrRequestPasswordFragment(self.email.get, hasPassword = true), SetOrRequestPasswordFragment.Tag)
-                  else if (pendingEmail.isDefined) (VerifyEmailFragment(pendingEmail.get, hasPassword = true), VerifyEmailFragment.Tag)
-                  else                             (AddEmailFragment(hasPassword = true), AddEmailFragment.Tag)
+                  else if (self.email.isDefined && pendingPw) (SetOrRequestPasswordFragment(self.email.get), SetOrRequestPasswordFragment.Tag)
+                  else if (pendingEmail.isDefined)            (VerifyEmailFragment(pendingEmail.get), VerifyEmailFragment.Tag)
+                  else if (self.email.isEmpty && isLogin && isNewClient && self.phone.isDefined)
+                                                              (AddEmailFragment(), AddEmailFragment.Tag)
+                  else if (self.handle.isEmpty)               (SetHandleFragment(), SetHandleFragment.Tag)
+                  else                                        (new MainPhoneFragment, MainPhoneFragment.Tag)
                 replaceMainFragment(f, t, addToBackStack = false)
-              }
-            case Right(Unregistered) => warn(l"This shouldn't happen, going back to sign in..."); Future.successful(openSignUpPage(None))
-            case Left(_) => showGenericErrorDialog()
-          }
-        case _ =>
-          warn(l"No logged in account, sending to Sign in")
-          Future.successful(openSignUpPage(token))
-      }
+            }
+
+          case Right(LimitReached) =>
+            for {
+              self         <- am.getSelf
+              pendingPw    <- am.storage.userPrefs(PendingPassword).apply()
+              pendingEmail <- am.storage.userPrefs(PendingEmail).apply()
+              ssoLogin     <- accountsService.activeAccount.map(_.exists(_.ssoId.isDefined)).head
+            } yield {
+              val (f, t) =
+                if (ssoLogin)                               (OtrDeviceLimitFragment.newInstance, OtrDeviceLimitFragment.Tag)
+                else if (self.email.isDefined && pendingPw) (SetOrRequestPasswordFragment(self.email.get), SetOrRequestPasswordFragment.Tag)
+                else if (pendingEmail.isDefined)            (VerifyEmailFragment(pendingEmail.get), VerifyEmailFragment.Tag)
+                else if (self.email.isEmpty)                (AddEmailFragment(), AddEmailFragment.Tag)
+                else                                        (OtrDeviceLimitFragment.newInstance, OtrDeviceLimitFragment.Tag)
+              replaceMainFragment(f, t, addToBackStack = false)
+            }
+
+          case Right(PasswordMissing) =>
+            for {
+              self         <- am.getSelf
+              pendingEmail <- am.storage.userPrefs(PendingEmail).apply()
+              ssoLogin     <- accountsService.activeAccount.map(_.exists(_.ssoId.isDefined)).head
+            } {
+              val (f, t) =
+                if (ssoLogin) {
+                  if (self.handle.isEmpty)       (SetHandleFragment(), SetHandleFragment.Tag)
+                  else                           (new MainPhoneFragment, MainPhoneFragment.Tag)
+                }
+                else if (self.email.isDefined)   (SetOrRequestPasswordFragment(self.email.get, hasPassword = true), SetOrRequestPasswordFragment.Tag)
+                else if (pendingEmail.isDefined) (VerifyEmailFragment(pendingEmail.get, hasPassword = true), VerifyEmailFragment.Tag)
+                else                             (AddEmailFragment(hasPassword = true), AddEmailFragment.Tag)
+              replaceMainFragment(f, t, addToBackStack = false)
+            }
+          case Right(Unregistered) => warn(l"This shouldn't happen, going back to sign in..."); Future.successful(openSignUpPage())
+          case Left(_) => showGenericErrorDialog()
+        }
+      case _ =>
+        warn(l"No logged in account, sending to Sign in")
+        Future.successful(openSignUpPage())
     }
-  }
 
   def replaceMainFragment(fragment: Fragment, newTag: String, reverse: Boolean = false, addToBackStack: Boolean = true): Unit = {
 
