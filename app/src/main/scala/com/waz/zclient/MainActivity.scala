@@ -41,6 +41,7 @@ import com.waz.zclient.common.controllers.{SharingController, UserAccountsContro
 import com.waz.zclient.controllers.navigation.{NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.deeplinks.{DeepLink, DeepLinkService}
 import com.waz.zclient.fragments.ConnectivityFragment
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.NavigationController
@@ -80,6 +81,7 @@ class MainActivity extends BaseActivity
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val spinnerController      = inject[SpinnerController]
   private lazy val passwordController     = inject[PasswordController]
+  private lazy val deepLinkService        = inject[DeepLinkService]
 
   override def onAttachedToWindow() = {
     super.onAttachedToWindow()
@@ -153,7 +155,18 @@ class MainActivity extends BaseActivity
     if (!getControllerFactory.getUserPreferencesController.hasCheckedForUnsupportedEmojis(Emojis.VERSION))
       Future(checkForUnsupportedEmojis())(Threading.Background)
 
-    startFirstFragment()
+    DeepLink(getIntent) match {
+      case None =>
+        verbose(l"DeepLink was not found. Starting the normal flow.")
+        startFirstFragment()
+      case Some(link) =>
+        verbose(l"DeepLink was detected $link. Trying to open it...")
+        if (deepLinkService.openDeepLink(link)) verbose(l"DeepLink was opened.")
+        else {
+          verbose(l"DeepLink can not be opened. Failing back to the normal flow.")
+          startFirstFragment()
+        }
+    }
   }
 
   override protected def onResume() = {
