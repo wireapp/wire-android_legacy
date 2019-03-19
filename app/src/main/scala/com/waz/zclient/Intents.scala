@@ -19,6 +19,7 @@ package com.waz.zclient
 
 import android.app.PendingIntent
 import android.content.{Context, Intent}
+import android.os.Bundle
 import com.waz.model.{ConvId, UserId}
 import com.waz.utils.returning
 import com.waz.zclient.calling.CallingActivity
@@ -89,16 +90,24 @@ object Intents {
   }
 
   implicit class RichIntent(val intent: Intent) extends AnyVal {
-    def fromNotification = Option(intent).exists(_.getBooleanExtra(FromNotificationExtra, false))
-    def fromSharing      = Option(intent).exists(_.getBooleanExtra(FromSharingExtra, false))
 
-    def startCall        = Option(intent).exists(_.getBooleanExtra(StartCallExtra, false))
-    def accountId        = Option(intent).map(_.getStringExtra(AccountIdExtra)).filter(_ != null).map(UserId)
-    def convId           = Option(intent).map(_.getStringExtra(ConvIdExtra)).filter(_ != null).map(ConvId)
+    // To handle cases where null is returned
+    def getAction: Option[String] = Option(intent).flatMap(i => Option(i.getAction))
+    def getFlags: Option[Int] = Option(intent).map(_.getFlags)
+    def getExtras: Option[Bundle] = Option(intent).flatMap(i => Option(i.getExtras))
+    def getDataString: Option[String] = Option(intent).map(_.getDataString)
 
-    def page             = Option(intent).map(_.getStringExtra(OpenPageExtra)).filter(_ != null)
 
-    def clearExtras() = Option(intent).foreach { i =>
+    def fromNotification: Boolean = Option(intent).exists(_.getBooleanExtra(FromNotificationExtra, false))
+    def fromSharing: Boolean = Option(intent).exists(_.getBooleanExtra(FromSharingExtra, false))
+
+    def startCall: Boolean = Option(intent).exists(_.getBooleanExtra(StartCallExtra, false))
+    def accountId: Option[UserId] = Option(intent).map(_.getStringExtra(AccountIdExtra)).filter(_ != null).map(UserId)
+    def convId: Option[ConvId] = Option(intent).map(_.getStringExtra(ConvIdExtra)).filter(_ != null).map(ConvId)
+
+    def page: Option[Page] = Option(intent).map(_.getStringExtra(OpenPageExtra)).filter(_ != null)
+
+    def clearExtras(): Unit = Option(intent).foreach { i =>
       i.removeExtra(FromNotificationExtra)
       i.removeExtra(FromSharingExtra)
       i.removeExtra(StartCallExtra)
@@ -106,21 +115,6 @@ object Intents {
       i.removeExtra(ConvIdExtra)
       i.removeExtra(OpenPageExtra)
     }
-
-    def log =
-      s"""Intent:
-          |action:           ${intent.getAction}
-          |flags:            ${intent.getFlags}
-          |extras:           ${intent.getExtras}
-          |categories:       ${intent.getCategories}
-          |data:             ${intent.getDataString}
-          |FromNotification: $fromNotification
-          |FromSharing:      $fromSharing
-          |Start call:       $startCall
-          |Account id:       $accountId
-          |Conv id:          $convId
-          |Page:             $page
-        """.stripMargin
 
     def ssoToken: Option[String] = Option(intent.getDataString).flatMap { str =>
       import SSOIntent._
