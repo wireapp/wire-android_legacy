@@ -51,13 +51,13 @@ object DeepLink {
   case class User(userId: UserId) extends DeepLink
 
   object User {
-    def apply(id: String): Option[User] = UuidRegex.findFirstIn(id).map(i => User(UserId(i)))
+    def apply(id: String): Option[User] = UuidRegex.findFirstIn(id).map(id => User(UserId(id)))
   }
 
   case class Conversation(convId: ConvId) extends DeepLink
 
   object Conversation {
-    def apply(id: String): Option[Conversation] = UuidRegex.findFirstIn(id).map(i => Conversation(ConvId(i)))
+    def apply(id: String): Option[Conversation] = UuidRegex.findFirstIn(id).map(id => Conversation(ConvId(id)))
   }
 
 }
