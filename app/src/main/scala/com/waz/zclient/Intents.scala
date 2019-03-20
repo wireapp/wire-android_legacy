@@ -129,7 +129,7 @@ object Intents {
       else None
     }
 
-    def clearSSOToken(): Unit = intent.setData(null)
+    def clearData(): Unit = intent.setData(null)
   }
 
   object NotificationIntent {

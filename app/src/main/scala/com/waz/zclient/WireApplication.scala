@@ -249,7 +249,7 @@ object WireApplication extends DerivedLogTag {
     bind [ClipboardUtils]       to new ClipboardUtils(ctx)
     bind [ExternalFileSharing]  to new ExternalFileSharing(ctx)
 
-    bind [DeepLinkService]                to new DeepLinkService()(Threading.Background)
+    bind [DeepLinkService]      to new DeepLinkService()
 
   }
 
