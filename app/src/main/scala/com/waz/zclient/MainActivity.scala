@@ -41,6 +41,7 @@ import com.waz.zclient.common.controllers.{SharingController, UserAccountsContro
 import com.waz.zclient.controllers.navigation.{NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.deeplinks.DeepLinkService.Error.{InvalidToken, SSOLoginTooManyAccounts}
 import com.waz.zclient.deeplinks.{DeepLink, DeepLinkService}
 import com.waz.zclient.fragments.ConnectivityFragment
 import com.waz.zclient.log.LogUI._
@@ -155,12 +156,19 @@ class MainActivity extends BaseActivity
     if (!getControllerFactory.getUserPreferencesController.hasCheckedForUnsupportedEmojis(Emojis.VERSION))
       Future(checkForUnsupportedEmojis())(Threading.Background)
 
-    (DeepLink(getIntent) match {
-      case Some(DeepLink.SSOLogin(token)) => deepLinkService.validateSSOLogin(token)
-      case _ => Future.successful(None)
-    }).foreach {
-      case Some(token) => openSignUpPage(Some(token))
-      case None => startFirstFragment()
+    import DeepLinkService._
+    import DeepLink._
+    deepLinkService.checkForDeepLink(getIntent) foreach {
+      case DoNotOpenDeepLink(SSOLogin, InvalidToken) =>
+        showErrorDialog(R.string.sso_signin_wrong_code_title, R.string.sso_signin_wrong_code_message)
+        startFirstFragment()
+      case DoNotOpenDeepLink(SSOLogin, SSOLoginTooManyAccounts) =>
+        showErrorDialog(R.string.sso_signin_max_accounts_title, R.string.sso_signin_max_accounts_message)
+        startFirstFragment()
+      case OpenDeepLink(SSOLoginToken(userId, raw)) =>
+        openSignUpPage(Some(raw))
+
+      case _ => startFirstFragment()
     }
   }
 
@@ -169,8 +177,9 @@ class MainActivity extends BaseActivity
     Option(ZMessaging.currentGlobal).foreach(_.googleApi.checkGooglePlayServicesAvailable(this))
   }
 
+  //TODO Replace string token with proper type
   private def openSignUpPage(ssoToken: Option[String] = None): Unit = {
-    verbose(l"openSignUpPage(${showString(ssoToken.getOrElse("None"))})")
+    verbose(l"openSignUpPage(${ssoToken.map(showString)})")
     userAccountsController.ssoToken ! ssoToken
     startActivity(new Intent(getApplicationContext, classOf[AppEntryActivity]))
     finish()

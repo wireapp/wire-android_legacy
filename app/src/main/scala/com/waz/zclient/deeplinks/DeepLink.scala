@@ -17,27 +17,74 @@
  */
 package com.waz.zclient.deeplinks
 
-import android.content.Intent
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
-import com.waz.zclient.Intents.SSOIntent
-import com.waz.zclient.log.LogUI._
+import com.waz.zclient.BuildConfig
+
+import scala.util.Try
+import scala.util.matching.Regex
 
 sealed trait DeepLink
 
 object DeepLink extends DerivedLogTag {
-  case class SSOLogin(token: String) extends DeepLink
-  case class User(userId: UserId) extends DeepLink
-  case class Conversation(convId: ConvId) extends DeepLink
+  case object SSOLogin extends DeepLink
+  case object User extends DeepLink
+  case object Conversation extends DeepLink
 
-  def apply(intent: Intent): Option[DeepLink] = Option(intent.getDataString).flatMap(apply)
+  sealed trait Token
+  case class SSOLoginToken(userId: UserId, raw: String) extends Token
+  case class UserToken(userId: UserId) extends Token
+  case class ConversationToken(conId: ConvId) extends Token
 
-  def apply(link: String): Option[DeepLink] = {
-    import SSOIntent._
-    verbose(l"DeepLink(${showString(link)})")
-    if (link.startsWith(Prefix) && link.length > Prefix.length)
-      Option(SSOLogin(link.substring(SchemeAndHost.length)))
-    else None
-  }
+  case class RawToken(value: String) extends AnyVal
+
+  def getAll: Seq[DeepLink] = Seq(SSOLogin, User, Conversation)
 }
 
+object DeepLinkParser {
+  import DeepLink._
+
+  private val Scheme = BuildConfig.CUSTOM_URL_SCHEME
+  private val UuidRegex: Regex =
+    "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}".r
+
+  def hostBy(link: DeepLink): String = link match {
+    case DeepLink.SSOLogin => "start-sso"
+    case DeepLink.User => "user"
+    case DeepLink.Conversation => "conversation"
+  }
+
+  def parseLink(str: String): Option[(DeepLink, RawToken)] = {
+    getAll.view
+      .map { link =>
+        val prefix = s"$Scheme://${hostBy(link)}/"
+        if (str.length > prefix.length && str.startsWith(prefix))
+          Some(link -> RawToken(str.substring(prefix.length)))
+        else
+          None
+      }
+      .collectFirst { case Some(res) => res }
+  }
+
+  def parseToken(link: DeepLink, raw: RawToken): Option[Token] = link match {
+    case SSOLogin =>
+      val tokenRegex = s"wire-(${UuidRegex.regex})".r("user_id")
+      for {
+        res <- tokenRegex.findFirstMatchIn(raw.value)
+        userId <- Try { UserId(res.group("user_id")) }.toOption
+      } yield SSOLoginToken(userId, raw.value)
+
+    case DeepLink.User =>
+      for {
+        res <- UuidRegex.findFirstIn(raw.value)
+        userId = UserId(res)
+      } yield UserToken(userId)
+
+    case DeepLink.Conversation =>
+      for {
+        res <- UuidRegex.findFirstIn(raw.value)
+        convId = ConvId(res)
+      } yield ConversationToken(convId)
+  }
+
+}

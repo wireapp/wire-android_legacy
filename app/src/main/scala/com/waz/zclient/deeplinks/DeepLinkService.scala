@@ -17,43 +17,78 @@
  */
 package com.waz.zclient.deeplinks
 
-import android.content.Context
+import android.content.Intent
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountManager.ClientRegistrationState.Registered
-import com.waz.service.{AccountManager, AccountsService, SSOService}
+import com.waz.service.{AccountManager, AccountsService}
 import com.waz.utils.events.Signal
-import com.waz.zclient.utils.ContextUtils.showErrorDialog
-import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
+import com.waz.zclient.{BuildConfig, Injectable, Injector}
+import com.waz.zclient.log.LogUI._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.async.Async.{async, await}
+import scala.concurrent.Future
 
 class DeepLinkService(implicit injector: Injector) extends Injectable with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Ui
+  import com.waz.zclient.deeplinks.DeepLinkService.Error._
+  import com.waz.zclient.deeplinks.DeepLinkService._
 
   private lazy val accountsService        = inject[AccountsService]
   private lazy val account                = inject[Signal[Option[AccountManager]]]
 
-  def validateSSOLogin(token: String)(implicit context: Context, ex: ExecutionContext): Future[Option[String]] = {
-    (if (!inject[SSOService].isTokenValid(token.trim)) {
-      showErrorDialog(R.string.sso_signin_wrong_code_title, R.string.sso_signin_wrong_code_message).map(_ => None)
-    } else {
-      accountsService.accountsWithManagers.head.flatMap {
-        case accounts if accounts.size < BuildConfig.MAX_ACCOUNTS =>
-          Future.successful(Some(token))
-        case _ =>
-          showErrorDialog(R.string.sso_signin_max_accounts_title, R.string.sso_signin_max_accounts_message).map(_ => None)
-      }
-    }).flatMap {
-      case Some(ssoToken) =>
-        account.head.flatMap {
-          case Some(am) =>
-            am.getOrRegisterClient().flatMap {
-              case Right(Registered(_)) => Future.successful(Some(ssoToken))
-              case _                    => Future.successful(None)
-            }
-          case _ => Future.successful(Some(ssoToken))
+  def checkForDeepLink(intent: Intent): Future[CheckingResult] = {
+    val dataString = Option(intent.getDataString)
+    verbose(l"DeepLink checking for '${dataString.map(redactedString)}'")
+    val result = dataString.flatMap(DeepLinkParser.parseLink) match {
+      case None => Future.successful(DeepLinkNotFound)
+      case Some((link, rawToken)) =>
+        DeepLinkParser.parseToken(link, rawToken) match {
+          case None => Future.successful(DoNotOpenDeepLink(link, Error.InvalidToken))
+          case Some(token) =>
+            checkDeepLink(link, token).recover { case _ => DoNotOpenDeepLink(link, Unknown) }
+
         }
-      case _ => Future.successful(None)
     }
+
+    result.foreach { res => verbose(l"DeepLink checking result: $res") }
+    result
   }
+
+  private def checkDeepLink(deepLink: DeepLink, token: DeepLink.Token): Future[CheckingResult] =
+    token match {
+      case DeepLink.SSOLoginToken(_, _) =>
+        async {
+          val accounts = await { accountsService.accountsWithManagers.head }
+          val acc = await { account.head }
+          if (accounts.size >= BuildConfig.MAX_ACCOUNTS)
+            DoNotOpenDeepLink(deepLink, SSOLoginTooManyAccounts)
+          else if (acc.isEmpty)
+            OpenDeepLink(token)
+          else {
+            await { acc.get.getOrRegisterClient() } match {
+              case Right(Registered(_)) => OpenDeepLink(token)
+              case _ => DoNotOpenDeepLink(deepLink, Unknown)
+            }
+          }
+        }
+
+      case _ =>
+        Future.successful(OpenDeepLink(token))
+    }
+}
+
+object DeepLinkService {
+
+  sealed trait CheckingResult
+  case object DeepLinkNotFound extends CheckingResult
+  case class DoNotOpenDeepLink(link: DeepLink, reason: Error) extends CheckingResult
+  case class OpenDeepLink(token: DeepLink.Token) extends CheckingResult
+
+  sealed trait Error
+  object Error {
+    case object InvalidToken extends Error
+    case object Unknown extends Error
+    case object SSOLoginTooManyAccounts extends Error
+  }
+
 }

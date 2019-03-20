@@ -129,6 +129,7 @@ android {
         buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
         buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
         buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
+        buildConfigField 'String', 'CUSTOM_URL_SCHEME',           "\"$config.custom_url_scheme\""
     }
 
     packagingOptions {
