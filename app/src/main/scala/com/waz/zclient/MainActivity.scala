@@ -168,6 +168,14 @@ class MainActivity extends BaseActivity
       case OpenDeepLink(SSOLoginToken(userId, raw)) =>
         openSignUpPage(Some(raw))
 
+      case OpenDeepLink(UserToken(userId)) =>
+        //TODO open user info screen
+        startFirstFragment()
+
+      case OpenDeepLink(ConversationToken(conId)) =>
+        //TODO open conversation screen
+        startFirstFragment()
+
       case _ => startFirstFragment()
     }
   }
