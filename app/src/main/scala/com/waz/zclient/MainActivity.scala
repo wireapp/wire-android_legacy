@@ -158,7 +158,7 @@ class MainActivity extends BaseActivity
 
     import DeepLinkService._
     import DeepLink._
-    deepLinkService.checkForDeepLink(getIntent) foreach {
+    deepLinkService.checkForDeepLink(getIntent).foreach {
       case DoNotOpenDeepLink(SSOLogin, InvalidToken) =>
         showErrorDialog(R.string.sso_signin_wrong_code_title, R.string.sso_signin_wrong_code_message)
         startFirstFragment()
@@ -177,7 +177,7 @@ class MainActivity extends BaseActivity
         startFirstFragment()
 
       case _ => startFirstFragment()
-    }
+    }(Threading.Ui)
   }
 
   override protected def onResume() = {

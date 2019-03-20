@@ -29,7 +29,7 @@ import scala.async.Async.{async, await}
 import scala.concurrent.Future
 
 class DeepLinkService(implicit injector: Injector) extends Injectable with DerivedLogTag {
-  import com.waz.threading.Threading.Implicits.Ui
+  import com.waz.threading.Threading.Implicits.Background
   import com.waz.zclient.deeplinks.DeepLinkService.Error._
   import com.waz.zclient.deeplinks.DeepLinkService._
 
