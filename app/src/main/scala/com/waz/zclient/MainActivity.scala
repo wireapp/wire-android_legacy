@@ -165,8 +165,8 @@ class MainActivity extends BaseActivity
       case DoNotOpenDeepLink(SSOLogin, SSOLoginTooManyAccounts) =>
         showErrorDialog(R.string.sso_signin_max_accounts_title, R.string.sso_signin_max_accounts_message)
         startFirstFragment()
-      case OpenDeepLink(SSOLoginToken(userId, raw)) =>
-        openSignUpPage(Some(raw))
+      case OpenDeepLink(SSOLoginToken(token)) =>
+        openSignUpPage(Some(token))
 
       case OpenDeepLink(UserToken(userId)) =>
         //TODO open user info screen
@@ -185,7 +185,6 @@ class MainActivity extends BaseActivity
     Option(ZMessaging.currentGlobal).foreach(_.googleApi.checkGooglePlayServicesAvailable(this))
   }
 
-  //TODO Replace string token with proper type
   private def openSignUpPage(ssoToken: Option[String] = None): Unit = {
     verbose(l"openSignUpPage(${ssoToken.map(showString)})")
     userAccountsController.ssoToken ! ssoToken
