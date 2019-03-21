@@ -1098,9 +1098,9 @@
     <string name="teams_set_name_title">Your name</string>
     <string name="teams_set_name_hint">FULL NAME</string>
     <string name="app_entry_create_account">Personal</string>
-    <string name="app_entry_create_account_sub">create an account</string>
+    <string name="app_entry_create_account_sub">Chat privately with groups of friends and family</string>
     <string name="app_entry_create_team">Pro</string>
-    <string name="app_entry_create_team_sub">create a team</string>
+    <string name="app_entry_create_team_sub">Secure collaboration for businesses, institutions and professional organizations</string>
     <string name="app_entry_login_sub">Already have an account?</string>
     <string name="app_entry_login">Log in</string>
 
