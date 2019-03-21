@@ -21,7 +21,6 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.zclient.BuildConfig
 
-import scala.util.Try
 import scala.util.matching.Regex
 
 sealed trait DeepLink
@@ -32,7 +31,7 @@ object DeepLink extends DerivedLogTag {
   case object Conversation extends DeepLink
 
   sealed trait Token
-  case class SSOLoginToken(userId: UserId, raw: String) extends Token
+  case class SSOLoginToken(token: String) extends Token
   case class UserToken(userId: UserId) extends Token
   case class ConversationToken(conId: ConvId) extends Token
 
@@ -68,11 +67,10 @@ object DeepLinkParser {
 
   def parseToken(link: DeepLink, raw: RawToken): Option[Token] = link match {
     case SSOLogin =>
-      val tokenRegex = s"wire-(${UuidRegex.regex})".r("user_id")
+      val tokenRegex = s"wire-${UuidRegex.regex}".r
       for {
-        res <- tokenRegex.findFirstMatchIn(raw.value)
-        userId <- Try { UserId(res.group("user_id")) }.toOption
-      } yield SSOLoginToken(userId, raw.value)
+        _ <- tokenRegex.findFirstIn(raw.value)
+      } yield SSOLoginToken(raw.value)
 
     case DeepLink.User =>
       for {
