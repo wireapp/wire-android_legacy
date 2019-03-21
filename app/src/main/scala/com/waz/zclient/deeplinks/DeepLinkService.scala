@@ -59,7 +59,7 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
 
   private def checkDeepLink(deepLink: DeepLink, token: DeepLink.Token): Future[CheckingResult] =
     token match {
-      case DeepLink.SSOLoginToken(_, _) =>
+      case DeepLink.SSOLoginToken(_) =>
         async {
           val accounts = await { accountsService.accountsWithManagers.head }
           val acc = await { account.head }
