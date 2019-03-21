@@ -167,10 +167,10 @@ class MainActivity extends BaseActivity
         showErrorDialog(R.string.sso_signin_max_accounts_title, R.string.sso_signin_max_accounts_message)
         startFirstFragment()
 
-      case OpenDeepLink(SSOLoginToken(token)) =>
+      case OpenDeepLink(SSOLoginToken(token), _) =>
         openSignUpPage(Some(token))
 
-      case OpenDeepLink(UserToken(userId)) =>
+      case OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember)) =>
         //TODO open user info screen
         startFirstFragment()
 
@@ -178,7 +178,7 @@ class MainActivity extends BaseActivity
         showErrorDialog(R.string.deep_link_conversation_error_title, R.string.deep_link_conversation_error_message)
         startFirstFragment()
 
-      case OpenDeepLink(ConversationToken(convId)) =>
+      case OpenDeepLink(ConversationToken(convId), _) =>
         switchConversation(convId)
 
       case _ => startFirstFragment()

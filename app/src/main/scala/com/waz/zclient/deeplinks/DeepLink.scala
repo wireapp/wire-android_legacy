@@ -35,6 +35,8 @@ object DeepLink extends DerivedLogTag {
   case class UserToken(userId: UserId) extends Token
   case class ConversationToken(conId: ConvId) extends Token
 
+  case class UserTokenInfo(connected: Boolean, currentTeamMember: Boolean)
+
   case class RawToken(value: String) extends AnyVal
 
   def getAll: Seq[DeepLink] = Seq(SSOLogin, User, Conversation)
