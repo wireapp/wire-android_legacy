@@ -350,7 +350,10 @@ dependencies {
     implementation "com.google.android.gms:play-services-maps:$playServicesVersion"
     implementation "com.google.android.gms:play-services-location:$playServicesVersion"
     implementation "com.google.android.gms:play-services-gcm:$playServicesVersion"
-    implementation 'com.google.firebase:firebase-messaging:17.3.0'
+    implementation ('com.google.firebase:firebase-messaging:17.3.0') {
+        exclude group: 'com.google.firebase', module: 'firebase-analytics'
+        exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
+    }
 
     //WorkManager
     def work_version = "1.0.0-alpha13"
