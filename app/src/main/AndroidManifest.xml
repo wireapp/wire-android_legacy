@@ -114,6 +114,32 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.VIEW" />
             </intent-filter>
+
+            <intent-filter>
+                <data
+                    android:host="conversation"
+                    android:scheme="${customURLScheme}"
+                    />
+
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.VIEW" />
+            </intent-filter>
+
+            <intent-filter>
+                <data
+                    android:host="user"
+                    android:scheme="${customURLScheme}"
+                    />
+
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.VIEW" />
+            </intent-filter>
         </activity>
 
         <activity
