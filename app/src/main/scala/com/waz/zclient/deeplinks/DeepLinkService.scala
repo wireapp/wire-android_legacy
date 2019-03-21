@@ -21,11 +21,13 @@ import android.content.Intent
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountManager.ClientRegistrationState.Registered
 import com.waz.service.conversation.ConversationsService
-import com.waz.service.{AccountManager, AccountsService}
+import com.waz.service.{AccountManager, AccountsService, UserService}
 import com.waz.utils.events.Signal
-import com.waz.zclient.deeplinks.DeepLink.Conversation
+import com.waz.zclient.deeplinks.DeepLink.{Conversation, UserTokenInfo}
 import com.waz.zclient.{BuildConfig, Injectable, Injector}
 import com.waz.zclient.log.LogUI._
+
+import cats.implicits._
 
 import scala.async.Async.{async, await}
 import scala.concurrent.Future
@@ -38,6 +40,7 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
   private lazy val accountsService        = inject[AccountsService]
   private lazy val account                = inject[Signal[Option[AccountManager]]]
   private lazy val conversationService    = inject[Signal[ConversationsService]]
+  private lazy val userService            = inject[Signal[UserService]]
 
   def checkForDeepLink(intent: Intent): Future[CheckingResult] = {
     val dataString = Option(intent.getDataString)
@@ -49,7 +52,6 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
           case None => Future.successful(DoNotOpenDeepLink(link, Error.InvalidToken))
           case Some(token) =>
             checkDeepLink(link, token).recover { case _ => DoNotOpenDeepLink(link, Unknown) }
-
         }
     }
 
@@ -86,9 +88,19 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
           }
         }
 
-      case _: DeepLink.UserToken =>
-        //All checks will be done in UserInfo screen
-        Future.successful(OpenDeepLink(token))
+      case DeepLink.UserToken(userId) =>
+        async {
+          val service = await { userService.head }
+          await { service.getSelfUser zip service.findUser(userId)} match {
+            case (Some(self), Some(other)) =>
+              val sameTeam = (self.teamId, other.teamId).mapN(_ == _).exists(identity)
+              OpenDeepLink(token, UserTokenInfo(other.isConnected, sameTeam))
+            case (Some(_), _) =>
+              OpenDeepLink(token, UserTokenInfo(connected = false, currentTeamMember = false))
+            case _ =>
+              DoNotOpenDeepLink(deepLink, Unknown)
+          }
+        }
 
       case _ =>
         Future.successful(OpenDeepLink(token))
@@ -100,7 +112,7 @@ object DeepLinkService {
   sealed trait CheckingResult
   case object DeepLinkNotFound extends CheckingResult
   case class DoNotOpenDeepLink(link: DeepLink, reason: Error) extends CheckingResult
-  case class OpenDeepLink(token: DeepLink.Token) extends CheckingResult
+  case class OpenDeepLink(token: DeepLink.Token, additionalInfo: Any = Unit) extends CheckingResult
 
   sealed trait Error
   object Error {
