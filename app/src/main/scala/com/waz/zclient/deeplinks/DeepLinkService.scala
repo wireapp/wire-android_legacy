@@ -20,8 +20,10 @@ package com.waz.zclient.deeplinks
 import android.content.Intent
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountManager.ClientRegistrationState.Registered
+import com.waz.service.conversation.ConversationsService
 import com.waz.service.{AccountManager, AccountsService}
 import com.waz.utils.events.Signal
+import com.waz.zclient.deeplinks.DeepLink.Conversation
 import com.waz.zclient.{BuildConfig, Injectable, Injector}
 import com.waz.zclient.log.LogUI._
 
@@ -35,6 +37,7 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
 
   private lazy val accountsService        = inject[AccountsService]
   private lazy val account                = inject[Signal[Option[AccountManager]]]
+  private lazy val conversationService    = inject[Signal[ConversationsService]]
 
   def checkForDeepLink(intent: Intent): Future[CheckingResult] = {
     val dataString = Option(intent.getDataString)
@@ -56,7 +59,7 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
 
   private def checkDeepLink(deepLink: DeepLink, token: DeepLink.Token): Future[CheckingResult] =
     token match {
-      case DeepLink.SSOLoginToken(_, _) =>
+      case DeepLink.SSOLoginToken(_) =>
         async {
           val accounts = await { accountsService.accountsWithManagers.head }
           val acc = await { account.head }
@@ -71,6 +74,21 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
             }
           }
         }
+
+      case DeepLink.ConversationToken(convId) =>
+        async {
+          val convService = conversationService.currentValue
+          if (convService.isEmpty) DoNotOpenDeepLink(Conversation, Unknown)
+          else {
+            val conv = await { convService.get.content.convById(convId) }
+            if (conv.isEmpty) DoNotOpenDeepLink(Conversation, NotFound)
+            else OpenDeepLink(token)
+          }
+        }
+
+      case _: DeepLink.UserToken =>
+        //All checks will be done in UserInfo screen
+        Future.successful(OpenDeepLink(token))
 
       case _ =>
         Future.successful(OpenDeepLink(token))
@@ -89,6 +107,7 @@ object DeepLinkService {
     case object InvalidToken extends Error
     case object Unknown extends Error
     case object SSOLoginTooManyAccounts extends Error
+    case object NotFound extends Error
   }
 
 }
