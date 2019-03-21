@@ -162,9 +162,11 @@ class MainActivity extends BaseActivity
       case DoNotOpenDeepLink(SSOLogin, InvalidToken) =>
         showErrorDialog(R.string.sso_signin_wrong_code_title, R.string.sso_signin_wrong_code_message)
         startFirstFragment()
+
       case DoNotOpenDeepLink(SSOLogin, SSOLoginTooManyAccounts) =>
         showErrorDialog(R.string.sso_signin_max_accounts_title, R.string.sso_signin_max_accounts_message)
         startFirstFragment()
+        
       case OpenDeepLink(SSOLoginToken(userId, raw)) =>
         openSignUpPage(Some(raw))
 
@@ -172,9 +174,12 @@ class MainActivity extends BaseActivity
         //TODO open user info screen
         startFirstFragment()
 
-      case OpenDeepLink(ConversationToken(conId)) =>
-        //TODO open conversation screen
+      case DoNotOpenDeepLink(Conversation, _) =>
+        showErrorDialog(R.string.deep_link_conversation_error_title, R.string.deep_link_conversation_error_message)
         startFirstFragment()
+
+      case OpenDeepLink(ConversationToken(convId)) =>
+        switchConversation(convId)
 
       case _ => startFirstFragment()
     }(Threading.Ui)
@@ -358,18 +363,6 @@ class MainActivity extends BaseActivity
   def handleIntent(intent: Intent) = {
     verbose(l"handleIntent: ${RichIntent(intent)}")
 
-    def switchConversation(convId: ConvId, call: Boolean = false) =
-      CancellableFuture.delay(750.millis).map { _ =>
-        verbose(l"setting conversation: $convId")
-        conversationController.selectConv(convId, ConversationChangeRequester.INTENT).foreach { _ =>
-          if (call)
-            for {
-              Some(acc) <- account.map(_.map(_.userId)).head
-              _         <- callStart.startCall(acc, convId)
-            } yield {}
-        }
-    } (Threading.Ui).future
-
     def clearIntent() = {
       intent.clearExtras()
       setIntent(intent)
@@ -466,6 +459,19 @@ class MainActivity extends BaseActivity
       .commit
 
   override def onUsernameSet(): Unit = replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.Tag, addToBackStack = false)
+
+  private def switchConversation(convId: ConvId, call: Boolean = false) =
+    CancellableFuture.delay(750.millis).map { _ =>
+      verbose(l"setting conversation: $convId")
+      conversationController.selectConv(convId, ConversationChangeRequester.INTENT).foreach { _ =>
+        if (call)
+          for {
+            Some(acc) <- account.map(_.map(_.userId)).head
+            _         <- callStart.startCall(acc, convId)
+          } yield {}
+      }
+    } (Threading.Ui).future
+
 }
 
 object MainActivity {
