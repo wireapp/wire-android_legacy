@@ -50,7 +50,6 @@ import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.participants.fragments.ParticipantFragment
 import com.waz.zclient.views.ConversationFragment
 import com.waz.zclient.{FragmentHelper, R}
-import com.waz.zclient.log.LogUI._
 
 class ConversationManagerFragment extends FragmentHelper
   with ConversationScreenControllerObserver
@@ -124,7 +123,6 @@ class ConversationManagerFragment extends FragmentHelper
     }
 
     subs += participantsController.onShowParticipantsWithUserId.onUi { user =>
-      verbose(l"[DEEP]: onShowParticipantsWithUserId")
       keyboard.hideKeyboardIfVisible()
       navigationController.setRightPage(Page.PARTICIPANT, ConversationManagerFragment.Tag)
       participantsController.selectParticipant(user)

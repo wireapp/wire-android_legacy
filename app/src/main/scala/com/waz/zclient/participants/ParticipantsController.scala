@@ -28,7 +28,6 @@ import com.waz.zclient.controllers.confirmation.{ConfirmationRequest, IConfirmat
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector, R}
 
@@ -57,30 +56,10 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
   lazy val conv              = convController.currentConv
   lazy val isGroup           = convController.currentConvIsGroup
 
-  // TODO: check other usages of this still work
-  lazy val otherParticipantId = for {
-    userId <- selectedParticipant
-    others <- if (userId.isDefined) Signal.const(Set.empty[UserId]) else otherParticipants
-  } yield
-    if (userId.isDefined) {
-      verbose(l"[DEEP]: otherParticipantId: userId is defined")
-      userId
-    }
-    else if (others.size == 1) {
-      verbose(l"[DEEP]: otherParticipantId: other size == 1")
-      others.headOption
-    }
-    else {
-      verbose(l"[DEEP]: otherParticipantId: None")
-      None
-    }
-
-  //    case others if others.size == 1 =>
-  //      verbose(l"[DEEP]: otherParticipantId. others.size == 1")
-  //      Signal.const(others.headOption)
-  //    case others                     =>
-  //      verbose(l"[DEEP]: otherParticipantId. others.size: ${others.size}")
-  //      selectedParticipant
+  lazy val otherParticipantId = otherParticipants.flatMap {
+    case others if others.size == 1 => Signal.const(others.headOption)
+    case others                     => selectedParticipant
+  }
 
   lazy val otherParticipant = for {
     z        <- zms

@@ -26,6 +26,7 @@ import android.os.{Build, Bundle}
 import android.support.v4.app.{Fragment, FragmentTransaction}
 import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.UserData.ConnectionStatus.{apply => _}
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
 import com.waz.service.ZMessaging.clock
@@ -48,6 +49,7 @@ import com.waz.zclient.fragments.ConnectivityFragment
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.pages.main.MainPhoneFragment
+import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.pages.startup.UpdateFragment
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.preferences.PreferencesActivity
@@ -160,8 +162,8 @@ class MainActivity extends BaseActivity
     if (!getControllerFactory.getUserPreferencesController.hasCheckedForUnsupportedEmojis(Emojis.VERSION))
       Future(checkForUnsupportedEmojis())(Threading.Background)
 
-    import DeepLinkService._
     import DeepLink.{logTag => _, _}
+    import DeepLinkService._
     deepLinkService.checkForDeepLink(getIntent).foreach {
       case DoNotOpenDeepLink(SSOLogin, InvalidToken) =>
         showErrorDialog(R.string.sso_signin_wrong_code_title, R.string.sso_signin_wrong_code_message)
@@ -175,11 +177,18 @@ class MainActivity extends BaseActivity
         openSignUpPage(Some(token))
 
       case OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember)) =>
-        verbose(l"[DEEP]: Opening user deep link. userId: $userId, connected: $connected, currentTeamMember: $currentTeamMember")
-        switchConversation(ConvId(userId.str))
-      //        switchConversation(ConvId(userId.str)).foreach { _ =>
-//          participantsController.onShowParticipantsWithUserId ! userId
-//        }
+        lazy val pickUserController = inject[IPickUserController]
+        pickUserController.hideUserProfile()
+        if (connected || currentTeamMember) {
+          CancellableFuture.delay(750.millis).map { _ =>
+            userAccountsController.getOrCreateAndOpenConvFor(userId)
+              .foreach { _ =>
+                participantsController.onShowParticipantsWithUserId ! userId
+              }
+          }
+        } else {
+          pickUserController.showUserProfile(userId)
+        }
 
       case DoNotOpenDeepLink(Conversation, _) =>
         showErrorDialog(R.string.deep_link_conversation_error_title, R.string.deep_link_conversation_error_message)

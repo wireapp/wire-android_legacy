@@ -100,13 +100,10 @@ class ParticipantFragment extends ManagerFragment
           case Some(SingleParticipantFragment.DevicesTab.str) =>
             Future.successful((SingleParticipantFragment.newInstance(Some(SingleParticipantFragment.DevicesTab.str)), SingleParticipantFragment.Tag))
           case _ =>
-            verbose(l"[DEEP]: PageToOpenArg: _")
             participantsController.isGroupOrBot.head.map {
               case true if getStringArg(UserToOpenArg).isEmpty =>
-                verbose(l"[DEEP]: PageToOpenArg: isGroupOrBot: true")
                 (GroupParticipantsFragment.newInstance(), GroupParticipantsFragment.Tag)
               case _ =>
-                verbose(l"[DEEP]: PageToOpenArg: isGroupOrBot: _")
                 (SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
             }
         }).map {
@@ -220,7 +217,6 @@ class ParticipantFragment extends ManagerFragment
   }
 
   private def showUser(userId: UserId): Unit = {
-    verbose(l"onShowUser($userId)")
     convScreenController.showUser(userId)
     participantsController.selectParticipant(userId)
 

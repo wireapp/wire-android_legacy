@@ -27,8 +27,6 @@ import com.waz.zclient.deeplinks.DeepLink.{Conversation, UserTokenInfo}
 import com.waz.zclient.{BuildConfig, Injectable, Injector}
 import com.waz.zclient.log.LogUI._
 
-import cats.implicits._
-
 import scala.async.Async.{async, await}
 import scala.concurrent.Future
 
@@ -92,14 +90,10 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
         async {
           val service = await { userService.head }
           await { service.syncIfNeeded(Set(userId)) }
-          await { service.getSelfUser zip service.findUser(userId)} match {
+          await { service.getSelfUser.zip(service.findUser(userId))} match {
             case (Some(self), Some(other)) =>
-              verbose(l"[DEEP]: UserToken(self: $self, other: $other)")
-              verbose(l"[DEEP]: other connection: ${other.connection}")
-              val sameTeam = (self.teamId, other.teamId).mapN(_ == _).exists(identity)
-              OpenDeepLink(token, UserTokenInfo(other.isConnected, sameTeam))
+              OpenDeepLink(token, UserTokenInfo(other.isConnected, self.isInTeam(other.teamId)))
             case (Some(_), _) =>
-              verbose(l"[DEEP]: UserToken(self: _, other: None)")
               OpenDeepLink(token, UserTokenInfo(connected = false, currentTeamMember = false))
             case _ =>
               DoNotOpenDeepLink(deepLink, Unknown)

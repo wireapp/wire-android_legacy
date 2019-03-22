@@ -199,7 +199,7 @@ public class NavigationController implements INavigationController {
                 setPagerEnabled(false);
                 break;
             case CONVERSATION_MENU_OVER_CONVERSATION_LIST:
-//            case PARTICIPANT:
+            case PARTICIPANT:
             case PARTICIPANT_USER_PROFILE:
             case PICK_USER:
             case COMMON_USER_PROFILE:
