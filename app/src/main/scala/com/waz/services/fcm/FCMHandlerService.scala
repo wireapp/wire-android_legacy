@@ -24,7 +24,7 @@ import com.waz.service.AccountsService.InForeground
 import com.waz.service.ZMessaging.clock
 import com.waz.service.push.PushService.FetchFromIdle
 import com.waz.service.push._
-import com.waz.service.{AccountsService, NetworkModeService, ZMessaging}
+import com.waz.service.{AccountsService, FCMNotificationStatsService, NetworkModeService, ZMessaging}
 import com.waz.services.ZMessagingService
 import com.waz.threading.Threading
 import com.waz.utils.{JsonDecoder, RichInstant, Serialized}
@@ -109,14 +109,15 @@ object FCMHandlerService {
 
   val UserKeyMissingMsg = "Notification did not contain user key - discarding"
 
-  class FCMHandler(userId:         UserId,
-                   accounts:       AccountsService,
-                   push:           PushService,
-                   network:        NetworkModeService,
-                   fcmPushes:      FCMNotificationsRepository,
-                   sentTime:       Instant) extends DerivedLogTag {
+  class FCMHandler(userId: UserId,
+                   accounts: AccountsService,
+                   push: PushService,
+                   network: NetworkModeService,
+                   fcmPushes: FCMNotificationStatsService,
+                   sentTime: Instant) extends DerivedLogTag {
 
     import com.waz.threading.Threading.Implicits.Background
+    import com.waz.model.FCMNotification.Pushed
 
     def handleMessage(data: Map[String, String]): Future[Unit] = {
       data match {
@@ -133,10 +134,10 @@ object FCMHandlerService {
       for {
         false <- accounts.accountState(userId).map(_ == InForeground).head
         drift <- push.beDrift.head
-        now   = clock.instant + drift
-        idle  = network.isDeviceIdleMode
+        now = clock.instant + drift
+        idle = network.isDeviceIdleMode
         _ <- nId match {
-          case Some(n) => fcmPushes.insert(FCMNotification(n, now, FCMNotification.Pushed))
+          case Some(n) => fcmPushes.markNotificationsWithState(Set(n), Pushed)
           case _ => Future.successful(())
         }
 
@@ -155,8 +156,8 @@ object FCMHandlerService {
 
   object FCMHandler {
     def apply(zms: ZMessaging, data: Map[String, String], sentTime: Instant): Future[Unit] =
-      new FCMHandler(zms.selfUserId, zms.accounts, zms.push, zms.network, zms.fcmNotifications,
-        sentTime).handleMessage(data)
+      new FCMHandler(zms.selfUserId, zms.accounts, zms.push, zms.network, zms.fcmNotStatsService, sentTime)
+        .handleMessage(data)
   }
 
   val DataKey = "data"
