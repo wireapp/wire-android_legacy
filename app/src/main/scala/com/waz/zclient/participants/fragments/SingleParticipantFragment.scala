@@ -197,6 +197,7 @@ class SingleParticipantFragment extends FragmentHelper {
 
   override def onViewCreated(v: View, @Nullable savedInstanceState: Bundle): Unit = {
     super.onViewCreated(v, savedInstanceState)
+    verbose(l"[DEEP]: onViewCreated")
 
     userHandle
 

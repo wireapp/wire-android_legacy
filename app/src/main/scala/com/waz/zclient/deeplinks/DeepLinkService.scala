@@ -91,11 +91,15 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
       case DeepLink.UserToken(userId) =>
         async {
           val service = await { userService.head }
+          await { service.syncIfNeeded(Set(userId)) }
           await { service.getSelfUser zip service.findUser(userId)} match {
             case (Some(self), Some(other)) =>
+              verbose(l"[DEEP]: UserToken(self: $self, other: $other)")
+              verbose(l"[DEEP]: other connection: ${other.connection}")
               val sameTeam = (self.teamId, other.teamId).mapN(_ == _).exists(identity)
               OpenDeepLink(token, UserTokenInfo(other.isConnected, sameTeam))
             case (Some(_), _) =>
+              verbose(l"[DEEP]: UserToken(self: _, other: None)")
               OpenDeepLink(token, UserTokenInfo(connected = false, currentTeamMember = false))
             case _ =>
               DoNotOpenDeepLink(deepLink, Unknown)

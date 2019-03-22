@@ -89,6 +89,7 @@ class ParticipantFragment extends ManagerFragment
     }
 
   override def onViewCreated(view: View, @Nullable savedInstanceState: Bundle): Unit = {
+    verbose(l"onViewCreated.")
 
     withChildFragmentOpt(R.id.fl__participant__container) {
       case Some(_) => //no action to take, view was already set
@@ -99,9 +100,14 @@ class ParticipantFragment extends ManagerFragment
           case Some(SingleParticipantFragment.DevicesTab.str) =>
             Future.successful((SingleParticipantFragment.newInstance(Some(SingleParticipantFragment.DevicesTab.str)), SingleParticipantFragment.Tag))
           case _ =>
+            verbose(l"[DEEP]: PageToOpenArg: _")
             participantsController.isGroupOrBot.head.map {
-              case true if getStringArg(UserToOpenArg).isEmpty => (GroupParticipantsFragment.newInstance(), GroupParticipantsFragment.Tag)
-              case _ => (SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
+              case true if getStringArg(UserToOpenArg).isEmpty =>
+                verbose(l"[DEEP]: PageToOpenArg: isGroupOrBot: true")
+                (GroupParticipantsFragment.newInstance(), GroupParticipantsFragment.Tag)
+              case _ =>
+                verbose(l"[DEEP]: PageToOpenArg: isGroupOrBot: _")
+                (SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
             }
         }).map {
           case (f, tag) =>
