@@ -73,6 +73,7 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   val vibrationSwitch      = findById[SwitchPreference](R.id.preferences_vibration)
   val darkThemeSwitch      = findById[SwitchPreference](R.id.preferences_dark_theme)
   val sendButtonSwitch     = findById[SwitchPreference](R.id.preferences_send_button)
+  val messagePreviewSwitch = findById[SwitchPreference](R.id.preferences_message_previews)
   val soundsButton         = findById[TextButton](R.id.preferences_sounds)
   val downloadImagesSwitch = findById[SwitchPreference](R.id.preferences_options_image_download)
 

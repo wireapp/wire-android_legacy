@@ -137,6 +137,13 @@
                 app:subtitle="@string/pref_options_cursor_send_button_summary"
                 />
 
+            <com.waz.zclient.preferences.views.SwitchPreference
+                android:id="@+id/preferences_message_previews"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                app:title="@string/pref_options_message_previews"
+                />
+
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
