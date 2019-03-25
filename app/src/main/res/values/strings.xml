@@ -1289,6 +1289,9 @@
     <string name="reply_message_type_asset">ATTACHMENT</string>
     <string name="reply_message_type_unknown">You cannot see this message.</string>
 
+    <string name="deep_link_conversation_error_title">Wire cannot open this conversation.</string>
+    <string name="deep_link_conversation_error_message">This account may not have access or the conversation may not exist.</string>
+
     <!--Two identical strings are needed for German translation-->
     <string name="quote_timestamp_message_time">Original message from %s</string>
     <string name="quote_timestamp_message_date">Original message from %s</string>

@@ -73,6 +73,7 @@ import com.waz.zclient.conversation.{ConversationController, ReplyController}
 import com.waz.zclient.conversation.creation.CreateConversationController
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.cursor.CursorController
+import com.waz.zclient.deeplinks.DeepLinkService
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.{MessageActionsController, NavigationController}
 import com.waz.zclient.messages.{LikesController, MessagePagedListController, MessageViewFactory, MessagesController, UsersController}
@@ -247,6 +248,9 @@ object WireApplication extends DerivedLogTag {
 
     bind [ClipboardUtils]       to new ClipboardUtils(ctx)
     bind [ExternalFileSharing]  to new ExternalFileSharing(ctx)
+
+    bind [DeepLinkService]      to new DeepLinkService()
+
   }
 
   def controllers(implicit ctx: WireContext) = new Module {
