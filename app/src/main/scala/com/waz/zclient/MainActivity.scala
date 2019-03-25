@@ -25,6 +25,8 @@ import android.graphics.{Color, Paint, PixelFormat}
 import android.os.{Build, Bundle}
 import android.support.v4.app.{Fragment, FragmentTransaction}
 import com.waz.content.UserPreferences._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.UserData.ConnectionStatus.{apply => _}
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
 import com.waz.service.ZMessaging.clock
@@ -47,7 +49,9 @@ import com.waz.zclient.fragments.ConnectivityFragment
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.pages.main.MainPhoneFragment
+import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.pages.startup.UpdateFragment
+import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.preferences.dialogs.ChangeHandleFragment
 import com.waz.zclient.tracking.UiTrackingController
@@ -66,7 +70,8 @@ class MainActivity extends BaseActivity
   with UpdateFragment.Container
   with NavigationControllerObserver
   with OtrDeviceLimitFragment.Container
-  with SetHandleFragment.Container {
+  with SetHandleFragment.Container
+  with DerivedLogTag {
 
   implicit val cxt = this
 
@@ -83,6 +88,7 @@ class MainActivity extends BaseActivity
   private lazy val spinnerController      = inject[SpinnerController]
   private lazy val passwordController     = inject[PasswordController]
   private lazy val deepLinkService        = inject[DeepLinkService]
+  private lazy val participantsController = inject[ParticipantsController]
 
   override def onAttachedToWindow() = {
     super.onAttachedToWindow()
@@ -156,8 +162,8 @@ class MainActivity extends BaseActivity
     if (!getControllerFactory.getUserPreferencesController.hasCheckedForUnsupportedEmojis(Emojis.VERSION))
       Future(checkForUnsupportedEmojis())(Threading.Background)
 
+    import DeepLink.{logTag => _, _}
     import DeepLinkService._
-    import DeepLink._
     deepLinkService.checkForDeepLink(getIntent).foreach {
       case DoNotOpenDeepLink(SSOLogin, InvalidToken) =>
         showErrorDialog(R.string.sso_signin_wrong_code_title, R.string.sso_signin_wrong_code_message)
@@ -171,8 +177,18 @@ class MainActivity extends BaseActivity
         openSignUpPage(Some(token))
 
       case OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember)) =>
-        //TODO open user info screen
-        startFirstFragment()
+        lazy val pickUserController = inject[IPickUserController]
+        pickUserController.hideUserProfile()
+        if (connected || currentTeamMember) {
+          CancellableFuture.delay(750.millis).map { _ =>
+            userAccountsController.getOrCreateAndOpenConvFor(userId)
+              .foreach { _ =>
+                participantsController.onShowParticipantsWithUserId ! userId
+              }
+          }
+        } else {
+          pickUserController.showUserProfile(userId)
+        }
 
       case DoNotOpenDeepLink(Conversation, _) =>
         showErrorDialog(R.string.deep_link_conversation_error_title, R.string.deep_link_conversation_error_message)
