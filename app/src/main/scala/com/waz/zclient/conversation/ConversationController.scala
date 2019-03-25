@@ -26,6 +26,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.Client
+import com.waz.service.AccountManager
 import com.waz.service.assets.AssetService
 import com.waz.service.assets.AssetService.RawAssetInput.UriInput
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
@@ -33,6 +34,7 @@ import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{Serialized, returning, _}
+import com.waz.zclient.calling.controllers.CallStartController
 import com.waz.zclient.conversation.ConversationController.ConversationChange
 import com.waz.zclient.conversationlist.ConversationListAdapter.Normal
 import com.waz.zclient.conversationlist.ConversationListController
@@ -51,15 +53,16 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationController")
 
-  private lazy val selectedConv      = inject[Signal[SelectedConversationService]]
-  private lazy val convsUi           = inject[Signal[ConversationsUiService]]
-  private lazy val conversations     = inject[Signal[ConversationsService]]
-  private lazy val convsStorage      = inject[Signal[ConversationStorage]]
-  private lazy val membersStorage    = inject[Signal[MembersStorage]]
-  private lazy val usersStorage      = inject[Signal[UsersStorage]]
-  private lazy val otrClientsStorage = inject[Signal[OtrClientsStorage]]
-
-  lazy val convListController = inject[ConversationListController]
+  private lazy val selectedConv       = inject[Signal[SelectedConversationService]]
+  private lazy val convsUi            = inject[Signal[ConversationsUiService]]
+  private lazy val conversations      = inject[Signal[ConversationsService]]
+  private lazy val convsStorage       = inject[Signal[ConversationStorage]]
+  private lazy val membersStorage     = inject[Signal[MembersStorage]]
+  private lazy val usersStorage       = inject[Signal[UsersStorage]]
+  private lazy val otrClientsStorage  = inject[Signal[OtrClientsStorage]]
+  private lazy val account            = inject[Signal[Option[AccountManager]]]
+  private lazy val callStart          = inject[CallStartController]
+  private lazy val convListController = inject[ConversationListController]
 
   private var lastConvId = Option.empty[ConvId]
 
@@ -134,6 +137,17 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   def selectConv(id: ConvId, requester: ConversationChangeRequester): Future[Unit] =
     selectConv(Some(id), requester)
+
+  def switchConversation(convId: ConvId, call: Boolean = false, delayMs: FiniteDuration = 750.millis) =
+    CancellableFuture.delay(delayMs).map { _ =>
+      selectConv(convId, ConversationChangeRequester.INTENT).foreach { _ =>
+        if (call)
+          for {
+            Some(acc) <- account.map(_.map(_.userId)).head
+            _         <- callStart.startCall(acc, convId)
+          } yield {}
+      }
+    } (Threading.Ui).future
 
   def groupConversation(id: ConvId): Signal[Boolean] =
     conversations.flatMap(_.groupConversation(id))

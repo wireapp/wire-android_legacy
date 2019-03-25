@@ -25,7 +25,6 @@ import com.waz.service.{AccountManager, AccountsService, UserService}
 import com.waz.utils.events.Signal
 import com.waz.zclient.deeplinks.DeepLink.{Conversation, UserTokenInfo}
 import com.waz.zclient.{BuildConfig, Injectable, Injector}
-import com.waz.zclient.log.LogUI._
 
 import scala.async.Async.{async, await}
 import scala.concurrent.Future
@@ -35,27 +34,25 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
   import com.waz.zclient.deeplinks.DeepLinkService.Error._
   import com.waz.zclient.deeplinks.DeepLinkService._
 
-  private lazy val accountsService        = inject[AccountsService]
-  private lazy val account                = inject[Signal[Option[AccountManager]]]
-  private lazy val conversationService    = inject[Signal[ConversationsService]]
-  private lazy val userService            = inject[Signal[UserService]]
+  val deepLink = Signal(Option.empty[CheckingResult])
 
-  def checkForDeepLink(intent: Intent): Future[CheckingResult] = {
-    val dataString = Option(intent.getDataString)
-    verbose(l"DeepLink checking for '${dataString.map(redactedString)}'")
-    val result = dataString.flatMap(DeepLinkParser.parseLink) match {
-      case None => Future.successful(DeepLinkNotFound)
+  private lazy val accountsService     = inject[AccountsService]
+  private lazy val account             = inject[Signal[Option[AccountManager]]]
+  private lazy val conversationService = inject[Signal[ConversationsService]]
+  private lazy val userService         = inject[Signal[UserService]]
+
+  def checkDeepLink(intent: Intent): Unit =
+    Option(intent.getDataString).flatMap(DeepLinkParser.parseLink) match {
+      case None => deepLink ! None
       case Some((link, rawToken)) =>
         DeepLinkParser.parseToken(link, rawToken) match {
-          case None => Future.successful(DoNotOpenDeepLink(link, Error.InvalidToken))
+          case None => deepLink ! Some(DoNotOpenDeepLink(link, Error.InvalidToken))
           case Some(token) =>
-            checkDeepLink(link, token).recover { case _ => DoNotOpenDeepLink(link, Unknown) }
+            checkDeepLink(link, token).map { deepLink ! Some(_) }.recover {
+              case _ => deepLink ! Some(DoNotOpenDeepLink(link, Unknown))
+            }
         }
     }
-
-    result.foreach { res => verbose(l"DeepLink checking result: $res") }
-    result
-  }
 
   private def checkDeepLink(deepLink: DeepLink, token: DeepLink.Token): Future[CheckingResult] =
     token match {

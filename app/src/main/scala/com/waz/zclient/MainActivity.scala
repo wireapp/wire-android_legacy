@@ -31,29 +31,27 @@ import com.waz.model.{ConvId, UserId}
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
 import com.waz.service.ZMessaging.clock
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.Signal
+import com.waz.threading.Threading
+import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.{RichInstant, returning}
 import com.waz.zclient.Intents._
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient.appentry.AppEntryActivity
-import com.waz.zclient.calling.controllers.CallStartController
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController, PasswordController}
 import com.waz.zclient.common.controllers.{SharingController, UserAccountsController}
 import com.waz.zclient.controllers.navigation.{NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.deeplinks.DeepLink.{logTag => _, _}
+import com.waz.zclient.deeplinks.DeepLinkService
 import com.waz.zclient.deeplinks.DeepLinkService.Error.{InvalidToken, SSOLoginTooManyAccounts}
-import com.waz.zclient.deeplinks.{DeepLink, DeepLinkService}
+import com.waz.zclient.deeplinks.DeepLinkService._
 import com.waz.zclient.fragments.ConnectivityFragment
 import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.pages.main.MainPhoneFragment
-import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.pages.startup.UpdateFragment
-import com.waz.zclient.participants.ParticipantsController
-import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
 import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.preferences.dialogs.ChangeHandleFragment
 import com.waz.zclient.tracking.UiTrackingController
@@ -66,6 +64,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
+import scala.collection.mutable
 
 class MainActivity extends BaseActivity
   with CallingBannerActivity
@@ -84,13 +83,11 @@ class MainActivity extends BaseActivity
   private lazy val accountsService        = inject[AccountsService]
   private lazy val sharingController      = inject[SharingController]
   private lazy val accentColorController  = inject[AccentColorController]
-  private lazy val callStart              = inject[CallStartController]
   private lazy val conversationController = inject[ConversationController]
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val spinnerController      = inject[SpinnerController]
   private lazy val passwordController     = inject[PasswordController]
   private lazy val deepLinkService        = inject[DeepLinkService]
-  private lazy val participantsController = inject[ParticipantsController]
 
   override def onAttachedToWindow() = {
     super.onAttachedToWindow()
@@ -155,6 +152,8 @@ class MainActivity extends BaseActivity
 
   }
 
+  private val subs = mutable.HashSet.empty[Subscription]
+
   override def onStart() = {
     getControllerFactory.getNavigationController.addNavigationControllerObserver(this)
     inject[NavigationController].mainActivityActive.mutate(_ + 1)
@@ -164,43 +163,41 @@ class MainActivity extends BaseActivity
     if (!getControllerFactory.getUserPreferencesController.hasCheckedForUnsupportedEmojis(Emojis.VERSION))
       Future(checkForUnsupportedEmojis())(Threading.Background)
 
-    import DeepLink.{logTag => _, _}
-    import DeepLinkService._
-    deepLinkService.checkForDeepLink(getIntent).foreach {
-      case DoNotOpenDeepLink(SSOLogin, InvalidToken) =>
-        showErrorDialog(R.string.sso_signin_wrong_code_title, R.string.sso_signin_wrong_code_message)
-        startFirstFragment()
+    def clearIntent(): Unit = {
+      val intent = getIntent
+      intent.setData(null)
+      setIntent(intent)
+    }
 
-      case DoNotOpenDeepLink(SSOLogin, SSOLoginTooManyAccounts) =>
-        showErrorDialog(R.string.sso_signin_max_accounts_title, R.string.sso_signin_max_accounts_message)
-        startFirstFragment()
+    deepLinkService.checkDeepLink(getIntent)
 
-      case OpenDeepLink(SSOLoginToken(token), _) =>
+    subs.foreach(_.unsubscribe())
+    subs.clear()
+    subs += deepLinkService.deepLink.onUi {
+      case Some(OpenDeepLink(SSOLoginToken(token), _)) =>
+        clearIntent()
         openSignUpPage(Some(token))
 
-      case OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember)) =>
-        lazy val pickUserController = inject[IPickUserController]
-        pickUserController.hideUserProfile()
-        if (connected || currentTeamMember) {
-          CancellableFuture.delay(750.millis).map { _ =>
-            userAccountsController.getOrCreateAndOpenConvFor(userId)
-              .foreach { _ =>
-                participantsController.onShowParticipantsWithUserId ! ParticipantRequest(userId, fromDeepLink = true)
-              }
-          }
-        } else {
-          pickUserController.showUserProfile(userId)
+      case Some(DoNotOpenDeepLink(SSOLogin, InvalidToken)) =>
+        showErrorDialog(R.string.sso_signin_wrong_code_title, R.string.sso_signin_wrong_code_message).map { _ =>
+          clearIntent()
+          startFirstFragment()
         }
 
-      case DoNotOpenDeepLink(Conversation, _) =>
-        showErrorDialog(R.string.deep_link_conversation_error_title, R.string.deep_link_conversation_error_message)
-        startFirstFragment()
+      case Some(DoNotOpenDeepLink(SSOLogin, SSOLoginTooManyAccounts)) =>
+        showErrorDialog(R.string.sso_signin_max_accounts_title, R.string.sso_signin_max_accounts_message).map { _ =>
+          clearIntent()
+          startFirstFragment()
+        }
 
-      case OpenDeepLink(ConversationToken(convId), _) =>
-        switchConversation(convId)
+      case Some(DoNotOpenDeepLink(Conversation, _)) =>
+        showErrorDialog(R.string.deep_link_conversation_error_title, R.string.deep_link_conversation_error_message).map { _ =>
+          clearIntent()
+          startFirstFragment()
+        }
 
       case _ => startFirstFragment()
-    }(Threading.Ui)
+    }
   }
 
   override protected def onResume() = {
@@ -215,10 +212,8 @@ class MainActivity extends BaseActivity
     finish()
   }
 
-
   def startFirstFragment(): Unit = {
     verbose(l"startFirstFragment, intent: ${RichIntent(getIntent)}")
-
     account.head.flatMap {
       case Some(am) =>
         am.getOrRegisterClient().map {
@@ -337,12 +332,11 @@ class MainActivity extends BaseActivity
     inject[NavigationController].mainActivityActive.mutate(_ - 1)
   }
 
-  override def onBackPressed(): Unit = {
+  override def onBackPressed(): Unit =
     Option(getSupportFragmentManager.findFragmentById(R.id.fl_main_content)).foreach {
       case f: OnBackPressedListener if f.onBackPressed() => //
       case _ => super.onBackPressed()
     }
-  }
 
   override protected def onActivityResult(requestCode: Int, resultCode: Int, data: Intent) = {
     super.onActivityResult(requestCode, resultCode, data)
@@ -363,7 +357,10 @@ class MainActivity extends BaseActivity
     if (IntentUtils.isPasswordResetIntent(intent)) onPasswordWasReset()
 
     setIntent(intent)
-    handleIntent(intent)
+    handleIntent(intent).foreach {
+      case false => deepLinkService.checkDeepLink(intent)
+      case _ =>
+    }
   }
 
   private def initializeControllers() = {
@@ -380,7 +377,7 @@ class MainActivity extends BaseActivity
       _        <- am.auth.onPasswordReset(emailCredentials = None)
     } yield {}
 
-  def handleIntent(intent: Intent) = {
+  def handleIntent(intent: Intent): Future[Boolean] = {
     verbose(l"handleIntent: ${RichIntent(intent)}")
 
     def clearIntent() = {
@@ -398,9 +395,9 @@ class MainActivity extends BaseActivity
           }
         }
 
-        switchAccount.flatMap { _ =>
+        val res = switchAccount.flatMap { _ =>
           (intent.convId match {
-            case Some(id) => switchConversation(id, startCall)
+            case Some(id) => conversationController.switchConversation(id, startCall)
             case _ =>        Future.successful({})
           }).map(_ => clearIntent())(Threading.Ui)
         }
@@ -412,22 +409,30 @@ class MainActivity extends BaseActivity
           case NonFatal(e) => error(l"Failed to switch accounts", e)
         }
 
+        res.map(_ => true)
+
       case SharingIntent() =>
-        for {
+        (for {
           convs <- sharingController.targetConvs.head
           exp   <- sharingController.ephemeralExpiration.head
           _     <- sharingController.sendContent(this)
-          _     <- if (convs.size == 1) switchConversation(convs.head) else Future.successful({})
-        } yield clearIntent()
+          _     <- if (convs.size == 1) conversationController.switchConversation(convs.head) else Future.successful({})
+        } yield clearIntent())
+          .map(_ => true)
 
       case OpenPageIntent(page) => page match {
         case Intents.Page.Settings =>
           startActivityForResult(PreferencesActivity.getDefaultIntent(this), PreferencesActivity.SwitchAccountCode)
           clearIntent()
-        case _ => error(l"Unknown page: ${redactedString(page)} - ignoring intent")
+          Future.successful(true)
+        case _ =>
+          error(l"Unknown page: ${redactedString(page)} - ignoring intent")
+          Future.successful(false)
       }
 
-      case _ => setIntent(intent)
+      case _ =>
+        setIntent(intent)
+        Future.successful(false)
     }
   }
 
@@ -479,19 +484,6 @@ class MainActivity extends BaseActivity
       .commit
 
   override def onUsernameSet(): Unit = replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.Tag, addToBackStack = false)
-
-  private def switchConversation(convId: ConvId, call: Boolean = false) =
-    CancellableFuture.delay(750.millis).map { _ =>
-      verbose(l"setting conversation: $convId")
-      conversationController.selectConv(convId, ConversationChangeRequester.INTENT).foreach { _ =>
-        if (call)
-          for {
-            Some(acc) <- account.map(_.map(_.userId)).head
-            _         <- callStart.startCall(acc, convId)
-          } yield {}
-      }
-    } (Threading.Ui).future
-
 }
 
 object MainActivity {
