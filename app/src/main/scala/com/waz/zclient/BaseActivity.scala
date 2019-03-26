@@ -31,6 +31,7 @@ import com.waz.service.{UiLifeCycle, ZMessaging}
 import com.waz.services.websocket.WebSocketService
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.returning
+import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.IControllerFactory
 import com.waz.zclient.tracking.GlobalTrackingController
@@ -99,7 +100,7 @@ class BaseActivity extends AppCompatActivity
   def getBaseTheme: Int = themeController.forceLoadDarkTheme
 
   override protected def onActivityResult(requestCode: Int, resultCode: Int, data: Intent) = {
-    verbose(l"onActivityResult: requestCode: $requestCode, resultCode: $resultCode, data: $data")
+    verbose(l"onActivityResult: requestCode: $requestCode, resultCode: $resultCode, data: ${RichIntent(data)}")
     super.onActivityResult(requestCode, resultCode, data)
     permissions.registerProvider(this)
   }

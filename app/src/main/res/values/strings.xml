@@ -493,8 +493,10 @@
 
     <!-- Advanced -->
     <string name="pref_advanced_screen_title">Advanced</string>
-    <string name="pref_advanced_debug_report_title">Submit debug report</string>
-    <string name="pref_advanced_debug_report_summary">This helps Wire Support diagnose problems.</string>
+    <string name="pref_advanced_enable_logs_title">Collect usage data</string>
+    <string name="pref_advanced_enable_logs_subtitle">This stores troubleshooting information locally. Disabling this option will delete all local logs.</string>
+    <string name="pref_advanced_debug_report_title">Create debug report</string>
+    <string name="pref_advanced_debug_report_summary">You can submit this to Wire Support to help diagnose problems.</string>
     <string name="pref_advanced_reset_push_title">Reset push notifications token</string>
     <string name="pref_advanced_reset_push_summary">If you experience problems with push notifications, Wire Support may ask you to reset this token.</string>
     <string name="pref_advanced_reset_push_completed">Push token has been reset</string>

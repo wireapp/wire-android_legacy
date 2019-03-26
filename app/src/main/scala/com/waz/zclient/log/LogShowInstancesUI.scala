@@ -17,15 +17,12 @@
  */
 package com.waz.zclient.log
 
-import android.content.Intent
 import com.evernote.android.job.Job
 import com.waz.avs.VideoPreview
 import com.waz.log.LogShow
 import com.waz.service.tracking.TrackingEvent
 import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.collection.controllers.CollectionController.ContentType
-import com.waz.zclient.deeplinks.DeepLink
-import com.waz.zclient.deeplinks.DeepLinkService.CheckingResult
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.UsersController.DisplayName
@@ -38,27 +35,22 @@ trait LogShowInstancesUI {
   
   implicit val JobLogShow: LogShow[Job] = LogShow.logShowWithHash
 
-  implicit val IntentLogShow: LogShow[Intent] = LogShow.create(_ => "intent")
-
-  implicit val RichIntentLogShow: LogShow[RichIntent] = LogShow.create(_ => "rich intent")
-//    LogShow.createFrom { i =>
-//      l"""
-//         |Intent(
-//         |  action:           ${redactedString(i.intent.getAction)}
-//         |  flags:            ${redactedString(i.intent.getFlags.toString)}
-//         |  extras:           ${redactedString(i.intent.getExtras.toString)}
-//         |  categories:       ${redactedString(i.intent.getCategories.toString)}
-//         |  data:             ${redactedString(i.intent.getDataString)}
-//         |  fromNotification: ${i.fromNotification}
-//         |  fromSharing:      ${i.intent.fromSharing}
-//         |  startCall:        ${i.intent.startCall}
-//         |  accountId:        ${i.accountId}
-//         |  convId:           ${i.convId}
-//         |  page:             ${i.page.map(redactedString)})
-//       """.stripMargin
-//    }
-
-  implicit val DeepLinkCheckingResultLogShow: LogShow[CheckingResult] = LogShow.logShowWithHash
+  implicit val RichIntentLogShow: LogShow[RichIntent] =
+    LogShow.createFrom { i =>
+      l"""
+         |Intent(
+         |  action:           ${i.getAction.map(redactedString)},
+         |  flags:            ${redactedString(i.getFlags.toString)},
+         |  extras:           ${i.getExtras.map(e => redactedString(e.toString))},
+         |  data:             ${i.getDataString.map(redactedString)},
+         |  fromNotification: ${i.fromNotification},
+         |  fromSharing:      ${i.fromSharing},
+         |  startCall:        ${i.startCall},
+         |  accountId:        ${i.accountId},
+         |  convId:           ${i.convId},
+         |  page:             ${i.page.map(redactedString)})
+        """.stripMargin
+  }
 
   implicit val SearchUserListStateLogShow: LogShow[SearchUserListState] =
     LogShow.createFrom {
@@ -110,7 +102,5 @@ trait LogShowInstancesUI {
     LogShow.createFrom { t =>
       l"ContentType(msgTypes: ${t.msgTypes}, typeFilter: ${t.typeFilter})"
     }
-
-  implicit val DeepLinkLogShow: LogShow[DeepLink] = LogShow.logShowWithHash
 
 }

@@ -32,6 +32,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient._
+import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.log.LogUI._
 
 class WebSocketController(implicit inj: Injector) extends Injectable {
@@ -93,7 +94,7 @@ class OnBootAndUpdateBroadcastReceiver extends BroadcastReceiver with DerivedLog
 
   override def onReceive(context: Context, intent: Intent): Unit = {
     this.context = context
-    verbose(l"onReceive $intent")
+    verbose(l"onReceive ${RichIntent(intent)}")
 
     accounts.zmsInstances.head.foreach { zs =>
       zs.map(_.selfUserId).foreach(PushTokenCheckJob(_))
@@ -165,7 +166,7 @@ class WebSocketService extends ServiceHelper with DerivedLogTag {
   override def onBind(intent: content.Intent): IBinder = null
 
   override def onStartCommand(intent: Intent, flags: Int, startId: Int): Int = {
-    verbose(l"onStartCommand($intent, $startId)")
+    verbose(l"onStartCommand(${RichIntent(intent)}, $startId)")
     webSocketActiveSubscription
     appInForegroundSubscription
 
