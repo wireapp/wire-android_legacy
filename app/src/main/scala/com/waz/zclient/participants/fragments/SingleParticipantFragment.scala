@@ -297,13 +297,13 @@ object SingleParticipantFragment {
   }
 
   private val TabToOpen: String = "TAB_TO_OPEN"
+  private val FromDeepLink: String = "FROM_DEEP_LINK"
 
-  def newInstance(tabToOpen: Option[String] = None): SingleParticipantFragment =
+  def newInstance(tabToOpen: Option[String] = None, fromDeepLink: Boolean = false): SingleParticipantFragment =
     returning(new SingleParticipantFragment) { f =>
-      tabToOpen.foreach { t =>
-        f.setArguments(returning(new Bundle){
-          _.putString(TabToOpen, t)
-        })
-      }
+      val args = new Bundle()
+      args.putBoolean(FromDeepLink, fromDeepLink)
+      tabToOpen.foreach { t => args.putString(TabToOpen, t)}
+      f.setArguments(args)
     }
 }
