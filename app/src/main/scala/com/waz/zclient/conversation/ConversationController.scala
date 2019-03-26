@@ -145,7 +145,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
           for {
             Some(acc) <- account.map(_.map(_.userId)).head
             _         <- callStart.startCall(acc, convId)
-          } yield {}
+          } yield ()
       }
     } (Threading.Ui).future
 

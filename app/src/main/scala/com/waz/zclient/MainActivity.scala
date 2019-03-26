@@ -149,7 +149,6 @@ class MainActivity extends BaseActivity
       case Hide(Some(message))=> loadingIndicator.hideWithMessage(message, 750)
       case Hide(_) => loadingIndicator.hide()
     }
-
   }
 
   private val subs = mutable.HashSet.empty[Subscription]
@@ -163,40 +162,43 @@ class MainActivity extends BaseActivity
     if (!getControllerFactory.getUserPreferencesController.hasCheckedForUnsupportedEmojis(Emojis.VERSION))
       Future(checkForUnsupportedEmojis())(Threading.Background)
 
-    def clearIntent(): Unit = {
-      val intent = getIntent
-      intent.setData(null)
-      setIntent(intent)
-    }
+    val intent = getIntent
+    deepLinkService.checkDeepLink(intent)
+    intent.setData(null)
+    setIntent(intent)
 
-    deepLinkService.checkDeepLink(getIntent)
-
-    subs.foreach(_.unsubscribe())
-    subs.clear()
     subs += deepLinkService.deepLink.onUi {
+      case None =>
+
       case Some(OpenDeepLink(SSOLoginToken(token), _)) =>
-        clearIntent()
+        verbose(l"open SSO token ${showString(token)}")
         openSignUpPage(Some(token))
+        deepLinkService.deepLink ! None
 
       case Some(DoNotOpenDeepLink(SSOLogin, InvalidToken)) =>
+        verbose(l"do not open, SSO token invalid")
         showErrorDialog(R.string.sso_signin_wrong_code_title, R.string.sso_signin_wrong_code_message).map { _ =>
-          clearIntent()
           startFirstFragment()
         }
+        deepLinkService.deepLink ! None
 
       case Some(DoNotOpenDeepLink(SSOLogin, SSOLoginTooManyAccounts)) =>
+        verbose(l"do not open, SSO token, too many accounts")
         showErrorDialog(R.string.sso_signin_max_accounts_title, R.string.sso_signin_max_accounts_message).map { _ =>
-          clearIntent()
           startFirstFragment()
         }
+        deepLinkService.deepLink ! None
 
       case Some(DoNotOpenDeepLink(Conversation, _)) =>
+        verbose(l"do not open, conversation deep link error")
         showErrorDialog(R.string.deep_link_conversation_error_title, R.string.deep_link_conversation_error_message).map { _ =>
-          clearIntent()
           startFirstFragment()
         }
+        deepLinkService.deepLink ! None
 
-      case _ => startFirstFragment()
+      case Some(_) =>
+        verbose(l"the default path (no deep link, or a link handled later)")
+        startFirstFragment() // don't reset the deep link - it may be handled later (also this line should be executed if not deep link is present)
     }
   }
 

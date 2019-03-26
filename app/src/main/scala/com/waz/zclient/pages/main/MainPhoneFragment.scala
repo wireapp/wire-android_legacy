@@ -26,7 +26,7 @@ import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.{ErrorData, Uid}
 import com.waz.service.{AccountManager, GlobalModule, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.{Signal, Subscription}
+import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.collection.controllers.CollectionController
@@ -38,7 +38,9 @@ import com.waz.zclient.controllers.confirmation.{ConfirmationObserver, Confirmat
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.controllers.singleimage.{ISingleImageController, SingleImageObserver}
 import com.waz.zclient.conversation.{ConversationController, ImageFragment}
-import com.waz.zclient.deeplinks.{DeepLink, DeepLinkService}
+import com.waz.zclient.deeplinks.DeepLink.{logTag => _, _}
+import com.waz.zclient.deeplinks.DeepLinkService
+import com.waz.zclient.deeplinks.DeepLinkService._
 import com.waz.zclient.giphy.GiphySharingPreviewFragment
 import com.waz.zclient.log.LogUI
 import com.waz.zclient.log.LogUI._
@@ -51,10 +53,7 @@ import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.tracking.GlobalTrackingController.analyticsPrefKey
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.menus.ConfirmationMenu
-import DeepLink.{logTag => _, _}
-import DeepLinkService._
 
-import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -142,19 +141,8 @@ class MainPhoneFragment extends FragmentHelper
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     confirmationMenu.foreach(_.setVisibility(View.GONE))
     zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
-  }
 
-  private val subs = mutable.HashSet.empty[Subscription]
-
-  override def onStart(): Unit = {
-    super.onStart()
-    singleImageController.addSingleImageObserver(this)
-    confirmationController.addConfirmationObserver(this)
-    collectionController.addObserver(this)
-
-    consentDialogFuture
-
-    subs += deepLinkService.deepLink.onUi {
+    deepLinkService.deepLink.onUi {
       case Some(OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember))) =>
         pickUserController.hideUserProfile()
         if (connected || currentTeamMember) {
@@ -171,17 +159,26 @@ class MainPhoneFragment extends FragmentHelper
             pickUserController.showUserProfile(userId)
           }
         }
+        deepLinkService.deepLink ! None
 
       case Some(OpenDeepLink(ConversationToken(convId), _)) =>
         conversationController.switchConversation(convId)
+        deepLinkService.deepLink ! None
 
       case _ =>
     }
   }
 
+  override def onStart(): Unit = {
+    super.onStart()
+    singleImageController.addSingleImageObserver(this)
+    confirmationController.addConfirmationObserver(this)
+    collectionController.addObserver(this)
+
+    consentDialogFuture
+  }
+
   override def onStop(): Unit = {
-    subs.foreach(_.unsubscribe())
-    subs.clear()
     singleImageController.removeSingleImageObserver(this)
     confirmationController.removeConfirmationObserver(this)
     collectionController.removeObserver(this)
