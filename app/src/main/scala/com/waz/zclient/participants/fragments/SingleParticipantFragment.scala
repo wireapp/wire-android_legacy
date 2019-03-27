@@ -53,6 +53,9 @@ class SingleParticipantFragment extends FragmentHelper {
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val userAccountsController = inject[UserAccountsController]
 
+//  private lazy val fromDeepLink: Boolean = getBooleanArg(FromDeepLink)
+  private lazy val fromDeepLink: Boolean = true
+
   private val visibleTab = Signal[SingleParticipantFragment.Tab](DetailsTab)
 
   private lazy val tabs = returning(view[TabLayout](R.id.details_and_devices_tabs)) {
@@ -131,7 +134,7 @@ class SingleParticipantFragment extends FragmentHelper {
     override def onLeftActionClicked(): Unit =
       participantsController.otherParticipant.map(_.expiresAt.isDefined).head.foreach {
         case false => participantsController.isGroup.head.flatMap {
-          case false => userAccountsController.hasCreateConvPermission.head.map {
+          case false if !fromDeepLink => userAccountsController.hasCreateConvPermission.head.map {
             case true => inject[CreateConversationController].onShowCreateConversation ! true
             case _ =>
           }
@@ -162,6 +165,8 @@ class SingleParticipantFragment extends FragmentHelper {
     isPartner      <- userAccountsController.isPartner
   } yield if (isWireless) {
     (R.string.empty_string, R.string.empty_string)
+  } else if (fromDeepLink) {
+    (R.string.glyph__conversation, R.string.conversation__action__open_conversation)
   } else if (!isPartner && !isGroupOrBot && canCreateConv) {
     (R.string.glyph__add_people, R.string.conversation__action__create_group)
   } else if (isPartner && !isGroupOrBot) {
