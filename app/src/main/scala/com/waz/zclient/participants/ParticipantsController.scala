@@ -48,7 +48,7 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
   lazy val selectedParticipant = Signal(Option.empty[UserId])
 
   val onShowParticipants = EventStream[Option[String]]() //Option[String] = fragment tag //TODO use type?
-  val onShowAnimations = EventStream[Boolean]() //Boolean represents with or without animations
+  val onLeaveParticipants = EventStream[Boolean]() //Boolean represents with or without animations
   val onShowParticipantsWithUserId = EventStream[ParticipantRequest]()
 
   val onShowUser = EventStream[Option[UserId]]()

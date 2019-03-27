@@ -143,7 +143,7 @@ class SingleParticipantFragment extends FragmentHelper {
             case _ =>
           }
           case _ => Future.successful {
-            participantsController.onShowAnimations ! true
+            participantsController.onLeaveParticipants ! true
             participantsController.otherParticipantId.head.foreach {
               case Some(userId) =>
                 inject[IConversationScreenController].hideUser()
