@@ -53,6 +53,7 @@ import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.pages.startup.UpdateFragment
 import com.waz.zclient.participants.ParticipantsController
+import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
 import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.preferences.dialogs.ChangeHandleFragment
 import com.waz.zclient.tracking.UiTrackingController
@@ -184,7 +185,7 @@ class MainActivity extends BaseActivity
           CancellableFuture.delay(750.millis).map { _ =>
             userAccountsController.getOrCreateAndOpenConvFor(userId)
               .foreach { _ =>
-                participantsController.onShowParticipantsWithUserId ! userId
+                participantsController.onShowParticipantsWithUserId ! ParticipantRequest(userId, fromDeepLink = true)
               }
           }
         } else {

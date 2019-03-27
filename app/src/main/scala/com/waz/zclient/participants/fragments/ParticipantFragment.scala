@@ -104,7 +104,7 @@ class ParticipantFragment extends ManagerFragment
               case true if getStringArg(UserToOpenArg).isEmpty =>
                 (GroupParticipantsFragment.newInstance(), GroupParticipantsFragment.Tag)
               case _ =>
-                (SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
+                (SingleParticipantFragment.newInstance(fromDeepLink = getBooleanArg(FromDeepLinkArg)), SingleParticipantFragment.Tag)
             }
         }).map {
           case (f, tag) =>
@@ -291,6 +291,7 @@ object ParticipantFragment {
   val TAG: String = classOf[ParticipantFragment].getName
   private val PageToOpenArg = "ARG__FIRST__PAGE"
   private val UserToOpenArg = "ARG__USER"
+  private val FromDeepLinkArg = "ARG__FROM__DEEP__LINK"
 
   def newInstance(page: Option[String]): ParticipantFragment =
     returning(new ParticipantFragment) { f =>
@@ -299,9 +300,12 @@ object ParticipantFragment {
       }
     }
 
-  def newInstance(userId: UserId): ParticipantFragment =
+  def newInstance(userId: UserId, fromDeepLink: Boolean = false): ParticipantFragment =
     returning(new ParticipantFragment) { f =>
-      f.setArguments(returning(new Bundle)(_.putString(UserToOpenArg, userId.str)))
+      f.setArguments(returning(new Bundle) { b =>
+        b.putString(UserToOpenArg, userId.str)
+        b.putBoolean(FromDeepLinkArg, fromDeepLink)
+      })
     }
 
 }
