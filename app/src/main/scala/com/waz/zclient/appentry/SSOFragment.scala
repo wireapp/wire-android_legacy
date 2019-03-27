@@ -19,6 +19,7 @@ package com.waz.zclient.appentry
 
 import android.app.FragmentManager
 import com.waz.api.impl.ErrorResponse
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.SSOService
 import com.waz.zclient.InputDialog.{Event, OnNegativeBtn, OnPositiveBtn, ValidatorResult}
 import com.waz.zclient._
@@ -33,7 +34,7 @@ object SSOFragment {
   val SSODialogTag = "SSO_DIALOG"
 }
 
-trait SSOFragment extends FragmentHelper {
+trait SSOFragment extends FragmentHelper with DerivedLogTag {
   import SSOFragment._
   import com.waz.threading.Threading.Implicits.Ui
 
@@ -66,9 +67,7 @@ trait SSOFragment extends FragmentHelper {
 
   protected def extractTokenAndShowSSODialog(showIfNoToken: Boolean = false): Unit =
     userAccountsController.ssoToken.head.foreach {
-      case Some(token) =>
-        userAccountsController.ssoToken ! None
-        verifyInput(token)
+      case Some(token) => verifyInput(token)
       case None if findChildFragment[InputDialog](SSODialogTag).isEmpty =>
         extractTokenFromClipboard
           .filter(_.nonEmpty || showIfNoToken)
@@ -79,24 +78,25 @@ trait SSOFragment extends FragmentHelper {
   protected def showSSODialog(token: Option[String]): Unit =
     if (findChildFragment[InputDialog](SSODialogTag).isEmpty)
       InputDialog.newInstance(
-          title                            = R.string.app_entry_sso_dialog_title,
-          message                          = R.string.app_entry_sso_dialog_message,
-          inputHint                        = Some(R.string.app_entry_sso_input_hint),
-          inputValue                       = token,
-          validateInput                    = true,
-          disablePositiveBtnOnInvalidInput = true,
-          negativeBtn                      = R.string.app_entry_dialog_cancel,
-          positiveBtn                      = R.string.app_entry_dialog_log_in
-        )
-      .setListener(dialogStaff)
-      .setValidator(dialogStaff)
-      .show(getChildFragmentManager, SSODialogTag)
+        title = R.string.app_entry_sso_dialog_title,
+        message = R.string.app_entry_sso_dialog_message,
+        inputHint = Some(R.string.app_entry_sso_input_hint),
+        inputValue = token,
+        validateInput = true,
+        disablePositiveBtnOnInvalidInput = true,
+        negativeBtn = R.string.app_entry_dialog_cancel,
+        positiveBtn = R.string.app_entry_dialog_log_in
+      )
+        .setListener(dialogStaff)
+        .setValidator(dialogStaff)
+        .show(getChildFragmentManager, SSODialogTag)
 
   protected def verifyInput(input: String): Future[Unit] =
     ssoService.extractUUID(input).fold(Future.successful(())) { token =>
       onVerifyingToken(true)
       ssoService.verifyToken(token).flatMap { result =>
         onVerifyingToken(false)
+        userAccountsController.ssoToken ! None
         import ErrorResponse._
         result match {
           case Right(true) =>
