@@ -1294,6 +1294,9 @@
     <string name="deep_link_conversation_error_title">Wire cannot open this conversation.</string>
     <string name="deep_link_conversation_error_message">This account may not have access or the conversation may not exist.</string>
 
+    <string name="deep_link_user_error_title">Wire can\'t find this person.</string>
+    <string name="deep_link_user_error_message">You may not have permission with this account or it no longer exists.</string>
+
     <!--Two identical strings are needed for German translation-->
     <string name="quote_timestamp_message_time">Original message from %s</string>
     <string name="quote_timestamp_message_date">Original message from %s</string>
