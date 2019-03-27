@@ -32,7 +32,7 @@ import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, Pas
 import com.waz.service.ZMessaging.clock
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.{Signal, Subscription}
+import com.waz.utils.events.Signal
 import com.waz.utils.{RichInstant, returning}
 import com.waz.zclient.Intents._
 import com.waz.zclient.SpinnerController.{Hide, Show}
@@ -64,7 +64,6 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
-import scala.collection.mutable
 
 class MainActivity extends BaseActivity
   with CallingBannerActivity
@@ -149,25 +148,8 @@ class MainActivity extends BaseActivity
       case Hide(Some(message))=> loadingIndicator.hideWithMessage(message, 750)
       case Hide(_) => loadingIndicator.hide()
     }
-  }
 
-  private val subs = mutable.HashSet.empty[Subscription]
-
-  override def onStart() = {
-    getControllerFactory.getNavigationController.addNavigationControllerObserver(this)
-    inject[NavigationController].mainActivityActive.mutate(_ + 1)
-
-    super.onStart()
-
-    if (!getControllerFactory.getUserPreferencesController.hasCheckedForUnsupportedEmojis(Emojis.VERSION))
-      Future(checkForUnsupportedEmojis())(Threading.Background)
-
-    val intent = getIntent
-    deepLinkService.checkDeepLink(intent)
-    intent.setData(null)
-    setIntent(intent)
-
-    subs += deepLinkService.deepLink.onUi {
+    deepLinkService.deepLink.onUi {
       case None =>
 
       case Some(OpenDeepLink(SSOLoginToken(token), _)) =>
@@ -200,6 +182,21 @@ class MainActivity extends BaseActivity
         verbose(l"the default path (no deep link, or a link handled later)")
         startFirstFragment() // don't reset the deep link - it may be handled later (also this line should be executed if not deep link is present)
     }
+  }
+
+  override def onStart() = {
+    getControllerFactory.getNavigationController.addNavigationControllerObserver(this)
+    inject[NavigationController].mainActivityActive.mutate(_ + 1)
+
+    super.onStart()
+
+    if (!getControllerFactory.getUserPreferencesController.hasCheckedForUnsupportedEmojis(Emojis.VERSION))
+      Future(checkForUnsupportedEmojis())(Threading.Background)
+
+    val intent = getIntent
+    deepLinkService.checkDeepLink(intent)
+    intent.setData(null)
+    setIntent(intent)
   }
 
   override protected def onResume() = {

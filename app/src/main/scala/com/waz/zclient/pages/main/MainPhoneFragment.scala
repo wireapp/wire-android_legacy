@@ -49,6 +49,7 @@ import com.waz.zclient.pages.main.conversationlist.ConfirmationFragment
 import com.waz.zclient.pages.main.conversationpager.ConversationPagerFragment
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
+import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.tracking.GlobalTrackingController.analyticsPrefKey
 import com.waz.zclient.utils.ContextUtils._
@@ -149,7 +150,7 @@ class MainPhoneFragment extends FragmentHelper
           CancellableFuture.delay(750.millis).map { _ =>
             userAccountsController.getOrCreateAndOpenConvFor(userId)
               .foreach { _ =>
-                participantsController.onShowParticipantsWithUserId ! userId
+                participantsController.onShowParticipantsWithUserId ! ParticipantRequest(userId, fromDeepLink = true)
               }
           }
         } else {
