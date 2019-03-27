@@ -53,7 +53,7 @@ class SingleParticipantFragment extends FragmentHelper {
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val userAccountsController = inject[UserAccountsController]
 
-  private lazy val fromDeepLink: Boolean = true // TODO: getBooleanArg(FromDeepLink)
+  private lazy val fromDeepLink: Boolean = getBooleanArg(FromDeepLink)
 
   private val visibleTab = Signal[SingleParticipantFragment.Tab](DetailsTab)
 

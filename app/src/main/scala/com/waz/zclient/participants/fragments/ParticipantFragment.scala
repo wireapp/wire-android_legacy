@@ -163,7 +163,11 @@ class ParticipantFragment extends ManagerFragment
   }
 
   override def onShowConversationMenu(inConvList: Boolean, convId: ConvId): Unit =
-    if (!inConvList) OptionsMenu(getContext, new ConversationOptionsMenuController(convId, Mode.Normal(inConvList))).show()
+    if (!inConvList) {
+      val fromDeepLink = getBooleanArg(FromDeepLinkArg)
+      val controller = new ConversationOptionsMenuController(convId, Mode.Normal(inConvList), fromDeepLink)
+      OptionsMenu(getContext, controller).show()
+    }
 
   def showOtrClient(userId: UserId, clientId: ClientId): Unit =
     getChildFragmentManager
