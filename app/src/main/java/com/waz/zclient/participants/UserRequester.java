@@ -18,5 +18,5 @@
 package com.waz.zclient.participants;
 
 public enum UserRequester {
-    SEARCH, CONVERSATION, PARTICIPANTS, INVITE, POPOVER, CALL
+    SEARCH, CONVERSATION, PARTICIPANTS, INVITE, POPOVER, CALL, DEEP_LINK
 }

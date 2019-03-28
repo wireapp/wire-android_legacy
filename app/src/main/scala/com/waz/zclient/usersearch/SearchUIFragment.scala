@@ -338,7 +338,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
             Future { user.connection match {
               case PendingFromUser | Blocked | Ignored | Cancelled | Unconnected =>
                 convScreenController.setPopoverLaunchedMode(DialogLaunchMode.SEARCH)
-                pickUserController.showUserProfile(userId)
+                pickUserController.showUserProfile(userId, false)
               case ConnectionStatus.PendingFromOther =>
                 getContainer.showIncomingPendingConnectRequest(ConvId(userId.str))
               case _ =>
