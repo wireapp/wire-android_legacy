@@ -58,15 +58,20 @@ class SingleParticipantFragment extends FragmentHelper {
   private val visibleTab = Signal[SingleParticipantFragment.Tab](DetailsTab)
 
   private lazy val tabs = returning(view[TabLayout](R.id.details_and_devices_tabs)) {
-    _.foreach {
-      _.addOnTabSelectedListener(new OnTabSelectedListener {
-        override def onTabSelected(tab: TabLayout.Tab): Unit = {
-          visibleTab ! SingleParticipantFragment.Tab.tabs.find(_.pos == tab.getPosition).getOrElse(DetailsTab)
-        }
+    _.foreach { layout =>
 
-        override def onTabUnselected(tab: TabLayout.Tab): Unit = {}
-        override def onTabReselected(tab: TabLayout.Tab): Unit = {}
-      })
+      if (fromDeepLink)
+        layout.setVisibility(View.GONE)
+      else {
+        layout.addOnTabSelectedListener(new OnTabSelectedListener {
+          override def onTabSelected(tab: TabLayout.Tab): Unit = {
+            visibleTab ! SingleParticipantFragment.Tab.tabs.find(_.pos == tab.getPosition).getOrElse(DetailsTab)
+          }
+
+          override def onTabUnselected(tab: TabLayout.Tab): Unit = {}
+          override def onTabReselected(tab: TabLayout.Tab): Unit = {}
+        })
+      }
     }
   }
 
