@@ -36,6 +36,7 @@
         app:w_font="@string/wire__typeface__light"
         android:gravity="center"
         android:background="?wireBackgroundColor"
+        android:paddingBottom="@dimen/wire__padding__regular"
         />
 
     <FrameLayout

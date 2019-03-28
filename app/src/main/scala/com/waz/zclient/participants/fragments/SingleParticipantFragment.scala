@@ -36,7 +36,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.participants.{ParticipantOtrDeviceAdapter, ParticipantsController}
-import com.waz.zclient.utils.{GuestUtils, RichView, StringUtils}
+import com.waz.zclient.utils.{ContextUtils, GuestUtils, RichView, StringUtils}
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.zclient.{FragmentHelper, R}
 import org.threeten.bp.Instant
@@ -119,6 +119,11 @@ class SingleParticipantFragment extends FragmentHelper {
     visibleTab.onUi {
       case DetailsTab => vh.foreach(_.setVisible(true))
       case _          => vh.foreach(_.setVisible(false))
+    }
+
+    if (fromDeepLink) {
+      verbose(l"DEEP details view, setting the top margin")
+      vh.foreach(_.setMarginTop(ContextUtils.getDimenPx(R.dimen.wire__padding__50)))
     }
   }
 
