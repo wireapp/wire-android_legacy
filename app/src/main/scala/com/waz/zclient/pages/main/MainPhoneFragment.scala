@@ -157,7 +157,7 @@ class MainPhoneFragment extends FragmentHelper
         } else {
           CancellableFuture.delay(getInt(R.integer.framework_animation_duration_medium).millis).map { _ =>
             navigationController.setVisiblePage(Page.CONVERSATION_LIST, MainPhoneFragment.Tag)
-            pickUserController.showUserProfile(userId)
+            pickUserController.showUserProfile(userId, true)
           }
         }
         deepLinkService.deepLink ! None
