@@ -152,7 +152,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
   private def switchToConversationList() =
     if (!mode.inConversationList) CancellableFuture.delay(getInt(R.integer.framework_animation_duration_medium).millis).map { _ =>
       navController.setVisiblePage(Page.CONVERSATION_LIST, tag)
-      participantsController.onShowAnimations ! true
+      participantsController.onLeaveParticipants ! true
     }
 
   new EventStreamWithAuxSignal(onMenuItemClicked, convState).apply {

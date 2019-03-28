@@ -146,6 +146,7 @@ class MainPhoneFragment extends FragmentHelper
     deepLinkService.deepLink.collect { case Some(result) => result } onUi {
       case OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember)) =>
         pickUserController.hideUserProfile()
+        participantsController.onLeaveParticipants ! true
         if (connected || currentTeamMember) {
           CancellableFuture.delay(750.millis).map { _ =>
             userAccountsController.getOrCreateAndOpenConvFor(userId)
@@ -156,14 +157,18 @@ class MainPhoneFragment extends FragmentHelper
         } else {
           CancellableFuture.delay(getInt(R.integer.framework_animation_duration_medium).millis).map { _ =>
             navigationController.setVisiblePage(Page.CONVERSATION_LIST, MainPhoneFragment.Tag)
-            participantsController.onShowAnimations ! true
             pickUserController.showUserProfile(userId)
           }
         }
         deepLinkService.deepLink ! None
 
       case OpenDeepLink(ConversationToken(convId), _) =>
-        conversationController.switchConversation(convId)
+        pickUserController.hideUserProfile()
+        participantsController.onLeaveParticipants ! true
+        participantsController.selectedParticipant ! None
+        CancellableFuture.delay(750.millis).map { _ =>
+          conversationController.switchConversation(convId)
+        }
         deepLinkService.deepLink ! None
 
       case DoNotOpenDeepLink(Conversation, reason) =>
