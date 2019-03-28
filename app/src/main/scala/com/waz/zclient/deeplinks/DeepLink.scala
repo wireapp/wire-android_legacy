@@ -35,7 +35,7 @@ object DeepLink extends DerivedLogTag {
   case class UserToken(userId: UserId) extends Token
   case class ConversationToken(conId: ConvId) extends Token
 
-  case class UserTokenInfo(connected: Boolean, currentTeamMember: Boolean)
+  case class UserTokenInfo(connected: Boolean, currentTeamMember: Boolean, self: Boolean = false)
 
   case class RawToken(value: String) extends AnyVal
 

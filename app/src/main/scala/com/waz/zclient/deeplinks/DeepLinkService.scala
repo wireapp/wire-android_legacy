@@ -97,6 +97,8 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
                 val service = await { userService.head }
                 await { service.syncIfNeeded(Set(userId)) }
                 await { service.getSelfUser.zip(service.findUser(userId)) } match {
+                  case (Some(self), Some(other)) if self.id == other.id =>
+                    OpenDeepLink(token, UserTokenInfo(connected = false, currentTeamMember = true, self = true))
                   case (Some(self), Some(other)) =>
                     OpenDeepLink(token, UserTokenInfo(other.isConnected, self.isInTeam(other.teamId)))
                   case (Some(_), _) =>
