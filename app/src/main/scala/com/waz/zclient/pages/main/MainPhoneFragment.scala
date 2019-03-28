@@ -144,10 +144,12 @@ class MainPhoneFragment extends FragmentHelper
     zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
 
     deepLinkService.deepLink.collect { case Some(result) => result } onUi {
-      case OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember)) =>
+      case OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember, self)) =>
         pickUserController.hideUserProfile()
         participantsController.onLeaveParticipants ! true
-        if (connected || currentTeamMember) {
+        if (self) {
+          startActivity(Intents.OpenSettingsIntent(getContext))
+        } else if (connected || currentTeamMember) {
           CancellableFuture.delay(750.millis).map { _ =>
             userAccountsController.getOrCreateAndOpenConvFor(userId)
               .foreach { _ =>
