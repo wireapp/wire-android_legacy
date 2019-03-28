@@ -143,8 +143,8 @@ class MainPhoneFragment extends FragmentHelper
     confirmationMenu.foreach(_.setVisibility(View.GONE))
     zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
 
-    deepLinkService.deepLink.onUi {
-      case Some(OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember))) =>
+    deepLinkService.deepLink.collect { case Some(result) => result } onUi {
+      case OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember)) =>
         pickUserController.hideUserProfile()
         if (connected || currentTeamMember) {
           CancellableFuture.delay(750.millis).map { _ =>
@@ -162,8 +162,13 @@ class MainPhoneFragment extends FragmentHelper
         }
         deepLinkService.deepLink ! None
 
-      case Some(OpenDeepLink(ConversationToken(convId), _)) =>
+      case OpenDeepLink(ConversationToken(convId), _) =>
         conversationController.switchConversation(convId)
+        deepLinkService.deepLink ! None
+
+      case DoNotOpenDeepLink(Conversation, _) =>
+        verbose(l"do not open, conversation deep link error")
+        showErrorDialog(R.string.deep_link_conversation_error_title, R.string.deep_link_conversation_error_message)
         deepLinkService.deepLink ! None
 
       case _ =>

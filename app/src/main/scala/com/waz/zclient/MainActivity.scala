@@ -171,13 +171,6 @@ class MainActivity extends BaseActivity
         }
         deepLinkService.deepLink ! None
 
-      case Some(DoNotOpenDeepLink(Conversation, _)) =>
-        verbose(l"do not open, conversation deep link error")
-        showErrorDialog(R.string.deep_link_conversation_error_title, R.string.deep_link_conversation_error_message).map { _ =>
-          startFirstFragment()
-        }
-        deepLinkService.deepLink ! None
-
       case Some(_) =>
         verbose(l"the default path (no deep link, or a link handled later)")
         startFirstFragment() // don't reset the deep link - it may be handled later (also this line should be executed if not deep link is present)
