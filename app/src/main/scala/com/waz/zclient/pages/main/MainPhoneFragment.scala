@@ -166,9 +166,14 @@ class MainPhoneFragment extends FragmentHelper
         conversationController.switchConversation(convId)
         deepLinkService.deepLink ! None
 
-      case DoNotOpenDeepLink(Conversation, _) =>
-        verbose(l"do not open, conversation deep link error")
+      case DoNotOpenDeepLink(Conversation, reason) =>
+        verbose(l"do not open, conversation deep link error. Reason: $reason")
         showErrorDialog(R.string.deep_link_conversation_error_title, R.string.deep_link_conversation_error_message)
+        deepLinkService.deepLink ! None
+
+      case DoNotOpenDeepLink(User, reason) =>
+        verbose(l"do not open, user deep link error. Reason: $reason")
+        showErrorDialog(R.string.deep_link_user_error_title, R.string.deep_link_user_error_message)
         deepLinkService.deepLink ! None
 
       case _ =>
