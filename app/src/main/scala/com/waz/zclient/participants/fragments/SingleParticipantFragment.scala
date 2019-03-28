@@ -177,15 +177,19 @@ class SingleParticipantFragment extends FragmentHelper {
   private lazy val footerMenu = returning( view[FooterMenu](R.id.fm__footer) ) { vh =>
     // TODO: merge this logic with ConversationOptionsMenuController
     (for {
-      createPerm <- userAccountsController.hasCreateConvPermission
-      conv       <- participantsController.conv
-      remPerm    <- userAccountsController.hasRemoveConversationMemberPermission(conv.id)
-      isGuest    <- participantsController.isCurrentUserGuest
-      isGroup    <- participantsController.isGroup
-      isPartner  <- userAccountsController.isPartner
-      other      <- participantsController.otherParticipant
-      otherIsGuest = other.isGuest(conv.team)
-    } yield (!fromDeepLink || otherIsGuest) && (createPerm || remPerm) && !isGuest && (!isGroup || !isPartner)).map {
+      conv           <- participantsController.conv
+      isGroup        <- participantsController.isGroup
+      createPerm     <- userAccountsController.hasCreateConvPermission
+      remPerm        <- userAccountsController.hasRemoveConversationMemberPermission(conv.id)
+      selfIsGuest    <- participantsController.isCurrentUserGuest
+      selfIsPartner  <- userAccountsController.isPartner
+      selfIsProUser  <- userAccountsController.isTeam
+      other          <- participantsController.otherParticipant
+      otherIsGuest    = other.isGuest(conv.team)
+    } yield {
+      if (fromDeepLink) !selfIsProUser || otherIsGuest
+      else (createPerm || remPerm) && !selfIsGuest && (!isGroup || !selfIsPartner)
+    }).map {
       case true => R.string.glyph__more
       case _    => R.string.empty_string
     }.map(getString).onUi(text => vh.foreach(_.setRightActionText(text)))
