@@ -99,6 +99,11 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
                 await { service.getSelfUser.zip(service.findUser(userId)) } match {
                   case (Some(self), Some(other)) if self.id == other.id =>
                     OpenDeepLink(token, UserTokenInfo(connected = false, currentTeamMember = true, self = true))
+                  case (Some(self), Some(other)) if self.isPartner(self.teamId) || other.isPartner(other.teamId) =>
+                    if (other.isConnected || self.createdBy.contains(self.id) || other.createdBy.contains(self.id))
+                      OpenDeepLink(token, UserTokenInfo(other.isConnected, self.isInTeam(other.teamId)))
+                    else
+                      DoNotOpenDeepLink(deepLink, NotAllowed)
                   case (Some(self), Some(other)) =>
                     OpenDeepLink(token, UserTokenInfo(other.isConnected, self.isInTeam(other.teamId)))
                   case (Some(_), _) =>
@@ -130,6 +135,7 @@ object DeepLinkService {
     case object Unknown extends Error
     case object SSOLoginTooManyAccounts extends Error
     case object NotFound extends Error
+    case object NotAllowed extends Error
   }
 
 }
