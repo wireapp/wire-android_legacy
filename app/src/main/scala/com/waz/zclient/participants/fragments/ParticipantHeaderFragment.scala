@@ -36,6 +36,7 @@ import com.waz.zclient.utils.{ContextUtils, RichView, ViewUtils}
 import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
 
 class ParticipantHeaderFragment extends FragmentHelper {
+class ParticipantHeaderFragment(fromDeepLink: Boolean = false) extends FragmentHelper {
   implicit def cxt: Context = getActivity
 
   private lazy val participantsController = inject[ParticipantsController]
@@ -193,5 +194,6 @@ class ParticipantHeaderFragment extends FragmentHelper {
 object ParticipantHeaderFragment {
   val TAG: String = classOf[ParticipantHeaderFragment].getName
 
-  def newInstance: ParticipantHeaderFragment = new ParticipantHeaderFragment
+  def newInstance(fromDeepLink: Boolean = false): ParticipantHeaderFragment =
+    new ParticipantHeaderFragment(fromDeepLink)
 }
