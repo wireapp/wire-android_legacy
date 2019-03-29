@@ -89,6 +89,9 @@ class AdvancedViewImpl(context: Context, attrs: AttributeSet, style: Int)
     } yield stats).foreach(v.setText)(Threading.Ui)
   }
 
+  import com.waz.zclient.utils._
+  statsDisplay.setVisible(BuildConfig.DEVELOPER_FEATURES_ENABLED)
+
   val webSocketForegroundServiceSwitch = returning(findById[SwitchPreference](R.id.preferences_websocket_service)) { v =>
     inject[GoogleApi].isGooglePlayServicesAvailable.map(if (_) View.GONE else View.VISIBLE).onUi(v.setVisibility)
     v.setPreference(WsForegroundKey, global = true)
