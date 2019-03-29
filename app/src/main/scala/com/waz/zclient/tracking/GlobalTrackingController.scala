@@ -20,11 +20,11 @@ package com.waz.zclient.tracking
 
 import android.content.Context
 import android.renderscript.RSRuntimeException
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.Preferences.PrefKey
 import com.waz.content.{GlobalPreferences, UsersStorage}
+import com.waz.log.BasicLogging.LogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
 import com.waz.service.ZMessaging
@@ -36,13 +36,15 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient._
 import com.waz.zclient.appentry.fragments.SignInFragment
 import com.waz.zclient.appentry.fragments.SignInFragment.{InputType, SignInMethod}
+import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
 import scala.concurrent.Future._
 import scala.concurrent.duration._
 import scala.util.Try
 
-class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext) extends Injectable {
+class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext)
+  extends Injectable with DerivedLogTag {
 
   import GlobalTrackingController._
 
@@ -60,12 +62,12 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
   val tracking    = inject[TrackingService]
 
   def optIn(): Future[Unit] = {
-    verbose("optIn")
+    verbose(l"optIn")
     sendEvent(OptInEvent)
   }
 
   def optOut(): Unit = dispatcher {
-    verbose("optOut")
+    verbose(l"optOut")
   }
 
   /**
@@ -88,7 +90,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
         case e: ReceivedPushEvent if e.p.toFetch.forall(_.asScala < 10.seconds) =>
         //don't track - there are a lot of these events! We want to keep the event count lower
         case e@ExceptionEvent(_, _, description, Some(throwable)) =>
-          error(description, throwable)(e.tag)
+          error(l"description: ${redactedString(description)}", throwable)(e.tag)
           isTrackingEnabled.head.map {
             case true =>
               throwable match {
@@ -114,11 +116,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
         case _ => Future.successful(0)
       }
     } yield {
-      verbose(
-        s"""
-           |trackEvent: ${eventArg.name}
-           |properties: ${eventArg.props.map(_.toString(2))}
-          """.stripMargin)
+      verbose(l"send event: $eventArg")
     }
 
   def onEnteredCredentials(response: Either[ErrorResponse, _], method: SignInMethod): Unit =
@@ -150,7 +148,7 @@ object GlobalTrackingController {
       case _: RSRuntimeException => //
       case _ =>
         val userId = Try(ZMessaging.context.getSharedPreferences("zprefs", Context.MODE_PRIVATE).getString("com.waz.device.id", "???")).getOrElse("????")
-        error(s"userId: $userId, zmessaging - $tag - $description")(tag)
+        error(l"userId: ${redactedString(userId)}", t)(tag)
     }
   }
 

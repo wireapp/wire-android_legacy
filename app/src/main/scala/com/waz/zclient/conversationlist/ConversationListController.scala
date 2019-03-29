@@ -29,13 +29,14 @@ import com.waz.zclient.conversationlist.ConversationListManagerFragment.ConvList
 import com.waz.zclient.conversationlist.views.ConversationAvatarView
 import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
-class ConversationListController(implicit inj: Injector, ec: EventContext) extends Injectable {
+class ConversationListController(implicit inj: Injector, ec: EventContext)
+  extends Injectable with DerivedLogTag {
 
   import ConversationListController._
 
@@ -123,7 +124,8 @@ object ConversationListController {
   // Keeps last message and missed call for each conversation, this is needed because MessagesStorage is not
   // supposed to be used for multiple conversations at the same time, as it loads an index of all conv messages.
   // Using MessagesStorage with multiple/all conversations forces it to reload full msgs index on every conv switch.
-  class LastMessageCache(zms: ZMessaging)(implicit inj: Injector, ec: EventContext) extends Injectable {
+  class LastMessageCache(zms: ZMessaging)(implicit inj: Injector, ec: EventContext)
+    extends Injectable with DerivedLogTag {
 
     private implicit val executionContext: ExecutionContext = Threading.Background
 

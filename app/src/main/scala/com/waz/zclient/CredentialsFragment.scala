@@ -21,7 +21,6 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.EmailCredentials
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.UserPreferences
@@ -164,7 +163,8 @@ class AddEmailFragment extends CredentialsFragment {
 }
 
 object AddEmailFragment {
-  val Tag = implicitLogTag
+
+  val Tag: String = getClass.getSimpleName
 
   def apply(hasPassword: Boolean = false): AddEmailFragment =
     CredentialsFragment(new AddEmailFragment(), hasPassword)
@@ -245,7 +245,7 @@ class VerifyEmailFragment extends CredentialsFragment {
 
 object VerifyEmailFragment {
 
-  val Tag = implicitLogTag
+  val Tag: String = getClass.getSimpleName
 
   def apply(email: EmailAddress, hasPassword: Boolean = false): VerifyEmailFragment =
     CredentialsFragment(new VerifyEmailFragment(), hasPassword, Some(email))
@@ -342,7 +342,8 @@ class SetOrRequestPasswordFragment extends CredentialsFragment {
 }
 
 object SetOrRequestPasswordFragment {
-  val Tag = implicitLogTag
+
+  val Tag: String = getClass.getSimpleName
 
   def apply(email: EmailAddress, hasPassword: Boolean = false): SetOrRequestPasswordFragment =
     CredentialsFragment(new SetOrRequestPasswordFragment(), hasPassword, Some(email))

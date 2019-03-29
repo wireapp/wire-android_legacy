@@ -35,10 +35,20 @@
             android:orientation="vertical"
             >
 
+            <com.waz.zclient.preferences.views.SwitchPreference
+                android:id="@+id/preferences_enable_logs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
+                app:title="@string/pref_advanced_enable_logs_title"
+                app:subtitle="@string/pref_advanced_enable_logs_subtitle"
+                />
+
             <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preferences_debug_report"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
                 app:subtitle="@string/pref_advanced_debug_report_summary"
                 app:title="@string/pref_advanced_debug_report_title"
                 />

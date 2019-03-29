@@ -22,8 +22,6 @@ import android.os.Bundle
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{ImageView, LinearLayout}
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -46,7 +44,7 @@ import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.zclient.{FragmentHelper, R}
 
 object BlockedUserProfileFragment {
-  val Tag: String = ZLog.ImplicitTag.implicitLogTag
+  val Tag: String = getClass.getSimpleName
   val ARGUMENT_USER_ID = "ARGUMENT_USER_ID"
   val ARGUMENT_USER_REQUESTER = "ARGUMENT_USER_REQUESTER"
   val STATE_IS_SHOWING_FOOTER_MENU = "STATE_IS_SHOWING_FOOTER_MENU"

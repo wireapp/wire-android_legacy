@@ -24,7 +24,7 @@ import android.view.HapticFeedbackConstants
 import android.view.View.OnClickListener
 import android.webkit.URLUtil
 import android.widget.TextView
-import com.waz.ZLog.ImplicitTag._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -44,7 +44,7 @@ import com.waz.zclient.utils.Time.TimeStamp
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{R, ViewHelper}
 
-trait CollectionItemView extends ViewHelper with EphemeralPartView {
+trait CollectionItemView extends ViewHelper with EphemeralPartView with DerivedLogTag {
   protected lazy val civZms = inject[Signal[ZMessaging]]
   protected lazy val messageActions = inject[MessageActionsController]
   protected lazy val collectionController = inject[CollectionController]

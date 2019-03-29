@@ -24,7 +24,6 @@ import android.support.v7.widget.Toolbar
 import android.view.View.{OnClickListener, OnLayoutChangeListener}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, ImageView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.{MessagesStorage, ReactionsStorage}
 import com.waz.model.{Liking, MessageId, UserId}
 import com.waz.service.assets.AssetService.RawAssetInput.WireAssetInput

@@ -21,11 +21,11 @@ import java.util.Locale
 
 import android.content.Context
 import com.waz.api.OtrClientType
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.model.otr.{Client, ClientId, UserClients}
 import com.waz.service.{AccountManager, ZMessaging}
 import com.waz.sync.SyncResult
-import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversation.ConversationController
@@ -35,7 +35,7 @@ import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.Future
 
-class ClientsController(implicit inj: Injector) extends Injectable {
+class ClientsController(implicit inj: Injector) extends Injectable with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 

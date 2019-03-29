@@ -17,14 +17,13 @@
  */
 package com.waz.zclient.appentry
 
-import android.content.Intent
+import android.app.FragmentManager
+import android.content.{Context, Intent}
 import android.content.res.Configuration
 import android.os.Bundle
 import android.support.v4.app.FragmentManager.OnBackStackChangedListener
 import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.view.View
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.service.AccountManager.ClientRegistrationState
 import com.waz.service.AccountsService
@@ -36,12 +35,17 @@ import com.waz.zclient._
 import com.waz.zclient.appentry.AppEntryActivity._
 import com.waz.zclient.appentry.controllers.InvitationsController
 import com.waz.zclient.appentry.fragments.{TeamNameFragment, _}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.newreg.fragments.country.CountryController
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.deeplinks.{DeepLink, DeepLinkService}
+import com.waz.zclient.deeplinks.DeepLink.{ConversationToken, UserToken}
+import com.waz.zclient.deeplinks.DeepLinkService.{DoNotOpenDeepLink, OpenDeepLink}
+import com.waz.zclient.utils.ContextUtils.showErrorDialog
 
 import scala.collection.JavaConverters._
 
@@ -68,11 +72,14 @@ object AppEntryActivity {
 
 class AppEntryActivity extends BaseActivity {
 
+  implicit def ctx: Context = this
+
   private lazy val progressView = ViewUtils.getView(this, R.id.liv__progress).asInstanceOf[LoadingIndicatorView]
   private lazy val countryController: CountryController = new CountryController(this)
   private lazy val invitesController = inject[InvitationsController]
   private lazy val spinnerController  = inject[SpinnerController]
   private lazy val userAccountsController = inject[UserAccountsController]
+  private lazy val deepLinkService: DeepLinkService = inject[DeepLinkService]
   private var createdFromSavedInstance: Boolean = false
   private var isPaused: Boolean = false
 
@@ -141,14 +148,39 @@ class AppEntryActivity extends BaseActivity {
       case Hide(Some(message)) => progressView.hideWithMessage(message, 750)
       case Hide(_) => progressView.hide()
     }
+
+    deepLinkService.deepLink.collect { case Some(result) => result } onUi {
+      case OpenDeepLink(UserToken(_), _) | DoNotOpenDeepLink(DeepLink.User, _) =>
+        showErrorDialog(R.string.deep_link_user_error_title, R.string.deep_link_user_error_message)
+        deepLinkService.deepLink ! None
+      case OpenDeepLink(ConversationToken(_), _) | DoNotOpenDeepLink(DeepLink.Conversation, _) =>
+        showErrorDialog(R.string.deep_link_conversation_error_title, R.string.deep_link_conversation_error_message)
+        deepLinkService.deepLink ! None
+      case _ =>
+    }
+  }
+
+  // It is possible to open the app through intents with deep links. If that happens, we can't just
+  // show the fragment that was opened previously - we have to take the user to the fragment specified
+  // by the intent (at this point the information about it should be already stored somewhere).
+  // If this is the case, in `onResume` we can pop back the stack and show the new fragment.
+  override def onResume(): Unit = {
+    super.onResume()
+    // if the SSO token is present we use it to log in the user
+    userAccountsController.ssoToken.head.foreach {
+      case Some(_) =>
+        getFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
+      case _ =>
+    }(Threading.Ui)
   }
 
   private def showFragment(): Unit = withFragmentOpt(AppLaunchFragment.Tag) {
     case Some(_) =>
     case None =>
       userAccountsController.ssoToken.head.foreach {
-        // if the SSO token is present we use it to log in the user
-        case Some(_) =>                    showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
+        case Some(_) =>
+        // if the SSO token is present we will handle it in onResume
         case _ =>
           Option(getIntent.getExtras).map(_.getInt(MethodArg)) match {
             case Some(LoginArgVal) =>      showFragment(SignInFragment(), SignInFragment.Tag, animated = false)
@@ -177,7 +209,7 @@ class AppEntryActivity extends BaseActivity {
   }
 
   override protected def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {
-    info(s"OnActivity result: $requestCode, $resultCode")
+    info(l"OnActivity result: $requestCode, $resultCode")
     super.onActivityResult(requestCode, resultCode, data)
     getSupportFragmentManager.findFragmentById(R.id.fl_main_content).onActivityResult(requestCode, resultCode, data)
   }

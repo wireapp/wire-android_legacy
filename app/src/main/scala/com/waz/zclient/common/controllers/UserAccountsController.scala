@@ -18,10 +18,9 @@
 package com.waz.zclient.common.controllers
 
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.SelfPermissions
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserPermissions.Permission._
 import com.waz.model.UserPermissions._
 import com.waz.model._
@@ -32,10 +31,13 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.utils.{ConversationSignal, UiStorage}
 import com.waz.zclient.{Injectable, Injector}
+import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
 
-class UserAccountsController(implicit injector: Injector, context: Context, ec: EventContext) extends Injectable {
+class UserAccountsController(implicit injector: Injector, context: Context, ec: EventContext)
+  extends Injectable with DerivedLogTag {
+  
   import Threading.Implicits.Ui
 
   private implicit val uiStorage   = inject[UiStorage]
@@ -76,7 +78,7 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
     prefs
       .flatMap(_.apply(SelfPermissions).signal)
       .map { bitmask =>
-        debug(s"Self permissions bitmask: $bitmask")
+        debug(l"Self permissions bitmask: $bitmask")
         decodeBitmask(bitmask)
       }
 

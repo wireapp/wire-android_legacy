@@ -25,10 +25,9 @@ import android.text.TextUtils
 import android.util.TypedValue
 import android.view.{Gravity, View}
 import android.widget.{TextView, Toast}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.Message
 import com.waz.content.UserPreferences.DownloadImagesAlways
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{AssetData, AssetId, MessageData, Mime}
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.RawAssetInput.WireAssetInput
@@ -41,6 +40,7 @@ import com.waz.utils.wrappers.{AndroidURIUtil, URI}
 import com.waz.zclient.controllers.drawing.IDrawingController.DrawingMethod
 import com.waz.zclient.controllers.singleimage.ISingleImageController
 import com.waz.zclient.drawing.DrawingFragment.Sketch
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageBottomSheetDialog.MessageAction
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.ui.utils.TypefaceUtils
@@ -51,7 +51,9 @@ import org.threeten.bp.Duration
 import scala.PartialFunction._
 import scala.util.Success
 
-class AssetsController(implicit context: Context, inj: Injector, ec: EventContext) extends Injectable { controller =>
+class AssetsController(implicit context: Context, inj: Injector, ec: EventContext)
+  extends Injectable with DerivedLogTag { controller =>
+
   import AssetsController._
   import Threading.Implicits.Ui
 
@@ -104,7 +106,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   // display full screen image for given message
   def showSingleImage(msg: MessageData, container: View) =
     if (!(msg.isEphemeral && msg.expired)) {
-      verbose(s"message loaded, opening single image for ${msg.id}")
+      verbose(l"message loaded, opening single image for ${msg.id}")
       singleImage.setViewReferences(container)
       singleImage.showSingleImage(msg.id.str)
     }
@@ -189,7 +191,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
 object AssetsController {
 
-  class PlaybackControls(assetId: AssetId, controller: AssetsController) {
+  class PlaybackControls(assetId: AssetId, controller: AssetsController) extends DerivedLogTag {
     val rAndP = controller.zms.map(_.global.recordingAndPlayback)
 
     val isPlaying = rAndP.flatMap(rP => rP.isPlaying(AssetMediaKey(assetId)))

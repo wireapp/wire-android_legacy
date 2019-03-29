@@ -18,13 +18,14 @@
 package com.waz.zclient.preferences
 
 import com.waz.content.UserPreferences
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
-import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.{Injectable, Injector}
 
 //So that java can access the new preferences from the SE
-class PreferencesController(implicit inj: Injector, ec: EventContext) extends Injectable {
+class PreferencesController(implicit inj: Injector, ec: EventContext)
+  extends Injectable with DerivedLogTag {
 
   private val zms = inject[Signal[ZMessaging]]
   private val userPrefs = zms.map(_.userPrefs)

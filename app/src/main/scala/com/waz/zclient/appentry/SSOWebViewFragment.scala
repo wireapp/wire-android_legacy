@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.appentry
 
+import android.app.FragmentManager
 import android.content.DialogInterface
 import android.os.Bundle
 import android.support.v7.widget.Toolbar
@@ -24,14 +25,11 @@ import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.webkit.WebView
 import android.widget.TextView
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag._
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.wrappers.URI
 import com.waz.zclient.appentry.DialogErrorMessage.EmailError
-import com.waz.zclient.appentry.SSOWebViewFragment._
 import com.waz.zclient.appentry.SSOWebViewWrapper.SSOResponse
 import com.waz.zclient.appentry.fragments.FirstLaunchAfterLoginFragment
 import com.waz.zclient.common.controllers.UserAccountsController
@@ -43,8 +41,6 @@ import scala.concurrent.Future
 class SSOWebViewFragment extends FragmentHelper {
   import Threading.Implicits.Ui
 
-  private lazy val accountsService  = inject[AccountsService]
-
   private lazy val webView = view[WebView](R.id.web_view)
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
@@ -52,27 +48,26 @@ class SSOWebViewFragment extends FragmentHelper {
   }
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
-    val toolbar = view.findViewById[Toolbar](R.id.toolbar)
-    val title = view.findViewById[TextView](R.id.title)
 
     webView.foreach { webView =>
       val webViewWrapper = new SSOWebViewWrapper(webView, ZMessaging.currentGlobal.backend.baseUrl.toString)
       webViewWrapper.onUrlChanged.onUi { url =>
-        title.setText(Option(URI.parse(url).getHost).getOrElse(""))
+        webView.findViewById[TextView](R.id.title).setText(Option(URI.parse(url).getHost).getOrElse(""))
       }
 
-      webViewWrapper.loginWithCode(getArguments.getString(SSOCode)).foreach(ssoResponse)
+      getStringArg(SSOWebViewFragment.SSOCode).foreach(code => webViewWrapper.loginWithCode(code).foreach(ssoResponse))
     }
 
+    val toolbar = view.findViewById[Toolbar](R.id.toolbar)
     toolbar.setNavigationIcon(R.drawable.action_back_dark)
     toolbar.setNavigationOnClickListener(new OnClickListener {
       override def onClick(v: View): Unit = onBackPressed()
     })
-
   }
 
   private def ssoResponse(loginResult: SSOResponse) = loginResult match {
     case Right((cookie, userId)) =>
+      val accountsService = inject[AccountsService]
       accountsService.ssoLogin(userId, cookie).map {
         case Left(error) =>
           ContextUtils.showErrorDialog(EmailError(error))
@@ -93,18 +88,15 @@ class SSOWebViewFragment extends FragmentHelper {
         getString(android.R.string.ok),
         new DialogInterface.OnClickListener {
           def onClick(dialog: DialogInterface, which: Int): Unit = {
-            getFragmentManager.popBackStack()
+            onBackPressed()
           }
         },
         true)
   }
 
   override def onBackPressed(): Boolean = {
-    if (webView.map(_.canGoBack).getOrElse(false)) webView.foreach(_.goBack())
-    else {
-      inject[UserAccountsController].ssoToken ! None
-      getFragmentManager.popBackStack()
-    }
+    getFragmentManager.popBackStack(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+    inject[UserAccountsController].ssoToken ! None
     true
   }
 
@@ -113,8 +105,8 @@ class SSOWebViewFragment extends FragmentHelper {
 }
 
 object SSOWebViewFragment {
-  val Tag: String = ZLog.ImplicitTag.implicitLogTag
 
+  val Tag: String = getClass.getSimpleName
   val SSOCode = "SSO_CODE"
 
   def newInstance(code: String): SSOWebViewFragment = {

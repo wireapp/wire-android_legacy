@@ -23,9 +23,8 @@ import android.os.Bundle
 import android.support.v7.widget.{CardView, GridLayout}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, ImageView, TextView}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.avs.{VideoPreview, VideoRenderer}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Dim2, UserId}
 import com.waz.service.call.Avs.VideoState
 import com.waz.threading.{SerialDispatchQueue, Threading}
@@ -35,6 +34,7 @@ import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.controllers.{ThemeController, ThemeControllingFrameLayout}
 import com.waz.zclient.common.views.BackgroundDrawable
 import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
@@ -102,7 +102,9 @@ abstract class UserVideoView(context: Context, val userId: UserId) extends Frame
   val shouldShowInfo: Signal[Boolean]
 }
 
-class SelfVideoView(context: Context, userId: UserId) extends UserVideoView(context, userId) {
+class SelfVideoView(context: Context, userId: UserId)
+  extends UserVideoView(context, userId) with DerivedLogTag {
+
   protected val muteIcon = returning(findById[GenericStyleKitView](R.id.mute_icon)) { icon =>
     icon.setOnDraw(WireStyleKit.drawMute)
   }
@@ -166,7 +168,7 @@ class CallingFragment extends FragmentHelper {
         viewMap.get(selfId).foreach { selfView =>
           previewCardView.foreach { cardView =>
             if (views.size == 2 && isVideoBeingSent) {
-              verbose("Showing card preview")
+              verbose(l"Showing card preview")
               cardView.removeAllViews()
               v.removeView(selfView)
               selfView.setLayoutParams(
@@ -178,7 +180,7 @@ class CallingFragment extends FragmentHelper {
               cardView.addView(selfView)
               cardView.setVisibility(View.VISIBLE)
             } else {
-              verbose("Hiding card preview")
+              verbose(l"Hiding card preview")
               cardView.removeAllViews()
               cardView.setVisibility(View.GONE)
             }
@@ -260,6 +262,6 @@ class CallingFragment extends FragmentHelper {
 }
 
 object CallingFragment {
-  val Tag = implicitLogTag
+  val Tag: String = getClass.getSimpleName
   def apply(): CallingFragment = new CallingFragment()
 }

@@ -24,7 +24,7 @@ import android.net.Uri
 import android.provider.Settings
 import android.util.AttributeSet
 import android.view._
-import com.waz.ZLog
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService
 import com.waz.threading.CancellableFuture.CancelException
 import com.waz.threading.Threading
@@ -40,10 +40,12 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.ListSet
 import scala.util.{Failure, Success}
 
-class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends TextureView(cxt, attrs, defStyleAttr) with ViewHelper with TextureView.SurfaceTextureListener {
-
-  implicit val logTag = ZLog.logTagFor[CameraPreviewTextureView]
-
+class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val defStyleAttr: Int)
+  extends TextureView(cxt, attrs, defStyleAttr)
+    with ViewHelper
+    with TextureView.SurfaceTextureListener
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
 
   def this(context: Context) = this(context, null)

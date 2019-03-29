@@ -27,7 +27,7 @@ import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
-import com.waz.ZLog.ImplicitTag._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{AccentColor, EmailAddress, PhoneNumber}
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
@@ -174,7 +174,8 @@ object AccountBackStackKey {
   }
 }
 
-class AccountViewController(view: AccountView)(implicit inj: Injector, ec: EventContext, context: Context) extends Injectable {
+class AccountViewController(view: AccountView)(implicit inj: Injector, ec: EventContext, context: Context)
+  extends Injectable with DerivedLogTag {
 
   val zms                = inject[Signal[ZMessaging]]
   val self               = zms.flatMap(_.users.selfUser)
@@ -223,7 +224,10 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   phone.onUi(view.setPhone)
   email.onUi(view.setEmail)
 
-  Signal(isTeam, accounts.isActiveAccountSSO).map { case (team, sso) => team && sso }.onUi(t => view.setDeleteAccountEnabled(!t))
+  Signal(isTeam, accounts.isActiveAccountSSO)
+    .map { case (team, sso) => team || sso }
+    .onUi(t => view.setDeleteAccountEnabled(!t))
+
   accounts.isActiveAccountSSO.onUi { sso =>
     view.setEmailEnabled(!sso)
     view.setResetPasswordEnabled(!sso)

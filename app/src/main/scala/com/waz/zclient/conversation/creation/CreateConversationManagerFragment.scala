@@ -25,8 +25,6 @@ import android.support.v7.widget.Toolbar
 import android.view.View.OnClickListener
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag._
 import com.waz.service.tracking.GroupConversationEvent
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -244,7 +242,7 @@ object CreateConversationManagerFragment {
 
   def newInstance: CreateConversationManagerFragment = new CreateConversationManagerFragment
 
-  val Tag = ZLog.ImplicitTag.implicitLogTag
+  val Tag: String = getClass.getSimpleName
 
   val SettingsPage = 0
   val PickerPage = 1

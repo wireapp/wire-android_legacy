@@ -20,11 +20,11 @@ package com.waz.zclient.calling
 import android.content.{Context, Intent}
 import android.os.{Build, Bundle}
 import android.view.WindowManager
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading
 import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.DeprecationUtils
 
 class CallingActivity extends BaseActivity {
@@ -33,7 +33,7 @@ class CallingActivity extends BaseActivity {
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
-    verbose("Creating CallingActivity")
+    verbose(l"Creating CallingActivity")
 
     setContentView(R.layout.calling_layout)
     getSupportFragmentManager
@@ -42,7 +42,7 @@ class CallingActivity extends BaseActivity {
       .commit
 
     controller.isCallActive.filter(_ == false).onUi { _ =>
-      verbose("call no longer exists, finishing activity")
+      verbose(l"call no longer exists, finishing activity")
       finish()
     }
   }
@@ -61,7 +61,7 @@ class CallingActivity extends BaseActivity {
   }
 
   override def onBackPressed() = {
-    verbose("onBackPressed")
+    verbose(l"onBackPressed")
 
     Option(getSupportFragmentManager.findFragmentById(R.id.calling_layout)).foreach {
       case f: OnBackPressedListener if f.onBackPressed() => //
@@ -82,7 +82,7 @@ class CallingActivity extends BaseActivity {
   override def getBaseTheme: Int = R.style.Theme_Calling
 }
 
-object CallingActivity extends Injectable {
+object CallingActivity extends Injectable with DerivedLogTag {
 
   def start(context: Context): Unit = {
     val intent = new Intent(context, classOf[CallingActivity])

@@ -21,7 +21,6 @@ import android.app.{Activity, FragmentManager}
 import android.os.Bundle
 import android.text.InputType
 import android.view.View
-import com.waz.ZLog
 import com.waz.zclient._
 import com.waz.zclient.appentry.CreateTeamFragment
 import com.waz.zclient.common.views.InputBox
@@ -63,5 +62,5 @@ case class SetNameFragment() extends CreateTeamFragment {
 }
 
 object SetNameFragment {
-  val Tag: String = ZLog.ImplicitTag.implicitLogTag
+  val Tag: String = getClass.getSimpleName
 }

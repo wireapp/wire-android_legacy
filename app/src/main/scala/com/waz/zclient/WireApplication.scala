@@ -31,13 +31,12 @@ import android.support.v4.app.{FragmentActivity, FragmentManager}
 import android.telephony.TelephonyManager
 import com.evernote.android.job.{JobCreator, JobManager}
 import com.google.android.gms.security.ProviderInstaller
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.api.NetworkMode
 import com.waz.background.WorkManagerSyncRequestService
 import com.waz.content._
 import com.waz.jobs.PushTokenCheckJob
-import com.waz.log.{AndroidLogOutput, BufferedLogOutput, InternalLog}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log._
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service._
@@ -74,6 +73,8 @@ import com.waz.zclient.conversation.{ConversationController, ReplyController}
 import com.waz.zclient.conversation.creation.CreateConversationController
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.cursor.CursorController
+import com.waz.zclient.deeplinks.DeepLinkService
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.{MessageActionsController, NavigationController}
 import com.waz.zclient.messages.{LikesController, MessagePagedListController, MessageViewFactory, MessagesController, UsersController}
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.AndroidNotificationsManager
@@ -92,7 +93,7 @@ import org.threeten.bp.Clock
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-object WireApplication {
+object WireApplication extends DerivedLogTag {
   var APP_INSTANCE: WireApplication = _
 
   type AccountToImageLoader = (UserId) => Future[Option[ImageLoader]]
@@ -103,7 +104,7 @@ object WireApplication {
 
   lazy val Global = new Module {
 
-    verbose("Global module created!!")
+    verbose(l"Global module created!!")
 
     implicit lazy val ctx:          WireApplication = WireApplication.APP_INSTANCE
     implicit lazy val wContext:     WireContext     = ctx
@@ -146,6 +147,7 @@ object WireApplication {
     bind [TrackingService]                to inject[GlobalModule].trackingService
     bind [PermissionsService]             to inject[GlobalModule].permissions
     bind [MetaDataService]                to inject[GlobalModule].metadata
+    bind [LogsService]                    to inject[GlobalModule].logsService
 
     import com.waz.threading.Threading.Implicits.Background
     bind [AccountToImageLoader]   to (userId => inject[AccountsService].getZms(userId).map(_.map(_.imageLoader)))
@@ -247,6 +249,9 @@ object WireApplication {
 
     bind [ClipboardUtils]       to new ClipboardUtils(ctx)
     bind [ExternalFileSharing]  to new ExternalFileSharing(ctx)
+
+    bind [DeepLinkService]      to new DeepLinkService()
+
   }
 
   def controllers(implicit ctx: WireContext) = new Module {
@@ -312,6 +317,8 @@ object WireApplication {
 class WireApplication extends MultiDexApplication with WireContext with Injectable {
   type NetworkSignal = Signal[NetworkMode]
   import WireApplication._
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   WireApplication.APP_INSTANCE = this
 
   override def eventContext: EventContext = EventContext.Global
@@ -331,7 +338,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
         sslContext.createSSLEngine
       } catch {
         case NonFatal(error) =>
-          verbose(s"Error while enabling TLS 1.2 on old device. $error")
+          verbose(l"Error while enabling TLS 1.2 on old device. $error")
       }
     }
   }
@@ -341,13 +348,16 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     SafeBase64.setDelegate(new AndroidBase64Delegate)
 
-    if (BuildConfig.LOGGING_ENABLED) {
-      InternalLog.add(new AndroidLogOutput(showSafeOnly = BuildConfig.SAFE_LOGGING))
-      InternalLog.add(new BufferedLogOutput(baseDir = getApplicationContext.getApplicationInfo.dataDir,
-        showSafeOnly = BuildConfig.SAFE_LOGGING))
+    ZMessaging.globalReady.future.onSuccess {
+      case _ => if (BuildConfig.LOGGING_ENABLED) {
+        InternalLog.setLogsService(inject[LogsService])
+        InternalLog.add(new AndroidLogOutput(showSafeOnly = BuildConfig.SAFE_LOGGING))
+        InternalLog.add(new BufferedLogOutput(baseDir = getApplicationContext.getApplicationInfo.dataDir,
+          showSafeOnly = BuildConfig.SAFE_LOGGING))
+      }
     }
 
-    verbose("onCreate")
+    verbose(l"onCreate")
 
     enableTLS12OnOldDevices()
 

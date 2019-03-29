@@ -23,7 +23,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.{LinearLayout, ScrollView}
-import com.waz.ZLog.ImplicitTag._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.Client
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
@@ -94,7 +94,9 @@ case class DevicesBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
   }
 }
 
-case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: EventContext) extends Injectable {
+case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: EventContext)
+  extends Injectable with DerivedLogTag {
+  
   val zms = inject[Signal[Option[ZMessaging]]]
   val accounts = inject[AccountsService]
   val passwordController = inject[PasswordController]

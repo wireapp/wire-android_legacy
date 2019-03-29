@@ -23,7 +23,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.text.InputType
 import android.view.View
-import com.waz.ZLog
 import com.waz.model.EmailAddress
 import com.waz.threading.Threading
 import com.waz.zclient._
@@ -74,6 +73,6 @@ case class SetTeamEmailFragment() extends CreateTeamFragment {
 }
 
 object SetTeamEmailFragment {
-  val Tag: String = ZLog.ImplicitTag.implicitLogTag
+  val Tag: String = getClass.getSimpleName
   val DuplicateEmailErrorCode = 409
 }

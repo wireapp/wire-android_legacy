@@ -20,21 +20,21 @@ package com.waz.services.fcm
 import com.evernote.android.job.Job.Result
 import com.evernote.android.job.util.support.PersistableBundleCompat
 import com.evernote.android.job.{Job, JobManager, JobRequest}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.{error, verbose}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Uid, UserId}
 import com.waz.service.AccountsService.InBackground
 import com.waz.service.ZMessaging
 import com.waz.service.push.PushService.FetchFromJob
 import com.waz.threading.Threading
 import com.waz.utils.returning
+import com.waz.zclient.log.LogUI._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 
-class FetchJob extends Job {
+class FetchJob extends Job with DerivedLogTag {
 
   import FetchJob._
   import Threading.Implicits.Background
@@ -42,7 +42,7 @@ class FetchJob extends Job {
   override def onRunJob(params: Job.Params) = {
     val account = Option(params.getExtras.getString(AccountExtra, null)).map(UserId)
     val notification = Option(params.getExtras.getString(NotificationExtra, null)).map(Uid(_))
-    verbose(s"onStartJob, account: $account")
+    verbose(l"onStartJob, account: $account")
     def syncAccount(userId: UserId, nId: Option[Uid]): Future[Unit] =
       for {
         Some(zms) <- ZMessaging.accountsService.flatMap(_.getZms(userId))
@@ -53,7 +53,7 @@ class FetchJob extends Job {
       ZMessaging.accountsService.flatMap(_.accountState(id).head).flatMap {
         case InBackground => syncAccount(id, notification)
         case _            =>
-          verbose("account active, no point in executing fetch job")
+          verbose(l"account active, no point in executing fetch job")
           Future.successful({})
       }
     }
@@ -63,13 +63,13 @@ class FetchJob extends Job {
       Result.SUCCESS
     } catch {
       case NonFatal(e) =>
-        error("FetchJob failed", e)
+        error(l"FetchJob failed", e)
         Result.RESCHEDULE
     }
   }
 }
 
-object FetchJob {
+object FetchJob extends DerivedLogTag {
 
   val Tag = "FetchJob"
   val AccountExtra = "accounts"
@@ -85,11 +85,11 @@ object FetchJob {
     val manager = JobManager.instance()
     val currentJobs = manager.getAllJobsForTag(tag).asScala.toSet
     val currentJob = returning(currentJobs.find(!_.isFinished)) { j =>
-      verbose(s"currentJob: $j")
+      verbose(l"currentJob: $j")
     }
 
     val hasPendingRequest = returning(JobManager.instance().getAllJobRequestsForTag(tag).asScala.toSet) { v =>
-      if (v.size > 1) error(s"Shouldn't be more than one fetch job for account: $userId")
+      if (v.size > 1) error(l"Shouldn't be more than one fetch job for account: $userId")
     }.nonEmpty
 
     if (!(hasPendingRequest || currentJob.isDefined)) {

@@ -24,9 +24,9 @@ import android.text.TextUtils
 import android.view.{MotionEvent, View}
 import android.widget.Toast
 import com.google.android.gms.common.{ConnectionResult, GoogleApiAvailability}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NetworkMode
 import com.waz.content.{GlobalPreferences, UserPreferences}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service.{NetworkModeService, ZMessaging}
@@ -51,7 +51,9 @@ import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) extends Injectable {
+class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
+  extends Injectable with DerivedLogTag {
+
   import CursorController._
   import Threading.Implicits.Ui
 
@@ -101,7 +103,10 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
   val onMessageEdited = EventStream[MessageData]()
   val onEphemeralExpirationSelected = EventStream[Option[FiniteDuration]]()
 
-  val sendButtonEnabled: Signal[Boolean] = zms.map(_.userPrefs).flatMap(_.preference(UserPreferences.SendButtonEnabled).signal)
+  val sendButtonEnabled: Signal[Boolean] = for {
+    sendPref <- zms.map(_.userPrefs).flatMap(_.preference(UserPreferences.SendButtonEnabled).signal)
+    emoji <- emojiKeyboardVisible
+  } yield emoji || sendPref
 
   val enteredTextEmpty = enteredText.map(_._1.isEmpty).orElse(Signal const true)
   val sendButtonVisible = Signal(emojiKeyboardVisible, enteredTextEmpty, sendButtonEnabled, isEditingMessage) map {

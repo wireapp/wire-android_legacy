@@ -25,7 +25,7 @@ public interface PickUserControllerScreenObserver {
 
     void onHidePickUser();
 
-    void onShowUserProfile(UserId userId);
+    void onShowUserProfile(UserId userId, boolean fromDeepLink);
 
     void onHideUserProfile();
 }

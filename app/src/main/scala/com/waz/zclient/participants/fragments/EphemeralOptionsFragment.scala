@@ -20,7 +20,6 @@ package com.waz.zclient.participants.fragments
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{LinearLayout, RelativeLayout, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.{ConvExpiry, ConvId}
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
@@ -102,6 +101,6 @@ class EphemeralOptionsFragment extends FragmentHelper {
 }
 
 object EphemeralOptionsFragment {
-  val Tag = implicitLogTag
+  val Tag: String = getClass.getSimpleName
 }
 

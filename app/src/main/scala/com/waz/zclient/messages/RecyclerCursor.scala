@@ -17,28 +17,34 @@
  */
 package com.waz.zclient.messages
 
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.MessageFilter
 import com.waz.content.ConvMessagesIndex._
 import com.waz.content.{ConvMessagesIndex, MessagesCursor}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, LocalInstant, MessageData}
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal, Subscription}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.utils.RichWireInstant
 
 import scala.concurrent.Future
 
-class RecyclerCursor(val conv: ConvId, zms: ZMessaging, val adapter: RecyclerNotifier, val messageFilter: Option[MessageFilter] = None)(implicit inj: Injector, ev: EventContext) extends Injectable { self =>
+class RecyclerCursor(val conv: ConvId,
+                     zms: ZMessaging,
+                     val adapter: RecyclerNotifier,
+                     val messageFilter: Option[MessageFilter] = None)
+                    (implicit inj: Injector, ev: EventContext)
+  extends Injectable
+  with DerivedLogTag { self =>
 
   import Threading.Implicits.Ui
 
-  verbose(s"RecyclerCursor created for conv: $conv")
+  verbose(l"RecyclerCursor created for conv: $conv")
 
   val countSignal = Signal[Int]()
   val cursorLoaded = Signal[Boolean](false)
@@ -80,7 +86,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, val adapter: RecyclerNot
   }
 
   private def setCursor(c: MessagesCursor): Unit = {
-    verbose(s"setCursor: c: $c, count: ${c.size}")
+    verbose(l"setCursor: c: $c, count: ${c.size}")
     self.cursor ! Some(c)
     cursorLoaded ! true
     window.cursorChanged(c)
@@ -91,7 +97,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, val adapter: RecyclerNot
   }
 
   private def notifyFromHistory(time: LocalInstant): Unit = {
-    verbose(s"notifyFromHistory($time)")
+    verbose(l"notifyFromHistory($time)")
 
     history.foreach { _.updates foreach { case (prev, current) => window.onUpdated(prev, current) } }
     history = history.filter(_.time.isAfter(time)) // leave only updates which happened after current cursor was loaded
@@ -104,7 +110,7 @@ class RecyclerCursor(val conv: ConvId, zms: ZMessaging, val adapter: RecyclerNot
 
   def apply(position: Int): MessageAndLikes = cursor.currentValue.flatten.fold2(null, { c =>
     if (window.shouldReload(position)) {
-      verbose(s"reloading window at position: $position")
+      verbose(l"reloading window at position: $position")
       window.reload(c, position)
     }
 

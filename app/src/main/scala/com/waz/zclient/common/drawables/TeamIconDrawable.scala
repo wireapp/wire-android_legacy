@@ -20,7 +20,7 @@ package com.waz.zclient.drawables
 import android.content.Context
 import android.graphics._
 import android.graphics.drawable.Drawable
-import com.waz.ZLog
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{AssetData, AssetId}
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapResult.BitmapLoaded
@@ -37,9 +37,11 @@ object TeamIconDrawable {
   val UserCorners = 0
 }
 
-class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: Context) extends Drawable with Injectable {
-  private implicit val tag = ZLog.logTagFor[TeamIconDrawable]
-
+class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: Context)
+  extends Drawable
+    with Injectable
+    with DerivedLogTag {
+  
   var text = ""
   var corners = UserCorners
   var selected = false

@@ -23,7 +23,7 @@ import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
-import com.waz.ZLog.ImplicitTag._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountManager
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -35,7 +35,11 @@ import com.waz.zclient.utils.{BackStackKey, ContextUtils}
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.BuildConfig
 
-class DataUsagePermissionsView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
+class DataUsagePermissionsView(context: Context, attrs: AttributeSet, style: Int)
+  extends LinearLayout(context, attrs, style)
+    with ViewHelper
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 

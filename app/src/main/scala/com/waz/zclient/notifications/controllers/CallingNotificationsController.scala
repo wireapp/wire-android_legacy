@@ -23,8 +23,6 @@ import android.content
 import android.graphics.{Bitmap, Color}
 import android.os.Build
 import android.support.v4.app.NotificationCompat
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.bitmap.BitmapUtils
 import com.waz.content.UserPreferences
 import com.waz.model.{ConvId, LocalInstant, Name, UserId}
@@ -43,6 +41,7 @@ import com.waz.zclient.Intents.{CallIntent, OpenCallingScreen}
 import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.views.ImageController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{IncomingCallNotificationsChannelId, OngoingNotificationsChannelId}
 import com.waz.zclient.utils.ContextUtils.{getString, _}
 import com.waz.zclient.utils.RingtoneUtils
@@ -122,7 +121,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
 
   private def cancelNots(nots: Seq[CallingNotificationsController.CallNotification]): Unit = {
     val notsIds = nots.map(_.id).toSet
-    verbose(s"cancelNots($notsIds)")
+    verbose(l"cancelNots($notsIds)")
     val toCancel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
       val activeIds = notificationManager.getActiveNotifications.map(_.getId).toSet
       Future.successful(activeIds -- notsIds)
@@ -137,7 +136,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
   }
 
   notifications.map(_.filter(!_.isMainCall)).onUi { nots =>
-    verbose(s"${nots.size} call notifications")
+    verbose(l"${nots.size} call notifications")
 
     cancelNots(nots)
     nots.foreach { not =>
@@ -146,7 +145,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
 
       def showNotification() = {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-          verbose(s"Adding not: ${not.id}")
+          verbose(l"Adding not: ${not.id}")
           currentNotificationsPref.head.foreach(_.mutate(_ + not.id))
         }
         notificationManager.notify(CallNotificationTag, not.id, builder.build())
@@ -154,11 +153,11 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
 
       Try(showNotification()).recover {
         case NonFatal(e) =>
-          error(s"Notify failed: try without bitmap", e)
+          error(l"Notify failed: try without bitmap", e)
           builder.setLargeIcon(null)
           try showNotification()
           catch {
-            case NonFatal(e2) => error("second display attempt failed, aborting", e2)
+            case NonFatal(e2) => error(l"second display attempt failed, aborting", e2)
           }
       }
     }

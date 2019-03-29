@@ -30,8 +30,6 @@ import android.view.animation.Animation
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
 import android.widget._
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.content.UserPreferences
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
@@ -52,6 +50,7 @@ import com.waz.zclient.conversation.creation.{CreateConversationController, Crea
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.integrations.IntegrationDetailsFragment
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode
@@ -339,7 +338,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
             Future { user.connection match {
               case PendingFromUser | Blocked | Ignored | Cancelled | Unconnected =>
                 convScreenController.setPopoverLaunchedMode(DialogLaunchMode.SEARCH)
-                pickUserController.showUserProfile(userId)
+                pickUserController.showUserProfile(userId, false)
               case ConnectionStatus.PendingFromOther =>
                 getContainer.showIncomingPendingConnectRequest(ConvId(userId.str))
               case _ =>
@@ -352,7 +351,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
 
   override def onConversationClicked(conversationData: ConversationData): Unit = {
     keyboard.hideKeyboardIfVisible()
-    verbose(s"onConversationClicked(${conversationData.id})")
+    verbose(l"onConversationClicked(${conversationData.id})")
     conversationController.selectConv(Some(conversationData.id), ConversationChangeRequester.START_CONVERSATION)
   }
 
@@ -436,7 +435,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
 
   override def onIntegrationClicked(data: IntegrationData): Unit = {
     keyboard.hideKeyboardIfVisible()
-    verbose(s"onIntegrationClicked(${data.id})")
+    verbose(l"onIntegrationClicked(${data.id})")
 
     import IntegrationDetailsFragment._
     getFragmentManager.beginTransaction

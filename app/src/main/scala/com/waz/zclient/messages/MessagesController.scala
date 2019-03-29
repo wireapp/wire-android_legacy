@@ -18,8 +18,8 @@
 package com.waz.zclient.messages
 
 import android.view.View
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.utils.events.{EventContext, EventStream, Signal}
@@ -29,9 +29,12 @@ import com.waz.zclient.pages.main.conversationpager.controller.{ISlidingPaneCont
 import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.{Injectable, Injector, WireContext}
 import com.waz.utils.RichWireInstant
+
 import scala.concurrent.duration._
 
-class MessagesController()(implicit injector: Injector, cxt: WireContext, ev: EventContext) extends Injectable {
+class MessagesController()(implicit injector: Injector, cxt: WireContext, ev: EventContext)
+  extends Injectable with DerivedLogTag {
+  
 import com.waz.threading.Threading.Implicits.Background
 
 import scala.concurrent.Future

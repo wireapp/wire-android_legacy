@@ -25,7 +25,7 @@ import android.content.res.Configuration
 import android.graphics.{Rect, SurfaceTexture}
 import android.hardware.Camera
 import android.view.{OrientationEventListener, Surface, WindowManager}
-import com.waz.ZLog
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.images.ImageAssetGenerator
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.RichFuture
@@ -39,10 +39,9 @@ import timber.log.Timber
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
-class GlobalCameraController(cameraFactory: CameraFactory)(implicit cxt: WireContext, eventContext: EventContext) {
-
-  implicit val logTag = ZLog.logTagFor[GlobalCameraController]
-
+class GlobalCameraController(cameraFactory: CameraFactory)(implicit cxt: WireContext, eventContext: EventContext)
+  extends DerivedLogTag {
+  
   implicit val cameraExecutionContext = new ExecutionContext {
     private val executor = Executors.newSingleThreadExecutor(new ThreadFactory {
       override def newThread(r: Runnable): Thread = new Thread(r, "CAMERA")

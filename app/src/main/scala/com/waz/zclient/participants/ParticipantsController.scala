@@ -18,7 +18,7 @@
 package com.waz.zclient.participants
 
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -27,13 +27,15 @@ import com.waz.zclient.common.controllers.{SoundController, ThemeController}
 import com.waz.zclient.controllers.confirmation.{ConfirmationRequest, IConfirmationController, TwoButtonConfirmationCallback}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
+import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.Future
 
-class ParticipantsController(implicit injector: Injector, context: Context, ec: EventContext) extends Injectable {
+class ParticipantsController(implicit injector: Injector, context: Context, ec: EventContext)
+  extends Injectable with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 
@@ -46,8 +48,8 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
   lazy val selectedParticipant = Signal(Option.empty[UserId])
 
   val onShowParticipants = EventStream[Option[String]]() //Option[String] = fragment tag //TODO use type?
-  val onShowAnimations = EventStream[Boolean]() //Boolean represents with or without animations
-  val onShowParticipantsWithUserId = EventStream[UserId]()
+  val onLeaveParticipants = EventStream[Boolean]() //Boolean represents with or without animations
+  val onShowParticipantsWithUserId = EventStream[ParticipantRequest]()
 
   val onShowUser = EventStream[Option[UserId]]()
 
@@ -141,4 +143,8 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
       inject[SoundController].playAlert()
     case _ =>
   }(Threading.Ui)
+}
+
+object ParticipantsController {
+  case class ParticipantRequest(userId: UserId, fromDeepLink: Boolean = false)
 }

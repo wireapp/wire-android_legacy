@@ -22,12 +22,11 @@ import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.util.AttributeSet
 import android.view.View.OnTouchListener
 import android.view.{MotionEvent, View, ViewGroup}
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.error
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.utils.events.{EventContext, EventStream}
 import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.preferences.views.ProfileAccountTab
 import com.waz.zclient.{Injectable, Injector, ViewHelper}
 
@@ -50,7 +49,11 @@ class AccountTabViewHolder(view: ProfileAccountTab) extends RecyclerView.ViewHol
   def bind(accountId: UserId): Unit = view.setAccount(accountId)
 }
 
-class AccountTabsAdapter(context: Context)(implicit injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[AccountTabViewHolder] with Injectable {
+class AccountTabsAdapter(context: Context)(implicit injector: Injector, eventContext: EventContext)
+  extends RecyclerView.Adapter[AccountTabViewHolder]
+    with Injectable
+    with DerivedLogTag {
+  
   val controller         = inject[UserAccountsController]
 
   val onItemClick = EventStream[AccountData]()
@@ -66,7 +69,7 @@ class AccountTabsAdapter(context: Context)(implicit injector: Injector, eventCon
   override def onBindViewHolder(holder: AccountTabViewHolder, position: Int) = {
     getItem(position) match {
       case Some(id) => holder.bind(id)
-      case _        => error("Invalid get item index")
+      case _        => error(l"Invalid get item index")
     }
   }
 
@@ -75,7 +78,7 @@ class AccountTabsAdapter(context: Context)(implicit injector: Injector, eventCon
     view.setOnTouchListener(new OnTouchListener {
 
       override def onTouch(v: View, event: MotionEvent) = {
-        ZLog.verbose(s"onTouch ${event.getAction}")
+        verbose(l"onTouch ${event.getAction}")
         event.getAction match {
           case MotionEvent.ACTION_DOWN =>
             (0 until parent.getChildCount).map(i => parent.getChildAt(i).asInstanceOf[ProfileAccountTab]).foreach { v =>

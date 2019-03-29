@@ -24,7 +24,6 @@ import android.util.AttributeSet
 import android.view.{Gravity, View, ViewGroup}
 import android.view.View.OnClickListener
 import android.widget.{CompoundButton, ImageView, LinearLayout, RelativeLayout}
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.model.{Availability, IntegrationData, TeamId, UserData}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning
@@ -46,7 +45,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
   inflate(R.layout.single_user_row_view)
   setTheme(Theme.Light, background = true)
 
-  private lazy val chathead = findById[ChatheadView](R.id.chathead)
+  private lazy val chathead = findById[ChatHeadView](R.id.chathead)
   private lazy val nameView = findById[TypefaceTextView](R.id.name_text)
   private lazy val subtitleView = findById[TypefaceTextView](R.id.username_text)
   private lazy val checkbox = findById[AppCompatCheckBox](R.id.checkbox)

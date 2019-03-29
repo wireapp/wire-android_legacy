@@ -17,21 +17,23 @@
  */
 package com.waz.zclient.conversation.creation
 
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
 import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences.ShouldCreateFullConversation
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, IntegrationId, ProviderId, UserId}
 import com.waz.service.tracking._
 import com.waz.service.{IntegrationsService, ZMessaging}
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.UiStorage
 import com.waz.zclient.{Injectable, Injector}
 
 import scala.concurrent.Future
 
-class CreateConversationController(implicit inj: Injector, ev: EventContext) extends Injectable {
+class CreateConversationController(implicit inj: Injector, ev: EventContext)
+  extends Injectable with DerivedLogTag  {
+
   import com.waz.threading.Threading.Implicits.Background
 
   lazy val onShowCreateConversation = EventStream[Boolean]()
@@ -94,7 +96,7 @@ class CreateConversationController(implicit inj: Injector, ev: EventContext) ext
         } else Future.successful(userIds)
       teamOnly            <- teamOnly.head
       readReceipts        <- readReceipts.head
-      _ = verbose(s"creating conv with  ${userIds.size} users, ${integrationIds.size} bots, shouldFullConv $shouldFullConv, teamOnly $teamOnly and readReceipts $readReceipts")
+      _ = verbose(l"creating conv with  ${userIds.size} users, ${integrationIds.size} bots, shouldFullConv $shouldFullConv, teamOnly $teamOnly and readReceipts $readReceipts")
       conv                <- conversationController.createGroupConversation(Some(name.trim), userIds, teamOnly, readReceipts)
       _                   <- Future.sequence(integrationIds.map { case (pId, iId) => integrationsService.head.flatMap(_.addBotToConversation(conv.id, pId, iId)) })
       from                <- fromScreen.head

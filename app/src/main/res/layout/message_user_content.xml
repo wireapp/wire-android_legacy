@@ -27,7 +27,7 @@
     <FrameLayout
         android:layout_height="wrap_content"
         android:layout_width="@dimen/content__padding_left">
-        <com.waz.zclient.common.views.ChatheadView
+        <com.waz.zclient.common.views.ChatHeadView
             android:id="@+id/chathead"
             app:show_border="false"
             android:layout_width="@dimen/content__separator__chathead__size"

@@ -22,7 +22,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.v4.app.{Fragment, FragmentManager}
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.MessageContent
 import com.waz.model.{MessageContent => _, _}
 import com.waz.service.assets.AssetService.RawAssetInput
@@ -106,7 +105,7 @@ class ConversationManagerFragment extends FragmentHelper
 
         screenController.showMessageDetails ! None
 
-        participantsController.onShowAnimations ! false
+        participantsController.onLeaveParticipants ! false
       } else if (!change.noChange) {
         collectionController.closeCollection()
       }
@@ -123,14 +122,14 @@ class ConversationManagerFragment extends FragmentHelper
       showFragment(ParticipantFragment.newInstance(childTag), ParticipantFragment.TAG)
     }
 
-    subs += participantsController.onShowParticipantsWithUserId.onUi { user =>
+    subs += participantsController.onShowParticipantsWithUserId.onUi { p =>
       keyboard.hideKeyboardIfVisible()
       navigationController.setRightPage(Page.PARTICIPANT, ConversationManagerFragment.Tag)
-      participantsController.selectParticipant(user)
-      showFragment(ParticipantFragment.newInstance(user), ParticipantFragment.TAG)
+      participantsController.selectParticipant(p.userId)
+      showFragment(ParticipantFragment.newInstance(p.userId, p.fromDeepLink), ParticipantFragment.TAG)
     }
 
-    subs += participantsController.onShowAnimations.onUi { withAnimations =>
+    subs += participantsController.onLeaveParticipants.onUi { withAnimations =>
       navigationController.setRightPage(Page.MESSAGE_STREAM, ConversationManagerFragment.Tag)
 
       if (withAnimations)

@@ -30,12 +30,16 @@ import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.ZLog.ImplicitTag._
 import MessageAction._
 import android.view.View
 import com.waz.content.ReactionsStorage
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 
-class SingleImageViewToolbar(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
+class SingleImageViewToolbar(context: Context, attrs: AttributeSet, style: Int)
+  extends LinearLayout(context, attrs, style)
+    with ViewHelper
+    with DerivedLogTag {
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 

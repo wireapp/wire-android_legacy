@@ -22,23 +22,29 @@ import android.os.Bundle
 import android.support.v7.widget.Toolbar
 import android.view._
 import android.widget.TextView
-import com.waz.ZLog.ImplicitTag._
-import com.waz.threading.Threading
+import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.ManagerFragment.Page
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.controllers.navigation.{INavigationController, Page => NavPage}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.{AddParticipantsFragment, CreateConversationController}
+import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx, getDrawable}
 import com.waz.zclient.utils.{ContextUtils, RichView, ViewUtils}
 import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
 
-class ParticipantHeaderFragment extends FragmentHelper {
+import scala.concurrent.duration._
+
+class ParticipantHeaderFragment(fromDeepLink: Boolean = false) extends FragmentHelper {
+  import Threading.Implicits.Ui
+
   implicit def cxt: Context = getActivity
 
+  private lazy val navigationController   = inject[INavigationController]
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val themeController        = inject[ThemeController]
   private lazy val newConvController      = inject[CreateConversationController]
@@ -100,7 +106,15 @@ class ParticipantHeaderFragment extends FragmentHelper {
 
   private lazy val closeButton = returning(view[TextView](R.id.close_button)) { vh =>
     addingUsers.map(!_).onUi(vis => vh.foreach(_.setVisible(vis)))
-    vh.onClick(_ => participantsController.onShowAnimations ! true)
+    vh.onClick { _ =>
+      participantsController.onLeaveParticipants ! true
+
+      // This is a workaround: when dismissing the single participant fragment, we should
+      // go directly back to the conversation list, not the underlying conversation.
+      if (fromDeepLink) CancellableFuture.delay(750.millis).map { _ =>
+        navigationController.setVisiblePage(NavPage.CONVERSATION_LIST, MainPhoneFragment.Tag)
+      }
+    }
   }
 
   private lazy val headerReadOnlyTextView = returning(view[TextView](R.id.participants__header)) { vh =>
@@ -194,5 +208,6 @@ class ParticipantHeaderFragment extends FragmentHelper {
 object ParticipantHeaderFragment {
   val TAG: String = classOf[ParticipantHeaderFragment].getName
 
-  def newInstance: ParticipantHeaderFragment = new ParticipantHeaderFragment
+  def newInstance(fromDeepLink: Boolean = false): ParticipantHeaderFragment =
+    new ParticipantHeaderFragment(fromDeepLink)
 }
