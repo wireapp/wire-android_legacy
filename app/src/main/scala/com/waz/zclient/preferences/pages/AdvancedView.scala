@@ -22,19 +22,21 @@ import android.content.Context
 import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
-import android.widget.{LinearLayout, Toast}
+import android.widget.{LinearLayout, TextView, Toast}
 import com.waz.content.GlobalPreferences.WsForegroundKey
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogsService
-import com.waz.service.ZMessaging
+import com.waz.service.{FCMNotificationStatsService, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
+import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.utils.wrappers.GoogleApi
 import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{BackStackKey, DebugUtils}
-import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.{BuildConfig, R, ViewHelper}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 trait AdvancedView
@@ -52,6 +54,7 @@ class AdvancedViewImpl(context: Context, attrs: AttributeSet, style: Int)
 
   private val logsService = inject[LogsService]
   private val initialLogsEnabled = logsService.logsEnabledGlobally.currentValue.getOrElse(false)
+  private val statsService = inject[Signal[FCMNotificationStatsService]]
 
   val submitLogs = returning(findById[TextButton](R.id.preferences_debug_report)) { v =>
     setButtonEnabled(v, initialLogsEnabled)
@@ -77,6 +80,13 @@ class AdvancedViewImpl(context: Context, attrs: AttributeSet, style: Int)
       setButtonEnabled(v, enabled = false)
       CancellableFuture.delay(5.seconds).map(_ => setButtonEnabled(v, enabled = true))(Threading.Ui)
     }
+  }
+
+  val statsDisplay = returning(findById[TextView](R.id.preferences_notifications_stats)) { v =>
+    (for {
+      service <- statsService.head
+      stats <- service.getFormattedStats
+    } yield stats).foreach(v.setText)(Threading.Ui)
   }
 
   val webSocketForegroundServiceSwitch = returning(findById[SwitchPreference](R.id.preferences_websocket_service)) { v =>
