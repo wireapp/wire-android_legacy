@@ -26,14 +26,16 @@ import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
 import com.waz.service.ZMessaging
-import com.waz.threading.Threading
+import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
 import com.waz.utils.events.{ClockSignal, Signal}
 import com.waz.zclient.common.controllers.{BrowserController, ThemeController, UserAccountsController}
+import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.CreateConversationController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
+import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.participants.{ParticipantOtrDeviceAdapter, ParticipantsController}
 import com.waz.zclient.utils.{ContextUtils, GuestUtils, RichView, StringUtils}
@@ -52,6 +54,7 @@ class SingleParticipantFragment extends FragmentHelper {
 
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val userAccountsController = inject[UserAccountsController]
+  private lazy val navigationController   = inject[INavigationController]
 
   private lazy val fromDeepLink: Boolean = getBooleanArg(FromDeepLink)
 
@@ -286,6 +289,9 @@ class SingleParticipantFragment extends FragmentHelper {
 
   override def onBackPressed(): Boolean = {
     participantsController.selectedParticipant ! None
+    if (fromDeepLink) CancellableFuture.delay(750.millis).map { _ =>
+      navigationController.setVisiblePage(Page.CONVERSATION_LIST, MainPhoneFragment.Tag)
+    }
     super.onBackPressed()
   }
 }

@@ -45,6 +45,7 @@ import com.waz.zclient.giphy.GiphySharingPreviewFragment
 import com.waz.zclient.log.LogUI
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
+import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.pages.main.conversationlist.ConfirmationFragment
 import com.waz.zclient.pages.main.conversationpager.ConversationPagerFragment
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
@@ -143,10 +144,12 @@ class MainPhoneFragment extends FragmentHelper
     confirmationMenu.foreach(_.setVisibility(View.GONE))
     zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
 
+
     deepLinkService.deepLink.collect { case Some(result) => result } onUi {
       case OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember, self)) =>
         pickUserController.hideUserProfile()
         participantsController.onLeaveParticipants ! true
+
         if (self) {
           startActivity(Intents.OpenSettingsIntent(getContext))
         } else if (connected || currentTeamMember) {
@@ -168,6 +171,8 @@ class MainPhoneFragment extends FragmentHelper
         pickUserController.hideUserProfile()
         participantsController.onLeaveParticipants ! true
         participantsController.selectedParticipant ! None
+        inject[IConversationScreenController].tearDown()
+
         CancellableFuture.delay(750.millis).map { _ =>
           conversationController.switchConversation(convId)
         }
