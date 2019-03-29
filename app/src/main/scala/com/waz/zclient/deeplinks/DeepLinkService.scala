@@ -108,15 +108,11 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
                   case (Some(self), Some(other)) if self.id == other.id =>
                     OpenDeepLink(token, UserTokenInfo(connected = false, currentTeamMember = true, self = true))
                   case (Some(self), Some(other)) if self.isPartner(self.teamId) || other.isPartner(self.teamId) =>
-                    if (other.isInTeam(self.teamId)) {
-                      val hasConv = await { membersStorage.getActiveConvs(other.id).map(_.nonEmpty) }
-                      if (hasConv || self.createdBy.contains(self.id) || other.createdBy.contains(self.id))
-                        OpenDeepLink(token, UserTokenInfo(other.isConnected, self.isInTeam(other.teamId)))
-                      else
-                        DoNotOpenDeepLink(deepLink, NotAllowed)
-                    } else {
+                    val hasConv = await { membersStorage.getActiveConvs(other.id).map(_.nonEmpty) }
+                    if (hasConv || self.createdBy.contains(self.id) || other.createdBy.contains(self.id))
                       OpenDeepLink(token, UserTokenInfo(other.isConnected, self.isInTeam(other.teamId)))
-                    }
+                    else
+                      DoNotOpenDeepLink(deepLink, NotAllowed)
 
                   case (Some(self), Some(other)) =>
                     OpenDeepLink(token, UserTokenInfo(other.isConnected, self.isInTeam(other.teamId)))
