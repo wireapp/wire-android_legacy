@@ -120,6 +120,8 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
 
                   case (Some(self), Some(other)) =>
                     OpenDeepLink(token, UserTokenInfo(other.isConnected, self.isInTeam(other.teamId)))
+                  case (Some(_), _) =>
+                    OpenDeepLink(token, UserTokenInfo(connected = false, currentTeamMember = false))
                   case _ =>
                     DoNotOpenDeepLink(deepLink, Unknown)
                 }
