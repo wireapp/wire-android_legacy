@@ -18,6 +18,7 @@
 package com.waz.zclient.deeplinks
 
 import android.content.Intent
+import com.waz.content.MembersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountManager.ClientRegistrationState.Registered
 import com.waz.service.{AccountManager, AccountsService, UserService}
@@ -46,6 +47,7 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
   private lazy val account             = inject[Signal[Option[AccountManager]]]
   private lazy val userService         = inject[Signal[UserService]]
   private lazy val convController      = inject[ConversationController]
+  private lazy val membersStorage      = inject[MembersStorage]
 
   def checkDeepLink(intent: Intent): Unit = Option(intent.getDataString).flatMap(DeepLinkParser.parseLink) match {
     case None =>
@@ -105,6 +107,17 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
                 await { service.getSelfUser.zip(service.findUser(userId)) } match {
                   case (Some(self), Some(other)) if self.id == other.id =>
                     OpenDeepLink(token, UserTokenInfo(connected = false, currentTeamMember = true, self = true))
+                  case (Some(self), Some(other)) if self.isPartner(self.teamId) || other.isPartner(self.teamId) =>
+                    if (other.isInTeam(self.teamId)) {
+                      val hasConv = await { membersStorage.getActiveConvs(other.id).map(_.nonEmpty) }
+                      if (hasConv || self.createdBy.contains(self.id) || other.createdBy.contains(self.id))
+                        OpenDeepLink(token, UserTokenInfo(other.isConnected, self.isInTeam(other.teamId)))
+                      else
+                        DoNotOpenDeepLink(deepLink, NotAllowed)
+                    } else {
+                      OpenDeepLink(token, UserTokenInfo(other.isConnected, self.isInTeam(other.teamId)))
+                    }
+
                   case (Some(self), Some(other)) =>
                     OpenDeepLink(token, UserTokenInfo(other.isConnected, self.isInTeam(other.teamId)))
                   case _ =>
@@ -134,6 +147,7 @@ object DeepLinkService {
     case object Unknown extends Error
     case object SSOLoginTooManyAccounts extends Error
     case object NotFound extends Error
+    case object NotAllowed extends Error
   }
 
 }
