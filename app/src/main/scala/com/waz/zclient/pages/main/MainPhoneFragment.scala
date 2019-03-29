@@ -143,10 +143,12 @@ class MainPhoneFragment extends FragmentHelper
     confirmationMenu.foreach(_.setVisibility(View.GONE))
     zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
 
+
     deepLinkService.deepLink.collect { case Some(result) => result } onUi {
       case OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember, self)) =>
         pickUserController.hideUserProfile()
         participantsController.onLeaveParticipants ! true
+
         if (self) {
           startActivity(Intents.OpenSettingsIntent(getContext))
         } else if (connected || currentTeamMember) {
@@ -168,6 +170,7 @@ class MainPhoneFragment extends FragmentHelper
         pickUserController.hideUserProfile()
         participantsController.onLeaveParticipants ! true
         participantsController.selectedParticipant ! None
+
         CancellableFuture.delay(750.millis).map { _ =>
           conversationController.switchConversation(convId)
         }

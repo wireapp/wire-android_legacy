@@ -21,10 +21,12 @@ import android.content.Intent
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountManager.ClientRegistrationState.Registered
 import com.waz.service.{AccountManager, AccountsService, UserService}
-import com.waz.utils.events.Signal
+import com.waz.threading.Threading
+import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.deeplinks.DeepLink.{Conversation, UserTokenInfo}
 import com.waz.zclient.{BuildConfig, Injectable, Injector}
+import com.waz.zclient.log.LogUI._
 
 import scala.async.Async.{async, await}
 import scala.concurrent.Future
@@ -35,6 +37,10 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
   import com.waz.zclient.deeplinks.DeepLinkService._
 
   val deepLink = Signal(Option.empty[CheckingResult])
+
+  deepLink.on(Threading.Background) { result =>
+    verbose(l"DeepLink checking result: $result")
+  } (EventContext.Global)
 
   private lazy val accountsService     = inject[AccountsService]
   private lazy val account             = inject[Signal[Option[AccountManager]]]
@@ -101,8 +107,6 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
                     OpenDeepLink(token, UserTokenInfo(connected = false, currentTeamMember = true, self = true))
                   case (Some(self), Some(other)) =>
                     OpenDeepLink(token, UserTokenInfo(other.isConnected, self.isInTeam(other.teamId)))
-                  case (Some(_), _) =>
-                    OpenDeepLink(token, UserTokenInfo(connected = false, currentTeamMember = false))
                   case _ =>
                     DoNotOpenDeepLink(deepLink, Unknown)
                 }
