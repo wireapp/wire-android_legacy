@@ -171,7 +171,6 @@ class MainPhoneFragment extends FragmentHelper
         pickUserController.hideUserProfile()
         participantsController.onLeaveParticipants ! true
         participantsController.selectedParticipant ! None
-        inject[IConversationScreenController].tearDown()
 
         CancellableFuture.delay(750.millis).map { _ =>
           conversationController.switchConversation(convId)
