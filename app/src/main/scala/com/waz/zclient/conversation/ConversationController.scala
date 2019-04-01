@@ -31,8 +31,6 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.Client
 import com.waz.service.AccountManager
-import com.waz.service.assets.AssetService
-import com.waz.service.assets.AssetService.RawAssetInput.UriInput
 import com.waz.service.assets2.{Content, ContentForUpload, UriHelper}
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
@@ -58,7 +56,6 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationController")
 
-  lazy val convListController = inject[ConversationListController]
   private lazy val selectedConv       = inject[Signal[SelectedConversationService]]
   private lazy val convsUi            = inject[Signal[ConversationsUiService]]
   private lazy val conversations      = inject[Signal[ConversationsService]]
@@ -69,6 +66,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   private lazy val account            = inject[Signal[Option[AccountManager]]]
   private lazy val callStart          = inject[CallStartController]
   private lazy val convListController = inject[ConversationListController]
+  private lazy val uriHelper          = inject[UriHelper]
 
   private var lastConvId = Option.empty[ConvId]
 
