@@ -73,7 +73,7 @@ class MainActivity extends BaseActivity
   with SetHandleFragment.Container
   with DerivedLogTag {
 
-  implicit val cxt = this
+  implicit val cxt: MainActivity = this
 
   import Threading.Implicits.Ui
 
@@ -88,7 +88,7 @@ class MainActivity extends BaseActivity
   private lazy val passwordController     = inject[PasswordController]
   private lazy val deepLinkService        = inject[DeepLinkService]
 
-  override def onAttachedToWindow() = {
+  override def onAttachedToWindow(): Unit = {
     super.onAttachedToWindow()
     getWindow.setFormat(PixelFormat.RGBA_8888)
   }
@@ -177,7 +177,7 @@ class MainActivity extends BaseActivity
     }
   }
 
-  override def onStart() = {
+  override def onStart(): Unit = {
     getControllerFactory.getNavigationController.addNavigationControllerObserver(this)
     inject[NavigationController].mainActivityActive.mutate(_ + 1)
 
@@ -192,7 +192,7 @@ class MainActivity extends BaseActivity
     setIntent(intent)
   }
 
-  override protected def onResume() = {
+  override protected def onResume(): Unit = {
     super.onResume()
     Option(ZMessaging.currentGlobal).foreach(_.googleApi.checkGooglePlayServicesAvailable(this))
   }
@@ -313,12 +313,12 @@ class MainActivity extends BaseActivity
     transaction.commit
   }
 
-  override protected def onSaveInstanceState(outState: Bundle) = {
+  override protected def onSaveInstanceState(outState: Bundle): Unit = {
     getControllerFactory.getNavigationController.onSaveInstanceState(outState)
     super.onSaveInstanceState(outState)
   }
 
-  override def onStop() = {
+  override def onStop(): Unit = {
     super.onStop()
     getControllerFactory.getNavigationController.removeNavigationControllerObserver(this)
     inject[NavigationController].mainActivityActive.mutate(_ - 1)
@@ -330,7 +330,7 @@ class MainActivity extends BaseActivity
       case _ => super.onBackPressed()
     }
 
-  override protected def onActivityResult(requestCode: Int, resultCode: Int, data: Intent) = {
+  override protected def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {
     super.onActivityResult(requestCode, resultCode, data)
     Option(ZMessaging.currentGlobal).foreach(_.googleApi.onActivityResult(requestCode, resultCode))
     Option(getSupportFragmentManager.findFragmentById(R.id.fl_main_content)).foreach(_.onActivityResult(requestCode, resultCode, data))
@@ -342,7 +342,7 @@ class MainActivity extends BaseActivity
     }
   }
 
-  override protected def onNewIntent(intent: Intent) = {
+  override protected def onNewIntent(intent: Intent): Unit = {
     super.onNewIntent(intent)
     verbose(l"onNewIntent: ${RichIntent(intent)}")
 
@@ -355,7 +355,7 @@ class MainActivity extends BaseActivity
     }
   }
 
-  private def initializeControllers() = {
+  private def initializeControllers(): Unit = {
     //Ensure tracking is started
     inject[UiTrackingController]
     inject[KeyboardController]
@@ -428,23 +428,23 @@ class MainActivity extends BaseActivity
     }
   }
 
-  def onPageVisible(page: Page) =
+  def onPageVisible(page: Page): Unit =
     getControllerFactory.getGlobalLayoutController.setSoftInputModeForPage(page)
 
-  def onInviteRequestSent(conversation: String) = {
+  def onInviteRequestSent(conversation: String): Future[Unit] = {
     info(l"onInviteRequestSent(${redactedString(conversation)})")
     conversationController.selectConv(Option(new ConvId(conversation)), ConversationChangeRequester.INVITE)
   }
 
-  override def logout() = {
+  override def logout(): Unit = {
     accountsService.activeAccountId.head.flatMap(_.fold(Future.successful({}))(accountsService.logout)).map { _ =>
       startFirstFragment()
     } (Threading.Ui)
   }
 
-  def manageDevices() = startActivity(ShowDevicesIntent(this))
+  def manageDevices(): Unit = startActivity(ShowDevicesIntent(this))
 
-  def dismissOtrDeviceLimitFragment() = withFragmentOpt(OtrDeviceLimitFragment.Tag)(_.foreach(removeFragment))
+  def dismissOtrDeviceLimitFragment(): Unit = withFragmentOpt(OtrDeviceLimitFragment.Tag)(_.foreach(removeFragment))
 
   private def checkForUnsupportedEmojis() =
     for {

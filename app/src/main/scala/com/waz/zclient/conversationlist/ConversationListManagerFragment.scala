@@ -23,22 +23,20 @@ import android.support.v4.app.{Fragment, FragmentManager}
 import android.view.{LayoutInflater, ViewGroup}
 import android.widget.FrameLayout
 import com.waz.api.SyncState._
+import com.waz.content.UsersStorage
 import com.waz.model._
 import com.waz.model.sync.SyncCommand._
 import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
+import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.common.controllers.{SoundController, ThemeController, UserAccountsController}
 import com.waz.zclient.connect.{PendingConnectRequestManagerFragment, SendConnectRequestFragment}
-import com.waz.zclient.controllers.camera.ICameraController
-import com.waz.zclient.controllers.confirmation._
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
 import com.waz.zclient.pages.main.pickuser.controller.{IPickUserController, PickUserControllerScreenObserver}
@@ -50,6 +48,7 @@ import com.waz.zclient.usersearch.SearchUIFragment
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.views.LoadingIndicatorView
+import com.waz.zclient.views.LoadingIndicatorView.{InfiniteLoadingBar, Spinner}
 import com.waz.zclient.views.menus.ConfirmationMenu
 import com.waz.zclient.{FragmentHelper, R}
 
@@ -72,38 +71,15 @@ class ConversationListManagerFragment extends Fragment
 
   implicit lazy val context = getContext
 
-  lazy val zms = inject[Signal[ZMessaging]]
-  lazy val userAccounts = inject[UserAccountsController]
-  lazy val users        = inject[UsersController]
-  lazy val themes       = inject[ThemeController]
-  lazy val sounds       = inject[SoundController]
-  lazy val convListController = inject[ConversationListController]
-
-  private lazy val convController                 = inject[ConversationController]
-  private lazy val accentColor                    = inject[AccentColorController]
-  private lazy val pickUserController             = inject[IPickUserController]
-  private lazy val navController                  = inject[INavigationController]
-  private lazy val convScreenController           = inject[IConversationScreenController]
-  private lazy val confirmationController         = inject[IConfirmationController]
-  private lazy val cameraController               = inject[ICameraController]
-  private lazy val userAccountsController         = inject[UserAccountsController]
+  private lazy val convController       = inject[ConversationController]
+  private lazy val pickUserController   = inject[IPickUserController]
+  private lazy val navController        = inject[INavigationController]
+  private lazy val convScreenController = inject[IConversationScreenController]
 
   private var startUiLoadingIndicator: LoadingIndicatorView = _
   private var listLoadingIndicator   : LoadingIndicatorView = _
   private var mainContainer          : FrameLayout          = _
   private var confirmationMenu       : ConfirmationMenu     = _
-
-  lazy val hasConvs = convListController.establishedConversations.map(_.nonEmpty)
-
-  import pickUserController._
-
-  lazy val animationType = {
-    import LoadingIndicatorView._
-    hasConvs.map {
-      case true => InfiniteLoadingBar
-      case _    => Spinner
-    }
-  }
 
   private def stripToConversationList() = {
     pickUserController.hideUserProfile() // Hide possibly open self profile
@@ -139,9 +115,9 @@ class ConversationListManagerFragment extends Fragment
       if (savedInstanceState == null) {
         val fm = getChildFragmentManager
         // When re-starting app to open into specific page, child fragments may exist despite savedInstanceState == null
-        if (isShowingUserProfile) hideUserProfile()
-        if (isShowingPickUser()) {
-          hidePickUser()
+        if (pickUserController.isShowingUserProfile) pickUserController.hideUserProfile()
+        if (pickUserController.isShowingPickUser()) {
+          pickUserController.hidePickUser()
           Option(fm.findFragmentByTag(SearchUIFragment.TAG)).foreach { _ =>
             fm.popBackStack(SearchUIFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE)
           }
@@ -154,9 +130,12 @@ class ConversationListManagerFragment extends Fragment
       }
 
       (for {
-        z        <- zms
+        z        <- inject[Signal[ZMessaging]]
         syncSate <- z.syncRequests.syncState(z.selfUserId, SyncMatchers)
-        animType <- animationType
+        animType <- inject[ConversationListController].establishedConversations.map(_.nonEmpty).map {
+          case true => InfiniteLoadingBar
+          case _    => Spinner
+        }
       } yield (syncSate, animType)).onUi { case (state, animType) =>
         state match {
           case SYNCING | WAITING => listLoadingIndicator.show(animType)
@@ -179,7 +158,7 @@ class ConversationListManagerFragment extends Fragment
         case _ => //
       }
 
-      accentColor.accentColor.map(_.color).onUi { c =>
+      inject[AccentColorController].accentColor.map(_.color).onUi { c =>
         Option(startUiLoadingIndicator).foreach(_.setColor(c))
         Option(listLoadingIndicator).foreach(_.setColor(c))
       }
@@ -233,9 +212,8 @@ class ConversationListManagerFragment extends Fragment
     getChildFragmentManager.getFragments.asScala.foreach(_.onActivityResult(requestCode, resultCode, data))
   }
 
-  override def onShowUserProfile(userId: UserId) =
+  override def onShowUserProfile(userId: UserId, fromDeepLink: Boolean) =
     if (!pickUserController.isShowingUserProfile) {
-      import com.waz.api.User.ConnectionStatus._
 
       def show(fragment: Fragment, tag: String): Unit = {
         getChildFragmentManager
@@ -251,24 +229,29 @@ class ConversationListManagerFragment extends Fragment
         togglePeoplePicker(false)
       }
 
-      zms.head.flatMap(_.usersStorage.get(userId)).foreach {
-        case Some(userData) => userData.connection match {
+      (for {
+        usersStorage  <- inject[Signal[UsersStorage]].head
+        user          <- usersStorage.get(userId)
+        userRequester =  if (fromDeepLink) UserRequester.DEEP_LINK else UserRequester.SEARCH
+      } yield (user, userRequester)).foreach { case (Some(userData), userRequester) =>
+        import com.waz.api.User.ConnectionStatus._
+        userData.connection match {
           case CANCELLED | UNCONNECTED =>
             if (!userData.isConnected) {
-              show(SendConnectRequestFragment.newInstance(userId.str, UserRequester.SEARCH), SendConnectRequestFragment.Tag)
+              show(SendConnectRequestFragment.newInstance(userId.str, userRequester), SendConnectRequestFragment.Tag)
               navController.setLeftPage(Page.SEND_CONNECT_REQUEST, Tag)
             }
 
           case PENDING_FROM_OTHER | PENDING_FROM_USER | IGNORED =>
             show(
-              PendingConnectRequestManagerFragment.newInstance(userId, UserRequester.SEARCH),
+              PendingConnectRequestManagerFragment.newInstance(userId, userRequester),
               PendingConnectRequestManagerFragment.Tag
             )
             navController.setLeftPage(Page.PENDING_CONNECT_REQUEST, Tag)
 
           case BLOCKED =>
             show (
-              BlockedUserProfileFragment.newInstance(userId.str, UserRequester.SEARCH),
+              BlockedUserProfileFragment.newInstance(userId.str, userRequester),
               BlockedUserProfileFragment.Tag
             )
             navController.setLeftPage(Page.PENDING_CONNECT_REQUEST, Tag)
@@ -385,7 +368,7 @@ class ConversationListManagerFragment extends Fragment
 
   override def onAcceptedConnectRequest(userId: UserId) = {
     verbose(l"onAcceptedConnectRequest $userId")
-    userAccountsController.getConversationId(userId).flatMap { convId =>
+    inject[UserAccountsController].getConversationId(userId).flatMap { convId =>
       convController.selectConv(convId, ConversationChangeRequester.START_CONVERSATION)
     }
   }

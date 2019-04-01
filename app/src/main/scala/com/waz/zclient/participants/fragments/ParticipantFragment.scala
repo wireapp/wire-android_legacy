@@ -69,7 +69,7 @@ class ParticipantFragment extends ManagerFragment
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val convScreenController   = inject[IConversationScreenController]
 
-  private lazy val headerFragment = ParticipantHeaderFragment.newInstance
+  private lazy val headerFragment = ParticipantHeaderFragment.newInstance(fromDeepLink = getBooleanArg(FromDeepLinkArg))
 
   override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation =
     if (nextAnim == 0 || getParentFragment == null)
