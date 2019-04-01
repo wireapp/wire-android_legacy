@@ -198,13 +198,13 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
       verbose(l"Outdated badge status")
   }
 
-  avatarInfo.on(Threading.Background){
+  avatarInfo.onUi {
     case (convId, isGroup, members, _, selfTeam) if conversationData.forall(_.id == convId) =>
       avatar.setMembers(members, convId, isGroup, selfTeam)
     case _ =>
       verbose(l"Outdated avatar info")
   }
-  avatarInfo.onUi{
+  avatarInfo.onUi {
     case (convId, isGroup, _, alpha, _) if conversationData.forall(_.id == convId) =>
       if (!isGroup) {
         avatar.setConversationType(ConversationType.OneToOne)
