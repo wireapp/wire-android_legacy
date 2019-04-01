@@ -1100,9 +1100,9 @@
     <string name="teams_set_name_title">Your name</string>
     <string name="teams_set_name_hint">FULL NAME</string>
     <string name="app_entry_create_account">Personal</string>
-    <string name="app_entry_create_account_sub">Chat privately with groups of friends and family</string>
+    <string name="app_entry_create_account_sub">create an account</string>
     <string name="app_entry_create_team">Pro</string>
-    <string name="app_entry_create_team_sub">Secure collaboration for businesses, institutions and professional organizations</string>
+    <string name="app_entry_create_team_sub">create a team</string>
     <string name="app_entry_login_sub">Already have an account?</string>
     <string name="app_entry_login">Log in</string>
 
@@ -1291,8 +1291,11 @@
     <string name="reply_message_type_asset">ATTACHMENT</string>
     <string name="reply_message_type_unknown">You cannot see this message.</string>
 
-    <string name="deep_link_conversation_error_title">Wire cannot open this conversation.</string>
-    <string name="deep_link_conversation_error_message">This account may not have access or the conversation may not exist.</string>
+    <string name="deep_link_conversation_error_title">Wire can\'t open this conversation.</string>
+    <string name="deep_link_conversation_error_message">You may not have permission with this account or the person may not be on Wire.</string>
+
+    <string name="deep_link_user_error_title">Wire can\'t find this person.</string>
+    <string name="deep_link_user_error_message">You may not have permission with this account or it no longer exists.</string>
 
     <!--Two identical strings are needed for German translation-->
     <string name="quote_timestamp_message_time">Original message from %s</string>

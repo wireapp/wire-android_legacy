@@ -69,7 +69,7 @@ class ParticipantFragment extends ManagerFragment
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val convScreenController   = inject[IConversationScreenController]
 
-  private lazy val headerFragment = ParticipantHeaderFragment.newInstance
+  private lazy val headerFragment = ParticipantHeaderFragment.newInstance(fromDeepLink = getBooleanArg(FromDeepLinkArg))
 
   override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation =
     if (nextAnim == 0 || getParentFragment == null)
@@ -104,7 +104,7 @@ class ParticipantFragment extends ManagerFragment
               case true if getStringArg(UserToOpenArg).isEmpty =>
                 (GroupParticipantsFragment.newInstance(), GroupParticipantsFragment.Tag)
               case _ =>
-                (SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
+                (SingleParticipantFragment.newInstance(fromDeepLink = getBooleanArg(FromDeepLinkArg)), SingleParticipantFragment.Tag)
             }
         }).map {
           case (f, tag) =>
@@ -152,7 +152,7 @@ class ParticipantFragment extends ManagerFragment
             true
           case Some(f: FragmentHelper) if f.onBackPressed() => true
           case Some(_: FragmentHelper) =>
-            if (getChildFragmentManager.getBackStackEntryCount <= 1) participantsController.onShowAnimations ! true
+            if (getChildFragmentManager.getBackStackEntryCount <= 1) participantsController.onLeaveParticipants ! true
             else getChildFragmentManager.popBackStack()
             true
           case _ =>
@@ -163,7 +163,11 @@ class ParticipantFragment extends ManagerFragment
   }
 
   override def onShowConversationMenu(inConvList: Boolean, convId: ConvId): Unit =
-    if (!inConvList) OptionsMenu(getContext, new ConversationOptionsMenuController(convId, Mode.Normal(inConvList))).show()
+    if (!inConvList) {
+      val fromDeepLink = getBooleanArg(FromDeepLinkArg)
+      val controller = new ConversationOptionsMenuController(convId, Mode.Normal(inConvList), fromDeepLink)
+      OptionsMenu(getContext, controller).show()
+    }
 
   def showOtrClient(userId: UserId, clientId: ClientId): Unit =
     getChildFragmentManager
@@ -291,6 +295,7 @@ object ParticipantFragment {
   val TAG: String = classOf[ParticipantFragment].getName
   private val PageToOpenArg = "ARG__FIRST__PAGE"
   private val UserToOpenArg = "ARG__USER"
+  private val FromDeepLinkArg = "ARG__FROM__DEEP__LINK"
 
   def newInstance(page: Option[String]): ParticipantFragment =
     returning(new ParticipantFragment) { f =>
@@ -299,9 +304,12 @@ object ParticipantFragment {
       }
     }
 
-  def newInstance(userId: UserId): ParticipantFragment =
+  def newInstance(userId: UserId, fromDeepLink: Boolean = false): ParticipantFragment =
     returning(new ParticipantFragment) { f =>
-      f.setArguments(returning(new Bundle)(_.putString(UserToOpenArg, userId.str)))
+      f.setArguments(returning(new Bundle) { b =>
+        b.putString(UserToOpenArg, userId.str)
+        b.putBoolean(FromDeepLinkArg, fromDeepLink)
+      })
     }
 
 }

@@ -28,6 +28,7 @@ import com.waz.zclient.messages.{MessageView, MessageViewPart}
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.utils.returning
+import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
 import com.waz.zclient.utils.ContextUtils._
 
 trait MentionsViewPart extends MessageViewPart with ViewHelper {
@@ -66,7 +67,7 @@ trait MentionsViewPart extends MessageViewPart with ViewHelper {
         new ClickableSpan {
           override def onClick(widget: View): Unit = {
             mention.userId match {
-              case Some(uId) => participantsController.onShowParticipantsWithUserId ! uId
+              case Some(uId) => participantsController.onShowParticipantsWithUserId ! ParticipantRequest(uId)
               case _ => participantsController.onShowParticipants ! None
             }
           }

@@ -350,12 +350,12 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     SafeBase64.setDelegate(new AndroidBase64Delegate)
 
     ZMessaging.globalReady.future.onSuccess {
-      case _ => if (BuildConfig.LOGGING_ENABLED) {
+      case _ =>
         InternalLog.setLogsService(inject[LogsService])
         InternalLog.add(new AndroidLogOutput(showSafeOnly = BuildConfig.SAFE_LOGGING))
-        InternalLog.add(new BufferedLogOutput(baseDir = getApplicationContext.getApplicationInfo.dataDir,
+        InternalLog.add(new BufferedLogOutput(
+          baseDir = getApplicationContext.getApplicationInfo.dataDir,
           showSafeOnly = BuildConfig.SAFE_LOGGING))
-      }
     }
 
     verbose(l"onCreate")

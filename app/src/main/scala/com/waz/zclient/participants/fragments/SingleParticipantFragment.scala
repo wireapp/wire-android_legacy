@@ -26,17 +26,19 @@ import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
 import com.waz.service.ZMessaging
-import com.waz.threading.Threading
+import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
 import com.waz.utils.events.{ClockSignal, Signal}
 import com.waz.zclient.common.controllers.{BrowserController, ThemeController, UserAccountsController}
+import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.CreateConversationController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
+import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.participants.{ParticipantOtrDeviceAdapter, ParticipantsController}
-import com.waz.zclient.utils.{GuestUtils, RichView, StringUtils}
+import com.waz.zclient.utils.{ContextUtils, GuestUtils, RichView, StringUtils}
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.zclient.{FragmentHelper, R}
 import org.threeten.bp.Instant
@@ -52,19 +54,27 @@ class SingleParticipantFragment extends FragmentHelper {
 
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val userAccountsController = inject[UserAccountsController]
+  private lazy val navigationController   = inject[INavigationController]
+
+  private lazy val fromDeepLink: Boolean = getBooleanArg(FromDeepLink)
 
   private val visibleTab = Signal[SingleParticipantFragment.Tab](DetailsTab)
 
   private lazy val tabs = returning(view[TabLayout](R.id.details_and_devices_tabs)) {
-    _.foreach {
-      _.addOnTabSelectedListener(new OnTabSelectedListener {
-        override def onTabSelected(tab: TabLayout.Tab): Unit = {
-          visibleTab ! SingleParticipantFragment.Tab.tabs.find(_.pos == tab.getPosition).getOrElse(DetailsTab)
-        }
+    _.foreach { layout =>
 
-        override def onTabUnselected(tab: TabLayout.Tab): Unit = {}
-        override def onTabReselected(tab: TabLayout.Tab): Unit = {}
-      })
+      if (fromDeepLink)
+        layout.setVisibility(View.GONE)
+      else {
+        layout.addOnTabSelectedListener(new OnTabSelectedListener {
+          override def onTabSelected(tab: TabLayout.Tab): Unit = {
+            visibleTab ! SingleParticipantFragment.Tab.tabs.find(_.pos == tab.getPosition).getOrElse(DetailsTab)
+          }
+
+          override def onTabUnselected(tab: TabLayout.Tab): Unit = {}
+          override def onTabReselected(tab: TabLayout.Tab): Unit = {}
+        })
+      }
     }
   }
 
@@ -113,6 +123,11 @@ class SingleParticipantFragment extends FragmentHelper {
       case DetailsTab => vh.foreach(_.setVisible(true))
       case _          => vh.foreach(_.setVisible(false))
     }
+
+    if (fromDeepLink) {
+      verbose(l"DEEP details view, setting the top margin")
+      vh.foreach(_.setMarginTop(ContextUtils.getDimenPx(R.dimen.wire__padding__50)))
+    }
   }
 
   private lazy val userHandle = returning(view[TextView](R.id.user_handle)) { vh =>
@@ -131,12 +146,12 @@ class SingleParticipantFragment extends FragmentHelper {
     override def onLeftActionClicked(): Unit =
       participantsController.otherParticipant.map(_.expiresAt.isDefined).head.foreach {
         case false => participantsController.isGroup.head.flatMap {
-          case false => userAccountsController.hasCreateConvPermission.head.map {
+          case false if !fromDeepLink => userAccountsController.hasCreateConvPermission.head.map {
             case true => inject[CreateConversationController].onShowCreateConversation ! true
             case _ =>
           }
           case _ => Future.successful {
-            participantsController.onShowAnimations ! true
+            participantsController.onLeaveParticipants ! true
             participantsController.otherParticipantId.head.foreach {
               case Some(userId) =>
                 inject[IConversationScreenController].hideUser()
@@ -162,6 +177,8 @@ class SingleParticipantFragment extends FragmentHelper {
     isPartner      <- userAccountsController.isPartner
   } yield if (isWireless) {
     (R.string.empty_string, R.string.empty_string)
+  } else if (fromDeepLink) {
+    (R.string.glyph__conversation, R.string.conversation__action__open_conversation)
   } else if (!isPartner && !isGroupOrBot && canCreateConv) {
     (R.string.glyph__add_people, R.string.conversation__action__create_group)
   } else if (isPartner && !isGroupOrBot) {
@@ -173,13 +190,19 @@ class SingleParticipantFragment extends FragmentHelper {
   private lazy val footerMenu = returning( view[FooterMenu](R.id.fm__footer) ) { vh =>
     // TODO: merge this logic with ConversationOptionsMenuController
     (for {
-      createPerm <- userAccountsController.hasCreateConvPermission
-      convId     <- participantsController.conv.map(_.id)
-      remPerm    <- userAccountsController.hasRemoveConversationMemberPermission(convId)
-      isGuest    <- participantsController.isCurrentUserGuest
-      isGroup    <- participantsController.isGroup
-      isPartner  <- userAccountsController.isPartner
-    } yield (createPerm || remPerm) && !isGuest && (!isGroup || !isPartner)).map {
+      conv           <- participantsController.conv
+      isGroup        <- participantsController.isGroup
+      createPerm     <- userAccountsController.hasCreateConvPermission
+      remPerm        <- userAccountsController.hasRemoveConversationMemberPermission(conv.id)
+      selfIsGuest    <- participantsController.isCurrentUserGuest
+      selfIsPartner  <- userAccountsController.isPartner
+      selfIsProUser  <- userAccountsController.isTeam
+      other          <- participantsController.otherParticipant
+      otherIsGuest    = other.isGuest(conv.team)
+    } yield {
+      if (fromDeepLink) !selfIsProUser || otherIsGuest
+      else (createPerm || remPerm) && !selfIsGuest && (!isGroup || !selfIsPartner)
+    }).map {
       case true => R.string.glyph__more
       case _    => R.string.empty_string
     }.map(getString).onUi(text => vh.foreach(_.setRightActionText(text)))
@@ -266,6 +289,9 @@ class SingleParticipantFragment extends FragmentHelper {
 
   override def onBackPressed(): Boolean = {
     participantsController.selectedParticipant ! None
+    if (fromDeepLink) CancellableFuture.delay(750.millis).map { _ =>
+      navigationController.setVisiblePage(Page.CONVERSATION_LIST, MainPhoneFragment.Tag)
+    }
     super.onBackPressed()
   }
 }
@@ -297,13 +323,13 @@ object SingleParticipantFragment {
   }
 
   private val TabToOpen: String = "TAB_TO_OPEN"
+  private val FromDeepLink: String = "FROM_DEEP_LINK"
 
-  def newInstance(tabToOpen: Option[String] = None): SingleParticipantFragment =
+  def newInstance(tabToOpen: Option[String] = None, fromDeepLink: Boolean = false): SingleParticipantFragment =
     returning(new SingleParticipantFragment) { f =>
-      tabToOpen.foreach { t =>
-        f.setArguments(returning(new Bundle){
-          _.putString(TabToOpen, t)
-        })
-      }
+      val args = new Bundle()
+      args.putBoolean(FromDeepLink, fromDeepLink)
+      tabToOpen.foreach { t => args.putString(TabToOpen, t)}
+      f.setArguments(args)
     }
 }
