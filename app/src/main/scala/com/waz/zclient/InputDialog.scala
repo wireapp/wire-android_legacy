@@ -23,9 +23,11 @@ import android.os.Bundle
 import android.support.annotation.StringRes
 import android.support.v4.app.DialogFragment
 import android.support.v7.app.AlertDialog
-import android.view.View
+import android.text.TextWatcher
 import android.view.View.OnAttachStateChangeListener
+import android.view.{LayoutInflater, View}
 import android.widget.{EditText, TextView}
+import com.waz.utils.returning
 import com.waz.zclient.utils.RichTextView
 
 object InputDialog {
@@ -47,53 +49,45 @@ object InputDialog {
     def isInputInvalid(input: String): ValidatorResult
   }
 
-  private val Title = "TITLE"
-  private val Message = "MESSAGE"
-  private val Input = "INPUT"
-  private val InputHint = "INPUT_HINT"
-  private val ValidateInput = "VALIDATE_INPUT"
+  private val Title                            = "TITLE"
+  private val Message                          = "MESSAGE"
+  private val Input                            = "INPUT"
+  private val InputHint                        = "INPUT_HINT"
+  private val ValidateInput                    = "VALIDATE_INPUT"
   private val DisablePositiveBtnOnInvalidInput = "DISABLE_POSITIVE_BTN"
-  private val NegativeBtn = "NEGATIVE_BTN"
-  private val PositiveBtn = "POSITIVE_BTN"
+  private val NegativeBtn                      = "NEGATIVE_BTN"
+  private val PositiveBtn                      = "POSITIVE_BTN"
 
   trait Listener {
     def onDialogEvent(event: Event): Unit
   }
 
-  def newInstance(
-                   @StringRes title: Int,
-                   @StringRes message: Int,
-                   inputValue: Option[String] = None,
-                   @StringRes inputHint: Option[Int] = None,
-                   validateInput: Boolean = false,
-                   disablePositiveBtnOnInvalidInput: Boolean = false,
-                   @StringRes negativeBtn: Int,
-                   @StringRes positiveBtn: Int
-                 ): InputDialog = {
-
-    val dialog = new InputDialog()
-    val bundle = new Bundle()
-
-    bundle.putInt(Title, title)
-    bundle.putInt(Message, message)
-    inputValue.foreach(i => bundle.putString(Input, i))
-    inputHint.foreach(ih => bundle.putInt(InputHint, ih))
-    bundle.putBoolean(ValidateInput, validateInput)
-    bundle.putBoolean(DisablePositiveBtnOnInvalidInput, disablePositiveBtnOnInvalidInput)
-    bundle.putInt(NegativeBtn, negativeBtn)
-    bundle.putInt(PositiveBtn, positiveBtn)
-
-    dialog.setArguments(bundle)
-    dialog
-  }
-
+  def newInstance(@StringRes title: Int,
+                  @StringRes message: Int,
+                  inputValue: Option[String] = None,
+                  @StringRes inputHint: Option[Int] = None,
+                  validateInput: Boolean = false,
+                  disablePositiveBtnOnInvalidInput: Boolean = false,
+                  @StringRes negativeBtn: Int,
+                  @StringRes positiveBtn: Int): InputDialog =
+    returning(new InputDialog()) {
+      _.setArguments(returning(new Bundle()) { bundle =>
+        bundle.putInt(Title, title)
+        bundle.putInt(Message, message)
+        inputValue.foreach(i => bundle.putString(Input, i))
+        inputHint.foreach(ih => bundle.putInt(InputHint, ih))
+        bundle.putBoolean(ValidateInput, validateInput)
+        bundle.putBoolean(DisablePositiveBtnOnInvalidInput, disablePositiveBtnOnInvalidInput)
+        bundle.putInt(NegativeBtn, negativeBtn)
+        bundle.putInt(PositiveBtn, positiveBtn)
+      })
+    }
 }
 
-class InputDialog extends DialogFragment {
-
+class InputDialog extends DialogFragment with FragmentHelper {
   import InputDialog._
 
-  private var listener: Option[Listener] = None
+  private var listener : Option[Listener] = None
   private var validator: Option[InputValidator] = None
 
   def setListener(listener: Listener): this.type = {
@@ -106,56 +100,74 @@ class InputDialog extends DialogFragment {
     this
   }
 
-  override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
-    super.onCreateDialog(savedInstanceState)
-    val args = getArguments
-
-    val view = getActivity.getLayoutInflater.inflate(R.layout.dialog_with_input_field, null)
-    val message = view.findViewById[TextView](R.id.message)
-    val input = view.findViewById[EditText](R.id.input)
-
-    message.setText(args.getInt(Message))
-    Option(args.getInt(InputHint)).foreach(input.setHint)
-
-    if (savedInstanceState == null) {
-      Option(args.getString(Input)).foreach(input.setText)
-    }
-
-    val dialog = new AlertDialog.Builder(getContext)
-      .setTitle(args.getInt(Title))
+  private lazy val view = LayoutInflater.from(getActivity).inflate(R.layout.dialog_with_input_field, null)
+  private lazy val input = view.findViewById[EditText](R.id.input)
+  private lazy val dialog =
+    new AlertDialog.Builder(getContext)
       .setView(view)
-      .setNegativeButton(args.getInt(NegativeBtn), new DialogInterface.OnClickListener {
-        override def onClick(dialogInterface: DialogInterface, i: Int): Unit =
-          listener.foreach(_.onDialogEvent(OnNegativeBtn))
-      })
-      .setPositiveButton(args.getInt(PositiveBtn), new DialogInterface.OnClickListener {
-        override def onClick(dialogInterface: DialogInterface, i: Int): Unit =
+      .setTitle(getArguments.getInt(Title))
+      .setPositiveButton(getArguments.getInt(PositiveBtn), new DialogInterface.OnClickListener {
+        def onClick(dialog: DialogInterface, which: Int): Unit =
           listener.foreach(_.onDialogEvent(OnPositiveBtn(input.getText.toString)))
+      })
+      .setNegativeButton(getArguments.getInt(NegativeBtn), new DialogInterface.OnClickListener {
+        def onClick(dialog: DialogInterface, which: Int): Unit =
+          listener.foreach(_.onDialogEvent(OnNegativeBtn))
       })
       .create()
 
-    if (args.getBoolean(ValidateInput)) {
-      val disablePositiveBtnOnInvalidInput = args.getBoolean(DisablePositiveBtnOnInvalidInput)
-      lazy val positiveBtn = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
+  override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
+    super.onCreateDialog(savedInstanceState)
 
-      def validate(str: String): Unit = validator.foreach { inputValidator =>
-        inputValidator.isInputInvalid(str) match {
-          case ValidatorResult.Valid =>
-            if (disablePositiveBtnOnInvalidInput) positiveBtn.setEnabled(true)
-          case ValidatorResult.Invalid(actions) =>
-            if (disablePositiveBtnOnInvalidInput) positiveBtn.setEnabled(false)
-            actions.foreach(_(input))
-        }
-      }
+    view
+    input
 
-      input.addOnAttachStateChangeListener(new OnAttachStateChangeListener {
-        override def onViewDetachedFromWindow(v: View): Unit = {}
-        override def onViewAttachedToWindow(v: View): Unit = validate(input.getText.toString)
-      })
-      input.addTextListener(str => validate(str))
+    getIntArg(Message).foreach(view.findViewById[TextView](R.id.message).setText)
+    getIntArg(InputHint).foreach(input.setHint)
+
+    if (savedInstanceState == null) {
+      getStringArg(Input).foreach(input.setText)
     }
 
     dialog
   }
 
+  override def onStart(): Unit = {
+    super.onStart()
+    if (getBooleanArg(ValidateInput)) {
+      input.addOnAttachStateChangeListener(onAttachStateChangeListener)
+      positiveBtn.setEnabled(false)
+      textWatcher = Option(input.addTextListener(validate))
+    } else {
+      positiveBtn.setEnabled(true)
+    }
+  }
+
+  override def onStop(): Unit = {
+    if (getBooleanArg(ValidateInput)) {
+      input.removeOnAttachStateChangeListener(onAttachStateChangeListener)
+      textWatcher.foreach(input.removeTextChangedListener)
+      textWatcher = None
+    }
+    super.onStop()
+  }
+
+  private  def validate(str: String): Unit = validator.foreach(
+    _.isInputInvalid(str) match {
+      case ValidatorResult.Valid =>
+        if (getBooleanArg(DisablePositiveBtnOnInvalidInput)) positiveBtn.setEnabled(true)
+      case ValidatorResult.Invalid(actions) =>
+        if (getBooleanArg(DisablePositiveBtnOnInvalidInput)) positiveBtn.setEnabled(false)
+        actions.foreach(_(input))
+    }
+  )
+
+  private def positiveBtn = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
+
+  private val onAttachStateChangeListener = new OnAttachStateChangeListener {
+    override def onViewDetachedFromWindow(v: View): Unit = {}
+    override def onViewAttachedToWindow(v: View): Unit = validate(input.getText.toString)
+  }
+
+  private var textWatcher = Option.empty[TextWatcher]
 }

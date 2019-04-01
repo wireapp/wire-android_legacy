@@ -39,7 +39,7 @@ public interface IPickUserController {
 
     boolean isShowingPickUser();
 
-    void showUserProfile(UserId userId);
+    void showUserProfile(UserId userId, boolean fromDeepLink);
 
     void hideUserProfile();
 

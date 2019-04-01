@@ -38,6 +38,7 @@ import com.waz.zclient.common.controllers.SharingController
 import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.confirmation.TwoButtonConfirmationCallback
+import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.sharing.ShareToMultipleFragment
 import com.waz.zclient.views.menus.ConfirmationMenu
@@ -92,7 +93,7 @@ class ShareActivity extends BaseActivity with ActivityHelper {
     inject[PermissionsService].requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
       case true =>
         val intent = getIntent
-        verbose(l"$intent")
+        verbose(l"${RichIntent(intent)}")
         val ir = ShareCompat.IntentReader.from(this)
         if (!ir.isShareIntent) finish()
         else {

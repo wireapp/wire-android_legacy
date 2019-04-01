@@ -25,32 +25,38 @@ import com.waz.content.UserPreferences.CrashesAndAnalyticsRequestShown
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.{ErrorData, Uid}
 import com.waz.service.{AccountManager, GlobalModule, ZMessaging}
-import com.waz.threading.Threading
+import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
+import com.waz.zclient._
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.collection.fragments.CollectionFragment
-import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
+import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
 import com.waz.zclient.controllers.collections.CollectionsObserver
 import com.waz.zclient.controllers.confirmation.{ConfirmationObserver, ConfirmationRequest, IConfirmationController}
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.controllers.singleimage.{ISingleImageController, SingleImageObserver}
 import com.waz.zclient.conversation.{ConversationController, ImageFragment}
+import com.waz.zclient.deeplinks.DeepLink.{logTag => _, _}
+import com.waz.zclient.deeplinks.DeepLinkService
+import com.waz.zclient.deeplinks.DeepLinkService._
 import com.waz.zclient.giphy.GiphySharingPreviewFragment
 import com.waz.zclient.log.LogUI
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversationlist.ConfirmationFragment
 import com.waz.zclient.pages.main.conversationpager.ConversationPagerFragment
+import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
+import com.waz.zclient.participants.ParticipantsController
+import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.tracking.GlobalTrackingController.analyticsPrefKey
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.menus.ConfirmationMenu
-import com.waz.zclient.{ErrorsController, FragmentHelper, OnBackPressedListener, R}
-import com.waz.zclient.BuildConfig
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 class MainPhoneFragment extends FragmentHelper
   with OnBackPressedListener
@@ -72,11 +78,14 @@ class MainPhoneFragment extends FragmentHelper
   private lazy val collectionController   = inject[CollectionController]
   private lazy val browserController      = inject[BrowserController]
   private lazy val errorsController       = inject[ErrorsController]
-
   private lazy val navigationController   = inject[INavigationController]
   private lazy val singleImageController  = inject[ISingleImageController]
   private lazy val confirmationController = inject[IConfirmationController]
   private lazy val keyboardController     = inject[KeyboardController]
+  private lazy val deepLinkService        = inject[DeepLinkService]
+  private lazy val participantsController = inject[ParticipantsController]
+  private lazy val userAccountsController = inject[UserAccountsController]
+  private lazy val pickUserController     = inject[IPickUserController]
 
   private lazy val confirmationMenu = returning(view[ConfirmationMenu](R.id.cm__confirm_action_light)) { vh =>
     accentColorController.accentColor.map(_.color).onUi(color => vh.foreach(_.setButtonColor(color)))
@@ -133,6 +142,52 @@ class MainPhoneFragment extends FragmentHelper
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     confirmationMenu.foreach(_.setVisibility(View.GONE))
     zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
+
+
+    deepLinkService.deepLink.collect { case Some(result) => result } onUi {
+      case OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember, self)) =>
+        pickUserController.hideUserProfile()
+        participantsController.onLeaveParticipants ! true
+
+        if (self) {
+          startActivity(Intents.OpenSettingsIntent(getContext))
+        } else if (connected || currentTeamMember) {
+          CancellableFuture.delay(750.millis).map { _ =>
+            userAccountsController.getOrCreateAndOpenConvFor(userId)
+              .foreach { _ =>
+                participantsController.onShowParticipantsWithUserId ! ParticipantRequest(userId, fromDeepLink = true)
+              }
+          }
+        } else {
+          CancellableFuture.delay(getInt(R.integer.framework_animation_duration_medium).millis).map { _ =>
+            navigationController.setVisiblePage(Page.CONVERSATION_LIST, MainPhoneFragment.Tag)
+            pickUserController.showUserProfile(userId, true)
+          }
+        }
+        deepLinkService.deepLink ! None
+
+      case OpenDeepLink(ConversationToken(convId), _) =>
+        pickUserController.hideUserProfile()
+        participantsController.onLeaveParticipants ! true
+        participantsController.selectedParticipant ! None
+
+        CancellableFuture.delay(750.millis).map { _ =>
+          conversationController.switchConversation(convId)
+        }
+        deepLinkService.deepLink ! None
+
+      case DoNotOpenDeepLink(Conversation, reason) =>
+        verbose(l"do not open, conversation deep link error. Reason: $reason")
+        showErrorDialog(R.string.deep_link_conversation_error_title, R.string.deep_link_conversation_error_message)
+        deepLinkService.deepLink ! None
+
+      case DoNotOpenDeepLink(User, reason) =>
+        verbose(l"do not open, user deep link error. Reason: $reason")
+        showErrorDialog(R.string.deep_link_user_error_title, R.string.deep_link_user_error_message)
+        deepLinkService.deepLink ! None
+
+      case _ =>
+    }
   }
 
   override def onStart(): Unit = {

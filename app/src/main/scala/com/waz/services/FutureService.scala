@@ -27,6 +27,7 @@ import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.WakeLockImpl
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.Intents.RichIntent
 
 import scala.concurrent.Future
 import scala.util.control.NoStackTrace
@@ -38,7 +39,7 @@ abstract class FutureService extends Service with DerivedLogTag {
   override def onBind(intent: Intent): IBinder = null
 
   override def onStartCommand(intent: Intent, flags: Int, startId: Int): Int = wakeLock {
-    debug(l"onStartCommand: $startId, intent: $intent")
+    debug(l"onStartCommand: $startId, intent: ${RichIntent(intent)}")
     Option(intent) foreach WakefulBroadcastReceiver.completeWakefulIntent
 
     val future =

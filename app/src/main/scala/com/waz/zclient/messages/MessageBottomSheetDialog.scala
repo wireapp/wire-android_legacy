@@ -121,7 +121,7 @@ object MessageBottomSheetDialog {
     case object Copy extends MessageAction(R.id.message_bottom_menu_item_copy, R.string.glyph__copy, R.string.message_bottom_menu_action_copy) {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params, assets: AssetsController): Signal[Boolean] =
         msg.msgType match {
-          case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA if !msg.isEphemeral => Signal.const(true)
+          case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA if zms.selfUserId == msg.userId || !msg.isEphemeral => Signal.const(true)
           case _ => Signal.const(false)
         }
     }

@@ -23,7 +23,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import com.waz.zclient._
-import com.waz.zclient.appentry.{CreateTeamFragment, SSOFragment, SSOWebViewFragment}
+import com.waz.zclient.appentry.{CreateTeamFragment, SSOFragment}
 import com.waz.zclient.common.views.InputBox
 import com.waz.zclient.common.views.InputBox.NameValidator
 import com.waz.zclient.ui.utils.KeyboardUtils
@@ -57,8 +57,6 @@ case class TeamNameFragment() extends CreateTeamFragment with SSOFragment {
 
   private def openUrl(id: Int): Unit =
     context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(context.getString(id))))
-
-  override protected def onSSOConfirm(code: String): Unit = showFragment(SSOWebViewFragment.newInstance(code), SSOWebViewFragment.Tag)
 }
 
 object TeamNameFragment {

@@ -42,7 +42,8 @@ import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.duration._
 
-class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit injector: Injector, context: Context, ec: EventContext)
+class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink: Boolean = false)
+                                       (implicit injector: Injector, context: Context, ec: EventContext)
   extends OptionsMenuController
     with Injectable
     with DerivedLogTag {
@@ -106,10 +107,17 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
     mode match {
       case Mode.Leaving(_) =>
         builder ++= Set(LeaveOnly, LeaveAndDelete)
+
       case Mode.Deleting(_) =>
         builder ++= Set(DeleteOnly, DeleteAndLeave)
+
+      case Mode.Normal(false) if fromDeepLink =>
+        if (connectStatus.contains(ACCEPTED) || connectStatus.contains(PENDING_FROM_USER)) builder += Block
+        else if (connectStatus.contains(BLOCKED)) builder += Unblock
+
       case Mode.Normal(false) if isGroup && selectedParticipant.isDefined =>
         if (removePerm && !isGuest) builder += RemoveMember
+
       case Mode.Normal(_) =>
 
         def notifications: MenuItem =
@@ -144,7 +152,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode)(implicit inj
   private def switchToConversationList() =
     if (!mode.inConversationList) CancellableFuture.delay(getInt(R.integer.framework_animation_duration_medium).millis).map { _ =>
       navController.setVisiblePage(Page.CONVERSATION_LIST, tag)
-      participantsController.onShowAnimations ! true
+      participantsController.onLeaveParticipants ! true
     }
 
   new EventStreamWithAuxSignal(onMenuItemClicked, convState).apply {

@@ -34,7 +34,7 @@ object AppLaunchFragment {
 
 class AppLaunchFragment extends SSOFragment {
 
-  private def activity = getActivity.asInstanceOf[AppEntryActivity]
+  protected def activity = getActivity.asInstanceOf[AppEntryActivity]
 
   private lazy val createTeamButton = view[LinearLayout](R.id.create_team_button)
   private lazy val createAccountButton = view[LinearLayout](R.id.create_account_button)
@@ -54,5 +54,4 @@ class AppLaunchFragment extends SSOFragment {
     loginButton.foreach(_.onClick(activity.showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)))
   }
 
-  override protected def onSSOConfirm(code: String): Unit = activity.showFragment(SSOWebViewFragment.newInstance(code.toString), SSOWebViewFragment.Tag)
 }

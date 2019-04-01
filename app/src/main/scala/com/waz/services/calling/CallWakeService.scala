@@ -34,10 +34,11 @@ import scala.concurrent.Future
   */
 class CallWakeService extends FutureService with ZMessagingService with DerivedLogTag {
   import CallWakeService._
+  import com.waz.zclient.Intents.RichIntent
   implicit val ec = EventContext.Global
 
   override protected def onIntent(intent: AIntent, id: Int): Future[Any] = onZmsIntent(intent) { implicit zms =>
-    debug(l"onIntent $intent")
+    debug(l"onIntent ${RichIntent(intent)}")
     if (intent != null && intent.hasExtra(ConvIdExtra)) {
       implicit val convId = ConvId(intent.getStringExtra(ConvIdExtra))
       debug(l"convId: $convId")
