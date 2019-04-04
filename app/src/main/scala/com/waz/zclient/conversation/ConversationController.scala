@@ -36,7 +36,6 @@ import com.waz.utils.wrappers.URI
 import com.waz.utils.{Serialized, returning, _}
 import com.waz.zclient.calling.controllers.CallStartController
 import com.waz.zclient.conversation.ConversationController.ConversationChange
-import com.waz.zclient.conversationlist.ConversationListAdapter.Normal
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
@@ -234,8 +233,8 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   def setCurrentConversationToNext(requester: ConversationChangeRequester): Future[Unit] = {
     def nextConversation(convId: ConvId): Future[Option[ConvId]] =
-      convListController.conversationListData(Normal).head.map {
-        case (_, regular, _) => regular.lift(regular.indexWhere(_.id == convId) + 1).map(_.id)
+      convListController.regularConversationListData.head.map {
+        regular => regular.lift(regular.indexWhere(_.id == convId) + 1).map(_.id)
       } (Threading.Background)
 
     for {
