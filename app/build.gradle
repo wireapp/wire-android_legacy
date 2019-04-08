@@ -126,10 +126,11 @@ android {
         buildConfigField 'String',  'BLACKLIST_HOST',             "\"$config.blacklistHost\""
         buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
         buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$config.certificatePin.certificate\""
-        buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
-        buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
+        buildConfigField 'boolean', 'SUBMIT_CRASH_REPORTS',       "$config.submitCrashReports"
+        buildConfigField 'boolean', 'ALLOW_MARKETING_COMMUNICATION', "$config.allowMarketingCommunication"
         buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
-        buildConfigField 'String', 'CUSTOM_URL_SCHEME',           "\"$config.custom_url_scheme\""
+        buildConfigField 'String',  'CUSTOM_URL_SCHEME',          "\"$config.custom_url_scheme\""
+        buildConfigField 'Integer', 'MINIMUM_PASSWORD_LENGTH',    "$config.minimum-password-length"
     }
 
     packagingOptions {
