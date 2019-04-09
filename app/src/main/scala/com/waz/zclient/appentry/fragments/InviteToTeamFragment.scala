@@ -56,7 +56,7 @@ case class InviteToTeamFragment() extends CreateTeamFragment {
     learnMoreButton.foreach(_.onClick(browser.openUrl(AndroidURIUtil.parse(context.getString(R.string.invalid_email_help)))))
     inputField.foreach { inputField =>
       inputField.setShouldDisableOnClick(false)
-      inputField.setShouldClearTextOnClick(true)
+      inputField.setShouldClearErrorOnClick(true)
       inputField.setValidator(InputBox.SimpleValidator)
       inputField.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS | InputType.TYPE_TEXT_FLAG_AUTO_COMPLETE | InputType.TYPE_TEXT_FLAG_AUTO_CORRECT)
       inputField.setButtonGlyph(R.string.glyph__send)
