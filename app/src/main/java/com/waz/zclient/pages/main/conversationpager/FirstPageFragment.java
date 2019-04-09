@@ -27,7 +27,6 @@ import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.conversationlist.ConversationListManagerFragment;
 import com.waz.zclient.pages.BaseFragment;
-import timber.log.Timber;
 
 public class FirstPageFragment extends BaseFragment<FirstPageFragment.Container> implements OnBackPressedListener {
 
@@ -89,9 +88,7 @@ public class FirstPageFragment extends BaseFragment<FirstPageFragment.Container>
                 .setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
                 .replace(R.id.fl__first_page_container, fragment, page.tag)
                 .commit();
-        } catch (Exception e) {
-            Timber.e(e, "Failed opening fragment!");
-        }
+        } catch (Exception e) { }
     }
 
     @Override

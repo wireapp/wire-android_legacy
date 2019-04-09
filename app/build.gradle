@@ -358,7 +358,6 @@ dependencies {
 
     //third party libraries
     implementation 'com.evernote:android-job:1.2.6'
-    implementation 'com.jakewharton.timber:timber:4.7.0'
     implementation 'com.jakewharton.threetenabp:threetenabp:1.1.0'
     implementation 'com.facebook.rebound:rebound:0.3.8'
     implementation 'com.atlassian.commonmark:commonmark:0.11.0'

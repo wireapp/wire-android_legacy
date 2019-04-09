@@ -19,7 +19,6 @@ package com.waz.zclient.utils;
 
 import android.content.Context;
 import com.waz.zclient.R;
-import timber.log.Timber;
 
 public enum LayoutSpec {
     LAYOUT_PHONE(320),
@@ -36,7 +35,6 @@ public enum LayoutSpec {
     private static LayoutSpec get(Context context) {
 
         if (context == null) {
-            Timber.e("Tried to get LayoutSpec with a null context!");
             return ERROR_GETTING_SPEC;
         }
 

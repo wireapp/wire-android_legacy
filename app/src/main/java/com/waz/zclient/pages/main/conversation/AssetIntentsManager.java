@@ -32,7 +32,6 @@ import com.waz.utils.wrappers.AndroidURI;
 import com.waz.utils.wrappers.AndroidURIUtil;
 import com.waz.utils.wrappers.URI;
 import com.waz.zclient.BuildConfig;
-import timber.log.Timber;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -77,7 +76,6 @@ public class AssetIntentsManager {
                 callback.openIntent(intent, tpe);
                 return;
             }
-            Timber.i("Did not resolve testing gallery for intent: %s", intent.toString());
         }
         Intent documentIntent = new Intent(openDocumentAction()).setType(mimeType).addCategory(Intent.CATEGORY_OPENABLE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && allowMultiple) {

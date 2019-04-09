@@ -36,7 +36,6 @@ import android.util.Pair;
 import android.view.View;
 import android.widget.TextView;
 import com.waz.zclient.R;
-import timber.log.Timber;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,13 +62,11 @@ public class TextViewUtils {
         final int highlightStart = string.indexOf('_');
 
         if (highlightStart < 0) {
-            Timber.e("Failed to highlight text - could not find _ marker in string.");
             return string;
         }
 
         final int highlightEnd = string.lastIndexOf('_');
         if (highlightStart >= highlightEnd) {
-            Timber.e("Failed to highlight text - make sure you have 2 _ markers to denote start and end of highlight region");
             return string;
         }
 
@@ -198,13 +195,11 @@ public class TextViewUtils {
         final int highlightStart = string.indexOf('_');
 
         if (highlightStart < 0) {
-            Timber.e("Failed to highlight text - could not find _ marker in string.");
             return;
         }
 
         final int highlightEnd = string.lastIndexOf('_') - 1;
         if (highlightStart >= highlightEnd) {
-            Timber.e("Failed to highlight text - make sure you have 2 _ markers to denote start and end of highlight region");
             return;
         }
 

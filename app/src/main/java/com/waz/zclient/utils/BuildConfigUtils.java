@@ -22,7 +22,6 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Environment;
-import timber.log.Timber;
 
 import java.io.File;
 
@@ -44,11 +43,8 @@ public class BuildConfigUtils {
         try {
             File path = Environment.getExternalStorageDirectory();
             File file = new File(path, fileName);
-            Timber.i("Build config file %s exists: %b", file.getAbsolutePath(), file.exists());
             return file.exists();
-        } catch (Exception e) {
-            Timber.e(e, "Something went wrong");
-        }
+        } catch (Exception e) { }
         return false;
     }
 }

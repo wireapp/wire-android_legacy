@@ -32,8 +32,6 @@ import com.waz.zclient.R;
 import com.waz.zclient.ui.pullforaction.OverScrollListener;
 import com.waz.zclient.ui.pullforaction.OverScrollMode;
 import com.waz.zclient.ui.pullforaction.PullForActionView;
-import timber.log.Timber;
-
 
 /**
  * ListView subclass that provides the swipe functionality
@@ -371,9 +369,7 @@ public class SwipeListView extends RecyclerView implements PullForActionView {
                     try {
                         targetView = (SwipeListRow) child;
                         targetView.setMaxOffset(allowSwipeAway ? viewWidth / 2 : listRowMenuIndicatorMaxSwipeOffset);
-                    } catch (ClassCastException e) {
-                        Timber.e(e, "ClassCastException when swiping");
-                    }
+                    } catch (ClassCastException e) { }
                     downX = motionEvent.getRawX();
                 } else {
                     closeItem();

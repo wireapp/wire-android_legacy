@@ -34,7 +34,7 @@ import com.waz.zclient.camera.controllers.{GlobalCameraController, Orientation, 
 import com.waz.zclient.common.controllers.SoundController
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{R, ViewHelper}
-import timber.log.Timber
+import com.waz.zclient.log.LogUI._
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.ListSet
@@ -103,7 +103,7 @@ class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val de
         observer.foreach(_.onCameraLoaded(flashModes.asJava))
       case Failure(ex : CancelException) =>
       case Failure(ex) =>
-        Timber.w(ex, "Failed to open camera - camera is likely unavailable")
+        warn(l"Failed to open camera - camera is likely unavailable", ex)
         observer.foreach(_.onCameraLoadingFailed())
     } (Threading.Ui)
   }

@@ -26,7 +26,6 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.util.DisplayMetrics;
 import com.waz.zclient.R;
-import timber.log.Timber;
 
 public class ContextWrapperEdgeEffect extends ContextWrapper {
 
@@ -73,16 +72,12 @@ public class ContextWrapperEdgeEffect extends ContextWrapper {
             try {
                 return (Integer) Class.forName("com.android.internal.R$drawable").getField(name).get(null);
             } catch (ClassNotFoundException e) {
-                Timber.e("Internal resource id does not exist: %s", name);
                 return 0;
             } catch (NoSuchFieldException e1) {
-                Timber.e("Internal resource id does not exist: %s", name);
                 return 0;
             } catch (IllegalArgumentException e2) {
-                Timber.e("Cannot access internal resource id: %s", name);
                 return 0;
             } catch (IllegalAccessException e3) {
-                Timber.e("Cannot access internal resource id: %s", name);
             }
             return 0;
         }

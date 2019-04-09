@@ -60,7 +60,6 @@ import com.waz.zclient.R;
 import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneController;
 import com.waz.zclient.ui.utils.MathUtils;
 import com.waz.zclient.utils.ViewUtils;
-import timber.log.Timber;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -486,10 +485,6 @@ public class SlidingPaneLayout extends ViewGroup {
         final int widthAvailable = widthSize - getPaddingLeft() - getPaddingRight();
         int widthRemaining = widthAvailable;
         final int childCount = getChildCount();
-
-        if (childCount > 2) {
-            Timber.e("onMeasure: More than two child views are not supported.");
-        }
 
         // We'll find the current one below.
         slideableView = null;

@@ -29,8 +29,6 @@ import com.waz.zclient.utils.ViewUtils;
 
 import java.lang.reflect.Field;
 
-import timber.log.Timber;
-
 public class AccentColorEditText extends android.support.v7.widget.AppCompatEditText {
 
     private static final int DEFAULT_CURSOR_WIDTH_DP = 2;
@@ -98,8 +96,6 @@ public class AccentColorEditText extends android.support.v7.widget.AppCompatEdit
                 darray[i] = cursorDrawable;
             }
 
-        } catch (IllegalAccessException | IllegalArgumentException ex) {
-            Timber.e(ex, "Error accessing private field");
-        }
+        } catch (IllegalAccessException | IllegalArgumentException ex) { }
     }
 }

@@ -30,8 +30,6 @@ import com.waz.service.BackendConfig;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.Backend;
 
-import timber.log.Timber;
-
 import java.util.NoSuchElementException;
 
 public class BackendPicker {
@@ -125,9 +123,7 @@ public class BackendPicker {
         if (backend != null) {
             try {
                 return Backend.byName().apply(backend);
-            } catch (NoSuchElementException ex) {
-                Timber.w("Could not find backend with name: %s", backend);
-            }
+            } catch (NoSuchElementException ex) { }
         }
         return null;
     }

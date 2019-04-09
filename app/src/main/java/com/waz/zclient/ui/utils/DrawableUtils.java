@@ -23,7 +23,6 @@ import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.DrawableContainer;
-import timber.log.Timber;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -52,18 +51,14 @@ public class DrawableUtils {
                 setConstantStateMethod = DrawableContainer.class.getDeclaredMethod(
                     "setConstantState", DrawableContainer.DrawableContainerState.class);
                 setConstantStateMethod.setAccessible(true);
-            } catch (NoSuchMethodException e) {
-                Timber.e(e, "Could not fetch setConstantState(). Oh well.");
-            }
+            } catch (NoSuchMethodException e) { }
             setConstantStateMethodFetched = true;
         }
         if (setConstantStateMethod != null) {
             try {
                 setConstantStateMethod.invoke(drawable, constantState);
                 return true;
-            } catch (Exception e) {
-                Timber.e(e, "Could not invoke setConstantState(). Oh well.");
-            }
+            } catch (Exception e) { }
         }
         return false;
     }

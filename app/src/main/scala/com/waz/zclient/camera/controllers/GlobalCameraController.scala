@@ -20,6 +20,7 @@ package com.waz.zclient.camera.controllers
 
 import java.util.concurrent.{Executors, ThreadFactory}
 
+import com.waz.zclient.log.LogUI._
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.{Rect, SurfaceTexture}
@@ -34,7 +35,6 @@ import com.waz.zclient.WireContext
 import com.waz.zclient.camera.{CameraFacing, FlashMode}
 import com.waz.zclient.utils.DeprecationUtils.CameraWrap
 import com.waz.zclient.utils.{AutoFocusCallbackDeprecation, Callback, CameraParamsWrapper, CameraSizeWrapper, CameraWrapper, DeprecationUtils, PictureCallbackDeprecated, ShutterCallbackDeprecated}
-import timber.log.Timber
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future, Promise}
@@ -48,7 +48,8 @@ class GlobalCameraController(cameraFactory: CameraFactory)(implicit cxt: WireCon
     })
 
 
-    override def reportFailure(cause: Throwable): Unit = Timber.e(cause, "Problem executing on Camera Thread.")
+    override def reportFailure(cause: Throwable): Unit =
+      error(l"Problem executing on Camera Thread.", cause)
 
     override def execute(runnable: Runnable): Unit = executor.submit(runnable)
   }
@@ -127,7 +128,7 @@ trait CameraFactory {
   def apply(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, cxt: Context, devOrientation: Orientation, flashMode: FlashMode): WireCamera
 }
 
-class AndroidCameraFactory extends CameraFactory {
+class AndroidCameraFactory extends CameraFactory with DerivedLogTag {
   override def apply(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, cxt: Context, devOrientation: Orientation, flashMode: FlashMode) =
     new AndroidCamera(info, texture, w, h, cxt, devOrientation, flashMode)
 
@@ -139,7 +140,7 @@ class AndroidCameraFactory extends CameraFactory {
     }
   } catch {
     case e: Throwable =>
-      Timber.w(e, "Failed to retrieve camera info - camera is likely unavailable")
+      warn(l"Failed to retrieve camera info - camera is likely unavailable", e)
       Seq.empty
   }
 }
@@ -160,7 +161,8 @@ trait WireCamera {
   def getSupportedFlashModes: Set[FlashMode]
 }
 
-class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, cxt: Context, devOrientation: Orientation, flashMode: FlashMode) extends WireCamera {
+class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, cxt: Context, devOrientation: Orientation, flashMode: FlashMode)
+  extends WireCamera with DerivedLogTag {
 
   import WireCamera._
 
@@ -280,7 +282,7 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
 
             DeprecationUtils.setAutoFocusCallback(c, new AutoFocusCallbackDeprecation {
               def onAutoFocus(s: java.lang.Boolean, cam: CameraWrapper): Unit = {
-                if (!s) Timber.w("Focus was unsuccessful - ignoring")
+                if (!s) warn(l"Focus was unsuccessful - ignoring")
                 promise.trySuccess(())
                 settingFocus = false
               }
@@ -365,7 +367,7 @@ trait Orientation {
   val orientation: Int
 }
 
-object Orientation {
+object Orientation extends DerivedLogTag {
   def apply(rot: Int): Orientation =
     if (rot == OrientationEventListener.ORIENTATION_UNKNOWN) Portrait_0
     else rot match {
@@ -374,7 +376,7 @@ object Orientation {
       case r if r > 135 && r <= 225 => Portrait_180
       case r if r > 225 && r <= 315 => Landscape_270
       case _ =>
-        Timber.w(s"Unexpected orientation value: $rot")
+        warn(l"Unexpected orientation value: $rot")
         Portrait_0
     }
 }

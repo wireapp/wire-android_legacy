@@ -19,7 +19,6 @@ package com.waz.zclient.controllers.navigation;
 
 import android.content.Context;
 import android.os.Bundle;
-import timber.log.Timber;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -80,7 +79,6 @@ public class NavigationController implements INavigationController {
 
     @Override
     public void setVisiblePage(Page page, String sender) {
-        Timber.i("Page: %s Sender: %s", page, sender);
         if (currentPage == page && !isInLandscape) {
             return;
         }
@@ -171,9 +169,7 @@ public class NavigationController implements INavigationController {
 
     @Override
     public void setPagerEnabled(boolean enabled) {
-        Timber.i("setPagerEnabled(%b)", enabled);
         if (enabled && getCurrentRightPage() == Page.PARTICIPANT) {
-            Timber.i("ignoring setPagerEnabled()");
             return;
         }
         isPagerEnabled = enabled;
