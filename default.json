@@ -22,5 +22,5 @@
   },
   "loggingEnabled": false,
   "custom_url_scheme": "wire",
-  "minimum-password-length": 8
+  "new_password_minimum_length": 8
 }
