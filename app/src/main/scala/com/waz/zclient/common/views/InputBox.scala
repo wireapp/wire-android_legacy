@@ -126,7 +126,7 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
   }
 
   def showErrorMessage(text: Option[String] = None): Unit = {
-    text.map(_.toUpperCase).foreach(errorText.setText)
+    text.foreach(errorText.setText)
     linkifyError.foreach { errorCallback =>
       TextViewUtils.linkifyText(errorText, Color.BLACK, true, false, new Runnable() {
         override def run() = errorCallback()
