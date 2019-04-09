@@ -1082,7 +1082,7 @@
     <string name="teams_set_email_about">LEARN MORE</string>
 
     <string name="teams_set_password_title">Set password</string>
-    <string name="teams_set_password_hint">AT LEAST 8 CHARACTERS</string>
+    <string name="teams_set_password_hint">Password</string>
 
     <string name="teams_set_username_title">Set username</string>
     <string name="teams_set_username_hint">USERNAME</string>
@@ -1296,6 +1296,8 @@
 
     <string name="deep_link_user_error_title">Wire can\'t find this person.</string>
     <string name="deep_link_user_error_message">You may not have permission with this account or it no longer exists.</string>
+
+    <string name="password_policy_hint">Use at least %1$s characters, with one lowercase letter, one capital letter, a number, and a special character.</string>
 
     <!--Two identical strings are needed for German translation-->
     <string name="quote_timestamp_message_time">Original message from %s</string>
