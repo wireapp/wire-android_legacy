@@ -168,12 +168,6 @@ object InputBox {
     def shouldTrim: Boolean = true
   }
 
-  object PasswordValidator extends Validator({ t =>
-    t.length >= 8 && t.length <= 101
-  }) {
-    override def shouldTrim: Boolean = false
-  }
-
   object NameValidator extends Validator(_.trim.length >= 2)
 
   object GroupNameValidator extends Validator(_.trim.length >= 1)
