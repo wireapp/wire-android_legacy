@@ -27,6 +27,7 @@ import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
+import com.bumptech.glide.load.resource.bitmap.CircleCrop
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
@@ -130,7 +131,7 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setPicture(picture: Picture) = {
     GlideBuilder.apply(picture)
-      .apply(new RequestOptions().centerCrop())
+      .apply(new RequestOptions().transforms(new CircleCrop()))
       .into(new CustomViewTarget[View, Drawable](pictureButton) {
       override def onResourceCleared(placeholder: Drawable): Unit =
         pictureButton.setDrawableStart(None)
