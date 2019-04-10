@@ -48,7 +48,8 @@ case class SetTeamPasswordFragment() extends CreateTeamFragment {
   private lazy val inputField = view[InputBox](R.id.input_field)
 
   private val passwordMinLength = BuildConfig.NEW_PASSWORD_MINIMUM_LENGTH
-  private val validator = PasswordValidator.createStrongPasswordValidator(passwordMinLength, maxLength = 101)
+  private val passwordMaxLength = BuildConfig.NEW_PASSWORD_MAXIMUM_LENGTH
+  private val validator = PasswordValidator.createStrongPasswordValidator(passwordMinLength, passwordMaxLength)
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     inputField.foreach { inputField =>
