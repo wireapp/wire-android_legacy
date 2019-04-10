@@ -155,10 +155,11 @@ class ImageSwipeAdapter(context: Context)(implicit injector: Injector, ev: Event
   }
 
   override def instantiateItem(container: ViewGroup, position: Int): AnyRef = {
-    val imageView = new SwipeImageView(context)
+    val imageView = if (discardedImages.nonEmpty) discardedImages.dequeue() else new SwipeImageView(context)
     imageView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
     imageView.setImageDrawable(new ColorDrawable(Color.TRANSPARENT))
     container.addView(imageView)
+    imageView.setPosition(position)
     getItem(position).foreach { messageData => imageView.setMessageData(messageData) }
     imageView
   }

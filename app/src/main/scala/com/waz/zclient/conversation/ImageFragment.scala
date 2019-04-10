@@ -189,7 +189,7 @@ class ImageFragment extends FragmentHelper {
       singleImageController.hideSingleImage()
     }
 
-  override def onDestroyView() = {
+  override def onDestroyView(): Unit = {
     collectionController.focusedItem ! None
     super.onDestroyView()
   }
