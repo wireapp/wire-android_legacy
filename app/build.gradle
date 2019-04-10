@@ -22,10 +22,10 @@ ext {
     playServicesVersion = '15.0.1'
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
     stethoVersion = '1.5.0'
-    zMessagingDevVersion = "141.0.855-PR"
+    zMessagingDevVersion = "141.0.2263-DEV"
     paging_version = "1.0.0"
     // Release version number must be like this X.0(.Y)
-    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '141.0.2261@aar'
+    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '141.0.2263@aar'
 
     avsVersion = '4.9.170@aar'
     avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
@@ -126,10 +126,12 @@ android {
         buildConfigField 'String',  'BLACKLIST_HOST',             "\"$config.blacklistHost\""
         buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
         buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$config.certificatePin.certificate\""
-        buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
-        buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
+        buildConfigField 'boolean', 'SUBMIT_CRASH_REPORTS',       "$config.submitCrashReports"
+        buildConfigField 'boolean', 'ALLOW_MARKETING_COMMUNICATION', "$config.allowMarketingCommunication"
         buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
-        buildConfigField 'String', 'CUSTOM_URL_SCHEME',           "\"$config.custom_url_scheme\""
+        buildConfigField 'String',  'CUSTOM_URL_SCHEME',          "\"$config.custom_url_scheme\""
+        buildConfigField 'Integer', 'NEW_PASSWORD_MINIMUM_LENGTH', "$config.new_password_minimum_length"
+        buildConfigField 'Integer', 'NEW_PASSWORD_MAXIMUM_LENGTH', "$config.new_password_maximum_length"
     }
 
     packagingOptions {
