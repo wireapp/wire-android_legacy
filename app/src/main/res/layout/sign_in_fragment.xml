@@ -110,6 +110,6 @@
         <FrameLayout
             android:id="@+id/sign_in_container"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/phone_sign_in_container_height"/>
+            android:layout_height="wrap_content"/>
     </LinearLayout>
 </FrameLayout>
